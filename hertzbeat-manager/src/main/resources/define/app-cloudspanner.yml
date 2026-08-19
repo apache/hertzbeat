@@ -1,0 +1,474 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: cloudspanner
+name:
+  zh-CN: Google Cloud Spanner
+  en-US: Google Cloud Spanner
+  ja-JP: Google Cloud Spanner
+help:
+  zh-CN: >
+    Hertzbeat 通过 JDBC 对 Google Cloud Spanner（Google Standard SQL 方言）进行监控。
+    请分别填写项目 ID、实例 ID 和数据库名称，Hertzbeat 将自动构建连接字符串。
+    如需附加 JDBC 连接属性（例如服务账号凭据），请在"额外参数"字段中以英文分号开头填写，
+    例如：;credentials=/path/to/key.json
+  en-US: >
+    Hertzbeat monitors Google Cloud Spanner (Google Standard SQL dialect) via JDBC.
+    Provide the project ID, instance ID, and database name separately — Hertzbeat
+    builds the connection URL automatically.
+    To add extra JDBC connection properties (e.g. a service account key file), enter
+    them in the Extra Params field starting with a semicolon:
+    ;credentials=/path/to/key.json
+  ja-JP: >
+    Hertzbeat は JDBC を使用して Google Cloud Spanner（Google Standard SQL 方言）を監視します。
+    プロジェクト ID、インスタンス ID、データベース名を個別に入力してください。
+    接続 URL は Hertzbeat が自動的に構築します。
+    追加の JDBC 接続プロパティ（サービスアカウントキーなど）が必要な場合は、
+    「追加パラメータ」フィールドにセミコロン始まりで入力してください。
+helpLink:
+  zh-CN: https://cloud.google.com/spanner/docs/use-oss-jdbc
+  en-US: https://cloud.google.com/spanner/docs/use-oss-jdbc
+  ja-JP: https://cloud.google.com/spanner/docs/use-oss-jdbc
+
+params:
+  - field: host
+    name:
+      zh-CN: 实例 ID
+      en-US: Instance ID
+      ja-JP: インスタンス ID
+    type: host
+    required: true
+    placeholder: 'my-instance'
+  - field: project
+    name:
+      zh-CN: 项目 ID
+      en-US: Project ID
+      ja-JP: プロジェクト ID
+    type: text
+    required: true
+    placeholder: 'my-gcp-project'
+  - field: database
+    name:
+      zh-CN: 数据库名
+      en-US: Database Name
+      ja-JP: データベース名
+    type: text
+    required: true
+    placeholder: 'my-database'
+  - field: params
+    name:
+      zh-CN: 额外参数
+      en-US: Extra Params
+      ja-JP: 追加パラメータ
+    type: text
+    required: false
+    placeholder: ';credentials=/path/to/key.json'
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト（ｍｓ）
+    type: number
+    range: '[400,200000]'
+    required: true
+    defaultValue: 6000
+  - field: reuseConnection
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+      ja-JP: 接続再利用
+    type: boolean
+    required: false
+    defaultValue: true
+
+metrics:
+  - name: tables
+    i18n:
+      zh-CN: 数据表
+      en-US: Tables
+      ja-JP: テーブル
+    priority: 0
+    fields:
+      - field: table_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 表名
+          en-US: Table Name
+          ja-JP: テーブル名
+      - field: table_type
+        type: 1
+        i18n:
+          zh-CN: 表类型
+          en-US: Table Type
+          ja-JP: テーブルタイプ
+      - field: spanner_state
+        type: 1
+        i18n:
+          zh-CN: Spanner 状态
+          en-US: Spanner State
+          ja-JP: Spannerの状態
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT TABLE_NAME AS table_name,
+               TABLE_TYPE AS table_type,
+               SPANNER_STATE AS spanner_state
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = ''
+        ORDER BY TABLE_NAME
+
+  - name: indexes
+    i18n:
+      zh-CN: 索引
+      en-US: Indexes
+      ja-JP: インデックス
+    priority: 1
+    fields:
+      - field: table_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 表名
+          en-US: Table Name
+          ja-JP: テーブル名
+      - field: index_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 索引名
+          en-US: Index Name
+          ja-JP: インデックス名
+      - field: index_type
+        type: 1
+        i18n:
+          zh-CN: 索引类型
+          en-US: Index Type
+          ja-JP: インデックスタイプ
+      - field: index_state
+        type: 1
+        i18n:
+          zh-CN: 索引状态
+          en-US: Index State
+          ja-JP: インデックス状態
+      - field: is_unique
+        type: 1
+        i18n:
+          zh-CN: 是否唯一
+          en-US: Is Unique
+          ja-JP: ユニーク
+      - field: is_null_filtered
+        type: 1
+        i18n:
+          zh-CN: 是否过滤 NULL
+          en-US: Is Null Filtered
+          ja-JP: NULL フィルタ
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT TABLE_NAME AS table_name,
+               INDEX_NAME AS index_name,
+               INDEX_TYPE AS index_type,
+               INDEX_STATE AS index_state,
+               CASE WHEN IS_UNIQUE THEN 'Y' ELSE 'N' END AS is_unique,
+               CASE WHEN IS_NULL_FILTERED THEN 'Y' ELSE 'N' END AS is_null_filtered
+        FROM INFORMATION_SCHEMA.INDEXES
+        WHERE TABLE_SCHEMA = ''
+        ORDER BY TABLE_NAME, INDEX_NAME
+
+  - name: database_options
+    i18n:
+      zh-CN: 数据库配置
+      en-US: Database Options
+      ja-JP: データベースオプション
+    priority: 2
+    fields:
+      - field: option_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 配置项
+          en-US: Option Name
+          ja-JP: オプション名
+      - field: option_value
+        type: 1
+        i18n:
+          zh-CN: 配置值
+          en-US: Option Value
+          ja-JP: オプション値
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT OPTION_NAME AS option_name,
+               OPTION_VALUE AS option_value
+        FROM INFORMATION_SCHEMA.DATABASE_OPTIONS
+        ORDER BY OPTION_NAME
+
+  - name: query_stats
+    i18n:
+      zh-CN: 查询统计（近1分钟）
+      en-US: Query Stats (last minute)
+      ja-JP: クエリ統計（直近1分）
+    priority: 3
+    fields:
+      - field: interval_end
+        type: 1
+        i18n:
+          zh-CN: 统计截止时间
+          en-US: Interval End
+          ja-JP: 集計終了時刻
+      - field: execution_count
+        type: 0
+        i18n:
+          zh-CN: 执行次数
+          en-US: Execution Count
+          ja-JP: 実行回数
+      - field: avg_latency_seconds
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 平均延迟(s)
+          en-US: Avg Latency(s)
+          ja-JP: 平均レイテンシ(s)
+      - field: avg_rows
+        type: 0
+        i18n:
+          zh-CN: 平均返回行数
+          en-US: Avg Rows
+          ja-JP: 平均返却行数
+      - field: avg_rows_scanned
+        type: 0
+        i18n:
+          zh-CN: 平均扫描行数
+          en-US: Avg Rows Scanned
+          ja-JP: 平均スキャン行数
+      - field: avg_cpu_seconds
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 平均 CPU 时间(s)
+          en-US: Avg CPU(s)
+          ja-JP: 平均 CPU 時間(s)
+      - field: all_failed_execution_count
+        type: 0
+        i18n:
+          zh-CN: 失败次数
+          en-US: Failed Count
+          ja-JP: 失敗回数
+      - field: timed_out_execution_count
+        type: 0
+        i18n:
+          zh-CN: 超时次数
+          en-US: Timed Out Count
+          ja-JP: タイムアウト回数
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT CAST(INTERVAL_END AS STRING) AS interval_end,
+               EXECUTION_COUNT AS execution_count,
+               AVG_LATENCY_SECONDS AS avg_latency_seconds,
+               AVG_ROWS AS avg_rows,
+               AVG_ROWS_SCANNED AS avg_rows_scanned,
+               AVG_CPU_SECONDS AS avg_cpu_seconds,
+               ALL_FAILED_EXECUTION_COUNT AS all_failed_execution_count,
+               TIMED_OUT_EXECUTION_COUNT AS timed_out_execution_count
+        FROM SPANNER_SYS.QUERY_STATS_TOTAL_MINUTE
+        ORDER BY INTERVAL_END DESC
+        LIMIT 1
+
+  - name: txn_stats
+    i18n:
+      zh-CN: 事务统计（近1分钟）
+      en-US: Transaction Stats (last minute)
+      ja-JP: トランザクション統計（直近1分）
+    priority: 4
+    fields:
+      - field: interval_end
+        type: 1
+        i18n:
+          zh-CN: 统计截止时间
+          en-US: Interval End
+          ja-JP: 集計終了時刻
+      - field: commit_attempt_count
+        type: 0
+        i18n:
+          zh-CN: 提交尝试次数
+          en-US: Commit Attempts
+          ja-JP: コミット試行回数
+      - field: commit_abort_count
+        type: 0
+        i18n:
+          zh-CN: 中止次数
+          en-US: Commit Aborts
+          ja-JP: コミット中止回数
+      - field: commit_retry_count
+        type: 0
+        i18n:
+          zh-CN: 重试次数
+          en-US: Commit Retries
+          ja-JP: コミット再試行回数
+      - field: commit_failed_precondition_count
+        type: 0
+        i18n:
+          zh-CN: 前置条件失败次数
+          en-US: Failed Precondition Count
+          ja-JP: 前提条件失敗回数
+      - field: avg_total_latency_seconds
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 平均总延迟(s)
+          en-US: Avg Total Latency(s)
+          ja-JP: 平均総レイテンシ(s)
+      - field: avg_commit_latency_seconds
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 平均提交延迟(s)
+          en-US: Avg Commit Latency(s)
+          ja-JP: 平均コミットレイテンシ(s)
+      - field: avg_participants
+        type: 0
+        i18n:
+          zh-CN: 平均参与者数
+          en-US: Avg Participants
+          ja-JP: 平均参加者数
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT CAST(INTERVAL_END AS STRING) AS interval_end,
+               COMMIT_ATTEMPT_COUNT AS commit_attempt_count,
+               COMMIT_ABORT_COUNT AS commit_abort_count,
+               COMMIT_RETRY_COUNT AS commit_retry_count,
+               COMMIT_FAILED_PRECONDITION_COUNT AS commit_failed_precondition_count,
+               AVG_TOTAL_LATENCY_SECONDS AS avg_total_latency_seconds,
+               AVG_COMMIT_LATENCY_SECONDS AS avg_commit_latency_seconds,
+               AVG_PARTICIPANTS AS avg_participants
+        FROM SPANNER_SYS.TXN_STATS_TOTAL_MINUTE
+        ORDER BY INTERVAL_END DESC
+        LIMIT 1
+
+  - name: lock_stats
+    i18n:
+      zh-CN: 锁等待统计（近1分钟）
+      en-US: Lock Stats (last minute)
+      ja-JP: ロック待機統計（直近1分）
+    priority: 5
+    fields:
+      - field: interval_end
+        type: 1
+        i18n:
+          zh-CN: 统计截止时间
+          en-US: Interval End
+          ja-JP: 集計終了時刻
+      - field: total_lock_wait_seconds
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 总锁等待时间(s)
+          en-US: Total Lock Wait(s)
+          ja-JP: 合計ロック待機時間(s)
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT CAST(INTERVAL_END AS STRING) AS interval_end,
+               TOTAL_LOCK_WAIT_SECONDS AS total_lock_wait_seconds
+        FROM SPANNER_SYS.LOCK_STATS_TOTAL_MINUTE
+        ORDER BY INTERVAL_END DESC
+        LIMIT 1
+
+  - name: table_sizes
+    i18n:
+      zh-CN: 表空间统计（近1小时）
+      en-US: Table Sizes (last hour)
+      ja-JP: テーブルサイズ統計（直近1時間）
+    priority: 6
+    fields:
+      - field: table_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 表名
+          en-US: Table Name
+          ja-JP: テーブル名
+      - field: used_bytes
+        type: 0
+        unit: B
+        i18n:
+          zh-CN: 已用字节
+          en-US: Used Bytes
+          ja-JP: 使用バイト数
+      - field: used_ssd_bytes
+        type: 0
+        unit: B
+        i18n:
+          zh-CN: SSD 已用字节
+          en-US: Used SSD Bytes
+          ja-JP: SSD 使用バイト数
+      - field: used_hdd_bytes
+        type: 0
+        unit: B
+        i18n:
+          zh-CN: HDD 已用字节
+          en-US: Used HDD Bytes
+          ja-JP: HDD 使用バイト数
+    protocol: jdbc
+    jdbc:
+      url: 'jdbc:cloudspanner:/projects/^_^project^_^/instances/^_^host^_^/databases/^_^database^_^^_^params^_^'
+      platform: cloudspanner
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: >-
+        SELECT TABLE_NAME AS table_name,
+               USED_BYTES AS used_bytes,
+               USED_SSD_BYTES AS used_ssd_bytes,
+               USED_HDD_BYTES AS used_hdd_bytes
+        FROM SPANNER_SYS.TABLE_SIZES_STATS_1HOUR
+        WHERE INTERVAL_END = (
+          SELECT MAX(INTERVAL_END) FROM SPANNER_SYS.TABLE_SIZES_STATS_1HOUR
+        )
+        ORDER BY TABLE_NAME
