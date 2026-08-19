@@ -70,6 +70,7 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
     private static final long DEFAULT_WINDOW_MILLIS = 30 * 60 * 1000L;
     private static final int DEFAULT_STEP_SECONDS = 30;
     private static final int MAX_PAGE_SIZE = 200;
+    private static final long MAX_DURATION_MS = Long.MAX_VALUE / 1_000_000L;
     private final GreptimeProperties greptimeProperties;
     private final GreptimeSqlQueryExecutor sqlQueryExecutor;
     private final RestTemplate restTemplate;
@@ -178,7 +179,7 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
         }
         String sql = "SELECT *, COUNT(*) OVER () AS total_count FROM (" + grouped
                 + ") trace_page ORDER BY start_time DESC LIMIT " + effectiveSize
-                + " OFFSET " + effectivePage * effectiveSize;
+                + " OFFSET " + (long) effectivePage * effectiveSize;
         List<Map<String, Object>> rows = sqlQueryExecutor.execute(sql);
         long total = rows.isEmpty() ? 0 : asLong(rows.getFirst().get("total_count"));
         return new SignalPage<>(rows.stream().map(this::toTraceListItem).toList(), effectivePage, effectiveSize, total);
@@ -335,12 +336,16 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
         addFlattenedResourceFilter(filters, "resource_attributes.service.namespace", serviceNamespace);
         addFlattenedResourceFilter(filters, "resource_attributes.deployment.environment.name", environment);
         if (minDurationMs != null) {
-            filters.add("duration_nano >= " + Math.max(0, minDurationMs) * 1_000_000L);
+            filters.add("duration_nano >= " + clampDurationMs(minDurationMs) * 1_000_000L);
         }
         if (maxDurationMs != null) {
-            filters.add("duration_nano <= " + Math.max(0, maxDurationMs) * 1_000_000L);
+            filters.add("duration_nano <= " + clampDurationMs(maxDurationMs) * 1_000_000L);
         }
         return String.join(" AND ", filters);
+    }
+
+    private long clampDurationMs(long durationMs) {
+        return Math.min(Math.max(0, durationMs), MAX_DURATION_MS);
     }
 
     private void addTextFilter(List<String> filters, String column, String value) {
