@@ -17,14 +17,20 @@
 
 package org.apache.hertzbeat.startup;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
 
 class EntityFreeObservabilityTransitionContractTest {
 
@@ -113,8 +119,24 @@ class EntityFreeObservabilityTransitionContractTest {
 
     @Test
     void currentSecurityConfigurationsShouldProtectOnlyCanonicalObservabilityRoutes() throws IOException {
+        // The runtime configuration is the source of truth; pinning its observability surface
+        // once here keeps all nine copies from drifting together unnoticed.
+        SurenessRules baseline = observabilityRules("hertzbeat-startup/src/main/resources/sureness.yml");
+        assertEquals(Set.of(
+                "/api/otlp/v1/**===post===[admin,user]",
+                // deprecated 1.8.x ingestion aliases keep the canonical write roles
+                "/api/logs/otlp/**===post===[admin,user]",
+                "/api/logs/ingest/**===post===[admin,user]",
+                "/api/observability/logs===delete===[admin]",
+                "/api/observability/**===get===[admin,user,guest]",
+                "/api/alert/sse/**===get===[admin,user,guest]",
+                "/api/manager/sse/**===get===[admin,user,guest]"),
+                baseline.resourceRole());
+        assertEquals(Set.of(), baseline.excludedResource());
+
+        // Every deployable and test copy must carry exactly the baseline rules on this surface,
+        // so a partial edit that skips a file fails on the file that was missed.
         for (String relativePath : new String[] {
-                "hertzbeat-startup/src/main/resources/sureness.yml",
                 "hertzbeat-manager/src/test/resources/sureness.yml",
                 "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/sureness.yml",
                 "script/sureness.yml",
@@ -124,21 +146,31 @@ class EntityFreeObservabilityTransitionContractTest {
                 "script/docker-compose/hertzbeat-postgresql-greptimedb/conf/sureness.yml",
                 "script/docker-compose/hertzbeat-postgresql-victoria-metrics/conf/sureness.yml"
         }) {
-            String securityConfig = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
-            assertTrue(securityConfig.contains("/api/otlp/v1/**===post===[admin,user]"), relativePath);
-            assertTrue(securityConfig.contains("/api/observability/**===get===[admin,user,guest]"), relativePath);
-            assertTrue(securityConfig.contains("/api/observability/logs===delete===[admin]"), relativePath);
-            // deprecated 1.8.x ingestion aliases keep the canonical write roles; no other legacy log rule may exist
-            assertTrue(securityConfig.contains("/api/logs/otlp/**===post===[admin,user]"), relativePath);
-            assertTrue(securityConfig.contains("/api/logs/ingest/**===post===[admin,user]"), relativePath);
-            assertFalse(securityConfig.replace("/api/logs/otlp/**===post===[admin,user]", "")
-                    .replace("/api/logs/ingest/**===post===[admin,user]", "")
-                    .contains("/api/logs/"), relativePath);
-            assertFalse(securityConfig.contains("/api/ingestion/otlp"), relativePath);
-            assertFalse(securityConfig.contains("/api/traces/"), relativePath);
-            assertFalse(securityConfig.contains("/api/otlp/**"), relativePath);
-            assertFalse(securityConfig.contains("/api/observability/capability===get"), relativePath);
+            SurenessRules copy = observabilityRules(relativePath);
+            assertEquals(baseline.resourceRole(), copy.resourceRole(), relativePath);
+            assertEquals(baseline.excludedResource(), copy.excludedResource(), relativePath);
         }
+    }
+
+    private record SurenessRules(Set<String> resourceRole, Set<String> excludedResource) {
+    }
+
+    @SuppressWarnings("unchecked")
+    private static SurenessRules observabilityRules(String relativePath) throws IOException {
+        Map<String, Object> document = new Yaml().load(Files.readString(REPOSITORY_ROOT.resolve(relativePath)));
+        return new SurenessRules(
+                observabilitySubset((List<String>) document.get("resourceRole")),
+                observabilitySubset((List<String>) document.get("excludedResource")));
+    }
+
+    private static Set<String> observabilitySubset(List<String> rules) {
+        // The route prefixes this transition owns, plus the sse streams scoped alongside it.
+        List<String> observabilityRoutePrefixes = List.of(
+                "/api/otlp", "/api/observability", "/api/logs", "/api/traces",
+                "/api/ingestion", "/api/alert/sse", "/api/manager/sse");
+        return rules.stream()
+                .filter(rule -> observabilityRoutePrefixes.stream().anyMatch(rule::startsWith))
+                .collect(Collectors.toSet());
     }
 
     @Test
