@@ -31,9 +31,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.RestClientException;
 
-/** Maps bounded signal workload rejection to a retryable HTTP response. */
+/**
+ * Maps bounded signal workload rejection to a retryable HTTP response.
+ *
+ * <p>Ordered just behind {@link OtlpHttpExceptionHandler}: the OTLP ingestion controllers need
+ * {@code google.rpc.Status} bodies, every other observability controller gets the {@code Message} envelope.
+ */
 @RestControllerAdvice(basePackages = "org.apache.hertzbeat.observability.controller")
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class SignalWorkloadExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.observability.service.SignalQueryRejectedException;
@@ -54,6 +55,16 @@ class SignalWorkloadExceptionHandlerTest {
         Order order = SignalWorkloadExceptionHandler.class.getAnnotation(Order.class);
 
         assertNotNull(order);
-        assertEquals(Ordered.HIGHEST_PRECEDENCE, order.value());
+        assertTrue(order.value() < Ordered.LOWEST_PRECEDENCE);
+    }
+
+    @Test
+    void shouldYieldToTheOtlpHttpAdvice() {
+        Order order = SignalWorkloadExceptionHandler.class.getAnnotation(Order.class);
+        Order otlpOrder = OtlpHttpExceptionHandler.class.getAnnotation(Order.class);
+
+        assertNotNull(order);
+        assertNotNull(otlpOrder);
+        assertTrue(otlpOrder.value() < order.value());
     }
 }

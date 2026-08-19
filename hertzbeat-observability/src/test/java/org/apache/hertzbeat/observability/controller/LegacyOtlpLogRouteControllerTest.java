@@ -23,8 +23,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.google.rpc.Code;
 import org.apache.hertzbeat.observability.service.OtlpLogIngestionService;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +53,9 @@ class LegacyOtlpLogRouteControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(
-                new LegacyOtlpLogRouteController(logIngestionService, new SignalWorkloadGuard())).build();
+                new LegacyOtlpLogRouteController(logIngestionService, new SignalWorkloadGuard()))
+                .setControllerAdvice(new OtlpHttpExceptionHandler())
+                .build();
     }
 
     @Test
@@ -105,6 +109,9 @@ class LegacyOtlpLogRouteControllerTest {
                         .content("{"))
                 .andExpect(status().isBadRequest())
                 .andExpect(header().string("Deprecation", "true"))
-                .andExpect(content().string("Malformed OTLP logs JSON payload"));
+                .andExpect(header().string("Link", "</api/otlp/v1/logs>; rel=\"successor-version\""))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value(Code.INVALID_ARGUMENT.getNumber()))
+                .andExpect(jsonPath("$.message").value("Malformed OTLP logs JSON payload"));
     }
 }

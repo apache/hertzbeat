@@ -27,7 +27,6 @@ import org.apache.hertzbeat.observability.service.SignalWorkloadGuard.Workload;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -112,15 +111,9 @@ public class LegacyOtlpLogRouteController {
                 .body(canonical.getBody());
     }
 
-    private static ResponseEntity.BodyBuilder deprecated(ResponseEntity.BodyBuilder builder) {
+    static ResponseEntity.BodyBuilder deprecated(ResponseEntity.BodyBuilder builder) {
         return builder
                 .header(DEPRECATION_HEADER, "true")
                 .header(LINK_HEADER, LINK_VALUE);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<byte[]> invalidPayload(IllegalArgumentException exception) {
-        return deprecated(ResponseEntity.status(HttpStatus.BAD_REQUEST))
-                .body(exception.getMessage().getBytes(StandardCharsets.UTF_8));
     }
 }

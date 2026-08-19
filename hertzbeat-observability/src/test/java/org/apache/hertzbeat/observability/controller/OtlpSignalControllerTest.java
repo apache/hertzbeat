@@ -17,14 +17,19 @@
 
 package org.apache.hertzbeat.observability.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import org.apache.hertzbeat.observability.service.OtlpSignalForwarder;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +43,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.client.ResourceAccessException;
 
 /** OTLP/HTTP route contract tests. */
 @ExtendWith(MockitoExtension.class)
@@ -51,7 +57,9 @@ class OtlpSignalControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(
-                new OtlpSignalController(signalForwarder, new SignalWorkloadGuard())).build();
+                new OtlpSignalController(signalForwarder, new SignalWorkloadGuard()))
+                .setControllerAdvice(new OtlpHttpExceptionHandler())
+                .build();
     }
 
     @Test
@@ -79,6 +87,26 @@ class OtlpSignalControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Malformed OTLP metrics JSON payload"));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value(Code.INVALID_ARGUMENT.getNumber()))
+                .andExpect(jsonPath("$.message").value("Malformed OTLP metrics JSON payload"));
+    }
+
+    @Test
+    void shouldReturnRetryableServiceUnavailableWhenGreptimeWriteFails() throws Exception {
+        when(signalForwarder.forwardHttp(eq("traces"), any(), any()))
+                .thenThrow(new ResourceAccessException("connect refused: http://greptime:4000"));
+
+        byte[] body = mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/traces")
+                        .contentType(OtlpHttpExceptionHandler.PROTOBUF)
+                        .content(new byte[] {1, 2, 3}))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string(HttpHeaders.RETRY_AFTER, "1"))
+                .andExpect(content().contentType(OtlpHttpExceptionHandler.PROTOBUF))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        Status status = Status.parseFrom(body);
+        assertEquals(Code.UNAVAILABLE.getNumber(), status.getCode());
+        assertEquals("GreptimeDB storage is unavailable", status.getMessage());
     }
 }

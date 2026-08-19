@@ -19,14 +19,11 @@ package org.apache.hertzbeat.observability.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.observability.service.OtlpLogIngestionService;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard.Workload;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -52,11 +49,5 @@ public class OtlpLogController {
     public ResponseEntity<byte[]> logs(@RequestBody byte[] content, @RequestHeader HttpHeaders headers) {
         return workloadGuard.execute(Workload.OTLP_WRITE,
                 () -> logIngestionService.ingestHttp(content, headers));
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<byte[]> invalidPayload(IllegalArgumentException exception) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(exception.getMessage().getBytes(StandardCharsets.UTF_8));
     }
 }

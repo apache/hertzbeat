@@ -17,12 +17,16 @@
 
 package org.apache.hertzbeat.observability.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import org.apache.hertzbeat.observability.service.OtlpLogIngestionService;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +53,9 @@ class OtlpLogControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(
-                new OtlpLogController(logIngestionService, new SignalWorkloadGuard())).build();
+                new OtlpLogController(logIngestionService, new SignalWorkloadGuard()))
+                .setControllerAdvice(new OtlpHttpExceptionHandler())
+                .build();
     }
 
     @Test
@@ -74,6 +80,25 @@ class OtlpLogControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Malformed OTLP logs JSON payload"));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value(Code.INVALID_ARGUMENT.getNumber()))
+                .andExpect(jsonPath("$.message").value("Malformed OTLP logs JSON payload"));
+    }
+
+    @Test
+    void shouldReturnBinaryRpcStatusForMalformedProtobufPayload() throws Exception {
+        when(logIngestionService.ingestHttp(any(), any()))
+                .thenThrow(new IllegalArgumentException("Malformed OTLP logs protobuf payload"));
+
+        byte[] body = mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/logs")
+                        .contentType(OtlpHttpExceptionHandler.PROTOBUF)
+                        .content(new byte[] {1, 2, 3}))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(OtlpHttpExceptionHandler.PROTOBUF))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        Status status = Status.parseFrom(body);
+        assertEquals(Code.INVALID_ARGUMENT.getNumber(), status.getCode());
+        assertEquals("Malformed OTLP logs protobuf payload", status.getMessage());
     }
 }
