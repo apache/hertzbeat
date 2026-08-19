@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.dispatch.entrance;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -39,7 +40,9 @@ import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,6 +82,11 @@ class CollectServerTest {
 
     private CollectServer.CollectNettyEventListener collectNettyEventListener;
 
+    @AfterEach
+    void tearDown() {
+        AesUtil.setDefaultSecretKey(AesUtil.DEFAULT_ENCODE_RULES);
+    }
+
     @BeforeEach
     void setUp() {
 
@@ -88,6 +96,7 @@ class CollectServerTest {
         when(properties.getEntrance()).thenReturn(entranceProperties);
 
         collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties);
+        ReflectionTestUtils.setField(collectServer, "commonSecret", "local-key-123456");
         collectNettyEventListener = collectServer.new CollectNettyEventListener();
     }
 
@@ -100,6 +109,31 @@ class CollectServerTest {
         collectServer.run();
 
         verify(remotingClient, times(1)).start();
+        assertEquals("local-key-123456", AesUtil.getDefaultSecretKey());
+    }
+
+    @Test
+    void testRunRejectsMissingCommonSecret() {
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        ReflectionTestUtils.setField(collectServer, "commonSecret", " ");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, collectServer::run);
+
+        assertTrue(exception.getMessage().contains("COMMON_SECRET"));
+        verify(remotingClient, times(0)).start();
+    }
+
+    @Test
+    void testRunRejectsInvalidCommonSecretLength() {
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        ReflectionTestUtils.setField(collectServer, "commonSecret", "too-short");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, collectServer::run);
+
+        assertTrue(exception.getMessage().contains("16, 24, or 32"));
+        verify(remotingClient, times(0)).start();
     }
 
     @Test

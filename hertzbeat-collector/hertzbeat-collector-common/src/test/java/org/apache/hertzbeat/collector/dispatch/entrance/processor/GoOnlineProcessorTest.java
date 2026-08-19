@@ -19,17 +19,15 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import io.netty.channel.ChannelHandlerContext;
 import org.apache.hertzbeat.collector.timer.TimerDispatcher;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -44,12 +42,8 @@ class GoOnlineProcessorTest {
     private GoOnlineProcessor goOnlineProcessor;
     private TimerDispatcher timerDispatcher;
 
-    @Mock
-    private ChannelHandlerContext channelHandlerContext;
-
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         timerDispatcher = new TimerDispatcher();
         goOnlineProcessor = new GoOnlineProcessor(timerDispatcher);
     }
@@ -81,7 +75,7 @@ class GoOnlineProcessorTest {
                 .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                 .setIdentity("test-identity")
                 .build();
-        goOnlineProcessor.handle(channelHandlerContext, responseMsg);
+        goOnlineProcessor.handle(null, responseMsg);
         assertEquals(1, currentCyclicTaskMap.size(), "Task map should still have 1 job after receiving RESPONSE");
 
         ClusterMsg.Message requestMsg = ClusterMsg.Message.newBuilder()
@@ -90,7 +84,26 @@ class GoOnlineProcessorTest {
                 .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                 .setIdentity("test-identity")
                 .build();
-        goOnlineProcessor.handle(channelHandlerContext, requestMsg);
+        goOnlineProcessor.handle(null, requestMsg);
         assertEquals(0, currentCyclicTaskMap.size(), "Task map should be empty after receiving REQUEST");
+    }
+
+    @Test
+    void shouldIgnoreAesSecretFromNetworkResponse() {
+        String localSecret = "local-key-123456";
+        AesUtil.setDefaultSecretKey(localSecret);
+        try {
+            ClusterMsg.Message response = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.GO_ONLINE)
+                    .setDirection(ClusterMsg.Direction.RESPONSE)
+                    .setMsg(ByteString.copyFromUtf8("{\"aesSecret\":\"network-key-1234\"}"))
+                    .build();
+
+            goOnlineProcessor.handle(null, response);
+
+            assertEquals(localSecret, AesUtil.getDefaultSecretKey());
+        } finally {
+            AesUtil.setDefaultSecretKey(AesUtil.DEFAULT_ENCODE_RULES);
+        }
     }
 }

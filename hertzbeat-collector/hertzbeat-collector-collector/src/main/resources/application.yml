@@ -70,6 +70,8 @@ push:
 
 
 common:
+  # Use the same key as Manager. Inject it through deployment configuration, never over Netty.
+  secret: ${COMMON_SECRET:}
   queue:
     type: netty
 
