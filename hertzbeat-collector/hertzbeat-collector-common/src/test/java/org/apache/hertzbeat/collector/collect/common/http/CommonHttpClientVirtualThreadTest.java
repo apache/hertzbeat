@@ -96,9 +96,11 @@ class CommonHttpClientVirtualThreadTest {
 
         CommonHttpClient.dispatchConnectionPoolCleanup();
         assertFalse(secondStarted.await(200, TimeUnit.MILLISECONDS));
+        assertFalse(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(200, TimeUnit.MILLISECONDS));
 
         releaseFirst.countDown();
         assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
+        assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
         assertEquals(1, maxConcurrent.get());
     }
 
