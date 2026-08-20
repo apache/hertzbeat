@@ -47,6 +47,38 @@ HertzBeat provides the following interface for receiving OTLP log data:
 POST /api/otlp/v1/logs
 ```
 
+### OTLP/gRPC Endpoint
+
+HertzBeat also runs an OTLP/gRPC listener when GreptimeDB storage is enabled, accepting metrics, logs
+and traces. It expects the same `Authorization: Bearer {token}` credential as the HTTP endpoint.
+
+```text
+{hertzbeat_host}:14317
+```
+
+The port is 14317 on every deployment - the docker images publish it unchanged, so there is no
+container-versus-host translation to remember.
+
+It is deliberately not the OpenTelemetry standard 4317: an OTel Collector, Jaeger or Tempo on the
+same host normally holds that port already, and a clash on a published port stops the container from
+starting at all. HertzBeat serves OTLP/HTTP on its own port too, so this is consistent with the rest
+of the product rather than an exception.
+
+To use 4317 anyway, or to turn the listener off, set it in `application.yml` or through the matching
+environment variables (and update the port mapping in `docker-compose.yaml` to match):
+
+```yaml
+hertzbeat:
+  otlp:
+    grpc:
+      enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
+      host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
+      port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
+```
+
+If the port cannot be bound, HertzBeat logs the failure and starts without gRPC ingestion; OTLP/HTTP
+on `/api/otlp/v1` keeps working.
+
 ### Request Configuration
 
 #### Request Headers

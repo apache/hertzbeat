@@ -63,7 +63,7 @@ public class OtlpGrpcServerConfig {
             matchIfMissing = true)
     public OtlpGrpcServerRunner otlpGrpcServerRunner(
             @Value("${hertzbeat.otlp.grpc.host:0.0.0.0}") String host,
-            @Value("${hertzbeat.otlp.grpc.port:4317}") int port,
+            @Value("${hertzbeat.otlp.grpc.port:14317}") int port,
             OtlpSignalForwarder signalForwarder,
             OtlpLogIngestionService logIngestionService,
             SignalWorkloadGuard workloadGuard,
@@ -86,16 +86,37 @@ public class OtlpGrpcServerConfig {
         private final ServerInterceptor authInterceptor;
         private Server server;
 
-        public void start() throws IOException {
-            server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
-                    .addService(ServerInterceptors.intercept(new MetricsService(signalForwarder, workloadGuard),
-                            authInterceptor))
-                    .addService(ServerInterceptors.intercept(new LogsService(logIngestionService, workloadGuard),
-                            authInterceptor))
-                    .addService(ServerInterceptors.intercept(new TracesService(signalForwarder, workloadGuard),
-                            authInterceptor))
-                    .build().start();
-            log.info("OTLP gRPC listener started on {}:{}", host, port);
+        /**
+         * Binds the OTLP/gRPC listener, or gives it up for this run.
+         *
+         * <p>The default 14317 keeps clear of 4317, the OpenTelemetry standard port an OTel Collector
+         * on the same host would already hold - and that host is exactly the one most likely to want
+         * this listener. A bind can still fail for other reasons, and letting it escape would abort
+         * the whole context: an optional side channel would then keep the monitoring system itself
+         * from starting, while HTTP ingestion on the main port stays perfectly able to serve the same
+         * signals. Degrade to "unavailable" and say how to fix it.
+         */
+        public void start() {
+            try {
+                server = NettyServerBuilder.forAddress(new InetSocketAddress(host, port))
+                        .addService(ServerInterceptors.intercept(new MetricsService(signalForwarder, workloadGuard),
+                                authInterceptor))
+                        .addService(ServerInterceptors.intercept(new LogsService(logIngestionService, workloadGuard),
+                                authInterceptor))
+                        .addService(ServerInterceptors.intercept(new TracesService(signalForwarder, workloadGuard),
+                                authInterceptor))
+                        .build().start();
+                log.info("OTLP gRPC listener started on {}:{}", host, port);
+            } catch (IOException exception) {
+                server = null;
+                log.error("OTLP gRPC listener could not bind {}:{}, so gRPC ingestion is unavailable for this run. "
+                        + "OTLP/HTTP ingestion on /api/otlp/v1 is unaffected. Set hertzbeat.otlp.grpc.port to a free "
+                        + "port, or hertzbeat.otlp.grpc.enabled=false to stop starting it.", host, port, exception);
+            }
+        }
+
+        boolean isRunning() {
+            return server != null;
         }
 
         public void stop() {

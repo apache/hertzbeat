@@ -40,6 +40,8 @@ import io.opentelemetry.proto.collector.logs.v1.LogsServiceGrpc;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceResponse;
 import io.opentelemetry.proto.collector.metrics.v1.MetricsServiceGrpc;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.apache.hertzbeat.common.security.OtlpAccessTokenValidator;
@@ -126,5 +128,47 @@ class OtlpGrpcServerConfigTest {
                 .isEqualTo(Status.RESOURCE_EXHAUSTED);
         assertThat(OtlpGrpcServerConfig.toGrpcStatus(new IllegalStateException("storage")))
                 .isEqualTo(Status.UNAVAILABLE);
+    }
+
+    /**
+     * A bind failure must cost the gRPC channel only, never the whole application: HTTP ingestion
+     * serves the same signals on the main port, so an optional side channel has no business keeping
+     * the monitoring system from starting.
+     */
+    @Test
+    void shouldGiveUpTheGrpcListenerInsteadOfTheApplicationWhenThePortIsTaken() throws Exception {
+        // Bind the same address the runner will use: on bsd a wildcard socket does not stop a
+        // listener from taking 127.0.0.1 on the same port.
+        try (ServerSocket occupied = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            OtlpGrpcServerConfig.OtlpGrpcServerRunner runner = runnerOn(occupied.getLocalPort());
+
+            runner.start();
+
+            assertThat(runner.isRunning()).isFalse();
+            runner.stop();
+        }
+    }
+
+    @Test
+    void shouldReportTheGrpcListenerRunningOnceItBinds() throws Exception {
+        int freePort;
+        try (ServerSocket probe = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))) {
+            freePort = probe.getLocalPort();
+        }
+        OtlpGrpcServerConfig.OtlpGrpcServerRunner runner = runnerOn(freePort);
+
+        runner.start();
+        try {
+            assertThat(runner.isRunning()).isTrue();
+        } finally {
+            runner.stop();
+        }
+    }
+
+    private OtlpGrpcServerConfig.OtlpGrpcServerRunner runnerOn(int port) {
+        return new OtlpGrpcServerConfig.OtlpGrpcServerRunner("127.0.0.1", port,
+                mock(OtlpSignalForwarder.class), mock(OtlpLogIngestionService.class),
+                mock(SignalWorkloadGuard.class),
+                new OtlpGrpcServerConfig.BearerTokenInterceptor(token -> null));
     }
 }

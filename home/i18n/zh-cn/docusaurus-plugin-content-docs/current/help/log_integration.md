@@ -47,6 +47,31 @@ HertzBeat 提供以下接口用于接收 OTLP 日志数据：
 POST /api/otlp/v1/logs
 ```
 
+### OTLP/gRPC 端点
+
+启用 GreptimeDB 存储时，HertzBeat 同时会启动一个 OTLP/gRPC 监听器，接收指标、日志与链路。凭证与 HTTP 端点一致，同样使用 `Authorization: Bearer {token}`。
+
+```text
+{hertzbeat_host}:14317
+```
+
+所有部署方式下都是这一个端口——Docker 镜像原样发布，不存在"容器内一个、宿主上另一个"的换算。
+
+这里刻意没有使用 OpenTelemetry 标准的 4317：同机的 OTel Collector、Jaeger 或 Tempo 通常已经占着该端口，而已发布端口一旦冲突，容器会直接起不来。HertzBeat 的 OTLP/HTTP 同样走自有端口，因此这个选择与产品其余部分是一致的，并非特例。
+
+如果确实想用 4317，或想关闭该监听器，可在 `application.yml` 中配置，或使用对应的环境变量（同时记得把 `docker-compose.yaml` 里的端口映射改成一致）：
+
+```yaml
+hertzbeat:
+  otlp:
+    grpc:
+      enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
+      host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
+      port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
+```
+
+若端口无法绑定，HertzBeat 会记录错误并在没有 gRPC 接收能力的情况下继续启动，`/api/otlp/v1` 上的 OTLP/HTTP 不受影响。
+
 ### 请求配置
 
 #### 请求头

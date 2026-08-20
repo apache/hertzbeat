@@ -41,6 +41,35 @@ Recommended upgrade steps:
 - If you cannot change the exporters in the same maintenance window, the two ingestion aliases above keep accepting data on 1.9.x. Watch the HertzBeat log for `Deprecated OTLP log route ... was called` warnings and migrate before 2.0.
 - If you use a customised `sureness.yml`, add `/api/otlp/v1/**===post===[admin,user]` and `/api/observability/**===get===[admin,user,guest]` (see the packaged `sureness.yml`); the old `/api/logs/**`, `/api/traces/**` and `/api/ingestion/otlp/**` rules can be dropped once your exporters are migrated.
 
+### New OTLP/gRPC listener on port 14317
+
+When `warehouse.store.greptime.enabled=true`, 1.9.0 additionally starts an OTLP/gRPC listener on
+`0.0.0.0:14317` so exporters can push metrics, logs and traces over gRPC. The packaged Dockerfile and
+the docker-compose files publish it unchanged, so the port is the same on every deployment.
+
+- **It is not the OpenTelemetry standard 4317.** An OTel Collector, Jaeger or Tempo on the same host
+  normally holds 4317 already, and a clash on a published port makes `docker compose up` fail
+  outright. HertzBeat serves OTLP/HTTP on its own port as well, so 14317 is consistent with the rest
+  of the product.
+- Existing deployments gain one newly bound port. If your firewall or security policy enumerates
+  listening ports, add 14317.
+- A port that cannot be bound does **not** stop HertzBeat: the failure is logged and the process
+  starts without gRPC ingestion, while OTLP/HTTP on `/api/otlp/v1` keeps working.
+- To move the listener to 4317, or disable it, set these in `application.yml` or through the matching
+  environment variables, and update the docker-compose port mapping to match:
+
+  ```yaml
+  hertzbeat:
+    otlp:
+      grpc:
+        enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
+        host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
+        port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
+  ```
+
+- If you deploy with the Helm chart, note that the chart is maintained in `apache/hertzbeat-helm-chart`;
+  check that its release exposes 14317 before relying on gRPC ingestion there.
+
 ### GreptimeDB signal tables renamed
 
 When `warehouse.store.greptime.enabled=true`, HertzBeat writes two different kinds of telemetry to GreptimeDB: the traces and logs **you** send it over OTLP, and its **own** runtime logs and traces shipped via OpenTelemetry. On 1.8.x both kinds of traces landed in the same `hzb_traces` table. 1.9.0 separates them, which renames one product table and both self-monitoring tables:
