@@ -17,11 +17,13 @@
 
 package org.apache.hertzbeat.otel.config;
 
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
  * HertzBeat self-telemetry auto configuration.
  */
+@AutoConfiguration
 @ComponentScan(basePackageClasses = OpenTelemetryConfig.class)
 public class OpenTelemetryAutoConfiguration {
 }

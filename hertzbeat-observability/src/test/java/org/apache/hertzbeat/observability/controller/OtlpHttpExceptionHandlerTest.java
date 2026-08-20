@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -35,7 +36,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.method.HandlerMethod;
@@ -134,7 +137,33 @@ class OtlpHttpExceptionHandlerTest {
         assertNull(response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER));
         Status status = parseJson(response.getBody());
         assertEquals(Code.INTERNAL.getNumber(), status.getCode());
-        assertEquals("boom", status.getMessage());
+        // The exporter gets a fixed phrase; the real cause only reaches the server log.
+        assertEquals("Unexpected OTLP ingestion failure", status.getMessage());
+        assertFalse(status.getMessage().contains("boom"));
+    }
+
+    /**
+     * A missing body is raised while spring resolves the arguments, so it never reaches the
+     * controller and is not an {@code ErrorResponse}. It must still answer 400 rather than 500:
+     * OTLP exporters replay 5xx, so a permanently malformed client would retry forever.
+     */
+    @Test
+    void shouldRejectUnreadableBodyAsNonRetryableClientError() throws Exception {
+        HttpMessageNotReadableException exception = new HttpMessageNotReadableException(
+                "Required request body is missing: public org.springframework.http.ResponseEntity<byte[]> "
+                        + "org.apache.hertzbeat.observability.controller.OtlpLogController.logs(byte[])",
+                new MockHttpInputMessage(new byte[0]));
+
+        ResponseEntity<byte[]> response = handler.handleUnreadableBody(
+                exception, request(MediaType.APPLICATION_JSON_VALUE), null);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNull(response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER));
+        Status status = parseJson(response.getBody());
+        assertEquals(Code.INVALID_ARGUMENT.getNumber(), status.getCode());
+        assertEquals("Malformed or missing OTLP request body", status.getMessage());
+        // The framework message names the handler method; that must not travel back to the caller.
+        assertFalse(status.getMessage().contains("org.apache.hertzbeat"));
     }
 
     @Test

@@ -41,17 +41,34 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 - 如果无法在同一维护窗口内改完 exporter，上表两条接收别名在 1.9.x 仍然可用；请关注 HertzBeat 日志中的 `Deprecated OTLP log route ... was called` 告警并在 2.0 之前完成迁移。
 - 如果使用了自定义 `sureness.yml`，请补充 `/api/otlp/v1/**===post===[admin,user]` 与 `/api/observability/**===get===[admin,user,guest]`（参考安装包内的 `sureness.yml`）；旧的 `/api/logs/**`、`/api/traces/**`、`/api/ingestion/otlp/**` 规则在 exporter 迁移完成后即可删除。
 
-### GreptimeDB 自监控表改名
+### GreptimeDB 信号表改名
 
-当 `warehouse.store.greptime.enabled=true` 时，HertzBeat 会通过 OpenTelemetry 把**自身**运行日志与链路写入 GreptimeDB。1.9.0 为了与产品可观测数据区分开，将这些内部表改名：
+当 `warehouse.store.greptime.enabled=true` 时，GreptimeDB 里同时存着两类遥测数据：**你**通过 OTLP 推送的日志与链路，以及 HertzBeat 通过 OpenTelemetry 写入的**自身**运行日志与链路。1.8.x 中两类链路数据落在同一张 `hzb_traces` 表里，1.9.0 将其拆开，因此一张产品表和两张自监控表都改了名：
 
 | 数据 | 1.8.x 表名 | 1.9.0 表名 |
 |---|---|---|
+| 产品 OTLP 链路（链路页面、链路查询） | `hzb_traces` | `hertzbeat_traces` |
+| 产品 OTLP 日志（日志页面、日志告警、SQL 编辑器） | `hertzbeat_logs` | `hertzbeat_logs`（不变） |
 | HertzBeat 自身日志（自监控） | `hzb_logs` | `hzb_internal_logs` |
 | HertzBeat 自身链路（自监控） | `hzb_traces` | `hzb_internal_traces` |
 
-- 产品日志表 `hertzbeat_logs`（日志页面、日志告警 SQL、SQL 编辑器使用的表）**没有**改名，1.8.x 期间接入的历史日志升级后仍可正常查询。
-- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留但不再写入新数据；如需把历史数据并入新表，可在 1.9.0 建好新表后手动执行（例如 `INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;`），否则待保留期过后直接 `DROP` 旧表即可。
+- **升级前接入的链路数据在链路页面上会是空的。** 1.9.0 只创建并查询 `hertzbeat_traces`，1.8.x 期间写入 `hzb_traces` 的 span 在手动迁移之前不会显示在界面上。
+- 产品日志表 `hertzbeat_logs` **没有**改名，1.8.x 期间接入的历史日志升级后无需任何操作即可正常查询。
+- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留但不再写入新数据。在 1.9.0 建好新表后可手动迁移历史数据，例如：
+
+  ```sql
+  INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;
+  ```
+
+  迁移链路数据需要更谨慎：`hzb_traces` 里混着你的 span 和 HertzBeat 自身的 span，需按服务名过滤，避免把自监控数据灌进产品表：
+
+  ```sql
+  -- 只保留业务服务；HertzBeat 自监控使用 service.name = 'HertzBeat'
+  INSERT INTO hertzbeat_traces SELECT * FROM hzb_traces WHERE service_name <> 'HertzBeat';
+  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces WHERE service_name = 'HertzBeat';
+  ```
+
+  如果不需要历史数据，待保留期过后直接 `DROP` 旧表即可。
 - 如果有看板或临时 SQL 直接查询 `hzb_logs` / `hzb_traces`，请改为新表名。
 
 ## Docker部署方式的升级

@@ -138,4 +138,45 @@ class GreptimeOtlpSignalStorageTest {
         assertThatThrownBy(() -> storage.writeProtobuf("traces", new byte[0]))
                 .isInstanceOf(HttpServerErrorException.class);
     }
+
+    /**
+     * 429 and 408 are 4xx codes that still mean "try again", so converting them into a client error
+     * would make the exporter drop a batch GreptimeDB was willing to take a moment later.
+     */
+    @Test
+    void shouldKeepGreptimeBackPressureRetryable() {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenThrow(HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests",
+                        new HttpHeaders(), new byte[0], StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("logs", new byte[0]))
+                .isInstanceOf(HttpClientErrorException.class);
+    }
+
+    @Test
+    void shouldKeepGreptimeRequestTimeoutRetryable() {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenThrow(HttpClientErrorException.create(HttpStatus.REQUEST_TIMEOUT, "Request Timeout",
+                        new HttpHeaders(), new byte[0], StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("metrics", new byte[0]))
+                .isInstanceOf(HttpClientErrorException.class);
+    }
+
+    /**
+     * The message travels back to the exporter inside a google.rpc.Status and, on the grpc transport,
+     * inside a status description that shares the trailer budget, so it must stay bounded.
+     */
+    @Test
+    void shouldTruncateOversizedGreptimeRejectionDetail() {
+        byte[] body = ("x".repeat(5000)).getBytes(StandardCharsets.UTF_8);
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenThrow(HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
+                        new HttpHeaders(), body, StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("logs", new byte[0]))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageEndingWith("...")
+                .satisfies(thrown -> assertThat(thrown.getMessage().length()).isLessThan(300));
+    }
 }

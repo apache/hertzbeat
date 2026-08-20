@@ -19,7 +19,10 @@ package org.apache.hertzbeat.observability.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -100,5 +103,22 @@ class OtlpLogControllerTest {
         Status status = Status.parseFrom(body);
         assertEquals(Code.INVALID_ARGUMENT.getNumber(), status.getCode());
         assertEquals("Malformed OTLP logs protobuf payload", status.getMessage());
+    }
+
+    /**
+     * End to end guard for the missing body path: it is resolved before the controller runs, so only a
+     * request that actually goes through the dispatcher proves the advice turns it into a 400 with a
+     * google.rpc.Status body that does not name the handler method.
+     */
+    @Test
+    void shouldRejectMissingBodyWithClientErrorInsteadOfServerError() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/logs")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(Code.INVALID_ARGUMENT.getNumber()))
+                .andExpect(jsonPath("$.message").value("Malformed or missing OTLP request body"))
+                .andExpect(content().string(not(containsString("org.apache.hertzbeat"))));
+
+        verifyNoInteractions(logIngestionService);
     }
 }

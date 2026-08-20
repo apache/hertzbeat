@@ -37,9 +37,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.method.HandlerMethod;
 
@@ -72,6 +74,9 @@ public class OtlpHttpExceptionHandler {
     private static final String RETRY_AFTER_SECONDS = "1";
     private static final String UNKNOWN_ERROR = "Unknown error";
     private static final String STORAGE_UNAVAILABLE = "GreptimeDB storage is unavailable";
+    private static final String UNREADABLE_BODY = "Malformed or missing OTLP request body";
+    private static final String UNEXPECTED_FAILURE = "Unexpected OTLP ingestion failure";
+    private static final String CLIENT_ERROR = "OTLP request rejected";
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<byte[]> handleInvalidPayload(IllegalArgumentException exception,
@@ -114,21 +119,52 @@ public class OtlpHttpExceptionHandler {
             request, handlerMethod, true);
     }
 
+    /**
+     * An absent or undecodable request body is a client error the exporter must not retry.
+     *
+     * <p>Spring signals it with {@code HttpMessageNotReadableException}, which is raised while the
+     * arguments are resolved rather than inside the controller, and which does not implement
+     * {@link ErrorResponse}. Without this handler it falls through to {@link #handleUnexpected} and
+     * comes back as a {@code 500}, which OTLP exporters read as retryable and replay forever.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<byte[]> handleUnreadableBody(HttpMessageNotReadableException exception,
+                                                       HttpServletRequest request,
+                                                       HandlerMethod handlerMethod) {
+        // The framework message embeds the handler signature, so keep it server-side only.
+        log.warn("OTLP/HTTP {} rejected, unreadable body: {}", request.getRequestURI(), messageOf(exception));
+        return respond(HttpStatus.BAD_REQUEST, Code.INVALID_ARGUMENT, UNREADABLE_BODY,
+            request, handlerMethod, false);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<byte[]> handleUnexpected(Exception exception,
                                                    HttpServletRequest request,
                                                    HandlerMethod handlerMethod) {
-        String message = messageOf(exception);
         if (exception instanceof ErrorResponse errorResponse) {
-            // Spring MVC's own request-level failures (missing body, unsupported method, ...) already carry
-            // the right status; keep it instead of degrading a client error into a 500.
+            // Spring MVC's own request-level failures (unsupported method, unsupported media type, ...)
+            // already carry the right status; keep it instead of degrading a client error into a 500.
             HttpStatus status = HttpStatus.valueOf(errorResponse.getStatusCode().value());
-            log.warn("OTLP/HTTP {} rejected ({}): {}", request.getRequestURI(), status.value(), message);
+            log.warn("OTLP/HTTP {} rejected ({}): {}", request.getRequestURI(), status.value(),
+                messageOf(exception));
             return respond(status, status.is4xxClientError() ? Code.INVALID_ARGUMENT : Code.INTERNAL,
-                message, request, handlerMethod, false);
+                clientFacingDetail(errorResponse), request, handlerMethod, false);
         }
-        log.error("OTLP/HTTP {} failed unexpectedly: {}", request.getRequestURI(), message, exception);
-        return respond(HttpStatus.INTERNAL_SERVER_ERROR, Code.INTERNAL, message, request, handlerMethod, false);
+        // Never echo an unhandled exception message: it routinely carries handler signatures, package
+        // names and internal state that the exporter has no business seeing.
+        log.error("OTLP/HTTP {} failed unexpectedly: {}", request.getRequestURI(), messageOf(exception),
+            exception);
+        return respond(HttpStatus.INTERNAL_SERVER_ERROR, Code.INTERNAL, UNEXPECTED_FAILURE,
+            request, handlerMethod, false);
+    }
+
+    /**
+     * Prefers the curated {@code ProblemDetail} text spring builds for the client over the raw
+     * exception message, which is written for a log line rather than for a response body.
+     */
+    private static String clientFacingDetail(ErrorResponse errorResponse) {
+        String detail = errorResponse.getBody() == null ? null : errorResponse.getBody().getDetail();
+        return StringUtils.hasText(detail) ? detail : CLIENT_ERROR;
     }
 
     private static ResponseEntity<byte[]> respond(HttpStatus status, Code code, String message,

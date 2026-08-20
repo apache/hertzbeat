@@ -41,17 +41,34 @@ Recommended upgrade steps:
 - If you cannot change the exporters in the same maintenance window, the two ingestion aliases above keep accepting data on 1.9.x. Watch the HertzBeat log for `Deprecated OTLP log route ... was called` warnings and migrate before 2.0.
 - If you use a customised `sureness.yml`, add `/api/otlp/v1/**===post===[admin,user]` and `/api/observability/**===get===[admin,user,guest]` (see the packaged `sureness.yml`); the old `/api/logs/**`, `/api/traces/**` and `/api/ingestion/otlp/**` rules can be dropped once your exporters are migrated.
 
-### GreptimeDB self-monitoring tables renamed
+### GreptimeDB signal tables renamed
 
-When `warehouse.store.greptime.enabled=true`, HertzBeat also ships its **own** runtime logs and traces to GreptimeDB via OpenTelemetry. In 1.9.0 these internal tables are renamed to keep them apart from the product observability data:
+When `warehouse.store.greptime.enabled=true`, HertzBeat writes two different kinds of telemetry to GreptimeDB: the traces and logs **you** send it over OTLP, and its **own** runtime logs and traces shipped via OpenTelemetry. On 1.8.x both kinds of traces landed in the same `hzb_traces` table. 1.9.0 separates them, which renames one product table and both self-monitoring tables:
 
 | Data | 1.8.x table | 1.9.0 table |
 |---|---|---|
+| Product OTLP traces (the traces page, trace queries) | `hzb_traces` | `hertzbeat_traces` |
+| Product OTLP logs (the logs page, log alerting, SQL editor) | `hertzbeat_logs` | `hertzbeat_logs` (unchanged) |
 | HertzBeat internal logs (self-monitoring) | `hzb_logs` | `hzb_internal_logs` |
 | HertzBeat internal traces (self-monitoring) | `hzb_traces` | `hzb_internal_traces` |
 
-- The product log table `hertzbeat_logs` (used by the log UI, log alerting SQL and the SQL editor) is **not** renamed; historical logs ingested on 1.8.x remain queryable.
-- No automatic migration is performed. The old `hzb_logs` / `hzb_traces` tables are left untouched but no longer receive new data. If you want the history in one place, copy it manually (for example `INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;`) once 1.9.0 has created the new tables; otherwise you can `DROP` the old tables when the retention no longer matters.
+- **The traces page will be empty for data ingested before the upgrade.** 1.9.0 creates `hertzbeat_traces` and queries only that table, so spans written to `hzb_traces` on 1.8.x are no longer visible in the UI until you copy them over.
+- The product log table `hertzbeat_logs` is **not** renamed; historical logs ingested on 1.8.x remain queryable with no action needed.
+- No automatic migration is performed. The old `hzb_logs` / `hzb_traces` tables are left untouched but no longer receive new data. Once 1.9.0 has created the new tables you can copy the history manually, for example:
+
+  ```sql
+  INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;
+  ```
+
+  Copying traces needs more care, because `hzb_traces` holds your spans and HertzBeat's own spans mixed together. Filter by service so the self-monitoring spans do not end up in the product table:
+
+  ```sql
+  -- keep only your own services; HertzBeat's self-telemetry uses service.name = 'HertzBeat'
+  INSERT INTO hertzbeat_traces SELECT * FROM hzb_traces WHERE service_name <> 'HertzBeat';
+  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces WHERE service_name = 'HertzBeat';
+  ```
+
+  Otherwise you can `DROP` the old tables when the retention no longer matters.
 - If you have dashboards or ad-hoc SQL against `hzb_logs` / `hzb_traces`, point them at the new table names.
 
 ## Upgrade For Docker Deploy

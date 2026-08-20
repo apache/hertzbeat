@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Set;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.service.OtlpSignalStorage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
@@ -32,10 +33,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 /** GreptimeDB storage implementation for validated OTLP protobuf requests. */
+@Slf4j
 @Service
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
@@ -52,6 +55,13 @@ public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
             "service.name", "service.namespace", "service.version", "deployment.environment.name",
             "host.name", "k8s.namespace.name", "k8s.pod.name"));
     private static final Set<String> SIGNALS = Set.of("metrics", "logs", "traces");
+    /**
+     * 4xx codes that still mean "come back later" rather than "this payload is wrong", so the
+     * batch must keep its retryable semantics instead of being dropped by the exporter.
+     */
+    private static final Set<Integer> RETRYABLE_CLIENT_ERRORS = Set.of(408, 425, 429);
+    /** Upper bound on how much of a GreptimeDB error body travels back to the exporter. */
+    private static final int MAX_REJECTION_DETAIL_LENGTH = 200;
 
     private final GreptimeProperties greptimeProperties;
     private final RestTemplate restTemplate;
@@ -75,12 +85,24 @@ public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
                     new HttpEntity<>(content == null ? new byte[0] : content, headers),
                     byte[].class);
         } catch (HttpClientErrorException exception) {
-            // A 4xx from GreptimeDB means the payload itself was rejected: surface it as a client error
-            // instead of a retryable storage failure so exporters stop retrying a request that can never succeed.
+            if (isRetryable(exception.getStatusCode())) {
+                // Let it stay a RestClientException so the ingestion boundary answers with a retryable
+                // 503 and the exporter replays the batch instead of discarding it.
+                throw exception;
+            }
+            // Any other 4xx means the payload itself was rejected: surface it as a client error instead of
+            // a retryable storage failure so exporters stop retrying a request that can never succeed.
+            // The full body only goes to the log; the exporter gets a bounded excerpt.
+            log.warn("GreptimeDB rejected OTLP {} with {}: {}", normalizedSignal,
+                    exception.getStatusCode().value(), exception.getResponseBodyAsString(StandardCharsets.UTF_8));
             throw new IllegalArgumentException(rejectionMessage(normalizedSignal, exception), exception);
         }
         // 5xx and transport failures propagate as RestClientException and keep their retryable semantics.
         return response.getBody() == null ? new byte[0] : response.getBody();
+    }
+
+    private static boolean isRetryable(HttpStatusCode statusCode) {
+        return RETRYABLE_CLIENT_ERRORS.contains(statusCode.value());
     }
 
     private static String rejectionMessage(String signal, HttpClientErrorException exception) {
@@ -89,7 +111,17 @@ public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
             detail = exception.getStatusText();
         }
         return "GreptimeDB rejected OTLP " + signal + " (" + exception.getStatusCode().value() + "): "
-                + detail.strip();
+                + truncate(detail.strip());
+    }
+
+    /**
+     * GreptimeDB error bodies can carry long internal detail, and this text ends up in a
+     * {@code google.rpc.Status} message and in a grpc status description, where an oversized value
+     * can overflow the trailer budget and cost the client the error itself.
+     */
+    private static String truncate(String detail) {
+        return detail.length() <= MAX_REJECTION_DETAIL_LENGTH
+                ? detail : detail.substring(0, MAX_REJECTION_DETAIL_LENGTH) + "...";
     }
 
     private HttpHeaders greptimeHeaders(String signal) {
