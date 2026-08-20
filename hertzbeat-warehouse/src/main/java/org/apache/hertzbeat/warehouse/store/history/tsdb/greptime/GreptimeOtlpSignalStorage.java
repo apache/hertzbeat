@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 /** GreptimeDB storage implementation for validated OTLP protobuf requests. */
@@ -97,7 +98,11 @@ public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
                     exception.getStatusCode().value(), exception.getResponseBodyAsString(StandardCharsets.UTF_8));
             throw new IllegalArgumentException(rejectionMessage(normalizedSignal, exception), exception);
         }
-        // 5xx and transport failures propagate as RestClientException and keep their retryable semantics.
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RestClientException("GreptimeDB returned unexpected OTLP " + normalizedSignal
+                    + " status " + response.getStatusCode().value());
+        }
+        // 3xx, 5xx, and transport failures remain RestClientException and keep their retryable semantics.
         return response.getBody() == null ? new byte[0] : response.getBody();
     }
 

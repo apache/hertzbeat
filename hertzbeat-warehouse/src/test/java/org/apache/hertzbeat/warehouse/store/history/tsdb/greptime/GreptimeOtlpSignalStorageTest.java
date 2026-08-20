@@ -38,6 +38,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
@@ -137,6 +138,16 @@ class GreptimeOtlpSignalStorageTest {
 
         assertThatThrownBy(() -> storage.writeProtobuf("traces", new byte[0]))
                 .isInstanceOf(HttpServerErrorException.class);
+    }
+
+    @Test
+    void shouldKeepUnexpectedRedirectResponsesRetryable() {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).body(new byte[0]));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("logs", new byte[0]))
+                .isInstanceOf(RestClientException.class)
+                .hasMessage("GreptimeDB returned unexpected OTLP logs status 307");
     }
 
     /**
