@@ -14,7 +14,6 @@ org.apache.hertzbeat.collector.collect.ntp.NtpCollectImpl
 org.apache.hertzbeat.collector.collect.websocket.WebsocketCollectImpl
 org.apache.hertzbeat.collector.collect.ftp.FtpCollectImpl
 org.apache.hertzbeat.collector.collect.udp.UdpCollectImpl
-org.apache.hertzbeat.collector.collect.push.PushCollectImpl
 org.apache.hertzbeat.collector.collect.dns.DnsCollectImpl
 org.apache.hertzbeat.collector.collect.nginx.NginxCollectImpl
 org.apache.hertzbeat.collector.collect.memcached.MemcachedCollectImpl

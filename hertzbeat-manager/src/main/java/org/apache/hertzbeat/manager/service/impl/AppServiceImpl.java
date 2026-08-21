@@ -22,14 +22,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.HertzBeatKeywordsUtil;
@@ -87,8 +84,6 @@ import static java.util.Objects.isNull;
 @Slf4j
 public class AppServiceImpl implements AppService, InitializingBean {
 
-    private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
-
     private final MonitorDao monitorDao;
     private final ObjectStoreConfigServiceImpl objectStoreConfigService;
     private final ParamDao paramDao;
@@ -129,29 +124,6 @@ public class AppServiceImpl implements AppService, InitializingBean {
             }
         }
         return Collections.emptyList();
-    }
-
-    @Override
-    public Job getPushDefine(Long monitorId) throws IllegalArgumentException {
-        Job appDefine = appDefines.get(DispatchConstants.PROTOCOL_PUSH);
-        if (appDefine == null) {
-            throw new IllegalArgumentException("The push collector not support.");
-        }
-        List<Metrics> metrics = appDefine.getMetrics();
-        List<Metrics> metricsTmp = new ArrayList<>();
-        for (Metrics metric : metrics) {
-            if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
-                List<Param> params = paramDao.findParamsByMonitorId(monitorId);
-                List<Configmap> configmaps = params.stream()
-                    .map(param -> new Configmap(param.getField(), param.getParamValue(),
-                        param.getType())).toList();
-                Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
-                CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
-                metricsTmp.add(metric);
-            }
-        }
-        appDefine.setMetrics(metricsTmp);
-        return appDefine;
     }
 
     @Override
@@ -293,9 +265,6 @@ public class AppServiceImpl implements AppService, InitializingBean {
     public List<Hierarchy> getAppHierarchy(String app, String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         Job job = appDefines.get(app.toLowerCase());
-        if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
-            return hierarchies;
-        }
         queryAppHierarchy(lang, hierarchies, job);
         return hierarchies;
     }

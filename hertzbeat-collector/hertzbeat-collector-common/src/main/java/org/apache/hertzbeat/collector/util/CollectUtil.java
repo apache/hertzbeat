@@ -437,13 +437,6 @@ public final class CollectUtil {
         return mapList;
     }
 
-    public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
-
-        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<>() {
-        });
-        metrics.setFields(pushFieldList);
-    }
-
     /**
      * convert 16 hexString to byte[]
      * eg: 302c0201010409636f6d6d756e697479a11c020419e502e7020100020100300e300c06082b060102010102000500

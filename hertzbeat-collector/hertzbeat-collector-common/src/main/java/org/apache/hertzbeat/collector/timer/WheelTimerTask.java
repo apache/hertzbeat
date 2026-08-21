@@ -20,7 +20,6 @@ package org.apache.hertzbeat.collector.timer;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -84,9 +83,6 @@ public class WheelTimerTask implements TimerTask {
             JsonElement jsonElement = GSON.toJsonTree(metric);
             CollectUtil.replaceSmilingPlaceholder(jsonElement, configmap);
             metric = GSON.fromJson(jsonElement, Metrics.class);
-            if (job.getApp().equals(DispatchConstants.PROTOCOL_PUSH)) {
-                CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
-            }
             metricsTmp.add(metric);
         }
         job.setMetrics(metricsTmp);

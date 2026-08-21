@@ -40,13 +40,6 @@ export class AppDefineService {
     return this.http.get<Message<ParamDefine[]>>(paramDefineUri);
   }
 
-  public getPushDefine(monitorId: number | undefined | null): Observable<Message<any>> {
-    if (monitorId === null || monitorId === undefined) {
-      console.log('getPushDefine monitorId can not null');
-    }
-    return this.http.get<Message<any>>(`/apps/${monitorId}/pushdefine`);
-  }
-
   public getAppDynamicDefine(monitorId: number | undefined | null): Observable<Message<any>> {
     if (monitorId === null || monitorId === undefined) {
       console.log('getAppDynamicDefine monitorId can not null');
