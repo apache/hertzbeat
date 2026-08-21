@@ -78,21 +78,21 @@ class SurenessUnruledEndpointTest {
 
     @Test
     void deletingLogsIsRestrictedToAdmin() {
-        assertEquals("[admin]", rolesFor("/api/logs", "delete"));
+        assertEquals("[admin]", rolesFor("/api/observability/logs", "delete"));
     }
 
     @Test
     void readingLogsStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/logs/list", "get"));
+        assertEquals("[admin,user,guest]", rolesFor("/api/observability/logs", "get"));
     }
 
     /**
-     * Matches how the sibling ingestion routes `/api/otlp/**` and `/api/logs/ingest/**`
-     * are already scoped, so a low privileged account can no longer forge log records.
+     * Authenticated operators may write telemetry to the canonical OTLP boundary;
+     * guests may not.
      */
     @Test
     void ingestingOtlpLogsRequiresAtLeastUser() {
-        assertEquals("[admin,user]", rolesFor("/api/logs/otlp/v1/logs", "post"));
+        assertEquals("[admin,user]", rolesFor("/api/otlp/v1/logs", "post"));
     }
 
     /**
