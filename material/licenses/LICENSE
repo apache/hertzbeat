@@ -184,167 +184,264 @@ subcomponents is subject to the terms and conditions of the following
 licenses.
 ========================================================================
 
-
 ========================================================================
 Apache-2.0 licenses
 ========================================================================
 The following components are provided under the Apache-2.0 License. See project link for details.
 The text of each license is the standard Apache 2.0 license.
-    https://mvnrepository.com/artifact/com.xugudb/xugu-jdbc/12.3.5 Apache-2.0
+
+    https://mvnrepository.com/artifact/cn.afterturn/easypoi-annotation/4.3.0 Apache-2.0
+    https://mvnrepository.com/artifact/cn.afterturn/easypoi-base/4.3.0 Apache-2.0
     https://mvnrepository.com/artifact/cn.afterturn/easypoi-spring-boot-starter/4.3.0 Apache-2.0
     https://mvnrepository.com/artifact/cn.afterturn/easypoi-web/4.3.0 Apache-2.0
-    https://mvnrepository.com/artifact/cn.afterturn/easypoi-base/4.3.0 Apache-2.0
-    https://mvnrepository.com/artifact/cn.afterturn/easypoi-annotation/4.3.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-auth-plugin/2.2.1 Apache-2.0
-    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-client/2.2.1 Apache-2.0
-    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-encryption-plugin/2.2.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/logback-adapter/1.1.4 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-auth-plugin/3.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-client/3.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-client-basic/3.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-encryption-plugin/3.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-log4j2-adapter/3.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.alibaba.nacos/nacos-logback-adapter-12/3.1.1 Apache-2.0
     https://mvnrepository.com/artifact/com.alibaba/fastjson/1.2.83 Apache-2.0
     https://mvnrepository.com/artifact/com.clickhouse/clickhouse-jdbc/0.4.6 Apache-2.0
     https://mvnrepository.com/artifact/com.dameng/DmJdbcDriver18/8.1.2.141 Apache-2.0
     https://mvnrepository.com/artifact/com.ecwid.consul/consul-api/1.4.5 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-parameter-names/2.15.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml.woodstox/woodstox-core/6.5.1 Apache-2.0
-    https://mvnrepository.com/artifact/com.fasterxml/classmate/1.6.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.ethlo.time/itu/1.14.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations/2.21 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin/2.20.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.woodstox/woodstox-core/7.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml/classmate/1.7.3 Apache-2.0
     https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine/2.9.3 Apache-2.0
+    https://mvnrepository.com/artifact/com.github.jinahya/bit-io/1.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/com.github.jsqlparser/jsqlparser/5.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.github.victools/jsonschema-generator/5.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.github.victools/jsonschema-module-jackson/5.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.github.victools/jsonschema-module-swagger-2/5.0.0 Apache-2.0
     https://mvnrepository.com/artifact/com.google.android/annotations/4.1.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-common-protos/2.17.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-common-protos/2.59.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.google.cloud.opentelemetry/detector-resources-support/0.36.0 Apache-2.0
     https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305/3.0.2 Apache-2.0
     https://mvnrepository.com/artifact/com.google.code.gson/gson/2.10.1 Apache-2.0
     https://mvnrepository.com/artifact/com.google.errorprone/error_prone_annotations/2.18.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java/24.3.25 Apache-2.0
     https://mvnrepository.com/artifact/com.google.guava/failureaccess/1.0.1 Apache-2.0
     https://mvnrepository.com/artifact/com.google.guava/guava/32.1.2-jre Apache-2.0
+    https://mvnrepository.com/artifact/com.google.guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava Apache-2.0
     https://mvnrepository.com/artifact/com.google.j2objc/j2objc-annotations/2.8 Apache-2.0
     https://mvnrepository.com/artifact/com.googlecode.concurrentlinkedhashmap/concurrentlinkedhashmap-lru/1.4.2 Apache-2.0
-    https://mvnrepository.com/artifact/com.google.guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava Apache-2.0
-    https://mvnrepository.com/artifact/com.huaweicloud/esdk-obs-java/3.23.5 Apache-2.0
-    https://mvnrepository.com/artifact/com.huaweicloud.sdk/huaweicloud-sdk-smn/3.1.37 Apache-2.0
     https://mvnrepository.com/artifact/com.huaweicloud.sdk/huaweicloud-sdk-core/3.1.37 Apache-2.0
+    https://mvnrepository.com/artifact/com.huaweicloud.sdk/huaweicloud-sdk-smn/3.1.37 Apache-2.0
+    https://mvnrepository.com/artifact/com.huaweicloud/esdk-obs-java/3.23.5 Apache-2.0
     https://mvnrepository.com/artifact/com.jamesmurty.utils/java-xmlbuilder/1.3 Apache-2.0
-    https://mvnrepository.com/artifact/com.jayway.jsonpath/json-path/2.7.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.jayway.jsonpath/json-path/2.9.0 Apache-2.0
     https://mvnrepository.com/artifact/com.netflix.concurrency-limits/concurrency-limits-core/0.3.6 Apache-2.0
+    https://mvnrepository.com/artifact/com.networknt/json-schema-validator/3.0.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.openai/openai-java-core/4.39.1 Apache-2.0
     https://mvnrepository.com/artifact/com.squareup.moshi/moshi/1.8.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor/4.12.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp/4.12.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.squareup.okio/okio/3.6.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.squareup.okio/okio-jvm/3.6.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor/5.3.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp/5.3.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp-jvm/5.3.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.squareup.okio/okio/3.16.4 Apache-2.0
+    https://mvnrepository.com/artifact/com.squareup.okio/okio-jvm/3.16.4 Apache-2.0
     https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-moshi/2.9.0 Apache-2.0
     https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit/2.9.0 Apache-2.0
     https://mvnrepository.com/artifact/com.usthe.sureness/spring-boot3-starter-sureness/1.1.0 Apache-2.0
     https://mvnrepository.com/artifact/com.usthe.sureness/sureness-core/1.1.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.zaxxer/HikariCP/5.0.1 Apache-2.0
+    https://mvnrepository.com/artifact/com.vesoft/client/3.6.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.xugudb/xugu-jdbc/12.3.5 Apache-2.0
+    https://mvnrepository.com/artifact/com.zaxxer/HikariCP/7.0.2 Apache-2.0
+    https://mvnrepository.com/artifact/com.zaxxer/SparseBitSet/1.2 Apache-2.0
     https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils/1.9.4 Apache-2.0
     https://mvnrepository.com/artifact/commons-cli/commons-cli/1.2 Apache-2.0
-    https://mvnrepository.com/artifact/commons-codec/commons-codec/1.16.1 Apache-2.0
+    https://mvnrepository.com/artifact/commons-codec/commons-codec/1.19.0 Apache-2.0
     https://mvnrepository.com/artifact/commons-collections/commons-collections/3.2.2 Apache-2.0
     https://mvnrepository.com/artifact/commons-digester/commons-digester/2.1 Apache-2.0
-    https://mvnrepository.com/artifact/commons-io/commons-io/2.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/commons-io/commons-io/2.16.1 Apache-2.0
     https://mvnrepository.com/artifact/commons-lang/commons-lang/2.6 Apache-2.0
+    https://mvnrepository.com/artifact/commons-logging/commons-logging/1.3.5 Apache-2.0
     https://mvnrepository.com/artifact/commons-net/commons-net/3.10.0 Apache-2.0
     https://mvnrepository.com/artifact/commons-validator/commons-validator/1.7 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-api/1.49.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-context/1.49.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-core/1.49.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-netty/1.49.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded/1.56.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-protobuf/1.56.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-protobuf-lite/1.56.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.grpc/grpc-stub/1.56.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/ingester-all/0.7.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/ingester-common/0.7.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/ingester-grpc/0.7.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/ingester-protocol/0.7.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/ingester-rpc/0.7.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/greptimedb-proto/0.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.asyncer/r2dbc-mysql/1.4.1 Apache-2.0
+    https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core/4.2.11 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/greptimedb-proto/0.9.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-all/0.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-common/0.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-grpc/0.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-protocol/0.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-rpc/0.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-api/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-context/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-core/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-protobuf/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-protobuf-lite/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-stub/1.76.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.grpc/grpc-util/1.76.3 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api/0.11.2 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl/0.11.2 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson/0.11.2 Apache-2.0
-    https://mvnrepository.com/artifact/io.lettuce/lettuce-core/6.3.1.RELEASE Apache-2.0
-    https://mvnrepository.com/artifact/io.micrometer/micrometer-commons/1.12.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.micrometer/micrometer-core/1.12.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.micrometer/micrometer-jakarta9/1.12.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.micrometer/micrometer-observation/1.12.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-all/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-buffer/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-dns/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-haproxy/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-http/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-http2/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-memcache/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-mqtt/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-redis/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-smtp/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-socks/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-stomp/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-codec-xml/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-common/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-handler/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-handler-proxy/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-handler-ssl-ocsp/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-resolver/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-resolver-dns/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-classes-macos/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-native-macos/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static/2.0.61.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-tcnative-classes/2.0.61.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-classes-epoll/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-classes-kqueue/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-native-epoll/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-native-kqueue/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-native-unix-common/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-rxtx/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-sctp/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.netty/netty-transport-udt/4.1.100.Final Apache-2.0
-    https://mvnrepository.com/artifact/io.perfmark/perfmark-api/0.26.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.projectreactor/reactor-core/3.6.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.micrometer/context-propagation/1.2.1 Apache-2.0
+    https://mvnrepository.com/artifact/io.micrometer/micrometer-commons/1.16.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.micrometer/micrometer-core/1.16.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.micrometer/micrometer-jakarta9/1.16.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.micrometer/micrometer-observation/1.16.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.micrometer/micrometer-registry-prometheus/1.16.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-all/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-buffer/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-dns/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-haproxy/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-http/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-http2/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-memcache/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-mqtt/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-redis/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-smtp/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-socks/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-stomp/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-codec-xml/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-common/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-handler/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-handler-proxy/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-handler-ssl-ocsp/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-resolver/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-resolver-dns/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-classes-macos/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-native-macos/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static/2.0.69.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-tcnative-classes/2.0.69.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-classes-epoll/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-classes-kqueue/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-native-epoll/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-native-kqueue/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-native-unix-common/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-rxtx/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-sctp/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.netty/netty-transport-udt/4.1.117.Final Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.contrib/opentelemetry-aws-resources/1.53.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.contrib/opentelemetry-azure-resources/1.53.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.contrib/opentelemetry-baggage-processor/1.53.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.contrib/opentelemetry-cloudfoundry-resources/1.53.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.contrib/opentelemetry-gcp-resources/1.53.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.contrib/opentelemetry-samplers/1.53.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-declarative-config-bridge/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-annotations/2.25.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-annotations-support/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-api/2.25.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-api-incubator/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-jdbc/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-kafka-clients-2.6/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-kafka-clients-common-0.11/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-log4j-appender-2.17/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-log4j-context-data-2.17-autoconfigure/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-logback-appender-1.0/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-logback-mdc-1.0/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-micrometer-1.5/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-mongo-3.1/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-reactor-3.1/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-resources/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-runtime-telemetry-java17/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-runtime-telemetry-java8/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-sdk-autoconfigure-support/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-boot-autoconfigure/2.25.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-boot-starter/2.25.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-kafka-2.7/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-web-3.1/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-webflux-5.3/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-webmvc-5.3/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-webmvc-6.0/2.25.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.proto/opentelemetry-proto/1.3.1-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.semconv/opentelemetry-semconv/1.39.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.semconv/opentelemetry-semconv-incubating/1.39.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api-incubator/1.59.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-common/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-context/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-common/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-logging/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-otlp/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-otlp-common/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-sender-okhttp/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-common/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-extension-autoconfigure/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-extension-incubator/1.59.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-logs/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-metrics/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-trace/1.59.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.perfmark/perfmark-api/0.27.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty-core/1.2.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty-http/1.2.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.projectreactor/reactor-core/3.8.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.prometheus/prometheus-metrics-config/1.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.prometheus/prometheus-metrics-core/1.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.prometheus/prometheus-metrics-exposition-formats/1.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.prometheus/prometheus-metrics-exposition-textformats/1.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.prometheus/prometheus-metrics-model/1.4.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.prometheus/prometheus-metrics-tracer-common/1.4.3 Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient/0.16.0 Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient_tracer_common/0.16.0 Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient_tracer_otel/0.16.0 Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient_tracer_otel_agent/0.16.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.smallrye/jandex/3.1.2 Apache-2.0
-    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations-jakarta/2.2.19 Apache-2.0
-    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-core-jakarta/2.2.19 Apache-2.0
-    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-models-jakarta/2.2.19 Apache-2.0
+    https://mvnrepository.com/artifact/io.r2dbc/r2dbc-spi/1.0.0.RELEASE Apache-2.0
+    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations/2.2.31 Apache-2.0
+    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations-jakarta/2.2.38 Apache-2.0
+    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-core-jakarta/2.2.28 Apache-2.0
+    https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-models-jakarta/2.2.28 Apache-2.0
+    https://mvnrepository.com/artifact/io.vavr/vavr/0.10.4 Apache-2.0
+    https://mvnrepository.com/artifact/io.vavr/vavr-match/0.10.4 Apache-2.0
     https://mvnrepository.com/artifact/jakarta.inject/jakarta.inject-api/2.0.1 Apache-2.0
-    https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api/3.0.2 Apache-2.0
-    https://mvnrepository.com/artifact/javax.validation/validation-api/1.1.0.Final Apache-2.0
-    https://mvnrepository.com/artifact/net.minidev/accessors-smart/2.5.0 Apache-2.0
-    https://mvnrepository.com/artifact/net.minidev/json-smart/2.5.0 Apache-2.0
+    https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api/3.1.1 Apache-2.0
+    https://mvnrepository.com/artifact/javax.validation/validation-api/2.0.1.Final Apache-2.0
+    https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy/1.17.8 Apache-2.0
+    https://mvnrepository.com/artifact/net.java.dev.jna/jna/5.18.1 Apache-2.0
+    https://mvnrepository.com/artifact/net.minidev/accessors-smart/2.6.0 Apache-2.0
+    https://mvnrepository.com/artifact/net.minidev/json-smart/2.6.0 Apache-2.0
     https://mvnrepository.com/artifact/net.sourceforge.nekohtml/nekohtml/1.9.22 Apache-2.0
     https://mvnrepository.com/artifact/ognl/ognl/3.2.6 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.arrow/arrow-format/10.0.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-core/10.0.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-netty/10.0.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.arrow/arrow-vector/10.0.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.arrow/flight-core/10.0.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.arrow/flight-grpc/10.0.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.arrow/arrow-format/18.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-core/18.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-netty/18.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-netty-buffer-patch/18.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.arrow/arrow-vector/18.1.0 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.commons/commons-collections4/4.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.commons/commons-compress/1.19 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.commons/commons-compress/1.27.1 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.commons/commons-jexl3/3.2.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.commons/commons-lang3/3.13.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.commons/commons-pool2/2.12.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.httpcomponents/httpasyncclient/4.1.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.commons/commons-lang3/3.19.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.commons/commons-math3/3.6.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.commons/commons-pool2/2.12.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5/5.5.2 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5/5.3.6 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5-h2/5.3.6 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient/4.5.14 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore/4.4.16 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore-nio/4.4.16 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.iotdb/influxdb-thrift/0.13.3 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.iotdb/iotdb-session/0.13.3 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.iotdb/iotdb-thrift/0.13.3 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.iotdb/service-rpc/0.13.3 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.iotdb/tsfile/0.13.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients/3.4.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api/2.21.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core/2.21.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j/2.21.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients/3.7.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api/2.25.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core/2.25.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j/2.25.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-api/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-driver-modbus/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-driver-s7/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-spi/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-transport-tcp/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-utils-pcap-shared/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-utils-raw-sockets/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.poi/poi/4.1.2 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml/4.1.2 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml-schemas/4.1.2 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-acl/4.9.4 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-client/4.9.4 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-common/4.9.4 Apache-2.0
@@ -355,94 +452,130 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.apache.sshd/sshd-common/2.13.1 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.sshd/sshd-core/2.13.1 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.sshd/sshd-sftp/2.13.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-el/10.1.19 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-websocket/10.1.19 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.thrift/libthrift/0.14.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core/11.0.18 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-el/11.0.18 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-websocket/11.0.18 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.xmlbeans/xmlbeans/3.1.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-api/0.12.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-driver-modbus/0.12.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.plc4x/plc4j-driver-s7/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.yetus/audience-annotations/0.12.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper/3.9.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper-jute/3.9.3 Apache-2.0
     https://mvnrepository.com/artifact/org.attoparser/attoparser/2.0.7.RELEASE Apache-2.0
-    https://mvnrepository.com/artifact/org.freemarker/freemarker/2.3.32 Apache-2.0
-    https://mvnrepository.com/artifact/org.flywaydb/flyway-core/10.11.1
-    https://mvnrepository.com/artifact/org.flywaydb/flyway-mysql/10.11.1
-    https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql/10.11.1
-    https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator/8.0.1.Final Apache-2.0
-    https://mvnrepository.com/artifact/org.ini4j/ini4j/0.5.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-common/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains/annotations/13.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.flywaydb/flyway-core/10.11.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql/10.11.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.flywaydb/flyway-mysql/10.11.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.freemarker/freemarker/2.3.34 Apache-2.0
+    https://mvnrepository.com/artifact/org.hibernate.models/hibernate-models/1.0.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core/7.2.4.Final Apache-2.0
+    https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator/9.0.1.Final Apache-2.0
+    https://mvnrepository.com/artifact/org.jboss.logging/jboss-logging/3.6.2.Final Apache-2.0
+    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect/2.2.21 Apache-2.0
+    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib/2.2.21 Apache-2.0
+    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.21 Apache-2.0
+    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.21 Apache-2.0
+    https://mvnrepository.com/artifact/org.jetbrains/annotations/17.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.jspecify/jspecify/1.0.0 Apache-2.0
     https://mvnrepository.com/artifact/org.lz4/lz4-java/1.8.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.mongodb/bson/4.11.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.mongodb/bson-record-codec/4.11.1 Apache-2.0
+    https://mvnrepository.com/artifact/org.mongodb/bson/5.6.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.mongodb/bson-record-codec/5.6.3 Apache-2.0
     https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-core/4.6.1 Apache-2.0
     https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-sync/4.6.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.msgpack/msgpack-core/0.9.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.msgpack/msgpack-core/0.9.8 Apache-2.0
+    https://mvnrepository.com/artifact/org.osgi/org.osgi.compendium/5.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.osgi/org.osgi.core/5.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.questdb/questdb/9.0.2 Apache-2.0
+    https://mvnrepository.com/artifact/org.snakeyaml/snakeyaml-engine/3.0.1 Apache-2.0
     https://mvnrepository.com/artifact/org.snmp4j/snmp4j/3.6.7 Apache-2.0
-    https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-common/2.3.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api/2.3.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui/2.3.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-actuator/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-actuator-autoconfigure/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-autoconfigure/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-configuration-processor/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-aop/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-freemarker/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-jdbc/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-json/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-logging/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-mail/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-thymeleaf/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-webflux/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-reactor-netty/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-webflux/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-tomcat/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.data/spring-data-commons/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework.data/spring-data-jpa/3.2.3 Apache-2.0
-    https://mvnrepository.com/artifact/org.thymeleaf/thymeleaf/3.1.2.RELEASE Apache-2.0
-    https://mvnrepository.com/artifact/org.thymeleaf/thymeleaf-spring6/3.1.2.RELEASE Apache-2.0
+    https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-common/2.8.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api/2.8.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui/2.8.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/mcp-spring-webmvc/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-autoconfigure-mcp-server-common/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-autoconfigure-mcp-server-webmvc/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-client-chat/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-commons/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-mcp/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-mcp-annotations/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-model/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-openai/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-starter-mcp-server-webmvc/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-template-st/2.0.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-actuator/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-actuator-autoconfigure/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-autoconfigure/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-data-commons/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-data-jpa/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-flyway/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-freemarker/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-health/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-hibernate/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-http-codec/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-http-converter/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-jackson/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-jdbc/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-jpa/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-mail/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-micrometer-metrics/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-micrometer-observation/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-netty/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-persistence/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-reactor/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-reactor-netty/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-servlet/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-sql/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-flyway/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-freemarker/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-jackson/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-jdbc/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-logging/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-mail/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-micrometer-metrics/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-reactor-netty/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-thymeleaf/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-tomcat/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-tomcat-runtime/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-webflux/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-thymeleaf/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-tomcat/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-transaction/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-validation/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-web-server/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-webflux/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-webmvc/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.data/spring-data-commons/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.data/spring-data-jpa/4.0.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-aop/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-aspects/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-beans/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-context/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-context-support/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-core/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-expression/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-jdbc/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-messaging/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-orm/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-tx/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-web/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-webflux/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-webmvc/7.0.5 Apache-2.0
+    https://mvnrepository.com/artifact/org.thymeleaf/thymeleaf/3.1.3.RELEASE Apache-2.0
+    https://mvnrepository.com/artifact/org.thymeleaf/thymeleaf-spring6/3.1.3.RELEASE Apache-2.0
     https://mvnrepository.com/artifact/org.unbescape/unbescape/1.1.6.RELEASE Apache-2.0
-    https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java/1.1.8.4 Apache-2.0
+    https://mvnrepository.com/artifact/org.webjars/swagger-ui/5.18.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java/1.1.10.7 Apache-2.0
     https://mvnrepository.com/artifact/org.yaml/snakeyaml/2.2 Apache-2.0
+    https://mvnrepository.com/artifact/tools.jackson.core/jackson-core/3.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind/3.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-xml/3.1.0 Apache-2.0
+    https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-yaml/3.1.0 Apache-2.0
     https://mvnrepository.com/artifact/xerces/xercesImpl/2.11.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core/4.2.25
-    https://mvnrepository.com/artifact/org.jboss.logging/jboss-logging/3.5.3.Final
-    https://mvnrepository.com/artifact/org.apache.commons/commons-math3/3.6.1
-    https://mvnrepository.com/artifact/org.apache.thrift/libthrift/0.14.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-aop/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-aspects/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-beans/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-context/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-context-support/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-core/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-expression/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-jcl/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-jdbc/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-orm/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-tx/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-web/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.springframework/spring-webmvc/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core/10.1.19
-    https://mvnrepository.com/artifact/org.apache.poi/poi/4.1.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml/4.1.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml-schemas/4.1.1 Apache-2.0
     https://mvnrepository.com/artifact/xml-apis/xml-apis/1.4.01 Apache-2.0
-    https://mvnrepository.com/artifact/org.webjars/swagger-ui/5.10.3 Apache-2.0
-    https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java/1.12.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.vesoft/client/3.6.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-boot-starter-2.15.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-logback-appender-1.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper/3.9.3 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry.proto/opentelemetry-proto/1.7.0-alpha Apache-2.0
-    https://mvnrepository.com/artifact/org.questdb/questdb Apache-2.0
-    https://mvnrepository.com/artifact/org.awaitility/awaitility/4.2.0 Apache-2.0
 
 ========================================================================
 BSD-2-Clause licenses
@@ -450,10 +583,10 @@ BSD-2-Clause licenses
 The following components are provided under the BSD-2-Clause License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/org.postgresql/postgresql/42.5.1 BSD-2-Clause
-    https://mvnrepository.com/artifact/org.hdrhistogram/HdrHistogram/2.1.12 BSD-2-Clause
-    https://mvnrepository.com/artifact/org.codehaus.woodstox/stax2-api/4.2.1
-    https://mvnrepository.com/artifact/com.github.luben/zstd-jni/1.5.2-1
+    https://mvnrepository.com/artifact/com.github.luben/zstd-jni/1.5.6-3 BSD-2-Clause
+    https://mvnrepository.com/artifact/org.codehaus.woodstox/stax2-api/4.2.2 BSD-2-Clause
+    https://mvnrepository.com/artifact/org.hdrhistogram/HdrHistogram/2.2.2 BSD-2-Clause
+    https://mvnrepository.com/artifact/org.postgresql/postgresql/42.5.5 BSD-2-Clause
 
 ========================================================================
 BSD-3-Clause licenses
@@ -462,17 +595,13 @@ The following components are provided under the BSD-3-Clause License. See projec
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/com.github.virtuald/curvesapi/1.06 BSD-3-Clause
-    https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java/3.19.4 BSD-3-Clause
-    https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java-util/3.19.4 BSD-3-Clause
-    https://mvnrepository.com/artifact/dnsjava/dnsjava/3.5.2 BSD-3-Clause
-    https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api/2.1.2 BSD-3-Clause
-    https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api/4.0.1 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.eclipse.angus/angus-activation/2.0.1 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-core/4.0.4 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime/4.0.4 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.glassfish.jaxb/txw2/4.0.4 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.ow2.asm/asm/9.3
-    https://mvnrepository.com/artifact/org.antlr/antlr4-runtime/4.13.0
+    https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java/3.25.5 BSD-3-Clause
+    https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java-util/3.25.5 BSD-3-Clause
+    https://mvnrepository.com/artifact/dnsjava/dnsjava/3.6.2 BSD-3-Clause
+    https://mvnrepository.com/artifact/org.antlr/ST4/4.3.4 BSD-3-Clause
+    https://mvnrepository.com/artifact/org.antlr/antlr-runtime/3.5.3 BSD-3-Clause
+    https://mvnrepository.com/artifact/org.antlr/antlr4-runtime/4.13.2 BSD-3-Clause
+    https://mvnrepository.com/artifact/org.ow2.asm/asm/9.7.1 BSD-3-Clause
 
 ========================================================================
 CC0-1.0 licenses
@@ -482,9 +611,14 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/net.i2p.crypto/eddsa/0.3.0 CC0-1.0
     https://mvnrepository.com/artifact/org.latencyutils/LatencyUtils/2.0.3 CC0-1.0
-    https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api/1.3.2 CC0-1.0
 
+========================================================================
+CDDL-1.0 OR GPL-2.0-only WITH Classpath-exception-2.0 licenses
+========================================================================
+The following component is dual-licensed under CDDL-1.0 or GPL-2.0-only with the Classpath Exception.
+The license text is included in licenses/LICENSE-javax.annotation-api.txt.
 
+    https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api/1.3.2 CDDL-1.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 
 ========================================================================
 CDDL-1.1 licenses
@@ -500,23 +634,31 @@ EPL-1.0 licenses
 The following components are provided under the EPL-1.0 License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/ch.qos.logback/logback-classic/1.4.14 EPL-1.0
-    https://mvnrepository.com/artifact/ch.qos.logback/logback-core/1.4.14 EPL-1.0
-    https://mvnrepository.com/artifact/com.h2database/h2/2.1.214
-    https://mvnrepository.com/artifact/org.locationtech.jts/jts-core/1.16.1
+    https://mvnrepository.com/artifact/com.h2database/h2/2.2.224 EPL-1.0
+    https://mvnrepository.com/artifact/org.locationtech.jts/jts-core/1.16.1 EPL-1.0
 
 ========================================================================
 EPL-2.0 licenses
 ========================================================================
-The following components are provided under the EPL-2.0 and BSD-3-Clause License. See project link for details.
+The following components are provided under the EPL-2.0 License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.1.0
-    https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api/2.1.1
-    https://mvnrepository.com/artifact/jakarta.transaction/jakarta.transaction-api/2.0.1
-    https://mvnrepository.com/artifact/org.eclipse.angus/jakarta.mail/2.0.2
-    https://mvnrepository.com/artifact/org.aspectj/aspectjweaver/1.9.21
+    https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api/3.0.0 EPL-2.0
+    https://mvnrepository.com/artifact/jakarta.mail/jakarta.mail-api/2.1.5 EPL-2.0
+    https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.2.0 EPL-2.0
+    https://mvnrepository.com/artifact/jakarta.transaction/jakarta.transaction-api/2.0.1 EPL-2.0
+    https://mvnrepository.com/artifact/org.aspectj/aspectjweaver/1.9.25.1 EPL-2.0
+    https://mvnrepository.com/artifact/org.eclipse.angus/angus-mail/2.0.5 EPL-2.0
+    https://mvnrepository.com/artifact/org.eclipse.paho/org.eclipse.paho.client.mqttv3/1.2.5 EPL-2.0
 
+========================================================================
+EPL-2.0 OR LGPL-2.1-only licenses
+========================================================================
+The following components are provided under the EPL-2.0 OR LGPL-2.1-only License. See project link for details.
+The text of each license is also included in licenses/LICENSE-[project].txt.
+
+    https://mvnrepository.com/artifact/ch.qos.logback/logback-classic/1.5.32 EPL-2.0 OR LGPL-2.1-only
+    https://mvnrepository.com/artifact/ch.qos.logback/logback-core/1.5.32 EPL-2.0 OR LGPL-2.1-only
 
 ========================================================================
 MIT licenses
@@ -524,21 +666,29 @@ MIT licenses
 The following components are provided under the MIT License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc/10.2.0.jre8 MIT
+    https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7/1.0.0 MIT
+    https://mvnrepository.com/artifact/io.lettuce/lettuce-core/6.8.2.RELEASE MIT
+    https://mvnrepository.com/artifact/com.knuddels/jtokkit/1.1.0 MIT
+    https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc/12.10.2.jre11 MIT
+    https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver/3.0.0 MIT
+    https://mvnrepository.com/artifact/io.modelcontextprotocol.sdk/mcp/2.0.0 MIT
+    https://mvnrepository.com/artifact/io.modelcontextprotocol.sdk/mcp-core/2.0.0 MIT
+    https://mvnrepository.com/artifact/io.modelcontextprotocol.sdk/mcp-json-jackson3/2.0.0 MIT
     https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on/1.85 MIT
     https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on/1.85 MIT
     https://mvnrepository.com/artifact/org.bouncycastle/bcutil-jdk18on/1.85 MIT
     https://mvnrepository.com/artifact/org.checkerframework/checker-qual/3.33.0 MIT
-    https://mvnrepository.com/artifact/org.codehaus.mojo/animal-sniffer-annotations/1.21 MIT
-    https://mvnrepository.com/artifact/org.influxdb/influxdb-java/2.23 MIT
+    https://mvnrepository.com/artifact/org.codehaus.mojo/animal-sniffer-annotations/1.24 MIT
+    https://mvnrepository.com/artifact/org.duckdb/duckdb_jdbc/1.4.2.0 MIT
+    https://mvnrepository.com/artifact/org.influxdb/influxdb-java/2.25 MIT
+    https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket/1.5.2 MIT
+    https://mvnrepository.com/artifact/org.pcap4j/pcap4j-core/1.8.2 MIT
+    https://mvnrepository.com/artifact/org.pcap4j/pcap4j-packetfactory-static/1.8.2 MIT
     https://mvnrepository.com/artifact/org.slf4j/jcl-over-slf4j/2.0.9 MIT
     https://mvnrepository.com/artifact/org.slf4j/jul-to-slf4j/2.0.9 MIT
     https://mvnrepository.com/artifact/org.slf4j/slf4j-api/2.0.9 MIT
-    https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket/1.5.2
-    https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver/3.0.0
-    https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7/1.0.0
-    https://mvnrepository.com/artifact/org.testcontainers/kafka/1.20.2 MIT
-    https://mvnrepository.com/artifact/org.duckdb/duckdb_jdbc/1.4.2.0 MIT
+    https://mvnrepository.com/artifact/org.webjars/webjars-locator-lite/1.1.3 MIT
+    https://mvnrepository.com/artifact/redis.clients.authentication/redis-authx-core/0.1.1-beta2 MIT
 
 ========================================================================
 MPL-1.1 licenses
@@ -548,15 +698,19 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/org.javassist/javassist/3.20.0-GA MPL-1.1
 
-
 ========================================================================
-edl-v10 licenses
+EDL-1.0 licenses
 ========================================================================
-The following components are provided under the http://www.eclipse.org/org/documents/edl-v10.php License. See project link for details.
+The following components are provided under the EDL-1.0 License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/com.sun.istack/istack-commons-runtime/4.1.2 http://www.eclipse.org/org/documents/edl-v10.php
-
+    https://mvnrepository.com/artifact/com.sun.istack/istack-commons-runtime/4.1.2 EDL-1.0
+    https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api/2.1.4 EDL-1.0
+    https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api/4.0.4 EDL-1.0
+    https://mvnrepository.com/artifact/org.eclipse.angus/angus-activation/2.0.3 EDL-1.0
+    https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-core/4.0.6 EDL-1.0
+    https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime/4.0.6 EDL-1.0
+    https://mvnrepository.com/artifact/org.glassfish.jaxb/txw2/4.0.6 EDL-1.0
 
 ========================================================================
 MIT-0 licenses
@@ -565,6 +719,14 @@ The following components are provided under the https://spdx.org/licenses/MIT-0.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams/1.0.4 https://spdx.org/licenses/MIT-0.html
+
+========================================================================
+Public-Domain licenses
+========================================================================
+The following components are provided under the Public-Domain License. See project link for details.
+The text of each license is also included in licenses/LICENSE-[project].txt.
+
+    https://mvnrepository.com/artifact/org.json/json/20240205 Public-Domain
 
 
 =======================================================================
@@ -576,13 +738,13 @@ subcomponents is subject to the terms and conditions of the following
 licenses.
 ========================================================================
 
-
 ========================================================================
 0BSD licenses
 ========================================================================
 The following components are provided under the 0BSD License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
+    https://npmjs.com/package/tslib/v/2.3.0 2.3.0 0BSD
     https://npmjs.com/package/tslib/v/2.6.2 2.6.2 0BSD
 
 ========================================================================
@@ -591,13 +753,19 @@ Apache-2.0 licenses
 The following components are provided under the Apache-2.0 License. See project link for details.
 The text of each license is the standard Apache 2.0 license.
 
+    https://npmjs.com/package/@chevrotain/cst-dts-gen/v/11.0.3 11.0.3 Apache-2.0
+    https://npmjs.com/package/@chevrotain/gast/v/11.0.3 11.0.3 Apache-2.0
+    https://npmjs.com/package/@chevrotain/regexp-to-ast/v/11.0.3 11.0.3 Apache-2.0
+    https://npmjs.com/package/@chevrotain/types/v/11.0.3 11.0.3 Apache-2.0
+    https://npmjs.com/package/@chevrotain/utils/v/11.0.3 11.0.3 Apache-2.0
     https://npmjs.com/package/adler-32/v/1.3.1 1.3.1 Apache-2.0
     https://npmjs.com/package/cfb/v/1.2.2 1.2.2 Apache-2.0
+    https://npmjs.com/package/chevrotain/v/11.0.3 11.0.3 Apache-2.0
     https://npmjs.com/package/codepage/v/1.15.0 1.15.0 Apache-2.0
     https://npmjs.com/package/crc-32/v/1.2.2 1.2.2 Apache-2.0
+    https://npmjs.com/package/dompurify/v/3.3.1 3.3.1 Apache-2.0
     https://npmjs.com/package/echarts/v/5.4.3 5.4.3 Apache-2.0
     https://npmjs.com/package/frac/v/1.1.2 1.1.2 Apache-2.0
-    https://npmjs.com/package/pdfjs-dist/v/3.11.174 3.11.174 Apache-2.0
     https://npmjs.com/package/rxjs/v/7.8.1 7.8.1 Apache-2.0
     https://npmjs.com/package/ssf/v/0.11.2 0.11.2 Apache-2.0
     https://npmjs.com/package/wmf/v/1.0.2 1.0.2 Apache-2.0
@@ -610,7 +778,7 @@ BSD-2-Clause licenses
 The following components are provided under the BSD-2-Clause License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://npmjs.com/package/entities/v/4.5.0 4.5.0 BSD-2-Clause
+    https://npmjs.com/package/entities/v/6.0.1 6.0.1 BSD-2-Clause
     https://npmjs.com/package/uri-js/v/4.4.1 4.4.1 BSD-2-Clause
 
 ========================================================================
@@ -619,22 +787,14 @@ BSD-3-Clause licenses
 The following components are provided under the BSD-3-Clause License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://npmjs.com/package/d3-array/v/1.2.4 1.2.4 BSD-3-Clause
-    https://npmjs.com/package/d3-collection/v/1.0.7 1.0.7 BSD-3-Clause
-    https://npmjs.com/package/d3-composite-projections/v/1.4.0 1.4.0 BSD-3-Clause
-    https://npmjs.com/package/d3-dsv/v/1.2.0 1.2.0 BSD-3-Clause
-    https://npmjs.com/package/d3-ease/v/1.0.7 1.0.7 BSD-3-Clause
-    https://npmjs.com/package/d3-geo/v/1.6.4 1.6.4 BSD-3-Clause
-    https://npmjs.com/package/d3-geo-projection/v/2.1.2 2.1.2 BSD-3-Clause
-    https://npmjs.com/package/d3-hexjson/v/1.1.1 1.1.1 BSD-3-Clause
-    https://npmjs.com/package/d3-hierarchy/v/1.1.9 1.1.9 BSD-3-Clause
-    https://npmjs.com/package/d3-path/v/2.0.0 2.0.0 BSD-3-Clause
-    https://npmjs.com/package/d3-sankey/v/0.9.1 0.9.1 BSD-3-Clause
+    https://npmjs.com/package/d3-array/v/2.12.1 2.12.1 BSD-3-Clause
+    https://npmjs.com/package/d3-ease/v/3.0.1 3.0.1 BSD-3-Clause
+    https://npmjs.com/package/d3-path/v/1.0.9 1.0.9 BSD-3-Clause
+    https://npmjs.com/package/d3-sankey/v/0.12.3 0.12.3 BSD-3-Clause
     https://npmjs.com/package/d3-shape/v/1.3.7 1.3.7 BSD-3-Clause
-    https://npmjs.com/package/d3-timer/v/1.0.10 1.0.10 BSD-3-Clause
-    https://npmjs.com/package/d3-voronoi/v/1.1.4 1.1.4 BSD-3-Clause
     https://npmjs.com/package/rw/v/1.3.3 1.3.3 BSD-3-Clause
     https://npmjs.com/package/zrender/v/5.4.4 5.4.4 BSD-3-Clause
+    https://npmjs.com/package/zrender/v/6.0.0 6.0.0 BSD-3-Clause
 
 ========================================================================
 ISC licenses
@@ -642,20 +802,40 @@ ISC licenses
 The following components are provided under the ISC License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://npmjs.com/package/@antv/color-util/v/2.0.6 2.0.6 ISC
-    https://npmjs.com/package/@antv/g-base/v/0.5.15 0.5.15 ISC
-    https://npmjs.com/package/@antv/g-canvas/v/0.5.14 0.5.14 ISC
-    https://npmjs.com/package/@antv/g-math/v/0.1.9 0.1.9 ISC
-    https://npmjs.com/package/@antv/g-svg/v/0.5.7 0.5.7 ISC
-    https://npmjs.com/package/@antv/matrix-util/v/3.1.0-beta.3 3.1.0-beta.3 ISC
-    https://npmjs.com/package/@antv/path-util/v/2.0.15 2.0.15 ISC
-    https://npmjs.com/package/@antv/util/v/2.0.17 2.0.17 ISC
+    https://npmjs.com/package/d3-array/v/3.2.4 3.2.4 ISC
+    https://npmjs.com/package/d3-axis/v/3.0.0 3.0.0 ISC
+    https://npmjs.com/package/d3-dsv/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-geo/v/3.1.1 3.1.1 ISC
+    https://npmjs.com/package/d3-hierarchy/v/3.1.2 3.1.2 ISC
+    https://npmjs.com/package/d3-path/v/3.1.0 3.1.0 ISC
+    https://npmjs.com/package/d3-shape/v/3.2.0 3.2.0 ISC
+    https://npmjs.com/package/d3-timer/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-brush/v/3.0.0 3.0.0 ISC
+    https://npmjs.com/package/d3-chord/v/3.0.1 3.0.1 ISC
     https://npmjs.com/package/d3-color/v/3.1.0 3.1.0 ISC
+    https://npmjs.com/package/d3-contour/v/4.0.2 4.0.2 ISC
+    https://npmjs.com/package/d3-delaunay/v/6.0.4 6.0.4 ISC
+    https://npmjs.com/package/d3-dispatch/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-drag/v/3.0.0 3.0.0 ISC
+    https://npmjs.com/package/d3-fetch/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-force/v/3.0.0 3.0.0 ISC
+    https://npmjs.com/package/d3-format/v/3.1.2 3.1.2 ISC
     https://npmjs.com/package/d3-interpolate/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-polygon/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-quadtree/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-random/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-scale-chromatic/v/3.1.0 3.1.0 ISC
+    https://npmjs.com/package/d3-scale/v/4.0.2 4.0.2 ISC
+    https://npmjs.com/package/d3-selection/v/3.0.0 3.0.0 ISC
+    https://npmjs.com/package/d3-time-format/v/4.1.0 4.1.0 ISC
+    https://npmjs.com/package/d3-time/v/3.1.0 3.1.0 ISC
+    https://npmjs.com/package/d3-transition/v/3.0.1 3.0.1 ISC
+    https://npmjs.com/package/d3-zoom/v/3.0.0 3.0.0 ISC
+    https://npmjs.com/package/d3/v/7.9.0 7.9.0 ISC
+    https://npmjs.com/package/delaunator/v/5.0.1 5.0.1 ISC
     https://npmjs.com/package/inherits/v/2.0.4 2.0.4 ISC
     https://npmjs.com/package/internmap/v/1.0.1 1.0.1 ISC
-    https://npmjs.com/package/simple-statistics/v/6.1.1 6.1.1 ISC
-    https://npmjs.com/package/topojson-client/v/3.1.0 3.1.0 ISC
+    https://npmjs.com/package/internmap/v/2.0.3 2.0.3 ISC
 
 ========================================================================
 MIT licenses
@@ -669,90 +849,173 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://npmjs.com/package/@angular/compiler/v/17.3.10 17.3.10 MIT
     https://npmjs.com/package/@angular/core/v/17.3.10 17.3.10 MIT
     https://npmjs.com/package/@angular/forms/v/17.3.10 17.3.10 MIT
-    https://npmjs.com/package/@angular/platform-browser/v/17.3.10 17.3.10 MIT
     https://npmjs.com/package/@angular/platform-browser-dynamic/v/17.3.10 17.3.10 MIT
+    https://npmjs.com/package/@angular/platform-browser/v/17.3.10 17.3.10 MIT
     https://npmjs.com/package/@angular/router/v/17.3.10 17.3.10 MIT
-    https://npmjs.com/package/@ant-design/colors/v/5.1.1 5.1.1 MIT
-    https://npmjs.com/package/@ant-design/icons-angular/v/15.0.0 15.0.0 MIT
-    https://npmjs.com/package/@antv/adjust/v/0.2.5 0.2.5 MIT
-    https://npmjs.com/package/@antv/attr/v/0.3.5 0.3.5 MIT
-    https://npmjs.com/package/@antv/component/v/0.8.35 0.8.35 MIT
-    https://npmjs.com/package/@antv/coord/v/0.3.1 0.3.1 MIT
-    https://npmjs.com/package/@antv/data-set/v/0.11.8 0.11.8 MIT
-    https://npmjs.com/package/@antv/dom-util/v/2.0.4 2.0.4 MIT
-    https://npmjs.com/package/@antv/event-emitter/v/0.1.3 0.1.3 MIT
-    https://npmjs.com/package/@antv/g2/v/4.2.10 4.2.10 MIT
-    https://npmjs.com/package/@antv/hierarchy/v/0.6.11 0.6.11 MIT
-    https://npmjs.com/package/@antv/scale/v/0.3.18 0.3.18 MIT
-    https://npmjs.com/package/@babel/runtime/v/7.23.9 7.23.9 MIT
-    https://npmjs.com/package/@ctrl/tinycolor/v/3.6.1 3.6.1 MIT
+    https://npmjs.com/package/@ant-design/colors/v/7.2.1 7.2.1 MIT
+    https://npmjs.com/package/@ant-design/fast-color/v/2.0.6 2.0.6 MIT
+    https://npmjs.com/package/@ant-design/fast-color/v/3.0.0 3.0.0 MIT
+    https://npmjs.com/package/@ant-design/icons-angular/v/17.0.0 17.0.0 MIT
+    https://npmjs.com/package/@ant-design/icons-angular/v/19.0.0 19.0.0 MIT
+    https://npmjs.com/package/@antfu/install-pkg/v/1.1.0 1.1.0 MIT
+    https://npmjs.com/package/@babel/runtime/v/7.28.4 7.28.4 MIT
+    https://npmjs.com/package/@braintree/sanitize-url/v/7.1.1 7.1.1 MIT
+    https://npmjs.com/package/@ctrl/tinycolor/v/4.2.0 4.2.0 MIT
     https://npmjs.com/package/@delon/abc/v/17.0.5 17.0.5 MIT
+    https://npmjs.com/package/@delon/abc/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/acl/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/auth/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/cache/v/17.3.1 17.3.1 MIT
-    https://npmjs.com/package/@delon/chart/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/form/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/mock/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/theme/v/17.3.1 17.3.1 MIT
     https://npmjs.com/package/@delon/util/v/17.3.1 17.3.1 MIT
-    https://npmjs.com/package/@kerwin612/ngx-query-builder 0.6.4 MIT
     https://npmjs.com/package/@github/hotkey/v/2.3.1 2.3.1 MIT
-    https://npmjs.com/package/@types/d3-timer/v/2.0.3 2.0.3 MIT
+    https://npmjs.com/package/@iconify/types/v/2.0.0 2.0.0 MIT
+    https://npmjs.com/package/@iconify/utils/v/3.1.0 3.1.0 MIT
+    https://npmjs.com/package/@kerwin612/ngx-query-builder/v/0.6.4 0.6.4 MIT
+    https://npmjs.com/package/@mermaid-js/parser/v/0.6.3 0.6.3 MIT
+    https://npmjs.com/package/@types/d3-array/v/3.2.2 3.2.2 MIT
+    https://npmjs.com/package/@types/d3-axis/v/3.0.6 3.0.6 MIT
+    https://npmjs.com/package/@types/d3-brush/v/3.0.6 3.0.6 MIT
+    https://npmjs.com/package/@types/d3-chord/v/3.0.6 3.0.6 MIT
+    https://npmjs.com/package/@types/d3-color/v/3.1.3 3.1.3 MIT
+    https://npmjs.com/package/@types/d3-contour/v/3.0.6 3.0.6 MIT
+    https://npmjs.com/package/@types/d3-delaunay/v/6.0.4 6.0.4 MIT
+    https://npmjs.com/package/@types/d3-dispatch/v/3.0.7 3.0.7 MIT
+    https://npmjs.com/package/@types/d3-drag/v/3.0.7 3.0.7 MIT
+    https://npmjs.com/package/@types/d3-dsv/v/3.0.7 3.0.7 MIT
+    https://npmjs.com/package/@types/d3-ease/v/3.0.2 3.0.2 MIT
+    https://npmjs.com/package/@types/d3-fetch/v/3.0.7 3.0.7 MIT
+    https://npmjs.com/package/@types/d3-force/v/3.0.10 3.0.10 MIT
+    https://npmjs.com/package/@types/d3-format/v/3.0.4 3.0.4 MIT
+    https://npmjs.com/package/@types/d3-geo/v/3.1.0 3.1.0 MIT
+    https://npmjs.com/package/@types/d3-hierarchy/v/3.1.7 3.1.7 MIT
+    https://npmjs.com/package/@types/d3-interpolate/v/3.0.4 3.0.4 MIT
+    https://npmjs.com/package/@types/d3-path/v/3.1.1 3.1.1 MIT
+    https://npmjs.com/package/@types/d3-polygon/v/3.0.2 3.0.2 MIT
+    https://npmjs.com/package/@types/d3-quadtree/v/3.0.6 3.0.6 MIT
+    https://npmjs.com/package/@types/d3-random/v/3.0.3 3.0.3 MIT
+    https://npmjs.com/package/@types/d3-scale-chromatic/v/3.1.0 3.1.0 MIT
+    https://npmjs.com/package/@types/d3-scale/v/4.0.9 4.0.9 MIT
+    https://npmjs.com/package/@types/d3-selection/v/3.0.11 3.0.11 MIT
+    https://npmjs.com/package/@types/d3-shape/v/3.1.8 3.1.8 MIT
+    https://npmjs.com/package/@types/d3-time-format/v/4.0.3 4.0.3 MIT
+    https://npmjs.com/package/@types/d3-time/v/3.0.4 3.0.4 MIT
+    https://npmjs.com/package/@types/d3-timer/v/3.0.2 3.0.2 MIT
+    https://npmjs.com/package/@types/d3-transition/v/3.0.9 3.0.9 MIT
+    https://npmjs.com/package/@types/d3-zoom/v/3.0.8 3.0.8 MIT
+    https://npmjs.com/package/@types/d3/v/7.4.3 7.4.3 MIT
+    https://npmjs.com/package/@types/geojson/v/7946.0.16 7946.0.16 MIT
     https://npmjs.com/package/@types/mockjs/v/1.0.10 1.0.10 MIT
-    https://npmjs.com/package/abs-svg-path/v/0.1.1 0.1.1 MIT
-    https://npmjs.com/package/ajv/v/8.12.0 8.12.0 MIT
+    https://npmjs.com/package/@types/trusted-types/v/2.0.7 2.0.7 MIT
+    https://npmjs.com/package/acorn/v/8.15.0 8.15.0 MIT
     https://npmjs.com/package/ajv-formats/v/2.1.1 2.1.1 MIT
-    https://npmjs.com/package/commander/v/2.20.3 2.20.3 MIT
-    https://npmjs.com/package/core-js/v/3.36.0 3.36.0 MIT
+    https://npmjs.com/package/ajv/v/8.12.0 8.12.0 MIT
+    https://npmjs.com/package/angular-tag-cloud-module/v/17.0.1 17.0.1 MIT
+    https://npmjs.com/package/chevrotain-allstar/v/0.3.1 0.3.1 MIT
+    https://npmjs.com/package/clipboard/v/2.0.11 2.0.11 MIT
+    https://npmjs.com/package/commander/v/14.0.2 14.0.2 MIT
+    https://npmjs.com/package/commander/v/7.2.0 7.2.0 MIT
+    https://npmjs.com/package/commander/v/8.3.0 8.3.0 MIT
+    https://npmjs.com/package/confbox/v/0.1.8 0.1.8 MIT
+    https://npmjs.com/package/core-js/v/3.47.0 3.47.0 MIT
     https://npmjs.com/package/core-util-is/v/1.0.3 1.0.3 MIT
-    https://npmjs.com/package/csstype/v/3.1.3 3.1.3 MIT
+    https://npmjs.com/package/cose-base/v/1.0.3 1.0.3 MIT
+    https://npmjs.com/package/cose-base/v/2.2.0 2.2.0 MIT
     https://npmjs.com/package/custom-event-polyfill/v/1.0.7 1.0.7 MIT
-    https://npmjs.com/package/dagre/v/0.8.5 0.8.5 MIT
+    https://npmjs.com/package/cytoscape-cose-bilkent/v/4.1.0 4.1.0 MIT
+    https://npmjs.com/package/cytoscape-fcose/v/2.2.0 2.2.0 MIT
+    https://npmjs.com/package/cytoscape/v/3.33.1 3.33.1 MIT
+    https://npmjs.com/package/dagre-d3-es/v/7.0.13 7.0.13 MIT
     https://npmjs.com/package/date-fns/v/2.30.0 2.30.0 MIT
-    https://npmjs.com/package/detect-browser/v/5.3.0 5.3.0 MIT
+    https://npmjs.com/package/dayjs/v/1.11.19 1.11.19 MIT
+    https://npmjs.com/package/delegate/v/3.2.0 3.2.0 MIT
+    https://npmjs.com/package/emoji-toolkit/v/9.0.1 9.0.1 MIT
     https://npmjs.com/package/extend/v/3.0.2 3.0.2 MIT
     https://npmjs.com/package/fast-deep-equal/v/3.1.3 3.1.3 MIT
-    https://npmjs.com/package/fecha/v/4.2.3 4.2.3 MIT
     https://npmjs.com/package/file-saver/v/2.0.5 2.0.5 MIT
-    https://npmjs.com/package/gl-matrix/v/3.4.3 3.4.3 MIT
-    https://npmjs.com/package/graphlib/v/2.1.8 2.1.8 MIT
-    https://npmjs.com/package/iconv-lite/v/0.4.24 0.4.24 MIT
+    https://npmjs.com/package/good-listener/v/1.2.2 1.2.2 MIT
+    https://npmjs.com/package/hachure-fill/v/0.5.2 0.5.2 MIT
+    https://npmjs.com/package/iconv-lite/v/0.6.3 0.6.3 MIT
     https://npmjs.com/package/immediate/v/3.0.6 3.0.6 MIT
-    https://npmjs.com/package/isutf8/v/4.0.0 4.0.0 MIT
-    https://npmjs.com/package/isarray/v/1.0.0 MIT
+    https://npmjs.com/package/isarray/v/1.0.0 1.0.0 MIT
+    https://npmjs.com/package/isutf8/v/4.0.1 4.0.1 MIT
     https://npmjs.com/package/jquery/v/3.7.1 3.7.1 MIT
     https://npmjs.com/package/json-schema-traverse/v/1.0.0 1.0.0 MIT
+    https://npmjs.com/package/jszip/v/3.10.1 3.10.1 MIT
+    https://npmjs.com/package/katex/v/0.16.27 0.16.27 MIT
+    https://npmjs.com/package/khroma/v/2.1.0 2.1.0 MIT
+    https://npmjs.com/package/langium/v/3.3.1 3.3.1 MIT
+    https://npmjs.com/package/layout-base/v/1.0.2 1.0.2 MIT
+    https://npmjs.com/package/layout-base/v/2.0.1 2.0.1 MIT
     https://npmjs.com/package/lie/v/3.3.0 3.3.0 MIT
-    https://npmjs.com/package/loadjs/v/4.2.0 4.2.0 MIT
-    https://npmjs.com/package/lodash/v/4.17.21 4.17.21 MIT
+    https://npmjs.com/package/loadjs/v/4.3.0 4.3.0 MIT
+    https://npmjs.com/package/lodash-es/v/4.17.21 4.17.21 MIT
+    https://npmjs.com/package/lodash-es/v/4.17.22 4.17.22 MIT
+    https://npmjs.com/package/marked/v/15.0.6 15.0.6 MIT
+    https://npmjs.com/package/marked/v/16.4.2 16.4.2 MIT
+    https://npmjs.com/package/mermaid/v/11.12.2 11.12.2 MIT
+    https://npmjs.com/package/mlly/v/1.8.0 1.8.0 MIT
     https://npmjs.com/package/mockjs/v/1.1.0 1.1.0 MIT
     https://npmjs.com/package/monaco-editor/v/0.36.1 0.36.1 MIT
+    https://npmjs.com/package/ng-in-viewport/v/16.1.0 16.1.0 MIT
     https://npmjs.com/package/ng-zorro-antd/v/17.4.1 17.4.1 MIT
     https://npmjs.com/package/ngx-color-picker/v/16.0.0 16.0.0 MIT
-    https://npmjs.com/package/ngx-countdown/v/15.0.0 15.0.0 MIT
+    https://npmjs.com/package/ngx-countdown/v/17.1.1 17.1.1 MIT
     https://npmjs.com/package/ngx-echarts/v/17.2.0 17.2.0 MIT
+    https://npmjs.com/package/ngx-markdown/v/19.0.0 19.0.0 MIT
     https://npmjs.com/package/ngx-slick-carousel/v/17.0.0 17.0.0 MIT
-    https://npmjs.com/package/parse-svg-path/v/0.1.2 0.1.2 MIT
-    https://npmjs.com/package/parse5/v/7.1.2 7.1.2 MIT
-    https://npmjs.com/package/path2d-polyfill/v/2.0.1 2.0.1 MIT
-    https://npmjs.com/package/plyr/v/3.7.8 3.7.8 MIT
-    https://npmjs.com/package/point-at-length/v/1.1.0 1.1.0 MIT
+    https://npmjs.com/package/package-manager-detector/v/1.6.0 1.6.0 MIT
+    https://npmjs.com/package/parse5/v/7.3.0 7.3.0 MIT
+    https://npmjs.com/package/path-data-parser/v/0.1.0 0.1.0 MIT
+    https://npmjs.com/package/pathe/v/2.0.3 2.0.3 MIT
+    https://npmjs.com/package/pkg-types/v/1.3.1 1.3.1 MIT
+    https://npmjs.com/package/plyr/v/3.8.4 3.8.4 MIT
+    https://npmjs.com/package/points-on-curve/v/0.2.0 0.2.0 MIT
+    https://npmjs.com/package/points-on-path/v/0.2.1 0.2.1 MIT
+    https://npmjs.com/package/prismjs/v/1.30.0 1.30.0 MIT
     https://npmjs.com/package/process-nextick-args/v/2.0.1 2.0.1 MIT
     https://npmjs.com/package/punycode/v/2.3.1 2.3.1 MIT
     https://npmjs.com/package/rangetouch/v/2.0.1 2.0.1 MIT
-    https://npmjs.com/package/regenerator-runtime/v/0.14.1 0.14.1 MIT
-    https://npmjs.com/package/regression/v/2.0.1 2.0.1 MIT
-    https://npmjs.com/package/require-from-string/v/2.0.2 2.0.2 MIT
     https://npmjs.com/package/readable-stream/v/2.3.8 2.3.8 MIT
+    https://npmjs.com/package/require-from-string/v/2.0.2 2.0.2 MIT
+    https://npmjs.com/package/roughjs/v/4.6.6 4.6.6 MIT
+    https://npmjs.com/package/safe-buffer/v/5.1.2 5.1.2 MIT
     https://npmjs.com/package/safer-buffer/v/2.1.2 2.1.2 MIT
     https://npmjs.com/package/screenfull/v/6.0.2 6.0.2 MIT
+    https://npmjs.com/package/select/v/1.1.2 1.1.2 MIT
     https://npmjs.com/package/setimmediate/v/1.0.5 1.0.5 MIT
     https://npmjs.com/package/slick-carousel/v/1.8.1 1.8.1 MIT
-    https://npmjs.com/package/safe-buffer/v/5.1.2 5.1.2 MIT
     https://npmjs.com/package/string_decoder/v/1.1.1 1.1.1 MIT
-    https://npmjs.com/package/url-polyfill/v/1.1.12 1.1.12 MIT
+    https://npmjs.com/package/stylis/v/4.3.6 4.3.6 MIT
+    https://npmjs.com/package/tiny-emitter/v/2.1.0 2.1.0 MIT
+    https://npmjs.com/package/tinyexec/v/1.0.2 1.0.2 MIT
+    https://npmjs.com/package/ts-dedent/v/2.2.0 2.2.0 MIT
+    https://npmjs.com/package/ufo/v/1.6.3 1.6.3 MIT
+    https://npmjs.com/package/url-polyfill/v/1.1.14 1.1.14 MIT
     https://npmjs.com/package/util-deprecate/v/1.0.2 1.0.2 MIT
+    https://npmjs.com/package/uuid/v/11.1.0 11.1.0 MIT
+    https://npmjs.com/package/vscode-jsonrpc/v/8.2.0 8.2.0 MIT
+    https://npmjs.com/package/vscode-languageserver-protocol/v/3.17.5 3.17.5 MIT
+    https://npmjs.com/package/vscode-languageserver-textdocument/v/1.0.12 1.0.12 MIT
+    https://npmjs.com/package/vscode-languageserver-types/v/3.17.5 3.17.5 MIT
+    https://npmjs.com/package/vscode-languageserver/v/9.0.1 9.0.1 MIT
+    https://npmjs.com/package/vscode-uri/v/3.0.8 3.0.8 MIT
     https://npmjs.com/package/zone.js/v/0.14.5 0.14.5 MIT
-    https://npmjs.com/package/angular-tag-cloud-module/v/17.0.1 17.0.1 MIT
-    https://npmjs.com/package/jszip/v/3.10.1 3.10.1 MIT
-    https://npmjs.com/package/pako/v/1.0.11 1.0.11 MIT
+
+========================================================================
+MIT AND Zlib licenses
+========================================================================
+The following component is provided under both the MIT and Zlib licenses.
+The license texts are included in licenses/LICENSE-pako.txt.
+
+    https://npmjs.com/package/pako/v/1.0.11 1.0.11 MIT AND Zlib
+
+========================================================================
+Unlicense licenses
+========================================================================
+The following components are provided under the Unlicense License. See project link for details.
+The text of each license is also included in licenses/LICENSE-[project].txt.
+
+    https://npmjs.com/package/robust-predicates/v/3.0.2 3.0.2 Unlicense
