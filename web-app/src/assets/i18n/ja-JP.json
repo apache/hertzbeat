@@ -27,6 +27,7 @@
   "alert.center.content": "アラート内容",
   "alert.center.deal": "処理済みにマーク",
   "alert.center.delete": "アラートを削除",
+  "alert.center.export": "アラートをエクスポート",
   "alert.center.end-time": "終了時間",
   "alert.center.filter-priority": "アラート優先度",
   "alert.center.filter-status": "アラートステータス",
