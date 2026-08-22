@@ -61,7 +61,7 @@ public interface NetworkConstants {
         Duration READ_TIMEOUT = Duration.ofSeconds(6);
         Duration WRITE_TIMEOUT = Duration.ofSeconds(6);
         Duration CONNECT_TIMEOUT = Duration.ofSeconds(6);
-        Duration GREPTIME_QUERY_READ_TIMEOUT = Duration.ofSeconds(5);
+        Duration GREPTIME_QUERY_READ_TIMEOUT = Duration.ofSeconds(15);
         Duration GREPTIME_QUERY_CONNECT_TIMEOUT = Duration.ofSeconds(2);
         Duration GREPTIME_WRITE_READ_TIMEOUT = Duration.ofSeconds(3);
         Duration GREPTIME_WRITE_CONNECT_TIMEOUT = Duration.ofSeconds(2);
