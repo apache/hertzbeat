@@ -36,7 +36,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: ./script/ci/github-actions/setup-deps
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
       with:
         version: 10
     - uses: actions/setup-node@v4
