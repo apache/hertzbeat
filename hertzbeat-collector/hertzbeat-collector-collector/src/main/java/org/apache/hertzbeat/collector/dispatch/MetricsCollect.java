@@ -183,6 +183,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             */
             metricsData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
             validateResponse(metricsData == null ? null : metricsData.stream().findFirst().orElse(null));
+            // if the timeout monitor already cancelled this cycle, skip the late result.
+            if (fastFailed()) {
+                return;
+            }
             collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             return;
         }
