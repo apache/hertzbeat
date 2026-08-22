@@ -25,6 +25,7 @@ export class EmailNoticeSender {
   emailPassword!: string;
   emailSsl: boolean = true;
   emailStarttls: boolean = false;
+  emailSslCertVerify: boolean = true;
   enable!: boolean;
   creator!: string;
   modifier!: string;
