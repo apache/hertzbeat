@@ -73,4 +73,25 @@ describe('ObservabilityService', () => {
     const options = http.post.calls.mostRecent().args[2] as HttpRequestOptions;
     expect(options.context.get(SILENT_HTTP_ERROR)).toBeTrue();
   });
+
+  it('uses the entity-free observability query contract', () => {
+    const http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
+    http.get.and.returnValue(of({ code: 0, data: {} }));
+    const service = new ObservabilityService(http);
+
+    service.metricInventory({}).subscribe();
+    expect(http.get.calls.mostRecent().args[0]).toBe('/observability/metrics/inventory');
+
+    service.queryMetrics({}, 'request_total').subscribe();
+    expect(http.get.calls.mostRecent().args[0]).toBe('/observability/metrics/query');
+
+    service.queryTraces({}, 0, 20).subscribe();
+    expect(http.get.calls.mostRecent().args[0]).toBe('/observability/traces');
+
+    service.traceOverview({}).subscribe();
+    expect(http.get.calls.mostRecent().args[0]).toBe('/observability/traces/overview');
+
+    service.traceDetail('trace/id').subscribe();
+    expect(http.get.calls.mostRecent().args[0]).toBe('/observability/traces/trace%2Fid');
+  });
 });

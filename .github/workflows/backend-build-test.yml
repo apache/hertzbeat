@@ -76,7 +76,7 @@ jobs:
       - name: Build backend Maven E2E modules
         run: |
           mvnd clean -B package \
-            -pl hertzbeat-e2e/hertzbeat-collector-common-e2e,hertzbeat-e2e/hertzbeat-collector-kafka-e2e,hertzbeat-e2e/hertzbeat-collector-basic-e2e,hertzbeat-e2e/hertzbeat-collector-mysql-r2dbc-e2e,hertzbeat-e2e/hertzbeat-log-e2e \
+            -pl hertzbeat-e2e/hertzbeat-collector-common-e2e,hertzbeat-e2e/hertzbeat-collector-kafka-e2e,hertzbeat-e2e/hertzbeat-collector-basic-e2e,hertzbeat-e2e/hertzbeat-collector-mysql-r2dbc-e2e,hertzbeat-e2e/hertzbeat-observability-e2e \
             -am \
             -Dmaven.test.skip=false \
             --file pom.xml
