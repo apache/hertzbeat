@@ -55,15 +55,15 @@ export class LogService {
   constructor(private http: HttpClient) {}
 
   list(options: LogQueryOptions): Observable<Message<Page<LogEntry>>> {
-    return this.http.get<Message<Page<LogEntry>>>('/logs/list', { params: this.params(options) });
+    return this.http.get<Message<Page<LogEntry>>>('/observability/logs', { params: this.params(options) });
   }
 
   overviewStats(options: LogQueryOptions): Observable<Message<LogOverviewStats>> {
-    return this.http.get<Message<LogOverviewStats>>('/logs/stats/overview', { params: this.params(options) });
+    return this.http.get<Message<LogOverviewStats>>('/observability/logs/overview', { params: this.params(options) });
   }
 
   trendStats(options: LogQueryOptions): Observable<Message<{ hourlyStats: Record<string, number> }>> {
-    return this.http.get<Message<{ hourlyStats: Record<string, number> }>>('/logs/stats/trend', {
+    return this.http.get<Message<{ hourlyStats: Record<string, number> }>>('/observability/logs/trend', {
       params: this.params(options)
     });
   }
@@ -71,7 +71,7 @@ export class LogService {
   batchDelete(timeUnixNanos: number[]): Observable<Message<string>> {
     let params = new HttpParams();
     timeUnixNanos.forEach(value => (params = params.append('timeUnixNanos', value)));
-    return this.http.delete<Message<string>>('/logs', { params });
+    return this.http.delete<Message<string>>('/observability/logs', { params });
   }
 
   private params(options: LogQueryOptions): HttpParams {

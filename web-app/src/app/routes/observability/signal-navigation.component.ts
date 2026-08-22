@@ -31,10 +31,12 @@ type SignalKind = 'metrics' | 'logs' | 'traces';
   standalone: true,
   imports: [I18nPipe, RouterModule, SharedModule],
   template: `
-    <nav [attr.aria-label]="'observability.navigation.signals' | i18n">
+    <nav class="signal-switch" [attr.aria-label]="'observability.navigation.signals' | i18n">
       <a
         nz-button
-        [nzType]="active === 'metrics' ? 'primary' : 'default'"
+        nzType="text"
+        class="signal-switch__item"
+        [class.signal-switch__item--active]="active === 'metrics'"
         routerLink="/metrics/manage"
         [queryParams]="context"
         [attr.aria-current]="active === 'metrics' ? 'page' : null"
@@ -42,7 +44,9 @@ type SignalKind = 'metrics' | 'logs' | 'traces';
       >
       <a
         nz-button
-        [nzType]="active === 'logs' ? 'primary' : 'default'"
+        nzType="text"
+        class="signal-switch__item"
+        [class.signal-switch__item--active]="active === 'logs'"
         routerLink="/log/manage"
         [queryParams]="context"
         [attr.aria-current]="active === 'logs' ? 'page' : null"
@@ -50,7 +54,9 @@ type SignalKind = 'metrics' | 'logs' | 'traces';
       >
       <a
         nz-button
-        [nzType]="active === 'traces' ? 'primary' : 'default'"
+        nzType="text"
+        class="signal-switch__item"
+        [class.signal-switch__item--active]="active === 'traces'"
         routerLink="/trace/manage"
         [queryParams]="context"
         [attr.aria-current]="active === 'traces' ? 'page' : null"
@@ -62,9 +68,25 @@ type SignalKind = 'metrics' | 'logs' | 'traces';
     `
       nav {
         display: flex;
+        gap: 2px;
+        padding: 3px;
+        background: rgba(63, 81, 181, 0.06);
+        border: 1px solid rgba(63, 81, 181, 0.12);
+        border-radius: 6px;
       }
-      a + a {
-        margin-left: -1px;
+      .signal-switch__item {
+        min-width: 64px;
+        border: 0;
+        box-shadow: none;
+      }
+      .signal-switch__item--active {
+        color: #fff;
+        background: #3f51b5;
+      }
+      .signal-switch__item--active:hover,
+      .signal-switch__item--active:focus {
+        color: #fff;
+        background: #34449c;
       }
     `
   ]
