@@ -84,8 +84,6 @@ resourceRole:
   # route forwards a raw promql expression straight to the time series database
   - /api/warehouse/**===get===[admin,user,guest]
   - /api/warehouse/query===post===[admin]
-  - /api/logs/otlp/**===post===[admin,user]
-  - /api/logs===delete===[admin]
   - /api/v2/alerts===post===[admin,user]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
@@ -107,8 +105,12 @@ resourceRole:
   - /api/ai/**===post===[admin]
   - /api/ai/**===put===[admin]
   - /api/ai/**===delete===[admin]
-  - /api/logs/sse/**===get===[admin,user,guest]
+  - /api/otlp/v1/**===post===[admin,user]
+  # deprecated 1.8.x OTLP log aliases, forwarded to /api/otlp/v1/logs, removed in 2.0
+  - /api/logs/otlp/**===post===[admin,user]
   - /api/logs/ingest/**===post===[admin,user]
+  - /api/observability/logs===delete===[admin]
+  - /api/observability/**===get===[admin,user,guest]
   # The OpenAPI document is a map of every route, parameter and model, so it is
   # scoped like any other administrative resource instead of being anonymous
   - /v3/api-docs/**===get===[admin]
@@ -130,7 +132,6 @@ excludedResource:
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
-  - /api/observability/capability===get
   - /api/push/**===*
   - /api/status/page/public/**===*
   # web ui resource

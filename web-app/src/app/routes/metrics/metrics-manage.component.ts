@@ -42,6 +42,7 @@ import {
 } from '../observability/signal-query-context';
 import { SignalStorageGuideComponent } from '../observability/signal-storage-guide.component';
 import { SignalTimeRangeComponent } from '../observability/signal-time-range.component';
+import { SignalWorkspaceComponent } from '../observability/signal-workspace.component';
 
 interface MetricTableRow {
   timestamp: number;
@@ -64,7 +65,8 @@ interface MetricTableRow {
     NzAutocompleteModule,
     SignalNavigationComponent,
     SignalStorageGuideComponent,
-    SignalTimeRangeComponent
+    SignalTimeRangeComponent,
+    SignalWorkspaceComponent
   ],
   templateUrl: './metrics-manage.component.html',
   styleUrl: './metrics-manage.component.less'

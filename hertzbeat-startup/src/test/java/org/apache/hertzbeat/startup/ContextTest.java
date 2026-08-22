@@ -19,6 +19,7 @@ package org.apache.hertzbeat.startup;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.annotation.Resource;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
@@ -43,8 +44,8 @@ import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
-import org.apache.hertzbeat.log.controller.OtlpSignalController;
-import org.apache.hertzbeat.log.controller.ThreeSignalQueryController;
+import org.apache.hertzbeat.observability.controller.OtlpSignalController;
+import org.apache.hertzbeat.observability.controller.ThreeSignalQueryController;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.iotdb.IotDbDataStorage;
@@ -54,6 +55,8 @@ import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisDataStorage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * Manager Test
@@ -111,6 +114,16 @@ class ContextTest extends AbstractSpringIntegrationTest {
         // Greptime-only signal controllers must not break the default application context.
         assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(OtlpSignalController.class));
         assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(ThreeSignalQueryController.class));
+    }
+
+    @Test
+    void canonicalOtlpLogRouteShouldBeAvailableWithoutGreptime() {
+        RequestMappingHandlerMapping handlerMapping = ctx.getBean(
+                "requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
+
+        assertTrue(handlerMapping.getHandlerMethods().keySet().stream()
+                .anyMatch(mapping -> mapping.getPatternValues().contains("/api/otlp/v1/logs")
+                        && mapping.getMethodsCondition().getMethods().contains(RequestMethod.POST)));
     }
 
 }

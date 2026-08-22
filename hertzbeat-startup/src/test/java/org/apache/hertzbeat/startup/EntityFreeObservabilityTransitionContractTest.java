@@ -1,0 +1,271 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.startup;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
+
+class EntityFreeObservabilityTransitionContractTest {
+
+    private static final Path REPOSITORY_ROOT = repositoryRoot();
+
+    @Test
+    void reactorAndRuntimeShouldOwnOneObservabilityModule() throws IOException {
+        String rootPom = Files.readString(REPOSITORY_ROOT.resolve("pom.xml"));
+        String managerPom = Files.readString(REPOSITORY_ROOT.resolve("hertzbeat-manager/pom.xml"));
+
+        assertTrue(rootPom.contains("<module>hertzbeat-observability</module>"));
+        assertFalse(rootPom.contains("<module>hertzbeat-log</module>"));
+        assertTrue(managerPom.contains("<artifactId>hertzbeat-observability</artifactId>"));
+        assertFalse(managerPom.contains("<artifactId>hertzbeat-log</artifactId>"));
+        assertFalse(Files.exists(REPOSITORY_ROOT.resolve("hertzbeat-log")));
+    }
+
+    @Test
+    void productionSourcesShouldExposeOnlyTheCanonicalEntityFreeContract() throws IOException {
+        Path sourceRoot = REPOSITORY_ROOT.resolve("hertzbeat-observability/src/main/java");
+        assertTrue(Files.isDirectory(sourceRoot));
+
+        // The deprecated 1.8.x OTLP log ingestion aliases live in exactly one class so the
+        // 2.0 removal is a single file delete plus the matching Sureness rules.
+        Path legacyAliasController = sourceRoot.resolve(
+                "org/apache/hertzbeat/observability/controller/LegacyOtlpLogRouteController.java");
+        assertTrue(Files.isRegularFile(legacyAliasController));
+        String legacyAliasSource = Files.readString(legacyAliasController);
+        assertTrue(legacyAliasSource.contains("@Deprecated(since = \"1.9.0\", forRemoval = true)"));
+        assertTrue(legacyAliasSource.contains("/api/logs/otlp/v1/logs"));
+        assertTrue(legacyAliasSource.contains("/api/logs/ingest/{protocol}"));
+        assertTrue(legacyAliasSource.contains("logIngestionService.ingestHttp(content, headers)"));
+
+        String productionSources;
+        try (Stream<Path> sources = Files.walk(sourceRoot)) {
+            productionSources = sources
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> !path.equals(legacyAliasController))
+                    .map(EntityFreeObservabilityTransitionContractTest::readSource)
+                    .reduce("", (left, right) -> left + '\n' + right);
+        }
+
+        assertTrue(productionSources.contains("/api/otlp/v1"));
+        assertTrue(productionSources.contains("/api/observability"));
+        assertFalse(productionSources.contains("/api/logs/otlp"));
+        assertFalse(productionSources.contains("/api/logs/ingest"));
+        assertFalse(productionSources.contains("/api/logs"));
+        assertFalse(productionSources.contains("/api/ingestion/otlp"));
+        assertFalse(productionSources.contains("/api/traces"));
+        assertFalse(productionSources.contains("org.apache.hertzbeat.manager.service.entity"));
+        assertFalse(productionSources.contains("HERTZBEAT_ENTITY_ID"));
+        assertFalse(productionSources.contains("HERTZBEAT_ENTITY_TYPE"));
+        assertFalse(productionSources.contains("EntityObservability"));
+        assertFalse(productionSources.contains("EntityTrace"));
+        assertFalse(productionSources.contains("OtlpEntity"));
+    }
+
+    @Test
+    void warehouseShouldOwnGreptimeSignalStorageSchemaAndQueries() throws IOException {
+        Path warehouseRoot = REPOSITORY_ROOT.resolve("hertzbeat-warehouse/src/main");
+        Path observabilityRoot = REPOSITORY_ROOT.resolve("hertzbeat-observability/src/main");
+
+        assertTrue(Files.isRegularFile(warehouseRoot.resolve(
+                "java/org/apache/hertzbeat/warehouse/store/history/tsdb/greptime/GreptimeSignalInitializer.java")));
+        assertTrue(Files.isRegularFile(warehouseRoot.resolve(
+                "java/org/apache/hertzbeat/warehouse/store/history/tsdb/greptime/GreptimeOtlpSignalStorage.java")));
+        assertTrue(Files.isRegularFile(warehouseRoot.resolve(
+                "java/org/apache/hertzbeat/warehouse/service/impl/GreptimeThreeSignalQueryService.java")));
+        assertTrue(Files.isRegularFile(warehouseRoot.resolve("resources/greptime/tables/hertzbeat_traces.sql")));
+        assertTrue(Files.isRegularFile(warehouseRoot.resolve(
+                "resources/greptime/pipelines/hertzbeat_otlp_log_v1.yaml")));
+
+        assertFalse(Files.exists(observabilityRoot.resolve(
+                "java/org/apache/hertzbeat/observability/config/GreptimeSignalInitializer.java")));
+        assertFalse(Files.exists(observabilityRoot.resolve(
+                "java/org/apache/hertzbeat/observability/service/impl/GreptimeThreeSignalQueryService.java")));
+        assertFalse(Files.exists(observabilityRoot.resolve("resources/greptime")));
+
+        String warehousePom = Files.readString(REPOSITORY_ROOT.resolve("hertzbeat-warehouse/pom.xml"));
+        assertFalse(warehousePom.contains("<artifactId>hertzbeat-observability</artifactId>"));
+        String observabilityForwarder = Files.readString(observabilityRoot.resolve(
+                "java/org/apache/hertzbeat/observability/service/impl/GreptimeOtlpSignalForwarder.java"));
+        assertTrue(observabilityForwarder.contains("OtlpSignalStorage"));
+        assertFalse(observabilityForwarder.contains("RestTemplate"));
+    }
+
+    @Test
+    void currentSecurityConfigurationsShouldProtectOnlyCanonicalObservabilityRoutes() throws IOException {
+        // The runtime configuration is the source of truth; pinning its observability surface
+        // once here keeps all nine copies from drifting together unnoticed.
+        SurenessRules baseline = observabilityRules("hertzbeat-startup/src/main/resources/sureness.yml");
+        assertEquals(Set.of(
+                "/api/otlp/v1/**===post===[admin,user]",
+                // deprecated 1.8.x ingestion aliases keep the canonical write roles
+                "/api/logs/otlp/**===post===[admin,user]",
+                "/api/logs/ingest/**===post===[admin,user]",
+                "/api/observability/logs===delete===[admin]",
+                "/api/observability/**===get===[admin,user,guest]",
+                "/api/alert/sse/**===get===[admin,user,guest]",
+                "/api/manager/sse/**===get===[admin,user,guest]"),
+                baseline.resourceRole());
+        assertEquals(Set.of(), baseline.excludedResource());
+
+        // Every deployable and test copy must carry exactly the baseline rules on this surface,
+        // so a partial edit that skips a file fails on the file that was missed.
+        for (String relativePath : new String[] {
+                "hertzbeat-manager/src/test/resources/sureness.yml",
+                "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/sureness.yml",
+                "script/sureness.yml",
+                "script/docker-compose/hertzbeat-mysql-iotdb/conf/sureness.yml",
+                "script/docker-compose/hertzbeat-mysql-tdengine/conf/sureness.yml",
+                "script/docker-compose/hertzbeat-mysql-victoria-metrics/conf/sureness.yml",
+                "script/docker-compose/hertzbeat-postgresql-greptimedb/conf/sureness.yml",
+                "script/docker-compose/hertzbeat-postgresql-victoria-metrics/conf/sureness.yml"
+        }) {
+            SurenessRules copy = observabilityRules(relativePath);
+            assertEquals(baseline.resourceRole(), copy.resourceRole(), relativePath);
+            assertEquals(baseline.excludedResource(), copy.excludedResource(), relativePath);
+        }
+    }
+
+    private record SurenessRules(Set<String> resourceRole, Set<String> excludedResource) {
+    }
+
+    @SuppressWarnings("unchecked")
+    private static SurenessRules observabilityRules(String relativePath) throws IOException {
+        Map<String, Object> document = new Yaml().load(Files.readString(REPOSITORY_ROOT.resolve(relativePath)));
+        return new SurenessRules(
+                observabilitySubset((List<String>) document.get("resourceRole")),
+                observabilitySubset((List<String>) document.get("excludedResource")));
+    }
+
+    private static Set<String> observabilitySubset(List<String> rules) {
+        // The route prefixes this transition owns, plus the sse streams scoped alongside it.
+        List<String> observabilityRoutePrefixes = List.of(
+                "/api/otlp", "/api/observability", "/api/logs", "/api/traces",
+                "/api/ingestion", "/api/alert/sse", "/api/manager/sse");
+        return rules.stream()
+                .filter(rule -> observabilityRoutePrefixes.stream().anyMatch(rule::startsWith))
+                .collect(Collectors.toSet());
+    }
+
+    @Test
+    void productAndSelfTelemetryShouldUseSeparateSignalTables() throws IOException {
+        String traceSchema = Files.readString(REPOSITORY_ROOT.resolve(
+                "hertzbeat-warehouse/src/main/resources/greptime/tables/hertzbeat_traces.sql"));
+        assertTrue(traceSchema.contains("CREATE TABLE IF NOT EXISTS hertzbeat_traces"));
+        assertFalse(traceSchema.contains("CREATE TABLE IF NOT EXISTS hzb_traces"));
+
+        String selfTelemetry = Files.readString(REPOSITORY_ROOT.resolve(
+                "hertzbeat-otel/src/main/java/org/apache/hertzbeat/otel/config/OpenTelemetryConfig.java"));
+        assertTrue(selfTelemetry.contains("DEFAULT_LOGS_TABLE_NAME = \"hzb_internal_logs\""));
+        assertTrue(selfTelemetry.contains("DEFAULT_TRACES_TABLE_NAME = \"hzb_internal_traces\""));
+        assertFalse(selfTelemetry.contains("DEFAULT_LOGS_TABLE_NAME = \"hertzbeat_logs\""));
+        assertFalse(selfTelemetry.contains("DEFAULT_TRACES_TABLE_NAME = \"hertzbeat_traces\""));
+    }
+
+    @Test
+    void currentClientsDocsAndProbesShouldUseCanonicalObservabilityRoutes() throws IOException {
+        for (String relativePath : new String[] {
+                "web-app/src/app/service/log.service.ts",
+                "web-app/src/app/service/observability.service.ts",
+                "web-app/src/app/routes/log/log-stream/log-stream.component.ts",
+                "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/vector.yml"
+        }) {
+            String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
+            assertFalse(content.contains("/api/logs"), relativePath);
+            assertFalse(content.contains("/logs/list"), relativePath);
+            assertFalse(content.contains("/logs/stats"), relativePath);
+            assertFalse(content.contains("/ingestion/otlp/metrics"), relativePath);
+            assertFalse(content.contains("/traces/list"), relativePath);
+            assertFalse(content.contains("/traces/stats"), relativePath);
+        }
+
+        // Integration docs must lead with the canonical route; the 1.8.x ingestion paths may only
+        // appear inside the upgrade notice that marks them as deprecated aliases.
+        for (String relativePath : new String[] {
+                "web-app/src/assets/doc/log-integration/otlp.en-US.md",
+                "web-app/src/assets/doc/log-integration/otlp.zh-CN.md",
+                "home/docs/help/log_integration.md",
+                "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/help/log_integration.md"
+        }) {
+            String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
+            assertTrue(content.contains("POST /api/otlp/v1/logs"), relativePath);
+            assertTrue(content.contains("/api/otlp/v1/logs"), relativePath);
+            assertTrue(content.contains("Deprecation: true"), relativePath);
+            assertFalse(content.contains("logs_endpoint: http://{hertzbeat_host}:1157/api/logs/"), relativePath);
+            assertFalse(content.contains("/logs/list"), relativePath);
+            assertFalse(content.contains("/logs/stats"), relativePath);
+            assertFalse(content.contains("/ingestion/otlp/metrics"), relativePath);
+            assertFalse(content.contains("/traces/list"), relativePath);
+            assertFalse(content.contains("/traces/stats"), relativePath);
+        }
+
+        // The upgrade guide must carry the 1.8.x -> 1.9.0 route table so operators see the break.
+        for (String relativePath : new String[] {
+                "home/docs/start/upgrade.md",
+                "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/start/upgrade.md"
+        }) {
+            String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
+            assertTrue(content.contains("`POST /api/logs/otlp/v1/logs` | `POST /api/otlp/v1/logs`"), relativePath);
+            assertTrue(content.contains("`GET /api/logs/list` | `GET /api/observability/logs`"), relativePath);
+            assertTrue(content.contains("`GET /api/traces/**` | `GET /api/observability/traces/**`"), relativePath);
+        }
+
+        String logService = Files.readString(REPOSITORY_ROOT.resolve("web-app/src/app/service/log.service.ts"));
+        assertTrue(logService.contains("/observability/logs"));
+        String observabilityService = Files.readString(
+                REPOSITORY_ROOT.resolve("web-app/src/app/service/observability.service.ts"));
+        assertTrue(observabilityService.contains("/observability/metrics/query"));
+        assertTrue(observabilityService.contains("/observability/traces"));
+        String streamComponent = Files.readString(REPOSITORY_ROOT.resolve(
+                "web-app/src/app/routes/log/log-stream/log-stream.component.ts"));
+        assertTrue(streamComponent.contains("/api/observability/logs/stream"));
+        String vectorConfig = Files.readString(REPOSITORY_ROOT.resolve(
+                "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/vector.yml"));
+        assertTrue(vectorConfig.contains("/api/otlp/v1/logs"));
+    }
+
+    private static String readSource(Path path) {
+        try {
+            return Files.readString(path);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read " + path, exception);
+        }
+    }
+
+    private static Path repositoryRoot() {
+        Path candidate = Path.of("").toAbsolutePath();
+        while (candidate != null && !Files.isRegularFile(candidate.resolve("mvnw"))) {
+            candidate = candidate.getParent();
+        }
+        if (candidate == null) {
+            throw new IllegalStateException("Unable to locate repository root");
+        }
+        return candidate;
+    }
+}
