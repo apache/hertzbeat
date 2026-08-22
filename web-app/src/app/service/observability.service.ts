@@ -145,7 +145,7 @@ export class ObservabilityService {
   }
 
   metricInventory(context: SignalContext, limit = 100): Observable<Message<{ metricNames: string[] }>> {
-    return this.http.get<Message<{ metricNames: string[] }>>('/ingestion/otlp/metrics/inventory', {
+    return this.http.get<Message<{ metricNames: string[] }>>('/observability/metrics/inventory', {
       params: this.contextParams(context).set('limit', limit)
     });
   }
@@ -162,7 +162,7 @@ export class ObservabilityService {
     if (filter) params = params.set('filter', filter);
     if (groupBy) params = params.set('groupBy', groupBy);
     if (aggregation) params = params.set('aggregation', aggregation);
-    return this.http.get<Message<MetricsConsole>>('/ingestion/otlp/metrics/console', { params });
+    return this.http.get<Message<MetricsConsole>>('/observability/metrics/query', { params });
   }
 
   queryTraces(
@@ -176,17 +176,17 @@ export class ObservabilityService {
     let params = this.contextParams(context).set('pageIndex', pageIndex).set('pageSize', pageSize).set('errorOnly', errorOnly);
     if (minDurationMs != null) params = params.set('minDurationMs', minDurationMs);
     if (maxDurationMs != null) params = params.set('maxDurationMs', maxDurationMs);
-    return this.http.get<Message<SignalPage<TraceListItem>>>('/traces/list', { params });
+    return this.http.get<Message<SignalPage<TraceListItem>>>('/observability/traces', { params });
   }
 
   traceOverview(context: SignalContext, errorOnly = false): Observable<Message<TraceOverview>> {
-    return this.http.get<Message<TraceOverview>>('/traces/stats/overview', {
+    return this.http.get<Message<TraceOverview>>('/observability/traces/overview', {
       params: this.contextParams(context).set('errorOnly', errorOnly)
     });
   }
 
   traceDetail(traceId: string): Observable<Message<TraceDetail>> {
-    return this.http.get<Message<TraceDetail>>(`/traces/${encodeURIComponent(traceId)}`);
+    return this.http.get<Message<TraceDetail>>(`/observability/traces/${encodeURIComponent(traceId)}`);
   }
 
   private probeMetrics(config: OtlpConnectionForm, now: number): Observable<SignalProbeResult> {
@@ -212,7 +212,7 @@ export class ObservabilityService {
       switchMap(() => timer(800)),
       switchMap(() => {
         const params = this.signalParams(config, now).set('query', 'hertzbeat_onboarding_probe').set('step', 1);
-        return this.http.get<Message<MetricsConsole>>('/ingestion/otlp/metrics/console', {
+        return this.http.get<Message<MetricsConsole>>('/observability/metrics/query', {
           params,
           context: this.silentProbeContext
         });
@@ -254,7 +254,7 @@ export class ObservabilityService {
     return this.send(config, 'logs', payload).pipe(
       switchMap(() => timer(800)),
       switchMap(() =>
-        this.http.get<Message<SignalPage<LogProbeEntry>>>('/logs/list', {
+        this.http.get<Message<SignalPage<LogProbeEntry>>>('/observability/logs', {
           params: this.signalParams(config, now).set('traceId', traceId).set('pageSize', 1),
           context: this.silentProbeContext
         })
@@ -299,7 +299,7 @@ export class ObservabilityService {
     return this.send(config, 'traces', payload).pipe(
       switchMap(() => timer(800)),
       switchMap(() =>
-        this.http.get<Message<SignalPage<TraceListItem>>>('/traces/list', {
+        this.http.get<Message<SignalPage<TraceListItem>>>('/observability/traces', {
           params: this.signalParams(config, now).set('traceId', traceId).set('pageSize', 1),
           context: this.silentProbeContext
         })

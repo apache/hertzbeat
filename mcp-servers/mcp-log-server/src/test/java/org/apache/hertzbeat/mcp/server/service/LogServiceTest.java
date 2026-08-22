@@ -45,7 +45,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
  */
 class LogServiceTest {
 
-    private static final String BASE_QUERY = "SELECT timestamp, severity_text, body FROM hzb_logs";
+    private static final String BASE_QUERY = "SELECT timestamp, severity_text, body FROM hzb_internal_logs";
 
     @Test
     void shouldBuildDefaultReadOnlyQuery() {
@@ -70,13 +70,13 @@ class LogServiceTest {
     @Test
     void shouldBuildQueryFromValidatedFilters() {
         String query = LogService.buildQuery(
-                " error ", " x'); DELETE FROM hzb_logs; -- ", 1L, 2L, 10);
+                " error ", " x'); DELETE FROM hzb_internal_logs; -- ", 1L, 2L, 10);
 
         assertThat(query).isEqualTo(BASE_QUERY
                 + " WHERE timestamp >= 1000000"
                 + " AND timestamp <= 2000000"
                 + " AND severity_text = 'ERROR'"
-                + " AND matches_term(body, 'x''); DELETE FROM hzb_logs; --')"
+                + " AND matches_term(body, 'x''); DELETE FROM hzb_internal_logs; --')"
                 + " ORDER BY timestamp DESC LIMIT 10");
     }
 

@@ -1,8 +1,14 @@
 > HertzBeat 支持 OpenTelemetry Logs Protocol (OTLP) 协议，外部系统可以通过 OTLP 方式将日志数据推送到 HertzBeat 日志平台。
 
+HertzBeat 1.9.0 的指标、日志和链路统一使用 `/api/otlp/v1/{signal}` 接收协议。该过渡版本不包含 Entity：接收遥测数据不会创建或绑定 Entity，外部 OTLP 数据也与 HertzBeat 自身遥测数据分开存储。
+
 ### 接口端点
 
-`POST /api/logs/otlp/v1/logs`
+`POST /api/otlp/v1/logs`
+
+启用 GreptimeDB 存储时，还可通过 OTLP/gRPC 接收指标、日志与链路，凭证与 HTTP 一致。exporter 指向 `{hertzbeat_host}:14317` 即可——所有部署方式都是这一个端口，Docker 镜像原样发布。这里刻意没有使用 OpenTelemetry 标准的 4317，因为同机的 OTel Collector 通常已经占着它。可用 `hertzbeat.otlp.grpc.port` 调整监听端口，`hertzbeat.otlp.grpc.enabled=false` 关闭该监听器。
+
+> 从 1.8.x 升级：原 `POST /api/logs/otlp/v1/logs` / `POST /api/logs/ingest/otlp` 在 1.9.x 仍作为 deprecated 别名可用（响应带 `Deprecation: true`），2.0 将移除，请把 exporter 指向 `/api/otlp/v1/logs`。
 
 ### 请求头
 
@@ -71,7 +77,7 @@
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
+    logs_endpoint: http://{hertzbeat_host}:1157/api/otlp/v1/logs
     compression: none
     encoding: json
     headers:
