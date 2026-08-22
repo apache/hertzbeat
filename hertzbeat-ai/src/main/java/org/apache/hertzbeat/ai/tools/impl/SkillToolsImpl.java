@@ -103,7 +103,7 @@ public class SkillToolsImpl implements SkillTools {
 
     @Override
     @Tool(name = "executeSkill",
-          description = "Execute a diagnostic skill. For skills requiring monitorId, first use queryMonitors "
+          description = "Execute a diagnostic skill. For skills requiring monitorId, first use query_monitors "
                   + "to find the target monitor's ID. Report-type skills will return results directly to the user "
                   + "without further AI processing. Use listSkills to see available skills.")
     public String executeSkill(
