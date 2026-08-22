@@ -15,111 +15,189 @@
   limitations under the License.
 -->
 <app-signal-storage-guide *ngIf="!storageSupported"></app-signal-storage-guide>
-<section class="signal-page" *ngIf="storageSupported">
-  <header class="page-heading"
-    ><div
-      ><h1>{{ 'observability.logs.title' | i18n }}</h1
-      ><p>{{ 'observability.logs.subtitle' | i18n }}</p></div
-    ><div class="heading-actions"
-      ><app-signal-navigation active="logs" [context]="navigationContext()"></app-signal-navigation
-      ><div class="mode-switch"
-        ><button nz-button [nzType]="mode === 'query' ? 'primary' : 'default'" (click)="setMode('query')">{{
-          'observability.logs.mode.query' | i18n
-        }}</button
-        ><button nz-button [nzType]="mode === 'stream' ? 'primary' : 'default'" (click)="setMode('stream')">{{
-          'observability.logs.mode.stream' | i18n
-        }}</button></div
-      ></div
-    ></header
-  >
-  <ng-container *ngIf="mode === 'query'; else streamMode">
-    <div class="query-toolbar">
-      <app-signal-time-range
-        [(value)]="timeRange"
-        [(refreshSeconds)]="refreshSeconds"
-        (apply)="search()"
-        (refresh)="refreshToNow()"
-      ></app-signal-time-range>
-      <input nz-input [(ngModel)]="serviceName" [placeholder]="'observability.filter.service' | i18n" />
-      <input nz-input [(ngModel)]="environment" [placeholder]="'observability.filter.environment' | i18n" />
-      <input nz-input [(ngModel)]="traceId" [placeholder]="'observability.filter.trace-id' | i18n" />
-      <nz-select [(ngModel)]="severityText" nzAllowClear [nzPlaceHolder]="'observability.logs.severity' | i18n">
-        <nz-option *ngFor="let level of severityLevels" [nzValue]="level" [nzLabel]="level"></nz-option>
-      </nz-select>
-      <input nz-input [(ngModel)]="searchContent" [placeholder]="'observability.logs.search' | i18n" />
-      <input
-        nz-input
-        class="resource-expression mono"
-        [(ngModel)]="resource"
-        [placeholder]="'observability.logs.resource-filter' | i18n"
-        (keyup.enter)="search()"
-      />
-      <button nz-button nzType="primary" [nzLoading]="loading" (click)="search()"
-        ><span nz-icon nzType="search"></span>{{ 'common.button.query' | i18n }}</button
+<app-signal-workspace
+  *ngIf="storageSupported"
+  [title]="'observability.logs.title' | i18n"
+  [subtitle]="'observability.logs.subtitle' | i18n"
+  [queryLabel]="'observability.time.toolbar' | i18n"
+  [showQueryPanel]="mode === 'query'"
+>
+  <div workspace-actions class="heading-actions">
+    <app-signal-navigation active="logs" [context]="navigationContext()"></app-signal-navigation>
+    <div class="mode-switch" role="group" [attr.aria-label]="'observability.logs.title' | i18n">
+      <button
+        nz-button
+        [nzType]="mode === 'query' ? 'primary' : 'text'"
+        [attr.aria-pressed]="mode === 'query'"
+        (click)="setMode('query')"
+        >{{ 'observability.logs.mode.query' | i18n }}</button
+      >
+      <button
+        nz-button
+        [nzType]="mode === 'stream' ? 'primary' : 'text'"
+        [attr.aria-pressed]="mode === 'stream'"
+        (click)="setMode('stream')"
+        >{{ 'observability.logs.mode.stream' | i18n }}</button
       >
     </div>
-    <nz-alert *ngIf="error" nzType="error" nzShowIcon [nzMessage]="error"></nz-alert>
-    <div class="overview-strip"
-      ><div
-        ><span>{{ 'observability.logs.total' | i18n }}</span
-        ><strong>{{ overview.totalCount || 0 }}</strong></div
-      ><div
-        ><span>ERROR</span><strong>{{ overview.errorCount || 0 }}</strong></div
-      ><div
-        ><span>WARN</span><strong>{{ overview.warnCount || 0 }}</strong></div
-      ><div
-        ><span>{{ 'observability.logs.with-trace' | i18n }}</span
-        ><strong>{{ overview.traceCoverage?.withTrace || 0 }}</strong></div
-      ></div
+  </div>
+
+  <app-signal-time-range
+    workspace-time
+    [(value)]="timeRange"
+    [(refreshSeconds)]="refreshSeconds"
+    (apply)="search()"
+    (refresh)="refreshToNow()"
+  ></app-signal-time-range>
+
+  <div workspace-filters class="query-fields logs-query-fields">
+    <label class="query-field">
+      <span class="query-field-label">{{ 'observability.filter.service' | i18n }}</span>
+      <input
+        nz-input
+        [(ngModel)]="serviceName"
+        [placeholder]="'observability.filter.service' | i18n"
+        [attr.aria-label]="'observability.filter.service' | i18n"
+      />
+    </label>
+    <label class="query-field">
+      <span class="query-field-label">{{ 'observability.filter.environment' | i18n }}</span>
+      <input
+        nz-input
+        [(ngModel)]="environment"
+        [placeholder]="'observability.filter.environment' | i18n"
+        [attr.aria-label]="'observability.filter.environment' | i18n"
+      />
+    </label>
+    <label class="query-field">
+      <span class="query-field-label">{{ 'observability.logs.search' | i18n }}</span>
+      <input
+        nz-input
+        [(ngModel)]="searchContent"
+        [placeholder]="'observability.logs.search' | i18n"
+        [attr.aria-label]="'observability.logs.search' | i18n"
+      />
+    </label>
+    <button class="query-submit" nz-button nzType="primary" [nzLoading]="loading" (click)="search()">
+      <span nz-icon nzType="search"></span>{{ 'common.button.query' | i18n }}
+    </button>
+    <details class="advanced-filters">
+      <summary>{{ 'observability.filter.advanced' | i18n }}</summary>
+      <div class="advanced-filter-grid logs-advanced-filter-grid">
+        <label class="query-field">
+          <span class="query-field-label">{{ 'observability.logs.severity' | i18n }}</span>
+          <nz-select
+            [(ngModel)]="severityText"
+            nzAllowClear
+            [nzPlaceHolder]="'observability.logs.severity' | i18n"
+            [attr.aria-label]="'observability.logs.severity' | i18n"
+          >
+            <nz-option *ngFor="let level of severityLevels" [nzValue]="level" [nzLabel]="level"></nz-option>
+          </nz-select>
+        </label>
+        <label class="query-field">
+          <span class="query-field-label">{{ 'observability.filter.trace-id' | i18n }}</span>
+          <input
+            nz-input
+            class="mono"
+            [(ngModel)]="traceId"
+            [placeholder]="'observability.filter.trace-id' | i18n"
+            [attr.aria-label]="'observability.filter.trace-id' | i18n"
+          />
+        </label>
+        <label class="query-field">
+          <span class="query-field-label">{{ 'observability.logs.resource' | i18n }}</span>
+          <input
+            nz-input
+            class="resource-expression mono"
+            [(ngModel)]="resource"
+            [placeholder]="'observability.logs.resource-filter' | i18n"
+            [attr.aria-label]="'observability.logs.resource' | i18n"
+            (keyup.enter)="search()"
+          />
+        </label>
+      </div>
+    </details>
+  </div>
+
+  <div workspace-alert><nz-alert *ngIf="error" nzType="error" nzShowIcon [nzMessage]="error"></nz-alert></div>
+
+  <div *ngIf="mode === 'query'" workspace-summary class="overview-strip logs-overview">
+    <div
+      ><span>{{ 'observability.logs.total' | i18n }}</span
+      ><strong>{{ overview.totalCount || 0 }}</strong></div
     >
-    <div class="section-title"
-      ><h2>{{ 'observability.logs.trend' | i18n }}</h2
-      ><span>{{ total }}</span></div
+    <div [class.overview-alert]="(overview.errorCount || 0) > 0"
+      ><span>ERROR</span><strong>{{ overview.errorCount || 0 }}</strong></div
     >
-    <section class="chart-region"
-      ><div *ngIf="total; else emptyTrend" echarts [options]="chartOption" class="trend-chart"></div
-      ><ng-template #emptyTrend><nz-empty [nzNotFoundContent]="'observability.empty.logs' | i18n"></nz-empty></ng-template
-    ></section>
-    <div class="section-title"
-      ><h2>{{ 'observability.logs.results' | i18n }}</h2
-      ><span>{{ total }}</span></div
+    <div
+      ><span>WARN</span><strong>{{ overview.warnCount || 0 }}</strong></div
     >
-    <nz-table
-      #logTable
-      [nzData]="logs"
-      nzSize="small"
-      [nzLoading]="loading"
-      [nzFrontPagination]="false"
-      [nzTotal]="total"
-      [nzPageIndex]="pageIndex"
-      [nzPageSize]="pageSize"
-      (nzPageIndexChange)="pageChanged($event)"
+    <div
+      ><span>{{ 'observability.logs.with-trace' | i18n }}</span
+      ><strong>{{ overview.traceCoverage?.withTrace || 0 }}</strong></div
     >
-      <thead
-        ><tr
-          ><th>{{ 'observability.column.time' | i18n }}</th
-          ><th>{{ 'observability.logs.severity' | i18n }}</th
-          ><th>{{ 'observability.column.service' | i18n }}</th
-          ><th>{{ 'observability.logs.message' | i18n }}</th
-          ><th>Trace ID</th></tr
-        ></thead
+  </div>
+
+  <div *ngIf="mode === 'query'" workspace-results class="evidence-stack">
+    <section class="evidence-section">
+      <header class="evidence-heading">
+        <div class="evidence-heading-title">
+          <h2>{{ 'observability.logs.trend' | i18n }}</h2>
+          <span>{{ total }}</span>
+        </div>
+      </header>
+      <div class="chart-region">
+        <div *ngIf="total; else emptyTrend" echarts [options]="chartOption" class="trend-chart"></div>
+        <ng-template #emptyTrend><nz-empty [nzNotFoundContent]="'observability.empty.logs' | i18n"></nz-empty></ng-template>
+      </div>
+    </section>
+
+    <section class="evidence-section">
+      <header class="evidence-heading">
+        <div class="evidence-heading-title">
+          <h2>{{ 'observability.logs.results' | i18n }}</h2>
+          <span>{{ total }}</span>
+        </div>
+      </header>
+      <nz-table
+        #logTable
+        [nzData]="logs"
+        nzSize="small"
+        [nzLoading]="loading"
+        [nzFrontPagination]="false"
+        [nzTotal]="total"
+        [nzPageIndex]="pageIndex"
+        [nzPageSize]="pageSize"
+        (nzPageIndexChange)="pageChanged($event)"
       >
-      <tbody
-        ><tr *ngFor="let log of logTable.data" (click)="open(log)"
-          ><td>{{ (log.timeUnixNano || 0) / 1000000 | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}</td
-          ><td
-            ><nz-tag [nzColor]="severityColor(log.severityNumber)">{{ log.severityText || log.severityNumber || '-' }}</nz-tag></td
-          ><td>{{ service(log) }}</td
-          ><td class="message-cell">{{ bodyText(log) }}</td
-          ><td
-            ><button *ngIf="log.traceId" nz-button nzType="link" class="mono" (click)="$event.stopPropagation(); openTrace(log)">{{
-              log.traceId
-            }}</button
-            ><span *ngIf="!log.traceId">-</span></td
-          ></tr
-        ></tbody
-      >
-    </nz-table>
+        <thead
+          ><tr
+            ><th>{{ 'observability.column.time' | i18n }}</th
+            ><th>{{ 'observability.logs.severity' | i18n }}</th
+            ><th>{{ 'observability.column.service' | i18n }}</th
+            ><th>{{ 'observability.logs.message' | i18n }}</th
+            ><th>Trace ID</th></tr
+          ></thead
+        >
+        <tbody
+          ><tr *ngFor="let log of logTable.data" (click)="open(log)"
+            ><td>{{ (log.timeUnixNano || 0) / 1000000 | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}</td
+            ><td
+              ><nz-tag [nzColor]="severityColor(log.severityNumber)">{{ log.severityText || log.severityNumber || '-' }}</nz-tag></td
+            ><td>{{ service(log) }}</td
+            ><td class="message-cell">{{ bodyText(log) }}</td
+            ><td
+              ><button *ngIf="log.traceId" nz-button nzType="link" class="mono" (click)="$event.stopPropagation(); openTrace(log)">{{
+                log.traceId
+              }}</button
+              ><span *ngIf="!log.traceId">-</span></td
+            ></tr
+          ></tbody
+        >
+      </nz-table>
+    </section>
+
     <nz-drawer
       [nzVisible]="detailVisible"
       nzPlacement="right"
@@ -136,13 +214,14 @@
         ><pre>{{ detailJson() }}</pre>
       </ng-container>
     </nz-drawer>
-  </ng-container>
-  <ng-template #streamMode>
+  </div>
+
+  <div *ngIf="mode === 'stream'" workspace-results class="stream-evidence">
     <app-log-stream
       [embedded]="true"
       [filterTraceId]="traceId"
       [filterSpanId]="spanId"
       [filterSeverityText]="severityText"
     ></app-log-stream>
-  </ng-template>
-</section>
+  </div>
+</app-signal-workspace>

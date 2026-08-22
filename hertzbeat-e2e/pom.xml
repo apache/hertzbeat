@@ -32,7 +32,7 @@
         <module>hertzbeat-collector-kafka-e2e</module>
         <module>hertzbeat-collector-basic-e2e</module>
         <module>hertzbeat-collector-mysql-r2dbc-e2e</module>
-        <module>hertzbeat-log-e2e</module>
+        <module>hertzbeat-observability-e2e</module>
     </modules>
 
     <properties>

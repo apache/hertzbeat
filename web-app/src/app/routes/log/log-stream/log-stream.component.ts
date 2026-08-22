@@ -163,7 +163,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Build filter parameters
     const filterParams = this.buildFilterParams();
-    const url = `/api/logs/sse/subscribe${filterParams ? `?${filterParams}` : ''}`;
+    const url = `/api/observability/logs/stream${filterParams ? `?${filterParams}` : ''}`;
     const token = this.localStorageService.getAuthorizationToken();
     const headers: Record<string, string> = {
       Accept: 'text/event-stream',
