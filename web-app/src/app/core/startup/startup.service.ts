@@ -71,7 +71,7 @@ export class StartupService {
               i18n: `monitor.app.${app}`
             });
           } else {
-            if (app != 'prometheus' && app != 'push') {
+            if (app != 'prometheus') {
               this.menuService.getItem('monitoring')?.children?.push({
                 text: app,
                 link: `/monitors?app=${app}`,
