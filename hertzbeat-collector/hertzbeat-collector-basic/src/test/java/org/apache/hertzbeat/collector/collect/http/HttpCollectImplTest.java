@@ -32,9 +32,12 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -673,5 +676,43 @@ class HttpCollectImplTest {
         assertEquals("heap", firstRow.getColumns(0));
         assertEquals("G1 Eden Space", firstRow.getColumns(1));
         capturedRows.forEach(t -> assertEquals(2, t.getColumnsList().size()));
+    }
+
+    @Test
+    void collectResolvesTimeExpressionsInUrlAndHeaders() throws Exception {
+        AtomicReference<String> requestUri = new AtomicReference<>();
+        AtomicReference<String> yearHeader = new AtomicReference<>();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requestUri.set(exchange.getRequestURI().toString());
+            yearHeader.set(exchange.getRequestHeaders().getFirst("X-Year"));
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            HttpProtocol http = HttpProtocol.builder()
+                    .method("GET")
+                    .host("127.0.0.1")
+                    .port(String.valueOf(server.getAddress().getPort()))
+                    .url("/metrics?year=${@year}")
+                    .headers(Map.of("X-Year", "${@year}"))
+                    .parseType(DispatchConstants.PARSE_DEFAULT)
+                    .build();
+            Metrics metrics = Metrics.builder()
+                    .http(http)
+                    .aliasFields(Lists.newArrayList("responseTime"))
+                    .build();
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+            httpCollectImpl.collect(builder, metrics);
+
+            String year = String.valueOf(LocalDateTime.now().getYear());
+            assertEquals("/metrics?year=" + year, requestUri.get());
+            assertEquals(year, yearHeader.get());
+        } finally {
+            server.stop(0);
+        }
     }
 }
