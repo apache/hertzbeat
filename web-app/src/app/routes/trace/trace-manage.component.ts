@@ -47,6 +47,7 @@ import {
 } from '../observability/signal-query-context';
 import { SignalStorageGuideComponent } from '../observability/signal-storage-guide.component';
 import { SignalTimeRangeComponent } from '../observability/signal-time-range.component';
+import { SignalWorkspaceComponent } from '../observability/signal-workspace.component';
 
 @Component({
   selector: 'app-trace-manage',
@@ -62,7 +63,8 @@ import { SignalTimeRangeComponent } from '../observability/signal-time-range.com
     NzTagModule,
     SignalNavigationComponent,
     SignalStorageGuideComponent,
-    SignalTimeRangeComponent
+    SignalTimeRangeComponent,
+    SignalWorkspaceComponent
   ],
   templateUrl: './trace-manage.component.html',
   styleUrl: './trace-manage.component.less'
