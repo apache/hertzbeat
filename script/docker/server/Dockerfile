@@ -32,7 +32,7 @@ ENV LANG=en_US.UTF-8
 
 ADD apache-hertzbeat-1.*-docker-bin.tar.gz /opt/
 
-EXPOSE 1157 1158 22
+EXPOSE 1157 1158 14317 22
 
 WORKDIR /opt/hertzbeat/
 
