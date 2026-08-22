@@ -124,10 +124,11 @@
             <span nz-icon style="margin-left: 5px" nzType="stop" nzTheme="outline"></span>
           </div>
         </div>
-        <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; gap: 2px">
+        <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex" [style.gap.px]="historyDays > 90 ? 0 : 2">
           <div
             *ngFor="let historyItem of component.history"
-            class="history-block br-8"
+            class="history-block"
+            [class.br-8]="historyDays <= 90"
             [style]="'background:' + calculateHistoryBlockRgb(historyItem)"
             nz-popover
             [nzPopoverContent]="contentTemplate"
