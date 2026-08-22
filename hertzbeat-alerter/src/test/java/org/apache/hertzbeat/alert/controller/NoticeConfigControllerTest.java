@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
 import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -63,6 +64,9 @@ class NoticeConfigControllerTest {
 
     @Mock
     private NoticeConfigServiceImpl noticeConfigService;
+
+    @Mock
+    private AlerterProperties alerterProperties;
 
     @InjectMocks
     private NoticeConfigController noticeConfigController;
@@ -508,6 +512,44 @@ class NoticeConfigControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
+
+    @Test
+    void previewNoticeTemplate() throws Exception {
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        noticeTemplate.setId(5L);
+        noticeTemplate.setName("preview-test");
+        noticeTemplate.setType((byte) 5);
+        noticeTemplate.setContent("""
+                [${title}] status=${status}
+                <#list alerts as alert>
+                ${alert.labels.alertname} - ${alert.content}
+                </#list>""");
+        when(alerterProperties.getConsoleUrl()).thenReturn("http://localhost:1157");
+
+        this.mockMvc.perform(post("/api/notice/template/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.containsString("HighCPUUsage")))
+                .andReturn();
+    }
+
+    @Test
+    void previewNoticeTemplateWithInvalidContent() throws Exception {
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        noticeTemplate.setId(5L);
+        noticeTemplate.setName("preview-test-invalid");
+        noticeTemplate.setType((byte) 5);
+        noticeTemplate.setContent("${undefinedVariable}");
+
+        this.mockMvc.perform(post("/api/notice/template/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andReturn();
     }
 }
