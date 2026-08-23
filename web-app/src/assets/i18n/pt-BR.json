@@ -102,6 +102,7 @@
   "alert.converge.eval-interval": "Intervalo de Convergência de Repetição de Alerta (s)",
   "alert.converge.enable": "Habilitar Convergência",
   "alert.center.delete": "Excluir Alertas",
+  "alert.center.export": "Exportar Alertas",
   "alert.center.clear": "Limpar Tudo",
   "alert.center.deal": "Marcar como Processado",
   "alert.center.no-deal": "Marcar como Pendente",

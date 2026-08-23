@@ -27,6 +27,7 @@
   "alert.center.content": "告警內容",
   "alert.center.deal": "標記已處理",
   "alert.center.delete": "刪除告警",
+  "alert.center.export": "匯出告警",
   "alert.center.end-time": "结束",
   "alert.center.filter-priority": "告警級別",
   "alert.center.filter-status": "告警狀態",
