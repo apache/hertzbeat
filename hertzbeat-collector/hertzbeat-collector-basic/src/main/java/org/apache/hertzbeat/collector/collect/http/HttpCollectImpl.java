@@ -901,7 +901,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 if (StringUtils.hasText(header.getValue())) {
-                    requestBuilder.addHeader(header.getKey(), header.getValue());
+                    requestBuilder.addHeader(header.getKey(), TimeExpressionUtil.calculate(header.getValue()));
                 }
             }
         }
@@ -936,18 +936,19 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // uri encode
+        String url = TimeExpressionUtil.calculate(httpProtocol.getUrl());
         String uri;
         if (enableUrlEncoding) {
             // if the url contains parameters directly
-            if (httpProtocol.getUrl().contains("?")) {
-                String path = httpProtocol.getUrl().substring(0, httpProtocol.getUrl().indexOf("?"));
-                String query = httpProtocol.getUrl().substring(httpProtocol.getUrl().indexOf("?") + 1);
+            if (url.contains("?")) {
+                String path = url.substring(0, url.indexOf("?"));
+                String query = url.substring(url.indexOf("?") + 1);
                 uri = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
             } else {
-                uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+                uri = UriUtils.encodePath(url, "UTF-8");
             }
         } else {
-            uri = httpProtocol.getUrl();
+            uri = url;
         }
 
         // append query params
