@@ -54,6 +54,11 @@
         <nz-option [nzLabel]="'alert.status.firing' | i18n" [nzValue]="'firing'"></nz-option>
         <nz-option [nzLabel]="'alert.status.resolved' | i18n" [nzValue]="'resolved'"></nz-option>
       </nz-select>
+
+      <button nz-button [nzLoading]="exportButtonLoading" (click)="exportAlerts()">
+        <i nz-icon nzType="download" nzTheme="outline"></i>
+        {{ 'alert.center.export' | i18n }}
+      </button>
     </div>
   </ng-template>
 </app-toolbar>
