@@ -27,6 +27,7 @@
   "alert.center.content": "Alert Content",
   "alert.center.deal": "Mark Processed",
   "alert.center.delete": "Delete Alerts",
+  "alert.center.export": "Export Alerts",
   "alert.center.end-time": "End Time",
   "alert.center.filter-priority": "Alert Priority",
   "alert.center.filter-status": "Alert Status",

@@ -125,8 +125,8 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public List<ComponentStatus> queryComponentsStatus(int days) {
-        if (days < 1 || days > 90) {
-            throw new IllegalArgumentException("days must be between 1 and 90");
+        if (days < 1 || days > 365) {
+            throw new IllegalArgumentException("days must be between 1 and 365");
         }
 
         int historySpanDays = days - 1;
@@ -246,8 +246,8 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public ComponentStatus queryComponentStatus(long id, int days) {
-        if (days < 1 || days > 90) {
-            throw new IllegalArgumentException("days must be between 1 and 90");
+        if (days < 1 || days > 365) {
+            throw new IllegalArgumentException("days must be between 1 and 365");
         }
 
         int historySpanDays = days - 1;
