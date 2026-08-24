@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { CollectorService } from './collector.service';
 
@@ -25,7 +26,7 @@ describe('CollectorService', () => {
   let service: CollectorService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(CollectorService);
   });
 
