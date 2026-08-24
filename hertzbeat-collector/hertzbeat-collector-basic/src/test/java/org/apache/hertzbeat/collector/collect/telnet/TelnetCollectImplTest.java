@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -153,6 +155,114 @@ class TelnetCollectImplTest {
             assertEquals(valueRow.getColumns(3), "YetAnotherValue");
         }
         mocked.close();
+    }
+
+    @Test
+    void testCollectPadsMissingMetrics() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Metrics metrics = telnetMetrics("mntr", List.of("responseTime", "a", "b", "c"));
+        try (MockedConstruction<TelnetClient> mocked = mockTelnetReply("a=1")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("1", builder.getValues(0).getColumns(1));
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(2));
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(3));
+    }
+
+    @Test
+    void testCollectFailsWithRawReplyWhenNothingParsed() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Metrics metrics = telnetMetrics("conf", List.of("responseTime", "a"));
+        try (MockedConstruction<TelnetClient> mocked =
+                mockTelnetReply("conf is not executed because it is not in the whitelist.")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+        assertTrue(builder.getMsg().contains("not in the whitelist"));
+    }
+
+    @Test
+    void testCollectKeepsFirstOnDuplicateKeys() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Metrics metrics = telnetMetrics("mntr", List.of("a", "b"));
+        try (MockedConstruction<TelnetClient> mocked = mockTelnetReply("a=1\na=2\nb=3")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("1", builder.getValues(0).getColumns(0));
+        assertEquals("3", builder.getValues(0).getColumns(1));
+    }
+
+    @Test
+    void testCollectFailsWhenReplyHasOnlyUnrelatedPairs() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Metrics metrics = telnetMetrics("mntr", List.of("responseTime", "a"));
+        try (MockedConstruction<TelnetClient> mocked = mockTelnetReply("error=conf disabled")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+    }
+
+    @Test
+    void testCollectSurvivesHeaderOnlyEnviReply() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setApp("zookeeper");
+        Metrics metrics = telnetMetrics("envi", List.of("responseTime", "a"));
+        try (MockedConstruction<TelnetClient> mocked = mockTelnetReply("Environment:")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+    }
+
+    @Test
+    void testCollectFailsCleanlyOnNewlineOnlyReply() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setApp("zookeeper");
+        Metrics metrics = telnetMetrics("conf", List.of("responseTime", "a"));
+        try (MockedConstruction<TelnetClient> mocked = mockTelnetReply("\n")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+        assertTrue(builder.getMsg().contains("returned no expected metrics"));
+    }
+
+    @Test
+    void testCollectKeepsValueContainingSeparator() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Metrics metrics = telnetMetrics("conf", List.of("dataDir", "secureClientPort"));
+        try (MockedConstruction<TelnetClient> mocked = mockTelnetReply("dataDir=/data/zk=a\nsecureClientPort=")) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("/data/zk=a", builder.getValues(0).getColumns(0));
+        assertEquals("", builder.getValues(0).getColumns(1));
+    }
+
+    @Test
+    void testCollectBlankCmdKeepsResponseTimeRow() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Metrics metrics = telnetMetrics("", List.of("responseTime"));
+        try (MockedConstruction<TelnetClient> mocked =
+                Mockito.mockConstruction(TelnetClient.class, (telnetClient, context) ->
+                        Mockito.when(telnetClient.isConnected()).thenReturn(true))) {
+            telnetCollect.collect(builder, metrics);
+        }
+        assertEquals(1, builder.getValuesCount());
+    }
+
+    private static Metrics telnetMetrics(String cmd, List<String> aliasFields) {
+        Metrics metrics = new Metrics();
+        metrics.setTelnet(TelnetProtocol.builder().timeout("10").port("2181").cmd(cmd).build());
+        metrics.setAliasFields(aliasFields);
+        return metrics;
+    }
+
+    private static MockedConstruction<TelnetClient> mockTelnetReply(String reply) {
+        InputStream inputStream = new ByteArrayInputStream(reply.getBytes(StandardCharsets.UTF_8));
+        return Mockito.mockConstruction(TelnetClient.class, (telnetClient, context) -> {
+            Mockito.when(telnetClient.isConnected()).thenReturn(true);
+            Mockito.when(telnetClient.getOutputStream()).thenReturn(Mockito.mock(OutputStream.class));
+            Mockito.when(telnetClient.getInputStream()).thenReturn(inputStream);
+        });
     }
 
     @Test
