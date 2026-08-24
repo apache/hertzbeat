@@ -313,8 +313,17 @@ public class MonitorServiceImpl implements MonitorService {
         // Parameter definition structure verification
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
                 || !StringUtils.hasText(monitor.getScrape());
-        String parameterDefinitionApp = isStatic ? monitor.getApp() : monitor.getScrape();
-        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(parameterDefinitionApp);
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> applicationParamDefines = appService.getAppParamDefines(monitor.getApp());
+        if (!CollectionUtils.isEmpty(applicationParamDefines)) {
+            paramDefines.addAll(applicationParamDefines);
+        }
+        if (!isStatic && !Objects.equals(monitor.getApp(), monitor.getScrape())) {
+            List<ParamDefineInfo> scrapeParamDefines = appService.getAppParamDefines(monitor.getScrape());
+            if (!CollectionUtils.isEmpty(scrapeParamDefines)) {
+                paramDefines.addAll(scrapeParamDefines);
+            }
+        }
         boolean restoresMaskedCredential = Boolean.TRUE.equals(isModify)
                 && !CollectionUtils.isEmpty(paramDefines)
                 && paramDefines.stream()
@@ -364,7 +373,10 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        checkJobFields(parameterDefinitionApp);
+        checkJobFields(monitor.getApp());
+        if (!isStatic && !Objects.equals(monitor.getApp(), monitor.getScrape())) {
+            checkJobFields(monitor.getScrape());
+        }
     }
 
     private void validateCredentialDestination(

@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -293,12 +295,16 @@ class MonitorServiceTest {
         MonitorDto dto = new MonitorDto();
         dto.setMonitor(monitor);
         dto.setParams(List.of(submittedUrl, submittedToken));
+        when(appService.getAppParamDefines("prometheus")).thenReturn(Collections.emptyList());
         when(appService.getAppParamDefines("http_sd")).thenReturn(List.of(
                 newParamDefine("__sd_url__", "text", true),
                 newParamDefine("__sd_token__", "password", false)));
         when(appService.getAppDefineOption("discovered-prometheus")).thenReturn(Optional.empty());
         when(monitorDao.findMonitorByNameEquals("discovered-prometheus")).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(storedUrl, storedToken));
+        Job applicationJob = new Job();
+        applicationJob.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("prometheus")).thenReturn(applicationJob);
         Job job = new Job();
         job.setMetrics(Collections.emptyList());
         when(appService.getAppDefine("http_sd")).thenReturn(job);
@@ -310,6 +316,48 @@ class MonitorServiceTest {
                 .findFirst()
                 .orElseThrow()
                 .getParamValue());
+    }
+
+    @Test
+    void validateServiceDiscoveryMonitorChecksApplicationAndScrapeCredentials() {
+        Monitor monitor = Monitor.builder()
+                .id(104L)
+                .name("discovered-mysql")
+                .app("mysql")
+                .scrape("http_sd")
+                .instance("https://discovery.example")
+                .intervals(60)
+                .build();
+        Param submittedPassword = Param.builder()
+                .monitorId(monitor.getId())
+                .field("password")
+                .paramValue("database-secret")
+                .build();
+        Param submittedDiscoveryToken = Param.builder()
+                .monitorId(monitor.getId())
+                .field("__sd_token__")
+                .paramValue("discovery-secret")
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submittedPassword, submittedDiscoveryToken));
+        ParamDefineInfo applicationPassword = newParamDefine("password", "password", true);
+        ParamDefineInfo discoveryToken = newParamDefine("__sd_token__", "password", true);
+        when(appService.getAppParamDefines("mysql")).thenReturn(List.of(applicationPassword));
+        when(appService.getAppParamDefines("http_sd")).thenReturn(List.of(discoveryToken));
+        Job applicationJob = new Job();
+        applicationJob.setMetrics(Collections.emptyList());
+        Job scrapeJob = new Job();
+        scrapeJob.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("mysql")).thenReturn(applicationJob);
+        when(appService.getAppDefine("http_sd")).thenReturn(scrapeJob);
+
+        monitorService.validate(dto, null);
+
+        verify(paramValidatorManager).validate(
+                eq(applicationPassword), argThat(param -> "password".equals(param.getField())));
+        verify(paramValidatorManager).validate(
+                eq(discoveryToken), argThat(param -> "__sd_token__".equals(param.getField())));
     }
 
     @Test
