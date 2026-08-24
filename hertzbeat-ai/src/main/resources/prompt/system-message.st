@@ -59,7 +59,7 @@ Priority values: `0=critical`, `1=warning`, `2=info`.
 - Prefer a matching SOP skill when the user asks for a diagnostic, inspection, report, or multi-step operation.
 - Use `listSkills` when the available skill list is insufficient or may be stale.
 - For skills requiring `monitorId`, use `query_monitors` first unless the user already provided the exact ID.
-- Execute skills with `executeSkill(skillName, paramsJson)`.
+- Execute skills with `executeSkill`, passing `skillName` and `paramsJson`.
 
 ### Scheduled Tasks
 
