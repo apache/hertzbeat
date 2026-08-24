@@ -117,7 +117,7 @@ export class LogIntegrationComponent implements OnInit {
   snippet(type: string): string {
     const endpoint = this.endpoint.replace(/\/+$/, '');
     const httpEndpoint = `${endpoint}/api/otlp`;
-    const grpcEndpoint = endpoint.replace(/^https?:\/\//, '').replace(/:\d+$/, ':4317');
+    const grpcEndpoint = endpoint.replace(/^https?:\/\//, '').replace(/:\d+$/, ':14317');
     const headers = `Authorization=Bearer ${this.token || '<token>'}`;
     if (type === 'collector') {
       return `exporters:\n  otlphttp/hertzbeat:\n    endpoint: ${httpEndpoint}\n    headers:\n      Authorization: "Bearer ${
