@@ -847,4 +847,51 @@ class DataSourceServiceTest {
         assertEquals(1, result.size());
         verify(mockExecutor).execute(rangeQuery);
     }
+
+    @Test
+    void rejectsQueriesThatExceedTheInputBudget() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        String oversized = "m".repeat(8193);
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("promql", oversized));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void rejectsPromqlAndSqlRangesBeyondOneDay() {
+        QueryExecutor promqlExecutor = Mockito.mock(QueryExecutor.class);
+        when(promqlExecutor.support("promql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(promqlExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("promql", "rate(http_requests_total[2d])"));
+        verify(promqlExecutor, never()).execute(anyString());
+
+        QueryExecutor sqlExecutor = Mockito.mock(QueryExecutor.class);
+        when(sqlExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(sqlExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.calculate(
+                        "sql", "sql(\"select avg(value) RANGE '2d' from cpu ALIGN '5m'\") > 1"));
+        verify(sqlExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void rejectsResultSetsBeyondTheAlertBudget() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (int index = 0; index < 1001; index++) {
+            rows.add(Map.of("__value__", index));
+        }
+        when(mockExecutor.execute("metric_name")).thenReturn(rows);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("promql", "metric_name"));
+    }
 }

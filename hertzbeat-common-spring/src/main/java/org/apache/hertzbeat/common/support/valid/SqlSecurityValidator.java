@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 /**
  * SQL Security Validator using JSqlParser 5.1+.
@@ -79,6 +80,17 @@ public class SqlSecurityValidator {
     private static final Set<String> WRITE_KEYWORDS = Set.of(
             "DELETE", "INSERT", "UPDATE", "MERGE", "INTO", "DROP", "ALTER",
             "CREATE", "GRANT", "REVOKE", "COPY", "RENAME", "ATTACH", "DETACH");
+
+    private static final String DURATION = "[0-9]+(?:ms|[smhdwy])(?:\\s*[0-9]+(?:ms|[smhdwy]))*";
+
+    private static final Pattern GREPTIME_RANGE_CLAUSE = Pattern.compile(
+            "(?i)\\bRANGE\\s*'\\s*" + DURATION + "\\s*'");
+
+    private static final Pattern GREPTIME_ALIGN_CLAUSE = Pattern.compile(
+            "(?i)\\bALIGN\\s*'\\s*" + DURATION + "\\s*'");
+
+    private static final Pattern GREPTIME_FILL_CLAUSE = Pattern.compile(
+            "(?i)\\bFILL\\s+(?:LINEAR|PREV|NEXT|NULL)\\b");
 
     private final Set<String> allowedTables;
 
@@ -136,16 +148,18 @@ public class SqlSecurityValidator {
      * {@code SELECT avg(v) RANGE '10s' FROM cpu ALIGN '5s'} are rejected by the parser
      * although they are ordinary reads.
      *
-     * <p>So the properties this mode has to guarantee are established without the parser:
+     * <p>So the first properties this mode has to guarantee are established without the parser:
      * statements are counted by scanning outside string literals and comments, the leading
      * keyword decides whether the statement reads, and no word that only a write contains may
      * appear anywhere. All three are dialect independent, and the last one is what covers a
      * write nested where the scan has no structure to reason about, as in
      * {@code WITH x AS (DELETE FROM cpu RETURNING *) SELECT * FROM x}.
      *
-     * <p>The parser then runs as a second and precise opinion over the whole tree. A statement
-     * it cannot parse is still accepted on the scan alone rather than failing a user whose
-     * dialect is merely richer than the parser.
+     * <p>The parser must still prove the complete statement tree and enumerate every table.
+     * For the Greptime clauses JSqlParser does not understand, a validation-only copy has the
+     * bounded {@code RANGE}, {@code ALIGN}, and {@code FILL} clauses removed before parsing.
+     * Any other unsupported syntax fails closed instead of relying on a keyword denylist as
+     * the sole proof of read-only behavior.
      * @param sql Statement to validate
      * @throws SqlSecurityException If the statement writes, or carries more than one statement
      */
@@ -160,21 +174,36 @@ public class SqlSecurityValidator {
         if (!SELECT_KEYWORD.equals(shape.leadingKeyword()) && !WITH_KEYWORD.equals(shape.leadingKeyword())) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
-
-        final Statement statement;
-        try {
-            statement = parseSingleStatement(sql);
-        } catch (JSQLParserException e) {
-            // Debug, not warn: a dialect the parser does not cover is the expected case here.
-            // This validation runs on every evaluation of every rule that uses one.
-            log.debug("SQL not understood by the parser, accepted as a read on the statement scan: {}", sql, e);
-            return;
-        }
+        final Statement statement = parseReadOnlyStatement(sql);
 
         if (!(statement instanceof Select)) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
-        assertNothingWrites(statement);
+        final List<String> tables = assertNothingWrites(statement);
+        if (tables.stream().map(this::normalizeIdentifier).anyMatch(table -> table.contains("."))) {
+            throw new SqlSecurityException("Schema-qualified tables are not allowed.");
+        }
+    }
+
+    private Statement parseReadOnlyStatement(String sql) throws SqlSecurityException {
+        try {
+            return parseSingleStatement(sql);
+        } catch (JSQLParserException originalFailure) {
+            String parserCompatibleSql = GREPTIME_RANGE_CLAUSE.matcher(sql).replaceAll("");
+            parserCompatibleSql = GREPTIME_ALIGN_CLAUSE.matcher(parserCompatibleSql).replaceAll("");
+            parserCompatibleSql = GREPTIME_FILL_CLAUSE.matcher(parserCompatibleSql).replaceAll("");
+            if (parserCompatibleSql.equals(sql)) {
+                throw new SqlSecurityException("Invalid SQL syntax: " + originalFailure.getMessage(), originalFailure);
+            }
+            try {
+                return parseSingleStatement(parserCompatibleSql);
+            } catch (JSQLParserException normalizedFailure) {
+                log.debug("Failed to parse SQL after removing Greptime range clauses: {}", sql, normalizedFailure);
+                throw new SqlSecurityException(
+                        "SQL structure could not be verified as a read: " + normalizedFailure.getMessage(),
+                        normalizedFailure);
+            }
+        }
     }
 
     /**
@@ -189,9 +218,9 @@ public class SqlSecurityValidator {
      * @param statement Parsed statement to walk
      * @throws SqlSecurityException If any part of the statement writes, or could not be walked
      */
-    private void assertNothingWrites(Statement statement) throws SqlSecurityException {
+    private List<String> assertNothingWrites(Statement statement) throws SqlSecurityException {
         try {
-            new ReadOnlyStatementFinder().getTableList(statement);
+            return new ReadOnlyStatementFinder().getTableList(statement);
         } catch (SecurityViolationException e) {
             throw new SqlSecurityException(e.getMessage());
         } catch (RuntimeException e) {

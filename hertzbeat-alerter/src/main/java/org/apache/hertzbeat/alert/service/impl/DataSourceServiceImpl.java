@@ -58,9 +58,9 @@ public class DataSourceServiceImpl implements DataSourceService {
     private static final List<String> DEFAULT_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
 
     /**
-     * The policy for an alert expression is read only and nothing narrower: which tables it
-     * may read is not constrained, because metric tables are created per metric on demand and
-     * a whitelist would reject every legitimate metric query.
+     * The policy for an alert expression is read only within the configured database. Metric
+     * tables are created per metric on demand, so an exact table whitelist would reject every
+     * legitimate metric query.
      */
     private static final SqlSecurityValidator EXPRESSION_SQL_VALIDATOR = SqlSecurityValidator.selectOnly();
 
@@ -88,6 +88,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
+        AlertQueryBudgetExecutor.validateInput(expr);
         if (executors == null || executors.isEmpty()) {
             throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
         }
@@ -99,7 +100,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
         try {
-            return evaluate(expr, guardSql(executor, EXPRESSION_SQL_VALIDATOR));
+            return evaluate(expr, guardSql(new AlertQueryBudgetExecutor(executor), EXPRESSION_SQL_VALIDATOR));
         } catch (AlertExpressionException ae) {
             log.error("Calculate query parse error, datasource: {}, expr: {}, msg: {}", datasource, expr, ae.getMessage(), ae);
             throw ae;
@@ -114,6 +115,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
+        AlertQueryBudgetExecutor.validateInput(expr);
         if (executors == null || executors.isEmpty()) {
             throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
         }
@@ -126,7 +128,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         expr = expr.replaceAll("\\s+", " ");
 
         try {
-            return guardSql(executor, sqlSecurityValidator).execute(expr);
+            return guardSql(new AlertQueryBudgetExecutor(executor), sqlSecurityValidator).execute(expr);
         } catch (AlertExpressionException ae) {
             // A statement the policy rejected, whose message names the part it broke.
             throw ae;

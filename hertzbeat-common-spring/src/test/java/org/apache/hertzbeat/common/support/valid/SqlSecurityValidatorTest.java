@@ -479,4 +479,21 @@ class SqlSecurityValidatorTest {
         assertThrows(SqlSecurityException.class, () -> validator.validate(
             "SELECT avg(value) RANGE '10s' FROM hertzbeat_logs ALIGN '5s'"));
     }
+
+    @Test
+    void testSelectOnlyCannotEscapeTheConfiguredDatabase() {
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+
+        assertThrows(SqlSecurityException.class,
+            () -> selectOnly.validate("SELECT * FROM information_schema.tables"));
+        assertThrows(SqlSecurityException.class,
+            () -> selectOnly.validate("SELECT * FROM pg_catalog.pg_tables"));
+        assertThrows(SqlSecurityException.class,
+            () -> selectOnly.validate("SELECT * FROM public.cpu"));
+        assertThrows(SqlSecurityException.class,
+            () -> selectOnly.validate("SELECT * FROM \"information_schema\".\"tables\""));
+        assertThrows(SqlSecurityException.class,
+            () -> selectOnly.validate(
+                "SELECT * FROM cpu, information_schema.tables RANGE '1m' ALIGN '1m'"));
+    }
 }
