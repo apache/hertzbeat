@@ -69,14 +69,6 @@ public class AppController {
         return ResponseUtil.handle(() -> appService.getAppParamDefines(app.toLowerCase()));
     }
 
-    @GetMapping(path = "/{monitorId}/pushdefine")
-    @Operation(summary = "The definition structure of the specified monitoring type according to the push query",
-            description = "The definition structure of the specified monitoring type according to the push query")
-    public ResponseEntity<Message<Job>> queryPushDefine(
-            @Parameter(description = "en: Monitoring type name", example = "api") @PathVariable("monitorId") final Long monitorId) {
-        return ResponseUtil.handle(() -> appService.getPushDefine(monitorId));
-    }
-
     @GetMapping(path = "/{monitorId}/define/dynamic")
     @Operation(summary = "The definition structure of the specified monitoring type according to the push query",
             description = "The definition structure of the specified monitoring type according to the push query")

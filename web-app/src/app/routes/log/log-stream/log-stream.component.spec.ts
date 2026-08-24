@@ -54,7 +54,7 @@ describe('LogStreamComponent', () => {
 
   it('should authenticate the log stream request', () => {
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/logs/sse/subscribe',
+      '/api/observability/logs/stream',
       jasmine.objectContaining({
         method: 'GET',
         headers: jasmine.objectContaining({
