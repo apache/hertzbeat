@@ -18,6 +18,8 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { configureShallowTest } from '@testing';
 
 import { MultiFuncInputComponent } from './multi-func-input.component';
 
@@ -26,9 +28,7 @@ describe('MultiFuncInputComponent', () => {
   let fixture: ComponentFixture<MultiFuncInputComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MultiFuncInputComponent]
-    }).compileComponents();
+    await configureShallowTest(MultiFuncInputComponent, [FormsModule]).compileComponents();
   });
 
   beforeEach(() => {

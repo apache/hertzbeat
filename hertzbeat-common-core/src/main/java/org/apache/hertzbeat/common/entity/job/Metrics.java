@@ -54,7 +54,6 @@ import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
@@ -212,10 +211,6 @@ public class Metrics {
      * Monitoring configuration information using the public rocketmq protocol
      */
     private RocketmqProtocol rocketmq;
-    /**
-     * Monitoring configuration information using push style
-     */
-    private PushProtocol push;
     /**
      * Monitoring configuration information using the public prometheus protocol
      */

@@ -8,7 +8,7 @@
 
 ```sql
 SELECT timestamp, severity_text, body
-FROM hzb_logs
+FROM hzb_internal_logs
 WHERE <结构化过滤条件>
 ORDER BY timestamp DESC
 LIMIT <1-100>
@@ -36,7 +36,7 @@ LIMIT <1-100>
 }
 ```
 
-当前 `hzb_logs` 表没有 `monitorId` 字段，因此本接口不提供无效的监控 ID 过滤。如果后续需要该能力，应先在 OpenTelemetry 日志写入链中定义并提取统一的监控 ID 字段。
+当前 `hzb_internal_logs` 表没有 `monitorId` 字段，因此本接口不提供无效的监控 ID 过滤。如果后续需要该能力，应先在 OpenTelemetry 日志写入链中定义并提取统一的监控 ID 字段。
 
 ## GreptimeDB 账号
 

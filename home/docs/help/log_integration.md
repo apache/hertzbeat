@@ -11,6 +11,14 @@ keywords: [open source monitoring, log integration, log management, multi-source
 The log integration feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
 :::
 
+:::warning Upgrading from 1.8.x? The ingestion path changed
+The 1.8.x endpoint `POST /api/logs/otlp/v1/logs` (and `POST /api/logs/ingest/otlp`) is replaced by `POST /api/otlp/v1/logs`. Update the `logs_endpoint` of every OpenTelemetry Collector / SDK exporter that points at HertzBeat. On 1.9.x the old paths still work as deprecated aliases (the response carries `Deprecation: true` and HertzBeat logs a warning); they are removed in 2.0. The query paths `/api/logs/**`, `/api/traces/**` and `/api/ingestion/otlp/**` moved to `/api/observability/**` with no alias. See the [Version Upgrade Guide](../start/upgrade) for the full old/new path table.
+:::
+
+:::info HertzBeat 1.9.0 transition
+Metrics, logs, and traces share `/api/otlp/v1/{signal}` for ingestion and `/api/observability/**` for queries. This release intentionally does not create or bind Entity records from telemetry. External OTLP signal tables are also separate from HertzBeat's internal self-telemetry tables.
+:::
+
 ## Core Capabilities
 
 - **Multi-source Log Integration**: Support receiving log data from mainstream platforms such as OpenTelemetry, Filebeat, Vector, Loki
@@ -36,8 +44,40 @@ You can view specific integration methods and configuration examples through Her
 HertzBeat provides the following interface for receiving OTLP log data:
 
 ```text
-POST /api/logs/otlp/v1/logs
+POST /api/otlp/v1/logs
 ```
+
+### OTLP/gRPC Endpoint
+
+HertzBeat also runs an OTLP/gRPC listener when GreptimeDB storage is enabled, accepting metrics, logs
+and traces. It expects the same `Authorization: Bearer {token}` credential as the HTTP endpoint.
+
+```text
+{hertzbeat_host}:14317
+```
+
+The port is 14317 on every deployment - the docker images publish it unchanged, so there is no
+container-versus-host translation to remember.
+
+It is deliberately not the OpenTelemetry standard 4317: an OTel Collector, Jaeger or Tempo on the
+same host normally holds that port already, and a clash on a published port stops the container from
+starting at all. HertzBeat serves OTLP/HTTP on its own port too, so this is consistent with the rest
+of the product rather than an exception.
+
+To use 4317 anyway, or to turn the listener off, set it in `application.yml` or through the matching
+environment variables (and update the port mapping in `docker-compose.yaml` to match):
+
+```yaml
+hertzbeat:
+  otlp:
+    grpc:
+      enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
+      host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
+      port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
+```
+
+If the port cannot be bound, HertzBeat logs the failure and starts without gRPC ingestion; OTLP/HTTP
+on `/api/otlp/v1` keeps working.
 
 ### Request Configuration
 
@@ -112,7 +152,7 @@ Add HertzBeat as a log export target in the OpenTelemetry Collector configuratio
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
+    logs_endpoint: http://{hertzbeat_host}:1157/api/otlp/v1/logs
     compression: none
     encoding: json
     headers:

@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { AlertGroupConvergeComponent } from './alert-group-converge.component';
 
@@ -26,9 +27,7 @@ describe('AlertConvergeComponent', () => {
   let fixture: ComponentFixture<AlertGroupConvergeComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [AlertGroupConvergeComponent]
-    }).compileComponents();
+    await configureShallowTest(AlertGroupConvergeComponent).compileComponents();
 
     fixture = TestBed.createComponent(AlertGroupConvergeComponent);
     component = fixture.componentInstance;

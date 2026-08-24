@@ -22,6 +22,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -30,14 +35,21 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.collector.collect.common.ssh.SshHelper;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannel;
+import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
@@ -227,6 +239,130 @@ class SshCollectImplTest {
         verify(channel).close(true);
         verify(immediateClose).await(timeout);
         verify(clientSession).close();
+    }
+
+    @Test
+    void collectPadsPartialOneRowOutput() throws Exception {
+        ChannelExec channel = oneRowChannel("52\n35.8033\n5%", "", 0);
+        Metrics metrics = Metrics.builder().ssh(oneRowProtocol()).build();
+        metrics.setAliasFields(List.of("cpu", "memory", "disk", "nfs_mount"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("52", builder.getValues(0).getColumns(0));
+        assertEquals("35.8033", builder.getValues(0).getColumns(1));
+        assertEquals("5%", builder.getValues(0).getColumns(2));
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(3));
+    }
+
+    @Test
+    void collectTreatsSilentEmptyOneRowOutputAsEmptyRow() throws Exception {
+        ChannelExec channel = oneRowChannel("", "", 1);
+        Metrics metrics = Metrics.builder().ssh(oneRowProtocol()).build();
+        metrics.setAliasFields(List.of("nfs_mount"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(0));
+    }
+
+    @Test
+    void collectFailsOnEmptyOutputWithStderr() throws Exception {
+        ChannelExec channel = oneRowChannel("", "boom: permission denied", 1);
+        Metrics metrics = Metrics.builder().ssh(oneRowProtocol()).build();
+        metrics.setAliasFields(List.of("nfs_mount"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+        assertEquals("boom: permission denied", builder.getMsg());
+    }
+
+    @Test
+    void collectDecodesOutputWithConfiguredCharset() throws Exception {
+        ChannelExec channel = oneRowChannel("挂载正常".getBytes(Charset.forName("GBK")), new byte[0], 0);
+        SshProtocol protocol = oneRowProtocol();
+        protocol.setCharset("GBK");
+        Metrics metrics = Metrics.builder().ssh(protocol).build();
+        metrics.setAliasFields(List.of("nfs_mount"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals("挂载正常", builder.getValues(0).getColumns(0));
+    }
+
+    private SshProtocol oneRowProtocol() {
+        return SshProtocol.builder()
+                .host("target.example.com")
+                .port("22")
+                .username("root")
+                .password("password")
+                .timeout("1000")
+                .reuseConnection("true")
+                .useProxy("false")
+                .script("echo ok")
+                .parseType("oneRow")
+                .build();
+    }
+
+    private ClientSession channelSession(ChannelExec channel) throws IOException {
+        ClientSession clientSession = mock(ClientSession.class);
+        when(clientSession.createExecChannel("echo ok")).thenReturn(channel);
+        return clientSession;
+    }
+
+    private ChannelExec oneRowChannel(String stdout, String stderr, int exitStatus) throws IOException {
+        return oneRowChannel(stdout.getBytes(StandardCharsets.UTF_8), stderr.getBytes(StandardCharsets.UTF_8), exitStatus);
+    }
+
+    private ChannelExec oneRowChannel(byte[] stdout, byte[] stderr, int exitStatus) throws IOException {
+        ChannelExec channel = mock(ChannelExec.class);
+        OpenFuture openFuture = mock(OpenFuture.class);
+        CloseFuture closeFuture = mock(CloseFuture.class);
+        AtomicReference<OutputStream> out = new AtomicReference<>();
+        AtomicReference<OutputStream> err = new AtomicReference<>();
+        doAnswer(inv -> {
+            out.set(inv.getArgument(0));
+            return null;
+        }).when(channel).setOut(any());
+        doAnswer(inv -> {
+            err.set(inv.getArgument(0));
+            return null;
+        }).when(channel).setErr(any());
+        when(channel.open()).thenReturn(openFuture);
+        when(channel.waitFor(any(), anyLong())).thenAnswer(inv -> {
+            out.get().write(stdout);
+            err.get().write(stderr);
+            return Set.of(ClientChannelEvent.CLOSED);
+        });
+        when(channel.getExitStatus()).thenReturn(exitStatus);
+        when(channel.close(false)).thenReturn(closeFuture);
+        when(closeFuture.await(anyLong())).thenReturn(true);
+        return channel;
     }
 
     private SshProtocol protocol(int timeout) {

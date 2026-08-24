@@ -51,8 +51,8 @@ public class OpenTelemetryConfig {
 
     private static final String HERTZBEAT_SERVICE_NAME = "HertzBeat";
     private static final String DEFAULT_GREPTIME_DB_NAME = "public";
-    private static final String DEFAULT_LOGS_TABLE_NAME = "hzb_logs";
-    private static final String DEFAULT_TRACES_TABLE_NAME = "hzb_traces";
+    private static final String DEFAULT_LOGS_TABLE_NAME = "hzb_internal_logs";
+    private static final String DEFAULT_TRACES_TABLE_NAME = "hzb_internal_traces";
     private static final String GREPTIME_DB_NAME_HEADER = "X-Greptime-DB-Name";
     private static final String GREPTIME_LOG_TABLE_NAME_HEADER = "X-Greptime-Log-Table-Name";
     private static final String GREPTIME_TRACE_TABLE_NAME_HEADER = "X-Greptime-Trace-Table-Name";

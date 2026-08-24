@@ -69,13 +69,11 @@ public class RedisMetricsDataCodec implements RedisCodec<String, CollectRep.Metr
             try (ByteArrayInputStream in = new ByteArrayInputStream(bytes);
                  ArrowStreamReader reader = new ArrowStreamReader(
                          Channels.newChannel(in), allocator)) {
-                reader.loadNextBatch();
-                VectorSchemaRoot root = reader.getVectorSchemaRoot();
-                if (root == null || root.getRowCount() == 0) {
-                    log.warn("Empty data received");
+                if (!reader.loadNextBatch()) {
+                    log.warn("No record batch in metrics data stream, discarding");
                     return null;
                 }
-                return new CollectRep.MetricsData(root);
+                return new CollectRep.MetricsData(reader.getVectorSchemaRoot());
             }
         } catch (Exception e) {
             log.error("Failed to decode metrics data", e);

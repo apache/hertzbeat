@@ -51,6 +51,13 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
+  # The OpenAPI document is a map of every route, parameter and model, so it is
+  # scoped like any other administrative resource instead of being anonymous
+  - /v3/api-docs/**===get===[admin]
+  - /v3/api-docs.yaml===get===[admin]
+  - /v3/api-docs.yaml/**===get===[admin]
+  - /v2/api-docs/**===get===[admin]
+  - /swagger-resources/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
@@ -82,10 +89,6 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui resource
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 
@@ -139,6 +142,32 @@ account:
     salt: 123
     role: [user]
 ```
+
+## OpenAPI Document And Swagger UI
+
+The generated OpenAPI document lists every route, http method, parameter name and type, and every request and response model. It is a ready made map of the attack surface, so HertzBeat does not serve it by default: `springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled` are both `false` in the shipped `application.yml`, which makes `/v3/api-docs` and `/swagger-ui/index.html` return 404.
+
+If you need the document, opt in by updating the `application.yml` file in the `config` directory:
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+```
+
+Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; the Swagger UI attaches the stored HertzBeat token to its same-origin document and try-it-out requests, and the page loads without asking for anything.
+
+Without that session the document is not exposed, but the page does not fail silently either. `/swagger-ui/index.html` is a static file and still loads; its request for `/v3/api-docs/swagger-config` is answered with `401` and a `WWW-Authenticate: Digest` challenge, so the browser asks for a username and password. Administrator credentials entered there let the document through, and an account without the `admin` role is answered with `403`.
+
+The document can also be fetched directly with an administrator token:
+
+```shell
+curl -H "Authorization: Bearer $YOUR_ADMIN_TOKEN" http://localhost:1157/v3/api-docs
+```
+
+> ⚠️ Do not move the OpenAPI paths into `excludedResource`; doing so makes the complete document anonymous again.
 
 ## Update Security Secret
 

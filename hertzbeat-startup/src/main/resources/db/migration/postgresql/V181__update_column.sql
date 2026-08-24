@@ -33,7 +33,7 @@
 -- under the License.
 
 -- Scheduled SOP execution configurations
-CREATE TABLE hzb_sop_schedule (
+CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
     id BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
     sop_name VARCHAR(64) NOT NULL,
@@ -57,5 +57,5 @@ COMMENT ON COLUMN hzb_sop_schedule.enabled IS 'Whether the schedule is enabled';
 COMMENT ON COLUMN hzb_sop_schedule.last_run_time IS 'Last execution time';
 COMMENT ON COLUMN hzb_sop_schedule.next_run_time IS 'Next scheduled execution time';
 
-CREATE INDEX idx_schedule_conversation_id ON hzb_sop_schedule(conversation_id);
-CREATE INDEX idx_schedule_enabled_next ON hzb_sop_schedule(enabled, next_run_time);
+CREATE INDEX IF NOT EXISTS idx_schedule_conversation_id ON hzb_sop_schedule(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_schedule_enabled_next ON hzb_sop_schedule(enabled, next_run_time);

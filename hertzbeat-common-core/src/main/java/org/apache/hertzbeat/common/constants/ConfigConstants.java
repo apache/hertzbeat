@@ -69,6 +69,8 @@ public interface ConfigConstants {
         String GRAFANA = "grafana";
 
         String LOG = "log";
+
+        String OBSERVABILITY = "observability";
     }
 
 }

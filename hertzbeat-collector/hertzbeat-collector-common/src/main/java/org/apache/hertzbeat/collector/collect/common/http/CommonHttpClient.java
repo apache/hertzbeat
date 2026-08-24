@@ -177,6 +177,11 @@ public class CommonHttpClient {
     static void setBeforeCleanupHookForTest(Runnable hook) {
         beforeCleanupHook = hook;
     }
+
+    static boolean awaitConnectionPoolCleanupIdleForTest(long timeout, TimeUnit unit) throws InterruptedException {
+        ScheduledDispatchTask currentCleanupTask = cleanupTask;
+        return currentCleanupTask == null || currentCleanupTask.awaitIdle(timeout, unit);
+    }
     
     public static void close() {
         try {
@@ -268,10 +273,24 @@ public class CommonHttpClient {
                 shouldSchedule = pendingRuns > 0;
                 if (!shouldSchedule) {
                     running = false;
+                    notifyAll();
                     return;
                 }
             }
             scheduleRun();
+        }
+
+        private synchronized boolean awaitIdle(long timeout, TimeUnit unit) throws InterruptedException {
+            long deadline = System.nanoTime() + unit.toNanos(timeout);
+            long remainingNanos = deadline - System.nanoTime();
+            while (running || pendingRuns > 0) {
+                if (remainingNanos <= 0) {
+                    return false;
+                }
+                TimeUnit.NANOSECONDS.timedWait(this, remainingNanos);
+                remainingNanos = deadline - System.nanoTime();
+            }
+            return true;
         }
     }
 }
