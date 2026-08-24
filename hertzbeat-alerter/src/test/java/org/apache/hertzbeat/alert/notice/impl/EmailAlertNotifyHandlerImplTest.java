@@ -118,8 +118,8 @@ class EmailAlertNotifyHandlerImplTest {
         GeneralConfig generalConfig = GeneralConfig.builder()
                 .content(JsonUtil.toJson(mailServerConfig))
                 .build();
-        when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
-        when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
+        lenient().when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
+        lenient().when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
     }
 
     @Test
