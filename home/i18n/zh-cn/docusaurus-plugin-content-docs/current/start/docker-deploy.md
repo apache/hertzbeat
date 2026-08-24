@@ -141,7 +141,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    下载 `application.yml` 文件到主机目录下，例如: $(pwd)/application.yml  
    下载源 [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
 
-   - 若需使用邮件发送告警，需替换 `application.yml` 里面的邮件服务器参数
+   - `spring.mail` 可选：若不使用邮件通知可省略；若需邮件告警，请在 `application.yml` 配置 `spring.mail`（也可在 UI 系统邮件设置中配置）
    - 若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）
    - 若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.victoria-metrics`参数 具体步骤参见 [使用victoria-metrics存储指标数据](victoria-metrics-init)
 

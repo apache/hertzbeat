@@ -125,6 +125,8 @@ spring:
     locations:
       - classpath:db/migration/{vendor}
 
+  # Not required if you don't use email notify. The whole spring.mail block can be omitted.
+  # Email can also be configured later in the UI (system email settings).
   mail:
     # Mail server address, eg: qq-mailbox is smtp.qq.com, qq-exmail is smtp.exmail.qq.com
     host: smtp.qq.com
