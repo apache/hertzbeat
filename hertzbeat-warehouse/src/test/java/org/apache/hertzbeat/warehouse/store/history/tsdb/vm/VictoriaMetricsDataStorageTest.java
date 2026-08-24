@@ -52,11 +52,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link VictoriaMetricsDataStorage}
@@ -215,6 +217,46 @@ class VictoriaMetricsDataStorageTest {
                 .atMost(7, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(attemptedBodies).hasSizeGreaterThanOrEqualTo(2));
         assertThat(attemptedBodies.get(1)).isEqualTo(attemptedBodies.get(0));
+    }
+
+    @Test
+    void singleNodeFlushClaimsTheRetryBatchWhileTheHttpWriteIsInFlight() throws Exception {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                10, 3600, new VictoriaMetricsProperties.Compression(false)));
+        CountDownLatch firstWriteStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstWrite = new CountDownLatch(1);
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            if (writes.incrementAndGet() == 1) {
+                firstWriteStarted.countDown();
+                assertThat(releaseFirstWrite.await(5, TimeUnit.SECONDS)).isTrue();
+            }
+            return ResponseEntity.noContent().build();
+        });
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+        victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+        ExecutorService flushers = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<Boolean> first = flushers.submit(() ->
+                    ReflectionTestUtils.invokeMethod(victoriaMetricsDataStorage, "flushBufferedMetrics"));
+            assertThat(firstWriteStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<Boolean> second = flushers.submit(() ->
+                    ReflectionTestUtils.invokeMethod(victoriaMetricsDataStorage, "flushBufferedMetrics"));
+
+            assertThat(second.get(2, TimeUnit.SECONDS)).isFalse();
+            assertThat(writes).hasValue(1);
+            releaseFirstWrite.countDown();
+            assertThat(first.get(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(writes).hasValue(1);
+        } finally {
+            releaseFirstWrite.countDown();
+            flushers.shutdownNow();
+        }
     }
 
     @Test

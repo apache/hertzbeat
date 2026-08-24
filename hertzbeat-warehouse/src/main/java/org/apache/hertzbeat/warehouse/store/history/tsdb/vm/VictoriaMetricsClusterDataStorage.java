@@ -116,6 +116,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
     private final AtomicBoolean immediateFlushPending = new AtomicBoolean(false);
+    private final AtomicBoolean flushInFlight = new AtomicBoolean(false);
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicLong droppedMetricCount = new AtomicLong();
     private List<VictoriaMetricsDataStorage.VictoriaMetricsContent> retryBatch = Collections.emptyList();
@@ -303,7 +304,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         while (hasPendingMetrics()) {
             if (!flushBufferedMetrics()) {
                 log.error("[Victoria Metrics] Unable to flush {} buffered metrics during shutdown",
-                        pendingMetricCount());
+                        getPendingMetricCount());
                 break;
             }
         }
@@ -679,7 +680,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
     }
 
-    long getDroppedMetricCount() {
+    @Override
+    public long getDroppedMetricCount() {
         return droppedMetricCount.get();
     }
 
@@ -704,30 +706,37 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     private boolean flushBufferedMetrics() {
-        List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch;
-        synchronized (metricsFlushLock) {
-            if (retryBatch.isEmpty()) {
-                List<VictoriaMetricsDataStorage.VictoriaMetricsContent> nextBatch =
-                        new ArrayList<>(vmInsertProps.bufferSize());
-                metricsBufferQueue.drainTo(nextBatch, vmInsertProps.bufferSize());
-                retryBatch = nextBatch;
-            }
-            batch = retryBatch;
-        }
-        if (batch.isEmpty()) {
-            return true;
-        }
-        if (!trySaveData(batch)) {
-            log.warn("[Victoria Metrics] Retaining {} metrics items for retry", batch.size());
+        if (!flushInFlight.compareAndSet(false, true)) {
             return false;
         }
-        synchronized (metricsFlushLock) {
-            if (retryBatch == batch) {
-                retryBatch = Collections.emptyList();
+        try {
+            List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch;
+            synchronized (metricsFlushLock) {
+                if (retryBatch.isEmpty()) {
+                    List<VictoriaMetricsDataStorage.VictoriaMetricsContent> nextBatch =
+                            new ArrayList<>(vmInsertProps.bufferSize());
+                    metricsBufferQueue.drainTo(nextBatch, vmInsertProps.bufferSize());
+                    retryBatch = nextBatch;
+                }
+                batch = retryBatch;
             }
+            if (batch.isEmpty()) {
+                return true;
+            }
+            if (!trySaveData(batch)) {
+                log.warn("[Victoria Metrics] Retaining {} metrics items for retry", batch.size());
+                return false;
+            }
+            synchronized (metricsFlushLock) {
+                if (retryBatch == batch) {
+                    retryBatch = Collections.emptyList();
+                }
+            }
+            log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
+            return true;
+        } finally {
+            flushInFlight.set(false);
         }
-        log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
-        return true;
     }
 
     private boolean hasPendingMetrics() {
@@ -736,7 +745,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
     }
 
-    private int pendingMetricCount() {
+    @Override
+    public int getPendingMetricCount() {
         synchronized (metricsFlushLock) {
             return retryBatch.size() + metricsBufferQueue.size();
         }

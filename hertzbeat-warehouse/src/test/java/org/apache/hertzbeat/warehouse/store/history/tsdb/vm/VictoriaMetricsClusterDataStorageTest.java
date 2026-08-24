@@ -97,6 +97,44 @@ class VictoriaMetricsClusterDataStorageTest {
     }
 
     @Test
+    void clusterFlushClaimsTheRetryBatchWhileTheHttpWriteIsInFlight() throws Exception {
+        mockHealthCheck();
+        CountDownLatch firstWriteStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstWrite = new CountDownLatch(1);
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenAnswer(invocation -> {
+                    if (writes.incrementAndGet() == 1) {
+                        firstWriteStarted.countDown();
+                        assertThat(releaseFirstWrite.await(5, TimeUnit.SECONDS)).isTrue();
+                    }
+                    return ResponseEntity.noContent().build();
+                });
+        VictoriaMetricsClusterDataStorage storage = createStorage(10, 3600);
+        ExecutorService flushers = Executors.newFixedThreadPool(2);
+
+        try {
+            Thread.sleep(1200);
+            saveOneMetric(storage);
+            Future<Boolean> first = flushers.submit(() ->
+                    ReflectionTestUtils.invokeMethod(storage, "flushBufferedMetrics"));
+            assertThat(firstWriteStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<Boolean> second = flushers.submit(() ->
+                    ReflectionTestUtils.invokeMethod(storage, "flushBufferedMetrics"));
+
+            assertThat(second.get(2, TimeUnit.SECONDS)).isFalse();
+            assertThat(writes).hasValue(1);
+            releaseFirstWrite.countDown();
+            assertThat(first.get(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(writes).hasValue(1);
+        } finally {
+            releaseFirstWrite.countDown();
+            storage.destroy();
+            flushers.shutdownNow();
+        }
+    }
+
+    @Test
     void retriesPeriodicFlushFailuresQuicklyWhenTheConfiguredIntervalIsLong() throws Exception {
         mockHealthCheck();
         List<String> attemptedBodies = new CopyOnWriteArrayList<>();
