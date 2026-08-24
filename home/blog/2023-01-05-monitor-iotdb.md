@@ -3,7 +3,8 @@ title: Use HertzBeat Monitoring IoTDB
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+cover_headline: Monitoring Apache IoTDB
 ---
 
 ## Use HertzBeat to monitor the Internet of Things database IoTDB, and it will be done in 5 minutes

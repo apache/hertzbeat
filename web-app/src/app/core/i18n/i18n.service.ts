@@ -3,6 +3,7 @@ import { registerLocaleData } from '@angular/common';
 import { HttpHeaders } from '@angular/common/http';
 import ngEn from '@angular/common/locales/en';
 import ngJa from '@angular/common/locales/ja';
+import ngKo from '@angular/common/locales/ko';
 import ngPt from '@angular/common/locales/pt';
 import ngZh from '@angular/common/locales/zh';
 import ngZhTw from '@angular/common/locales/zh-Hant';
@@ -15,10 +16,11 @@ import {
   SettingsService,
   zh_CN as delonZhCn,
   zh_TW as delonZhTw,
-  ja_JP as delonJaJP
+  ja_JP as delonJaJP,
+  ko_KR as delonKoKR
 } from '@delon/theme';
 import { AlainConfigService } from '@delon/util/config';
-import { enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw, ja as dfJa, ptBR as dfPtBR } from 'date-fns/locale';
+import { enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw, ja as dfJa, ko as dfKo, ptBR as dfPtBR } from 'date-fns/locale';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 import {
   en_US as zorroEnUS,
@@ -26,6 +28,7 @@ import {
   zh_CN as zorroZhCN,
   zh_TW as zorroZhTW,
   ja_JP as zorroJaJP,
+  ko_KR as zorroKoKR,
   pt_BR as zorroPtBR
 } from 'ng-zorro-antd/i18n';
 import { Observable, zip } from 'rxjs';
@@ -75,6 +78,14 @@ const LANGS: { [key: string]: LangConfigData } = {
     date: dfJa,
     delon: delonJaJP,
     abbr: '🇯🇵'
+  },
+  'ko-KR': {
+    text: '한국어',
+    ng: ngKo,
+    zorro: zorroKoKR,
+    date: dfKo,
+    delon: delonKoKR,
+    abbr: '🇰🇷'
   },
   'pt-BR': {
     text: 'Português (Brasil)',

@@ -12,7 +12,7 @@ import { UserLockComponent } from './passport/lock/lock.component';
 import { UserLoginComponent } from './passport/login/login.component';
 import { StatusPublicComponent } from './status-public/status-public.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   {
     path: '',
     component: LayoutBasicComponent,
@@ -28,6 +28,21 @@ const routes: Routes = [
         data: { titleI18n: 'menu.monitor.center' }
       },
       { path: 'log', loadChildren: () => import('./log/log.module').then(m => m.LogModule) },
+      {
+        path: 'observability/integration',
+        loadComponent: () => import('./log/log-integration/log-integration.component').then(m => m.LogIntegrationComponent),
+        data: { titleI18n: 'menu.observability.integration' }
+      },
+      {
+        path: 'metrics/manage',
+        loadComponent: () => import('./metrics/metrics-manage.component').then(m => m.MetricsManageComponent),
+        data: { titleI18n: 'menu.observability.metrics' }
+      },
+      {
+        path: 'trace/manage',
+        loadComponent: () => import('./trace/trace-manage.component').then(m => m.TraceManageComponent),
+        data: { titleI18n: 'menu.observability.traces' }
+      },
       { path: 'alert', loadChildren: () => import('./alert/alert.module').then(m => m.AlertModule) },
       { path: 'setting', loadChildren: () => import('./setting/setting.module').then(m => m.SettingModule) }
     ]

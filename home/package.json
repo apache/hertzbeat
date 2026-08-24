@@ -25,6 +25,7 @@
     "@docusaurus/plugin-sitemap": "^3.9.2",
     "@docusaurus/preset-classic": "3.9.2",
     "@docusaurus/remark-plugin-npm2yarn": "3.9.2",
+    "@docusaurus/theme-common": "3.9.2",
     "@docusaurus/theme-live-codeblock": "3.9.2",
     "@docusaurus/theme-search-algolia": "3.9.2",
     "@douyinfe/semi-ui": "2.24.1",

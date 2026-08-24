@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -116,7 +117,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         // Delay dispatcher lookup to avoid a startup cycle with CommonDispatcher.
         WheelTimerTask timerJob = new WheelTimerTask(addJob, metricsTaskDispatchSupplier);
         if (addJob.isCyclic()) {
-            Long nextExecutionTime = getNextExecutionInterval(addJob);
+            long nextExecutionTime = initialCyclicDelay(addJob);
             Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTime, TimeUnit.SECONDS);
             cancelPreviousTimeout(currentCyclicTaskMap.put(addJob.getId(), timeout));
         } else {
@@ -203,6 +204,21 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         if (previousTimeout != null) {
             previousTimeout.cancel();
         }
+    }
+
+    /**
+     * Interval jobs get a random first-run phase: a restart re-adds every job at once,
+     * and a shared phase makes them all collect at the same instant forever. Cron jobs
+     * keep their meaningful phase; already-executed or re-added jobs keep theirs.
+     */
+    long initialCyclicDelay(Job addJob) {
+        long nextExecutionTime = getNextExecutionInterval(addJob);
+        boolean fixedPhase = ScheduleTypeEnum.CRON.getType().equals(addJob.getScheduleType());
+        if (!fixedPhase && addJob.getDispatchTime() <= 0
+                && !currentCyclicTaskMap.containsKey(addJob.getId()) && nextExecutionTime > 1) {
+            nextExecutionTime = ThreadLocalRandom.current().nextLong(nextExecutionTime) + 1;
+        }
+        return nextExecutionTime;
     }
 
     public Long getNextExecutionInterval(Job job) {

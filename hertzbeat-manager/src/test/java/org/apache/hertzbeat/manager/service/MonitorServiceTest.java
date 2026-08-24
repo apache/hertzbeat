@@ -226,6 +226,59 @@ class MonitorServiceTest {
     }
 
     @Test
+    void addMonitorWithoutInstanceFallsBackToHostParam() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("www.example.com").build(),
+                Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void addMonitorInstanceStaysStableAcrossRepeatedResolution() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .instance("www.example.com:443")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void modifyMonitorKeepsInstanceStableAcrossEdits() {
+        long monitorId = 7L;
+        Monitor stored = Monitor.builder().jobId(1L).intervals(1).app("demoApp").name("ssl")
+                .instance("www.example.com:443").id(monitorId).build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(stored));
+        List<Param> params = List.of(Param.builder().field("port").paramValue("443").build());
+
+        for (int edit = 0; edit < 2; edit++) {
+            Monitor dto = Monitor.builder().jobId(1L).intervals(1).app("demoApp").name("ssl")
+                    .instance("www.example.com:443").id(monitorId).build();
+            assertDoesNotThrow(() -> monitorService.modifyMonitor(dto, params, null, null));
+            assertEquals("www.example.com:443", dto.getInstance());
+        }
+    }
+
+    @Test
     void addMonitorException() {
         Monitor monitor = Monitor.builder()
                 .intervals(1)
@@ -633,110 +686,59 @@ class MonitorServiceTest {
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+    }
 
-        // Test logic: When scrape is not equal to static (and not null), and instance is empty, instance should be set to "unknown"
-        reset(monitorDao); // Reset the mock of monitorDao from previous code
+    @Test
+    void modifyDynamicMonitorUsesUnknownInstance() {
+        Monitor monitor = modifyPausedMonitor("custom_sd", "stale-instance", null);
 
-        long testSdMonitorId = 2L;
-        Monitor sdMonitor = Monitor.builder()
-                .id(testSdMonitorId)
+        assertEquals("unknown", monitor.getInstance());
+    }
+
+    @ParameterizedTest
+    @CsvSource(nullValues = "NULL", value = {
+            "example.com, NULL, example.com",
+            "example.com, 443, example.com:443",
+            "example.com:80, NULL, example.com",
+            "example.com:80, 443, example.com:443",
+            "127.0.0.1:80, 443, 127.0.0.1:443",
+            "2001:db8::1, NULL, 2001:db8::1",
+            "2001:db8::1, 443, '[2001:db8::1]:443'",
+            "'[2001:db8::1]:80', NULL, '[2001:db8::1]'",
+            "'[2001:db8::1]:80', 443, '[2001:db8::1]:443'"
+    })
+    void modifyStaticMonitorNormalizesInstancePort(String instance, String port, String expected) {
+        Monitor monitor = modifyPausedMonitor(CommonConstants.SCRAPE_STATIC, instance, port);
+
+        assertEquals(expected, monitor.getInstance());
+    }
+
+    private Monitor modifyPausedMonitor(String scrape, String instance, String port) {
+        long monitorId = 99L;
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .jobId(1L)
+                .app("app")
+                .status(CommonConstants.MONITOR_PAUSED_CODE)
+                .build();
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
                 .app("app")
                 .name("memory")
-                .scrape("custom_sd") // Not static
-                .instance("")        // Instance is empty
+                .scrape(scrape)
+                .instance(instance)
                 .intervals(1)
                 .build();
+        List<Param> params = port == null
+                ? Collections.emptyList()
+                : List.of(Param.builder()
+                        .field(MonitorServiceImpl.PARAM_FIELD_PORT)
+                        .paramValue(port)
+                        .build());
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
 
-        Monitor preSdMonitor = Monitor.builder()
-                .id(testSdMonitorId)
-                .app("app")
-                .name("memory")
-                .jobId(2L)
-                .status(CommonConstants.MONITOR_UP_CODE) // Ensure not paused state to proceed to following logic
-                .build();
-
-        List<Param> emptyParams = new ArrayList<>();
-        Job mockJob = new Job();
-        mockJob.setMetrics(new ArrayList<>());
-        mockJob.setParams(new ArrayList<>());
-
-        when(monitorDao.findById(testSdMonitorId)).thenReturn(Optional.of(preSdMonitor));
-        when(appService.getAppDefine("custom_sd")).thenReturn(mockJob); // Query job based on scrape
-        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(2L);
-        when(monitorDao.save(any(Monitor.class))).thenReturn(sdMonitor);
-
-        assertDoesNotThrow(() -> monitorService.modifyMonitor(sdMonitor, emptyParams, null, null));
-
-        // Assert that instance is assigned as unknown
-        assertEquals("unknown", sdMonitor.getInstance());
-
-        // Test logic: Port verification (from none to exists, from exists to none)
-        // Scenario 1: Originally without port mark (or with one), now port has value in params
-        reset(monitorDao);
-
-        long testPortMonitorId = 3L;
-        Monitor portMonitor = Monitor.builder()
-                .id(testPortMonitorId)
-                .app("app")
-                .name("memory3")
-                .scrape(CommonConstants.SCRAPE_STATIC)
-                .instance("127.0.0.1")
-                .intervals(1)
-                .build();
-
-        Monitor prePortMonitor = Monitor.builder()
-                .id(testPortMonitorId)
-                .app("app")
-                .name("memory3")
-                .jobId(3L)
-                .status(CommonConstants.MONITOR_UP_CODE)
-                .build();
-
-        List<Param> portParams = new ArrayList<>();
-        portParams.add(Param.builder().field(MonitorServiceImpl.PARAM_FIELD_PORT).paramValue("8080").build());
-
-        when(monitorDao.findById(testPortMonitorId)).thenReturn(Optional.of(prePortMonitor));
-        when(appService.getAppDefine("app")).thenReturn(mockJob);
-        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(3L);
-        when(monitorDao.save(any(Monitor.class))).thenReturn(portMonitor);
-
-        assertDoesNotThrow(() -> monitorService.modifyMonitor(portMonitor, portParams, null, null));
-
-        // Assert that instance appended the port
-        assertEquals("127.0.0.1:8080", portMonitor.getInstance());
-
-        // Scenario 2: Originally instance has port mark, now port has no value in params
-        reset(monitorDao);
-
-        long testNoPortMonitorId = 4L;
-        Monitor noPortMonitor = Monitor.builder()
-                .id(testNoPortMonitorId)
-                .app("app")
-                .name("memory")
-                .scrape(CommonConstants.SCRAPE_STATIC)
-                .instance("127.0.0.1:8080") // Original instance has port
-                .intervals(1)
-                .build();
-
-        Monitor preNoPortMonitor = Monitor.builder()
-                .id(testNoPortMonitorId)
-                .app("app")
-                .name("memory")
-                .jobId(4L)
-                .status(CommonConstants.MONITOR_UP_CODE)
-                .build();
-
-        List<Param> noPortParams = new ArrayList<>(); // empty
-
-        when(monitorDao.findById(testNoPortMonitorId)).thenReturn(Optional.of(preNoPortMonitor));
-        when(appService.getAppDefine("app")).thenReturn(mockJob);
-        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(4L);
-        when(monitorDao.save(any(Monitor.class))).thenReturn(noPortMonitor);
-
-        assertDoesNotThrow(() -> monitorService.modifyMonitor(noPortMonitor, noPortParams, null, null));
-
-        // Assert that the port mark in instance is removed
-        assertEquals("127.0.0.1", noPortMonitor.getInstance());
+        monitorService.modifyMonitor(monitor, params, null, null);
+        return monitor;
     }
 
     @Test

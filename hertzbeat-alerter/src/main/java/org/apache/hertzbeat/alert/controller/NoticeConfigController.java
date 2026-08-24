@@ -29,7 +29,11 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.alert.notice.NoticeTemplateRenderer;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +57,9 @@ public class NoticeConfigController {
 
     @Autowired
     private NoticeConfigService noticeConfigService;
+
+    @Autowired
+    private AlerterProperties alerterProperties;
 
     @PostMapping(path = "/receiver")
     @Operation(summary = "Add a recipient", description = "Add a recipient")
@@ -87,14 +94,16 @@ public class NoticeConfigController {
             @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name,
             @Parameter(description = "en: List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
             @Parameter(description = "en: Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name, pageIndex, pageSize)));
+        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name, pageIndex, pageSize)
+                .map(NoticeReceiverMaskUtil::mask)));
     }
 
     @GetMapping(path = "/receivers/all")
     @Operation(summary = "Get a list of all message notification recipients",
             description = "Get a list of all message notification recipients")
     public ResponseEntity<Message<List<NoticeReceiver>>> getAllReceivers() {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeReceivers()));
+        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeReceivers().stream()
+                .map(NoticeReceiverMaskUtil::mask).toList()));
     }
 
     @GetMapping(path = "/receiver/{id}")
@@ -106,7 +115,7 @@ public class NoticeConfigController {
         if (noticeReceiver == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "The relevant information of the recipient could not be found, please check whether the parameters are correct or refresh the page"));
         }
-        return ResponseEntity.ok(Message.success(noticeReceiver));
+        return ResponseEntity.ok(Message.success(NoticeReceiverMaskUtil.mask(noticeReceiver)));
     }
 
     @PostMapping(path = "/rule")
@@ -224,5 +233,19 @@ public class NoticeConfigController {
             return ResponseEntity.ok(Message.success());
         }
         return ResponseEntity.ok(Message.fail(FAIL_CODE, "Notify service not available, please check config!"));
+    }
+
+    @PostMapping(path = "/template/preview")
+    @Operation(summary = "Preview how a notice template renders against a sample alert",
+            description = "Preview how a notice template renders against a sample alert, without sending anything")
+    public ResponseEntity<Message<String>> previewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
+        try {
+            String rendered = NoticeTemplateRenderer.renderContent(
+                    noticeTemplate, NoticeTemplateRenderer.sampleGroupAlert(), alerterProperties.getConsoleUrl(),
+                    ResourceBundleUtil.getBundle("alerter"));
+            return ResponseEntity.ok(Message.successWithData(rendered));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Failed to render template: " + e.getMessage()));
+        }
     }
 }

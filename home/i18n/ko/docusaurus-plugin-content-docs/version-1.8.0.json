@@ -1,0 +1,166 @@
+{
+  "version.label": {
+    "message": "1.8.0",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.quickstart": {
+    "message": "빠른 시작",
+    "description": "The label for category quickstart in sidebar docs"
+  },
+  "sidebar.docs.category.custom": {
+    "message": "커스텀 모니터링",
+    "description": "The label for category custom in sidebar docs"
+  },
+  "sidebar.docs.category.http": {
+    "message": "HTTP 프로토콜",
+    "description": "The label for category http in sidebar docs"
+  },
+  "sidebar.docs.category.jdbc": {
+    "message": "JDBC 프로토콜",
+    "description": "The label for category jdbc in sidebar docs"
+  },
+  "sidebar.docs.category.ssh": {
+    "message": "SSH 프로토콜",
+    "description": "The label for category ssh in sidebar docs"
+  },
+  "sidebar.docs.category.telnet": {
+    "message": "TELNET 프로토콜",
+    "description": "The label for category telnet in sidebar docs"
+  },
+  "sidebar.docs.category.guides": {
+    "message": "사용 가이드",
+    "description": "The label for category guides in sidebar docs"
+  },
+  "sidebar.docs.category.service": {
+    "message": "서비스 모니터링",
+    "description": "The label for category service in sidebar docs"
+  },
+  "sidebar.docs.category.database": {
+    "message": "데이터베이스 모니터링",
+    "description": "The label for category database in sidebar docs"
+  },
+  "sidebar.docs.category.os": {
+    "message": "OS 모니터링",
+    "description": "The label for category os in sidebar docs"
+  },
+  "sidebar.docs.category.server": {
+    "message": "서버 모니터링",
+    "description": "The label for category server in sidebar docs"
+  },
+  "sidebar.docs.category.alert": {
+    "message": "알람",
+    "description": "The label for category alert in sidebar docs"
+  },
+  "sidebar.docs.category.notice": {
+    "message": "알림",
+    "description": "The label for category notice in sidebar docs"
+  },
+  "sidebar.docs.category.service-discovery": {
+    "message": "서비스 디스커버리",
+    "description": "The label for category service-discovery in sidebar docs"
+  },
+  "sidebar.docs.category.mid": {
+    "message": "미들웨어 모니터링",
+    "description": "The label for category mid in sidebar docs"
+  },
+  "sidebar.docs.category.Others": {
+    "message": "기타",
+    "description": "The label for category Others in sidebar docs"
+  },
+  "sidebar.docs.category.cloud-native": {
+    "message": "클라우드 네이티브 모니터링",
+    "description": "The label for category cloud-native in sidebar docs"
+  },
+  "sidebar.docs.category.jmx": {
+    "message": "JMX 프로토콜",
+    "description": "The label for category jmx in sidebar docs"
+  },
+  "sidebar.docs.category.snmp": {
+    "message": "SNMP 프로토콜",
+    "description": "The label for category snmp in sidebar docs"
+  },
+  "sidebar.docs.link.Install via Helm": {
+    "message": "Helm으로 설치",
+    "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+  },
+  "sidebar.docs.category.push": {
+    "message": "Push",
+    "description": "The label for category push in sidebar docs"
+  },
+  "sidebar.docs.category.program": {
+    "message": "애플리케이션 모니터링",
+    "description": "The label for category program in sidebar docs"
+  },
+  "sidebar.docs.category.cache": {
+    "message": "캐시 모니터링",
+    "description": "The label for category cache in sidebar docs"
+  },
+  "sidebar.docs.category.bigdata": {
+    "message": "빅데이터 모니터링",
+    "description": "The label for category bigdata in sidebar docs"
+  },
+  "sidebar.docs.category.webserver": {
+    "message": "웹서버 모니터링",
+    "description": "The label for category webserver in sidebar docs"
+  },
+  "sidebar.docs.category.contribution": {
+    "message": "기여 가이드",
+    "description": "The label for category contribution in sidebar docs"
+  },
+  "sidebar.docs.category.submit": {
+    "message": "제출 가이드",
+    "description": "The label for category submit in sidebar docs"
+  },
+  "sidebar.docs.category.release": {
+    "message": "릴리스 가이드",
+    "description": "The label for category release in sidebar docs"
+  },
+  "sidebar.docs.category.Community": {
+    "message": "커뮤니티",
+    "description": "The label for category Community in sidebar docs"
+  },
+  "sidebar.docs.category.network": {
+    "message": "네트워크 모니터링",
+    "description": "The label for category network in sidebar docs"
+  },
+  "sidebar.docs.category.NGQL": {
+    "message": "NGQL",
+    "description": "The label for category NGQL in sidebar docs"
+  },
+  "sidebar.docs.category.llm": {
+    "message": "AI LLM 모니터링",
+    "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.aiConfig": {
+    "message": "AI LLM 설정",
+    "description": "The label for category aiConfig in sidebar docs"
+  },
+  "sidebar.docs.category.install": {
+    "message": "설치",
+    "description": "The label for category install in sidebar docs"
+  },
+  "sidebar.docs.category.upgrade": {
+    "message": "업그레이드",
+    "description": "The label for category upgrade in sidebar docs"
+  },
+  "sidebar.docs.category.setting": {
+    "message": "설정",
+    "description": "The label for category setting in sidebar docs"
+  },
+  "sidebar.docs.category.change-db": {
+    "message": "DB 변경",
+    "description": "The label for category change-db in sidebar docs"
+  },
+  "sidebar.docs.category.use-case": {
+    "message": "사용 사례",
+    "description": "The label for category use-case in sidebar docs"
+  },
+  "sidebar.docs.category.extern-deploy": {
+    "message": "외부 설치",
+    "description": "The label for category extern-deploy in sidebar docs"
+  },
+  "sidebar.docs.category.log": {
+    "message": "로그",
+    "description": "The label for category log in sidebar docs"
+  }
+}

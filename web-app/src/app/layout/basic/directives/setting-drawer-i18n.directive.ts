@@ -54,7 +54,7 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
     'setting.drawer.info.message'
   ];
 
-  private readonly languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
+  private readonly languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW', 'ko-KR'];
 
   constructor(
     private el: ElementRef<HTMLElement>,

@@ -1,0 +1,19 @@
+releases:
+  label: Releases
+  permalink: releases
+  description: Apache HertzBeat release announcements and product updates.
+
+engineering:
+  label: Engineering
+  permalink: engineering
+  description: Technical deep dives into Apache HertzBeat architecture and internals.
+
+tutorials:
+  label: Tutorials
+  permalink: tutorials
+  description: Guides and best practices for deploying, integrating, and using Apache HertzBeat.
+
+community:
+  label: Community
+  permalink: community
+  description: News, events, milestones, and stories from the Apache HertzBeat community.

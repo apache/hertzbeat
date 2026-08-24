@@ -1,3 +1,9 @@
+---
+tags: [community]
+description: Explore HertzBeat's OSPP projects, including monitoring template marketplaces and collector scheduling, with expected outcomes and contributor guidance.
+cover_headline: OSPP 2024 Project Topics
+---
+
 # [Open Source Summer] HertzBeat project introduction
 
 ## What is HertzBeat?

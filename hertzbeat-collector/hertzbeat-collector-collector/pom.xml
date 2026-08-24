@@ -132,6 +132,32 @@
 
     <build>
         <finalName>apache-hertzbeat-collector-${hzb.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <classesDirectory>target/classes/</classesDirectory>
+                    <archive>
+                        <!--Generated JAR does not include Maven descriptor-related files-->
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <manifest>
+                            <!--Project startup class-->
+                            <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
+                            <addClasspath>true</addClasspath>
+                            <!--Location of external dependency JARs-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>. config</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>
@@ -183,30 +209,6 @@
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven-jar-plugin.version}</version>
-                        <configuration>
-                            <classesDirectory>target/classes/</classesDirectory>
-                            <archive>
-                                <!--Generated JAR does not include Maven descriptor-related files-->
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <!--Project startup class-->
-                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
-                                    <useUniqueVersions>false</useUniqueVersions>
-                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
-                                    <addClasspath>true</addClasspath>
-                                    <!--Location of external dependency JARs-->
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                </manifest>
-                                <manifestEntries>
-                                    <Class-Path>. config</Class-Path>
-                                </manifestEntries>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
                         <version>${maven-assembly-plugin.version}</version>
                         <executions>
@@ -253,30 +255,6 @@
                         <configuration>
                             <source>${java.version}</source>
                             <target>${java.version}</target>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven-jar-plugin.version}</version>
-                        <configuration>
-                            <classesDirectory>target/classes/</classesDirectory>
-                            <archive>
-                                <!--Generated JAR does not include Maven descriptor-related files-->
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <!--Project startup class-->
-                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
-                                    <useUniqueVersions>false</useUniqueVersions>
-                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
-                                    <addClasspath>true</addClasspath>
-                                    <!--Location of external dependency JARs-->
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                </manifest>
-                                <manifestEntries>
-                                    <Class-Path>. config</Class-Path>
-                                </manifestEntries>
-                            </archive>
                         </configuration>
                     </plugin>
                     <plugin>

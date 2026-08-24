@@ -18,15 +18,16 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
-import { NoticeReceiverMailService } from './notice-receiver.service';
+import { NoticeReceiverService } from './notice-receiver.service';
 
 describe('NoticeReceiverService', () => {
-  let service: NoticeReceiverMailService;
+  let service: NoticeReceiverService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(NoticeReceiverMailService);
+    configureHttpServiceTest();
+    service = TestBed.inject(NoticeReceiverService);
   });
 
   it('should be created', () => {

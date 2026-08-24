@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { SystemConfigComponent } from './system-config.component';
 
@@ -26,9 +27,7 @@ describe('SystemConfigComponent', () => {
   let fixture: ComponentFixture<SystemConfigComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [SystemConfigComponent]
-    }).compileComponents();
+    await configureShallowTest(SystemConfigComponent).compileComponents();
 
     fixture = TestBed.createComponent(SystemConfigComponent);
     component = fixture.componentInstance;

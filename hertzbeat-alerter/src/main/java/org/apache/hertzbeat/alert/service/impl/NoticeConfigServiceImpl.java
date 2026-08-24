@@ -31,6 +31,7 @@ import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -52,6 +53,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -91,7 +93,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                    criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                 );
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -113,9 +115,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
             // Filter by name (case-insensitive)
             List<NoticeTemplate> filteredDefaultTemplates = defaultTemplates.stream()
-                    .filter(template -> StringUtils.isBlank(name)
-                            || template.getName().toLowerCase().contains(name.toLowerCase()))
-                    .collect(Collectors.toList());
+                .filter(template -> StringUtils.isBlank(name)
+                    || template.getName().toLowerCase().contains(name.toLowerCase()))
+                .collect(Collectors.toList());
 
             // Pagination logic
             int totalItems = filteredDefaultTemplates.size();
@@ -134,7 +136,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                 Predicate predicate = criteriaBuilder.conjunction();
                 if (StringUtils.isNotBlank(name)) {
                     Predicate predicateName = criteriaBuilder.like(
-                            criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                     );
                     predicate = criteriaBuilder.and(predicateName);
                 }
@@ -144,7 +146,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             return noticeTemplateDao.findAll(specification, pageRequest);
         }
     }
-
 
 
     @Override
@@ -160,7 +161,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                    criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                 );
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -176,7 +177,41 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver);
         noticeReceiverDao.save(noticeReceiver);
+    }
+
+    /**
+     * The rest api returns receivers with masked secret fields, so a receiver submitted
+     * from the ui may carry the mask placeholder instead of the real secret.
+     * Restore such fields from the stored entity before using the receiver.
+     * @throws IllegalArgumentException if the receiver carries an id but no stored receiver
+     *                                  exists for it: without the stored entity the mask cannot
+     *                                  be resolved, and saving would persist the placeholder
+     */
+    private void resolveMaskedSecrets(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver, false);
+    }
+
+    /**
+     * Bind stored secrets to their original notification type and destination for test messages.
+     */
+    private void resolveMaskedSecretsForTest(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver, true);
+    }
+
+    private void resolveMaskedSecrets(NoticeReceiver noticeReceiver, boolean testMessage) {
+        if (noticeReceiver == null || noticeReceiver.getId() == null) {
+            return;
+        }
+        NoticeReceiver existing = noticeReceiverDao.findById(noticeReceiver.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "The receiver with id " + noticeReceiver.getId() + " does not exist."));
+        if (testMessage) {
+            NoticeReceiverMaskUtil.resolveMaskForTest(noticeReceiver, existing);
+        } else {
+            NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing);
+        }
     }
 
     @Override
@@ -211,51 +246,58 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             CacheFactory.setNoticeCache(rules);
         }
 
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // TODO: This matches an already-grouped alert against notice rules (group-then-route). It cannot fully
-        //  separate alerts that were grouped together but should reach different receivers, so a rule matched by
-        //  one alert still notifies the whole group. The ideal design is route-then-group (like Alertmanager):
-        //  route each single alert by its labels first, then group per receiver. Tracked as a follow-up to #3852.
+        // Match grouped alerts here; dispatch scopes each notification to the single alerts matching its rule.
         return rules.stream()
-                .filter(rule -> {
-                    if (!rule.isFilterAll()) {
-                        // filter labels: a rule matches when ANY single alert in the group carries
-                        if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
-                            List<SingleAlert> singleAlerts = alert.getAlerts();
-                            boolean labelMatch = singleAlerts != null && singleAlerts.stream().anyMatch(singleAlert -> {
-                                Map<String, String> alertLabels = singleAlert.getLabels();
-                                if (alertLabels == null) {
-                                    return false;
-                                }
-                                return rule.getLabels().entrySet().stream().allMatch(labelItem ->
-                                        Objects.equals(labelItem.getValue(), alertLabels.get(labelItem.getKey())));
-                            });
-                            if (!labelMatch) {
+            .filter(rule -> {
+                if (!rule.isFilterAll()) {
+                    // filter labels: a rule matches when ANY single alert in the group carries
+                    if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
+                        List<SingleAlert> singleAlerts = alert.getAlerts();
+                        boolean labelMatch = singleAlerts != null && singleAlerts.stream().anyMatch(singleAlert -> {
+                            Map<String, String> alertLabels = singleAlert.getLabels();
+                            if (alertLabels == null) {
                                 return false;
                             }
-                        }
-                    }
-
-                    LocalDateTime nowDate = LocalDateTime.now();
-                    // filter day
-                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
-                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
-                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (!dayMatch) {
+                            return rule.getLabels().entrySet().stream().allMatch(labelItem ->
+                             Objects.equals(labelItem.getValue(), alertLabels.get(labelItem.getKey())));
+                        });
+                        if (!labelMatch) {
                             return false;
                         }
                     }
-                    // filter time
-                    LocalTime nowTime = nowDate.toLocalTime();
-                    boolean startMatch = rule.getPeriodStart() == null
-                            || nowTime.isAfter(rule.getPeriodStart().toLocalTime())
-                            || (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
-                                    && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
-                    boolean endMatch = rule.getPeriodEnd() == null
-                            || nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
-                    return startMatch && endMatch;
-                })
-                .collect(Collectors.toList());
+                }
+
+                LocalDateTime nowDate = LocalDateTime.now();
+                // filter day
+                int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+                if (rule.getDays() != null && !rule.getDays().isEmpty()) {
+                    boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
+                    if (!dayMatch) {
+                        return false;
+                    }
+                }
+                // filter time, compare wall-clock times in the server time zone,
+                // the stored date part is meaningless (it is the day the user picked the time on the ui)
+                LocalTime nowTime = nowDate.toLocalTime();
+                LocalTime startTime = rule.getPeriodStart() == null
+                    ? null : rule.getPeriodStart().withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
+                LocalTime endTime = rule.getPeriodEnd() == null
+                    ? null : rule.getPeriodEnd().withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
+                if (startTime == null && endTime == null) {
+                    return true;
+                }
+                if (startTime == null) {
+                    return !nowTime.isAfter(endTime);
+                }
+                if (endTime == null) {
+                    return !nowTime.isBefore(startTime);
+                }
+                if (!startTime.isAfter(endTime)) {
+                    return !nowTime.isBefore(startTime) && !nowTime.isAfter(endTime);
+                }
+                // cross-midnight window, e.g. 22:00-06:00
+                return !nowTime.isBefore(startTime) || !nowTime.isAfter(endTime);
+            }).collect(Collectors.toList());
     }
 
     @Override
@@ -308,37 +350,39 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecretsForTest(noticeReceiver);
         Map<String, String> labels = new HashMap<>(8);
         labels.put(CommonConstants.LABEL_INSTANCE, "127.0.0.1");
         labels.put(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert");
         Map<String, String> annotations = new HashMap<>(8);
         annotations.put("suggest", "Please check the CPU usage of the server");
         SingleAlert singleAlert1 = SingleAlert.builder()
-                .labels(labels)
-                .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
-                .startAt(System.currentTimeMillis())
-                .activeAt(System.currentTimeMillis())
-                .endAt(System.currentTimeMillis())
-                .triggerTimes(2)
-                .annotations(annotations)
-                .status("firing")
-                .build();
+            .labels(labels)
+            .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
+            .startAt(System.currentTimeMillis())
+            .activeAt(System.currentTimeMillis())
+            .endAt(System.currentTimeMillis())
+            .triggerTimes(2)
+            .annotations(annotations)
+            .status("firing")
+            .build();
         SingleAlert singleAlert2 = SingleAlert.builder()
-                .labels(labels)
-                .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
-                .startAt(System.currentTimeMillis())
-                .activeAt(System.currentTimeMillis())
-                .endAt(System.currentTimeMillis())
-                .triggerTimes(4)
-                .annotations(annotations)
-                .status("firing")
-                .build();
+            .labels(labels)
+            .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
+            .startAt(System.currentTimeMillis())
+            .activeAt(System.currentTimeMillis())
+            .endAt(System.currentTimeMillis())
+            .triggerTimes(4)
+            .annotations(annotations)
+            .status("firing")
+            .build();
         GroupAlert groupAlert = GroupAlert.builder()
-                .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert"))
-                .commonAnnotations(annotations)
-                .alerts(List.of(singleAlert1, singleAlert2))
-                .status("firing")
-                .build();
+            .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert",
+                CommonConstants.LABEL_INSTANCE, "127.0.0.1"))
+            .commonAnnotations(annotations)
+            .alerts(List.of(singleAlert1, singleAlert2))
+            .status("firing")
+            .build();
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, groupAlert);
     }
 

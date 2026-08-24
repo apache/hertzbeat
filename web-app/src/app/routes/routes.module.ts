@@ -7,6 +7,7 @@ import { TagCloudComponent } from 'angular-tag-cloud-module';
 import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchComponent } from 'ng-zorro-antd/switch';
@@ -38,6 +39,7 @@ const COMPONENTS: Array<Type<void>> = [DashboardComponent, UserLoginComponent, U
     SlickCarouselModule,
     TagCloudComponent,
     NzDividerModule,
+    NzEmptyModule,
     LayoutModule,
     NzCollapseModule,
     NzListModule,

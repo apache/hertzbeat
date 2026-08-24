@@ -8,7 +8,7 @@
 
 ```sql
 SELECT timestamp, severity_text, body
-FROM hzb_logs
+FROM hzb_internal_logs
 WHERE <结构化过滤条件>
 ORDER BY timestamp DESC
 LIMIT <1-100>
@@ -36,13 +36,13 @@ LIMIT <1-100>
 }
 ```
 
-当前 `hzb_logs` 表没有 `monitorId` 字段，因此本接口不提供无效的监控 ID 过滤。如果后续需要该能力，应先在 OpenTelemetry 日志写入链中定义并提取统一的监控 ID 字段。
+当前 `hzb_internal_logs` 表没有 `monitorId` 字段，因此本接口不提供无效的监控 ID 过滤。如果后续需要该能力，应先在 OpenTelemetry 日志写入链中定义并提取统一的监控 ID 字段。
 
 ## GreptimeDB 账号
 
 服务支持通过 `greptime.username` 和 `greptime.password` 发送 HTTP Basic Authentication。用户名和密码必须同时配置；建议配合 HTTPS 或可信内网使用。
 
-项目当前 Docker Compose 使用 GreptimeDB `v0.14.3`，该版本只提供身份认证，不能限制用户为只读权限。因此当前真正生效的安全边界是“删除原始 SQL参数并固定生成单条 `SELECT`”。使用 GreptimeDB 1.0 及以上版本时，应为该 MCP 配置独立的 `ro`/`readonly` 账号。
+项目当前 Docker Compose 使用 GreptimeDB `v1.1.3`。应为该 MCP 配置独立的 `ro`/`readonly` 账号；同时，服务仍通过删除原始 SQL 参数并固定生成单条 `SELECT`，限制可执行查询范围。
 
 ## Claude Desktop 集成（stdio）
 

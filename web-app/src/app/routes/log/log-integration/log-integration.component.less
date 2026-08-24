@@ -1,84 +1,220 @@
-@import "~src/styles/theme";
+@import '~src/styles/theme';
 
-.log-integration-container {
+.integration-page {
+  min-height: 100%;
+  color: @text-color;
+}
+
+.page-heading {
   display: flex;
-  height: 100%;
-  background: @common-background-color;
-  border-radius: 4px;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 0 20px;
+  border-bottom: 1px solid @border-color-split;
 
-  .data-sources {
-    width: 240px;
-    border-right: 1px solid #f0f0f0;
-    padding: 16px;
-    background: @common-background-color;
-
-    h2 {
-      margin-bottom: 16px;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .source-list {
-      .source-item {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        transition: all 0.3s;
-
-        &:hover {
-          background: rgba(0, 0, 0, 0.05);
-        }
-
-        &.active {
-          background: rgba(0, 0, 0, 0.1);
-        }
-
-        img {
-          width: 24px;
-          height: 24px;
-          margin-right: 8px;
-        }
-      }
-    }
+  h1 {
+    margin: 0 0 6px;
+    font-weight: 600;
+    font-size: 24px;
   }
 
-  .doc-content {
-    flex: 1;
-    padding: 24px;
-    overflow-y: auto;
-    background: @common-background-color;
+  p {
+    margin: 0;
+    color: @text-color-secondary;
+  }
+}
 
-    h2 {
-      margin-bottom: 24px;
-      font-size: 20px;
-      font-weight: 500;
+.integration-workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(440px, 1.1fr);
+  gap: 0;
+  margin-top: 20px;
+  background: @component-background;
+  border: 1px solid @border-color-split;
+}
+
+.connection-form,
+.configuration-output {
+  padding: 24px;
+}
+
+.connection-form {
+  border-right: 1px solid @border-color-split;
+}
+
+.section-heading {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-weight: 600;
+    font-size: 17px;
+  }
+
+  p {
+    margin: 0;
+    color: @text-color-secondary;
+  }
+}
+
+.step-index {
+  display: inline-flex;
+  flex: 0 0 26px;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: @primary-color;
+  font-weight: 600;
+  background: fade(@primary-color, 10%);
+  border-radius: 50%;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  nz-form-item {
+    min-width: 0;
+  }
+}
+
+.protocol-options {
+  display: flex;
+  width: 100%;
+
+  label {
+    position: relative;
+    flex: 1 1 0;
+    padding: 0 8px;
+    white-space: nowrap;
+    text-align: center;
+    border: 1px solid @border-color-base;
+
+    + label {
+      margin-left: -1px;
+    }
+
+    &.ant-radio-button-wrapper-checked {
+      z-index: 1;
+      color: @primary-color;
+      border-color: @primary-color;
     }
   }
 }
 
+.token-input {
+  width: 100%;
+}
+
+.detect-hint {
+  margin: 8px 0 0;
+  color: @text-color-secondary;
+  font-size: 12px;
+}
+
+.probe-results {
+  margin-top: 18px;
+  border-top: 1px solid @border-color-split;
+}
+
+.probe-row {
+  display: grid;
+  grid-template-columns: 18px 76px 150px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  color: @success-color;
+  border-bottom: 1px solid @border-color-split;
+
+  &.probe-error {
+    color: @error-color;
+  }
+
+  .probe-message {
+    overflow: hidden;
+    color: @text-color-secondary;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 0 10px;
+  color: @text-color-secondary;
+  background: @common-tint-gray;
+  border: 1px solid @border-color-split;
+  border-bottom: 0;
+}
+
+pre {
+  min-height: 310px;
+  margin: 0 0 16px;
+  padding: 18px;
+  overflow: auto;
+  color: @text-color;
+  font-size: 12px;
+  line-height: 1.65;
+  background: #fafafa;
+  border: 1px solid @border-color-split;
+
+  code {
+    display: block;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border: 0;
+  }
+}
+
+:host ::ng-deep .configuration-output .ant-alert-info {
+  background: @common-tint-gray;
+  border-color: @border-color-split;
+}
+
 [data-theme='dark'] {
   :host {
-    .log-integration-container {
-      background: @common-background-color-dark;
-      .data-sources {
-        background: @common-background-color-dark;
-      }
-      .doc-content {
-        background: @common-background-color-dark;
-      }
-      .source-list {
-        .source-item {
-          &:hover {
-            background: rgba(255, 255, 255, 0.4);
-          }
-
-          &.active {
-            background: rgba(255, 255, 255, 0.6);
-          }
-        }
-      }
+    .integration-page {
+      color: @text-color-dark;
     }
+
+    .integration-workspace {
+      background: @common-background-color-dark;
+    }
+
+    .code-toolbar {
+      background: @common-tint-gray-dark;
+      border-color: #434343;
+    }
+
+    pre {
+      color: @text-color-dark;
+      background: @common-background-color-dark;
+      border-color: #434343;
+    }
+  }
+
+  :host ::ng-deep .configuration-output .ant-alert-info {
+    background: @common-tint-gray-dark;
+    border-color: #434343;
+  }
+}
+
+@media (max-width: 1080px) {
+  .integration-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .connection-form {
+    border-right: 0;
+    border-bottom: 1px solid @border-color-split;
   }
 }

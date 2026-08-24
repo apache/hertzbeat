@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -27,6 +28,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -50,12 +52,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "hzb_bulletin")
+@Table(name = "hzb_bulletin", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_bulletin_name", columnNames = "name")
+})
 public class Bulletin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Bulletin ID", example = "1")
+    @Schema(description = "Bulletin ID", example = "1", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(description = "Bulletin Name", example = "Bulletin1", accessMode = READ_WRITE)
@@ -74,19 +78,19 @@ public class Bulletin {
     @Convert(converter = JsonMapListAttributeConverter.class)
     private Map<String, List<String>> fields;
 
-    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_WRITE)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_WRITE)
+    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_WRITE)
+    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_WRITE)
+    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 }

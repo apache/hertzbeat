@@ -3,8 +3,9 @@ title: HertzBeat First Apache version v1.6.0 released now!
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source, monitoring, alerting]
+cover_headline: Apache HertzBeat 1.6.0
 ---
 
 **Hi guys, We are excited to announce that Apache HertzBeat™ has released its first Apache version v1.6.0! 🎉.**

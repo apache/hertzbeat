@@ -23,6 +23,7 @@ on:
     - cron: '0 0 * * *'
   push:
     branches: [ action* ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,7 +36,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: ./script/ci/github-actions/setup-deps
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
       with:
         version: 10
     - uses: actions/setup-node@v4
@@ -52,7 +53,7 @@ jobs:
 
     - name: Build the Backend
       run: |
-        mvnd -B clean package -Prelease,Pcluster -Dmaven.test.skip=false --file pom.xml
+        mvnd -B clean package -Prelease,cluster -Dmaven.test.skip=false --file pom.xml
 
     - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
     - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd

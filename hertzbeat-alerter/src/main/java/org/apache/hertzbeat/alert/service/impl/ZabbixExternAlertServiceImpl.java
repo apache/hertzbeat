@@ -42,6 +42,7 @@ public class ZabbixExternAlertServiceImpl implements ExternAlertService {
             log.warn("parse extern alert content failed! content: {}", content);
             return;
         }
+        alert.setId(null);
         alarmCommonReduce.reduceAndSendAlarm(alert);
     }
 

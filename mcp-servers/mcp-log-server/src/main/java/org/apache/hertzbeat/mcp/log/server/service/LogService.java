@@ -48,7 +48,7 @@ import java.util.Set;
 @Slf4j
 public class LogService {
 
-    private static final String BASE_QUERY = "SELECT timestamp, severity_text, body FROM hzb_logs";
+    private static final String BASE_QUERY = "SELECT timestamp, severity_text, body FROM hzb_internal_logs";
     private static final String TIMESTAMP_COLUMN = "timestamp";
     private static final String SEVERITY_TEXT_COLUMN = "severity_text";
     private static final String BODY_COLUMN = "body";

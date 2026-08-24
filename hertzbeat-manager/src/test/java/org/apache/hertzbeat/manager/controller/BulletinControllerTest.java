@@ -62,7 +62,7 @@ class BulletinControllerTest {
         Bulletin bulletinDto = new Bulletin();
         doAnswer(invocation -> {
             throw new IllegalArgumentException("Invalid bulletin");
-        }).when(bulletinService).validate(bulletinDto);
+        }).when(bulletinService).validate(bulletinDto, false);
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/bulletin")
                 .contentType("application/json")
@@ -72,7 +72,7 @@ class BulletinControllerTest {
 
         doAnswer(invocation -> {
             return null;
-        }).when(bulletinService).validate(bulletinDto);
+        }).when(bulletinService).validate(bulletinDto, false);
         doAnswer(invocation -> {
             return null;
         }).when(bulletinService).addBulletin(bulletinDto);
@@ -88,7 +88,7 @@ class BulletinControllerTest {
         Bulletin bulletinDto = new Bulletin();
         doAnswer(invocation -> {
             throw new IllegalArgumentException("Invalid bulletin");
-        }).when(bulletinService).validate(bulletinDto);
+        }).when(bulletinService).validate(bulletinDto, true);
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/bulletin")
                 .contentType("application/json")
@@ -98,7 +98,7 @@ class BulletinControllerTest {
 
         doAnswer(invocation -> {
             return null;
-        }).when(bulletinService).validate(bulletinDto);
+        }).when(bulletinService).validate(bulletinDto, true);
         doAnswer(invocation -> {
             return null;
         }).when(bulletinService).editBulletin(bulletinDto);

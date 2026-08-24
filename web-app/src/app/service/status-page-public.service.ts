@@ -43,12 +43,22 @@ export class StatusPagePublicService {
     return this.http.get<Message<StatusPageOrg>>(status_page_org_public_uri);
   }
 
-  public getStatusPageComponents(): Observable<Message<StatusPageComponentStatus[]>> {
-    return this.http.get<Message<StatusPageComponentStatus[]>>(status_page_component_public_uri);
+  public getStatusPageComponents(days?: number): Observable<Message<StatusPageComponentStatus[]>> {
+    let httpParams = new HttpParams();
+    if (days != null) {
+      httpParams = httpParams.append('days', days);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<StatusPageComponentStatus[]>>(status_page_component_public_uri, options);
   }
 
-  public getStatusPageComponent(componentId: number): Observable<Message<StatusPageComponentStatus>> {
-    return this.http.get<Message<StatusPageComponentStatus>>(`${status_page_component_public_uri}/${componentId}`);
+  public getStatusPageComponent(componentId: number, days?: number): Observable<Message<StatusPageComponentStatus>> {
+    let httpParams = new HttpParams();
+    if (days != null) {
+      httpParams = httpParams.append('days', days);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<StatusPageComponentStatus>>(`${status_page_component_public_uri}/${componentId}`, options);
   }
 
   public getStatusPageIncidents(

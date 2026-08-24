@@ -18,7 +18,7 @@
  */
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { Component, NgZone } from '@angular/core';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { I18NService } from '@core';
@@ -45,6 +45,7 @@ describe('SettingDrawerI18nDirective', () => {
   let i18nService: jasmine.SpyObj<I18NService>;
   let httpMock: HttpTestingController;
   let mockTranslations: { [key: string]: string };
+  const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW', 'ko-KR'];
 
   const mockI18nData = {
     'zh-CN': {
@@ -74,6 +75,12 @@ describe('SettingDrawerI18nDirective', () => {
       'setting.drawer.theme.color': '主題色',
       'setting.drawer.settings': '設置',
       'setting.drawer.info.message': '配置欄只在開發環境用於預覽,生產環境不會展現,請拷貝後手動修改參數配置文件 src/styles/theme.less'
+    },
+    'ko-KR': {
+      'setting.drawer.theme.color': '테마 색상',
+      'setting.drawer.settings': '설정',
+      'setting.drawer.info.message':
+        '이 설정 패널은 개발 환경에서 미리보기 용도로만 제공되며, 운영 환경에서는 표시되지 않습니다. src/styles/theme.less 파일을 복사하여 직접 수정해 주세요'
     }
   };
 
@@ -96,7 +103,7 @@ describe('SettingDrawerI18nDirective', () => {
     await TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       declarations: [TestComponent, SettingDrawerI18nDirective],
-      providers: [{ provide: ALAIN_I18N_TOKEN, useValue: i18nServiceSpy }, NgZone]
+      providers: [{ provide: ALAIN_I18N_TOKEN, useValue: i18nServiceSpy }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestComponent);
@@ -114,36 +121,33 @@ describe('SettingDrawerI18nDirective', () => {
     httpMock.verify();
   });
 
-  it('should create', () => {
+  function loadMappings(): void {
+    fixture.detectChanges();
+    languages.forEach(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`).flush(mockI18nData[lang as keyof typeof mockI18nData]));
+  }
+
+  function destroyFixture(): void {
+    fixture.destroy();
+    tick(2000);
+  }
+
+  it('should create', fakeAsync(() => {
+    loadMappings();
     expect(directive).toBeTruthy();
-  });
+    destroyFixture();
+  }));
 
   it('should load mappings from i18n files', fakeAsync(() => {
-    fixture.detectChanges();
-
-    const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
-    const requests = languages.map(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`));
-
-    languages.forEach((lang, index) => {
-      requests[index].flush(mockI18nData[lang as keyof typeof mockI18nData]);
-    });
-
+    loadMappings();
     tick(100);
     fixture.detectChanges();
 
     expect(i18nService.fanyi).toHaveBeenCalled();
+    destroyFixture();
   }));
 
   it('should replace Chinese text with translations', fakeAsync(() => {
-    fixture.detectChanges();
-
-    const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
-    const requests = languages.map(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`));
-
-    languages.forEach((lang, index) => {
-      requests[index].flush(mockI18nData[lang as keyof typeof mockI18nData]);
-    });
-
+    loadMappings();
     tick(2000);
     fixture.detectChanges();
     tick(100);
@@ -155,5 +159,6 @@ describe('SettingDrawerI18nDirective', () => {
         expect(themeColorDiv.textContent).toContain('Theme Color');
       }
     }
+    destroyFixture();
   }));
 });
