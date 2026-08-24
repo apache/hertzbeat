@@ -224,6 +224,8 @@
   "alert.notice.type.ntfy-server-url": "Ntfy 服务器地址",
   "alert.notice.type.ntfy-topic": "Ntfy 主题",
   "alert.notice.type.ntfy-token": "Ntfy 访问令牌",
+  "alert.notice.type.teams": "Microsoft Teams",
+  "alert.notice.type.teams-webHook-url": "Teams Workflows Webhook 地址",
   "alert.notice.type.phone": "手机号",
   "alert.notice.type.serverchan": "Server酱(ServerChan)",
   "alert.notice.type.serverchan-token": "Server酱Token",
