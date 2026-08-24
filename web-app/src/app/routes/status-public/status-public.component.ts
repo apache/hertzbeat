@@ -52,7 +52,7 @@ export class StatusPublicComponent implements OnInit {
   showMode: string = 'component';
 
   historyDays: number = 30;
-  historyDaysOptions: number[] = [1, 7, 30, 90];
+  historyDaysOptions: number[] = [1, 7, 30, 60, 90, 180, 365];
 
   pageIndex: number = 1;
   pageSize: number = 9999;

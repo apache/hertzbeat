@@ -26,6 +26,7 @@ trap 'rm -f "$default_config" "$override_config"' EXIT HUP INT TERM
 
 docker compose -f "$compose_file" config --format json > "$default_config"
 HERTZBEAT_BIND_ADDRESS=192.0.2.10 \
+HERTZBEAT_OTLP_BIND_ADDRESS=192.0.2.20 \
   docker compose -f "$compose_file" config --format json > "$override_config"
 
 assert_binding() {
@@ -51,6 +52,8 @@ for service_port in 1157 1158; do
   assert_binding "$default_config" hertzbeat "$service_port" "$service_port" 127.0.0.1
   assert_binding "$override_config" hertzbeat "$service_port" "$service_port" 192.0.2.10
 done
+assert_binding "$default_config" hertzbeat 14317 14317 127.0.0.1
+assert_binding "$override_config" hertzbeat 14317 14317 192.0.2.20
 
 assert_binding "$default_config" postgres 5432 15432 127.0.0.1
 for datastore_port in 4000 4001 4002 4003; do

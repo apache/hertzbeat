@@ -32,8 +32,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    # PostgreSQL is an implementation detail of this stack. Keep it local;
-    # containers reach it through the hertzbeat bridge network.
+    # Bind data-store ports to localhost only: these services carry default
+    # credentials (see POSTGRES_PASSWORD / the greptime static user provider)
+    # and are only meant for the operator on the host, not for remote access.
     ports:
       - '127.0.0.1:15432:5432'
     environment:
@@ -60,8 +61,9 @@ services:
       start_period: 30s
     environment:
         TZ: Asia/Shanghai
-    # GreptimeDB is an implementation detail of this stack. Keep all of its
-    # published protocols local and use the bridge network from containers.
+    # Bind data-store ports to localhost only: these services use the default
+    # static user provider (greptime=greptime) and are only meant for the
+    # operator on the host, not for remote access.
     ports:
       - "127.0.0.1:14000:4000"
       - "127.0.0.1:14001:4001"
@@ -110,5 +112,8 @@ services:
     ports:
       - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1157:1157"
       - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1158:1158"
+      # OTLP/gRPC ingestion. 14317 rather than the OpenTelemetry standard 4317, which a local
+      # OTel Collector normally holds - and a clash on a published port stops the container.
+      - "${HERTZBEAT_OTLP_BIND_ADDRESS:-127.0.0.1}:14317:14317"
     networks:
       - hertzbeat

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
@@ -44,6 +45,38 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class MetricsDataServiceImpl implements MetricsDataService {
+
+    /**
+     * The history range is interpolated straight into the time predicate of the generated
+     * query - {@code WHERE ts >= now - %s} for tdengine, the equivalent for influxdb, iotdb
+     * and victoria metrics - with no quoting around it, which makes it the widest opening
+     * of the four inputs: anything after the range escapes the predicate and continues the
+     * statement.
+     *
+     * <p>A count followed by a single unit letter is the whole language the ui speaks
+     * ({@code 1h}, {@code 6h}, {@code 1D}, {@code 1W}, {@code 4W}, {@code 12W}) and cannot
+     * carry a quote, a separator or a comment. Both cases are accepted because the storages
+     * differ on it: questdb lowercases the unit while `TimePeriodUtil` reads an uppercase
+     * unit as a calendar period. Which units a given storage actually supports is left to
+     * that storage, so this rejects without changing what already worked.
+     */
+    private static final Pattern HISTORY_RANGE = Pattern.compile("\\d{1,6}[smhdwy]", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * App, metrics group and metric names reach the storages as table and column
+     * identifiers, quoted with backticks in tdengine and double quotes in questdb, and as
+     * promql label values in victoria metrics. None of the characters allowed here can
+     * close any of those, and every monitoring template shipped with hertzbeat names its
+     * apps, metric groups and fields from this set.
+     */
+    private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z0-9_-]{1,200}");
+
+    /**
+     * The instance is commonly an address, so it additionally allows the punctuation an
+     * address carries. The storages that build a table name from it already fold {@code .},
+     * {@code :}, {@code [} and {@code ]} into underscores.
+     */
+    private static final Pattern INSTANCE = Pattern.compile("[A-Za-z0-9_\\-.:\\[\\]]{1,200}");
 
     private final RealTimeDataReader realTimeDataReader;
 
@@ -111,6 +144,11 @@ public class MetricsDataServiceImpl implements MetricsDataService {
         if (history == null) {
             history = "6h";
         }
+        validateHistoryRange(history);
+        validateIdentifier(app, "app");
+        validateIdentifier(metrics, "metrics");
+        validateIdentifier(metric, "metric");
+        validateInstance(instance);
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
             instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, history);
@@ -125,5 +163,24 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                 .instance(instance).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
+    }
+
+    private static void validateHistoryRange(String history) {
+        if (!HISTORY_RANGE.matcher(history).matches()) {
+            throw new IllegalArgumentException("history range: " + history
+                    + " is illegal, expected a count followed by a unit such as 6h or 1W.");
+        }
+    }
+
+    private static void validateIdentifier(String value, String name) {
+        if (value == null || !IDENTIFIER.matcher(value).matches()) {
+            throw new IllegalArgumentException(name + ": " + value + " is illegal.");
+        }
+    }
+
+    private static void validateInstance(String instance) {
+        if (instance == null || !INSTANCE.matcher(instance).matches()) {
+            throw new IllegalArgumentException("instance: " + instance + " is illegal.");
+        }
     }
 }

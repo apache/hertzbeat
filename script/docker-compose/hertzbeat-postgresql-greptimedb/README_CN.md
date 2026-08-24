@@ -35,6 +35,8 @@
 
 - `1157` 是 HertzBeat Web UI 和 API 端口。
 - `1158` 是 Manager 与 Collector 的通信端口。
+- `14317` 是 OTLP/gRPC 遥测写入端口。它使用独立的监听地址变量，避免仅为
+  远程 Collector 开放网络时同时暴露遥测写入。
 - `15432`、`14000`–`14003` 是 PostgreSQL 和 GreptimeDB 的开发调试端口。
   容器之间通过内部 `hertzbeat` 网络访问，所以这些端口始终只监听本机。
 
@@ -51,7 +53,11 @@ docker compose config
 只允许 Collector 所在的来源网络访问 `1158`。如需远程访问 Web/API，建议通过
 TLS 反向代理开放 `1157`。如果必须设置为 `0.0.0.0`，请先替换所有内置/默认凭证，
 通过防火墙或安全组限制来源并配置 TLS。`HERTZBEAT_BIND_ADDRESS` 不会开放
-PostgreSQL 或 GreptimeDB 端口。
+OTLP、PostgreSQL 或 GreptimeDB 端口。
+
+如果需要远程 OTLP/gRPC 写入，请单独设置 `HERTZBEAT_OTLP_BIND_ADDRESS`，并只允许
+可信遥测来源访问 `14317`。建议先通过具备认证和 TLS 的 Collector 或网关，再把流量
+转发到 HertzBeat。
 
 远程 Collector 应配置 Manager 的可达地址和 `1158` 端口；除非 Manager 与
 Collector 位于同一主机，否则不能使用 `127.0.0.1`。

@@ -116,9 +116,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
             // Filter the numerical metrics that can be aggregated under this monitor
-            if (this.app == 'push') {
-              return this.appDefineSvc.getPushDefine(this.monitorId);
-            } else if (this.app == 'prometheus') {
+            if (this.app == 'prometheus') {
               return this.appDefineSvc.getAppDynamicDefine(this.monitorId);
             } else {
               return this.appDefineSvc.getAppDefine(this.app);
@@ -517,9 +515,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
-            if (this.app == 'push') {
-              return this.appDefineSvc.getPushDefine(this.monitorId);
-            } else if (this.app == 'prometheus') {
+            if (this.app == 'prometheus') {
               return this.appDefineSvc.getAppDynamicDefine(this.monitorId);
             } else {
               return this.appDefineSvc.getAppDefine(this.app);

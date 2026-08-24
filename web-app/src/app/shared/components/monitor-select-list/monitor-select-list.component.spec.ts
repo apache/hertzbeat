@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { MonitorSelectListComponent } from './monitor-select-list.component';
 
@@ -26,9 +27,7 @@ describe('MonitorSelectListComponent', () => {
   let fixture: ComponentFixture<MonitorSelectListComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorSelectListComponent]
-    }).compileComponents();
+    await configureShallowTest(MonitorSelectListComponent).compileComponents();
   });
 
   beforeEach(() => {

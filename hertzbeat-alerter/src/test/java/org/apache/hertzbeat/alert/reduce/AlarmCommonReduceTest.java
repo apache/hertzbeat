@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.junit.jupiter.api.AfterEach;
@@ -83,6 +85,28 @@ class AlarmCommonReduceTest {
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void durableFingerprintShouldRemainIndependentFromCalculatorCacheKey() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<String> durableFingerprint = new AtomicReference<>();
+        doAnswer(invocation -> {
+            durableFingerprint.set(invocation.getArgument(0, SingleAlert.class).getFingerprint());
+            latch.countDown();
+            return null;
+        }).when(alarmGroupReduce).processGroupAlert(any(SingleAlert.class));
+        SingleAlert alert = SingleAlert.builder()
+                .labels(new HashMap<>(Map.of(
+                        "instance", "db-1",
+                        "alertname", "disk_full",
+                        "timestamp", "not-part-of-identity")))
+                .build();
+
+        alarmCommonReduce.reduceAndSendAlarm(alert);
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertEquals("alertname:disk_full,instance:db-1", durableFingerprint.get());
     }
 
     @Test

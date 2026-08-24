@@ -116,6 +116,25 @@ class TdEngineDataStorageTest {
     }
 
     @Test
+    void testSaveDataStripsControlCharacters() throws Exception {
+        tdEngineDataStorage = new TdEngineDataStorage(tdEngineProperties);
+        setPrivateField(tdEngineDataStorage, "hikariDataSource", mockHikariDataSource);
+        setParentPrivateField(tdEngineDataStorage, "serverAvailable", true);
+
+        // snmp octet strings can carry NUL bytes (issue #1481); tabs are legitimate data and stay
+        CollectRep.MetricsData metricsData = generateMockedMetricsData("Loopback\tInterface 1\u0000");
+        tdEngineDataStorage.saveData(metricsData);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockStatement, atLeastOnce()).execute(sqlCaptor.capture());
+        String executedSql = sqlCaptor.getValue();
+
+        assertTrue(executedSql.contains("Loopback\tInterface 1'"), "NUL stripped, tab preserved");
+        assertTrue(executedSql.indexOf('\u0000') < 0, "no raw NUL byte may reach the sql text");
+        assertTrue(!executedSql.contains("\\u0000"), "no textual NUL escape may survive in the labels json");
+    }
+
+    @Test
     void destroy() {
     }
 
@@ -146,6 +165,10 @@ class TdEngineDataStorageTest {
     }
 
     public static CollectRep.MetricsData generateMockedMetricsData() {
+        return generateMockedMetricsData("test-%server-01");
+    }
+
+    public static CollectRep.MetricsData generateMockedMetricsData(String instanceValue) {
         CollectRep.MetricsData mockMetricsData = Mockito.mock(CollectRep.MetricsData.class);
 
         when(mockMetricsData.getId()).thenReturn(0L);
@@ -156,9 +179,9 @@ class TdEngineDataStorageTest {
         when(mockMetricsData.getInstance()).thenReturn("test-%server-01");
 
         CollectRep.ValueRow mockValueRow = Mockito.mock(CollectRep.ValueRow.class);
-        List<String> columnValues = List.of("test-%server-01", "68.7");
+        List<String> columnValues = List.of(instanceValue, "68.7");
         when(mockValueRow.getColumnsList()).thenReturn(columnValues);
-        when(mockValueRow.getColumns(0)).thenReturn("test-%server-01");
+        when(mockValueRow.getColumns(0)).thenReturn(instanceValue);
         when(mockValueRow.getColumns(1)).thenReturn("68.7");
         List<CollectRep.ValueRow> mockValueRowsList = List.of(mockValueRow);
         when(mockMetricsData.getValues()).thenReturn(mockValueRowsList);
@@ -177,7 +200,7 @@ class TdEngineDataStorageTest {
         Field instanceArrowField = new Field("instance", instanceFieldType, null);
         ArrowCell instanceCell = Mockito.mock(ArrowCell.class);
         when(instanceCell.getField()).thenReturn(instanceArrowField);
-        when(instanceCell.getValue()).thenReturn("test-%server-01");
+        when(instanceCell.getValue()).thenReturn(instanceValue);
         when(instanceCell.getMetadataAsBoolean(MetricDataConstants.LABEL)).thenReturn(true);
         when(instanceCell.getMetadataAsByte(MetricDataConstants.TYPE)).thenReturn(CommonConstants.TYPE_STRING);
 

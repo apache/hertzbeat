@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { AlertGroupService } from './alert-group.service';
 
@@ -25,7 +26,7 @@ describe('AlertConvergeService', () => {
   let service: AlertGroupService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(AlertGroupService);
   });
 

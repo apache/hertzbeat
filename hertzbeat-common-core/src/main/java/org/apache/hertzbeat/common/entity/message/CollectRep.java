@@ -285,8 +285,9 @@ public final class CollectRep {
                 Row row = iterator.next();
                 ValueRow valueRow = ValueRow.newBuilder()
                     .setColumns(fieldNames.stream()
-                        .map(fieldName -> new String(((VarCharVector)
-                            table.getVector(fieldName)).get(row.getRowNumber())))
+                        .map(fieldName -> new String(
+                                ((VarCharVector) table.getVector(fieldName)).get(row.getRowNumber()),
+                                StandardCharsets.UTF_8))
                         .collect(Collectors.toList()))
                     .build();
                 values.add(valueRow);
@@ -443,8 +444,8 @@ public final class CollectRep {
                                         fieldIndex < row.getColumnsList().size()) {
                                     String value = row.getColumns(fieldIndex);
                                     if (value != null) {
-                                        // Check byte array size, Arrow buffer size is 32768 bytes
                                         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+                                        // setSafe grows the variable-width data buffer beyond its initial allocation.
                                         vector.setSafe(rowIndex, bytes);
                                     }
                                 }
@@ -464,7 +465,7 @@ public final class CollectRep {
                     throw e;
                 }
             }
-            
+
             public long getId() {
                 return Long.parseLong(metadata.getOrDefault(MetricDataConstants.ID, "0"));
             }

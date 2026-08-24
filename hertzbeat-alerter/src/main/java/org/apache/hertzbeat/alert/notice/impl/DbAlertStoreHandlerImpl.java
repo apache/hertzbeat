@@ -42,6 +42,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
 
+    static final int LOCK_STRIPE_COUNT = 256;
+
+    private static final Object[] KEY_LOCKS = createKeyLocks();
+
     private final GroupAlertDao groupAlertDao;
     
     private final SingleAlertDao singleAlertDao;
@@ -58,7 +62,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
         List<SingleAlert> newAlerts = new ArrayList<>();
 
         for (SingleAlert singleAlert : originalAlerts) {
-            synchronized (singleAlert.getFingerprint().intern()) {
+            synchronized (lockFor(singleAlert.getFingerprint())) {
                 SingleAlert existAlert = singleAlertDao.findByFingerprint(singleAlert.getFingerprint());
                 if (existAlert != null) {
                     // Update the existing alert with the ID and creation time from the database
@@ -90,7 +94,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
         }
         groupAlert.setAlerts(newAlerts);
         // Find existing alert group
-        synchronized (groupAlert.getGroupKey().intern()) {
+        synchronized (lockFor(groupAlert.getGroupKey())) {
             GroupAlert existGroupAlert = groupAlertDao.findByGroupKey(groupAlert.getGroupKey());
             // Process resolved alerts
             if (existGroupAlert != null) {
@@ -131,5 +135,17 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             savedGroupAlert.setAlerts(groupAlert.getAlerts());
             return savedGroupAlert;
         }
+    }
+
+    static Object lockFor(String key) {
+        return KEY_LOCKS[Math.floorMod(key.hashCode(), LOCK_STRIPE_COUNT)];
+    }
+
+    private static Object[] createKeyLocks() {
+        Object[] locks = new Object[LOCK_STRIPE_COUNT];
+        for (int index = 0; index < locks.length; index++) {
+            locks[index] = new Object();
+        }
+        return locks;
     }
 }

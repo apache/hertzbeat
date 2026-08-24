@@ -34,6 +34,8 @@ The quick-start stack publishes every host port on `127.0.0.1` by default:
 
 - `1157` is the HertzBeat web UI and API.
 - `1158` is the manager/collector transport.
+- `14317` is OTLP/gRPC telemetry ingestion. It uses a separate bind override so
+  enabling a remote Collector does not also expose ingestion.
 - `15432` and `14000`–`14003` are the PostgreSQL and GreptimeDB development
   endpoints. They remain loopback-only because containers use the internal
   `hertzbeat` network.
@@ -53,7 +55,11 @@ access is also needed, expose `1157` through a TLS reverse proxy where
 possible. Before setting a wildcard address such as `0.0.0.0`, replace all
 bundled/default credentials, restrict access with a firewall or security
 group, and configure TLS. `HERTZBEAT_BIND_ADDRESS` does not expose the
-PostgreSQL or GreptimeDB ports.
+OTLP, PostgreSQL, or GreptimeDB ports.
+
+For remote OTLP/gRPC senders, set `HERTZBEAT_OTLP_BIND_ADDRESS` separately and
+allow `14317` only from trusted telemetry source networks. Prefer an authenticated
+and TLS-protected collector or gateway before traffic reaches HertzBeat.
 
 Configure a remote collector with the manager's reachable address and port
 `1158`; do not point it at `127.0.0.1` unless the manager runs on the same

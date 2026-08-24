@@ -65,7 +65,7 @@ public class BulletinServiceImpl implements BulletinService {
      * validate Bulletin
      */
     @Override
-    public void validate(Bulletin bulletin) throws IllegalArgumentException {
+    public void validate(Bulletin bulletin, boolean isModify) throws IllegalArgumentException {
         if (bulletin == null) {
             throw new IllegalArgumentException("Bulletin cannot be null");
         }
@@ -78,8 +78,11 @@ public class BulletinServiceImpl implements BulletinService {
         if (bulletin.getMonitorIds() == null || bulletin.getMonitorIds().isEmpty()) {
             throw new IllegalArgumentException("Bulletin monitorIds cannot be null or empty");
         }
+        if (isModify && bulletin.getId() == null) {
+            throw new IllegalArgumentException("Bulletin id cannot be null when editing");
+        }
         Bulletin existBulletin = bulletinDao.findByName(bulletin.getName());
-        if (existBulletin != null && !existBulletin.getId().equals(bulletin.getId())) {
+        if (existBulletin != null && (!isModify || !existBulletin.getId().equals(bulletin.getId()))) {
             throw new IllegalArgumentException("Bulletin name duplicated");
         }
     }
@@ -94,7 +97,12 @@ public class BulletinServiceImpl implements BulletinService {
         if (optional.isEmpty()) {
             throw new IllegalArgumentException("Bulletin not found");
         }
-        bulletinDao.save(bulletin);
+        Bulletin storedBulletin = optional.get();
+        storedBulletin.setName(bulletin.getName());
+        storedBulletin.setMonitorIds(bulletin.getMonitorIds());
+        storedBulletin.setApp(bulletin.getApp());
+        storedBulletin.setFields(bulletin.getFields());
+        bulletinDao.save(storedBulletin);
     }
 
     /**
@@ -103,7 +111,13 @@ public class BulletinServiceImpl implements BulletinService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addBulletin(Bulletin bulletin) {
-        bulletinDao.save(bulletin);
+        Bulletin newBulletin = Bulletin.builder()
+                .name(bulletin.getName())
+                .monitorIds(bulletin.getMonitorIds())
+                .app(bulletin.getApp())
+                .fields(bulletin.getFields())
+                .build();
+        bulletinDao.save(newBulletin);
     }
 
     /**

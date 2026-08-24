@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { LabelSelectorComponent } from './label-selector.component';
 
@@ -26,9 +27,7 @@ describe('LabelSelectorComponent', () => {
   let fixture: ComponentFixture<LabelSelectorComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [LabelSelectorComponent]
-    }).compileComponents();
+    await configureShallowTest(LabelSelectorComponent).compileComponents();
 
     fixture = TestBed.createComponent(LabelSelectorComponent);
     component = fixture.componentInstance;
