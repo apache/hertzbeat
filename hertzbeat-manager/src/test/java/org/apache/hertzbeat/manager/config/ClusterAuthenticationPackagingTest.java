@@ -25,10 +25,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.yaml.snakeyaml.Yaml;
 import org.junit.jupiter.api.Test;
 
 class ClusterAuthenticationPackagingTest {
+
+    private static final Pattern YAML_FENCE =
+            Pattern.compile("```yaml\\s*\\R(.*?)```", Pattern.DOTALL);
 
     private static final String REQUIRED_SECRET =
             "CLUSTER_AUTH_ACTIVE_SECRET: ${CLUSTER_AUTH_ACTIVE_SECRET:?";
@@ -98,6 +106,58 @@ class ClusterAuthenticationPackagingTest {
         String collector = Files.readString(repository.resolve("home/docs/help/collector.md"));
         assertTrue(collector.contains("openssl rand -hex 32"));
         assertTrue(collector.contains("openssl rand -hex 16"));
+    }
+
+    @Test
+    void collectorGuideUsesExecutableManagerAndCollectorAuthenticationPaths()
+            throws IOException {
+        String guide = Files.readString(
+                repositoryRoot().resolve("home/docs/help/collector.md"));
+        List<Map<?, ?>> yamlDocuments = yamlDocuments(guide);
+
+        assertTrue(
+                yamlDocuments.stream().anyMatch(document ->
+                        "${CLUSTER_AUTH_ACTIVE_SECRET:}".equals(nestedValue(
+                                document,
+                                "scheduler",
+                                "server",
+                                "authentication",
+                                "active-secret"))),
+                "The Manager example must use scheduler.server.authentication");
+        assertTrue(
+                yamlDocuments.stream().anyMatch(document ->
+                        "${CLUSTER_AUTH_ACTIVE_SECRET:}".equals(nestedValue(
+                                document,
+                                "collector",
+                                "dispatch",
+                                "entrance",
+                                "netty",
+                                "authentication",
+                                "active-secret"))),
+                "The Collector example must use collector.dispatch.entrance.netty.authentication");
+    }
+
+    private List<Map<?, ?>> yamlDocuments(String markdown) {
+        List<Map<?, ?>> documents = new ArrayList<>();
+        Matcher matcher = YAML_FENCE.matcher(markdown);
+        while (matcher.find()) {
+            Object document = new Yaml().load(matcher.group(1));
+            if (document instanceof Map<?, ?> map) {
+                documents.add(map);
+            }
+        }
+        return documents;
+    }
+
+    private Object nestedValue(Map<?, ?> document, String... path) {
+        Object current = document;
+        for (String segment : path) {
+            if (!(current instanceof Map<?, ?> map)) {
+                return null;
+            }
+            current = map.get(segment);
+        }
+        return current;
     }
 
     private Path repositoryRoot() {

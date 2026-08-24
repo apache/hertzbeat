@@ -99,15 +99,37 @@ data. Configure both values on both sides and keep them independent.
 common:
   secret: ${COMMON_SECRET:}
 
-authentication:
-  mode: required
-  active-key-id: primary
-  active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
-  previous-key-id: ${CLUSTER_AUTH_PREVIOUS_KEY_ID:}
-  previous-secret: ${CLUSTER_AUTH_PREVIOUS_SECRET:}
-  max-clock-skew: 5m
-  handshake-timeout: 3s
+# Manager application.yml
+scheduler:
+  server:
+    authentication:
+      mode: required
+      active-key-id: primary
+      active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
+      previous-key-id: ${CLUSTER_AUTH_PREVIOUS_KEY_ID:}
+      previous-secret: ${CLUSTER_AUTH_PREVIOUS_SECRET:}
+      max-clock-skew: 5m
+      handshake-timeout: 3s
+
+# Standalone Collector application.yml
+collector:
+  dispatch:
+    entrance:
+      netty:
+        authentication:
+          mode: required
+          active-key-id: primary
+          active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
+          previous-key-id: ${CLUSTER_AUTH_PREVIOUS_KEY_ID:}
+          previous-secret: ${CLUSTER_AUTH_PREVIOUS_SECRET:}
+          max-clock-skew: 5m
+          handshake-timeout: 3s
 ```
+
+Use the `scheduler.server.authentication` block on Manager and the
+`collector.dispatch.entrance.netty.authentication` block on every standalone
+Collector. The environment-variable names are deliberately identical on both
+sides.
 
 Generate both values once and store them in the deployment secret manager:
 
