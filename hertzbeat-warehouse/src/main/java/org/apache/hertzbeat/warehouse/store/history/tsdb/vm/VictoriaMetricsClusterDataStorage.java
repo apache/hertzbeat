@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -107,7 +108,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private final VictoriaMetricsSelectProperties vmSelectProps;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
-    private final AtomicLong rejectedLabelCollisionCount = new AtomicLong();
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
@@ -190,12 +191,10 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         var managedLabelCollisions =
                 VictoriaMetricsDataStorage.findManagedLabelCollisions(metricsData.getLabels());
         if (!managedLabelCollisions.isEmpty()) {
-            long rejectedCount = rejectedLabelCollisionCount.incrementAndGet();
-            log.error("[warehouse victoria-metrics] reject metrics data {} because custom labels contain "
-                    + "HertzBeat-managed keys {}; cumulative rejected batches: {}.",
-                    metricsData.getId(), managedLabelCollisions, rejectedCount);
-            return;
+            recordIgnoredLabelCollisions(metricsData.getId(), managedLabelCollisions);
         }
+        Map<String, String> customizedLabels = VictoriaMetricsDataStorage.withoutManagedLabels(
+                metricsData.getLabels(), managedLabelCollisions);
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto;
@@ -253,7 +252,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 }
                                 labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
-                                VictoriaMetricsDataStorage.addCustomizedLabels(labels, metricsData.getLabels());
+                                VictoriaMetricsDataStorage.addCustomizedLabels(labels, customizedLabels);
                                 VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
                                     .metric(new HashMap<>(labels))
                                     .values(new Double[]{entry.getValue()})
@@ -283,8 +282,18 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
     }
 
-    long getRejectedLabelCollisionCount() {
-        return rejectedLabelCollisionCount.get();
+    private void recordIgnoredLabelCollisions(long monitorId, Set<String> collisions) {
+        long previousCount = ignoredLabelCollisionCount.getAndAdd(collisions.size());
+        long ignoredCount = previousCount + collisions.size();
+        if (previousCount == 0 || previousCount / 100 < ignoredCount / 100) {
+            log.warn("[warehouse victoria-metrics-cluster] ignore custom labels {} from metrics data {} because "
+                            + "the keys are HertzBeat-managed; cumulative ignored labels: {}.",
+                    collisions, monitorId, ignoredCount);
+        }
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
     }
 
     @Override

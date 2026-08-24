@@ -153,18 +153,19 @@ Once configured, restart HertzBeat to connect to the VictoriaMetrics cluster.
 Monitor custom labels keep their existing Prometheus semantics when HertzBeat
 writes to VictoriaMetrics:
 
-- `job`, `instance`, and ordinary custom labels continue to use the configured
-  custom values. Upgrading does not rename these labels or move new samples to
-  a different label set.
-- `__name__`, `__monitor_id__`, `__metrics__`, and `__metric__` are managed by
-  HertzBeat and cannot be used as monitor custom-label keys. If one is present,
-  HertzBeat rejects that metrics batch and logs the conflicting key names
-  without logging their values.
+- `job` and ordinary custom labels continue to use their configured values.
+- `instance`, `__name__`, `__monitor_id__`, `__metrics__`, and `__metric__` are
+  managed by HertzBeat. If a monitor supplies one of these custom-label keys,
+  HertzBeat ignores only the conflicting label, stores the remaining metrics,
+  and reports the key name through a rate-limited warning and cumulative count.
+  Label values are not written to the warning.
 
-Before upgrading, inspect monitor custom labels and rename any of the four
-HertzBeat-managed keys. Existing VictoriaMetrics series are not rewritten.
-No migration is needed for monitors that use `job`, `instance`, or other
-custom labels.
+Before upgrading, inspect monitor custom labels and rename managed keys. If an
+existing monitor uses a custom `instance` value for a separate identity, move
+that value to a distinct label such as `target_instance`; new samples use the
+HertzBeat monitor instance. Existing VictoriaMetrics series are not rewritten.
+No migration is needed for monitors that use `job` or other ordinary custom
+labels.
 
 ### FAQ
 

@@ -154,10 +154,14 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
-    void testSaveDataRejectsCustomLabelCollisions() {
+    void testSaveDataSkipsCustomLabelCollisionsWithoutDroppingMetrics() throws Exception {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
-
+            @SuppressWarnings("unchecked")
+            Result<WriteOk, Err> mockResult = mock(Result.class);
+            when(mockResult.isOk()).thenReturn(true);
+            when(greptimeDb.write(any(Table.class)))
+                    .thenReturn(CompletableFuture.completedFuture(mockResult));
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
 
             CollectRep.MetricsData metricsData = createMockMetricsData(true);
@@ -169,10 +173,20 @@ class GreptimeDbDataStorageTest {
             when(metricsData.getLabels()).thenReturn(customLabels);
             when(metricsData.getInstance()).thenReturn("server1");
 
+            ArgumentCaptor<Table> tableCaptor = ArgumentCaptor.forClass(Table.class);
             greptimeDbDataStorage.saveData(metricsData);
 
-            verify(greptimeDb, never()).write(any(Table.class));
-            assertEquals(1, greptimeDbDataStorage.getRejectedLabelCollisionCount());
+            verify(greptimeDb).write(tableCaptor.capture());
+            List<String> columnNames = getColumnSchemas(tableCaptor.getValue()).stream()
+                    .map(RowData.ColumnSchema::getColumnName)
+                    .toList();
+            // The fixture already contains an `instance` metric field in addition to the
+            // storage identity tag; the conflicting custom label must not add a third column.
+            assertEquals(2, Collections.frequency(columnNames, "instance"));
+            assertEquals(1, Collections.frequency(columnNames, "ts"));
+            assertEquals(1, Collections.frequency(columnNames, "usage"));
+            assertEquals(1, Collections.frequency(columnNames, "env"));
+            assertEquals(3, greptimeDbDataStorage.getIgnoredLabelCollisionCount());
         }
     }
 

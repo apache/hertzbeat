@@ -105,14 +105,15 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         LABEL_KEY_NAME,
         LABEL_KEY_MONITOR_ID,
         MONITOR_METRICS_KEY,
-        MONITOR_METRIC_KEY);
+        MONITOR_METRIC_KEY,
+        LABEL_KEY_INSTANCE);
     private static final long MAX_WAIT_MS = 500L;
     private static final int MAX_RETRIES = 3;
 
     private final VictoriaMetricsProperties victoriaMetricsProp;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
-    private final AtomicLong rejectedLabelCollisionCount = new AtomicLong();
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
@@ -181,12 +182,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         }
         Set<String> managedLabelCollisions = findManagedLabelCollisions(metricsData.getLabels());
         if (!managedLabelCollisions.isEmpty()) {
-            long rejectedCount = rejectedLabelCollisionCount.incrementAndGet();
-            log.error("[warehouse victoria-metrics] reject metrics data {} because custom labels contain "
-                    + "HertzBeat-managed keys {}; cumulative rejected batches: {}.",
-                    metricsData.getId(), managedLabelCollisions, rejectedCount);
-            return;
+            recordIgnoredLabelCollisions(metricsData.getId(), managedLabelCollisions);
         }
+        Map<String, String> customizedLabels = withoutManagedLabels(
+                metricsData.getLabels(), managedLabelCollisions);
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto = false;
@@ -243,7 +242,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                             }
                             labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                             // add customized labels as identifier
-                            addCustomizedLabels(labels, metricsData.getLabels());
+                            addCustomizedLabels(labels, customizedLabels);
                             VictoriaMetricsContent content = VictoriaMetricsContent.builder()
                                 .metric(new HashMap<>(labels))
                                 .values(new Double[]{entry.getValue()})
@@ -276,17 +275,44 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         labels.putAll(customizedLabels);
     }
 
-    long getRejectedLabelCollisionCount() {
-        return rejectedLabelCollisionCount.get();
+    private void recordIgnoredLabelCollisions(long monitorId, Set<String> collisions) {
+        long previousCount = ignoredLabelCollisionCount.getAndAdd(collisions.size());
+        long ignoredCount = previousCount + collisions.size();
+        if (previousCount == 0 || previousCount / 100 < ignoredCount / 100) {
+            log.warn("[warehouse victoria-metrics] ignore custom labels {} from metrics data {} because "
+                            + "the keys are HertzBeat-managed; cumulative ignored labels: {}.",
+                    collisions, monitorId, ignoredCount);
+        }
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
     }
 
     static Set<String> findManagedLabelCollisions(Map<String, String> customizedLabels) {
         if (ObjectUtils.isEmpty(customizedLabels)) {
             return Set.of();
         }
-        Set<String> collisions = new TreeSet<>(customizedLabels.keySet());
-        collisions.retainAll(MANAGED_LABEL_KEYS);
+        Set<String> collisions = new TreeSet<>();
+        for (String key : customizedLabels.keySet()) {
+            if (key != null && MANAGED_LABEL_KEYS.contains(key)) {
+                collisions.add(key);
+            }
+        }
         return collisions;
+    }
+
+    static Map<String, String> withoutManagedLabels(
+            Map<String, String> customizedLabels, Set<String> managedLabelCollisions) {
+        if (ObjectUtils.isEmpty(customizedLabels)) {
+            return Map.of();
+        }
+        if (managedLabelCollisions.isEmpty()) {
+            return customizedLabels;
+        }
+        Map<String, String> safeLabels = new HashMap<>(customizedLabels);
+        managedLabelCollisions.forEach(safeLabels::remove);
+        return safeLabels;
     }
 
     @Override

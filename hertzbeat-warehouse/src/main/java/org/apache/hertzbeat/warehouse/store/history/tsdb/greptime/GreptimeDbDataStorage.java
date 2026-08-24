@@ -116,7 +116,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private final RestTemplate restTemplate;
 
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
-    private final AtomicLong rejectedLabelCollisionCount = new AtomicLong();
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     public GreptimeDbDataStorage(GreptimeProperties greptimeProperties,
                                  @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
@@ -170,11 +170,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         List<String> fieldNames = fields.stream().map(CollectRep.Field::getName).collect(Collectors.toList());
         Set<String> labelCollisions = findLabelCollisions(customLabels, fieldNames);
         if (!labelCollisions.isEmpty()) {
-            long rejectedCount = rejectedLabelCollisionCount.incrementAndGet();
-            log.error("[warehouse greptime] reject metrics data {} because custom labels contain "
-                    + "storage-managed keys {}; cumulative rejected batches: {}.",
-                    metricsData.getId(), labelCollisions, rejectedCount);
-            return;
+            long previousCount = ignoredLabelCollisionCount.getAndAdd(labelCollisions.size());
+            long ignoredCount = previousCount + labelCollisions.size();
+            if (shouldLogLabelCollisions(previousCount, ignoredCount)) {
+                log.warn("[warehouse greptime] ignore custom labels {} from metrics data {} because "
+                                + "the keys are storage-managed; cumulative ignored labels: {}.",
+                        labelCollisions, metricsData.getId(), ignoredCount);
+            }
         }
         fields.forEach(field -> {
             if (field.getLabel()) {
@@ -262,8 +264,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return collisions;
     }
 
-    long getRejectedLabelCollisionCount() {
-        return rejectedLabelCollisionCount.get();
+    private boolean shouldLogLabelCollisions(long previousCount, long currentCount) {
+        return previousCount == 0 || previousCount / 100 < currentCount / 100;
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
     }
 
     @Override
