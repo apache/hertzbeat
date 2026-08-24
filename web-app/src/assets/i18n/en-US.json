@@ -650,7 +650,7 @@
   "observability.integration.error.network": "Cannot reach HertzBeat. Check the address and network access.",
   "observability.integration.error.request": "Detection failed. Check the configuration and try again.",
   "observability.integration.generate-token": "Generate",
-  "observability.integration.grpc-note": "OTLP/gRPC listens on port 4317.",
+  "observability.integration.grpc-note": "OTLP/gRPC listens on port 14317.",
   "observability.integration.protocol": "Protocol",
   "observability.integration.ready-to-copy": "Generated from the form above",
   "observability.integration.subtitle": "Connect metrics, logs, and traces without configuring entities, pipelines, or tables.",
