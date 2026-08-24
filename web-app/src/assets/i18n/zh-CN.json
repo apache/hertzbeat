@@ -650,7 +650,7 @@
   "observability.integration.error.network": "无法连接 HertzBeat，请检查地址和网络访问。",
   "observability.integration.error.request": "检测失败，请检查配置后重试。",
   "observability.integration.generate-token": "生成",
-  "observability.integration.grpc-note": "OTLP/gRPC 默认监听 4317 端口。",
+  "observability.integration.grpc-note": "OTLP/gRPC 默认监听 14317 端口。",
   "observability.integration.protocol": "协议",
   "observability.integration.ready-to-copy": "已根据左侧表单生成",
   "observability.integration.subtitle": "无需理解实体、Pipeline 或数据表，即可接入指标、日志和链路。",
