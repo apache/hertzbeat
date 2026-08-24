@@ -101,6 +101,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_END_TIME = "end";
     private static final String LABEL_KEY_TS = "ts";
     private static final int LOG_BATCH_SIZE = 500;
+    private static final Map<String, String> OTLP_RESOURCE_KEY_ALIASES = Map.of(
+            "service_name", "service.name",
+            "service_namespace", "service.namespace",
+            "deployment_environment_name", "deployment.environment.name");
 
     private GreptimeDB greptimeDb;
 
@@ -756,7 +760,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         addJsonCondition(resourceConditions, "deployment.environment.name", filter.environment());
         if (StringUtils.hasText(filter.resourceFilter())) {
             for (ResourceFilterExpression.Clause clause : ResourceFilterExpression.parse(filter.resourceFilter())) {
-                String attribute = "json_get_string(resource, '$[\"" + clause.key() + "\"]')";
+                String attribute = resourceAttributeExpression(clause.key());
                 switch (clause.operator()) {
                     case EQUALS -> resourceConditions.add(attribute + " = '" + safeString(clause.value()) + "'");
                     case NOT_EQUALS -> resourceConditions.add(attribute + " <> '" + safeString(clause.value()) + "'");
@@ -774,8 +778,18 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private void addJsonCondition(List<String> conditions, String key, String value) {
         if (StringUtils.hasText(value)) {
-            conditions.add("json_get_string(resource, '$[\"" + key + "\"]') = '" + safeString(value) + "'");
+            conditions.add(resourceAttributeExpression(key) + " = '" + safeString(value) + "'");
         }
+    }
+
+    private String resourceAttributeExpression(String key) {
+        String normalizedKey = key.replace('.', '_');
+        String canonical = "json_get_string(resource, '$[\"" + key + "\"]')";
+        if (normalizedKey.equals(key)) {
+            return canonical;
+        }
+        String normalized = "json_get_string(resource, '$[\"" + normalizedKey + "\"]')";
+        return "COALESCE(" + canonical + ", " + normalized + ")";
     }
 
     private static long msToNs(Long ms) {
@@ -857,7 +871,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
                 Object bodyObj = parseJsonMaybe(row.get("body"));
                 Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
-                Map<String, Object> resource = castToMap(parseJsonMaybe(row.get("resource")));
+                Map<String, Object> resource = canonicalizeOtlpResource(
+                        castToMap(parseJsonMaybe(row.get("resource"))));
 
                 LogEntry entry = LogEntry.builder()
                         .timeUnixNano(castToLong(row.get("time_unix_nano")))
@@ -911,6 +926,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return (Map<String, Object>) obj;
         }
         return null;
+    }
+
+    private static Map<String, Object> canonicalizeOtlpResource(Map<String, Object> resource) {
+        if (resource == null || resource.isEmpty()) {
+            return resource;
+        }
+        Map<String, Object> canonical = new LinkedHashMap<>(resource);
+        OTLP_RESOURCE_KEY_ALIASES.forEach((normalized, dotted) -> {
+            if (!canonical.containsKey(dotted) && resource.containsKey(normalized)) {
+                canonical.put(dotted, resource.get(normalized));
+            }
+        });
+        return canonical;
     }
 
     private static Long castToLong(Object obj) {

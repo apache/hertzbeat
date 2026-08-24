@@ -92,10 +92,16 @@
       *ngIf="!monitor && isTable"
       nzSize="small"
       [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
-      [nzFrontPagination]="false"
-      [nzShowPagination]="false"
+      [nzFrontPagination]="true"
+      [nzShowPagination]="valueRows.length > 10"
+      [nzPageSize]="pageSize"
+      [nzShowSizeChanger]="true"
+      [nzPageSizeOptions]="[10, 20, 50, 100]"
+      [nzPageIndex]="pageIndex"
+      (nzPageIndexChange)="pageIndex = $event"
+      (nzPageSizeChange)="pageSize = $event; pageIndex = 1"
       [nzData]="valueRows"
-      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
+      [nzScroll]="height ? { y: valueRows.length > 10 ? pagedScrollY : scrollY } : { x: '100%' }"
       #smallTable
     >
       <thead>

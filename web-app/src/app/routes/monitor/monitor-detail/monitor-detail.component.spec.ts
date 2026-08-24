@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { MonitorDetailComponent } from './monitor-detail.component';
 
@@ -26,9 +27,7 @@ describe('MonitorDetailComponent', () => {
   let fixture: ComponentFixture<MonitorDetailComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorDetailComponent]
-    }).compileComponents();
+    await configureShallowTest(MonitorDetailComponent).compileComponents();
   });
 
   beforeEach(() => {

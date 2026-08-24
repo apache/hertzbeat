@@ -1,8 +1,18 @@
 > HertzBeat supports OpenTelemetry Logs Protocol (OTLP), allowing external systems to push log data to the HertzBeat log platform via OTLP.
 
+In HertzBeat 1.9.0, metrics, logs, and traces share the canonical `/api/otlp/v1/{signal}` ingestion contract. This transition is intentionally Entity-free: receiving telemetry does not create or bind Entity records, and external OTLP data is kept separate from HertzBeat's internal self-telemetry.
+
 ### API Endpoint
 
-`POST /api/logs/otlp/v1/logs`
+`POST /api/otlp/v1/logs`
+
+OTLP/gRPC is also available for metrics, logs and traces when GreptimeDB storage is enabled, using the
+same bearer token. Point exporters at `{hertzbeat_host}:14317` - the same port on every deployment,
+published unchanged by the docker images. It is deliberately not the OpenTelemetry standard 4317,
+which a local OTel Collector normally holds already. Set `hertzbeat.otlp.grpc.port` to move the
+listener, `hertzbeat.otlp.grpc.enabled=false` to turn it off.
+
+> Upgrading from 1.8.x: the former `POST /api/logs/otlp/v1/logs` / `POST /api/logs/ingest/otlp` endpoints still work on 1.9.x as deprecated aliases (responses carry `Deprecation: true`) and will be removed in 2.0. Point your exporters at `/api/otlp/v1/logs`.
 
 ### Request Headers
 
@@ -71,7 +81,7 @@ Supports standard OTLP JSON-Protobuf format or Binary Protobuf format log data:
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
+    logs_endpoint: http://{hertzbeat_host}:1157/api/otlp/v1/logs
     compression: none
     encoding: json
     headers:

@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { ConfigurableFieldComponent } from './configurable-field.component';
 
@@ -26,9 +27,7 @@ describe('ConfigurableFieldComponent', () => {
   let fixture: ComponentFixture<ConfigurableFieldComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ConfigurableFieldComponent]
-    }).compileComponents();
+    await configureShallowTest(ConfigurableFieldComponent).compileComponents();
   });
 
   beforeEach(() => {

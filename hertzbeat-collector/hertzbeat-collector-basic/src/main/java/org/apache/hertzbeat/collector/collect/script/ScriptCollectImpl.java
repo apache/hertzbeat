@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.OneRowResponseSupport;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -52,7 +53,6 @@ public class ScriptCollectImpl extends AbstractCollect {
     private static final String BASH_C = "-c";
     private static final String POWERSHELL_C = "-Command";
     private static final String POWERSHELL_FILE = "-File";
-    private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
     private static final String PARSE_TYPE_LOG = "log";
@@ -113,25 +113,48 @@ public class ScriptCollectImpl extends AbstractCollect {
         try {
             Process process = processBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), Charset.forName(scriptProtocol.getCharset())));
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (StringUtils.hasText(line)) {
-                    response.append(line).append("\n");
+            BufferedReader errorReader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream(), Charset.forName(scriptProtocol.getCharset())));
+            // drain stderr on its own thread: a full stderr pipe would deadlock the stdout read;
+            // StringBuffer because the drainer may still be writing when the buffer is read
+            StringBuffer errorBuffer = new StringBuffer();
+            Thread errorDrainer = new Thread(() -> {
+                try {
+                    String errorLine;
+                    while ((errorLine = errorReader.readLine()) != null) {
+                        if (StringUtils.hasText(errorLine)) {
+                            errorBuffer.append(errorLine).append("\n");
+                        }
+                    }
+                } catch (IOException e) {
+                    log.warn("read script error stream failed: {}", e.getMessage());
                 }
-            }
-            process.waitFor();
+            });
+            errorDrainer.setDaemon(true);
+            errorDrainer.start();
+            String result = readResponse(reader);
+            int exitCode = process.waitFor();
+            // bounded: a lingering grandchild can keep the stderr pipe open
+            errorDrainer.join(1000);
             Long responseTime = System.currentTimeMillis() - startTime;
-            String result = String.valueOf(response);
+            String errorResult = errorBuffer.toString();
             if (!StringUtils.hasText(result)) {
+                if (OneRowResponseSupport.tryAppendEmptyOneRow(scriptProtocol.getParseType(), errorResult,
+                        exitCode, metrics.getAliasFields(), builder, responseTime)) {
+                    return;
+                }
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Script response data is null");
+                builder.setMsg(OneRowResponseSupport.buildBlankFailureMessage(errorResult, exitCode,
+                        "Script exited with code: ", "Script response data is null"));
                 return;
+            }
+            if (StringUtils.hasText(errorResult)) {
+                log.warn("script command succeeded but wrote to stderr: {}", errorResult.trim());
             }
             switch (scriptProtocol.getParseType()) {
                 case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
+                case OneRowResponseSupport.PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
@@ -207,28 +230,7 @@ public class ScriptCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
-        String[] lines = result.split("\n");
-        if (lines.length + 1 < aliasFields.size()) {
-            log.error("ssh response data not enough: {}", result);
-            return;
-        }
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        int aliasIndex = 0;
-        int lineIndex = 0;
-        while (aliasIndex < aliasFields.size()) {
-            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumn(responseTime.toString());
-            } else {
-                if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumn(lines[lineIndex].trim());
-                } else {
-                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                }
-                lineIndex++;
-            }
-            aliasIndex++;
-        }
-        builder.addValueRow(valueRowBuilder.build());
+        OneRowResponseSupport.appendResponseValues(result, aliasFields, builder, responseTime);
     }
 
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
@@ -260,5 +262,16 @@ public class ScriptCollectImpl extends AbstractCollect {
             }
             builder.addValueRow(valueRowBuilder.build());
         }
+    }
+
+    private String readResponse(BufferedReader reader) throws IOException {
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (StringUtils.hasText(line)) {
+                response.append(line).append("\n");
+            }
+        }
+        return response.toString();
     }
 }

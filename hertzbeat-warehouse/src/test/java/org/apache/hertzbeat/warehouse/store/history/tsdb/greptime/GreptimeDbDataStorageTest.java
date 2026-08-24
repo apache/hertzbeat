@@ -53,6 +53,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.dto.observability.LogQueryFilter;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
@@ -293,6 +294,38 @@ class GreptimeDbDataStorageTest {
 
             assertTrue(capturedSql.toLowerCase().contains("limit 10"));
             assertTrue(capturedSql.toLowerCase().contains("offset 1"));
+        }
+    }
+
+    @Test
+    void shouldQueryNormalizedOtlpResourceKeysAndRestoreCanonicalNames() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(
+                    greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            Map<String, Object> row = new HashMap<>();
+            row.put("time_unix_nano", System.nanoTime());
+            row.put("severity_text", "INFO");
+            row.put("body", "OTLP resource proof");
+            row.put("resource", Map.of(
+                    "service_name", "checkout-api",
+                    "service_namespace", "storefront",
+                    "deployment_environment_name", "preview"));
+            when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(row));
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+
+            List<LogEntry> result = greptimeDbDataStorage.queryObservabilityLogs(
+                    new LogQueryFilter(null, null, null, null, null, null, null,
+                            "checkout-api", "storefront", "preview", null),
+                    0, 20);
+
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            assertTrue(sqlCaptor.getValue().contains("service_name"));
+            assertTrue(sqlCaptor.getValue().contains("service_namespace"));
+            assertTrue(sqlCaptor.getValue().contains("deployment_environment_name"));
+            assertEquals("checkout-api", result.getFirst().getResource().get("service.name"));
+            assertEquals("storefront", result.getFirst().getResource().get("service.namespace"));
+            assertEquals("preview", result.getFirst().getResource().get("deployment.environment.name"));
         }
     }
 

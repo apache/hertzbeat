@@ -19,17 +19,23 @@ package org.apache.hertzbeat.ai.tools.impl;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.service.SopScheduleService;
+import org.apache.hertzbeat.ai.sop.model.SopDefinition;
+import org.apache.hertzbeat.ai.sop.model.SopParameter;
 import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
 import org.apache.hertzbeat.ai.utils.SopMessageUtil;
 import org.apache.hertzbeat.ai.tools.ScheduleTools;
 import org.apache.hertzbeat.common.entity.ai.SopSchedule;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Implementation of ScheduleTools for AI-driven schedule management.
@@ -78,18 +84,22 @@ public class ScheduleToolsImpl implements ScheduleTools {
     @Tool(name = "createScheduleWithConversation",
           description = "Create a scheduled task for a specific conversation. "
                   + "Use the conversationId from the system context. "
+                  + "Pass skill parameters as a JSON object when the skill requires inputs. "
                   + "The cron expression should be in 6-digit Spring format.")
     public String createScheduleWithConversation(
             @ToolParam(description = "Conversation ID from the system context", required = true) Long conversationId,
             @ToolParam(description = "Name of the skill to schedule (e.g., 'daily_inspection')", required = true) String skillName,
             @ToolParam(description = "Cron expression in Spring format (e.g., '0 0 9 * * ?')", required = true) String cronExpression,
-            @ToolParam(description = "Description of the schedule", required = false) String description) {
+            @ToolParam(description = "Description of the schedule", required = false) String description,
+            @ToolParam(description = "Skill parameters as a JSON object (e.g., '{\"monitorId\":123}')",
+                       required = false) String paramsJson) {
 
         log.info("AI creating schedule: conversationId={}, skill={}, cron={}, desc={}", 
                  conversationId, skillName, cronExpression, description);
 
         // Validate skill exists
-        if (skillRegistry.getSkill(skillName) == null) {
+        SopDefinition skill = skillRegistry.getSkill(skillName);
+        if (skill == null) {
             String available = String.join(", ", 
                     skillRegistry.getAllSkills().stream()
                             .map(s -> s.getName())
@@ -103,11 +113,16 @@ public class ScheduleToolsImpl implements ScheduleTools {
         }
 
         try {
-            // Check for duplicate schedule (same skill + cron expression)
+            Map<String, Object> params = parseSkillParams(paramsJson);
+            validateRequiredParameters(skill, params);
+            String serializedParams = params.isEmpty() ? null : JsonUtil.toJson(params);
+
+            // Parameters are part of a schedule's identity so the same skill and cron can target different inputs.
             List<SopSchedule> existing = scheduleService.getSchedulesByConversation(conversationId);
             boolean duplicate = existing.stream()
-                    .anyMatch(s -> s.getSopName().equals(skillName) 
-                                && s.getCronExpression().equals(cronExpression));
+                    .anyMatch(schedule -> Objects.equals(schedule.getSopName(), skillName)
+                            && Objects.equals(schedule.getCronExpression(), cronExpression)
+                            && hasSameParams(schedule.getSopParams(), params));
             if (duplicate) {
                 return SopMessageUtil.getMessage("schedule.create.duplicate", 
                         new Object[]{skillName, cronExpression}, null)
@@ -118,6 +133,7 @@ public class ScheduleToolsImpl implements ScheduleTools {
             schedule.setConversationId(conversationId);
             schedule.setSopName(skillName);
             schedule.setCronExpression(cronExpression);
+            schedule.setSopParams(serializedParams);
             schedule.setEnabled(true);
 
             SopSchedule created = scheduleService.createSchedule(schedule);
@@ -147,6 +163,55 @@ public class ScheduleToolsImpl implements ScheduleTools {
         } catch (Exception e) {
             log.error("Failed to create schedule", e);
             return SopMessageUtil.getMessage("schedule.error.create.failed") + ": " + e.getMessage();
+        }
+    }
+
+    private Map<String, Object> parseSkillParams(String paramsJson) {
+        if (paramsJson == null || paramsJson.isBlank()) {
+            return Map.of();
+        }
+        Map<String, Object> params;
+        try {
+            params = JsonUtil.fromJson(paramsJson, new TypeReference<>() {});
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("Skill parameters must be a valid JSON object", e);
+        }
+        if (params == null) {
+            throw new IllegalArgumentException("Skill parameters must be a valid JSON object");
+        }
+        return params;
+    }
+
+    private void validateRequiredParameters(SopDefinition skill, Map<String, Object> params) {
+        if (skill.getParameters() == null) {
+            return;
+        }
+        for (SopParameter parameter : skill.getParameters()) {
+            Object value = params.get(parameter.getName());
+            if (isMissing(value)) {
+                value = parameter.getDefaultValue();
+            }
+            if (parameter.isRequired() && isMissing(value)) {
+                throw new IllegalArgumentException(
+                        "Required skill parameter is missing: " + parameter.getName());
+            }
+        }
+    }
+
+    private boolean isMissing(Object value) {
+        return value == null || value instanceof String text && text.isBlank();
+    }
+
+    private boolean hasSameParams(String existingJson, Map<String, Object> params) {
+        if (existingJson == null || existingJson.isBlank()) {
+            return params.isEmpty();
+        }
+        try {
+            Map<String, Object> existingParams = JsonUtil.fromJson(existingJson, new TypeReference<>() {});
+            return Objects.equals(existingParams, params);
+        } catch (RuntimeException e) {
+            log.warn("Failed to parse parameters of an existing schedule", e);
+            return false;
         }
     }
 

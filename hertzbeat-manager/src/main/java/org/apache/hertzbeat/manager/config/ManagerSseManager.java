@@ -19,80 +19,68 @@
 
 package org.apache.hertzbeat.manager.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.ImportTaskMessage;
 import org.apache.hertzbeat.common.entity.dto.ManagerMessage;
+import org.apache.hertzbeat.common.support.SseEmitterRegistry;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * Manager SSE
+ * Manager SSE.
+ *
+ * <p>Note: the lifecycle of a subscription - its timeout, the ceiling on how many may be held
+ * and the cleanup of the ones that went away - belongs to {@link SseEmitterRegistry}; what is
+ * manager specific is only the events these subscribers are waiting for.
  */
-@Slf4j
 @Component
 public class ManagerSseManager {
-    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
+    private final SseEmitterRegistry registry = new SseEmitterRegistry("manager");
+
+    /**
+     * Registers a subscription for the given client.
+     *
+     * @param clientId Identifier of the subscriber, unique per subscription
+     * @return The emitter the controller returns to spring
+     */
     public SseEmitter createEmitter(Long clientId) {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-        emitter.onCompletion(() -> removeEmitter(clientId));
-        emitter.onTimeout(() -> removeEmitter(clientId));
-        emitters.put(clientId, emitter);
-        return emitter;
+        return registry.createEmitter(clientId);
     }
 
+    /**
+     * Delivers one manager event to every live subscriber.
+     *
+     * @param eventName Name of the sse event, which is what the ui subscribes by
+     * @param data Serialised payload
+     */
     @Async
     public void broadcast(String eventName, String data) {
-        emitters.forEach((clientId, emitter) -> {
-            try {
-                emitter.send(SseEmitter.event()
-                        .id(String.valueOf(System.currentTimeMillis()))
-                        .name(eventName)
-                        .data(data));
-            } catch (IOException | IllegalStateException e) {
-                tryCompleteAndClean(clientId, emitter);
-            } catch (Exception exception) {
-                log.error("Failed to broadcast manager message data to client: {}", exception.getMessage());
-                tryCompleteAndClean(clientId, emitter);
-            }
-        });
+        registry.broadcast(eventName, data);
     }
 
-    private void tryCompleteAndClean(Long clientId, SseEmitter emitter) {
-        try {
-            Optional.ofNullable(emitter).ifPresent(ResponseBodyEmitter::complete);
-        } catch (Throwable e) {
-            log.debug("Failed to complete emitter for client {}: {}", clientId, e.getMessage());
-        }
-        // execute clear
-        removeEmitter(clientId);
-    }
-
-    public void broadcastImportTaskInProgress(String taskName, Integer progress){
-        ManagerMessage managerMessage = ImportTaskMessage.createInProgressMessage(taskName, progress);
+    public void broadcastImportTaskInProgress(String taskName, Integer progress) {
+        final ManagerMessage managerMessage = ImportTaskMessage.createInProgressMessage(taskName, progress);
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
     }
 
-    public void broadcastImportTaskSuccess(String taskName){
-        ManagerMessage managerMessage = ImportTaskMessage.createCompletedMessage(taskName);
+    public void broadcastImportTaskSuccess(String taskName) {
+        final ManagerMessage managerMessage = ImportTaskMessage.createCompletedMessage(taskName);
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
     }
 
-    public void broadcastImportTaskFail(String taskName, String errMsg){
-        ManagerMessage managerMessage = ImportTaskMessage.createFailedMessage(taskName, errMsg);
+    public void broadcastImportTaskFail(String taskName, String errMsg) {
+        final ManagerMessage managerMessage = ImportTaskMessage.createFailedMessage(taskName, errMsg);
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
     }
 
-    private void removeEmitter(Long clientId) {
-        emitters.remove(clientId);
+    void setMaxEmitters(int maxEmitters) {
+        registry.setMaxEmitters(maxEmitters);
+    }
+
+    int subscriptionCount() {
+        return registry.subscriptionCount();
     }
 }

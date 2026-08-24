@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { AlertInhibitComponent } from './alert-inhibit.component';
 
@@ -26,9 +27,7 @@ describe('AlertInhibitComponent', () => {
   let fixture: ComponentFixture<AlertInhibitComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [AlertInhibitComponent]
-    }).compileComponents();
+    await configureShallowTest(AlertInhibitComponent).compileComponents();
 
     fixture = TestBed.createComponent(AlertInhibitComponent);
     component = fixture.componentInstance;

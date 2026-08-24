@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -30,6 +30,7 @@ const alerts_summary_uri = '/alerts/summary';
 const alerts_group_uri = '/alerts/group';
 const alerts_group_status_uri = '/alerts/group/status';
 const alerts_uri = '/alerts';
+const alerts_export_uri = '/alerts/export';
 
 @Injectable({
   providedIn: 'root'
@@ -87,6 +88,21 @@ export class AlertService {
     }
     const options = { params: httpParams };
     return this.http.get<Message<Page<GroupAlert>>>(alerts_group_uri, options);
+  }
+
+  public exportAlerts(status: string | undefined, search: string | undefined): Observable<HttpResponse<Blob>> {
+    let httpParams = new HttpParams();
+    if (status != undefined) {
+      httpParams = httpParams.append('status', status);
+    }
+    if (search != undefined && search != '' && search.trim() != '') {
+      httpParams = httpParams.append('search', search.trim());
+    }
+    return this.http.get(alerts_export_uri, {
+      params: httpParams,
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 
   public deleteGroupAlerts(alertIds: Set<number>): Observable<Message<any>> {
