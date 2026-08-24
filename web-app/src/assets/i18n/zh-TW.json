@@ -613,7 +613,7 @@
   "observability.integration.error.network": "無法連線 HertzBeat，請檢查位址和網路存取。",
   "observability.integration.error.request": "檢測失敗，請檢查設定後重試。",
   "observability.integration.generate-token": "產生",
-  "observability.integration.grpc-note": "OTLP/gRPC 預設監聽 4317 埠。",
+  "observability.integration.grpc-note": "OTLP/gRPC 預設監聽 14317 埠。",
   "observability.integration.protocol": "協定",
   "observability.integration.ready-to-copy": "已根據左側表單產生",
   "observability.integration.subtitle": "無需理解實體、Pipeline 或資料表，即可接入指標、日誌和鏈路。",
