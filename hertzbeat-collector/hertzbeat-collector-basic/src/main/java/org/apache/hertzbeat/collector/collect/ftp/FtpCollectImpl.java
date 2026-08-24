@@ -18,12 +18,12 @@
 package org.apache.hertzbeat.collector.collect.ftp;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
@@ -53,6 +53,8 @@ public class FtpCollectImpl extends AbstractCollect {
 
     private static final String ANONYMOUS = "anonymous";
     private static final String PASSWORD = "password";
+    private static final int MAX_INSECURE_WARNING_ENDPOINTS = 1024;
+    private static final Set<String> INSECURE_WARNING_ENDPOINTS = ConcurrentHashMap.newKeySet();
 
     /**
      * preCheck params
@@ -63,17 +65,8 @@ public class FtpCollectImpl extends AbstractCollect {
             throw new IllegalArgumentException("Ftp collect must has ftp params.");
         }
         FtpProtocol ftpProtocol = metrics.getFtp();
-        Assert.hasText(ftpProtocol.getHost(), "Ftp Protocol host is required.");
-        Assert.hasText(ftpProtocol.getPort(), "Ftp Protocol port is required.");
-        Assert.hasText(ftpProtocol.getDirection(), "Ftp Protocol direction is required.");
-        Assert.hasText(ftpProtocol.getTimeout(), "Ftp Protocol timeout is required.");
-        if (Boolean.parseBoolean(ftpProtocol.getSsl())
-                && !Boolean.parseBoolean(ftpProtocol.getInsecureSkipVerify())) {
-            Assert.hasText(ftpProtocol.getHostKeyFingerprint(),
-                    "Sftp Protocol host key fingerprint is required.");
-            Assert.isTrue(ftpProtocol.hasValidHostKeyFingerprints(),
-                    "Sftp Protocol host key fingerprints must use the SHA256:base64 format.");
-        }
+        String validationError = ftpProtocol.validationError();
+        Assert.isNull(validationError, validationError);
     }
 
     @Override
@@ -247,9 +240,7 @@ public class FtpCollectImpl extends AbstractCollect {
 
     static ServerKeyVerifier createServerKeyVerifier(FtpProtocol ftpProtocol) {
         if (Boolean.parseBoolean(ftpProtocol.getInsecureSkipVerify())) {
-            log.warn("[SFTPClient] host key verification is disabled for {}:{}; "
-                            + "configure trusted host key fingerprints and re-enable verification",
-                    ftpProtocol.getHost(), ftpProtocol.getPort());
+            logInsecureVerification(ftpProtocol);
             return AcceptAllServerKeyVerifier.INSTANCE;
         }
         Assert.hasText(ftpProtocol.getHostKeyFingerprint(),
@@ -257,20 +248,33 @@ public class FtpCollectImpl extends AbstractCollect {
                         + "Obtain it through a trusted channel; see the FTP monitor guide.");
         Assert.isTrue(ftpProtocol.hasValidHostKeyFingerprints(),
                 "Sftp Protocol host key fingerprints must use the SHA256:base64 format.");
-        List<String> expectedFingerprints = ftpProtocol.getParsedHostKeyFingerprints();
+        List<String> expectedFingerprints = ftpProtocol.parseHostKeyFingerprints();
         Assert.notEmpty(expectedFingerprints,
                 "Sftp Protocol host key fingerprint list must not be empty.");
         return (clientSession, remoteAddress, serverKey) -> {
-            String actualFingerprint = KeyUtils.getFingerPrint(BuiltinDigests.sha256, serverKey);
-            boolean matches = actualFingerprint != null && expectedFingerprints.stream()
-                    .anyMatch(expectedFingerprint -> MessageDigest.isEqual(
-                            expectedFingerprint.getBytes(StandardCharsets.UTF_8),
-                            actualFingerprint.getBytes(StandardCharsets.UTF_8)));
+            boolean matches = serverKey != null && expectedFingerprints.stream()
+                    .anyMatch(expectedFingerprint -> Boolean.TRUE.equals(
+                            KeyUtils.checkFingerPrint(
+                                    expectedFingerprint,
+                                    BuiltinDigests.sha256,
+                                    serverKey).getKey()));
             if (!matches) {
                 log.warn("[SFTPClient] server host key did not match for {}:{}",
                         ftpProtocol.getHost(), ftpProtocol.getPort());
             }
             return matches;
         };
+    }
+
+    private static void logInsecureVerification(FtpProtocol ftpProtocol) {
+        String endpoint = Objects.toString(ftpProtocol.getHost(), "<unknown>")
+                + ':' + Objects.toString(ftpProtocol.getPort(), "<unknown>");
+        if (INSECURE_WARNING_ENDPOINTS.size() < MAX_INSECURE_WARNING_ENDPOINTS
+                && INSECURE_WARNING_ENDPOINTS.add(endpoint)) {
+            log.warn("[SFTPClient] host key verification is disabled for {}; "
+                    + "configure trusted host key fingerprints and re-enable verification", endpoint);
+        } else {
+            log.debug("[SFTPClient] host key verification remains disabled for {}", endpoint);
+        }
     }
 }

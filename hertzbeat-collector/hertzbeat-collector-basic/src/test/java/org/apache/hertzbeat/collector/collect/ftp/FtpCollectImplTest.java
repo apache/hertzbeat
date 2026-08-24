@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.security.KeyPairGenerator;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.keyverifier.ServerKeyVerifier;
+import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.config.keys.KeyUtils;
 import org.apache.sshd.common.digest.BuiltinDigests;
 import org.junit.jupiter.api.Test;
@@ -153,11 +155,9 @@ class FtpCollectImplTest {
 
     @Test
     void serverKeyVerifierSupportsHostKeyRotationWindow() throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
-        keyPairGenerator.initialize(256);
-        var currentKey = keyPairGenerator.generateKeyPair().getPublic();
-        var nextKey = keyPairGenerator.generateKeyPair().getPublic();
-        var unrelatedKey = keyPairGenerator.generateKeyPair().getPublic();
+        var currentKey = generateEcPublicKey();
+        var nextKey = generateEcPublicKey();
+        var unrelatedKey = generateEcPublicKey();
         FtpProtocol ftpProtocol = FtpProtocol.builder()
                 .host("sftp.example.com")
                 .port("22")
@@ -167,29 +167,23 @@ class FtpCollectImplTest {
                 .build();
 
         ServerKeyVerifier verifier = FtpCollectImpl.createServerKeyVerifier(ftpProtocol);
+        ClientSession session = Mockito.mock(ClientSession.class);
+        InetSocketAddress address = InetSocketAddress.createUnresolved("sftp.example.com", 22);
 
-        assertTrue(verifier.verifyServerKey(null, null, currentKey));
-        assertTrue(verifier.verifyServerKey(null, null, nextKey));
-        assertFalse(verifier.verifyServerKey(null, null, unrelatedKey));
+        assertTrue(verifier.verifyServerKey(session, address, currentKey));
+        assertTrue(verifier.verifyServerKey(session, address, nextKey));
+        assertFalse(verifier.verifyServerKey(session, address, unrelatedKey));
     }
 
     @Test
-    void serverKeyVerifierAlwaysUsesSha256() throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
-        keyPairGenerator.initialize(256);
-        var serverKey = keyPairGenerator.generateKeyPair().getPublic();
+    void serverKeyVerifierRejectsNonSha256Fingerprints() {
+        var serverKey = generateEcPublicKey();
         FtpProtocol ftpProtocol = FtpProtocol.builder()
-                .hostKeyFingerprint(KeyUtils.getFingerPrint(BuiltinDigests.sha256, serverKey))
+                .hostKeyFingerprint(KeyUtils.getFingerPrint(BuiltinDigests.md5, serverKey))
                 .build();
-        var previousFactory = KeyUtils.getDefaultFingerPrintFactory();
 
-        try {
-            KeyUtils.setDefaultFingerPrintFactory(BuiltinDigests.md5);
-            ServerKeyVerifier verifier = FtpCollectImpl.createServerKeyVerifier(ftpProtocol);
-            assertTrue(verifier.verifyServerKey(null, null, serverKey));
-        } finally {
-            KeyUtils.setDefaultFingerPrintFactory(previousFactory);
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> FtpCollectImpl.createServerKeyVerifier(ftpProtocol));
     }
 
     @Test
@@ -201,5 +195,57 @@ class FtpCollectImplTest {
         assertSame(
                 AcceptAllServerKeyVerifier.INSTANCE,
                 FtpCollectImpl.createServerKeyVerifier(ftpProtocol));
+    }
+
+    @Test
+    void preCheckRejectsMalformedVerificationOptOut() {
+        FtpProtocol ftpProtocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint(KeyUtils.getFingerPrint(
+                        BuiltinDigests.sha256,
+                        generateEcPublicKey()))
+                .insecureSkipVerify("enabled")
+                .build();
+        Metrics metrics = new Metrics();
+        metrics.setFtp(ftpProtocol);
+
+        assertThrows(IllegalArgumentException.class, () -> ftpCollectImpl.preCheck(metrics));
+    }
+
+    @Test
+    void preCheckFailsClosedForSftpWithoutHostKeyPolicy() {
+        FtpProtocol ftpProtocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .build();
+        Metrics metrics = new Metrics();
+        metrics.setFtp(ftpProtocol);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> ftpCollectImpl.preCheck(metrics));
+
+        assertTrue(exception.getMessage().contains("host key fingerprint is required"));
+    }
+
+    private static java.security.PublicKey generateEcPublicKey() {
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+            keyPairGenerator.initialize(256);
+            return keyPairGenerator.generateKeyPair().getPublic();
+        } catch (Exception exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 }

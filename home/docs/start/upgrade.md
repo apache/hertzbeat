@@ -16,6 +16,24 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 ## Breaking Changes In 1.9.0
 
+### SFTP monitors require an explicit host-key policy
+
+1.9.0 stops accepting any SFTP server key by default. Every SFTP monitor must
+either pin one or more trusted `SHA256:...` host-key fingerprints or explicitly
+select the dangerous temporary skip-verification option.
+
+This is a fail-closed breaking change. HertzBeat does not automatically enable
+skip verification for 1.8.x monitors, imports, or direct API/SQL-created rows.
+Before or immediately after upgrading, edit each SFTP monitor and:
+
+1. obtain the server key and verify its fingerprint through a trusted channel;
+2. add the verified fingerprint to **SFTP Host Key Fingerprints**; and
+3. use the skip-verification option only as a short-lived recovery measure.
+
+Until one of those policies is configured, the affected SFTP monitor reports a
+configuration failure and does not connect. Plain FTP monitors are unchanged.
+See [FTP Monitor](../help/ftp) for fingerprint acquisition and key rotation.
+
 ### Observability (OTLP / logs / traces) API paths moved
 
 1.9.0 consolidates the 1.8.x log module into `hertzbeat-observability`. Metrics, logs and traces now share one ingestion prefix (`/api/otlp/v1/{signal}`) and one query prefix (`/api/observability/**`). Any OpenTelemetry Collector, Vector, SDK exporter, script or dashboard that was configured against a 1.8.x path must be updated.

@@ -90,41 +90,62 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-        if (!validateIpDomain(host) || !validPort(port) || StringUtils.isBlank(direction) || StringUtils.isBlank(timeout)) {
-            return true;
+        return validationError() != null;
+    }
+
+    /**
+     * Validate the complete FTP/SFTP protocol contract used by collectors.
+     *
+     * @return a safe operator-facing error, or {@code null} when valid
+     */
+    public String validationError() {
+        if (!validateIpDomain(host)) {
+            return "Ftp Protocol host is invalid.";
         }
-        if (!CommonUtil.isNumeric(timeout)) {
-            return true;
+        if (!validPort(port)) {
+            return "Ftp Protocol port is invalid.";
+        }
+        if (StringUtils.isBlank(direction)) {
+            return "Ftp Protocol direction is required.";
+        }
+        if (StringUtils.isBlank(timeout) || !CommonUtil.isNumeric(timeout)) {
+            return "Ftp Protocol timeout must be numeric.";
         }
         if (StringUtils.isNotBlank(ssl)
                 && !"true".equalsIgnoreCase(ssl)
                 && !"false".equalsIgnoreCase(ssl)) {
-            return true;
+            return "Ftp Protocol SFTP option must be true or false.";
         }
         if (StringUtils.isNotBlank(insecureSkipVerify)
                 && !"true".equalsIgnoreCase(insecureSkipVerify)
                 && !"false".equalsIgnoreCase(insecureSkipVerify)) {
-            return true;
+            return "Sftp Protocol skip-verification option must be true or false.";
         }
         if (!"true".equalsIgnoreCase(ssl)) {
-            return false;
+            return null;
         }
         if (StringUtils.isAnyBlank(username, password)) {
-            return true;
+            return "Sftp Protocol username and password are required.";
         }
-        if (StringUtils.isNotBlank(hostKeyFingerprint) && !hasValidHostKeyFingerprints()) {
-            return true;
+        if ("true".equalsIgnoreCase(insecureSkipVerify)) {
+            return null;
         }
-        return !"true".equalsIgnoreCase(insecureSkipVerify) && StringUtils.isBlank(hostKeyFingerprint);
+        if (StringUtils.isBlank(hostKeyFingerprint)) {
+            return "Sftp Protocol host key fingerprint is required unless verification is explicitly skipped.";
+        }
+        if (!hasValidHostKeyFingerprints()) {
+            return "Sftp Protocol host key fingerprints must use the SHA256:base64 format.";
+        }
+        return null;
     }
 
     public boolean hasValidHostKeyFingerprints() {
-        List<String> fingerprints = getParsedHostKeyFingerprints();
+        List<String> fingerprints = parseHostKeyFingerprints();
         return !fingerprints.isEmpty()
                 && fingerprints.stream().allMatch(value -> SHA256_FINGERPRINT_PATTERN.matcher(value).matches());
     }
 
-    public List<String> getParsedHostKeyFingerprints() {
+    public List<String> parseHostKeyFingerprints() {
         if (StringUtils.isBlank(hostKeyFingerprint)) {
             return List.of();
         }

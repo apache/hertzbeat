@@ -99,4 +99,54 @@ describe('MonitorFormComponent', () => {
     expect(payloadParam.display).toBeTrue();
     expect(component.hasAdvancedParams).toBeTrue();
   });
+
+  it('should reevaluate dependent advanced fields when a boolean parent changes', () => {
+    const fingerprintDefine = new ParamDefine();
+    fingerprintDefine.field = 'hostKeyFingerprint';
+    fingerprintDefine.name = 'SFTP Host Key Fingerprints';
+    fingerprintDefine.type = 'textarea';
+    (fingerprintDefine as any).depend = {
+      ssl: [true]
+    };
+
+    const fingerprintParam = new Param();
+    fingerprintParam.field = 'hostKeyFingerprint';
+    fingerprintParam.paramValue = 'SHA256:test';
+    fingerprintParam.display = false;
+
+    component.monitor.app = 'ftp';
+    component.paramDefines = [];
+    component.params = [];
+    component.sdDefines = [];
+    component.sdParams = [];
+    component.advancedParamDefines = [fingerprintDefine];
+    component.advancedParams = [fingerprintParam];
+
+    component.onParamBooleanChanged(true, 'ssl');
+    expect(fingerprintParam.display).toBeTrue();
+    expect(component.hasAdvancedParams).toBeTrue();
+
+    component.onParamBooleanChanged(false, 'ssl');
+    expect(fingerprintParam.display).toBeFalse();
+    expect(fingerprintParam.paramValue).toBeNull();
+    expect(component.hasAdvancedParams).toBeFalse();
+  });
+
+  it('should not treat a persisted false string as an enabled boolean', () => {
+    const portParam = new Param();
+    portParam.field = 'port';
+    portParam.paramValue = 21;
+
+    component.monitor.app = 'ftp';
+    component.params = [portParam];
+    component.paramDefines = [];
+    component.sdDefines = [];
+    component.sdParams = [];
+    component.advancedParamDefines = [];
+    component.advancedParams = [];
+
+    component.onParamBooleanChanged('false', 'ssl');
+
+    expect(portParam.paramValue).toBe(21);
+  });
 });

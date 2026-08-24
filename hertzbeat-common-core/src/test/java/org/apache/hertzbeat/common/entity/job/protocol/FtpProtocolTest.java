@@ -20,6 +20,7 @@ package org.apache.hertzbeat.common.entity.job.protocol;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 class FtpProtocolTest {
@@ -142,5 +143,24 @@ class FtpProtocolTest {
                 .timeout("abc")
                 .build();
         assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void serializationDoesNotExposeComputedValidationProperties() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint(VALID_SHA256_FINGERPRINT)
+                .build();
+
+        String json = JsonUtil.toJson(protocol);
+
+        assertFalse(json.contains("validationError"));
+        assertFalse(json.contains("parsedHostKeyFingerprints"));
     }
 }
