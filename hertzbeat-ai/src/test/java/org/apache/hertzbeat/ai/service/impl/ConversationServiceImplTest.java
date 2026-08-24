@@ -26,6 +26,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -127,6 +128,49 @@ class ConversationServiceImplTest {
         verify(chatClientProviderService).streamChat(contextCaptor.capture());
         assertEquals(history, contextCaptor.getValue().getConversationHistory());
         assertEquals(subject, contextCaptor.getValue().getSubject());
+    }
+
+    /**
+     * The service should create a conversation and return its ID when the client omits the optional conversation ID.
+     */
+    @Test
+    void streamChatShouldCreateConversationWhenConversationIdIsMissing() {
+        bindSubject("alice");
+        AtomicLong messageId = new AtomicLong(20L);
+        when(chatClientProviderService.isConfigured()).thenReturn(true);
+        when(conversationDao.save(any(ChatConversation.class))).thenAnswer(invocation -> {
+            ChatConversation savedConversation = invocation.getArgument(0);
+            savedConversation.setId(CONVERSATION_ID);
+            return savedConversation;
+        });
+        when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID)).thenReturn(List.of());
+        when(messageDao.save(any(ChatMessage.class))).thenAnswer(invocation -> {
+            ChatMessage savedMessage = invocation.getArgument(0);
+            savedMessage.setId(messageId.getAndIncrement());
+            return savedMessage;
+        });
+        when(chatClientProviderService.streamChat(any(ChatRequestContext.class)))
+            .thenReturn(Flux.just("Current answer"));
+
+        List<ServerSentEvent<ChatResponseChunk>> events = conversationService
+            .streamChat("Initial question", null)
+            .collectList()
+            .block();
+
+        assertNotNull(events);
+        assertEquals(2, events.size());
+        assertEquals(CONVERSATION_ID, events.get(0).data().getConversationId());
+        assertEquals(CONVERSATION_ID, events.get(1).data().getConversationId());
+
+        ArgumentCaptor<ChatRequestContext> contextCaptor = ArgumentCaptor.forClass(ChatRequestContext.class);
+        verify(chatClientProviderService).streamChat(contextCaptor.capture());
+        assertEquals(CONVERSATION_ID, contextCaptor.getValue().getConversationId());
+        assertEquals(List.of(), contextCaptor.getValue().getConversationHistory());
+        ArgumentCaptor<ChatConversation> conversationCaptor = ArgumentCaptor.forClass(ChatConversation.class);
+        verify(conversationDao).save(conversationCaptor.capture());
+        assertEquals("Initial question", conversationCaptor.getValue().getTitle());
+        assertEquals("alice", conversationCaptor.getValue().getCreator());
+        verifyNoMoreInteractions(conversationDao);
     }
 
     /**

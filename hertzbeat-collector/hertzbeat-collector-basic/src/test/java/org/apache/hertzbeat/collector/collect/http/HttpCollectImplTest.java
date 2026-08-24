@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.http;
 import com.google.common.collect.Lists;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -31,9 +32,12 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -384,6 +388,48 @@ class HttpCollectImplTest {
     }
 
     @Test
+    void parseResponseByJsonPathKeepsRowAlignmentWhenAliasPathMissing() throws Exception {
+        String jsonResponse = "{\"items\": ["
+                + "{\"metadata\": {\"name\": \"pod-a\"}, \"status\": {\"phase\": \"Running\","
+                + " \"containerStatuses\": [{\"name\": \"c1\", \"ready\": true, \"restartCount\": 5}]}},"
+                + "{\"metadata\": {\"name\": \"pod-b-pending\"}, \"status\": {\"phase\": \"Pending\"}},"
+                + "{\"metadata\": {\"name\": \"pod-c\"}, \"status\": {\"phase\": \"Running\","
+                + " \"containerStatuses\": [{\"name\": \"c3\", \"ready\": true, \"restartCount\": 2}]}}"
+                + "]}";
+        HttpProtocol http = HttpProtocol.builder()
+                .parseType(DispatchConstants.PARSE_JSON_PATH)
+                .parseScript("$.items.*")
+                .build();
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByJsonPath",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class,
+                Long.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, jsonResponse,
+                Lists.newArrayList("$.metadata.name", "$.status.containerStatuses[0].restartCount"), http, builder, 100L);
+
+        assertEquals(3, capturedRows.size());
+        assertEquals("pod-a", capturedRows.get(0).getColumns(0));
+        assertEquals("5", capturedRows.get(0).getColumns(1));
+        assertEquals("pod-b-pending", capturedRows.get(1).getColumns(0));
+        assertEquals(CommonConstants.NULL_VALUE, capturedRows.get(1).getColumns(1));
+        assertEquals("pod-c", capturedRows.get(2).getColumns(0));
+        assertEquals("2", capturedRows.get(2).getColumns(1));
+    }
+
+    @Test
     void testParsePromQlLabelValue() throws Exception {
         // Create Prometheus format test data
         String prometheusData = """
@@ -630,5 +676,43 @@ class HttpCollectImplTest {
         assertEquals("heap", firstRow.getColumns(0));
         assertEquals("G1 Eden Space", firstRow.getColumns(1));
         capturedRows.forEach(t -> assertEquals(2, t.getColumnsList().size()));
+    }
+
+    @Test
+    void collectResolvesTimeExpressionsInUrlAndHeaders() throws Exception {
+        AtomicReference<String> requestUri = new AtomicReference<>();
+        AtomicReference<String> yearHeader = new AtomicReference<>();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requestUri.set(exchange.getRequestURI().toString());
+            yearHeader.set(exchange.getRequestHeaders().getFirst("X-Year"));
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            HttpProtocol http = HttpProtocol.builder()
+                    .method("GET")
+                    .host("127.0.0.1")
+                    .port(String.valueOf(server.getAddress().getPort()))
+                    .url("/metrics?year=${@year}")
+                    .headers(Map.of("X-Year", "${@year}"))
+                    .parseType(DispatchConstants.PARSE_DEFAULT)
+                    .build();
+            Metrics metrics = Metrics.builder()
+                    .http(http)
+                    .aliasFields(Lists.newArrayList("responseTime"))
+                    .build();
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+            httpCollectImpl.collect(builder, metrics);
+
+            String year = String.valueOf(LocalDateTime.now().getYear());
+            assertEquals("/metrics?year=" + year, requestUri.get());
+            assertEquals(year, yearHeader.get());
+        } finally {
+            server.stop(0);
+        }
     }
 }

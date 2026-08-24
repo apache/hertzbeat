@@ -1,0 +1,39 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<section class="signal-workspace">
+  <header class="signal-workspace-heading">
+    <div class="signal-workspace-heading-copy">
+      <h1>{{ title }}</h1>
+      <p>{{ subtitle }}</p>
+    </div>
+    <div class="signal-workspace-actions">
+      <ng-content select="[workspace-actions]"></ng-content>
+    </div>
+  </header>
+
+  <section *ngIf="showQueryPanel" class="signal-query-panel" [attr.aria-label]="queryLabel">
+    <div class="signal-query-panel-scope">
+      <span class="signal-query-panel-label">{{ queryLabel }}</span>
+      <div class="signal-query-panel-time"><ng-content select="[workspace-time]"></ng-content></div>
+    </div>
+    <ng-content select="[workspace-filters]"></ng-content>
+  </section>
+
+  <div class="signal-workspace-feedback"><ng-content select="[workspace-alert]"></ng-content></div>
+  <ng-content select="[workspace-summary]"></ng-content>
+  <ng-content select="[workspace-results]"></ng-content>
+</section>

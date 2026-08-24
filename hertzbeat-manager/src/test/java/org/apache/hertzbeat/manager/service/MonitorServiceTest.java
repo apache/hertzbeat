@@ -226,6 +226,59 @@ class MonitorServiceTest {
     }
 
     @Test
+    void addMonitorWithoutInstanceFallsBackToHostParam() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("www.example.com").build(),
+                Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void addMonitorInstanceStaysStableAcrossRepeatedResolution() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .instance("www.example.com:443")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void modifyMonitorKeepsInstanceStableAcrossEdits() {
+        long monitorId = 7L;
+        Monitor stored = Monitor.builder().jobId(1L).intervals(1).app("demoApp").name("ssl")
+                .instance("www.example.com:443").id(monitorId).build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(stored));
+        List<Param> params = List.of(Param.builder().field("port").paramValue("443").build());
+
+        for (int edit = 0; edit < 2; edit++) {
+            Monitor dto = Monitor.builder().jobId(1L).intervals(1).app("demoApp").name("ssl")
+                    .instance("www.example.com:443").id(monitorId).build();
+            assertDoesNotThrow(() -> monitorService.modifyMonitor(dto, params, null, null));
+            assertEquals("www.example.com:443", dto.getInstance());
+        }
+    }
+
+    @Test
     void addMonitorException() {
         Monitor monitor = Monitor.builder()
                 .intervals(1)

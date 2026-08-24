@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { MonitorSelectMenuComponent } from './monitor-select-menu.component';
 
@@ -26,9 +27,7 @@ describe('MonitorSelectMenuComponent', () => {
   let fixture: ComponentFixture<MonitorSelectMenuComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorSelectMenuComponent]
-    }).compileComponents();
+    await configureShallowTest(MonitorSelectMenuComponent).compileComponents();
   });
 
   beforeEach(() => {

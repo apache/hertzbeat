@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { MessageServerComponent } from './message-server.component';
 
@@ -26,9 +27,7 @@ describe('MessageServerComponent', () => {
   let fixture: ComponentFixture<MessageServerComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MessageServerComponent]
-    }).compileComponents();
+    await configureShallowTest(MessageServerComponent).compileComponents();
 
     fixture = TestBed.createComponent(MessageServerComponent);
     component = fixture.componentInstance;

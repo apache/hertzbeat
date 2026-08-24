@@ -86,7 +86,9 @@ export class DefaultInterceptor implements HttpInterceptor {
   private tryRefreshToken(ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandler): Observable<any> {
     // 1, redirect to login page if this request is used for refreshing token
     if ([`/account/auth/refresh`].some(url => req.url.includes(url))) {
-      this.toLogin();
+      if (!req.context.get(SILENT_HTTP_ERROR)) {
+        this.toLogin();
+      }
       return throwError(ev);
     }
     // 2, if `refreshToking` is true, means that the refreshing token request is in progress
@@ -202,7 +204,7 @@ export class DefaultInterceptor implements HttpInterceptor {
         if (!silentError) {
           this.checkStatus(err);
         }
-        return throwError(err.error);
+        return throwError(silentError ? err : err.error);
       })
     );
   }
