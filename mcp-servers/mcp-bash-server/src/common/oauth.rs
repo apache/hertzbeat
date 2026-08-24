@@ -105,10 +105,17 @@ struct RegisteredClient {
     client_id: String,
     client_secret: Option<String>,
     redirect_uris: Vec<String>,
+    grant_types: HashSet<String>,
     token_endpoint_auth_method: TokenEndpointAuthMethod,
     registered_at: DateTime<Utc>,
     expires_at: DateTime<Utc>,
     refresh_expires_at: Option<DateTime<Utc>>,
+}
+
+impl RegisteredClient {
+    fn supports_grant(&self, grant_type: &str) -> bool {
+        self.grant_types.contains(grant_type)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -174,6 +181,16 @@ struct IssuedTokens {
     access: McpAccessToken,
 }
 
+#[derive(Serialize)]
+struct TokenResponse {
+    access_token: String,
+    token_type: String,
+    expires_in: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    refresh_token: Option<String>,
+    scope: Option<String>,
+}
+
 /// Central OAuth state. Every remotely growable map has a hard cardinality
 /// bound and is pruned by expiry on the operations that access it.
 #[derive(Clone, Debug)]
@@ -231,6 +248,10 @@ impl McpOAuthStore {
                 client_id: "public-test-client".to_string(),
                 client_secret: None,
                 redirect_uris: vec!["http://127.0.0.1:8080/callback".to_string()],
+                grant_types: HashSet::from([
+                    "authorization_code".to_string(),
+                    "refresh_token".to_string(),
+                ]),
                 token_endpoint_auth_method: TokenEndpointAuthMethod::None,
                 registered_at: now,
                 expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
@@ -243,6 +264,10 @@ impl McpOAuthStore {
                 client_id: "confidential-test-client".to_string(),
                 client_secret: Some("test-only-confidential-secret".to_string()),
                 redirect_uris: vec!["https://client.example/callback".to_string()],
+                grant_types: HashSet::from([
+                    "authorization_code".to_string(),
+                    "refresh_token".to_string(),
+                ]),
                 token_endpoint_auth_method: TokenEndpointAuthMethod::ClientSecretPost,
                 registered_at: now,
                 expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
@@ -447,6 +472,9 @@ impl McpOAuthStore {
             .ok_or_else(|| {
                 OAuthError::InvalidRequest("invalid client id or redirect uri".to_string())
             })?;
+        if !client.supports_grant("authorization_code") {
+            return Err(OAuthError::UnauthorizedClient);
+        }
         let scope = validate_scope(params.scope.as_deref())?;
         debug!(
             "Starting authorization transaction for client {} using {}",
@@ -527,9 +555,13 @@ impl McpOAuthStore {
         &self,
         request: &TokenRequest,
     ) -> Result<IssuedTokens, OAuthError> {
-        self.validate_token_client(&request.client_id, &request.client_secret)
+        let client = self
+            .validate_token_client(&request.client_id, &request.client_secret)
             .await
             .ok_or(OAuthError::InvalidClient)?;
+        if !client.supports_grant("authorization_code") {
+            return Err(OAuthError::UnauthorizedClient);
+        }
 
         let _issuance = self.token_issuance.lock().await;
         let now = Utc::now();
@@ -553,7 +585,12 @@ impl McpOAuthStore {
             return Err(OAuthError::InvalidGrant);
         }
         let issued = self
-            .issue_tokens_locked(code.client_id, code.scope, None)
+            .issue_tokens_locked(
+                code.client_id,
+                code.scope,
+                client.supports_grant("refresh_token"),
+                None,
+            )
             .await?;
         codes.remove(&request.code);
         Ok(issued)
@@ -563,9 +600,13 @@ impl McpOAuthStore {
         &self,
         request: &TokenRequest,
     ) -> Result<IssuedTokens, OAuthError> {
-        self.validate_token_client(&request.client_id, &request.client_secret)
+        let client = self
+            .validate_token_client(&request.client_id, &request.client_secret)
             .await
             .ok_or(OAuthError::InvalidClient)?;
+        if !client.supports_grant("refresh_token") {
+            return Err(OAuthError::UnauthorizedClient);
+        }
 
         let _issuance = self.token_issuance.lock().await;
         let now = Utc::now();
@@ -584,6 +625,7 @@ impl McpOAuthStore {
         self.issue_tokens_locked(
             record.client_id.clone(),
             record.scope.clone(),
+            true,
             Some(RefreshRotation {
                 token: request.refresh_token.clone(),
                 record,
@@ -599,40 +641,40 @@ impl McpOAuthStore {
         scope: Option<String>,
     ) -> Result<IssuedTokens, OAuthError> {
         let _issuance = self.token_issuance.lock().await;
-        self.issue_tokens_locked(client_id, scope, None).await
+        self.issue_tokens_locked(client_id, scope, true, None).await
     }
 
     async fn issue_tokens_locked(
         &self,
         client_id: String,
         scope: Option<String>,
+        issue_refresh_token: bool,
         rotation: Option<RefreshRotation>,
     ) -> Result<IssuedTokens, OAuthError> {
         let now = Utc::now();
         let access_token_value = random_prefixed("mcp-token");
-        let refresh_token_value = random_prefixed("mcp-refresh");
-        let (token_family_id, refresh_expires_at) = rotation
-            .as_ref()
-            .map(|rotation| {
-                (
-                    rotation.record.family_id.clone(),
-                    rotation.record.family_expires_at,
-                )
-            })
-            .unwrap_or_else(|| {
-                (
-                    Uuid::new_v4().to_string(),
-                    now + Duration::seconds(REFRESH_TOKEN_TTL_SECONDS),
-                )
-            });
-        if refresh_expires_at <= now {
+        let refresh_token_value = issue_refresh_token.then(|| random_prefixed("mcp-refresh"));
+        let (token_family_id, refresh_expires_at) = if let Some(rotation) = rotation.as_ref() {
+            (
+                rotation.record.family_id.clone(),
+                Some(rotation.record.family_expires_at),
+            )
+        } else if issue_refresh_token {
+            (
+                Uuid::new_v4().to_string(),
+                Some(now + Duration::seconds(REFRESH_TOKEN_TTL_SECONDS)),
+            )
+        } else {
+            (Uuid::new_v4().to_string(), None)
+        };
+        if refresh_expires_at.is_some_and(|expires_at| expires_at <= now) {
             return Err(OAuthError::InvalidGrant);
         }
         let access = McpAccessToken {
             access_token: access_token_value.clone(),
             token_type: "bearer".to_string(),
             expires_in: ACCESS_TOKEN_TTL_SECONDS as u64,
-            refresh_token: Some(refresh_token_value.clone()),
+            refresh_token: refresh_token_value.clone(),
             scope: scope.clone(),
             client_id: client_id.clone(),
             issued_at: now,
@@ -652,7 +694,7 @@ impl McpOAuthStore {
         }
         let mut refresh_tokens = self.refresh_tokens.write().await;
         refresh_tokens.retain(|_, token| token.expires_at > now);
-        if refresh_tokens.len() >= MAX_REFRESH_TOKENS && rotation.is_none() {
+        if issue_refresh_token && refresh_tokens.len() >= MAX_REFRESH_TOKENS && rotation.is_none() {
             return Err(OAuthError::TemporarilyUnavailable);
         }
         let mut used_refresh_tokens = self.used_refresh_tokens.write().await;
@@ -679,18 +721,22 @@ impl McpOAuthStore {
             );
         }
         access_tokens.insert(access_token_value, access.clone());
-        refresh_tokens.insert(
-            refresh_token_value,
-            RefreshTokenRecord {
-                client_id,
-                scope,
-                family_id: token_family_id,
-                family_expires_at: refresh_expires_at,
-                expires_at: refresh_expires_at,
-            },
-        );
-        client.expires_at = refresh_expires_at;
-        client.refresh_expires_at = Some(refresh_expires_at);
+        if let (Some(refresh_token_value), Some(refresh_expires_at)) =
+            (refresh_token_value, refresh_expires_at)
+        {
+            refresh_tokens.insert(
+                refresh_token_value,
+                RefreshTokenRecord {
+                    client_id,
+                    scope,
+                    family_id: token_family_id,
+                    family_expires_at: refresh_expires_at,
+                    expires_at: refresh_expires_at,
+                },
+            );
+            client.expires_at = refresh_expires_at;
+            client.refresh_expires_at = Some(refresh_expires_at);
+        }
         Ok(IssuedTokens { access })
     }
 
@@ -729,6 +775,7 @@ impl McpOAuthStore {
 enum OAuthError {
     InvalidRequest(String),
     InvalidClient,
+    UnauthorizedClient,
     InvalidGrant,
     InvalidTransaction,
     RateLimited,
@@ -746,6 +793,11 @@ impl OAuthError {
                 StatusCode::UNAUTHORIZED,
                 "invalid_client",
                 "client authentication failed",
+            ),
+            Self::UnauthorizedClient => oauth_json_error(
+                StatusCode::BAD_REQUEST,
+                "unauthorized_client",
+                "client is not authorized to use this grant type",
             ),
             Self::InvalidGrant => oauth_json_error(
                 StatusCode::BAD_REQUEST,
@@ -1126,17 +1178,20 @@ pub async fn oauth_token(
         }
     };
     match issued {
-        Ok(issued) => (
-            StatusCode::OK,
-            Json(serde_json::json!({
-                "access_token": issued.access.access_token,
-                "token_type": issued.access.token_type,
-                "expires_in": issued.access.expires_in,
-                "refresh_token": issued.access.refresh_token,
-                "scope": issued.access.scope,
-            })),
-        )
-            .into_response(),
+        Ok(issued) => {
+            let access = issued.access;
+            (
+                StatusCode::OK,
+                Json(TokenResponse {
+                    access_token: access.access_token,
+                    token_type: access.token_type,
+                    expires_in: access.expires_in,
+                    refresh_token: access.refresh_token,
+                    scope: access.scope,
+                }),
+            )
+                .into_response()
+        }
         Err(error) => error.response(),
     }
 }
@@ -1216,9 +1271,9 @@ pub async fn oauth_register(
         Ok(bytes) => bytes,
         Err(response) => return response,
     };
-    let request = match serde_json::from_slice::<ClientRegistrationRequest>(&bytes) {
-        Ok(request) => request,
-        Err(_) => {
+    let mut registration = match serde_json::from_slice::<Value>(&bytes) {
+        Ok(Value::Object(registration)) => registration,
+        _ => {
             return oauth_json_error(
                 StatusCode::BAD_REQUEST,
                 "invalid_client_metadata",
@@ -1226,6 +1281,20 @@ pub async fn oauth_register(
             );
         }
     };
+    registration
+        .entry("grant_types".to_string())
+        .or_insert_with(|| serde_json::json!(["authorization_code"]));
+    let request =
+        match serde_json::from_value::<ClientRegistrationRequest>(Value::Object(registration)) {
+            Ok(request) => request,
+            Err(_) => {
+                return oauth_json_error(
+                    StatusCode::BAD_REQUEST,
+                    "invalid_client_metadata",
+                    "registration request is invalid",
+                );
+            }
+        };
     if request.client_name.trim().is_empty() || request.client_name.len() > 100 {
         return oauth_json_error(
             StatusCode::BAD_REQUEST,
@@ -1309,12 +1378,14 @@ pub async fn oauth_register(
             unique_redirects.push(redirect.clone());
         }
     }
+    let grant_types = request.grant_types.iter().cloned().collect::<HashSet<_>>();
     clients.insert(
         client_id.clone(),
         RegisteredClient {
             client_id: client_id.clone(),
             client_secret: client_secret.clone(),
             redirect_uris: unique_redirects.clone(),
+            grant_types,
             token_endpoint_auth_method: auth_method.clone(),
             registered_at: now,
             expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
@@ -1964,6 +2035,148 @@ mod tests {
             .unwrap();
         let registered: ClientRegistrationResponse = serde_json::from_slice(&body).unwrap();
         assert_eq!(registered.client_secret.unwrap().len(), 48);
+    }
+
+    #[tokio::test]
+    async fn registration_defaults_missing_grant_types_to_authorization_code() {
+        let store = Arc::new(McpOAuthStore::new());
+        let registration = serde_json::json!({
+            "client_name": "default-grant-client",
+            "redirect_uris": ["http://127.0.0.1:9912/callback"],
+            "token_endpoint_auth_method": "none",
+            "response_types": ["code"]
+        });
+
+        let response = oauth_register(
+            State(store),
+            Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::CREATED);
+        let body = to_bytes(response.into_body(), MAX_OAUTH_BODY_BYTES)
+            .await
+            .unwrap();
+        let registered: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(
+            registered.get("grant_types"),
+            Some(&serde_json::json!(["authorization_code"]))
+        );
+    }
+
+    #[tokio::test]
+    async fn authorization_code_only_client_receives_no_refresh_token() {
+        let store = Arc::new(McpOAuthStore::new());
+        let registration = ClientRegistrationRequest {
+            client_name: "authorization-code-only".to_string(),
+            redirect_uris: vec!["http://127.0.0.1:9913/callback".to_string()],
+            grant_types: vec!["authorization_code".to_string()],
+            token_endpoint_auth_method: "none".to_string(),
+            response_types: vec!["code".to_string()],
+        };
+        let response = oauth_register(
+            State(store.clone()),
+            Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::CREATED);
+        let body = to_bytes(response.into_body(), MAX_OAUTH_BODY_BYTES)
+            .await
+            .unwrap();
+        let registered: ClientRegistrationResponse = serde_json::from_slice(&body).unwrap();
+
+        let code = approve_transaction(
+            &store,
+            authorize_query(&registered.client_id, "http://127.0.0.1:9913/callback"),
+        )
+        .await;
+        let response = token_request(
+            store.clone(),
+            TokenRequest {
+                grant_type: "authorization_code".to_string(),
+                code,
+                client_id: registered.client_id.clone(),
+                client_secret: String::new(),
+                redirect_uri: "http://127.0.0.1:9913/callback".to_string(),
+                code_verifier: Some(VERIFIER.to_string()),
+                refresh_token: String::new(),
+            },
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), MAX_OAUTH_BODY_BYTES)
+            .await
+            .unwrap();
+        let token: Value = serde_json::from_slice(&body).unwrap();
+        assert!(
+            token.get("refresh_token").is_none(),
+            "refresh_token must be omitted unless the client registered that grant"
+        );
+        assert!(store.refresh_tokens.read().await.is_empty());
+        assert!(
+            store
+                .clients
+                .read()
+                .await
+                .get(&registered.client_id)
+                .unwrap()
+                .refresh_expires_at
+                .is_none(),
+            "access-only issuance must not extend the registration as if a refresh token existed"
+        );
+    }
+
+    #[tokio::test]
+    async fn client_cannot_use_an_unregistered_refresh_grant() {
+        let store = Arc::new(McpOAuthStore::new());
+        let registration = ClientRegistrationRequest {
+            client_name: "authorization-code-only".to_string(),
+            redirect_uris: vec!["http://127.0.0.1:9914/callback".to_string()],
+            grant_types: vec!["authorization_code".to_string()],
+            token_endpoint_auth_method: "none".to_string(),
+            response_types: vec!["code".to_string()],
+        };
+        let response = oauth_register(
+            State(store.clone()),
+            Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::CREATED);
+        let body = to_bytes(response.into_body(), MAX_OAUTH_BODY_BYTES)
+            .await
+            .unwrap();
+        let registered: ClientRegistrationResponse = serde_json::from_slice(&body).unwrap();
+
+        let response = token_request(
+            store,
+            TokenRequest {
+                grant_type: "refresh_token".to_string(),
+                code: String::new(),
+                client_id: registered.client_id,
+                client_secret: String::new(),
+                redirect_uri: String::new(),
+                code_verifier: None,
+                refresh_token: "unissued-refresh-token".to_string(),
+            },
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body = to_bytes(response.into_body(), MAX_OAUTH_BODY_BYTES)
+            .await
+            .unwrap();
+        let error: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(
+            error.get("error"),
+            Some(&Value::String("unauthorized_client".to_string()))
+        );
     }
 
     #[tokio::test]
