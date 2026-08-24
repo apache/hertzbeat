@@ -83,17 +83,19 @@ public interface StatusPageService {
     /**
      * query status page components status.
      *
+     * @param days number of days of history to return
      * @return status page components status
      */
-    List<ComponentStatus> queryComponentsStatus();
+    List<ComponentStatus> queryComponentsStatus(int days);
 
     /**
      * query status page component status.
      *
-     * @param id status page component id
+     * @param id   status page component id
+     * @param days number of days of history to return
      * @return status page component status
      */
-    ComponentStatus queryComponentStatus(long id);
+    ComponentStatus queryComponentStatus(long id, int days);
 
     /**
      * query status page incidents.

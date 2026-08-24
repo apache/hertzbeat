@@ -30,7 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
@@ -62,6 +64,9 @@ class NoticeConfigControllerTest {
 
     @Mock
     private NoticeConfigServiceImpl noticeConfigService;
+
+    @Mock
+    private AlerterProperties alerterProperties;
 
     @InjectMocks
     private NoticeConfigController noticeConfigController;
@@ -174,6 +179,7 @@ class NoticeConfigControllerTest {
         NoticeReceiver receiver1 = new NoticeReceiver();
         receiver1.setId(1L);
         receiver1.setName("Receiver1");
+        receiver1.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
 
         NoticeReceiver receiver2 = new NoticeReceiver();
         receiver2.setId(2L);
@@ -197,6 +203,7 @@ class NoticeConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].id").value(1))
                 .andExpect(jsonPath("$.data.content[0].name").value("Receiver1"))
+                .andExpect(jsonPath("$.data.content[0].tgBotToken").value(NoticeReceiverMaskUtil.SECRET_MASK + "voJM"))
                 .andExpect(jsonPath("$.data.content[1].id").value(2))
                 .andExpect(jsonPath("$.data.content[1].name").value("Receiver2"))
                 .andExpect(jsonPath("$.data.totalElements").value(2))
@@ -222,6 +229,8 @@ class NoticeConfigControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.accessToken").value(NoticeReceiverMaskUtil.SECRET_MASK + "739d"))
+                .andExpect(jsonPath("$.data.email").value("2762242004@qq.com"))
                 .andReturn();
     }
 
@@ -503,6 +512,44 @@ class NoticeConfigControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
+
+    @Test
+    void previewNoticeTemplate() throws Exception {
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        noticeTemplate.setId(5L);
+        noticeTemplate.setName("preview-test");
+        noticeTemplate.setType((byte) 5);
+        noticeTemplate.setContent("""
+                [${title}] status=${status}
+                <#list alerts as alert>
+                ${alert.labels.alertname} - ${alert.content}
+                </#list>""");
+        when(alerterProperties.getConsoleUrl()).thenReturn("http://localhost:1157");
+
+        this.mockMvc.perform(post("/api/notice/template/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.containsString("HighCPUUsage")))
+                .andReturn();
+    }
+
+    @Test
+    void previewNoticeTemplateWithInvalidContent() throws Exception {
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        noticeTemplate.setId(5L);
+        noticeTemplate.setName("preview-test-invalid");
+        noticeTemplate.setType((byte) 5);
+        noticeTemplate.setContent("${undefinedVariable}");
+
+        this.mockMvc.perform(post("/api/notice/template/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andReturn();
     }
 }

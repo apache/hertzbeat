@@ -1,6 +1,6 @@
 ---
 id: redis  
-title: Monitorin REDIS database 
+title: Monitoring REDIS database 
 sidebar_label: REDIS   
 keywords: [ open source monitoring tool, open source Redis monitoring tool, monitoring Redis metrics ]
 ---
@@ -68,7 +68,7 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 | used_memory               | byte     | Total number of bytes allocated by Redis using its allocator (either standard libc, jemalloc, or an alternative allocator such as tcmalloc)                                  |
 | used_memory_human         | GB/MB/KB | Human readable representation of previous value                                                                                   |
 | used_memory_rss           | byte     | Number of bytes that Redis allocated as seen by the operating system (a.k.a resident set size). This is the number reported by tools such as top(1) and ps(1)                                  |
-| used_memory_rss_human     | GB/MB/KB | Human readable representation of previous value值                                                                                    |
+| used_memory_rss_human     | GB/MB/KB | Human readable representation of previous value                                                                                    |
 | used_memory_peak          | byte     | Peak memory consumed by Redis (in bytes)                               |
 | used_memory_peak_human    | GB/MB/KB | Human readable representation of previous value                                      |
 | used_memory_peak_perc     | none        | The percentage of used_memory_peak out of used_memory                                                              |

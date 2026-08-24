@@ -3,8 +3,11 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
-tags: [opensource, practice]
+tags: [community]
+description: 刘天佑分享从采用无代理监控，到贡献项目文档、NGQL 指标查询和 NebulaGraph 集群监控的开源历程。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome LiuTianyou
+cover_kicker: New Committer
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

@@ -81,10 +81,10 @@ alerter:
 3. Create a message template (template-code)
    - Go to "Template Management" page
    - Click "Add Template"
-   - Create a template with the following format:
+   - Create a template with the following content (Aliyun placeholders use the `${...}` syntax, and the template must declare exactly these three variables — no more, no less — otherwise sending fails with a "template variable/placeholder mismatch" error):
 
    ```text
-   Monitor: `instance`, Alert Level: `priority`. Content: `content`
+   Monitor: ${instance}, Alert Level: ${priority}. Content: ${content}
    ```
 
    - Submit the template for review

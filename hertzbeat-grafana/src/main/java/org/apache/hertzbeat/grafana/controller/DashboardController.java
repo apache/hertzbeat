@@ -102,6 +102,6 @@ public class DashboardController {
             log.error("delete dashboard error", e);
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "delete dashboard fail"));
         }
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "delete dashboard fail"));
+        return ResponseEntity.ok(Message.success("delete dashboard success"));
     }
 }

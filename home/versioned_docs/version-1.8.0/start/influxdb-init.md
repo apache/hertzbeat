@@ -1,6 +1,6 @@
 ---
-id: influxdb-init  
-title: Use Time Series Database InfluxDB to Store Metrics Data (Optional)     
+id: influxdb-init
+title: Use Time Series Database InfluxDB to Store Metrics Data (Optional)
 sidebar_label: Metrics Store InfluxDB
 ---
 
@@ -8,7 +8,7 @@ Apache HertzBeat's historical data storage relies on the time series database, y
 
 > It is recommended to use VictoriaMetrics as metrics storage.
 
-**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
+**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 Note⚠️ Need InfluxDB 1.x Version.
 
@@ -52,8 +52,8 @@ After the installation you can check if the Docker version normally output at th
    ```yaml
    warehouse:
       store:
-         # disable jpa
-         jpa:
+         # disable DuckDB
+         duckdb:
             enabled: false
          # enable influxdb
          influxdb:

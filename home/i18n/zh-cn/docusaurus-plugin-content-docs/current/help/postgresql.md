@@ -1,7 +1,7 @@
 ---
-id: postgresql  
-title: 监控：PostgreSQL数据库监控      
-sidebar_label: PostgreSQL数据库   
+id: postgresql
+title: 监控：PostgreSQL数据库监控
+sidebar_label: PostgreSQL数据库
 keywords: [开源监控系统, 开源数据库监控, PostgreSQL数据库监控]
 ---
 
@@ -53,3 +53,15 @@ keywords: [开源监控系统, 开源数据库监控, PostgreSQL数据库监控]
 |  指标名称   | 指标单位 |  指标帮助描述  |
 |---------|------|----------|
 | running | 连接数  | 当前客户端连接数 |
+
+#### 指标集合：users
+
+|      指标名称      | 指标单位 |        指标帮助描述        |
+|----------------|------|----------------------|
+| usename        | 无    | 数据库用户名               |
+| usesysid       | 无    | 用户系统ID               |
+| usecreatedb    | 无    | 用户是否可以创建数据库（Y/N）     |
+| usesuper       | 无    | 用户是否为超级用户（Y/N）       |
+| valuntil       | 无    | 密码过期时间（时间戳）          |
+| days_left      | 天    | 密码剩余有效天数             |
+| account_status | 无    | 账号状态（OPEN/EXPIRED）   |

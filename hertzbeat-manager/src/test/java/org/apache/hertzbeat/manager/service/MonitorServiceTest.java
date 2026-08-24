@@ -65,6 +65,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -222,6 +223,59 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+    }
+
+    @Test
+    void addMonitorWithoutInstanceFallsBackToHostParam() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("www.example.com").build(),
+                Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void addMonitorInstanceStaysStableAcrossRepeatedResolution() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .instance("www.example.com:443")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void modifyMonitorKeepsInstanceStableAcrossEdits() {
+        long monitorId = 7L;
+        Monitor stored = Monitor.builder().jobId(1L).intervals(1).app("demoApp").name("ssl")
+                .instance("www.example.com:443").id(monitorId).build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(stored));
+        List<Param> params = List.of(Param.builder().field("port").paramValue("443").build());
+
+        for (int edit = 0; edit < 2; edit++) {
+            Monitor dto = Monitor.builder().jobId(1L).intervals(1).app("demoApp").name("ssl")
+                    .instance("www.example.com:443").id(monitorId).build();
+            assertDoesNotThrow(() -> monitorService.modifyMonitor(dto, params, null, null));
+            assertEquals("www.example.com:443", dto.getInstance());
+        }
     }
 
     @Test
@@ -632,6 +686,46 @@ class MonitorServiceTest {
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+    }
+
+    @Test
+    void testModifyMonitorPreservesLiveStatus() {
+        long monitorId = 1L;
+        List<Param> params = Collections.singletonList(Param.builder()
+                .field("field")
+                .paramValue("value")
+                .build());
+        Monitor preMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+                .id(monitorId).status(CommonConstants.MONITOR_UP_CODE).build();
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+                .id(monitorId).status(CommonConstants.MONITOR_PAUSED_CODE).build();
+        Job job = new Job();
+        job.setApp(monitor.getApp());
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(preMonitor));
+        when(tagService.determineNewLabels(any())).thenReturn(Collections.emptyList());
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(1L);
+
+        monitorService.modifyMonitor(monitor, params, null, null);
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        verify(monitorDao).save(monitorCaptor.capture());
+        assertEquals(CommonConstants.MONITOR_UP_CODE, monitorCaptor.getValue().getStatus());
+
+        reset(monitorDao, tagService, appService, collectJobScheduling, paramDao, collectorMonitorBindDao);
+        long pausedMonitorId = 2L;
+        Monitor pausedPreMonitor = Monitor.builder().jobId(2L).intervals(1).app("app").name("memory").instance("host")
+                .id(pausedMonitorId).status(CommonConstants.MONITOR_PAUSED_CODE).build();
+        Monitor pausedMonitor = Monitor.builder().jobId(2L).intervals(1).app("app").name("memory").instance("host")
+                .id(pausedMonitorId).status(CommonConstants.MONITOR_UP_CODE).build();
+        when(monitorDao.findById(pausedMonitorId)).thenReturn(Optional.of(pausedPreMonitor));
+        when(tagService.determineNewLabels(any())).thenReturn(Collections.emptyList());
+
+        monitorService.modifyMonitor(pausedMonitor, params, null, null);
+
+        monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        verify(monitorDao).save(monitorCaptor.capture());
+        assertEquals(CommonConstants.MONITOR_PAUSED_CODE, monitorCaptor.getValue().getStatus());
     }
 
     @Test

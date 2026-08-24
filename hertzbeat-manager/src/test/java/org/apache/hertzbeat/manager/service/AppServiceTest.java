@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -82,6 +83,19 @@ class AppServiceTest {
     @Test
     void getAppParamDefines() {
         assertDoesNotThrow(() -> appService.getAppParamDefines("jvm"));
+    }
+
+    @Test
+    void getAppParamDefinesShouldNotContainDuplicateFields() {
+        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines("nvidia");
+        Map<String, Long> fieldCounts = paramDefines.stream()
+                .collect(Collectors.groupingBy(ParamDefineInfo::getField, Collectors.counting()));
+
+        assertTrue(fieldCounts.values().stream().allMatch(count -> count == 1),
+                () -> "Duplicate param fields found: " + fieldCounts.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 1)
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.joining(", ")));
     }
 
     @Test

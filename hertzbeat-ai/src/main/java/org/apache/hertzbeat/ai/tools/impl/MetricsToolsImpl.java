@@ -146,7 +146,7 @@ public class MetricsToolsImpl implements MetricsTools {
             HertzBeat: Get historical metrics data for analysis and trending.
             Returns time-series data for specified metrics over a time range.
             Use the query_monitors tool to find the correct monitor IDs/ name or type for the monitor(s) user asked the metrics for
-            Pass that name into the get_apps_metrics_hierarchy tool to get the metrics hierarchy i.e metrics and the field paramater
+            Pass that name into the get_apps_metrics_hierarchy tool to get the metrics hierarchy i.e metrics and the field parameter
             DO NOT USE THE LABEL FIELD ALWAYS USE THE VALUE FIELD FROM THE HIERARCHY JSON
             Ask user to provide the filters for labels, history and interval aggregation
             """)

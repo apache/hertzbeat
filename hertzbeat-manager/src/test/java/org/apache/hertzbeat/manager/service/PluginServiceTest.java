@@ -98,7 +98,7 @@ class PluginServiceTest {
         metadata.setItems(pluginItems);
         metadata.setParamCount(0);
         PluginServiceImpl service = spy(pluginService);
-        doReturn(metadata).when(service).validateJarFile(any());
+        doReturn(metadata).when(service).validateJarFile(any(), any());
 
         MockMultipartFile mockFile = new MockMultipartFile(
                 "file", "test-plugin.jar", "application/java-archive",

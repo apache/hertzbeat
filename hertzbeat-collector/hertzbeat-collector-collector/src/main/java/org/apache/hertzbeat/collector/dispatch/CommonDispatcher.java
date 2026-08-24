@@ -158,30 +158,33 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             for (Map.Entry<String, MetricsTime> entry : metricsTimeoutMonitorMap.entrySet()) {
                 MetricsTime metricsTime = entry.getValue();
                 if (metricsTime.getStartTime() < deadline) {
-                    // Metrics collection timeout
-                    MetricsTime removedMetricsTime = metricsTimeoutMonitorMap.remove(entry.getKey());
-                    if (removedMetricsTime == null) {
-                        continue;
-                    }
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
                     Job job = timerJob.getJob();
-                    // timeout metrics
-                    if (metricsCollector != null) {
-                        long duration = System.currentTimeMillis() - removedMetricsTime.getStartTime();
-                        metricsCollector.recordCollectMetrics(job, duration, "timeout");
-                    }
 
                     CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
                             .setApp(job.getApp())
+                            .setLabels(job.getLabels())
+                            .setAnnotations(job.getAnnotations())
+                            .addMetadataAll(job.getMetadata())
                             .setMetrics(metricsTime.getMetrics().getName())
                             .setPriority(metricsTime.getMetrics().getPriority())
                             .setTime(System.currentTimeMillis())
                             .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
                     if (metricsData.getPriority() == 0) {
+                        // dispatchCollectData removes the map entry as a once-wins gate;
+                        // cancel afterwards so cyclicJob() inside it still fires normally.
                         dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                        metricsTime.getTimeout().cancel();
+                    } else {
+                        // remove the stale entry and cancel the in-flight collect so a
+                        // late result does not produce a duplicate dispatch.
+                        MetricsTime removed = metricsTimeoutMonitorMap.remove(entry.getKey());
+                        if (removed != null) {
+                            metricsTime.getTimeout().cancel();
+                        }
                     }
                 }
             }
@@ -219,16 +222,28 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         String monitorKey;
         if (metrics.isHasSubTask()) {
             monitorKey = job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId();
+        } else if (metrics.getPrometheus() != null) {
+            monitorKey = String.valueOf(job.getId());
         } else {
             monitorKey = job.getId() + "-" + metrics.getName();
         }
         MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
 
-        // job completed metrics
         if (metricsTime != null && metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
-            String status = metricsData.getCode() == CollectRep.Code.SUCCESS ? "success" : "fail";
+            String status;
+            if (metricsData.getCode() == CollectRep.Code.SUCCESS) {
+                status = "success";
+            } else if (metricsData.getCode() == CollectRep.Code.TIMEOUT) {
+                status = "timeout";
+            } else {
+                status = "fail";
+            }
             metricsCollector.recordCollectMetrics(job, duration, status);
+        }
+        // if the entry was already removed by the timeout monitor, skip the duplicate result.
+        if (metricsTime == null && !metrics.isHasSubTask() && metrics.getPrometheus() == null) {
+            return;
         }
         if (metrics.isHasSubTask()) {
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);

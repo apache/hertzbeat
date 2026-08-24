@@ -46,7 +46,7 @@ hive --service hiveserver2 &
 | vm_version  | None        | The version of the virtual machine.                       |
 | up_time     | None        | The duration for which HiveServer2 has been running.      |
 
-#### metric Collection: enviroment
+#### metric Collection: environment
 
 |     Metric Name      | metric unit |                       Metrics help describe                       |
 |----------------------|-------------|-------------------------------------------------------------------|

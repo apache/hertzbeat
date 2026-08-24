@@ -17,40 +17,124 @@
   ~ under the License.
 -->
 
-<app-help-message-show
-  [help_message_content]="'log.help.integration' | i18n"
-  [guild_link]="'log.help.integration.link' | i18n"
-  [module_name]="'menu.log.integration'"
-  [icon_name]="'file-text'"
-></app-help-message-show>
-
-<nz-divider></nz-divider>
-
-<div class="log-integration-container">
-  <div class="data-sources">
-    <h2>{{ 'log.integration.source' | i18n }}</h2>
-    <div class="source-list">
-      <div
-        class="source-item"
-        *ngFor="let source of dataSources"
-        (click)="selectSource(source)"
-        [class.active]="selectedSource?.id === source.id"
-      >
-        <img [src]="source.icon" [alt]="source.name" />
-        <span>{{ source.name }}</span>
-      </div>
+<section class="integration-page">
+  <header class="page-heading">
+    <div>
+      <h1>{{ 'observability.integration.title' | i18n }}</h1>
+      <p>{{ 'observability.integration.subtitle' | i18n }}</p>
     </div>
-  </div>
-  <div class="doc-content">
-    <ng-container *ngIf="selectedSource">
-      <div style="display: flex; justify-content: space-between; align-items: center">
-        <h2>{{ selectedSource.name }}</h2>
-        <button nz-button nzType="default" (click)="goToTokenManagement()" style="margin-right: 16px">
-          <span nz-icon nzType="setting" nzTheme="outline"></span>
-          {{ 'log.integration.token.manage' | i18n }}
+    <button nz-button nzType="primary" (click)="goToTokenManagement()">
+      <span nz-icon nzType="setting"></span>
+      {{ 'log.integration.token.manage' | i18n }}
+    </button>
+  </header>
+
+  <div class="integration-workspace">
+    <form class="connection-form" nz-form nzLayout="vertical">
+      <div class="section-heading">
+        <span class="step-index">1</span>
+        <div>
+          <h2>{{ 'observability.integration.connection' | i18n }}</h2>
+        </div>
+      </div>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{ 'observability.integration.protocol' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-radio-group class="protocol-options" [(ngModel)]="protocol" name="protocol">
+            <label nz-radio-button nzValue="http-json">HTTP JSON</label>
+            <label nz-radio-button nzValue="http-protobuf">HTTP Protobuf</label>
+            <label nz-radio-button nzValue="grpc">gRPC</label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{ 'observability.integration.address' | i18n }}</nz-form-label>
+        <nz-form-control [nzExtra]="'observability.integration.address-hint' | i18n">
+          <input nz-input [(ngModel)]="endpoint" name="endpoint" placeholder="https://hertzbeat.example.com" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{ 'observability.integration.token' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-input-group class="token-input" [nzAddOnAfter]="tokenAction">
+            <input
+              nz-input
+              type="password"
+              [(ngModel)]="token"
+              name="token"
+              [placeholder]="'observability.integration.token-placeholder' | i18n"
+            />
+          </nz-input-group>
+          <ng-template #tokenAction>
+            <button nz-button nzType="link" type="button" [nzLoading]="generatingToken" (click)="generateToken()">
+              {{ 'observability.integration.generate-token' | i18n }}
+            </button>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div class="field-row">
+        <nz-form-item>
+          <nz-form-label nzRequired>service.name</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="serviceName" name="serviceName" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label nzRequired>environment</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="environment" name="environment" />
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+
+      <button nz-button nzType="primary" type="button" [disabled]="!formValid" [nzLoading]="detecting" (click)="detect()">
+        <span nz-icon nzType="thunderbolt"></span>
+        {{ 'observability.integration.detect' | i18n }}
+      </button>
+      <p class="detect-hint">{{ 'observability.integration.detect-hint' | i18n }}</p>
+
+      <div class="probe-results" *ngIf="probeResults.length">
+        <div class="probe-row" *ngFor="let result of probeResults" [class.probe-error]="result.status === 'error'">
+          <span nz-icon [nzType]="result.status === 'success' ? 'check-circle' : 'close-circle'"></span>
+          <strong>{{ signalLabel(result.signal) }}</strong>
+          <span *ngIf="result.lastReceived">{{ result.lastReceived | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+          <span *ngIf="result.errorKey || result.error" class="probe-message">
+            {{ result.errorKey ? (result.errorKey | i18n) : result.error }}
+          </span>
+        </div>
+      </div>
+    </form>
+
+    <section class="configuration-output">
+      <div class="section-heading">
+        <span class="step-index">2</span>
+        <div>
+          <h2>{{ 'observability.integration.configuration' | i18n }}</h2>
+          <p>{{ 'observability.integration.configuration-hint' | i18n }}</p>
+        </div>
+      </div>
+
+      <nz-tabset>
+        <nz-tab nzTitle="Environment" (nzSelect)="selectedSnippet = 'environment'"></nz-tab>
+        <nz-tab nzTitle="Collector" (nzSelect)="selectedSnippet = 'collector'"></nz-tab>
+        <nz-tab nzTitle="Java Agent" (nzSelect)="selectedSnippet = 'java'"></nz-tab>
+        <nz-tab nzTitle="curl" (nzSelect)="selectedSnippet = 'curl'"></nz-tab>
+      </nz-tabset>
+
+      <div class="code-toolbar">
+        <span>{{ 'observability.integration.ready-to-copy' | i18n }}</span>
+        <button nz-button nzType="text" nzSize="small" (click)="copy(snippet(selectedSnippet))">
+          <span nz-icon nzType="copy"></span>
+          {{ 'common.button.copy' | i18n }}
         </button>
       </div>
-      <markdown [data]="markdownContent"></markdown>
-    </ng-container>
+      <pre><code>{{ snippet(selectedSnippet) }}</code></pre>
+
+      <nz-alert nzType="info" nzShowIcon [nzMessage]="'observability.integration.grpc-note' | i18n"></nz-alert>
+    </section>
   </div>
-</div>
+</section>

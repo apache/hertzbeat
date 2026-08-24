@@ -59,7 +59,7 @@ limitations under the License.
   Just run `mvn checkstyle:checkstyle`.
 
 - Frontend code formatting plugin `eslint`
-  Just run `npm run lint:fix` in web-app
+  Just run `pnpm run lint:fix` in web-app
 
 ### 2.2 Document style check
 

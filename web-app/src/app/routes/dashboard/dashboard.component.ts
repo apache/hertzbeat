@@ -37,6 +37,17 @@ import { MonitorService } from '../../service/monitor.service';
 import { ThemeService } from '../../service/theme.service';
 import { formatLabelName } from '../../shared/utils/common-util';
 
+interface SlideConfig {
+  infinite: boolean;
+  speed: number;
+  slidesToShow: number;
+  slidesToScroll: number;
+  autoplay: boolean;
+  autoplaySpeed: number;
+  rows: number;
+  responsive: Array<{ breakpoint: number; settings: Record<string, number | boolean> }>;
+}
+
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
@@ -121,19 +132,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // start -- quantitative information summary
-  appCountService: AppCount = new AppCount();
-  appCountOs: AppCount = new AppCount();
-  appCountDb: AppCount = new AppCount();
-  appCountMid: AppCount = new AppCount();
-  appCountCustom: AppCount = new AppCount();
-  appCountProgram: AppCount = new AppCount();
-  appCountCache: AppCount = new AppCount();
-  appCountBigdata: AppCount = new AppCount();
-  appCountWebserver: AppCount = new AppCount();
-  appCountCn: AppCount = new AppCount();
-  appCountNetwork: AppCount = new AppCount();
+  categoryCards: Array<{ category: string; icon: string; count: AppCount }> = [];
+  totalMonitors: number = 0;
 
-  slideConfig = {
+  slideConfig: SlideConfig = {
     infinite: true,
     speed: 1800,
     slidesToShow: 4,
@@ -495,17 +497,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 break;
             }
           });
-          this.appCountService = appCountService;
-          this.appCountOs = appCountOs;
-          this.appCountDb = appCountDb;
-          this.appCountMid = appCountMid;
-          this.appCountCustom = appCountCustom;
-          this.appCountBigdata = appCountBigdata;
-          this.appCountCache = appCountCache;
-          this.appCountProgram = appCountProgram;
-          this.appCountWebserver = appCountWebserver;
-          this.appCountNetwork = appCountNetwork;
-          this.appCountCn = appCountCn;
+          this.totalMonitors = total;
+          this.categoryCards = [
+            { category: 'service', icon: 'cloud', count: appCountService },
+            { category: 'program', icon: 'code', count: appCountProgram },
+            { category: 'db', icon: 'database', count: appCountDb },
+            { category: 'cache', icon: 'group', count: appCountCache },
+            { category: 'os', icon: 'windows', count: appCountOs },
+            { category: 'mid', icon: 'merge-cells', count: appCountMid },
+            { category: 'bigdata', icon: 'dot-chart', count: appCountBigdata },
+            { category: 'webserver', icon: 'database', count: appCountWebserver },
+            { category: 'cn', icon: 'cloud-server', count: appCountCn },
+            { category: 'network', icon: 'global', count: appCountNetwork },
+            { category: 'custom', icon: 'project', count: appCountCustom }
+          ].filter(card => card.count.size > 0);
+          const loop = this.categoryCards.length > this.slideConfig.slidesToShow;
+          this.slideConfig = {
+            ...this.slideConfig,
+            infinite: loop,
+            autoplay: loop,
+            responsive: this.slideConfig.responsive.map(r => ({ ...r, settings: { ...r.settings, infinite: loop } }))
+          };
           // @ts-ignore
           this.appsCountTheme.series[0].data = [{ value: total, name: this.i18nSvc.fanyi('dashboard.monitors.total') }];
           // @ts-ignore

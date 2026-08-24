@@ -41,6 +41,12 @@
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
       <ul nz-menu>
         <li nz-menu-item>
+          <button nz-button (click)="onEditBulletinDefine()">
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+            {{ 'common.button.edit' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
           <button nz-button nzDanger (click)="onDeleteBulletinDefines()">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
             {{ 'common.button.delete' | i18n }}
@@ -169,6 +175,7 @@
             nzAllowClear
             nzShowSearch
             name="appDefines"
+            [nzDisabled]="!isManageModalAdd"
             [(ngModel)]="define.app"
             (nzOnSearch)="onSearchAppDefines()"
             (ngModelChange)="onAppChange($event)"
@@ -182,70 +189,45 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" [nzFor]="'filterLabels'">{{ 'monitor.search.label' | i18n }} </nz-form-label>
-        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-          <app-form-field
-            [item]="{
-              field: 'labels',
-              type: 'label-selector',
-            }"
-            [name]="'labels'"
-            [(ngModel)]="filterLabels"
-            (ngModelChange)="onFilterInputChange($event)"
-          />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             nzAllowClear
             nzShowSearch
+            nzServerSearch
             name="monitors"
+            nzPlaceHolder="{{ 'bulletin.monitor.name.placeholder' | i18n }}"
             [(ngModel)]="define.monitorIds"
-            (nzOnSearch)="onSearchMonitorsByApp(define.app)"
+            (nzOnSearch)="onMonitorSearch($event)"
             nzMode="multiple"
             required
           >
             <ng-container *ngFor="let monitor of filteredMonitors">
-              <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
+              <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name" nzCustomContent>
+                <span>{{ monitor.name }}</span>
+                <ng-container *ngFor="let label of monitor.labels | keyvalue">
+                  <nz-tag class="monitor-label-tag">{{ label.key }}:{{ label.value }}</nz-tag>
+                </ng-container>
+              </nz-option>
             </ng-container>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.metrics' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="metrics" nzRequired="true">{{ 'bulletin.monitor.metrics' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-transfer
-            [nzDataSource]="hierarchies"
-            [nzRenderList]="[leftRenderList, null]"
-            (nzChange)="transferChange($event)"
-            (nzSelectChange)="onSelectChange($event)"
-          >
-            <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect" let-stat="stat">
-              <div *ngIf="updateTransferStat(stat)"></div>
-              <nz-tree
-                [nzData]="treeNodes"
-                nzExpandAll
-                nzBlockNode
-                nzCheckable
-                nzCheckStrictly
-                name="metrics"
-                (nzCheckBoxChange)="treeCheckBoxChange($event, onItemSelect)"
-              >
-                <ng-template let-node>
-                  <span
-                    (click)="checkBoxChange(node, onItemSelect)"
-                    class="ant-tree-node-content-wrapper ant-tree-node-content-wrapper-open"
-                  >
-                    {{ node.title }}
-                  </span>
-                </ng-template>
-              </nz-tree>
-            </ng-template>
-          </nz-transfer>
+          <div class="metrics-tree-box">
+            <nz-tree
+              #metricsTree
+              [nzData]="treeNodes"
+              [nzCheckedKeys]="checkedKeys"
+              nzCheckable
+              nzExpandAll
+              nzBlockNode
+              (nzCheckBoxChange)="onMetricsCheckChange()"
+            ></nz-tree>
+          </div>
         </nz-form-control>
       </nz-form-item>
     </form>

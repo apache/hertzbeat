@@ -137,28 +137,34 @@
       ]
     },
     {
-      "text": "Log",
-      "i18n": "menu.log",
+      "text": "Observability",
+      "i18n": "menu.observability",
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
         {
           "text": "Integration",
-          "i18n": "menu.log.integration",
+          "i18n": "menu.observability.integration",
           "icon": "anticon-api",
-          "link": "/log/integration/otlp"
+          "link": "/observability/integration"
         },
         {
-          "text": "Stream",
-          "i18n": "menu.log.stream",
-          "icon": "anticon-file-text",
-          "link": "/log/stream"
+          "text": "Metrics",
+          "i18n": "menu.observability.metrics",
+          "icon": "anticon-line-chart",
+          "link": "/metrics/manage"
         },
         {
           "text": "Manage",
-          "i18n": "menu.log.manage",
+          "i18n": "menu.observability.logs",
           "icon": "anticon-database",
           "link": "/log/manage"
+        },
+        {
+          "text": "Traces",
+          "i18n": "menu.observability.traces",
+          "icon": "anticon-node-index",
+          "link": "/trace/manage"
         }
       ]
     },

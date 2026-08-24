@@ -22,10 +22,14 @@ import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
+import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,13 +42,22 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -202,9 +215,103 @@ class NoticeConfigServiceTest {
 
     @Test
     void editReceiver() {
-        final NoticeReceiver noticeReceiver = mock(NoticeReceiver.class);
+        final NoticeReceiver noticeReceiver = new NoticeReceiver();
+        noticeReceiver.setId(5L);
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(noticeReceiver));
         noticeConfigService.editReceiver(noticeReceiver);
         verify(noticeReceiverDao, times(1)).save(noticeReceiver);
+    }
+
+    @Test
+    void editReceiverKeepsStoredSecretWhenMasked() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        noticeConfigService.editReceiver(incoming);
+
+        assertEquals("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM", incoming.getTgBotToken());
+        verify(noticeReceiverDao, times(1)).save(incoming);
+    }
+
+    @Test
+    void editReceiverRejectsUnknownId() {
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.empty());
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.editReceiver(incoming));
+        verify(noticeReceiverDao, never()).save(any());
+    }
+
+    @Test
+    void sendTestMsgResolvesMaskedSecret() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        noticeConfigService.sendTestMsg(incoming);
+
+        assertEquals("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM", incoming.getTgBotToken());
+    }
+
+    @Test
+    void sendTestMsgRejectsUnknownId() {
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.empty());
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incoming));
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
+    }
+
+    @Test
+    void sendTestMsgRejectsMaskedSecretReplayToChangedWebhookUrl() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setType((byte) 2);
+        stored.setHookUrl("https://trusted.example/hook");
+        stored.setHookAuthToken("hook-auth-token-abcd");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(stored);
+        incoming.setHookUrl("https://attacker.example/collect");
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incoming));
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
+    }
+
+    @Test
+    void sendTestMsgRejectsBareMaskReplayToChangedWebhookUrl() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setType((byte) 2);
+        stored.setHookUrl("https://trusted.example/hook");
+        stored.setHookAuthToken("hook-auth-token-abcd");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setType((byte) 2);
+        incoming.setHookUrl("https://attacker.example/collect");
+        incoming.setHookAuthToken(NoticeReceiverMaskUtil.SECRET_MASK);
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incoming));
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
     }
 
     @Test
@@ -279,9 +386,140 @@ class NoticeConfigServiceTest {
 
     @Test
     void sendTestMsg() {
-        final NoticeReceiver noticeReceiver = mock(NoticeReceiver.class);
+        final NoticeReceiver noticeReceiver = new NoticeReceiver();
         final NoticeTemplate noticeTemplate = null;
         noticeConfigService.sendTestMsg(noticeReceiver);
         verify(dispatcherAlarm, times(1)).sendNoticeMsg(eq(noticeReceiver), eq(noticeTemplate), any(GroupAlert.class));
+    }
+
+    @AfterEach
+    void tearDown() {
+        CacheFactory.clearNoticeCache();
+    }
+
+    private GroupAlert buildGroupAlertWithPartialLabel() {
+        SingleAlert alertA = SingleAlert.builder()
+                .labels(new HashMap<>(Map.of("alertname", "cpu", "instance", "s1", "department", "algorithm")))
+                .build();
+        SingleAlert alertB = SingleAlert.builder()
+                .labels(new HashMap<>(Map.of("alertname", "cpu", "instance", "s2")))
+                .build();
+        return GroupAlert.builder()
+                .commonLabels(new HashMap<>(Map.of("alertname", "cpu")))
+                .alerts(Arrays.asList(alertA, alertB))
+                .build();
+    }
+
+    /**
+     * A rule scoped to a label carried by only part of the group's alerts must still match,
+     * even though that label is absent from commonLabels. Regression test for issue #3852.
+     */
+    @Test
+    void getReceiverFilterRuleMatchesLabelOnPartialAlert() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(1L);
+        rule.setName("algorithm-team");
+        rule.setFilterAll(false);
+        rule.setLabels(new HashMap<>(Map.of("department", "algorithm")));
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertEquals(1, matched.size());
+        assertEquals(1L, matched.get(0).getId());
+    }
+
+    /**
+     * A rule whose label value is not present on any alert in the group must not match.
+     */
+    @Test
+    void getReceiverFilterRuleSkipsRuleWithUnmatchedLabel() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(2L);
+        rule.setName("infra-team");
+        rule.setFilterAll(false);
+        rule.setLabels(new HashMap<>(Map.of("department", "infra")));
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertTrue(matched.isEmpty());
+    }
+
+    /**
+     * A rule requiring several labels matches only when a single alert carries all of them,
+     * preventing false matches assembled across different alerts in the group.
+     */
+    @Test
+    void getReceiverFilterRuleRequiresAllLabelsOnSameAlert() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(3L);
+        rule.setName("algorithm-on-s2");
+        rule.setFilterAll(false);
+        rule.setLabels(new HashMap<>(Map.of("department", "algorithm", "instance", "s2")));
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertTrue(matched.isEmpty());
+    }
+
+    /**
+     * A forward-all rule keeps matching regardless of labels.
+     */
+    @Test
+    void getReceiverFilterRuleForwardAllAlwaysMatches() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(4L);
+        rule.setName("forward-all");
+        rule.setFilterAll(true);
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertEquals(1, matched.size());
+        assertEquals(4L, matched.get(0).getId());
+    }
+
+    @Test
+    void getReceiverFilterRuleMatchesPeriodContainingNow() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.minusHours(6), now.plusHours(6));
+        assertEquals(1, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleFiltersPeriodExcludingNow() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.plusHours(1), now.plusHours(2));
+        assertEquals(0, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleMatchesCrossMidnightPeriod() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.minusHours(1), now.minusHours(2).plusDays(1));
+        assertEquals(1, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleNormalizesStoredOffsetToServerZone() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(
+                now.minusHours(6).withZoneSameInstant(ZoneOffset.ofHours(-7)),
+                now.plusHours(6).withZoneSameInstant(ZoneOffset.ofHours(9)));
+        assertEquals(1, matched.size());
+    }
+
+    private List<NoticeRule> filterWithPeriod(ZonedDateTime periodStart, ZonedDateTime periodEnd) {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(10L);
+        rule.setName("PeriodRule");
+        rule.setFilterAll(true);
+        rule.setPeriodStart(periodStart);
+        rule.setPeriodEnd(periodEnd);
+        CacheFactory.clearNoticeCache();
+        when(noticeRuleDao.findNoticeRulesByEnableTrue()).thenReturn(Collections.singletonList(rule));
+        return noticeConfigService.getReceiverFilterRule(new GroupAlert());
     }
 }

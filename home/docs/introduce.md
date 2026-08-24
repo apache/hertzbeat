@@ -156,7 +156,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 
 ### Easy to Use
 
-- Set **Monitoring+Alarm+Notification*- All in one, no need to deploy multiple component services separately.
+- Set **Monitoring+Alarm+Notification** - All in one, no need to deploy multiple component services separately.
 - Full UI interface operation, no matter adding new monitor, modifying monitor template, or alarm threshold notification, all can be done in WEB interface, no need to modify files or scripts or reboot.
 - No Agent is needed, we only need to fill in the required IP, port, account, password and other parameters in the WEB interface.
 - Customization friendly, only need a monitoring template YML, automatically generate monitoring management page, data chart page, threshold configuration for corresponding monitoring types.

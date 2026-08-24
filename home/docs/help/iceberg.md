@@ -1,6 +1,6 @@
 ---
 id: iceberg 
-Title: Monitoring Apache Iceberg
+title: Monitoring Apache Iceberg
 sidebar_label: Apache Iceberg
 keywords: [open source monitoring tool, open source apache hive monitoring tool, monitoring apache iceberg metrics]
 ---
@@ -46,7 +46,7 @@ hive --service hiveserver2 &
 | vm_version  | None        | The version of the virtual machine.                       |
 | up_time     | None        | The duration for which HiveServer2 has been running.      |
 
-#### metric Collection: enviroment
+#### metric Collection: environment
 
 |     Metric Name      | metric unit |                       Metrics help describe                       |
 |----------------------|-------------|-------------------------------------------------------------------|

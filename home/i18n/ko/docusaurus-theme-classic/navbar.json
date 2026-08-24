@@ -1,0 +1,162 @@
+{
+  "title": {
+    "message": "HertzBeat",
+    "description": "The title in the navbar"
+  },
+  "item.label.main": {
+    "message": "홈",
+    "description": "Navbar item with label main"
+  },
+  "item.label.document": {
+    "message": "문서",
+    "description": "Navbar item with label document"
+  },
+  "item.label.blog": {
+    "message": "블로그",
+    "description": "Navbar item with label blog"
+  },
+  "item.label.discuss": {
+    "message": "커뮤니티 문의",
+    "description": "Navbar item with label discuss"
+  },
+  "item.label.kanban": {
+    "message": "칸반",
+    "description": "Navbar item with label kanban"
+  },
+  "item.label.about": {
+    "message": "소개",
+    "description": "Navbar item with label about"
+  },
+  "item.label.login": {
+    "message": "지금 로그인",
+    "description": "Navbar item with label login"
+  },
+  "item.label.design": {
+    "message": "설계",
+    "description": "Navbar item with label design"
+  },
+  "item.label.resource": {
+    "message": "자료",
+    "description": "Navbar item with label resource"
+  },
+  "item.label.contributing": {
+    "message": "기여자 가이드",
+    "description": "Navbar item with label contributing"
+  },
+  "item.label.developer": {
+    "message": "기여자",
+    "description": "Navbar item with label developer"
+  },
+  "item.label.enterprise": {
+    "message": "엔터프라이즈",
+    "description": "Navbar item with label enterprise"
+  },
+  "item.label.Docs": {
+    "message": "문서",
+    "description": "Navbar item with label Docs"
+  },
+  "item.label.Others": {
+    "message": "기타",
+    "description": "Navbar item with label Others"
+  },
+  "item.label.contributors": {
+    "message": "기여자",
+    "description": "Navbar item with label contributors"
+  },
+  "item.label.ASF": {
+    "message": "ASF",
+    "description": "Navbar item with label ASF"
+  },
+  "item.label.Community": {
+    "message": "커뮤니티",
+    "description": "Navbar item with label Community"
+  },
+  "item.label.code_of_conduct": {
+    "message": "행동 강령",
+    "description": "Navbar item with label code_of_conduct"
+  },
+  "item.label.join_the_mailing_lists": {
+    "message": "메일링 리스트 가입",
+    "description": "Navbar item with label join_the_mailing_lists"
+  },
+  "item.label.become_committer": {
+    "message": "커미터 되기",
+    "description": "Navbar item with label become_committer"
+  },
+  "item.label.become_pmc_member": {
+    "message": "PMC 멤버 되기",
+    "description": "Navbar item with label become_pmc_member"
+  },
+  "item.label.new_committer_process": {
+    "message": "신규 커미터 절차",
+    "description": "Navbar item with label new_committer_process"
+  },
+  "item.label.new_pmc_member_process": {
+    "message": "신규 PMC 멤버 절차",
+    "description": "Navbar item with label new_pmc_member_process"
+  },
+  "item.label.documentation_notice": {
+    "message": "문서 안내",
+    "description": "Navbar item with label documentation_notice"
+  },
+  "item.label.submit_code": {
+    "message": "코드 제출",
+    "description": "Navbar item with label submit_code"
+  },
+  "item.label.code_style_and_quality_guide": {
+    "message": "코드 스타일 및 품질 가이드",
+    "description": "Navbar item with label code_style_and_quality_guide"
+  },
+  "item.label.how_to_release": {
+    "message": "릴리스 방법",
+    "description": "Navbar item with label how_to_release"
+  },
+  "item.label.how_to_verify_release": {
+    "message": "릴리스 검증 방법",
+    "description": "Navbar item with label how_to_verify_release"
+  },
+  "item.label.Foundation": {
+    "message": "재단",
+    "description": "Navbar item with label Foundation"
+  },
+  "item.label.License": {
+    "message": "라이선스",
+    "description": "Navbar item with label License"
+  },
+  "item.label.Events": {
+    "message": "이벤트",
+    "description": "Navbar item with label Events"
+  },
+  "item.label.Security": {
+    "message": "보안",
+    "description": "Navbar item with label Security"
+  },
+  "item.label.Sponsorship": {
+    "message": "후원",
+    "description": "Navbar item with label Sponsorship"
+  },
+  "item.label.Privacy": {
+    "message": "개인정보처리방침",
+    "description": "Navbar item with label Privacy"
+  },
+  "item.label.team": {
+    "message": "팀",
+    "description": "Navbar item with label team"
+  },
+  "item.label.Thanks": {
+    "message": "감사의 말",
+    "description": "Navbar item with label Thanks"
+  },
+  "item.label.download": {
+    "message": "다운로드",
+    "description": "Navbar item with label download"
+  },
+  "item.label.contribution": {
+    "message": "기여 가이드",
+    "description": "Navbar item with label contribution"
+  },
+  "item.label.development": {
+    "message": "개발",
+    "description": "Navbar item with label development"
+  }
+}

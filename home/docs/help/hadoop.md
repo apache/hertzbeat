@@ -27,7 +27,7 @@ vi $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 
 ```shell
 export HADOOP_OPTS= "$HADOOP_OPTS
--Djava.rmi.server.hostname=对外ip地址 
+-Djava.rmi.server.hostname=external-ip-address 
 -Dcom.sun.management.jmxremote.port=9999
 -Dcom.sun.management.jmxremote.ssl=false
 -Dcom.sun.management.jmxremote.authenticate=false "

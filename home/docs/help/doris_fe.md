@@ -1,6 +1,6 @@
 ---
 id: doris_fe
-title: Monitoring DORIS Database FE Monitoring
+title: Monitoring DORIS Database FE
 sidebar_label: DORIS Database FE
 keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS Database FE Monitoring]
 ---

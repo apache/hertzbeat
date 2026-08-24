@@ -1,6 +1,6 @@
 ---
 id: doris_be
-title: Monitoring DORIS Database BE Monitoring
+title: Monitoring DORIS Database BE
 sidebar_label: DORIS Database BE
 keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS Database BE Monitoring]
 ---

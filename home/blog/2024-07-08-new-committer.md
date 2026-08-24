@@ -1,10 +1,13 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Zhangshenghang describes his journey from adding HBase and big-data monitoring to reviewing contributions and helping guide the HertzBeat community.
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome zhangshenghang
+cover_kicker: New Committer
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

@@ -20,6 +20,8 @@ package org.apache.hertzbeat.warehouse.db;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -39,7 +41,9 @@ public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
 
     private final GreptimeProperties greptimeProperties;
 
-    public GreptimePromqlQueryExecutor(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
+    public GreptimePromqlQueryExecutor(GreptimeProperties greptimeProperties,
+                                       @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
+                                       RestTemplate restTemplate) {
         super(restTemplate, new HttpPromqlProperties(greptimeProperties.httpEndpoint() + QUERY_PATH,
                 greptimeProperties.username(), greptimeProperties.password()));
         this.greptimeProperties = greptimeProperties;

@@ -1,6 +1,6 @@
 ---
 id:  hbase_regionserver  
-title: Monitoring HBase RegionServer Monitoring  
+title: Monitoring HBase RegionServer  
 sidebar_label: HBase RegionServer Monitoring  
 keywords: [Open-source monitoring system, Open-source database monitoring, RegionServer monitoring]
 ---

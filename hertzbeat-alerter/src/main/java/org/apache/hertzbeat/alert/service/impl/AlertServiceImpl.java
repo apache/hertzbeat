@@ -17,21 +17,33 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import cn.afterturn.easypoi.excel.ExcelExportUtil;
+import cn.afterturn.easypoi.excel.entity.ExportParams;
+import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.dto.SingleAlertExportDTO;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,7 +59,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AlertServiceImpl implements AlertService {
-    
+
+    private static final DateTimeFormatter EXPORT_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     @Autowired
     private GroupAlertDao groupAlertDao;
     
@@ -59,7 +73,13 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
-        Specification<SingleAlert> specification = (root, query, criteriaBuilder) -> {
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
+        return singleAlertDao.findAll(buildSingleAlertSpecification(status, search), pageRequest);
+    }
+
+    private Specification<SingleAlert> buildSingleAlertSpecification(String status, String search) {
+        return (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (status != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
@@ -88,9 +108,54 @@ public class AlertServiceImpl implements AlertService {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }
         };
+    }
+
+    @Override
+    public void exportSingleAlerts(String status, String search, String sort, String order, HttpServletResponse response) {
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return singleAlertDao.findAll(specification, pageRequest);
+        List<SingleAlert> alerts = singleAlertDao.findAll(buildSingleAlertSpecification(status, search), sortExp);
+        // easypoi mutates the list in place, so it must be mutable (not Stream.toList()).
+        List<SingleAlertExportDTO> rows = alerts.stream().map(this::toExportRow).collect(Collectors.toList());
+        try (Workbook workbook = ExcelExportUtil.exportExcel(
+                new ExportParams("Alert Records", "Alerts", ExcelType.XSSF), SingleAlertExportDTO.class, rows)) {
+            String fileName = "hertzbeat_alerts_" + System.currentTimeMillis() + ".xlsx";
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+            workbook.write(response.getOutputStream());
+        } catch (IOException e) {
+            log.error("export alerts to excel error: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to export alerts", e);
+        }
+    }
+
+    private SingleAlertExportDTO toExportRow(SingleAlert alert) {
+        SingleAlertExportDTO row = new SingleAlertExportDTO();
+        row.setStatus(alert.getStatus());
+        row.setContent(alert.getContent());
+        row.setLabels(mapToString(alert.getLabels()));
+        row.setAnnotations(mapToString(alert.getAnnotations()));
+        row.setFingerprint(alert.getFingerprint());
+        row.setTriggerTimes(alert.getTriggerTimes());
+        row.setStartAt(formatEpochMilli(alert.getStartAt()));
+        row.setActiveAt(formatEpochMilli(alert.getActiveAt()));
+        row.setEndAt(formatEpochMilli(alert.getEndAt()));
+        return row;
+    }
+
+    private String mapToString(Map<String, String> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
+        return map.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining("; "));
+    }
+
+    private String formatEpochMilli(Long epochMilli) {
+        if (epochMilli == null) {
+            return "";
+        }
+        return EXPORT_TIME_FORMATTER.format(Instant.ofEpochMilli(epochMilli).atZone(ZoneId.systemDefault()));
     }
 
     @Override

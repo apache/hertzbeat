@@ -19,6 +19,7 @@ import { catchError, filter, mergeMap, switchMap, take } from 'rxjs/operators';
 import { Message } from '../../pojo/Message';
 import { AuthService } from '../../service/auth.service';
 import { LocalStorageService } from '../../service/local-storage.service';
+import { SILENT_HTTP_ERROR } from './http-context';
 
 const CODE_MESSAGE: { [key: number]: string } = {
   400: 'Request Illegal Content, No Response.',
@@ -85,7 +86,9 @@ export class DefaultInterceptor implements HttpInterceptor {
   private tryRefreshToken(ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandler): Observable<any> {
     // 1, redirect to login page if this request is used for refreshing token
     if ([`/account/auth/refresh`].some(url => req.url.includes(url))) {
-      this.toLogin();
+      if (!req.context.get(SILENT_HTTP_ERROR)) {
+        this.toLogin();
+      }
       return throwError(ev);
     }
     // 2, if `refreshToking` is true, means that the refreshing token request is in progress
@@ -154,7 +157,7 @@ export class DefaultInterceptor implements HttpInterceptor {
       res['Accept-Language'] = lang;
     }
     let token = this.storageSvc.getAuthorizationToken();
-    if (token !== null) {
+    if (!headers?.has('Authorization') && token !== null) {
       res['Authorization'] = `Bearer ${token}`;
     }
     return res;
@@ -176,13 +179,16 @@ export class DefaultInterceptor implements HttpInterceptor {
         }
       }),
       catchError((err: HttpErrorResponse) => {
+        const silentError = newReq.context.get(SILENT_HTTP_ERROR);
         // handle failed response and token expired
         switch (err.status) {
           case 401:
             return this.tryRefreshToken(err, newReq, next);
           case 404:
           case 500:
-            this.goTo(`/exception/${err.status}?url=${req.urlWithParams}`);
+            if (!silentError) {
+              this.goTo(`/exception/${err.status}?url=${req.urlWithParams}`);
+            }
             break;
           case 400:
             let resp = new HttpResponse({
@@ -195,8 +201,10 @@ export class DefaultInterceptor implements HttpInterceptor {
           default:
             break;
         }
-        this.checkStatus(err);
-        return throwError(err.error);
+        if (!silentError) {
+          this.checkStatus(err);
+        }
+        return throwError(silentError ? err : err.error);
       })
     );
   }

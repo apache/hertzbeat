@@ -2,7 +2,7 @@
 id: pulsar  
 title: 监控：Pulsar监控  
 sidebar_label: Apache Pulsar
-keywords: [开源监控系统, 开源数据库监控, HbaseMaster监控]
+keywords: [开源监控系统, 开源数据库监控, Pulsar监控]
 ---
 
 > 对Pulsar的通用性能指标进行采集监控

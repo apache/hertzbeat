@@ -38,12 +38,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         with:
           version: 10
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: pnpm
           cache-dependency-path: home/pnpm-lock.yaml
       - uses: actions/setup-python@v4
@@ -51,9 +51,14 @@ jobs:
           python-version: '3.8'
 
       - name: Check Markdown
-        uses: DavidAnson/markdownlint-cli2-action@07035fd053f7be764496c0f8d8f9f41f98305101
+        uses: DavidAnson/markdownlint-cli2-action@8de2aa07cae85fd17c0b35642db70cf5495f1d25  # v24.0.0
         with:
-          globs: './home/**/*.md'
+          globs: |
+            ./home/README.md
+            ./home/blog/**/*.md
+            ./home/docs/**/*.md
+            ./home/i18n/zh-cn/docusaurus-plugin-content-blog/**/*.md
+            ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/**/*.md
 
       - name: Check filenames
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
@@ -61,7 +66,8 @@ jobs:
       - name: Dead Link Check
         run: |
           sudo npm install -g markdown-link-check@3.8.7
-          find ./home -name "*.md" > all_md_files.txt
+          find ./home/docs ./home/blog ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current ./home/i18n/zh-cn/docusaurus-plugin-content-blog -name "*.md" > all_md_files.txt
+          printf '%s\n' ./home/README.md >> all_md_files.txt
           grep -vFf ./script/ci/exclude_files.txt all_md_files.txt > to_check.txt
           xargs -P 8 -a to_check.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
 

@@ -19,7 +19,7 @@
 
 <app-help-message-show
   [help_message_content]="'alert.help.setting' | i18n"
-  [guild_link]="'alert.help.center.setting' | i18n"
+  [guild_link]="'alert.help.setting.link' | i18n"
   [module_name]="'menu.alert.setting'"
   [icon_name]="'calculator'"
 ></app-help-message-show>
@@ -713,7 +713,7 @@
               [nzData]="previewData"
               [nzSize]="'small'"
               [nzLoading]="previewTableLoading"
-              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
+              [nzScroll]="previewData.length > 3 ? { x: 'max-content', y: '180px' } : { x: 'max-content' }"
               [nzShowPagination]="false"
             >
               <thead>
@@ -788,7 +788,7 @@
               [nzData]="previewData"
               [nzSize]="'small'"
               [nzLoading]="previewTableLoading"
-              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
+              [nzScroll]="previewData.length > 3 ? { x: 'max-content', y: '180px' } : { x: 'max-content' }"
               [nzShowPagination]="false"
             >
               <thead>

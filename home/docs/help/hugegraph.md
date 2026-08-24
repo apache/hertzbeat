@@ -1,6 +1,6 @@
 ---
 id: hugegraph  
-title: Monitoring HugeGraph Monitoring    
+title: Monitoring HugeGraph    
 sidebar_label: Apache HugeGraph
 keywords: [Open Source Monitoring System, Open Source Database Monitoring, HugeGraph Monitoring]
 ---

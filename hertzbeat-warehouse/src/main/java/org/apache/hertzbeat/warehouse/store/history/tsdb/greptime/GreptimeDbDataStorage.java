@@ -40,6 +40,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -57,16 +58,19 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.dto.observability.LogQueryFilter;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.common.support.exception.StorageUnavailableException;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -95,7 +99,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LOG_TABLE_NAME = WarehouseConstants.LOG_TABLE_NAME;
     private static final String LABEL_KEY_START_TIME = "start";
     private static final String LABEL_KEY_END_TIME = "end";
+    private static final String LABEL_KEY_TS = "ts";
     private static final int LOG_BATCH_SIZE = 500;
+    private static final Map<String, String> OTLP_RESOURCE_KEY_ALIASES = Map.of(
+            "service_name", "service.name",
+            "service_namespace", "service.namespace",
+            "deployment_environment_name", "deployment.environment.name");
 
     private GreptimeDB greptimeDb;
 
@@ -105,7 +114,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
 
-    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
+    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties,
+                                 @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
+                                 RestTemplate restTemplate,
                                  GreptimeSqlQueryExecutor greptimeSqlQueryExecutor) {
         if (greptimeProperties == null) {
             log.error("init error, please config Warehouse GreptimeDB props in application.yml");
@@ -151,6 +162,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         tableSchemaBuilder.addTag("instance", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond);
         List<CollectRep.Field> fields = metricsData.getFields();
+        Map<String, String> customLabels = metricsData.getLabels();
+        List<String> fieldNames = fields.stream().map(CollectRep.Field::getName).collect(Collectors.toList());
         fields.forEach(field -> {
             if (field.getLabel()) {
                 tableSchemaBuilder.addTag(field.getName(), DataType.String);
@@ -162,9 +175,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
         });
+        List<String> labelKeys = new LinkedList<>();
+        if (!Objects.isNull(customLabels) && !customLabels.isEmpty()) {
+            for (Map.Entry<String, String> label : customLabels.entrySet()) {
+                String key = label.getKey();
+                if (!LABEL_KEY_INSTANCE.equals(key) && !LABEL_KEY_TS.equals(key) && !fieldNames.contains(key)) {
+                    tableSchemaBuilder.addTag(key, DataType.String);
+                    labelKeys.add(key);
+                }
+            }
+        }
         Table table = Table.from(tableSchemaBuilder.build());
         long now = System.currentTimeMillis();
-        Object[] values = new Object[2 + fields.size()];
+        Object[] values = new Object[2 + fields.size() + labelKeys.size()];
         values[0] = instance;
         values[1] = now;
         RowWrapper rowWrapper = metricsData.readRow();
@@ -193,6 +216,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
             });
+
+            for (int i = 0; i < labelKeys.size(); i++) {
+                values[2 + fields.size() + i] = customLabels.get(labelKeys.get(i));
+            }
 
             table.addRow(values);
         }
@@ -497,7 +524,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
                     .addField("severity_number", DataType.Int32)
                     .addField("severity_text", DataType.String)
-                    .addField("body", DataType.Json)
+                    .addField("body", DataType.String)
                     .addField("trace_id", DataType.String)
                     .addField("span_id", DataType.String)
                     .addField("trace_flags", DataType.Int32)
@@ -514,7 +541,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
                     logEntry.getSeverityNumber(),
                     logEntry.getSeverityText(),
-                    JsonUtil.toJson(logEntry.getBody()),
+                    logBodyAsString(logEntry.getBody()),
                     logEntry.getTraceId(),
                     logEntry.getSpanId(),
                     logEntry.getTraceFlags(),
@@ -605,6 +632,166 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
+    @Override
+    public List<LogEntry> queryObservabilityLogs(LogQueryFilter filter, Integer offset, Integer limit) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
+            buildObservabilityWhereConditions(sql, filter);
+            sql.append(" ORDER BY time_unix_nano DESC");
+            if (limit != null && limit > 0) {
+                sql.append(" LIMIT ").append(Math.min(limit, 200));
+                if (offset != null && offset > 0) {
+                    sql.append(" OFFSET ").append(offset);
+                }
+            }
+            return mapRowsToLogEntries(greptimeSqlQueryExecutor.execute(sql.toString()));
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
+        }
+    }
+
+    @Override
+    public long countObservabilityLogs(LogQueryFilter filter) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS count FROM ").append(LOG_TABLE_NAME);
+            buildObservabilityWhereConditions(sql, filter);
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            return rows.isEmpty() ? 0 : valueAsLong(rows.getFirst(), "count");
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
+        }
+    }
+
+    @Override
+    public boolean supportsLogQuery() {
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> queryLogOverviewAggregate(LogQueryFilter filter) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total_count, ")
+                    .append("SUM(CASE WHEN severity_number BETWEEN 21 AND 24 THEN 1 ELSE 0 END) AS fatal_count, ")
+                    .append("SUM(CASE WHEN severity_number BETWEEN 17 AND 20 THEN 1 ELSE 0 END) AS error_count, ")
+                    .append("SUM(CASE WHEN severity_number BETWEEN 13 AND 16 THEN 1 ELSE 0 END) AS warn_count, ")
+                    .append("SUM(CASE WHEN severity_number BETWEEN 9 AND 12 THEN 1 ELSE 0 END) AS info_count, ")
+                    .append("SUM(CASE WHEN severity_number BETWEEN 5 AND 8 THEN 1 ELSE 0 END) AS debug_count, ")
+                    .append("SUM(CASE WHEN severity_number BETWEEN 1 AND 4 THEN 1 ELSE 0 END) AS trace_count, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id <> '' THEN 1 ELSE 0 END) AS with_trace, ")
+                    .append("SUM(CASE WHEN span_id IS NOT NULL AND span_id <> '' THEN 1 ELSE 0 END) AS with_span, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id <> '' AND span_id IS NOT NULL ")
+                    .append("AND span_id <> '' THEN 1 ELSE 0 END) AS with_both FROM ")
+                    .append(LOG_TABLE_NAME);
+            buildObservabilityWhereConditions(sql, filter);
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows.isEmpty()) {
+                return emptyLogOverview();
+            }
+            Map<String, Object> row = rows.getFirst();
+            long total = valueAsLong(row, "total_count");
+            Map<String, Long> coverage = new HashMap<>();
+            coverage.put("withTrace", valueAsLong(row, "with_trace"));
+            coverage.put("withoutTrace", total - coverage.get("withTrace"));
+            coverage.put("withSpan", valueAsLong(row, "with_span"));
+            coverage.put("withBothTraceAndSpan", valueAsLong(row, "with_both"));
+            Map<String, Object> overview = new HashMap<>();
+            overview.put("totalCount", total);
+            overview.put("fatalCount", valueAsLong(row, "fatal_count"));
+            overview.put("errorCount", valueAsLong(row, "error_count"));
+            overview.put("warnCount", valueAsLong(row, "warn_count"));
+            overview.put("infoCount", valueAsLong(row, "info_count"));
+            overview.put("debugCount", valueAsLong(row, "debug_count"));
+            overview.put("traceCount", valueAsLong(row, "trace_count"));
+            overview.put("traceCoverage", coverage);
+            return overview;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
+        }
+    }
+
+    @Override
+    public Map<String, Long> queryLogTrendAggregate(LogQueryFilter filter) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT date_bin(INTERVAL '1 hour', time_unix_nano) AS bucket, ")
+                    .append("COUNT(*) AS count FROM ").append(LOG_TABLE_NAME);
+            buildObservabilityWhereConditions(sql, filter);
+            sql.append(" GROUP BY bucket ORDER BY bucket ASC");
+            Map<String, Long> trend = new LinkedHashMap<>();
+            for (Map<String, Object> row : greptimeSqlQueryExecutor.execute(sql.toString())) {
+                trend.put(String.valueOf(row.get("bucket")), valueAsLong(row, "count"));
+            }
+            return trend;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
+        }
+    }
+
+    private Map<String, Object> emptyLogOverview() {
+        Map<String, Long> coverage = Map.of("withTrace", 0L, "withoutTrace", 0L,
+                "withSpan", 0L, "withBothTraceAndSpan", 0L);
+        Map<String, Object> overview = new HashMap<>();
+        for (String key : List.of("totalCount", "fatalCount", "errorCount", "warnCount", "infoCount",
+                "debugCount", "traceCount")) {
+            overview.put(key, 0L);
+        }
+        overview.put("traceCoverage", coverage);
+        return overview;
+    }
+
+    private static long valueAsLong(Map<String, Object> row, String key) {
+        Long value = castToLong(row.get(key));
+        return value == null ? 0 : value;
+    }
+
+    private void buildObservabilityWhereConditions(StringBuilder sql, LogQueryFilter filter) {
+        buildWhereConditions(sql, filter.start(), filter.end(), filter.traceId(), filter.spanId(),
+                filter.severityNumber(), filter.severityText(), filter.search());
+        List<String> resourceConditions = new ArrayList<>();
+        addJsonCondition(resourceConditions, "service.name", filter.serviceName());
+        addJsonCondition(resourceConditions, "service.namespace", filter.serviceNamespace());
+        addJsonCondition(resourceConditions, "deployment.environment.name", filter.environment());
+        if (StringUtils.hasText(filter.resourceFilter())) {
+            for (ResourceFilterExpression.Clause clause : ResourceFilterExpression.parse(filter.resourceFilter())) {
+                String attribute = resourceAttributeExpression(clause.key());
+                switch (clause.operator()) {
+                    case EQUALS -> resourceConditions.add(attribute + " = '" + safeString(clause.value()) + "'");
+                    case NOT_EQUALS -> resourceConditions.add(attribute + " <> '" + safeString(clause.value()) + "'");
+                    case EXISTS -> resourceConditions.add(attribute + " IS NOT NULL");
+                    case NOT_EXISTS -> resourceConditions.add(attribute + " IS NULL");
+                    default -> throw new IllegalArgumentException("Invalid resource filter expression");
+                }
+            }
+        }
+        if (!resourceConditions.isEmpty()) {
+            sql.append(sql.indexOf(" WHERE ") >= 0 ? " AND " : " WHERE ")
+                    .append(String.join(" AND ", resourceConditions));
+        }
+    }
+
+    private void addJsonCondition(List<String> conditions, String key, String value) {
+        if (StringUtils.hasText(value)) {
+            conditions.add(resourceAttributeExpression(key) + " = '" + safeString(value) + "'");
+        }
+    }
+
+    private String resourceAttributeExpression(String key) {
+        String normalizedKey = key.replace('.', '_');
+        String canonical = "json_get_string(resource, '$[\"" + key + "\"]')";
+        if (normalizedKey.equals(key)) {
+            return canonical;
+        }
+        String normalized = "json_get_string(resource, '$[\"" + normalizedKey + "\"]')";
+        return "COALESCE(" + canonical + ", " + normalized + ")";
+    }
+
     private static long msToNs(Long ms) {
         return ms * 1_000_000L;
     }
@@ -684,7 +871,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
                 Object bodyObj = parseJsonMaybe(row.get("body"));
                 Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
-                Map<String, Object> resource = castToMap(parseJsonMaybe(row.get("resource")));
+                Map<String, Object> resource = canonicalizeOtlpResource(
+                        castToMap(parseJsonMaybe(row.get("resource"))));
 
                 LogEntry entry = LogEntry.builder()
                         .timeUnixNano(castToLong(row.get("time_unix_nano")))
@@ -706,6 +894,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             }
         }
         return list;
+    }
+
+    private static String logBodyAsString(Object body) {
+        if (body == null) {
+            return null;
+        }
+        return body instanceof String value ? value : JsonUtil.toJson(body);
     }
 
     private static Object parseJsonMaybe(Object value) {
@@ -731,6 +926,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return (Map<String, Object>) obj;
         }
         return null;
+    }
+
+    private static Map<String, Object> canonicalizeOtlpResource(Map<String, Object> resource) {
+        if (resource == null || resource.isEmpty()) {
+            return resource;
+        }
+        Map<String, Object> canonical = new LinkedHashMap<>(resource);
+        OTLP_RESOURCE_KEY_ALIASES.forEach((normalized, dotted) -> {
+            if (!canonical.containsKey(dotted) && resource.containsKey(normalized)) {
+                canonical.put(dotted, resource.get(normalized));
+            }
+        });
+        return canonical;
     }
 
     private static Long castToLong(Object obj) {
@@ -802,7 +1010,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
                     .addField("severity_number", DataType.Int32)
                     .addField("severity_text", DataType.String)
-                    .addField("body", DataType.Json)
+                    .addField("body", DataType.String)
                     .addField("trace_id", DataType.String)
                     .addField("span_id", DataType.String)
                     .addField("trace_flags", DataType.Int32)
@@ -819,7 +1027,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                         logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
                         logEntry.getSeverityNumber(),
                         logEntry.getSeverityText(),
-                        JsonUtil.toJson(logEntry.getBody()),
+                        logBodyAsString(logEntry.getBody()),
                         logEntry.getTraceId(),
                         logEntry.getSpanId(),
                         logEntry.getTraceFlags(),

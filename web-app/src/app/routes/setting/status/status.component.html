@@ -26,122 +26,200 @@
 <nz-divider></nz-divider>
 
 <nz-spin [nzSpinning]="orgLoading" [nzTip]="'Loading...'" nzSize="large">
-  <div class="-inner-content">
-    <form nz-form #newForm="ngForm">
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">
-          {{ 'status.org.name' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input
-            [(ngModel)]="statusOrgForEdit.name"
-            nz-input
-            name="name"
-            type="text"
-            id="name"
-            required
-            [placeholder]="'status.org.name.tip' | i18n"
-          />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="desc" nzRequired="true">
-          {{ 'status.org.desc' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input
-            [(ngModel)]="statusOrgForEdit.description"
-            nz-input
-            required
-            name="desc"
-            type="text"
-            id="desc"
-            [placeholder]="'status.org.desc.tip' | i18n"
-          />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="home" nzRequired="true">
-          {{ 'status.org.home' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input
-            [(ngModel)]="statusOrgForEdit.home"
-            nz-input
-            required
-            name="home"
-            type="text"
-            id="home"
-            [placeholder]="'status.org.home.tip' | i18n"
-          />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="logo" nzRequired="true">
-          {{ 'status.org.logo' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input
-            [(ngModel)]="statusOrgForEdit.logo"
-            nz-input
-            required
-            name="logo"
-            type="text"
-            id="logo"
-            [placeholder]="'status.org.logo.tip' | i18n"
-          />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="feedback" nzRequired="true">
-          {{ 'status.org.feedback' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input
-            [(ngModel)]="statusOrgForEdit.feedback"
-            nz-input
-            required
-            name="feedback"
-            type="text"
-            id="feedback"
-            [placeholder]="'status.org.feedback.tip' | i18n"
-          />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="color">
-          {{ 'status.org.color' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input
-            [(colorPicker)]="statusOrgForEdit.color"
-            cpFallbackColor="#e9f3d3"
-            cpOutputFormat="hex"
-            [style.background]="statusOrgForEdit.color"
-            style="width: 100%"
-            nz-input
-            required
-            name="color"
-            type="text"
-            id="color"
-            [placeholder]="statusOrgForEdit.color == undefined ? ('status.org.color.tip' | i18n) : ''"
-          />
-        </nz-form-control>
-      </nz-form-item>
-      <div nz-row>
-        <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
-          <button nz-button nzType="primary" type="submit" (click)="onSaveStatusOrg(newForm.form)">
-            {{ 'common.button.ok' | i18n }}
+  <!-- Organization brand card: empty-state guide / configured summary / inline edit form -->
+  <div class="status-org-card">
+    <!-- Empty state: organization not configured -->
+    <ng-container *ngIf="!orgEditing && statusOrg?.id == undefined">
+      <div class="status-org-empty">
+        <div class="status-org-empty-icon">
+          <i nz-icon nzType="appstore" nzTheme="outline"></i>
+        </div>
+        <div class="status-org-empty-content">
+          <div class="status-org-empty-title">{{ 'status.org.empty.title' | i18n }}</div>
+          <div class="status-org-empty-desc">{{ 'status.org.empty.desc' | i18n }}</div>
+        </div>
+        <div class="status-org-empty-action">
+          <button nz-button nzType="primary" (click)="startEditOrg()">
+            <i nz-icon nzType="setting" nzTheme="outline"></i>
+            {{ 'status.org.setup' | i18n }}
           </button>
         </div>
       </div>
-    </form>
+    </ng-container>
+
+    <!-- Configured summary: shows brand at a glance -->
+    <ng-container *ngIf="!orgEditing && statusOrg?.id != undefined">
+      <div class="status-org-summary" [style.borderLeftColor]="statusOrg.color || '#1890ff'">
+        <div class="status-org-summary-logo" [style.backgroundColor]="statusOrg.color || '#f0f5ff'">
+          <img *ngIf="statusOrg.logo" [src]="statusOrg.logo" alt="logo" />
+          <i *ngIf="!statusOrg.logo" nz-icon nzType="appstore" nzTheme="outline"></i>
+        </div>
+        <div class="status-org-summary-body">
+          <div class="status-org-summary-title">
+            <span class="status-org-name">{{ statusOrg.name }}</span>
+            <nz-tag nzColor="success" class="status-org-tag">
+              <i nz-icon nzType="check-circle" nzTheme="fill"></i>
+              {{ 'status.org.configured' | i18n }}
+            </nz-tag>
+          </div>
+          <div class="status-org-summary-desc" *ngIf="statusOrg.description">{{ statusOrg.description }}</div>
+          <div class="status-org-summary-meta">
+            <span class="meta-item" *ngIf="statusOrg.home">
+              <i nz-icon nzType="link" nzTheme="outline"></i>
+              <a [href]="statusOrg.home" target="_blank" rel="noopener">{{ statusOrg.home }}</a>
+            </span>
+            <span class="meta-item" *ngIf="statusOrg.feedback">
+              <i nz-icon nzType="message" nzTheme="outline"></i>
+              <a [href]="statusOrg.feedback" target="_blank" rel="noopener">{{ statusOrg.feedback }}</a>
+            </span>
+            <span class="meta-item" *ngIf="statusOrg.color">
+              <i nz-icon nzType="bg-colors" nzTheme="outline"></i>
+              <span class="color-chip" [style.background]="statusOrg.color"></span>
+              <span>{{ statusOrg.color }}</span>
+            </span>
+          </div>
+        </div>
+        <div class="status-org-summary-actions">
+          <a routerLink="/status" target="_blank" class="status-preview-link">
+            <i nz-icon nzType="eye" nzTheme="outline"></i>
+            {{ 'status.preview' | i18n }}
+            <i nz-icon nzType="arrow-right" nzTheme="outline"></i>
+          </a>
+          <button nz-button nzType="default" (click)="startEditOrg()">
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+            {{ 'common.button.edit' | i18n }}
+          </button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Inline edit form -->
+    <ng-container *ngIf="orgEditing">
+      <div class="status-org-edit-header">
+        <span class="status-org-edit-title">
+          <i nz-icon nzType="setting" nzTheme="outline"></i>
+          {{ 'status.org.edit' | i18n }}
+        </span>
+      </div>
+      <div class="-inner-content">
+        <form nz-form #newForm="ngForm">
+          <nz-form-item>
+            <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">
+              {{ 'status.org.name' | i18n }}
+            </nz-form-label>
+            <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+              <input
+                [(ngModel)]="statusOrgForEdit.name"
+                nz-input
+                name="name"
+                type="text"
+                id="name"
+                required
+                [placeholder]="'status.org.name.tip' | i18n"
+              />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="7" nzFor="desc" nzRequired="true">
+              {{ 'status.org.desc' | i18n }}
+            </nz-form-label>
+            <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+              <input
+                [(ngModel)]="statusOrgForEdit.description"
+                nz-input
+                required
+                name="desc"
+                type="text"
+                id="desc"
+                [placeholder]="'status.org.desc.tip' | i18n"
+              />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="7" nzFor="home" nzRequired="true">
+              {{ 'status.org.home' | i18n }}
+            </nz-form-label>
+            <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+              <input
+                [(ngModel)]="statusOrgForEdit.home"
+                nz-input
+                required
+                name="home"
+                type="text"
+                id="home"
+                [placeholder]="'status.org.home.tip' | i18n"
+              />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="7" nzFor="logo" nzRequired="true">
+              {{ 'status.org.logo' | i18n }}
+            </nz-form-label>
+            <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+              <input
+                [(ngModel)]="statusOrgForEdit.logo"
+                nz-input
+                required
+                name="logo"
+                type="text"
+                id="logo"
+                [placeholder]="'status.org.logo.tip' | i18n"
+              />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="7" nzFor="feedback" nzRequired="true">
+              {{ 'status.org.feedback' | i18n }}
+            </nz-form-label>
+            <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+              <input
+                [(ngModel)]="statusOrgForEdit.feedback"
+                nz-input
+                required
+                name="feedback"
+                type="text"
+                id="feedback"
+                [placeholder]="'status.org.feedback.tip' | i18n"
+              />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="7" nzFor="color">
+              {{ 'status.org.color' | i18n }}
+            </nz-form-label>
+            <nz-form-control [nzSpan]="12">
+              <input
+                [(colorPicker)]="statusOrgForEdit.color"
+                cpFallbackColor="#e9f3d3"
+                cpOutputFormat="hex"
+                [style.background]="statusOrgForEdit.color"
+                style="width: 100%"
+                nz-input
+                required
+                name="color"
+                type="text"
+                id="color"
+                [placeholder]="statusOrgForEdit.color == undefined ? ('status.org.color.tip' | i18n) : ''"
+              />
+            </nz-form-control>
+          </nz-form-item>
+          <div nz-row>
+            <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 12, offset: 7 }" class="status-org-edit-actions">
+              <button nz-button type="button" (click)="cancelEditOrg()" *ngIf="statusOrg?.id != undefined">
+                {{ 'common.button.cancel' | i18n }}
+              </button>
+              <button nz-button nzType="primary" type="submit" (click)="onSaveStatusOrg(newForm.form)">
+                {{ 'common.button.ok' | i18n }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-container>
   </div>
 </nz-spin>
 
-<nz-divider></nz-divider>
-
-<nz-tabset nzSize="large" [nzTabBarGutter]="8">
+<nz-tabset nzSize="large" [nzTabBarGutter]="8" class="status-tabset">
   <nz-tab [nzTitle]="'status.component' | i18n" (nzClick)="loadComponentInfo()">
     <app-toolbar>
       <ng-template #left>
@@ -152,23 +230,17 @@
           <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
           {{ 'status.component.new' | i18n }}
         </button>
-        <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
-          <a routerLink="/status" target="_blank">
-            <i nz-icon nzType="link" nzTheme="outline"></i>
-            {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
-          </a>
-        </button>
       </ng-template>
     </app-toolbar>
-    <nz-table #fixedTable [nzData]="statusComponents" nzFrontPagination="false" [nzLoading]="componentLoading" [nzScroll]="{ x: '1240px' }">
+    <nz-table #fixedTable [nzData]="statusComponents" nzFrontPagination="false" [nzLoading]="componentLoading">
       <thead>
         <tr>
-          <th nzAlign="center" nzWidth="15%">{{ 'status.component.name' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'status.component.state' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'status.component.method' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'status.component.tag' | i18n }}</th>
-          <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+          <th nzAlign="center" nzWidth="18%">{{ 'status.component.name' | i18n }}</th>
+          <th nzAlign="center" nzWidth="12%">{{ 'status.component.state' | i18n }}</th>
+          <th nzAlign="center" nzWidth="14%">{{ 'status.component.method' | i18n }}</th>
+          <th nzAlign="center" nzWidth="20%">{{ 'status.component.tag' | i18n }}</th>
+          <th nzAlign="center" nzWidth="22%">{{ 'common.edit-time' | i18n }}</th>
+          <th nzAlign="center" nzWidth="14%">{{ 'common.edit' | i18n }}</th>
         </tr>
       </thead>
       <tbody>
@@ -244,12 +316,6 @@
           <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
           {{ 'status.incident.new' | i18n }}
         </button>
-        <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
-          <a routerLink="/status" target="_blank">
-            <i nz-icon nzType="link" nzTheme="outline"></i>
-            {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
-          </a>
-        </button>
       </ng-template>
       <ng-template #right>
         <app-multi-func-input
@@ -279,16 +345,15 @@
       nzShowPagination="true"
       nzShowSizeChanger
       [nzLoading]="incidentLoading"
-      [nzScroll]="{ x: '1240px' }"
     >
       <thead>
         <tr>
-          <th nzAlign="center" nzWidth="15%">{{ 'status.incident.name' | i18n }}</th>
+          <th nzAlign="center" nzWidth="16%">{{ 'status.incident.name' | i18n }}</th>
           <th nzAlign="center" nzWidth="10%">{{ 'status.incident.state' | i18n }}</th>
-          <th nzAlign="center" nzWidth="40%">{{ 'status.incident.message-latest' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'status.incident.component' | i18n }}</th>
-          <th nzAlign="center" nzWidth="10%">{{ 'common.new-time' | i18n }}</th>
-          <th nzAlign="center" nzWidth="10%">{{ 'common.edit' | i18n }}</th>
+          <th nzAlign="center" nzWidth="34%">{{ 'status.incident.message-latest' | i18n }}</th>
+          <th nzAlign="center" nzWidth="14%">{{ 'status.incident.component' | i18n }}</th>
+          <th nzAlign="center" nzWidth="12%">{{ 'common.new-time' | i18n }}</th>
+          <th nzAlign="center" nzWidth="14%">{{ 'common.edit' | i18n }}</th>
         </tr>
       </thead>
       <tbody>

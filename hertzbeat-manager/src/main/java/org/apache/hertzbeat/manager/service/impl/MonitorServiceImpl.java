@@ -138,6 +138,34 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private MetricsFavoriteService metricsFavoriteService;
 
+    /**
+     * Idempotent: an instance already carrying a port is left untouched, so repeated
+     * edits cannot grow it (host:443:443...). A missing instance falls back to the
+     * host param - never concatenated onto null, which produced "null:443" identities.
+     */
+    private void resolveMonitorInstance(Monitor monitor, List<Param> params) {
+        String instance = monitor.getInstance();
+        if (!StringUtils.hasText(instance)) {
+            instance = params.stream()
+                    .filter(param -> "host".equals(param.getField()))
+                    .map(Param::getParamValue)
+                    .filter(StringUtils::hasText)
+                    .findFirst()
+                    .orElse(StringUtils.hasText(monitor.getName()) ? monitor.getName() : "unknown");
+        }
+        Param portParam = params.stream()
+                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
+        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
+                ? ""
+                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (!IpDomainUtil.isHasPortWithMark(instance)) {
+            instance = instance + portWithMark;
+        }
+        monitor.setInstance(instance);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public void detectMonitor(Monitor monitor, List<Param> params, String collector) throws MonitorDetectException {
@@ -181,20 +209,11 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+        appDefine.setScheduleType(monitor.getScheduleType());
+        appDefine.setCronExpression(monitor.getCronExpression());
 
+        resolveMonitorInstance(monitor, params);
         String instance = monitor.getInstance();
-        // The port field may be null
-        Param portParam = params.stream()
-                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
-                .findFirst()
-                .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (!IpDomainUtil.isHasPortWithMark(instance)) {
-            instance = instance + portWithMark;
-        }
-        monitor.setInstance(instance);
 
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
                 CommonConstants.LABEL_INSTANCE, instance);
@@ -382,19 +401,8 @@ public class MonitorServiceImpl implements MonitorService {
             labelDao.saveAll(addLabels);
         }
 
+        resolveMonitorInstance(monitor, params);
         String instance = monitor.getInstance();
-        // The port field may be null
-        Param portParam = params.stream()
-                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
-                .findFirst()
-                .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (Objects.nonNull(instance)) {
-            instance = instance + portWithMark;
-        }
-        monitor.setInstance(instance);
 
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
                 || !StringUtils.hasText(monitor.getScrape());
@@ -431,12 +439,6 @@ public class MonitorServiceImpl implements MonitorService {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
             }
             monitor.setJobId(newJobId);
-
-            // execute only in non paused status
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {
-            }
         }
 
         // After the update is successfully released, refresh the database
@@ -451,6 +453,8 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change.
             // we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
+            // preserve the live status owned by the real-time collection path; the modify request must not overwrite it
+            monitor.setStatus(preMonitor.getStatus());
             // update or open grafana dashboard
             if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null) {
                 if (grafanaDashboard.isEnabled()) {
@@ -780,6 +784,8 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                appDefine.setScheduleType(monitor.getScheduleType());
+                appDefine.setCronExpression(monitor.getCronExpression());
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
                         CommonConstants.LABEL_INSTANCE, monitor.getInstance());
                 appDefine.setMetadata(metadata);

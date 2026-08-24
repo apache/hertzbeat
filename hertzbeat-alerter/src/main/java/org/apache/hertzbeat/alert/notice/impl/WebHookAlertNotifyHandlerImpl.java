@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
@@ -47,6 +48,15 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                 throw new AlertNoticeException("Webhook URL is null or empty");
             }
 
+            // Send the URL verbatim via the URI overload: the String overload treats it
+            // as a URI template and re-encodes it, corrupting pre-encoded query params
+            URI hookUri;
+            try {
+                hookUri = URI.create(hookUrl);
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Invalid webhook URL: " + e.getMessage());
+            }
+
             HttpHeaders headers = new HttpHeaders();
             if ("Basic".equalsIgnoreCase(receiver.getHookAuthType())) {
                 headers.setBasicAuth(receiver.getHookAuthToken());
@@ -59,7 +69,7 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             webhookJson = webhookJson.replace(",\n  }", "\n }");
 
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
-            ResponseEntity<String> entity = restTemplate.postForEntity(hookUrl, alertHttpEntity, String.class);
+            ResponseEntity<String> entity = restTemplate.postForEntity(hookUri, alertHttpEntity, String.class);
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
                 log.debug("Send WebHook: {} Success", hookUrl);
             } else {

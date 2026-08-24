@@ -130,14 +130,18 @@ More details see&emsp;&#x1F449;&emsp;[Alarm grouping](alarm_group) <br />
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.
 
 &emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />
-&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure SMS Notification](alert_sms) <br />
 &emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_discord) <br />
+&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_slack) <br />
+&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_telegram) <br />
 &emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />
+&emsp;&#x1F449;&emsp;[Configure enterprise WeChat App Notification](alert_enterprise_wechat_app) <br />
 &emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />
+&emsp;&#x1F449;&emsp;[Configure FeiShu App Notification](alert_feishu_app) <br />
 &emsp;&#x1F449;&emsp;[Configure Huawei Cloud SMN Notification](alert_smn) <br />
+&emsp;&#x1F449;&emsp;[Notification Template](alert_notification_template) <br />
 
 ### Plugins
 

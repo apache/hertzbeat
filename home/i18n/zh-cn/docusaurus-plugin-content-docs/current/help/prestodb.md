@@ -14,6 +14,10 @@ keywords: [ 开源监控系统, 开源数据库监控, Presto数据库监控 ]
 | 目标Host | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 任务名称   | 标识此监控的名称，名称需要保证唯一性。                                  |
 | 端口     | 被监控的平台端口。                                            |
+| 启用HTTPS  | 是否启用 PrestoDB API 的 HTTPS 访问。                      |
+| 认证方式   | 可选的 HTTP 认证方式，支持 `Basic Auth` 和 `Digest Auth`。      |
+| 用户名    | 启用 `Basic Auth` 或 `Digest Auth` 后使用的用户名。            |
+| 密码     | 启用 `Basic Auth` 或 `Digest Auth` 后使用的密码。             |
 | 连接超时时间 | 设置连接PrestoDB未响应数据时的超时时间，单位ms毫秒，默认6000毫秒。             |
 | 采集间隔   | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒。                      |
 | 绑定标签   | 用于对监控资源进行分类管理。                                       |

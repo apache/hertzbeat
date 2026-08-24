@@ -53,6 +53,36 @@ params:
       ja-JP: HTTPS
     type: boolean
     required: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+      ja-JP: 認証方法
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+      ja-JP: ユーザー名
+    type: text
+    limit: 50
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+      ja-JP: パスワード
+    type: password
+    required: false
+    hide: true
   - field: timeout
     name:
       zh-CN: 超时时间(ms)
@@ -115,6 +145,12 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'
 
@@ -182,6 +218,12 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$[*]'
 

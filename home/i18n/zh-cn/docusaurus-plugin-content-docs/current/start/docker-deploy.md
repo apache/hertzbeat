@@ -83,6 +83,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    - `-e MANAGER_HOST=127.0.0.1` : 重要, 配置连接的 HertzBeat Server 地址，127.0.0.1 需替换为 HertzBeat Server 对外 IP 地址。
    - `-e MANAGER_PORT=1158` :  (可选) 配置连接的 HertzBeat Server 端口，默认 1158.
    - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (可选) 覆盖 MySQL 兼容监控查询链路。可选值：`auto`、`jdbc`、`r2dbc`。
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat-collector/ext-lib` : (可选) 挂载外部 JDBC 驱动到采集器。
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (可选)挂载日志文件到本地主机方便查看
    - `--name hertzbeat-collector` : 命名容器名称为 hertzbeat-collector
    - `apache/hertzbeat-collector` : 使用[官方应用镜像](https://hub.docker.com/r/apache/hertzbeat-collector)来启动容器, 若网络超时可用`quay.io/tancloud/hertzbeat-collector`代替。
@@ -92,6 +93,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    - `MANAGER_HOST=127.0.0.1` 中的 `127.0.0.1` 需被替换为 HertzBeat Server 对外 IP 地址。
    - 标记为可选的参数，非必填项，若不需要则删除。
    - 挂载文件时，前面参数为你自定义本地文件地址，后面参数为容器内文件地址。挂载时请确保你本地已有此文件。
+   - 采集器容器会将 `/opt/hertzbeat-collector` 保持为稳定根路径，升级版本时无需调整 `logs` 和 `ext-lib` 的挂载目标。
    - 可执行```docker update --restart=always hertzbeat-collector```配置容器自动重启。
 
    :::

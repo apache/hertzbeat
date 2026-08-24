@@ -39,10 +39,10 @@ This website is compiled using node, using Docusaurus framework components
 
 1. Download and install nodejs (version 18.8.0)
 2. Clone the code to the local `git clone git@github.com:apache/hertzbeat.git`
-3. In `home` directory run `npm install` to install the required dependent libraries.
-4. In `home` directory run `npm run start`, you can visit [http://localhost:3000](http://localhost:3000) to view the English mode preview of the site
-5. In `home` directory run `npm run start-zh-cn`, you can visit [http://localhost:3000](http://localhost:3000) to view the Chinese mode preview of the site
-6. To generate static website resource files, run `npm run build`. The static resources of the build are in the build directory.
+3. In `home` directory run `pnpm install` to install the required dependent libraries.
+4. In `home` directory run `pnpm start`, you can visit [http://localhost:3000](http://localhost:3000) to view the English mode preview of the site
+5. In `home` directory run `pnpm start-zh-cn`, you can visit [http://localhost:3000](http://localhost:3000) to view the Chinese mode preview of the site
+6. To generate static website resource files, run `pnpm build`. The static resources of the build are in the build directory.
 
 ## Document Format Inspection
 
@@ -91,6 +91,38 @@ MD format configuration file in the project: [.markdownlint-cli2.jsonc](https://
 |-- docusaurus.config.js
 |-- sidebars.js // document sidebar menu configuration
 ```
+
+## Writing a blog post
+
+A post lives in `blog/` and, when translated, in
+`i18n/<locale>/docusaurus-plugin-content-blog/` under the same file name.
+
+```yaml
+---
+title: Announcement of Apache HertzBeat™ 1.8.0 Release
+author: Apache HertzBeat Community
+author_url: https://github.com/apache/hertzbeat
+tags: [releases]
+description: Apache HertzBeat 1.8.0 introduces AI chat and MCP tooling, log monitoring, and major performance improvements.
+cover_headline: Apache HertzBeat 1.8.0
+---
+```
+
+- **`tags`** — start with exactly one category from `blog/tags.yml`
+  (`releases`, `engineering`, `tutorials`, `community`). It drives the category
+  filter on the blog list page. Add free-form topic tags after it if useful.
+- **`description`** — one or two sentences. It becomes the card summary *and* the
+  search-engine snippet. Without it Docusaurus falls back to the first block of
+  the post, which is usually a greeting or a heading.
+- **`cover_headline`** — optional. The blog list renders a cover for every post
+  in the site's visual style; this sets the big line of text on it (e.g.
+  `Welcome Bob`). Without it the text is derived from the version or monitored
+  product found in the title.
+- **`cover_kicker`** — optional. The small pill badge on the generated cover
+  (e.g. `New Committer`). Defaults to the category name. Cover text is English
+  on every locale, matching the shared visual style.
+- **`image`** — optional. A real cover image; when set it replaces the generated
+  cover entirely.
 
 ## Specification
 

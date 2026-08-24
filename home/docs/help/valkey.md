@@ -1,6 +1,6 @@
 ---
 id: valkey  
-title: Monitorin Valkey database 
+title: Monitoring Valkey database 
 sidebar_label: Valkey   
 keywords: [ open source monitoring tool, open source valkey monitoring tool, monitoring valkey metrics ]
 ---

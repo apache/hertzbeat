@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { ToolbarComponent } from './toolbar.component';
 
@@ -26,9 +27,7 @@ describe('ToolbarComponent', () => {
   let fixture: ComponentFixture<ToolbarComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ToolbarComponent]
-    }).compileComponents();
+    await configureShallowTest(ToolbarComponent).compileComponents();
   });
 
   beforeEach(() => {

@@ -17,16 +17,14 @@
  * under the License.
  */
 
-import { ChangeDetectorRef, Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
-import { TransferChange, TransferSelectChange, TransferStat } from 'ng-zorro-antd/transfer';
-import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
-import { Subject } from 'rxjs';
-import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { NzTreeComponent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
+import { finalize } from 'rxjs/operators';
 
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Fields } from '../../pojo/Fields';
@@ -59,11 +57,12 @@ export class BulletinComponent implements OnInit, OnDestroy {
   deleteBulletinIds: number[] = [];
   isAppListLoading = false;
   isMonitorListLoading = false;
+  @ViewChild('metricsTree') metricsTree?: NzTreeComponent;
   treeNodes!: NzTreeNodeOptions[];
+  checkedKeys: string[] = [];
   hierarchies: NzTreeNodeOptions[] = [];
   appMap = new Map<string, string>();
   appEntries: Array<{ value: any; key: string }> = [];
-  checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   metrics = new Set<string>();
   fields: Fields = {};
@@ -73,36 +72,23 @@ export class BulletinComponent implements OnInit, OnDestroy {
   refreshInterval: any;
   deadline = 30;
   countDownTime: number = 0;
-  filterLabels: Record<string, string> = {};
   filteredMonitors: Monitor[] = [];
-  private filterSubject = new Subject<string>(); //filter logic debouncing
-  currentStat: TransferStat | null = null; //transfer component status
 
   ngOnInit() {
     this.loadTabs();
     this.refreshInterval = setInterval(() => {
       this.countDown();
     }, 1000); // every 30 seconds refresh the tabs
-    this.filterSubject
-      .pipe(
-        debounceTime(300), // triggered after the user stops typing for 300ms
-        distinctUntilChanged()
-      )
-      .subscribe(value => {
-        this.filterMonitors();
-      });
   }
 
   ngOnDestroy() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    this.filterSubject.complete();
   }
 
   sync() {
     this.loadCurrentBulletinData();
-    this.clearFilters();
   }
 
   configRefreshDeadline(deadlineTime: number) {
@@ -132,8 +118,12 @@ export class BulletinComponent implements OnInit, OnDestroy {
 
   onEditBulletinDefine() {
     if (this.currentBulletin) {
-      this.define = this.currentBulletin;
-      this.onAppChange(this.define.app);
+      this.resetManageModalData();
+      this.define = JSON.parse(JSON.stringify(this.currentBulletin));
+      this.define.monitorIds = this.define.monitorIds || [];
+      this.fields = this.define.fields ? JSON.parse(JSON.stringify(this.define.fields)) : {};
+      this.onSearchAppDefines();
+      this.onAppChange(this.define.app, true);
       this.isManageModalAdd = false;
       this.isManageModalVisible = true;
       this.isManageModalOkLoading = false;
@@ -169,9 +159,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
-    // clear fields
     this.fields = {};
-    this.clearFilters();
   }
 
   resetManageModalData() {
@@ -179,12 +167,15 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.define.monitorIds = [];
     this.hierarchies = [];
     this.treeNodes = [];
-    // clear fields
+    this.checkedKeys = [];
     this.fields = {};
   }
 
   onManageModalOk() {
     this.isManageModalOkLoading = true;
+    if (this.metricsTree) {
+      this.fields = this.collectFieldsFromTree();
+    }
     this.define.fields = this.fields;
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
@@ -200,7 +191,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
             if (message.code === 0) {
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.isManageModalVisible = false;
-              // clear fields
               this.fields = {};
               this.resetManageModalData();
               this.loadTabs();
@@ -268,7 +258,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
         message => {
           if (message.code === 0) {
             this.monitors = message.data;
-            this.filterMonitors();
+            this.filteredMonitors = [...this.monitors];
             if (this.monitors != null) {
               this.isMonitorListLoading = true;
             }
@@ -282,17 +272,17 @@ export class BulletinComponent implements OnInit, OnDestroy {
       );
   }
 
-  onAppChange(app: string): void {
+  onAppChange(app: string, backfill: boolean = false): void {
     if (app) {
       this.onSearchMonitorsByApp(app);
-      this.onSearchTreeNodes(app);
+      this.onSearchTreeNodes(app, backfill);
     } else {
       this.hierarchies = [];
       this.treeNodes = [];
     }
   }
 
-  onSearchTreeNodes(app: string): void {
+  onSearchTreeNodes(app: string, backfill: boolean = false): void {
     this.appDefineSvc
       .getAppHierarchyByName(this.i18nSvc.defaultLang, app)
       .pipe()
@@ -300,7 +290,10 @@ export class BulletinComponent implements OnInit, OnDestroy {
         message => {
           if (message.code === 0) {
             this.hierarchies = this.transformToTransferItems(message.data);
+            // when editing, pre-check the metrics already saved on the bulletin (drives parent cascade)
+            this.checkedKeys = backfill ? this.computeCheckedKeys() : [];
             this.treeNodes = this.generateTree(this.hierarchies);
+            this.cdr.detectChanges();
           } else {
             console.warn(message.msg);
           }
@@ -311,27 +304,38 @@ export class BulletinComponent implements OnInit, OnDestroy {
       );
   }
 
+  // keys of the leaves whose field is already saved on the bulletin, used to pre-check the tree when editing
+  private computeCheckedKeys(): string[] {
+    if (!this.fields || Object.keys(this.fields).length === 0) {
+      return [];
+    }
+    return this.hierarchies
+      .filter(item => item.isLeaf && this.fields[item.metric] && this.fields[item.metric].includes(item.value))
+      .map(item => item.key);
+  }
+
   transformToTransferItems(data: any[]): NzTreeNodeOptions[] {
     const result: NzTreeNodeOptions[] = [];
     let currentId = 1;
 
-    const traverse = (nodes: any[], parentKey: string | null = null, parentId: number | null = null) => {
+    const traverse = (nodes: any[], parentValue: string | null = null, parentId: number | null = null) => {
       nodes.forEach(node => {
-        const key = parentKey ? `${parentKey}` : node.value;
-        const isRootNode = parentId === null;
+        const id = currentId++;
+        // `metric` carries the metric name (the parent group's value); leaves use it as their fields key.
+        // `key` must be unique per node, otherwise nz-tree cannot track the checkbox state correctly.
         const item: NzTreeNodeOptions = {
-          id: currentId++,
-          key,
+          id,
+          key: `${id}`,
+          metric: parentValue ?? node.value,
           value: node.value,
           title: node.label,
           isLeaf: node.isLeaf,
-          parentId,
-          disabled: isRootNode
+          parentId
         };
         result.push(item);
 
         if (node.children) {
-          traverse(node.children, key, item.id);
+          traverse(node.children, node.value, id);
         }
       });
     };
@@ -369,108 +373,34 @@ export class BulletinComponent implements OnInit, OnDestroy {
     return tree;
   }
 
-  updateTransferStat(stat: TransferStat): boolean {
-    this.currentStat = stat;
-    // stat.shownCount = 33;
-    return true;
+  onMetricsCheckChange(): void {
+    this.fields = this.collectFieldsFromTree();
   }
 
-  private collectLeafNodes(nodes: NzTreeNodeOptions[], results: NzTreeNodeOptions[]): void {
-    nodes.forEach(node => {
-      if (node.isLeaf && !node.disabled) {
-        results.push(node);
-      }
-      if (node.children) {
-        this.collectLeafNodes(node.children, results);
-      }
-    });
-  }
-
-  onSelectChange(event: TransferSelectChange): void {
-    if (event.direction === 'left' && event.checked && this.currentStat?.checkAll) {
-      const allLeafNodes: NzTreeNodeOptions[] = [];
-      this.collectLeafNodes(this.treeNodes, allLeafNodes);
-
-      allLeafNodes.forEach(node => {
-        const existing = this.checkedNodeList.find(n => n.origin.id === node.id);
-        if (!existing) {
-          const treeNode = new NzTreeNode(node);
-          treeNode.isChecked = true;
-          this.checkedNodeList.push(treeNode);
-        }
-      });
-    }
-    if (event.direction === 'left' && !event.checked && this.currentStat?.checkAll === false) {
-      this.checkedNodeList = [];
-    }
-  }
-
-  treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
-    this.checkBoxChange(event.node!, onItemSelect);
-  }
-
-  checkBoxChange(node: NzTreeNode, onItemSelect: (item: NzTreeNodeOptions) => void): void {
-    if (node.isDisabled) {
-      return;
-    }
-
-    if (node.isChecked) {
-      this.checkedNodeList.push(node);
-    } else {
-      const idx = this.checkedNodeList.indexOf(node);
-      if (idx !== -1) {
-        this.checkedNodeList.splice(idx, 1);
-      }
-    }
-    const item = this.hierarchies.find(w => w.id === node.origin.id);
-    onItemSelect(item!);
-  }
-
-  transferChange(ret: TransferChange): void {
-    // add
-    if (ret.to === 'right') {
-      this.checkedNodeList.forEach(node => {
-        // Check if each transferred node is in the left selected nodes
-        const item = ret.list.find(w => w.value === node.origin.value);
-        if (item) {
-          // If it exists, disable the node and set it to checked
-          node.isDisabled = true;
-          node.isChecked = true;
-          // If the key does not exist, create an empty array
-          if (!this.fields[item.key]) {
-            this.fields[item.key] = [];
-          }
-          // If the key exists but the value is not saved, add it to the value array
-          if (!this.fields[item.key].includes(item.value)) {
-            this.fields[item.key].push(item.value);
-          }
-        }
-      });
-    }
-    // delete
-    else if (ret.to === 'left') {
-      this.checkedNodeList.forEach(node => {
-        // Check if each transferred node is in the left selected nodes
-        const item = ret.list.find(w => w.value === node.origin.value);
-        if (item) {
-          // If it exists, enable the node and set it to unchecked
-          node.isDisabled = false;
-          node.isChecked = false;
-          // If the key exists, delete the value
-          if (this.fields[item.key]) {
-            const index = this.fields[item.key].indexOf(item.value);
-            if (index > -1) {
-              this.fields[item.key].splice(index, 1);
+  // collect the checked leaf nodes of the metric tree into the `{ metric: [field, ...] }` shape
+  private collectFieldsFromTree(): Fields {
+    const fields: Fields = {};
+    const roots = this.metricsTree ? this.metricsTree.getTreeNodes() : [];
+    const walk = (nodes: NzTreeNode[]) => {
+      nodes.forEach(node => {
+        if (node.isLeaf) {
+          if (node.isChecked) {
+            const metric = node.origin.metric;
+            const value = node.origin.value;
+            if (!fields[metric]) {
+              fields[metric] = [];
             }
-            // If the array under this key is empty, delete the key
-            if (this.fields[item.key].length === 0) {
-              delete this.fields[item.key];
+            if (!fields[metric].includes(value)) {
+              fields[metric].push(value);
             }
           }
+        } else if (node.children) {
+          walk(node.children);
         }
       });
-      this.checkedNodeList = this.checkedNodeList.filter(item => item.isChecked);
-    }
+    };
+    walk(roots);
+    return fields;
   }
 
   loadTabs() {
@@ -630,46 +560,25 @@ export class BulletinComponent implements OnInit, OnDestroy {
     return result;
   }
 
-  onFilterInputChange(value: string): void {
-    this.filterSubject.next(value); // push the input value to the debounce Subject
-  }
-
-  filterMonitors(): void {
-    const validLabels = this.cleanFilterLabels(this.filterLabels);
-    const activeFilters = Object.entries(validLabels).filter(([k, v]) => k !== '' && k !== 'null'); // Second filtering ensures key validity
-
-    if (activeFilters.length === 0) {
+  // search the monitor list on the client side, matching the term against the monitor name,
+  // any label key, or any label value (the monitor list API already returns labels with the data)
+  onMonitorSearch(value: string): void {
+    const term = (value ?? '').trim().toLowerCase();
+    if (!term) {
       this.filteredMonitors = [...this.monitors];
       return;
     }
-
     this.filteredMonitors = this.monitors.filter(monitor => {
-      if (!monitor.labels || typeof monitor.labels !== 'object') return false;
-
-      return activeFilters.every(([filterKey, filterValue]) => {
-        const keyExists = Object.prototype.hasOwnProperty.call(monitor.labels, filterKey);
-        const actualValue = (monitor.labels[filterKey] ?? '').toLowerCase();
-        return filterValue === '' ? keyExists : actualValue.includes(filterValue.toLowerCase());
-      });
-    });
-  }
-
-  private cleanFilterLabels(labels: any): Record<string, string> {
-    const cleaned: Record<string, string> = {};
-    Object.entries(labels ?? {}).forEach(([k, v]) => {
-      if (typeof k === 'string') {
-        const trimmedKey = k.trim();
-        if (trimmedKey !== '' && trimmedKey !== 'null') {
-          cleaned[trimmedKey] = (v ?? '').toString().trim();
-        }
+      if (monitor.name && monitor.name.toLowerCase().includes(term)) {
+        return true;
       }
+      const labels = monitor.labels;
+      if (labels && typeof labels === 'object') {
+        return Object.entries(labels).some(
+          ([key, val]) => (key ?? '').toLowerCase().includes(term) || (val ?? '').toString().toLowerCase().includes(term)
+        );
+      }
+      return false;
     });
-    return cleaned;
-  }
-
-  clearFilters(): void {
-    this.filterLabels = {};
-    this.filterMonitors();
-    this.cdr.detectChanges();
   }
 }

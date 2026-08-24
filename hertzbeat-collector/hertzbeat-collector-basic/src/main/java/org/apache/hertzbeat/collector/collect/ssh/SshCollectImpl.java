@@ -19,7 +19,10 @@ package org.apache.hertzbeat.collector.collect.ssh;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.ConnectException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -32,8 +35,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
+import org.apache.hertzbeat.collector.collect.common.OneRowResponseSupport;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
 import org.apache.hertzbeat.collector.collect.common.ssh.SshHelper;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
@@ -49,7 +51,7 @@ import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
-import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
+import org.apache.sshd.common.future.CloseFuture;
 import org.springframework.util.StringUtils;
 
 /**
@@ -58,13 +60,11 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class SshCollectImpl extends AbstractCollect {
 
-    private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
     private static final String PARSE_TYPE_LOG = "log";
 
     private static final int DEFAULT_TIMEOUT = 10_000;
-    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -79,7 +79,8 @@ public class SshCollectImpl extends AbstractCollect {
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
         boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
-        boolean useProxy = Boolean.parseBoolean(sshProtocol.getUseProxy());
+        boolean useProxy = Boolean.parseBoolean(sshProtocol.getUseProxy())
+                && StringUtils.hasText(sshProtocol.getProxyHost());
         int timeout = CollectUtil.getTimeout(sshProtocol.getTimeout(), DEFAULT_TIMEOUT);
         ClientChannel channel = null;
         ClientSession clientSession = null;
@@ -93,8 +94,9 @@ public class SshCollectImpl extends AbstractCollect {
             }
             channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
+            ByteArrayOutputStream errorResponse = new ByteArrayOutputStream();
             channel.setOut(response);
-            channel.setErr(new NoCloseOutputStream(System.err));
+            channel.setErr(errorResponse);
             channel.open().verify(timeout);
             List<ClientChannelEvent> list = new ArrayList<>();
             list.add(ClientChannelEvent.CLOSED);
@@ -107,16 +109,28 @@ public class SshCollectImpl extends AbstractCollect {
                 throw new SocketTimeoutException("Failed to retrieve command result in time: " + sshProtocol.getScript());
             }
             Long responseTime = System.currentTimeMillis() - startTime;
-            String result = response.toString();
+            Charset charset = StringUtils.hasText(sshProtocol.getCharset())
+                    ? Charset.forName(sshProtocol.getCharset()) : StandardCharsets.UTF_8;
+            String result = response.toString(charset);
+            String errorResult = errorResponse.toString(charset);
+            Integer exitStatus = channel.getExitStatus();
             if (!StringUtils.hasText(result)) {
+                if (OneRowResponseSupport.tryAppendEmptyOneRow(sshProtocol.getParseType(), errorResult,
+                        exitStatus, metrics.getAliasFields(), builder, responseTime)) {
+                    return;
+                }
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("ssh shell response data is null");
+                builder.setMsg(OneRowResponseSupport.buildBlankFailureMessage(errorResult, exitStatus,
+                        "ssh command exited with code: ", "ssh shell response data is null"));
                 return;
+            }
+            if (StringUtils.hasText(errorResult)) {
+                log.warn("ssh command succeeded but wrote to stderr: {}", errorResult.trim());
             }
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
+                case OneRowResponseSupport.PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
@@ -147,17 +161,14 @@ public class SshCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } finally {
-            if (channel != null && channel.isOpen()) {
-                try {
-                    // Close the SSH channel with the 'false' parameter to ensure the session is not kept alive.
-                    long st = System.currentTimeMillis();
-                    channel.close(false).addListener(future ->
-                            log.debug("channel is closed in {} ms", System.currentTimeMillis() - st));
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+            boolean channelClosed = true;
+            try {
+                channelClosed = closeChannel(channel, timeout);
+            } catch (Exception e) {
+                channelClosed = false;
+                log.error("Failed to close SSH channel", e);
             }
-            if (clientSession != null && !reuseConnection && !useProxy) {
+            if (clientSession != null && (!channelClosed || (!reuseConnection && !useProxy))) {
                 try {
                     clientSession.close();
                 } catch (Exception e) {
@@ -165,6 +176,35 @@ public class SshCollectImpl extends AbstractCollect {
                 }
             }
         }
+    }
+
+    static boolean closeChannel(ClientChannel channel, int timeout) throws IOException {
+        if (channel == null || channel.isClosed()) {
+            return true;
+        }
+        long startTime = System.currentTimeMillis();
+        try {
+            CloseFuture closeFuture = channel.close(false);
+            if (!closeFuture.await(timeout)) {
+                log.warn("SSH channel graceful close timed out after {} ms, forcing local cleanup", timeout);
+                closeFuture = channel.close(true);
+                if (!closeFuture.await(timeout)) {
+                    log.warn("SSH channel immediate close timed out after {} ms", timeout);
+                    return false;
+                }
+            }
+        } catch (InterruptedIOException e) {
+            try {
+                channel.close(true);
+            } catch (RuntimeException closeException) {
+                e.addSuppressed(closeException);
+            } finally {
+                Thread.currentThread().interrupt();
+            }
+            throw e;
+        }
+        log.debug("SSH channel closed in {} ms", System.currentTimeMillis() - startTime);
+        return true;
     }
 
     @Override
@@ -218,28 +258,7 @@ public class SshCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
-        String[] lines = result.split("\n");
-        if (lines.length + 1 < aliasFields.size()) {
-            log.error("ssh response data not enough: {}", result);
-            return;
-        }
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        int aliasIndex = 0;
-        int lineIndex = 0;
-        while (aliasIndex < aliasFields.size()) {
-            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumn(responseTime.toString());
-            } else {
-                if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumn(lines[lineIndex].trim());
-                } else {
-                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                }
-                lineIndex++;
-            }
-            aliasIndex++;
-        }
-        builder.addValueRow(valueRowBuilder.build());
+        OneRowResponseSupport.appendResponseValues(result, aliasFields, builder, responseTime);
     }
 
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
@@ -271,14 +290,6 @@ public class SshCollectImpl extends AbstractCollect {
             }
             builder.addValueRow(valueRowBuilder.build());
         }
-    }
-
-    private void removeConnectSessionCache(SshProtocol sshProtocol) {
-        CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                .build();
-        connectionCommonCache.removeCache(identifier);
     }
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection, boolean useProxy)

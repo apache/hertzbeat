@@ -73,7 +73,8 @@ if [ -n "$SERVER_PORT" ]; then
 fi
 MAIN_CLASS="org.apache.hertzbeat.collector.Collector"
 EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
-CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
+LIB_PATH="$DEPLOY_DIR/lib"
+CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"
 # log dir
 LOGS_DIR=$DEPLOY_DIR/logs
 # create logs dir when not exist

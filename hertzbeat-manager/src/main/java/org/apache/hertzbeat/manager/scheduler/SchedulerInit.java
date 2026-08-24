@@ -118,6 +118,8 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                appDefine.setScheduleType(monitor.getScheduleType());
+                appDefine.setCronExpression(monitor.getCronExpression());
 
                 String instance = monitor.getInstance();
 

@@ -19,9 +19,11 @@ package org.apache.hertzbeat.alert.reduce;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
@@ -44,6 +46,7 @@ public class AlarmSilenceReduce {
     /**
      * Process alert with silence rules
      * If alert matches any active silence rule, it will be silenced
+     *
      * @param groupAlert The alert to be processed
      */
     public void silenceAlarm(GroupAlert groupAlert) {
@@ -52,7 +55,7 @@ public class AlarmSilenceReduce {
             alertSilenceList = alertSilenceDao.findAlertSilencesByEnableTrue();
             CacheFactory.setAlertSilenceCache(alertSilenceList);
         }
-        
+
         // Check each silence rule
         for (AlertSilence alertSilence : alertSilenceList) {
             // Check if alert matches silence rule
@@ -60,10 +63,10 @@ public class AlarmSilenceReduce {
             if (!match && groupAlert.getGroupLabels() != null) {
                 Map<String, String> labels = alertSilence.getLabels();
                 Map<String, String> alertLabels = groupAlert.getGroupLabels();
-                match = labels.entrySet().stream().anyMatch(item -> 
+                match = labels.entrySet().stream().anyMatch(item ->
                     alertLabels.containsKey(item.getKey()) && item.getValue().equals(alertLabels.get(item.getKey())));
             }
-            
+
             if (match) {
                 LocalDateTime now = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
@@ -76,22 +79,23 @@ public class AlarmSilenceReduce {
                 } else if (alertSilence.getType() == 1) {
                     // Cyclic silence rule
                     int currentDayOfWeek = now.getDayOfWeek().getValue();
-                    if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek) 
-                            && !checkAndSave(now, alertSilence)) {
+                    if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek)
+                        && !checkAndSave(now, alertSilence)) {
                         // Alert is silenced
                         return;
                     }
                 }
             }
         }
-        
+
         // No matching silence rule, forward the alert
         dispatcherAlarm.dispatchAlarm(groupAlert);
     }
 
     /**
      * Check if alert time is within silence period and update silence rule counter
-     * @param now Current time
+     *
+     * @param now          Current time
      * @param alertSilence Silence rule to check
      * @return true if alert should not be silenced, false if alert should be silenced
      */
@@ -100,8 +104,11 @@ public class AlarmSilenceReduce {
         boolean endMatch;
         if (alertSilence.getType() == 1) {
             LocalTime nowTime = now.toLocalTime();
-            LocalTime startTime = alertSilence.getPeriodStart() == null ? null : alertSilence.getPeriodStart().toLocalTime();
-            LocalTime endTime = alertSilence.getPeriodEnd() == null ? null : alertSilence.getPeriodEnd().toLocalTime();
+            // compare wall-clock times in the server time zone, the stored offset may differ from it
+            LocalTime startTime = alertSilence.getPeriodStart() == null
+                ? null : alertSilence.getPeriodStart().withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
+            LocalTime endTime = alertSilence.getPeriodEnd() == null
+                ? null : alertSilence.getPeriodEnd().withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
             if (startTime == null && endTime == null) {
                 startMatch = true;
                 endMatch = true;
@@ -121,9 +128,9 @@ public class AlarmSilenceReduce {
             }
         } else {
             startMatch = alertSilence.getPeriodStart() == null
-                    || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+                || now.isAfter(alertSilence.getPeriodStart().withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime());
             endMatch = alertSilence.getPeriodEnd() == null
-                    || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+                || now.isBefore(alertSilence.getPeriodEnd().withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime());
         }
 
         if (startMatch && endMatch) {

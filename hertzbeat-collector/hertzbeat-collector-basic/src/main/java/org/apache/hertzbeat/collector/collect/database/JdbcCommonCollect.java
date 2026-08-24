@@ -46,6 +46,7 @@ import org.apache.hertzbeat.common.entity.job.SshTunnel;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JdbcUrlSafetyUtil;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.postgresql.util.PSQLException;
@@ -63,6 +64,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
+    private static final int CONNECTION_LOCK_STRIPES = 64;
+    private static final Object[] CONNECTION_LOCKS = createConnectionLocks();
 
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
@@ -317,6 +320,17 @@ public class JdbcCommonCollect extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
+        if (!reuseConnection) {
+            return getConnection(username, password, url, timeout, false, identifier);
+        }
+        Object lock = CONNECTION_LOCKS[Math.floorMod(identifier.hashCode(), CONNECTION_LOCKS.length)];
+        synchronized (lock) {
+            return getConnection(username, password, url, timeout, true, identifier);
+        }
+    }
+
+    private Statement getConnection(String username, String password, String url, Integer timeout,
+                                    boolean reuseConnection, CacheIdentifier identifier) throws Exception {
         Statement statement = null;
         if (reuseConnection) {
             Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
@@ -348,19 +362,50 @@ public class JdbcCommonCollect extends AbstractCollect {
                 return statement;
             }
         }
-        // renew connection when failed
-        Connection connection = DriverManager.getConnection(url, username, password);
-        connection.setReadOnly(true);
-        statement = connection.createStatement();
-        int timeoutSecond = timeout / 1000;
-        timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
-        statement.setQueryTimeout(timeoutSecond);
-        statement.setMaxRows(1000);
-        if (reuseConnection) {
-            JdbcConnect jdbcConnect = new JdbcConnect(connection);
-            connectionCommonCache.addCache(identifier, jdbcConnect);
+        Connection connection = null;
+        try {
+            // renew connection when failed
+            connection = openConnection(url, username, password);
+            connection.setReadOnly(true);
+            statement = connection.createStatement();
+            int timeoutSecond = timeout / 1000;
+            timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+            statement.setQueryTimeout(timeoutSecond);
+            statement.setMaxRows(1000);
+            if (reuseConnection) {
+                JdbcConnect jdbcConnect = new JdbcConnect(connection);
+                connectionCommonCache.addCache(identifier, jdbcConnect);
+            }
+        } catch (Exception exception) {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+            } catch (Exception closeException) {
+                log.error("Jdbc close statement error: {}", closeException.getMessage());
+            }
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception closeException) {
+                log.error("Jdbc close connection error: {}", closeException.getMessage());
+            }
+            throw exception;
         }
         return statement;
+    }
+
+    private static Object[] createConnectionLocks() {
+        Object[] locks = new Object[CONNECTION_LOCK_STRIPES];
+        for (int i = 0; i < locks.length; i++) {
+            locks[i] = new Object();
+        }
+        return locks;
+    }
+
+    Connection openConnection(String url, String username, String password) throws SQLException {
+        return DriverManager.getConnection(url, username, password);
     }
 
     /**
@@ -561,28 +606,33 @@ public class JdbcCommonCollect extends AbstractCollect {
             return url;
         }
         assert jdbcProtocol.getPlatform() != null;
-        return switch (jdbcProtocol.getPlatform()) {
+        // the database name is concatenated into the url below, so it must not carry url syntax
+        String database = JdbcUrlSafetyUtil.requireSafeDatabaseName(jdbcProtocol.getDatabase());
+        String constructedUrl = switch (jdbcProtocol.getPlatform()) {
             case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
+                    + "/" + database
                     + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
             case "xugu" -> "jdbc:xugu://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "postgresql" -> "jdbc:postgresql://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "clickhouse" -> "jdbc:clickhouse://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "sqlserver" -> "jdbc:sqlserver://" + host + ":" + port
-                    + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
+                    + ";" + (database.isEmpty() ? "" : "DatabaseName=" + database)
                     + ";trustServerCertificate=true;";
             case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "dm" -> "jdbc:dm://" + host + ":" + port;
             case "db2" -> "jdbc:db2://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "testcontainers" -> "jdbc:tc:" + host + ":" + port
-                    + ":///" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase()) + "?user=root&password=root";
+                    + ":///" + database + "?user=root&password=root";
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
+        // fail closed if any concatenated value still smuggled a driver property through
+        JdbcUrlSafetyUtil.requireSafeJdbcUrl(constructedUrl);
+        return constructedUrl;
     }
 
     private static final class ResultSetJdbcQueryRowSet implements JdbcQueryRowSet {

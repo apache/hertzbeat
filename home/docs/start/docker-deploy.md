@@ -85,6 +85,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    - `-e MANAGER_HOST=127.0.0.1` : Important, Set the main hertzbeat server ip host, must use the server host instead of 127.0.0.1.
    - `-e MANAGER_PORT=1158` :  (optional) Set the main hertzbeat server port, default 1158.
    - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (optional) Override the MySQL-compatible monitoring query path. Supported values: `auto`, `jdbc`, `r2dbc`.
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat-collector/ext-lib` : (optional) Mount external JDBC driver jars to the collector.
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host to facilitate viewing.
    - `--name hertzbeat-collector` : Naming container name hertzbeat-collector
    - `apache/hertzbeat-collector` : Use the [official application mirror](https://hub.docker.com/r/apache/hertzbeat-collector) to start the container, if the network times out, use `quay.io/tancloud/hertzbeat-collector` instead.
@@ -95,6 +96,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    - Marked as optional parameters, non-mandatory items, if not needed, delete them.
    - The `127.0.0.1` in `MANAGER_HOST` needs to be replaced with the external IP address of the HertzBeat Server.
    - When mounting files, the first parameter is your custom local file address, and the second parameter is the container file address. Make sure you have this file locally when mounting.
+   - The collector keeps `/opt/hertzbeat-collector` as the stable container root path across upgrades.
    - You can execute `docker update --restart=always hertzbeat-collector` to configure the container to restart automatically.
    - If you want to use the host network mode to start Docker, you can use `docker run -d --network host .....`
 

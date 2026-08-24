@@ -18,9 +18,13 @@
 package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
@@ -56,6 +60,18 @@ class VictoriaMetricsPropertiesTest {
         assertThat(properties.insert().flushInterval()).isEqualTo(3);
         assertThat(properties.insert().compression()).isNotNull();
         assertThat(properties.insert().compression().enabled()).isTrue();
+    }
+
+    @Test
+    void compressionShouldDefaultToDisabledWhenNotConfigured() {
+        var source = new MapConfigurationPropertySource(Map.of(
+                "warehouse.store.victoria-metrics.insert.buffer-size", "999"));
+        var defaultProperties = new Binder(source)
+                .bind("warehouse.store.victoria-metrics", VictoriaMetricsProperties.class)
+                .get();
+
+        assertThat(defaultProperties.insert().compression()).isNotNull();
+        assertThat(defaultProperties.insert().compression().enabled()).isFalse();
     }
 
 }

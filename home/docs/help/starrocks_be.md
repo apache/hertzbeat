@@ -1,6 +1,6 @@
 ---
 id: starrocks_be
-title: Monitoring StarRocks Database BE Monitoring
+title: Monitoring StarRocks Database BE
 sidebar_label: StarRocks Database BE
 keywords: [Open Source Monitoring System, Open Source Database Monitoring, StarRocks Database BE Monitoring]
 ---

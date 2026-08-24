@@ -3,7 +3,8 @@ title: Best Practices for SSL Certificate Expiration Monitoring
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+cover_headline: SSL Certificate Expiry Monitoring
 ---
 
 First of all, I would like to wish all the students who see it a happy mid-autumn festival, good health, and try to get rich on the basis of good health.

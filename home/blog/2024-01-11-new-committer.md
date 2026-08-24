@@ -1,10 +1,13 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Meet new Committers Leo, Zhou Shusheng, and Zhang Yang and their work on push collection, service monitoring templates, documentation, and community projects.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome New Committer
+cover_kicker: New Committer
 ---
 
 ! [hertzBeat](/img/blog/new-committer.png)
