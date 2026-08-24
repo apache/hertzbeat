@@ -32,29 +32,37 @@ import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
- * Send alarm information through email
+ * Send alarm information through email.
+ * <p>
+ * {@code spring.mail} is optional. Spring Boot only auto-configures {@link JavaMailSender}
+ * when mail host properties are set; without them this handler still starts and uses a
+ * local {@link JavaMailSenderImpl}, which can be configured via yml defaults or the UI
+ * (database) mail server settings.
+ * </p>
  */
 @Component
 @Slf4j
 public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
-    private final JavaMailSender javaMailSender;
+    private final JavaMailSenderImpl javaMailSender;
 
-    @Value("${spring.mail.host:smtp.demo.com}")
+    @Value("${spring.mail.host:}")
     private String host;
 
-    @Value("${spring.mail.username:demo}")
+    @Value("${spring.mail.username:}")
     private String username;
 
-    @Value("${spring.mail.password:demo}")
+    @Value("${spring.mail.password:}")
     private String password;
 
     @Value("${spring.mail.port:465}")
@@ -72,19 +80,27 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
 
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
-    public EmailAlertNotifyHandlerImpl(JavaMailSender javaMailSender, GeneralConfigDao generalConfigDao) {
-        this.javaMailSender = javaMailSender;
+    public EmailAlertNotifyHandlerImpl(ObjectProvider<JavaMailSender> javaMailSenderProvider,
+                                       GeneralConfigDao generalConfigDao) {
+        // Prefer the Boot-auto-configured sender when spring.mail is present; otherwise keep a
+        // local sender so the app can start and email can still be configured via the UI/DB.
+        JavaMailSender available = javaMailSenderProvider.getIfAvailable();
+        if (available instanceof JavaMailSenderImpl mailSender) {
+            this.javaMailSender = mailSender;
+        } else {
+            this.javaMailSender = new JavaMailSenderImpl();
+            log.info("spring.mail is not configured; email notify will require UI/DB mail server settings");
+        }
         this.generalConfigDao = generalConfigDao;
     }
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {
         try {
-            // get sender
-            JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
+            JavaMailSenderImpl sender = javaMailSender;
             String fromUsername = username;
+            boolean useDatabase = false;
             try {
-                boolean useDatabase = false;
                 GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);
                 if (emailConfig != null && emailConfig.getContent() != null) {
                     // enable database configuration
@@ -103,6 +119,9 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                     }
                 }
                 if (!useDatabase) {
+                    if (!StringUtils.hasText(host) || !StringUtils.hasText(username)) {
+                        throw new AlertNoticeException(mailNotConfiguredMessage());
+                    }
                     // if the database is not configured, use the yml configuration
                     sender.setHost(host);
                     sender.setPort(port);
@@ -112,6 +131,8 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                     props.put("mail.smtp.ssl.enable", sslEnable);
                     props.put("mail.smtp.starttls.enable", starttlsEnable);
                 }
+            } catch (AlertNoticeException e) {
+                throw e;
             } catch (Exception e) {
                 log.error("Type not found {}", e.getMessage());
             }
@@ -128,9 +149,16 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
             // Set Email Content Template
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
+        } catch (AlertNoticeException e) {
+            throw e;
         } catch (Exception e) {
             throw new AlertNoticeException("[Email Notify Error] " + e.getMessage());
         }
+    }
+
+    private static String mailNotConfiguredMessage() {
+        return "[Email Notify Error] Mail server is not configured. "
+                + "Set spring.mail in application.yml or enable email settings in the UI.";
     }
 
     @Override

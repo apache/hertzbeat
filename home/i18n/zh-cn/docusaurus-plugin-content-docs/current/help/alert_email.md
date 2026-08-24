@@ -28,7 +28,7 @@ keywords: [告警邮件通知, 开源告警系统, 开源监控告警系统]
 
 1. 自己内网部署的HertzBeat无法接收到邮件通知
 
-   > HertzBeat需要自己配置邮件服务器，TanCloud无需，请确认是否在application.yml配置了自己的邮件服务器
+   > HertzBeat需要配置邮件服务器。可在 `application.yml` 中配置 `spring.mail`，或在 UI 系统邮件设置中配置。若不使用邮件通知，可省略 `spring.mail`，不影响 HertzBeat 启动。
 
 2. 云环境TanCloud无法接收到邮件通知
 
