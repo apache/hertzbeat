@@ -704,13 +704,11 @@ public class HttpCollectImpl extends AbstractCollect {
                         valueRowBuilder.addColumn(String.valueOf(value));
                     } else {
                         if (alias.startsWith("$.")) {
-                            List<Object> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
-                            if (subResults != null && subResults.size() > i) {
-                                Object resultValue = subResults.get(i);
-                                valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
-                            } else {
-                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                            }
+                            // per-row evaluation, a global "parseScript + alias" query would misalign rows missing the path
+                            List<Object> aliasValues = JsonPathParser.parseRowWithJsonPath(objectValue, alias);
+                            // a wildcard alias matching multiple values is kept whole and rendered as "[v1, v2]"
+                            Object resultValue = aliasValues.size() == 1 ? aliasValues.get(0) : (aliasValues.isEmpty() ? null : aliasValues);
+                            valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
                         } else {
                             addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                         }
@@ -903,7 +901,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 if (StringUtils.hasText(header.getValue())) {
-                    requestBuilder.addHeader(header.getKey(), header.getValue());
+                    requestBuilder.addHeader(header.getKey(), TimeExpressionUtil.calculate(header.getValue()));
                 }
             }
         }
@@ -938,18 +936,19 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // uri encode
+        String url = TimeExpressionUtil.calculate(httpProtocol.getUrl());
         String uri;
         if (enableUrlEncoding) {
             // if the url contains parameters directly
-            if (httpProtocol.getUrl().contains("?")) {
-                String path = httpProtocol.getUrl().substring(0, httpProtocol.getUrl().indexOf("?"));
-                String query = httpProtocol.getUrl().substring(httpProtocol.getUrl().indexOf("?") + 1);
+            if (url.contains("?")) {
+                String path = url.substring(0, url.indexOf("?"));
+                String query = url.substring(url.indexOf("?") + 1);
                 uri = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
             } else {
-                uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+                uri = UriUtils.encodePath(url, "UTF-8");
             }
         } else {
-            uri = httpProtocol.getUrl();
+            uri = url;
         }
 
         // append query params

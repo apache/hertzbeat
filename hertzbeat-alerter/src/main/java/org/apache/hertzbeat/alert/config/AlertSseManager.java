@@ -19,62 +19,50 @@
 
 package org.apache.hertzbeat.alert.config;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.support.SseEmitterRegistry;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * SSE manager for alert
+ * SSE manager for alert.
+ *
+ * <p>Note: the lifecycle of a subscription - its timeout, the ceiling on how many may be held
+ * and the cleanup of the ones that went away - belongs to {@link SseEmitterRegistry}; what is
+ * alert specific is only the event these subscribers are waiting for.
  */
-@Slf4j
 @Component
 public class AlertSseManager {
-    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
+    private static final String ALERT_EVENT = "ALERT_EVENT";
+
+    private final SseEmitterRegistry registry = new SseEmitterRegistry("alert");
+
+    /**
+     * Registers a subscription for the given client.
+     *
+     * @param clientId Identifier of the subscriber, unique per subscription
+     * @return The emitter the controller returns to spring
+     */
     public SseEmitter createEmitter(Long clientId) {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-        emitter.onCompletion(() -> removeEmitter(clientId));
-        emitter.onTimeout(() -> removeEmitter(clientId));
-        emitter.onError((ex) -> removeEmitter(clientId));
-        emitters.put(clientId, emitter);
-        return emitter;
+        return registry.createEmitter(clientId);
     }
 
+    /**
+     * Delivers one alert to every live subscriber.
+     *
+     * @param data Serialised alert payload
+     */
     @Async
     public void broadcast(String data) {
-        emitters.forEach((clientId, emitter) -> {
-            try {
-                emitter.send(SseEmitter.event()
-                        .id(String.valueOf(System.currentTimeMillis()))
-                        .name("ALERT_EVENT")
-                        .data(data));
-            } catch (IOException | IllegalStateException e) {
-                tryCompleteAndClean(clientId, emitter);
-            } catch (Exception exception) {
-                log.error("Failed to broadcast alert data to client: {}", exception.getMessage());
-                tryCompleteAndClean(clientId, emitter);
-            }
-        });
+        registry.broadcast(ALERT_EVENT, data);
     }
 
-    private void tryCompleteAndClean(Long clientId, SseEmitter emitter) {
-        try {
-            Optional.ofNullable(emitter).ifPresent(ResponseBodyEmitter::complete);
-        } catch (Throwable e) {
-            log.debug("Failed to complete emitter for client {}: {}", clientId, e.getMessage());
-        }
-        // execute clear
-        removeEmitter(clientId);
+    void setMaxEmitters(int maxEmitters) {
+        registry.setMaxEmitters(maxEmitters);
     }
 
-    private void removeEmitter(Long clientId) {
-        emitters.remove(clientId);
+    int subscriptionCount() {
+        return registry.subscriptionCount();
     }
 }

@@ -66,6 +66,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
     private static final String CONSTANTS_URL_PREFIX = "jdbc:TAOS-RS://";
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
+    private static final Pattern NUL_CHAR_PATTERN = Pattern.compile("\\u0000");
     private static final String INSTANCE_NULL = "''";
     private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS %s";
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
@@ -346,12 +347,13 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     private String formatStringValue(String value) {
-        String formatValue = SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
-        // bugfix Argument list too long
-        if (formatValue != null && formatValue.length() > tableStrColumnDefineMaxLength) {
+        // snmp octet strings may carry NUL padding that breaks the insert sql
+        String formatValue = NUL_CHAR_PATTERN.matcher(value).replaceAll("");
+        // truncate the logical value before escaping so the cut cannot split an escape sequence
+        if (formatValue.length() > tableStrColumnDefineMaxLength) {
             formatValue = formatValue.substring(0, tableStrColumnDefineMaxLength);
         }
-        return formatValue;
+        return SQL_SPECIAL_STRING_PATTERN.matcher(formatValue).replaceAll("\\\\$0");
     }
 
     @Override

@@ -37,8 +37,6 @@ public interface AppService {
      */
     List<ParamDefineInfo> getAppParamDefines(String app);
 
-    Job getPushDefine(Long monitorId);
-
     /**
      * get auto generate dynamic template define
      * for prometheus and more type

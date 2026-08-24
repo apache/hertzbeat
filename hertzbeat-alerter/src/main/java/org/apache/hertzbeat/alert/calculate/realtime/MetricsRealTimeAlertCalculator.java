@@ -251,20 +251,14 @@ public class MetricsRealTimeAlertCalculator {
                     }
                     final int fieldType = field.getType();
 
+                    // strict jexl aborts the whole rule on undefined variables,
+                    // so define every field even when its value is empty or unparseable
                     if (fieldType == CommonConstants.TYPE_NUMBER) {
-                        final Double doubleValue;
-                        if ((doubleValue = CommonUtil.parseStrDouble(valueStr)) != null) {
-                            fieldValueMap.put(field.getName(), doubleValue);
-                        }
+                        fieldValueMap.put(field.getName(), CommonUtil.parseStrDouble(valueStr));
                     } else if (fieldType == CommonConstants.TYPE_TIME) {
-                        final Integer integerValue;
-                        if ((integerValue = CommonUtil.parseStrInteger(valueStr)) != null) {
-                            fieldValueMap.put(field.getName(), integerValue);
-                        }
+                        fieldValueMap.put(field.getName(), CommonUtil.parseStrInteger(valueStr));
                     } else {
-                        if (StringUtils.isNotEmpty(valueStr)) {
-                            fieldValueMap.put(field.getName(), valueStr);
-                        }
+                        fieldValueMap.put(field.getName(), valueStr);
                     }
 
                     if (field.getLabel()) {

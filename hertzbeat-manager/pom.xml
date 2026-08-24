@@ -91,10 +91,10 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-otel</artifactId>
         </dependency>
-        <!-- log -->
+        <!-- observability -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-log</artifactId>
+            <artifactId>hertzbeat-observability</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>

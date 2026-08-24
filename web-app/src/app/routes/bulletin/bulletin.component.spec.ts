@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { BulletinComponent } from './bulletin.component';
 
@@ -26,9 +27,7 @@ describe('BulletinComponent', () => {
   let fixture: ComponentFixture<BulletinComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [BulletinComponent]
-    }).compileComponents();
+    await configureShallowTest(BulletinComponent).compileComponents();
   });
 
   beforeEach(() => {
