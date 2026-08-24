@@ -21,6 +21,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
@@ -61,6 +62,17 @@ public class AlertsController {
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         Page<SingleAlert> alertPage = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertPage));
+    }
+
+    @GetMapping("/export")
+    @Operation(summary = "Export Alarms", description = "Export single alarms matching the filters as an Excel sheet")
+    public void exportAlerts(
+            @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
+            @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
+            @Parameter(description = "Sort field, default activeAt", example = "activeAt") @RequestParam(defaultValue = "activeAt") String sort,
+            @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
+            HttpServletResponse response) {
+        alertService.exportSingleAlerts(status, search, sort, order, response);
     }
 
     @GetMapping("/group")

@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { AppDefineService } from './app-define.service';
 
@@ -25,7 +26,7 @@ describe('AppDefineService', () => {
   let service: AppDefineService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(AppDefineService);
   });
 

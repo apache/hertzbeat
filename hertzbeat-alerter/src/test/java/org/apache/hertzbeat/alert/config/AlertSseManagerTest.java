@@ -17,25 +17,30 @@
 
 package org.apache.hertzbeat.alert.config;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.hertzbeat.common.support.SseEmitterRegistry;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
- * alert sse manager test
+ * Test case for {@link AlertSseManager}.
+ *
+ * <p>Note: how a subscription is bounded and cleaned up is covered by
+ * {@code SseEmitterRegistryTest}; what is left here is what makes this stream the alert one.
  */
-public class AlertSseManagerTest {
+class AlertSseManagerTest {
 
     private AlertSseManager alertSseManager;
 
@@ -44,26 +49,51 @@ public class AlertSseManagerTest {
         alertSseManager = new AlertSseManager();
     }
 
+    /**
+     * The ui subscribes by event name, so an alert delivered under any other name reaches
+     * nobody even though the connection is up.
+     */
     @Test
-    void testCompleteThrowsException() throws Exception {
-        SseEmitter emitter = alertSseManager.createEmitter(1L);
-        assertNotNull(emitter);
+    void testAlertsAreDeliveredUnderTheAlertEventName() throws Exception {
+        alertSseManager.createEmitter(1L);
+        final SseEmitter subscriber = mock(SseEmitter.class);
+        emitters().put(1L, subscriber);
 
-        Map<Long, SseEmitter> emitters = new HashMap<>();
-        SseEmitter spyEmitter = mock(SseEmitter.class);
-        
-        doThrow(new IllegalStateException("Simulated output stream error")).when(spyEmitter).send(any(SseEmitter.SseEventBuilder.class));
-        doThrow(new RuntimeException("Complete failed")).when(spyEmitter).complete();
-        
-        emitters.put(1L, spyEmitter);
+        alertSseManager.broadcast("{\"id\":1}");
 
-        Field emittersField = AlertSseManager.class.getDeclaredField("emitters");
-        emittersField.setAccessible(true);
-        emittersField.set(alertSseManager, emitters);
-
-        assertThrows(RuntimeException.class, () -> alertSseManager.broadcast("{\"id\":1,\"content\":\"Test alert\"}"));
-        Map<Long, SseEmitter> currentEmitters = (Map<Long, SseEmitter>) emittersField.get(alertSseManager);
-        assertFalse(currentEmitters.containsKey(1L), "Emitter should still exist because complete() threw exception");
+        final ArgumentCaptor<SseEmitter.SseEventBuilder> event =
+                ArgumentCaptor.forClass(SseEmitter.SseEventBuilder.class);
+        verify(subscriber).send(event.capture());
+        final String rendered = event.getValue().build().stream()
+                .map(part -> String.valueOf(part.getData()))
+                .collect(Collectors.joining());
+        assertTrue(rendered.contains("event:ALERT_EVENT"), "alerts must be delivered as ALERT_EVENT, was " + rendered);
+        assertTrue(rendered.contains("{\"id\":1}"), "the alert payload must be delivered as is, was " + rendered);
     }
 
+    /**
+     * The manager has to hand its subscriptions to a registry rather than hold them itself,
+     * otherwise none of the bounds that registry enforces apply to this stream.
+     */
+    @Test
+    void testSubscriptionsAreBoundedByTheRegistry() {
+        alertSseManager.setMaxEmitters(1);
+
+        assertNotNull(alertSseManager.createEmitter(1L));
+        final ResponseStatusException thrown =
+                assertThrows(ResponseStatusException.class, () -> alertSseManager.createEmitter(2L));
+
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, thrown.getStatusCode());
+        assertEquals(1, alertSseManager.subscriptionCount());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, SseEmitter> emitters() throws Exception {
+        final Field registryField = AlertSseManager.class.getDeclaredField("registry");
+        registryField.setAccessible(true);
+        final Object registry = registryField.get(alertSseManager);
+        final Field emittersField = SseEmitterRegistry.class.getDeclaredField("emitters");
+        emittersField.setAccessible(true);
+        return (Map<Long, SseEmitter>) emittersField.get(registry);
+    }
 }

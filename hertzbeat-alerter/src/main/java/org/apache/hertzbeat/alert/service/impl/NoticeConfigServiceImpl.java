@@ -377,7 +377,8 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             .status("firing")
             .build();
         GroupAlert groupAlert = GroupAlert.builder()
-            .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert"))
+            .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert",
+                CommonConstants.LABEL_INSTANCE, "127.0.0.1"))
             .commonAnnotations(annotations)
             .alerts(List.of(singleAlert1, singleAlert2))
             .status("firing")

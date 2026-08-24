@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { PluginService } from './plugin.service';
 
@@ -25,7 +26,7 @@ describe('PluginService', () => {
   let service: PluginService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(PluginService);
   });
 

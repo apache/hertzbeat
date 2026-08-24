@@ -38,7 +38,13 @@ import {
   imports: [FormsModule, I18nPipe, SharedModule, NzDatePickerModule, NzSelectModule],
   template: `
     <div class="range-actions" role="toolbar" [attr.aria-label]="'observability.time.toolbar' | i18n">
-      <button nz-button type="button" (click)="shift(-1)" [title]="'observability.time.previous' | i18n">
+      <button
+        nz-button
+        type="button"
+        (click)="shift(-1)"
+        [title]="'observability.time.previous' | i18n"
+        [attr.aria-label]="'observability.time.previous' | i18n"
+      >
         <span nz-icon nzType="left"></span>
       </button>
       <nz-select [ngModel]="selectedPreset" (ngModelChange)="selectPreset($event)" [attr.aria-label]="'observability.time.preset' | i18n">
@@ -49,11 +55,23 @@ import {
         ></nz-option>
         <nz-option *ngIf="selectedPreset === 'custom'" nzValue="custom" [nzLabel]="'observability.time.custom' | i18n"></nz-option>
       </nz-select>
-      <button nz-button type="button" [disabled]="!canMoveForward" (click)="shift(1)" [title]="'observability.time.next' | i18n">
+      <button
+        nz-button
+        type="button"
+        [disabled]="!canMoveForward"
+        (click)="shift(1)"
+        [title]="'observability.time.next' | i18n"
+        [attr.aria-label]="'observability.time.next' | i18n"
+      >
         <span nz-icon nzType="right"></span>
       </button>
     </div>
-    <nz-range-picker [ngModel]="value" (ngModelChange)="setAbsoluteRange($event)" nzShowTime></nz-range-picker>
+    <nz-range-picker
+      [ngModel]="value"
+      (ngModelChange)="setAbsoluteRange($event)"
+      nzShowTime
+      [attr.aria-label]="'observability.time.custom' | i18n"
+    ></nz-range-picker>
     <nz-select
       [ngModel]="refreshSeconds"
       (ngModelChange)="setRefreshInterval($event)"
@@ -65,7 +83,7 @@ import {
       <nz-option [nzValue]="60" [nzLabel]="'observability.time.refresh-1m' | i18n"></nz-option>
       <nz-option [nzValue]="300" [nzLabel]="'observability.time.refresh-5m' | i18n"></nz-option>
     </nz-select>
-    <button nz-button type="button" (click)="refreshNow()" [title]="'common.refresh' | i18n">
+    <button nz-button type="button" (click)="refreshNow()" [title]="'common.refresh' | i18n" [attr.aria-label]="'common.refresh' | i18n">
       <span nz-icon nzType="reload"></span>
     </button>
   `,
@@ -73,7 +91,7 @@ import {
     `
       :host {
         display: grid;
-        grid-template-columns: auto minmax(330px, 1fr) 126px 40px;
+        grid-template-columns: auto minmax(300px, 1fr) 132px 36px;
         gap: 8px;
         align-items: center;
         min-width: 0;
@@ -83,7 +101,7 @@ import {
         min-width: 0;
       }
       .range-actions button {
-        flex: 0 0 34px;
+        flex: 0 0 36px;
       }
       .range-actions button + nz-select,
       .range-actions nz-select + button {
@@ -97,11 +115,19 @@ import {
         min-width: 0;
       }
       :host > button {
-        width: 40px;
+        width: 36px;
       }
       @media (max-width: 900px) {
         :host {
-          grid-template-columns: auto minmax(260px, 1fr) 112px 40px;
+          grid-template-columns: auto minmax(240px, 1fr) 118px 36px;
+        }
+      }
+      @media (max-width: 700px) {
+        :host {
+          grid-template-columns: minmax(0, 1fr) 118px 36px;
+        }
+        .range-actions {
+          grid-column: 1 / -1;
         }
       }
     `
