@@ -17,12 +17,19 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.assertj.core.api.Assertions.assertThat;
+
+import java.net.URI;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -38,6 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,10 +57,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test case for {@link VictoriaMetricsDataStorage}
@@ -182,6 +186,50 @@ class VictoriaMetricsDataStorageTest {
                         assertThat(postForEntityCount.get())
                                 // minimum flushes: ensure all data is processed (threadCount * writeSize / bufferSize)
                                 .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
+    }
+
+    @Test
+    void shouldQueryHistoryByMonitorIdInsteadOfInstance() {
+        long monitorId = 599733946907392L;
+        when(restTemplate.exchange(
+                any(URI.class),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenReturn(ResponseEntity.ok(""));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryMetricData(
+                monitorId, "hdp-hadoop2:10003", "flink", "taskmanager", "value", "6h");
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(
+                uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        assertThat(uriCaptor.getValue().getQuery())
+                .contains("__monitor_id__=\"" + monitorId + "\"")
+                .doesNotContain("instance=\"hdp-hadoop2:10003\"");
+    }
+
+    @Test
+    void shouldQueryIntervalHistoryByMonitorIdInsteadOfInstance() {
+        long monitorId = 599733946907392L;
+        when(restTemplate.exchange(
+                any(URI.class),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(PromQlQueryContent.class)
+        )).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryIntervalMetricData(
+                monitorId, "hdp-hadoop2:10003", "flink", "taskmanager", "value", "1w");
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate, times(4)).exchange(
+                uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class));
+        assertThat(uriCaptor.getAllValues()).allSatisfy(uri -> assertThat(uri.getQuery())
+                .contains("__monitor_id__=\"" + monitorId + "\"")
+                .doesNotContain("instance=\"hdp-hadoop2:10003\""));
     }
 
     @AfterEach

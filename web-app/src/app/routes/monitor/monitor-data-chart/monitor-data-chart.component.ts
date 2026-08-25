@@ -267,6 +267,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
     this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-loading')}`;
     let metricData$ = this.monitorSvc
       .getMonitorMetricHistoryData(
+        this.monitorId,
         this.instance,
         this.app == 'prometheus' ? `_prometheus_${this.monitorName}` : this.app,
         this.metrics,

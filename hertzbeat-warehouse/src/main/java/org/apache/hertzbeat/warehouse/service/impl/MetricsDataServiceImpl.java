@@ -141,6 +141,17 @@ public class MetricsDataServiceImpl implements MetricsDataService {
 
     @Override
     public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String history, Boolean interval) {
+        return queryMetricHistoryData(null, instance, app, metrics, metric, history, interval);
+    }
+
+    @Override
+    public MetricsHistoryData getMetricHistoryData(Long monitorId, String instance, String app, String metrics,
+                                                   String metric, String history, Boolean interval) {
+        return queryMetricHistoryData(monitorId, instance, app, metrics, metric, history, interval);
+    }
+
+    private MetricsHistoryData queryMetricHistoryData(Long monitorId, String instance, String app, String metrics,
+                                                      String metric, String history, Boolean interval) {
         if (history == null) {
             history = "6h";
         }
@@ -151,9 +162,13 @@ public class MetricsDataServiceImpl implements MetricsDataService {
         validateInstance(instance);
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, history);
+            instanceValuesMap = monitorId != null
+                    ? historyDataReader.get().getHistoryMetricData(monitorId, instance, app, metrics, metric, history)
+                    : historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, history);
         } else {
-            instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(instance, app, metrics, metric, history);
+            instanceValuesMap = monitorId != null
+                    ? historyDataReader.get().getHistoryIntervalMetricData(monitorId, instance, app, metrics, metric, history)
+                    : historyDataReader.get().getHistoryIntervalMetricData(instance, app, metrics, metric, history);
         }
         if (instanceValuesMap.containsKey("{}")) {
             instanceValuesMap.put("", instanceValuesMap.get("{}"));
