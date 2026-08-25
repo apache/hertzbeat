@@ -51,6 +51,8 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
 
     // This exact flat-key allowlist is the boundary that prevents setup from becoming an arbitrary YAML editor.
     private static final String DUCKDB_ENABLED = "warehouse.store.duckdb.enabled";
+    private static final String DATASOURCE_DRIVER = "spring.datasource.driver-class-name";
+    private static final String HIBERNATE_DIALECT = "spring.jpa.properties.hibernate.dialect";
     private static final String MAIL_PORT = "spring.mail.port";
     private static final String MAIL_USERNAME = "spring.mail.username";
     private static final String MANAGED_SERVER_PROFILE_ID = "server-direct";
@@ -79,7 +81,26 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
         Map<String, Object> properties = new LinkedHashMap<>();
         plainProperties(value).forEach(
                 (key, item) -> properties.put(key, Integrity.literalForSpring(item)));
+        MetadataDatabaseKind kind = value.metadataDatabase().kind();
+        properties.put(DATASOURCE_DRIVER, driverFor(kind));
+        properties.put(HIBERNATE_DIALECT, dialectFor(kind));
         return Map.copyOf(properties);
+    }
+
+    private static String driverFor(MetadataDatabaseKind kind) {
+        return switch (kind) {
+            case H2 -> "org.h2.Driver";
+            case MYSQL -> "com.mysql.cj.jdbc.Driver";
+            case POSTGRESQL -> "org.postgresql.Driver";
+        };
+    }
+
+    private static String dialectFor(MetadataDatabaseKind kind) {
+        return switch (kind) {
+            case H2 -> "org.hibernate.dialect.H2Dialect";
+            case MYSQL -> "org.hibernate.dialect.MySQLDialect";
+            case POSTGRESQL -> "org.hibernate.dialect.PostgreSQLDialect";
+        };
     }
 
     private static Map<String, String> plainProperties(ManagedApplicationConfig value) {

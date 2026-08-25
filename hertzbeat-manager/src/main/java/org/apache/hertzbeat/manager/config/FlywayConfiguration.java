@@ -20,43 +20,17 @@ package org.apache.hertzbeat.manager.config;
 import org.flywaydb.core.Flyway;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.flyway.autoconfigure.FlywayMigrationInitializer;
-import org.springframework.boot.flyway.autoconfigure.FlywayProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 
-/**
- * Flyway database migration config.
- * Delays Flyway execution until after Hibernate has created/updated the schema.
- */
+/** Runs Flyway before JPA so empty databases use the current baseline migration. */
 @Configuration
 @ConditionalOnProperty(prefix = "spring.flyway", name = "enabled", havingValue = "true")
 public class FlywayConfiguration {
 
-    /**
-     * Disable the default FlywayMigrationInitializer by providing an empty callback.
-     */
+    /** Retains an explicit initializer while preserving Spring Boot's migrate-before-JPA contract. */
     @Bean
     public FlywayMigrationInitializer flywayInitializer(Flyway flyway) {
-        return new FlywayMigrationInitializer(flyway, (f) -> {
-            // Empty callback - we'll run migrations manually after Hibernate
-        });
-    }
-
-    /**
-     * Delayed Flyway migration that runs after EntityManagerFactory is initialized.
-     * This ensures Hibernate's ddl-auto runs first to create/update tables,
-     * then Flyway can perform additional migrations if needed.
-     */
-    @Bean
-    @DependsOn("entityManagerFactory")
-    Dummy delayedFlywayInitializer(Flyway flyway, FlywayProperties flywayProperties) {
-        if (flywayProperties.isEnabled()) {
-            flyway.migrate();
-        }
-        return new Dummy();
-    }
-
-    static class Dummy {
+        return new FlywayMigrationInitializer(flyway);
     }
 }

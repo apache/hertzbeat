@@ -31,6 +31,23 @@ class ManagedOptionalConfigurationPersistenceTest {
     private java.nio.file.Path root;
 
     @Test
+    void materializesTheDriverAndHibernateDialectForEachManagedDatabaseKind() {
+        assertThat(databaseProperties(MetadataDatabaseKind.H2, "jdbc:h2:./data/hertzbeat"))
+                .containsEntry("spring.datasource.driver-class-name", "org.h2.Driver")
+                .containsEntry("spring.jpa.database", "H2")
+                .containsEntry("spring.jpa.properties.hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        assertThat(databaseProperties(MetadataDatabaseKind.MYSQL, "jdbc:mysql://db/hertzbeat"))
+                .containsEntry("spring.datasource.driver-class-name", "com.mysql.cj.jdbc.Driver")
+                .containsEntry("spring.jpa.database", "MYSQL")
+                .containsEntry("spring.jpa.properties.hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+        assertThat(databaseProperties(MetadataDatabaseKind.POSTGRESQL, "jdbc:postgresql://db/hertzbeat"))
+                .containsEntry("spring.datasource.driver-class-name", "org.postgresql.Driver")
+                .containsEntry("spring.jpa.database", "POSTGRESQL")
+                .containsEntry("spring.jpa.properties.hibernate.dialect",
+                        "org.hibernate.dialect.PostgreSQLDialect");
+    }
+
+    @Test
     void optionsUpdatePreservesRequiredSettingsAndStoresMailPasswordOnlyInSecrets() throws Exception {
         ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(root);
         assertThat(transaction.apply(required())).isEqualTo(ManagedConfigurationTransaction.Outcome.APPLIED);
@@ -174,5 +191,13 @@ class ManagedOptionalConfigurationPersistenceTest {
                         new GreptimeEndpoints("localhost:4001", "http://localhost:4000"), "public"));
         return new ManagedConfigurationBundle(application,
                 ManagedSecrets.withoutTelemetryPassword(SecretValue.of("database-secret")));
+    }
+
+    private static java.util.Map<String, Object> databaseProperties(
+            MetadataDatabaseKind kind, String jdbcUrl) {
+        return ApplicationConfigDocumentCodec.springProperties(new ManagedApplicationConfig(
+                new MetadataDatabaseSettings(kind, jdbcUrl, "hertzbeat"),
+                GreptimeSettings.anonymous(
+                        new GreptimeEndpoints("localhost:4001", "http://localhost:4000"), "public")));
     }
 }
