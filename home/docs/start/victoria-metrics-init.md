@@ -148,6 +148,25 @@ warehouse:
 
 Once configured, restart HertzBeat to connect to the VictoriaMetrics cluster.
 
+### Custom Label Collision Policy
+
+Monitor custom labels keep their existing Prometheus semantics when HertzBeat
+writes to VictoriaMetrics:
+
+- `job` and ordinary custom labels continue to use their configured values.
+- `instance`, `__name__`, `__monitor_id__`, `__metrics__`, and `__metric__` are
+  managed by HertzBeat. If a monitor supplies one of these custom-label keys,
+  HertzBeat ignores only the conflicting label, stores the remaining metrics,
+  and reports the key name through a rate-limited warning and cumulative count.
+  Label values are not written to the warning.
+
+Before upgrading, inspect monitor custom labels and rename managed keys. If an
+existing monitor uses a custom `instance` value for a separate identity, move
+that value to a distinct label such as `target_instance`; new samples use the
+HertzBeat monitor instance. Existing VictoriaMetrics series are not rewritten.
+No migration is needed for monitors that use `job` or other ordinary custom
+labels.
+
 ### FAQ
 
 1. Do both the time series databases need to be configured? Can they both be used?

@@ -32,10 +32,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
 
 import com.google.common.collect.Maps;
@@ -98,12 +101,19 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
+    private static final Set<String> MANAGED_LABEL_KEYS = Set.of(
+        LABEL_KEY_NAME,
+        LABEL_KEY_MONITOR_ID,
+        MONITOR_METRICS_KEY,
+        MONITOR_METRIC_KEY,
+        LABEL_KEY_INSTANCE);
     private static final long MAX_WAIT_MS = 500L;
     private static final int MAX_RETRIES = 3;
 
     private final VictoriaMetricsProperties victoriaMetricsProp;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
@@ -170,6 +180,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
+        Set<String> managedLabelCollisions = findManagedLabelCollisions(metricsData.getLabels());
+        if (!managedLabelCollisions.isEmpty()) {
+            recordIgnoredLabelCollisions(metricsData.getId(), managedLabelCollisions);
+        }
+        Map<String, String> customizedLabels = withoutManagedLabels(
+                metricsData.getLabels(), managedLabelCollisions);
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto = false;
@@ -226,10 +242,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                             }
                             labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                             // add customized labels as identifier
-                            var customizedLabels = metricsData.getLabels();
-                            if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                labels.putAll(customizedLabels);
-                            }
+                            addCustomizedLabels(labels, customizedLabels);
                             VictoriaMetricsContent content = VictoriaMetricsContent.builder()
                                 .metric(new HashMap<>(labels))
                                 .values(new Double[]{entry.getValue()})
@@ -253,6 +266,53 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         sendVictoriaMetrics(contentList);
+    }
+
+    static void addCustomizedLabels(Map<String, String> labels, Map<String, String> customizedLabels) {
+        if (ObjectUtils.isEmpty(customizedLabels)) {
+            return;
+        }
+        labels.putAll(customizedLabels);
+    }
+
+    private void recordIgnoredLabelCollisions(long monitorId, Set<String> collisions) {
+        long previousCount = ignoredLabelCollisionCount.getAndAdd(collisions.size());
+        long ignoredCount = previousCount + collisions.size();
+        if (previousCount == 0 || previousCount / 100 < ignoredCount / 100) {
+            log.warn("[warehouse victoria-metrics] ignore custom labels {} from metrics data {} because "
+                            + "the keys are HertzBeat-managed; cumulative ignored labels: {}.",
+                    collisions, monitorId, ignoredCount);
+        }
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
+    }
+
+    static Set<String> findManagedLabelCollisions(Map<String, String> customizedLabels) {
+        if (ObjectUtils.isEmpty(customizedLabels)) {
+            return Set.of();
+        }
+        Set<String> collisions = new TreeSet<>();
+        for (String key : customizedLabels.keySet()) {
+            if (key != null && MANAGED_LABEL_KEYS.contains(key)) {
+                collisions.add(key);
+            }
+        }
+        return collisions;
+    }
+
+    static Map<String, String> withoutManagedLabels(
+            Map<String, String> customizedLabels, Set<String> managedLabelCollisions) {
+        if (ObjectUtils.isEmpty(customizedLabels)) {
+            return Map.of();
+        }
+        if (managedLabelCollisions.isEmpty()) {
+            return customizedLabels;
+        }
+        Map<String, String> safeLabels = new HashMap<>(customizedLabels);
+        managedLabelCollisions.forEach(safeLabels::remove);
+        return safeLabels;
     }
 
     @Override
