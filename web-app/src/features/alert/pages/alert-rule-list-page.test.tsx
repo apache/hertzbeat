@@ -18,6 +18,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AlertRuleDatasourceState } from '../model/alert-rule-model';
+import editorStyles from '../shared/alert-rule-editor.module.css?raw';
 import { AlertRuleListPage } from './alert-rule-list-page';
 
 const controller = vi.hoisted(() => ({
@@ -41,8 +43,17 @@ const controller = vi.hoisted(() => ({
   submitSearch: vi.fn(),
   toggle: vi.fn()
 }));
+const datasource = vi.hoisted<{ retry: ReturnType<typeof vi.fn>; state: AlertRuleDatasourceState }>(() => ({
+  retry: vi.fn(),
+  state: {
+    kind: 'ready',
+    status: { hasPromqlExecutor: true, hasSqlExecutor: true }
+  }
+}));
 vi.mock('../controller/use-alert-rule-list-controller', () => ({ useAlertRuleListController: () => controller }));
-vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
+vi.mock('../controller/use-alert-rule-datasource-controller', () => ({
+  useAlertRuleDatasourceController: () => datasource
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const record = {
@@ -64,13 +75,17 @@ describe('AlertRuleListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     controller.state = buildState();
+    datasource.state = {
+      kind: 'ready',
+      status: { hasPromqlExecutor: true, hasSqlExecutor: true }
+    };
   });
   afterEach(cleanup);
 
-  it('renders LocalDateTime verbatim without browser parsing', () => {
+  it('does not parse server timestamps that are not part of the Apache master list surface', () => {
     const parse = vi.spyOn(Date, 'parse');
     render(<AlertRuleListPage />);
-    expect(screen.getByText('2026-07-17T09:00:00')).toBeInTheDocument();
+    expect(screen.queryByText('2026-07-17T09:00:00')).not.toBeInTheDocument();
     expect(parse).not.toHaveBeenCalled();
   });
 
@@ -91,6 +106,7 @@ describe('AlertRuleListPage', () => {
     expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'alertRules.empty' })).toBeVisible();
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
@@ -105,7 +121,7 @@ describe('AlertRuleListPage', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  it('does not invent nullable strategy, datasource, expression, period, times, or time', () => {
+  it('does not invent nullable strategy, datasource, expression, template, or labels', () => {
     controller.state = buildState({
       list: {
         kind: 'ready',
@@ -114,22 +130,41 @@ describe('AlertRuleListPage', () => {
       }
     });
     render(<AlertRuleListPage />);
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(6);
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByRole('columnheader', { name: 'alertRules.expression' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'alertRules.template' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'alertRules.labels' })).toBeInTheDocument();
   });
 
-  it('delegates search, refresh, create, edit, toggle, and delete', () => {
+  it('opens strategy selection in list context before delegating create', () => {
     render(<AlertRuleListPage />);
     fireEvent.change(screen.getByPlaceholderText('alertRules.search'), { target: { value: 'prod' } });
     fireEvent.click(screen.getByRole('button', { name: 'common.query' }));
     fireEvent.click(screen.getByRole('button', { name: 'common.refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'alertRules.new' }));
+    expect(screen.getByRole('dialog')).toHaveStyle({ width: '500px' });
+    expect(editorStyles).toMatch(/\.typeChoice:global\(\.ant-btn\)\s*\{[^}]*width:\s*200px;[^}]*min-height:\s*160px;/s);
+    expect(controller.create).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.kind.realtime' }));
     fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
     fireEvent.click(screen.getByRole('switch'));
     expect(controller.setSearch).toHaveBeenCalledWith('prod');
     expect(controller.refresh).toHaveBeenCalled();
-    expect(controller.create).toHaveBeenCalled();
+    expect(controller.create).toHaveBeenCalledWith('realtime');
     expect(controller.edit).toHaveBeenCalledWith(7);
     expect(controller.toggle).toHaveBeenCalledWith(record, false);
+  });
+
+  it('keeps an unavailable periodic strategy disabled and its datasource retry local to the chooser', () => {
+    datasource.state = { kind: 'unavailable' };
+    render(<AlertRuleListPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.new' }));
+
+    expect(screen.getByRole('button', { name: 'alertRules.kind.periodic' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(datasource.retry).toHaveBeenCalledOnce();
+    expect(controller.refresh).not.toHaveBeenCalled();
   });
 
   it('delegates current-page selection and confirms one batch delete', async () => {

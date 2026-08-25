@@ -7,13 +7,13 @@
 
 import {
   parseMetricAlertCondition,
-  serializeCompleteMetricAlertCondition,
+  serializeMetricAlertConditionAuthoring,
   type MetricAlertConditionGroup,
   type MetricAlertField
 } from './alert-rule-condition';
 import type { AlertRuleDraft, MetricAlertAuthoring, MetricAlertEditorDraft } from './alert-rule-draft-contract';
 import {
-  buildRealtimeMetricExpression,
+  buildRealtimeMetricAuthoringExpression,
   parseRealtimeMetricExpression,
   type RealtimeMetricTarget
 } from './alert-rule-metric-expression';
@@ -21,14 +21,16 @@ import { AlertRuleContractError } from './alert-rule-types';
 
 export type { MetricAlertAuthoring, MetricAlertEditorDraft } from './alert-rule-draft-contract';
 
-export function createMetricAlertEditorDraft(): MetricAlertEditorDraft {
+export function createMetricAlertEditorDraft(
+  mode: MetricAlertAuthoring['mode'] = 'structured'
+): MetricAlertEditorDraft {
   return {
     kind: 'targeted',
     app: '',
     target: null,
     monitorIds: [],
     monitorLabels: [],
-    authoring: emptyStructuredAuthoring()
+    authoring: emptyAuthoring(mode)
   };
 }
 
@@ -62,7 +64,7 @@ export function buildMetricAlertApplicationPatch(draft: AlertRuleDraft, applicat
       target: null,
       monitorIds: [],
       monitorLabels: [],
-      authoring: emptyStructuredAuthoring()
+      authoring: emptyAuthoring(draft.authoringMode)
     }
   };
 }
@@ -80,18 +82,15 @@ export function buildMetricAlertTargetPatch(
     target,
     monitorIds: [],
     monitorLabels: [],
-    authoring: emptyStructuredAuthoring()
+    authoring: emptyAuthoring(draft.authoringMode)
   };
   return {
-    expr:
-      target.kind === 'availability'
-        ? buildRealtimeMetricExpression({
-            target,
-            monitorIds: [],
-            monitorLabels: [],
-            condition: ''
-          })
-        : '',
+    expr: buildRealtimeMetricAuthoringExpression({
+      target,
+      monitorIds: [],
+      monitorLabels: [],
+      condition: ''
+    }),
     metricEditor: next
   };
 }
@@ -121,10 +120,11 @@ export function buildMetricAlertStructuredConditionPatch(
   fields: MetricAlertField[]
 ): Partial<AlertRuleDraft> {
   const editor = targetedMetricEditor(draft);
-  const threshold = serializeCompleteMetricAlertCondition(condition, fields);
-  const expression = threshold ? composeTargetedExpression(editor, threshold) : '';
+  const threshold = serializeMetricAlertConditionAuthoring(condition, fields);
+  const expression = composeTargetedAuthoringExpression(editor, threshold);
   return {
     expr: expression,
+    authoringMode: 'structured',
     metricEditor: {
       ...editor,
       authoring: { mode: 'structured', condition }
@@ -141,8 +141,8 @@ export function buildMetricAlertAuthoringModePatch(
   if (editor.authoring.mode === mode) return {};
   if (mode === 'structured') return recoverMetricAlertStructuredAuthoring(draft, fields);
   if (editor.authoring.mode !== 'structured') return {};
-  const threshold = serializeCompleteMetricAlertCondition(editor.authoring.condition, fields);
-  return threshold === null ? {} : buildMetricAlertExpertConditionPatch(draft, threshold);
+  const threshold = serializeMetricAlertConditionAuthoring(editor.authoring.condition, fields);
+  return buildMetricAlertExpertConditionPatch(draft, threshold);
 }
 
 export function buildMetricAlertExpertConditionPatch(
@@ -152,7 +152,8 @@ export function buildMetricAlertExpertConditionPatch(
   const editor = targetedMetricEditor(draft);
   const normalized = condition.trim();
   return {
-    expr: normalized ? composeTargetedExpression(editor, normalized) : '',
+    expr: composeTargetedAuthoringExpression(editor, normalized),
+    authoringMode: 'expert',
     metricEditor: {
       ...editor,
       authoring: { mode: 'expert', condition }
@@ -172,10 +173,18 @@ export function recoverMetricAlertStructuredAuthoring(
   if (editor?.kind !== 'targeted' || editor.target?.kind !== 'metric' || editor.authoring.mode !== 'expert') {
     return {};
   }
+  if (!editor.authoring.condition.trim()) {
+    return {
+      expr: draft.expr,
+      authoringMode: 'structured',
+      metricEditor: { ...editor, authoring: emptyStructuredAuthoring() }
+    };
+  }
   const condition = parseMetricAlertCondition(editor.authoring.condition, fields);
   if (!condition) return {};
   return {
     expr: draft.expr,
+    authoringMode: 'structured',
     metricEditor: {
       ...editor,
       authoring: { mode: 'structured', condition }
@@ -183,9 +192,12 @@ export function recoverMetricAlertStructuredAuthoring(
   };
 }
 
-function composeTargetedExpression(editor: Extract<MetricAlertEditorDraft, { kind: 'targeted' }>, condition: string) {
+function composeTargetedAuthoringExpression(
+  editor: Extract<MetricAlertEditorDraft, { kind: 'targeted' }>,
+  condition: string
+) {
   if (!editor.target) throw contract('metric alert target is missing');
-  return buildRealtimeMetricExpression({
+  return buildRealtimeMetricAuthoringExpression({
     target: editor.target,
     monitorIds: editor.monitorIds,
     monitorLabels: editor.monitorLabels,
@@ -219,6 +231,10 @@ function emptyStructuredAuthoring(): MetricAlertAuthoring {
     mode: 'structured',
     condition: { kind: 'group', join: 'and', items: [] }
   };
+}
+
+function emptyAuthoring(mode: MetricAlertAuthoring['mode'] | undefined): MetricAlertAuthoring {
+  return mode === 'expert' ? { mode: 'expert', condition: '' } : emptyStructuredAuthoring();
 }
 
 function contract(message: string) {

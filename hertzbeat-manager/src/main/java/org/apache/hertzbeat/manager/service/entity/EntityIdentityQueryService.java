@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Query boundary for raw persisted entity identity rows, counts, and match lookups.
@@ -42,12 +43,36 @@ public class EntityIdentityQueryService {
         return entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(entityId);
     }
 
+    public List<EntityIdentity> findIdentities(String workspaceId, long entityId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndEntityId(workspaceId, entityId);
+    }
+
     public List<EntityIdentity> findMatchingIdentities(Set<String> identityKeys, Set<String> normalizedValues) {
         return entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
     }
 
+    public List<EntityIdentity> findMatchingIdentities(
+            String workspaceId, Set<String> identityKeys, Set<String> normalizedValues) {
+        if (!StringUtils.hasText(workspaceId)
+                || CollectionUtils.isEmpty(identityKeys) || CollectionUtils.isEmpty(normalizedValues)) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
+                workspaceId, identityKeys, normalizedValues);
+    }
+
     public long countDistinctEntityIdsByIdentityKeys(Set<String> identityKeys) {
         return entityIdentityDao.countDistinctEntityIdsByIdentityKeyIn(identityKeys);
+    }
+
+    public long countDistinctEntityIdsByIdentityKeys(String workspaceId, Set<String> identityKeys) {
+        if (!StringUtils.hasText(workspaceId) || CollectionUtils.isEmpty(identityKeys)) {
+            return 0;
+        }
+        return entityIdentityDao.countDistinctOwnedEntityIdsByWorkspaceIdAndIdentityKeyIn(workspaceId, identityKeys);
     }
 
     public long countIdentities(long entityId) {

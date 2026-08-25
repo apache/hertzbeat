@@ -9,23 +9,29 @@ import type {
   AgentProviderConfigurationView,
   AgentProviderInput,
   AgentProviderOption,
+  AgentRunSnapshot,
   AgentSession,
   AgentTranscriptMessage
 } from '../model/agent-workspace-contract';
 import {
   agentGatewayEventSchema,
+  agentSourceTargetSchema,
   agentProviderConfigurationViewSchema,
   agentProviderOptionSchema,
+  agentRunSnapshotSchema,
   agentSessionSchema,
   agentTranscriptEntrySchema,
   springPageSchema,
   transcriptPayloadSchema
 } from './agent-gateway-schema';
+import { projectAgentSourceTarget } from './agent-source-target-projection';
 
 const paths = {
   sessions: '/api/agent/sessions',
   transcript: (sessionUid: string) => `/api/agent/sessions/${encodeURIComponent(sessionUid)}/transcript`,
+  latestRun: (sessionUid: string) => `/api/agent/sessions/${encodeURIComponent(sessionUid)}/latest-run`,
   stream: '/api/agent/webui/chat/stream',
+  run: (runUid: string) => `/api/agent/runs/${encodeURIComponent(runUid)}`,
   stop: (runUid: string) => `/api/agent/runs/${encodeURIComponent(runUid)}/stop`,
   approval: (approvalId: string, decision: 'approve' | 'reject') =>
     `/api/agent/approvals/${encodeURIComponent(approvalId)}/${decision}`,
@@ -85,14 +91,17 @@ export async function streamAgentChat(
   onEvent: (event: AgentGatewayEvent) => void,
   options: { signal?: AbortSignal; language?: string } = {}
 ) {
+  const preferredLanguage = request.preferredLanguage;
+  const wireRequest = wireChatRequest(request);
   const headers = new Headers({ Accept: 'text/event-stream', 'Content-Type': 'application/json' });
-  if (options.language) headers.set('Accept-Language', options.language);
+  const requestLanguage = preferredLanguage ?? options.language;
+  if (requestLanguage) headers.set('Accept-Language', requestLanguage);
   let response: Response;
   try {
     response = await apiStreamFetch(paths.stream, {
       method: 'POST',
       headers,
-      body: JSON.stringify(request),
+      body: JSON.stringify(wireRequest),
       cache: 'no-store',
       ...(options.signal ? { signal: options.signal } : {})
     });
@@ -105,6 +114,32 @@ export async function streamAgentChat(
     throw new AgentGatewayRequestError('contract', response.status);
   }
   await readEventStream(response.body, onEvent);
+}
+
+function wireChatRequest(request: AgentChatRequest) {
+  const target = request.target ? sourceTarget(request.target) : undefined;
+  return {
+    conversationId: request.conversationId,
+    messageId: request.messageId,
+    message: request.message,
+    ...(target ? { target } : {}),
+    attachments: request.attachments
+  };
+}
+
+function sourceTarget(target: NonNullable<AgentChatRequest['target']>) {
+  return parse(agentSourceTargetSchema, projectAgentSourceTarget(target));
+}
+
+export async function getAgentRun(runUid: string, signal?: AbortSignal): Promise<AgentRunSnapshot> {
+  return parse(agentRunSnapshotSchema, await apiMessageGet(paths.run(runUid), signal ? { signal } : {}));
+}
+
+export async function getLatestAgentRun(sessionUid: string, signal?: AbortSignal): Promise<AgentRunSnapshot | null> {
+  return parse(
+    agentRunSnapshotSchema.nullable(),
+    await apiMessageGet(paths.latestRun(sessionUid), signal ? { signal } : {})
+  );
 }
 
 export function stopAgentRun(runUid: string) {

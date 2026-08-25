@@ -30,7 +30,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <dependencySets>
         <dependencySet>
             <!--Use artifacts in the project, third-party packages packaged into the lib directory of the tar.gz file-->
-            <useProjectArtifact>true</useProjectArtifact>
+            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>
@@ -74,7 +74,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <directory>target</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>*.jar</include>
+                <include>${project.build.finalName}.jar</include>
             </includes>
         </fileSet>
 

@@ -101,7 +101,7 @@ describe('SetupPage access gate', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Optional configuration' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Public access' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'External address' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Connect data services' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Create the first administrator' })).not.toBeInTheDocument();
     expect(configuration.useSetupConfigurationController).not.toHaveBeenCalled();
@@ -134,13 +134,13 @@ function statusFixture(phase: 'administrator_required' | 'optional_configuration
 function optionalController() {
   return {
     draft: {
-      publicBaseUrl: '',
-      serverOtlpHttpEndpoint: '',
-      serverOtlpGrpcEndpoint: '',
+      useProxy: false,
+      proxyPublicBaseUrl: '',
       retentionDays: null,
       mail: { host: '', port: null, security: 'starttls', username: '', password: '', fromAddress: '' }
     },
     updateDraft: vi.fn(),
+    publicOrigin: 'http://127.0.0.1:1157',
     save: vi.fn(),
     savePending: false,
     saveFailureKey: null,

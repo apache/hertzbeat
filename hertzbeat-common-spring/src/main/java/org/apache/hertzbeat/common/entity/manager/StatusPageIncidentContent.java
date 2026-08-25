@@ -62,7 +62,7 @@ public class StatusPageIncidentContent {
     @Schema(title = "incident content message", example = "we find the gateway connection timeout")
     @NotBlank
     private String message;
-    
+
     @Schema(title = "incident state: 0-Investigating 1-Identified 2-Monitoring 3-Resolved", example = "0")
     private byte state;
 

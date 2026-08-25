@@ -78,4 +78,34 @@ describe('Status management results', () => {
     fireEvent.click(confirm);
     expect(onDelete).not.toHaveBeenCalled();
   });
+
+  it('keeps unknown component health neutral instead of presenting it as a failure', () => {
+    const view = render(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'ready', records: [{ ...component, state: 2 }] }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    const tag = screen.getByText('statusManagement.unknown').closest('.ant-tag');
+    expect(tag).toHaveAttribute('data-component-state', 'unknown');
+    expect(tag).not.toHaveClass('ant-tag-error');
+
+    view.rerender(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'ready', records: [{ ...component, state: 1 }] }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(screen.getByText('status.abnormal').closest('.ant-tag')).toHaveAttribute('data-component-state', 'abnormal');
+    expect(screen.getByText('status.abnormal').closest('.ant-tag')).toHaveClass('ant-tag-error');
+  });
 });

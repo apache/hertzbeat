@@ -47,6 +47,7 @@ import org.springframework.test.context.TestPropertySource;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TrustedStartup
 @TestPropertySource(properties = {
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "spring.datasource.url=jdbc:h2:mem:message-server-concurrency;MODE=MySQL;DB_CLOSE_DELAY=-1",

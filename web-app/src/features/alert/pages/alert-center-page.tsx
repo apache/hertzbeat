@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -23,85 +23,135 @@ import {
   OperationalPageHeader,
   OperationalResultRegion
 } from '@/shared/operational-page/operational-page';
-
-import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertCenterBulkActions } from '../components/alert-center-actions';
+import { AlertCenterExportMenu } from '../components/alert-center-export-menu';
 import { AlertCenterResults } from '../components/alert-center-results';
 import { AlertCenterRecovery } from '../components/alert-center-recovery';
 import { AlertCenterSummary } from '../components/alert-center-summary';
 import { AlertCenterToolbar } from '../components/alert-center-toolbar';
+import { useAlertCenterDeleteScope } from '../controller/use-alert-center-delete-scope';
 import { useAlertCenterController } from '../controller/use-alert-center-controller';
+import { useAlertCenterExport } from '../controller/use-alert-center-export';
 import { canRetryAlertCenterRecovery } from '../model/alert-capability-model';
 
 export function AlertCenterPage() {
   const controller = useAlertCenterController();
-  const { capabilities, command, draft, list, query, recovery, refreshing, summary } = controller.state;
+  const { command, draft, list, query, recovery, refreshing } = controller.state;
+  const deleteScope = useAlertCenterDeleteScope(query);
   const busy = command !== 'idle' || recovery !== null;
+  const selectedGroups = selectedAlertGroups(list, controller.state.selectedIds);
 
   return (
     <OperationalPage mode="data">
-      <AlertCenterHeading manageRules={controller.manageRules} />
-      <AlertManagementNav />
+      <AlertCenterHeading
+        busy={busy}
+        manageRules={controller.manageRules}
+        query={query}
+        selectedGroups={selectedGroups}
+      />
       <AlertCenterToolbar
         disabled={busy}
         draft={draft}
-        query={query}
         refreshing={refreshing}
         onDraftChange={controller.setDraft}
         onSubmit={controller.submitFilters}
-        onStatusChange={controller.changeStatus}
-        onSeverityChange={controller.changeSeverity}
         onRefresh={controller.refresh}
       />
-      <OperationalResultRegion>
-        <AlertCenterSummary state={summary} retry={controller.retrySummary} />
-        <AlertCenterBulkActions
-          actionPolicy={capabilities}
-          busy={busy}
-          selectedGroups={selectedAlertGroups(list, controller.state.selectedIds)}
-          actions={{
-            acknowledge: controller.acknowledgeSelected,
-            clear: controller.clearSelection,
-            remove: controller.removeSelected,
-            reopen: controller.reopenSelected,
-            resolve: controller.resolveSelected,
-            unacknowledge: controller.unacknowledgeSelected
-          }}
-        />
-        <AlertCenterRecovery
-          canRetry={canRetryAlertCenterRecovery(capabilities, recovery)}
-          recovery={recovery}
-          retrying={command === 'recovering'}
-          retry={controller.retryOperation}
-        />
-        <AlertCenterResults
-          actionPolicy={capabilities}
-          onAcknowledge={controller.acknowledge}
-          busy={busy}
-          state={list}
-          pageIndex={query.pageIndex}
-          pageSize={query.pageSize}
-          selectedIds={controller.state.selectedIds}
-          onPageChange={controller.changePage}
-          onRemove={controller.remove}
-          onReopen={controller.reopen}
-          onResolve={controller.resolve}
-          onUnacknowledge={controller.unacknowledge}
-          onSelectIds={controller.selectIds}
-          retry={controller.retryList}
-        />
-      </OperationalResultRegion>
+      <AlertCenterResultRegion
+        busy={busy}
+        controller={controller}
+        deleteScope={deleteScope}
+        selectedGroups={selectedGroups}
+      />
     </OperationalPage>
   );
 }
 
-function AlertCenterHeading({ manageRules }: { manageRules: () => unknown }) {
+function AlertCenterResultRegion({
+  busy,
+  controller,
+  deleteScope,
+  selectedGroups
+}: {
+  busy: boolean;
+  controller: ReturnType<typeof useAlertCenterController>;
+  deleteScope: ReturnType<typeof useAlertCenterDeleteScope>;
+  selectedGroups: ReturnType<typeof selectedAlertGroups>;
+}) {
+  const { capabilities, command, list, query, recovery, summary } = controller.state;
+  return (
+    <OperationalResultRegion>
+      <AlertCenterSummary state={summary} retry={controller.retrySummary} />
+      <AlertCenterBulkActions
+        actionPolicy={capabilities}
+        busy={busy}
+        filteredTotal={list.kind === 'ready' ? list.total : selectedGroups.length}
+        selectedGroups={selectedGroups}
+        actions={{
+          cancelPreparation: deleteScope.cancelPreparation,
+          clear: controller.clearSelection,
+          prepareFiltered: deleteScope.prepareFiltered,
+          removeFiltered: controller.removeIds,
+          removeSelected: controller.removeSelected
+        }}
+      />
+      <AlertCenterRecovery
+        canRetry={canRetryAlertCenterRecovery(capabilities, recovery)}
+        recovery={recovery}
+        retrying={command === 'recovering'}
+        retry={controller.retryOperation}
+      />
+      <AlertCenterResults
+        actionPolicy={capabilities}
+        onAcknowledge={controller.acknowledge}
+        busy={busy}
+        state={list}
+        pageIndex={query.pageIndex}
+        pageSize={query.pageSize}
+        selectedIds={controller.state.selectedIds}
+        onPageChange={controller.changePage}
+        onRemove={controller.remove}
+        onReopen={controller.reopen}
+        onResolve={controller.resolve}
+        onUnacknowledge={controller.unacknowledge}
+        onSelectIds={controller.selectIds}
+        retry={controller.retryList}
+      />
+    </OperationalResultRegion>
+  );
+}
+
+function AlertCenterHeading({
+  busy,
+  manageRules,
+  query,
+  selectedGroups
+}: {
+  busy: boolean;
+  manageRules: () => unknown;
+  query: ReturnType<typeof useAlertCenterController>['state']['query'];
+  selectedGroups: ReturnType<typeof selectedAlertGroups>;
+}) {
   const { t } = useTranslation();
+  const exportController = useAlertCenterExport({ query, selectedGroups });
   return (
     <OperationalPageHeader
       title={t('alert.title')}
       description={t('alert.description')}
-      actions={<Button onClick={() => void manageRules()}>{t('alertRules.manage')}</Button>}
+      actions={
+        <Space size="small">
+          <AlertCenterExportMenu
+            busy={busy}
+            exporting={exportController.exporting}
+            exportAll={exportController.exportAll}
+            exportFiltered={exportController.exportFiltered}
+            exportSelected={exportController.exportSelected}
+            exportTimeRange={exportController.exportTimeRange}
+            selectedGroups={selectedGroups}
+          />
+          <Button onClick={() => void manageRules()}>{t('alertRules.manage')}</Button>
+        </Space>
+      }
     />
   );
 }

@@ -17,9 +17,14 @@
     "query": "查詢",
     "refresh": "重新整理",
     "actions": "操作",
+    "tableSelection": {
+      "selectAll": "選擇目前頁全部項目",
+      "clearAll": "取消選擇目前頁全部項目"
+    },
     "view": "查看",
     "edit": "編輯",
     "cancel": "取消",
+    "confirm": "確認",
     "unsavedChangesConfirm": "放棄尚未儲存的變更嗎？",
     "discardChanges": "放棄變更",
     "save": "儲存",
@@ -164,6 +169,10 @@
     "description": "服務、主機、資料庫等資源會在此自動統一，無需理解或手動建立抽象實體模型。",
     "empty": "沒有符合目前篩選條件的資源。",
     "loading": "正在載入資源…",
+    "degraded": {
+      "title": "執行證據暫時無法使用",
+      "description": "資源身分仍可讀取，但無法載入遙測支援的狀態與證據。頁面不會推斷健康狀態，也不會以零值代替缺失資料。"
+    },
     "filters": {
       "search": "搜尋資源",
       "type": "類型",
@@ -1390,14 +1399,6 @@
       "resizeHistory": "調整歷史區高度"
     }
   },
-  "alertNavigation": {
-    "events": "警報事件",
-    "rules": "規則",
-    "noiseControl": "降噪",
-    "groups": "分組收斂",
-    "inhibits": "警報抑制",
-    "silences": "警報靜默"
-  },
   "settingsNavigation": {
     "receivers": "接收人",
     "rules": "傳送規則",
@@ -1487,7 +1488,6 @@
       "not-found": "This alert integration is not in the server catalog."
     },
     "readiness": {
-      "ready": "This backend guide is ready to configure.",
       "configuration_required": "This source requires sender or gateway configuration before it can run.",
       "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
     },
@@ -1497,17 +1497,41 @@
     "snippets": "Payload examples",
     "limitations": "Known limitations",
     "menu": "外部告警整合",
-    "title": "{{source}} 整合",
     "description": "設定外部傳送端，透過 HertzBeat 的驗證入口上報告警。",
-    "sourcesLabel": "整合來源",
-    "method": "方法",
+    "sourcesLabel": "整合告警來源",
+    "sourceGroups": {
+      "ready": "可直接接入",
+      "configuration_required": "需要閘道",
+      "guide_blocked": "暫不可用"
+    },
     "endpoint": "介面路徑",
-    "endpointHint": "這裡只顯示介面路徑，請在傳送端前面加上實際可存取的 HertzBeat 服務位址。",
-    "authorizationHeader": "必要標頭",
-    "manageTokens": "管理 API 權杖",
+    "endpointConfiguredHint": "此回呼位址由系統設定中的公共存取位址與介面路徑 {{path}} 自動組合。",
+    "endpointRelativeHint": "尚未設定公共存取位址，暫時只顯示介面路徑；在系統設定中補充後會自動產生完整回呼位址。",
+    "requestHeaders": "請求標頭",
+    "generateToken": "點擊產生 Token",
+    "dataFlow": "成功回應代表什麼",
     "copy": "複製",
     "copied": "已複製",
-    "copyFailed": "複製失敗"
+    "copyFailed": "複製失敗",
+    "workspace": {
+      "prepare": "準備存取憑證",
+      "configure": "設定傳送端",
+      "verify": "驗證告警生命週期"
+    },
+    "verification": {
+      "unverified": "尚未驗證",
+      "unverifiedHint": "開始驗證後，請從該告警來源觸發一則真實告警。",
+      "waiting": "正在等待告警來源事件",
+      "waitingHint": "自 {{time}} 起等待該來源傳送一則有效事件。",
+      "verified": "已收到事件",
+      "verifiedHint": "最近一次在 {{time}} 透過已接收事件完成驗證。",
+      "start": "開始驗證",
+      "restart": "重新驗證",
+      "starting": "正在開始…",
+      "startFailed": "無法開始驗證，請重試。",
+      "verifiedRail": "已透過真實告警來源事件驗證"
+    },
+    "zabbix": { "parameters": "媒介類型參數", "script": "Webhook 指令碼" }
   },
   "plugins": {
     "title": "外掛程式管理",
@@ -1599,6 +1623,23 @@
     "takeSelectedOffline": "所選設為離線",
     "deleteSelected": "刪除所選",
     "mutationSuccess": "採集器狀態已重新整理。",
+    "details": {
+      "action": "詳情",
+      "actionNamed": "檢視 {{name}} 詳情",
+      "title": "{{name}} 詳情",
+      "updatedAt": "最後更新",
+      "overview": "概覽",
+      "configuration": "配置",
+      "properties": "屬性",
+      "assignments": "任務分配",
+      "operations": "執行設定",
+      "position": "第 {{current}} 個，共 {{total}} 個",
+      "previous": "上一個採集器",
+      "next": "下一個採集器",
+      "close": "關閉採集器詳情",
+      "resize": "調整採集器詳情寬度",
+      "moreActions": "更多採集器操作"
+    },
     "deploy": {
       "action": "產生部署資訊",
       "title": "採集器部署資訊",
@@ -1823,6 +1864,12 @@
     "copy": "複製",
     "delete": "刪除",
     "deleteConfirm": "刪除此標籤？",
+    "selectRow": "選擇此列",
+    "selected": "已選擇 {{count}} 項",
+    "clearSelection": "清除選擇",
+    "deleteSelected": "刪除所選",
+    "deleteSelectedConfirm_one": "刪除選取的 {{count}} 個標籤？",
+    "deleteSelectedConfirm_other": "刪除選取的 {{count}} 個標籤？",
     "nameRequired": "請輸入標籤名稱。",
     "saveSuccess": "標籤已儲存。",
     "saveFailed": "標籤無法儲存。",
@@ -1839,7 +1886,7 @@
   },
   "systemConfig": {
     "title": "系統設定",
-    "description": "設定全域語言、時區與介面密度。",
+    "description": "設定全域語言與時區。",
     "loading": "正在載入系統設定…",
     "readOnly": "只有管理員可以修改系統設定。",
     "recovery": "無法確認已儲存的設定，請先核對伺服器目前設定再繼續。",
@@ -1852,7 +1899,23 @@
     "saveSuccess": "系統設定已儲存。",
     "saveFailed": "系統設定無法儲存。",
     "discard": "放棄變更",
-    "noChanges": "沒有未儲存的變更。",
+    "publicAccess": {
+      "title": "對外位址",
+      "description": "設定警報傳送端與遙測用戶端接入 HertzBeat 時使用的位址。",
+      "loading": "正在載入公共存取設定…",
+      "unavailable": "公共存取設定暫時不可用。",
+      "invalid": "公共存取設定傳回了無效回應。",
+      "publicBaseUrl": "HertzBeat 對外位址",
+      "publicBaseUrlHelp": "用於產生外部警報回呼位址；如透過反向代理存取，請填入包含路徑前綴的完整位址。",
+      "advancedTitle": "進階 OTLP 端點",
+      "advancedHelp": "預設使用標準連接埠：HTTP 4318、gRPC 4317；只有透過其他位址或連接埠接入時才需要填寫。",
+      "otlpHttp": "伺服器 OTLP HTTP 端點",
+      "otlpHttpHelp": "留空時使用 HertzBeat 對外位址的主機和標準連接埠 4318；也可填入完整的 HTTP(S) 位址。",
+      "otlpGrpc": "伺服器 OTLP gRPC 端點",
+      "otlpGrpcHelp": "留空時使用 HertzBeat 對外位址的主機和標準連接埠 4317；也可填入完整的 HTTP(S) 位址。",
+      "saveSuccess": "公共存取設定已儲存。",
+      "saveFailed": "公共存取設定無法儲存。"
+    },
     "locale": {
       "label": "語言",
       "help": "儲存後套用至目前瀏覽器。",
@@ -1865,18 +1928,11 @@
     "timezone": {
       "label": "時區",
       "help": "用於伺服器時間顯示與工作排程。"
-    },
-    "theme": {
-      "label": "介面",
-      "help": "選擇標準、深色或緊湊的運維介面。",
-      "light-ops": "標準淺色",
-      "dark-ops": "深色",
-      "compact": "緊湊深色"
     }
   },
   "objectStore": {
     "title": "物件儲存",
-    "description": "選擇 HertzBeat 產生檔案與二進位物件的儲存位置。",
+    "description": "目前用於儲存自訂監控範本（YAML 定義）。指標、日誌、追蹤與告警資料不受此設定影響。",
     "loading": "正在載入物件儲存設定…",
     "recoveryProof": "無法確認已儲存的設定，請重試以核對伺服器目前設定。",
     "recoveryUncertain": "儲存結果尚不確定，請稍後核對伺服器設定後再繼續修改。",
@@ -1884,13 +1940,30 @@
     "reconcileComplete": "已重新載入目前伺服器設定，未推定密鑰寫入結果。",
     "unavailable": "物件儲存設定暫時不可用。",
     "missing": "尚未設定物件儲存。",
+    "status": {
+      "unconfigured": "未設定",
+      "configured": "已設定"
+    },
     "invalid": "物件儲存回應無效。",
     "readOnly": "只有管理員可以修改物件儲存設定。",
     "validation": "請填寫物件儲存必填欄位。",
     "saveSuccess": "物件儲存設定已儲存。",
     "saveFailed": "物件儲存設定無法儲存。",
+    "migrationConflict": "目標位置已有同名但內容不同的自訂範本，請先處理衝突再切換。",
+    "migrateAndSave": "移轉並儲存",
     "discard": "放棄變更",
     "noChanges": "沒有未儲存的變更。",
+    "searchTypes": "搜尋儲存方式",
+    "noMatchingTypes": "沒有符合的儲存方式。",
+    "activationHint": "儲存時會先複製並驗證既有自訂範本，再啟用此位置；來源副本會保留。",
+    "unsavedHint": "切換前會複製並驗證既有自訂範本；遇到同名衝突時不會覆寫。",
+    "obsSectionTitle": "華為雲 OBS 設定",
+    "obsSectionDescription": "已設定的憑證不會顯示；保留空白即可沿用目前憑證。",
+    "activate": {
+      "database": "移轉並使用資料庫儲存",
+      "file": "移轉並使用本機檔案系統",
+      "obs": "移轉並使用華為雲 OBS"
+    },
     "type": {
       "label": "儲存方式",
       "database": "資料庫",
@@ -1898,9 +1971,9 @@
       "obs": "華為雲 OBS"
     },
     "typeHelp": {
-      "database": "將物件儲存在 HertzBeat 使用的資料庫中。",
-      "file": "將物件儲存在 HertzBeat 伺服器檔案系統中。",
-      "obs": "將物件儲存在華為雲 OBS 儲存桶中。"
+      "database": "將自訂監控範本儲存到 HertzBeat 目前使用的資料庫中。",
+      "file": "將自訂監控範本儲存為 HertzBeat 伺服器上的 define/app-*.yml 檔案。",
+      "obs": "將自訂監控範本 YAML 檔案儲存到華為雲 OBS 儲存桶的指定路徑下。"
     },
     "obs": {
       "accessKey": "存取金鑰",
@@ -1949,6 +2022,13 @@
     "unavailable": "Token 資料無法使用。",
     "invalid": "Token 回應無效。",
     "empty": "尚未產生 API Token。",
+    "emptyTitle": "建立第一個 API Token",
+    "emptyDescription": "為整合或遙測用戶端建立獨立憑證。",
+    "emptyName": "依使用它的用戶端或整合命名。",
+    "emptyScope": "只選擇它所需的最小存取範圍。",
+    "emptyExpiry": "設定有效期，或保留至手動撤銷。",
+    "emptyOneTime": "密鑰只會在建立後顯示一次。",
+    "emptyAction": "建立第一個 Token",
     "scope": {
       "label": "存取範圍",
       "apiAdmin": "管理 API",
@@ -1967,18 +2047,34 @@
   "alertGroups": {
     "title": "警報分組",
     "description": "控制相關警報在通知前的分組與傳送節奏。",
-    "new": "新增策略",
-    "edit": "編輯策略",
+    "new": "新增分組策略",
+    "edit": "編輯分組策略",
     "search": "搜尋策略",
     "empty": "目前條件下沒有分組策略。",
-    "name": "策略",
+    "name": "策略名稱",
     "labels": "分組標籤",
-    "wait": "首次等待",
-    "interval": "分組間隔",
+    "labelsPlaceholder": "請輸入標籤",
+    "wait": "等待時間",
+    "interval": "間隔時間",
     "repeat": "重複間隔",
-    "enabled": "啟用",
+    "enabled": "開啓",
     "updated": "更新時間",
     "seconds": "{{value}} 秒",
+    "secondsUnit": "秒",
+    "durationUnit": "單位",
+    "units": {
+      "seconds": "秒",
+      "minutes": "分鐘",
+      "hours": "小時"
+    },
+    "required": "請填充必填項！",
+    "help": {
+      "name": "標識此分組策略的名稱，需要唯一。",
+      "labels": "根據告警標籤 Key 對告警消息進行分組，支持配置多個標籤 Key，如 alertname、severity、instance 等。",
+      "wait": "新告警產生後的等待時間，在此期間收到的相同告警將被分組，默認 30 秒。",
+      "interval": "發送分組告警通知的最小時間間隔，避免告警通知過於頻繁，默認 5 分鐘。",
+      "repeat": "持續觸發告警的最小重複通知間隔，避免重複發送通知，默認 4 小時。"
+    },
     "delete": "刪除",
     "deleteConfirm": "確認刪除此分組策略？",
     "deleteSelected": "刪除所選",
@@ -1993,19 +2089,38 @@
   "alertInhibits": {
     "title": "警報抑制",
     "description": "來源警報生效時，抑制符合條件的目標警報。",
-    "new": "新增抑制策略",
-    "edit": "編輯抑制策略",
+    "new": "新增抑制規則",
+    "edit": "編輯抑制規則",
     "search": "搜尋抑制策略",
     "empty": "目前條件下沒有抑制策略。",
-    "name": "策略",
-    "sourceLabels": "來源標籤",
+    "name": "抑制規則名稱",
+    "nameHelp": "標識此抑制規則的名稱，需要唯一。",
+    "sourceLabels": "源標籤",
     "targetLabels": "目標標籤",
     "equalLabels": "相等標籤",
+    "equalPlaceholder": "輸入或選擇標籤",
+    "matcherKey": "鍵",
+    "matcherValue": "值",
+    "addMatcher": "新增標籤條件",
+    "removeMatcher": "刪除標籤條件",
+    "required": "請填充必填項！",
+    "logicPreview": {
+      "title": "這條規則會做什麼",
+      "trigger": "觸發：",
+      "triggerDetail": "偵測到一條標籤符合 {{source}} 的生效中警報。",
+      "effect": "抑制：",
+      "effectDetail": "標籤符合 {{target}} 的警報不會繼續傳送通知。",
+      "condition": "僅當：",
+      "conditionDetail": "觸發警報與被抑制警報的 {{equal}} 標籤值相同。",
+      "sourceEmpty": "請設定用於觸發抑制的警報。",
+      "targetEmpty": "請設定不再傳送通知的目標警報。",
+      "equalEmpty": "請設定兩條警報必須保持相同值的標籤。"
+    },
     "matcherPlaceholder": "severity:critical, service:checkout",
     "sourceHelp": "用於觸發抑制的生效中警報。",
     "targetHelp": "來源警報生效期間需要被抑制的警報。",
     "equalHelp": "來源與目標警報中，這些標籤的值必須相同。",
-    "enabled": "啟用",
+    "enabled": "開啓",
     "updated": "更新時間",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此抑制策略？",
@@ -2040,29 +2155,38 @@
     "title": "警報靜默",
     "description": "在單次或週期性維護時段內靜默符合條件的警報。",
     "new": "新增靜默策略",
+    "createTitle": "新增靜默策略",
     "edit": "編輯靜默策略",
     "search": "搜尋靜默策略",
     "empty": "目前條件下沒有靜默策略。",
-    "name": "策略",
-    "matchAll": "符合全部警報",
-    "labels": "標籤條件",
+    "name": "策略名稱",
+    "matchAll": "應用所有",
+    "labels": "匹配標籤",
+    "matcherKey": "鍵",
+    "matcherValue": "值",
+    "addMatcher": "新增標籤條件",
+    "removeMatcher": "刪除標籤條件",
+    "required": "請填充必填項！",
+    "periodInvalid": "請選擇有效的時間範圍。",
+    "recurringPeriodInvalid": "開始時間和結束時間不能相同。",
+    "daysRequired": "請至少選擇一天。",
     "matcherPlaceholder": "service:checkout, environment:staging",
     "labelsHelp": "只有同時符合所有標籤的警報會被靜默。",
-    "enabled": "啟用",
-    "type": "計畫類型",
-    "once": "單次",
-    "recurring": "週期",
-    "days": "生效日期",
-    "timeWindow": "靜默時間",
+    "enabled": "開啓",
+    "type": "靜默類型",
+    "once": "一次性靜默",
+    "recurring": "週期性靜默",
+    "days": "選擇日期",
+    "timeWindow": "靜默時段",
     "start": "開始時間",
     "end": "結束時間",
     "crossMidnightHelp": "結束時間早於開始時間時，表示跨午夜的時間範圍。",
     "scope": "作用範圍",
     "schedule": "靜默計畫",
-    "times": "命中次數",
+    "times": "已靜默告警數",
     "allAlerts": "全部警報",
     "selectedDays": "每週 {{count}} 天",
-    "updated": "更新時間",
+    "updated": "編輯時間",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此靜默策略？",
     "deleteSelected": "刪除所選",
@@ -2073,6 +2197,7 @@
     "unavailable": "靜默策略暫時無法使用。",
     "saveSuccess": "靜默策略已儲存。",
     "saveFailed": "靜默策略儲存失敗。",
+    "deleteSuccess": "靜默策略已刪除。",
     "operationSuccess": "靜默策略已更新。",
     "operationFailed": "靜默策略操作失敗。",
     "management": {
@@ -2087,31 +2212,36 @@
       "return": "返回實體"
     },
     "week": {
-      "1": "週一",
-      "2": "週二",
-      "3": "週三",
-      "4": "週四",
-      "5": "週五",
-      "6": "週六",
-      "7": "週日"
+      "1": "星期一",
+      "2": "星期二",
+      "3": "星期三",
+      "4": "星期四",
+      "5": "星期五",
+      "6": "星期六",
+      "7": "星期日"
     }
   },
   "noticeReceivers": {
     "title": "通知接收人",
     "description": "管理通知規則使用的人員與渠道地址。",
     "loading": "正在載入通知接收人…",
-    "new": "新增接收人",
-    "edit": "編輯接收人",
-    "search": "搜尋接收人",
+    "new": "新增接收對象",
+    "edit": "編輯接收對象",
+    "search": "接收對象名稱",
     "empty": "目前條件下沒有接收人。",
-    "name": "接收人",
-    "type": "渠道類型",
-    "setting": "接收地址",
-    "updated": "更新時間",
+    "name": "接收對象",
+    "nameField": "接收對象名稱",
+    "type": "通知方式",
+    "setting": "設定",
+    "updated": "編輯時間",
     "configured": "已安全設定",
-    "test": "傳送測試",
+    "test": "傳送告警測試",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此接收人？",
+    "required": "請填寫必填欄位！",
+    "emailInvalid": "無效的電子郵件地址！",
+    "phoneInvalid": "無效的手機號碼！",
+    "invalidField": "輸入無效。",
     "validation": "請填寫接收人名稱和渠道要求的所有設定。",
     "loadFailed": "接收人載入失敗。",
     "saveSuccess": "接收人已儲存。",
@@ -2233,14 +2363,26 @@
     "saveSuccess": "範本已儲存。",
     "saveFailed": "範本儲存失敗。",
     "deleteSuccess": "範本已刪除。",
-    "deleteFailed": "範本刪除失敗。"
+    "deleteFailed": "範本刪除失敗。",
+    "previewSource": "範本原始碼",
+    "previewSearch": "搜尋範本原始碼",
+    "previewSearchPlaceholder": "搜尋原始碼",
+    "previewMatchCount": "{{current}} / {{total}}",
+    "previewNoMatches": "沒有符合項目",
+    "previewPreviousMatch": "上一個符合項目",
+    "previewNextMatch": "下一個符合項目",
+    "previewJumpToBody": "範本正文",
+    "previewBodyUnavailable": "找不到開頭註解。",
+    "previewCopy": "複製原始碼",
+    "previewCopied": "已複製",
+    "previewCopyFailed": "複製失敗"
   },
   "notificationWorkspace": {
     "label": "通知設定流程",
     "title": "通知設定",
     "description": "依序設定投遞相依項目，並分別維護各個設定區域。",
     "steps": {
-      "channels": { "label": "通道", "dependency": "提供郵件與簡訊投遞服務。" },
+      "channels": { "label": "渠道服務", "dependency": "提供郵件與簡訊投遞服務。" },
       "receivers": { "label": "接收者", "dependency": "新增使用已設定通道的投遞目標。" },
       "templates": { "label": "範本", "dependency": "可選擇為通道自訂訊息內容。" },
       "rules": { "label": "規則", "dependency": "將警報路由至一個或多個接收者。" }
@@ -2416,15 +2558,100 @@
   "alertRules": {
     "title": "警報規則",
     "description": "管理警報計算規則及其啟用狀態。",
+    "guide": { "alertCenter": "查看警報中心", "deliveryRules": "設定傳送規則" },
     "manage": "管理規則",
     "new": "新增規則",
     "edit": "編輯規則",
+    "newRealtime": "新增實時阈值",
+    "newPeriodic": "新增周期阈值",
+    "editRealtime": "編輯實時阈值",
+    "editPeriodic": "編輯周期閾值",
     "editorDescription": "設定觸發條件，預覽結果後儲存規則。",
     "search": "搜尋規則",
     "empty": "目前條件下沒有警報規則。",
-    "name": "規則",
+    "required": "請填充必填項!",
+    "confirm": "確定",
+    "typeChoice": {
+      "title": "選擇告警計算方式",
+      "realtimeDescription": "監控資料每次採集完成後立即計算。",
+      "periodicDescription": "按排程執行 PromQL 或 SQL 查詢。",
+      "periodicUnavailable": "請先設定支援的查詢執行器再建立週期規則。"
+    },
+    "help": {
+      "name": "阈值规则名称，需要有唯一性",
+      "dataType": "選擇此閾值規則的資料類型",
+      "target": "選中的指標對象",
+      "rule": "圖形化選擇設置指標觸發告警規則,支援多規則與",
+      "bindings": "配置此閾值規則應用到指定監控任務,默認不關聯應用全部",
+      "period": "週期性執行閾值計算的時間間隔，單位秒，最小60秒",
+      "window": "即時閾值計算的窗口時間，單位秒",
+      "severity": "觸發阈值的告警級別,從低到高依次爲:警告-warning,嚴重-critical,緊急-emergency",
+      "mode": "選擇告警模式，告警組模式會將相同條件的告警合併，單條告警模式會分別發送每條告警",
+      "times": "設置觸發阈值多少次之後才會發送告警",
+      "template": "支持的通知模版環境變量",
+      "labels": "您可以使用標簽進行監控資源的分類管理, 例如給資源分別綁定生産環境、測試環境的標簽。",
+      "annotations": "您可以使用註解對實體信息進行標記，例如給資源綁定重要事件的註解。",
+      "enable": "此告警阈值配置開啓生效或關閉",
+      "queryMetric": "圖形化選擇設置指標觸發告警規則,支援多規則與",
+      "queryLog": "配置日誌查詢條件，用於篩選需要監控的日誌"
+    },
+    "query": {
+      "label": "查詢語言",
+      "promql": "PromQL",
+      "sql": "SQL",
+      "expression": "查詢運算式",
+      "examples": "範例：",
+      "promqlUnsupportedLog": "PromQL 暫不支援日誌告警規則",
+      "sqlUnsupportedMetric": "SQL 暫不支援指標告警規則",
+      "promqlPlaceholder": "PromQL查詢語句: sum(rate(process_cpu_seconds_total[5m])) > 0.8",
+      "promqlDescription": "PromQL 查詢語言",
+      "sqlDescription": "SQL 查詢語言",
+      "sqlValidation": {
+        "selectOnly": "僅允許 SELECT 查詢",
+        "union": "不允許使用 UNION",
+        "intersect": "不允許使用 INTERSECT",
+        "except": "不允許使用 EXCEPT",
+        "subquery": "不允許使用子查詢",
+        "from": "SQL 查詢必須包含 FROM 子句",
+        "table": "僅允許查詢 hertzbeat_logs 表",
+        "parentheses": "括號不匹配"
+      }
+    },
+    "severity": { "label": "告警等級", "placeholder": "選擇級別" },
+    "mode": { "label": "告警模式", "placeholder": "請選擇告警模式", "group": "分組告警", "individual": "逐筆告警" },
+    "window": "計算視窗",
+    "seconds": "秒",
+    "finalExpression": "最終總運算式",
+    "annotations": "綁定註解",
+    "map": {
+      "key": "鍵",
+      "value": "值",
+      "addLabel": "新增標籤",
+      "addAnnotation": "新增註解",
+      "remove": "刪除此項"
+    },
+    "variables": {
+      "title": "可用變數",
+      "__instance__": "實例 ID",
+      "__labels__": "標籤",
+      "__instancename__": "實例名稱",
+      "__instancehost__": "實例 Host",
+      "__app__": "應用類型",
+      "__metrics__": "指標名稱",
+      "log": {
+        "timestamp": "時間戳記",
+        "severityText": "日誌等級",
+        "body": "日誌正文",
+        "traceId": "Trace ID",
+        "spanId": "Span ID",
+        "attributes": "日誌屬性",
+        "resource": "資源屬性"
+      }
+    },
+    "name": "阈值名称",
     "type": "類型",
     "enabled": "啟用",
+    "enabledThreshold": "啓用閾值",
     "updated": "更新時間",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此警報規則？",
@@ -2465,20 +2692,25 @@
       }
     },
     "operationSuccess": "警報規則已更新。",
+    "deleteSuccess": "已確認刪除警報規則。",
     "operationFailed": "警報規則操作失敗。",
     "saveSuccess": "警報規則已儲存。",
     "saveFailed": "警報規則儲存失敗。",
     "validation": "請完成規則必填欄位。",
-    "expressionRequired": "請先填寫運算式再預覽。",
     "expression": "運算式",
     "metricTarget": {
+      "type": "指標類型",
+      "typePlaceholder": "請搜尋或選擇指標對象",
       "application": "應用",
       "applicationPlaceholder": "選擇應用",
       "target": "指標目標",
       "targetPlaceholder": "選擇可用性或指標",
       "availability": "可用性",
       "availabilityDescription": "所選應用無法使用時觸發警報。",
-      "rowCount": "資料列數",
+      "availabilityDown": "宕機",
+      "availabilityUnreachable": "不可達",
+      "availabilityTrigger": "異常時觸發告警",
+      "rowCount": "指標值行數量",
       "appsEmpty": "目前沒有可見的監控應用。",
       "appsUnavailable": "應用目錄暫時無法使用。",
       "appsError": "無法載入應用目錄。",
@@ -2487,11 +2719,27 @@
       "legacyExpression": "此舊運算式無法安全轉換為引導編輯器格式。在你主動編輯前，它會保持原樣。"
     },
     "metricBindings": {
-      "title": "監控綁定",
+      "title": "關聯監控",
+      "dialogTitle": "閾值規則關聯監控",
       "description": "將此規則限制到選定的監控實例或標籤。",
-      "manage": "管理綁定",
-      "instances": "監控實例",
-      "labels": "監控標籤",
+      "manage": "關聯監控",
+      "instances": "實例關聯",
+      "labels": "標籤關聯",
+      "unassociated": "未關聯監控",
+      "associated": "已關聯監控",
+      "count": "{{count}} 項",
+      "filterName": "輸入名稱進行過濾...",
+      "filterLabels": "輸入標籤進行過濾...",
+      "moveLeft": "將所選監控移至未關聯",
+      "moveRight": "將所選監控移至已關聯",
+      "selectAll": {
+        "unassociated": "選擇全部可見的未關聯監控",
+        "associated": "選擇全部可見的已關聯監控"
+      },
+      "noData": "暫無資料",
+      "addLabel": "輸入標籤",
+      "removeLabel": "移除標籤",
+      "labelEmpty": "暫無匹配的監控對象，請添加標籤",
       "loading": "正在載入監控選項。",
       "empty": "此應用尚未設定監控。",
       "unavailable": "監控選項暫時無法使用。",
@@ -2500,20 +2748,36 @@
       "noLabels": "沒有可用的監控標籤。"
     },
     "metricCondition": {
+      "rule": "閾值規則",
       "title": "觸發條件",
-      "structured": "引導模式",
-      "expert": "專家模式",
+      "structured": "閾值模版",
+      "expert": "閾值表達式",
       "expertExpression": "條件運算式",
+      "insertExpression": "支持的閾值觸發表達式環境變量與操作符",
+      "expressionPlaceholder": "根據此表達式計算判斷是否觸發閾值。示例",
+      "expressionTypes": {
+        "number": "數值型",
+        "string": "字符型",
+        "time": "時間型",
+        "object": "對象"
+      },
       "expertOnly": "此條件使用了引導編輯器無法安全表示的語法。",
       "join": "符合方式",
-      "and": "全部符合",
-      "or": "任一符合",
+      "and": "AND",
+      "or": "OR",
       "addCondition": "新增條件",
       "addGroup": "新增條件群組",
+      "ruleButton": "Rule",
+      "rulesetButton": "Ruleset",
       "empty": "新增條件後即可完成規則。",
+      "emptyGroup": "規則組不能為空，請新增規則或刪除整個規則組。",
       "field": "指標欄位",
       "operator": "運算子",
       "value": "值",
+      "objectAttribute": "物件屬性",
+      "objectAttributePlaceholder": "請輸入物件屬性",
+      "numberPlaceholder": "請輸入數值",
+      "stringPlaceholder": "請輸入匹配字串",
       "noValue": "不需填寫值",
       "remove": "刪除條件",
       "operators": {
@@ -2530,13 +2794,23 @@
         "matches": "符合",
         "!matches": "不符合",
         "exists": "存在",
-        "!exists": "不存在"
+        "!exists": "不存在",
+        "&&": "與",
+        "||": "或",
+        "()": "括號"
       }
     },
-    "template": "訊息範本",
-    "labels": "標籤",
+    "logCondition": {
+      "expression": "日誌運算式",
+      "expressionPlaceholder": "請輸入告警表達式，例如: count > 10"
+    },
+    "template": "告警内容",
+    "templatePlaceholder": "检测出 CPU 利用率过高",
+    "labels": "綁定標簽",
     "labelsPlaceholder": "team:ops, severity:critical",
-    "period": "計算週期（秒）",
+    "period": "執行週期",
+    "periodPlaceholder": "請輸入執行週期，最小60秒",
+    "windowPlaceholder": "請輸入計算窗口時間",
     "times": "觸發次數",
     "preview": "預覽",
     "previewSuccess": "預覽傳回 {{count}} 行；每頁最多顯示 {{pageSize}} 行。",
@@ -2557,13 +2831,14 @@
       "periodic": "週期"
     },
     "dataType": {
-      "label": "訊號",
+      "label": "資料類型",
       "metric": "指標",
       "log": "日誌",
       "trace": "鏈路"
     }
   },
   "alert": {
+    "diagnosticActions": "診斷操作",
     "integration": {
       "source": {
         "webhook": "Webhook",
@@ -2572,16 +2847,22 @@
         "skywalking": "SkyWalking",
         "uptime-kuma": "Uptime Kuma",
         "zabbix": "Zabbix",
-        "tencent": "Tencent Cloud",
-        "alibabacloud-sls": "Alibaba Cloud SLS",
-        "huaweicloud-ces": "Huawei Cloud CES",
-        "volcengine": "Volcengine"
+        "tencent": "騰訊雲",
+        "alibabacloud-sls": "阿里雲 SLS",
+        "huaweicloud-ces": "華為雲 CES",
+        "volcengine": "火山引擎"
       },
       "ack": {
         "accepted_for_processing": "A successful response means the alert was accepted for processing; it does not prove delivery health."
       },
       "limit": {
         "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "huaweicloud-ces": {
+          "confirmation_may_be_billable": "華為雲會將訂閱確認訊息計入收費訊息；執行實際訂閱測試前請先確認價格。"
+        },
+        "volcengine": {
+          "event_recovery_unavailable": "火山引擎事件回呼僅支援觸發；指標與無資料回呼支援恢復。"
+        },
         "zabbix": {
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
@@ -2612,25 +2893,93 @@
           "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
         }
       },
+      "skywalking": {
+        "step": {
+          "create_token": "建立具有告警接入寫入權限的 API Token。",
+          "configure_webhook": "使用下方接入位址與 Authorization 標頭設定 SkyWalking 告警及恢復 Webhook。",
+          "verify_lifecycle": "觸發並恢復一筆受控告警，確認相同 UUID 的 HertzBeat 告警變為已恢復。"
+        }
+      },
+      "uptime-kuma": {
+        "step": {
+          "create_token": "建立具有告警接入寫入權限的 API Token。",
+          "configure_webhook": "建立 Webhook 通知，選擇 POST、JSON 預設，並加入下方 Authorization 標頭。",
+          "verify_lifecycle": "依序傳送 DOWN 與 UP 心跳，確認同一監控告警變為已恢復。"
+        }
+      },
+      "tencent": {
+        "step": {
+          "create_token": "建立具有告警接入寫入權限的 API Token。",
+          "configure_template": "為觸發及恢復建立自訂 Webhook 通知範本，並對應下方原生物件與策略欄位。",
+          "verify_lifecycle": "為同一執行個體傳送觸發及恢復通知，確認只恢復該執行個體的告警。"
+        }
+      },
+      "alibabacloud-sls": {
+        "step": {
+          "create_token": "建立具有告警接入寫入權限的 API Token。",
+          "configure_action": "建立 WebHook-自訂行動，使用 POST、JSON、Authorization 標頭，並在範本中包含 alert_instance_id。",
+          "verify_lifecycle": "觸發並恢復同一告警執行個體，確認該執行個體變為已恢復且接入端回傳 HTTP 200。"
+        }
+      },
+      "huaweicloud-ces": {
+        "step": {
+          "create_token": "建立具有告警接入寫入權限的 API Token。",
+          "configure_subscription": "為此接入位址建立 HTTP/HTTPS SMN 訂閱，並將 X-HertzBeat-Token 加入自訂請求標頭。",
+          "verify_subscription": "執行可用性測試並確認訂閱，再觸發及恢復一筆受控 CES 告警。"
+        }
+      },
+      "volcengine": {
+        "step": {
+          "create_token": "建立具有告警接入寫入權限的 API Token。",
+          "configure_callback": "設定火山引擎回呼位址，並將受管 Token 放入其原生 Token 標頭。",
+          "verify_lifecycle": "觸發並恢復一筆指標告警，確認同一資源的告警變為已恢復。"
+        }
+      },
       "zabbix": {
         "step": {
-          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix.",
+          "create_token": "建立具有告警接入寫入權限的 API Token，並儲存為 Zabbix 私密使用者巨集 {$HERTZBEAT_API_TOKEN}。",
+          "configure_media_type": "使用下方參數與指令碼建立 Zabbix Webhook 媒介類型，並同時配置到故障操作與恢復操作。",
+          "verify_problem_and_recovery": "觸發一次受控故障並恢復，確認 HertzBeat 中同一筆告警從告警中變為已恢復。"
         }
       }
     },
     "title": "警報中心",
     "description": "查看群組警報與目前處理狀態。",
+    "expandDetails": "展開警報詳情",
+    "collapseDetails": "收合警報詳情",
     "search": "搜尋警報",
+    "filters": {
+      "more": "更多篩選",
+      "less": "收起篩選",
+      "moreActive": "更多篩選（{{count}}）"
+    },
     "empty": "目前條件下沒有警報。",
     "name": "警報",
     "labels": "標籤",
     "updated": "更新時間",
+    "viewDetails": "查看詳情",
     "delete": "刪除",
+    "moreActions": "更多警報操作",
     "confirmDelete": "確認刪除",
     "deleteConfirm": "刪除告警群組 {{target}} 及其告警記錄？",
     "deleteSuccess": "告警群組已刪除。",
     "deleteFailed": "無法刪除或驗證此告警群組。",
     "selected": "已選取 {{count}} 項",
+    "export": {
+      "label": "匯出",
+      "selected": "匯出選取項目",
+      "timeRange": "依時間範圍匯出",
+      "filtered": "匯出目前篩選結果",
+      "all": "全部匯出",
+      "timeRangeTitle": "依時間範圍匯出告警",
+      "updatedTime": "告警更新時間",
+      "timeRangeHelp": "時間範圍依伺服器本地的告警更新時間計算；沒有更新時間的告警不會匯出。",
+      "confirm": "匯出",
+      "success": "已匯出 {{count}} 個告警群組。",
+      "failure": "無法完成告警匯出。"
+    },
+    "clearSelection": "清除選取",
     "acknowledge": "確認",
     "acknowledgeSelected": "確認所選告警",
     "acknowledgeConfirm": "確認此告警群組？",
@@ -2661,7 +3010,26 @@
     "reopenFailed": "無法重新觸發或驗證此告警群組。",
     "deleteSelected": "批次刪除",
     "deleteSelectedConfirm": "刪除選取的 {{count}} 個告警群組及其告警記錄？",
+    "deleteScope": {
+      "title": "批次刪除告警",
+      "description": "選擇本次刪除的確切範圍；告警群組下的告警記錄會一併刪除。",
+      "selectedTitle": "僅刪除已選項（{{count}}）",
+      "selectedDescription": "只刪除目前頁面中已勾選的告警群組。",
+      "filteredTitle": "刪除目前篩選的全部結果（{{count}}）",
+      "filteredDescription": "包含最近一次已提交篩選下的所有分頁，不包含尚未查詢的篩選變更。",
+      "limitDescription": "目前篩選超過單次可刪除並驗證的 {{limit}} 個告警群組，請先縮小篩選範圍。",
+      "prepareFailure": "無法讀取完整篩選範圍，未刪除任何告警。",
+      "review": "繼續確認",
+      "reviewTitle": "確認刪除篩選結果",
+      "reviewCount": "個告警群組將被刪除",
+      "reviewDescription": "刪除檢視時符合的 {{count}} 個告警群組及其告警記錄？此操作無法復原；之後新產生的告警不在本次刪除範圍內。",
+      "confirmSelected": "刪除已選項",
+      "confirmFiltered": "確認全部刪除"
+    },
     "summaryUnavailable": "警報概覽暫時無法使用，仍可查詢警報清單。",
+    "investigate": "調查",
+    "openMonitor": "監控",
+    "openEntity": "資源",
     "listUnavailable": "警報清單暫時無法使用。",
     "listLoadFailed": "警報清單載入失敗。",
     "summaryLoadFailed": "警報概覽載入失敗。",
@@ -2676,8 +3044,8 @@
     "summary": {
       "total": "警報總數",
       "acknowledged": "已確認",
-      "nonFiring": "非警報中",
-      "scope": "全域單筆警報",
+      "handled": "已處理",
+      "workspaceScope": "目前工作區",
       "warning": "警告",
       "critical": "嚴重",
       "emergency": "緊急"
@@ -2903,18 +3271,36 @@
   "statusManagement": {
     "title": "狀態頁",
     "description": "發佈元件健康狀態，並向使用者同步服務事件。",
+    "navComponents": "元件",
+    "navIncidents": "事件",
+    "navSettings": "設定",
+    "publishIncident": "發佈事件",
+    "reviewIncident": "檢查事件",
+    "incidentInfo": "事件資訊",
+    "reviewAndPublish": "檢查並發佈",
+    "reviewTitle": "檢查公開內容",
+    "reviewDescription": "發佈前確認訪客將看到的事件資訊。",
+    "publicUpdatePreview": "公開更新預覽",
+    "previewNotPublished": "此草稿尚未發佈。",
+    "backToIncident": "返回編輯",
     "loadingOrganization": "正在載入頁面資訊…",
     "loadingComponents": "正在載入狀態元件…",
     "loadingIncidents": "正在載入事件…",
     "openPublicPage": "開啟公開頁面",
     "organization": "頁面資訊",
+    "organizationDetails": "頁面資訊詳情",
     "organizationDescription": "設定公開名稱、說明和相關連結。",
+    "componentCollection": "公開元件",
+    "setupTitle": "建立公開狀態頁",
+    "setupDescription": "先設定公開頁面資訊；建立完成後，再管理元件和故障事件。",
+    "createPage": "建立狀態頁",
     "notConfigured": "請先設定頁面資訊，再新增元件。",
     "name": "名稱",
     "home": "首頁網址",
     "logo": "Logo 網址",
     "feedback": "回饋網址",
-    "color": "強調色",
+    "color": "狀態頁主題色",
+    "colorDescription": "用於公開狀態頁的頂部裝飾線、按鈕和連結，不會改變服務狀態顏色。",
     "componentsDescription": "可按監控標籤自動計算狀態，也可手動維護。",
     "newComponent": "新增元件",
     "editComponent": "編輯元件",
@@ -2926,10 +3312,15 @@
     "componentUpdateHint": "儲存後，修改會同步到公開狀態頁。",
     "unknown": "未知",
     "incidentsDescription": "建立事件，並隨處理進度持續新增更新。",
+    "emptyIncidentsDescription": "已發佈的事件和處理進度會集中顯示在這裡。",
+    "emptyIncidentsNeedsComponent": "請先新增公開元件，再發佈事件。",
     "newIncident": "新增事件",
     "updateIncident": "更新事件",
     "incidentName": "事件名稱",
+    "incidentNameHint": "此名稱會顯示在公開狀態頁上。",
     "updateMessage": "更新內容",
+    "updateMessageHint": "此內容會顯示在事件時間軸中。",
+    "affectedComponentsHint": "選擇本次事件影響的公開元件。",
     "updateHistory": "更新記錄",
     "investigating": "調查中",
     "identified": "已定位",
@@ -2950,6 +3341,20 @@
   "status": {
     "title": "服務狀態",
     "description": "公開的元件健康狀態與故障記錄。",
+    "systemStatus": "系統狀態",
+    "availabilityUnavailable": "暫無可用率資料",
+    "periodUnavailable": "暫無可用率統計期間",
+    "historySummary": "{{count}} 天：{{healthy}} 天正常，{{incident}} 天故障，{{unknown}} 天未知。",
+    "viewHistoryEvidence": "查看歷史證據",
+    "incidentHistory": "故障歷史",
+    "incidentHistoryDescription": "所選年份內公開的服務事件。",
+    "timeUnavailable": "時間暫時無法使用",
+    "overallDescription": {
+      "healthy": "目前公開元件均未回報服務中斷。",
+      "degraded": "部分公開元件正在回報服務降級。",
+      "incident": "目前有服務故障影響一個或多個公開元件。",
+      "unknown": "根據現有資料暫時無法判斷整體狀態。"
+    },
     "loading": "正在載入公開狀態…",
     "loadingIncidents": "正在載入故障記錄…",
     "operational": "所有系統運作正常",
@@ -2984,14 +3389,26 @@
   },
   "deployment": {
     "title": "部署設定",
-    "description": "檢視目前資料庫設定來源，並將 HertzBeat 中繼資料從 H2 安全移轉。",
+    "description": "檢視目前部署；需要移轉資料庫或完整重設時，請使用下方引導操作。",
     "loading": "正在載入部署設定…",
     "unavailable": "部署設定暫時無法使用。",
+    "danger": {
+      "title": "危險操作",
+      "description": "以下操作會改寫或清除持久化資料，執行前請確認影響範圍與復原方案。"
+    },
     "current": {
       "title": "目前部署",
       "description": "伺服器觀察到的設定來源與重新啟動要求。",
+      "summary": "管理資料儲存在 {{managementDatabase}}，遙測資料儲存在 {{telemetryDatabase}}；設定{{applyMode}}，以{{topology}}模式執行。",
+      "scope": "設定範圍",
+      "databaseConnections": "資料庫連線",
+      "configurationManagement": "設定管理方式",
+      "viewDetails": "檢視目前設定",
+      "hideDetails": "收合目前設定",
       "managementDatabase": "管理資料庫",
+      "managementDatabaseDescription": "儲存帳號、監控、告警與系統設定",
       "greptimeDatabase": "GreptimeDB 遙測資料庫",
+      "greptimeDatabaseDescription": "儲存指標、日誌與鏈路資料",
       "applyMode": "套用方式",
       "maintenanceMode": "維護模式",
       "topology": "部署拓撲",
@@ -3006,6 +3423,7 @@
       "command_line": "命令列"
     },
     "applyMode": { "managed_write": "受管理設定", "external_apply": "外部 / GitOps 設定" },
+    "applyModeInline": { "managed_write": "由 HertzBeat 管理", "external_apply": "由外部管理" },
     "maintenance": {
       "active": "維護模式已啟用",
       "inactive": "維護模式未啟用",
@@ -3014,10 +3432,31 @@
       "acknowledgementAutoEnter": "我瞭解開始移轉時伺服器會自動進入維護模式並暫停監控寫入。"
     },
     "topology": { "single_node": "單一節點", "multi_node": "多個節點", "unknown": "未知" },
+    "topologyInline": { "single_node": "單一節點", "multi_node": "多節點", "unknown": "未知" },
     "migration": {
-      "title": "H2 中繼資料移轉",
-      "description": "複製中繼資料前，請驗證空白的 MySQL 或 PostgreSQL 目標資料庫。",
+      "title": "HertzBeat 資料庫移轉精靈",
+      "description": "將 HertzBeat 管理資料從 H2 移轉到空白的 MySQL 或 PostgreSQL 資料庫。複製資料前會先驗證目標資料庫。",
+      "open": "開啟移轉精靈",
+      "close": "返回部署設定",
       "blocked": "伺服器已阻止目前部署執行移轉。"
+    },
+    "reset": {
+      "description": "清除目前 HertzBeat 執行個體並重新進入初始化設定。此操作無法復原。",
+      "action": "重設 HertzBeat",
+      "modalTitle": "重設整個 HertzBeat 執行個體",
+      "warning": "這會永久刪除目前執行個體中的所有帳號、設定與監控資料。",
+      "scopeTitle": "將被清除",
+      "scope": {
+        "management": "管理資料庫中的帳號、權限、監控、告警與系統設定",
+        "telemetry": "目前 GreptimeDB 資料庫中的全部指標、日誌、鏈路與相關資料表",
+        "local": "本機託管設定、初始化狀態以及標準 H2 與 DuckDB 資料檔"
+      },
+      "externalObjects": "外部物件儲存中的檔案不會自動刪除，以避免誤刪共用儲存中的其他內容。",
+      "inputLabel": "確認短語",
+      "instruction": "請輸入以下內容以繼續：",
+      "confirm": "清除全部內容並重新初始化",
+      "failed": "無法開始重設。目前資料尚未清除，請稍後再試。",
+      "transitionDelayed": "重設請求已儲存，但初始化頁面尚未就緒。請稍後重新整理；伺服器會自動繼續執行重設。"
     },
     "fields": {
       "target": "目標資料庫",
@@ -3132,13 +3571,14 @@
       "optional": { "title": "選填設定", "pending": "管理員設定已完成。下一步是選填伺服器設定。" }
     },
     "optional": {
-      "description": "立即設定公用端點、資料保留與郵件，或留空並稍後在設定中完成。",
+      "description": "立即確認對外位址、資料保留與郵件，或稍後在系統設定中修改。",
       "publicAccess": {
-        "title": "公用存取",
-        "description": "請填寫管理員與遙測傳送端應使用的位址。HertzBeat 不會從目前瀏覽器推斷這些位址。",
-        "publicBaseUrl": "公用基礎 URL",
-        "otlpHttp": "伺服器 OTLP HTTP 端點",
-        "otlpGrpc": "伺服器 OTLP gRPC 端點"
+        "title": "對外位址",
+        "description": "預設使用目前安裝位址。只有透過負載平衡器、反向代理或閘道對外提供服務時，才需要填寫其他位址。",
+        "defaultAddress": "目前安裝位址：",
+        "useProxy": "透過負載平衡器或代理對外存取",
+        "proxyPublicBaseUrl": "外部存取位址",
+        "proxyPublicBaseUrlHelp": "請填寫使用者和外部系統實際存取的完整位址，包括通訊協定以及自訂連接埠或路徑前綴。"
       },
       "retention": { "title": "資料保留", "description": "設定資料保留天數，或留空並稍後設定。", "days": "保留天數" },
       "mail": {
@@ -3152,7 +3592,7 @@
         "password": "密碼",
         "fromAddress": "寄件位址"
       },
-      "validatePublicAccess": "驗證公用存取",
+      "validatePublicAccess": "驗證對外位址",
       "validateMail": "測試郵件連線",
       "save": "儲存選填設定",
       "saveRejected": "選填設定遭拒。已驗證的狀態允許安全重試。",
@@ -3250,7 +3690,17 @@
       "loading": "正在載入調查記錄…",
       "unavailable": "調查記錄暫不可用。",
       "empty": "尚無調查記錄。",
-      "untitled": "未命名調查"
+      "untitled": "未命名調查",
+      "search": "搜尋調查記錄",
+      "noMatches": "沒有符合的調查記錄。",
+      "status": {
+        "active": "進行中",
+        "completed": "已完成",
+        "failed": "失敗",
+        "cancelled": "已取消",
+        "recoveryRequired": "需要核對",
+        "noRun": "暫無執行"
+      }
     },
     "investigation": { "label": "問題調查" },
     "roles": { "you": "你", "assistant": "HertzBeat AI" },
@@ -3259,11 +3709,35 @@
       "description": "可以詢問監控、實體、告警、指標、日誌、鏈路或拓撲範圍內的問題。"
     },
     "composer": { "label": "調查問題", "placeholder": "讓 HertzBeat 協助排查一個運行問題…" },
-    "actions": { "send": "傳送", "stop": "停止", "approve": "批准", "reject": "拒絕", "submit": "提交" },
+    "actions": {
+      "send": "傳送",
+      "stop": "停止",
+      "recover": "查看同一執行",
+      "retryNew": "開始新執行",
+      "approve": "批准",
+      "reject": "拒絕",
+      "submit": "提交"
+    },
     "failure": "調查連線暫不可用。系統不會假定任何操作已經完成。",
+    "sessionLoadIncomplete": "部分已儲存的調查資訊未能載入，請重新整理或重新選擇該調查。",
+    "recoveryRequired": "工具可能已經執行，但 HertzBeat 未能儲存結果。繼續前請先核對目標狀態。",
+    "targetMismatch": "目前調查目標已失效，請返回來源頁面重新發起調查。",
+    "targetUnavailable": "HertzBeat 暫時無法核驗目前調查目標，本次調查未啟動。",
+    "invalidTarget": "此調查連結包含無效或暫不支援的目標，請返回來源頁面重新發起。",
+    "activeObservationPaused": "即時觀察已暫停，伺服器仍將該執行標記為進行中，系統未假定它已完成。",
     "context": {
       "label": "運行上下文",
+      "open": "開啟運行詳情",
+      "close": "收起運行詳情",
+      "shortLabel": "詳情",
+      "panelClose": "關閉運行詳情面板",
       "target": "目標",
+      "monitorTarget": "監控 {{id}}",
+      "singleAlertTarget": "單筆警報 {{id}}",
+      "entityTarget": "實體 {{id}}",
+      "topologyTarget": "拓撲根實體 {{id}}",
+      "traceTarget": "鏈路 {{id}}",
+      "logTarget": "日誌頁",
       "none": "未附帶頁面上下文",
       "activity": "工具活動",
       "noActivity": "尚未使用工具",

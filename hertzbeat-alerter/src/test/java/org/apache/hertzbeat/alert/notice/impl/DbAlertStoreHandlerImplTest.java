@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import com.google.common.util.concurrent.Striped;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,26 +25,30 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Test case for {@link DbAlertStoreHandlerImpl}
  */
 @ExtendWith(MockitoExtension.class)
 class DbAlertStoreHandlerImplTest {
+    private static final String WORKSPACE_ID = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
     
     @Mock
     private GroupAlertDao groupAlertDao;
@@ -52,6 +57,8 @@ class DbAlertStoreHandlerImplTest {
     private SingleAlertDao singleAlertDao;
 
     @InjectMocks
+    private DbAlertStoreTransaction dbAlertStoreTransaction;
+
     private DbAlertStoreHandlerImpl dbAlertStoreHandler;
 
     private GroupAlert groupAlert;
@@ -59,8 +66,11 @@ class DbAlertStoreHandlerImplTest {
 
     @BeforeEach
     public void setUp() {
+        dbAlertStoreHandler = new DbAlertStoreHandlerImpl(dbAlertStoreTransaction);
         groupAlert = new GroupAlert();
+        groupAlert.setWorkspaceId(WORKSPACE_ID);
         singleAlert = new SingleAlert();
+        singleAlert.setWorkspaceId(WORKSPACE_ID);
         singleAlert.setFingerprint("test-fingerprint");
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
@@ -79,7 +89,7 @@ class DbAlertStoreHandlerImplTest {
         String groupKey = "test-group";
         groupAlert.setGroupKey(groupKey);
 
-        when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(null);
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(WORKSPACE_ID, groupKey)).thenReturn(null);
 
         SingleAlert savedSingleAlert = new SingleAlert();
         savedSingleAlert.setFingerprint("test-finger");
@@ -106,7 +116,7 @@ class DbAlertStoreHandlerImplTest {
 
         GroupAlert existingGroup = new GroupAlert();
         existingGroup.setId(1L);
-        when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(existingGroup);
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(WORKSPACE_ID, groupKey)).thenReturn(existingGroup);
 
         SingleAlert existingAlert = new SingleAlert();
         existingAlert.setId(1L);
@@ -114,7 +124,7 @@ class DbAlertStoreHandlerImplTest {
         existingAlert.setStartAt(1000L);
         existingAlert.setActiveAt(2000L);
         existingAlert.setTriggerTimes(1);
-        when(singleAlertDao.findByFingerprint(fingerprint)).thenReturn(existingAlert);
+        when(singleAlertDao.findByWorkspaceIdAndFingerprint(WORKSPACE_ID, fingerprint)).thenReturn(existingAlert);
 
         when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(existingAlert);
         when(groupAlertDao.save(any(GroupAlert.class))).thenReturn(existingGroup);
@@ -139,7 +149,8 @@ class DbAlertStoreHandlerImplTest {
         existingGroup.setCommonLabels(Map.of(
                 "collectorName", "integrated-e2e",
                 "collectorVersion", "1.8.0"));
-        when(groupAlertDao.findByGroupKey(groupAlert.getGroupKey())).thenReturn(existingGroup);
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(WORKSPACE_ID, groupAlert.getGroupKey()))
+                .thenReturn(existingGroup);
         when(singleAlertDao.save(singleAlert)).thenReturn(singleAlert);
         when(groupAlertDao.save(groupAlert)).thenReturn(groupAlert);
 
@@ -148,6 +159,82 @@ class DbAlertStoreHandlerImplTest {
         assertTrue(stored.getCommonLabels().containsKey("collectorVersion"));
         assertNull(stored.getCommonLabels().get("collectorVersion"));
         assertEquals("integrated-e2e", stored.getCommonLabels().get("collectorName"));
+    }
+
+    @Test
+    void sameFingerprintAndGroupKeyAreIndependentAcrossWorkspaces() {
+        GroupAlert teamA = group("team-a", "same-group", "same-fingerprint");
+        GroupAlert teamB = group("team-b", "same-group", "same-fingerprint");
+        when(singleAlertDao.save(any(SingleAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        dbAlertStoreHandler.store(teamA);
+        dbAlertStoreHandler.store(teamB);
+
+        verify(singleAlertDao).findByWorkspaceIdAndFingerprint("team-a", "same-fingerprint");
+        verify(singleAlertDao).findByWorkspaceIdAndFingerprint("team-b", "same-fingerprint");
+        verify(groupAlertDao).findByWorkspaceIdAndGroupKey("team-a", "same-group");
+        verify(groupAlertDao).findByWorkspaceIdAndGroupKey("team-b", "same-group");
+        verify(singleAlertDao, org.mockito.Mockito.times(2)).save(any(SingleAlert.class));
+        verify(groupAlertDao, org.mockito.Mockito.times(2)).save(any(GroupAlert.class));
+    }
+
+    @Test
+    void newScopedFingerprintDiscardsUntrustedExternalIds() {
+        groupAlert.setId(700L);
+        groupAlert.setGroupKey("new-group");
+        singleAlert.setId(701L);
+        when(singleAlertDao.findByWorkspaceIdAndFingerprint(
+                WORKSPACE_ID, singleAlert.getFingerprint())).thenReturn(null);
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(
+                WORKSPACE_ID, groupAlert.getGroupKey())).thenReturn(null);
+        when(singleAlertDao.save(any(SingleAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        dbAlertStoreHandler.store(groupAlert);
+
+        ArgumentCaptor<SingleAlert> singleCaptor = ArgumentCaptor.forClass(SingleAlert.class);
+        ArgumentCaptor<GroupAlert> groupCaptor = ArgumentCaptor.forClass(GroupAlert.class);
+        verify(singleAlertDao).save(singleCaptor.capture());
+        verify(groupAlertDao).save(groupCaptor.capture());
+        assertNull(singleCaptor.getValue().getId());
+        assertNull(groupCaptor.getValue().getId());
+    }
+
+    @Test
+    void lockSetUsesStripeOrderInsteadOfLexicalKeyOrder() {
+        Striped<Lock> stripes = Striped.lock(2);
+        List<String> keys = keysWhoseLexicalOrderInvertsStripeOrder(stripes);
+        List<Lock> expected = java.util.stream.StreamSupport.stream(
+                stripes.bulkGet(keys).spliterator(), false).toList();
+
+        assertEquals(expected, DbAlertStoreHandlerImpl.locksFor(stripes, keys));
+    }
+
+    private static List<String> keysWhoseLexicalOrderInvertsStripeOrder(Striped<Lock> stripes) {
+        for (int left = 0; left < 100; left++) {
+            for (int right = left + 1; right < 100; right++) {
+                String first = "key-" + left;
+                String second = "key-" + right;
+                if (stripes.get(first) != stripes.get(second)
+                        && stripes.get(first) != stripes.bulkGet(List.of(first, second)).iterator().next()) {
+                    return List.of(first, second);
+                }
+            }
+        }
+        throw new AssertionError("unable to find inverted stripe keys");
+    }
+
+    private static GroupAlert group(String workspaceId, String groupKey, String fingerprint) {
+        SingleAlert alert = SingleAlert.builder()
+                .workspaceId(workspaceId)
+                .fingerprint(fingerprint)
+                .build();
+        return GroupAlert.builder()
+                .workspaceId(workspaceId)
+                .groupKey(groupKey)
+                .alerts(List.of(alert))
+                .build();
     }
 
 }

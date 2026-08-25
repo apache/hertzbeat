@@ -174,7 +174,7 @@ public class OtlpCorrelationEnricher {
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
-        upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        replaceWorkspaceIdentity(attributes, context.workspaceId());
         replaceCollectorIdentity(attributes, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
@@ -186,7 +186,7 @@ public class OtlpCorrelationEnricher {
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
-        upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        replaceWorkspaceIdentity(attributes, context.workspaceId());
         replaceCollectorIdentity(attributes, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
@@ -198,7 +198,7 @@ public class OtlpCorrelationEnricher {
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         addStringAttributeIfMissing(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         addStringAttributeIfMissing(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
-        upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        replaceWorkspaceIdentity(attributes, context.workspaceId());
         replaceCollectorIdentity(attributes, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
@@ -294,6 +294,14 @@ public class OtlpCorrelationEnricher {
         if (StringUtils.isNotBlank(collectorId)) {
             attributes.add(stringAttribute(COLLECTOR_ID_ATTRIBUTE, collectorId));
             attributes.add(stringAttribute(COLLECTOR_ATTRIBUTE, collectorId));
+        }
+    }
+
+    private void replaceWorkspaceIdentity(List<KeyValue> attributes, String workspaceId) {
+        attributes.removeIf(attribute ->
+                OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID_KEYS.contains(attribute.getKey()));
+        if (StringUtils.isNotBlank(workspaceId)) {
+            attributes.add(stringAttribute(WORKSPACE_ID_ATTRIBUTE, workspaceId));
         }
     }
 

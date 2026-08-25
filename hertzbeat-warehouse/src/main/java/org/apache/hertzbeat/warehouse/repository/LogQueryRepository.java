@@ -21,6 +21,7 @@ package org.apache.hertzbeat.warehouse.repository;
 
 import java.util.List;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 
 /**
  * Repository for recent log queries used by OTLP workspaces.
@@ -49,6 +50,16 @@ public interface LogQueryRepository {
      */
     default List<LogEntry> queryRecentLogs(long start, long end, int limit) {
         return queryLogs(start, end, null, null, limit);
+    }
+
+    /**
+     * Query recent logs using a storage-enforced workspace predicate.
+     *
+     * <p>Implementations must not fall back to an unscoped read when the workspace is absent or
+     * the backing adapter cannot enforce this predicate.</p>
+     */
+    default List<LogEntry> queryRecentLogs(String workspaceId, long start, long end, int limit) {
+        throw new TelemetryStorageUnavailableException();
     }
 
     /**

@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
@@ -32,10 +33,13 @@ import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
@@ -61,9 +65,9 @@ class OtlpEntityIdentityResolverTest {
 
     @Test
     void enrichesMetricsWithUniqueEntityIdFromCanonicalResourceIdentityInWorkspace() {
-        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenReturn(List.of(identity(42L, "service.name", "Checkout", "checkout", 90, true)));
-        when(workspaceQueryGateway.findEntitiesByIds(Set.of(42L)))
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
                 .thenReturn(Map.of(42L, entity(42L, "prod-west")));
 
         ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(
@@ -79,13 +83,13 @@ class OtlpEntityIdentityResolverTest {
 
     @Test
     void prefersEntityWithMostCanonicalEvidenceOverBroadPrimaryIdentity() {
-        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenReturn(List.of(
                         identity(41L, "service.name", "checkout", "checkout", 150, true),
                         identity(42L, "service.name", "checkout", "checkout", 90, true),
                         identity(42L, "service.namespace", "commerce", "commerce", 30, false),
                         identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
-        when(workspaceQueryGateway.findEntitiesByIds(Set.of(41L, 42L)))
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(41L, 42L)))
                 .thenReturn(Map.of(
                         41L, entity(41L, "prod-west", "service", "checkout", "Checkout Broad"),
                         42L, entity(42L, "prod-west", "service", "checkout", "Checkout API")));
@@ -100,13 +104,13 @@ class OtlpEntityIdentityResolverTest {
 
     @Test
     void doesNotResolveEntityWhenCanonicalEvidenceIsSplitAcrossEntities() {
-        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenReturn(List.of(
                         identity(41L, "service.name", "checkout", "checkout", 90, true),
                         identity(41L, "deployment.environment.name", "prod", "prod", 20, false),
                         identity(42L, "service.name", "checkout", "checkout", 90, true),
                         identity(42L, "service.namespace", "commerce", "commerce", 30, false)));
-        when(workspaceQueryGateway.findEntitiesByIds(Set.of(41L, 42L)))
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(41L, 42L)))
                 .thenReturn(Map.of(41L, entity(41L, "prod-west"), 42L, entity(42L, "prod-west")));
 
         Optional<String> resolved = resolver.resolveEntityId(Map.of(
@@ -136,11 +140,11 @@ class OtlpEntityIdentityResolverTest {
 
     @Test
     void doesNotResolveEntityWhenBestMatchIsAmbiguous() {
-        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenReturn(List.of(
                         identity(42L, "service.name", "checkout", "checkout", 90, true),
                         identity(43L, "service.name", "checkout", "checkout", 90, true)));
-        when(workspaceQueryGateway.findEntitiesByIds(Set.of(42L, 43L)))
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L, 43L)))
                 .thenReturn(Map.of(42L, entity(42L, "prod-west"), 43L, entity(43L, "prod-west")));
 
         Optional<String> resolved = resolver.resolveEntityId(Map.of("service.name", "checkout"), "prod-west");
@@ -150,9 +154,9 @@ class OtlpEntityIdentityResolverTest {
 
     @Test
     void doesNotResolveEntityOutsideAuthenticatedWorkspace() {
-        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenReturn(List.of(identity(42L, "service.name", "checkout", "checkout", 90, true)));
-        when(workspaceQueryGateway.findEntitiesByIds(Set.of(42L)))
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
                 .thenReturn(Map.of(42L, entity(42L, "other-workspace")));
 
         Optional<String> resolved = resolver.resolveEntityId(Map.of("service.name", "checkout"), "prod-west");
@@ -162,7 +166,7 @@ class OtlpEntityIdentityResolverTest {
 
     @Test
     void keepsMetricsUnchangedWhenWorkspaceIdentityLookupFails() {
-        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenThrow(new IllegalStateException("workspace query down"));
 
         ExportMetricsServiceRequest enriched = assertDoesNotThrow(() -> resolver.enrichMetrics(metricsRequest(
@@ -172,12 +176,143 @@ class OtlpEntityIdentityResolverTest {
         assertTrue(!metricResourceAttributes(enriched).containsKey("hertzbeat.entity_id"));
     }
 
+    @Test
+    void batchesCanonicalIdentityResolutionAcrossTheMetricsRequest() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                "prod-west", Set.of("service.name"), Set.of("checkout", "payments")))
+                .thenReturn(List.of(
+                        identity(42L, "service.name", "checkout", "checkout", 90, true),
+                        identity(43L, "service.name", "payments", "payments", 90, true)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L, 43L)))
+                .thenReturn(Map.of(
+                        42L, entity(42L, "prod-west", "service", "checkout", "Checkout API"),
+                        43L, entity(43L, "prod-west", "service", "payments", "Payments API")));
+
+        ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(List.of(
+                resource(stringAttribute("service.name", "checkout")),
+                resource(stringAttribute("service.name", "checkout")),
+                resource(stringAttribute("service.name", "payments")))), "prod-west");
+
+        assertEquals("42", metricResourceAttributes(enriched, 0).get("hertzbeat.entity_id"));
+        assertEquals("42", metricResourceAttributes(enriched, 1).get("hertzbeat.entity_id"));
+        assertEquals("43", metricResourceAttributes(enriched, 2).get("hertzbeat.entity_id"));
+        verify(workspaceQueryGateway, times(1)).findIdentitiesByKeysAndNormalizedValues(
+                "prod-west", Set.of("service.name"), Set.of("checkout", "payments"));
+        verify(workspaceQueryGateway, times(1)).findEntitiesByIds("prod-west", Set.of(42L, 43L));
+    }
+
+    @Test
+    void chunksLargeRequestsIntoBoundedIdentityAndEntityLookups() {
+        List<Resource> resources = IntStream.range(0, 1_200)
+                .mapToObj(index -> resource(stringAttribute("service.name", "service-" + index)))
+                .toList();
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                eq("prod-west"), eq(Set.of("service.name")), anySet()))
+                .thenAnswer(invocation -> {
+                    Set<String> values = invocation.getArgument(2);
+                    return values.stream()
+                            .map(value -> {
+                                long entityId = Long.parseLong(value.substring("service-".length())) + 1;
+                                return identity(entityId, "service.name", value, value, 90, true);
+                            })
+                            .toList();
+                });
+        when(workspaceQueryGateway.findEntitiesByIds(eq("prod-west"), anySet()))
+                .thenAnswer(invocation -> {
+                    Set<Long> entityIds = invocation.getArgument(1);
+                    Map<Long, ObserveEntity> entities = new LinkedHashMap<>();
+                    entityIds.forEach(entityId -> entities.put(entityId,
+                            entity(entityId, "prod-west", "service", "service-" + (entityId - 1),
+                                    "Service " + (entityId - 1))));
+                    return entities;
+                });
+
+        ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(resources), "prod-west");
+
+        assertEquals("1", metricResourceAttributes(enriched, 0).get("hertzbeat.entity_id"));
+        assertEquals("1200", metricResourceAttributes(enriched, 1_199).get("hertzbeat.entity_id"));
+        ArgumentCaptor<Set<String>> identityValues = ArgumentCaptor.forClass(Set.class);
+        verify(workspaceQueryGateway, times(3)).findIdentitiesByKeysAndNormalizedValues(
+                eq("prod-west"), eq(Set.of("service.name")), identityValues.capture());
+        assertTrue(identityValues.getAllValues().stream().allMatch(values -> values.size() <= 512));
+        assertEquals(1_200, identityValues.getAllValues().stream()
+                .flatMap(Set::stream)
+                .collect(Collectors.toCollection(LinkedHashSet::new))
+                .size());
+        ArgumentCaptor<Set<Long>> entityIds = ArgumentCaptor.forClass(Set.class);
+        verify(workspaceQueryGateway, times(3)).findEntitiesByIds(eq("prod-west"), entityIds.capture());
+        assertTrue(entityIds.getAllValues().stream().allMatch(ids -> ids.size() <= 512));
+        assertEquals(1_200, entityIds.getAllValues().stream()
+                .flatMap(Set::stream)
+                .collect(Collectors.toCollection(LinkedHashSet::new))
+                .size());
+    }
+
+    @Test
+    void rejectsUnknownClientEntityIdAndUsesCanonicalResolution() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                "prod-west", Set.of("service.name"), Set.of("checkout")))
+                .thenReturn(List.of(identity(42L, "service.name", "checkout", "checkout", 90, true)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L, 999L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(
+                stringAttribute("hertzbeat.entity_id", "999"),
+                stringAttribute("hertzbeat.entity_type", "forged"),
+                stringAttribute("hertzbeat.entity_name", "Forged Entity"),
+                stringAttribute("service.name", "checkout")), "prod-west");
+
+        Map<String, String> attributes = metricResourceAttributes(enriched);
+        assertEquals("42", attributes.get("hertzbeat.entity_id"));
+        assertEquals("service", attributes.get("hertzbeat.entity_type"));
+        assertEquals("Checkout API", attributes.get("hertzbeat.entity_name"));
+    }
+
+    @Test
+    void acceptsClientEntityIdOnlyAfterWorkspaceScopedValidation() {
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(
+                stringAttribute("hertzbeat.entity_id", "42")), "prod-west");
+
+        Map<String, String> attributes = metricResourceAttributes(enriched);
+        assertEquals("42", attributes.get("hertzbeat.entity_id"));
+        assertEquals("service", attributes.get("hertzbeat.entity_type"));
+        assertEquals("Checkout API", attributes.get("hertzbeat.entity_name"));
+        verify(workspaceQueryGateway).findEntitiesByIds("prod-west", Set.of(42L));
+    }
+
+    @Test
+    void removesUnknownClientEntityIdWhenNoCanonicalIdentityCanResolveIt() {
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(999L)))
+                .thenReturn(Map.of());
+
+        ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(
+                stringAttribute("hertzbeat.entity_id", "999"),
+                stringAttribute("hertzbeat.entity_type", "forged"),
+                stringAttribute("hertzbeat.entity_name", "Forged Entity")), "prod-west");
+
+        Map<String, String> attributes = metricResourceAttributes(enriched);
+        assertTrue(!attributes.containsKey("hertzbeat.entity_id"));
+        assertTrue(!attributes.containsKey("hertzbeat.entity_type"));
+        assertTrue(!attributes.containsKey("hertzbeat.entity_name"));
+    }
+
     private ExportMetricsServiceRequest metricsRequest(KeyValue... resourceAttributes) {
-        return ExportMetricsServiceRequest.newBuilder()
-                .addResourceMetrics(ResourceMetrics.newBuilder()
-                        .setResource(Resource.newBuilder().addAllAttributes(List.of(resourceAttributes)).build())
-                        .build())
-                .build();
+        return metricsRequest(List.of(resource(resourceAttributes)));
+    }
+
+    private ExportMetricsServiceRequest metricsRequest(List<Resource> resources) {
+        ExportMetricsServiceRequest.Builder request = ExportMetricsServiceRequest.newBuilder();
+        resources.forEach(resource -> request.addResourceMetrics(ResourceMetrics.newBuilder()
+                .setResource(resource)
+                .build()));
+        return request.build();
+    }
+
+    private Resource resource(KeyValue... resourceAttributes) {
+        return Resource.newBuilder().addAllAttributes(List.of(resourceAttributes)).build();
     }
 
     private KeyValue stringAttribute(String key, String value) {
@@ -188,7 +323,11 @@ class OtlpEntityIdentityResolverTest {
     }
 
     private Map<String, String> metricResourceAttributes(ExportMetricsServiceRequest request) {
-        return request.getResourceMetrics(0)
+        return metricResourceAttributes(request, 0);
+    }
+
+    private Map<String, String> metricResourceAttributes(ExportMetricsServiceRequest request, int index) {
+        return request.getResourceMetrics(index)
                 .getResource()
                 .getAttributesList()
                 .stream()

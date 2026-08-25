@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAlertRuleDraft } from '../model/alert-rule-model';
@@ -26,7 +26,6 @@ const controller = vi.hoisted(() => ({
   cancel: vi.fn(),
   changeDataType: vi.fn(),
   changeKind: vi.fn(),
-  changeMetricApplication: vi.fn(),
   changeMetricAuthoringMode: vi.fn(),
   changeMetricBindingIds: vi.fn(),
   changeMetricBindingLabels: vi.fn(),
@@ -54,6 +53,9 @@ vi.mock('../controller/use-alert-rule-action-capabilities', () => ({
   useAlertRuleActionCapabilities: () => actionCapabilities
 }));
 vi.mock('../controller/use-alert-rule-editor-controller', () => ({ useAlertRuleEditorController }));
+vi.mock('./alert-rule-list-page', () => ({
+  AlertRuleListPage: () => <div data-testid="alert-rule-list-background" />
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 describe('AlertRuleEditorPage', () => {
@@ -65,8 +67,64 @@ describe('AlertRuleEditorPage', () => {
   });
   afterEach(cleanup);
 
-  it('centers its bounded editor workspace on wide screens', () => {
-    expect(editorStyles).toMatch(/\.page\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*1040px;[^}]*margin-inline:\s*auto;/s);
+  it('recreates the master authoring dialog over the rule list instead of a full-page card', () => {
+    expect(editorStyles).toMatch(/\.editorDialogBody\s*\{[^}]*display:\s*grid/s);
+    expect(editorStyles).not.toMatch(/\.editorDialogBody\s*\{[^}]*max-height:/s);
+    expect(editorStyles).not.toMatch(/\.editorDialogBody\s*\{[^}]*overflow-y:/s);
+    expect(editorStyles).not.toMatch(/\.editorSurface\s*\{[^}]*border:\s*1px solid/s);
+
+    render(<AlertRuleEditorPage mode="new" />);
+    expect(screen.getByTestId('alert-rule-list-background')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'alertRules.newRealtime' })).toHaveStyle({ width: '70%' });
+    expect(screen.queryByRole('region', { name: 'alertRules.typeChoice.title' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('alertRules.name')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'alertRules.confirm' }).closest('.ant-modal-footer')).not.toBeNull();
+  });
+
+  it('lets the SQL editor consume Escape before the dialog closes', () => {
+    controller.state = buildState({
+      requestedKind: 'periodic',
+      draft: { ...createAlertRuleDraft(), kind: 'periodic', dataType: 'log' }
+    });
+    render(<AlertRuleEditorPage mode="new" />);
+    const editor = screen.getByLabelText('alertRules.expression');
+    const editorHost = editor.closest('[data-hb-alert-sql-editor="codemirror"]');
+    const completion = document.createElement('div');
+    completion.className = 'cm-tooltip-autocomplete';
+    editorHost?.append(completion);
+
+    fireEvent.keyDown(editor, { key: 'Escape' });
+    expect(controller.cancel).not.toHaveBeenCalled();
+
+    completion.remove();
+    fireEvent.keyDown(editor, { key: 'Escape' });
+    expect(controller.cancel).toHaveBeenCalledOnce();
+  });
+
+  it('leaves Escape from a nested modal to that modal instead of closing the rule editor', () => {
+    render(<AlertRuleEditorPage mode="new" />);
+    const nestedModalControl = document.createElement('button');
+    document.body.append(nestedModalControl);
+
+    fireEvent.keyDown(nestedModalControl, { key: 'Escape' });
+
+    expect(controller.cancel).not.toHaveBeenCalled();
+    nestedModalControl.remove();
+  });
+
+  it('enters new authoring with the strategy already selected by the list modal', () => {
+    render(<AlertRuleEditorPage mode="new" />);
+
+    expect(screen.getByLabelText('alertRules.name')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alertRules.kind.realtime' })).not.toBeInTheDocument();
+  });
+
+  it('retires direct new-rule routes that do not carry a selected strategy', async () => {
+    controller.state = buildState({ requestedKind: null });
+    render(<AlertRuleEditorPage mode="new" />);
+
+    expect(screen.queryByLabelText('alertRules.name')).not.toBeInTheDocument();
+    await waitFor(() => expect(controller.cancel).toHaveBeenCalledOnce());
   });
 
   it.each([
@@ -91,7 +149,7 @@ describe('AlertRuleEditorPage', () => {
     ['error', 'alertRules.previewFailed']
   ])('renders preview state %s distinctly', (kind, evidence) => {
     controller.state = buildState({ preview: { kind } });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     expect(screen.getByText(evidence)).toBeInTheDocument();
   });
 
@@ -102,7 +160,7 @@ describe('AlertRuleEditorPage', () => {
     ['validation', 'alertRules.validation']
   ])('renders save failure %s distinctly', (failure, evidence) => {
     controller.state = buildState({ saveFailure: failure });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     expect(screen.getByText(evidence)).toBeInTheDocument();
   });
 
@@ -110,24 +168,24 @@ describe('AlertRuleEditorPage', () => {
     controller.state = buildState({
       recovery: { phase: 'proof', failure: 'unavailable', retryable: true }
     });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(controller.retrySave).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.confirm' })).toBeDisabled();
     expect(screen.getByLabelText('alertRules.name')).toBeDisabled();
 
     cleanup();
     controller.state = buildState({
       recovery: { phase: 'commit-uncertain', failure: 'unavailable', retryable: false }
     });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     expect(screen.queryByRole('button', { name: 'common.retry' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.confirm' })).toBeDisabled();
   });
 
   it('preserves cleared period and times as null for validation', () => {
     controller.state = buildState({ draft: { ...createAlertRuleDraft(), kind: 'periodic' } });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     fireEvent.change(screen.getByLabelText('alertRules.period'), { target: { value: '' } });
     fireEvent.change(screen.getByLabelText('alertRules.times'), { target: { value: '' } });
     expect(controller.updateDraft).toHaveBeenCalledWith({ period: null });
@@ -141,7 +199,7 @@ describe('AlertRuleEditorPage', () => {
     [{ kind: 'ready', status: { hasPromqlExecutor: false, hasSqlExecutor: true } }, 'alertRules.datasource.sqlOnly']
   ])('renders datasource capability state %#', (datasource, message) => {
     controller.state = buildState({ datasource });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 
@@ -150,7 +208,7 @@ describe('AlertRuleEditorPage', () => {
     ['error', 'common.routeError.description']
   ])('renders and retries datasource %s without retrying rule detail', (kind, message) => {
     controller.state = buildState({ datasource: { kind } });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
 
     expect(screen.getByText(message)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
@@ -167,7 +225,7 @@ describe('AlertRuleEditorPage', () => {
         rows: [{ metric: 'cpu_usage', value: 92.5, __value__: null, labels: { service: 'checkout' } }]
       }
     });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
     expect(screen.getByText('alertRules.previewSuccess')).toBeInTheDocument();
     expect(screen.getAllByText('metric').length).toBeGreaterThan(0);
     expect(screen.getByText('cpu_usage')).toBeInTheDocument();
@@ -175,13 +233,23 @@ describe('AlertRuleEditorPage', () => {
     expect(screen.getByText('null')).toBeInTheDocument();
     expect(screen.getByText('{"service":"checkout"}')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('alertRules.name'), { target: { value: 'New' } });
-    fireEvent.click(screen.getByRole('button', { name: 'alertRules.preview' }));
-    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.confirm' }));
     fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
     expect(controller.updateDraft).toHaveBeenCalledWith({ name: 'New' });
-    expect(controller.preview).toHaveBeenCalled();
     expect(controller.save).toHaveBeenCalled();
     expect(controller.cancel).toHaveBeenCalled();
+  });
+
+  it('marks source-required fields inline after an invalid submit attempt', () => {
+    controller.state = buildState({ draft: { ...createAlertRuleDraft(), labelsText: '' } });
+    render(<AlertRuleEditorPage mode="new" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.confirm' }));
+
+    expect(screen.getByLabelText('alertRules.name')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('combobox', { name: 'alertRules.severity.label' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getAllByText('alertRules.required')).toHaveLength(3);
+    expect(controller.save).toHaveBeenCalledOnce();
   });
 
   it('denies a read-only session before the editor controller can load protected dependencies', () => {
@@ -199,13 +267,12 @@ describe('AlertRuleEditorPage', () => {
       command: 'saving',
       draft: { ...createAlertRuleDraft(), kind: 'periodic' }
     });
-    render(<AlertRuleEditorPage mode="new" />);
+    render(<AlertRuleEditorPage mode="edit" />);
 
     for (const label of [
       'alertRules.name',
       'alertRules.expression',
       'alertRules.template',
-      'alertRules.labels',
       'alertRules.period',
       'alertRules.times'
     ]) {
@@ -215,7 +282,8 @@ describe('AlertRuleEditorPage', () => {
     expect(screen.getByRole('switch')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'alertRules.preview' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /common\.save/ })).toHaveClass('ant-btn-loading');
+    const savingButton = screen.getAllByRole('button').find(button => button.classList.contains('ant-btn-loading'));
+    expect(savingButton).toHaveTextContent('alertRules.confirm');
   });
 });
 
@@ -229,17 +297,18 @@ function buildState(override: Record<string, unknown> = {}) {
     },
     detail: { kind: 'ready' },
     draft: createAlertRuleDraft(),
+    labelSuggestions: { kind: 'received', keys: [], catalog: { keys: [], valuesByKey: {} } },
     metricBindings: {
       eligible: false,
       open: false,
       evidence: { kind: 'idle' },
       selectedMonitorIds: [],
-      selectedLabels: [],
-      labelChoices: []
+      selectedLabels: []
     },
     metricTarget: { apps: { kind: 'ready', apps: [] }, hierarchy: { kind: 'idle' } },
     preview: { kind: 'idle' },
     recovery: undefined,
+    requestedKind: 'realtime',
     saveFailure: undefined,
     ...override
   };

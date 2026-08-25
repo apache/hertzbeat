@@ -75,7 +75,11 @@ class AgentInteractionInputServiceTest {
         AgentRuntimeEvent event = publishedEvents.get(0);
         assertEquals(RequestKind.USER_INPUT, event.getRequestKind());
         assertEquals("monitor.create", event.getRequestPayload().get("targetTool"));
-        service.submit(event.getRequestId(), actor, Map.of("host", "127.0.0.1", "password", "secret"));
+        assertThrows(IllegalArgumentException.class, () -> service.submit(event.getRequestId(), actor,
+                "workspace-b", Map.of("host", "127.0.0.1", "password", "secret")));
+        assertFalse(resultFuture.isDone());
+        service.submit(event.getRequestId(), actor, "default",
+                Map.of("host", "127.0.0.1", "password", "secret"));
 
         InteractionResult result = resultFuture.get(2, TimeUnit.SECONDS);
         AgentRuntimeEvent completedEvent = publishedEvents.get(1);
@@ -85,10 +89,7 @@ class AgentInteractionInputServiceTest {
         assertEquals(event.getRequestId(), completedEvent.getRequestId());
         assertNull(completedEvent.getRequestPayload());
         AgentToolExecutionRequest targetRequest = request("monitor.create",
-                Map.of("name", "local", "params", Map.of("port", 22), "inputRef", result.inputRef()))
-                .toBuilder()
-                .runUid("run-2")
-                .build();
+                Map.of("name", "local", "params", Map.of("port", 22), "inputRef", result.inputRef()));
         service.validateReference(targetRequest);
         AgentToolExecutionRequest merged = service.mergeAndTake(targetRequest);
 
@@ -120,7 +121,7 @@ class AgentInteractionInputServiceTest {
                 List.of(new InputField("host", "params.host", "text", "Host", true, null)), context));
 
         assertTrue(eventPublished.await(2, TimeUnit.SECONDS));
-        service.submit(publishedEvent.get().getRequestId(), actor, Map.of("host", "127.0.0.1"));
+        service.submit(publishedEvent.get().getRequestId(), actor, "default", Map.of("host", "127.0.0.1"));
         InteractionResult result = resultFuture.get(2, TimeUnit.SECONDS);
 
         assertThrows(IllegalArgumentException.class, () -> service.validateReference(
@@ -132,6 +133,14 @@ class AgentInteractionInputServiceTest {
                 .build();
         assertThrows(IllegalArgumentException.class,
                 () -> service.validateReference(anotherSessionRequest));
+        AgentToolExecutionRequest anotherWorkspaceRequest = request("monitor.create",
+                Map.of("inputRef", result.inputRef())).toBuilder().workspaceId("workspace-b").build();
+        assertThrows(IllegalArgumentException.class,
+                () -> service.validateReference(anotherWorkspaceRequest));
+        AgentToolExecutionRequest anotherRunRequest = request("monitor.create",
+                Map.of("inputRef", result.inputRef())).toBuilder().runUid("run-2").build();
+        assertThrows(IllegalArgumentException.class,
+                () -> service.validateReference(anotherRunRequest));
     }
 
     private AgentToolExecutionRequest request(String toolName, Map<String, Object> arguments) {

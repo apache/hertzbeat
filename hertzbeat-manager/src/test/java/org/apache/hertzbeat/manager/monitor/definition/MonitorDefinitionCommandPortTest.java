@@ -36,6 +36,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -46,9 +49,7 @@ import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 class MonitorDefinitionCommandPortTest {
@@ -76,31 +79,27 @@ class MonitorDefinitionCommandPortTest {
     private WarehouseService warehouseService;
 
     @Mock
-    private ObjectStoreConfigServiceImpl objectStoreConfigService;
-
-    @Mock
-    private ObjectProvider<ObjectStoreService> objectStoreServiceProvider;
-
-    @Mock
     private ObjectProvider<MonitorService> monitorServiceProvider;
 
     @Mock
     private MonitorService monitorService;
 
+    private MonitorDefinitionMutationCoordinator mutationCoordinator;
+
     @BeforeEach
     void setUp() throws Exception {
         when(defineDao.findAll()).thenReturn(new ArrayList<>());
         lenient().when(monitorServiceProvider.getIfAvailable()).thenReturn(monitorService);
+        mutationCoordinator = new MonitorDefinitionMutationCoordinator();
         appService = new AppServiceImpl(
                 monitorDao,
-                objectStoreConfigService,
                 paramDao,
-                defineDao,
                 warehouseService,
                 monitorServiceProvider,
-                objectStoreServiceProvider);
+                new MonitorDefinitionStoreFactory(defineDao),
+                mutationCoordinator);
         commandService = new MonitorDefinitionCommandService(appService);
-        appService.initializeRuntimeDefinitions();
+        appService.initializeRuntimeDefinitions(null);
         clearInvocations(defineDao, monitorDao, monitorService);
     }
 
@@ -115,6 +114,28 @@ class MonitorDefinitionCommandPortTest {
         assertError(MonitorDefinitionErrorCode.CREATE_CONFLICT, () -> commandService.create(definition));
         verify(defineDao).save(any(Define.class));
         verify(monitorService).updateAppCollectJob(any(Job.class));
+    }
+
+    @Test
+    void migrationLockBlocksDefinitionWritesUntilTransactionCompletion() throws Exception {
+        CountDownLatch attempted = new CountDownLatch(1);
+        TransactionSynchronizationManager.initSynchronization();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            mutationCoordinator.executeMigration(() -> { });
+            var pendingWrite = executor.submit(() -> {
+                attempted.countDown();
+                return appService.executeSerialized(state -> true);
+            });
+
+            assertTrue(attempted.await(1, TimeUnit.SECONDS));
+            assertThrows(TimeoutException.class, () -> pendingWrite.get(100, TimeUnit.MILLISECONDS));
+
+            TransactionSynchronizationManager.getSynchronizations().getLast()
+                    .afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+            assertTrue(pendingWrite.get(1, TimeUnit.SECONDS));
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test

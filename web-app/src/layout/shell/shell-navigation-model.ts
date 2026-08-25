@@ -7,6 +7,7 @@
 
 import type { Action, IResourceItem } from '@refinedev/core';
 import type { ReactNode } from 'react';
+import { matchPath } from 'react-router-dom';
 import { z } from 'zod';
 
 import type { TimeOwnership } from '@/shared/time';
@@ -30,6 +31,7 @@ const shellResourceMetaSchema = z
     capability: z.enum(['supported', 'unknown', 'unsupported']),
     label: z.string().optional(),
     labelKey: z.string(),
+    activePath: z.string().startsWith('/').optional(),
     navigation: z.boolean(),
     order: z.number().int().nonnegative(),
     requiredRoles: z.array(z.string()).optional(),
@@ -52,6 +54,7 @@ export function resolveShellTimePolicy(shell: ShellResourceMeta | undefined, act
 }
 
 export type ShellNavigationItem = {
+  activePath?: string;
   capability: ShellCapability;
   children: ShellNavigationItem[];
   disabled: boolean;
@@ -70,6 +73,7 @@ export function buildShellNavigation(resources: readonly IResourceItem[], roles:
     const shell = readShellResourceMeta(resource.meta?.shell);
     if (!shell?.navigation || !hasShellRoleAccess(shell, roles)) return;
     const item: ShellNavigationItem = {
+      ...(shell.activePath ? { activePath: shell.activePath } : {}),
       capability: shell.capability,
       children: [],
       disabled: shell.capability !== 'supported',
@@ -106,8 +110,9 @@ export function activeNavigationTrail(tree: readonly ShellNavigationItem[], loca
   const visit = (items: readonly ShellNavigationItem[], parents: string[]) => {
     items.forEach(item => {
       const trail = [...parents, item.name];
-      if (item.route && routeMatches(item.route, location) && (!match || item.route.length > match.routeLength)) {
-        match = { routeLength: item.route.length, trail };
+      const activePath = item.activePath ?? item.route;
+      if (activePath && routeMatches(activePath, location) && (!match || activePath.length > match.routeLength)) {
+        match = { routeLength: activePath.length, trail };
       }
       visit(item.children, trail);
     });
@@ -136,7 +141,7 @@ function routeLocation(value: string) {
 }
 
 function pathMatches(route: string, pathname: string) {
-  return pathname === route || pathname.startsWith(`${route}/`);
+  return matchPath({ path: route, end: false }, pathname) !== null;
 }
 
 function sortNavigation(items: ShellNavigationItem[]) {

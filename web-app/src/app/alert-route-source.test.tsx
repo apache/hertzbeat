@@ -16,13 +16,11 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
-import type { PropsWithChildren, ReactNode } from 'react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AlertManagementNav } from '@/features/alert/components/alert-management-nav';
-import { AlertNoiseControlNav } from '@/features/alert/components/alert-noise-control-nav';
 import { useAlertCenterController } from '@/features/alert/controller/use-alert-center-controller';
 import { useAlertRuleEditorController } from '@/features/alert/controller/use-alert-rule-editor-controller';
 import { useAlertRuleListController } from '@/features/alert/controller/use-alert-rule-list-controller';
@@ -41,6 +39,7 @@ const canonical = vi.hoisted(() => ({
     integrations: '/canonical-alerts/integrations/:source'
   },
   integrationPath: vi.fn((source: string) => `/canonical-alerts/integrations/${source}`),
+  ruleNewPath: vi.fn((kind: string) => `/canonical-alerts/rules/new?kind=${kind}`),
   ruleEditPath: vi.fn((ruleId: number) => `/canonical-alerts/rules/${ruleId}/edit`)
 }));
 const navigate = vi.hoisted(() => vi.fn());
@@ -78,6 +77,7 @@ vi.mock('@/shared/navigation/app-paths', async importOriginal => ({
   ...(await importOriginal<typeof import('@/shared/navigation/app-paths')>()),
   alertRoutePaths: canonical.paths,
   buildAlertIntegrationPath: canonical.integrationPath,
+  buildAlertRuleNewPath: canonical.ruleNewPath,
   buildAlertRuleEditPath: canonical.ruleEditPath
 }));
 vi.mock('@/features/alert/api/alert-api', () => alertApi);
@@ -135,7 +135,7 @@ describe('Alert route ownership', () => {
     });
   });
 
-  it('derives the application catalog and both Alert navigation controls from the inward contract', () => {
+  it('derives the application catalog from the inward contract', () => {
     expect(getAppRoute('alerts').path).toBe(canonical.paths.center);
     expect(getAppRoute('alert-rules').path).toBe(canonical.paths.rules);
     expect(getAppRoute('alert-rule-new').path).toBe(canonical.paths.ruleNew);
@@ -144,28 +144,21 @@ describe('Alert route ownership', () => {
     expect(getAppRoute('alert-inhibits').path).toBe(canonical.paths.inhibits);
     expect(getAppRoute('alert-silences').path).toBe(canonical.paths.silences);
     expect(getAppRoute('alert-integrations').path).toBe(canonical.paths.integrations);
-
-    renderNavigation(<AlertManagementNav />, canonical.paths.center);
-    fireEvent.click(screen.getByRole('tab', { name: 'alertNavigation.rules' }));
-    expect(navigate).toHaveBeenLastCalledWith(canonical.paths.rules);
-    fireEvent.click(screen.getByRole('tab', { name: 'alertIntegrations.menu' }));
-    expect(navigate).toHaveBeenLastCalledWith('/canonical-alerts/integrations/webhook');
-
-    renderNavigation(<AlertNoiseControlNav />, canonical.paths.groups);
-    fireEvent.click(screen.getByText('alertNavigation.inhibits'));
-    expect(navigate).toHaveBeenLastCalledWith(canonical.paths.inhibits);
   });
 
   it('drives list, editor, and center controller navigation from the same contract', async () => {
     const list = renderRoutedController(canonical.paths.rules, useAlertRuleListController);
     await waitFor(() => expect(list.result.current.state.list.kind).toBe('empty'));
-    act(() => list.result.current.create());
-    expect(navigate).toHaveBeenLastCalledWith(canonical.paths.ruleNew);
+    act(() => list.result.current.create('realtime'));
+    expect(navigate).toHaveBeenLastCalledWith('/canonical-alerts/rules/new?kind=realtime');
+    expect(canonical.ruleNewPath).toHaveBeenCalledWith('realtime');
     act(() => list.result.current.edit(17));
     expect(navigate).toHaveBeenLastCalledWith('/canonical-alerts/rules/17/edit');
     expect(canonical.ruleEditPath).toHaveBeenCalledWith(17);
 
-    const editor = renderRoutedController(canonical.paths.ruleNew, () => useAlertRuleEditorController('new'));
+    const editor = renderRoutedController(`${canonical.paths.ruleNew}?kind=realtime`, () =>
+      useAlertRuleEditorController('new')
+    );
     act(() => editor.result.current.cancel());
     expect(navigate).toHaveBeenLastCalledWith(canonical.paths.rules);
     act(() =>
@@ -188,10 +181,6 @@ describe('Alert route ownership', () => {
     expect(navigate).toHaveBeenLastCalledWith(canonical.paths.rules);
   });
 });
-
-function renderNavigation(navigation: ReactNode, entry: string) {
-  return render(<MemoryRouter initialEntries={[entry]}>{navigation}</MemoryRouter>);
-}
 
 function renderRoutedController<Result>(entry: string, useController: () => Result) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });

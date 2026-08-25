@@ -17,9 +17,14 @@
     "query": "Consultar",
     "refresh": "Atualizar",
     "actions": "Ações",
+    "tableSelection": {
+      "selectAll": "Selecionar todos os itens desta página",
+      "clearAll": "Limpar todos os itens selecionados desta página"
+    },
     "view": "Ver",
     "edit": "Editar",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
     "unsavedChangesConfirm": "Descartar as alterações não salvas?",
     "discardChanges": "Descartar alterações",
     "save": "Salvar",
@@ -164,6 +169,10 @@
     "description": "Serviços, hosts, bancos de dados e outros recursos são unificados automaticamente, sem exigir modelagem abstrata manual.",
     "empty": "Nenhum recurso corresponde aos filtros atuais.",
     "loading": "Carregando recursos…",
+    "degraded": {
+      "title": "As evidências operacionais estão indisponíveis",
+      "description": "A identidade do recurso está disponível, mas o status e as evidências baseados em telemetria não puderam ser carregados. Nenhum estado saudável ou valor zero é inferido."
+    },
     "filters": {
       "search": "Pesquisar recursos",
       "type": "Tipo",
@@ -1406,14 +1415,6 @@
       "resizeHistory": "Redimensionar painel de histórico"
     }
   },
-  "alertNavigation": {
-    "events": "Eventos",
-    "rules": "Regras",
-    "noiseControl": "Controle de ruído",
-    "groups": "Agrupamento",
-    "inhibits": "Inibição",
-    "silences": "Silêncios"
-  },
   "settingsNavigation": {
     "receivers": "Destinatários",
     "rules": "Regras de envio",
@@ -1503,7 +1504,6 @@
       "not-found": "This alert integration is not in the server catalog."
     },
     "readiness": {
-      "ready": "This backend guide is ready to configure.",
       "configuration_required": "This source requires sender or gateway configuration before it can run.",
       "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
     },
@@ -1513,17 +1513,41 @@
     "snippets": "Payload examples",
     "limitations": "Known limitations",
     "menu": "Integrações de alertas externos",
-    "title": "Integração {{source}}",
     "description": "Configure um emissor externo para relatar alertas pela entrada autenticada do HertzBeat.",
-    "sourcesLabel": "Fontes de integração",
-    "method": "Método",
+    "sourcesLabel": "Fontes de alerta integradas",
+    "sourceGroups": {
+      "ready": "Disponível diretamente",
+      "configuration_required": "Gateway necessário",
+      "guide_blocked": "Indisponível"
+    },
     "endpoint": "Caminho de entrada",
-    "endpointHint": "Somente o caminho de entrada é exibido. Adicione antes dele o endereço do servidor HertzBeat acessível pelo emissor.",
-    "authorizationHeader": "Cabeçalho obrigatório",
-    "manageTokens": "Gerenciar tokens de API",
+    "endpointConfiguredHint": "Esta URL de callback combina o endereço de acesso público das Configurações do Sistema com o caminho de entrada {{path}}.",
+    "endpointRelativeHint": "O endereço de acesso público não está configurado, então apenas o caminho de entrada é exibido. Adicione-o nas Configurações do Sistema para gerar a URL completa.",
+    "requestHeaders": "Cabeçalhos da solicitação",
+    "generateToken": "Gerar token",
+    "dataFlow": "O que significa uma resposta bem-sucedida",
     "copy": "Copiar",
     "copied": "Copiado",
-    "copyFailed": "Falha ao copiar"
+    "copyFailed": "Falha ao copiar",
+    "workspace": {
+      "prepare": "Preparar acesso",
+      "configure": "Configurar o emissor",
+      "verify": "Verificar o ciclo de vida do alerta"
+    },
+    "verification": {
+      "unverified": "Não verificado",
+      "unverifiedHint": "Inicie a verificação e dispare um alerta real neste emissor.",
+      "waiting": "Aguardando evento do emissor",
+      "waitingHint": "Aguardando desde {{time}} um evento válido desta origem.",
+      "verified": "Evento recebido",
+      "verifiedHint": "Última verificação por evento aceito em {{time}}.",
+      "start": "Iniciar verificação",
+      "restart": "Verificar novamente",
+      "starting": "Iniciando…",
+      "startFailed": "Não foi possível iniciar a verificação. Tente novamente.",
+      "verifiedRail": "Verificado por um evento real do emissor"
+    },
+    "zabbix": { "parameters": "Parâmetros do tipo de mídia", "script": "Script do webhook" }
   },
   "plugins": {
     "title": "Gerenciamento de plugins",
@@ -1618,6 +1642,23 @@
     "takeSelectedOffline": "Colocar selecionados offline",
     "deleteSelected": "Excluir selecionados",
     "mutationSuccess": "O estado dos coletores foi atualizado.",
+    "details": {
+      "action": "Detalhes",
+      "actionNamed": "Ver detalhes de {{name}}",
+      "title": "Detalhes do Collector: {{name}}",
+      "updatedAt": "Última atualização",
+      "overview": "Visão geral",
+      "configuration": "Configuração",
+      "properties": "Propriedades",
+      "assignments": "Atribuição de tarefas",
+      "operations": "Configuração operacional",
+      "position": "{{current}} de {{total}}",
+      "previous": "Collector anterior",
+      "next": "Próximo Collector",
+      "close": "Fechar detalhes do Collector",
+      "resize": "Redimensionar detalhes do Collector",
+      "moreActions": "Mais ações do Collector"
+    },
     "deploy": {
       "action": "Gerar informações de implantação",
       "title": "Informações de implantação do Collector",
@@ -1842,6 +1883,12 @@
     "copy": "Copiar",
     "delete": "Excluir",
     "deleteConfirm": "Excluir este rótulo?",
+    "selected": "{{count}} selecionado(s)",
+    "selectRow": "Selecionar linha",
+    "clearSelection": "Limpar seleção",
+    "deleteSelected": "Excluir selecionados",
+    "deleteSelectedConfirm_one": "Excluir {{count}} rótulo selecionado?",
+    "deleteSelectedConfirm_other": "Excluir {{count}} rótulos selecionados?",
     "nameRequired": "Informe o nome do rótulo.",
     "saveSuccess": "Rótulo salvo.",
     "saveFailed": "Não foi possível salvar o rótulo.",
@@ -1858,7 +1905,7 @@
   },
   "systemConfig": {
     "title": "Configurações do sistema",
-    "description": "Configure o idioma, fuso horário e densidade da interface.",
+    "description": "Configure o idioma e o fuso horário compartilhados.",
     "loading": "Carregando configurações do sistema…",
     "readOnly": "Somente administradores podem alterar as configurações do sistema.",
     "recovery": "Não foi possível confirmar as configurações salvas. Verifique as configurações atuais do servidor antes de continuar.",
@@ -1871,7 +1918,23 @@
     "saveSuccess": "Configurações do sistema salvas.",
     "saveFailed": "Não foi possível salvar as configurações do sistema.",
     "discard": "Descartar alterações",
-    "noChanges": "Nenhuma alteração não salva.",
+    "publicAccess": {
+      "title": "Acesso público",
+      "description": "Endereços usados por operadores, emissores de alertas e clientes de telemetria para acessar esta instalação do HertzBeat.",
+      "loading": "Carregando configurações de acesso público…",
+      "unavailable": "As configurações de acesso público estão indisponíveis.",
+      "invalid": "As configurações de acesso público retornaram uma resposta inválida.",
+      "publicBaseUrl": "URL base pública",
+      "publicBaseUrlHelp": "Usada para gerar URLs completas de retorno de alertas externos. Inclua o prefixo do proxy reverso, se houver.",
+      "advancedTitle": "Endpoints OTLP avançados",
+      "advancedHelp": "As portas padrão são HTTP 4318 e gRPC 4317. Configure estes campos apenas quando o OTLP usar outro host ou porta.",
+      "otlpHttp": "Endpoint HTTP OTLP do servidor",
+      "otlpHttpHelp": "Deixe vazio para usar o host público do HertzBeat na porta padrão 4318 ou informe um endereço HTTP(S) completo.",
+      "otlpGrpc": "Endpoint gRPC OTLP do servidor",
+      "otlpGrpcHelp": "Deixe vazio para usar o host público do HertzBeat na porta padrão 4317 ou informe um endereço HTTP(S) completo.",
+      "saveSuccess": "Configurações de acesso público salvas.",
+      "saveFailed": "Não foi possível salvar as configurações de acesso público."
+    },
     "locale": {
       "label": "Idioma",
       "help": "Aplicado a este navegador após salvar.",
@@ -1884,18 +1947,11 @@
     "timezone": {
       "label": "Fuso horário",
       "help": "Usado na exibição de horários e nos agendamentos do servidor."
-    },
-    "theme": {
-      "label": "Interface",
-      "help": "Escolha a interface padrão, escura ou compacta.",
-      "light-ops": "Claro padrão",
-      "dark-ops": "Escuro",
-      "compact": "Escuro compacto"
     }
   },
   "objectStore": {
     "title": "Armazenamento de objetos",
-    "description": "Escolha onde o HertzBeat armazena arquivos e objetos binários.",
+    "description": "Escolha onde as definições YAML de modelos de monitoramento personalizados são armazenadas. Métricas, logs, traces e alertas não são afetados.",
     "loading": "Carregando a configuração de armazenamento de objetos…",
     "recoveryProof": "Não foi possível confirmar a configuração salva. Tente novamente para verificar a configuração atual do servidor.",
     "recoveryUncertain": "O resultado do salvamento é incerto. Verifique a configuração do servidor mais tarde antes de fazer novas alterações.",
@@ -1903,13 +1959,30 @@
     "reconcileComplete": "A configuração atual do servidor foi recarregada. O resultado da gravação do segredo não foi presumido.",
     "unavailable": "A configuração de armazenamento está indisponível.",
     "missing": "O armazenamento de objetos ainda não foi configurado.",
+    "status": {
+      "unconfigured": "Não configurado",
+      "configured": "Configurado"
+    },
     "invalid": "A resposta do armazenamento de objetos é inválida.",
     "readOnly": "Somente administradores podem alterar a configuração do armazenamento de objetos.",
     "validation": "Preencha os campos obrigatórios do armazenamento.",
     "saveSuccess": "Configuração de armazenamento salva.",
     "saveFailed": "Não foi possível salvar a configuração de armazenamento.",
+    "migrationConflict": "O destino contém modelos personalizados com o mesmo nome e conteúdo diferente. Resolva os conflitos antes de alternar.",
+    "migrateAndSave": "Migrar e salvar",
     "discard": "Descartar alterações",
     "noChanges": "Nenhuma alteração não salva.",
+    "searchTypes": "Pesquisar métodos de armazenamento",
+    "noMatchingTypes": "Nenhum método de armazenamento correspondente.",
+    "activationHint": "Ao salvar, os modelos personalizados existentes são copiados e verificados antes de ativar este local. A cópia de origem é mantida.",
+    "unsavedHint": "Os modelos personalizados existentes são copiados e verificados antes da alteração. Conflitos de mesmo nome nunca são sobrescritos.",
+    "obsSectionTitle": "Configuração do Huawei Cloud OBS",
+    "obsSectionDescription": "As credenciais configuradas não são exibidas; deixe-as em branco para manter os valores atuais.",
+    "activate": {
+      "database": "Migrar e usar armazenamento no banco de dados",
+      "file": "Migrar e usar sistema de arquivos local",
+      "obs": "Migrar e usar Huawei Cloud OBS"
+    },
     "type": {
       "label": "Provedor de armazenamento",
       "database": "Banco de dados",
@@ -1917,9 +1990,9 @@
       "obs": "Huawei Cloud OBS"
     },
     "typeHelp": {
-      "database": "Armazene objetos no banco de dados usado pelo HertzBeat.",
-      "file": "Armazene objetos no sistema de arquivos do servidor HertzBeat.",
-      "obs": "Armazene objetos em um bucket Huawei Cloud OBS."
+      "database": "Armazene modelos de monitoramento personalizados no banco de dados usado atualmente pelo HertzBeat.",
+      "file": "Armazene modelos de monitoramento personalizados como arquivos define/app-*.yml no servidor HertzBeat.",
+      "obs": "Armazene os arquivos YAML dos modelos de monitoramento personalizados no caminho configurado de um bucket Huawei Cloud OBS."
     },
     "obs": {
       "accessKey": "Chave de acesso",
@@ -1968,6 +2041,13 @@
     "unavailable": "Os dados de token estão indisponíveis.",
     "invalid": "A resposta de token é inválida.",
     "empty": "Nenhum token de API foi gerado.",
+    "emptyTitle": "Crie seu primeiro token de API",
+    "emptyDescription": "Crie uma credencial dedicada para uma integração ou cliente de telemetria.",
+    "emptyName": "Dê o nome do cliente ou da integração que usará o token.",
+    "emptyScope": "Escolha o menor escopo de acesso necessário.",
+    "emptyExpiry": "Defina uma validade ou mantenha-o ativo até ser revogado.",
+    "emptyOneTime": "O segredo é exibido uma única vez após a criação.",
+    "emptyAction": "Criar primeiro token",
     "scope": {
       "label": "Acesso",
       "apiAdmin": "API de administração",
@@ -1986,18 +2066,34 @@
   "alertGroups": {
     "title": "Agrupamento de alertas",
     "description": "Controle como alertas relacionados são agrupados antes da notificação.",
-    "new": "Nova política",
-    "edit": "Editar política",
+    "new": "Nova política de agrupamento",
+    "edit": "Editar política de agrupamento",
     "search": "Pesquisar políticas",
     "empty": "Nenhuma política corresponde à consulta.",
-    "name": "Política",
+    "name": "Nome da política",
     "labels": "Rótulos de grupo",
-    "wait": "Espera inicial",
-    "interval": "Intervalo do grupo",
+    "labelsPlaceholder": "Por favor, insira uma tag",
+    "wait": "tempo de espera",
+    "interval": "Tempo de intervalo",
     "repeat": "Intervalo de repetição",
-    "enabled": "Ativa",
+    "enabled": "Habilitar",
     "updated": "Atualizada",
     "seconds": "{{value}} s",
+    "secondsUnit": "Segundos",
+    "durationUnit": "Unidade",
+    "units": {
+      "seconds": "Segundos",
+      "minutes": "Minutos",
+      "hours": "Horas"
+    },
+    "required": "Preencha este campo obrigatório.",
+    "help": {
+      "name": "Nome exclusivo que identifica esta política de agrupamento.",
+      "labels": "Agrupe mensagens pelas chaves dos rótulos. São aceitas várias chaves, como alertname, severity e instance.",
+      "wait": "Tempo de espera após um novo alerta para agrupar alertas correspondentes; o padrão é 30 segundos.",
+      "interval": "Intervalo mínimo entre notificações agrupadas para evitar mensagens excessivas; o padrão é 5 minutos.",
+      "repeat": "Intervalo mínimo de repetição para alertas contínuos; o padrão é 4 horas."
+    },
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta política de agrupamento?",
     "deleteSelected": "Excluir selecionadas",
@@ -2012,19 +2108,38 @@
   "alertInhibits": {
     "title": "Inibição de alertas",
     "description": "Suprima alertas de destino enquanto um alerta de origem correspondente estiver ativo.",
-    "new": "Nova inibição",
-    "edit": "Editar inibição",
+    "new": "Adicionado regras de supressão",
+    "edit": "Editar regras de supressão",
     "search": "Pesquisar inibições",
     "empty": "Nenhuma política de inibição corresponde à consulta.",
-    "name": "Política",
-    "sourceLabels": "Rótulos de origem",
-    "targetLabels": "Rótulos de destino",
-    "equalLabels": "Rótulos iguais",
+    "name": "Suprimir nome da regra",
+    "nameHelp": "Nome exclusivo que identifica esta regra de supressão.",
+    "sourceLabels": "etiqueta de origem",
+    "targetLabels": "Tags de destino",
+    "equalLabels": "Tags iguais",
+    "equalPlaceholder": "Insira ou selecione tags",
+    "matcherKey": "Chave",
+    "matcherValue": "Valor",
+    "addMatcher": "Adicionar correspondência de rótulo",
+    "removeMatcher": "Remover correspondência de rótulo",
+    "required": "Preencha este campo obrigatório.",
+    "logicPreview": {
+      "title": "O que esta regra faz",
+      "trigger": "Ativação:",
+      "triggerDetail": "Detecta um alerta ativo cujos rótulos correspondem a {{source}}.",
+      "effect": "Supressão:",
+      "effectDetail": "Alertas cujos rótulos correspondem a {{target}} não seguem para o envio de notificações.",
+      "condition": "Somente se:",
+      "conditionDetail": "O alerta de ativação e o alerta suprimido tiverem o mesmo valor em {{equal}}.",
+      "sourceEmpty": "Defina o alerta que inicia a supressão.",
+      "targetEmpty": "Defina o alerta que deixará de enviar notificações.",
+      "equalEmpty": "Defina os rótulos que devem ter valores iguais nos dois alertas."
+    },
     "matcherPlaceholder": "severity:critical, service:checkout",
     "sourceHelp": "O alerta ativo que inicia a inibição.",
     "targetHelp": "O alerta suprimido enquanto a origem estiver ativa.",
     "equalHelp": "Estes rótulos devem ter valores iguais nos alertas de origem e destino.",
-    "enabled": "Ativa",
+    "enabled": "Habilitar",
     "updated": "Atualizada",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta política de inibição?",
@@ -2059,29 +2174,38 @@
     "title": "Silêncios de alertas",
     "description": "Silencie alertas correspondentes durante janelas de manutenção únicas ou recorrentes.",
     "new": "Novo silêncio",
+    "createTitle": "Nova Estratégia de Silêncio",
     "edit": "Editar silêncio",
     "search": "Pesquisar silêncios",
     "empty": "Nenhuma política de silêncio corresponde à consulta.",
-    "name": "Política",
-    "matchAll": "Corresponder a todos os alertas",
-    "labels": "Condições de rótulos",
+    "name": "Nome da Estratégia de Silêncio",
+    "matchAll": "Corresponder a Todos",
+    "labels": "Correspondência de Etiqueta",
+    "matcherKey": "Chave",
+    "matcherValue": "Valor",
+    "addMatcher": "Adicionar correspondência de rótulo",
+    "removeMatcher": "Remover correspondência de rótulo",
+    "required": "Preencha este campo obrigatório.",
+    "periodInvalid": "Selecione um intervalo de tempo válido.",
+    "recurringPeriodInvalid": "Os horários de início e término devem ser diferentes.",
+    "daysRequired": "Selecione pelo menos um dia.",
     "matcherPlaceholder": "service:checkout, environment:staging",
     "labelsHelp": "Somente alertas que correspondem a todos os rótulos serão silenciados.",
-    "enabled": "Ativa",
-    "type": "Tipo de agenda",
-    "once": "Uma vez",
-    "recurring": "Recorrente",
+    "enabled": "Habilitar",
+    "type": "Tipo de Silêncio",
+    "once": "Silêncio Único",
+    "recurring": "Silêncio Periódico",
     "days": "Dias ativos",
-    "timeWindow": "Janela de tempo",
+    "timeWindow": "Período de Silêncio",
     "start": "Início",
     "end": "Fim",
     "crossMidnightHelp": "Um horário final anterior ao inicial cria uma janela noturna.",
     "scope": "Escopo",
     "schedule": "Agenda",
-    "times": "Correspondências",
+    "times": "Número de Alertas Silenciados",
     "allAlerts": "Todos os alertas",
     "selectedDays": "{{count}} dias",
-    "updated": "Atualizada",
+    "updated": "Tempo de Atualização",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta política de silêncio?",
     "deleteSelected": "Excluir selecionadas",
@@ -2092,6 +2216,7 @@
     "unavailable": "As políticas de silêncio estão indisponíveis.",
     "saveSuccess": "Política de silêncio salva.",
     "saveFailed": "Não foi possível salvar a política de silêncio.",
+    "deleteSuccess": "Política de silêncio excluída.",
     "operationSuccess": "Política de silêncio atualizada.",
     "operationFailed": "Falha na operação da política de silêncio.",
     "management": {
@@ -2121,16 +2246,21 @@
     "loading": "Carregando destinatários…",
     "new": "Novo destinatário",
     "edit": "Editar destinatário",
-    "search": "Pesquisar destinatários",
+    "search": "Nome do destinatário",
     "empty": "Nenhum destinatário corresponde à consulta.",
     "name": "Destinatário",
-    "type": "Tipo de canal",
-    "setting": "Destino",
-    "updated": "Atualizado",
+    "nameField": "Nome do destinatário",
+    "type": "Método de notificação",
+    "setting": "Configuração",
+    "updated": "Hora da edição",
     "configured": "Configurado com segurança",
-    "test": "Enviar teste",
+    "test": "Enviar teste de alerta",
     "delete": "Excluir",
     "deleteConfirm": "Excluir este destinatário?",
+    "required": "Preencha este campo obrigatório.",
+    "emailInvalid": "Endereço de e-mail inválido.",
+    "phoneInvalid": "Número de telefone inválido.",
+    "invalidField": "Valor inválido.",
     "validation": "Preencha o nome e todas as configurações obrigatórias do canal.",
     "loadFailed": "Não foi possível carregar o destinatário.",
     "saveSuccess": "Destinatário salvo.",
@@ -2252,14 +2382,26 @@
     "saveSuccess": "Modelo salvo.",
     "saveFailed": "Não foi possível salvar o modelo.",
     "deleteSuccess": "Modelo excluído.",
-    "deleteFailed": "Não foi possível excluir o modelo."
+    "deleteFailed": "Não foi possível excluir o modelo.",
+    "previewSource": "Código-fonte do modelo",
+    "previewSearch": "Pesquisar no código-fonte do modelo",
+    "previewSearchPlaceholder": "Pesquisar no código-fonte",
+    "previewMatchCount": "{{current}} / {{total}}",
+    "previewNoMatches": "Nenhuma correspondência",
+    "previewPreviousMatch": "Correspondência anterior",
+    "previewNextMatch": "Próxima correspondência",
+    "previewJumpToBody": "Corpo do modelo",
+    "previewBodyUnavailable": "Nenhum comentário inicial foi encontrado.",
+    "previewCopy": "Copiar código-fonte",
+    "previewCopied": "Copiado",
+    "previewCopyFailed": "Falha ao copiar"
   },
   "notificationWorkspace": {
     "label": "Fluxo de configuração de notificações",
     "title": "Configuração de notificações",
     "description": "Configure as dependências de entrega em ordem e gerencie cada área separadamente.",
     "steps": {
-      "channels": { "label": "Canais", "dependency": "Configure os serviços de entrega por e-mail e SMS." },
+      "channels": { "label": "Serviços de canal", "dependency": "Configure os serviços de entrega por e-mail e SMS." },
       "receivers": { "label": "Destinatários", "dependency": "Adicione destinos que usam os canais configurados." },
       "templates": { "label": "Modelos", "dependency": "Personalize opcionalmente as mensagens de um canal." },
       "rules": { "label": "Regras", "dependency": "Direcione alertas para um ou mais destinatários." }
@@ -2435,15 +2577,105 @@
   "alertRules": {
     "title": "Regras de alerta",
     "description": "Gerencie regras de avaliação e o estado de ativação.",
+    "guide": { "alertCenter": "Ver central de alertas", "deliveryRules": "Configurar regras de envio" },
     "manage": "Gerenciar regras",
     "new": "Nova regra",
     "edit": "Editar regra",
+    "newRealtime": "Nova Regra de Limite em Tempo Real",
+    "newPeriodic": "Nova Regra de Limite Periódica",
+    "editRealtime": "Editar Limite em Tempo Real",
+    "editPeriodic": "Editar Limite Periódico",
     "editorDescription": "Defina a condição, verifique o resultado e salve a regra.",
     "search": "Pesquisar regras",
     "empty": "Nenhuma regra corresponde à consulta.",
-    "name": "Regra",
+    "required": "Por favor, preencha os campos obrigatórios!",
+    "confirm": "OK",
+    "typeChoice": {
+      "title": "Escolha a avaliação do alerta",
+      "realtimeDescription": "Avalie cada coleta de dados de monitoramento assim que ela chegar.",
+      "periodicDescription": "Execute uma consulta PromQL ou SQL em um intervalo definido.",
+      "periodicUnavailable": "Configure um executor de consulta compatível antes de criar uma regra periódica."
+    },
+    "help": {
+      "name": "O nome da regra de limite precisa ser exclusivo",
+      "dataType": "Selecione o tipo de dados para esta regra de limite",
+      "target": "O objeto métrico selecionado",
+      "rule": "Configuração gráfica de regras de limite de alarme, suporta múltiplas regras &&",
+      "bindings": "Configure essa regra de limiar para aplicar à tarefa de monitoramento especificada, e o padrão é que todos os aplicativos não estão associados.",
+      "period": "Intervalo de tempo para cálculo periódico de limite, em segundos, mínimo 60 segundos",
+      "window": "Janela de tempo para cálculo de limite em tempo real, em segundos",
+      "severity": "O nível de alarme que dispara o limite, do baixo para o alto: Aviso, Crítico, Emergência",
+      "mode": "Selecione o modo de alerta, o modo de grupo de alerta irá mesclar alertas com as mesmas condições, o modo de alerta individual irá enviar cada alerta separadamente",
+      "times": "Defina quantas vezes o limite deve ser disparado antes de enviar um alerta",
+      "template": "Variáveis de ambiente de modelo de notificação suportadas",
+      "labels": "Você pode usar etiquetas para gerenciamento de classificação. Ex: atribuir etiquetas a recursos em ambiente de produção e teste.",
+      "annotations": "As anotações podem ser usadas para marcar informações da entidade, como anotações vinculativas para eventos importantes para um recurso.",
+      "enable": "Esta configuração de limite de alarme está habilitada ou desabilitada",
+      "queryMetric": "Configuração gráfica de regras de limite de alarme, suporta múltiplas regras &&",
+      "queryLog": "Configure condições de consulta de log para filtrar logs que precisam ser monitorados"
+    },
+    "query": {
+      "label": "Linguagem de consulta",
+      "promql": "PromQL",
+      "sql": "SQL",
+      "expression": "Expressão da consulta",
+      "examples": "Exemplos:",
+      "promqlUnsupportedLog": "PromQL não oferece suporte a regras de alerta de log",
+      "sqlUnsupportedMetric": "SQL não oferece suporte a regras de alerta de métrica",
+      "promqlPlaceholder": "Consulta PromQL: sum(rate(process_cpu_seconds_total[5m])) > 0.8",
+      "promqlDescription": "Linguagem de consulta PromQL",
+      "sqlDescription": "Linguagem de consulta SQL",
+      "sqlValidation": {
+        "selectOnly": "Somente instruções SELECT são permitidas",
+        "union": "UNION não é permitido",
+        "intersect": "INTERSECT não é permitido",
+        "except": "EXCEPT não é permitido",
+        "subquery": "Subconsultas não são permitidas",
+        "from": "A consulta SQL deve conter a cláusula FROM",
+        "table": "Somente a tabela hertzbeat_logs é permitida",
+        "parentheses": "Parênteses incompatíveis"
+      }
+    },
+    "severity": { "label": "Severidade", "placeholder": "Selecione Prioridades" },
+    "mode": {
+      "label": "Modo de alerta",
+      "placeholder": "Por favor selecione o modo de alerta",
+      "group": "Agrupado",
+      "individual": "Individual"
+    },
+    "window": "Janela de cálculo",
+    "seconds": "segundos",
+    "finalExpression": "Expressão final",
+    "annotations": "Anotações",
+    "map": {
+      "key": "Chave",
+      "value": "Valor",
+      "addLabel": "Adicionar rótulo",
+      "addAnnotation": "Adicionar anotação",
+      "remove": "Remover item"
+    },
+    "variables": {
+      "title": "Variáveis disponíveis",
+      "__instance__": "ID da instância",
+      "__labels__": "Rótulos",
+      "__instancename__": "Nome da instância",
+      "__instancehost__": "Host da instância",
+      "__app__": "Aplicação",
+      "__metrics__": "Nome da métrica",
+      "log": {
+        "timestamp": "Data e hora",
+        "severityText": "Texto da severidade",
+        "body": "Corpo do log",
+        "traceId": "ID do trace",
+        "spanId": "ID do span",
+        "attributes": "Atributos do log",
+        "resource": "Atributos do recurso"
+      }
+    },
+    "name": "Nome do limite",
     "type": "Tipo",
     "enabled": "Ativa",
+    "enabledThreshold": "Habilitar Limite",
     "updated": "Atualizada",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta regra de alerta?",
@@ -2484,20 +2716,25 @@
       }
     },
     "operationSuccess": "Regra de alerta atualizada.",
+    "deleteSuccess": "Exclusão de regras de alerta confirmada.",
     "operationFailed": "Falha na operação da regra.",
     "saveSuccess": "Regra de alerta salva.",
     "saveFailed": "Não foi possível salvar a regra.",
     "validation": "Preencha os campos obrigatórios.",
-    "expressionRequired": "Informe uma expressão antes de visualizar.",
     "expression": "Expressão",
     "metricTarget": {
+      "type": "Tipo de métrica",
+      "typePlaceholder": "Pesquise ou selecione um destino de métrica",
       "application": "Aplicação",
       "applicationPlaceholder": "Selecione uma aplicação",
       "target": "Alvo da métrica",
       "targetPlaceholder": "Selecione disponibilidade ou uma métrica",
       "availability": "Disponibilidade",
       "availabilityDescription": "Dispara quando a aplicação selecionada fica indisponível.",
-      "rowCount": "Contagem de linhas",
+      "availabilityDown": "Inativo",
+      "availabilityUnreachable": "Inacessível",
+      "availabilityTrigger": "Disparar alarmes e atualizar o status do monitor",
+      "rowCount": "Contagem de linhas de valor do Sistema-Métricas",
       "appsEmpty": "Nenhuma aplicação de monitoramento visível está disponível.",
       "appsUnavailable": "O catálogo de aplicações está temporariamente indisponível.",
       "appsError": "Não foi possível carregar o catálogo de aplicações.",
@@ -2507,10 +2744,26 @@
     },
     "metricBindings": {
       "title": "Vínculos de monitores",
+      "dialogTitle": "Associar Monitores ao Limite de Alarme",
       "description": "Limite esta regra às instâncias ou etiquetas de monitor selecionadas.",
       "manage": "Gerenciar vínculos",
-      "instances": "Instâncias de monitor",
-      "labels": "Etiquetas de monitor",
+      "instances": "Associar Instâncias",
+      "labels": "Associar Rótulos",
+      "unassociated": "Não Associado",
+      "associated": "Associado",
+      "count": "{{count}} itens",
+      "filterName": "Digite o nome para filtrar...",
+      "filterLabels": "Filtrar por rótulos...",
+      "moveLeft": "Mover monitores selecionados para não associados",
+      "moveRight": "Mover monitores selecionados para associados",
+      "selectAll": {
+        "unassociated": "Selecionar todos os monitores não associados visíveis",
+        "associated": "Selecionar todos os monitores associados visíveis"
+      },
+      "noData": "Sem dados",
+      "addLabel": "Digite o rótulo",
+      "removeLabel": "Remover rótulo",
+      "labelEmpty": "Não há objetos de monitoramento correspondentes, adicione rótulos",
       "loading": "Carregando opções de monitores.",
       "empty": "Nenhum monitor está configurado para esta aplicação.",
       "unavailable": "As opções de monitores estão temporariamente indisponíveis.",
@@ -2519,20 +2772,36 @@
       "noLabels": "Nenhuma etiqueta de monitor está disponível."
     },
     "metricCondition": {
+      "rule": "Regra de Limite",
       "title": "Limite",
-      "structured": "Guiado",
-      "expert": "Especialista",
+      "structured": "Limite de Modelo",
+      "expert": "Limite de Codificação",
       "expertExpression": "Expressão da condição",
+      "insertExpression": "Variáveis de ambiente e operadores suportados na expressão de disparo do limite",
+      "expressionPlaceholder": "Calcule se o limite foi disparado de acordo com esta expressão. Ex",
+      "expressionTypes": {
+        "number": "Numérico",
+        "string": "Texto",
+        "time": "Tempo",
+        "object": "Objeto"
+      },
       "expertOnly": "Esta condição usa uma sintaxe que o editor guiado não pode representar com segurança.",
       "join": "Correspondência",
-      "and": "Todas",
-      "or": "Qualquer",
+      "and": "AND",
+      "or": "OR",
       "addCondition": "Adicionar condição",
       "addGroup": "Adicionar grupo",
+      "ruleButton": "Rule",
+      "rulesetButton": "Ruleset",
       "empty": "Adicione uma condição para concluir esta regra.",
+      "emptyGroup": "Um conjunto de regras não pode ficar vazio. Adicione uma regra ou remova todo o conjunto.",
       "field": "Campo da métrica",
       "operator": "Operador",
       "value": "Valor",
+      "objectAttribute": "Atributo do objeto",
+      "objectAttributePlaceholder": "Insira um atributo do objeto",
+      "numberPlaceholder": "Insira um número",
+      "stringPlaceholder": "Insira um texto correspondente",
       "noValue": "Sem valor",
       "remove": "Remover condição",
       "operators": {
@@ -2549,13 +2818,23 @@
         "matches": "Corresponde",
         "!matches": "Não corresponde",
         "exists": "Existe",
-        "!exists": "Não existe"
+        "!exists": "Não existe",
+        "&&": "E",
+        "||": "Ou",
+        "()": "Parênteses"
       }
     },
-    "template": "Modelo de mensagem",
+    "logCondition": {
+      "expression": "Expressão de log",
+      "expressionPlaceholder": "Digite a expressão de alerta, ex: count > 10"
+    },
+    "template": "Modelo de Notificação",
+    "templatePlaceholder": "Digite o modelo de notificação. Ex: ${app}.${metrics}.${metric} valor está muito alto",
     "labels": "Rótulos",
     "labelsPlaceholder": "team:ops, severity:critical",
-    "period": "Período de avaliação (segundos)",
+    "period": "Ciclo de execução",
+    "periodPlaceholder": "Insira o período de execução, mínimo de 60 segundos",
+    "windowPlaceholder": "Insira o tempo da janela de cálculo",
     "times": "Contagem de disparo",
     "preview": "Visualizar",
     "previewSuccess": "A prévia retornou {{count}} linhas; até {{pageSize}} linhas são exibidas por página.",
@@ -2576,13 +2855,14 @@
       "periodic": "Periódica"
     },
     "dataType": {
-      "label": "Sinal",
+      "label": "Tipo de Dados",
       "metric": "Métrica",
       "log": "Log",
       "trace": "Trace"
     }
   },
   "alert": {
+    "diagnosticActions": "Ações de diagnóstico",
     "integration": {
       "source": {
         "webhook": "Webhook",
@@ -2601,6 +2881,12 @@
       },
       "limit": {
         "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "huaweicloud-ces": {
+          "confirmation_may_be_billable": "A Huawei Cloud contabiliza as mensagens de confirmação de assinatura como mensagens faturáveis; confirme o preço antes do teste real."
+        },
+        "volcengine": {
+          "event_recovery_unavailable": "Callbacks de eventos do Volcengine apenas disparam alertas; callbacks de métricas e ausência de dados aceitam recuperação."
+        },
         "zabbix": {
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
@@ -2631,25 +2917,93 @@
           "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
         }
       },
+      "skywalking": {
+        "step": {
+          "create_token": "Crie um token de API com permissão de escrita para entrada de alertas.",
+          "configure_webhook": "Configure o webhook e a URL de recuperação do SkyWalking com o endpoint e o cabeçalho Authorization abaixo.",
+          "verify_lifecycle": "Dispare e recupere um alarme controlado; confirme que o mesmo UUID move um alerta do HertzBeat para resolvido."
+        }
+      },
+      "uptime-kuma": {
+        "step": {
+          "create_token": "Crie um token de API com permissão de escrita para entrada de alertas.",
+          "configure_webhook": "Crie uma notificação Webhook usando POST, a predefinição JSON e o cabeçalho Authorization adicional abaixo.",
+          "verify_lifecycle": "Envie um heartbeat DOWN e depois UP; confirme que o mesmo alerta do monitor muda para resolvido."
+        }
+      },
+      "tencent": {
+        "step": {
+          "create_token": "Crie um token de API com permissão de escrita para entrada de alertas.",
+          "configure_template": "Crie um modelo personalizado de notificação Webhook para Trigger e Recovery e mapeie os campos nativos abaixo.",
+          "verify_lifecycle": "Envie Trigger e Recovery para uma instância; confirme que somente o alerta dessa instância é resolvido."
+        }
+      },
+      "alibabacloud-sls": {
+        "step": {
+          "create_token": "Crie um token de API com permissão de escrita para entrada de alertas.",
+          "configure_action": "Crie uma ação WebHook-Custom com POST, JSON, o cabeçalho Authorization e um modelo que inclua alert_instance_id.",
+          "verify_lifecycle": "Dispare e recupere a mesma instância de alerta; confirme que ela muda para resolvida e que o endpoint retorna HTTP 200."
+        }
+      },
+      "huaweicloud-ces": {
+        "step": {
+          "create_token": "Crie um token de API com permissão de escrita para entrada de alertas.",
+          "configure_subscription": "Crie uma assinatura HTTP/HTTPS do SMN para este endpoint e adicione X-HertzBeat-Token como cabeçalho personalizado.",
+          "verify_subscription": "Execute o teste de disponibilidade, confirme a assinatura e dispare e recupere um alarme CES controlado."
+        }
+      },
+      "volcengine": {
+        "step": {
+          "create_token": "Crie um token de API com permissão de escrita para entrada de alertas.",
+          "configure_callback": "Configure o endpoint de callback do Volcengine e coloque o token gerenciado no cabeçalho nativo Token.",
+          "verify_lifecycle": "Dispare e recupere um alerta de métrica; confirme que o mesmo recurso muda para resolvido."
+        }
+      },
       "zabbix": {
         "step": {
-          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix.",
+          "create_token": "Create an API token with alert-ingress write access and store it as the secret Zabbix user macro {$HERTZBEAT_API_TOKEN}.",
+          "configure_media_type": "Create a Zabbix Webhook media type with the parameters and script below, then use it in both problem and recovery operations.",
+          "verify_problem_and_recovery": "Trigger one controlled problem, resolve it, and confirm that HertzBeat shows one alert moving from firing to resolved."
         }
       }
     },
     "title": "Central de alertas",
     "description": "Consulte alertas agrupados e o estado de tratamento.",
+    "expandDetails": "Expandir detalhes do alerta",
+    "collapseDetails": "Recolher detalhes do alerta",
     "search": "Pesquisar alertas",
+    "filters": {
+      "more": "Mais filtros",
+      "less": "Ocultar filtros",
+      "moreActive": "Mais filtros ({{count}})"
+    },
     "empty": "Nenhum alerta corresponde à consulta.",
     "name": "Alerta",
     "labels": "Rótulos",
     "updated": "Atualizado",
+    "viewDetails": "Ver detalhes",
     "delete": "Excluir",
+    "moreActions": "Mais ações do alerta",
     "confirmDelete": "Confirmar exclusão",
     "deleteConfirm": "Excluir o grupo de alertas {{target}} e seus registros?",
     "deleteSuccess": "Grupo de alertas excluído.",
     "deleteFailed": "Não foi possível excluir ou verificar o grupo de alertas.",
     "selected": "{{count}} selecionados",
+    "export": {
+      "label": "Exportar",
+      "selected": "Exportar selecionados",
+      "timeRange": "Exportar por período",
+      "filtered": "Exportar resultados filtrados",
+      "all": "Exportar tudo",
+      "timeRangeTitle": "Exportar alertas por período",
+      "updatedTime": "Hora de atualização do alerta",
+      "timeRangeHelp": "O período usa a hora local do servidor. Alertas sem hora de atualização são excluídos.",
+      "confirm": "Exportar",
+      "success": "{{count}} grupos de alertas exportados.",
+      "failure": "Não foi possível concluir a exportação de alertas."
+    },
+    "clearSelection": "Limpar seleção",
     "acknowledge": "Reconhecer",
     "acknowledgeSelected": "Reconhecer selecionados",
     "acknowledgeConfirm": "Reconhecer este grupo de alertas?",
@@ -2680,14 +3034,33 @@
     "reopenFailed": "Não foi possível reabrir ou verificar o grupo de alertas.",
     "deleteSelected": "Excluir selecionados",
     "deleteSelectedConfirm": "Excluir {{count}} grupos de alertas selecionados e seus alertas?",
+    "deleteScope": {
+      "title": "Excluir grupos de alertas",
+      "description": "Escolha o escopo exato desta exclusão. Os alertas de cada grupo também serão excluídos.",
+      "selectedTitle": "Grupos selecionados ({{count}})",
+      "selectedDescription": "Exclui somente os grupos selecionados nesta página.",
+      "filteredTitle": "Todos os resultados do filtro atual ({{count}})",
+      "filteredDescription": "Inclui todas as páginas do último filtro aplicado, não alterações ainda não consultadas.",
+      "limitDescription": "Este filtro excede o limite de {{limit}} grupos que podem ser excluídos e verificados em uma operação. Restrinja os filtros primeiro.",
+      "prepareFailure": "Não foi possível preparar todo o escopo filtrado. Nenhum alerta foi excluído.",
+      "review": "Revisar exclusão",
+      "reviewTitle": "Confirmar exclusão filtrada",
+      "reviewCount": "grupos de alertas nesta exclusão",
+      "reviewDescription": "Excluir este conjunto exato de {{count}} grupos de alertas e seus alertas, obtido na revisão? Esta ação não pode ser desfeita. Alertas criados depois não estão incluídos.",
+      "confirmSelected": "Excluir selecionados",
+      "confirmFiltered": "Confirmar exclusão de todos"
+    },
     "summaryUnavailable": "O resumo de alertas está indisponível; a lista continua pesquisável.",
+    "investigate": "Investigar",
+    "openMonitor": "Monitor",
+    "openEntity": "Recurso",
     "listUnavailable": "Os resultados de alertas estão indisponíveis.",
     "listLoadFailed": "Não foi possível carregar os resultados de alertas.",
     "summaryLoadFailed": "Não foi possível carregar o resumo de alertas.",
     "details": {
       "triggerTimes": "Acionamentos",
-      "labels": "Rótulos",
-      "annotations": "Anotações",
+      "labels": "Vincular Etiquetas",
+      "annotations": "Anotação de ligação",
       "startAt": "Primeiro acionamento",
       "activeAt": "Última atividade",
       "endAt": "Resolvido em"
@@ -2695,8 +3068,8 @@
     "summary": {
       "total": "Total",
       "acknowledged": "Reconhecidos",
-      "nonFiring": "Não ativos",
-      "scope": "Alertas individuais globais",
+      "handled": "Tratados",
+      "workspaceScope": "Workspace atual",
       "warning": "Aviso",
       "critical": "Crítico",
       "emergency": "Emergência"
@@ -2922,18 +3295,36 @@
   "statusManagement": {
     "title": "Página de status",
     "description": "Publique a saúde dos componentes e comunique incidentes do serviço.",
+    "navComponents": "Componentes",
+    "navIncidents": "Incidentes",
+    "navSettings": "Configurações",
+    "publishIncident": "Publicar incidente",
+    "reviewIncident": "Revisar incidente",
+    "incidentInfo": "Detalhes do incidente",
+    "reviewAndPublish": "Revisar e publicar",
+    "reviewTitle": "Revise a atualização pública",
+    "reviewDescription": "Confirme o que os visitantes verão antes de publicar esta atualização.",
+    "publicUpdatePreview": "Prévia da atualização pública",
+    "previewNotPublished": "Este rascunho ainda não foi publicado.",
+    "backToIncident": "Voltar à edição",
     "loadingOrganization": "Carregando a identidade da página…",
     "loadingComponents": "Carregando componentes de status…",
     "loadingIncidents": "Carregando incidentes…",
     "openPublicPage": "Abrir página pública",
     "organization": "Identidade da página",
+    "organizationDetails": "Detalhes da identidade da página",
     "organizationDescription": "Defina o nome público, a descrição e os links.",
+    "componentCollection": "Componentes públicos",
+    "setupTitle": "Crie sua página pública de status",
+    "setupDescription": "Comece pela identidade pública. Componentes e incidentes ficam disponíveis depois que a página for criada.",
+    "createPage": "Criar página de status",
     "notConfigured": "Configure a página antes de adicionar componentes.",
     "name": "Nome",
     "home": "URL inicial",
     "logo": "URL do logotipo",
     "feedback": "URL de feedback",
-    "color": "Cor de destaque",
+    "color": "Cor do tema da página de status",
+    "colorDescription": "Usada na linha de destaque, nos botões e nos links da página pública. As cores de status do serviço não mudam.",
     "componentsDescription": "Use correspondência automática de rótulos ou um estado manual.",
     "newComponent": "Novo componente",
     "editComponent": "Editar componente",
@@ -2945,10 +3336,15 @@
     "componentUpdateHint": "As alterações aparecem na página pública após salvar.",
     "unknown": "Desconhecido",
     "incidentsDescription": "Crie incidentes e adicione atualizações durante a resposta.",
+    "emptyIncidentsDescription": "Incidentes publicados e atualizações de resposta serão reunidos aqui.",
+    "emptyIncidentsNeedsComponent": "Adicione um componente público antes de publicar um incidente.",
     "newIncident": "Novo incidente",
     "updateIncident": "Atualizar incidente",
     "incidentName": "Nome do incidente",
+    "incidentNameHint": "Este nome aparece na página pública de status.",
     "updateMessage": "Mensagem da atualização",
+    "updateMessageHint": "Esta mensagem aparece na linha do tempo do incidente.",
+    "affectedComponentsHint": "Selecione os componentes públicos afetados por este incidente.",
     "updateHistory": "Histórico de atualizações",
     "investigating": "Investigando",
     "identified": "Identificado",
@@ -2969,6 +3365,20 @@
   "status": {
     "title": "Status do serviço",
     "description": "Saúde pública dos componentes e histórico de incidentes.",
+    "systemStatus": "Status do sistema",
+    "availabilityUnavailable": "Disponibilidade indisponível",
+    "periodUnavailable": "Período de disponibilidade indisponível",
+    "historySummary": "{{count}} dias: {{healthy}} operacionais, {{incident}} com incidente e {{unknown}} desconhecidos.",
+    "viewHistoryEvidence": "Ver evidências do histórico",
+    "incidentHistory": "Histórico de incidentes",
+    "incidentHistoryDescription": "Eventos de serviço publicados no ano selecionado.",
+    "timeUnavailable": "Horário indisponível",
+    "overallDescription": {
+      "healthy": "Nenhuma interrupção ativa foi informada pelos componentes públicos configurados.",
+      "degraded": "Alguns componentes públicos estão relatando serviço degradado.",
+      "incident": "Um incidente ativo está afetando um ou mais componentes públicos.",
+      "unknown": "O status geral atual não pode ser determinado com os dados disponíveis."
+    },
     "loading": "Carregando o status público…",
     "loadingIncidents": "Carregando o histórico de incidentes…",
     "operational": "Todos os sistemas operacionais",
@@ -3003,14 +3413,26 @@
   },
   "deployment": {
     "title": "Configuração da implantação",
-    "description": "Inspecione as origens ativas dos bancos e migre com segurança os metadados do HertzBeat a partir do H2.",
+    "description": "Revise a implantação atual e use as operações guiadas quando precisar migrar o banco ou redefinir toda a instância.",
     "loading": "Carregando configuração da implantação…",
     "unavailable": "A configuração da implantação está indisponível.",
+    "danger": {
+      "title": "Operações de risco",
+      "description": "Estas ações alteram ou apagam dados persistentes. Confirme o escopo e o plano de recuperação antes de continuar."
+    },
     "current": {
       "title": "Implantação atual",
       "description": "Origens de configuração e requisitos de reinicialização observados pelo servidor.",
+      "summary": "Os dados de gerenciamento ficam em {{managementDatabase}} e os dados de telemetria em {{telemetryDatabase}}; a configuração é {{applyMode}} e opera no modo {{topology}}.",
+      "scope": "Áreas de configuração",
+      "databaseConnections": "Conexões de banco",
+      "configurationManagement": "Gerenciamento da configuração",
+      "viewDetails": "Ver configuração atual",
+      "hideDetails": "Ocultar configuração atual",
       "managementDatabase": "Banco de gerenciamento",
+      "managementDatabaseDescription": "Armazena contas, monitores, alertas e configurações do sistema",
       "greptimeDatabase": "Banco de telemetria GreptimeDB",
+      "greptimeDatabaseDescription": "Armazena métricas, logs e traces",
       "applyMode": "Modo de aplicação",
       "maintenanceMode": "Modo de manutenção",
       "topology": "Topologia da implantação",
@@ -3025,6 +3447,7 @@
       "command_line": "Linha de comando"
     },
     "applyMode": { "managed_write": "Configuração gerenciada", "external_apply": "Configuração externa / GitOps" },
+    "applyModeInline": { "managed_write": "gerenciada pelo HertzBeat", "external_apply": "gerenciada externamente" },
     "maintenance": {
       "active": "O modo de manutenção está ativo",
       "inactive": "O modo de manutenção está inativo",
@@ -3033,10 +3456,31 @@
       "acknowledgementAutoEnter": "Entendo que iniciar a migração entrará automaticamente no modo de manutenção e pausará as gravações de monitoramento."
     },
     "topology": { "single_node": "Nó único", "multi_node": "Vários nós", "unknown": "Desconhecida" },
+    "topologyInline": { "single_node": "nó único", "multi_node": "vários nós", "unknown": "desconhecido" },
     "migration": {
-      "title": "Migração de metadados H2",
-      "description": "Valide um destino MySQL ou PostgreSQL vazio antes de copiar os metadados.",
+      "title": "Assistente de migração de banco do HertzBeat",
+      "description": "Mova os dados de gerenciamento do HertzBeat do H2 para um banco MySQL ou PostgreSQL vazio. O destino será validado antes da cópia.",
+      "open": "Abrir assistente de migração",
+      "close": "Voltar à configuração de implantação",
       "blocked": "O servidor bloqueou a migração para a implantação atual."
+    },
+    "reset": {
+      "description": "Apague esta instância do HertzBeat e retorne à configuração inicial. Esta ação não pode ser desfeita.",
+      "action": "Redefinir HertzBeat",
+      "modalTitle": "Redefinir toda a instância do HertzBeat",
+      "warning": "Isso exclui permanentemente todas as contas, configurações e dados de monitoramento desta instância.",
+      "scopeTitle": "Esta redefinição apaga",
+      "scope": {
+        "management": "Contas, permissões, monitores, alertas e configurações no banco de gerenciamento",
+        "telemetry": "Todas as métricas, logs, traces e tabelas do banco GreptimeDB configurado",
+        "local": "Estado de configuração gerenciado e os arquivos de dados H2 e DuckDB locais padrão"
+      },
+      "externalObjects": "Os arquivos em armazenamento de objetos externo são mantidos para evitar a exclusão de conteúdo não relacionado em armazenamento compartilhado.",
+      "inputLabel": "Frase de confirmação",
+      "instruction": "Digite a frase a seguir para continuar:",
+      "confirm": "Apagar tudo e reiniciar a configuração",
+      "failed": "Não foi possível iniciar a redefinição. Nenhum dado foi apagado; tente novamente.",
+      "transitionDelayed": "A solicitação de redefinição foi salva, mas a configuração ainda não está pronta. Atualize esta página em instantes; o servidor retomará a redefinição automaticamente."
     },
     "fields": {
       "target": "Banco de destino",
@@ -3157,13 +3601,14 @@
       }
     },
     "optional": {
-      "description": "Configure endpoints públicos, retenção e e-mail agora, ou deixe em branco para configurar depois.",
+      "description": "Confirme o endereço externo, a retenção e o e-mail agora, ou ajuste-os depois nas configurações do sistema.",
       "publicAccess": {
-        "title": "Acesso público",
-        "description": "Informe os endereços usados por operadores e remetentes de telemetria. O HertzBeat não os deduz deste navegador.",
-        "publicBaseUrl": "URL base pública",
-        "otlpHttp": "Endpoint HTTP OTLP do servidor",
-        "otlpGrpc": "Endpoint gRPC OTLP do servidor"
+        "title": "Endereço externo",
+        "description": "O endereço atual da instalação é usado por padrão. Informe outro endereço apenas quando o HertzBeat for publicado por um balanceador de carga, proxy reverso ou gateway.",
+        "defaultAddress": "Endereço atual da instalação:",
+        "useProxy": "Usar balanceador de carga ou proxy",
+        "proxyPublicBaseUrl": "URL pública externa",
+        "proxyPublicBaseUrlHelp": "Informe o endereço completo usado por usuários e sistemas externos, incluindo o esquema e qualquer porta ou prefixo de caminho personalizado."
       },
       "retention": {
         "title": "Retenção de dados",
@@ -3279,7 +3724,17 @@
       "loading": "Carregando investigações…",
       "unavailable": "As investigações estão indisponíveis.",
       "empty": "Ainda não há investigações.",
-      "untitled": "Investigação sem título"
+      "untitled": "Investigação sem título",
+      "search": "Buscar investigações",
+      "noMatches": "Nenhuma investigação encontrada.",
+      "status": {
+        "active": "Em andamento",
+        "completed": "Concluída",
+        "failed": "Falhou",
+        "cancelled": "Cancelada",
+        "recoveryRequired": "Verificação necessária",
+        "noRun": "Sem execuções"
+      }
     },
     "investigation": { "label": "Investigação" },
     "roles": { "you": "Você", "assistant": "HertzBeat AI" },
@@ -3291,11 +3746,35 @@
       "label": "Prompt da investigação",
       "placeholder": "Peça ao HertzBeat para investigar um problema operacional…"
     },
-    "actions": { "send": "Enviar", "stop": "Parar", "approve": "Aprovar", "reject": "Rejeitar", "submit": "Enviar" },
+    "actions": {
+      "send": "Enviar",
+      "stop": "Parar",
+      "recover": "Verificar a mesma execução",
+      "retryNew": "Iniciar nova execução",
+      "approve": "Aprovar",
+      "reject": "Rejeitar",
+      "submit": "Enviar"
+    },
     "failure": "O fluxo da investigação está indisponível. Nenhuma ação será considerada concluída.",
+    "sessionLoadIncomplete": "Não foi possível carregar alguns detalhes salvos da investigação. Atualize ou selecione a investigação novamente.",
+    "recoveryRequired": "A ferramenta pode ter sido executada, mas o HertzBeat não conseguiu salvar o resultado. Verifique o destino antes de continuar.",
+    "targetMismatch": "Este alvo de investigação não é mais válido. Volte à origem e inicie uma nova investigação.",
+    "targetUnavailable": "O HertzBeat não consegue verificar este alvo de investigação agora. Nenhuma investigação foi iniciada.",
+    "invalidTarget": "Este link de investigação contém um alvo inválido ou ainda não suportado. Volte à página de origem e tente novamente.",
+    "activeObservationPaused": "A observação em tempo real foi pausada. A execução persistente continua em andamento; nenhuma conclusão foi presumida.",
     "context": {
       "label": "Contexto da execução",
+      "open": "Abrir detalhes da execução",
+      "close": "Fechar detalhes da execução",
+      "shortLabel": "Detalhes",
+      "panelClose": "Fechar painel de detalhes da execução",
       "target": "Alvo",
+      "monitorTarget": "Monitor {{id}}",
+      "singleAlertTarget": "Alerta individual {{id}}",
+      "entityTarget": "Entidade {{id}}",
+      "topologyTarget": "Raiz da topologia {{id}}",
+      "traceTarget": "Trace {{id}}",
+      "logTarget": "Página de logs",
       "none": "Nenhum contexto de página anexado",
       "activity": "Atividade das ferramentas",
       "noActivity": "Nenhuma ferramenta usada",

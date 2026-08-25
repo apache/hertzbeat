@@ -35,8 +35,7 @@ describe('system configuration locale contract', () => {
     expect(expected).toContain('timezonesUnavailable');
     expect(expected).toContain('useCurrentServerSettings');
     expect(expected).toEqual(expect.arrayContaining(['missing', 'permission', 'invalid']));
-    expect(expected).toEqual(expect.arrayContaining(['theme.light-ops', 'theme.dark-ops', 'theme.compact']));
-    expect(expected).not.toEqual(expect.arrayContaining(['theme.default', 'theme.dark']));
+    expect(expected).not.toEqual(expect.arrayContaining(['theme.label', 'theme.help']));
   });
 });
 

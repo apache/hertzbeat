@@ -34,6 +34,7 @@ import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -119,6 +120,21 @@ public class EntityTopologyQueryService {
                                                         Boolean hideInternal,
                                                         Integer pageIndex,
                                                         Integer pageSize) {
+        return buildFocusedTopology(AuthTokenScopes.DEFAULT_WORKSPACE_ID, focusEntityId, requestedDepth,
+                environment, sourceKind, start, end, relationType, hideInternal, pageIndex, pageSize);
+    }
+
+    public EntityTopologyGraphInfo buildFocusedTopology(String workspaceId,
+                                                        Long focusEntityId,
+                                                        int requestedDepth,
+                                                        String environment,
+                                                        String sourceKind,
+                                                        Long start,
+                                                        Long end,
+                                                        String relationType,
+                                                        Boolean hideInternal,
+                                                        Integer pageIndex,
+                                                        Integer pageSize) {
         int depth = normalizeDepth(requestedDepth);
         EntityTopologyGraphInfo graph = new EntityTopologyGraphInfo();
         String normalizedSourceKind = normalizeSourceKind(sourceKind);
@@ -131,7 +147,7 @@ public class EntityTopologyQueryService {
         initializeEdgePageEvidence(graph, pageIndex, pageSize);
         if (focusEntityId == null) {
             return buildDefaultTopologyGraph(graph, depth, environment, normalizedSourceKind,
-                    sourceSelection, start, end, normalizedRelationType, hideInternal, pageIndex, pageSize);
+                    sourceSelection, workspaceId, start, end, normalizedRelationType, hideInternal, pageIndex, pageSize);
         }
         var focusEntity = entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(focusEntityId);
         if (focusEntity.isEmpty() || !matchesEnvironment(focusEntity.get(), environment)) {
@@ -151,7 +167,7 @@ public class EntityTopologyQueryService {
                 : List.of());
 
         TraceCallTopologyReadModel traceCallReadModel = sourceSelection.includeTraceCalls()
-                ? traceCallTopologyReadModel(entityById.values(), environment, start, end, hideInternal)
+                ? traceCallTopologyReadModel(workspaceId, entityById.values(), environment, start, end, hideInternal)
                 : TraceCallTopologyReadModel.empty();
         Map<Long, ObserveEntity> traceEntityById = traceCallReadModel.entityById();
         List<TraceCallTopologyEdgeInfo> traceCallEdges = traceCallReadModel.edges();
@@ -184,6 +200,7 @@ public class EntityTopologyQueryService {
                                                               String environment,
                                                               String sourceKind,
                                                               TopologySourceSelection sourceSelection,
+                                                              String workspaceId,
                                                               Long start,
                                                               Long end,
                                                               String relationType,
@@ -215,7 +232,7 @@ public class EntityTopologyQueryService {
                 : List.of());
 
         TraceCallTopologyReadModel traceCallReadModel = sourceSelection.includeTraceCalls()
-                ? traceCallTopologyOverviewReadModel(environment, start, end, hideInternal)
+                ? traceCallTopologyOverviewReadModel(workspaceId, environment, start, end, hideInternal)
                 : TraceCallTopologyReadModel.empty();
         Map<Long, ObserveEntity> traceEntityById = traceCallReadModel.entityById();
         List<TraceCallTopologyEdgeInfo> traceCallEdges = traceCallReadModel.edges();
@@ -269,22 +286,24 @@ public class EntityTopologyQueryService {
     private record DefaultSeedSelection(List<ObserveEntity> entities, boolean partial) {
     }
 
-    private TraceCallTopologyReadModel traceCallTopologyReadModel(Collection<ObserveEntity> seedEntities,
+    private TraceCallTopologyReadModel traceCallTopologyReadModel(String workspaceId,
+                                                                  Collection<ObserveEntity> seedEntities,
                                                                   String environment,
                                                                   Long start,
                                                                   Long end,
                                                                   Boolean hideInternal) {
         TraceCallTopologyReadModel readModel = traceCallTopologyQueryService.findTraceCallEdges(
-                seedEntities, environment, start, end, hideInternal == null || hideInternal);
+                workspaceId, seedEntities, environment, start, end, hideInternal == null || hideInternal);
         return readModel == null ? TraceCallTopologyReadModel.empty() : readModel;
     }
 
-    private TraceCallTopologyReadModel traceCallTopologyOverviewReadModel(String environment,
+    private TraceCallTopologyReadModel traceCallTopologyOverviewReadModel(String workspaceId,
+                                                                          String environment,
                                                                           Long start,
                                                                           Long end,
                                                                           Boolean hideInternal) {
         TraceCallTopologyReadModel readModel = traceCallTopologyQueryService.findTraceCallEdgesForOverview(
-                environment, start, end, hideInternal == null || hideInternal);
+                workspaceId, environment, start, end, hideInternal == null || hideInternal);
         return readModel == null ? TraceCallTopologyReadModel.empty() : readModel;
     }
 

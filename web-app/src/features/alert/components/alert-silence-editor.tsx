@@ -16,17 +16,22 @@
  */
 
 import { Input, Modal, Switch } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSilenceDraft } from '../model/alert-silence-model';
+import type { AlertLabelSuggestionState } from '../model/alert-label-suggestion-model';
+import { validateAlertSilenceDraft, type AlertSilenceDraft } from '../model/alert-silence-model';
 import type { AlertSilenceRecovery as RecoveryState } from '../model/alert-silence-page-model';
 import styles from '../shared/alert-silence-editor.module.css';
+import { AlertLabelMatcherEditor } from './alert-label-matcher-editor';
+import { AlertSilenceFieldRow } from './alert-silence-field-row';
 import { AlertSilenceScheduleFields } from './alert-silence-schedule-fields';
 import { AlertSilenceRecovery } from './alert-silence-recovery';
 
 interface AlertSilenceEditorProps {
   draft: AlertSilenceDraft;
   recovery: RecoveryState | null;
+  labelSuggestions: AlertLabelSuggestionState;
   saving: boolean;
   writeLocked: boolean;
   update: (patch: Partial<AlertSilenceDraft>) => void;
@@ -37,52 +42,79 @@ interface AlertSilenceEditorProps {
 }
 
 export function AlertSilenceEditor(props: AlertSilenceEditorProps) {
-  const { draft, recovery, saving, writeLocked, update, replace, close, retry, submit } = props;
+  const { draft, recovery, labelSuggestions, saving, writeLocked, update, replace, close, retry, submit } = props;
   const { t } = useTranslation();
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const invalidFields = submitAttempted ? validateAlertSilenceDraft(draft) : [];
+  const submitDraft = () => {
+    if (writeLocked) return;
+    setSubmitAttempted(true);
+    if (validateAlertSilenceDraft(draft).length === 0) submit();
+  };
   return (
     <Modal
       open
-      width={680}
+      width="40%"
+      rootClassName={styles.modal ?? ''}
       closable={!saving}
       maskClosable={false}
-      title={t(draft.id ? 'alertSilences.edit' : 'alertSilences.new')}
-      okText={t('common.save')}
+      title={t(draft.id ? 'alertSilences.edit' : 'alertSilences.createTitle')}
+      okText={t('common.confirm')}
       cancelText={t('common.cancel')}
       confirmLoading={saving}
       cancelButtonProps={{ disabled: saving }}
       okButtonProps={{ disabled: writeLocked }}
       keyboard={!saving}
       onCancel={close}
-      onOk={submit}
+      onOk={submitDraft}
     >
       <AlertSilenceRecovery busy={saving} recovery={recovery} retry={retry} />
       <div className={styles.form}>
-        <label className={`${styles.field} ${styles.wide}`}>
-          {t('alertSilences.name')}
-          <Input disabled={writeLocked} value={draft.name} onChange={event => update({ name: event.target.value })} />
-        </label>
-        <label className={styles.field}>
-          {t('alertSilences.matchAll')}
-          <Switch disabled={writeLocked} checked={draft.matchAll} onChange={matchAll => update({ matchAll })} />
-        </label>
-        <label className={styles.field}>
-          {t('alertSilences.enabled')}
-          <Switch disabled={writeLocked} checked={draft.enable} onChange={enable => update({ enable })} />
-        </label>
+        <AlertSilenceFieldRow invalid={invalidFields.includes('name')} label={t('alertSilences.name')} required>
+          <Input
+            aria-label={t('alertSilences.name')}
+            aria-invalid={invalidFields.includes('name')}
+            disabled={writeLocked}
+            {...(invalidFields.includes('name') ? { status: 'error' as const } : {})}
+            value={draft.name}
+            onChange={event => update({ name: event.target.value })}
+          />
+        </AlertSilenceFieldRow>
+        <AlertSilenceFieldRow label={t('alertSilences.matchAll')} required>
+          <Switch
+            aria-label={t('alertSilences.matchAll')}
+            disabled={writeLocked}
+            checked={draft.matchAll}
+            onChange={matchAll => update({ matchAll })}
+          />
+        </AlertSilenceFieldRow>
         {!draft.matchAll && (
-          <label className={`${styles.field} ${styles.wide}`}>
-            {t('alertSilences.labels')}
-            <Input.TextArea
-              rows={2}
+          <AlertSilenceFieldRow invalid={invalidFields.includes('labels')} label={t('alertSilences.labels')} required>
+            <AlertLabelMatcherEditor
               disabled={writeLocked}
+              invalid={invalidFields.includes('labels')}
+              suggestions={labelSuggestions}
+              translationRoot="alertSilences"
               value={draft.labelsText}
-              placeholder={t('alertSilences.matcherPlaceholder')}
-              onChange={event => update({ labelsText: event.target.value })}
+              change={labelsText => update({ labelsText })}
             />
-            <span className={styles.hint}>{t('alertSilences.labelsHelp')}</span>
-          </label>
+          </AlertSilenceFieldRow>
         )}
-        <AlertSilenceScheduleFields disabled={writeLocked} draft={draft} update={update} replace={replace} />
+        <AlertSilenceScheduleFields
+          disabled={writeLocked}
+          draft={draft}
+          invalidFields={invalidFields}
+          update={update}
+          replace={replace}
+        />
+        <AlertSilenceFieldRow label={t('alertSilences.enabled')} required>
+          <Switch
+            aria-label={t('alertSilences.enabled')}
+            disabled={writeLocked}
+            checked={draft.enable}
+            onChange={enable => update({ enable })}
+          />
+        </AlertSilenceFieldRow>
       </div>
     </Modal>
   );

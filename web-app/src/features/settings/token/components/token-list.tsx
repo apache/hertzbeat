@@ -15,9 +15,18 @@
  * limitations under the License.
  */
 
+import {
+  ClockCircleOutlined,
+  CopyOutlined,
+  KeyOutlined,
+  SafetyCertificateOutlined,
+  TagOutlined
+} from '@ant-design/icons';
 import { App, Button, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
+import type { ReactNode } from 'react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
@@ -35,6 +44,9 @@ type TokenListProps = {
   list: TokenListState;
   refreshing: boolean;
   revokingId: number | null;
+  generating: boolean;
+  generationDisabled: boolean;
+  onGenerate: () => void;
   onRetry: () => void | Promise<void>;
   onRevoke: (id: number) => void | Promise<void>;
 };
@@ -47,7 +59,7 @@ export function TokenList(props: TokenListProps) {
     return <OperationalStatePanel kind="loading" title={t('token.loading')} />;
   }
   if (props.list.kind === 'empty') {
-    return <OperationalStatePanel kind="empty" title={t('token.empty')} />;
+    return <TokenEmptyState {...props} />;
   }
   if (
     props.list.kind === 'unavailable' ||
@@ -58,7 +70,7 @@ export function TokenList(props: TokenListProps) {
     return <TokenListFailureState kind={props.list.kind} onRetry={props.onRetry} />;
   }
   if (props.list.records.length === 0) {
-    return <OperationalStatePanel kind="empty" title={t('token.empty')} />;
+    return <TokenEmptyState {...props} />;
   }
 
   const confirmRevoke = (token: TokenResourceRecord) => {
@@ -85,6 +97,53 @@ export function TokenList(props: TokenListProps) {
         scroll={{ x: 1380 }}
       />
     </div>
+  );
+}
+
+function TokenEmptyState(props: Pick<TokenListProps, 'generating' | 'generationDisabled' | 'onGenerate'>) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  return (
+    <section className={styles.emptyState} data-state="empty" role="status" aria-labelledby={titleId}>
+      <div className={styles.emptyIcon} aria-hidden="true">
+        <KeyOutlined />
+      </div>
+      <Typography.Title level={3} id={titleId} className={styles.emptyTitle!}>
+        {t('token.emptyTitle')}
+      </Typography.Title>
+      <Typography.Text type="secondary" className={styles.emptyDescription!}>
+        {t('token.emptyDescription')}
+      </Typography.Text>
+      <ul className={styles.emptyGuidance}>
+        <EmptyGuidance icon={<TagOutlined />} text={t('token.emptyName')} />
+        <EmptyGuidance icon={<SafetyCertificateOutlined />} text={t('token.emptyScope')} />
+        <EmptyGuidance icon={<ClockCircleOutlined />} text={t('token.emptyExpiry')} />
+      </ul>
+      <div className={styles.oneTimeNotice}>
+        <CopyOutlined aria-hidden="true" />
+        <span>{t('token.emptyOneTime')}</span>
+      </div>
+      <Button
+        type="primary"
+        size="large"
+        loading={props.generating}
+        disabled={props.generationDisabled}
+        onClick={props.onGenerate}
+      >
+        {t('token.emptyAction')}
+      </Button>
+    </section>
+  );
+}
+
+function EmptyGuidance({ icon, text }: { icon: ReactNode; text: string }) {
+  return (
+    <li>
+      <span className={styles.guidanceIcon} aria-hidden="true">
+        {icon}
+      </span>
+      <span>{text}</span>
+    </li>
   );
 }
 

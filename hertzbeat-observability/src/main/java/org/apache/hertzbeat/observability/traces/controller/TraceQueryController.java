@@ -27,6 +27,9 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
@@ -76,10 +79,11 @@ public class TraceQueryController {
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
-                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                workspaceId, entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, pageIndex, pageSize,
                 hideInternal, spanScope, scopedFilters.attributeFilter());
         return ResponseEntity.ok(Message.success(page));
@@ -107,10 +111,11 @@ public class TraceQueryController {
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
-                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                workspaceId, entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, hideInternal, spanScope,
                 scopedFilters.attributeFilter())));
     }
@@ -141,10 +146,11 @@ public class TraceQueryController {
             @RequestParam(value = "minCount", required = false) Integer minCount,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
-                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                workspaceId, entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
                 minCount, hideInternal, spanScope, scopedFilters.attributeFilter())));
     }
@@ -176,10 +182,11 @@ public class TraceQueryController {
                                                           Long minDurationMs,
                                                           @RequestParam(value = "maxDurationMs", required = false)
                                                           Long maxDurationMs) {
+        String workspaceId = trustedWorkspaceId();
         TraceDetailQuery query = detailQuery(
                 entityId, traceId, spanId, start, end, serviceName, serviceNamespace, environment, collectorId,
                 instance, endpoint, resourceFilter, attributeFilter, minDurationMs, maxDurationMs);
-        return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceDetail(query)));
+        return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceDetail(workspaceId, query)));
     }
 
     @GetMapping("/{traceId}/spans")
@@ -213,10 +220,11 @@ public class TraceQueryController {
                                                                  Long minDurationMs,
                                                                  @RequestParam(value = "maxDurationMs", required = false)
                                                                  Long maxDurationMs) {
+        String workspaceId = trustedWorkspaceId();
         TraceDetailQuery query = detailQuery(
                 entityId, traceId, spanId, start, end, serviceName, serviceNamespace, environment, collectorId,
                 instance, endpoint, resourceFilter, attributeFilter, minDurationMs, maxDurationMs);
-        TraceDetailDto detail = entityTraceQueryService.getTraceDetail(query);
+        TraceDetailDto detail = entityTraceQueryService.getTraceDetail(workspaceId, query);
         return ResponseEntity.ok(Message.success(detail == null ? List.of() : detail.getSpans()));
     }
 
@@ -258,6 +266,14 @@ public class TraceQueryController {
         return StringUtils.hasText(scopedResourceFilter)
                 ? scopedResourceFilter + " and " + entityTypeFilter
                 : entityTypeFilter;
+    }
+
+    private String trustedWorkspaceId() {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return AuthTokenScopes.normalizeWorkspaceId(workspaceId);
     }
 
     private ScopedFilters scopeFilters(Long entityId, String entityType, String collectorId, String instance,

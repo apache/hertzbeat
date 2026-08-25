@@ -11,7 +11,7 @@ import {
 } from '../model/entity-contract';
 import { normalizeEntityMonitorQuery } from '../model/entity-monitor-query';
 import { writeEntityQuery } from '../model/entity-query';
-import { parseEntityDetail, parseEntityMonitorPage, parseEntityPage } from './entity-schema';
+import { parseEntityDetail, parseEntityIdentity, parseEntityMonitorPage, parseEntityPage } from './entity-schema';
 
 class EntityMissingError extends Error {
   constructor() {
@@ -71,6 +71,15 @@ export async function loadEntityDetail(id: number, signal?: AbortSignal) {
   const detail = parseEntityDetail(value);
   if (detail.entity.id !== id) throw new EntityContractError('Entity detail does not match its request');
   return detail;
+}
+
+export async function loadEntityIdentity(id: number, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(id) || id <= 0) throw new EntityMissingError();
+  const value = await apiMessageGet(`/api/entities/${id}`, signal ? { signal } : undefined);
+  if (value === null || value === undefined) throw new EntityMissingError();
+  const entity = parseEntityIdentity(value);
+  if (entity.id !== id) throw new EntityContractError('Entity identity does not match its request');
+  return entity;
 }
 
 export async function loadEntityMonitors(id: number, input: EntityMonitorQuery, signal?: AbortSignal) {

@@ -33,11 +33,15 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
+import org.apache.hertzbeat.ai.gateway.application.AgentTargetCanonicalizationService.FailureKind;
+import org.apache.hertzbeat.ai.gateway.application.AgentTargetCanonicalizationService.TargetCanonicalizationException;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CancelRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.channel.webui.dto.WebUiChatStreamRequest;
+import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.GatewayEventType;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
@@ -45,7 +49,9 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingle
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStreamResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ErrorPayload;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -79,11 +85,13 @@ class WebUiControllerTest {
     @AfterEach
     void tearDown() {
         SurenessContextHolder.clear();
+        AuthTokenRequestContext.clear();
     }
 
     @Test
     void chatShouldRouteInvokeCommandAndReturnSingleResponse() {
         bindSubject();
+        AuthTokenRequestContext.bindWorkspaceId("workspace-a");
         WebUiController controller = controller();
         WebUiChatStreamRequest request = chatRequest();
         GatewaySingleResponse expected = new GatewaySingleResponse(
@@ -101,10 +109,37 @@ class WebUiControllerTest {
         assertEquals("msg-1", command.commandId());
         assertEquals("conv-1", command.userInput().getConversationId());
         assertEquals("diagnose cpu", command.userInput().getMessage().getText());
+        assertEquals(42L, command.userInput().getTarget().getMonitorId());
+        assertEquals("basic.max_connections", command.userInput().getTarget().getSignal().getQuery());
+        assertEquals(1000L, command.userInput().getTarget().getSignal().getStart());
+        assertEquals(2000L, command.userInput().getTarget().getSignal().getEnd());
+        assertEquals("Asia/Shanghai", command.userInput().getTarget().getSignal().getTimezone());
         assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
         assertEquals("trusted-user", command.envelope().getActor().getId());
         assertEquals(List.of("user"), command.envelope().getActor().getRoles());
         assertEquals("zh-CN", command.envelope().getPreferredLanguage());
+        assertEquals("workspace-a", command.envelope().getWorkspaceId());
+    }
+
+    @Test
+    void chatShouldCaptureOnlyTheTypedSingleAlertSourceIntentFromTrustedWorkspace() {
+        bindSubject();
+        AuthTokenRequestContext.bindWorkspaceId("workspace-a");
+        WebUiChatStreamRequest request = WebUiChatStreamRequest.builder()
+                .conversationId("conv-alert").messageId("msg-alert").message("inspect this alert")
+                .target(AgentTargetRef.builder().alertId(42L).alertType("single").build())
+                .build();
+        when(commandRouter.handle(commandCaptor.capture())).thenReturn(new GatewaySingleResponse(
+                new Meta("msg-alert", "conv-alert", "ags-alert", "run-alert", true, "done"),
+                Map.of("message", "ok"), List.of()));
+
+        controller().chat(request, "en-US");
+
+        InvokeCommand command = assertInstanceOf(InvokeCommand.class, commandCaptor.getValue());
+        assertEquals(42L, command.userInput().getTarget().getAlertId());
+        assertEquals("single", command.userInput().getTarget().getAlertType());
+        assertEquals("workspace-a", command.envelope().getWorkspaceId());
+        assertEquals("en-US", command.envelope().getPreferredLanguage());
     }
 
     @Test
@@ -131,6 +166,27 @@ class WebUiControllerTest {
     }
 
     @Test
+    void streamChatShouldCaptureActorAndWorkspaceBeforeDeferredSubscription() {
+        bindSubject();
+        AuthTokenRequestContext.bindWorkspaceId("workspace-a");
+        WebUiController controller = controller();
+        GatewayEvent event = new GatewayEvent(GatewayEventType.RUN_COMPLETED, "event-1", "conv-1",
+                "ags-1", "run-1", null, new RunCompletedPayload(null), 100L);
+        when(commandRouter.handle(commandCaptor.capture())).thenReturn(new GatewayStreamResponse(
+                new Meta("msg-1", "conv-1", "ags-1", "run-1", false, "streaming"), Flux.just(event)));
+
+        Flux<ServerSentEvent<GatewayEvent>> stream = controller.streamChat(chatRequest(), "ja-JP");
+        SurenessContextHolder.clear();
+        AuthTokenRequestContext.clear();
+        stream.collectList().block();
+
+        InvokeCommand command = assertInstanceOf(InvokeCommand.class, commandCaptor.getValue());
+        assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals("workspace-a", command.envelope().getWorkspaceId());
+        assertEquals("ja-JP", command.envelope().getPreferredLanguage());
+    }
+
+    @Test
     void streamChatShouldNotExposeRuntimeExceptionDetails() {
         bindSubject();
         when(commandRouter.handle(commandCaptor.capture())).thenReturn(new GatewayStreamResponse(
@@ -143,6 +199,21 @@ class WebUiControllerTest {
         ErrorPayload error = (ErrorPayload) events.getFirst().data().payload();
         assertFalse(error.errorMessage().contains("private-value"));
         assertEquals("Agent Gateway stream failed", error.errorMessage());
+    }
+
+    @Test
+    void streamChatShouldMapSynchronousCanonicalizationFailuresWithoutLeakingDetails() {
+        bindSubject();
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenThrow(new TargetCanonicalizationException(FailureKind.UNAVAILABLE));
+
+        List<ServerSentEvent<GatewayEvent>> events = controller().streamChat(chatRequest(), null)
+                .collectList().block();
+
+        ErrorPayload error = (ErrorPayload) events.getFirst().data().payload();
+        assertEquals("TARGET_UNAVAILABLE", error.status());
+        assertEquals("Investigation target is unavailable", error.errorMessage());
+        assertFalse(error.errorMessage().contains("Entity"));
     }
 
     @Test
@@ -159,6 +230,7 @@ class WebUiControllerTest {
         CancelRunCommand command = assertInstanceOf(CancelRunCommand.class, commandCaptor.getValue());
         assertEquals("run-1", command.runUid());
         assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
     }
 
     @Test
@@ -170,7 +242,8 @@ class WebUiControllerTest {
 
         assertEquals(SUCCESS_CODE, response.getBody().getCode());
         verify(interactionInputService).submit(eq("aui-1"),
-                argThat(actor -> "trusted-user".equals(actor.getId())), eq(Map.of("password", "secret")));
+                argThat(actor -> "trusted-user".equals(actor.getId())), eq("default"),
+                eq(Map.of("password", "secret")));
     }
 
     private WebUiChatStreamRequest chatRequest() {
@@ -178,6 +251,16 @@ class WebUiControllerTest {
                 .conversationId("conv-1")
                 .messageId("msg-1")
                 .message("diagnose cpu")
+                .target(AgentTargetRef.builder()
+                        .monitorId(42L)
+                        .signal(AgentSignalRef.builder()
+                                .type("metrics")
+                                .query("basic.max_connections")
+                                .start(1000L)
+                                .end(2000L)
+                                .timezone("Asia/Shanghai")
+                                .build())
+                        .build())
                 .build();
     }
 

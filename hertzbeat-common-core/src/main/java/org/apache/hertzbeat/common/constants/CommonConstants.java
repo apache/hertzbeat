@@ -100,6 +100,16 @@ public interface CommonConstants {
     String LABEL_INSTANCE_NAME = "instancename";
 
     /**
+     * Internal authority label for the HertzBeat monitor that produced an alert.
+     */
+    String LABEL_MONITOR_ID = "hertzbeat.monitor.id";
+
+    /**
+     * Internal authority label for one unambiguous entity associated with an alert.
+     */
+    String LABEL_ENTITY_ID = "hertzbeat.entity.id";
+
+    /**
      * Alarm severity label key
      */
     String LABEL_ALERT_SEVERITY = "severity";

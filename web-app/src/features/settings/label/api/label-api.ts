@@ -87,8 +87,16 @@ export async function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
 }
 
 export async function deleteLabel(id: number) {
-  if (!positiveSafeInteger(id)) throw new LabelRequestContractError('Label id is invalid');
-  const receipt = await labelApiRequest(() => apiMessageDelete(`${labelEndpoint}?ids=${encodeURIComponent(id)}`));
+  return deleteLabels([id]);
+}
+
+export async function deleteLabels(ids: number[]) {
+  if (ids.length === 0 || ids.some(id => !positiveSafeInteger(id)) || new Set(ids).size !== ids.length) {
+    throw new LabelRequestContractError('Label ids are invalid');
+  }
+  const params = new URLSearchParams();
+  ids.forEach(id => params.append('ids', String(id)));
+  const receipt = await labelApiRequest(() => apiMessageDelete(`${labelEndpoint}?${params.toString()}`));
   return parseLabelWriteReceipt(receipt);
 }
 

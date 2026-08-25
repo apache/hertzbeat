@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
@@ -52,9 +53,11 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceRowQuery;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -75,9 +78,36 @@ class EntityTraceQueryServiceImplTest {
     @Mock
     private ObservabilityWorkspaceQueryGateway workspaceQueryGateway;
 
+    @BeforeEach
+    void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("default");
+    }
+
     @AfterEach
     void tearDown() {
         AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void recentTraceReadUsesOnlyTheExplicitWorkspace() {
+        AuthTokenRequestContext.bindWorkspaceId("team-b");
+        when(traceQueryRepository.supportsTraceListRows()).thenReturn(true);
+        when(traceQueryRepository.queryTraceListRows(
+                100L, 200L, false, null, null, null, "team-a", Map.of(), false, 0, 20))
+                .thenReturn(List.of());
+
+        assertTrue(entityTraceQueryService.queryRecentTraces("team-a", 100L, 200L, 20).isEmpty());
+
+        verify(traceQueryRepository).queryTraceListRows(
+                100L, 200L, false, null, null, null, "team-a", Map.of(), false, 0, 20);
+    }
+
+    @Test
+    void blankWorkspaceRejectsRecentTraceReadBeforeStorageCapabilityLookup() {
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> entityTraceQueryService.queryRecentTraces(" ", 100L, 200L, 20));
+
+        verifyNoInteractions(traceQueryRepository);
     }
 
     @Test
@@ -93,7 +123,7 @@ class EntityTraceQueryServiceImplTest {
         when(traceQueryRepository.queryRecentTraceRows(
                 eq(1500), org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
                 eq("checkout-service"), eq("commerce"), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(),
+                eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false))).thenReturn(List.of(
                 traceRow("trace-1", "span-root", null, "GET /checkout", "checkout-service", "STATUS_CODE_ERROR",
                         now - 60_000, 4_000_000L,
@@ -119,7 +149,7 @@ class EntityTraceQueryServiceImplTest {
         verify(traceQueryRepository, atLeastOnce()).queryRecentTraceRows(
                 eq(1500), org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
                 eq("checkout-service"), eq("commerce"), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), identityFilterCaptor.capture(), eq(false));
+                eq("default"), identityFilterCaptor.capture(), eq(false));
         assertEquals(Set.of("checkout-service"), identityFilterCaptor.getValue().get("service.name"));
         assertEquals(Set.of("commerce"), identityFilterCaptor.getValue().get("service.namespace"));
     }
@@ -184,7 +214,7 @@ class EntityTraceQueryServiceImplTest {
         when(traceQueryRepository.queryTraceSummaryRows(
                 org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
                 eq("codex-pd-1369-novice-checkout"), eq("product-design-1369"), eq("prod"),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false)))
                 .thenReturn(Map.of(
                         "total_trace_count", 1L,
@@ -202,7 +232,7 @@ class EntityTraceQueryServiceImplTest {
         verify(traceQueryRepository).queryTraceSummaryRows(
                 org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
                 eq("codex-pd-1369-novice-checkout"), eq("product-design-1369"), eq("prod"),
-                org.mockito.ArgumentMatchers.isNull(), identityFilterCaptor.capture(), eq(false));
+                eq("default"), identityFilterCaptor.capture(), eq(false));
         assertNull(identityFilterCaptor.getValue().get("hertzbeat.entity_id"));
         assertEquals(Set.of("codex-pd-1369-novice-checkout"),
                 identityFilterCaptor.getValue().get("service.name"));
@@ -319,7 +349,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false))).thenReturn(List.of(checkoutRoot, checkoutChild, inventoryRoot, unknownRoot));
 
         Map<String, Object> result = entityTraceQueryService.getTraceGroupByStats(
@@ -357,7 +387,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false));
         verify(traceQueryRepository, never()).queryTraceGroupByRows(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
@@ -422,8 +452,8 @@ class EntityTraceQueryServiceImplTest {
                         Map.of("service.name", "payment-service", "service.namespace", "payments"))
         );
 
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("default", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("default", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true)
         ));
         when(traceQueryRepository.queryRecentTraceRows(
@@ -431,7 +461,7 @@ class EntityTraceQueryServiceImplTest {
                 eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(),
+                eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false))).thenReturn(listRows);
         when(traceQueryRepository.queryTraceRows(
                 org.mockito.ArgumentMatchers.any(TraceRowQuery.class), eq(5000))).thenReturn(detailRows);
@@ -473,7 +503,7 @@ class EntityTraceQueryServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(),
+                eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false))).thenReturn(List.of(
                 traceRow("trace-1", "span-root", null, "GET /checkout", "checkout-service", "STATUS_CODE_ERROR",
                         now - 10_000, 3_000_000L,
@@ -499,7 +529,7 @@ class EntityTraceQueryServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(),
+                eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(true))).thenReturn(List.of(
                 traceRow("trace-self", "span-root", null, "GET /internal", "hertzbeat", "STATUS_CODE_OK",
                         now - 10_000, 2_000_000L,
@@ -521,7 +551,7 @@ class EntityTraceQueryServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(),
+                eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(true));
     }
 
@@ -532,7 +562,14 @@ class EntityTraceQueryServiceImplTest {
                 traceRow("trace-http", "span-root", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
                         now - 5_000, 5_000_000L, Map.of("service.name", "checkout-service"))
         );
-        when(traceQueryRepository.queryTraceRows("trace-http", 5000)).thenReturn(rows);
+        when(traceQueryRepository.queryTraceRows(
+                eq("trace-http"), eq(5000), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
+                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false))).thenReturn(rows);
+        stubDefaultWorkspaceTraceRows("trace-http", rows);
 
         var page = entityTraceQueryService.queryTraceList(null, null, null, "trace-http", false, null, null, null, 0, 20, false);
         TraceOverviewDto overview = entityTraceQueryService.getTraceOverview(null, null, null, "trace-http", false, null, null, null, false);
@@ -544,7 +581,13 @@ class EntityTraceQueryServiceImplTest {
         assertNotNull(detail);
         assertEquals("trace-http", detail.getTraceId());
         assertEquals(1, detail.getSpans().size());
-        verify(traceQueryRepository, atLeastOnce()).queryTraceRows("trace-http", 5000);
+        verify(traceQueryRepository, atLeastOnce()).queryTraceRows(
+                eq("trace-http"), eq(5000), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
+                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false));
         verify(traceQueryRepository, never()).queryRecentTraceRows(1500, null, false);
     }
 
@@ -575,7 +618,7 @@ class EntityTraceQueryServiceImplTest {
                 "trace-redacted", "span-redacted", null, "GET /checkout", "checkout",
                 "STATUS_CODE_OK", System.currentTimeMillis(), 1_000_000L, Map.of());
         row.put("span_events", "[{\"body\":\"" + secretSentinel + "\"}");
-        when(traceQueryRepository.queryTraceRows("trace-redacted", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-redacted", List.of(row));
         Logger logger = (Logger) LoggerFactory.getLogger(EntityTraceQueryServiceImpl.class);
         Level previousLevel = logger.getLevel();
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -604,7 +647,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 eq("recommendation"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(true))).thenReturn(List.of(
                 traceRow("trace-rec", "span-child", "span-root", "Lookup products", "product-catalog", "STATUS_CODE_OK",
                         now - 5_000, 900_000L,
@@ -626,7 +669,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 eq("recommendation"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(true));
     }
 
@@ -639,7 +682,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), eq("SELECT cart"),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(true))).thenReturn(List.of(
                 traceRow("trace-cart", "span-root", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
                         now - 10_000, 5_000_000L,
@@ -660,7 +703,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), eq("SELECT cart"),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(true));
     }
 
@@ -671,8 +714,8 @@ class EntityTraceQueryServiceImplTest {
         long end = now;
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("team-a", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("team-a", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true),
                 identity(1L, "service.namespace", "commerce", 80, false),
                 identity(1L, "host.name", "checkout-1", 50, false)
@@ -713,8 +756,8 @@ class EntityTraceQueryServiceImplTest {
         long end = now;
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("team-a", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("team-a", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true),
                 identity(1L, "service.namespace", "commerce", 80, false)
         ));
@@ -765,7 +808,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false))).thenReturn(List.of(
                 traceRow("trace-stable", "span-root-1", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
                         now - 10_000, 2_000_000L,
@@ -806,7 +849,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), pushedFilterCaptor.capture(), eq(false));
+                eq("default"), pushedFilterCaptor.capture(), eq(false));
         assertEquals(Set.of("1.2.3", "1.2.4"), pushedFilterCaptor.getValue().get("service.version"));
         verify(traceQueryRepository, never()).queryTraceListRows(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
@@ -828,7 +871,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false))).thenReturn(List.of(
                 traceRow("trace-stable", "span-root-1", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
                         now - 10_000, 2_000_000L,
@@ -875,7 +918,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), pushedFilterCaptor.capture(), eq(false));
+                eq("default"), pushedFilterCaptor.capture(), eq(false));
         assertEquals(Map.of("service.version", Set.of("1.2.3")), pushedFilterCaptor.getValue());
         verify(traceQueryRepository, never()).queryTraceListRows(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
@@ -909,7 +952,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false))).thenReturn(List.of(matchingRow, inventoryRow, databaseRow));
 
         var page = entityTraceQueryService.queryTraceList(null, start, end, null,
@@ -924,7 +967,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), pushedFilterCaptor.capture(), eq(false));
+                eq("default"), pushedFilterCaptor.capture(), eq(false));
         assertEquals(Map.of("service.version", Set.of("1.2.3")), pushedFilterCaptor.getValue());
         verify(traceQueryRepository, never()).queryTraceListRows(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
@@ -946,7 +989,7 @@ class EntityTraceQueryServiceImplTest {
                 eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq("default"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
                 eq(false))).thenReturn(List.of(
                 traceRow("trace-checkout", "span-root-1", null, "POST /checkout",
                         "checkout-service", "STATUS_CODE_OK", now - 10_000, 2_000_000L,
@@ -972,8 +1015,8 @@ class EntityTraceQueryServiceImplTest {
         long end = now;
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("team-a", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("team-a", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true),
                 identity(1L, "service.namespace", "commerce", 80, false),
                 identity(1L, "deployment.environment.name", "prod", 70, false)
@@ -1057,7 +1100,7 @@ class EntityTraceQueryServiceImplTest {
         when(traceQueryRepository.queryTraceListRows(
                 eq(start), eq(end), eq(false), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false), eq(0), eq(1000)))
                 .thenReturn(List.of(traceListRow(
                         "trace-capped",
@@ -1082,7 +1125,7 @@ class EntityTraceQueryServiceImplTest {
         verify(traceQueryRepository).queryTraceListRows(
                 eq(start), eq(end), eq(false), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false), eq(0), eq(1000));
     }
 
@@ -1095,7 +1138,7 @@ class EntityTraceQueryServiceImplTest {
         when(traceQueryRepository.queryTraceListRows(
                 eq(start), eq(end), eq(false), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false), eq(0), eq(20)))
                 .thenReturn(List.of(traceListRow(
                         "trace-normalized",
@@ -1119,7 +1162,7 @@ class EntityTraceQueryServiceImplTest {
         verify(traceQueryRepository).queryTraceListRows(
                 eq(start), eq(end), eq(false), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("default"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false), eq(0), eq(20));
     }
 
@@ -1130,8 +1173,8 @@ class EntityTraceQueryServiceImplTest {
         long end = now;
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("team-a", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("team-a", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true),
                 identity(1L, "service.namespace", "commerce", 80, false)
         ));
@@ -1186,8 +1229,8 @@ class EntityTraceQueryServiceImplTest {
         long end = now;
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("team-a", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("team-a", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true),
                 identity(1L, "service.namespace", "commerce", 80, false)
         ));
@@ -1234,8 +1277,8 @@ class EntityTraceQueryServiceImplTest {
         long end = now;
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
-        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findEntityById("team-a", 1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("team-a", 1L)).thenReturn(List.of(
                 identity(1L, "service.name", "checkout-service", 100, true),
                 identity(1L, "service.namespace", "commerce", 80, false)
         ));
@@ -1470,7 +1513,7 @@ class EntityTraceQueryServiceImplTest {
         row.put("span_attributes", List.of(
                 Map.of("key", "db.statement", "value", Map.of("stringValue", "select 1"))
         ));
-        when(traceQueryRepository.queryTraceRows("trace-attribution", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-attribution", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-attribution");
 
@@ -1490,7 +1533,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", System.currentTimeMillis(), 1L,
                 Map.of("service.name", "checkout-service"));
         row.put("duration_nano", BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE));
-        when(traceQueryRepository.queryTraceRows("trace-unsigned-duration", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-unsigned-duration", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-unsigned-duration");
 
@@ -1505,7 +1548,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", System.currentTimeMillis(), 1L,
                 Map.of("service.name", "checkout-service"));
         row.put("duration_nano", BigDecimal.valueOf(Long.MAX_VALUE).add(BigDecimal.ONE));
-        when(traceQueryRepository.queryTraceRows("trace-decimal-duration", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-decimal-duration", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-decimal-duration");
 
@@ -1520,7 +1563,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", System.currentTimeMillis(), 1L,
                 Map.of("service.name", "checkout-service"));
         row.put("duration_nano", -1L);
-        when(traceQueryRepository.queryTraceRows("trace-negative-duration", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-negative-duration", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-negative-duration");
 
@@ -1554,7 +1597,7 @@ class EntityTraceQueryServiceImplTest {
                   }
                 ]
                 """);
-        when(traceQueryRepository.queryTraceRows("trace-dropped-count", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-dropped-count", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-dropped-count");
 
@@ -1590,7 +1633,7 @@ class EntityTraceQueryServiceImplTest {
                   }
                 ]
                 """);
-        when(traceQueryRepository.queryTraceRows("trace-negative-dropped-count", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-negative-dropped-count", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-negative-dropped-count");
 
@@ -1606,7 +1649,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", timestampMillis, 5_000_000L,
                 Map.of("service.name", "checkout-service"));
         row.put("timestamp", timestampMillis);
-        when(traceQueryRepository.queryTraceRows("trace-epoch-millis", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-epoch-millis", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-epoch-millis");
 
@@ -1622,7 +1665,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", timestampMillis, 5_000_000L,
                 Map.of("service.name", "checkout-service"));
         row.put("timestamp", Long.toString(timestampMillis));
-        when(traceQueryRepository.queryTraceRows("trace-epoch-millis-string", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-epoch-millis-string", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-epoch-millis-string");
 
@@ -1638,7 +1681,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", timestampMillis, 5_000_000L,
                 Map.of("service.name", "checkout-service"));
         row.put("timestamp", "2026-05-13 01:04:00+00:00");
-        when(traceQueryRepository.queryTraceRows("trace-offset-timestamp", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-offset-timestamp", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-offset-timestamp");
 
@@ -1654,7 +1697,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", timestampMillis, 5_000_000L,
                 Map.of("service.name", "checkout-service"));
         row.put("timestamp", ZonedDateTime.parse("2026-05-13T02:05:00Z[UTC]"));
-        when(traceQueryRepository.queryTraceRows("trace-zoned-timestamp", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-zoned-timestamp", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-zoned-timestamp");
 
@@ -1670,7 +1713,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout-service", "STATUS_CODE_OK", timestampDate.getTime(), 5_000_000L,
                 Map.of("service.name", "checkout-service"));
         row.put("timestamp", timestampDate);
-        when(traceQueryRepository.queryTraceRows("trace-sql-date-timestamp", 5000)).thenReturn(List.of(row));
+        stubDefaultWorkspaceTraceRows("trace-sql-date-timestamp", List.of(row));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-sql-date-timestamp");
 
@@ -1688,7 +1731,7 @@ class EntityTraceQueryServiceImplTest {
         Map<String, Object> orphanRow = traceRow("trace-orphan", "span-orphan", "span-missing", "SELECT cart",
                 "checkout-service", "STATUS_CODE_ERROR", now + 500, 1_000_000L,
                 Map.of("service.name", "checkout-service"));
-        when(traceQueryRepository.queryTraceRows("trace-orphan", 5000)).thenReturn(List.of(rootRow, orphanRow));
+        stubDefaultWorkspaceTraceRows("trace-orphan", List.of(rootRow, orphanRow));
 
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(null, "trace-orphan");
 
@@ -1697,6 +1740,13 @@ class EntityTraceQueryServiceImplTest {
         assertEquals("span-root", detail.getSpans().getFirst().getSpanId());
         assertEquals("span-orphan", detail.getSpans().get(1).getSpanId());
         assertEquals(1, detail.getErrorSpanCount());
+    }
+
+    private void stubDefaultWorkspaceTraceRows(String traceId, List<Map<String, Object>> rows) {
+        when(traceQueryRepository.queryTraceRows(
+                org.mockito.ArgumentMatchers.<TraceRowQuery>argThat(query -> traceId.equals(query.traceId())
+                        && "default".equals(query.workspaceId())),
+                eq(5000))).thenReturn(rows);
     }
 
     private EntityIdentity identity(Long entityId, String key, String value, int priority, boolean primary) {

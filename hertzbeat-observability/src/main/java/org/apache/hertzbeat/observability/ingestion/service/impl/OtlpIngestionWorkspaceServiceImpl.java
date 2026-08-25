@@ -48,12 +48,15 @@ import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOver
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.common.observability.model.EntityCanonicalIdentityRegistry;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilitySignalIntakeGateway;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.metrics.inventory.MetricInventoryRepository;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
@@ -165,14 +168,19 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     @Value("${hertzbeat.otlp.grpc.port:4317}")
     private int otlpGrpcPort = 4317;
 
+    OtlpIngestionOverviewDto getOverview() {
+        return getOverview(AuthTokenScopes.DEFAULT_WORKSPACE_ID);
+    }
+
     @Override
-    public OtlpIngestionOverviewDto getOverview() {
+    public OtlpIngestionOverviewDto getOverview(String workspaceId) {
+        String workspace = requireWorkspace(workspaceId);
         long now = System.currentTimeMillis();
         long start = now - LOOKBACK_MILLIS;
-        List<LogEntry> recentLogs = queryRecentLogs(start, now);
+        List<LogEntry> recentLogs = queryRecentLogs(workspace, start, now);
         List<LogEntry> externalLogs = recentLogs.stream().filter(this::isExternalLog).toList();
         List<TraceListItemDto> recentTraces = entityTraceQueryService
-                .queryTraceList(null, start, now, null, false, null, null, null, 0, SAMPLE_LIMIT)
+                .queryRecentTraces(workspace, start, now, SAMPLE_LIMIT)
                 .getContent();
         List<TraceListItemDto> externalTraces = recentTraces.stream().filter(this::isExternalTrace).toList();
         TraceOverviewDto traceOverview = new TraceOverviewDto(
@@ -182,7 +190,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 externalTraces.stream().anyMatch(item -> item.getStartTime() != null && item.getStartTime() >= now - LOOKBACK_MILLIS)
         );
         List<TelemetryIdentitySnapshot> identitySnapshots =
-                observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(externalLogs, externalTraces, List.of());
+                observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(
+                        workspace, externalLogs, externalTraces, List.of());
         List<TelemetryIdentitySnapshot> otlpMetricSnapshots = identitySnapshots.stream()
                 .filter(this::isOtlpSnapshot)
                 .filter(snapshot -> "metrics".equals(snapshot.getSignal()))
@@ -290,7 +299,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 activeSignalCount,
                 latestObservedAt,
                 services.size(),
-                workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(canonicalIdentityKeySet()),
+                workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(workspace, canonicalIdentityKeySet()),
                 recentEvents,
                 buildReadinessChecks(now)
         );
@@ -602,16 +611,22 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         );
     }
 
+    OtlpEntityBindingSummaryDto getBindingSummary() {
+        return getBindingSummary(AuthTokenScopes.DEFAULT_WORKSPACE_ID);
+    }
+
     @Override
-    public OtlpEntityBindingSummaryDto getBindingSummary() {
+    public OtlpEntityBindingSummaryDto getBindingSummary(String workspaceId) {
+        String workspace = requireWorkspace(workspaceId);
         long now = System.currentTimeMillis();
         long start = now - LOOKBACK_MILLIS;
-        List<LogEntry> recentLogs = queryRecentLogs(start, now);
+        List<LogEntry> recentLogs = queryRecentLogs(workspace, start, now);
         List<TraceListItemDto> recentTraces = entityTraceQueryService
-                .queryTraceList(null, start, now, null, false, null, null, null, 0, SAMPLE_LIMIT)
+                .queryRecentTraces(workspace, start, now, SAMPLE_LIMIT)
                 .getContent();
         List<TelemetryIdentitySnapshot> identitySnapshots =
                 observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(
+                        workspace,
                         recentLogs.stream().filter(this::isExternalLog).toList(),
                         recentTraces.stream().filter(this::isExternalTrace).toList(),
                         List.of()).stream()
@@ -623,12 +638,12 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         samples = samples.stream().limit(12).toList();
         List<String> recentServices = collectRecentServices(identitySnapshots, DEFAULT_RECENT_SERVICE_LIMIT);
 
-        Map<Long, List<EntityIdentity>> entityIdentityMap = collectRecentBoundEntityIdentities(identitySnapshots);
+        Map<Long, List<EntityIdentity>> entityIdentityMap = collectRecentBoundEntityIdentities(workspace, identitySnapshots);
         Set<String> boundIdentityMatches = boundIdentityMatchKeys(entityIdentityMap);
         List<OtlpEntityBindingSummaryDto.UnboundEntityCandidate> unboundCandidates =
                 buildUnboundEntityCandidates(identitySnapshots, boundIdentityMatches);
 
-        Map<Long, ObserveEntity> entityMap = workspaceQueryGateway.findEntitiesByIds(entityIdentityMap.keySet());
+        Map<Long, ObserveEntity> entityMap = workspaceQueryGateway.findEntitiesByIds(workspace, entityIdentityMap.keySet());
         List<OtlpEntityBindingSummaryDto.BoundEntity> boundEntities = new ArrayList<>();
         for (Map.Entry<Long, List<EntityIdentity>> entry : entityIdentityMap.entrySet()) {
             ObserveEntity entity = entityMap.get(entry.getKey());
@@ -649,7 +664,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     entity.getNamespace(),
                     primaryIdentity == null ? null : primaryIdentity.getIdentityKey(),
                     primaryIdentity == null ? null : primaryIdentity.getIdentityValue(),
-                    workspaceQueryGateway.countMonitorBindsByEntityId(entity.getId())
+                    workspaceQueryGateway.countMonitorBindsByEntityId(workspace, entity.getId())
             ));
             if (boundEntities.size() >= 6) {
                 break;
@@ -669,24 +684,48 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                                    String serviceName, String serviceNamespace, String environment,
                                                    String query, String filter, String groupBy, String aggregation,
                                                    String temporalAggregation, String step, String limit) {
-        return getMetricsConsole(entityId, entityType, start, end, serviceName, serviceNamespace, environment, query,
+        return getMetricsConsole(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, entityType, start, end, serviceName,
+                serviceNamespace, environment, query,
                 filter, groupBy, aggregation, temporalAggregation, step, limit, null);
     }
 
+    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String query, String filter, String groupBy, String aggregation,
+                                            String temporalAggregation, String step, String limit,
+                                            String operationName) {
+        return getMetricsConsole(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, entityType, start, end, serviceName,
+                serviceNamespace, environment, query, filter, groupBy, aggregation, temporalAggregation, step, limit,
+                operationName);
+    }
+
+    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String collectorId, String instance, String endpoint, String query,
+                                            String filter, String groupBy, String aggregation,
+                                            String temporalAggregation, String step, String limit,
+                                            String operationName) {
+        return getMetricsConsole(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, entityType, start, end, serviceName,
+                serviceNamespace, environment, collectorId, instance, endpoint, query, filter, groupBy, aggregation,
+                temporalAggregation, step, limit, operationName);
+    }
+
     @Override
-    public OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end,
+    public OtlpMetricsConsoleDto getMetricsConsole(String workspaceId, Long entityId, String entityType, Long start,
+                                                   Long end,
                                                    String serviceName, String serviceNamespace, String environment,
                                                    String query, String filter, String groupBy, String aggregation,
                                                    String temporalAggregation, String step, String limit,
                                                    String operationName) {
         return getMetricsConsole(
-                entityId, entityType, start, end, serviceName, serviceNamespace, environment,
+                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment,
                 null, null, null, query, filter, groupBy, aggregation, temporalAggregation, step, limit,
                 operationName);
     }
 
     @Override
     public OtlpMetricsConsoleDto getMetricsConsole(
+            String workspaceId,
             Long entityId,
             String entityType,
             Long start,
@@ -705,6 +744,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             String step,
             String limit,
             String operationName) {
+        String trustedWorkspaceId = requireMetricsWorkspace(workspaceId);
         long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
         long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
                 ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
@@ -717,12 +757,17 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 || StringUtils.hasText(trimToNull(serviceNamespace))
                 || StringUtils.hasText(trimToNull(environment));
         OtlpMetricsConsoleDto.Context context = resolveMetricsConsoleContext(
-                entityId, entityType, resolvedStart, resolvedEnd, serviceName, serviceNamespace, environment
+                trustedWorkspaceId, entityId, entityType, resolvedStart, resolvedEnd,
+                serviceName, serviceNamespace, environment
         );
+        context.setWorkspaceId(trustedWorkspaceId);
         context.setCollectorId(trimToNull(collectorId));
         context.setInstance(trimToNull(instance));
         context.setEndpoint(trimToNull(endpoint));
         String resolvedQuery = trimToNull(query);
+        if (StringUtils.hasText(resolvedQuery) && !SIMPLE_METRIC_NAME.matcher(resolvedQuery).matches()) {
+            return unsupportedMetricsQuery(context, resolvedQuery);
+        }
         String normalizedOperationName = trimToNull(operationName);
         context.setOperationName(normalizedOperationName);
         List<String> resolvedQueries;
@@ -825,32 +870,36 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         );
     }
 
-    public OtlpMetricsConsoleDto getMetricsConsole(Long entityId, Long start, Long end,
-                                                   String serviceName, String serviceNamespace, String environment,
-                                                   String query, String filter, String groupBy, String aggregation) {
-        return getMetricsConsole(entityId, null, start, end, serviceName, serviceNamespace, environment, query, filter,
-                groupBy, aggregation, null, null, null);
+    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, Long start, Long end,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String query, String filter, String groupBy, String aggregation) {
+        return getMetricsConsole(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, null, start, end, serviceName,
+                serviceNamespace, environment, query, filter,
+                groupBy, aggregation, null, null, null, null);
     }
 
-    public OtlpMetricsConsoleDto getMetricsConsole(Long entityId, Long start, Long end,
-                                                   String serviceName, String serviceNamespace, String environment,
-                                                   String query, String filter, String groupBy, String aggregation,
-                                                   String temporalAggregation, String step, String limit) {
-        return getMetricsConsole(entityId, null, start, end, serviceName, serviceNamespace, environment, query, filter,
-                groupBy, aggregation, temporalAggregation, step, limit);
+    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, Long start, Long end,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String query, String filter, String groupBy, String aggregation,
+                                            String temporalAggregation, String step, String limit) {
+        return getMetricsConsole(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, null, start, end, serviceName,
+                serviceNamespace, environment, query, filter,
+                groupBy, aggregation, temporalAggregation, step, limit, null);
     }
 
     @Override
-    public OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
+    public OtlpMetricsInventoryDto getMetricsInventory(String workspaceId, Long entityId, String entityType, Long start,
+                                                       Long end,
                                                        String serviceName, String serviceNamespace, String environment,
                                                        String limit) {
         return getMetricsInventory(
-                entityId, entityType, start, end, serviceName, serviceNamespace, environment,
+                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment,
                 null, null, null, limit);
     }
 
     @Override
     public OtlpMetricsInventoryDto getMetricsInventory(
+            String workspaceId,
             Long entityId,
             String entityType,
             Long start,
@@ -862,14 +911,17 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             String instance,
             String endpoint,
             String limit) {
+        String trustedWorkspaceId = requireMetricsWorkspace(workspaceId);
         long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
         long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
                 ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
                 : start;
         int resolvedLimit = resolveRelatedMetricsLimit(limit);
         OtlpMetricsConsoleDto.Context context = resolveMetricsConsoleContext(
-                entityId, entityType, resolvedStart, resolvedEnd, serviceName, serviceNamespace, environment
+                trustedWorkspaceId, entityId, entityType, resolvedStart, resolvedEnd,
+                serviceName, serviceNamespace, environment
         );
+        context.setWorkspaceId(trustedWorkspaceId);
         context.setCollectorId(trimToNull(collectorId));
         context.setInstance(trimToNull(instance));
         context.setEndpoint(trimToNull(endpoint));
@@ -903,18 +955,29 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return new OtlpMetricsInventoryDto(context, "recent-intake-fallback", fallbackItems.size(), fallbackItems);
     }
 
+    OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
+                                                String serviceName, String serviceNamespace, String environment,
+                                                String collectorId, String instance, String endpoint, String limit) {
+        return getMetricsInventory(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, entityType, start, end, serviceName,
+                serviceNamespace, environment, collectorId, instance, endpoint, limit);
+    }
+
     @Override
-    public OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
+    public OtlpRelatedMetricsDto getRelatedMetrics(String workspaceId, Long entityId, String entityType, Long start,
+                                                   Long end, String serviceName,
                                                    String serviceNamespace, String environment,
                                                    String filter, String operationName, String limit) {
+        String trustedWorkspaceId = requireMetricsWorkspace(workspaceId);
         long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
         long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
                 ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
                 : start;
         int resolvedLimit = resolveRelatedMetricsLimit(limit);
         OtlpMetricsConsoleDto.Context context = resolveMetricsConsoleContext(
-                entityId, entityType, resolvedStart, resolvedEnd, serviceName, serviceNamespace, environment
+                trustedWorkspaceId, entityId, entityType, resolvedStart, resolvedEnd,
+                serviceName, serviceNamespace, environment
         );
+        context.setWorkspaceId(trustedWorkspaceId);
         String normalizedFilter = trimToNull(filter);
         String normalizedOperationName = trimToNull(operationName);
         context.setOperationName(normalizedOperationName);
@@ -933,10 +996,18 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         );
     }
 
-    public OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, Long start, Long end, String serviceName,
-                                                   String serviceNamespace, String environment,
-                                                   String filter, String limit) {
-        return getRelatedMetrics(entityId, null, start, end, serviceName, serviceNamespace, environment, filter, null, limit);
+    OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
+                                            String serviceNamespace, String environment, String filter,
+                                            String operationName, String limit) {
+        return getRelatedMetrics(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, entityType, start, end, serviceName,
+                serviceNamespace, environment, filter, operationName, limit);
+    }
+
+    OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, Long start, Long end, String serviceName,
+                                            String serviceNamespace, String environment,
+                                            String filter, String limit) {
+        return getRelatedMetrics(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, null, start, end, serviceName,
+                serviceNamespace, environment, filter, null, limit);
     }
 
     private List<OtlpRelatedMetricsDto.Candidate> buildRelatedMetricCandidates(
@@ -987,7 +1058,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 .toList();
         if (metricQueryRepository.hasPromqlExecutor()) {
             List<OtlpRelatedMetricsDto.Candidate> availableCandidates =
-                    filterPromqlAvailableRelatedMetricCandidates(rawCandidates, start, end, limit);
+                    filterPromqlAvailableRelatedMetricCandidates(
+                            context.getWorkspaceId(), rawCandidates, start, end, limit);
             if (!availableCandidates.isEmpty()) {
                 return mergeAvailableRelatedMetricCandidates(availableCandidates, rawCandidates, limit);
             }
@@ -1042,7 +1114,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         candidates.addAll(serviceContextMetricCandidateNames(context));
         if (persistent.status() == MetricInventoryRepository.Status.UNSUPPORTED) {
-            candidates.addAll(globalRecentMetricCandidateNames());
+            candidates.addAll(globalRecentMetricCandidateNames(context.getWorkspaceId()));
         }
         return new MetricCandidateDiscovery(
                 normalizeCandidateMetricNames(candidates), persistent.status(), persistent.errorMessage());
@@ -1057,6 +1129,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return MetricInventoryRepository.Result.unsupported();
         }
         MetricInventoryRepository.Query query = new MetricInventoryRepository.Query(
+                context.getWorkspaceId(),
                 trimToNull(context.getServiceName()),
                 trimToNull(context.getServiceNamespace()),
                 trimToNull(context.getEnvironment()),
@@ -1087,6 +1160,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private List<OtlpRelatedMetricsDto.Candidate> filterPromqlAvailableRelatedMetricCandidates(
+            String workspaceId,
             List<OtlpRelatedMetricsDto.Candidate> candidates,
             long start,
             long end,
@@ -1097,7 +1171,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         String step = resolvePromqlStep(start, end, null);
         List<OtlpRelatedMetricsDto.Candidate> available = new ArrayList<>();
         for (OtlpRelatedMetricsDto.Candidate candidate : candidates) {
-            for (RelatedMetricAvailabilityProbe probe : buildRelatedMetricAvailabilityProbes(candidate)) {
+            for (RelatedMetricAvailabilityProbe probe :
+                    buildRelatedMetricAvailabilityProbes(workspaceId, candidate)) {
                 MetricQueryRepository.PromqlRangeQueryResult result = metricQueryRepository.queryPromqlRange(
                         RELATED_METRICS_REF_ID,
                         probe.query(),
@@ -1131,7 +1206,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return available;
     }
 
-    private List<RelatedMetricAvailabilityProbe> buildRelatedMetricAvailabilityProbes(OtlpRelatedMetricsDto.Candidate candidate) {
+    private List<RelatedMetricAvailabilityProbe> buildRelatedMetricAvailabilityProbes(
+            String workspaceId, OtlpRelatedMetricsDto.Candidate candidate) {
         if (candidate == null || !StringUtils.hasText(candidate.getQuery())) {
             return List.of();
         }
@@ -1153,27 +1229,32 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             serviceMatch.remove("operation_name");
             serviceMatch.remove("http_route");
             return List.of(
-                    buildRelatedMetricAvailabilityProbe(metricName, candidate, operationNameMatch),
-                    buildRelatedMetricAvailabilityProbe(metricName, candidate, httpRouteMatch),
-                    buildRelatedMetricAvailabilityProbe(metricName, candidate, serviceMatch)
+                    buildRelatedMetricAvailabilityProbe(workspaceId, metricName, candidate, operationNameMatch),
+                    buildRelatedMetricAvailabilityProbe(workspaceId, metricName, candidate, httpRouteMatch),
+                    buildRelatedMetricAvailabilityProbe(workspaceId, metricName, candidate, serviceMatch)
             );
         }
-        return List.of(buildRelatedMetricAvailabilityProbe(metricName, candidate, resourceMatch));
+        return List.of(buildRelatedMetricAvailabilityProbe(workspaceId, metricName, candidate, resourceMatch));
     }
 
-    private RelatedMetricAvailabilityProbe buildRelatedMetricAvailabilityProbe(String metricName,
-                                                                               OtlpRelatedMetricsDto.Candidate candidate,
-                                                                               Map<String, String> resourceMatch) {
+    private RelatedMetricAvailabilityProbe buildRelatedMetricAvailabilityProbe(
+            String workspaceId,
+            String metricName,
+            OtlpRelatedMetricsDto.Candidate candidate,
+            Map<String, String> resourceMatch) {
         return new RelatedMetricAvailabilityProbe(
-                buildRelatedMetricAvailabilityQuery(metricName, resourceMatch),
+                buildRelatedMetricAvailabilityQuery(workspaceId, metricName, resourceMatch),
                 matchedAvailabilityLabels(candidate, resourceMatch),
                 resourceMatch
         );
     }
 
-    private String buildRelatedMetricAvailabilityQuery(String metricName, Map<String, String> resourceMatch) {
+    private String buildRelatedMetricAvailabilityQuery(
+            String workspaceId, String metricName, Map<String, String> resourceMatch) {
         List<String> matchers = new ArrayList<>();
         matchers.add("__name__=\"" + escapePromqlLabelValue(metricName) + "\"");
+        matchers.add(OtlpMetricSemanticLabels.HERTZBEAT_WORKSPACE_ID + "=\""
+                + escapePromqlLabelValue(requireMetricsWorkspace(workspaceId)) + "\"");
         if (!CollectionUtils.isEmpty(resourceMatch)) {
             for (Map.Entry<String, String> entry : resourceMatch.entrySet()) {
                 String label = normalizePromqlLabelName(entry.getKey());
@@ -1241,6 +1322,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             String labelName = normalizePromqlLabelName(matcher.group(1));
             if (!isPromqlLabelName(labelName)) {
                 continue;
+            }
+            if (OtlpMetricSemanticLabels.isWorkspaceIdentifier(labelName)) {
+                throw new IllegalArgumentException("Workspace must use the authenticated query scope");
             }
             String labelValue = firstText(matcher.group(3), matcher.group(4), matcher.group(5));
             if (!StringUtils.hasText(labelValue)) {
@@ -1381,6 +1465,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return logQueryRepository.queryRecentLogs(start, end, SAMPLE_LIMIT);
     }
 
+    private List<LogEntry> queryRecentLogs(String workspaceId, long start, long end) {
+        return logQueryRepository.queryRecentLogs(workspaceId, start, end, SAMPLE_LIMIT);
+    }
+
     private <T> List<T> safeBeanList(List<T> items) {
         if (items == null) {
             return List.of();
@@ -1388,22 +1476,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return items.stream().filter(Objects::nonNull).toList();
     }
 
-    private TelemetryIdentitySnapshot resolveRecentExternalSignalContext(long start, long end,
+    private TelemetryIdentitySnapshot resolveRecentExternalSignalContext(String workspaceId,
                                                                         String serviceName, String serviceNamespace,
                                                                         String environment) {
         String requiredServiceName = trimToNull(serviceName);
         String requiredServiceNamespace = trimToNull(serviceNamespace);
         String requiredEnvironment = trimToNull(environment);
-        List<LogEntry> externalLogs = queryRecentLogs(start, end).stream()
-                .filter(this::isExternalLog)
-                .toList();
-        var tracePage = entityTraceQueryService
-                .queryTraceList(null, start, end, null, false, null, null, null, 0, SAMPLE_LIMIT);
-        List<TraceListItemDto> externalTraces = (tracePage == null ? List.<TraceListItemDto>of() : tracePage.getContent())
-                .stream()
-                .filter(this::isExternalTrace)
-                .toList();
-        return observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(externalLogs, externalTraces, List.of()).stream()
+        return observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(
+                        workspaceId, List.of(), List.of(), List.of()).stream()
                 .filter(snapshot -> StringUtils.hasText(trimToNull(snapshot.getServiceName())))
                 .filter(snapshot -> requiredServiceName == null
                         || requiredServiceName.equals(trimToNull(snapshot.getServiceName())))
@@ -1511,7 +1591,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return new LinkedHashSet<>(EntityCanonicalIdentityRegistry.CANONICAL_OTEL_RESOURCE_KEYS);
     }
 
-    private Map<Long, List<EntityIdentity>> collectRecentBoundEntityIdentities(List<TelemetryIdentitySnapshot> snapshots) {
+    private Map<Long, List<EntityIdentity>> collectRecentBoundEntityIdentities(
+            String workspaceId, List<TelemetryIdentitySnapshot> snapshots) {
         if (CollectionUtils.isEmpty(snapshots)) {
             return Collections.emptyMap();
         }
@@ -1539,7 +1620,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return Collections.emptyMap();
         }
         List<EntityIdentity> matchedIdentities =
-                workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(identityKeys, normalizedValues);
+                workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                        workspaceId, identityKeys, normalizedValues);
         if (CollectionUtils.isEmpty(matchedIdentities)) {
             return Collections.emptyMap();
         }
@@ -1851,7 +1933,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return StringUtils.hasText(primary) ? primary : fallback;
     }
 
-    private OtlpMetricsConsoleDto.Context resolveMetricsConsoleContext(Long entityId, String requestedEntityType,
+    private OtlpMetricsConsoleDto.Context resolveMetricsConsoleContext(
+                                                                       String workspaceId,
+                                                                       Long entityId, String requestedEntityType,
                                                                        long start, long end,
                                                                        String serviceName, String serviceNamespace,
                                                                        String environment) {
@@ -1861,14 +1945,17 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         String entityType = trimToNull(requestedEntityType);
         String entityName = null;
         if (entityId != null) {
-            Optional<ObserveEntity> entity = workspaceQueryGateway.findEntityById(entityId);
+            Optional<ObserveEntity> entity = workspaceQueryGateway.findEntityById(workspaceId, entityId);
+            if (entity.isEmpty()) {
+                throw new TelemetryStorageUnavailableException();
+            }
             if (!StringUtils.hasText(entityType)) {
                 entityType = entity.map(ObserveEntity::getType).map(this::trimToNull).orElse(null);
             }
             entityName = entity
                     .map(value -> StringUtils.hasText(value.getDisplayName()) ? value.getDisplayName() : value.getName())
                     .orElse(null);
-            List<EntityIdentity> identities = workspaceQueryGateway.findIdentitiesByEntityId(entityId);
+            List<EntityIdentity> identities = workspaceQueryGateway.findIdentitiesByEntityId(workspaceId, entityId);
             Set<String> resolvedIdentityKeys = new LinkedHashSet<>();
             for (EntityIdentity identity : rankedEntityIdentities(identities)) {
                 if (!StringUtils.hasText(identity.getIdentityKey()) || !StringUtils.hasText(identity.getIdentityValue())) {
@@ -1897,7 +1984,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             }
         }
         TelemetryIdentitySnapshot recentMetricContext = observabilitySignalIntakeGateway.resolveRecentOtlpMetricContext(
-                resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment
+                workspaceId, resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment
         );
         if (recentMetricContext != null) {
             if (!StringUtils.hasText(resolvedServiceName)) {
@@ -1919,7 +2006,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 || !StringUtils.hasText(resolvedServiceNamespace)
                 || !StringUtils.hasText(resolvedEnvironment)) {
             TelemetryIdentitySnapshot fallbackSignalContext = resolveRecentExternalSignalContext(
-                    start, end, resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment
+                    workspaceId, resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment
             );
             if (fallbackSignalContext != null) {
                 if (!StringUtils.hasText(resolvedServiceName)) {
@@ -1975,20 +2062,26 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         List<OtlpMetricsConsoleDto.Context> candidateContexts = new ArrayList<>();
         addCandidateMetricsContext(candidateContexts, initialContext, resolvedStart, resolvedEnd);
         if (!explicitContextRequested) {
-            observabilitySignalIntakeGateway.collectRecentOtlpMetricContexts(DEFAULT_RECENT_SERVICE_LIMIT).stream()
-                    .map(snapshot -> new OtlpMetricsConsoleDto.Context(
-                            null,
-                            null,
-                            null,
-                            trimToNull(snapshot.getServiceName()),
-                            trimToNull(snapshot.getServiceNamespace()),
-                            trimToNull(snapshot.getEnvironmentName()),
-                            null,
-                            operationName,
-                            resolvedStart,
-                            resolvedEnd
-                    ))
-                    .forEach(context -> addCandidateMetricsContext(candidateContexts, context, resolvedStart, resolvedEnd));
+            observabilitySignalIntakeGateway.collectRecentOtlpMetricContexts(
+                            initialContext.getWorkspaceId(), DEFAULT_RECENT_SERVICE_LIMIT).stream()
+                    .map(snapshot -> {
+                        OtlpMetricsConsoleDto.Context recent = new OtlpMetricsConsoleDto.Context(
+                                null,
+                                null,
+                                null,
+                                trimToNull(snapshot.getServiceName()),
+                                trimToNull(snapshot.getServiceNamespace()),
+                                trimToNull(snapshot.getEnvironmentName()),
+                                null,
+                                operationName,
+                                resolvedStart,
+                                resolvedEnd
+                        );
+                        recent.setWorkspaceId(initialContext.getWorkspaceId());
+                        return recent;
+                    })
+                    .forEach(context -> addCandidateMetricsContext(
+                            candidateContexts, context, resolvedStart, resolvedEnd));
         }
         OtlpMetricsConsoleDto firstEmptyConsole = null;
         String lastErrorMessage = null;
@@ -2082,6 +2175,20 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 .orElse(null);
     }
 
+    private OtlpMetricsConsoleDto unsupportedMetricsQuery(
+            OtlpMetricsConsoleDto.Context context, String query) {
+        return new OtlpMetricsConsoleDto(
+                context,
+                query,
+                null,
+                WarehouseConstants.PROMQL,
+                null,
+                new OtlpMetricsConsoleDto.Stats(0, 0, null),
+                "unsupported_query",
+                null
+        );
+    }
+
     private List<String> buildDefaultMetricsQueries(OtlpMetricsConsoleDto.Context context,
                                                     String filter,
                                                     String groupBy,
@@ -2104,7 +2211,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         if (!CollectionUtils.isEmpty(contextCandidates)) {
             return contextCandidates;
         }
-        return globalRecentMetricCandidateNames();
+        return globalRecentMetricCandidateNames(context.getWorkspaceId());
     }
 
     private List<String> serviceContextMetricCandidateNames(OtlpMetricsConsoleDto.Context context) {
@@ -2113,6 +2220,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         List<String> candidates = new ArrayList<>(contextServiceExperienceMetricNames(context));
         candidates.addAll(observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
+                context.getWorkspaceId(),
                 context.getServiceName(),
                 context.getServiceNamespace(),
                 context.getEnvironment(),
@@ -2121,8 +2229,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return normalizeCandidateMetricNames(candidates);
     }
 
-    private List<String> globalRecentMetricCandidateNames() {
+    private List<String> globalRecentMetricCandidateNames(String workspaceId) {
         return normalizeCandidateMetricNames(observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
+                workspaceId,
                 null,
                 null,
                 null,
@@ -2201,7 +2310,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                               String temporalAggregation,
                                               String operationLabel,
                                               String operationName) {
-        if (context == null || !StringUtils.hasText(context.getServiceName())) {
+        if (context == null || !StringUtils.hasText(context.getWorkspaceId())) {
             return null;
         }
         String normalizedMetricName = normalizePromqlMetricName(metricName);
@@ -2210,10 +2319,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         List<String> matchers = new ArrayList<>();
         Set<String> scopedLabels = new LinkedHashSet<>();
+        addExactMetricMatcher(matchers, scopedLabels, OtlpMetricSemanticLabels.HERTZBEAT_WORKSPACE_ID,
+                context.getWorkspaceId());
         matchers.add("__name__=\"" + escapePromqlLabelValue(normalizedMetricName) + "\"");
         scopedLabels.add("__name__");
-        matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
-        scopedLabels.add("service_name");
+        if (StringUtils.hasText(context.getServiceName())) {
+            matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
+            scopedLabels.add("service_name");
+        }
         if (StringUtils.hasText(context.getServiceNamespace())) {
             matchers.add("service_namespace=\"" + escapePromqlLabelValue(context.getServiceNamespace()) + "\"");
             scopedLabels.add("service_namespace");
@@ -2253,6 +2366,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         List<String> matchers = new ArrayList<>();
         Set<String> scopedLabels = new LinkedHashSet<>();
+        addExactMetricMatcher(matchers, scopedLabels, OtlpMetricSemanticLabels.HERTZBEAT_WORKSPACE_ID,
+                context.getWorkspaceId());
         matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
         scopedLabels.add("service_name");
         if (StringUtils.hasText(context.getServiceNamespace())) {
@@ -2321,11 +2436,11 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                                               String operationName) {
         String normalizedQuery = trimToNull(query);
         if (!StringUtils.hasText(normalizedQuery) || !SIMPLE_METRIC_NAME.matcher(normalizedQuery).matches()) {
-            return StringUtils.hasText(normalizedQuery) ? List.of(normalizedQuery) : List.of();
+            return List.of();
         }
         List<String> generatedQueries = buildMetricsQueriesForMetric(context, normalizedQuery, filter, groupBy, aggregation,
                 temporalAggregation, operationName);
-        return generatedQueries.isEmpty() ? List.of(normalizedQuery) : generatedQueries;
+        return generatedQueries;
     }
 
     private List<String> parseMetricsFilterMatchers(String filter) {
@@ -2592,6 +2707,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 resolvedStart,
                 resolvedEnd
         );
+        normalized.setWorkspaceId(candidate.getWorkspaceId());
         normalized.setInstance(trimToNull(candidate.getInstance()));
         normalized.setEndpoint(trimToNull(candidate.getEndpoint()));
         boolean duplicated = contexts.stream().anyMatch(existing ->
@@ -2913,6 +3029,18 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String requireMetricsWorkspace(String workspaceId) {
+        return requireWorkspace(workspaceId);
+    }
+
+    private String requireWorkspace(String workspaceId) {
+        String normalized = trimToNull(workspaceId);
+        if (!StringUtils.hasText(normalized)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return normalized;
     }
 
     private final class CandidateAccumulator {

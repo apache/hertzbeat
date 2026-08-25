@@ -21,6 +21,7 @@ import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentTranscriptEntryDao;
@@ -80,6 +81,7 @@ public class AgentSessionService {
         AgentSession session = AgentSession.builder()
             .sessionUid("ags_" + SnowFlakeIdGenerator.generateId())
             .sessionKey(sessionKey)
+            .workspaceId(envelope.getWorkspaceId())
             .channel(envelope.getChannelId())
             .originEntryType(originEntryType.name())
             .conversationId(userInput.getConversationId())
@@ -95,6 +97,11 @@ public class AgentSessionService {
             entityManager.clear();
             return sessionDao.findBySessionKey(sessionKey).orElseThrow(() -> e);
         }
+    }
+
+    /** Read-only session probe used before target canonicalization and admission locking. */
+    public Optional<AgentSession> findSession(GatewayEnvelope envelope, String conversationId) {
+        return sessionDao.findBySessionKey(sessionKeyBuilder.build(envelope, conversationId));
     }
 
     @Transactional
@@ -144,12 +151,13 @@ public class AgentSessionService {
             return Optional.empty();
         }
         if (normalized.chars().allMatch(Character::isDigit)) {
-            return sessionDao.findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-                    Long.parseLong(normalized), envelope.getChannelId(), actor.getType(), actor.getId(),
-                    originEntryType.name());
+            return sessionDao.findByIdAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+                    Long.parseLong(normalized), envelope.getWorkspaceId(), envelope.getChannelId(), actor.getType(),
+                    actor.getId(), originEntryType.name());
         }
-        return sessionDao.findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-                normalized, envelope.getChannelId(), actor.getType(), actor.getId(), originEntryType.name());
+        return sessionDao.findBySessionUidAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+                normalized, envelope.getWorkspaceId(), envelope.getChannelId(), actor.getType(), actor.getId(),
+                originEntryType.name());
     }
 
     public Page<AgentSession> findSessions(
@@ -159,12 +167,14 @@ public class AgentSessionService {
             throw new IllegalArgumentException("Session query actor is required");
         }
         if (!StringUtils.hasText(title)) {
-            return sessionDao.findByChannelAndActorTypeAndActorIdAndOriginEntryTypeOrderByGmtUpdateDesc(
-                    envelope.getChannelId(), actor.getType(), actor.getId(), originEntryType.name(), pageable);
+            return sessionDao.findByWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryTypeOrderByGmtUpdateDesc(
+                    envelope.getWorkspaceId(), envelope.getChannelId(), actor.getType(), actor.getId(),
+                    originEntryType.name(), pageable);
         }
         return sessionDao
-                .findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-                        envelope.getChannelId(), actor.getType(), actor.getId(), originEntryType.name(), title, pageable);
+                .findByWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                        envelope.getWorkspaceId(), envelope.getChannelId(), actor.getType(), actor.getId(),
+                        originEntryType.name(), title, pageable);
     }
 
     public Page<AgentTranscriptEntry> findTranscriptEntries(Long sessionId, Pageable pageable) {
@@ -177,6 +187,49 @@ public class AgentSessionService {
             List.of(TranscriptMessage.TranscriptRole.USER.wireValue(),
                 TranscriptMessage.TranscriptRole.ASSISTANT.wireValue()),
             pageable);
+    }
+
+    public Optional<TranscriptMessage> findFirstRunTranscriptMessage(Long runId, TranscriptMessage.TranscriptRole role) {
+        if (runId == null || role == null) {
+            return Optional.empty();
+        }
+        return transcriptEntryDao.findFirstByRunIdAndMessageRoleOrderBySessionSequenceAsc(runId, role.wireValue())
+            .map(this::transcriptMessage)
+            .filter(Objects::nonNull);
+    }
+
+    public Optional<TranscriptMessage> findUniqueRunTranscriptMessage(
+            Long runId, TranscriptMessage.TranscriptRole role) {
+        if (runId == null || role == null) {
+            return Optional.empty();
+        }
+        List<AgentTranscriptEntry> entries = transcriptEntryDao
+                .findTop2ByRunIdAndMessageRoleOrderBySessionSequenceAsc(runId, role.wireValue());
+        if (entries.size() != 1) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(transcriptMessage(entries.getFirst()));
+    }
+
+    public Optional<TranscriptMessage> findLatestRunTranscriptMessage(Long runId,
+                                                                      TranscriptMessage.TranscriptRole role) {
+        if (runId == null || role == null) {
+            return Optional.empty();
+        }
+        return transcriptEntryDao.findTopByRunIdAndMessageRoleOrderBySessionSequenceDesc(runId, role.wireValue())
+            .map(this::transcriptMessage)
+            .filter(Objects::nonNull);
+    }
+
+    public List<TranscriptMessage> findRunTranscriptMessages(Long runId, TranscriptMessage.TranscriptRole role) {
+        if (runId == null || role == null) {
+            return List.of();
+        }
+        return transcriptEntryDao.findByRunIdAndMessageRoleOrderBySessionSequenceAsc(runId, role.wireValue())
+                .stream()
+                .map(this::transcriptMessage)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     @Transactional
@@ -319,7 +372,7 @@ public class AgentSessionService {
         if (entry == null) {
             return null;
         }
-        TranscriptMessage message = JsonUtil.fromJson(entry.getPayloadJson(), TranscriptMessage.class);
+        TranscriptMessage message = JsonUtil.fromJsonQuietly(entry.getPayloadJson(), TranscriptMessage.class);
         if (message == null) {
             return null;
         }

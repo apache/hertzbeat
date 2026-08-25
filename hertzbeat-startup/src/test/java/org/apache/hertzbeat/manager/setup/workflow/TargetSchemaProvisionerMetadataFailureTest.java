@@ -77,8 +77,11 @@ class TargetSchemaProvisionerMetadataFailureTest {
         Statement historyStatement = mock(Statement.class);
         ResultSet tables = tableRows(baseline);
         ResultSet history = historyRow(baseline);
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(connection.isReadOnly()).thenReturn(false);
         when(connection.getMetaData()).thenReturn(metadata);
         when(connection.createStatement()).thenReturn(historyStatement);
+        when(metadata.getDatabaseProductName()).thenReturn("MySQL");
         when(metadata.getTables(isNull(), isNull(), anyString(), any(String[].class)))
                 .thenReturn(tables);
         when(historyStatement.executeQuery(anyString())).thenReturn(history);

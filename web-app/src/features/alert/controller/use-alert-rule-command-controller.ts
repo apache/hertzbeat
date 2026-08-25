@@ -39,10 +39,7 @@ export function useAlertRuleCommandController(
   );
   const save = async () => {
     if (!capabilities.canWrite) return;
-    if (!draft || validateAlertRuleDraft(draft).length > 0) {
-      void message.warning(t('alertRules.validation'));
-      return;
-    }
+    if (!draft || validateAlertRuleDraft(draft).length > 0) return;
     await operation.save(draft);
   };
   return { canSave: capabilities.canWrite, isLocked: operation.isLocked, retry: operation.retry, save };

@@ -75,8 +75,12 @@ describe('NoticeReceiverPage', () => {
   it('renders an honest empty state only for a successful empty list', () => {
     controller.useNoticeReceiverController.mockReturnValue(view('ready'));
     renderPage();
+    expect(screen.getByRole('columnheader', { name: 'noticeReceivers.name' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'noticeReceivers.type' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'noticeReceivers.setting' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'noticeReceivers.updated' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'common.actions' })).toBeInTheDocument();
     expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('noticeReceivers.empty');
-    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
 
   it('uses a compact loading state before authoritative rows exist', () => {

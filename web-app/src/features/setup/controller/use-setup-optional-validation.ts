@@ -19,7 +19,8 @@ const initialValidation: ValidationMap = { publicAccess: null, mail: null };
 export function useSetupOptionalValidation(
   draftRef: { current: SetupOptionalDraft },
   startWrite: SetupWriteBoundary,
-  clearMailSecret: () => void
+  clearMailSecret: () => void,
+  publicOrigin: string
 ) {
   const [validation, setValidation] = useState<ValidationMap>(initialValidation);
   const generations = useRef<Record<Section, number>>({ public_access: 0, mail: 0 });
@@ -40,7 +41,7 @@ export function useSetupOptionalValidation(
       setValidation(current => ({ ...current, [key]: { state: 'checking' } }));
       try {
         const result = await validateSetupSection(
-          createOptionalValidationRequest(section, draftRef.current),
+          createOptionalValidationRequest(section, draftRef.current, publicOrigin),
           write.signal
         );
         if (!write.signal.aborted && generations.current[section] === generation) {
@@ -57,7 +58,7 @@ export function useSetupOptionalValidation(
         if (validating.current[section] === generation) delete validating.current[section];
       }
     },
-    [clearMailSecret, draftRef, startWrite]
+    [clearMailSecret, draftRef, publicOrigin, startWrite]
   );
   return {
     reset,

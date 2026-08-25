@@ -31,6 +31,13 @@ describe('shell locale contract', () => {
     }
     expect(expected).toContain('reason.collector_status_unavailable');
     expect(expected).toContain('state.degraded');
+    expect(expected).toContain('details');
+    expect(expected).toContain('openManagement');
+    expect(expected).toContain('currentStatusObservedAt');
+    expect(expected).not.toContain('snapshotObservedAt');
+    expect(expected).toContain('collectorOnlineCount');
+    expect(expected).toContain('collectorRuntimeHealthyCount');
+    expect(expected).toContain('collectorOfflineCount');
   });
 
   it('keeps shell alert notification copy aligned across all five locales', () => {

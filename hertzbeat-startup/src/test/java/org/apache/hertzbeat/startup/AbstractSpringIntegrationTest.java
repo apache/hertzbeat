@@ -25,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @ActiveProfiles("test")
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TrustedStartup
 public class AbstractSpringIntegrationTest {
 
 }

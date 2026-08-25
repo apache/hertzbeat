@@ -53,4 +53,18 @@ describe('shell runtime status style contract', () => {
     expect(dotRule).toMatch(/width:\s*8px/);
     expect(dotRule).toMatch(/height:\s*8px/);
   });
+
+  it('makes status triggers visibly keyboard-focusable without turning them into boxed pills', () => {
+    expect(shellStyles).toMatch(/button\.statusSlot\s*\{[^}]*cursor:\s*pointer/s);
+    expect(shellStyles).toMatch(/button\.statusSlot:focus-visible\s*\{[^}]*outline:/s);
+    expect(shellStyles).toMatch(/\.statusPopover\s*\{[^}]*width:/s);
+  });
+
+  it('renders diagnostic evidence as separate compact rows instead of a run-on sentence', () => {
+    const evidenceRule = shellStyles.match(/\.statusPopoverEvidence\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(evidenceRule).toMatch(/display:\s*grid/);
+    expect(evidenceRule).toMatch(/gap:/);
+    expect(evidenceRule).toMatch(/list-style:\s*none/);
+  });
 });

@@ -18,13 +18,16 @@
 package org.apache.hertzbeat.alert.dao;
 
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.alerter.AlertAnalysisPolicy;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /** Persistence for automatic alert analysis policies. */
 public interface AlertAnalysisPolicyDao extends JpaRepository<AlertAnalysisPolicy, Long> {
 
-    List<AlertAnalysisPolicy> findByEnabledTrueOrderByIdAsc();
+    List<AlertAnalysisPolicy> findByWorkspaceIdAndEnabledTrueOrderByIdAsc(String workspaceId);
 
-    List<AlertAnalysisPolicy> findAllByOrderByIdAsc();
+    List<AlertAnalysisPolicy> findAllByWorkspaceIdOrderByIdAsc(String workspaceId);
+
+    Optional<AlertAnalysisPolicy> findByWorkspaceIdAndId(String workspaceId, Long id);
 }

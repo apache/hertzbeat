@@ -2,7 +2,7 @@ version: 2
 processors:
   - vrl:
       source: |
-        .timestamp = .Timestamp
+        .timestamp = if (to_int(.Timestamp) ?? 0) > 0 { .Timestamp } else { .ObservedTimestamp }
         .trace_id = .TraceId
         .span_id = .SpanId
         .severity_text = .SeverityText

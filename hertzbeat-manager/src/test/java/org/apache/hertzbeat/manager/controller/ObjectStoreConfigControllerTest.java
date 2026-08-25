@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigPublicOptions;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMigrationConflictException;
 import org.apache.hertzbeat.manager.service.ObjectStoreConfigService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -109,6 +110,20 @@ class ObjectStoreConfigControllerTest {
                 .andExpect(jsonPath("$.msg").value("Invalid object store config"))
                 .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("secret-body-sentinel"))));
+    }
+
+    @Test
+    void migrationConflictReturnsStableEnvelopeWithoutLeakingDefinitionNames() throws Exception {
+        when(objectStoreConfigService.saveAndGetSafeConfig(any()))
+                .thenThrow(new MonitorDefinitionMigrationConflictException(java.util.List.of("private-app-name")));
+
+        mockMvc.perform(post("/api/config/oss")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"FILE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value(MonitorDefinitionMigrationConflictException.ERROR_CODE))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("private-app-name"))));
     }
 
     private ObjectStoreConfigResponse obsResponse() {

@@ -36,6 +36,7 @@ vi.mock('../controller/object-store-resource-controller', () => ({
   useObjectStoreResourceController: controller.useObjectStoreResourceController
 }));
 
+import { objectStoreTypePickerNeedsSearch } from '../model/object-store-model';
 import { ObjectStorePage } from './object-store-page';
 
 const configuredObs = {
@@ -75,7 +76,21 @@ describe('ObjectStorePage', () => {
     expect(page).toContainElement(header);
     expect(page).toHaveAttribute('data-mode', 'form');
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Object storage' }));
+    expect(header).toHaveTextContent(
+      'Choose where custom monitoring template YAML definitions are stored. Metrics, logs, traces, and alert data are not affected.'
+    );
+    expect(screen.queryByRole('heading', { name: 'Choose a storage location' })).not.toBeInTheDocument();
     expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+  });
+
+  it('uses a scrollable provider rail and reserves search for larger catalogs', () => {
+    renderObjectStorePage();
+
+    expect(document.querySelector('[data-hb-object-store-method-list]')).toHaveAttribute('data-scrollable', 'true');
+    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(objectStoreTypePickerNeedsSearch(5)).toBe(false);
+    expect(objectStoreTypePickerNeedsSearch(6)).toBe(true);
   });
 
   it('renders the ready controller state and forwards editor actions', async () => {
@@ -92,11 +107,15 @@ describe('ObjectStorePage', () => {
     expect(screen.getAllByText('A credential is already configured. Leave this field blank to keep it.')).toHaveLength(
       2
     );
+    expect(screen.getByRole('radiogroup', { name: 'Storage method' })).toBeInTheDocument();
+    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.getByRole('radio', { name: /Huawei Cloud OBS/ })).toBeChecked();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('OBS access key'), {
       target: { value: 'changed-ak' }
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Migrate and save' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }));
 
     expect(controller.updateDraft).toHaveBeenCalledWith({
@@ -152,12 +171,25 @@ describe('ObjectStorePage', () => {
     );
     renderObjectStorePage();
 
+    expect((await screen.findByText('Not configured')).closest('[data-hb-object-store-status]')).toHaveAttribute(
+      'data-status',
+      'unconfigured'
+    );
+    expect(screen.getByText('Not configured').closest('[data-hb-object-store-type-header]')).toBeInTheDocument();
+    expect(document.querySelector('[data-state="empty"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Database/ })).toBeChecked();
     expect(
-      (await screen.findByText('Object storage has not been configured.')).closest('[data-state]')
-    ).toHaveAttribute('data-state', 'empty');
-    expect(screen.getByRole('combobox')).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+      screen.getByText('Store custom monitoring templates in the database currently used by HertzBeat.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Saving copies existing custom templates first, verifies them, and then enables this location. The source copy is retained.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Local file system/ })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: /Huawei Cloud OBS/ })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Migrate and use database storage' }));
     expect(controller.submit).toHaveBeenCalledTimes(1);
   });
 
@@ -167,7 +199,7 @@ describe('ObjectStorePage', () => {
 
     expect(await screen.findByText('Object storage has not been configured.')).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Migrate and save' })).not.toBeInTheDocument();
   });
 
   it('renders loading without exposing stale editor values', () => {
@@ -186,8 +218,8 @@ describe('ObjectStorePage', () => {
 
     expect(await screen.findByPlaceholderText('OBS access key')).toBeDisabled();
     expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
-    expect(screen.getByRole('combobox')).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
+    screen.getAllByRole('radio').forEach(radio => expect(radio).toBeDisabled());
+    expect(screen.getByRole('button', { name: /Migrate and save$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 
@@ -200,7 +232,7 @@ describe('ObjectStorePage', () => {
     ).toHaveAttribute('data-state', 'permission');
     expect(screen.getByPlaceholderText('OBS access key')).toBeDisabled();
     expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Migrate and save' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
   });
 
@@ -218,7 +250,7 @@ describe('ObjectStorePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(controller.retry).toHaveBeenCalledTimes(1);
     expect(screen.getByPlaceholderText('OBS access key')).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Migrate and save' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 

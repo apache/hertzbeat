@@ -15,78 +15,79 @@
  * limitations under the License.
  */
 
+import { DownOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalCommandBar } from '@/shared/operational-page/operational-page';
 
 import styles from '../shared/alert-center.module.css';
-import {
-  alertSeverities,
-  alertStatusFilters,
-  type AlertQuery,
-  type AlertSeverity,
-  type AlertStatusFilter
-} from '../model/alert-model';
+import { alertSeverities, alertStatusFilters, type AlertSeverity, type AlertStatusFilter } from '../model/alert-model';
 import type { AlertDraftField, AlertFilterDraft } from '../model/alert-center-view-model';
 
 type AlertCenterToolbarProps = {
   draft: AlertFilterDraft;
   disabled: boolean;
-  query: AlertQuery;
   refreshing: boolean;
   onDraftChange: (field: AlertDraftField, value: string) => void;
   onSubmit: () => void;
-  onStatusChange: (status: AlertStatusFilter) => void;
-  onSeverityChange: (severity: AlertSeverity) => void;
   onRefresh: () => unknown;
 };
 
 export function AlertCenterToolbar({
   draft,
   disabled,
-  query,
   refreshing,
   onDraftChange,
   onSubmit,
-  onStatusChange,
-  onSeverityChange,
   onRefresh
 }: AlertCenterToolbarProps) {
   const { t } = useTranslation();
+  const advancedId = useId();
+  const advancedCount = countAdvancedFilters(draft);
+  const [advancedOpen, setAdvancedOpen] = useState(advancedCount > 0);
+
   return (
     <OperationalCommandBar
       role="search"
       ariaLabel={t('alert.search')}
       primary={
-        <div className={styles.toolbarFilters}>
-          <AlertScopeFilterFields disabled={disabled} draft={draft} onDraftChange={onDraftChange} onSubmit={onSubmit} />
-          <Select<AlertStatusFilter>
+        <div className={styles.toolbar} data-alert-filter-workbench>
+          <AlertPrimaryFilters
+            advancedCount={advancedCount}
+            advancedId={advancedId}
+            advancedOpen={advancedOpen}
             disabled={disabled}
-            value={query.status}
-            onChange={onStatusChange}
-            options={['', ...alertStatusFilters].map(value => ({
-              value,
-              label: t(value ? `alert.status.${value}` : 'alert.status.all')
-            }))}
+            draft={draft}
+            onAdvancedToggle={() => setAdvancedOpen(open => !open)}
+            onDraftChange={onDraftChange}
+            onSubmit={onSubmit}
           />
-          <Select<AlertSeverity>
-            disabled={disabled}
-            value={query.severity}
-            onChange={onSeverityChange}
-            options={['', ...alertSeverities].map(value => ({
-              value,
-              label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
-            }))}
-          />
+          <div
+            id={advancedId}
+            aria-hidden={!advancedOpen}
+            className={styles.advancedFilters}
+            data-open={advancedOpen}
+            data-testid="alert-advanced-filters"
+            inert={!advancedOpen}
+          >
+            <AlertScopeFilterFields
+              disabled={disabled}
+              draft={draft}
+              onDraftChange={onDraftChange}
+              onSubmit={onSubmit}
+            />
+          </div>
         </div>
       }
       secondary={
         <>
-          <Button type="primary" disabled={disabled} onClick={onSubmit}>
+          <Button className={styles.queryButton ?? ''} type="primary" disabled={disabled} onClick={onSubmit}>
             {t('common.query')}
           </Button>
           <Button
+            className={styles.refreshButton ?? ''}
             loading={refreshing}
             disabled={disabled}
             onClick={() => {
@@ -101,6 +102,78 @@ export function AlertCenterToolbar({
   );
 }
 
+type AlertPrimaryFiltersProps = Pick<AlertCenterToolbarProps, 'disabled' | 'draft' | 'onDraftChange' | 'onSubmit'> & {
+  advancedCount: number;
+  advancedId: string;
+  advancedOpen: boolean;
+  onAdvancedToggle: () => void;
+};
+
+function AlertPrimaryFilters({
+  advancedCount,
+  advancedId,
+  advancedOpen,
+  disabled,
+  draft,
+  onAdvancedToggle,
+  onDraftChange,
+  onSubmit
+}: AlertPrimaryFiltersProps) {
+  const { t } = useTranslation();
+  let disclosureLabel = t('alert.filters.more');
+  if (advancedOpen) disclosureLabel = t('alert.filters.less');
+  else if (advancedCount > 0) disclosureLabel = t('alert.filters.moreActive', { count: advancedCount });
+
+  return (
+    <div className={styles.primaryFilters}>
+      <Input
+        allowClear
+        aria-label={t('alert.search')}
+        className={styles.searchInput}
+        disabled={disabled}
+        prefix={<SearchOutlined aria-hidden />}
+        value={draft.search}
+        placeholder={t('alert.search')}
+        onChange={event => onDraftChange('search', event.target.value)}
+        onPressEnter={onSubmit}
+      />
+      <Select<AlertStatusFilter>
+        aria-label={t('alert.status.label')}
+        className={styles.filterSelect ?? ''}
+        disabled={disabled}
+        value={draft.status}
+        onChange={value => onDraftChange('status', value)}
+        options={['', ...alertStatusFilters].map(value => ({
+          value,
+          label: t(value ? `alert.status.${value}` : 'alert.status.all')
+        }))}
+      />
+      <Select<AlertSeverity>
+        aria-label={t('alert.severity.label')}
+        className={styles.filterSelect ?? ''}
+        disabled={disabled}
+        value={draft.severity}
+        onChange={value => onDraftChange('severity', value)}
+        options={['', ...alertSeverities].map(value => ({
+          value,
+          label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
+        }))}
+      />
+      <Button
+        aria-controls={advancedId}
+        aria-expanded={advancedOpen}
+        className={`${styles.disclosure} ${advancedOpen ? styles.disclosureOpen : ''}`}
+        disabled={disabled}
+        icon={<DownOutlined aria-hidden />}
+        type="text"
+        onClick={onAdvancedToggle}
+      >
+        {disclosureLabel}
+      </Button>
+    </div>
+  );
+}
+
 type AlertScopeFilterFieldsProps = {
   disabled: boolean;
   draft: AlertFilterDraft;
@@ -111,39 +184,61 @@ type AlertScopeFilterFieldsProps = {
 function AlertScopeFilterFields({ disabled, draft, onDraftChange, onSubmit }: AlertScopeFilterFieldsProps) {
   const { t } = useTranslation();
   return (
-    <>
-      <Input
-        allowClear
+    <div className={styles.advancedInner}>
+      <AlertScopeField
         disabled={disabled}
-        value={draft.search}
-        placeholder={t('alert.search')}
-        onChange={event => onDraftChange('search', event.target.value)}
-        onPressEnter={onSubmit}
-      />
-      <Input
-        allowClear
-        disabled={disabled}
+        label={t('instrumentation.field.serviceName')}
         value={draft.serviceName}
-        placeholder={t('instrumentation.field.serviceName')}
-        onChange={event => onDraftChange('serviceName', event.target.value)}
-        onPressEnter={onSubmit}
+        onChange={value => onDraftChange('serviceName', value)}
+        onSubmit={onSubmit}
       />
-      <Input
-        allowClear
+      <AlertScopeField
         disabled={disabled}
+        label={t('instrumentation.field.serviceNamespace')}
         value={draft.serviceNamespace}
-        placeholder={t('instrumentation.field.serviceNamespace')}
-        onChange={event => onDraftChange('serviceNamespace', event.target.value)}
-        onPressEnter={onSubmit}
+        onChange={value => onDraftChange('serviceNamespace', value)}
+        onSubmit={onSubmit}
       />
+      <AlertScopeField
+        disabled={disabled}
+        label={t('instrumentation.field.serviceEnvironment')}
+        value={draft.environment}
+        onChange={value => onDraftChange('environment', value)}
+        onSubmit={onSubmit}
+      />
+    </div>
+  );
+}
+
+function AlertScopeField({
+  disabled,
+  label,
+  value,
+  onChange,
+  onSubmit
+}: {
+  disabled: boolean;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <label className={styles.advancedField}>
+      <span className={styles.advancedLabel}>{label}</span>
       <Input
         allowClear
+        aria-label={label}
         disabled={disabled}
-        value={draft.environment}
-        placeholder={t('instrumentation.field.serviceEnvironment')}
-        onChange={event => onDraftChange('environment', event.target.value)}
+        value={value}
+        placeholder={label}
+        onChange={event => onChange(event.target.value)}
         onPressEnter={onSubmit}
       />
-    </>
+    </label>
   );
+}
+
+function countAdvancedFilters(draft: AlertFilterDraft) {
+  return [draft.serviceName, draft.serviceNamespace, draft.environment].filter(Boolean).length;
 }

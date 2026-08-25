@@ -49,6 +49,41 @@ describe('NoticeReceiverResults', () => {
     expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeReceivers.loading');
   });
 
+  it('keeps the receiver table schema visible for an authoritative empty collection', () => {
+    render(
+      <NoticeReceiverResults
+        actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
+        state={{ kind: 'ready', records: [], total: 0 }}
+        busy={false}
+        pageIndex={0}
+        pageSize={8}
+        edit={vi.fn()}
+        remove={vi.fn()}
+        retry={vi.fn()}
+        onPageChange={vi.fn()}
+      />
+    );
+
+    const props = table.capture.mock.lastCall?.[0] as {
+      columns: Array<{ title: string; fixed?: string }>;
+      locale: { emptyText: ReactNode };
+    };
+    expect(props.columns.map(column => column.title)).toEqual([
+      'noticeReceivers.name',
+      'noticeReceivers.type',
+      'noticeReceivers.setting',
+      'noticeReceivers.updated',
+      'common.actions'
+    ]);
+    expect(props.columns.at(-1)?.fixed).toBe('right');
+    render(<>{props.locale.emptyText}</>);
+    expect(document.querySelector('[data-hb-operational-table-empty]')).toHaveTextContent('noticeReceivers.empty');
+    expect(document.querySelector('[data-hb-operational-table-empty] [data-state="empty"]')).toHaveAttribute(
+      'data-presentation',
+      'quiet'
+    );
+  });
+
   it('locks pagination while a command or recovery owns the list', () => {
     render(
       <NoticeReceiverResults

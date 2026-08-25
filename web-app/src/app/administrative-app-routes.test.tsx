@@ -93,6 +93,12 @@ vi.mock('@/features/deployment', async () => {
         probes.deploymentApi();
       }, []);
       return React.createElement('div', { 'data-testid': 'deployment-page' });
+    },
+    DeploymentMigrationPage: () => {
+      React.useEffect(() => {
+        probes.deploymentApi();
+      }, []);
+      return React.createElement('div', { 'data-testid': 'deployment-migration-page' });
     }
   };
 });
@@ -121,6 +127,8 @@ describe('actual administrative app routes', () => {
     ['/settings/plugins', 'GUEST'],
     ['/settings/deployment', 'USER'],
     ['/settings/deployment', 'GUEST'],
+    ['/settings/deployment/migration', 'USER'],
+    ['/settings/deployment/migration', 'GUEST'],
     ['/ai/schedules', 'USER'],
     ['/ai/schedules', 'GUEST']
   ])('does not mount the feature loader or API at %s for %s', async (path, role) => {
@@ -160,6 +168,13 @@ describe('actual administrative app routes', () => {
 
     expect(await screen.findByTestId('deployment-page')).toBeInTheDocument();
     expect(probes.deploymentLoader).toHaveBeenCalledOnce();
+    await waitFor(() => expect(probes.deploymentApi).toHaveBeenCalledOnce());
+  });
+
+  it('admits ADMIN to the guarded management database migration page', async () => {
+    renderAppRoute('/settings/deployment/migration', 'ADMIN');
+
+    expect(await screen.findByTestId('deployment-migration-page')).toBeInTheDocument();
     await waitFor(() => expect(probes.deploymentApi).toHaveBeenCalledOnce());
   });
 

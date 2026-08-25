@@ -25,6 +25,7 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeGate;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
@@ -38,6 +39,8 @@ import org.apache.hertzbeat.manager.setup.installation.InstallationCompletionSer
 import org.apache.hertzbeat.manager.setup.installation.InstallationRecordRepository;
 import org.apache.hertzbeat.manager.setup.installation.LocalInstallationFingerprintStore;
 import org.apache.hertzbeat.manager.setup.runtime.FileSetupTransitionIntentStore;
+import org.apache.hertzbeat.manager.setup.runtime.FactoryResetStateStore;
+import org.apache.hertzbeat.manager.setup.runtime.FileFactoryResetStateStore;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.manager.setup.runtime.SetupResponseTransition;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransitionScheduler;
@@ -47,6 +50,10 @@ import org.apache.hertzbeat.manager.setup.security.SetupHttpUnlockService;
 import org.apache.hertzbeat.manager.setup.unattended.SetupPasswordFileLoader;
 import org.apache.hertzbeat.manager.setup.unattended.UnattendedSetupInitializer;
 import org.apache.hertzbeat.manager.setup.workflow.DefaultSetupWorkflow;
+import org.apache.hertzbeat.manager.setup.workflow.DefaultFactoryResetDataCleaner;
+import org.apache.hertzbeat.manager.setup.workflow.FactoryResetCoordinator;
+import org.apache.hertzbeat.manager.setup.workflow.FactoryResetDataCleaner;
+import org.apache.hertzbeat.manager.setup.workflow.FactoryResetLocalStateCleaner;
 import org.apache.hertzbeat.manager.setup.workflow.HeadlessSetupCoordinator;
 import org.apache.hertzbeat.manager.setup.workflow.SetupCompletionCoordinator;
 import org.apache.hertzbeat.manager.setup.workflow.SetupConfigurationCoordinator;
@@ -59,6 +66,10 @@ import org.apache.hertzbeat.manager.setup.workflow.SetupRequestValidator;
 import org.apache.hertzbeat.manager.setup.workflow.SetupRuntimeState;
 import org.apache.hertzbeat.manager.setup.workflow.SetupTransitionService;
 import org.springframework.beans.factory.ObjectProvider;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceOrchestrator;
+import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -95,6 +106,42 @@ public class SetupApiConfiguration {
     @Bean
     public SetupTransitionIntentStore setupTransitionIntentStore(Environment environment) {
         return new FileSetupTransitionIntentStore(SetupInstallationPaths.root(environment));
+    }
+
+    @Bean
+    public FactoryResetStateStore factoryResetStateStore(Environment environment) {
+        return new FileFactoryResetStateStore(SetupInstallationPaths.root(environment));
+    }
+
+    @Bean
+    public FactoryResetLocalStateCleaner factoryResetLocalStateCleaner(Environment environment) {
+        return new FactoryResetLocalStateCleaner(SetupInstallationPaths.root(environment));
+    }
+
+    @Bean
+    @ConditionalOnBean(MigrationMaintenanceOrchestrator.class)
+    public FactoryResetDataCleaner factoryResetDataCleaner(
+            MigrationMaintenanceOrchestrator maintenance,
+            ObjectProvider<GreptimeSqlQueryExecutor> greptimeProvider) {
+        return new DefaultFactoryResetDataCleaner(maintenance, greptimeProvider);
+    }
+
+    @Bean(name = "factoryResetExecutor", destroyMethod = "shutdownNow")
+    public ScheduledExecutorService factoryResetExecutor() {
+        return Executors.newSingleThreadScheduledExecutor(
+                Thread.ofPlatform().name("factory-reset").factory());
+    }
+
+    @Bean(destroyMethod = "close")
+    public FactoryResetCoordinator factoryResetCoordinator(
+            FactoryResetStateStore state,
+            ObjectProvider<FactoryResetDataCleaner> dataCleanerProvider,
+            FactoryResetLocalStateCleaner localState,
+            SetupRuntimeTransition transition,
+            @Qualifier("factoryResetExecutor") ScheduledExecutorService executor) {
+        return new FactoryResetCoordinator(
+                state, dataCleanerProvider::getIfUnique, localState, transition,
+                task -> executor.schedule(task, 250, TimeUnit.MILLISECONDS));
     }
 
     @Bean
@@ -186,12 +233,20 @@ public class SetupApiConfiguration {
 
     @Bean
     public ApplicationRunner completedInstallationConvergenceRunner(
-            BusinessRuntimeGate gate, SetupRuntimeState state, SetupRuntimeTransitionScheduler scheduler) {
+            BusinessRuntimeGate gate, SetupRuntimeState state, FactoryResetStateStore factoryReset,
+            SetupRuntimeTransitionScheduler scheduler) {
         return arguments -> {
-            if (gate.mode() == RuntimeMode.FULL_SETUP_GATED && state.phase() == SetupPhase.COMPLETE) {
+            if (installationConvergenceAllowed(gate.mode(), state.phase(), factoryReset.load())) {
                 scheduler.installationCompleted();
             }
         };
+    }
+
+    static boolean installationConvergenceAllowed(
+            RuntimeMode mode, SetupPhase phase, Optional<FactoryResetStateStore.State> factoryReset) {
+        return mode == RuntimeMode.FULL_SETUP_GATED
+                && phase == SetupPhase.COMPLETE
+                && factoryReset.isEmpty();
     }
 
     private Optional<SetupCompletionCoordinator> completion(

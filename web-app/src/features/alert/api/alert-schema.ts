@@ -201,10 +201,6 @@ function matchesRequestedLabel(source: z.output<typeof alertGroupSchema>, reques
 }
 
 function mapAlertGroup(source: z.output<typeof alertGroupSchema>): AlertGroup {
-  const severity = source.commonLabels?.severity;
-  if (severity !== undefined && !alertSeverities.includes(severity as (typeof alertSeverities)[number])) {
-    throw new AlertContractError('commonLabels severity is unsupported');
-  }
   return {
     id: source.id,
     status: source.status,

@@ -21,7 +21,11 @@ import { settingsPaths } from '@/shared/settings/settings-routes';
 
 const alertIntegrationWriterScope: AccessTokenScope = 'api-admin';
 
-type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
+export type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
+export type AlertIntegrationVerification =
+  | { status: 'unverified'; startedAt: null; verifiedAt: null }
+  | { status: 'waiting'; startedAt: number; verifiedAt: null }
+  | { status: 'verified'; startedAt: number; verifiedAt: number };
 export type AlertIntegrationIconKey =
   | 'hertzbeat'
   | 'prometheus'
@@ -32,19 +36,24 @@ export type AlertIntegrationIconKey =
   | 'alibabacloud'
   | 'huaweicloud'
   | 'volcengine';
-export type AlertIntegrationCatalogItem = {
+type AlertIntegrationDescriptor = {
   source: string;
   displayNameKey: string;
   iconKey: AlertIntegrationIconKey;
   readiness: AlertIntegrationReadiness;
   limitations: string[];
 };
+export type AlertIntegrationCatalogItem = AlertIntegrationDescriptor & {
+  verification: AlertIntegrationVerification;
+};
 export type AlertIntegrationCatalog = { items: AlertIntegrationCatalogItem[] };
-export type AlertIntegrationGuide = AlertIntegrationCatalogItem & {
+export type AlertIntegrationRequiredHeaders =
+  { Authorization: 'Bearer {token}' } | { 'X-HertzBeat-Token': '{token}' } | { Token: '{token}' };
+export type AlertIntegrationGuide = AlertIntegrationDescriptor & {
   method: 'POST';
   ingressPath: string;
   payloadShape: string;
-  requiredHeaders: { Authorization: 'Bearer {token}' };
+  requiredHeaders: AlertIntegrationRequiredHeaders;
   requiredFields: string[];
   steps: string[];
   snippets: string[];
@@ -56,12 +65,6 @@ export type AlertIntegrationState =
   | { kind: AlertIntegrationFailureKind }
   | { kind: 'not-found'; catalog: AlertIntegrationCatalogItem[] }
   | { kind: 'ready'; catalog: AlertIntegrationCatalogItem[]; guide: AlertIntegrationGuide };
-export type AlertIntegrationCopyState = {
-  source: string;
-  target: 'endpoint' | 'authorization';
-  outcome: 'copied' | 'failed';
-} | null;
-
 export class AlertIntegrationRequestFailure extends Error {
   constructor(readonly kind: Exclude<AlertIntegrationFailureKind, 'contract'>) {
     super('Alert integration request failed');
@@ -92,16 +95,41 @@ export function alertIntegrationIconPath(iconKey: AlertIntegrationIconKey) {
   return iconPaths[iconKey];
 }
 
+const readinessOrder: readonly AlertIntegrationReadiness[] = ['ready', 'configuration_required', 'guide_blocked'];
+
+export function alertIntegrationSourceGroups(sources: readonly AlertIntegrationCatalogItem[]) {
+  return readinessOrder
+    .map(readiness => ({ readiness, sources: sources.filter(source => source.readiness === readiness) }))
+    .filter(group => group.sources.length > 0);
+}
+
 /** Token creation is an administrative operation even though guides are readable by every supported role. */
 export function canManageAlertIntegrationTokens(roles: readonly string[]) {
   return roles.includes('ADMIN');
 }
 
-export function buildAlertIngressContract(guide: AlertIntegrationGuide) {
+export function buildAlertIngressContract(guide: AlertIntegrationGuide, publicBaseUrl?: string | null) {
+  const credentialHeader = Object.entries(guide.requiredHeaders)
+    .map(([name, value]) => `${name}: ${value}`)
+    .join('\n');
+  const endpoint = publicBaseUrl ? joinPublicCallbackUrl(publicBaseUrl, guide.ingressPath) : guide.ingressPath;
   return {
-    endpoint: guide.ingressPath,
-    authorizationHeader: `Authorization: ${guide.requiredHeaders.Authorization}`
+    endpoint,
+    ingressPath: guide.ingressPath,
+    publicBaseUrlConfigured: endpoint !== guide.ingressPath,
+    requestHeaders: `Content-Type: application/json\n${credentialHeader}`
   };
+}
+
+/** Preserves a configured reverse-proxy base path while appending the backend-owned ingress path. */
+export function joinPublicCallbackUrl(publicBaseUrl: string, ingressPath: string) {
+  const base = new URL(publicBaseUrl);
+  const basePath = base.pathname.replace(/\/+$/, '');
+  const callbackPath = ingressPath.replace(/^\/+/, '');
+  base.pathname = `${basePath}/${callbackPath}`;
+  base.search = '';
+  base.hash = '';
+  return base.toString();
 }
 
 /**

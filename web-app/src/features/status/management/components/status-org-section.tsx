@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { Typography } from 'antd';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
@@ -27,41 +28,49 @@ type StatusOrgSectionProps = {
 };
 
 export function StatusOrgSection(props: StatusOrgSectionProps) {
-  const { t } = useTranslation();
   return (
     <section className={styles.section}>
-      <StatusSectionHeading
-        title={t('statusManagement.organization')}
-        description={t('statusManagement.organizationDescription')}
-      />
-      {props.state.kind === 'loading' && (
-        <OperationalStatePanel kind="loading" title={t('statusManagement.loadingOrganization')} />
-      )}
-      {props.state.kind === 'unavailable' && (
-        <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />
-      )}
-      {props.state.kind === 'permission' && (
-        <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />
-      )}
-      {props.state.kind === 'error' && <OperationalStatePanel kind="error" title={t('common.routeError.title')} />}
-      {props.state.kind === 'missing' && (
-        <>
-          <OperationalStatePanel kind="empty" title={t('statusManagement.notConfigured')} />
-          {(props.canCreate || props.writeRecovery) && (
-            <StatusOrgForm
-              key={props.canCreate ? 'write' : 'read'}
-              org={undefined}
-              canWrite={props.canCreate}
-              saving={props.saving}
-              commandLocked={props.commandLocked}
-              writeRecovery={props.writeRecovery}
-              onRetry={props.onRetryWrite}
-              onSubmit={props.onSave}
-            />
-          )}
-        </>
-      )}
-      {props.state.kind === 'ready' && (
+      <StatusOrgSectionIntro {...props} />
+      <StatusOrgSectionContent {...props} />
+    </section>
+  );
+}
+
+function StatusOrgSectionIntro(props: StatusOrgSectionProps) {
+  const { t } = useTranslation();
+  const showSetup = props.state.kind === 'missing' && (props.canCreate || Boolean(props.writeRecovery));
+  if (showSetup) {
+    return (
+      <div className={styles.setupIntro}>
+        <Typography.Title level={4}>{t('statusManagement.setupTitle')}</Typography.Title>
+        <Typography.Text type="secondary">{t('statusManagement.setupDescription')}</Typography.Text>
+      </div>
+    );
+  }
+  if (props.state.kind === 'ready') return null;
+  return (
+    <StatusSectionHeading
+      title={t('statusManagement.organization')}
+      description={t('statusManagement.organizationDescription')}
+    />
+  );
+}
+
+function StatusOrgSectionContent(props: StatusOrgSectionProps) {
+  const { t } = useTranslation();
+  switch (props.state.kind) {
+    case 'loading':
+      return <OperationalStatePanel kind="loading" title={t('statusManagement.loadingOrganization')} />;
+    case 'unavailable':
+      return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+    case 'permission':
+      return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
+    case 'error':
+      return <OperationalStatePanel kind="error" title={t('common.routeError.title')} />;
+    case 'missing':
+      return <MissingStatusOrgContent {...props} />;
+    case 'ready':
+      return (
         <StatusOrgForm
           key={props.canUpdate ? 'write' : 'read'}
           org={props.state.record}
@@ -72,7 +81,25 @@ export function StatusOrgSection(props: StatusOrgSectionProps) {
           onRetry={props.onRetryWrite}
           onSubmit={props.onSave}
         />
-      )}
-    </section>
+      );
+  }
+}
+
+function MissingStatusOrgContent(props: StatusOrgSectionProps) {
+  const { t } = useTranslation();
+  if (!props.canCreate && !props.writeRecovery) {
+    return <OperationalStatePanel kind="empty" title={t('statusManagement.notConfigured')} />;
+  }
+  return (
+    <StatusOrgForm
+      key={props.canCreate ? 'write' : 'read'}
+      org={undefined}
+      canWrite={props.canCreate}
+      saving={props.saving}
+      commandLocked={props.commandLocked}
+      writeRecovery={props.writeRecovery}
+      onRetry={props.onRetryWrite}
+      onSubmit={props.onSave}
+    />
   );
 }

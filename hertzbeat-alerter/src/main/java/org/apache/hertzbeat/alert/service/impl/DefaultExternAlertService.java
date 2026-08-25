@@ -36,7 +36,7 @@ public class DefaultExternAlertService implements ExternAlertService {
     private AlarmCommonReduce alarmCommonReduce;
     
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         SingleAlert alert = ExternalAlertIngressValidator.normalize(
                 JsonUtil.fromJsonQuietly(content, SingleAlert.class));
         alert.setId(null);
@@ -71,7 +71,7 @@ public class DefaultExternAlertService implements ExternAlertService {
                 alert.setEndAt(Instant.now().toEpochMilli());
             }
         }
-        alarmCommonReduce.reduceAndSendAlarm(alert);
+        alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert);
     }
 
     @Override

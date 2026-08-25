@@ -19,9 +19,8 @@ type SetupMail = {
   fromAddress: string;
 };
 export type SetupOptionalDraft = {
-  publicBaseUrl: string;
-  serverOtlpHttpEndpoint: string;
-  serverOtlpGrpcEndpoint: string;
+  useProxy: boolean;
+  proxyPublicBaseUrl: string;
   retentionDays: number | null;
   mail: {
     host: string;
@@ -64,18 +63,15 @@ export type SetupOptionalValidationEvidence =
 
 export function createOptionalDraft(): SetupOptionalDraft {
   return {
-    publicBaseUrl: '',
-    serverOtlpHttpEndpoint: '',
-    serverOtlpGrpcEndpoint: '',
+    useProxy: false,
+    proxyPublicBaseUrl: '',
     retentionDays: null,
     mail: { host: '', port: null, security: 'starttls', username: '', password: '', fromAddress: '' }
   };
 }
 
-export function createOptionalOptionsRequest(draft: SetupOptionalDraft): SetupOptionsRequest {
-  const publicAccess = normalizedPublicAccess(draft);
-  const request: SetupOptionsRequest = {};
-  if (Object.keys(publicAccess).length) request.publicAccess = publicAccess;
+export function createOptionalOptionsRequest(draft: SetupOptionalDraft, publicOrigin: string): SetupOptionsRequest {
+  const request: SetupOptionsRequest = { publicAccess: normalizedPublicAccess(draft, publicOrigin) };
   if (draft.retentionDays !== null) request.retention = { days: draft.retentionDays };
   if (optionalMailStarted(draft.mail)) request.mail = normalizedMail(draft.mail);
   return request;
@@ -83,9 +79,10 @@ export function createOptionalOptionsRequest(draft: SetupOptionalDraft): SetupOp
 
 export function createOptionalValidationRequest(
   section: SetupOptionalValidationRequest['section'],
-  draft: SetupOptionalDraft
+  draft: SetupOptionalDraft,
+  publicOrigin: string
 ): SetupOptionalValidationRequest {
-  if (section === 'public_access') return { section, publicAccess: normalizedPublicAccess(draft) };
+  if (section === 'public_access') return { section, publicAccess: normalizedPublicAccess(draft, publicOrigin) };
   return { section, mail: normalizedMail(draft.mail) };
 }
 
@@ -106,19 +103,54 @@ export function optionalMailValidationReady(mail: SetupOptionalDraft['mail']) {
 export function optionalDraftValid(draft: SetupOptionalDraft) {
   const retentionValid =
     draft.retentionDays === null || (Number.isInteger(draft.retentionDays) && draft.retentionDays > 0);
-  return retentionValid && optionalMailComplete(draft.mail);
+  return retentionValid && setupPublicAccessValid(draft) && optionalMailComplete(draft.mail);
 }
 
 export function clearOptionalMailSecret(draft: SetupOptionalDraft): SetupOptionalDraft {
   return { ...draft, mail: { ...draft.mail, password: '' } };
 }
 
-function normalizedPublicAccess(draft: SetupOptionalDraft): SetupPublicAccess {
-  return compactStrings({
-    publicBaseUrl: draft.publicBaseUrl,
-    serverOtlpHttpEndpoint: draft.serverOtlpHttpEndpoint,
-    serverOtlpGrpcEndpoint: draft.serverOtlpGrpcEndpoint
-  });
+function normalizedPublicAccess(draft: SetupOptionalDraft, publicOrigin: string): SetupPublicAccess {
+  const candidate = draft.useProxy ? draft.proxyPublicBaseUrl : publicOrigin;
+  const publicBaseUrl = normalizeSetupPublicBaseUrl(candidate);
+  if (!publicBaseUrl) throw new Error('Invalid setup public base URL');
+  return { publicBaseUrl };
+}
+
+export function setupPublicAccessValid(draft: SetupOptionalDraft) {
+  return !draft.useProxy || normalizeSetupPublicBaseUrl(draft.proxyPublicBaseUrl) !== null;
+}
+
+export function setupPublicAccessValidationReady(draft: SetupOptionalDraft) {
+  return setupPublicAccessValid(draft);
+}
+
+function normalizeSetupPublicBaseUrl(value: string) {
+  const candidate = value.trim();
+  if (!candidate) return null;
+  try {
+    const address = new URL(candidate);
+    if (
+      (address.protocol !== 'http:' && address.protocol !== 'https:') ||
+      !address.hostname ||
+      address.username ||
+      address.password ||
+      address.search ||
+      address.hash ||
+      address.port === '0' ||
+      wildcardHost(address.hostname)
+    ) {
+      return null;
+    }
+    return candidate;
+  } catch {
+    return null;
+  }
+}
+
+function wildcardHost(value: string) {
+  const host = value.toLowerCase().replace(/^\[|\]$/g, '');
+  return host === '0.0.0.0' || host === '::' || host === '0:0:0:0:0:0:0:0';
 }
 
 function normalizedMail(mail: SetupOptionalDraft['mail']): SetupMail {
@@ -133,10 +165,4 @@ function normalizedMail(mail: SetupOptionalDraft['mail']): SetupMail {
     ...(mail.password.trim() ? { password: mail.password } : {}),
     fromAddress: mail.fromAddress.trim()
   };
-}
-
-function compactStrings(values: Record<string, string>) {
-  return Object.fromEntries(
-    Object.entries(values).flatMap(([key, value]) => (value.trim() ? [[key, value.trim()]] : []))
-  );
 }

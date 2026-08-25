@@ -15,32 +15,42 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import {
+  loadPublicAccessConfig,
+  publicAccessConfigQueryKey
+} from '@/features/settings/system-config/api/public-access-config-api';
 import { buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
 
-import { loadAlertIntegrationCatalog, loadAlertIntegrationGuide } from '../api/alert-integration-api';
+import {
+  loadAlertIntegrationCatalog,
+  loadAlertIntegrationGuide,
+  startAlertIntegrationVerification
+} from '../api/alert-integration-api';
 import {
   alertIntegrationFailureKind,
   buildAlertIngressContract,
   buildAlertIntegrationTokenSettingsPath,
   canManageAlertIntegrationTokens,
-  type AlertIntegrationCopyState,
+  type AlertIntegrationCatalog,
   type AlertIntegrationState
 } from '../model/alert-integration-model';
 import { alertIntegrationQueryKeys } from './alert-integration-query-keys';
 
 export function useAlertIntegrationController() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { session } = useSession();
   const canManageTokens = canManageAlertIntegrationTokens(session?.roles ?? []);
   const selectedSource = useParams<{ source: string }>().source ?? '';
   const catalogQuery = useQuery({
     queryKey: alertIntegrationQueryKeys.catalog(),
     queryFn: ({ signal }) => loadAlertIntegrationCatalog(signal),
+    refetchInterval: query => alertIntegrationCatalogRefreshInterval(query.state.data),
     retry: false
   });
   const catalogItem = catalogQuery.data?.items.find(item => item.source === selectedSource);
@@ -54,41 +64,56 @@ export function useAlertIntegrationController() {
     enabled: catalogItem !== undefined,
     retry: false
   });
-  const [copyEvidence, setCopyEvidence] = useState<AlertIntegrationCopyState>(null);
-  const copyState = copyEvidence?.source === selectedSource ? copyEvidence : null;
+  const publicAccessQuery = useQuery({
+    queryKey: publicAccessConfigQueryKey,
+    queryFn: ({ signal }) => loadPublicAccessConfig(signal),
+    retry: false
+  });
+  const verificationMutation = useMutation({
+    mutationFn: (source: string) => startAlertIntegrationVerification(source),
+    onSuccess: (verification, source) => {
+      queryClient.setQueryData<AlertIntegrationCatalog>(alertIntegrationQueryKeys.catalog(), current =>
+        current
+          ? {
+              items: current.items.map(item => (item.source === source ? { ...item, verification } : item))
+            }
+          : current
+      );
+    }
+  });
   const state = resolveState(catalogQuery, detailQuery, catalogItem !== undefined);
   const guide = state.kind === 'ready' ? state.guide : undefined;
-  const contract = guide ? buildAlertIngressContract(guide) : undefined;
+  const contract = guide
+    ? buildAlertIngressContract(guide, configuredPublicBaseUrl(publicAccessQuery.data))
+    : undefined;
   const tokenSettingsPath = buildAlertIntegrationTokenSettingsPath(selectedSource);
-  const copy = async (target: 'endpoint' | 'authorization', value?: string) => {
-    if (!guide || guide.readiness === 'guide_blocked' || !value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopyEvidence({ source: guide.source, target, outcome: 'copied' });
-    } catch {
-      setCopyEvidence({ source: guide.source, target, outcome: 'failed' });
-    }
-  };
   return {
     state,
     selectedSource,
     contract,
-    copyState,
     tokenSettingsPath,
     canManageTokens,
+    verificationStarting: verificationMutation.isPending && verificationMutation.variables === selectedSource,
+    verificationError: verificationMutation.isError && verificationMutation.variables === selectedSource,
     actions: {
       selectSource: (source: string) => {
-        setCopyEvidence(null);
         void navigate(buildAlertIntegrationPath(source));
       },
       retry: () => retryFailedState(state, catalogQuery, detailQuery, catalogItem !== undefined),
+      startVerification: () => verificationMutation.mutateAsync(selectedSource),
       openTokenSettings: () => {
         if (canManageTokens) void navigate(tokenSettingsPath);
-      },
-      copyEndpoint: () => copy('endpoint', contract?.endpoint),
-      copyAuthorizationHeader: () => copy('authorization', contract?.authorizationHeader)
+      }
     }
   };
+}
+
+function configuredPublicBaseUrl(config: Awaited<ReturnType<typeof loadPublicAccessConfig>> | undefined) {
+  return config?.publicBaseUrl;
+}
+
+export function alertIntegrationCatalogRefreshInterval(catalog: AlertIntegrationCatalog | undefined) {
+  return catalog?.items.some(item => item.verification.status === 'waiting') ? 2_000 : false;
 }
 
 type QueryEvidence<T> = { isPending: boolean; error: Error | null; data: T | undefined };

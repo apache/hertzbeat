@@ -27,6 +27,7 @@ import {
 } from '@/shared/operational-page';
 
 import { SystemConfigEditor } from '../components/system-config-editor';
+import { PublicAccessConfigSection } from '../components/public-access-config-section';
 import { RetryButton, SystemConfigReadFailure } from '../components/system-config-state';
 import { useSystemConfigResourceController } from '../controller/system-config-resource-controller';
 
@@ -93,6 +94,7 @@ function SystemConfigReadyContent({ controller }: { controller: SystemConfigCont
         onSave={controller.save}
         onDiscard={controller.discard}
       />
+      <PublicAccessConfigSection canConfigure={state.canConfigure} />
     </>
   );
 }

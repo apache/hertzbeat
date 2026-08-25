@@ -26,8 +26,21 @@ describe('alert query toolbars', () => {
 
   afterEach(cleanup);
 
+  it('keeps Alert Group search, query, and refresh in one compact command group', () => {
+    const { container } = renderWithI18n(groupToolbar());
+    const commandBar = requireHtmlElement(
+      container.querySelector('[data-hb-operational-command-bar]'),
+      'Operational command bar'
+    );
+    const primary = requireHtmlElement(commandBar.querySelector('[data-hb-operational-command-primary]'), 'Actions');
+
+    expect(within(primary).getByRole('textbox')).toBeInTheDocument();
+    expect(within(primary).getByRole('button', { name: i18n.t('common.query') })).toBeInTheDocument();
+    expect(within(primary).getByRole('button', { name: i18n.t('common.refresh') })).toBeInTheDocument();
+    expect(commandBar.querySelector('[data-hb-operational-command-secondary]')).not.toBeInTheDocument();
+  });
+
   it.each([
-    ['groups', groupToolbar()],
     ['inhibitions', inhibitToolbar()],
     ['silences', silenceToolbar()],
     ['rules', ruleToolbar()]

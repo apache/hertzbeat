@@ -13,7 +13,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import type { CollectorInstrumentationIntake } from '@/shared/collector';
-import { requireDomElement } from '@/test/dom-element';
+import { requireDomElement, requireHtmlElement } from '@/test/dom-element';
 import type { CollectorRuntimeReport } from '../model/collector-runtime-report-model';
 
 const resource = vi.hoisted(() => ({
@@ -60,8 +60,7 @@ describe('CollectorPage', () => {
     expect(screen.getByText(/Manage registered standalone Collectors/)).toBeVisible();
     expect(screen.getByText('Java Collector')).toBeVisible();
     expect(screen.getByText('Embedded Java Collector')).toBeVisible();
-    expect(screen.getAllByText('Not applicable')).toHaveLength(2);
-    expect(screen.getAllByText('10.0.0.7')).toHaveLength(2);
+    expect(screen.queryByText('10.0.0.7')).not.toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Search collectors'), { target: { value: ' west ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
@@ -80,6 +79,40 @@ describe('CollectorPage', () => {
     expect(
       screen.queryByRole('button', { name: /main-default-collector (online|offline|delete)/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps the inventory focused and reveals secondary diagnostics in a navigable inspector', () => {
+    renderPage();
+
+    for (const heading of ['Collector', 'Collector type', 'Status', 'Mode', 'Tasks', 'Actions']) {
+      expect(screen.getByRole('columnheader', { name: heading })).toBeInTheDocument();
+    }
+    for (const heading of ['Pinned', 'Dispatched', 'Collector gateway', 'Managed runtime', 'Address', 'Version']) {
+      expect(screen.queryByRole('columnheader', { name: heading })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText('10.0.0.7')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View edge details' }));
+
+    const inspector = screen.getByRole('dialog', { name: 'Collector details: edge' });
+    expect(within(inspector).queryByRole('tab')).not.toBeInTheDocument();
+    expect(within(inspector).getByRole('heading', { name: 'edge' })).toBeInTheDocument();
+    expect(within(inspector).getByRole('heading', { name: 'Properties' })).toBeInTheDocument();
+    expect(within(inspector).getByRole('heading', { name: 'Task assignment' })).toBeInTheDocument();
+    expect(within(inspector).getByRole('heading', { name: 'Operational configuration' })).toBeInTheDocument();
+    expect(within(inspector).getByText('10.0.0.7')).toBeInTheDocument();
+    expect(within(inspector).getByText('2.0.0')).toBeInTheDocument();
+    expect(within(inspector).getByText('Not advertised')).toBeInTheDocument();
+    expect(within(inspector).getByText('Not reported')).toBeInTheDocument();
+    expect(within(inspector).getByText('1 of 2')).toBeInTheDocument();
+    expect(within(inspector).getByRole('separator', { name: 'Resize Collector details' })).toBeInTheDocument();
+
+    fireEvent.keyDown(inspector, { key: 'ArrowDown' });
+    expect(screen.getByRole('dialog', { name: 'Collector details: main-default-collector' })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowUp' });
+    expect(screen.getByRole('dialog', { name: 'Collector details: edge' })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Collector details: edge' })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -194,9 +227,12 @@ describe('CollectorPage', () => {
 
     expect(screen.getByText('edge applied runtime revision 8; runtime state is RUNNING.')).toBeInTheDocument();
     expect(screen.getByText('Hybrid Collector')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Configure edge OTLP intake address' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Configure edge Hybrid runtime' })).toBeVisible();
-    expect(screen.getByText('DEGRADED')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Configure edge OTLP intake address' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View edge details' }));
+    const inspector = screen.getByRole('dialog', { name: 'Collector details: edge' });
+    expect(within(inspector).getByRole('button', { name: 'Configure edge OTLP intake address' })).toBeVisible();
+    expect(within(inspector).getByRole('button', { name: 'Configure edge Hybrid runtime' })).toBeVisible();
+    expect(within(inspector).getByText('DEGRADED')).toBeInTheDocument();
   });
 
   it('keeps a Server-owned intake read-only because it is not a capability of this Collector', () => {
@@ -319,12 +355,24 @@ describe('CollectorPage', () => {
     );
     renderPage();
 
-    expect(screen.getByText('Advertised by Collector')).toBeInTheDocument();
-    expect(screen.getByText('Server endpoint — not Collector')).toBeInTheDocument();
-    expect(screen.getByText('Not advertised')).toBeInTheDocument();
-    expect(screen.getAllByText('Stored advertisement is invalid.').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('Advertisement is currently unavailable.')).toBeInTheDocument();
-    const dialog = screen.getByRole('dialog', { name: 'OTLP gateway for invalid' });
+    for (const [name, evidence] of [
+      ['available', 'Advertised by Collector'],
+      ['server', 'Server endpoint — not Collector'],
+      ['absent', 'Not advertised'],
+      ['unavailable', 'Advertisement is currently unavailable.']
+    ] as const) {
+      fireEvent.click(screen.getByRole('button', { name: `View ${name} details` }));
+      const details = requireHtmlElement(
+        screen.getByText(`Collector details: ${name}`).closest('[role="dialog"]'),
+        `${name} details drawer`
+      );
+      expect(within(details).getByText(evidence)).toBeInTheDocument();
+    }
+    expect(screen.getByText('Stored advertisement is invalid.')).toBeInTheDocument();
+    const dialog = requireHtmlElement(
+      screen.getByText('OTLP gateway for invalid').closest('.ant-modal'),
+      'Invalid intake dialog'
+    );
     expect(within(dialog).getByRole('button', { name: 'Clear advertisement' })).toBeInTheDocument();
     expect(within(dialog).queryByLabelText('OTLP gRPC HTTP(S) endpoint')).not.toBeInTheDocument();
   });

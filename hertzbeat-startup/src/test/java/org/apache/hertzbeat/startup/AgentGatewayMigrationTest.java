@@ -68,6 +68,8 @@ class AgentGatewayMigrationTest {
                 assertTrue(columnExists(statement, "hzb_agent_run", "target_context_json"));
                 assertTrue(columnExists(statement, "hzb_agent_run", "entry_type"));
                 assertTrue(columnExists(statement, "hzb_agent_session", "origin_entry_type"));
+                assertTrue(columnExists(statement, "hzb_agent_session", "workspace_id"));
+                assertEquals("'default'", columnDefault(statement, "hzb_agent_session", "workspace_id"));
             }
         }
     }
@@ -82,6 +84,20 @@ class AgentGatewayMigrationTest {
                 assertTrue(sql.contains("create table") && sql.contains(table), database + ":" + table);
             }
             assertTrue(sql.contains("target_context_json"), database);
+            assertTrue(sql.contains("workspace_id varchar(128) not null default 'default'"), database);
+            assertTrue(sql.contains("idx_agent_session_owner") && sql.contains("workspace_id, channel"), database);
+        }
+    }
+
+    private String columnDefault(Statement statement, String table, String column) throws Exception {
+        try (ResultSet rows = statement.executeQuery("""
+                SELECT COLUMN_DEFAULT
+                  FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_NAME = UPPER('%s')
+                   AND COLUMN_NAME = UPPER('%s')
+                """.formatted(table, column))) {
+            assertTrue(rows.next());
+            return rows.getString(1);
         }
     }
 

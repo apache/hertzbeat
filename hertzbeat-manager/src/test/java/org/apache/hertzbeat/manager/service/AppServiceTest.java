@@ -27,26 +27,24 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
-import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMutationCoordinator;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSource;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStore;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStoreFactory;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 
-import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,8 +61,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -75,8 +77,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AppServiceTest {
 
-    @InjectMocks
     private AppServiceImpl appService;
+
+    private MonitorDefinitionStoreFactory definitionStoreFactory;
 
     @Mock
     private MonitorDao monitorDao;
@@ -91,18 +94,20 @@ class AppServiceTest {
     private WarehouseService warehouseService;
 
     @Mock
-    private ObjectStoreConfigServiceImpl objectStoreConfigService;
-
-    @Mock
-    private ObjectProvider<ObjectStoreService> objectStoreServiceProvider;
-
-    @Mock
-    private ObjectStoreService objectStoreService;
+    private ObjectProvider<MonitorService> monitorServiceProvider;
 
     @BeforeEach
     void setUp() throws Exception {
         when(defineDao.findAll()).thenReturn(new ArrayList<>());
-        appService.initializeRuntimeDefinitions();
+        definitionStoreFactory = spy(new MonitorDefinitionStoreFactory(defineDao));
+        appService = new AppServiceImpl(
+                monitorDao,
+                paramDao,
+                warehouseService,
+                monitorServiceProvider,
+                definitionStoreFactory,
+                new MonitorDefinitionMutationCoordinator());
+        appService.initializeRuntimeDefinitions(null);
     }
 
     @Test
@@ -306,16 +311,14 @@ class AppServiceTest {
         when(defineDao.findAll()).thenReturn(List.of(previous));
         appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(database));
 
-        FileDTO partial = FileDTO.builder()
-                .inputStream(new ByteArrayInputStream("app: partial".getBytes(StandardCharsets.UTF_8)))
-                .build();
-        FileDTO invalid = FileDTO.builder()
-                .inputStream(new ByteArrayInputStream("app: [invalid".getBytes(StandardCharsets.UTF_8)))
-                .build();
         ObjectStoreDTO<Object> objectStore = new ObjectStoreDTO<>();
         objectStore.setType(ObjectStoreDTO.Type.OBS);
-        when(objectStoreServiceProvider.getIfAvailable()).thenReturn(objectStoreService);
-        when(objectStoreService.list("define")).thenReturn(List.of(partial, invalid));
+        MonitorDefinitionStore invalidStore = mock(MonitorDefinitionStore.class);
+        when(invalidStore.loadAll()).thenReturn(Map.of(
+                "partial", "app: partial",
+                "invalid", "app: [invalid"));
+        doReturn(invalidStore).when(definitionStoreFactory)
+                .open(argThat(config -> config != null && config.getType() == ObjectStoreDTO.Type.OBS));
 
         assertThrows(RuntimeException.class,
                 () -> appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(objectStore)));
@@ -327,7 +330,7 @@ class AppServiceTest {
 
         appService.deleteMonitorDefine("previous");
         verify(defineDao).deleteById("previous");
-        verify(objectStoreService, never()).remove("define/app-previous.yml");
+        verify(invalidStore, never()).delete("previous");
     }
 
     @Test

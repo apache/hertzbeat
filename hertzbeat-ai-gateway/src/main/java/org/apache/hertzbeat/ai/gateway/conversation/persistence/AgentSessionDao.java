@@ -22,6 +22,9 @@ import java.util.Optional;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -42,18 +45,20 @@ public interface AgentSessionDao extends JpaRepository<AgentSession, Long> {
      */
     Optional<AgentSession> findBySessionUid(String sessionUid);
 
-    Optional<AgentSession> findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-            Long id, String channel, String actorType, String actorId, String originEntryType);
+    Optional<AgentSession> findByIdAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            Long id, String workspaceId, String channel, String actorType, String actorId, String originEntryType);
 
-    Optional<AgentSession> findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-            String sessionUid, String channel, String actorType, String actorId, String originEntryType);
+    Optional<AgentSession> findBySessionUidAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            String sessionUid, String workspaceId, String channel, String actorType, String actorId,
+            String originEntryType);
 
-    Page<AgentSession> findByChannelAndActorTypeAndActorIdAndOriginEntryTypeOrderByGmtUpdateDesc(
-            String channel, String actorType, String actorId, String originEntryType, Pageable pageable);
+    Page<AgentSession> findByWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryTypeOrderByGmtUpdateDesc(
+            String workspaceId, String channel, String actorType, String actorId, String originEntryType,
+            Pageable pageable);
 
     Page<AgentSession>
-            findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-                    String channel, String actorType, String actorId, String originEntryType,
+            findByWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                    String workspaceId, String channel, String actorType, String actorId, String originEntryType,
                     String title, Pageable pageable);
 
     /**
@@ -61,4 +66,19 @@ public interface AgentSessionDao extends JpaRepository<AgentSession, Long> {
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<AgentSession> findFirstById(Long id);
+
+    /**
+     * Advance session activity without merging a stale session entity over transcript sequence or title updates.
+     */
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update AgentSession session
+            set session.gmtUpdate = case
+                when session.gmtUpdate is null or session.gmtUpdate < :transitionAt then :transitionAt
+                else session.gmtUpdate
+            end
+            where session.id = :sessionId
+            """)
+    int advanceGmtUpdate(@Param("sessionId") Long sessionId,
+                         @Param("transitionAt") java.time.LocalDateTime transitionAt);
 }

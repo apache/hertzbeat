@@ -78,6 +78,7 @@ public class GreptimeMetricInventoryRepository implements MetricInventoryReposit
 
     private boolean supports(Query query) {
         return query != null
+                && StringUtils.hasText(query.workspaceId())
                 && StringUtils.hasText(query.serviceName())
                 && StringUtils.hasText(query.serviceNamespace())
                 && StringUtils.hasText(query.environment())
@@ -88,6 +89,7 @@ public class GreptimeMetricInventoryRepository implements MetricInventoryReposit
 
     private String buildQuery(Query query) {
         List<String> filters = new ArrayList<>();
+        filters.add(equalsColumn("p.hertzbeat_workspace_id", query.workspaceId()));
         filters.add(equalsColumn("p.service_name", query.serviceName()));
         filters.add(equalsColumn("p.service_namespace", query.serviceNamespace()));
         filters.add(equalsColumn("p.deployment_environment_name", query.environment()));

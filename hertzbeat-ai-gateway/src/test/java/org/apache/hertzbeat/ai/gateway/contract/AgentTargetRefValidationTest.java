@@ -53,16 +53,47 @@ class AgentTargetRefValidationTest {
         AgentTargetRef reversed = AgentTargetRef.builder()
             .signal(AgentSignalRef.builder().type("traces").start(2_000L).end(1_000L).build())
             .build();
+        AgentTargetRef empty = AgentTargetRef.builder()
+            .signal(AgentSignalRef.builder().type("metrics").start(1_000L).end(1_000L).build())
+            .build();
 
         assertFalse(validator.validate(partial).isEmpty());
         assertFalse(validator.validate(reversed).isEmpty());
+        assertFalse(validator.validate(empty).isEmpty());
     }
 
     @Test
     void rejectsUnknownSignalsAndUnboundedTopologyDepth() {
         AgentTargetRef target = AgentTargetRef.builder()
             .signal(AgentSignalRef.builder().type("events").build())
-            .topology(AgentTopologyRef.builder().rootEntityId(42L).depth(11).build())
+            .topology(AgentTopologyRef.builder().rootEntityId(42L).depth(3).build())
+            .build();
+
+        assertFalse(validator.validate(target).isEmpty());
+    }
+
+    @Test
+    void rejectsUnknownSignalTimezone() {
+        AgentTargetRef target = AgentTargetRef.builder()
+                .monitorId(42L)
+                .signal(AgentSignalRef.builder().type("metrics").query("basic.qps")
+                        .start(1_000L).end(2_000L).timezone("Mars/Olympus").build())
+                .build();
+
+        assertFalse(validator.validate(target).isEmpty());
+    }
+
+    @Test
+    void rejectsNonPositiveMonitorIdentifiers() {
+        AgentTargetRef target = AgentTargetRef.builder().monitorId(0L).alertId(0L).build();
+
+        assertFalse(validator.validate(target).isEmpty());
+    }
+
+    @Test
+    void rejectsSimultaneousTopologyNodeAndEdgeSelection() {
+        AgentTargetRef target = AgentTargetRef.builder()
+            .topology(AgentTopologyRef.builder().nodeId("node-1").edgeId("edge-1").build())
             .build();
 
         assertFalse(validator.validate(target).isEmpty());

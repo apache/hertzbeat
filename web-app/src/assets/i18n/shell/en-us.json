@@ -27,11 +27,16 @@
         "unavailable": "Unavailable",
         "unknown": "Unknown"
       },
-      "snapshotObservedAt": "Snapshot {{time}}",
+      "currentStatusObservedAt": "Current status · {{time}}",
       "collectorLastReportedAt": "Last report {{time}}",
       "collectorCounts": "{{online}}/{{total}} online · {{runtimeHealthy}} runtime healthy",
+      "collectorOnlineCount": "Collectors online: {{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "Runtimes healthy: {{count}}",
+      "collectorOfflineCount": "Collectors offline: {{count}}",
       "collectorNotReported": "No runtime report",
       "notObserved": "Not observed",
+      "details": "{{label}} status details",
+      "openManagement": "Open management",
       "request": {
         "permission": "Runtime status permission denied",
         "unavailable": "Runtime status request unavailable",

@@ -19,11 +19,11 @@ export function buildAlertGroupColumns(
 ): ColumnsType<AlertGroupConverge> {
   const seconds = (value: number | null) => (value === null ? '—' : t('alertGroups.seconds', { value }));
   return [
-    { title: t('alertGroups.name'), dataIndex: 'name' },
-    { title: t('alertGroups.labels'), dataIndex: 'groupLabels', render: renderLabels },
-    { title: t('alertGroups.wait'), dataIndex: 'groupWait', width: 130, render: seconds },
-    { title: t('alertGroups.interval'), dataIndex: 'groupInterval', width: 150, render: seconds },
-    { title: t('alertGroups.repeat'), dataIndex: 'repeatInterval', width: 150, render: seconds },
+    { title: t('alertGroups.name'), dataIndex: 'name', width: 140 },
+    { title: t('alertGroups.labels'), dataIndex: 'groupLabels', width: 120, render: renderLabels },
+    { title: t('alertGroups.wait'), dataIndex: 'groupWait', width: 110, render: seconds },
+    { title: t('alertGroups.interval'), dataIndex: 'groupInterval', width: 120, render: seconds },
+    { title: t('alertGroups.repeat'), dataIndex: 'repeatInterval', width: 120, render: seconds },
     {
       title: t('alertGroups.enabled'),
       dataIndex: 'enable',
@@ -33,12 +33,12 @@ export function buildAlertGroupColumns(
     {
       title: t('alertGroups.updated'),
       dataIndex: 'gmtUpdate',
-      width: 180,
+      width: 170,
       render: (value: string | null) => value ?? '—'
     },
     {
       title: t('common.actions'),
-      width: 150,
+      width: 100,
       render: (_value, group) => <AlertGroupActionCell actions={actions} group={group} t={t} />
     }
   ];

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Repository;
@@ -54,6 +55,41 @@ public class DelegatingLogQueryRepository implements LogQueryRepository {
             } catch (Exception ex) {
                 // Continue probing later readers. Mixed-store setups may expose non-log-capable backends first.
             }
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<LogEntry> queryRecentLogs(String workspaceId, long start, long end, int limit) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        String trustedWorkspaceId = workspaceId.trim();
+        int resolvedLimit = Math.max(limit, 1);
+        boolean scopedAdapterAvailable = false;
+        for (HistoryDataReader historyDataReader : historyDataReaderProvider.orderedStream().toList()) {
+            if (historyDataReader == null) {
+                continue;
+            }
+            try {
+                List<LogEntry> logs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                        start, end, null, null, null, null, null, 0, resolvedLimit,
+                        null, false, trustedWorkspaceId
+                );
+                scopedAdapterAvailable = true;
+                if (!CollectionUtils.isEmpty(logs)) {
+                    return logs;
+                }
+            } catch (UnsupportedOperationException ignored) {
+                // Probe a later reader without ever falling back to the legacy unscoped contract.
+            } catch (TelemetryStorageUnavailableException ex) {
+                throw ex;
+            } catch (RuntimeException ex) {
+                throw new TelemetryStorageUnavailableException();
+            }
+        }
+        if (!scopedAdapterAvailable) {
+            throw new TelemetryStorageUnavailableException();
         }
         return Collections.emptyList();
     }

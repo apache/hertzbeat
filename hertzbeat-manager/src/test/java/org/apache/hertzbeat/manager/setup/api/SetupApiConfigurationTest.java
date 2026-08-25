@@ -19,6 +19,10 @@ package org.apache.hertzbeat.manager.setup.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+import org.apache.hertzbeat.common.runtime.RuntimeMode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
+import org.apache.hertzbeat.manager.setup.runtime.FactoryResetStateStore.State;
 import org.junit.jupiter.api.Test;
 
 class SetupApiConfigurationTest {
@@ -32,5 +36,15 @@ class SetupApiConfigurationTest {
     @Test
     void explicitLoopbackAddressMustRemainLocal() {
         assertThat(SetupApiConfiguration.bindAddress("127.0.0.1").isLoopbackAddress()).isTrue();
+    }
+
+    @Test
+    void pendingFactoryResetMustBlockOrdinaryCompletedInstallationConvergence() {
+        assertThat(SetupApiConfiguration.installationConvergenceAllowed(
+                RuntimeMode.FULL_SETUP_GATED, SetupPhase.COMPLETE, Optional.of(State.REQUESTED))).isFalse();
+        assertThat(SetupApiConfiguration.installationConvergenceAllowed(
+                RuntimeMode.FULL_SETUP_GATED, SetupPhase.COMPLETE, Optional.of(State.CLEANED))).isFalse();
+        assertThat(SetupApiConfiguration.installationConvergenceAllowed(
+                RuntimeMode.FULL_SETUP_GATED, SetupPhase.COMPLETE, Optional.empty())).isTrue();
     }
 }

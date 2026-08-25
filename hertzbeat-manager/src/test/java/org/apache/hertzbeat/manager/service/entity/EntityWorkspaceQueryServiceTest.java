@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -196,6 +197,23 @@ class EntityWorkspaceQueryServiceTest {
 
         assertEquals(Optional.of(checkout), entity);
         verify(observeEntityDao).findById(501L);
+    }
+
+    @Test
+    void findEntityByIdWithWorkspaceUsesCompositeDaoLookup() {
+        ObserveEntity checkout = ObserveEntity.builder()
+                .id(502L)
+                .name("checkout")
+                .workspaceId("team-a")
+                .build();
+        when(observeEntityDao.findFirstByWorkspaceIdAndId("team-a", 502L))
+                .thenReturn(Optional.of(checkout));
+
+        assertEquals(Optional.of(checkout), entityWorkspaceQueryService.findEntityById("team-a", 502L));
+        assertTrue(entityWorkspaceQueryService.findEntityById(" ", 502L).isEmpty());
+
+        verify(observeEntityDao).findFirstByWorkspaceIdAndId("team-a", 502L);
+        verify(observeEntityDao, org.mockito.Mockito.never()).findById(502L);
     }
 
     @Test

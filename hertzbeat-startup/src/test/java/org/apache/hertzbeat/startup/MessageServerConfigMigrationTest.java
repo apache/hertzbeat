@@ -39,11 +39,8 @@ class MessageServerConfigMigrationTest {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE hzb_config (type VARCHAR(32) PRIMARY KEY)");
                 statement.execute("INSERT INTO hzb_config(type) VALUES ('email'), ('sms')");
-                for (String sql : migration("h2").split(";")) {
-                    if (!sql.isBlank()) {
-                        statement.execute(sql);
-                    }
-                }
+                executeMigration(statement, migration("h2"));
+                executeMigration(statement, migration("h2"));
                 try (ResultSet rows = statement.executeQuery(
                         "SELECT COUNT(*), COUNT(DISTINCT config_revision) FROM hzb_config")) {
                     assertTrue(rows.next());
@@ -80,10 +77,23 @@ class MessageServerConfigMigrationTest {
     }
 
     private String migration(String database) throws IOException {
-        String path = "/db/migration/" + database + "/V204__add_config_revision.sql";
+        String path = "/db/migration/" + database + "/V200__create_entity_foundation.sql";
         try (var input = getClass().getResourceAsStream(path)) {
             assertNotNull(input, path);
-            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            String baseline = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            int start = baseline.indexOf("ALTER TABLE hzb_config ADD COLUMN");
+            int end = baseline.indexOf("CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout", start);
+            assertTrue(start >= 0, database + " config revision start");
+            assertTrue(end > start, database + " config revision end");
+            return baseline.substring(start, end);
+        }
+    }
+
+    private void executeMigration(Statement statement, String migration) throws Exception {
+        for (String sql : migration.split(";")) {
+            if (!sql.isBlank()) {
+                statement.execute(sql);
+            }
         }
     }
 }

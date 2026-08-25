@@ -42,6 +42,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -70,6 +72,8 @@ class ApiTokenValidationFilterTest {
         filter = new ApiTokenValidationFilter(accountService);
         AuthTokenRequestContext.clear();
         lenient().when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn(null);
+        lenient().when(request.getParameter("workspaceId")).thenReturn(null);
+        lenient().when(request.getParameter("workspace_id")).thenReturn(null);
         lenient().when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn(null);
         lenient().when(principalMap.getPrincipal(
                 ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION)).thenReturn(null);
@@ -117,36 +121,68 @@ class ApiTokenValidationFilterTest {
     }
 
     @Test
-    void testUiSessionWorkspaceClaimBindsRequestContextWithoutManagedValidation() throws Exception {
+    void testUiSessionRejectsWorkspaceOverrideWithoutManagedValidation() throws Exception {
         SubjectSum subject = mockSubject();
         when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn("team-a");
         when(request.getParameter("workspaceId")).thenReturn("team-b");
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
-            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            org.junit.jupiter.api.Assertions.assertEquals("team-b", AuthTokenRequestContext.currentWorkspaceId());
-            org.junit.jupiter.api.Assertions.assertEquals(
-                    "team-a", AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(403);
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
             verify(accountService, never()).checkTokenStatus(any());
+        }
+    }
 
-            filter.afterCompletion(request, response, new Object(), null);
+    @Test
+    void testMissingSubjectWorkspaceRejectsRequestedWorkspace() throws Exception {
+        SubjectSum subject = mockSubject();
+        when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn("team-b");
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(403);
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentWorkspaceId());
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
         }
     }
 
     @Test
-    void testMissingSubjectWorkspaceDoesNotAuthenticateRequestedWorkspace() throws Exception {
+    void testUiSessionAllowsMatchingRequestedWorkspace() throws Exception {
         SubjectSum subject = mockSubject();
-        when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn("team-b");
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn("team-a");
+        when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn(" team-a ");
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            org.junit.jupiter.api.Assertions.assertEquals("team-b", AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertEquals("team-a", AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertEquals(
+                    "team-a", AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
+        }
+    }
+
+    @Test
+    void testUiSessionRejectsSnakeCaseWorkspaceOverride() throws Exception {
+        SubjectSum subject = mockSubject();
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn("team-a");
+        when(request.getParameter("workspace_id")).thenReturn("team-b");
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(403);
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentWorkspaceId());
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
         }
     }
@@ -157,7 +193,8 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), 7L)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
@@ -167,8 +204,33 @@ class ApiTokenValidationFilterTest {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN);
+            verify(accountService).checkTokenStatus(
+                    managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
             verify(accountService).checkManagedTokenAccess("admin", List.of("admin"), 7L);
+            verify(accountService).touchTokenLastUsedTime(managedToken);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "PUT"})
+    void monitorManageWritesRequireApiAdminScopeExactlyOnce(String method) throws Exception {
+        String managedToken = "managed-token";
+        when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
+        when(request.getMethod()).thenReturn(method);
+        when(request.getRequestURI()).thenReturn("/api/monitors/manage");
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
+        doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
+        SubjectSum subject = mockManagedSubjectWithClaims();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            verify(accountService).checkTokenStatus(
+                    managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
+            verify(accountService).checkManagedTokenAccess("admin", List.of("admin"), null);
             verify(accountService).touchTokenLastUsedTime(managedToken);
         }
     }
@@ -179,7 +241,8 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getMethod()).thenReturn("GET");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.READONLY_QUERY)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.READONLY_QUERY, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
@@ -188,7 +251,8 @@ class ApiTokenValidationFilterTest {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.READONLY_QUERY);
+            verify(accountService).checkTokenStatus(
+                    managedToken, AuthTokenScopes.READONLY_QUERY, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
         }
     }
 
@@ -197,7 +261,8 @@ class ApiTokenValidationFilterTest {
         String managedToken = "managed-token";
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getRequestURI()).thenReturn("/api/otlp/v1/metrics");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.OTLP_INGEST, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
@@ -206,7 +271,8 @@ class ApiTokenValidationFilterTest {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST);
+            verify(accountService).checkTokenStatus(
+                    managedToken, AuthTokenScopes.OTLP_INGEST, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentCollectorId());
         }
     }
@@ -216,7 +282,8 @@ class ApiTokenValidationFilterTest {
         String managedToken = "collector-token";
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getRequestURI()).thenReturn("/api/otlp/v1/metrics");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.OTLP_INGEST, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         SubjectSum subject = mockManagedSubjectWithClaims();
         when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))
@@ -241,7 +308,8 @@ class ApiTokenValidationFilterTest {
         String managedToken = "collector-token";
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getRequestURI()).thenReturn("/api/otlp/v1/traces");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.OTLP_INGEST, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
         SubjectSum subject = mockManagedSubjectWithClaims();
@@ -260,27 +328,26 @@ class ApiTokenValidationFilterTest {
     }
 
     @Test
-    void testManagedTokenWorkspaceHeaderRequiresWorkspaceBoundary() throws Exception {
+    void testManagedTokenWorkspaceOverrideRejectedAfterTokenBoundaryValidation() throws Exception {
         String managedToken = "managed-token";
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn("prod-west");
         when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn("team-a");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "prod-west")).thenReturn(null);
+        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "team-a")).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
-        doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
         SubjectSum subject = mockManagedSubjectWithClaims();
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
-            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "prod-west");
-            org.junit.jupiter.api.Assertions.assertEquals("prod-west", AuthTokenRequestContext.currentWorkspaceId());
-            org.junit.jupiter.api.Assertions.assertEquals(
-                    "team-a", AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
-            filter.afterCompletion(request, response, new Object(), null);
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "team-a");
+            verify(accountService).checkManagedTokenAccess("admin", List.of("admin"), null);
+            verify(accountService, never()).touchTokenLastUsedTime(managedToken);
+            verify(response).setStatus(403);
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentWorkspaceId());
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
         }
@@ -292,7 +359,9 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + revokedToken);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(revokedToken, AuthTokenScopes.API_ADMIN)).thenReturn("Token has been revoked");
+        when(accountService.checkTokenStatus(
+                revokedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID))
+                .thenReturn("Token has been revoked");
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -312,7 +381,9 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer managed-token");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus("managed-token", AuthTokenScopes.API_ADMIN)).thenThrow(new RuntimeException("DB down"));
+        when(accountService.checkTokenStatus(
+                "managed-token", AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID))
+                .thenThrow(new RuntimeException("DB down"));
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -334,7 +405,8 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null))
                 .thenReturn("Token permissions are outdated");
 
@@ -370,7 +442,8 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         // touchTokenLastUsedTime throws exception
         org.mockito.Mockito.doThrow(new RuntimeException("DB error"))
@@ -400,7 +473,8 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
-        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
+        when(accountService.checkTokenStatus(
+                managedToken, AuthTokenScopes.API_ADMIN, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
         when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null))
                 .thenThrow(new RuntimeException("account store unavailable"));
 

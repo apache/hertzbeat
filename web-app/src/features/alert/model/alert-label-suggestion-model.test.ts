@@ -14,11 +14,15 @@ describe('alert label suggestions', () => {
     expect(
       buildAlertLabelSuggestionState({
         keys: ['service', ' environment ', '', 'region', 'environment'],
-        valuesByKey: {}
+        valuesByKey: { service: [], environment: ['production'], region: [] }
       })
     ).toEqual({
       kind: 'received',
-      keys: ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env', 'environment', 'region']
+      keys: ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env', 'environment', 'region'],
+      catalog: {
+        keys: ['service', 'environment', 'region'],
+        valuesByKey: { service: [], environment: ['production'], region: [] }
+      }
     });
   });
 

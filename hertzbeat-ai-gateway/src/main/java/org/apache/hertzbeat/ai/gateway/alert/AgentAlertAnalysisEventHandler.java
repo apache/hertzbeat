@@ -63,7 +63,7 @@ public class AgentAlertAnalysisEventHandler {
 
     private final AlertAnalysisPolicyService policyService;
     private final GatewayCommandRouter commandRouter;
-    private final Map<String, AnalysisWindow> windows = new ConcurrentHashMap<>();
+    private final Map<AnalysisWindowKey, AnalysisWindow> windows = new ConcurrentHashMap<>();
     private final ExecutorService executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(256), Thread.ofPlatform().name("agent-alert-analysis-", 0).factory(),
             new ThreadPoolExecutor.AbortPolicy());
@@ -80,6 +80,9 @@ public class AgentAlertAnalysisEventHandler {
         if (alert == null || !CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) {
             return;
         }
+        if (alert.getId() == null || alert.getWorkspaceId() == null || alert.getWorkspaceId().isBlank()) {
+            return;
+        }
         try {
             executor.execute(() -> process(alert.clone()));
         } catch (RuntimeException exception) {
@@ -88,8 +91,8 @@ public class AgentAlertAnalysisEventHandler {
     }
 
     private void process(SingleAlert alert) {
-        for (AlertAnalysisPolicy policy : policyService.findEnabled()) {
-            if (matches(policy, alert)) {
+        for (AlertAnalysisPolicy policy : policyService.findEnabled(alert.getWorkspaceId())) {
+            if (alert.getWorkspaceId().equals(policy.getWorkspaceId()) && matches(policy, alert)) {
                 accept(policy, alert);
             }
         }
@@ -101,7 +104,7 @@ public class AgentAlertAnalysisEventHandler {
             return;
         }
         long now = System.currentTimeMillis();
-        String windowKey = policy.getId() + ":" + group;
+        AnalysisWindowKey windowKey = new AnalysisWindowKey(alert.getWorkspaceId(), policy.getId(), group);
         AnalysisTrigger trigger;
         synchronized (windows.computeIfAbsent(windowKey, ignored -> new AnalysisWindow(now))) {
             AnalysisWindow window = windows.get(windowKey);
@@ -114,7 +117,7 @@ public class AgentAlertAnalysisEventHandler {
                 return;
             }
             window.lastTriggeredAt = now;
-            trigger = new AnalysisTrigger(policy, group, window.firstSeenAt,
+            trigger = new AnalysisTrigger(alert.getWorkspaceId(), policy, group, window.firstSeenAt,
                     List.copyOf(window.alerts.values()), alert);
             window.alerts.clear();
             window.firstSeenAt = now;
@@ -123,8 +126,8 @@ public class AgentAlertAnalysisEventHandler {
     }
 
     private void invoke(AnalysisTrigger trigger) {
-        String contextHash = GatewayText.sha256(trigger.policy().getId() + ":" + trigger.groupKey()
-                + ":" + trigger.firstSeenAt());
+        String contextHash = GatewayText.sha256(trigger.workspaceId() + ":" + trigger.policy().getId()
+                + ":" + trigger.groupKey() + ":" + trigger.firstSeenAt());
         String conversationId = "alert-analysis:" + contextHash;
         String commandId = "alert_" + GatewayText.sha256(conversationId + ":"
                 + alertKey(trigger.triggerAlert())).substring(0, 32);
@@ -154,6 +157,7 @@ public class AgentAlertAnalysisEventHandler {
                         .receivedAt(now)
                         .actor(AgentActor.alertAnalysisActor())
                         .preferredLanguage(AgentResponseLanguage.systemDefault())
+                        .workspaceId(trigger.workspaceId())
                         .build())
                 .replyMode(ReplyMode.FINAL_ONLY)
                 .commandId(commandId)
@@ -241,7 +245,10 @@ public class AgentAlertAnalysisEventHandler {
         }
     }
 
-    private record AnalysisTrigger(AlertAnalysisPolicy policy, String groupKey, long firstSeenAt,
+    private record AnalysisWindowKey(String workspaceId, Long policyId, String groupKey) {
+    }
+
+    private record AnalysisTrigger(String workspaceId, AlertAnalysisPolicy policy, String groupKey, long firstSeenAt,
                                    List<SingleAlert> alerts, SingleAlert triggerAlert) {
     }
 }

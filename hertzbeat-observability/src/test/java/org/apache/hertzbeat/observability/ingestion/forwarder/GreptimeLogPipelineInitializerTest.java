@@ -119,6 +119,14 @@ class GreptimeLogPipelineInitializerTest {
     }
 
     @Test
+    void fallsBackToObservedTimestampWhenAnOtelLogHasNoEventTimestamp() throws Exception {
+        String pipeline = bundledPipeline();
+
+        assertTrue(pipeline.contains(
+                ".timestamp = if (to_int(.Timestamp) ?? 0) > 0 { .Timestamp } else { .ObservedTimestamp }"));
+    }
+
+    @Test
     void trimsAndNormalizesGreptimeEndpointBeforeQueryingAndUploadingPipeline() {
         configureGreptimeProperties(true, "  http://greptime:4000///  ");
         when(restTemplate.exchange(

@@ -163,9 +163,8 @@
 }
 
 .statePanel {
-  --state-accent: var(--hb-status-unknown);
   display: grid;
-  grid-template-columns: 3px minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   gap: var(--hb-space-3);
   min-height: 76px;
@@ -174,24 +173,12 @@
   background: var(--hb-bg-raised);
 }
 
-.statePanel::before {
-  align-self: stretch;
-  background: var(--state-accent);
-  content: '';
-}
-
-.statePanel[data-state='loading'] {
-  --state-accent: var(--hb-status-loading);
-}
-
-.statePanel[data-state='unsupported'],
-.statePanel[data-state='unavailable'],
-.statePanel[data-state='permission'] {
-  --state-accent: var(--hb-status-degraded);
-}
-
-.statePanel[data-state='error'] {
-  --state-accent: var(--hb-status-unavailable);
+.statePanel[data-presentation='quiet'] {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  min-height: 52px;
+  padding: var(--hb-space-3) 0;
+  border: 0;
+  background: transparent;
 }
 
 .stateCopy {
@@ -215,9 +202,5 @@
   .actions,
   .commandSecondary {
     justify-content: flex-start;
-  }
-
-  .statePanel::before {
-    display: none;
   }
 }

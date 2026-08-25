@@ -143,6 +143,31 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
         migrationCompletionApplied = exactMigration && normalRuntimeSelected;
     }
 
+    @Override
+    public synchronized void factoryResetRequested() {
+        if (closed || currentContext == null || currentContext.mode() != RuntimeMode.NORMAL) {
+            return;
+        }
+        convergenceConfirmed = false;
+        normalRuntimeSelected = false;
+        transitionInternal(new StartupPlan(
+                new StartupDecision(RuntimeMode.FULL_SETUP_GATED), true,
+                StartupLaunchAdmission.Mode.ORDINARY));
+    }
+
+    @Override
+    public synchronized void factoryResetCompleted() {
+        if (closed || currentContext == null
+                || currentContext.mode() != RuntimeMode.FULL_SETUP_GATED) {
+            return;
+        }
+        convergenceConfirmed = false;
+        normalRuntimeSelected = false;
+        transitionInternal(new StartupPlan(
+                new StartupDecision(RuntimeMode.SETUP_ONLY), true,
+                StartupLaunchAdmission.Mode.ORDINARY));
+    }
+
     public synchronized RunningApplicationContext transition(StartupDecision decision) {
         if (closed) {
             throw StandaloneDeploymentOwnerException.unavailable();

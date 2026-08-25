@@ -30,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -55,8 +56,9 @@ public class HuaweiCloudExternAlertServiceTest {
     @Test
     void testAddExternAlertWithInvalidContent() {
         String invalidContent = "invalid json";
-        externAlertService.addExternAlert(invalidContent);
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", invalidContent));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -66,8 +68,9 @@ public class HuaweiCloudExternAlertServiceTest {
         externAlert.setType("failedType");
         externAlert.setMessage("failedMessage");
         externAlert.setTimestamp("2025-06-07T15:12:09Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert)));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -87,8 +90,9 @@ public class HuaweiCloudExternAlertServiceTest {
         externAlert.setMessage("{}");
         externAlert.setSigningCertUrl("https://smn.cn-north-4.myhuaweicloud.com/failedUrl");
         externAlert.setTimestamp("2025-06-07T15:12:09Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert)));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -116,12 +120,12 @@ public class HuaweiCloudExternAlertServiceTest {
                 + "\"ComparisonOperator\":\"\\u003e\",\"Value\":\"5 count\",\"Unit\":\"count\",\"Count\":2}}");
         externAlert.setSigningCertUrl("https://smn.cn-north-4.myhuaweicloud.com/smn/SMN_cn-north-4_b98100ca131b4116ab8ee7ccedbaae99.pem");
         externAlert.setTimestamp("2025-06-02T14:56:17Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
-    void testSubscriptionUrl() {
+    void rejectsFailedSubscriptionConfirmation() {
         HuaweiCloudExternAlert externAlert = new HuaweiCloudExternAlert();
         externAlert.setSubscribeUrl("https://console.huaweicloud.com/smn/subscription/confirm?token=477a784601d744e4ab9ab83986502d31c4b938"
                 + "0ec0b64392b134e517c3aa17eb7b3a12dc9f3b4ab495e61c4dee654b435d7223ea934345bf8ae8901cef912b1d&topic_urn=urn:smn:cn-north-4"
@@ -136,12 +140,18 @@ public class HuaweiCloudExternAlertServiceTest {
                 + "CES_notification_group_bngJ2aMpX. To confirm this subscription, please visit the subscribe_url included in this message. The subscribe_url is valid only within 48 hours.");
         externAlert.setSigningCertUrl("https://smn.cn-north-4.myhuaweicloud.com/smn/SMN_cn-north-4_b98100ca131b4116ab8ee7ccedbaae99.pem");
         externAlert.setTimestamp("2025-06-07T15:07:14Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert)));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
-    void testUnsubscribe() {
+    void rejectsBlankSubscriptionConfirmationUrl() {
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.autoSubscribeForUrl(" "));
+    }
+
+    @Test
+    void rejectsInvalidUnsubscribeSignature() {
         HuaweiCloudExternAlert externAlert = new HuaweiCloudExternAlert();
         externAlert.setSignature("TImrLoeb0tV1JZJSPyA0rpC9mNqH3MmhwQ4tgpuHHa+JztfGVZFvkU//OthKKhzpDAoYiXOYG9DbzXCLbvaGePIRITakoynYyYr9zZIpdx9jXhQNlgF8np"
                 + "1+t0JxNeoIq0DYWgH52tsodwqOm+OnmkcHwCRo/1rFv85KrKAaX2gy3sNwXw1hKnAwAw0mJlxHHSf/N3+7j6GoxCNV7fN9K4CpJiLMGNvUa7zVmG0U9mPvt/7Lac155kPPQ9l"
@@ -156,8 +166,9 @@ public class HuaweiCloudExternAlertServiceTest {
         externAlert.setMessage("{}");
         externAlert.setSigningCertUrl("https://smn.cn-north-4.myhuaweicloud.com/smn/SMN_cn-north-4_b98100ca131b4116ab8ee7ccedbaae99.pem");
         externAlert.setTimestamp("2025-06-07T15:12:09Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert)));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -176,8 +187,9 @@ public class HuaweiCloudExternAlertServiceTest {
                 + "CES_notification_group_bngJ2aMpX. To confirm this subscription, please visit the subscribe_url included in this message. The subscribe_url is valid only within 48 hours.");
         externAlert.setSigningCertUrl("https://xxxx.myhuaweicloud.com/smn/SMN_cn-north-4_b98100ca131b4116ab8ee7ccedbaae99.pem");
         externAlert.setTimestamp("2025-06-07T15:07:14Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert)));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -194,8 +206,9 @@ public class HuaweiCloudExternAlertServiceTest {
         externAlert.setMessage("{}");
         externAlert.setSigningCertUrl("https://xxx.myhuaweicloud.com/failedUrl");
         externAlert.setTimestamp("2025-06-07T15:12:09Z");
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert)));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
 }

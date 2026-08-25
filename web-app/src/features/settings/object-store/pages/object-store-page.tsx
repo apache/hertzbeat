@@ -65,7 +65,6 @@ function ObjectStoreReadyContent({ controller }: { controller: ObjectStoreContro
   if (state.kind !== 'ready') return null;
   return (
     <>
-      {state.unconfigured && <OperationalStatePanel kind="empty" title={t('objectStore.missing')} />}
       {!controller.canWrite && <OperationalStatePanel kind="permission" title={t('objectStore.readOnly')} />}
       {state.recovery && (
         <OperationalStatePanel
@@ -89,6 +88,7 @@ function ObjectStoreReadyContent({ controller }: { controller: ObjectStoreContro
         showValidation={state.showValidation}
         saving={state.saving}
         canWrite={controller.canWrite}
+        unconfigured={state.unconfigured}
         onUpdate={controller.updateDraft}
         onSubmit={controller.submit}
         onDiscard={controller.discard}

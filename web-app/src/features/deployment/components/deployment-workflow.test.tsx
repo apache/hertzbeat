@@ -16,6 +16,13 @@ describe('DeploymentWorkflow', () => {
 
   afterEach(cleanup);
 
+  it('renders the focused management-database migration workflow without repeating the deployment summary', () => {
+    renderWorkflow();
+
+    expect(screen.queryByRole('heading', { name: 'Current deployment' })).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('jdbc:mysql://db/hb')).toBeInTheDocument();
+  });
+
   it('shows unavailable maintenance admission as a blocker without a fake switch', () => {
     renderWorkflow({
       maintenanceMode: 'inactive',
@@ -26,8 +33,7 @@ describe('DeploymentWorkflow', () => {
         activeOperationId: null
       }
     });
-
-    expect(screen.getAllByText('Maintenance mode is inactive')).toHaveLength(2);
+    expect(screen.getByText('Maintenance mode is inactive')).toBeInTheDocument();
     expect(screen.getByText(/automatic maintenance admission is unavailable/i)).toBeInTheDocument();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Start migration' })).toBeDisabled();
@@ -41,7 +47,6 @@ describe('DeploymentWorkflow', () => {
         migration: { allowed: true, blockedBy: null, maintenanceAdmission: 'auto_enter', activeOperationId: null }
       }
     });
-
     expect(
       screen.getByRole('checkbox', { name: /starting migration will automatically enter maintenance mode/i })
     ).toBeInTheDocument();
@@ -75,7 +80,6 @@ describe('DeploymentWorkflow', () => {
       setMaintenanceAcknowledged,
       start
     });
-
     expect(screen.getByRole('button', { name: 'Start migration' })).toBeDisabled();
     fireEvent.click(screen.getByRole('checkbox', { name: /I understand monitoring writes must remain paused/i }));
     expect(setMaintenanceAcknowledged).toHaveBeenCalledWith(true);
@@ -105,7 +109,6 @@ describe('DeploymentWorkflow', () => {
     renderWorkflow({
       validation: { valid: true, observedAt: '2026-08-09T01:00:00Z', errorCode: null, warnings: [warning] }
     });
-
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 

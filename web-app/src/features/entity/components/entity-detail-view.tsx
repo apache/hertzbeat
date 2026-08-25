@@ -15,6 +15,7 @@ import { entityExploreSignals, type EntityExploreSignal } from '../model/entity-
 import type { EntityMonitorQuery, EntityNextActionType } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
 import { EntityDetailMetadata } from './entity-detail-metadata';
+import { DegradedEntityDetail } from './entity-detail-degraded';
 import { EntityEvidenceLists } from './entity-evidence-lists';
 import { EntityNoiseControlEvidence } from './entity-noise-control-evidence';
 import { EntityOperationalGuidance } from './entity-operational-guidance';
@@ -51,6 +52,9 @@ export function EntityDetailView({
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
+  if (evidence.kind === 'degraded') {
+    return <DegradedEntityDetail entity={evidence.entity} state={state} actions={actions} />;
+  }
   if (evidence.kind !== 'ready') {
     const stateCopy = {
       loading: { kind: 'loading', title: t('entity.loading') },

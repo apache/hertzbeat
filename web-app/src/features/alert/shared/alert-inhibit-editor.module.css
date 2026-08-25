@@ -1,0 +1,128 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.form {
+  display: grid;
+  gap: 20px;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 12fr) minmax(0, 5fr);
+  align-items: start;
+  column-gap: 0;
+}
+
+.fieldLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 12px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.requiredMark,
+.fieldError {
+  color: var(--ant-color-error);
+}
+
+.fieldControl {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.fieldControl > :global(.ant-select) {
+  width: 100%;
+}
+
+.logicPreview {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 17fr);
+  align-items: start;
+  padding-inline-end: 12px;
+}
+
+.logicPreviewTitle {
+  padding: 2px 12px 0 0;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.logicSteps {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  border-inline-start: 2px solid var(--ant-color-primary-border-hover);
+  padding: 0 0 0 30px;
+  overflow-wrap: anywhere;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.logicSteps li::marker {
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}
+
+.logicStepLabel {
+  margin-inline-end: 6px;
+  color: var(--ant-color-text);
+  font-weight: 600;
+}
+
+.fieldError {
+  font-size: 12px;
+}
+
+.modal :global(.ant-modal-footer) {
+  margin: 24px -24px -20px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+@media (max-width: 800px) {
+  .modal :global(.ant-modal) {
+    width: calc(100vw - 32px) !important;
+  }
+
+  .form {
+    gap: 16px;
+  }
+
+  .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .fieldLabel {
+    justify-content: flex-start;
+    padding-inline-end: 0;
+    text-align: left;
+  }
+
+  .logicPreview {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-inline-end: 0;
+  }
+
+  .logicPreviewTitle {
+    padding: 0;
+    text-align: left;
+  }
+
+  .fieldRow > :last-child {
+    display: none;
+  }
+}

@@ -6,9 +6,9 @@
  */
 
 import type { AlertRuleDraft } from './alert-rule-draft';
-import { serializeCompleteMetricAlertCondition, type MetricAlertField } from './alert-rule-condition';
+import { serializeMetricAlertConditionAuthoring, type MetricAlertField } from './alert-rule-condition';
 import {
-  buildRealtimeMetricExpression,
+  buildRealtimeMetricAuthoringExpression,
   normalizeRealtimeMetricBindings,
   type RealtimeMetricBindings
 } from './alert-rule-metric-expression';
@@ -39,14 +39,14 @@ export function buildMetricAlertBindingsPatch(
 
 function bindingExpression(editor: TargetedMetricEditor, fields: MetricAlertField[]) {
   if (!editor.target) throw contract('metric alert target is missing');
-  if (editor.target.kind === 'availability') return composeExpression(editor, '');
+  if (editor.target.kind === 'availability') return composeAuthoringExpression(editor, '');
   const threshold = bindingThreshold(editor, fields);
-  return threshold === null ? '' : composeExpression(editor, threshold);
+  return composeAuthoringExpression(editor, threshold ?? '');
 }
 
-function composeExpression(editor: TargetedMetricEditor, condition: string) {
+function composeAuthoringExpression(editor: TargetedMetricEditor, condition: string) {
   if (!editor.target) throw contract('metric alert target is missing');
-  return buildRealtimeMetricExpression({
+  return buildRealtimeMetricAuthoringExpression({
     target: editor.target,
     monitorIds: editor.monitorIds,
     monitorLabels: editor.monitorLabels,
@@ -70,7 +70,7 @@ function bindingThreshold(editor: TargetedMetricEditor, fields: MetricAlertField
     const threshold = editor.authoring.condition.trim();
     return threshold || null;
   }
-  return serializeCompleteMetricAlertCondition(editor.authoring.condition, fields);
+  return serializeMetricAlertConditionAuthoring(editor.authoring.condition, fields) || null;
 }
 
 function sameBindings(editor: TargetedMetricEditor, bindings: RealtimeMetricBindings) {

@@ -32,7 +32,7 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 
 class IdentityMigrationResourceTest {
-    private static final String MIGRATION = "V205__add_identity_and_installation.sql";
+    private static final String MIGRATION = "V200__create_entity_foundation.sql";
     private static final List<String> REQUIRED_SCHEMA = List.of(
             "username VARCHAR(64) NOT NULL",
             "password_hash VARCHAR(100) NOT NULL",
@@ -50,6 +50,7 @@ class IdentityMigrationResourceTest {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:identity-migration;DB_CLOSE_DELAY=-1");
         try (Connection connection = dataSource.getConnection()) {
+            executeMigration(connection, migration("h2"));
             executeMigration(connection, migration("h2"));
             try (Statement statement = connection.createStatement()) {
                 statement.executeUpdate(accountInsert("owner", 1));
@@ -97,7 +98,13 @@ class IdentityMigrationResourceTest {
             if (stream == null) {
                 throw new IOException("Migration resource is missing: " + resource);
             }
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            String baseline = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            int start = baseline.indexOf("CREATE TABLE IF NOT EXISTS hzb_account");
+            int end = baseline.indexOf("ALTER TABLE hzb_sop_schedule", start);
+            if (start < 0) {
+                throw new IOException("Identity schema is missing from migration: " + resource);
+            }
+            return baseline.substring(start, end < 0 ? baseline.length() : end);
         }
     }
 }

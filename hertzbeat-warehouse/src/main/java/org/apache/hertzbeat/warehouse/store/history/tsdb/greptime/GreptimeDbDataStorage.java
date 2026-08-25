@@ -66,16 +66,19 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
+import org.apache.hertzbeat.warehouse.db.GreptimeQueryGuard;
+import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
-import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -121,18 +124,22 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private final RestTemplate restTemplate;
 
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
-
+    private final GreptimeQueryGuard queryGuard;
     private final GreptimeServerAvailabilityProbe serverAvailabilityProbe;
 
     @Autowired
-    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
-                                 GreptimeSqlQueryExecutor greptimeSqlQueryExecutor) {
-        this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor,
+    public GreptimeDbDataStorage(
+            GreptimeProperties greptimeProperties,
+            @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE) RestTemplate restTemplate,
+            GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+            GreptimeQueryGuard queryGuard) {
+        this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard,
                 createServerAvailabilityProbe(greptimeProperties));
     }
 
     GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
                           GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+                          GreptimeQueryGuard queryGuard,
                           GreptimeServerAvailabilityProbe serverAvailabilityProbe) {
         if (greptimeProperties == null) {
             log.error("init error, please config Warehouse GreptimeDB props in application.yml");
@@ -141,6 +148,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         this.restTemplate = restTemplate;
         this.greptimeProperties = greptimeProperties;
         this.greptimeSqlQueryExecutor = greptimeSqlQueryExecutor;
+        this.queryGuard = Objects.requireNonNull(queryGuard);
         this.serverAvailabilityProbe = Objects.requireNonNull(serverAvailabilityProbe);
         serverAvailable = initGreptimeDbClient(greptimeProperties);
         if (serverAvailable) {
@@ -219,8 +227,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValues().isEmpty()) {
-            log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
+        if (metricsData.rowCount() == 0) {
+            log.info("[warehouse greptime] metrics data {} {} is empty, ignore.",
+                    metricsData.getId(), metricsData.getMetrics());
             return;
         }
         String instance = metricsData.getInstance();
@@ -486,8 +495,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
             ResponseEntity<PromQlQueryContent> responseEntity = null;
             if (uri != null) {
-                responseEntity = restTemplate.exchange(uri,
-                        HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                responseEntity = queryGuard.execute(() -> restTemplate.exchange(uri,
+                        HttpMethod.GET, httpEntity, PromQlQueryContent.class));
             }
             if (responseEntity != null && responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from greptime success. {}", uri);
@@ -576,8 +585,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         HttpEntity<Void> httpEntity = getHttpEntity();
-        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
-                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+        ResponseEntity<PromQlQueryContent> responseEntity = queryGuard.execute(() -> restTemplate.exchange(uri,
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class));
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             log.error("query interval metrics data from greptime failed. {}", responseEntity);
             return;
@@ -704,9 +713,14 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             sql.append(" ORDER BY timestamp DESC");
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             return mapRowsToLogEntries(rows);
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
             return List.of();
         }
@@ -805,9 +819,14 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             return mapRowsToLogEntries(rows);
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] queryLogsByMultipleConditionsWithPagination error: {}", e.getMessage(), e);
             return List.of();
         }
@@ -889,7 +908,14 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     searchContent, excludedServiceNames, requireServiceName, workspaceId,
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
+            requireScopedAggregateRow(workspaceId, rows);
+            if (StringUtils.hasText(workspaceId)) {
+                Map<String, Object> row = rows.get(0);
+                return requireConvertibleLong(row, "count", false);
+            }
             if (rows != null && !rows.isEmpty()) {
                 Object countObj = rows.get(0).get("count");
                 if (countObj instanceof Number) {
@@ -898,6 +924,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             }
             return 0;
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] countLogsByMultipleConditions error: {}", e.getMessage(), e);
             return 0;
         }
@@ -959,26 +988,44 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .append("SUM(CASE WHEN severity_number >= 13 AND severity_number <= 16 THEN 1 ELSE 0 END) as warnCount, ")
                     .append("SUM(CASE WHEN severity_number >= 9 AND severity_number <= 12 THEN 1 ELSE 0 END) as infoCount, ")
                     .append("SUM(CASE WHEN severity_number >= 5 AND severity_number <= 8 THEN 1 ELSE 0 END) as debugCount, ")
-                    .append("SUM(CASE WHEN severity_number >= 1 AND severity_number <= 4 THEN 1 ELSE 0 END) as traceCount ")
+                    .append("SUM(CASE WHEN severity_number >= 1 AND severity_number <= 4 THEN 1 ELSE 0 END) as traceCount, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' THEN 1 ELSE 0 END) as withTrace, ")
+                    .append("SUM(CASE WHEN span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withSpan, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' ")
+                    .append("AND span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withBothTraceAndSpan ")
                     .append("FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
                     searchContent, excludedServiceNames, requireServiceName, workspaceId,
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
+                requireScopedAggregateRow(workspaceId, rows);
                 return Map.of();
             }
+            requireScopedAggregateRow(workspaceId, rows);
             Map<String, Object> row = rows.get(0);
             Map<String, Long> result = new HashMap<>();
-            putLong(result, "totalCount", columnValue(row, "totalCount"));
-            putLong(result, "fatalCount", columnValue(row, "fatalCount"));
-            putLong(result, "errorCount", columnValue(row, "errorCount"));
-            putLong(result, "warnCount", columnValue(row, "warnCount"));
-            putLong(result, "infoCount", columnValue(row, "infoCount"));
-            putLong(result, "debugCount", columnValue(row, "debugCount"));
-            putLong(result, "traceCount", columnValue(row, "traceCount"));
+            result.put("totalCount", aggregateLong(workspaceId, row, "totalCount", false));
+            result.put("fatalCount", aggregateLong(workspaceId, row, "fatalCount", true));
+            result.put("errorCount", aggregateLong(workspaceId, row, "errorCount", true));
+            result.put("warnCount", aggregateLong(workspaceId, row, "warnCount", true));
+            result.put("infoCount", aggregateLong(workspaceId, row, "infoCount", true));
+            result.put("debugCount", aggregateLong(workspaceId, row, "debugCount", true));
+            result.put("traceCount", aggregateLong(workspaceId, row, "traceCount", true));
+            long totalCount = result.get("totalCount");
+            long withTrace = aggregateLong(workspaceId, row, "withTrace", true);
+            result.put("withTrace", withTrace);
+            result.put("withoutTrace", Math.max(totalCount - withTrace, 0));
+            result.put("withSpan", aggregateLong(workspaceId, row, "withSpan", true));
+            result.put("withBothTraceAndSpan",
+                    aggregateLong(workspaceId, row, "withBothTraceAndSpan", true));
             return result;
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] countLogsBySeverityBuckets error: {}", e.getMessage(), e);
             return Map.of();
         }
@@ -1043,20 +1090,28 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
                     searchContent, excludedServiceNames, requireServiceName, workspaceId,
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
+                requireScopedAggregateRow(workspaceId, rows);
                 return Map.of();
             }
+            requireScopedAggregateRow(workspaceId, rows);
             Map<String, Object> row = rows.get(0);
-            long totalCount = normalizeLong(columnValue(row, "totalCount"));
-            long withTrace = normalizeLong(columnValue(row, "withTrace"));
+            long totalCount = aggregateLong(workspaceId, row, "totalCount", false);
+            long withTrace = aggregateLong(workspaceId, row, "withTrace", true);
             Map<String, Long> result = new HashMap<>();
             result.put("withTrace", withTrace);
             result.put("withoutTrace", Math.max(totalCount - withTrace, 0));
-            result.put("withSpan", normalizeLong(columnValue(row, "withSpan")));
-            result.put("withBothTraceAndSpan", normalizeLong(columnValue(row, "withBothTraceAndSpan")));
+            result.put("withSpan", aggregateLong(workspaceId, row, "withSpan", true));
+            result.put("withBothTraceAndSpan",
+                    aggregateLong(workspaceId, row, "withBothTraceAndSpan", true));
             return result;
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] countLogTraceCoverage error: {}", e.getMessage(), e);
             return Map.of();
         }
@@ -1117,19 +1172,25 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     searchContent, excludedServiceNames, requireServiceName, workspaceId,
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             sql.append(" GROUP BY hour ORDER BY hour ASC");
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
                 return Map.of();
             }
             Map<String, Long> result = new HashMap<>();
             for (Map<String, Object> row : rows) {
-                String hour = formatHourBucket(row.get("hour"));
+                validateScopedGroupedRow(workspaceId, row, "hour");
+                String hour = formatHourBucket(columnValue(row, "hour"));
                 if (StringUtils.hasText(hour)) {
-                    result.put(hour, normalizeLong(row.get("count")));
+                    result.put(hour, aggregateLong(workspaceId, row, "count", false));
                 }
             }
             return result;
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] countLogsByHour error: {}", e.getMessage(), e);
             return Map.of();
         }
@@ -1162,20 +1223,26 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     searchContent, excludedServiceNames, requireServiceName, workspaceId,
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             sql.append(" GROUP BY groupValue ORDER BY count DESC LIMIT 20");
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
                 return Map.of();
             }
             Map<String, Long> result = new java.util.LinkedHashMap<>();
             for (Map<String, Object> row : rows) {
+                validateScopedGroupedRow(workspaceId, row, "groupValue");
                 String value = String.valueOf(columnValue(row, "groupValue"));
                 if (!StringUtils.hasText(value) || "null".equalsIgnoreCase(value)) {
                     value = "unknown";
                 }
-                result.put(value, normalizeLong(columnValue(row, "count")));
+                result.put(value, aggregateLong(workspaceId, row, "count", false));
             }
             return result;
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] countLogsByGroup error: {}", e.getMessage(), e);
             return Map.of();
         }
@@ -1183,10 +1250,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private static long msToNs(Long ms) {
         return ms * 1_000_000L;
-    }
-
-    private static void putLong(Map<String, Long> target, String key, Object value) {
-        target.put(key, normalizeLong(value));
     }
 
     private static Object columnValue(Map<String, Object> row, String key) {
@@ -1206,6 +1269,67 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             }
         }
         return null;
+    }
+
+    private static void requireScopedAggregateRow(String workspaceId, List<Map<String, Object>> rows) {
+        if (StringUtils.hasText(workspaceId) && (rows == null || rows.size() != 1)) {
+            throw new IllegalStateException("Scoped aggregate returned an invalid row count");
+        }
+    }
+
+    private static void validateScopedGroupedRow(
+            String workspaceId, Map<String, Object> row, String groupAlias) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return;
+        }
+        if (!hasColumn(row, groupAlias) || columnValue(row, groupAlias) == null) {
+            throw new IllegalStateException("Scoped aggregate returned a missing group alias");
+        }
+        requireConvertibleLong(row, "count", false);
+    }
+
+    private static long aggregateLong(
+            String workspaceId, Map<String, Object> row, String alias, boolean nullable) {
+        return StringUtils.hasText(workspaceId)
+                ? requireConvertibleLong(row, alias, nullable)
+                : normalizeLong(columnValue(row, alias));
+    }
+
+    private static long requireConvertibleLong(Map<String, Object> row, String alias, boolean nullable) {
+        if (!hasColumn(row, alias)) {
+            throw new IllegalStateException("Scoped aggregate returned a missing count alias");
+        }
+        Object value = columnValue(row, alias);
+        if (value == null && nullable) {
+            return 0L;
+        }
+        Long parsed = parseNonnegativeExactLong(value);
+        if (parsed == null) {
+            throw new IllegalStateException("Scoped aggregate returned an invalid count");
+        }
+        return parsed;
+    }
+
+    private static Long parseNonnegativeExactLong(Object value) {
+        if (!(value instanceof Number) && !(value instanceof CharSequence)) {
+            return null;
+        }
+        String literal = String.valueOf(value).trim();
+        if (!StringUtils.hasText(literal)) {
+            return null;
+        }
+        try {
+            BigDecimal decimal = new BigDecimal(literal);
+            return decimal.signum() < 0 ? null : decimal.longValueExact();
+        } catch (ArithmeticException | NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static boolean hasColumn(Map<String, Object> row, String alias) {
+        return row != null && row.keySet().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(key -> key.equalsIgnoreCase(alias));
     }
 
     private static long normalizeLong(Object value) {
@@ -1536,16 +1660,31 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return null;
         }
         String normalizedWorkspaceId = safeString(workspaceId.trim());
-        String hertzbeatWorkspace = "json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]')";
-        String workspace = "json_get_string(resource_attributes, '$[\"workspace.id\"]')";
-        List<String> predicates = new ArrayList<>();
-        predicates.add(hertzbeatWorkspace + " = '" + normalizedWorkspaceId + "'");
-        predicates.add(workspace + " = '" + normalizedWorkspaceId + "'");
+        List<String> workspaceExpressions = List.of(
+                workspaceJsonExpression("hertzbeat.workspace_id"),
+                workspaceJsonExpression("hertzbeat_workspace_id"),
+                workspaceJsonExpression("workspace.id"),
+                workspaceJsonExpression("workspace_id"));
+        int lowestPriority = workspaceExpressions.size() - 1;
+        String condition = workspaceExpressions.get(lowestPriority) + " = '" + normalizedWorkspaceId + "'";
         if ("default".equals(normalizedWorkspaceId)) {
-            predicates.add("((" + hertzbeatWorkspace + " IS NULL OR " + hertzbeatWorkspace + " = '')"
-                    + " AND (" + workspace + " IS NULL OR " + workspace + " = ''))");
+            condition = "(" + condition + " OR " + missingWorkspaceExpression(
+                    workspaceExpressions.get(lowestPriority)) + ")";
         }
-        return "(" + String.join(" OR ", predicates) + ")";
+        for (int index = lowestPriority - 1; index >= 0; index--) {
+            String expression = workspaceExpressions.get(index);
+            condition = "(" + expression + " = '" + normalizedWorkspaceId + "' OR ("
+                    + missingWorkspaceExpression(expression) + " AND " + condition + "))";
+        }
+        return condition;
+    }
+
+    private String workspaceJsonExpression(String key) {
+        return "TRIM(json_get_string(resource_attributes, '$[\"" + key + "\"]'))";
+    }
+
+    private String missingWorkspaceExpression(String expression) {
+        return "(" + expression + " IS NULL OR " + expression + " = '')";
     }
 
     private List<LogEntry> mapRowsToLogEntries(List<Map<String, Object>> rows) {

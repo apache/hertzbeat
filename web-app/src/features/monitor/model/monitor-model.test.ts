@@ -150,6 +150,9 @@ describe('monitor list model', () => {
     );
     expect(safeMonitorReturnTo('/dashboard')).toBe('/dashboard');
     expect(safeMonitorReturnTo('/monitors?app=website')).toBe('/monitors?app=website');
+    expect(safeMonitorReturnTo('/alerts?status=firing&pageIndex=0&pageSize=8&password=private#selection')).toBe(
+      '/alerts?status=firing&pageIndex=0&pageSize=8'
+    );
     expect(safeMonitorReturnTo('/dashboard?token=private-token')).toBe('/monitors');
     expect(safeMonitorReturnTo('https://example.com')).toBe('/monitors');
     expect(safeMonitorReturnTo('/monitors-evil')).toBe('/monitors');

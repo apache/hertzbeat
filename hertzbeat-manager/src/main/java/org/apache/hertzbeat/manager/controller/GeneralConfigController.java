@@ -30,6 +30,8 @@ import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfig;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
@@ -38,6 +40,7 @@ import org.apache.hertzbeat.manager.service.ConfigService;
 import org.apache.hertzbeat.manager.service.MessageServerConfigConflictException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigRevisionRequiredException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigService;
+import org.apache.hertzbeat.manager.service.PublicAccessConfigService;
 import org.apache.hertzbeat.manager.service.SystemConfigService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +88,9 @@ public class GeneralConfigController {
     @Resource
     private SystemConfigService systemConfigService;
 
+    @Resource
+    private PublicAccessConfigService publicAccessConfigService;
+
     @PostMapping(path = "/system")
     @Operation(summary = "Save the system config")
     public ResponseEntity<Message<SystemConfig>> saveSystemConfig(@RequestBody SystemConfigRequest request) {
@@ -95,6 +101,19 @@ public class GeneralConfigController {
     @Operation(summary = "Get the system config")
     public ResponseEntity<Message<SystemConfig>> getSystemConfig() {
         return handleSystemConfig(systemConfigService::getConfig);
+    }
+
+    @PostMapping(path = "/public-access")
+    @Operation(summary = "Save the operator-advertised public access addresses")
+    public ResponseEntity<Message<PublicAccessConfig>> savePublicAccessConfig(
+            @RequestBody PublicAccessConfigRequest request) {
+        return handlePublicAccessConfig(() -> publicAccessConfigService.saveAndGetConfig(request));
+    }
+
+    @GetMapping(path = "/public-access")
+    @Operation(summary = "Get the operator-advertised public access addresses")
+    public ResponseEntity<Message<PublicAccessConfig>> getPublicAccessConfig() {
+        return handlePublicAccessConfig(publicAccessConfigService::getConfig);
     }
 
     @PostMapping(path = "/email")
@@ -205,6 +224,17 @@ public class GeneralConfigController {
         } catch (Exception exception) {
             log.error("System config error: {}", exception.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "System config error"));
+        }
+    }
+
+    private <T> ResponseEntity<Message<T>> handlePublicAccessConfig(Supplier<T> action) {
+        try {
+            return ResponseEntity.ok(Message.success(action.get()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid public access config"));
+        } catch (Exception exception) {
+            log.error("Public access config error: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Public access config unavailable"));
         }
     }
 }

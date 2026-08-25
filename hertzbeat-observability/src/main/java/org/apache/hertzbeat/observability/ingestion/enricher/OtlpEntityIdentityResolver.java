@@ -26,13 +26,15 @@ import io.opentelemetry.proto.logs.v1.ResourceLogs;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +57,11 @@ public class OtlpEntityIdentityResolver {
     private static final String GOVERNANCE_STATUS_NEEDS_GOVERNANCE = "needs_governance";
     private static final String GOVERNANCE_SUMMARY_IDENTITY_CONFLICT =
             "OTLP resource identity matched multiple entities";
+    private static final int LOOKUP_BATCH_SIZE = 512;
+    private static final Set<String> SERVER_OWNED_ENTITY_ATTRIBUTES = Set.of(
+            OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID,
+            OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE,
+            OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_NAME);
 
     private final List<ObservabilityWorkspaceQueryGateway> workspaceQueryGateways;
 
@@ -66,10 +73,14 @@ public class OtlpEntityIdentityResolver {
         if (request == null || request.getResourceMetricsCount() == 0) {
             return request;
         }
+        List<Resource> enrichedResources = enrichResources(request.getResourceMetricsList().stream()
+                .map(ResourceMetrics::getResource)
+                .toList(), workspaceId);
         ExportMetricsServiceRequest.Builder requestBuilder = request.toBuilder().clearResourceMetrics();
-        for (ResourceMetrics resourceMetrics : request.getResourceMetricsList()) {
+        for (int index = 0; index < request.getResourceMetricsCount(); index++) {
+            ResourceMetrics resourceMetrics = request.getResourceMetrics(index);
             requestBuilder.addResourceMetrics(resourceMetrics.toBuilder()
-                    .setResource(enrichResource(resourceMetrics.getResource(), workspaceId))
+                    .setResource(enrichedResources.get(index))
                     .build());
         }
         return requestBuilder.build();
@@ -79,10 +90,14 @@ public class OtlpEntityIdentityResolver {
         if (request == null || request.getResourceLogsCount() == 0) {
             return request;
         }
+        List<Resource> enrichedResources = enrichResources(request.getResourceLogsList().stream()
+                .map(ResourceLogs::getResource)
+                .toList(), workspaceId);
         ExportLogsServiceRequest.Builder requestBuilder = request.toBuilder().clearResourceLogs();
-        for (ResourceLogs resourceLogs : request.getResourceLogsList()) {
+        for (int index = 0; index < request.getResourceLogsCount(); index++) {
+            ResourceLogs resourceLogs = request.getResourceLogs(index);
             requestBuilder.addResourceLogs(resourceLogs.toBuilder()
-                    .setResource(enrichResource(resourceLogs.getResource(), workspaceId))
+                    .setResource(enrichedResources.get(index))
                     .build());
         }
         return requestBuilder.build();
@@ -92,20 +107,20 @@ public class OtlpEntityIdentityResolver {
         if (request == null || request.getResourceSpansCount() == 0) {
             return request;
         }
+        List<Resource> enrichedResources = enrichResources(request.getResourceSpansList().stream()
+                .map(ResourceSpans::getResource)
+                .toList(), workspaceId);
         ExportTraceServiceRequest.Builder requestBuilder = request.toBuilder().clearResourceSpans();
-        for (ResourceSpans resourceSpans : request.getResourceSpansList()) {
+        for (int index = 0; index < request.getResourceSpansCount(); index++) {
+            ResourceSpans resourceSpans = request.getResourceSpans(index);
             requestBuilder.addResourceSpans(resourceSpans.toBuilder()
-                    .setResource(enrichResource(resourceSpans.getResource(), workspaceId))
+                    .setResource(enrichedResources.get(index))
                     .build());
         }
         return requestBuilder.build();
     }
 
     public Optional<String> resolveEntityId(Map<String, String> resourceAttributes, String workspaceId) {
-        return resolveEntity(resourceAttributes, workspaceId).map(entity -> String.valueOf(entity.getId()));
-    }
-
-    private Optional<ObserveEntity> resolveEntity(Map<String, String> resourceAttributes, String workspaceId) {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = workspaceQueryGateway();
         String safeWorkspaceId = StringUtils.trimToNull(workspaceId);
         if (workspaceQueryGateway == null || safeWorkspaceId == null || resourceAttributes == null
@@ -113,41 +128,16 @@ public class OtlpEntityIdentityResolver {
             return Optional.empty();
         }
         Map<String, String> normalizedIdentities = normalizedCanonicalIdentities(resourceAttributes);
-        if (normalizedIdentities.isEmpty()) {
+        ResourceCandidate candidate = ResourceCandidate.fromAttributes(resourceAttributes,
+                normalizedIdentities, submittedEntityId(resourceAttributes));
+        if (!candidate.requiresResolution()) {
             return Optional.empty();
         }
         try {
-            List<EntityIdentity> matchedIdentities = nullToEmpty(
-                    workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
-                            normalizedIdentities.keySet(), Set.copyOf(normalizedIdentities.values())));
-            Map<Long, EntityIdentityMatch> scores = scoreMatchingIdentities(matchedIdentities, normalizedIdentities);
-            if (scores.isEmpty()) {
-                return Optional.empty();
-            }
-            Map<Long, ObserveEntity> entities =
-                    Optional.ofNullable(workspaceQueryGateway.findEntitiesByIds(scores.keySet()))
-                            .orElseGet(Collections::emptyMap);
-            Map<Long, EntityIdentityMatch> workspaceScores = scores.entrySet().stream()
-                    .filter(entry -> workspaceMatches(entities.get(entry.getKey()), safeWorkspaceId))
-                    .collect(LinkedHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
-            if (workspaceScores.isEmpty()) {
-                return Optional.empty();
-            }
-            int topScore = workspaceScores.values().stream()
-                    .mapToInt(EntityIdentityMatch::matchedIdentityCount)
-                    .max()
-                    .orElse(0);
-            List<Long> topEntityIds = workspaceScores.entrySet().stream()
-                    .filter(entry -> entry.getValue().matchedIdentityCount() == topScore)
-                    .map(Map.Entry::getKey)
-                    .sorted()
-                    .toList();
-            if (topEntityIds.size() != 1) {
-                recordIdentityConflict(workspaceQueryGateway, safeWorkspaceId, normalizedIdentities,
-                        topEntityIds, entities);
-                return Optional.empty();
-            }
-            return Optional.ofNullable(entities.get(topEntityIds.getFirst()));
+            return resolveCandidates(List.of(candidate), workspaceQueryGateway, safeWorkspaceId)
+                    .getFirst()
+                    .entity()
+                    .map(entity -> String.valueOf(entity.getId()));
         } catch (RuntimeException ex) {
             log.warn("Failed to resolve OTLP resource entity identity for workspace {}: {}",
                     safeWorkspaceId, ex.toString());
@@ -155,17 +145,215 @@ public class OtlpEntityIdentityResolver {
         }
     }
 
-    private Resource enrichResource(Resource resource, String workspaceId) {
-        Map<String, String> resourceAttributes = stringAttributes(resource.getAttributesList());
-        if (StringUtils.isNotBlank(resourceAttributes.get(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID))) {
-            return resource;
+    private List<Resource> enrichResources(List<Resource> resources, String workspaceId) {
+        if (resources == null || resources.isEmpty()) {
+            return List.of();
         }
-        Optional<ObserveEntity> entity = resolveEntity(resourceAttributes, workspaceId);
-        if (entity.isEmpty() || entity.get().getId() == null) {
-            return resource;
+        List<ResourceCandidate> candidates = resources.stream()
+                .map(this::resourceCandidate)
+                .toList();
+        ObservabilityWorkspaceQueryGateway workspaceQueryGateway = workspaceQueryGateway();
+        String safeWorkspaceId = StringUtils.trimToNull(workspaceId);
+        if (workspaceQueryGateway == null || safeWorkspaceId == null) {
+            return candidates.stream().map(this::withoutUntrustedEntityAttributes).toList();
         }
-        ObserveEntity resolvedEntity = entity.get();
-        Resource.Builder resourceBuilder = resource.toBuilder()
+        try {
+            List<EntityResolution> resolutions = resolveCandidates(candidates, workspaceQueryGateway, safeWorkspaceId);
+            List<Resource> enrichedResources = new ArrayList<>(candidates.size());
+            for (int index = 0; index < candidates.size(); index++) {
+                enrichedResources.add(applyResolution(candidates.get(index), resolutions.get(index)));
+            }
+            return List.copyOf(enrichedResources);
+        } catch (RuntimeException ex) {
+            log.warn("Failed to resolve OTLP resource entity identities for workspace {}: {}",
+                    safeWorkspaceId, ex.toString());
+            return candidates.stream().map(this::withoutUntrustedEntityAttributes).toList();
+        }
+    }
+
+    private List<EntityResolution> resolveCandidates(List<ResourceCandidate> candidates,
+                                                     ObservabilityWorkspaceQueryGateway workspaceQueryGateway,
+                                                     String workspaceId) {
+        Map<String, Set<String>> valuesByIdentityKey = canonicalValuesByIdentityKey(candidates);
+        Map<IdentityPair, Set<Long>> entityIdsByIdentityPair = new LinkedHashMap<>();
+        for (String identityKey : EntityCanonicalIdentityRegistry.CANONICAL_OTEL_RESOURCE_KEYS) {
+            Set<String> normalizedValues = valuesByIdentityKey.get(identityKey);
+            if (normalizedValues == null || normalizedValues.isEmpty()) {
+                continue;
+            }
+            forEachBatch(normalizedValues, valueBatch ->
+                indexIdentityEntityIds(
+                        nullToEmpty(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                                workspaceId, Set.of(identityKey), valueBatch)),
+                        entityIdsByIdentityPair));
+        }
+
+        Map<Map<String, String>, Map<Long, EntityIdentityMatch>> scoresByFingerprint = new LinkedHashMap<>();
+        Set<Long> entityIds = new LinkedHashSet<>();
+        for (ResourceCandidate candidate : candidates) {
+            if (!candidate.normalizedIdentities().isEmpty()) {
+                scoresByFingerprint.computeIfAbsent(candidate.normalizedIdentities(), ignored -> {
+                    Map<Long, EntityIdentityMatch> scores = scoreMatchingIdentities(
+                            entityIdsByIdentityPair, candidate.normalizedIdentities());
+                    entityIds.addAll(scores.keySet());
+                    return scores;
+                });
+            }
+            if (candidate.submittedEntityId() != null) {
+                entityIds.add(candidate.submittedEntityId());
+            }
+        }
+
+        Map<Long, ObserveEntity> entities = findWorkspaceEntities(
+                workspaceQueryGateway, workspaceId, entityIds);
+        Map<Map<String, String>, EntityResolution> canonicalResolutions = new LinkedHashMap<>();
+        List<EntityResolution> resolutions = new ArrayList<>(candidates.size());
+        for (ResourceCandidate candidate : candidates) {
+            EntityResolution canonicalResolution = canonicalResolutions.computeIfAbsent(
+                    candidate.normalizedIdentities(),
+                    ignored -> resolveCanonicalCandidate(
+                            candidate.normalizedIdentities(),
+                            scoresByFingerprint.getOrDefault(candidate.normalizedIdentities(), Map.of()),
+                            entities,
+                            workspaceQueryGateway,
+                            workspaceId));
+            resolutions.add(mergeSubmittedEntityHint(candidate, canonicalResolution, entities));
+        }
+        return List.copyOf(resolutions);
+    }
+
+    private Map<String, Set<String>> canonicalValuesByIdentityKey(List<ResourceCandidate> candidates) {
+        Map<String, Set<String>> valuesByIdentityKey = new LinkedHashMap<>();
+        for (ResourceCandidate candidate : candidates) {
+            candidate.normalizedIdentities().forEach((key, value) ->
+                    valuesByIdentityKey.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value));
+        }
+        return valuesByIdentityKey;
+    }
+
+    private void indexIdentityEntityIds(List<EntityIdentity> identities,
+                                        Map<IdentityPair, Set<Long>> entityIdsByIdentityPair) {
+        for (EntityIdentity identity : identities) {
+            if (identity == null || identity.getEntityId() == null
+                    || StringUtils.isBlank(identity.getIdentityKey())) {
+                continue;
+            }
+            String normalizedValue = normalizedIdentityValue(identity);
+            if (normalizedValue == null) {
+                continue;
+            }
+            IdentityPair pair = new IdentityPair(identity.getIdentityKey(), normalizedValue);
+            entityIdsByIdentityPair.computeIfAbsent(pair, ignored -> new LinkedHashSet<>())
+                    .add(identity.getEntityId());
+        }
+    }
+
+    private Map<Long, ObserveEntity> findWorkspaceEntities(
+            ObservabilityWorkspaceQueryGateway workspaceQueryGateway,
+            String workspaceId,
+            Set<Long> entityIds) {
+        if (entityIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, ObserveEntity> found = new LinkedHashMap<>();
+        forEachBatch(entityIds, entityIdBatch ->
+            found.putAll(Optional.ofNullable(
+                            workspaceQueryGateway.findEntitiesByIds(workspaceId, entityIdBatch))
+                    .orElseGet(Map::of)));
+        Map<Long, ObserveEntity> workspaceEntities = new LinkedHashMap<>();
+        for (Long entityId : entityIds) {
+            ObserveEntity entity = found.get(entityId);
+            if (workspaceMatches(entity, workspaceId)) {
+                workspaceEntities.put(entityId, entity);
+            }
+        }
+        return workspaceEntities;
+    }
+
+    private <T> void forEachBatch(Set<T> values, Consumer<Set<T>> consumer) {
+        if (values.size() <= LOOKUP_BATCH_SIZE) {
+            consumer.accept(Set.copyOf(values));
+            return;
+        }
+        Set<T> batch = new LinkedHashSet<>(LOOKUP_BATCH_SIZE);
+        for (T value : values) {
+            batch.add(value);
+            if (batch.size() == LOOKUP_BATCH_SIZE) {
+                consumer.accept(Set.copyOf(batch));
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) {
+            consumer.accept(Set.copyOf(batch));
+        }
+    }
+
+    private EntityResolution resolveCanonicalCandidate(
+            Map<String, String> normalizedIdentities,
+            Map<Long, EntityIdentityMatch> scores,
+            Map<Long, ObserveEntity> entities,
+            ObservabilityWorkspaceQueryGateway workspaceQueryGateway,
+            String workspaceId) {
+        if (normalizedIdentities.isEmpty() || scores.isEmpty()) {
+            return EntityResolution.unresolved();
+        }
+        int topScore = 0;
+        List<Long> topEntityIds = new ArrayList<>();
+        for (Map.Entry<Long, EntityIdentityMatch> entry : scores.entrySet()) {
+            if (!entities.containsKey(entry.getKey())) {
+                continue;
+            }
+            int score = entry.getValue().matchedIdentityCount();
+            if (score > topScore) {
+                topScore = score;
+                topEntityIds.clear();
+            }
+            if (score == topScore) {
+                topEntityIds.add(entry.getKey());
+            }
+        }
+        if (topEntityIds.isEmpty()) {
+            return EntityResolution.unresolved();
+        }
+        topEntityIds.sort(Long::compareTo);
+        if (topEntityIds.size() != 1) {
+            recordIdentityConflict(workspaceQueryGateway, workspaceId, normalizedIdentities,
+                    topEntityIds, entities);
+            return EntityResolution.ambiguous();
+        }
+        return EntityResolution.resolved(entities.get(topEntityIds.getFirst()));
+    }
+
+    private EntityResolution mergeSubmittedEntityHint(ResourceCandidate candidate,
+                                                       EntityResolution canonicalResolution,
+                                                       Map<Long, ObserveEntity> entities) {
+        if (canonicalResolution.status() != ResolutionStatus.UNRESOLVED) {
+            return canonicalResolution;
+        }
+        ObserveEntity submittedEntity = candidate.submittedEntityId() == null
+                ? null
+                : entities.get(candidate.submittedEntityId());
+        return submittedEntity == null
+                ? EntityResolution.unresolved()
+                : EntityResolution.resolved(submittedEntity);
+    }
+
+    private ResourceCandidate resourceCandidate(Resource resource) {
+        Map<String, String> attributes = stringAttributes(resource.getAttributesList());
+        Map<String, String> normalizedIdentities = normalizedCanonicalIdentities(attributes);
+        return new ResourceCandidate(
+                resource,
+                normalizedIdentities,
+                submittedEntityId(attributes),
+                hasServerOwnedEntityAttributes(resource));
+    }
+
+    private Resource applyResolution(ResourceCandidate candidate, EntityResolution resolution) {
+        if (resolution.entity().isEmpty()) {
+            return withoutUntrustedEntityAttributes(candidate);
+        }
+        ObserveEntity resolvedEntity = resolution.entity().get();
+        Resource.Builder resourceBuilder = withoutServerOwnedEntityAttributes(candidate.resource()).toBuilder()
                 .addAttributes(stringAttribute(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID,
                         String.valueOf(resolvedEntity.getId())));
         String entityType = StringUtils.trimToNull(resolvedEntity.getType());
@@ -180,6 +368,39 @@ public class OtlpEntityIdentityResolver {
                     entityName));
         }
         return resourceBuilder.build();
+    }
+
+    private Resource withoutUntrustedEntityAttributes(ResourceCandidate candidate) {
+        return candidate.hasServerOwnedEntityAttributes()
+                ? withoutServerOwnedEntityAttributes(candidate.resource())
+                : candidate.resource();
+    }
+
+    private Resource withoutServerOwnedEntityAttributes(Resource resource) {
+        Resource.Builder resourceBuilder = resource.toBuilder().clearAttributes();
+        resource.getAttributesList().stream()
+                .filter(attribute -> !SERVER_OWNED_ENTITY_ATTRIBUTES.contains(attribute.getKey()))
+                .forEach(resourceBuilder::addAttributes);
+        return resourceBuilder.build();
+    }
+
+    private boolean hasServerOwnedEntityAttributes(Resource resource) {
+        return resource.getAttributesList().stream()
+                .anyMatch(attribute -> SERVER_OWNED_ENTITY_ATTRIBUTES.contains(attribute.getKey()));
+    }
+
+    private Long submittedEntityId(Map<String, String> resourceAttributes) {
+        String rawEntityId = StringUtils.trimToNull(
+                resourceAttributes.get(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID));
+        if (rawEntityId == null) {
+            return null;
+        }
+        try {
+            long entityId = Long.parseLong(rawEntityId);
+            return entityId > 0 ? entityId : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private ObservabilityWorkspaceQueryGateway workspaceQueryGateway() {
@@ -197,20 +418,16 @@ public class OtlpEntityIdentityResolver {
         return normalized;
     }
 
-    private Map<Long, EntityIdentityMatch> scoreMatchingIdentities(List<EntityIdentity> matchedIdentities,
-                                                                  Map<String, String> normalizedIdentities) {
+    private Map<Long, EntityIdentityMatch> scoreMatchingIdentities(
+            Map<IdentityPair, Set<Long>> entityIdsByIdentityPair,
+            Map<String, String> normalizedIdentities) {
         Map<Long, EntityIdentityMatch> scores = new LinkedHashMap<>();
-        for (EntityIdentity identity : matchedIdentities) {
-            if (identity == null || identity.getEntityId() == null
-                    || StringUtils.isBlank(identity.getIdentityKey())) {
-                continue;
+        for (Map.Entry<String, String> identityEntry : normalizedIdentities.entrySet()) {
+            IdentityPair pair = new IdentityPair(identityEntry.getKey(), identityEntry.getValue());
+            for (Long entityId : entityIdsByIdentityPair.getOrDefault(pair, Set.of())) {
+                scores.computeIfAbsent(entityId, ignored -> new EntityIdentityMatch())
+                        .add(identityEntry.getKey());
             }
-            String expectedValue = normalizedIdentities.get(identity.getIdentityKey());
-            if (expectedValue == null || !expectedValue.equals(normalizedIdentityValue(identity))) {
-                continue;
-            }
-            scores.computeIfAbsent(identity.getEntityId(), ignored -> new EntityIdentityMatch())
-                    .add(identity);
         }
         return scores;
     }
@@ -282,12 +499,59 @@ public class OtlpEntityIdentityResolver {
                 .build();
     }
 
+    private enum ResolutionStatus {
+        RESOLVED,
+        UNRESOLVED,
+        AMBIGUOUS
+    }
+
+    private record EntityResolution(ResolutionStatus status, Optional<ObserveEntity> entity) {
+
+        private static EntityResolution resolved(ObserveEntity entity) {
+            return new EntityResolution(ResolutionStatus.RESOLVED, Optional.of(Objects.requireNonNull(entity)));
+        }
+
+        private static EntityResolution unresolved() {
+            return new EntityResolution(ResolutionStatus.UNRESOLVED, Optional.empty());
+        }
+
+        private static EntityResolution ambiguous() {
+            return new EntityResolution(ResolutionStatus.AMBIGUOUS, Optional.empty());
+        }
+    }
+
+    private record IdentityPair(String identityKey, String normalizedValue) {
+    }
+
+    private record ResourceCandidate(Resource resource,
+                                     Map<String, String> normalizedIdentities,
+                                     Long submittedEntityId,
+                                     boolean hasServerOwnedEntityAttributes) {
+
+        private ResourceCandidate {
+            normalizedIdentities = Map.copyOf(normalizedIdentities);
+        }
+
+        private static ResourceCandidate fromAttributes(Map<String, String> resourceAttributes,
+                                                        Map<String, String> normalizedIdentities,
+                                                        Long submittedEntityId) {
+            boolean hasServerOwnedAttributes = resourceAttributes.keySet().stream()
+                    .anyMatch(SERVER_OWNED_ENTITY_ATTRIBUTES::contains);
+            return new ResourceCandidate(Resource.getDefaultInstance(), normalizedIdentities,
+                    submittedEntityId, hasServerOwnedAttributes);
+        }
+
+        private boolean requiresResolution() {
+            return submittedEntityId != null || !normalizedIdentities.isEmpty();
+        }
+    }
+
     private static final class EntityIdentityMatch {
 
-        private final Set<String> matchedIdentityKeys = new java.util.LinkedHashSet<>();
+        private final Set<String> matchedIdentityKeys = new LinkedHashSet<>();
 
-        private void add(EntityIdentity identity) {
-            matchedIdentityKeys.add(identity.getIdentityKey());
+        private void add(String identityKey) {
+            matchedIdentityKeys.add(identityKey);
         }
 
         private int matchedIdentityCount() {

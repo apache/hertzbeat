@@ -36,6 +36,7 @@ describe('useSetupOptionalCommands refresh abort boundary', () => {
           startWrite: () => ({ signal: request.signal, release }),
           clearMailSecret: vi.fn(),
           resetMailValidation: vi.fn(),
+          publicOrigin: 'http://127.0.0.1:1157',
           onCompleted: vi.fn()
         })
       );

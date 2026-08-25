@@ -69,7 +69,9 @@ class EntityAlertEvidenceQuerySourceOwnershipTest {
         assertTrue(querySource.contains("public List<SingleAlert> findAlerts(List<Monitor> monitors, String status)"));
         assertTrue(querySource.contains("entityWorkspaceAccessService.currentRequestWorkspaceId()"));
         assertTrue(querySource.contains("private Specification<SingleAlert> buildAlertSpecification("));
-        assertTrue(querySource.contains("private boolean matchesAlertRequestWorkspace("));
-        assertTrue(querySource.contains("AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(requestWorkspaceId)"));
+        assertTrue(querySource.contains("criteriaBuilder.equal(root.get(\"workspaceId\")"));
+        assertTrue(querySource.contains("AuthTokenScopes.normalizeWorkspaceId(requestWorkspaceId)"));
+        assertFalse(querySource.contains("matchesAlertRequestWorkspace("));
+        assertFalse(querySource.contains("ALERT_WORKSPACE_LABEL_KEYS"));
     }
 }

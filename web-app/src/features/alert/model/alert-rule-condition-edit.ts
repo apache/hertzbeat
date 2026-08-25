@@ -8,11 +8,13 @@
 import {
   metricAlertConditionLimits,
   metricAlertOperatorsForType,
+  resolveMetricAlertField,
   type MetricAlertCondition,
   type MetricAlertConditionGroup,
   type MetricAlertConditionOperator,
   type MetricAlertField
 } from './alert-rule-condition';
+import { isMetricAlertAttribute } from './alert-rule-condition-field';
 import { AlertRuleContractError } from './alert-rule-types';
 
 type ConditionPath = number[];
@@ -26,18 +28,14 @@ export function addMetricAlertCondition(
   return updateGroup(root, groupPath, group => appendItem(group, condition));
 }
 
-export function addMetricAlertConditionGroup(
-  root: MetricAlertConditionGroup,
-  groupPath: ConditionPath,
-  fields: MetricAlertField[]
-) {
+export function addMetricAlertConditionGroup(root: MetricAlertConditionGroup, groupPath: ConditionPath) {
   if (groupPath.length + 2 > metricAlertConditionLimits.maximumDepth) {
     throw contract('condition group is too deep');
   }
   const group: MetricAlertConditionGroup = {
     kind: 'group',
     join: 'and',
-    items: [newCondition(fields)]
+    items: []
   };
   return updateGroup(root, groupPath, parent => appendItem(parent, group));
 }
@@ -101,6 +99,20 @@ export function updateMetricAlertConditionValue(
   }));
 }
 
+export function updateMetricAlertConditionAttribute(
+  root: MetricAlertConditionGroup,
+  itemPath: ConditionPath,
+  attribute: string,
+  fields: MetricAlertField[]
+) {
+  return updateCondition(root, itemPath, current => {
+    const resolved = resolveMetricAlertField(fields, current.field);
+    if (!resolved?.field.acceptsAttribute) throw contract('condition field does not accept an attribute');
+    if (attribute && !isMetricAlertAttribute(attribute)) throw contract('condition field attribute is invalid');
+    return { ...current, field: attribute ? `${resolved.field.value}.${attribute}` : resolved.field.value };
+  });
+}
+
 function updateCondition(
   root: MetricAlertConditionGroup,
   itemPath: ConditionPath,
@@ -155,14 +167,14 @@ function firstOperator(field: MetricAlertField) {
 }
 
 function requiredField(fields: MetricAlertField[], value: string) {
-  const matches = fields.filter(field => field.value === value);
-  if (matches.length !== 1) throw contract('metric field is invalid');
-  return matches[0]!;
+  const resolved = resolveMetricAlertField(fields, value);
+  if (!resolved) throw contract('metric field is invalid');
+  return resolved.field;
 }
 
 function initialValue(operator: MetricAlertConditionOperator) {
   if (operator === 'exists' || operator === '!exists') return null;
-  return ['>', '<', '==', '!=', '<=', '>='].includes(operator) ? 0 : '';
+  return ['>', '<', '==', '!=', '<=', '>='].includes(operator) ? null : '';
 }
 
 function normalizeValue(operator: MetricAlertConditionOperator, value: string | number | null) {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Form, Input, Select } from 'antd';
+import { Checkbox, Form, Input, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { StatusComponent } from '../model/status-management-contract';
@@ -37,26 +37,50 @@ export function StatusIncidentFields({ components }: StatusIncidentFieldsProps) 
 
   return (
     <>
-      <Form.Item name="name" label={t('statusManagement.incidentName')} rules={[{ required: true, whitespace: true }]}>
+      <Form.Item
+        name="name"
+        label={t('statusManagement.incidentName')}
+        extra={t('statusManagement.incidentNameHint')}
+        rules={[{ required: true, whitespace: true }]}
+      >
         <Input />
       </Form.Item>
-      <Form.Item name="componentIds" label={t('status.components')} rules={[{ required: true }]}>
-        <Select
-          mode="multiple"
-          options={components.flatMap(item => (item.id == null ? [] : [{ value: item.id, label: item.name }]))}
-        />
-      </Form.Item>
       <Form.Item name="state" label={t('status.state')}>
-        <Select
+        <Radio.Group
+          className="status-incident-state"
+          optionType="button"
+          buttonStyle="solid"
           options={Object.values(statusIncidentState).map(value => ({ value, label: t(incidentStateKey(value)) }))}
         />
       </Form.Item>
       <Form.Item
         name="message"
         label={t('statusManagement.updateMessage')}
+        extra={t('statusManagement.updateMessageHint')}
         rules={[{ required: true, whitespace: true }]}
       >
-        <Input.TextArea rows={3} />
+        <Input.TextArea rows={4} />
+      </Form.Item>
+      <Form.Item
+        name="componentIds"
+        label={t('status.components')}
+        extra={t('statusManagement.affectedComponentsHint')}
+        rules={[{ type: 'array', min: 1, required: true }]}
+      >
+        <Checkbox.Group aria-label={t('status.components')} className="status-incident-components">
+          {components.flatMap(item =>
+            item.id === undefined
+              ? []
+              : [
+                  <Checkbox key={item.id} value={item.id}>
+                    <span className="status-incident-component-copy">
+                      <strong>{item.name}</strong>
+                      {item.description && <small>{item.description}</small>}
+                    </span>
+                  </Checkbox>
+                ]
+          )}
+        </Checkbox.Group>
       </Form.Item>
     </>
   );

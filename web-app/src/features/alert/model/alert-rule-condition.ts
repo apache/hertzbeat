@@ -11,7 +11,10 @@
 
 import { AlertRuleContractError } from './alert-rule-types';
 import { parseMetricAlertConditionSource } from './alert-rule-condition-parser';
-import { serializeMetricAlertConditionSource } from './alert-rule-condition-serializer';
+import {
+  serializeMetricAlertConditionAuthoringSource,
+  serializeMetricAlertConditionSource
+} from './alert-rule-condition-serializer';
 import type {
   MetricAlertConditionGroup,
   MetricAlertConditionOperator,
@@ -19,6 +22,9 @@ import type {
   MetricAlertNumericOperator,
   MetricAlertStringOperator
 } from './alert-rule-condition-contract';
+import { isMetricAlertAttribute, resolveMetricAlertFieldSource } from './alert-rule-condition-field';
+
+export { isMetricAlertAttribute };
 
 export type {
   MetricAlertCondition,
@@ -63,12 +69,35 @@ export function metricAlertOperatorsForType(type: number): readonly MetricAlertC
   return [];
 }
 
+export function metricAlertFieldTypeKey(type: number): 'number' | 'string' | 'object' | 'time' {
+  if (type === metricAlertFieldTypes.number) return 'number';
+  if (type === metricAlertFieldTypes.string) return 'string';
+  if (type === metricAlertFieldTypes.object) return 'object';
+  if (type === metricAlertFieldTypes.time) return 'time';
+  throw contract('metric field type is invalid');
+}
+
+export function resolveMetricAlertField(fields: MetricAlertField[], source: string) {
+  return resolveMetricAlertFieldSource(metricFieldMap(fields), source);
+}
+
 /** Serializes only the condition subset represented by the structured editor. */
 export function serializeMetricAlertCondition(group: MetricAlertConditionGroup, fields: MetricAlertField[]) {
   const fieldMap = metricFieldMap(fields);
   return serializeMetricAlertConditionSource(
     group,
     fieldMap,
+    metricAlertOperatorsForType,
+    metricAlertConditionLimits.maximumDepth,
+    metricAlertConditionLimits.maximumItemsPerGroup
+  );
+}
+
+/** Serializes the source-visible draft, including Angular-compatible incomplete values. */
+export function serializeMetricAlertConditionAuthoring(group: MetricAlertConditionGroup, fields: MetricAlertField[]) {
+  return serializeMetricAlertConditionAuthoringSource(
+    group,
+    metricFieldMap(fields),
     metricAlertOperatorsForType,
     metricAlertConditionLimits.maximumDepth,
     metricAlertConditionLimits.maximumItemsPerGroup

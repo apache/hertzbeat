@@ -1,8 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { App } from 'antd';
 import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { previewAlertRule } from '../api/alert-rule-api';
 import {
@@ -24,8 +22,6 @@ export function useAlertRulePreviewController(
   identity: AlertRuleEditorIdentityController,
   updateRoute: AlertRuleRouteUpdate
 ) {
-  const { t } = useTranslation();
-  const { message } = App.useApp();
   const previewEpochRef = useRef(0);
   const previousCanPreviewRef = useRef(canPreview);
   const invalidate = () => {
@@ -33,10 +29,7 @@ export function useAlertRulePreviewController(
   };
   const preview = async () => {
     if (!canPreview) return;
-    if (!draft?.expr.trim()) {
-      void message.warning(t('alertRules.expressionRequired'));
-      return;
-    }
+    if (!draft?.expr.trim()) return;
     let request: AlertRulePreviewRequest;
     try {
       request = buildAlertRulePreviewRequest(draft);

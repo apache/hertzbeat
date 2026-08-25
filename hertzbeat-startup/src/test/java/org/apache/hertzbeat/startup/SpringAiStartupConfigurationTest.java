@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.FileSystemResource;
 
 class SpringAiStartupConfigurationTest {
 
@@ -39,6 +42,17 @@ class SpringAiStartupConfigurationTest {
                 .contains("ai:")
                 .contains("model:")
                 .contains("chat: none");
+    }
+
+    @Test
+    void defaultStartupDisablesMcpServerAndCallbackConversion() throws IOException {
+        Path applicationYaml = repoRoot().resolve("hertzbeat-startup/src/main/resources/application.yml");
+        PropertySource<?> properties = new YamlPropertySourceLoader()
+                .load("application", new FileSystemResource(applicationYaml))
+                .getFirst();
+
+        assertThat(properties.getProperty("spring.ai.mcp.server.enabled")).isEqualTo(false);
+        assertThat(properties.getProperty("spring.ai.mcp.server.tool-callback-converter")).isEqualTo(false);
     }
 
     private static String readRepoFile(String relativePath) throws IOException {

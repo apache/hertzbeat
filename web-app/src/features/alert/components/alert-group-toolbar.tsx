@@ -20,6 +20,8 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalCommandBar, OperationalSearchControl } from '@/shared/operational-page';
 
+import styles from './alert-group-toolbar.module.css';
+
 export function AlertGroupToolbar({
   refreshing,
   search,
@@ -39,19 +41,19 @@ export function AlertGroupToolbar({
       role="search"
       ariaLabel={t('alertGroups.search')}
       primary={
-        <OperationalSearchControl
-          ariaLabel={t('alertGroups.search')}
-          value={search}
-          placeholder={t('alertGroups.search')}
-          submitLabel={t('common.query')}
-          onChange={setSearch}
-          onSubmit={submitSearch}
-        />
-      }
-      secondary={
-        <Button loading={refreshing} onClick={() => void refresh()}>
-          {t('common.refresh')}
-        </Button>
+        <div className={styles.commandGroup}>
+          <OperationalSearchControl
+            ariaLabel={t('alertGroups.search')}
+            value={search}
+            placeholder={t('alertGroups.search')}
+            submitLabel={t('common.query')}
+            onChange={setSearch}
+            onSubmit={submitSearch}
+          />
+          <Button loading={refreshing} onClick={() => void refresh()}>
+            {t('common.refresh')}
+          </Button>
+        </div>
       }
     />
   );

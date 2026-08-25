@@ -25,7 +25,7 @@ final class MigrationStartupTargetInspector {
     private final MigrationStartupCurrentSchemaVerifier schema;
 
     MigrationStartupTargetInspector() {
-        this(new B206MigrationStartupCurrentSchemaVerifier());
+        this(new B200MigrationStartupCurrentSchemaVerifier());
     }
 
     MigrationStartupTargetInspector(MigrationStartupCurrentSchemaVerifier schema) {

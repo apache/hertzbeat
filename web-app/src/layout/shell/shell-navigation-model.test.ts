@@ -37,6 +37,24 @@ describe('shell navigation model', () => {
     expect(activeNavigationTrail(tree, '/alerts/rules/42/edit')).toEqual(['workspace', 'alerts', 'alert-rules']);
   });
 
+  it('keeps a resource active across dynamic child paths while preserving its concrete navigation target', () => {
+    const tree = buildShellNavigation([
+      resource('alerts', '/alerts', 'workspace', 20),
+      resource(
+        'alert-integrations',
+        '/alerts/integrations/webhook',
+        'alerts',
+        60,
+        'supported',
+        undefined,
+        '/alerts/integrations/:source'
+      )
+    ]);
+
+    expect(activeNavigationTrail(tree, '/alerts/integrations/alertmanager')).toEqual(['alerts', 'alert-integrations']);
+    expect(tree[0]?.children[0]?.route).toBe('/alerts/integrations/webhook');
+  });
+
   it('selects a dynamic monitor application only when its canonical query matches', () => {
     const tree = buildShellNavigation([
       ...resources,
@@ -174,7 +192,8 @@ function resource(
   parent?: string,
   order = 0,
   capability: 'supported' | 'unknown' | 'unsupported' = 'supported',
-  requiredRoles?: string[]
+  requiredRoles?: string[],
+  activePath?: string
 ) {
   return {
     name,
@@ -185,7 +204,8 @@ function resource(
         navigation: true,
         order,
         timePolicy: list ? ('unknown' as const) : ('none' as const),
-        ...(requiredRoles ? { requiredRoles } : {})
+        ...(requiredRoles ? { requiredRoles } : {}),
+        ...(activePath ? { activePath } : {})
       },
       ...(parent ? { parent } : {})
     },

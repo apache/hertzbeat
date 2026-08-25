@@ -10,7 +10,10 @@ import {
   type AlertRuleType
 } from './alert-rule-types';
 import type { AlertRuleDraft } from './alert-rule-draft-contract';
+import { parseMetricAlertCondition } from './alert-rule-condition';
+import { logAlertFields } from './alert-rule-log-fields';
 import { createMetricAlertEditorDraft, metricAlertEditorFromExpression } from './alert-rule-metric-draft';
+import { parseRealtimeMetricExpression } from './alert-rule-metric-expression';
 
 export type { AlertRuleDraft } from './alert-rule-draft-contract';
 export type AlertRulePreviewRequest = {
@@ -18,6 +21,11 @@ export type AlertRulePreviewRequest = {
   datasource: AlertRuleDatasource;
   expr: string;
 };
+
+export const alertRuleSeverities = ['emergency', 'critical', 'warning'] as const;
+export const alertRuleModes = ['group', 'individual'] as const;
+export type AlertRuleSeverity = (typeof alertRuleSeverities)[number];
+export type AlertRuleMode = (typeof alertRuleModes)[number];
 
 const strategyForType: Record<AlertRuleType, { kind: AlertRuleKind; dataType: AlertRuleDataType }> = {
   realtime_metric: { kind: 'realtime', dataType: 'metric' },
@@ -39,6 +47,7 @@ export function createAlertRuleDraft(): AlertRuleDraft {
     enable: true,
     period: 300,
     times: 3,
+    authoringMode: 'structured',
     metricEditor: createMetricAlertEditorDraft()
   };
 }
@@ -89,15 +98,29 @@ export function validateAlertRuleDraft(draft: AlertRuleDraft) {
   recordInvalidDraftField(invalid, 'name', !validBoundedText(draft.name, 100));
   recordInvalidDraftField(invalid, 'type', !validDraftType(draft));
   recordInvalidDraftField(invalid, 'expr', !validDraftExpression(draft));
-  recordInvalidDraftField(invalid, 'template', !validWritableText(draft.template, draft.persisted?.template, 2048));
+  recordInvalidDraftField(invalid, 'template', !validWritableText(draft.template, draft.persisted?.template, 200));
   recordInvalidDraftField(invalid, 'labels', !tryParseLabels(draft.labelsText));
+  recordInvalidDraftField(
+    invalid,
+    'severity',
+    (!draft.persisted || draft.strategyChanged === true) &&
+      !alertRuleSeverities.includes(alertRuleLabelValue(draft.labelsText, 'severity') as AlertRuleSeverity)
+  );
+  recordInvalidDraftField(
+    invalid,
+    'alertMode',
+    (!draft.persisted || draft.strategyChanged === true) &&
+      draft.dataType === 'log' &&
+      !alertRuleModes.includes(alertRuleLabelValue(draft.labelsText, 'alert_mode') as AlertRuleMode)
+  );
   recordInvalidDraftField(invalid, 'annotations', !validNullableMap(draft.annotations));
   recordInvalidDraftField(invalid, 'period', !validDraftPeriod(draft));
   recordInvalidDraftField(invalid, 'times', !isNullablePositiveJavaInteger(draft.times));
   return invalid;
 }
 
-type InvalidAlertRuleDraftField = 'name' | 'type' | 'expr' | 'template' | 'labels' | 'annotations' | 'period' | 'times';
+export type InvalidAlertRuleDraftField =
+  'name' | 'type' | 'expr' | 'template' | 'labels' | 'annotations' | 'period' | 'times' | 'severity' | 'alertMode';
 
 function recordInvalidDraftField(
   invalid: InvalidAlertRuleDraftField[],
@@ -108,7 +131,30 @@ function recordInvalidDraftField(
 }
 
 function validDraftExpression(draft: AlertRuleDraft) {
-  return validWritableText(draft.expr, draft.strategyChanged ? undefined : draft.persisted?.expr, 2048);
+  if (!validWritableText(draft.expr, draft.strategyChanged ? undefined : draft.persisted?.expr, 2048)) return false;
+  if (realtimeLogExpressionExceedsLimit(draft)) return false;
+  if (periodicMetricExpressionExceedsLimit(draft)) return false;
+  if (requiresCompleteMetricExpression(draft)) {
+    return parseRealtimeMetricExpression(draft.expr) !== null;
+  }
+  return true;
+}
+
+function periodicMetricExpressionExceedsLimit(draft: AlertRuleDraft) {
+  return draft.kind === 'periodic' && draft.dataType === 'metric' && draft.expr.length > 100;
+}
+
+function realtimeLogExpressionExceedsLimit(draft: AlertRuleDraft) {
+  return draft.kind === 'realtime' && draft.dataType === 'log' && draft.expr.length > 200;
+}
+
+function requiresCompleteMetricExpression(draft: AlertRuleDraft) {
+  return (
+    draft.kind === 'realtime' &&
+    draft.dataType === 'metric' &&
+    draft.metricEditor?.kind === 'targeted' &&
+    draft.metricEditor.target?.kind === 'metric'
+  );
 }
 
 function validDraftPeriod(draft: AlertRuleDraft) {
@@ -118,21 +164,22 @@ function validDraftPeriod(draft: AlertRuleDraft) {
 export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
   const resolvedType = rule.type ?? 'realtime_metric';
   const { kind, dataType } = strategyForType[resolvedType];
+  const expression = rule.expr ?? '';
+  const metricEditor = resolvedType === 'realtime_metric' ? metricAlertEditorFromExpression(expression) : undefined;
   return {
     id: rule.id,
     name: rule.name,
     kind,
     dataType,
-    expr: rule.expr ?? '',
+    expr: expression,
     template: rule.template ?? '',
-    labelsText: Object.entries(rule.labels ?? {})
-      .map(([key, value]) => `${key}:${value}`)
-      .join(', '),
+    labelsText: serializeLabels(rule.labels ?? {}),
     annotations: cloneNullableMap(rule.annotations),
     enable: rule.enable,
     period: rule.period,
     times: rule.times,
-    ...(resolvedType === 'realtime_metric' ? { metricEditor: metricAlertEditorFromExpression(rule.expr ?? '') } : {}),
+    authoringMode: detailAuthoringMode(resolvedType, expression, metricEditor),
+    ...(metricEditor ? { metricEditor } : {}),
     persisted: {
       type: rule.type,
       datasource: rule.datasource,
@@ -143,6 +190,21 @@ export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
       template: rule.template
     }
   };
+}
+
+function detailAuthoringMode(
+  type: AlertRuleType,
+  expression: string,
+  metricEditor: ReturnType<typeof metricAlertEditorFromExpression> | undefined
+) {
+  if (type === 'realtime_metric') {
+    if (metricEditor?.kind === 'targeted') return metricEditor.authoring.mode;
+    return expression.trim() ? 'expert' : 'structured';
+  }
+  if (type === 'realtime_log') {
+    return !expression.trim() || parseMetricAlertCondition(expression, logAlertFields) ? 'structured' : 'expert';
+  }
+  return 'structured';
 }
 
 function typeForDraft(draft: AlertRuleDraft): AlertRuleType {
@@ -182,17 +244,106 @@ function resolveLabels(draft: AlertRuleDraft) {
 }
 
 function parseLabels(value: string) {
-  const result: Record<string, string> = {};
+  const result: Record<string, string> = Object.create(null) as Record<string, string>;
   if (!value.trim()) return result;
-  for (const item of value.split(',')) {
-    const separator = item.indexOf(':');
-    const key = item.slice(0, separator).trim();
-    const labelValue = item.slice(separator + 1).trim();
-    if (separator < 1 || !key || !labelValue || key in result)
+  for (const [rawKey, rawValue] of parseLabelEntries(value)) {
+    const key = rawKey.trim();
+    const labelValue = rawValue.trim();
+    if (!key || !labelValue || Object.hasOwn(result, key))
       throw contract('labels must contain unique key:value entries');
     result[key] = labelValue;
   }
   return result;
+}
+
+function parseLabelEntries(value: string): Array<[string, string]> {
+  const entries: Array<[string, string]> = [];
+  let key = '';
+  let labelValue = '';
+  let readingValue = false;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index] ?? '';
+    const next = value[index + 1];
+    if (character === '\\' && next && ['\\', ',', ':'].includes(next)) {
+      if (readingValue) labelValue += next;
+      else key += next;
+      index += 1;
+      continue;
+    }
+    if (!readingValue && character === ':') {
+      readingValue = true;
+      continue;
+    }
+    if (readingValue && character === ',') {
+      entries.push([key, labelValue]);
+      key = '';
+      labelValue = '';
+      readingValue = false;
+      continue;
+    }
+    if (readingValue) labelValue += character;
+    else key += character;
+  }
+  entries.push([key, labelValue]);
+  return entries;
+}
+
+export function alertRuleLabelValue(value: string, key: string) {
+  try {
+    return parseLabels(value)[key] ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export function updateAlertRuleLabel(value: string, key: string, labelValue: string) {
+  let labels: Record<string, string> = Object.create(null) as Record<string, string>;
+  try {
+    labels = parseLabels(value);
+  } catch {
+    // A controlled map editor cannot safely merge malformed source text.
+  }
+  const normalizedKey = key.trim();
+  const normalizedValue = labelValue.trim();
+  if (!normalizedKey) return serializeLabels(labels);
+  if (normalizedValue) labels[normalizedKey] = normalizedValue;
+  else delete labels[normalizedKey];
+  return serializeLabels(labels);
+}
+
+export function alertRuleCustomLabels(value: string) {
+  try {
+    const labels = parseLabels(value);
+    delete labels.severity;
+    delete labels.alert_mode;
+    return labels;
+  } catch {
+    return {};
+  }
+}
+
+export function replaceAlertRuleCustomLabels(value: string, customLabels: Record<string, string>) {
+  const reserved = {
+    severity: alertRuleLabelValue(value, 'severity'),
+    alert_mode: alertRuleLabelValue(value, 'alert_mode')
+  };
+  const labels: Record<string, string> = Object.create(null) as Record<string, string>;
+  if (reserved.severity) labels.severity = reserved.severity;
+  if (reserved.alert_mode) labels.alert_mode = reserved.alert_mode;
+  for (const [key, labelValue] of Object.entries(customLabels)) {
+    if (key !== 'severity' && key !== 'alert_mode') labels[key] = labelValue;
+  }
+  return serializeLabels(labels);
+}
+
+function serializeLabels(labels: Record<string, string>) {
+  return Object.entries(labels)
+    .map(([key, value]) => `${escapeLabelPart(key)}:${escapeLabelPart(value)}`)
+    .join(', ');
+}
+
+function escapeLabelPart(value: string) {
+  return value.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll(':', '\\:');
 }
 
 function tryParseLabels(value: string) {

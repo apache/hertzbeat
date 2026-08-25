@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import { Tabs } from 'antd';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { StatusManagementEditors } from '../components/status-management-editors';
 import { StatusManagementHeader } from '../components/status-management-header';
 import { StatusWriteRecoveryAlert } from '../components/status-write-recovery-alert';
@@ -26,46 +30,86 @@ import { OperationalPage, OperationalResultRegion } from '@/shared/operational-p
 import { useStatusManagementController } from '../controller/use-status-management-controller';
 
 export function StatusManagementPage() {
+  const { t } = useTranslation();
   const controller = useStatusManagementController();
+  const [activeWorkspace, setActiveWorkspace] = useState('settings');
   const statusOrg = controller.org.kind === 'ready' ? controller.org.record : undefined;
   const statusComponents = controller.components.kind === 'ready' ? controller.components.records : [];
   return (
     <OperationalPage mode="workspace">
-      <StatusManagementHeader publicStatusHref={publicStatusPath} />
+      <StatusManagementHeader
+        {...(statusOrg ? { publicStatusHref: publicStatusPath } : {})}
+        canPublish={Boolean(statusOrg && controller.capabilities.canCreate)}
+        publishDisabled={controller.commandLocked || statusComponents.length === 0}
+        onPublish={controller.openNewIncident}
+      />
       <OperationalResultRegion>
-        <StatusOrgSection
-          canCreate={controller.capabilities.canCreate}
-          canUpdate={controller.capabilities.canUpdate}
-          state={controller.org}
-          saving={controller.orgSaving}
-          commandLocked={controller.commandLocked}
-          writeRecovery={controller.orgWriteRecovery}
-          onRetryWrite={controller.retryOrgWrite}
-          onSave={controller.saveOrg}
-        />
-        <StatusComponentSection
-          canCreate={controller.capabilities.canCreate}
-          canUpdate={controller.capabilities.canUpdate}
-          canDelete={controller.capabilities.canDelete}
-          orgId={statusOrg?.id}
-          state={controller.components}
-          commandLocked={controller.commandLocked}
-          deleteRecovery={controller.componentDeleteRecovery}
-          deleteRecoveryPending={controller.componentDeleteRecoveryPending}
-          onNew={controller.openNewComponent}
-          onRefresh={controller.refreshComponents}
-          onEdit={controller.editComponent}
-          onDelete={controller.deleteComponent}
-        />
-        <StatusIncidentWorkspace
-          controller={controller}
-          orgId={statusOrg?.id}
-          componentCount={statusComponents.length}
-        />
+        {statusOrg ? (
+          <Tabs
+            className="status-management-workspaces"
+            activeKey={activeWorkspace}
+            onChange={setActiveWorkspace}
+            items={[
+              {
+                key: 'settings',
+                label: t('statusManagement.navSettings'),
+                children: <StatusOrgWorkspace controller={controller} />
+              },
+              {
+                key: 'components',
+                label: t('statusManagement.navComponents'),
+                children: (
+                  <StatusComponentSection
+                    canCreate={controller.capabilities.canCreate}
+                    canUpdate={controller.capabilities.canUpdate}
+                    canDelete={controller.capabilities.canDelete}
+                    orgId={statusOrg.id}
+                    state={controller.components}
+                    commandLocked={controller.commandLocked}
+                    deleteRecovery={controller.componentDeleteRecovery}
+                    deleteRecoveryPending={controller.componentDeleteRecoveryPending}
+                    onNew={controller.openNewComponent}
+                    onRefresh={controller.refreshComponents}
+                    onEdit={controller.editComponent}
+                    onDelete={controller.deleteComponent}
+                  />
+                )
+              },
+              {
+                key: 'incidents',
+                label: t('statusManagement.navIncidents'),
+                children: (
+                  <StatusIncidentWorkspace
+                    controller={controller}
+                    orgId={statusOrg.id}
+                    componentCount={statusComponents.length}
+                  />
+                )
+              }
+            ]}
+          />
+        ) : (
+          <StatusOrgWorkspace controller={controller} />
+        )}
       </OperationalResultRegion>
 
       <StatusEditorLayer controller={controller} components={statusComponents} />
     </OperationalPage>
+  );
+}
+
+function StatusOrgWorkspace({ controller }: { controller: ReturnType<typeof useStatusManagementController> }) {
+  return (
+    <StatusOrgSection
+      canCreate={controller.capabilities.canCreate}
+      canUpdate={controller.capabilities.canUpdate}
+      state={controller.org}
+      saving={controller.orgSaving}
+      commandLocked={controller.commandLocked}
+      writeRecovery={controller.orgWriteRecovery}
+      onRetryWrite={controller.retryOrgWrite}
+      onSave={controller.saveOrg}
+    />
   );
 }
 

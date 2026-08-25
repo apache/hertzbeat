@@ -24,13 +24,16 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import io.greptime.GreptimeDB;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.warehouse.db.GreptimeQueryGuard;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,6 +63,8 @@ class GreptimeDbIntervalAggregationTest {
     @Mock
     private GreptimeDB greptimeDb;
 
+    private GreptimeQueryGuard queryGuard;
+
     @BeforeEach
     void setUp() {
         when(properties.grpcEndpoints()).thenReturn("127.0.0.1:4001");
@@ -68,6 +73,12 @@ class GreptimeDbIntervalAggregationTest {
         when(properties.password()).thenReturn("password");
         when(properties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
         when(properties.expireTime()).thenReturn(null);
+        queryGuard = new GreptimeQueryGuard(4, Duration.ofSeconds(2), Duration.ofMillis(10));
+    }
+
+    @AfterEach
+    void tearDown() {
+        queryGuard.close();
     }
 
     @Test
@@ -87,7 +98,8 @@ class GreptimeDbIntervalAggregationTest {
 
         try (MockedStatic<GreptimeDB> mocked = mockStatic(GreptimeDB.class)) {
             mocked.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
-            GreptimeDbDataStorage storage = new GreptimeDbDataStorage(properties, restTemplate, sqlQueryExecutor);
+            GreptimeDbDataStorage storage = new GreptimeDbDataStorage(
+                    properties, restTemplate, sqlQueryExecutor, queryGuard);
 
             Map<String, List<Value>> result = storage.getHistoryIntervalMetricData(
                     "127.0.0.1:3306", "mysql", "basic", "max_connections", "1W",

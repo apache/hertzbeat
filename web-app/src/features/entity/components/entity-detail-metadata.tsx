@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 
-import type { EntityDetail } from '../model/entity-contract';
+import type { EntityDetail, EntityRecord } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
 import { EntityEvidenceSources } from './entity-evidence-sources';
 import styles from './entity-view.module.css';
@@ -34,6 +34,15 @@ export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
   );
 }
 
+export function EntityIdentityMetadata({ entity }: { entity: EntityRecord }) {
+  const { t } = useTranslation();
+  return (
+    <OperationalSection title={t('entity.sections.details')}>
+      <Descriptions className={styles.metadataGrid!} size="small" column={2} items={entityItems(t, entity)} />
+    </OperationalSection>
+  );
+}
+
 function baseItems(t: (key: string) => string, detail: EntityDetail) {
   const entity = detail.entity;
   return [
@@ -43,6 +52,12 @@ function baseItems(t: (key: string) => string, detail: EntityDetail) {
       children: <Tag>{localizeEntityCode(t, 'status', detail.status?.status)}</Tag>
     },
     { key: 'reason', label: t('entity.fields.reason'), children: detail.status?.reason || '—' },
+    ...entityItems(t, entity)
+  ];
+}
+
+function entityItems(t: (key: string) => string, entity: EntityRecord) {
+  return [
     { key: 'environment', label: t('entity.fields.environment'), children: entity.environment || '—' },
     { key: 'owner', label: t('entity.fields.owner'), children: entity.owner || '—' },
     { key: 'source', label: t('entity.fields.source'), children: localizeEntityCode(t, 'source', entity.source) },

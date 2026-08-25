@@ -35,6 +35,7 @@ public interface CollectorScopedMetricsQueryService {
      * Storage-neutral metrics console request including the optional Collector scope.
      */
     record Request(
+            String workspaceId,
             Long entityId,
             String entityType,
             Long start,
@@ -60,6 +61,7 @@ public interface CollectorScopedMetricsQueryService {
      * Storage-neutral metric inventory request using the same Collector scope as console queries.
      */
     record InventoryRequest(
+            String workspaceId,
             Long entityId,
             String entityType,
             Long start,

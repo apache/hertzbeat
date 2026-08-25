@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.alert.integration.guide;
 
-import static org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.Readiness.CONFIGURATION_REQUIRED;
-import static org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.Readiness.GUIDE_BLOCKED;
 import static org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.Readiness.READY;
 
 import java.util.LinkedHashMap;
@@ -36,9 +34,6 @@ import org.springframework.stereotype.Component;
 public class AlertIntegrationDescriptorRegistry {
 
     private static final String ACKNOWLEDGEMENT = "alert.integration.ack.accepted_for_processing";
-    private static final String AUTHORIZATION_REQUIRED =
-            "alert.integration.limit.bearer_configuration_required";
-
     private final List<AlertIntegrationDescriptor> descriptors;
     private final Set<String> ingressSources;
     private final Map<String, AlertIntegrationDescriptor> byPublicSource;
@@ -148,34 +143,51 @@ public class AlertIntegrationDescriptorRegistry {
                                 }"""),
                         READY,
                         List.of())),
-                descriptor("skywalking", constrainedGuide(
+                descriptor("skywalking", guide(
                         "skywalking",
                         "skywalking",
+                        "/api/alerts/report/skywalking",
                         "skywalking_alert_array",
-                        List.of("[].alarmMessage", "[].startTime", "[].tags"),
-                        CONFIGURATION_REQUIRED)),
-                descriptor("uptime-kuma", constrainedGuide(
+                        List.of("[].uuid", "[].alarmMessage", "[].startTime", "[].recoveryTime", "[].tags"),
+                        List.of(
+                                "alert.integration.skywalking.step.create_token",
+                                "alert.integration.skywalking.step.configure_webhook",
+                                "alert.integration.skywalking.step.verify_lifecycle"),
+                        List.of(DirectAlertIntegrationGuideContent.SKYWALKING_WEBHOOK),
+                        READY,
+                        List.of())),
+                descriptor("uptime-kuma", guide(
                         "uptime-kuma",
                         "uptime-kuma",
+                        "/api/alerts/report/uptime-kuma",
                         "uptime_kuma_webhook",
                         List.of("heartbeat.status", "heartbeat.time", "monitor.id", "monitor.name"),
-                        CONFIGURATION_REQUIRED)),
+                        List.of(
+                                "alert.integration.uptime-kuma.step.create_token",
+                                "alert.integration.uptime-kuma.step.configure_webhook",
+                                "alert.integration.uptime-kuma.step.verify_lifecycle"),
+                        List.of(DirectAlertIntegrationGuideContent.UPTIME_KUMA_WEBHOOK),
+                        READY,
+                        List.of())),
                 descriptor("zabbix", guide(
                         "zabbix",
                         "zabbix",
                         "/api/alerts/report/zabbix",
                         "single_alert",
                         List.of("labels", "content", "status", "startAt"),
-                        List.of("alert.integration.zabbix.step.correct_guide_required"),
-                        List.of(),
-                        GUIDE_BLOCKED,
                         List.of(
-                                "alert.integration.limit.zabbix.authorization_missing",
-                                "alert.integration.limit.zabbix.response_contract_mismatch",
-                                "alert.integration.limit.zabbix.recovery_time_semantics"))),
-                descriptor("tencent", constrainedGuide(
+                                "alert.integration.zabbix.step.create_token",
+                                "alert.integration.zabbix.step.configure_media_type",
+                                "alert.integration.zabbix.step.verify_problem_and_recovery"),
+                        List.of(
+                                ZabbixIntegrationGuideContent.MEDIA_TYPE_PARAMETERS,
+                                ZabbixIntegrationGuideContent.WEBHOOK_SCRIPT),
+                        READY,
+                        List.of())),
+                descriptor("tencent", guide(
                         "tencent",
                         "tencent",
+                        "/api/alerts/report/tencent",
                         "tencent_cloud_webhook",
                         List.of(
                                 "alarmStatus",
@@ -183,16 +195,38 @@ public class AlertIntegrationDescriptorRegistry {
                                 "firstOccurTime",
                                 "alarmObjInfo",
                                 "alarmPolicyInfo.conditions"),
-                        CONFIGURATION_REQUIRED)),
-                descriptor("alibabacloud-sls", constrainedGuide(
+                        List.of(
+                                "alert.integration.tencent.step.create_token",
+                                "alert.integration.tencent.step.configure_template",
+                                "alert.integration.tencent.step.verify_lifecycle"),
+                        List.of(DirectAlertIntegrationGuideContent.TENCENT_WEBHOOK_PAYLOAD),
+                        READY,
+                        List.of())),
+                descriptor("alibabacloud-sls", guide(
                         "alibabacloud-sls",
                         "alibabacloud",
+                        "/api/alerts/report/alibabacloud-sls",
                         "alibaba_cloud_sls_webhook",
-                        List.of("alert_name", "status", "fire_time", "alert_time", "region", "project"),
-                        CONFIGURATION_REQUIRED)),
-                descriptor("huaweicloud-ces", constrainedGuide(
+                        List.of(
+                                "alert_name",
+                                "alert_id",
+                                "alert_instance_id",
+                                "status",
+                                "fire_time",
+                                "alert_time",
+                                "region",
+                                "project"),
+                        List.of(
+                                "alert.integration.alibabacloud-sls.step.create_token",
+                                "alert.integration.alibabacloud-sls.step.configure_action",
+                                "alert.integration.alibabacloud-sls.step.verify_lifecycle"),
+                        List.of(DirectAlertIntegrationGuideContent.ALIBABA_SLS_WEBHOOK_PAYLOAD),
+                        READY,
+                        List.of())),
+                descriptor("huaweicloud-ces", guide(
                         "huaweicloud-ces",
                         "huaweicloud",
+                        "/api/alerts/report/huaweicloud-ces",
                         "huawei_cloud_smn_webhook",
                         List.of(
                                 "signature",
@@ -201,35 +235,32 @@ public class AlertIntegrationDescriptorRegistry {
                                 "message",
                                 "timestamp",
                                 "topic_urn"),
-                        CONFIGURATION_REQUIRED)),
-                descriptor("volcengine", constrainedGuide(
+                        List.of(
+                                "alert.integration.huaweicloud-ces.step.create_token",
+                                "alert.integration.huaweicloud-ces.step.configure_subscription",
+                                "alert.integration.huaweicloud-ces.step.verify_subscription"),
+                        List.of(),
+                        READY,
+                        List.of("alert.integration.limit.huaweicloud-ces.confirmation_may_be_billable"),
+                        vendorTokenHeader("X-HertzBeat-Token"))),
+                descriptor("volcengine", guide(
                         "volcengine",
                         "volcengine",
+                        "/api/alerts/report/volcengine",
                         "volcengine_webhook",
-                        List.of("Type"),
-                        CONFIGURATION_REQUIRED)));
+                        List.of("Type", "RuleName", "RuleId", "HappenedAt", "RecoveredResources[].Id"),
+                        List.of(
+                                "alert.integration.volcengine.step.create_token",
+                                "alert.integration.volcengine.step.configure_callback",
+                                "alert.integration.volcengine.step.verify_lifecycle"),
+                        List.of(DirectAlertIntegrationGuideContent.VOLCENGINE_METRIC_PAYLOAD),
+                        READY,
+                        List.of("alert.integration.limit.volcengine.event_recovery_unavailable"),
+                        vendorTokenHeader("Token"))));
     }
 
     private static AlertIntegrationDescriptor descriptor(String ingressSource, IntegrationGuide guide) {
         return new AlertIntegrationDescriptor(ingressSource, guide);
-    }
-
-    private static IntegrationGuide constrainedGuide(
-            String source,
-            String iconKey,
-            String payloadShape,
-            List<String> requiredFields,
-            Readiness readiness) {
-        return guide(
-                source,
-                iconKey,
-                "/api/alerts/report/" + source,
-                payloadShape,
-                requiredFields,
-                List.of("alert.integration.step.configure_bearer_capable_callback"),
-                List.of(),
-                readiness,
-                List.of(AUTHORIZATION_REQUIRED));
     }
 
     private static IntegrationGuide guide(
@@ -249,7 +280,7 @@ public class AlertIntegrationDescriptorRegistry {
                 "POST",
                 ingressPath,
                 payloadShape,
-                requiredHeaders(),
+                bearerHeaders(),
                 requiredFields,
                 steps,
                 snippets,
@@ -258,9 +289,42 @@ public class AlertIntegrationDescriptorRegistry {
                 limitations);
     }
 
-    private static Map<String, String> requiredHeaders() {
+    private static IntegrationGuide guide(
+            String source,
+            String iconKey,
+            String ingressPath,
+            String payloadShape,
+            List<String> requiredFields,
+            List<String> steps,
+            List<String> snippets,
+            Readiness readiness,
+            List<String> limitations,
+            Map<String, String> requiredHeaders) {
+        return new IntegrationGuide(
+                source,
+                "alert.integration.source." + source,
+                iconKey,
+                "POST",
+                ingressPath,
+                payloadShape,
+                requiredHeaders,
+                requiredFields,
+                steps,
+                snippets,
+                ACKNOWLEDGEMENT,
+                readiness,
+                limitations);
+    }
+
+    private static Map<String, String> bearerHeaders() {
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("Authorization", "Bearer {token}");
+        return headers;
+    }
+
+    private static Map<String, String> vendorTokenHeader(String headerName) {
+        LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+        headers.put(headerName, "{token}");
         return headers;
     }
 }

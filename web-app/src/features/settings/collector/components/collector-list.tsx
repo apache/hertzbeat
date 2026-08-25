@@ -5,20 +5,19 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Checkbox, Pagination, Table, Tag, Typography } from 'antd';
+import { Button, Checkbox, Pagination, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
-import { classifyCollectorKind } from '../model/collector-kind-model';
 import type { CollectorListState, CollectorMutationAction, CollectorRecord } from '../model/collector-model';
 import { collectorPageSizes, type CollectorPageSize, type CollectorQuery } from '../model/collector-query-model';
-import { CollectorIntakeStateTag } from './collector-intake-state-tag';
+import { CollectorDetailsDrawer } from './collector-details-drawer';
 import { CollectorKindTag } from './collector-kind-tag';
 import { CollectorRowActions } from './collector-row-actions';
-import { CollectorRuntimeReportFacts } from './collector-runtime-report-facts';
 
 type Props = {
   canWrite: boolean;
@@ -37,6 +36,7 @@ type Props = {
 
 export function CollectorList(props: Props) {
   const { t } = useTranslation();
+  const [detailsName, setDetailsName] = useState<string | null>(null);
   if (props.state.kind === 'loading') {
     return <OperationalStatePanel kind="loading" title={t('collectors.loading')} />;
   }
@@ -52,16 +52,19 @@ export function CollectorList(props: Props) {
   if (props.state.kind === 'error') {
     return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   }
-  const columns = collectorColumns(props, t);
+  const records = props.state.records;
+  const detailsRecord = records.find(record => record.name === detailsName) ?? null;
+  const detailsIndex = detailsRecord ? records.findIndex(record => record.name === detailsRecord.name) : -1;
+  const columns = collectorColumns(props, t, setDetailsName);
   return (
     <div>
       <Table
         rowKey="name"
         columns={columns}
-        dataSource={props.state.records}
+        dataSource={records}
         loading={props.busy}
         pagination={false}
-        scroll={{ x: 1760 }}
+        scroll={{ x: 920 }}
       />
       <Pagination
         current={props.query.pageIndex + 1}
@@ -69,19 +72,32 @@ export function CollectorList(props: Props) {
         pageSizeOptions={[...collectorPageSizes]}
         total={props.state.total}
         showSizeChanger
-        onChange={(page, pageSize) => props.onPage(page - 1, pageSize as CollectorPageSize)}
+        onChange={(page, pageSize) => {
+          setDetailsName(null);
+          props.onPage(page - 1, pageSize as CollectorPageSize);
+        }}
+      />
+      <CollectorDetailsDrawer
+        canWrite={props.canWrite}
+        canDelete={props.canDelete}
+        busy={props.busy}
+        record={detailsRecord}
+        position={detailsIndex + 1}
+        total={records.length}
+        onAction={props.onAction}
+        onIntake={props.onIntake}
+        onRuntime={props.onRuntime}
+        onPrevious={() => setDetailsName(records[detailsIndex - 1]?.name ?? detailsName)}
+        onNext={() => setDetailsName(records[detailsIndex + 1]?.name ?? detailsName)}
+        onClose={() => setDetailsName(null)}
       />
     </div>
   );
 }
 
-function collectorColumns(props: Props, t: TFunction): ColumnsType<CollectorRecord> {
+function collectorColumns(props: Props, t: TFunction, onDetails: (name: string) => void): ColumnsType<CollectorRecord> {
   const selectable = props.canWrite || props.canDelete;
-  return [
-    ...(selectable ? selectionColumns(props, t) : []),
-    ...factColumns(t),
-    ...(selectable ? [actionColumn(props, t)] : [])
-  ];
+  return [...(selectable ? selectionColumns(props, t) : []), ...coreFactColumns(t), actionColumn(props, t, onDetails)];
 }
 
 function selectionColumns(props: Props, t: TFunction): ColumnsType<CollectorRecord> {
@@ -114,21 +130,7 @@ function selectionColumns(props: Props, t: TFunction): ColumnsType<CollectorReco
   ];
 }
 
-function renderIntake(record: CollectorRecord, t: TFunction) {
-  if (classifyCollectorKind(record) === 'embedded_java') {
-    return <Typography.Text type="secondary">{t('collectors.kind.notApplicable')}</Typography.Text>;
-  }
-  return <CollectorIntakeStateTag intake={record.instrumentationIntake} />;
-}
-
-function renderRuntime(record: CollectorRecord, t: TFunction) {
-  if (classifyCollectorKind(record) === 'embedded_java') {
-    return <Typography.Text type="secondary">{t('collectors.kind.notApplicable')}</Typography.Text>;
-  }
-  return <CollectorRuntimeReportFacts report={record.runtimeReport} />;
-}
-
-function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
+function coreFactColumns(t: TFunction): ColumnsType<CollectorRecord> {
   return [
     { title: t('collectors.name'), dataIndex: 'name', key: 'name', width: 180, ellipsis: true },
     {
@@ -159,49 +161,41 @@ function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
       key: 'tasks',
       width: 80,
       render: (_, record) => record.pinMonitorNum + record.dispatchMonitorNum
-    },
-    { title: t('collectors.pinned'), dataIndex: 'pinMonitorNum', key: 'pinned', width: 80 },
-    { title: t('collectors.dispatched'), dataIndex: 'dispatchMonitorNum', key: 'dispatched', width: 90 },
-    {
-      title: t('collectors.intake.column'),
-      key: 'intake',
-      width: 168,
-      render: (_, record) => renderIntake(record, t)
-    },
-    {
-      title: t('collectors.runtime.report.column'),
-      key: 'runtime',
-      width: 240,
-      render: (_, record) => renderRuntime(record, t)
-    },
-    { title: t('collectors.address'), dataIndex: 'address', key: 'address', width: 180, ellipsis: true },
-    {
-      title: t('collectors.version'),
-      dataIndex: 'version',
-      key: 'version',
-      width: 120,
-      render: (value: string | null) => value || '—'
     }
   ];
 }
 
-function actionColumn(props: Props, t: TFunction): ColumnsType<CollectorRecord>[number] {
+function actionColumn(
+  props: Props,
+  t: TFunction,
+  onDetails: (name: string) => void
+): ColumnsType<CollectorRecord>[number] {
   return {
     title: t('common.actions'),
     key: 'actions',
     fixed: 'right',
-    width: 420,
+    width: 260,
     render: (_, record) => (
-      <CollectorRowActions
-        canWrite={props.canWrite}
-        canDelete={props.canDelete}
-        busy={props.busy}
-        onAction={props.onAction}
-        onIntake={props.onIntake}
-        onRuntime={props.onRuntime}
-        record={record}
-        t={t}
-      />
+      <Space size={4} wrap>
+        <Button
+          size="small"
+          aria-label={t('collectors.details.actionNamed', { name: record.name })}
+          onClick={() => onDetails(record.name)}
+        >
+          {t('collectors.details.action')}
+        </Button>
+        <CollectorRowActions
+          canWrite={props.canWrite}
+          canDelete={props.canDelete}
+          busy={props.busy}
+          showConfiguration={false}
+          onAction={props.onAction}
+          onIntake={props.onIntake}
+          onRuntime={props.onRuntime}
+          record={record}
+          t={t}
+        />
+      </Space>
     )
   };
 }

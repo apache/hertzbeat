@@ -21,7 +21,9 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
@@ -42,18 +44,18 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
 
     @Override
     public OtlpMetricsConsoleDto query(Request request) {
+        String workspaceId = requireWorkspaceId(request.workspaceId());
         String collectorId = normalizeCollectorId(request.collectorId());
         TelemetryQueryContextScope queryContextScope = new TelemetryQueryContextScope(
                 request.instance(), request.endpoint());
         String query = StringUtils.trimWhitespace(request.query());
-        if (StringUtils.hasText(collectorId) && StringUtils.hasText(query)
-                && !SIMPLE_METRIC_NAME.matcher(query).matches()) {
+        if (StringUtils.hasText(query) && !SIMPLE_METRIC_NAME.matcher(query).matches()) {
             return unsupportedQuery(request, collectorId, queryContextScope);
         }
         String scopedFilter = applyCollectorFilter(request.filter(), collectorId);
         queryContextScope.validateMetricFilter(scopedFilter);
         OtlpMetricsConsoleDto result = workspaceService.getMetricsConsole(
-                request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
+                workspaceId, request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
                 request.serviceNamespace(), request.environment(), collectorId, queryContextScope.instance(),
                 queryContextScope.endpoint(), request.query(), scopedFilter, request.groupBy(), request.aggregation(),
                 request.temporalAggregation(), request.step(), request.limit(), request.operationName());
@@ -67,11 +69,12 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
 
     @Override
     public OtlpMetricsInventoryDto inventory(InventoryRequest request) {
+        String workspaceId = requireWorkspaceId(request.workspaceId());
         String collectorId = normalizeCollectorId(request.collectorId());
         TelemetryQueryContextScope queryContextScope = new TelemetryQueryContextScope(
                 request.instance(), request.endpoint());
         OtlpMetricsInventoryDto result = workspaceService.getMetricsInventory(
-                request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
+                workspaceId, request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
                 request.serviceNamespace(), request.environment(), collectorId, queryContextScope.instance(),
                 queryContextScope.endpoint(), request.limit());
         if (result != null && result.getContext() != null) {
@@ -95,6 +98,9 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
 
     private String applyCollectorFilter(String filter, String collectorId) {
         String normalizedFilter = StringUtils.trimWhitespace(filter);
+        if (containsWorkspaceSelector(normalizedFilter)) {
+            throw new IllegalArgumentException("Workspace must use the authenticated query scope");
+        }
         if (!StringUtils.hasText(collectorId)) {
             return normalizedFilter;
         }
@@ -103,6 +109,22 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
             throw new IllegalArgumentException("Collector ID must use the dedicated query parameter");
         }
         return normalizedFilter;
+    }
+
+    private boolean containsWorkspaceSelector(String filter) {
+        if (!StringUtils.hasText(filter)) {
+            return false;
+        }
+        return filter.contains(OtlpMetricSemanticLabels.HERTZBEAT_WORKSPACE_ID)
+                || OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID_KEYS.stream().anyMatch(filter::contains);
+    }
+
+    private String requireWorkspaceId(String workspaceId) {
+        String normalized = StringUtils.trimWhitespace(workspaceId);
+        if (!StringUtils.hasText(normalized)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return normalized;
     }
 
     private OtlpMetricsConsoleDto unsupportedQuery(Request request, String collectorId,

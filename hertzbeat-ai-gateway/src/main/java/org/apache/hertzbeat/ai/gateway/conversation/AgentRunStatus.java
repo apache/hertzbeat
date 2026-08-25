@@ -25,5 +25,6 @@ public enum AgentRunStatus {
     RUNNING,
     SUCCEEDED,
     FAILED,
-    CANCELLED
+    CANCELLED,
+    RECOVERY_REQUIRED
 }

@@ -72,6 +72,9 @@ public class AgentRuntimeRequest {
         if (!session.getId().equals(run.getSessionId())) {
             throw new IllegalArgumentException("Agent runtime run must belong to the supplied session");
         }
+        if (!java.util.Objects.equals(session.getWorkspaceId(), envelope.getWorkspaceId())) {
+            throw new IllegalArgumentException("Agent runtime session workspace does not match the envelope");
+        }
         // Builder omission means the session has no replayable history; explicit entries must still be complete.
         this.chatHistory = chatHistory == null ? List.of() : List.copyOf(chatHistory);
     }

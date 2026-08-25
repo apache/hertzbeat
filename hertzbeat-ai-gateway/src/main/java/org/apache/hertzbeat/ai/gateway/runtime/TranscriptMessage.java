@@ -18,9 +18,11 @@
 package org.apache.hertzbeat.ai.gateway.runtime;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -55,6 +57,29 @@ public class TranscriptMessage {
     private String errorMessage;
 
     /**
+     * Exact run that produced a successful, non-empty READ observation. This typed marker is intentionally absent
+     * from legacy, failed, empty, search, change, and compacted transcript messages.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String groundingRunUid;
+
+    /** Exact typed proof used by new targeted runs; legacy runUid-only markers never unlock grounding. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private AgentGroundingProof groundingProof;
+
+    /** Version of the canonical invocation fingerprint persisted on the authoritative USER entry. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String requestFingerprintVersion;
+
+    /** Hash of the execution-affecting request fields used to validate idempotent redelivery. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String requestFingerprint;
+
+    /** Full versioned request material required for owner-scoped retry recovery. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private AgentRunRequestSnapshot requestSnapshot;
+
+    /**
      * Provider usage for the complete primary model response that produced this assistant message.
      */
     private AgentRuntimeModelResponse.Usage usage;
@@ -69,9 +94,21 @@ public class TranscriptMessage {
     private Long firstKeptSessionSequence;
 
     public static TranscriptMessage userText(String text) {
+        return userText(text, null, null);
+    }
+
+    public static TranscriptMessage userText(String text, String fingerprintVersion, String fingerprint) {
+        return userText(text, fingerprintVersion, fingerprint, null);
+    }
+
+    public static TranscriptMessage userText(String text, String fingerprintVersion, String fingerprint,
+                                             AgentRunRequestSnapshot requestSnapshot) {
         return TranscriptMessage.builder()
             .role(TranscriptRole.USER)
             .content(List.of(TranscriptContent.text(text)))
+            .requestFingerprintVersion(fingerprintVersion)
+            .requestFingerprint(fingerprint)
+            .requestSnapshot(requestSnapshot)
             .build();
     }
 
@@ -103,11 +140,30 @@ public class TranscriptMessage {
 
     public static TranscriptMessage toolResult(String toolCallId, String toolName,
                                                String text, String errorMessage) {
+        return toolResult(toolCallId, toolName, text, errorMessage, null);
+    }
+
+    public static TranscriptMessage toolResult(String toolCallId, String toolName,
+                                               String text, String errorMessage, String groundingRunUid) {
         return TranscriptMessage.builder()
             .role(TranscriptRole.TOOL_RESULT)
             .toolCallId(toolCallId)
             .toolName(toolName)
             .errorMessage(errorMessage)
+            .groundingRunUid(groundingRunUid)
+            .content(List.of(TranscriptContent.text(text)))
+            .build();
+    }
+
+    public static TranscriptMessage groundedToolResult(String toolCallId, String toolName,
+                                                       String text, String errorMessage,
+                                                       AgentGroundingProof groundingProof) {
+        return TranscriptMessage.builder()
+            .role(TranscriptRole.TOOL_RESULT)
+            .toolCallId(toolCallId)
+            .toolName(toolName)
+            .errorMessage(errorMessage)
+            .groundingProof(groundingProof)
             .content(List.of(TranscriptContent.text(text)))
             .build();
     }

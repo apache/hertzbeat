@@ -21,9 +21,11 @@ import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
@@ -41,6 +43,7 @@ public class AgentToolCallLedgerService {
 
     private static final int ERROR_LIMIT = 1024;
     private static final int DEFAULT_APPROVAL_EXPIRY_MINUTES = 30;
+    private static final String APPROVAL_NOT_FOUND = "Agent tool approval not found";
 
     private final AgentToolCallDao toolCallDao;
 
@@ -118,15 +121,65 @@ public class AgentToolCallLedgerService {
     }
 
     @Transactional
-    public AgentToolCall approve(String approvalId, AgentActor approvingActor) {
-        return decide(approvalId, approvingActor, AgentApprovalDecision.APPROVED,
-            AgentApprovalStatus.APPROVED, null);
+    public AgentToolCall decideApproval(String approvalId, GatewayEnvelope envelope,
+                                        AgentRuntimeEntryType originEntryType,
+                                        AgentApprovalDecision decision) {
+        AgentActor approvingActor = envelope.getActor();
+        requireChangeCapableActor(approvingActor, "Approval decision");
+        AgentToolCall toolCall = toolCallDao.findOwnedApprovalForUpdate(
+                        approvalId, envelope.getWorkspaceId(), envelope.getChannelId(), approvingActor.getType(),
+                        approvingActor.getId(), originEntryType.name())
+                .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        return decide(toolCall, approvingActor, decision,
+                decision == AgentApprovalDecision.APPROVED
+                        ? AgentApprovalStatus.APPROVED : AgentApprovalStatus.REJECTED,
+                decision == AgentApprovalDecision.APPROVED ? null : AgentToolStatus.DENIED);
+    }
+
+    @Transactional(readOnly = true)
+    public void requireApprovalOwner(String approvalId, GatewayEnvelope envelope,
+                                     AgentRuntimeEntryType originEntryType) {
+        AgentActor approvingActor = envelope.getActor();
+        requireChangeCapableActor(approvingActor, "Approval decision");
+        if (!toolCallDao.existsOwnedApproval(approvalId, envelope.getWorkspaceId(), envelope.getChannelId(),
+                approvingActor.getType(), approvingActor.getId(), originEntryType.name())) {
+            throw new IllegalArgumentException(APPROVAL_NOT_FOUND);
+        }
     }
 
     @Transactional
-    public AgentToolCall reject(String approvalId, AgentActor approvingActor) {
-        return decide(approvalId, approvingActor, AgentApprovalDecision.REJECTED,
-            AgentApprovalStatus.REJECTED, AgentToolStatus.DENIED);
+    public AgentToolCall terminalizeUnconsumedApproval(String approvalId, GatewayEnvelope envelope,
+                                                       AgentRuntimeEntryType originEntryType,
+                                                       AgentApprovalDecision decision) {
+        AgentActor approvingActor = envelope.getActor();
+        requireChangeCapableActor(approvingActor, "Approval decision");
+        AgentToolCall toolCall = toolCallDao.findOwnedApprovalForUpdate(
+                        approvalId, envelope.getWorkspaceId(), envelope.getChannelId(), approvingActor.getType(),
+                        approvingActor.getId(), originEntryType.name())
+                .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        if (decision == AgentApprovalDecision.APPROVED
+                && (AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus())
+                    || AgentToolStatus.RUNNING.name().equals(toolCall.getStatus()))
+                && AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus())) {
+            toolCall.setApprovalStatus(AgentApprovalStatus.EXPIRED.name());
+            toolCall.setApprovalReason("Approval runtime was no longer active before execution resumed.");
+            toolCall.setStatus(AgentToolStatus.DENIED.name());
+            toolCall.setErrorMessage("Agent tool approval runtime was no longer active.");
+            return toolCallDao.save(toolCall);
+        }
+        return toolCall;
+    }
+
+    @Transactional
+    public AgentToolCall failApprovedToolBeforeExecution(AgentToolCall candidate, String errorMessage,
+                                                         long elapsedMs) {
+        AgentToolCall toolCall = toolCallDao.findApprovalForRuntimeResume(candidate.getApprovalId())
+                .orElseThrow(() -> new IllegalArgumentException("Approved Agent tool approval was not found"));
+        if (AgentToolStatus.RUNNING.name().equals(toolCall.getStatus())
+                && AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus())) {
+            return failToolCall(toolCall, errorMessage, elapsedMs);
+        }
+        return toolCall;
     }
 
     @Transactional
@@ -187,7 +240,7 @@ public class AgentToolCallLedgerService {
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Approved Agent tool approval id is required");
         }
-        AgentToolCall toolCall = toolCallDao.findByApprovalId(approvalId)
+        AgentToolCall toolCall = toolCallDao.findApprovalForRuntimeResume(approvalId)
             .orElseThrow(() -> new IllegalArgumentException("Approved Agent tool approval was not found"));
         verifyApprovedPendingToolCall(request, descriptor, toolCall);
         return toolCall;
@@ -210,12 +263,9 @@ public class AgentToolCallLedgerService {
         }
     }
 
-    private AgentToolCall decide(String approvalId, AgentActor approvingActor,
+    private AgentToolCall decide(AgentToolCall toolCall, AgentActor approvingActor,
                                  AgentApprovalDecision decision, AgentApprovalStatus approvalStatus,
                                  AgentToolStatus terminalStatus) {
-        requireChangeCapableActor(approvingActor, "Approval decision");
-        AgentToolCall toolCall = toolCallDao.findByApprovalId(approvalId)
-            .orElseThrow(() -> new IllegalArgumentException("Agent tool approval not found"));
         LocalDateTime now = LocalDateTime.now();
         if (isExpired(toolCall, now)) {
             expire(toolCall, now);

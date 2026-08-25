@@ -22,6 +22,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
 
 import { isMonitorSortField, monitorStatusCodes, type MonitorAction } from '../model/monitor-contract';
 import type { MonitorListEvidence } from '../model/monitor-list-model';
@@ -80,6 +81,12 @@ export function MonitorListResults({
     return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   const rowSelection: TableRowSelection<MonitorListRow> = {
     selectedRowKeys: selectedIds,
+    getTitleCheckboxProps: () =>
+      pageSelectionTitleCheckboxProps(
+        selectedIds,
+        evidence.records.filter(record => !isMonitorRowDisappeared(record)).map(record => record.id),
+        pageSelectionLabels(t)
+      ),
     getCheckboxProps: row => ({ disabled: operating || isMonitorRowDisappeared(row) }),
     onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };

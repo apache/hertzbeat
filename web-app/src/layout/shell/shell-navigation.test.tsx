@@ -168,13 +168,27 @@ describe('expanded ShellNavigation', () => {
 
     expect(screen.queryByRole('link', { name: 'menu.monitors' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.basicMonitoring' }));
+    expect(screen.getByRole('button', { name: 'shell.navigation.basicMonitoring' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
     expect(screen.getByRole('link', { name: 'menu.monitors' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.alerting' }));
+    expect(screen.getByRole('button', { name: 'shell.navigation.basicMonitoring' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: 'shell.navigation.alerting' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'menu.alerts' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'alertRules.title' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.administration' }));
+    expect(screen.getByRole('button', { name: 'shell.navigation.alerting' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'shell.navigation.administration' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
     expect(screen.getByRole('link', { name: 'menu.tokens' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'menu.settings' })).not.toBeInTheDocument();
   });

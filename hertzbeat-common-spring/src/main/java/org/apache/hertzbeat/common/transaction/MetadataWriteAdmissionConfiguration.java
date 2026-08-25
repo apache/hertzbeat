@@ -8,6 +8,7 @@
 package org.apache.hertzbeat.common.transaction;
 
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Role;
@@ -31,6 +32,7 @@ public class MetadataWriteAdmissionConfiguration {
     }
 
     @Bean
+    @ConditionalOnBean(TransactionAttributeSource.class)
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     MetadataWriteAdmissionAdvisor metadataWriteAdmissionAdvisor(
             TransactionAttributeSource transactionAttributeSource,

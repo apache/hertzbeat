@@ -13,6 +13,7 @@ import { classifyMonitorReadError, loadMonitorsByApp, MonitorContractError, type
 import {
   buildMetricAlertBindingsPatch,
   metricAlertFieldsForTarget,
+  normalizeRealtimeMetricBindings,
   type AlertRuleDraft,
   type MetricAlertField
 } from '../model/alert-rule-model';
@@ -21,11 +22,9 @@ import type { AlertRuleMetricTargetState } from './use-alert-rule-metric-target-
 
 type BindingFailure = 'unavailable' | 'contract-error' | 'error';
 type BindingEvidence =
-  | { kind: 'idle' | 'loading' | 'empty' }
-  | { kind: BindingFailure }
-  | { kind: 'ready'; monitors: Monitor[]; labels: string[] };
+  { kind: 'idle' | 'loading' | 'empty' } | { kind: BindingFailure } | { kind: 'ready'; monitors: Monitor[] };
 type BindingContext = { app: string; fields: MetricAlertField[]; key: string };
-type BindingSession = { key: string; monitorIds: number[]; labels: string[]; initialLabels: string[] };
+type BindingSession = { key: string; monitorIds: number[]; labels: string[] };
 type UpdateDraft = (patch: Partial<AlertRuleDraft>) => void;
 type SetBindingSession = (session: BindingSession | null) => void;
 
@@ -85,8 +84,7 @@ function bindingControllerState(
     open: session !== null,
     evidence,
     selectedMonitorIds: session?.monitorIds ?? [],
-    selectedLabels: session?.labels ?? [],
-    labelChoices: session ? bindingLabels(session, evidence) : []
+    selectedLabels: session?.labels ?? []
   };
 }
 
@@ -119,8 +117,7 @@ function openBindingSession(command: BindingCommandContext) {
   command.setSession({
     key: command.context.key,
     monitorIds: [...editor.monitorIds],
-    labels: [...editor.monitorLabels],
-    initialLabels: [...editor.monitorLabels]
+    labels: [...editor.monitorLabels]
   });
 }
 
@@ -146,9 +143,13 @@ function changeBindingMonitorIds(command: BindingCommandContext, monitorIds: num
 
 function changeBindingLabels(command: BindingCommandContext, labels: string[]) {
   if (!isConfirmable(command.evidence) || !command.activeSession) return;
-  const available = new Set(bindingLabels(command.activeSession, command.evidence));
-  if (labels.some(label => !available.has(label))) return;
-  command.setSession({ ...command.activeSession, labels: [...labels] });
+  const normalized = labels.map(label => label.trim());
+  try {
+    normalizeRealtimeMetricBindings([], normalized);
+  } catch {
+    return;
+  }
+  command.setSession({ ...command.activeSession, labels: [...new Set(normalized)] });
 }
 
 function bindingContext(draft: AlertRuleDraft | null, state: AlertRuleMetricTargetState): BindingContext | null {
@@ -182,15 +183,7 @@ function resolveEvidence(query: QueryEvidence<Monitor[]>): BindingEvidence {
   if (query.isError) return { kind: bindingFailure(query.error) };
   if (query.data === undefined) return { kind: 'error' };
   if (query.data.length === 0) return { kind: 'empty' };
-  return { kind: 'ready', monitors: query.data, labels: monitorLabels(query.data) };
-}
-
-function monitorLabels(monitors: Monitor[]) {
-  return [
-    ...new Set(
-      monitors.flatMap(monitor => Object.entries(monitor.labels ?? {}).map(([name, value]) => `${name}:${value}`))
-    )
-  ].sort((left, right) => left.localeCompare(right));
+  return { kind: 'ready', monitors: query.data };
 }
 
 function bindingFailure(error: unknown): BindingFailure {
@@ -200,10 +193,6 @@ function bindingFailure(error: unknown): BindingFailure {
 
 function isConfirmable(evidence: BindingEvidence) {
   return evidence.kind === 'ready' || evidence.kind === 'empty';
-}
-
-function bindingLabels(session: BindingSession, evidence: BindingEvidence) {
-  return [...new Set([...session.initialLabels, ...(evidence.kind === 'ready' ? evidence.labels : [])])];
 }
 
 type QueryEvidence<T> = {

@@ -32,6 +32,8 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import java.util.Set;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfig;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigOptions;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
@@ -40,6 +42,7 @@ import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.MessageServerConfigConflictException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigRevisionRequiredException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigService;
+import org.apache.hertzbeat.manager.service.PublicAccessConfigService;
 import org.apache.hertzbeat.manager.service.SystemConfigService;
 import org.apache.hertzbeat.manager.service.impl.ConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,6 +72,9 @@ class GeneralConfigControllerTest {
 
     @Mock
     private SystemConfigService systemConfigService;
+
+    @Mock
+    private PublicAccessConfigService publicAccessConfigService;
 
     @InjectMocks
     private GeneralConfigController generalConfigController;
@@ -165,6 +171,55 @@ class GeneralConfigControllerTest {
                         org.hamcrest.Matchers.containsString("secret-token-sentinel"))))
                 .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("unknown-field-sentinel"))));
+    }
+
+    @Test
+    void publicAccessConfigCanBeReadAndUpdatedAfterSetup() throws Exception {
+        PublicAccessConfig current = new PublicAccessConfig(
+                "https://hertzbeat.example.test/base",
+                "https://otel.example.test/v1",
+                "https://otel.example.test:4317");
+        when(publicAccessConfigService.getConfig()).thenReturn(current);
+        when(publicAccessConfigService.saveAndGetConfig(any())).thenReturn(current);
+
+        mockMvc.perform(get("/api/config/public-access").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.publicBaseUrl").value("https://hertzbeat.example.test/base"));
+        mockMvc.perform(post("/api/config/public-access")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"publicBaseUrl":"https://hertzbeat.example.test/base",
+                                 "serverOtlpHttpEndpoint":"https://otel.example.test/v1",
+                                 "serverOtlpGrpcEndpoint":"https://otel.example.test:4317"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.serverOtlpGrpcEndpoint")
+                        .value("https://otel.example.test:4317"));
+        verify(publicAccessConfigService).saveAndGetConfig(any(PublicAccessConfigRequest.class));
+    }
+
+    @Test
+    void publicAccessConfigRejectsUnknownFieldsWithoutEchoingInput() throws Exception {
+        when(publicAccessConfigService.saveAndGetConfig(any())).thenAnswer(invocation -> {
+            PublicAccessConfigRequest request = invocation.getArgument(0);
+            if (request.isUnknownFieldPresent()) {
+                throw new IllegalArgumentException("unknown-public-access-field");
+            }
+            return new PublicAccessConfig(null, null, null);
+        });
+
+        mockMvc.perform(post("/api/config/public-access")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"publicBaseUrl":"https://hertzbeat.example.test",
+                                 "password":"secret-public-access-sentinel"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Invalid public access config"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("secret-public-access-sentinel"))))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("unknown-public-access-field"))));
     }
 
     @Test

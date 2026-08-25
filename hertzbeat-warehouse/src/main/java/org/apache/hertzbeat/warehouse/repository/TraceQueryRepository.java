@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 
 /**
  * Repository for raw trace row queries.
@@ -161,6 +162,10 @@ public interface TraceQueryRepository {
                                                            String workspaceId,
                                                            Map<String, Set<String>> resourceIdentityFilters,
                                                            Boolean hideInternal) {
+        if (workspaceId != null && !workspaceId.isBlank()
+                || resourceIdentityFilters != null && !resourceIdentityFilters.isEmpty()) {
+            throw new TelemetryStorageUnavailableException();
+        }
         return queryRecentTraceRows(limit, start, end, serviceName, environment, hideInternal);
     }
 
@@ -519,6 +524,19 @@ public interface TraceQueryRepository {
                                                                  Collection<String> serviceNames,
                                                                  Boolean hideInternal) {
         return queryTraceServiceGraphRows(limit, start, end, environment, hideInternal);
+    }
+
+    /**
+     * Query a service graph within one trusted workspace.
+     */
+    default List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                 Long start,
+                                                                 Long end,
+                                                                 String environment,
+                                                                 String workspaceId,
+                                                                 Collection<String> serviceNames,
+                                                                 Boolean hideInternal) {
+        throw new TelemetryStorageUnavailableException();
     }
 
     /**

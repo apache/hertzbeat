@@ -23,10 +23,27 @@ import zhCn from '@/assets/i18n/zh-cn.json';
 import zhTw from '@/assets/i18n/zh-tw.json';
 
 describe('Alert Group locale coverage', () => {
-  it('provides batch-delete copy in every runtime locale', () => {
+  it('provides source-aligned editor and batch-delete copy in every runtime locale', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.alertGroups.required).toBeTruthy();
+      expect(locale.alertGroups.labelsPlaceholder).toBeTruthy();
+      expect(locale.alertGroups.durationUnit).toBeTruthy();
+      expect(locale.alertGroups.units.seconds).toBeTruthy();
+      expect(locale.alertGroups.units.minutes).toBeTruthy();
+      expect(locale.alertGroups.units.hours).toBeTruthy();
+      expect(locale.common.tableSelection.selectAll).toBeTruthy();
+      expect(locale.common.tableSelection.clearAll).toBeTruthy();
+      expect(locale.alertGroups.help.name).toBeTruthy();
+      expect(locale.alertGroups.help.labels).toBeTruthy();
+      expect(locale.alertGroups.help.wait).toBeTruthy();
+      expect(locale.alertGroups.help.interval).toBeTruthy();
+      expect(locale.alertGroups.help.repeat).toBeTruthy();
       expect(locale.alertGroups.deleteSelected).toBeTruthy();
       expect(locale.alertGroups.deleteSelectedConfirm).toContain('{{count}}');
     }
+
+    expect(en.alertGroups.wait).toBe('Wait Time');
+    expect(en.alertGroups.interval).toBe('Interval Time');
+    expect(en.alertGroups.enabled).toBe('Enable');
   });
 });

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
@@ -43,7 +44,11 @@ public interface ObserveEntityDao extends JpaRepository<ObserveEntity, Long>, Jp
 
     Optional<ObserveEntity> findFirstByWorkspaceIdAndName(String workspaceId, String name);
 
+    Optional<ObserveEntity> findFirstByWorkspaceIdAndId(String workspaceId, Long id);
+
     List<ObserveEntity> findAllByWorkspaceId(String workspaceId, Sort sort);
 
     List<ObserveEntity> findAllByWorkspaceId(String workspaceId, Pageable pageable);
+
+    List<ObserveEntity> findAllByWorkspaceIdAndIdIn(String workspaceId, Collection<Long> ids);
 }

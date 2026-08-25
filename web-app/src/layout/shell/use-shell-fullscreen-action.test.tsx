@@ -11,6 +11,28 @@ import { describe, expect, it, vi } from 'vitest';
 import { useShellFullscreenAction } from './use-shell-fullscreen-action';
 
 describe('useShellFullscreenAction', () => {
+  it('asks the browser to hide navigation chrome before entering fullscreen', async () => {
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+    const requestDescriptor = Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen');
+    const exitDescriptor = Object.getOwnPropertyDescriptor(document, 'exitFullscreen');
+    Object.defineProperty(document.documentElement, 'requestFullscreen', {
+      configurable: true,
+      value: requestFullscreen
+    });
+    Object.defineProperty(document, 'exitFullscreen', { configurable: true, value: exitFullscreen });
+
+    const { result, unmount } = renderHook(() => useShellFullscreenAction());
+    try {
+      await act(async () => expect(result.current.toggle()).resolves.toBe('changed'));
+      expect(requestFullscreen).toHaveBeenCalledWith({ navigationUI: 'hide' });
+    } finally {
+      unmount();
+      restoreProperty(document.documentElement, 'requestFullscreen', requestDescriptor);
+      restoreProperty(document, 'exitFullscreen', exitDescriptor);
+    }
+  });
+
   it('tracks browser fullscreen events and toggles through the runtime boundary', async () => {
     const runtime = fullscreenRuntime();
     const { result, unmount } = renderHook(() => useShellFullscreenAction(runtime));
@@ -42,6 +64,11 @@ describe('useShellFullscreenAction', () => {
     expect(denied.result.current.state).toEqual({ available: true, active: false, busy: false });
   });
 });
+
+function restoreProperty(target: object, key: PropertyKey, descriptor: PropertyDescriptor | undefined) {
+  if (descriptor) Object.defineProperty(target, key, descriptor);
+  else Reflect.deleteProperty(target, key);
+}
 
 function fullscreenRuntime(available = true) {
   let active = false;

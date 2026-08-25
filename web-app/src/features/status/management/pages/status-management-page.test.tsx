@@ -93,13 +93,19 @@ describe('StatusManagementPage', () => {
       });
       renderPage();
 
-      expect((await screen.findAllByText('API')).length).toBeGreaterThan(0);
-      expect(screen.getByText('Outage')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'New component' }) !== null).toBe(canWrite);
-      expect(screen.queryByRole('button', { name: 'New incident' }) !== null).toBe(canWrite);
-      expect(screen.queryAllByRole('button', { name: 'Edit' }).length > 0).toBe(canWrite);
-      expect(screen.queryAllByRole('button', { name: 'Update' }).length > 0).toBe(canWrite);
-      expect(screen.queryAllByRole('button', { name: 'Delete' }).length > 0).toBe(canDelete);
+      await openWorkspace('navComponents');
+      const componentsPanel = activeWorkspacePanel();
+      expect((await within(componentsPanel).findAllByText('API')).length).toBeGreaterThan(0);
+      expect(within(componentsPanel).queryByRole('button', { name: 'New component' }) !== null).toBe(canWrite);
+      expect(within(componentsPanel).queryAllByRole('button', { name: 'Edit' }).length > 0).toBe(canWrite);
+      expect(within(componentsPanel).queryAllByRole('button', { name: 'Delete' }).length > 0).toBe(canDelete);
+
+      await openWorkspace('navIncidents');
+      const incidentsPanel = activeWorkspacePanel();
+      expect(within(incidentsPanel).getByText('Outage')).toBeInTheDocument();
+      expect(within(incidentsPanel).queryByRole('button', { name: 'New incident' }) !== null).toBe(canWrite);
+      expect(within(incidentsPanel).queryAllByRole('button', { name: 'Update' }).length > 0).toBe(canWrite);
+      expect(within(incidentsPanel).queryAllByRole('button', { name: 'Delete' }).length > 0).toBe(canDelete);
     }
   );
 
@@ -121,22 +127,55 @@ describe('StatusManagementPage', () => {
     expect(page).toContainElement(header);
     expect(page).toContainElement(results);
     expect(screen.getByText(i18n.t('statusManagement.description'))).toBeInTheDocument();
-    const publicStatusLink = screen.getByRole('link', { name: i18n.t('statusManagement.openPublicPage') });
+    const publicStatusLink = await screen.findByRole('link', { name: i18n.t('statusManagement.openPublicPage') });
     expect(publicStatusLink).toHaveAttribute('href', '/status');
     expect(publicStatusLink).toHaveAttribute('target', '_blank');
+    expect(screen.getAllByRole('link', { name: i18n.t('statusManagement.openPublicPage') })).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens settings first and keeps only settings, components, and incidents', async () => {
+    api.loadStatusComponents.mockResolvedValue([statusComponent]);
+    renderPage();
+
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs.map(tab => tab.textContent)).toEqual([
+      i18n.t('statusManagement.navSettings'),
+      i18n.t('statusManagement.navComponents'),
+      i18n.t('statusManagement.navIncidents')
+    ]);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(i18n.t('statusManagement.name'))).not.toBeInTheDocument();
+    const settingsPanel = activeWorkspacePanel();
+    const settingsRegion = organizationRegion(settingsPanel);
+    expect(within(settingsRegion).getByText(org.name)).toBeInTheDocument();
+    expect(within(settingsPanel).getByRole('button', { name: i18n.t('common.edit') })).toBeInTheDocument();
   });
 
   it('renders explicit empty component and incident states after loading', async () => {
     renderPage();
 
-    expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
-    expect(screen.getByText('No public components are configured.')).toBeInTheDocument();
-    expect(screen.getByText('No incidents in the selected period.')).toBeInTheDocument();
+    await openWorkspace('navComponents');
+    expect(activeWorkspacePanel().querySelector('[data-state="empty"]')).toHaveAttribute('data-presentation', 'quiet');
+    await openWorkspace('navIncidents');
+    const emptyIncidents = within(activeWorkspacePanel()).getByRole('region', {
+      name: i18n.t('status.noIncidents')
+    });
+    expect(emptyIncidents).toHaveAttribute('data-state', 'empty');
+    expect(
+      within(emptyIncidents).getByText(i18n.t('statusManagement.emptyIncidentsNeedsComponent'))
+    ).toBeInTheDocument();
+    expect(within(emptyIncidents).getByRole('button', { name: i18n.t('statusManagement.newIncident') })).toBeDisabled();
+    expect(
+      within(activeWorkspacePanel()).getAllByRole('button', { name: i18n.t('statusManagement.newIncident') })
+    ).toHaveLength(1);
   });
 
   it('keeps incident search and query together while refresh stays in the action rail', async () => {
     const { container } = renderPage();
 
+    await openWorkspace('navIncidents');
     await screen.findByRole('textbox', { name: i18n.t('statusManagement.searchIncidents') });
     const commandBar = requireHtmlElement(
       container.querySelector('[data-hb-operational-command-bar]'),
@@ -164,6 +203,7 @@ describe('StatusManagementPage', () => {
     });
     const { container } = renderPage('/settings/status-page?pageIndex=3&pageSize=8');
 
+    await openWorkspace('navIncidents');
     await waitFor(() =>
       expect(api.loadStatusIncidents).toHaveBeenCalledWith(
         {
@@ -175,16 +215,49 @@ describe('StatusManagementPage', () => {
       )
     );
     await waitFor(() => expect(container.querySelector('.ant-pagination')).not.toBeNull());
-    expect(screen.queryByText('No incidents in the selected period.')).not.toBeInTheDocument();
-    expect(container.querySelector('.ant-table')).not.toBeNull();
+    expect(within(activeWorkspacePanel()).queryByText('No incidents in the selected period.')).not.toBeInTheDocument();
+    expect(activeWorkspacePanel().querySelector('.ant-table')).not.toBeNull();
   });
 
-  it('allows initial configuration only for exact organization not-found', async () => {
+  it('focuses exact organization not-found on setup and defers operational workspaces', async () => {
     api.loadStatusOrg.mockRejectedValue(new StatusOrgNotFoundError());
     renderPage();
 
-    expect(await screen.findByText('Configure the page identity before adding components.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: i18n.t('statusManagement.setupTitle') })).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toBeEnabled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: i18n.t('statusManagement.openPublicPage') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('statusManagement.newComponent') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('statusManagement.newIncident') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('search', { name: i18n.t('statusManagement.searchIncidents') })).not.toBeInTheDocument();
+  });
+
+  it('keeps the original unconfigured evidence for a read-only viewer', async () => {
+    access.roles = ['GUEST'];
+    api.loadStatusOrg.mockRejectedValue(new StatusOrgNotFoundError());
+    renderPage();
+
+    expect(await screen.findByText(i18n.t('statusManagement.notConfigured'))).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: i18n.t('statusManagement.setupTitle') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('statusManagement.createPage') })).not.toBeInTheDocument();
+  });
+
+  it('reveals the public link and operational workspaces after initial setup succeeds', async () => {
+    api.loadStatusOrg.mockRejectedValueOnce(new StatusOrgNotFoundError());
+    api.saveStatusOrg.mockResolvedValueOnce({ ...org, feedback: '', color: '#5b6fd8' });
+    renderPage();
+
+    await screen.findByRole('heading', { name: i18n.t('statusManagement.setupTitle') });
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: org.name } });
+    fireEvent.change(screen.getByLabelText('Home URL'), { target: { value: org.home } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: org.description } });
+    fireEvent.change(screen.getByLabelText('Logo URL'), { target: { value: org.logo } });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('statusManagement.createPage') }));
+
+    await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledOnce());
+    expect(await screen.findByRole('link', { name: i18n.t('statusManagement.openPublicPage') })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: i18n.t('statusManagement.navComponents') })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: i18n.t('statusManagement.navIncidents') })).toBeInTheDocument();
   });
 
   it('keeps organization authoring unavailable on transport failure', async () => {
@@ -199,12 +272,13 @@ describe('StatusManagementPage', () => {
 
   it('cancels organization edits without writing and saves explicit edits', async () => {
     renderPage();
-    expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
-    await waitFor(() => expect(screen.getByLabelText('Name')).toBeEnabled());
-    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Changed' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(screen.getByDisplayValue('HertzBeat')).toBeDisabled());
+    await openWorkspace('navSettings');
+    expect(within(organizationRegion()).getByText('HertzBeat')).toBeInTheDocument();
+    fireEvent.click(within(activeWorkspacePanel()).getByRole('button', { name: 'Edit' }));
+    await waitFor(() => expect(within(activeWorkspacePanel()).getByLabelText('Name')).toBeEnabled());
+    fireEvent.change(within(activeWorkspacePanel()).getByLabelText('Name'), { target: { value: 'Changed' } });
+    fireEvent.click(within(activeWorkspacePanel()).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(within(organizationRegion()).getByText('HertzBeat')).toBeInTheDocument());
     expect(api.saveStatusOrg).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
@@ -220,7 +294,8 @@ describe('StatusManagementPage', () => {
     api.saveStatusOrg.mockReturnValueOnce(firstSave.promise);
     renderPage();
 
-    expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
+    await openWorkspace('navSettings');
+    expect(within(organizationRegion()).getByText('HertzBeat')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     const name = await screen.findByLabelText('Name');
     fireEvent.change(name, { target: { value: 'Draft organization' } });
@@ -246,20 +321,28 @@ describe('StatusManagementPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Retry$/ }));
     await waitFor(() => expect(api.loadStatusOrg).toHaveBeenCalledTimes(3));
     expect(api.saveStatusOrg).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(name).toBeDisabled());
+    await waitFor(() => expect(within(organizationRegion()).getByText('Draft organization')).toBeInTheDocument());
   });
 
   it('shows component delete recovery with one explicit read-only Retry', async () => {
     api.loadStatusComponents.mockResolvedValue([statusComponent]);
     renderPage();
 
-    const row = (await screen.findByText('API')).closest('tr');
+    await openWorkspace('navComponents');
+    const row = within(
+      within(activeWorkspacePanel()).getByRole('list', { name: i18n.t('statusManagement.componentCollection') })
+    )
+      .getByText('API')
+      .closest('li');
     if (!(row instanceof HTMLElement)) throw new Error('Missing component row');
     fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
 
     expect(await screen.findByText(i18n.t('statusManagement.unknown'))).toBeInTheDocument();
-    for (const refresh of screen.getAllByRole('button', { name: 'Refresh' })) expect(refresh).toBeDisabled();
+    const managementRefresh = screen
+      .getAllByRole('button', { name: 'Refresh' })
+      .filter(button => !button.closest('[inert]'));
+    for (const refresh of managementRefresh) expect(refresh).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
     expect(api.deleteStatusComponent).toHaveBeenCalledTimes(1);
   });
@@ -276,7 +359,8 @@ describe('StatusManagementPage', () => {
     api.loadStatusIncident.mockResolvedValue(incidentSummary);
     renderPage();
 
-    const row = (await screen.findByText('Outage')).closest('tr');
+    await openWorkspace('navIncidents');
+    const row = within(activeWorkspacePanel()).getByText('Outage').closest('tr');
     if (!(row instanceof HTMLElement)) throw new Error('Missing incident row');
     fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
@@ -289,7 +373,8 @@ describe('StatusManagementPage', () => {
   it('does not replace an organization draft during a background refresh', async () => {
     const { client } = renderPage();
 
-    expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
+    await openWorkspace('navSettings');
+    expect(within(organizationRegion()).getByText('HertzBeat')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     const name = await screen.findByLabelText('Name');
     fireEvent.change(name, { target: { value: 'Local draft' } });
@@ -302,6 +387,21 @@ describe('StatusManagementPage', () => {
     await waitFor(() => expect(api.loadStatusOrg).toHaveBeenCalledTimes(2));
     expect(name).toHaveValue('Local draft');
     expect(name).toBeEnabled();
+  });
+
+  it('keeps an unsaved settings draft when the operator checks another workspace', async () => {
+    renderPage();
+
+    await openWorkspace('navSettings');
+    fireEvent.click(within(activeWorkspacePanel()).getByRole('button', { name: 'Edit' }));
+    const name = await within(activeWorkspacePanel()).findByLabelText('Name');
+    fireEvent.change(name, { target: { value: 'Unpublished status name' } });
+
+    await openWorkspace('navComponents');
+    await openWorkspace('navSettings');
+
+    expect(within(activeWorkspacePanel()).getByLabelText('Name')).toHaveValue('Unpublished status name');
+    expect(api.saveStatusOrg).not.toHaveBeenCalled();
   });
 
   it('keeps a new incident open when an obsolete detail request finishes', async () => {
@@ -317,7 +417,8 @@ describe('StatusManagementPage', () => {
     api.loadStatusIncident.mockReturnValue(detail.promise);
     renderPage();
 
-    expect(await screen.findByText('Outage')).toBeInTheDocument();
+    await openWorkspace('navIncidents');
+    expect(within(activeWorkspacePanel()).getByText('Outage')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
     await waitFor(() => expect(api.loadStatusIncident).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
     fireEvent.click(screen.getByRole('button', { name: 'New incident' }));
@@ -348,7 +449,8 @@ describe('StatusManagementPage', () => {
     api.loadStatusIncident.mockRejectedValue(new StatusManagementMissingError('incident'));
     renderPage();
 
-    expect(await screen.findByText('Outage')).toBeInTheDocument();
+    await openWorkspace('navIncidents');
+    expect(within(activeWorkspacePanel()).getByText('Outage')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
 
     expect(await screen.findByText(i18n.t('statusManagement.loadIncidentFailed'))).toBeInTheDocument();
@@ -389,6 +491,18 @@ function renderPage(entry = '/settings/status-page') {
     </I18nextProvider>
   );
   return { ...view, client };
+}
+
+async function openWorkspace(key: 'navComponents' | 'navIncidents' | 'navSettings') {
+  fireEvent.click(await screen.findByRole('tab', { name: i18n.t(`statusManagement.${key}`) }));
+}
+
+function activeWorkspacePanel() {
+  return screen.getByRole('tabpanel');
+}
+
+function organizationRegion(panel = activeWorkspacePanel()) {
+  return within(panel).getByRole('region', { name: i18n.t('statusManagement.organization') });
 }
 
 class ResizeObserverStub {

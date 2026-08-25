@@ -27,11 +27,16 @@
         "unavailable": "無法使用",
         "unknown": "未知"
       },
-      "snapshotObservedAt": "快照於 {{time}}",
+      "currentStatusObservedAt": "目前狀態 · {{time}}",
       "collectorLastReportedAt": "最後回報於 {{time}}",
       "collectorCounts": "{{online}}/{{total}} 在線 · {{runtimeHealthy}} 個執行階段正常",
+      "collectorOnlineCount": "在線採集器：{{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "執行階段正常：{{count}} 個",
+      "collectorOfflineCount": "未上線採集器：{{count}} 個",
       "collectorNotReported": "暫無執行階段回報",
       "notObserved": "尚未觀測",
+      "details": "{{label}}狀態詳情",
+      "openManagement": "前往管理頁面",
       "request": {
         "permission": "無權檢視執行狀態",
         "unavailable": "執行狀態請求無法使用",

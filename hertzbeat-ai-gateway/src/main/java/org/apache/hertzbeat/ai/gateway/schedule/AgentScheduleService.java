@@ -32,6 +32,7 @@ import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
@@ -203,6 +204,7 @@ public class AgentScheduleService {
                         .channelId(ChannelId.SYSTEM.id())
                         .receivedAt(now)
                         .actor(AgentActor.scheduleActor())
+                        .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                         .build(),
                 scheduleInput(schedule, "schedule-session:" + schedule.getId()),
                 AgentRuntimeEntryType.SCHEDULE_TRIGGER);

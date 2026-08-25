@@ -27,7 +27,8 @@ spring:
       chat: none
     mcp:
       server:
-        enabled: true
+        enabled: false
+        tool-callback-converter: false
         stdio: false
         protocol: streamable
         streamable-http:
@@ -211,6 +212,10 @@ warehouse:
       database: public
       username: greptime
       password: greptime
+      query:
+        max-concurrency: 8
+        timeout: 5s
+        admission-wait: 100ms
     questdb:
       enabled: false
       url: localhost:9000

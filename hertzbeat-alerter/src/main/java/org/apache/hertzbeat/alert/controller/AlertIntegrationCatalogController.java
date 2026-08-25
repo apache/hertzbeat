@@ -21,10 +21,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.CatalogResponse;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.IntegrationGuide;
+import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.IntegrationVerification;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationRequestException;
 import org.apache.hertzbeat.alert.integration.service.AlertIntegrationCatalogService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
 
 /**
  * Read-only catalog for external alert integrations.
@@ -50,13 +53,21 @@ public class AlertIntegrationCatalogController {
     @GetMapping
     @Operation(summary = "List external alert integrations")
     public ResponseEntity<Message<CatalogResponse>> catalog() {
-        return ResponseEntity.ok(Message.success(service.catalog()));
+        return ResponseEntity.ok(Message.success(
+                service.catalog(AuthTokenRequestContext.currentWorkspaceId())));
     }
 
     @GetMapping("/{source}")
     @Operation(summary = "Render one external alert integration")
     public ResponseEntity<Message<IntegrationGuide>> render(@PathVariable String source) {
         return ResponseEntity.ok(Message.success(service.render(source)));
+    }
+
+    @PutMapping("/{source}/verification")
+    @Operation(summary = "Start external alert integration verification")
+    public ResponseEntity<Message<IntegrationVerification>> startVerification(@PathVariable String source) {
+        return ResponseEntity.ok(Message.success(service.startVerification(
+                AuthTokenRequestContext.currentWorkspaceId(), source)));
     }
 
     @ExceptionHandler(AlertIntegrationRequestException.class)

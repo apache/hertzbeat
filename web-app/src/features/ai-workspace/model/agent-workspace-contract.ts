@@ -1,28 +1,133 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-export type AgentSignalRef = {
-  type: 'metrics' | 'logs' | 'traces';
-  query?: string;
-  timeRange?: string;
-  start?: number;
-  end?: number;
+type AgentMonitorMetricSignal = {
+  type: 'metrics';
+  query: string;
+  start: number;
+  end: number;
+  timezone: string;
+};
+
+export type AgentMonitorMetricSourceTarget = {
+  monitorId: number;
+  signal: AgentMonitorMetricSignal;
+};
+
+type AgentSingleAlertSourceTarget = {
+  alertId: number;
+  alertType: 'single';
+};
+
+type AgentEntitySourceTarget = {
+  entityId: number;
 };
 
 export type AgentTopologyRef = {
-  rootEntityId?: number;
+  rootEntityId: number;
   nodeId?: string;
   edgeId?: string;
-  depth?: number;
+  depth: 1 | 2;
+  environment?: string;
+  sourceKind: string;
+  start?: number;
+  end?: number;
+  relationType?: string;
+  hideInternal: boolean;
+  pageIndex: number;
+  pageSize: number;
 };
 
-export type AgentTargetRef = {
-  monitorId?: number;
-  alertId?: number;
-  entityId?: number;
-  collector?: string;
-  signal?: AgentSignalRef;
-  topology?: AgentTopologyRef;
+export type AgentTopologySourceTarget = {
+  topology: AgentTopologyRef;
 };
+
+export type AgentTraceRef = {
+  traceId: string;
+  spanId?: string;
+  start: number;
+  end: number;
+  serviceName?: string;
+  serviceNamespace?: string;
+  environment?: string;
+  resourceFilter?: string;
+  attributeFilter?: string;
+  minDurationMs?: number;
+  maxDurationMs?: number;
+};
+
+export type AgentTraceSourceTarget = {
+  trace: AgentTraceRef;
+};
+
+export type AgentLogRef = {
+  start: number;
+  end: number;
+  traceId?: string;
+  spanId?: string;
+  severityNumber?: number;
+  severityText?: 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+  search?: string;
+  serviceName?: string;
+  serviceNamespace?: string;
+  environment?: string;
+  resourceFilter?: string;
+  attributeFilter?: string;
+  hideInternal: boolean;
+  hideNoise: boolean;
+  pageIndex: number;
+  pageSize: number;
+};
+
+export type AgentLogSourceTarget = { log: AgentLogRef };
+
+export type AgentSourceTarget =
+  | AgentMonitorMetricSourceTarget
+  | AgentSingleAlertSourceTarget
+  | AgentEntitySourceTarget
+  | AgentTopologySourceTarget
+  | AgentTraceSourceTarget
+  | AgentLogSourceTarget;
+
+type AgentCanonicalMonitorMetricTarget = AgentMonitorMetricSourceTarget & {
+  version: string;
+  entityId: number;
+  service: {
+    name: string;
+    namespace?: string;
+    environment?: string;
+  };
+};
+
+type AgentCanonicalSingleAlertTarget = AgentSingleAlertSourceTarget & {
+  version: string;
+};
+
+type AgentCanonicalEntityTarget = AgentEntitySourceTarget & {
+  version: string;
+};
+
+type AgentCanonicalTopologyTarget = AgentTopologySourceTarget & {
+  version: string;
+  entityId: number;
+};
+
+type AgentCanonicalTraceTarget = AgentTraceSourceTarget & {
+  version: string;
+};
+
+type AgentCanonicalLogTarget = AgentLogSourceTarget & {
+  version: string;
+};
+
+type AgentCanonicalTarget =
+  | AgentCanonicalMonitorMetricTarget
+  | AgentCanonicalSingleAlertTarget
+  | AgentCanonicalEntityTarget
+  | AgentCanonicalTopologyTarget
+  | AgentCanonicalTraceTarget
+  | AgentCanonicalLogTarget;
+
+export type AgentTargetRef = AgentSourceTarget | AgentCanonicalTarget;
 
 export const agentGatewayEventTypes = [
   'RUN_STARTED',
@@ -35,6 +140,7 @@ export const agentGatewayEventTypes = [
   'INPUT_COMPLETED',
   'APPROVAL_REQUESTED',
   'APPROVAL_COMPLETED',
+  'RUN_STATUS',
   'RUN_COMPLETED',
   'ERROR'
 ] as const;
@@ -54,8 +160,19 @@ export type AgentChatRequest = {
   conversationId: string;
   messageId: string;
   message: string;
-  target?: AgentTargetRef;
+  target?: AgentSourceTarget;
   attachments: string[];
+  /** Internal transport metadata. The API adapter maps this to Accept-Language and strips it from JSON. */
+  preferredLanguage?: string;
+};
+
+export type AgentRetryRequest = {
+  conversationId: string;
+  messageId: string;
+  message: string;
+  target: AgentSourceTarget | null;
+  attachments: string[];
+  preferredLanguage: string;
 };
 
 export type AgentSession = {
@@ -66,6 +183,20 @@ export type AgentSession = {
   title: string | null;
   gmtCreate: string | null;
   gmtUpdate: string | null;
+};
+
+export type AgentRunSnapshot = {
+  runUid: string;
+  sessionUid: string;
+  messageId: string;
+  status: 'CREATED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'RECOVERY_REQUIRED';
+  target: AgentTargetRef | null;
+  result: string | null;
+  errorMessage: string | null;
+  replayAvailable: boolean;
+  startedAt: string | null;
+  completedAt: string | null;
+  retryRequest: AgentRetryRequest | null;
 };
 
 export type AgentTranscriptMessage = {

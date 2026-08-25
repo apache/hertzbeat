@@ -48,7 +48,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.apache.hertzbeat.alert.dto.HuaweiCloudExternAlert.AlertType.NOTIFICATION;
 import static org.apache.hertzbeat.alert.dto.HuaweiCloudExternAlert.AlertType.SUBSCRIPTION;
@@ -81,17 +80,17 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
     }
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         HuaweiCloudExternAlert externAlert = JsonUtil.fromJsonQuietly(content, HuaweiCloudExternAlert.class);
         if (externAlert == null || StringUtils.isBlank(externAlert.getMessage())) {
             log.warn("Failed to parse Huawei Cloud external alert content");
-            return;
+            throw ExternalAlertIngressValidator.rejected();
         }
         if (!isMessageValid(externAlert)) {
             log.warn("Huawei Cloud external alert verification failed");
-            return;
+            throw ExternalAlertIngressValidator.rejected();
         }
-        process(externAlert);
+        process(workspaceId, externAlert);
     }
 
     /**
@@ -99,9 +98,10 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
      *
      * @param externAlert alert content entity
      */
-    private void process(HuaweiCloudExternAlert externAlert) {
+    private void process(String workspaceId, HuaweiCloudExternAlert externAlert) {
         if (NOTIFICATION.getType().equals(externAlert.getType())) {
-            Optional.ofNullable(buildSendAlert(externAlert)).ifPresent(alarmCommonReduce::reduceAndSendAlarm);
+            SingleAlert alert = ExternalAlertIngressValidator.requirePresent(buildSendAlert(externAlert));
+            alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert);
         } else if (SUBSCRIPTION.getType().equals(externAlert.getType())) {
             autoSubscribeForUrl(externAlert.getSubscribeUrl());
         } else if (UNSUBSCRIBE.getType().equals(externAlert.getType())) {
@@ -200,7 +200,7 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
      */
     public void autoSubscribeForUrl(String subscribeUrl) {
         if (StringUtils.isBlank(subscribeUrl)) {
-            return;
+            throw ExternalAlertIngressValidator.rejected();
         }
         if (!subscribeUrl.startsWith(SUBSCRIBE_URL_PREFIX)) {
             throw new SecurityException("Untrusted domain: " + subscribeUrl);
@@ -213,7 +213,7 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
 
                 if (statusCode != 200) {
                     log.error("Subscribe URL request failed with status code: {}", statusCode);
-                    return;
+                    throw ExternalAlertIngressValidator.rejected();
                 }
                 JsonNode jsonResponse = JsonUtil.fromJsonQuietly(responseBody);
                 if (jsonResponse == null) {
@@ -225,8 +225,11 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
                 }
                 log.info("Successfully subscribed to Huawei Cloud(SMN) url.");
             }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
         } catch (Exception exception) {
             log.error("Failed to subscribe URL request: {}", exception.getClass().getSimpleName());
+            throw ExternalAlertIngressValidator.rejected();
         }
     }
 

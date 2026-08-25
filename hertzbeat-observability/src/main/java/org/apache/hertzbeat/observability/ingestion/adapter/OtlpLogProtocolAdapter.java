@@ -71,8 +71,6 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     private static final int OTLP_TRACE_ID_BYTES = 16;
     private static final int OTLP_SPAN_ID_BYTES = 8;
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId");
-    private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
-            "hertzbeat.workspace_id", "hertzbeat_workspace_id", "workspace.id", "workspace_id");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final CommonDataQueue commonDataQueue;
@@ -232,7 +230,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     }
 
     private void bindAuthenticatedResourceScope(Map<String, Object> resourceAttributes) {
-        WORKSPACE_RESOURCE_KEYS.forEach(resourceAttributes::remove);
+        OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID_KEYS.forEach(resourceAttributes::remove);
         resourceAttributes.put("hertzbeat_workspace_id",
                 AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId()));
         OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID_KEYS.forEach(resourceAttributes::remove);

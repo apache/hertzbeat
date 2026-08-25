@@ -52,7 +52,7 @@ type DeleteReceipt = {
 type OperationReceipt = ToggleReceipt | DeleteReceipt;
 
 type OperationMessages = {
-  success: () => void;
+  success: (kind: OperationReceipt['kind']) => void;
   failure: () => void;
 };
 
@@ -78,7 +78,7 @@ export function useAlertRuleListOperations(rereadLatest: () => Promise<AlertRule
       if (!completed || !gate.isCurrent(owner)) return;
       receiptRef.current = undefined;
       setRecoveryPending(false);
-      messages.success();
+      messages.success(receipt.kind);
     } catch (reason) {
       if (!gate.isCurrent(owner)) return;
       if (receipt.phase === 'write') {

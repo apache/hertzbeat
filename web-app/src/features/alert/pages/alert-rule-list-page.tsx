@@ -16,11 +16,12 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page/operational-page';
 
-import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertRuleImportDialog } from '../components/alert-rule-import-dialog';
+import { AlertRuleTypeChooserDialog } from '../components/alert-rule-type-chooser';
 import { buildAlertRuleListColumns } from '../components/alert-rule-list-columns';
 import {
   AlertRuleListHeading,
@@ -28,10 +29,12 @@ import {
   AlertRuleListToolbar
 } from '../components/alert-rule-list-controls';
 import { AlertRuleListResults } from '../components/alert-rule-list-results';
+import { useAlertRuleDatasourceController } from '../controller/use-alert-rule-datasource-controller';
 import { useAlertRuleListController } from '../controller/use-alert-rule-list-controller';
 
 export function AlertRuleListPage() {
   const controller = useAlertRuleListController();
+  const [typeChooserOpen, setTypeChooserOpen] = useState(false);
   const { capabilities, command, exporting, importState, refreshing, search, selectedIds } = controller.state;
   const commandBusy = command !== 'idle';
   const interactionLocked = commandBusy || exporting || importState.busy;
@@ -43,11 +46,14 @@ export function AlertRuleListPage() {
         busy={interactionLocked}
         exporting={exporting}
         selectedCount={selectedIds.length}
-        create={controller.create}
+        create={() => setTypeChooserOpen(true)}
         importRules={controller.importActions.open}
         removeSelected={() => controller.removeMany(selectedIds)}
         exportSelected={format => controller.exportSelected(selectedIds, format)}
       />
+      {typeChooserOpen ? (
+        <AlertRuleTypeChooserDialogContainer onCancel={() => setTypeChooserOpen(false)} onChoose={controller.create} />
+      ) : null}
       <AlertRuleImportDialog
         state={importState}
         onCancel={controller.importActions.cancel}
@@ -55,7 +61,6 @@ export function AlertRuleListPage() {
         onInspect={controller.importActions.inspect}
         onSubmit={controller.importActions.submit}
       />
-      <AlertManagementNav />
       <AlertRuleListToolbar
         search={search}
         refreshing={refreshing}
@@ -71,6 +76,21 @@ export function AlertRuleListPage() {
         recovering={recovering}
       />
     </OperationalPage>
+  );
+}
+
+function AlertRuleTypeChooserDialogContainer(props: {
+  onCancel: () => void;
+  onChoose: Parameters<typeof AlertRuleTypeChooserDialog>[0]['onChoose'];
+}) {
+  const datasource = useAlertRuleDatasourceController();
+  return (
+    <AlertRuleTypeChooserDialog
+      datasource={datasource.state}
+      onCancel={props.onCancel}
+      onChoose={props.onChoose}
+      retry={datasource.retry}
+    />
   );
 }
 

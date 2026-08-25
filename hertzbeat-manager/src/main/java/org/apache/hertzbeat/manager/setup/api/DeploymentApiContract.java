@@ -46,6 +46,7 @@ public final class DeploymentApiContract {
             "/api/config/deployment/metadata-migrations/{operationId}/activate";
     public static final String EXPORT_PATH =
             "/api/config/deployment/metadata-migrations/{operationId}/export";
+    public static final String FACTORY_RESET_PATH = "/api/config/deployment/factory-reset";
 
     private DeploymentApiContract() {
     }
@@ -263,6 +264,19 @@ public final class DeploymentApiContract {
     /** Explicit migration activation input. */
     public record ActivateMigrationRequest(
             @NotNull MigrationOperationState expectedState) {
+    }
+
+    /** Explicit destructive reset proof. The phrase is never returned or logged. */
+    public record FactoryResetRequest(@NotBlank String confirmation) {
+
+        @Override
+        public String toString() {
+            return "FactoryResetRequest[confirmation=<redacted>]";
+        }
+    }
+
+    /** Acknowledges durable admission; cleanup continues outside the request thread. */
+    public record FactoryResetResponse(boolean accepted) {
     }
 
 }

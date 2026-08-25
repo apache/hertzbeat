@@ -28,13 +28,13 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
 import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
@@ -60,11 +60,14 @@ class AgentRunServiceTest {
     private AgentRunDao runDao;
 
     @Mock
+    private AgentSessionDao sessionDao;
+
+    @Mock
     private EntityManager entityManager;
 
     @Test
     void createOrResumeRunShouldCreateRunInRunTableShape() throws NoSuchFieldException {
-        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
         UserInput userInput = UserInput.builder()
             .messageId("msg_1")
@@ -83,7 +86,8 @@ class AgentRunServiceTest {
         AgentRun saved = captor.getValue();
         assertEquals("hzb_agent_run", AgentRun.class.getAnnotation(Table.class).name());
         assertEquals("run_uid", AgentRun.class.getDeclaredField("runUid").getAnnotation(Column.class).name());
-        assertTrue(AgentRun.class.getDeclaredField("resultSummary").isAnnotationPresent(Lob.class));
+        assertEquals("TEXT", AgentRun.class.getDeclaredField("resultSummary")
+            .getAnnotation(Column.class).columnDefinition());
         assertFalse(Arrays.stream(AgentRun.class.getDeclaredFields()).anyMatch(this::isRunRiskField));
         assertFalse(Arrays.stream(AgentRun.class.getDeclaredFields())
             .anyMatch(field -> "phase".equals(field.getName()) || "errorCode".equals(field.getName())));
@@ -96,7 +100,7 @@ class AgentRunServiceTest {
 
     @Test
     void createOrResumeRunShouldResumeExistingRunBySessionMessage() {
-        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
         UserInput userInput = UserInput.builder()
             .messageId("msg_1")
@@ -115,7 +119,7 @@ class AgentRunServiceTest {
 
     @Test
     void createRunShouldPersistTheCompleteInvestigationTarget() {
-        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
         AgentTargetRef target = AgentTargetRef.builder()
             .entityId(300L)
@@ -154,7 +158,7 @@ class AgentRunServiceTest {
 
     @Test
     void createOrResumeRunShouldRecoverExistingRunAfterSessionMessageUniqueConflict() {
-        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
         UserInput userInput = UserInput.builder()
             .messageId("msg_1")
@@ -174,7 +178,7 @@ class AgentRunServiceTest {
 
     @Test
     void findMethodsShouldDelegateToRunDao() {
-        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
         AgentRun run = AgentRun.builder().id(1L).runUid("run_1").build();
         when(runDao.findByRunUid("run_1")).thenReturn(Optional.of(run));
 
@@ -183,19 +187,23 @@ class AgentRunServiceTest {
 
     @Test
     void lifecycleUpdatesShouldKeepNonSecretResultDetailAndSanitizeAllStoredOutcomes() {
-        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
         when(runDao.save(any(AgentRun.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(sessionDao.advanceGmtUpdate(org.mockito.ArgumentMatchers.eq(1L), any(java.time.LocalDateTime.class)))
+                .thenReturn(1);
         String finalAnswer = "ok password=hunter2 token=tok-secret " + "detail ".repeat(3000);
 
         AgentRun succeeded = service.markSucceeded(
-            AgentRun.builder().id(1L).runUid("run_1").build(), finalAnswer);
+            AgentRun.builder().id(1L).runUid("run_1").sessionId(1L).build(), finalAnswer);
         AgentRun failed = service.markFailed(
-            AgentRun.builder().id(2L).runUid("run_2").build(),
+            AgentRun.builder().id(2L).runUid("run_2").sessionId(1L).build(),
             "failed authorization=Bearer auth-secret");
 
         assertTrue(succeeded.getResultSummary().contains("detail ".repeat(100)));
         assertNoRawSecret(succeeded.getResultSummary());
         assertNoRawSecret(failed.getErrorMessage());
+        verify(sessionDao, org.mockito.Mockito.times(2))
+                .advanceGmtUpdate(org.mockito.ArgumentMatchers.eq(1L), any(java.time.LocalDateTime.class));
     }
 
     private void assertNoRawSecret(String text) {

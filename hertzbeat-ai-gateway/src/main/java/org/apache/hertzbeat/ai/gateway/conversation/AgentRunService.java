@@ -19,9 +19,13 @@ package org.apache.hertzbeat.ai.gateway.conversation;
 
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
@@ -42,10 +46,12 @@ import org.springframework.util.StringUtils;
 public class AgentRunService {
 
     private final AgentRunDao runDao;
+    private final AgentSessionDao sessionDao;
     private final EntityManager entityManager;
 
-    public AgentRunService(AgentRunDao runDao, EntityManager entityManager) {
+    public AgentRunService(AgentRunDao runDao, AgentSessionDao sessionDao, EntityManager entityManager) {
         this.runDao = runDao;
+        this.sessionDao = sessionDao;
         this.entityManager = entityManager;
     }
 
@@ -68,35 +74,61 @@ public class AgentRunService {
 
     @Transactional
     public AgentRun markRunning(AgentRun run) {
+        LocalDateTime transitionAt = LocalDateTime.now();
         run.setStatus(AgentRunStatus.RUNNING.name());
-        run.setStartedAt(LocalDateTime.now());
+        run.setStartedAt(transitionAt);
         run.setCompletedAt(null);
         run.setErrorMessage(null);
-        return runDao.save(run);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
     }
 
     @Transactional
     public AgentRun markSucceeded(AgentRun run, String resultSummary) {
+        LocalDateTime transitionAt = LocalDateTime.now();
         run.setStatus(AgentRunStatus.SUCCEEDED.name());
         run.setResultSummary(GatewayText.redactSecrets(resultSummary));
-        run.setCompletedAt(LocalDateTime.now());
-        return runDao.save(run);
+        run.setCompletedAt(transitionAt);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
     }
 
     @Transactional
     public AgentRun markFailed(AgentRun run, String errorMessage) {
+        LocalDateTime transitionAt = LocalDateTime.now();
         run.setStatus(AgentRunStatus.FAILED.name());
         run.setErrorMessage(GatewayText.safeSummary(errorMessage, 1024));
-        run.setCompletedAt(LocalDateTime.now());
-        return runDao.save(run);
+        run.setCompletedAt(transitionAt);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
     }
 
     @Transactional
     public AgentRun markCancelled(AgentRun run, String reason) {
-        run.setStatus(AgentRunStatus.CANCELLED.name());
+        LocalDateTime transitionAt = LocalDateTime.now();
+        String safeReason = GatewayText.safeSummary(reason, 1024);
+        int updated = runDao.cancelIfActive(run.getId(),
+                List.of(AgentRunStatus.CREATED.name(), AgentRunStatus.RUNNING.name()),
+                AgentRunStatus.CANCELLED.name(), safeReason, transitionAt);
+        if (updated == 1) {
+            touchSession(run, transitionAt);
+        }
+        return runDao.findById(run.getId()).orElseThrow(
+                () -> new IllegalStateException("Agent run disappeared during cancellation"));
+    }
+
+    @Transactional
+    public AgentRun markRecoveryRequired(AgentRun run, String reason) {
+        LocalDateTime transitionAt = LocalDateTime.now();
+        run.setStatus(AgentRunStatus.RECOVERY_REQUIRED.name());
         run.setErrorMessage(GatewayText.safeSummary(reason, 1024));
-        run.setCompletedAt(LocalDateTime.now());
-        return runDao.save(run);
+        run.setCompletedAt(transitionAt);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
     }
 
     public Optional<AgentRun> findRun(String runUid) {
@@ -106,6 +138,23 @@ public class AgentRunService {
             return Optional.empty();
         }
         return runDao.findByRunUid(normalized);
+    }
+
+    public Optional<AgentRun> findLatestRun(Long sessionId) {
+        return sessionId == null ? Optional.empty() : runDao.findTopBySessionIdOrderByIdDesc(sessionId);
+    }
+
+    public Map<Long, AgentRunListProjection> findLatestRunProjections(Collection<Long> sessionIds) {
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, AgentRunListProjection> projections = new LinkedHashMap<>();
+        for (AgentRun run : runDao.findLatestBySessionIds(sessionIds)) {
+            if (run.getSessionId() != null && StringUtils.hasText(run.getStatus())) {
+                projections.put(run.getSessionId(), AgentRunListProjection.from(run));
+            }
+        }
+        return Map.copyOf(projections);
     }
 
     /**
@@ -147,6 +196,12 @@ public class AgentRunService {
     public boolean hasActiveRun(Long sessionId) {
         return runDao.existsBySessionIdAndStatusIn(sessionId,
                 List.of(AgentRunStatus.CREATED.name(), AgentRunStatus.RUNNING.name()));
+    }
+
+    private void touchSession(AgentRun run, LocalDateTime transitionAt) {
+        if (sessionDao.advanceGmtUpdate(run.getSessionId(), transitionAt) != 1) {
+            throw new IllegalStateException("Agent run session does not exist");
+        }
     }
 
     private AgentRun buildRun(AgentSession session, UserInput userInput, String messageId,

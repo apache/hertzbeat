@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMigrationConflictException;
 import org.apache.hertzbeat.manager.service.ObjectStoreConfigService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
@@ -71,6 +72,8 @@ public class ObjectStoreConfigController {
         } catch (DataAccessException exception) {
             log.error("Object store storage unavailable: {}", exception.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Object store storage unavailable"));
+        } catch (MonitorDefinitionMigrationConflictException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, MonitorDefinitionMigrationConflictException.ERROR_CODE));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid object store config"));
         } catch (Exception exception) {

@@ -1,0 +1,149 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.summary {
+  padding-block: var(--hb-space-3) var(--hb-space-5);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+  gap: var(--hb-space-5);
+}
+
+.overviewCopy {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-3);
+}
+
+.summarySentence {
+  color: var(--hb-text-primary);
+  font-size: 15px;
+  font-weight: 550;
+  line-height: 1.6;
+}
+
+.scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--hb-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  list-style: none;
+}
+
+.scope li + li::before {
+  content: '·';
+  margin-inline: var(--hb-space-2);
+}
+
+.detailsToggle {
+  height: auto;
+  padding: 1px 0 !important;
+  color: var(--hb-text-secondary);
+}
+
+.detailsToggle:hover,
+.detailsToggle:focus-visible {
+  color: var(--ant-color-primary);
+}
+
+.evidence {
+  margin-top: var(--hb-space-4);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.databases {
+  display: grid;
+}
+
+.databaseRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.72fr);
+  align-items: center;
+  gap: var(--hb-space-5);
+  min-height: 76px;
+  padding: var(--hb-space-4) 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.databaseCopy,
+.databaseTruth {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.databaseTruth {
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--hb-space-2);
+}
+
+.databaseKind {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.restartRequired {
+  grid-column: 1 / -1;
+  color: var(--hb-status-degraded);
+}
+
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hb-space-5);
+  margin: 0;
+  padding: var(--hb-space-4) 0;
+}
+
+.metadataItem {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.metadataItem dt {
+  color: var(--hb-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.metadataItem dd {
+  margin: 0;
+  color: var(--hb-text-primary);
+  font-weight: 550;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .overview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-3);
+  }
+
+  .detailsToggle {
+    justify-self: start;
+  }
+
+  .databaseRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-3);
+  }
+
+  .metadata {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-3);
+  }
+}

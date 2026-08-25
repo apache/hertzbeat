@@ -128,6 +128,7 @@ export const appRouteCatalog = {
   'deployment-settings': pageRoute('deployment-settings', settingsPaths.deployment, {
     resource: { labelKey: 'settingsNavigation.deployment', requiredRoles: ['ADMIN'] }
   }),
+  'deployment-migration': pageRoute('deployment-migration', settingsPaths.deploymentMigration),
   'system-settings': pageRoute('system-settings', settingsPaths.system, {
     resource: { labelKey: 'settingsNavigation.system' }
   }),

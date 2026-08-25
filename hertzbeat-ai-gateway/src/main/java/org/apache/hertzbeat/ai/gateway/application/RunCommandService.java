@@ -32,7 +32,6 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStream
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeControlRegistry;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
-import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
@@ -67,9 +66,9 @@ public class RunCommandService {
             return response(command, null, runUid, List.of(error));
         }
         AgentRun run = runOptional.get();
-        AgentSession session = session(run);
+        AgentSession session = session(run, command);
         List<GatewayEvent> events;
-        if (!ownedBy(command.envelope().getActor(), session)) {
+        if (session == null) {
             events = List.of(errorEvent(command.commandId(), null, runUid, "Agent run not found."));
         } else if (isTerminalRun(run)) {
             events = List.of(errorEvent(command.commandId(), session, runUid,
@@ -137,24 +136,20 @@ public class RunCommandService {
                 .build();
     }
 
-    private AgentSession session(AgentRun run) {
+    private AgentSession session(AgentRun run, CancelRunCommand command) {
         if (run == null || run.getSessionId() == null) {
             return null;
         }
-        return sessionService.findSession(String.valueOf(run.getSessionId())).orElse(null);
+        return sessionService.findOwnedSession(String.valueOf(run.getSessionId()), command.envelope(),
+                command.originEntryType()).orElse(null);
     }
 
     private boolean isTerminalRun(AgentRun run) {
         String status = run == null ? null : run.getStatus();
         return AgentRunStatus.SUCCEEDED.name().equals(status)
                 || AgentRunStatus.FAILED.name().equals(status)
-                || AgentRunStatus.CANCELLED.name().equals(status);
-    }
-
-    private boolean ownedBy(AgentActor actor, AgentSession session) {
-        return actor != null && session != null
-                && actor.getType().equals(session.getActorType())
-                && actor.getId().equals(session.getActorId());
+                || AgentRunStatus.CANCELLED.name().equals(status)
+                || AgentRunStatus.RECOVERY_REQUIRED.name().equals(status);
     }
 
     private String requiredText(String value, String message) {

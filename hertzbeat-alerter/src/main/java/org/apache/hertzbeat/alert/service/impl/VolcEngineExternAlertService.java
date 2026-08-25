@@ -19,7 +19,6 @@ package org.apache.hertzbeat.alert.service.impl;
 
 import tools.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.alert.dto.VolcEngineExternEventAlert;
 import org.apache.hertzbeat.alert.dto.VolcEngineExternMetricAlert;
@@ -41,7 +40,6 @@ import java.util.Objects;
 /**
  * Volcengine alarm entity class
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VolcEngineExternAlertService implements ExternAlertService {
@@ -54,34 +52,36 @@ public class VolcEngineExternAlertService implements ExternAlertService {
     );
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         JsonNode root = JsonUtil.fromJsonQuietly(content);
-        if (root == null) {
-            log.warn("Failed to parse VolcEngine external alert content");
-            return;
-        }
-        String type = root.get("Type").asText();
+        root = ExternalAlertIngressValidator.requirePresent(root);
+        JsonNode typeNode = ExternalAlertIngressValidator.requirePresent(root.get("Type"));
+        String type = typeNode.asText();
         if (VolcEngineExternMetricAlert.ALERT_TYPE_EVENT.equals(type)) {
             VolcEngineExternEventAlert eventAlert = JsonUtil.fromJsonQuietly(content, VolcEngineExternEventAlert.class);
-            if (eventAlert == null) {
-                log.warn("Failed to parse VolcEngine external event alert content");
-                return;
-            }
+            eventAlert = ExternalAlertIngressValidator.requirePresent(eventAlert);
             SingleAlert singleAlert = new VolcEngineAlertConverter().convertEventToSingleAlert(eventAlert);
-            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
-
-        } else {
+            alarmCommonReduce.reduceAndSendAlarm(workspaceId, singleAlert);
+        } else if (isMetricAlertType(type)) {
             // deal with metric alert
             VolcEngineExternMetricAlert report = JsonUtil.fromJsonQuietly(
                     content, VolcEngineExternMetricAlert.class);
-            if (report == null) {
-                log.warn("Failed to parse VolcEngine external metrics alert content");
-                return;
+            report = ExternalAlertIngressValidator.requirePresent(report);
+            List<SingleAlert> alerts = ExternalAlertIngressValidator.requireBatch(
+                    new VolcEngineAlertConverter().convertMetricAlertToSingeAlert(report));
+            for (SingleAlert singleAlert : alerts) {
+                alarmCommonReduce.reduceAndSendAlarm(workspaceId, singleAlert);
             }
-            for (SingleAlert singleAlert : new VolcEngineAlertConverter().convertMetricAlertToSingeAlert(report)) {
-                alarmCommonReduce.reduceAndSendAlarm(singleAlert);
-            }
+        } else {
+            throw ExternalAlertIngressValidator.rejected();
         }
+    }
+
+    private static boolean isMetricAlertType(String type) {
+        return VolcEngineExternMetricAlert.ALERT_TYPE_METRIC.equals(type)
+                || VolcEngineExternMetricAlert.ALERT_TYPE_METRICS_NODATA.equals(type)
+                || VolcEngineExternMetricAlert.ALERT_TYPE_NO_DATA_RECOVERED.equals(type)
+                || VolcEngineExternMetricAlert.ALERT_TYPE_METRIC_RECOVERED.equals(type);
     }
 
     @Override
@@ -180,11 +180,14 @@ public class VolcEngineExternAlertService implements ExternAlertService {
                 SingleAlert.SingleAlertBuilder builder = SingleAlert.builder()
                         .status(status)
                         .startAt(resource.getFirstAlertTime() * 1000)
-                        .endAt(resource.getLastAlertTime() * 1000)
+                        .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status)
+                                ? resource.getLastAlertTime() * 1000
+                                : null)
                         .labels(buildLabels(alert, resource))
                         .activeAt(convertHappenAt(alert.getHappenedAt()))
                         .content(resource.getName() + alert.getRuleCondition())
-                        .annotations(buildAnnotations(resource));
+                        .annotations(buildAnnotations(resource))
+                        .triggerTimes(1);
                 result.add(builder.build());
             }
             return result;

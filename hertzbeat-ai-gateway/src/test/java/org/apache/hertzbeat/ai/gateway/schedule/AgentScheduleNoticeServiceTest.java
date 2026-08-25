@@ -27,6 +27,7 @@ import java.util.List;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -70,11 +71,34 @@ class AgentScheduleNoticeServiceTest {
         AgentRun run = AgentRun.builder().runUid("run_1").build();
 
         new AgentScheduleNoticeService(noticeConfigService, alertNoticeDispatch, workerPool)
-                .send(schedule, run, true, "Everything is healthy");
+                .send(schedule, run, AgentRunStatus.SUCCEEDED, "Everything is healthy");
 
         ArgumentCaptor<GroupAlert> alert = ArgumentCaptor.forClass(GroupAlert.class);
         verify(alertNoticeDispatch).sendNoticeMsg(eq(receiver), eq(template), alert.capture());
         assertEquals("resolved", alert.getValue().getStatus());
         assertEquals("Everything is healthy", alert.getValue().getAlerts().getFirst().getContent());
+    }
+
+    @Test
+    void recoveryRequiredNoticeShouldNotClaimFailureOrSuccess() {
+        NoticeReceiver receiver = NoticeReceiver.builder().id(10L).type((byte) 1).build();
+        when(noticeConfigService.getReceiverById(10L)).thenReturn(receiver);
+        doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(1).run();
+            return null;
+        }).when(workerPool).executeNotify(eq((byte) 1), any());
+        AgentSchedule schedule = AgentSchedule.builder()
+                .id(7L).name("Daily inspection").receiverIds(List.of(10L)).lastTriggerAt(100L).build();
+        AgentRun run = AgentRun.builder().runUid("run_recovery").build();
+
+        new AgentScheduleNoticeService(noticeConfigService, alertNoticeDispatch, workerPool)
+                .send(schedule, run, AgentRunStatus.RECOVERY_REQUIRED, "Check the target state");
+
+        ArgumentCaptor<GroupAlert> alert = ArgumentCaptor.forClass(GroupAlert.class);
+        verify(alertNoticeDispatch).sendNoticeMsg(eq(receiver), eq(null), alert.capture());
+        assertEquals("warning", alert.getValue().getCommonLabels().get("severity"));
+        assertEquals("RECOVERY_REQUIRED", alert.getValue().getCommonAnnotations().get("resultStatus"));
+        assertEquals("Check the target state",
+                alert.getValue().getAlerts().getFirst().getAnnotations().get("recoveryRequired"));
     }
 }

@@ -17,8 +17,8 @@
 
 import { Drawer } from 'antd';
 
-import editorStyles from './notice-template-editor.module.css';
 import { NoticeTemplateEditor } from './notice-template-editor';
+import { NoticeTemplatePreview } from './notice-template-preview';
 import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../model/notice-template-model';
 
 type NoticeTemplateOverlaysProps = {
@@ -62,7 +62,7 @@ export function NoticeTemplateOverlays({
         maskClosable={!busy}
         onClose={() => !busy && onPreviewClose()}
       >
-        {preview && <pre className={editorStyles.preview}>{preview.content}</pre>}
+        {preview && <NoticeTemplatePreview content={preview.content} />}
       </Drawer>
     </>
   );

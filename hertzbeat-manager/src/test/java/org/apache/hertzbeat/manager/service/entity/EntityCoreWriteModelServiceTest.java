@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -171,7 +173,6 @@ class EntityCoreWriteModelServiceTest {
     @Test
     void createEntityAppliesCoreAndPersistsCatalogRow() {
         ObserveEntity input = ObserveEntity.builder()
-                .id(71L)
                 .type("service")
                 .name("checkout-api")
                 .displayName("Checkout API")
@@ -189,14 +190,15 @@ class EntityCoreWriteModelServiceTest {
         ArgumentCaptor<ObserveEntity> entityCaptor = ArgumentCaptor.forClass(ObserveEntity.class);
         verify(observeEntityDao).save(entityCaptor.capture());
         ObserveEntity persisted = entityCaptor.getValue();
-        assertEquals(71L, persisted.getId());
+        assertNotNull(persisted.getId());
+        assertTrue(persisted.getId() > 0);
         assertEquals("service", persisted.getType());
         assertEquals("checkout-api", persisted.getName());
         assertEquals("Checkout API", persisted.getDisplayName());
         assertEquals("definition", persisted.getSource());
         assertEquals("team-a", persisted.getWorkspaceId());
         assertEquals(List.of("team:checkout"), persisted.getTags());
-        assertEquals(71L, saved.getId());
+        assertEquals(persisted.getId(), saved.getId());
     }
 
     @Test
@@ -232,6 +234,25 @@ class EntityCoreWriteModelServiceTest {
         assertEquals(List.of("tier:gold"), persisted.getTags());
         assertEquals("team-a", persisted.getWorkspaceId());
         assertEquals(72L, saved.getId());
+    }
+
+    @Test
+    void createEntityNeverReusesCallerProvidedId() {
+        ObserveEntity input = ObserveEntity.builder()
+                .id(71L)
+                .type("service")
+                .name("caller-id")
+                .workspaceId("team-a")
+                .build();
+        when(entityWorkspaceAccessService.resolveWriteWorkspaceId(
+                "team-a", AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn("team-a");
+        when(observeEntityDao.save(any(ObserveEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ObserveEntity saved = coreWriteModelService.createEntity(input, "manual");
+
+        assertNotNull(saved.getId());
+        assertTrue(saved.getId() > 0);
+        assertTrue(saved.getId() != 71L);
     }
 
     @Test
@@ -285,10 +306,13 @@ class EntityCoreWriteModelServiceTest {
         ArgumentCaptor<List<ObserveEntity>> entitiesCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(observeEntityDao).saveAll(entitiesCaptor.capture());
         List<ObserveEntity> persisted = entitiesCaptor.getValue();
-        assertEquals(List.of(81L, 82L), persisted.stream().map(ObserveEntity::getId).toList());
+        List<Long> persistedIds = persisted.stream().map(ObserveEntity::getId).toList();
+        assertEquals(2, persistedIds.size());
+        assertTrue(persistedIds.stream().allMatch(id -> id != null && id > 0));
+        assertTrue(persistedIds.stream().noneMatch(id -> id == 81L || id == 82L));
         assertEquals(List.of("checkout", "checkout-public"), persisted.stream().map(ObserveEntity::getName).toList());
         assertEquals(List.of("service", "api"), persisted.stream().map(ObserveEntity::getType).toList());
         assertEquals(Collections.emptyList(), persisted.getFirst().getTags());
-        assertEquals(List.of(81L, 82L), saved.stream().map(ObserveEntity::getId).toList());
+        assertEquals(persistedIds, saved.stream().map(ObserveEntity::getId).toList());
     }
 }

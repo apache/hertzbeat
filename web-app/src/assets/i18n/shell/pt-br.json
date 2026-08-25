@@ -27,11 +27,16 @@
         "unavailable": "Indisponível",
         "unknown": "Desconhecido"
       },
-      "snapshotObservedAt": "Snapshot às {{time}}",
+      "currentStatusObservedAt": "Status atual · {{time}}",
       "collectorLastReportedAt": "Último relato às {{time}}",
       "collectorCounts": "{{online}}/{{total}} online · {{runtimeHealthy}} com runtime saudável",
+      "collectorOnlineCount": "Coletores online: {{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "Runtimes saudáveis: {{count}}",
+      "collectorOfflineCount": "Coletores offline: {{count}}",
       "collectorNotReported": "Sem relato de runtime",
       "notObserved": "Não observado",
+      "details": "Detalhes do status de {{label}}",
+      "openManagement": "Abrir gerenciamento",
       "request": {
         "permission": "Permissão para status de execução negada",
         "unavailable": "Solicitação de status de execução indisponível",

@@ -66,6 +66,20 @@ class TranscriptMessageTest {
         assertEquals(usage, restored.getUsage());
     }
 
+    @Test
+    void groundingRunMarkerShouldBeExplicitAndAbsentFromLegacyToolResults() {
+        TranscriptMessage grounded = TranscriptMessage.toolResult(
+                "call-1", "monitor.get", "result", null, "run-1");
+        String groundedJson = JsonUtil.toJson(grounded);
+        TranscriptMessage restored = JsonUtil.fromJson(groundedJson, TranscriptMessage.class);
+        String legacyJson = JsonUtil.toJson(TranscriptMessage.toolResult(
+                "call-legacy", "monitor.get", "result", null));
+
+        assertTrue(groundedJson.contains("\"groundingRunUid\":\"run-1\""));
+        assertEquals("run-1", restored.getGroundingRunUid());
+        assertFalse(legacyJson.contains("groundingRunUid"));
+    }
+
     private TranscriptMessage assistantToolCall(String id, String name) {
         return TranscriptMessage.assistantToolCalls("", List.of(
                 TranscriptContent.toolCall(id, name, Map.of())), null);

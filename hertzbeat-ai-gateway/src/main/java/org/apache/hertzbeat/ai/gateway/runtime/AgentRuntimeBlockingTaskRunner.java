@@ -39,6 +39,16 @@ public class AgentRuntimeBlockingTaskRunner {
     private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(
             new DaemonThreadFactory("agent-runtime-blocking"));
 
+    private final ExecutorService executor;
+
+    public AgentRuntimeBlockingTaskRunner() {
+        this(EXECUTOR);
+    }
+
+    AgentRuntimeBlockingTaskRunner(ExecutorService executor) {
+        this.executor = Objects.requireNonNull(executor, "executor must not be null");
+    }
+
     public <T> T run(String operation, Duration timeout, AgentRuntimeControl control, Callable<T> callable) {
         // Runtime operations must be named and bounded before work is submitted to the shared executor.
         if (!StringUtils.hasText(operation)) {
@@ -51,7 +61,7 @@ public class AgentRuntimeBlockingTaskRunner {
         Objects.requireNonNull(callable, "callable must not be null");
         AgentRuntimeControl safeControl = Objects.requireNonNull(control, "control must not be null");
         safeControl.checkpoint();
-        Future<T> future = EXECUTOR.submit(callable);
+        Future<T> future = executor.submit(callable);
         AutoCloseable abortRegistration = safeControl.onAbort(() -> future.cancel(true));
         try {
             return await(operation, timeout, safeControl, future);
@@ -99,9 +109,17 @@ public class AgentRuntimeBlockingTaskRunner {
             control.checkpoint();
             throw exception;
         } catch (ExecutionException exception) {
-            control.checkpoint();
+            if (!isFatal(exception.getCause())) {
+                control.checkpoint();
+            }
             throw exception;
         }
+    }
+
+    private boolean isFatal(Throwable failure) {
+        return failure instanceof VirtualMachineError
+                || failure instanceof ThreadDeath
+                || failure instanceof LinkageError;
     }
 
     private void closeQuietly(AutoCloseable closeable) {

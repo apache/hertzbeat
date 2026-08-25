@@ -1,23 +1,37 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { CloseOutlined } from '@ant-design/icons';
 import { Button, Input, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { AgentInputRequest, AgentToolActivity } from '../model/agent-workspace-reducer';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
-import styles from './agent-workspace-view.module.css';
+import { agentWorkspaceTargetFacts } from './agent-workspace-target-facts';
+import styles from './agent-workspace-context-pane.module.css';
 
 export function AgentWorkspaceContextPane({
   controller,
-  isAdmin
+  isAdmin,
+  onClose
 }: {
   controller: AgentWorkspaceViewModel;
   isAdmin: boolean;
+  onClose: () => void;
 }) {
   const { t } = useTranslation();
   return (
-    <aside className={styles.context} aria-label={t('aiWorkspace.context.label')}>
+    <aside className={styles.context} id="agent-run-context" aria-label={t('aiWorkspace.context.label')}>
+      <header className={styles.contextHeader}>
+        <Typography.Text strong>{t('aiWorkspace.context.label')}</Typography.Text>
+        <Button
+          aria-label={t('aiWorkspace.context.panelClose')}
+          icon={<CloseOutlined />}
+          size="small"
+          type="text"
+          onClick={onClose}
+        />
+      </header>
       <ContextTarget target={controller.target} />
       <ContextTools tools={controller.run.tools} />
       <ContextApprovals controller={controller} isAdmin={isAdmin} />
@@ -28,7 +42,7 @@ export function AgentWorkspaceContextPane({
 
 function ContextTarget({ target }: { target: AgentWorkspaceViewModel['target'] }) {
   const { t } = useTranslation();
-  const facts = useMemo(() => targetFacts(target), [target]);
+  const facts = useMemo(() => agentWorkspaceTargetFacts(target, t), [t, target]);
   return (
     <ContextSection title={t('aiWorkspace.context.target')}>
       {facts.length ? facts.map(item => <Tag key={item}>{item}</Tag>) : <Muted value={t('aiWorkspace.context.none')} />}
@@ -52,8 +66,15 @@ function ContextTools({ tools }: { tools: AgentToolActivity[] }) {
 function ToolActivity({ tool }: { tool: AgentToolActivity }) {
   return (
     <div className={styles.activity}>
-      <code>{tool.toolName}</code>
-      <Tag>{tool.status}</Tag>
+      <div className={styles.activitySummary}>
+        <code>{tool.toolName}</code>
+        <Tag>{tool.status}</Tag>
+      </div>
+      {tool.errorMessage ? (
+        <Typography.Text className={styles.activityError ?? ''} type="danger">
+          {tool.errorMessage}
+        </Typography.Text>
+      ) : null}
     </div>
   );
 }
@@ -178,17 +199,4 @@ function Muted({ value }: { value: string }) {
 
 function isPending(item: { status: string }) {
   return item.status === 'PENDING' || item.status === 'WAITING_INPUT' || item.status === 'WAITING_APPROVAL';
-}
-
-function targetFacts(target: AgentWorkspaceViewModel['target']) {
-  if (!target) return [];
-  const facts: string[] = [];
-  if (target.monitorId) facts.push(`Monitor ${target.monitorId}`);
-  if (target.entityId) facts.push(`Entity ${target.entityId}`);
-  if (target.alertId) facts.push(`Alert ${target.alertId}`);
-  if (target.collector) facts.push(`Collector ${target.collector}`);
-  if (target.signal)
-    facts.push(`${target.signal.type}${target.signal.timeRange ? ` · ${target.signal.timeRange}` : ''}`);
-  if (target.topology) facts.push('Topology');
-  return facts;
 }

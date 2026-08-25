@@ -65,9 +65,11 @@ import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -120,6 +122,7 @@ class AlarmGroupReduceTest {
     @Test
     void whenNoGroupRules_shouldSendSingleAlert() {
         SingleAlert alert = SingleAlert.builder()
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .fingerprint("fp1")
                 .status("firing")
                 .labels(createLabels("severity", "critical"))
@@ -142,6 +145,7 @@ class AlarmGroupReduceTest {
         alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
 
         SingleAlert alert = SingleAlert.builder()
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .fingerprint("fp1")
                 .status("firing")
                 .labels(createLabels("severity", "critical", "instance", "host1"))
@@ -291,6 +295,24 @@ class AlarmGroupReduceTest {
         verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
     }
 
+    @Test
+    void sameGroupLabelsNeverMergeAcrossWorkspaces() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        alarmGroupReduce.processGroupAlert(groupAlert("team-a", "same-a", "firing"));
+        alarmGroupReduce.processGroupAlert(groupAlert("team-b", "same-b", "firing"));
+
+        dispatchAndDrain();
+
+        ArgumentCaptor<org.apache.hertzbeat.common.entity.alerter.GroupAlert> groups =
+                ArgumentCaptor.forClass(org.apache.hertzbeat.common.entity.alerter.GroupAlert.class);
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(groups.capture());
+        assertEquals(java.util.Set.of("team-a", "team-b"), groups.getAllValues().stream()
+                .map(org.apache.hertzbeat.common.entity.alerter.GroupAlert::getWorkspaceId)
+                .collect(java.util.stream.Collectors.toSet()));
+        assertTrue(groups.getAllValues().stream().allMatch(group -> group.getAlerts().size() == 1
+                && group.getWorkspaceId().equals(group.getAlerts().getFirst().getWorkspaceId())));
+    }
+
     private void dispatchAndDrain() throws Exception {
         alarmGroupReduce.dispatchCheckAndSendGroups();
         alarmGroupReduce.pauseAdmission();
@@ -309,7 +331,12 @@ class AlarmGroupReduceTest {
     }
 
     private SingleAlert groupAlert(String fingerprint, String status) {
+        return groupAlert(AuthTokenScopes.DEFAULT_WORKSPACE_ID, fingerprint, status);
+    }
+
+    private SingleAlert groupAlert(String workspaceId, String fingerprint, String status) {
         return SingleAlert.builder()
+                .workspaceId(workspaceId)
                 .fingerprint(fingerprint)
                 .status(status)
                 .labels(createLabels("severity", "critical"))

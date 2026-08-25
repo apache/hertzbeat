@@ -24,9 +24,10 @@ public interface ExternAlertService {
 
     /**
      * Save external alarms of services
+     * @param workspaceId trusted workspace captured before asynchronous processing
      * @param content alert report json string
      */
-    void addExternAlert(String content);
+    void addExternAlert(String workspaceId, String content);
 
 
     /**

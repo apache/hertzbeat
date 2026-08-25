@@ -26,7 +26,6 @@ import {
   type OperationalStateKind
 } from '@/shared/operational-page';
 
-import { AlertManagementNav } from '../../components/alert-management-nav';
 import { IntegrationGuide } from '../components/integration-guide';
 import { IntegrationSourceRail } from '../components/integration-source-rail';
 import styles from '../components/integration.module.css';
@@ -36,15 +35,13 @@ import type { AlertIntegrationState } from '../model/alert-integration-model';
 export function AlertIntegrationPage() {
   const { t } = useTranslation();
   const controller = useAlertIntegrationController();
-  const title =
-    controller.state.kind === 'ready'
-      ? t('alertIntegrations.title', { source: t(controller.state.guide.displayNameKey) })
-      : t('alertIntegrations.menu');
+  const showPageHeader = controller.state.kind !== 'ready' || !controller.contract;
 
   return (
     <OperationalPage mode="data">
-      <OperationalPageHeader title={title} description={t('alertIntegrations.description')} />
-      <AlertManagementNav />
+      {showPageHeader && (
+        <OperationalPageHeader title={t('alertIntegrations.menu')} description={t('alertIntegrations.description')} />
+      )}
       <OperationalResultRegion>
         <IntegrationContent controller={controller} />
       </OperationalResultRegion>
@@ -63,11 +60,13 @@ function IntegrationContent({ controller }: { controller: ReturnType<typeof useA
 }
 
 function IntegrationReady({ controller }: { controller: ReturnType<typeof useAlertIntegrationController> }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (controller.state.kind !== 'ready') {
     return null;
   }
   const guide = controller.state.guide;
+  const catalogItem = controller.state.catalog.find(item => item.source === guide.source);
+  if (!catalogItem) return null;
   if (!controller.contract) return null;
   return (
     <div className={styles.layout}>
@@ -80,14 +79,18 @@ function IntegrationReady({ controller }: { controller: ReturnType<typeof useAle
       <IntegrationGuide
         guide={guide}
         endpoint={controller.contract.endpoint}
-        authorizationHeader={controller.contract.authorizationHeader}
-        copyState={controller.copyState}
+        ingressPath={controller.contract.ingressPath}
+        publicBaseUrlConfigured={controller.contract.publicBaseUrlConfigured}
+        requestHeaders={controller.contract.requestHeaders}
         tokenSettingsPath={controller.tokenSettingsPath}
         canManageTokens={controller.canManageTokens}
+        verification={catalogItem.verification}
+        verificationStarting={controller.verificationStarting}
+        verificationError={controller.verificationError}
+        locale={i18n.resolvedLanguage ?? i18n.language}
         t={t}
-        onCopyEndpoint={() => void controller.actions.copyEndpoint()}
-        onCopyAuthorization={() => void controller.actions.copyAuthorizationHeader()}
         onOpenTokenSettings={() => void controller.actions.openTokenSettings()}
+        onStartVerification={() => void controller.actions.startVerification()}
       />
     </div>
   );

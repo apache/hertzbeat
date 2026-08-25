@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -31,8 +32,11 @@ import java.util.Map;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService.TraceDetailQuery;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,8 +51,14 @@ class AgentTraceToolServiceTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("team-b");
         traceQueryService = mock(EntityTraceQueryService.class);
         service = new AgentTraceToolService(traceQueryService);
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -57,8 +67,8 @@ class AgentTraceToolServiceTest {
         row.setTraceId("trace-1");
         row.setServiceName("checkout");
         row.setResourceAttributes(Map.of("api_key", "trace-secret"));
-        when(traceQueryService.queryTraceList(9L, 1_000L, 2_000L, null, true,
-                "checkout", null, "prod", null, null, null, 2, 50, true))
+        when(traceQueryService.queryTraceList("team-b", 9L, 1_000L, 2_000L, null, true,
+                "checkout", null, "prod", null, null, null, null, 2, 50, true, null, null))
                 .thenReturn(new PageImpl<>(List.of(row), PageRequest.of(2, 50), 101));
 
         Map<String, Object> result = service.queryTraces(9L, 1_000L, 2_000L, null, true,
@@ -66,8 +76,8 @@ class AgentTraceToolServiceTest {
 
         assertEquals(101L, result.get("totalElements"));
         assertFalse(result.toString().contains("trace-secret"));
-        verify(traceQueryService).queryTraceList(9L, 1_000L, 2_000L, null, true,
-                "checkout", null, "prod", null, null, null, 2, 50, true);
+        verify(traceQueryService).queryTraceList("team-b", 9L, 1_000L, 2_000L, null, true,
+                "checkout", null, "prod", null, null, null, null, 2, 50, true, null, null);
     }
 
     @Test
@@ -80,17 +90,32 @@ class AgentTraceToolServiceTest {
         span.setStatusMessage("failed authorization=private-token");
         span.setSpanAttributes(Map.of("password", "span-secret"));
         detail.setSpans(List.of(span));
-        when(traceQueryService.getTraceDetail(any(TraceDetailQuery.class))).thenReturn(detail);
+        when(traceQueryService.getTraceDetail(any(), any(TraceDetailQuery.class))).thenReturn(detail);
 
-        Map<String, Object> result = service.getTrace(7L, "trace-2", 1_000L, 2_000L,
-                "checkout", "shop", "prod");
+        Map<String, Object> result = service.getTrace("trace-2", "span-1", 1_000L, 2_000L,
+                "checkout", "shop", "prod", "service.version=1", "http.status_code=503", 10L, 20L);
 
         ArgumentCaptor<TraceDetailQuery> query = ArgumentCaptor.forClass(TraceDetailQuery.class);
-        verify(traceQueryService).getTraceDetail(query.capture());
+        verify(traceQueryService).getTraceDetail(org.mockito.ArgumentMatchers.eq("team-b"), query.capture());
         assertEquals("trace-2", query.getValue().traceId());
-        assertEquals(7L, query.getValue().entityId());
+        assertEquals(null, query.getValue().entityId());
+        assertEquals("span-1", query.getValue().spanId());
+        assertEquals("service.version=1", query.getValue().resourceFilter());
+        assertEquals("http.status_code=503", query.getValue().attributeFilter());
+        assertEquals(10L, query.getValue().minDurationMs());
+        assertEquals(20L, query.getValue().maxDurationMs());
         assertFalse(result.toString().contains("private-token"));
         assertFalse(result.toString().contains("span-secret"));
+    }
+
+    @Test
+    void shouldRejectMissingRuntimeWorkspaceBeforeTraceRead() {
+        AuthTokenRequestContext.clear();
+
+        assertThrows(CommonException.class, () -> service.getTrace("trace-2", null, 1_000L, 2_000L,
+                null, null, null, null, null, null, null));
+
+        verifyNoInteractions(traceQueryService);
     }
 
     @Test

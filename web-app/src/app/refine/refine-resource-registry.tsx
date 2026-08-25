@@ -61,6 +61,7 @@ import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import { alertSilenceResourceName } from './resources/alert-silence-data-provider';
 
 type NavigationResource = {
+  activePath?: string;
   name: string;
   list?: string;
   create?: string;
@@ -319,9 +320,8 @@ const staticRefineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('status-management', {
-    parent: 'shell-administration',
     icon: <HeartOutlined />,
-    order: 60,
+    order: 45,
     timePolicy: 'none'
   })
 ];
@@ -339,6 +339,7 @@ export const shellAccessControlProvider: AccessControlProvider = {
 function navigationResource(resource: NavigationResource): ResourceProps {
   const shell: ShellResourceMeta = {
     capability: resource.capability ?? 'supported',
+    ...(resource.activePath ? { activePath: resource.activePath } : {}),
     ...optionalResourceLabel(resource.label),
     labelKey: resource.labelKey,
     navigation: resource.navigation ?? true,
@@ -419,6 +420,7 @@ function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedN
   if (!routeDefinition.resource) throw new Error(`Route ${routeId} is not a Refine resource.`);
   return navigationResource({
     ...resource,
+    activePath: routeDefinition.path,
     name: resource.name ?? routeDefinition.id,
     list: routeDefinition.resource.listPath ?? routeDefinition.path,
     labelKey: routeDefinition.resource.labelKey,

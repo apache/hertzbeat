@@ -6,3 +6,4 @@
  */
 
 export { useAuthoritativePageSelection } from './authoritative-page-selection';
+export { pageSelectionLabels, pageSelectionTitleCheckboxProps, type PageSelectionLabels } from './page-selection-title';

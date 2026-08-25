@@ -20,6 +20,7 @@ type CommandDependencies = {
   startWrite: SetupWriteBoundary;
   clearMailSecret: () => void;
   resetMailValidation: () => void;
+  publicOrigin: string;
   onCompleted: (response: SetupCompleteResponse) => void;
 };
 
@@ -34,7 +35,8 @@ function useOptionsCommand({
   refresh,
   startWrite,
   clearMailSecret,
-  resetMailValidation
+  resetMailValidation,
+  publicOrigin
 }: CommandDependencies) {
   const admission = useCommandAdmission();
   const [saveFailureKey, setFailure] = useState<string | null>(null);
@@ -43,7 +45,7 @@ function useOptionsCommand({
     const write = startWrite();
     setFailure(null);
     try {
-      await saveSetupOptions(createOptionalOptionsRequest(draftRef.current), write.signal);
+      await saveSetupOptions(createOptionalOptionsRequest(draftRef.current, publicOrigin), write.signal);
       if (write.signal.aborted) {
         admission.abort();
         return;
@@ -77,7 +79,7 @@ function useOptionsCommand({
     } finally {
       write.release();
     }
-  }, [admission, clearMailSecret, draftRef, refresh, resetMailValidation, startWrite]);
+  }, [admission, clearMailSecret, draftRef, publicOrigin, refresh, resetMailValidation, startWrite]);
   return { save, saveFailureKey, savePending: admission.pending };
 }
 

@@ -74,7 +74,7 @@ describe('LabelResults', () => {
     expect(callbacks.onPageChange).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps row actions on their record and falls back to creation time', async () => {
+  it('keeps low-frequency row actions in one contextual menu and falls back to creation time', async () => {
     const callbacks = renderResults();
     const expectedTime = new Intl.DateTimeFormat(undefined, {
       dateStyle: 'short',
@@ -91,9 +91,13 @@ describe('LabelResults', () => {
 
     expect(screen.getByText(expectedTime)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'environment:production' }));
-    fireEvent.click(screen.getByRole('button', { name: 'labels.copy' }));
-    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
-    fireEvent.click(screen.getByRole('button', { name: 'labels.delete' }));
+    expect(screen.queryByRole('menuitem', { name: 'labels.copy' })).not.toBeInTheDocument();
+    await openActionsMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'labels.copy' }));
+    await openActionsMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'common.edit' }));
+    await openActionsMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'labels.delete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
 
     expect(callbacks.onInspect).toHaveBeenCalledWith(record);
@@ -107,7 +111,8 @@ describe('LabelResults', () => {
     const results = render(labelResults(callbacks, false));
     const actions = render(<App>{renderColumn('common.actions', undefined)}</App>);
 
-    fireEvent.click(screen.getByRole('button', { name: 'labels.delete' }));
+    await openActionsMenu();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'labels.delete' }));
     expect(await screen.findByRole('button', { name: 'OK' })).toBeEnabled();
 
     results.rerender(labelResults(callbacks, true));
@@ -130,6 +135,8 @@ describe('LabelResults', () => {
         state={{ kind: 'permission' }}
         pageIndex={0}
         pageSize={20}
+        selectedIds={[]}
+        onSelectionChange={vi.fn()}
         {...callbacks}
       />
     );
@@ -141,8 +148,38 @@ describe('LabelResults', () => {
   it('keeps the actions column fixed inside the table viewport', () => {
     renderResults();
 
-    expect(table.props?.scroll).toEqual({ x: 980 });
-    expect(table.props?.columns?.find(column => column.title === 'common.actions')).toMatchObject({ fixed: 'right' });
+    expect(table.props?.scroll).toEqual({ x: 872 });
+    expect(table.props?.columns?.find(column => column.title === 'common.actions')).toMatchObject({
+      align: 'center',
+      fixed: 'right',
+      width: 64
+    });
+  });
+
+  it('uses the shared current-page selection names', () => {
+    renderResults();
+    expect(table.props?.rowSelection?.getTitleCheckboxProps?.()).toEqual({
+      'aria-label': 'common.tableSelection.selectAll'
+    });
+
+    const callbacks = labelCallbacks();
+    render(
+      <LabelResults
+        busy={false}
+        canDelete
+        canUpdate
+        writeLocked={false}
+        state={{ kind: 'ready', records: [record], total: 1 }}
+        pageIndex={0}
+        pageSize={20}
+        selectedIds={[record.id]}
+        onSelectionChange={vi.fn()}
+        {...callbacks}
+      />
+    );
+    expect(table.props?.rowSelection?.getTitleCheckboxProps?.()).toEqual({
+      'aria-label': 'common.tableSelection.clearAll'
+    });
   });
 });
 
@@ -172,6 +209,8 @@ function labelResults(callbacks: ReturnType<typeof labelCallbacks>, busy: boolea
       state={{ kind: 'ready', records: [record], total: 33 }}
       pageIndex={2}
       pageSize={20}
+      selectedIds={[]}
+      onSelectionChange={vi.fn()}
       {...callbacks}
     />
   );
@@ -190,4 +229,9 @@ function renderColumn(title: string, value: unknown): ReactNode {
   if (isValidElement(cell)) return cell;
   if (cell && typeof cell === 'object') return 'children' in cell ? cell.children : null;
   return cell;
+}
+
+async function openActionsMenu() {
+  fireEvent.click(screen.getByRole('button', { name: 'common.actions' }));
+  await screen.findByRole('menu');
 }

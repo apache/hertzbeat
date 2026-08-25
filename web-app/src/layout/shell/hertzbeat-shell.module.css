@@ -76,6 +76,26 @@
   white-space: nowrap;
 }
 
+button.statusSlot {
+  padding: 0;
+  border-width: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.statusSlot:hover .statusLabel {
+  color: var(--hb-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.statusSlot:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
 .statusLabel {
   flex: none;
 }
@@ -84,6 +104,46 @@
   flex: none;
   color: var(--hb-text-muted);
   font-size: 11px;
+}
+
+.statusPopover {
+  display: grid;
+  gap: 10px;
+  width: min(288px, calc(100vw - 40px));
+}
+
+.statusPopoverHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statusPopoverHeader > strong {
+  color: var(--hb-text-primary);
+  font-size: 13px;
+}
+
+.statusPopoverHeader > span {
+  color: var(--hb-text-muted);
+  font-size: 12px;
+}
+
+.statusPopoverEvidence {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--hb-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.statusPopoverLink {
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .statusDot {
@@ -415,6 +475,11 @@ button.timePolicy:hover {
   font-size: 9px;
 }
 
+.navigationChevron :global(.anticon),
+.navigationToggle :global(.anticon) {
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
 .navigationToggle {
   position: absolute;
   right: 2px;
@@ -439,6 +504,29 @@ button.timePolicy:hover {
 
 .navigationToggleClosed {
   transform: rotate(180deg);
+}
+
+.navigationChildrenMotion {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 140ms ease,
+    visibility 0s linear 220ms;
+}
+
+.navigationChildrenMotion[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.navigationChildrenClip {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .navigationChildren {
@@ -563,6 +651,14 @@ button.timePolicy:hover {
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
   min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigationChildrenMotion,
+  .navigationChevron :global(.anticon),
+  .navigationToggle :global(.anticon) {
+    transition-duration: 0.01ms;
+  }
 }
 
 @media (max-width: 1180px) {

@@ -15,12 +15,17 @@
  * limitations under the License.
  */
 
-import { Button, Popconfirm, Space, Table, Tag } from 'antd';
+import { MoreOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Popconfirm, Table, Tag } from 'antd';
+import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableRowSelection } from 'antd/es/table/interface';
 import type { TFunction } from 'i18next';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
 
 import { buildLabelDisplayName, labelTypeKey, type LabelListState, type LabelRecord } from '../model/label-model';
 import { isLabelPageSize, labelPageSizes, type LabelPageSize } from '../model/label-query-model';
@@ -42,6 +47,8 @@ type LabelResultsProps = LabelResultActions & {
   pageIndex: number;
   pageSize: LabelPageSize;
   onPageChange: (pageIndex: number, pageSize: LabelPageSize) => void;
+  selectedIds: number[];
+  onSelectionChange: (ids: number[]) => void;
 };
 
 export function LabelResults(props: LabelResultsProps) {
@@ -55,13 +62,15 @@ export function LabelResults(props: LabelResultsProps) {
     return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('labels.empty')} />;
 
+  const rowSelection = createRowSelection(props, t);
   return (
     <Table<LabelRecord>
       rowKey="id"
       size="small"
       columns={createLabelColumns(t, props)}
       dataSource={props.state.records}
-      scroll={{ x: 980 }}
+      {...(rowSelection ? { rowSelection } : {})}
+      scroll={{ x: props.canDelete ? 872 : 824 }}
       pagination={{
         disabled: props.busy,
         current: props.pageIndex + 1,
@@ -75,6 +84,22 @@ export function LabelResults(props: LabelResultsProps) {
       }}
     />
   );
+}
+
+function createRowSelection(props: LabelResultsProps, t: TFunction): TableRowSelection<LabelRecord> | undefined {
+  if (!props.canDelete) return undefined;
+  return {
+    preserveSelectedRowKeys: false,
+    selectedRowKeys: props.selectedIds,
+    getTitleCheckboxProps: () =>
+      pageSelectionTitleCheckboxProps(
+        props.selectedIds,
+        props.state.kind === 'ready' ? props.state.records.map(record => record.id) : [],
+        pageSelectionLabels(t)
+      ),
+    getCheckboxProps: () => ({ 'aria-label': t('labels.selectRow'), disabled: props.busy || props.writeLocked }),
+    onChange: keys => props.onSelectionChange(keys.filter((key): key is number => typeof key === 'number'))
+  };
 }
 
 function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsType<LabelRecord> {
@@ -108,30 +133,60 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
     },
     {
       title: t('common.actions'),
+      align: 'center',
       fixed: 'right',
-      width: 220,
-      render: (_value, row) => (
-        <Space size={2}>
-          <Button type="link" onClick={() => actions.onCopy(row)}>
-            {t('labels.copy')}
-          </Button>
-          <Button type="link" disabled={!actions.canUpdate || actions.writeLocked} onClick={() => actions.onEdit(row)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm
-            disabled={!actions.canDelete || actions.writeLocked}
-            okButtonProps={{ disabled: !actions.canDelete || actions.writeLocked }}
-            title={t('labels.deleteConfirm')}
-            onConfirm={() => actions.onRemove(row)}
-          >
-            <Button type="link" danger disabled={!actions.canDelete || actions.writeLocked}>
-              {t('labels.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      )
+      width: 64,
+      render: (_value, row) => <LabelRowActions t={t} row={row} actions={actions} />
     }
   ];
+}
+
+function LabelRowActions({ t, row, actions }: { t: TFunction; row: LabelRecord; actions: LabelResultsProps }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const editDisabled = !actions.canUpdate || actions.writeLocked;
+  const deleteDisabled = !actions.canDelete || actions.writeLocked;
+  const items: MenuProps['items'] = [
+    { key: 'copy', label: t('labels.copy') },
+    { key: 'edit', label: t('common.edit'), disabled: editDisabled },
+    { type: 'divider' },
+    { key: 'delete', label: t('labels.delete'), danger: true, disabled: deleteDisabled }
+  ];
+  return (
+    <Popconfirm
+      open={deleteOpen}
+      title={t('labels.deleteConfirm')}
+      okButtonProps={{ danger: true, disabled: deleteDisabled }}
+      onCancel={() => setDeleteOpen(false)}
+      onConfirm={() => {
+        if (!deleteDisabled) actions.onRemove(row);
+        setDeleteOpen(false);
+      }}
+      onOpenChange={open => {
+        if (!open) setDeleteOpen(false);
+      }}
+    >
+      <Dropdown
+        trigger={['click']}
+        placement="bottomRight"
+        menu={{
+          items,
+          onClick: ({ key }) => {
+            if (key === 'copy') actions.onCopy(row);
+            if (key === 'edit' && !editDisabled) actions.onEdit(row);
+            if (key === 'delete' && !deleteDisabled) setDeleteOpen(true);
+          }
+        }}
+      >
+        <Button
+          type="text"
+          size="small"
+          className={styles.actionTrigger ?? ''}
+          aria-label={t('common.actions')}
+          icon={<MoreOutlined aria-hidden="true" />}
+        />
+      </Dropdown>
+    </Popconfirm>
+  );
 }
 
 function formatTime(value?: string) {

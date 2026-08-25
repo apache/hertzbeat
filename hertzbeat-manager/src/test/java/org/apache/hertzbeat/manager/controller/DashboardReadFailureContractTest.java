@@ -81,7 +81,8 @@ class DashboardReadFailureContractTest {
 
     @Test
     void alertSummaryKeepsUnexpectedDetailsPrivate() throws Exception {
-        Mockito.when(alertService.getAlertsSummary()).thenThrow(new IllegalStateException(PRIVATE_RUNTIME_DETAIL));
+        Mockito.when(alertService.getAlertsSummary(Mockito.isNull()))
+                .thenThrow(new IllegalStateException(PRIVATE_RUNTIME_DETAIL));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/summary"))
                 .andExpect(status().isInternalServerError())

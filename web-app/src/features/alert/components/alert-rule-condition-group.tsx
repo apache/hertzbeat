@@ -5,8 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Select } from 'antd';
+import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -32,37 +32,49 @@ export function AlertRuleConditionGroup(props: ConditionGroupProps) {
   return (
     <section className={styles.conditionGroup}>
       <header className={styles.conditionGroupHeader}>
-        <Select
+        <Radio.Group
           aria-label={t('alertRules.metricCondition.join')}
+          buttonStyle="solid"
           disabled={props.busy}
+          optionType="button"
+          size="small"
           value={props.group.join}
-          options={['and', 'or'].map(value => ({
-            value,
-            label: t(`alertRules.metricCondition.${value}`)
-          }))}
-          onChange={join => props.change(updateMetricAlertConditionGroupJoin(props.root, props.path, join))}
-        />
-        <Button
-          aria-label={t('alertRules.metricCondition.addCondition')}
-          size="small"
-          icon={<PlusOutlined />}
-          disabled={props.busy || atLimit}
-          onClick={() => props.change(addMetricAlertCondition(props.root, props.path, props.fields))}
+          onChange={event =>
+            props.change(
+              updateMetricAlertConditionGroupJoin(
+                props.root,
+                props.path,
+                event.target.value as MetricAlertConditionGroup['join']
+              )
+            )
+          }
         >
-          {t('alertRules.metricCondition.addCondition')}
-        </Button>
-        <Button
-          aria-label={t('alertRules.metricCondition.addGroup')}
-          size="small"
-          icon={<PlusOutlined />}
-          disabled={props.busy || atLimit || !canNest}
-          onClick={() => props.change(addMetricAlertConditionGroup(props.root, props.path, props.fields))}
-        >
-          {t('alertRules.metricCondition.addGroup')}
-        </Button>
+          <Radio.Button value="and">{t('alertRules.metricCondition.and')}</Radio.Button>
+          <Radio.Button value="or">{t('alertRules.metricCondition.or')}</Radio.Button>
+        </Radio.Group>
+        <div className={styles.conditionGroupActions}>
+          <Button
+            aria-label={t('alertRules.metricCondition.addCondition')}
+            size="small"
+            icon={<PlusOutlined />}
+            disabled={props.busy || atLimit}
+            onClick={() => props.change(addMetricAlertCondition(props.root, props.path, props.fields))}
+          >
+            {t('alertRules.metricCondition.ruleButton')}
+          </Button>
+          <Button
+            aria-label={t('alertRules.metricCondition.addGroup')}
+            size="small"
+            icon={<PlusOutlined />}
+            disabled={props.busy || atLimit || !canNest}
+            onClick={() => props.change(addMetricAlertConditionGroup(props.root, props.path))}
+          >
+            {t('alertRules.metricCondition.rulesetButton')}
+          </Button>
+        </div>
       </header>
-      {props.group.items.length === 0 && (
-        <div className={styles.conditionEmpty}>{t('alertRules.metricCondition.empty')}</div>
+      {props.path.length > 0 && props.group.items.length === 0 && (
+        <div className={styles.conditionEmpty}>{t('alertRules.metricCondition.emptyGroup')}</div>
       )}
       {props.group.items.map((item, index) => {
         const itemPath = [...props.path, index];
@@ -84,9 +96,8 @@ function RemoveButton(props: ConditionGroupProps & { path: number[] }) {
   return (
     <Button
       aria-label={t('alertRules.metricCondition.remove')}
-      type="text"
       danger
-      icon={<DeleteOutlined />}
+      icon={<MinusOutlined />}
       disabled={props.busy}
       onClick={() => props.change(removeMetricAlertConditionItem(props.root, props.path))}
     />

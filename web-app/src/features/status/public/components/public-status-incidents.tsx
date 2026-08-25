@@ -15,16 +15,13 @@
  * limitations under the License.
  */
 
-import { Button, InputNumber, Space, Table, Tag, Timeline, Typography } from 'antd';
+import { DownOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, InputNumber, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
-import type {
-  PublicStatusIncident,
-  PublicStatusIncidentState,
-  PublicStatusState
-} from '../model/public-status-contract';
+import type { PublicStatusIncident, PublicStatusState } from '../model/public-status-contract';
 import {
   earliestPublicStatusIncidentYear,
   type PublicStatusIncidentRange
@@ -46,8 +43,11 @@ export function PublicStatusIncidents({ incidents, range, refreshing, state, onY
   const { t } = useTranslation();
   return (
     <section className={styles.section}>
-      <div className={styles.sectionHeader}>
-        <Typography.Title level={4}>{t('status.incidents')}</Typography.Title>
+      <div className={styles.incidentHeader}>
+        <div>
+          <Typography.Title level={3}>{t('status.incidentHistory')}</Typography.Title>
+          <Typography.Text type="secondary">{t('status.incidentHistoryDescription')}</Typography.Text>
+        </div>
         <IncidentYearToolbar
           year={range.year}
           refreshing={refreshing}
@@ -56,32 +56,13 @@ export function PublicStatusIncidents({ incidents, range, refreshing, state, onY
         />
       </div>
       {state === 'ready' ? (
-        <Table<PublicStatusIncident>
-          rowKey="id"
-          pagination={false}
-          size="small"
-          dataSource={incidents}
-          scroll={{ x: 720 }}
-          expandable={{
-            defaultExpandAllRows: true,
-            expandedRowRender: incident => <IncidentEvidence incident={incident} />
-          }}
-          columns={[
-            { title: t('status.incident'), dataIndex: 'name' },
-            {
-              title: t('status.state'),
-              dataIndex: 'state',
-              render: (state: PublicStatusIncidentState) => <Tag>{t(publicIncidentStateKey(state))}</Tag>
-            },
-            {
-              title: t('status.started'),
-              dataIndex: 'startTime',
-              render: (value: number | undefined) => (value ? new Date(value).toLocaleString() : '—')
-            }
-          ]}
-        />
+        <div className={styles.incidentList}>
+          {incidents.map(incident => (
+            <StatusIncident incident={incident} key={incident.id} />
+          ))}
+        </div>
       ) : state === 'empty' ? (
-        <OperationalStatePanel kind="empty" title={t('status.noIncidents')} />
+        <OperationalStatePanel kind="empty" presentation="quiet" title={t('status.noIncidents')} />
       ) : (
         <PublicStatusRegionState state={state} loadingKey="status.loadingIncidents" />
       )}
@@ -102,8 +83,7 @@ function IncidentYearToolbar({
 }) {
   const { t } = useTranslation();
   return (
-    <Space>
-      <Typography.Text>{t('status.incidentYear')}</Typography.Text>
+    <div className={styles.incidentToolbar}>
       <InputNumber
         aria-label={t('status.incidentYear')}
         precision={0}
@@ -114,44 +94,68 @@ function IncidentYearToolbar({
           if (typeof value === 'number') onYearChange(value);
         }}
       />
-      <Button loading={refreshing} onClick={() => void onRefresh()}>
-        {t('common.refresh')}
-      </Button>
-    </Space>
+      <Button
+        aria-label={t('common.refresh')}
+        icon={<ReloadOutlined />}
+        loading={refreshing}
+        onClick={() => void onRefresh()}
+      />
+    </div>
+  );
+}
+
+function StatusIncident({ incident }: { incident: PublicStatusIncident }) {
+  const { i18n, t } = useTranslation();
+  const locale = i18n?.language ?? 'en-US';
+  return (
+    <details className={styles.incident} data-incident-state={incident.state}>
+      <summary>
+        <span className={styles.incidentMarker} aria-hidden />
+        <span className={styles.incidentCopy}>
+          <Typography.Text strong>{incident.name}</Typography.Text>
+          <Typography.Text type="secondary">
+            {incident.startTime ? new Date(incident.startTime).toLocaleString(locale) : t('status.timeUnavailable')}
+          </Typography.Text>
+        </span>
+        <Tag bordered={false}>{t(publicIncidentStateKey(incident.state))}</Tag>
+        <DownOutlined className={styles.disclosureIcon} aria-hidden />
+      </summary>
+      <IncidentEvidence incident={incident} />
+    </details>
   );
 }
 
 function IncidentEvidence({ incident }: { incident: PublicStatusIncident }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const locale = i18n?.language ?? 'en-US';
   if (incident.components === null || incident.contents === null) {
     return <OperationalStatePanel kind="unavailable" title={t('status.incidentDetailsUnavailable')} />;
   }
   return (
-    <Space direction="vertical" className={styles.incidentEvidence ?? ''}>
-      <div>
-        <Typography.Text strong>{t('status.affectedComponents')}</Typography.Text>{' '}
-        {incident.components.length
-          ? incident.components.map(component => <Tag key={component.id}>{component.name}</Tag>)
-          : t('status.noAffectedComponents')}
+    <div className={styles.incidentEvidence}>
+      <div className={styles.affectedComponents}>
+        <Typography.Text strong>{t('status.affectedComponents')}</Typography.Text>
+        <div>
+          {incident.components.length
+            ? incident.components.map(component => <Tag key={component.id}>{component.name}</Tag>)
+            : t('status.noAffectedComponents')}
+        </div>
       </div>
       {incident.contents.length ? (
-        <Timeline
-          items={incident.contents.map(content => ({
-            key: content.id,
-            children: (
-              <>
-                <Space>
-                  <Typography.Text>{new Date(content.timestamp).toLocaleString()}</Typography.Text>
-                  <Tag>{t(publicIncidentStateKey(content.state))}</Tag>
-                </Space>
-                <div>{content.message}</div>
-              </>
-            )
-          }))}
-        />
+        <ol className={styles.incidentTimeline}>
+          {incident.contents.map(content => (
+            <li key={content.id} data-update-state={content.state}>
+              <div className={styles.timelineMeta}>
+                <Typography.Text>{t(publicIncidentStateKey(content.state))}</Typography.Text>
+                <Typography.Text type="secondary">{new Date(content.timestamp).toLocaleString(locale)}</Typography.Text>
+              </div>
+              <Typography.Paragraph>{content.message}</Typography.Paragraph>
+            </li>
+          ))}
+        </ol>
       ) : (
-        <OperationalStatePanel kind="empty" title={t('status.noIncidentUpdates')} />
+        <OperationalStatePanel kind="empty" presentation="quiet" title={t('status.noIncidentUpdates')} />
       )}
-    </Space>
+    </div>
   );
 }

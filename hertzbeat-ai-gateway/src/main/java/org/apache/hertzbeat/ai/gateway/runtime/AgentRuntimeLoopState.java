@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 
 /**
@@ -45,12 +46,39 @@ final class AgentRuntimeLoopState {
     private String currentAssistantMessageItemId;
     private int currentAssistantMessageDeltaIndex;
     private boolean currentAssistantMessageStarted;
+    private boolean successfulReadObservation;
 
     AgentRuntimeLoopState(List<TranscriptMessage> initialMessages) {
+        this(initialMessages, null, null, true);
+    }
+
+    AgentRuntimeLoopState(List<TranscriptMessage> initialMessages, String currentRunUid) {
+        this(initialMessages, currentRunUid, null, true);
+    }
+
+    AgentRuntimeLoopState(List<TranscriptMessage> initialMessages, String currentRunUid, AgentTargetRef currentTarget) {
+        this(initialMessages, currentRunUid, currentTarget, true);
+    }
+
+    AgentRuntimeLoopState(List<TranscriptMessage> initialMessages, String currentRunUid, AgentTargetRef currentTarget,
+                          boolean groundingEligible) {
+        this(initialMessages, currentRunUid, currentTarget, groundingEligible, false);
+    }
+
+    AgentRuntimeLoopState(List<TranscriptMessage> initialMessages, String currentRunUid, AgentTargetRef currentTarget,
+                          boolean groundingEligible, AgentRuntimeContext context) {
+        this(initialMessages, currentRunUid, currentTarget, groundingEligible,
+                context != null && context.hasVerifiedDurableGrounding());
+    }
+
+    private AgentRuntimeLoopState(List<TranscriptMessage> initialMessages, String currentRunUid,
+                                  AgentTargetRef currentTarget, boolean groundingEligible,
+                                  boolean durableGroundingVerified) {
         if (initialMessages != null) {
             initialMessages.stream().filter(Objects::nonNull).forEach(messages::add);
         }
         usageBaselineStartIndex = messages.size();
+        successfulReadObservation = groundingEligible && durableGroundingVerified;
     }
 
     void addTurnMessage(TranscriptMessage message) {
@@ -62,6 +90,7 @@ final class AgentRuntimeLoopState {
         messages.clear();
         messages.addAll(compactedMessages);
         usageBaselineStartIndex = messages.size();
+        // A live observation remains valid for this invocation even when compaction prunes its marker.
     }
 
     void incrementModelRequestCount() {
@@ -110,6 +139,14 @@ final class AgentRuntimeLoopState {
 
     int getToolCallCount() {
         return toolCallCount;
+    }
+
+    void recordSuccessfulReadObservation() {
+        successfulReadObservation = true;
+    }
+
+    boolean hasSuccessfulReadObservation() {
+        return successfulReadObservation;
     }
 
     List<TranscriptMessage> messages() {

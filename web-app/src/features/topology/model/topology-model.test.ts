@@ -11,6 +11,7 @@ import {
   withTopologyPageDefaults,
   writeTopologyQuery
 } from './topology-model';
+import { materializeTopologyInvestigation } from './topology-agent-handoff';
 
 describe('topology query model', () => {
   it('parses every explicit backend input and reuses an exact complete time window', () => {
@@ -121,5 +122,75 @@ describe('topology query model', () => {
     });
     expect(node.toString()).toBe('depth=2&nodeId=service%3Acheckout');
     expect(model.writeTopologySelection(node, { kind: 'none' }).toString()).toBe('depth=2');
+  });
+
+  it('materializes the exact focused graph request and selected node for an Agent handoff', () => {
+    expect(
+      materializeTopologyInvestigation(
+        {
+          pathname: '/topology',
+          search:
+            '?focusEntityId=10&depth=2&environment=prod&sourceKind=otlp-trace-call' +
+            '&relationType=trace-call&hideInternal=true&pageIndex=1&pageSize=50&nodeId=entity%3A10'
+        },
+        { from: 1_000, to: 2_000 }
+      )
+    ).toEqual({
+      topology: {
+        rootEntityId: 10,
+        nodeId: 'entity:10',
+        depth: 2,
+        environment: 'prod',
+        sourceKind: 'otlp-trace-call',
+        start: 1_000,
+        end: 2_000,
+        relationType: 'trace-call',
+        hideInternal: true,
+        pageIndex: 1,
+        pageSize: 50
+      }
+    });
+  });
+
+  it('uses an explicit route window and rejects scopes the exact Agent tool cannot execute', () => {
+    expect(
+      materializeTopologyInvestigation(
+        {
+          pathname: '/topology',
+          search: '?focusEntityId=10&depth=1&start=3000&end=4000&edgeId=edge%3A10'
+        },
+        { from: 1_000, to: 2_000 }
+      )
+    ).toMatchObject({
+      topology: {
+        rootEntityId: 10,
+        edgeId: 'edge:10',
+        sourceKind: 'entity-relation',
+        start: 3_000,
+        end: 4_000,
+        hideInternal: false,
+        pageIndex: 0,
+        pageSize: 25
+      }
+    });
+
+    for (const search of [
+      '?depth=1',
+      '?focusEntityId=10&sourceKind=unknown',
+      '?focusEntityId=10&pageIndex=10001',
+      '?focusEntityId=10&pageSize=200',
+      `?focusEntityId=10&start=1&end=${7 * 24 * 60 * 60_000 + 2}`,
+      `?focusEntityId=10&environment=${'a'.repeat(129)}`
+    ]) {
+      expect(
+        materializeTopologyInvestigation({ pathname: '/topology', search }, { from: 1_000, to: 2_000 })
+      ).toBeUndefined();
+    }
+    expect(
+      materializeTopologyInvestigation(
+        { pathname: '/entities/10', search: '?focusEntityId=10' },
+        { from: 1_000, to: 2_000 }
+      )
+    ).toBeUndefined();
   });
 });

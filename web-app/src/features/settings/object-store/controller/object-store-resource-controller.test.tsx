@@ -18,7 +18,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ObjectStoreRequestFailure } from '../model/object-store-failure';
+import { objectStoreMigrationConflictCode, ObjectStoreRequestFailure } from '../model/object-store-failure';
 import { createObjectStoreDraft, type ObjectStoreResourceRecord } from '../model/object-store-model';
 import { useObjectStoreResourceController } from './object-store-resource-controller';
 
@@ -410,6 +410,24 @@ describe('Object Store resource controller', () => {
       expect(refine.providerUpdate).toHaveBeenCalledTimes(2);
     }
   );
+
+  it('keeps the draft and explains a target definition conflict without retrying the write', async () => {
+    refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+    refine.providerUpdate.mockRejectedValueOnce(
+      new ObjectStoreRequestFailure('invalid', 'rejected', { code: objectStoreMigrationConflictCode })
+    );
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    act(() => result.current.updateDraft(fileDraft()));
+    act(() => result.current.submit());
+
+    await waitFor(() => expect(result.current.state).toMatchObject({ locked: false, dirty: true }));
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(refine.notification).toHaveBeenCalledWith({
+      message: 'objectStore.migrationConflict',
+      type: 'error'
+    });
+  });
 
   it.each(definiteWriteRejections)(
     'does not start canonical proof after a definite FILE %s rejection',

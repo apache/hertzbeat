@@ -27,6 +27,7 @@ type LabelApi = typeof import('../api/label-api');
 const canonical = vi.hoisted(() => ({ endpoint: '/canonical-label-endpoint' }));
 const labelApi = vi.hoisted(() => ({
   deleteLabel: vi.fn<LabelApi['deleteLabel']>(),
+  deleteLabels: vi.fn<LabelApi['deleteLabels']>(),
   findCanonicalLabel: vi.fn<LabelApi['findCanonicalLabel']>(),
   loadLabels: vi.fn<LabelApi['loadLabels']>(),
   saveLabel: vi.fn<LabelApi['saveLabel']>()
@@ -49,7 +50,7 @@ const serverLabel: LabelRecord = {
 };
 
 describe('Label Refine data provider', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => vi.resetAllMocks());
 
   it('uses the endpoint owned by the Label API', () => {
     expect(labelDataProvider.getApiUrl()).toBe(canonical.endpoint);
@@ -129,6 +130,7 @@ describe('Label Refine data provider', () => {
     expect(labelApi.loadLabels).not.toHaveBeenCalled();
     expect(labelApi.saveLabel).not.toHaveBeenCalled();
     expect(labelApi.deleteLabel).not.toHaveBeenCalled();
+    expect(labelApi.deleteLabels).not.toHaveBeenCalled();
   });
 
   it('fails invalid pagination, ids, and delete variables before transport', async () => {
@@ -367,6 +369,40 @@ describe('Label Refine data provider', () => {
     });
     expect(labelApi.deleteLabel).toHaveBeenCalledWith(7);
     expect(labelApi.findCanonicalLabel).toHaveBeenCalledTimes(2);
+  });
+
+  it('preflights, deletes, and proves a selected batch with one transport request', async () => {
+    const second = { ...serverLabel, id: 9, name: 'region', tagValue: 'west' };
+    labelApi.findCanonicalLabel
+      .mockResolvedValueOnce(serverLabel)
+      .mockResolvedValueOnce(second)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
+    labelApi.deleteLabels.mockResolvedValue(null);
+
+    await expect(
+      labelDataProvider.deleteMany?.<LabelRecord, LabelRecord[]>({
+        resource: 'labels',
+        ids: [7, 9],
+        variables: [serverLabel, second]
+      })
+    ).resolves.toEqual({ data: [serverLabel, second] });
+
+    expect(labelApi.deleteLabels).toHaveBeenCalledWith([7, 9]);
+    expect(labelApi.findCanonicalLabel).toHaveBeenCalledTimes(4);
+  });
+
+  it('rejects mismatched batch records before any delete transport', async () => {
+    await expect(
+      labelDataProvider.deleteMany?.({
+        resource: 'labels',
+        ids: [7, 9],
+        variables: [serverLabel]
+      })
+    ).rejects.toMatchObject({ writeOutcome: 'not-attempted' });
+
+    expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
+    expect(labelApi.deleteLabels).not.toHaveBeenCalled();
   });
 
   it('turns ambiguous DELETE and delete-proof failures into exact proof-only evidence', async () => {

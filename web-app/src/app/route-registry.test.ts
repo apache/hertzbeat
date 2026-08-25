@@ -358,6 +358,15 @@ describe('route registry', () => {
     ]);
   });
 
+  it('registers the focused management database migration route beside deployment settings', () => {
+    expect(getAppRoute('deployment-migration')).toEqual({
+      id: 'deployment-migration',
+      path: '/settings/deployment/migration',
+      layout: 'basic',
+      kind: 'page'
+    });
+  });
+
   it('registers the session lock as a canonical passport-layout page', () => {
     expect(getAppRoute('lock')).toEqual({ id: 'lock', path: '/passport/lock', layout: 'passport', kind: 'page' });
   });

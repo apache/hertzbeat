@@ -82,4 +82,25 @@ describe('PluginList', () => {
 
     expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
   });
+
+  it('localizes current-page selection in both states', () => {
+    const props = {
+      records: [{ id: 11, name: 'audit', enableStatus: true }],
+      total: 1,
+      query: { search: '', pageIndex: 0, pageSize: 8 as const },
+      pageSizes: [8] as const,
+      canWrite: true,
+      busy: false,
+      onSelected: vi.fn(),
+      onPage: vi.fn(),
+      onToggle: vi.fn(),
+      onDelete: vi.fn(),
+      onConfigure: vi.fn()
+    };
+    const view = render(<PluginList {...props} selectedIds={[]} />);
+    expect(screen.getByRole('checkbox', { name: 'common.tableSelection.selectAll' })).not.toBeChecked();
+
+    view.rerender(<PluginList {...props} selectedIds={[11]} />);
+    expect(screen.getByRole('checkbox', { name: 'common.tableSelection.clearAll' })).toBeChecked();
+  });
 });

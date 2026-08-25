@@ -144,7 +144,8 @@ function QueryProbe({ onSnapshot }: { onSnapshot: ((snapshot: ControllerSnapshot
         onClick={() => {
           deferredDeleteReceipt.current = {
             query: { search: 'env', pageIndex: 2, pageSize: 50 },
-            visibleRecords: 1
+            visibleRecords: 1,
+            deletedRecords: 1
           };
           void navigate('/settings/labels?pageIndex=4&pageSize=100&search=production');
         }}
@@ -156,7 +157,8 @@ function QueryProbe({ onSnapshot }: { onSnapshot: ((snapshot: ControllerSnapshot
         onClick={() =>
           reconcileConfirmedDelete({
             query: { search: 'env', pageIndex: 2, pageSize: 50 },
-            visibleRecords: 1
+            visibleRecords: 1,
+            deletedRecords: 1
           })
         }
       >

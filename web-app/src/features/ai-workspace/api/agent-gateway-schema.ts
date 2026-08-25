@@ -3,6 +3,8 @@
 import { z } from 'zod';
 
 import { agentGatewayEventTypes } from '../model/agent-workspace-contract';
+import { agentRunTargetSchema, agentSourceTargetWireSchema } from './agent-target-schema';
+export { agentSourceTargetSchema } from './agent-target-schema';
 
 export const agentGatewayEventSchema = z
   .object({
@@ -28,6 +30,33 @@ export const agentSessionSchema = z
     gmtUpdate: z.string().nullable()
   })
   .passthrough();
+
+export const agentRunSnapshotSchema = z
+  .object({
+    runUid: z.string().min(1),
+    sessionUid: z.string().min(1),
+    messageId: z.string().min(1),
+    status: z.enum(['CREATED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'RECOVERY_REQUIRED']),
+    target: agentRunTargetSchema.nullable(),
+    result: z.string().nullable(),
+    errorMessage: z.string().nullable(),
+    replayAvailable: z.boolean(),
+    startedAt: z.string().nullable(),
+    completedAt: z.string().nullable(),
+    retryRequest: z
+      .object({
+        conversationId: z.string().min(1),
+        messageId: z.string().min(1),
+        message: z.string().min(1),
+        target: agentSourceTargetWireSchema.nullable(),
+        attachments: z.array(z.string().min(1)),
+        preferredLanguage: z.string().min(1)
+      })
+      .strict()
+      .nullable()
+      .default(null)
+  })
+  .strict();
 
 export const agentTranscriptEntrySchema = z
   .object({

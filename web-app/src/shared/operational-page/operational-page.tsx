@@ -131,17 +131,20 @@ export function OperationalSection({
 
 export type OperationalStateKind =
   'loading' | 'empty' | 'no-match' | 'unsupported' | 'unavailable' | 'permission' | 'error';
+export type OperationalStatePresentation = 'accent' | 'quiet';
 
 export function OperationalStatePanel({
   kind,
   title,
   description,
-  action
+  action,
+  presentation = 'accent'
 }: {
   kind: OperationalStateKind;
   title: ReactNode;
   description?: ReactNode | undefined;
   action?: ReactNode | undefined;
+  presentation?: OperationalStatePresentation | undefined;
 }) {
   const titleId = useId();
   return (
@@ -150,6 +153,7 @@ export function OperationalStatePanel({
       role={operationalStateRole(kind)}
       aria-labelledby={titleId}
       data-state={kind}
+      data-presentation={presentation}
     >
       <div className={styles.stateCopy}>
         <Typography.Text id={titleId} strong>
@@ -159,6 +163,20 @@ export function OperationalStatePanel({
       </div>
       {action == null ? null : <div className={styles.stateAction}>{action}</div>}
     </section>
+  );
+}
+
+export function OperationalTableEmptyState({
+  title,
+  description
+}: {
+  title: ReactNode;
+  description?: ReactNode | undefined;
+}) {
+  return (
+    <div data-hb-operational-table-empty="">
+      <OperationalStatePanel kind="empty" presentation="quiet" title={title} description={description} />
+    </div>
   );
 }
 

@@ -32,7 +32,7 @@ const browserFullscreenRuntime: FullscreenRuntime = {
   enter: async () => {
     const target = fullscreenDocument();
     if (!target?.documentElement.requestFullscreen) throw new Error('Fullscreen is unavailable');
-    await target.documentElement.requestFullscreen();
+    await target.documentElement.requestFullscreen({ navigationUI: 'hide' });
   },
   exit: async () => {
     const target = fullscreenDocument();

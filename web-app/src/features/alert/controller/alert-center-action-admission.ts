@@ -55,6 +55,7 @@ export function createAlertCenterActionCommands(
       const current = visibleAlertGroup(list, group.id);
       return current ? removeGroups([current.id]) : Promise.resolve(false);
     },
+    removeIds: removeGroups,
     removeSelected: () => removeGroups(selectedVisibleAlertIds(list, selectedIds)),
     resolve: (group: { id: number }) =>
       updateVisibleGroupStatus(group, ['firing', 'acknowledged'], 'resolved', 'resolve'),

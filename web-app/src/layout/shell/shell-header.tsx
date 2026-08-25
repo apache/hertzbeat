@@ -9,16 +9,20 @@ import { ClockCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, type MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, type Location, type NavigateFunction } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import { safeRedirectTarget } from '@/core/auth/navigation';
 import { resolveLocale } from '@/core/i18n/locale';
 import { useShellAlertNotificationController } from '@/features/alert/shell';
 import { useShellMonitorImportTaskNotifications } from '@/features/monitor/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';
+import { materializeTopologyInvestigation } from '@/features/topology';
+import { useShellInvestigation } from '@/shared/investigation';
 import {
   buildAgentWorkspacePath,
-  deriveAgentTargetFromLocation
+  canMaterializeAgentInvestigation,
+  materializeAgentInvestigation
 } from '@/features/ai-workspace/model/agent-workspace-context';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
@@ -42,8 +46,9 @@ export function ShellHeader() {
     roles: session?.roles ?? []
   });
   const runtimeStatus = useRuntimeStatusController();
+  const publishedInvestigation = useShellInvestigation();
   const accountName = session?.username ?? '';
-  const investigationTarget = deriveAgentTargetFromLocation(location);
+  const investigationAvailable = hasShellInvestigation(location, actions.sharedTime.window, publishedInvestigation);
 
   return (
     <header className={styles.header}>
@@ -59,13 +64,12 @@ export function ShellHeader() {
           alertNotifications={alertNotifications}
           fullscreen={actions.fullscreen}
           loggingOut={actions.loggingOut}
-          {...(investigationTarget
+          {...(investigationAvailable
             ? {
                 investigation: {
                   label: t('shell.actions.investigate'),
-                  onOpen: () => {
-                    void navigate(buildAgentWorkspacePath(investigationTarget));
-                  }
+                  onOpen: () =>
+                    openShellInvestigation(location, actions.sharedTime.window, navigate, publishedInvestigation)
                 }
               }
             : {})}
@@ -84,6 +88,32 @@ export function ShellHeader() {
       </div>
     </header>
   );
+}
+
+function hasShellInvestigation(
+  location: Location,
+  window: SharedTimeValue['window'],
+  publishedInvestigation: ReturnType<typeof useShellInvestigation>
+) {
+  return (
+    canMaterializeAgentInvestigation(location) ||
+    materializeTopologyInvestigation(location, window) !== undefined ||
+    publishedInvestigation !== undefined
+  );
+}
+
+function openShellInvestigation(
+  location: Location,
+  window: SharedTimeValue['window'],
+  navigate: NavigateFunction,
+  publishedInvestigation: ReturnType<typeof useShellInvestigation>
+) {
+  const target =
+    materializeTopologyInvestigation(location, window) ??
+    publishedInvestigation ??
+    materializeAgentInvestigation(location);
+  const returnTo = safeRedirectTarget(`${location.pathname}${location.search}${location.hash}`);
+  if (target) void navigate(buildAgentWorkspacePath(target, returnTo ?? undefined));
 }
 
 function ShellTimeControl({ time, t, locale }: { time: SharedTimeValue; t: TFunction; locale: string | undefined }) {

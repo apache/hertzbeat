@@ -23,13 +23,16 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -76,8 +79,56 @@ class LogQueryControllerTest {
 
     @BeforeEach
     void setUp() {
-        this.logQueryController = new LogQueryController(new LogQueryServiceImpl(List.of(historyDataReader)));
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader))));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+    }
+
+    private static HistoryDataReader workspaceCompatibleReader(HistoryDataReader delegate) {
+        return (HistoryDataReader) Proxy.newProxyInstance(
+                HistoryDataReader.class.getClassLoader(), new Class<?>[]{HistoryDataReader.class},
+                (proxy, method, arguments) -> invokeWorkspaceCompatible(delegate, method, arguments));
+    }
+
+    private static Object invokeWorkspaceCompatible(HistoryDataReader delegate, Method method, Object[] arguments)
+            throws Throwable {
+        if (method.getDeclaringClass() == Object.class) {
+            return method.invoke(delegate, arguments);
+        }
+        int parameterCount = method.getParameterCount();
+        if (hasStub(delegate, method.getName(), parameterCount)) {
+            return invoke(delegate, method, arguments);
+        }
+        int legacyParameterCount = org.mockito.Mockito.mockingDetails(delegate).getStubbings().stream()
+                .filter(stubbing -> stubbing.getInvocation().getMethod().getName().equals(method.getName()))
+                .mapToInt(stubbing -> stubbing.getInvocation().getMethod().getParameterCount())
+                .filter(candidate -> candidate < parameterCount)
+                .max()
+                .orElse(-1);
+        if (legacyParameterCount > 0) {
+            Method legacyMethod = Arrays.stream(HistoryDataReader.class.getMethods())
+                    .filter(candidate -> candidate.getName().equals(method.getName()))
+                    .filter(candidate -> candidate.getParameterCount() == legacyParameterCount)
+                    .findFirst()
+                    .orElseThrow();
+            return invoke(delegate, legacyMethod, Arrays.copyOf(arguments, legacyParameterCount));
+        }
+        throw new UnsupportedOperationException("workspace history query is not stubbed");
+    }
+
+    private static boolean hasStub(HistoryDataReader delegate, String methodName, int parameterCount) {
+        return org.mockito.Mockito.mockingDetails(delegate).getStubbings().stream()
+                .anyMatch(stubbing -> stubbing.getInvocation().getMethod().getName().equals(methodName)
+                        && stubbing.getInvocation().getMethod().getParameterCount() == parameterCount);
+    }
+
+    private static Object invoke(HistoryDataReader delegate, Method method, Object[] arguments) throws Throwable {
+        try {
+            return method.invoke(delegate, arguments);
+        } catch (InvocationTargetException exception) {
+            throw exception.getCause();
+        }
     }
 
     @AfterEach
@@ -273,7 +324,8 @@ class LogQueryControllerTest {
     void testListLogsPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
-                new LogQueryServiceImpl(List.of(historyDataReader), Optional.of(workspaceQueryGateway)));
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
+                        Optional.of(workspaceQueryGateway)));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
         EntityIdentity serviceName = EntityIdentity.builder()
                 .entityId(42L)
@@ -294,14 +346,14 @@ class LogQueryControllerTest {
                 .identityValue("prod")
                 .priority(20)
                 .build();
-        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(Optional.of(ObserveEntity.builder()
+        when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
                 .id(42L)
                 .type("service")
                 .name("checkout")
                 .namespace("payments")
                 .environment("prod")
                 .build()));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(42L))
+        when(workspaceQueryGateway.findIdentitiesByEntityId("default", 42L))
                 .thenReturn(List.of(serviceName, serviceNamespace, environment));
         LogEntry checkoutProdLog = LogEntry.builder()
                 .timeUnixNano(1734005477630000000L)
@@ -324,11 +376,11 @@ class LogQueryControllerTest {
                 .build();
         Map<String, String> expectedResourceFilters = Map.of("hertzbeat.entity_id", "42");
         when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod"),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
                 eq(expectedResourceFilters), eq(Map.of())))
                 .thenReturn(2L);
         when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
-                any(), eq(0), eq(20), anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod"),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
                 eq(expectedResourceFilters), eq(Map.of())))
                 .thenReturn(List.of(checkoutProdLog, billingStagingLog));
 
@@ -347,16 +399,17 @@ class LogQueryControllerTest {
     void testLogStatsPreferEntityIdentityOverConflictingRouteContext() throws Exception {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
-                new LogQueryServiceImpl(List.of(historyDataReader), Optional.of(workspaceQueryGateway)));
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
+                        Optional.of(workspaceQueryGateway)));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
-        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(Optional.of(ObserveEntity.builder()
+        when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
                 .id(42L)
                 .type("service")
                 .name("checkout")
                 .namespace("payments")
                 .environment("prod")
                 .build()));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findIdentitiesByEntityId("default", 42L)).thenReturn(List.of(
                 EntityIdentity.builder()
                         .entityId(42L)
                         .identityKey("service.name")
@@ -382,7 +435,7 @@ class LogQueryControllerTest {
                 "hertzbeat.entity_id", "42");
         Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
         when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
                 eq(expectedResourceFilters), eq(expectedAttributeFilters)))
                 .thenReturn(Map.of(
                         "totalCount", 3L,
@@ -408,7 +461,7 @@ class LogQueryControllerTest {
                 .andExpect(jsonPath("$.data.errorCount").value(1));
 
         verify(historyDataReader).countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
                 eq(expectedResourceFilters), eq(expectedAttributeFilters));
     }
 
@@ -599,16 +652,17 @@ class LogQueryControllerTest {
     void testLogContextPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
-                new LogQueryServiceImpl(List.of(historyDataReader), Optional.of(workspaceQueryGateway)));
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
+                        Optional.of(workspaceQueryGateway)));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
-        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(Optional.of(ObserveEntity.builder()
+        when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
                 .id(42L)
                 .type("service")
                 .name("checkout")
                 .namespace("payments")
                 .environment("prod")
                 .build()));
-        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(
+        when(workspaceQueryGateway.findIdentitiesByEntityId("default", 42L)).thenReturn(List.of(
                 EntityIdentity.builder()
                         .entityId(42L)
                         .identityKey("service.name")
@@ -647,7 +701,7 @@ class LogQueryControllerTest {
                 "hertzbeat.entity_id", "42");
         Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
         when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
                 eq(expectedResourceFilters), eq(expectedAttributeFilters)))
                 .thenReturn(List.of(selectedLog));
 
@@ -664,7 +718,7 @@ class LogQueryControllerTest {
                 .andExpect(jsonPath("$.data.selected.body").value("checkout selected"));
 
         verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
                 eq(expectedResourceFilters), eq(expectedAttributeFilters));
     }
 
@@ -846,7 +900,6 @@ class LogQueryControllerTest {
 
         Map<String, String> expectedResourceFilters = Map.of(
                 "service.version", "1.2.3",
-                "hertzbeat.entity_id", "42",
                 "hertzbeat.entity_type", "service",
                 "hertzbeat.collector.id", "collector-a",
                 "service.instance.id", "checkout-7d9"
@@ -862,7 +915,6 @@ class LogQueryControllerTest {
                 .thenReturn(List.of(filteredLog));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
-                        .param("entityId", "42")
                         .param("entityType", "service")
                         .param("collectorId", "collector-a")
                         .param("instance", "checkout-7d9")
@@ -1431,21 +1483,27 @@ class LogQueryControllerTest {
     void testOverviewStatsUsesStorageAggregateWhenAvailable() throws Exception {
         when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(),
                 any(), any(), any(), anySet(), eq(false)))
-                .thenReturn(java.util.Map.of(
-                        "totalCount", 42L,
-                        "fatalCount", 1L,
-                        "errorCount", 2L,
-                        "warnCount", 3L,
-                        "infoCount", 36L,
-                        "debugCount", 0L,
-                        "traceCount", 0L
+                .thenReturn(java.util.Map.ofEntries(
+                        java.util.Map.entry("totalCount", 42L),
+                        java.util.Map.entry("fatalCount", 1L),
+                        java.util.Map.entry("errorCount", 2L),
+                        java.util.Map.entry("warnCount", 3L),
+                        java.util.Map.entry("infoCount", 36L),
+                        java.util.Map.entry("debugCount", 0L),
+                        java.util.Map.entry("traceCount", 0L),
+                        java.util.Map.entry("withTrace", 30L),
+                        java.util.Map.entry("withoutTrace", 12L),
+                        java.util.Map.entry("withSpan", 25L),
+                        java.util.Map.entry("withBothTraceAndSpan", 20L)
                 ));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.totalCount").value(42))
-                .andExpect(jsonPath("$.data.errorCount").value(2));
+                .andExpect(jsonPath("$.data.errorCount").value(2))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(30))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(20));
         verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
                 any(), any(), any(), any());
     }
@@ -1460,11 +1518,14 @@ class LogQueryControllerTest {
                 .attributes(new HashMap<>())
                 .build();
         MockMvc fallbackMockMvc = MockMvcBuilders
-                .standaloneSetup(new LogQueryController(new LogQueryServiceImpl(List.of(historyDataReader, secondaryHistoryDataReader))))
+                .standaloneSetup(new LogQueryController(new LogQueryServiceImpl(List.of(
+                        workspaceCompatibleReader(historyDataReader),
+                        workspaceCompatibleReader(secondaryHistoryDataReader)))))
                 .build();
 
-        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(0L);
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default")))
+                .thenThrow(new UnsupportedOperationException());
         when(secondaryHistoryDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(1L);
         when(secondaryHistoryDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))

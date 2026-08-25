@@ -15,17 +15,25 @@
  * limitations under the License.
  */
 
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalPageHeader } from '@/shared/operational-page';
 
 interface StatusManagementHeaderProps {
-  publicStatusHref: string;
+  publicStatusHref?: string;
+  canPublish?: boolean;
+  publishDisabled?: boolean;
+  onPublish?: () => void;
 }
 
 /** Keeps the heading presentational while its page owns the public route policy. */
-export function StatusManagementHeader({ publicStatusHref }: StatusManagementHeaderProps) {
+export function StatusManagementHeader({
+  publicStatusHref,
+  canPublish = false,
+  publishDisabled = false,
+  onPublish
+}: StatusManagementHeaderProps) {
   const { t } = useTranslation();
 
   return (
@@ -33,9 +41,20 @@ export function StatusManagementHeader({ publicStatusHref }: StatusManagementHea
       title={t('statusManagement.title')}
       description={t('statusManagement.description')}
       actions={
-        <Button href={publicStatusHref} target="_blank" rel="noreferrer">
-          {t('statusManagement.openPublicPage')}
-        </Button>
+        publicStatusHref || (canPublish && onPublish) ? (
+          <Space>
+            {publicStatusHref && (
+              <Button href={publicStatusHref} target="_blank" rel="noreferrer">
+                {t('statusManagement.openPublicPage')}
+              </Button>
+            )}
+            {canPublish && onPublish && (
+              <Button type="primary" disabled={publishDisabled} onClick={onPublish}>
+                {t('statusManagement.publishIncident')}
+              </Button>
+            )}
+          </Space>
+        ) : undefined
       }
     />
   );

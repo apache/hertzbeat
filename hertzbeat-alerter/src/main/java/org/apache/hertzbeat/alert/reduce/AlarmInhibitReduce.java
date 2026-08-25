@@ -71,7 +71,7 @@ public class AlarmInhibitReduce implements DisposableBean {
      * key: ruleId
      * value: map of source alerts with their fingerprints
      */
-    private final Map<Long, Map<String, SourceAlertEntry>> sourceAlertCache;
+    private final Map<WorkspaceRuleKey, Map<String, SourceAlertEntry>> sourceAlertCache;
 
     /**
      * Default TTL for source alerts (4 hours)
@@ -217,13 +217,13 @@ public class AlarmInhibitReduce implements DisposableBean {
             for (var alert : groupAlert.getAlerts()) {
                 for (AlertInhibit rule : inhibitRules.values()) {
                     if (isSourceAlert(alert, rule)) {
-                        cacheSourceAlert(alert, rule);
+                        cacheSourceAlert(groupAlert.getWorkspaceId(), alert, rule);
                     }
                 }
             }
 
             // Filter out inhibited alerts
-            groupAlert.getAlerts().removeIf(this::shouldInhibit);
+            groupAlert.getAlerts().removeIf(alert -> shouldInhibit(groupAlert.getWorkspaceId(), alert));
 
             // Continue processing if there are remaining alerts
             if (!groupAlert.getAlerts().isEmpty()) {
@@ -256,7 +256,7 @@ public class AlarmInhibitReduce implements DisposableBean {
      * Check if alert should be inhibited by any active source alerts
      * @param alert Single alert to be processed
      */
-    private boolean shouldInhibit(SingleAlert alert) {
+    private boolean shouldInhibit(String workspaceId, SingleAlert alert) {
         if (alert == null) {
             log.warn("Received null alert in shouldInhibit");
             return false;
@@ -270,7 +270,7 @@ public class AlarmInhibitReduce implements DisposableBean {
                 continue;
             }
 
-            List<SingleAlert> sourceAlerts = getActiveSourceAlerts(rule);
+            List<SingleAlert> sourceAlerts = getActiveSourceAlerts(workspaceId, rule);
             if (sourceAlerts.isEmpty()) {
                 continue;
             }
@@ -327,13 +327,13 @@ public class AlarmInhibitReduce implements DisposableBean {
      * @param alert Single alert to be processed
      * @param rule The rule of inhibition
      */
-    private void cacheSourceAlert(SingleAlert alert, AlertInhibit rule) {
+    private void cacheSourceAlert(String workspaceId, SingleAlert alert, AlertInhibit rule) {
         if (alert == null || rule == null) {
             log.warn("Received null alert or rule in cacheSourceAlert");
             return;
         }
         Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.computeIfAbsent(
-                rule.getId(),
+                new WorkspaceRuleKey(requireWorkspace(workspaceId), rule.getId()),
                 k -> new ConcurrentHashMap<>()
         );
 
@@ -351,12 +351,13 @@ public class AlarmInhibitReduce implements DisposableBean {
      * @param rule The rule of inhibition
      * @return List of active source alerts
      */
-    private List<SingleAlert> getActiveSourceAlerts(AlertInhibit rule) {
+    private List<SingleAlert> getActiveSourceAlerts(String workspaceId, AlertInhibit rule) {
         if (rule == null) {
             log.warn("Received null rule in getActiveSourceAlerts");
             return Collections.emptyList();
         }
-        Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(rule.getId());
+        Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(
+                new WorkspaceRuleKey(requireWorkspace(workspaceId), rule.getId()));
         if (ruleCache == null || ruleCache.isEmpty()) {
             return Collections.emptyList();
         }
@@ -379,6 +380,16 @@ public class AlarmInhibitReduce implements DisposableBean {
         }
         long now = System.currentTimeMillis();
         cache.entrySet().removeIf(entry -> entry.getValue().getExpiryTime() <= now);
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
+    }
+
+    private record WorkspaceRuleKey(String workspaceId, Long ruleId) {
     }
 
     /**

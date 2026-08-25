@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.setup.api;
 
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 
 /** HTTP response policy shared by setup and deployment controllers. */
@@ -29,5 +30,10 @@ public final class SetupHttpContract {
     /** Creates a response builder that prevents setup and deployment data from being stored. */
     public static ResponseEntity.BodyBuilder noStore() {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore());
+    }
+
+    /** Creates a no-store response with an explicit status for accepted asynchronous work. */
+    public static ResponseEntity.BodyBuilder noStore(HttpStatusCode status) {
+        return ResponseEntity.status(status).cacheControl(CacheControl.noStore());
     }
 }

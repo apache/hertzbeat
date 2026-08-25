@@ -27,11 +27,16 @@
         "unavailable": "利用不可",
         "unknown": "不明"
       },
-      "snapshotObservedAt": "スナップショット {{time}}",
+      "currentStatusObservedAt": "現在の状態 · {{time}}",
       "collectorLastReportedAt": "最終報告 {{time}}",
       "collectorCounts": "{{online}}/{{total}} オンライン · ランタイム正常 {{runtimeHealthy}}",
+      "collectorOnlineCount": "オンラインのコレクター: {{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "正常なランタイム: {{count}}",
+      "collectorOfflineCount": "オフラインのコレクター: {{count}}",
       "collectorNotReported": "ランタイム報告なし",
       "notObserved": "未観測",
+      "details": "{{label}}のステータス詳細",
+      "openManagement": "管理画面を開く",
       "request": {
         "permission": "実行状態を表示する権限がありません",
         "unavailable": "実行状態のリクエストを利用できません",

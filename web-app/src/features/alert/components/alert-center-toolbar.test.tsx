@@ -18,7 +18,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { AlertQuery } from '../model/alert-model';
 import type { AlertFilterDraft } from '../model/alert-center-view-model';
 import { AlertCenterToolbar } from './alert-center-toolbar';
 
@@ -30,16 +29,10 @@ const draft: AlertFilterDraft = {
   search: 'latency',
   serviceName: 'checkout',
   serviceNamespace: 'shop',
-  environment: 'production'
-};
-const query: AlertQuery = {
-  ...draft,
+  environment: 'production',
   status: 'firing',
-  severity: 'warning',
-  pageIndex: 0,
-  pageSize: 8
+  severity: 'warning'
 };
-
 describe('AlertCenterToolbar', () => {
   afterEach(cleanup);
 
@@ -71,39 +64,54 @@ describe('AlertCenterToolbar', () => {
 
     fireEvent.mouseDown(statusFilter);
     fireEvent.click(await screen.findByText('alert.status.resolved'));
-    expect(callbacks.onStatusChange.mock.calls[0]?.[0]).toBe('resolved');
+    expect(callbacks.onDraftChange).toHaveBeenLastCalledWith('status', 'resolved');
     fireEvent.mouseDown(statusFilter);
     fireEvent.click(await screen.findByText('alert.status.all'));
-    expect(callbacks.onStatusChange.mock.calls[1]?.[0]).toBe('');
+    expect(callbacks.onDraftChange).toHaveBeenLastCalledWith('status', '');
 
     fireEvent.mouseDown(severityFilter);
     fireEvent.click(await screen.findByText('alert.severity.critical'));
-    expect(callbacks.onSeverityChange.mock.calls[0]?.[0]).toBe('critical');
+    expect(callbacks.onDraftChange).toHaveBeenLastCalledWith('severity', 'critical');
     fireEvent.mouseDown(severityFilter);
     fireEvent.click(await screen.findByText('alert.severity.all'));
-    expect(callbacks.onSeverityChange.mock.calls[1]?.[0]).toBe('');
+    expect(callbacks.onDraftChange).toHaveBeenLastCalledWith('severity', '');
 
     fireEvent.click(screen.getByRole('button', { name: 'common.query' }));
     expect(callbacks.onSubmit).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps service scope behind an accessible disclosure when no advanced filter is active', () => {
+    renderToolbar({ ...draft, serviceName: '', serviceNamespace: '', environment: '' });
+
+    expect(screen.getByTestId('alert-advanced-filters')).toHaveAttribute('aria-hidden', 'true');
+    const disclosure = screen.getByRole('button', { name: 'alert.filters.more' });
+    expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(disclosure);
+
+    expect(screen.getByTestId('alert-advanced-filters')).toHaveAttribute('aria-hidden', 'false');
+    expect(screen.getByPlaceholderText('instrumentation.field.serviceName')).toBeVisible();
+    expect(screen.getByPlaceholderText('instrumentation.field.serviceNamespace')).toBeVisible();
+    expect(screen.getByPlaceholderText('instrumentation.field.serviceEnvironment')).toBeVisible();
+  });
+
   it('delegates refresh without awaiting it and reflects loading state', () => {
     const callbacks = createCallbacks();
     callbacks.onRefresh.mockReturnValue(new Promise<void>(() => undefined));
-    const view = render(<AlertCenterToolbar draft={draft} query={query} refreshing={false} {...callbacks} />);
+    const view = render(<AlertCenterToolbar draft={draft} refreshing={false} {...callbacks} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'common.refresh' }));
     expect(callbacks.onRefresh).toHaveBeenCalledTimes(1);
 
-    view.rerender(<AlertCenterToolbar draft={draft} query={query} refreshing {...callbacks} />);
+    view.rerender(<AlertCenterToolbar draft={draft} refreshing {...callbacks} />);
     const loadingRefresh = screen.getByRole('button', { name: /common\.refresh/ });
     expect(within(loadingRefresh).getByRole('img', { name: 'loading' })).toBeInTheDocument();
   });
 });
 
-function renderToolbar() {
+function renderToolbar(nextDraft = draft) {
   const callbacks = createCallbacks();
-  render(<AlertCenterToolbar draft={draft} query={query} refreshing={false} {...callbacks} />);
+  render(<AlertCenterToolbar draft={nextDraft} refreshing={false} {...callbacks} />);
   return callbacks;
 }
 
@@ -112,8 +120,6 @@ function createCallbacks() {
     disabled: false,
     onDraftChange: vi.fn(),
     onSubmit: vi.fn(),
-    onStatusChange: vi.fn(),
-    onSeverityChange: vi.fn(),
     onRefresh: vi.fn()
   };
 }

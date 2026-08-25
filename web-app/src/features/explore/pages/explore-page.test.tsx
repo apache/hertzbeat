@@ -25,6 +25,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import en from '@/assets/i18n/en-us.json';
 import { ApiMessageError } from '@/core/http/api-message';
+import { ShellInvestigationProvider, useShellInvestigation } from '@/shared/investigation';
 import { GlobalTimeProvider, RouteTimeProvider } from '@/shared/time';
 
 import { ExploreSignalContractError, type MetricConsole } from '../model/explore-signal-contract';
@@ -434,6 +435,30 @@ describe('ExplorePage instrumentation context boundary', () => {
 
     expect(await screen.findByText(/Refresh failed/u)).toHaveTextContent(i18n.t('explore.states.transportError'));
     expect(screen.getByRole('button', { name: 'trace-cached' })).toBeDisabled();
+    expect(screen.getByTestId('investigation-target')).toHaveTextContent('none');
+  });
+
+  it('publishes only the current non-empty exact Log page as an investigation target', async () => {
+    api.loadLogSignal.mockResolvedValueOnce(logEvidence(logPage('ready evidence', 'trace-ready')));
+    renderPage(
+      '/explore?signal=logs&start=1000&end=2000&serviceName=checkout&traceId=trace-ready' +
+        '&severityText=warn&hideNoise=true'
+    );
+
+    expect(await screen.findByText('ready evidence')).toBeInTheDocument();
+    expect(JSON.parse(screen.getByTestId('investigation-target').textContent ?? '')).toEqual({
+      log: {
+        start: 1_000,
+        end: 2_000,
+        traceId: 'trace-ready',
+        severityText: 'WARN',
+        serviceName: 'checkout',
+        hideInternal: false,
+        hideNoise: true,
+        pageIndex: 0,
+        pageSize: 20
+      }
+    });
   });
 });
 
@@ -523,8 +548,11 @@ function renderPage(initialEntry: string) {
           <GlobalTimeProvider>
             <RouteTimeProvider policy="route_owned" canonicalizeInvalidExact={false}>
               <App>
-                <ExplorePage />
-                <LocationProbe />
+                <ShellInvestigationProvider>
+                  <ExplorePage />
+                  <LocationProbe />
+                  <InvestigationProbe />
+                </ShellInvestigationProvider>
               </App>
             </RouteTimeProvider>
           </GlobalTimeProvider>
@@ -532,6 +560,11 @@ function renderPage(initialEntry: string) {
       </QueryClientProvider>
     </I18nextProvider>
   );
+}
+
+function InvestigationProbe() {
+  const investigation = useShellInvestigation();
+  return <output data-testid="investigation-target">{investigation ? JSON.stringify(investigation) : 'none'}</output>;
 }
 
 function LocationProbe() {

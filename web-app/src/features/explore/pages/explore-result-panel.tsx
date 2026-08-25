@@ -18,15 +18,14 @@
 import { useTranslation } from 'react-i18next';
 
 import { useLiveLogController } from '../controller/use-live-log-controller';
-import { useTraceDetailController } from '../controller/use-trace-detail-controller';
-import type { ExploreQuery, LogExploreQuery, TraceExploreQuery } from '../model/explore-model';
+import type { ExploreQuery, LogExploreQuery } from '../model/explore-model';
 import type { ExploreCurrentResultState, ExplorePageResultState } from '../model/explore-result-model';
-import type { ExplorePageResult, TraceRow } from '../model/explore-signal-contract';
 import { ExploreLoadingResult, ExploreMessageResult, ExploreResultFrame } from '../components/explore-state-panel';
 import { LogResult } from '../components/log-result';
 import { MetricResult } from '../components/metric-result';
-import { TraceResult } from '../components/trace-result';
 import { exploreFailureMessageKey, refreshFailureMessageKey } from './explore-result-messages';
+import { ExploreLogPanel } from './explore-log-panel';
+import { ExploreTracePanel } from './explore-trace-panel';
 
 type ResultPanelProps = {
   query: ExploreQuery;
@@ -133,38 +132,15 @@ function HistoricalResult({
   }
   if (result.signal === 'logs' && query.signal === 'logs')
     return (
-      <ExploreResultFrame>
-        <LogResult
-          data={result.data}
-          statistics={result.statistics}
-          query={query}
-          t={t}
-          navigate={openPath}
-          evidenceCurrent={evidenceCurrent}
-        />
-      </ExploreResultFrame>
+      <ExploreLogPanel
+        data={result.data}
+        statistics={result.statistics}
+        query={query}
+        openPath={openPath}
+        evidenceCurrent={evidenceCurrent}
+      />
     );
   if (result.signal === 'traces' && query.signal === 'traces')
-    return <TracePanel data={result.data} query={query} openPath={openPath} evidenceCurrent={evidenceCurrent} />;
+    return <ExploreTracePanel data={result.data} query={query} openPath={openPath} evidenceCurrent={evidenceCurrent} />;
   return null;
-}
-
-function TracePanel({
-  data,
-  query,
-  openPath,
-  evidenceCurrent
-}: {
-  data: ExplorePageResult<TraceRow>;
-  query: TraceExploreQuery;
-  openPath: (path: string) => void;
-  evidenceCurrent: boolean;
-}) {
-  const { t } = useTranslation();
-  const trace = useTraceDetailController(query, openPath, evidenceCurrent);
-  return (
-    <ExploreResultFrame>
-      <TraceResult data={data} t={t} trace={trace} evidenceCurrent={evidenceCurrent} />
-    </ExploreResultFrame>
-  );
 }

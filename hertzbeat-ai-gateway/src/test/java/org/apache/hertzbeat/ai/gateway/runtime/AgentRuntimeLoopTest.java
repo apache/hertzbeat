@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -36,9 +38,11 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.function.Consumer;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
+import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalStatus;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentPolicyDecision;
@@ -47,13 +51,17 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionRequest;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolOutput;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPayloadHasher;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionOrchestrator;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredTool;
+import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -271,7 +279,7 @@ class AgentRuntimeLoopTest {
                 .findFirst()
                 .orElseThrow();
         assertTrue(events.indexOf(assistantCompleted) < events.indexOf(toolStarted));
-        assertEquals("", requests.get(1).getChatHistory().get(1).text());
+        assertEquals("", requests.get(1).getChatHistory().get(3).text());
     }
 
     @Test
@@ -284,11 +292,11 @@ class AgentRuntimeLoopTest {
 
         assertRuntimeSucceeded(result);
         assertEquals(1, modelClient.requests.size());
-        assertEquals(2, modelClient.requests.get(0).getChatHistory().size());
+        assertEquals(4, modelClient.requests.get(0).getChatHistory().size());
         TranscriptMessage forwardedHistoryMessage = modelClient.requests.get(0).getChatHistory().get(0);
         assertEquals(historyMessage.getRole(), forwardedHistoryMessage.getRole());
         assertEquals(historyMessage.text(), forwardedHistoryMessage.text());
-        TranscriptMessage currentUserMessage = modelClient.requests.get(0).getChatHistory().get(1);
+        TranscriptMessage currentUserMessage = modelClient.requests.get(0).getChatHistory().get(3);
         assertEquals(TranscriptMessage.TranscriptRole.USER, currentUserMessage.getRole());
         assertEquals("diagnose monitor", currentUserMessage.text());
     }
@@ -301,9 +309,11 @@ class AgentRuntimeLoopTest {
 
         InvocationResult result = run(modelClient, catalog, approvalResumeRuntime(List.of(historyMessage)));
 
-        assertRuntimeSucceeded(result);
+        assertRuntimeFailed(result);
+        assertEquals("Investigation requires a successful HertzBeat data observation before a final answer.",
+                result.getError().getMessage());
         assertEquals(1, modelClient.requests.size());
-        assertEquals(1, modelClient.requests.get(0).getChatHistory().size());
+        assertEquals(3, modelClient.requests.get(0).getChatHistory().size());
         TranscriptMessage replayedMessage = modelClient.requests.get(0).getChatHistory().get(0);
         assertEquals(historyMessage.getRole(), replayedMessage.getRole());
         assertEquals(historyMessage.text(), replayedMessage.text());
@@ -340,6 +350,8 @@ class AgentRuntimeLoopTest {
         assertEquals(context.getRunId(), catalog.lastRequest.getRunId());
         assertEquals(context.getRunUid(), catalog.lastRequest.getRunUid());
         assertEquals(context.getRunSessionId(), catalog.lastRequest.getRunSessionId());
+        assertEquals(context.getWorkspaceId(), catalog.lastRequest.getWorkspaceId());
+        assertSame(context.getEffectiveTarget(), catalog.lastRequest.getEffectiveTarget());
         assertSame(context.getActor(), catalog.lastRequest.getActor());
         assertEquals("monitor.get", catalog.lastRequest.getToolName());
         assertEquals(modelArguments(), catalog.lastRequest.getArguments());
@@ -351,16 +363,16 @@ class AgentRuntimeLoopTest {
         assertFalse(runtimeContext.contains("session-context"));
         assertFalse(runtimeContext.contains("trace-loop"));
         assertFalse(runtimeContext.contains("content="));
-        assertEquals(3, secondRequest.getChatHistory().size());
-        TranscriptMessage currentUserMessage = secondRequest.getChatHistory().get(0);
+        assertEquals(5, secondRequest.getChatHistory().size());
+        TranscriptMessage currentUserMessage = secondRequest.getChatHistory().get(2);
         assertEquals(TranscriptMessage.TranscriptRole.USER, currentUserMessage.getRole());
         assertEquals("diagnose monitor", currentUserMessage.text());
-        TranscriptMessage assistantToolCall = secondRequest.getChatHistory().get(1);
+        TranscriptMessage assistantToolCall = secondRequest.getChatHistory().get(3);
         assertEquals(TranscriptMessage.TranscriptRole.ASSISTANT, assistantToolCall.getRole());
         assertEquals("monitor.get", assistantToolCall.toolCalls().get(0).getName());
         assertEquals(modelArguments(), assistantToolCall.toolCalls().get(0).getInput());
         assertEquals(7L, assistantToolCall.getUsage().totalTokens());
-        TranscriptMessage toolResult = secondRequest.getChatHistory().get(2);
+        TranscriptMessage toolResult = secondRequest.getChatHistory().get(4);
         assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT, toolResult.getRole());
         assertEquals("agc-loop", toolResult.getToolCallId());
         assertEquals("monitor ok token=tool-secret " + "x".repeat(80), toolResult.text());
@@ -502,7 +514,7 @@ class AgentRuntimeLoopTest {
                 .findFirst()
                 .orElseThrow();
         assertEquals(AgentRuntimeEvent.EventStatus.IN_PROGRESS, toolStarted.getStatus());
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(2);
+        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
         assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT, toolResult.getRole());
         assertEquals("approved ok", toolResult.text());
     }
@@ -558,7 +570,7 @@ class AgentRuntimeLoopTest {
                 .findFirst()
                 .orElseThrow();
         assertEquals(AgentRuntimeEvent.EventStatus.DECLINED, toolCompleted.getStatus());
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(2);
+        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
         assertEquals("Tool execution rejected by approval decision.", toolResult.text());
     }
 
@@ -577,7 +589,7 @@ class AgentRuntimeLoopTest {
 
         assertRuntimeSucceeded(result);
         assertEquals(0, catalog.executeCount);
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(2);
+        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
         assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT, toolResult.getRole());
         assertEquals("delete_everything", toolResult.getToolName());
         assertEquals("call-unknown", toolResult.getToolCallId());
@@ -730,7 +742,7 @@ class AgentRuntimeLoopTest {
         InvocationResult result = run(modelClient, catalog, runtime(config -> { }));
 
         assertRuntimeSucceeded(result);
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(2);
+        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
         assertEquals("monitor connection failed", toolResult.getErrorMessage());
     }
 
@@ -870,7 +882,7 @@ class AgentRuntimeLoopTest {
         assertEquals("Tool timed out.", result.getResponse());
         assertEquals(1, catalog.executeCount);
         assertEquals(2, modelClient.requests.size());
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(2);
+        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
         assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT, toolResult.getRole());
         assertEquals("monitor.get", toolResult.getToolName());
         assertEquals("call-slow", toolResult.getToolCallId());
@@ -915,14 +927,14 @@ class AgentRuntimeLoopTest {
         assertRuntimeSucceeded(result);
         assertEquals(1, catalog.executeCount);
         assertEquals(3, modelClient.requests.size());
-        assertEquals(3, modelClient.requests.get(1).getChatHistory().size());
-        assertEquals(3, modelClient.requests.get(2).getChatHistory().size());
+        assertEquals(5, modelClient.requests.get(1).getChatHistory().size());
+        assertEquals(5, modelClient.requests.get(2).getChatHistory().size());
         assertEquals(TranscriptMessage.TranscriptRole.USER,
-            modelClient.requests.get(1).getChatHistory().get(0).getRole());
-        assertEquals(TranscriptMessage.TranscriptRole.ASSISTANT,
-            modelClient.requests.get(1).getChatHistory().get(1).getRole());
-        assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT,
             modelClient.requests.get(1).getChatHistory().get(2).getRole());
+        assertEquals(TranscriptMessage.TranscriptRole.ASSISTANT,
+            modelClient.requests.get(1).getChatHistory().get(3).getRole());
+        assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT,
+            modelClient.requests.get(1).getChatHistory().get(4).getRole());
     }
 
     @Test
@@ -1042,11 +1054,13 @@ class AgentRuntimeLoopTest {
                                    List<TranscriptMessage> chatHistory) {
         AgentRuntimeProperties config = new AgentRuntimeProperties();
         customizer.accept(config);
+        List<TranscriptMessage> groundedHistory = withGroundingProof(chatHistory);
+        AgentRun run = AgentRun.builder().id(2L).runUid("run-context").sessionId(1L)
+                .entryType(AgentRuntimeEntryType.USER_INPUT.name()).build();
         AgentRuntimeRequest request = AgentRuntimeRequest.builder()
                 .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
                 .session(AgentSession.builder().id(1L).sessionUid("session-context").build())
-                .run(AgentRun.builder().id(2L).runUid("run-context").sessionId(1L)
-                        .targetMonitorId(99L).build())
+                .run(run)
                 .envelope(GatewayEnvelope.builder()
                         .channelId("web-ui")
                         .receivedAt(100L)
@@ -1057,11 +1071,11 @@ class AgentRuntimeLoopTest {
                         .conversationId("conversation-loop")
                         .message(Message.builder().text("diagnose monitor").build())
                         .build())
-                .chatHistory(chatHistory)
+                .chatHistory(groundedHistory)
                 .build();
         AgentRuntimeContext context = new AgentRuntimeContextBuilder(CLOCK, () -> "trace-loop")
                 .build(request, config);
-        return new RuntimeFixture(context, config);
+        return new RuntimeFixture(verifiedContext(context, run, groundedHistory), config);
     }
 
     private RuntimeFixture approvalResumeRuntime(List<TranscriptMessage> chatHistory) {
@@ -1070,8 +1084,7 @@ class AgentRuntimeLoopTest {
                 .entryType(AgentRuntimeEntryType.ALERT_TRIGGER)
                 .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
                 .session(AgentSession.builder().id(1L).sessionUid("session-context").build())
-                .run(AgentRun.builder().id(2L).runUid("run-context").sessionId(1L)
-                        .targetMonitorId(99L).build())
+                .run(AgentRun.builder().id(2L).runUid("run-context").sessionId(1L).build())
                 .envelope(GatewayEnvelope.builder()
                         .channelId("alert")
                         .receivedAt(100L)
@@ -1081,11 +1094,53 @@ class AgentRuntimeLoopTest {
                         .conversationId("conversation-loop")
                         .message(Message.builder().text("resume approved tool").build())
                         .build())
-                .chatHistory(chatHistory)
+                .chatHistory(withGroundingProof(chatHistory))
                 .build();
         AgentRuntimeContext context = new AgentRuntimeContextBuilder(CLOCK, () -> "trace-loop")
                 .build(request, config);
         return new RuntimeFixture(context, config);
+    }
+
+    private List<TranscriptMessage> withGroundingProof(List<TranscriptMessage> history) {
+        Map<String, Object> arguments = Map.of("monitorId", 99L);
+        String output = "{\"monitorId\":99}";
+        AgentGroundingProof proof = AgentGroundingProof.builder()
+                .version(AgentReadGroundingEvaluator.VERSION)
+                .runUid("run-context")
+                .toolName("monitor.get")
+                .toolCallId("call-grounding")
+                .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(arguments))
+                .outputHash(GatewayText.sha256(AgentRuntimeTextSanitizer.redact(output)))
+                .observationKind("monitor")
+                .observationCount(1)
+                .build();
+        List<TranscriptMessage> grounded = new ArrayList<>(history);
+        grounded.add(TranscriptMessage.assistantToolCalls("", List.of(
+                TranscriptContent.toolCall("call-grounding", "monitor.get", arguments)), null));
+        grounded.add(TranscriptMessage.groundedToolResult(
+                "call-grounding", "monitor.get", output, null, proof));
+        return grounded;
+    }
+
+    private AgentRuntimeContext verifiedContext(AgentRuntimeContext context, AgentRun run,
+                                                List<TranscriptMessage> history) {
+        TranscriptMessage proofMessage = history.stream()
+                .filter(message -> message.getGroundingProof() != null)
+                .findFirst().orElseThrow();
+        Map<String, Object> arguments = Map.of("monitorId", 99L);
+        AgentTranscriptRecorder recorder = mock(AgentTranscriptRecorder.class);
+        AgentToolCallDao toolCallDao = mock(AgentToolCallDao.class);
+        when(recorder.findRunGroundingMessages(2L)).thenReturn(List.of(proofMessage));
+        when(toolCallDao.findByRunIdOrderByGmtCreateAsc(2L)).thenReturn(List.of(AgentToolCall.builder()
+                .runId(2L).runUid("run-context").toolCallId("call-grounding").toolName("monitor.get")
+                .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
+                .inputJson(JsonUtil.toJson(arguments))
+                .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(arguments))
+                .resultOutput("{\"monitorId\":99}").build()));
+        AgentGroundingEvidenceVerifier.VerifiedHistory verified =
+                new AgentGroundingEvidenceVerifier(recorder, toolCallDao)
+                        .verifyHistory(run, null, history);
+        return context.withVerifiedChatHistory(verified);
     }
 
     private record RuntimeFixture(AgentRuntimeContext context, AgentRuntimeProperties config) {
@@ -1328,7 +1383,8 @@ class AgentRuntimeLoopTest {
         private final FakeToolCatalogService catalog;
 
         private FakeToolExecutionOrchestrator(FakeToolCatalogService catalog) {
-            super(new AgentToolRegistry(), null, null, null);
+            super(new AgentToolRegistry(), null, null, null,
+                    new org.apache.hertzbeat.ai.gateway.tool.core.AgentTargetToolAuthorizer());
             this.catalog = catalog;
         }
 

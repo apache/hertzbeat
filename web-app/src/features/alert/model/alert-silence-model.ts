@@ -112,3 +112,4 @@ export {
   createAlertSilenceDraft,
   validateAlertSilenceDraft
 } from './alert-silence-write-model';
+export type { AlertSilenceInvalidDraftField } from './alert-silence-write-model';

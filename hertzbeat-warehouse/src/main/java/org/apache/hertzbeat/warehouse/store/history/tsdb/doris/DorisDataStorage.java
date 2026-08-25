@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
@@ -81,6 +82,12 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private static final String DATABASE_NAME = "hertzbeat";
     private static final String TABLE_NAME = "hzb_history";
     private static final String LOG_TABLE_NAME = "hzb_log";
+    private static final String WORKSPACE_RESOURCE_SELECTOR = "COALESCE("
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"hertzbeat.workspace_id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"hertzbeat_workspace_id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"workspace.id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"workspace_id\"')), ''), "
+            + "'default') = ?";
     private static final String WRITE_MODE_JDBC = "jdbc";
     private static final String WRITE_MODE_STREAM = "stream";
 
@@ -1011,7 +1018,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                 searchContent, excludedServiceNames, requireServiceName, workspaceId,
                 serviceName, serviceNamespace, environment);
         sql.append(" ORDER BY time_unix_nano DESC");
-        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditions");
+        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditions", workspaceId);
     }
 
     @Override
@@ -1052,7 +1059,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                 params.add(offset);
             }
         }
-        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditionsWithPagination");
+        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditionsWithPagination", workspaceId);
     }
 
     @Override
@@ -1085,11 +1092,21 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             bindParameters(pstmt, params);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getLong("count");
+                    long count = rs.getLong("count");
+                    if (StringUtils.hasText(workspaceId) && (rs.wasNull() || count < 0 || rs.next())) {
+                        throw new TelemetryStorageUnavailableException();
+                    }
+                    return count;
+                }
+                if (StringUtils.hasText(workspaceId)) {
+                    throw new TelemetryStorageUnavailableException();
                 }
                 return 0;
             }
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[Doris] countLogsByMultipleConditions error: {}", e.getMessage(), e);
             return 0;
         }
@@ -1197,9 +1214,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             }
         }
         if (StringUtils.hasText(workspaceId)) {
-            conditions.add("(resource LIKE ? OR resource LIKE ?)");
-            params.add("%\"hertzbeat.workspace_id\":\"" + workspaceId.trim() + "\"%");
-            params.add("%\"workspace.id\":\"" + workspaceId.trim() + "\"%");
+            conditions.add(workspaceCondition(params, workspaceId.trim()));
         }
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", conditions));
@@ -1212,13 +1227,18 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         params.add("%\"" + resourceKey + "\":\"" + value.trim() + "\"%");
     }
 
+    private String workspaceCondition(List<Object> params, String workspaceId) {
+        params.add(workspaceId);
+        return WORKSPACE_RESOURCE_SELECTOR;
+    }
+
     private void bindParameters(PreparedStatement pstmt, List<Object> params) throws SQLException {
         for (int i = 0; i < params.size(); i++) {
             pstmt.setObject(i + 1, params.get(i));
         }
     }
 
-    private List<LogEntry> executeLogQuery(String sql, List<Object> params, String queryName) {
+    private List<LogEntry> executeLogQuery(String sql, List<Object> params, String queryName, String workspaceId) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             bindParameters(pstmt, params);
@@ -1226,6 +1246,9 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                 return mapRowsToLogEntries(rs);
             }
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[Doris] {} error: {}", queryName, e.getMessage(), e);
             return List.of();
         }

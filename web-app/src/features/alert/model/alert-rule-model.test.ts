@@ -26,6 +26,9 @@ import {
   alertRuleWriteOutcome,
   buildAlertRuleStrategyPatch,
   buildAlertRulePayload,
+  buildMetricAlertApplicationPatch,
+  buildMetricAlertAuthoringModePatch,
+  buildMetricAlertTargetPatch,
   createAlertRuleDraft,
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
@@ -96,6 +99,17 @@ describe('alert rule model', () => {
       name: 'Updated',
       annotations: { summary: 'Checkout is slow' }
     });
+  });
+
+  it('round-trips label keys and values that contain draft separators', () => {
+    const labels = {
+      'routing:key': 'api,v2',
+      matcher: 'status:5xx',
+      path: String.raw`edge\primary`
+    };
+    const draft = alertRuleDraftFromDetail({ ...persisted, labels });
+
+    expect(buildAlertRulePayload(draft).labels).toEqual(labels);
   });
 
   it('maps persisted strategy types without adding metric editor state to non-realtime-metric drafts', () => {
@@ -172,8 +186,70 @@ describe('alert rule model', () => {
     ).toThrow(AlertRuleContractError);
   });
 
-  it('requires name, expression, and message template', () => {
-    expect(validateAlertRuleDraft(createAlertRuleDraft())).toEqual(['name', 'expr', 'template']);
+  it('starts new authoring without inventing a severity and requires every source-required field', () => {
+    const draft = createAlertRuleDraft();
+
+    expect(draft.labelsText).toBe('');
+    expect(validateAlertRuleDraft(draft)).toEqual(['name', 'expr', 'template', 'severity']);
+  });
+
+  it('enforces the source 200-character message-template write limit', () => {
+    const draft = {
+      ...createAlertRuleDraft(),
+      name: 'Complete rule',
+      expr: 'value > 1',
+      labelsText: 'severity:warning'
+    };
+
+    expect(validateAlertRuleDraft({ ...draft, template: 'x'.repeat(200) })).not.toContain('template');
+    expect(validateAlertRuleDraft({ ...draft, template: 'x'.repeat(201) })).toContain('template');
+  });
+
+  it('enforces the source 200-character realtime-log expression write limit', () => {
+    const draft = {
+      ...createAlertRuleDraft(),
+      name: 'Complete log rule',
+      kind: 'realtime' as const,
+      dataType: 'log' as const,
+      template: 'Log alert',
+      labelsText: 'severity:warning, alert_mode:group'
+    };
+
+    expect(validateAlertRuleDraft({ ...draft, expr: 'x'.repeat(200) })).not.toContain('expr');
+    expect(validateAlertRuleDraft({ ...draft, expr: 'x'.repeat(201) })).toContain('expr');
+  });
+
+  it('enforces the source 100-character periodic PromQL write limit', () => {
+    const draft = {
+      ...createAlertRuleDraft(),
+      name: 'Complete periodic rule',
+      kind: 'periodic' as const,
+      dataType: 'metric' as const,
+      template: 'Alert',
+      labelsText: 'severity:warning'
+    };
+
+    expect(validateAlertRuleDraft({ ...draft, expr: 'x'.repeat(100) })).not.toContain('expr');
+    expect(validateAlertRuleDraft({ ...draft, expr: 'x'.repeat(101) })).toContain('expr');
+  });
+
+  it('keeps the selected metric context visible but rejects an empty threshold', () => {
+    const initial = {
+      ...createAlertRuleDraft(),
+      name: 'CPU high',
+      template: 'CPU usage is high',
+      labelsText: 'severity:warning'
+    };
+    const withApplication = { ...initial, ...buildMetricAlertApplicationPatch(initial, 'linux_script') };
+    const withTarget = {
+      ...withApplication,
+      ...buildMetricAlertTargetPatch(withApplication, { kind: 'metric', app: 'linux_script', metric: 'cpu' })
+    };
+    const expert = { ...withTarget, ...buildMetricAlertAuthoringModePatch(withTarget, 'expert', []) };
+
+    expect(validateAlertRuleDraft(withTarget)).toContain('expr');
+    expect(expert.expr).toBe('equals(__app__,"linux_script") && equals(__metrics__,"cpu")');
+    expect(validateAlertRuleDraft(expert)).toContain('expr');
   });
 
   it.each([
@@ -191,6 +267,7 @@ describe('alert rule model', () => {
         dataType,
         expr: 'value > 1',
         template: 'Alert',
+        labelsText: dataType === 'log' ? 'severity:warning, alert_mode:group' : 'severity:warning',
         period,
         times: null
       })
@@ -211,7 +288,7 @@ describe('alert rule model', () => {
         period: 0,
         times: 0
       })
-    ).toEqual(['name', 'type', 'expr', 'template', 'labels', 'annotations', 'period', 'times']);
+    ).toEqual(['name', 'type', 'expr', 'template', 'labels', 'severity', 'annotations', 'period', 'times']);
   });
 
   it('maps periodic signal choices to the executor that can evaluate them', () => {
@@ -238,6 +315,7 @@ describe('alert rule model', () => {
       dataType: 'log',
       expr: periodicLogStarterExpression,
       period: 300,
+      labelsText: '',
       strategyChanged: true
     });
     expect(periodicPatch).not.toHaveProperty('metricEditor');
@@ -246,6 +324,7 @@ describe('alert rule model', () => {
       dataType: 'trace',
       expr: '',
       period: 300,
+      labelsText: '',
       strategyChanged: true
     });
 
@@ -255,6 +334,44 @@ describe('alert rule model', () => {
         app: '',
         target: null
       }
+    });
+  });
+
+  it('preserves the source authoring mode while realtime data types change', () => {
+    const metric = {
+      ...createAlertRuleDraft(),
+      authoringMode: 'expert' as const,
+      metricEditor: {
+        kind: 'targeted' as const,
+        app: 'hertzbeat',
+        target: { kind: 'metric' as const, app: 'hertzbeat', metric: 'summary' },
+        monitorIds: [],
+        monitorLabels: [],
+        authoring: { mode: 'expert' as const, condition: 'responseTime > 100' }
+      }
+    };
+
+    const log = { ...metric, ...buildAlertRuleStrategyPatch(metric, 'realtime', 'log') };
+    const metricAgain = { ...log, ...buildAlertRuleStrategyPatch(log, 'realtime', 'metric') };
+
+    expect(log.authoringMode).toBe('expert');
+    expect(metricAgain.authoringMode).toBe('expert');
+    expect(metricAgain.metricEditor).toMatchObject({
+      kind: 'targeted',
+      authoring: { mode: 'expert', condition: '' }
+    });
+  });
+
+  it('preserves explicit reserved labels across strategy changes without selecting missing values', () => {
+    const blank = createAlertRuleDraft();
+    expect(buildAlertRuleStrategyPatch(blank, 'realtime', 'log')).toMatchObject({ labelsText: '' });
+
+    const selected = { ...blank, labelsText: 'severity:critical, alert_mode:individual' };
+    expect(buildAlertRuleStrategyPatch(selected, 'periodic', 'log')).toMatchObject({
+      labelsText: 'severity:critical, alert_mode:individual'
+    });
+    expect(buildAlertRuleStrategyPatch(selected, 'periodic', 'metric')).toMatchObject({
+      labelsText: 'severity:critical'
     });
   });
 

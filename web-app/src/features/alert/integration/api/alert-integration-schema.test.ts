@@ -30,18 +30,16 @@ const catalog = {
       displayNameKey: 'alert.integration.source.webhook',
       iconKey: 'hertzbeat',
       readiness: 'ready',
-      limitations: []
+      limitations: [],
+      verification: { status: 'unverified', startedAt: null, verifiedAt: null }
     },
     {
       source: 'zabbix',
       displayNameKey: 'alert.integration.source.zabbix',
       iconKey: 'zabbix',
-      readiness: 'guide_blocked',
-      limitations: [
-        'alert.integration.limit.zabbix.authorization_missing',
-        'alert.integration.limit.zabbix.response_contract_mismatch',
-        'alert.integration.limit.zabbix.recovery_time_semantics'
-      ]
+      readiness: 'ready',
+      limitations: [],
+      verification: { status: 'verified', startedAt: 100, verifiedAt: 200 }
     }
   ]
 };
@@ -70,6 +68,42 @@ describe('alert integration backend contract', () => {
   it('parses exact catalog and detail fixtures from backend commit 4945f457c', () => {
     expect(parseAlertIntegrationCatalog(catalog).items.map(item => item.source)).toEqual(['webhook', 'zabbix']);
     expect(parseAlertIntegrationGuide(guide, 'webhook')).toEqual(guide);
+  });
+
+  it('accepts only the three managed-token header shapes exposed by registered senders', () => {
+    expect(
+      parseAlertIntegrationGuide(
+        { ...guide, source: 'huaweicloud-ces', requiredHeaders: { 'X-HertzBeat-Token': '{token}' } },
+        'huaweicloud-ces'
+      ).requiredHeaders
+    ).toEqual({ 'X-HertzBeat-Token': '{token}' });
+    expect(
+      parseAlertIntegrationGuide(
+        { ...guide, source: 'volcengine', requiredHeaders: { Token: '{token}' } },
+        'volcengine'
+      ).requiredHeaders
+    ).toEqual({ Token: '{token}' });
+  });
+
+  it('binds vendor-native token headers to the source that actually supports them', () => {
+    expect(() =>
+      parseAlertIntegrationGuide(
+        { ...guide, source: 'skywalking', requiredHeaders: { Token: '{token}' } },
+        'skywalking'
+      )
+    ).toThrow(AlertIntegrationContractError);
+    expect(() =>
+      parseAlertIntegrationGuide(
+        { ...guide, source: 'huaweicloud-ces', requiredHeaders: { Authorization: 'Bearer {token}' } },
+        'huaweicloud-ces'
+      )
+    ).toThrow(AlertIntegrationContractError);
+    expect(() =>
+      parseAlertIntegrationGuide(
+        { ...guide, source: 'volcengine', requiredHeaders: { 'X-HertzBeat-Token': '{token}' } },
+        'volcengine'
+      )
+    ).toThrow(AlertIntegrationContractError);
   });
 
   it('rejects duplicate catalog sources, unknown readiness, and extra fields', () => {
@@ -104,11 +138,42 @@ describe('alert integration backend contract', () => {
     expect(() => parseAlertIntegrationCatalog({ items: [] })).toThrow(AlertIntegrationContractError);
   });
 
+  it('rejects impossible verification evidence', () => {
+    expect(() =>
+      parseAlertIntegrationCatalog({
+        items: [
+          {
+            ...catalog.items[0],
+            verification: { status: 'waiting', startedAt: null, verifiedAt: null }
+          }
+        ]
+      })
+    ).toThrow(AlertIntegrationContractError);
+    expect(() =>
+      parseAlertIntegrationCatalog({
+        items: [
+          {
+            ...catalog.items[0],
+            verification: { status: 'verified', startedAt: 200, verifiedAt: 100 }
+          }
+        ]
+      })
+    ).toThrow(AlertIntegrationContractError);
+  });
+
   it.each([
     ['absolute ingress', { ...guide, ingressPath: 'https://attacker.example/report' }],
     ['protocol-relative ingress', { ...guide, ingressPath: '//attacker.example/report' }],
     ['empty ingress segment', { ...guide, ingressPath: '/api//alerts/report' }],
     ['real bearer value', { ...guide, requiredHeaders: { Authorization: 'Bearer secret-value' } }],
+    ['unknown managed-token header', { ...guide, requiredHeaders: { 'X-API-Key': '{token}' } }],
+    [
+      'multiple credential headers',
+      {
+        ...guide,
+        requiredHeaders: { Authorization: 'Bearer {token}', Token: '{token}' }
+      }
+    ],
     ['extra field', { ...guide, health: 'ready' }],
     ['wrong source', { ...guide, source: 'prometheus' }]
   ])('rejects unsafe %s detail evidence', (_label, value) => {

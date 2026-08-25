@@ -41,6 +41,7 @@ import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,6 +59,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 */
 @ExtendWith(MockitoExtension.class)
 class AlertServiceTest {
+    private static final String WORKSPACE_ID = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
     @Mock
     private GroupAlertDao groupAlertDao;
 
@@ -85,11 +87,11 @@ class AlertServiceTest {
         List<GroupAlert> groupAlerts = List.of(
                 GroupAlert.builder().id(1L).alertFingerprints(List.of()).build(),
                 GroupAlert.builder().id(2L).alertFingerprints(List.of()).build());
-        when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(groupAlerts);
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(groupAlerts);
 
-        assertDoesNotThrow(() -> alertService.deleteGroupAlerts(ids));
+        assertDoesNotThrow(() -> alertService.deleteGroupAlerts(WORKSPACE_ID, ids));
 
-        verify(groupAlertDao, times(1)).deleteGroupAlertsByIdIn(ids);
+        verify(groupAlertDao, times(1)).deleteGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids);
     }
 
     @Test
@@ -99,13 +101,13 @@ class AlertServiceTest {
                 .id(1L)
                 .alertFingerprints(List.of("private-alert-fingerprint"))
                 .build();
-        when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(List.of(existingAlert));
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(List.of(existingAlert));
         TransactionSynchronizationManager.initSynchronization();
         try {
-            assertThrows(AlertGroupNotFoundException.class, () -> alertService.deleteGroupAlerts(ids));
+            assertThrows(AlertGroupNotFoundException.class, () -> alertService.deleteGroupAlerts(WORKSPACE_ID, ids));
 
             assertTrue(TransactionSynchronizationManager.getSynchronizations().isEmpty());
-            verify(groupAlertDao, never()).deleteGroupAlertsByIdIn(ids);
+            verify(groupAlertDao, never()).deleteGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids);
             verifyNoInteractions(singleAlertDao);
             verifyNoInteractions(alertGroupMutationPublisher);
         } finally {
@@ -119,11 +121,11 @@ class AlertServiceTest {
         List<GroupAlert> groupAlerts = List.of(
                 GroupAlert.builder().id(1L).alertFingerprints(List.of()).build(),
                 GroupAlert.builder().id(2L).alertFingerprints(List.of()).build());
-        when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(groupAlerts);
-        alertService.deleteGroupAlerts(ids);
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(groupAlerts);
+        alertService.deleteGroupAlerts(WORKSPACE_ID, ids);
 
-        verify(groupAlertDao).deleteGroupAlertsByIdIn(ids);
-        verify(alertGroupMutationPublisher).publishDeleted(ids);
+        verify(groupAlertDao).deleteGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids);
+        verify(alertGroupMutationPublisher).publishDeleted(WORKSPACE_ID, ids);
     }
 
     @Test
@@ -152,10 +154,11 @@ class AlertServiceTest {
                 .status(CommonConstants.ALERT_STATUS_RESOLVED)
                 .endAt(1L)
                 .build();
-        when(groupAlertDao.findAllById(ids)).thenReturn(groupAlerts);
-        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-1"))).thenReturn(List.of(singleAlert));
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(groupAlerts);
+        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(WORKSPACE_ID,
+                List.of("fingerprint-1"))).thenReturn(List.of(singleAlert));
 
-        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(status, ids));
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(WORKSPACE_ID, status, ids));
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, groupAlert.getStatus());
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, singleAlert.getStatus());
         assertNull(singleAlert.getEndAt());
@@ -177,10 +180,12 @@ class AlertServiceTest {
                 .status(CommonConstants.ALERT_STATUS_FIRING)
                 .activeAt(123L)
                 .build();
-        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
-        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-2"))).thenReturn(List.of(singleAlert));
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(List.of(groupAlert));
+        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(WORKSPACE_ID,
+                List.of("fingerprint-2"))).thenReturn(List.of(singleAlert));
 
-        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_RESOLVED, ids));
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(
+                WORKSPACE_ID, CommonConstants.ALERT_STATUS_RESOLVED, ids));
 
         assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, groupAlert.getStatus());
         assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, singleAlert.getStatus());
@@ -203,10 +208,11 @@ class AlertServiceTest {
                 .status(CommonConstants.ALERT_STATUS_FIRING)
                 .activeAt(456L)
                 .build();
-        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
-        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-3"))).thenReturn(List.of(singleAlert));
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(List.of(groupAlert));
+        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(WORKSPACE_ID,
+                List.of("fingerprint-3"))).thenReturn(List.of(singleAlert));
 
-        assertDoesNotThrow(() -> alertService.editGroupAlertStatus("acknowledged", ids));
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(WORKSPACE_ID, "acknowledged", ids));
 
         assertEquals("acknowledged", groupAlert.getStatus());
         assertEquals("acknowledged", singleAlert.getStatus());
@@ -224,11 +230,12 @@ class AlertServiceTest {
                 .status(CommonConstants.ALERT_STATUS_FIRING)
                 .alertFingerprints(List.of("fingerprint-1"))
                 .build();
-        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(existingAlert));
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(List.of(existingAlert));
         TransactionSynchronizationManager.initSynchronization();
         try {
             assertThrows(AlertGroupNotFoundException.class,
-                    () -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_RESOLVED, ids));
+                    () -> alertService.editGroupAlertStatus(
+                            WORKSPACE_ID, CommonConstants.ALERT_STATUS_RESOLVED, ids));
 
             assertTrue(TransactionSynchronizationManager.getSynchronizations().isEmpty());
             verify(groupAlertDao, never()).saveAll(anyList());
@@ -245,12 +252,13 @@ class AlertServiceTest {
         List<GroupAlert> groupAlerts = List.of(
                 GroupAlert.builder().id(1L).alertFingerprints(List.of()).build(),
                 GroupAlert.builder().id(2L).alertFingerprints(List.of()).build());
-        when(groupAlertDao.findAllById(List.of(2L, 1L))).thenReturn(groupAlerts);
-        alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_ACKNOWLEDGED, ids);
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, List.of(2L, 1L)))
+                .thenReturn(groupAlerts);
+        alertService.editGroupAlertStatus(WORKSPACE_ID, CommonConstants.ALERT_STATUS_ACKNOWLEDGED, ids);
 
         verify(groupAlertDao).saveAll(groupAlerts);
         verify(alertGroupMutationPublisher).publishStatusChanged(
-                List.of(2L, 1L), CommonConstants.ALERT_STATUS_ACKNOWLEDGED);
+                WORKSPACE_ID, List.of(2L, 1L), CommonConstants.ALERT_STATUS_ACKNOWLEDGED);
     }
 
     @Test
@@ -261,9 +269,10 @@ class AlertServiceTest {
                 .status(CommonConstants.ALERT_STATUS_ACKNOWLEDGED)
                 .alertFingerprints(List.of())
                 .build();
-        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
+        when(groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(WORKSPACE_ID, ids)).thenReturn(List.of(groupAlert));
 
-        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_ACKNOWLEDGED, ids));
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(
+                WORKSPACE_ID, CommonConstants.ALERT_STATUS_ACKNOWLEDGED, ids));
 
         assertEquals(CommonConstants.ALERT_STATUS_ACKNOWLEDGED, groupAlert.getStatus());
         verify(groupAlertDao).saveAll(List.of(groupAlert));
@@ -273,9 +282,25 @@ class AlertServiceTest {
     @Test
     void editGroupAlertStatusRejectsUnsupportedStatusBeforeQueriesOrWrites() {
         assertThrows(AlertGroupStatusNotSupportedException.class,
-                () -> alertService.editGroupAlertStatus("private-arbitrary-status", List.of(1L)));
+                () -> alertService.editGroupAlertStatus(WORKSPACE_ID, "private-arbitrary-status", List.of(1L)));
 
         verifyNoInteractions(groupAlertDao, singleAlertDao);
+    }
+
+    @Test
+    void editSingleAlertStatusRejectsPartialConcurrentWrite() {
+        List<Long> ids = List.of(1L, 2L);
+        when(singleAlertDao.findAllByWorkspaceIdAndIdInForUpdate(WORKSPACE_ID, ids)).thenReturn(List.of(
+                SingleAlert.builder().id(1L).build(),
+                SingleAlert.builder().id(2L).build()));
+        when(singleAlertDao.updateSingleAlertsStatus(WORKSPACE_ID, CommonConstants.ALERT_STATUS_RESOLVED, ids))
+                .thenReturn(1);
+
+        assertThrows(AlertGroupNotFoundException.class, () -> alertService.editSingleAlertStatus(
+                WORKSPACE_ID, CommonConstants.ALERT_STATUS_RESOLVED, ids));
+
+        verify(singleAlertDao).findAllByWorkspaceIdAndIdInForUpdate(WORKSPACE_ID, ids);
+        verify(singleAlertDao).updateSingleAlertsStatus(WORKSPACE_ID, CommonConstants.ALERT_STATUS_RESOLVED, ids);
     }
 
     @Test
@@ -309,9 +334,11 @@ class AlertServiceTest {
                 .build();
         when(groupAlertDao.findAll(Mockito.<Specification<GroupAlert>>any(), Mockito.any(Sort.class)))
                 .thenReturn(List.of(matching, wrongNamespace, wrongEnvironment));
-        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-1"))).thenReturn(List.of());
+        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(WORKSPACE_ID,
+                List.of("fingerprint-1"))).thenReturn(List.of());
 
         Page<GroupAlert> result = alertService.getGroupAlerts(
+                WORKSPACE_ID,
                 CommonConstants.ALERT_STATUS_FIRING,
                 null,
                 null,
@@ -333,10 +360,11 @@ class AlertServiceTest {
         SingleAlert alert = new SingleAlert();
         alert.setLabels(Collections.singletonMap(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
 
-        when(singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING)).thenReturn(Collections.singletonList(alert));
-        when(singleAlertDao.count()).thenReturn(10L);
+        when(singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(
+                WORKSPACE_ID, CommonConstants.ALERT_STATUS_FIRING)).thenReturn(Collections.singletonList(alert));
+        when(singleAlertDao.countByWorkspaceId(WORKSPACE_ID)).thenReturn(10L);
 
-        AlertSummary summary = alertService.getAlertsSummary();
+        AlertSummary summary = alertService.getAlertsSummary(WORKSPACE_ID);
 
         assertNotNull(summary);
         assertEquals(1, summary.getPriorityCriticalNum());
@@ -345,8 +373,9 @@ class AlertServiceTest {
         assertEquals(10L, summary.getTotal());
         assertEquals(90.0f, summary.getRate());
 
-        verify(singleAlertDao, times(1)).querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
-        verify(singleAlertDao, times(1)).count();
+        verify(singleAlertDao, times(1)).querySingleAlertsByWorkspaceIdAndStatus(
+                WORKSPACE_ID, CommonConstants.ALERT_STATUS_FIRING);
+        verify(singleAlertDao, times(1)).countByWorkspaceId(WORKSPACE_ID);
     }
 
 }

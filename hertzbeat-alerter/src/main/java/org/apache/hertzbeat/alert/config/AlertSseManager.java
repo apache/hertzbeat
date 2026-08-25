@@ -45,7 +45,7 @@ public class AlertSseManager implements ApplicationListener<ContextClosedEvent> 
 
     private static final long RECONNECT_TIME_MILLIS = 3_000L;
 
-    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<WorkspaceClientKey, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Object lifecycleMonitor = new Object();
     private final AtomicLong eventSequence = new AtomicLong(System.currentTimeMillis());
     private final Supplier<SseEmitter> emitterFactory;
@@ -64,21 +64,22 @@ public class AlertSseManager implements ApplicationListener<ContextClosedEvent> 
      * clients must reread canonical alert state rather than expect replay from
      * this in-memory stream.
      */
-    public SseEmitter createEmitter(Long clientId) {
+    public SseEmitter createEmitter(String workspaceId, Long clientId) {
+        WorkspaceClientKey clientKey = new WorkspaceClientKey(requireWorkspace(workspaceId), clientId);
         SseEmitter emitter = emitterFactory.get();
-        emitter.onCompletion(() -> removeEmitter(clientId, emitter));
-        emitter.onTimeout(() -> removeEmitter(clientId, emitter));
-        emitter.onError((ex) -> removeEmitter(clientId, emitter));
+        emitter.onCompletion(() -> removeEmitter(clientKey, emitter));
+        emitter.onTimeout(() -> removeEmitter(clientKey, emitter));
+        emitter.onError((ex) -> removeEmitter(clientKey, emitter));
         SseEmitter replacedEmitter;
         synchronized (lifecycleMonitor) {
             if (closing) {
                 tryComplete(emitter);
                 return emitter;
             }
-            replacedEmitter = emitters.put(clientId, emitter);
+            replacedEmitter = emitters.put(clientKey, emitter);
         }
         if (replacedEmitter != null && replacedEmitter != emitter) {
-            tryCompleteAndClean(clientId, replacedEmitter);
+            tryCompleteAndClean(clientKey, replacedEmitter);
         }
         try {
             emitter.send(SseEmitter.event()
@@ -86,40 +87,43 @@ public class AlertSseManager implements ApplicationListener<ContextClosedEvent> 
                     .data("{}")
                     .reconnectTime(RECONNECT_TIME_MILLIS));
         } catch (IOException | IllegalStateException exception) {
-            tryCompleteAndClean(clientId, emitter);
+            tryCompleteAndClean(clientKey, emitter);
         }
         return emitter;
     }
 
     @Async
-    public void broadcast(String data) {
-        broadcast(data, "ALERT_EVENT");
+    public void broadcast(String workspaceId, String data) {
+        broadcast(requireWorkspace(workspaceId), data, "ALERT_EVENT");
     }
 
     @Async
-    public void broadcastGroupMutation(String data) {
-        broadcast(data, "ALERT_GROUP_MUTATION");
+    public void broadcastGroupMutation(String workspaceId, String data) {
+        broadcast(requireWorkspace(workspaceId), data, "ALERT_GROUP_MUTATION");
     }
 
-    private void broadcast(String data, String eventName) {
+    private void broadcast(String workspaceId, String data, String eventName) {
         String eventId = String.valueOf(eventSequence.incrementAndGet());
-        emitters.forEach((clientId, emitter) -> {
+        emitters.forEach((clientKey, emitter) -> {
+            if (!workspaceId.equals(clientKey.workspaceId())) {
+                return;
+            }
             try {
                 emitter.send(SseEmitter.event()
                         .id(eventId)
                         .name(eventName)
                         .data(data));
             } catch (IOException | IllegalStateException e) {
-                tryCompleteAndClean(clientId, emitter);
+                tryCompleteAndClean(clientKey, emitter);
             } catch (Exception exception) {
                 log.error("Failed to broadcast alert data to client: {}",
                         exception.getClass().getSimpleName());
-                tryCompleteAndClean(clientId, emitter);
+                tryCompleteAndClean(clientKey, emitter);
             }
         });
     }
 
-    private void tryCompleteAndClean(Long clientId, SseEmitter emitter) {
+    private void tryCompleteAndClean(WorkspaceClientKey clientId, SseEmitter emitter) {
         tryComplete(emitter);
         removeEmitter(clientId, emitter);
     }
@@ -136,7 +140,7 @@ public class AlertSseManager implements ApplicationListener<ContextClosedEvent> 
     public void onApplicationEvent(ContextClosedEvent event) {
         // Complete requests before the embedded server enters graceful shutdown;
         // otherwise long-lived SSE responses can consume the entire shutdown grace period.
-        Map<Long, SseEmitter> activeEmitters;
+        Map<WorkspaceClientKey, SseEmitter> activeEmitters;
         synchronized (lifecycleMonitor) {
             closing = true;
             activeEmitters = new HashMap<>(emitters);
@@ -145,7 +149,17 @@ public class AlertSseManager implements ApplicationListener<ContextClosedEvent> 
         activeEmitters.forEach(this::tryCompleteAndClean);
     }
 
-    private void removeEmitter(Long clientId, SseEmitter emitter) {
+    private void removeEmitter(WorkspaceClientKey clientId, SseEmitter emitter) {
         emitters.remove(clientId, emitter);
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
+    }
+
+    private record WorkspaceClientKey(String workspaceId, Long clientId) {
     }
 }

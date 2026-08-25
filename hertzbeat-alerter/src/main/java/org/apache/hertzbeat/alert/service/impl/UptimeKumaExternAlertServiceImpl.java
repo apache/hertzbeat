@@ -43,14 +43,11 @@ public class UptimeKumaExternAlertServiceImpl implements ExternAlertService {
     private AlarmCommonReduce alarmCommonReduce;
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         UptimeKumaExternAlert alert = JsonUtil.fromJsonQuietly(content, UptimeKumaExternAlert.class);
-        if (alert == null) {
-            log.warn("Failed to parse Uptime Kuma external alert content");
-            return;
-        }
+        alert = ExternalAlertIngressValidator.requirePresent(alert);
         SingleAlert singleAlert = new UptimeKumaAlertConverter().convert(alert);
-        alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+        alarmCommonReduce.reduceAndSendAlarm(workspaceId, singleAlert);
     }
 
     /**
@@ -63,10 +60,13 @@ public class UptimeKumaExternAlertServiceImpl implements ExternAlertService {
          */
         public SingleAlert convert(UptimeKumaExternAlert alert) {
             // build basic info
+            Long observedAt = parseTime(alert.getHeartbeat().getTime());
+            String status = convertStatus(alert.getHeartbeat().getStatus());
             SingleAlert.SingleAlertBuilder builder = SingleAlert.builder()
-                    .status(convertStatus(alert.getHeartbeat().getStatus()))
-                    .startAt(parseTime(alert.getHeartbeat().getTime()))
-                    .activeAt(parseTime(alert.getHeartbeat().getTime()))
+                    .status(status)
+                    .startAt(observedAt)
+                    .activeAt(observedAt)
+                    .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status) ? observedAt : null)
                     .triggerTimes(1);
 
             // build labels

@@ -35,6 +35,7 @@ const resource = vi.hoisted(() => {
     copyLabel: vi.fn(),
     createLabel: vi.fn(),
     deleteLabel: vi.fn(),
+    deleteLabels: vi.fn(),
     inspectLabel: vi.fn(),
     isInFlight: vi.fn(),
     isLocked: vi.fn(),
@@ -85,7 +86,7 @@ describe('LabelPage', () => {
   });
   afterEach(cleanup);
 
-  it('owns New Label in the shared header and query commands in the search band', () => {
+  it('keeps create, query, and refresh in one compact command bar', () => {
     renderLabelPage();
 
     const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
@@ -93,18 +94,14 @@ describe('LabelPage', () => {
       document.querySelector('[data-hb-operational-page-header]'),
       'Operational page header'
     );
-    const headerActions = requireDomElement(
-      header.querySelector('[data-hb-operational-page-actions]'),
-      'Operational page actions'
-    );
     const commandBand = screen.getByRole('search');
     const create = screen.getByRole('button', { name: 'New label' });
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Labels' }));
-    expect(headerActions).toContainElement(create);
+    expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+    expect(commandBand).toContainElement(create);
     expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Query' }));
     expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
-    expect(commandBand).not.toContainElement(create);
   });
 
   it('uses the shared command and result frame with a compact empty state', () => {
@@ -122,13 +119,20 @@ describe('LabelPage', () => {
     ['GUEST', true, true, true]
   ] as const)(
     'separates %s create, update, and delete controls',
-    (role, createDisabled, editDisabled, deleteDisabled) => {
+    async (role, createDisabled, editDisabled, deleteDisabled) => {
       access.roles = [role];
       renderLabelPage();
 
       expect(screen.getByRole('button', { name: 'New label' })).toHaveProperty('disabled', createDisabled);
-      expect(screen.getByRole('button', { name: 'Edit' })).toHaveProperty('disabled', editDisabled);
-      expect(screen.getByRole('button', { name: 'Delete' })).toHaveProperty('disabled', deleteDisabled);
+      await openRowActions();
+      expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveAttribute(
+        'aria-disabled',
+        editDisabled ? 'true' : 'false'
+      );
+      expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
+        'aria-disabled',
+        deleteDisabled ? 'true' : 'false'
+      );
     }
   );
 
@@ -158,6 +162,42 @@ describe('LabelPage', () => {
       )
     );
     expect(resource.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects only visible labels and cancels batch deletion without a write', async () => {
+    renderLabelPage();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select row' }));
+    expect(screen.getByText('1 selected')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }));
+    expect(await screen.findByText('Delete 1 selected label?')).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(resource.deleteLabels).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+  });
+
+  it('clears current-page selection before refresh or query scope changes', async () => {
+    renderLabelPage();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select row' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select row' }));
+    fireEvent.change(screen.getByPlaceholderText('Search labels'), { target: { value: 'production' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.queryByText('1 selected')).not.toBeInTheDocument());
+  });
+
+  it('confirms one selected batch with the current visible records', async () => {
+    renderLabelPage();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select row' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+
+    expect(resource.deleteLabels).toHaveBeenCalledWith([serverLabel], expect.any(Function));
   });
 
   it('validates input and closes create only after the resource success callback', async () => {
@@ -206,7 +246,8 @@ describe('LabelPage', () => {
     await waitFor(() => expect(resource.createLabel).toHaveBeenCalled());
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    await openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit' }));
     dialog = screen.getByRole('dialog');
     expect(within(dialog).getByLabelText('Name')).toHaveValue('env');
     act(() => completeCreate?.());
@@ -227,14 +268,16 @@ describe('LabelPage', () => {
     expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeDisabled();
     expect(within(dialog).getByRole('button', { name: /OK$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'New label' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    await openRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('shows commit uncertainty with GET-only recovery, refresh, and editor exit', async () => {
     resource.retryMutationProof.mockResolvedValue(false);
     renderLabelPage();
-    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    await openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit' }));
     resource.recovery = 'commit-uncertain';
     resource.isLocked.mockReturnValue(true);
     fireEvent.change(screen.getByPlaceholderText('Search labels'), { target: { value: 'rerender' } });
@@ -246,8 +289,9 @@ describe('LabelPage', () => {
     expect(within(dialog).getByRole('button', { name: /OK$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'New label' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    await openRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -282,13 +326,15 @@ describe('LabelPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(resource.retryMutationProof).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    await openRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('updates, deletes, copies, inspects, and refreshes through the resource controller', async () => {
     renderLabelPage();
     await screen.findByText('env:prod');
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    await openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit' }));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByLabelText('Description'), { target: { value: 'Updated' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
@@ -300,10 +346,12 @@ describe('LabelPage', () => {
       )
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    await openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Copy' }));
     fireEvent.click(screen.getByRole('button', { name: 'env:prod' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
 
     expect(resource.copyLabel).toHaveBeenCalledWith(serverLabel);
@@ -355,6 +403,11 @@ describe('LabelPage', () => {
     await waitFor(() => expect(search).toHaveValue('production'));
   });
 });
+
+async function openRowActions() {
+  fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+  await screen.findByRole('menu');
+}
 
 function renderLabelPage(initialEntry = '/settings/labels') {
   const renderTree = () => (

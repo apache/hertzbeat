@@ -22,7 +22,13 @@ import { useTranslation } from 'react-i18next';
 import { resolveLocale } from '@/core/i18n/i18n';
 import { useLocaleChangeAction } from '@/shared/i18n/use-locale-change-action';
 import { loadPublicStatusComponents, loadPublicStatusIncidents, loadPublicStatusOrg } from '../api/public-status-api';
-import type { PublicStatusViewModel } from '../model/public-status-contract';
+import type {
+  PublicStatusComponent,
+  PublicStatusIncidentPage,
+  PublicStatusOrg,
+  PublicStatusState,
+  PublicStatusViewModel
+} from '../model/public-status-contract';
 import { createPublicStatusIncidentRange, isPublicStatusIncidentYear } from '../model/public-status-incident-range';
 import { publicStatusComponentState, publicStatusIncidentState } from '../model/public-status-model';
 import { publicStatusQueryKeys } from './public-status-query-keys';
@@ -57,14 +63,23 @@ export function usePublicStatusController(): PublicStatusViewModel {
     error: incidents.error,
     pending: incidents.isPending
   });
+  const locale = resolveLocale(i18n.resolvedLanguage);
+  const readyContent = publicStatusReadyContent({
+    org: org.data,
+    orgError: org.error,
+    components: components.data,
+    componentState,
+    incidents: incidents.data,
+    incidentState
+  });
   return {
     componentState,
     incidentRange,
     incidentState,
-    locale: resolveLocale(i18n.resolvedLanguage),
-    org: org.error ? undefined : org.data,
-    components: componentState === 'ready' ? (components.data ?? []) : [],
-    incidents: incidentState === 'ready' ? (incidents.data?.content ?? []) : [],
+    locale,
+    org: readyContent.org,
+    components: readyContent.components,
+    incidents: readyContent.incidents,
     refresh: () => Promise.all([org.refetch(), components.refetch(), incidents.refetch()]),
     refreshing:
       (org.isFetching && !org.isPending) ||
@@ -74,5 +89,20 @@ export function usePublicStatusController(): PublicStatusViewModel {
     selectIncidentYear: (year: number) => {
       if (isPublicStatusIncidentYear(year, new Date().getFullYear())) setIncidentYear(year);
     }
+  };
+}
+
+function publicStatusReadyContent(input: {
+  org: PublicStatusOrg | undefined;
+  orgError: unknown;
+  components: PublicStatusComponent[] | undefined;
+  componentState: PublicStatusState;
+  incidents: PublicStatusIncidentPage | undefined;
+  incidentState: PublicStatusState;
+}) {
+  return {
+    ...(input.orgError || !input.org ? {} : { org: input.org }),
+    components: input.componentState === 'ready' ? (input.components ?? []) : [],
+    incidents: input.incidentState === 'ready' ? (input.incidents?.content ?? []) : []
   };
 }

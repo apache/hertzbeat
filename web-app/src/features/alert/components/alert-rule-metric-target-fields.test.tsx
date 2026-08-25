@@ -21,6 +21,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MonitorAppHierarchyNode } from '@/features/monitor';
 
 import { createAlertRuleDraft, type AlertRuleDraft } from '../model/alert-rule-model';
+import editorStyles from '../shared/alert-rule-editor.module.css?raw';
 import { AlertRuleMetricTargetFields } from './alert-rule-metric-target-fields';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -50,8 +51,7 @@ const hierarchy: MonitorAppHierarchyNode = {
 describe('Alert Rule metric target fields', () => {
   afterEach(cleanup);
 
-  it('keeps application and target selection as two explicit dependent actions', async () => {
-    const changeApplication = vi.fn();
+  it('matches the 1.8.0 searchable two-level metric-type cascader', async () => {
     const changeTarget = vi.fn();
     const draft = targetedDraft({ app: 'springboot3' });
     renderTarget(
@@ -66,17 +66,19 @@ describe('Alert Rule metric target fields', () => {
         },
         hierarchy: { kind: 'ready', hierarchy }
       },
-      changeApplication,
       changeTarget
     );
 
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'alertRules.metricTarget.application' }));
-    fireEvent.click(await screen.findByText('Linux'));
-    await waitFor(() => expect(changeApplication).toHaveBeenCalledWith('linux'));
+    const selector = screen.getByRole('combobox', { name: 'alertRules.metricTarget.type' });
+    expect(selector).toHaveAttribute('aria-autocomplete', 'list');
+    expect(screen.queryByRole('combobox', { name: 'alertRules.metricTarget.application' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'alertRules.metricTarget.target' })).not.toBeInTheDocument();
 
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'alertRules.metricTarget.target' }));
+    fireEvent.mouseDown(selector);
+    fireEvent.click(await screen.findByText('Spring Boot 3'));
     fireEvent.click(await screen.findByText('alertRules.metricTarget.availability'));
     await waitFor(() => expect(changeTarget).toHaveBeenCalledWith({ kind: 'availability', app: 'springboot3' }));
+    expect(screen.getByText('Spring Boot 3 / alertRules.metricTarget.availability')).toBeInTheDocument();
   });
 
   it('forwards a metric target selected from the typed catalog option', async () => {
@@ -90,11 +92,11 @@ describe('Alert Rule metric target fields', () => {
         },
         hierarchy: { kind: 'ready', hierarchy }
       },
-      vi.fn(),
       changeTarget
     );
 
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'alertRules.metricTarget.target' }));
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'alertRules.metricTarget.type' }));
+    fireEvent.click(await screen.findByText('Spring Boot 3'));
     fireEvent.click(await screen.findByText('Summary'));
 
     await waitFor(() =>
@@ -119,14 +121,35 @@ describe('Alert Rule metric target fields', () => {
       },
       vi.fn(),
       vi.fn(),
-      vi.fn(),
       retryHierarchy
     );
 
-    expect(screen.getByRole('combobox', { name: 'alertRules.metricTarget.application' })).toBeEnabled();
+    expect(screen.getByRole('combobox', { name: 'alertRules.metricTarget.type' })).toBeEnabled();
     expect(screen.getByText('alertRules.metricTarget.hierarchyUnavailable')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(retryHierarchy).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails closed when the complete searchable catalog is unavailable', () => {
+    const retryApps = vi.fn();
+    renderTarget(
+      targetedDraft({ app: 'springboot3' }),
+      {
+        apps: {
+          kind: 'ready',
+          apps: [{ category: 'application', value: 'springboot3', label: 'Spring Boot 3' }]
+        },
+        hierarchy: { kind: 'idle' },
+        catalog: { kind: 'unavailable' }
+      },
+      vi.fn(),
+      retryApps
+    );
+
+    expect(screen.getByRole('combobox', { name: 'alertRules.metricTarget.type' })).toBeDisabled();
+    expect(screen.getByText('alertRules.metricTarget.hierarchyUnavailable')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(retryApps).toHaveBeenCalledTimes(1);
   });
 
   it('preserves unparsed legacy expressions in an explicit expert fallback', () => {
@@ -139,7 +162,6 @@ describe('Alert Rule metric target fields', () => {
     renderTarget(
       draft,
       { apps: { kind: 'ready', apps: [] }, hierarchy: { kind: 'idle' } },
-      vi.fn(),
       vi.fn(),
       vi.fn(),
       vi.fn(),
@@ -169,11 +191,17 @@ describe('Alert Rule metric target fields', () => {
         },
         hierarchy: { kind: 'ready', hierarchy }
       },
-      vi.fn(),
       vi.fn()
     );
 
-    expect(screen.getByText('alertRules.metricTarget.availabilityDescription')).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent(
+      '*alertRules.metricCondition.rule:alertRules.metricTarget.availabilityDownalertRules.metricTarget.availabilityUnreachablealertRules.metricTarget.availabilityTrigger'
+    );
+    expect(screen.getAllByTestId('availability-status')).toHaveLength(2);
+    expect(editorStyles).toMatch(
+      /\.fieldRow,\s*\.conditionModeRow,\s*\.conditionAuthoringRow,\s*\.metricAvailabilityRow,\s*\.metricSection > label\s*\{[^}]*grid-template-columns:\s*minmax\(150px, 7fr\) minmax\(0, 12fr\) minmax\(80px, 5fr\);/s
+    );
+    expect(editorStyles).toMatch(/\.availabilityRule\s*\{[^}]*grid-column:\s*2;/s);
     expect(screen.queryByText('alertRules.metricCondition.mode.structured')).not.toBeInTheDocument();
   });
 });
@@ -181,7 +209,6 @@ describe('Alert Rule metric target fields', () => {
 function renderTarget(
   draft: AlertRuleDraft,
   metricTarget: Parameters<typeof AlertRuleMetricTargetFields>[0]['state'],
-  changeApplication: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeApplication'],
   changeTarget: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeTarget'],
   retryApps = vi.fn(),
   retryHierarchy = vi.fn(),
@@ -193,7 +220,6 @@ function renderTarget(
       draft={draft}
       state={metricTarget}
       update={update}
-      changeApplication={changeApplication}
       changeAuthoringMode={vi.fn()}
       changeExpertCondition={vi.fn()}
       changeStructuredCondition={vi.fn()}

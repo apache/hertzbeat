@@ -10,7 +10,8 @@ import {
   classifyEntityDeleteError,
   classifyEntityDetailReadError,
   deleteEntity,
-  loadEntityDetail
+  loadEntityDetail,
+  loadEntityIdentity
 } from '../api/entity-api';
 import type { EntityNextActionType, EntityRecord } from '../model/entity-contract';
 import {
@@ -41,15 +42,12 @@ export function useEntityDetailController() {
   const monitors = useEntityMonitorsController(id);
   const result = useQuery({
     queryKey: entityQueryKeys.detail(id),
-    queryFn: id === undefined ? skipToken : ({ signal }) => loadEntityDetail(id, signal),
+    queryFn: id === undefined ? skipToken : ({ signal }) => loadEntityDetailEvidence(id, signal),
     retry: false
   });
   const evidence = resolveDetail(id, result.isPending, result.error, result.data);
-  const deletion = useEntityDeletion(
-    evidence.kind === 'ready' ? evidence.detail.entity : undefined,
-    params.get('returnTo'),
-    capabilities.canDelete
-  );
+  const entity = entityFromEvidence(evidence);
+  const deletion = useEntityDeletion(entity, params.get('returnTo'), capabilities.canDelete);
   const inspectionActions = buildEntityInspectionActions(evidence, params.get('returnTo'), navigate);
   return {
     state: {
@@ -64,12 +62,11 @@ export function useEntityDetailController() {
       refresh: () => void result.refetch(),
       back: () => void navigate(safeEntityReturnTo(params.get('returnTo'))),
       edit: () => {
-        if (capabilities.canWrite && evidence.kind === 'ready')
-          void navigate(buildEntityEditRoute(evidence.detail.entity.id, params.get('returnTo')));
+        if (capabilities.canWrite && entity) void navigate(buildEntityEditRoute(entity.id, params.get('returnTo')));
       },
       definition: () => {
-        if (capabilities.canWrite && evidence.kind === 'ready') {
-          void navigate(buildEntityDefinitionRoute(evidence.detail.entity.id, params.get('returnTo')));
+        if (capabilities.canWrite && entity) {
+          void navigate(buildEntityDefinitionRoute(entity.id, params.get('returnTo')));
         }
       },
       ...inspectionActions,
@@ -177,12 +174,30 @@ function resolveDetail(
   id: number | undefined,
   pending: boolean,
   error: Error | null,
-  detail: Awaited<ReturnType<typeof loadEntityDetail>> | undefined
+  detail: Extract<EntityDetailEvidence, { kind: 'ready' | 'degraded' }> | undefined
 ): EntityDetailEvidence {
   if (id === undefined) return { kind: 'missing' };
   if (pending) return { kind: 'loading' };
   if (error) return { kind: classifyEntityDetailReadError(error) };
-  return detail ? { kind: 'ready', detail } : { kind: 'error' };
+  return detail ?? { kind: 'error' };
+}
+
+async function loadEntityDetailEvidence(
+  id: number,
+  signal: AbortSignal
+): Promise<Extract<EntityDetailEvidence, { kind: 'ready' | 'degraded' }>> {
+  try {
+    return { kind: 'ready', detail: await loadEntityDetail(id, signal) };
+  } catch (error) {
+    if (signal.aborted || classifyEntityDetailReadError(error) !== 'unavailable') throw error;
+    const entity = await loadEntityIdentity(id, signal);
+    return { kind: 'degraded', entity, unavailable: 'telemetry' };
+  }
+}
+
+function entityFromEvidence(evidence: EntityDetailEvidence) {
+  if (evidence.kind === 'ready') return evidence.detail.entity;
+  return evidence.kind === 'degraded' ? evidence.entity : undefined;
 }
 
 function parseEntityId(value: string | undefined) {

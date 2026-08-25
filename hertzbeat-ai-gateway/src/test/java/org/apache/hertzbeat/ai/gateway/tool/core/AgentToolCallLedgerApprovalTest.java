@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
@@ -64,10 +66,13 @@ class AgentToolCallLedgerApprovalTest {
     @Test
     void approveShouldUpdatePendingToolCallApprovalState() {
         AgentToolCall toolCall = pendingToolCall();
-        when(toolCallDao.findByApprovalId("agp_1")).thenReturn(Optional.of(toolCall));
+        when(toolCallDao.findOwnedApprovalForUpdate(
+                "agp_1", "workspace-a", "web-ui", "user", "approver", "USER_INPUT"))
+                .thenReturn(Optional.of(toolCall));
         when(toolCallDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AgentToolCall approved = service.approve("agp_1", actor("approver", "admin"));
+        AgentToolCall approved = service.decideApproval("agp_1", envelope("approver"),
+                AgentRuntimeEntryType.USER_INPUT, AgentApprovalDecision.APPROVED);
 
         assertEquals(AgentApprovalStatus.APPROVED.name(), approved.getApprovalStatus());
         assertEquals("approver", approved.getApprovalActorId());
@@ -80,10 +85,13 @@ class AgentToolCallLedgerApprovalTest {
     @Test
     void rejectShouldPersistRejectedDecisionOnToolCall() {
         AgentToolCall toolCall = pendingToolCall();
-        when(toolCallDao.findByApprovalId("agp_1")).thenReturn(Optional.of(toolCall));
+        when(toolCallDao.findOwnedApprovalForUpdate(
+                "agp_1", "workspace-a", "web-ui", "user", "approver", "USER_INPUT"))
+                .thenReturn(Optional.of(toolCall));
         when(toolCallDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AgentToolCall rejected = service.reject("agp_1", actor("approver", "admin"));
+        AgentToolCall rejected = service.decideApproval("agp_1", envelope("approver"),
+                AgentRuntimeEntryType.USER_INPUT, AgentApprovalDecision.REJECTED);
 
         assertEquals(AgentApprovalStatus.REJECTED.name(), rejected.getApprovalStatus());
         assertEquals(AgentToolStatus.DENIED.name(), rejected.getStatus());
@@ -95,10 +103,30 @@ class AgentToolCallLedgerApprovalTest {
     void nonAdminActorShouldNotApproveOrRejectAndShouldNotMutate() {
         AgentActor userOnly = actor("requester", "user");
 
-        assertThrows(IllegalStateException.class, () -> service.approve("agc_1", userOnly));
-        assertThrows(IllegalStateException.class, () -> service.reject("agc_1", userOnly));
+        GatewayEnvelope envelope = GatewayEnvelope.builder().channelId("web-ui").receivedAt(1L)
+                .workspaceId("workspace-a").actor(userOnly).build();
+        assertThrows(IllegalStateException.class, () -> service.decideApproval("agc_1", envelope,
+                AgentRuntimeEntryType.USER_INPUT, AgentApprovalDecision.APPROVED));
+        assertThrows(IllegalStateException.class, () -> service.decideApproval("agc_1", envelope,
+                AgentRuntimeEntryType.USER_INPUT, AgentApprovalDecision.REJECTED));
 
         verifyNoInteractions(toolCallDao);
+    }
+
+    @Test
+    void foreignWorkspaceShouldUseOnlyOwnerScopedApprovalLookup() {
+        GatewayEnvelope foreign = GatewayEnvelope.builder().channelId("web-ui").receivedAt(1L)
+                .workspaceId("workspace-b").actor(actor("approver", "admin")).build();
+        when(toolCallDao.findOwnedApprovalForUpdate(
+                "agp_1", "workspace-b", "web-ui", "user", "approver", "USER_INPUT"))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> service.decideApproval("agp_1", foreign, AgentRuntimeEntryType.USER_INPUT,
+                        AgentApprovalDecision.APPROVED));
+
+        assertEquals("Agent tool approval not found", error.getMessage());
+        verify(toolCallDao, never()).findByApprovalId("agp_1");
     }
 
     @Test
@@ -180,6 +208,11 @@ class AgentToolCallLedgerApprovalTest {
             .approvalStatus(AgentApprovalStatus.PENDING.name())
             .approvalExpiresAt(LocalDateTime.now().plusMinutes(10))
             .build();
+    }
+
+    private GatewayEnvelope envelope(String actorId) {
+        return GatewayEnvelope.builder().channelId("web-ui").receivedAt(1L).workspaceId("workspace-a")
+                .actor(actor(actorId, "admin")).build();
     }
 
     private AgentToolExecutionRequest approvalRequest(String approvalId, String toolCallId,

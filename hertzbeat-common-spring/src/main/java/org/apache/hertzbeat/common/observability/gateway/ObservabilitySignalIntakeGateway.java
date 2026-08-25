@@ -61,13 +61,31 @@ public interface ObservabilitySignalIntakeGateway {
                                                                           List<TraceListItemDto> traces,
                                                                           List<Monitor> monitors);
 
+    List<TelemetryIdentitySnapshot> collectRecentExternalIdentitySnapshots(String workspaceId,
+                                                                          List<LogEntry> logs,
+                                                                          List<TraceListItemDto> traces,
+                                                                          List<Monitor> monitors);
+
     TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(String serviceName,
+                                                             String serviceNamespace,
+                                                             String environment);
+
+    TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(String workspaceId,
+                                                             String serviceName,
                                                              String serviceNamespace,
                                                              String environment);
 
     List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContexts(int limit);
 
+    List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContexts(String workspaceId, int limit);
+
     List<String> collectRecentOtlpMetricNames(String serviceName,
+                                              String serviceNamespace,
+                                              String environment,
+                                              int limit);
+
+    List<String> collectRecentOtlpMetricNames(String workspaceId,
+                                              String serviceName,
                                               String serviceNamespace,
                                               String environment,
                                               int limit);

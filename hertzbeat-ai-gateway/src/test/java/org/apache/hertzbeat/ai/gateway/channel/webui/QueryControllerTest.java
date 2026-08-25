@@ -32,15 +32,20 @@ import java.util.List;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetRunCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetLatestSessionRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
-import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunSnapshot;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionListItem;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,11 +77,13 @@ class QueryControllerTest {
     @AfterEach
     void tearDown() {
         SurenessContextHolder.clear();
+        AuthTokenRequestContext.clear();
     }
 
     @Test
     void sessionQueryShouldRouteThroughGatewayCommandRouter() {
         bindSubject();
+        AuthTokenRequestContext.bindWorkspaceId("workspace-a");
         QueryController controller = controller();
         GatewaySingleResponse sessionResponse = response("get-session:ags-1", "session");
         when(commandRouter.handle(commandCaptor.capture()))
@@ -88,18 +95,56 @@ class QueryControllerTest {
         GetSessionCommand command = (GetSessionCommand) commandCaptor.getValue();
         assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
         assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals("workspace-a", command.envelope().getWorkspaceId());
         assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
+    }
+
+    @Test
+    void runQueryShouldRouteTheCurrentWebUiOwnerThroughGatewayCommandRouter() {
+        bindSubject();
+        AgentRunSnapshot snapshot = new AgentRunSnapshot(
+                "run-1", "session-1", "message-1", "RUNNING",
+                null, null, null, true, null, null, null);
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenReturn(response("get-run:run-1", "run", snapshot));
+
+        assertSame(snapshot, controller().getRun("run-1").getBody().getData());
+
+        assertInstanceOf(GetRunCommand.class, commandCaptor.getValue());
+        GetRunCommand command = (GetRunCommand) commandCaptor.getValue();
+        assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
+        assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
+        assertEquals("run-1", command.runUid());
+    }
+
+    @Test
+    void latestSessionRunQueryShouldRouteTheCurrentWebUiOwner() {
+        bindSubject();
+        AgentRunSnapshot snapshot = new AgentRunSnapshot(
+                "run-2", "session-1", "message-2", "FAILED",
+                null, null, "failed", true, null, null, null);
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenReturn(response("get-latest-run:session-1", "run", snapshot));
+
+        assertSame(snapshot, controller().getLatestSessionRun("session-1").getBody().getData());
+
+        assertInstanceOf(GetLatestSessionRunCommand.class, commandCaptor.getValue());
+        GetLatestSessionRunCommand command = (GetLatestSessionRunCommand) commandCaptor.getValue();
+        assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
+        assertEquals("session-1", command.sessionUid());
     }
 
     @Test
     void listSessionsShouldRouteCurrentWebUiActorThroughGatewayCommandRouter() {
         bindSubject();
         PageRequest pageRequest = PageRequest.of(0, 50);
-        Page<AgentSession> page = Page.empty(pageRequest);
+        Page<AgentSessionListItem> page = Page.empty(pageRequest);
         when(commandRouter.handle(commandCaptor.capture()))
                 .thenReturn(response("list-sessions:0", "sessions", page));
 
-        ResponseEntity<Message<Page<AgentSession>>> response = controller().listSessions(0, 50);
+        ResponseEntity<Message<Page<AgentSessionListItem>>> response = controller().listSessions(0, 50);
 
         assertSame(page, response.getBody().getData());
         assertInstanceOf(ListSessionsCommand.class, commandCaptor.getValue());
@@ -113,11 +158,11 @@ class QueryControllerTest {
     @Test
     void alertAnalysisListShouldRouteSystemEnvelopeAndSearchThroughGatewayCommandRouter() {
         bindSubject();
-        Page<AgentSession> page = Page.empty(PageRequest.of(0, 50));
+        Page<AgentSessionListItem> page = Page.empty(PageRequest.of(0, 50));
         when(commandRouter.handle(commandCaptor.capture()))
                 .thenReturn(response("list-alert-analysis-sessions:0", "sessions", page));
 
-        ResponseEntity<Message<Page<AgentSession>>> response =
+        ResponseEntity<Message<Page<AgentSessionListItem>>> response =
                 controller().listAlertAnalysisSessions(0, 50, "database");
 
         assertSame(page, response.getBody().getData());
@@ -126,6 +171,7 @@ class QueryControllerTest {
         assertEquals(ChannelId.SYSTEM.id(), command.envelope().getChannelId());
         assertEquals("system", command.envelope().getActor().getType());
         assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals(AuthTokenScopes.DEFAULT_WORKSPACE_ID, command.envelope().getWorkspaceId());
         assertEquals(AgentRuntimeEntryType.ALERT_TRIGGER, command.originEntryType());
         assertEquals("database", command.title());
     }

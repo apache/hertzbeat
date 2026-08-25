@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.alert.controller;
 
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,12 +29,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.integration.service.AlertIntegrationVerificationService;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.AlertManagerExternAlertService;
+import org.apache.hertzbeat.alert.service.impl.AlibabaCloudSlsExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.DefaultExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.PrometheusExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.ZabbixExternAlertServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +58,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class AlertReportControllerTest {
 
     private static final String BODY = "{\"summary\":\"database unavailable\"}";
+    private static final String WORKSPACE_ID = "team-a";
 
     private MockMvc mockMvc;
 
@@ -61,11 +68,20 @@ class AlertReportControllerTest {
     @Mock
     private AlarmCommonReduce alarmCommonReduce;
 
+    @Mock
+    private AlertIntegrationVerificationService verificationService;
+
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId(WORKSPACE_ID);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new AlertReportController(List.of(externAlertService)))
+                .standaloneSetup(new AlertReportController(List.of(externAlertService), verificationService))
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -80,7 +96,8 @@ class AlertReportControllerTest {
                 .andExpect(jsonPath("$.msg").value("Add extern alert success"))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
-        verify(externAlertService).addExternAlert(BODY);
+        verify(externAlertService).addExternAlert(WORKSPACE_ID, BODY);
+        verify(verificationService).recordAcceptedIngress(WORKSPACE_ID, "tencent");
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alerts/report/Tencent")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,7 +118,38 @@ class AlertReportControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add extern alert success"));
 
-        verify(externAlertService).addExternAlert(BODY);
+        verify(externAlertService).addExternAlert(WORKSPACE_ID, BODY);
+        verify(verificationService).recordAcceptedIngress(WORKSPACE_ID, "default");
+    }
+
+    @Test
+    void acceptedIngressRemainsSuccessfulWhenVerificationEvidenceCannotBeStored() throws Exception {
+        when(externAlertService.supportSource()).thenReturn("default");
+        doThrow(new IllegalStateException("verification storage unavailable"))
+                .when(verificationService).recordAcceptedIngress(WORKSPACE_ID, "default");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/alerts/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+
+        verify(externAlertService).addExternAlert(WORKSPACE_ID, BODY);
+    }
+
+    @Test
+    void missingAuthenticatedWorkspaceRejectsBeforeIngress() throws Exception {
+        when(externAlertService.supportSource()).thenReturn("default");
+        AuthTokenRequestContext.clear();
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/alerts/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.msg").value("external_alert_rejected"));
+
+        verify(externAlertService, org.mockito.Mockito.never()).addExternAlert(any(), any());
+        verify(verificationService, never()).recordAcceptedIngress(any(), any());
     }
 
     @Test
@@ -115,7 +163,7 @@ class AlertReportControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add extern alert success"));
 
-        verify(externAlertService).addExternAlert(BODY);
+        verify(externAlertService).addExternAlert(WORKSPACE_ID, BODY);
     }
 
     @Test
@@ -123,7 +171,7 @@ class AlertReportControllerTest {
         String privateBody = "{\"token\":\"Bearer-private\",\"path\":\"/secret/alert.json\"}";
         when(externAlertService.supportSource()).thenReturn("default");
         doThrow(new IllegalArgumentException("Bearer-private at /secret/alert.json: " + privateBody))
-                .when(externAlertService).addExternAlert(privateBody);
+                .when(externAlertService).addExternAlert(WORKSPACE_ID, privateBody);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alerts/report")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,7 +197,7 @@ class AlertReportControllerTest {
     @Test
     void realIngressRejectsMalformedEmptyAndUnprocessablePayloadsSafely() throws Exception {
         MockMvc realIngress = MockMvcBuilders
-                .standaloneSetup(new AlertReportController(realIngressServices()))
+                .standaloneSetup(new AlertReportController(realIngressServices(), verificationService))
                 .build();
         String privateBody = "Bearer-private-token private-test-source /secret/private-body";
         List<RequestBuilder> rejectedRequests = List.of(
@@ -159,6 +207,8 @@ class AlertReportControllerTest {
                 post("/api/v2/alerts", "[]"),
                 post("/api/alerts/report/alertmanager", privateBody),
                 post("/api/alerts/report/alertmanager", "{\"alerts\":[]}"),
+                post("/api/alerts/report/alibabacloud-sls", privateBody),
+                post("/api/alerts/report/alibabacloud-sls", "[]"),
                 post("/api/alerts/report/zabbix", privateBody),
                 post("/api/alerts/report/zabbix", "{}"));
 
@@ -192,7 +242,7 @@ class AlertReportControllerTest {
                         org.hamcrest.Matchers.containsString(privateSource))));
 
         MockMvc unavailable = MockMvcBuilders
-                .standaloneSetup(new AlertReportController(List.of()))
+                .standaloneSetup(new AlertReportController(List.of(), verificationService))
                 .build();
         unavailable.perform(MockMvcRequestBuilders.post("/api/v2/alerts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,6 +268,7 @@ class AlertReportControllerTest {
                 withReducer(new DefaultExternAlertService()),
                 withReducer(new PrometheusExternAlertService()),
                 withReducer(new AlertManagerExternAlertService()),
+                new AlibabaCloudSlsExternAlertService(alarmCommonReduce),
                 withReducer(new ZabbixExternAlertServiceImpl()));
     }
 

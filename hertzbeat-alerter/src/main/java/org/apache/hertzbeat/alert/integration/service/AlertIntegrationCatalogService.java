@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.CatalogResponse;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.IntegrationGuide;
+import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.IntegrationVerification;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationRequestException;
 import org.apache.hertzbeat.alert.integration.guide.AlertIntegrationDescriptor;
 import org.apache.hertzbeat.alert.integration.guide.AlertIntegrationDescriptorRegistry;
@@ -37,20 +38,31 @@ public class AlertIntegrationCatalogService {
 
     private final List<ExternAlertService> externAlertServices;
     private final AlertIntegrationDescriptorRegistry descriptorRegistry;
+    private final AlertIntegrationVerificationService verificationService;
 
     public AlertIntegrationCatalogService(
             List<ExternAlertService> externAlertServices,
-            AlertIntegrationDescriptorRegistry descriptorRegistry) {
+            AlertIntegrationDescriptorRegistry descriptorRegistry,
+            AlertIntegrationVerificationService verificationService) {
         this.externAlertServices = List.copyOf(externAlertServices);
         this.descriptorRegistry = descriptorRegistry;
+        this.verificationService = verificationService;
     }
 
-    public CatalogResponse catalog() {
+    public CatalogResponse catalog(String workspaceId) {
         requireAlignedDescriptors();
+        Map<String, IntegrationVerification> verificationBySource =
+                verificationService.evidenceBySource(workspaceId);
         return new CatalogResponse(descriptorRegistry.descriptors().stream()
                 .map(AlertIntegrationDescriptor::guide)
-                .map(IntegrationGuide::toCatalogItem)
+                .map(guide -> guide.toCatalogItem(verificationBySource.getOrDefault(
+                        guide.source(), verificationService.unverified())))
                 .toList());
+    }
+
+    public IntegrationVerification startVerification(String workspaceId, String source) {
+        IntegrationGuide guide = render(source);
+        return verificationService.start(workspaceId, guide.source());
     }
 
     public IntegrationGuide render(String source) {

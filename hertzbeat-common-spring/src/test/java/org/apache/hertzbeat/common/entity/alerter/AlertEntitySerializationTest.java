@@ -53,6 +53,35 @@ class AlertEntitySerializationTest {
         assertStringMapWithoutNullEntry(payload.path("alerts").path(0).path("annotations"));
     }
 
+    @Test
+    void shouldNeverExposePersistedWorkspaceInAlertPayloads() throws Exception {
+        SingleAlert singleAlert = SingleAlert.builder().build();
+        GroupAlert groupAlert = GroupAlert.builder().alerts(List.of(singleAlert)).build();
+        setWorkspace(singleAlert, "team-a");
+        setWorkspace(groupAlert, "team-a");
+
+        JsonNode payload = JsonUtil.fromJson(JsonUtil.toJson(groupAlert));
+
+        assertFalse(payload.has("workspaceId"));
+        assertFalse(payload.path("alerts").path(0).has("workspaceId"));
+    }
+
+    @Test
+    void clonePreservesInternalWorkspaceWithoutExposingIt() {
+        SingleAlert alert = SingleAlert.builder().workspaceId("team-a").build();
+
+        SingleAlert clone = alert.clone();
+
+        assertEquals("team-a", clone.getWorkspaceId());
+        assertFalse(JsonUtil.fromJson(JsonUtil.toJson(clone)).has("workspaceId"));
+    }
+
+    private void setWorkspace(Object alert, String workspaceId) throws Exception {
+        var field = alert.getClass().getDeclaredField("workspaceId");
+        field.setAccessible(true);
+        field.set(alert, workspaceId);
+    }
+
     private void assertStringMapWithoutNullEntry(JsonNode map) {
         assertEquals("CollectorUnavailable", map.path("alertname").textValue());
         assertFalse(map.has("collectorVersion"));

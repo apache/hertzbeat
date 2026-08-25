@@ -64,6 +64,7 @@ public record GatewayEvent(
         INPUT_COMPLETED,
         APPROVAL_REQUESTED,
         APPROVAL_COMPLETED,
+        RUN_STATUS,
         RUN_COMPLETED,
         ERROR
     }
@@ -82,6 +83,7 @@ public record GatewayEvent(
             InputCompletedPayload,
             ApprovalRequestedPayload,
             ApprovalCompletedPayload,
+            RunStatusPayload,
             RunCompletedPayload,
             ErrorPayload {
     }
@@ -173,6 +175,15 @@ public record GatewayEvent(
             String status) implements GatewayEventPayload {
     }
 
+    /** Durable run snapshot emitted instead of starting a duplicate runtime. */
+    @Builder
+    public record RunStatusPayload(
+            String status,
+            String result,
+            String errorMessage,
+            boolean replayAvailable) implements GatewayEventPayload {
+    }
+
     /** Run completion payload. */
     @Builder
     public record RunCompletedPayload(String traceId) implements GatewayEventPayload {
@@ -182,6 +193,7 @@ public record GatewayEvent(
     @Builder
     public record ErrorPayload(
             String traceId,
-            String errorMessage) implements GatewayEventPayload {
+            String errorMessage,
+            String status) implements GatewayEventPayload {
     }
 }

@@ -5,6 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import { NotificationOutlined } from '@ant-design/icons';
 import { Button, Pagination, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,7 @@ import {
   latestIncidentMessage,
   type StatusIncidentCollectionState
 } from '../model/status-management-model';
+import styles from './status-management.module.css';
 
 export type IncidentResultsProps = {
   state: StatusIncidentCollectionState<StatusIncident>;
@@ -29,6 +31,11 @@ export type IncidentResultsProps = {
   commandLocked: boolean;
   canUpdate: boolean;
   canDelete: boolean;
+  canCreate: boolean;
+  orgId: number | undefined;
+  componentCount: number;
+  draftSearch: string;
+  onNew: () => void;
   onPageChange: (pageIndex: number, pageSize: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
@@ -36,16 +43,8 @@ export type IncidentResultsProps = {
 
 export function IncidentResults(props: IncidentResultsProps) {
   const { t } = useTranslation();
-  if (props.state.kind === 'loading') {
-    return <OperationalStatePanel kind="loading" title={t('statusManagement.loadingIncidents')} />;
-  }
-  if (props.state.kind === 'unavailable') {
-    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
-  }
-  if (props.state.kind === 'permission')
-    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
-  if (props.state.kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.title')} />;
-  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('status.noIncidents')} />;
+  const statePanel = incidentStatePanel(props, t);
+  if (statePanel) return statePanel;
 
   const pagination = incidentPagination(props);
   return (
@@ -62,6 +61,52 @@ export function IncidentResults(props: IncidentResultsProps) {
       {props.records.length === 0 && props.total > 0 && <Pagination {...pagination} />}
     </>
   );
+}
+
+function incidentStatePanel(props: IncidentResultsProps, t: (key: string) => string) {
+  if (props.state.kind === 'loading') {
+    return <OperationalStatePanel kind="loading" title={t('statusManagement.loadingIncidents')} />;
+  }
+  if (props.state.kind === 'unavailable') {
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  }
+  if (props.state.kind === 'permission')
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
+  if (props.state.kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.title')} />;
+  if (props.state.kind === 'empty') {
+    if (props.draftSearch.trim() !== '') {
+      return <OperationalStatePanel kind="empty" presentation="quiet" title={t('status.noIncidents')} />;
+    }
+    return <IncidentEmptyResults {...props} />;
+  }
+  return undefined;
+}
+
+function IncidentEmptyResults(props: IncidentResultsProps) {
+  const { t } = useTranslation();
+  const createDisabled = !props.orgId || props.componentCount === 0 || props.commandLocked;
+  const descriptionKey = emptyIncidentDescriptionKey(props.componentCount);
+  return (
+    <section className={styles.incidentEmpty} data-state="empty" role="region" aria-label={t('status.noIncidents')}>
+      <span className={styles.incidentEmptyIcon} aria-hidden>
+        <NotificationOutlined />
+      </span>
+      <div className={styles.incidentEmptyCopy}>
+        <strong>{t('status.noIncidents')}</strong>
+        <span>{t(descriptionKey)}</span>
+      </div>
+      {props.canCreate && (
+        <Button type="primary" disabled={createDisabled} onClick={props.onNew}>
+          {t('statusManagement.newIncident')}
+        </Button>
+      )}
+    </section>
+  );
+}
+
+function emptyIncidentDescriptionKey(componentCount: number) {
+  if (componentCount === 0) return 'statusManagement.emptyIncidentsNeedsComponent';
+  return 'statusManagement.emptyIncidentsDescription';
 }
 
 function incidentColumns(props: IncidentResultsProps, t: (key: string) => string): ColumnsType<StatusIncident> {

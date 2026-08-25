@@ -15,15 +15,18 @@
  * limitations under the License.
  */
 
-import { Table, Tag } from 'antd';
+import { RightOutlined } from '@ant-design/icons';
+import { Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
+import { pageSelectionLabels } from '@/shared/table-selection';
 
 import styles from '../shared/alert-center.module.css';
-import { hasAlertCenterRowActions, type AlertCenterActionPolicy } from '../model/alert-capability-model';
+import type { AlertCenterActionPolicy } from '../model/alert-capability-model';
 import {
   alertPageSizes,
   alertSeverities,
@@ -64,6 +67,13 @@ type AlertCenterColumnsOptions = {
   actions: AlertCenterRowActionHandlers;
 };
 
+const alertScopeLabelAliases = [
+  ['service.name', 'serviceName', 'service'],
+  ['service.namespace', 'serviceNamespace', 'namespace'],
+  ['deployment.environment.name', 'environment', 'env'],
+  ['instance']
+] as const;
+
 export function AlertCenterResults({
   actionPolicy,
   onAcknowledge,
@@ -81,11 +91,19 @@ export function AlertCenterResults({
   retry
 }: AlertCenterResultsProps) {
   const { t } = useTranslation();
+  const [expandedIds, setExpandedIds] = useState<number[]>([]);
   const fallback = renderResultFallback(state, t, retry);
   if (fallback) return fallback;
 
   const records = state.kind === 'ready' ? state.records : [];
-  const rowSelection = alertCenterRowSelection(actionPolicy, busy, selectedIds, onSelectIds);
+  const rowSelection = alertCenterRowSelection(
+    actionPolicy,
+    busy,
+    records,
+    selectedIds,
+    onSelectIds,
+    pageSelectionLabels(t)
+  );
   const actions = {
     acknowledge: onAcknowledge,
     remove: onRemove,
@@ -94,27 +112,54 @@ export function AlertCenterResults({
     unacknowledge: onUnacknowledge
   };
   return (
-    <Table<AlertGroup>
-      rowKey="id"
-      size="small"
-      loading={state.kind === 'loading'}
-      dataSource={records}
-      columns={buildColumns({ t, actionPolicy, busy, actions })}
-      {...(rowSelection ? { rowSelection } : {})}
-      expandable={{
-        expandedRowRender: group => <AlertCenterGroupDetails alerts={group.alerts} />,
-        rowExpandable: group => group.alerts.length > 0
-      }}
-      pagination={{
-        current: pageIndex + 1,
-        disabled: busy,
-        pageSize,
-        pageSizeOptions: [...alertPageSizes],
-        showSizeChanger: true,
-        total: state.kind === 'ready' ? state.total : 0,
-        onChange: onPageChange
-      }}
-    />
+    <div className={styles.resultSurface} data-alert-workbench>
+      <Table<AlertGroup>
+        className={styles.alertTable ?? ''}
+        rowKey="id"
+        size="small"
+        loading={state.kind === 'loading'}
+        dataSource={records}
+        columns={buildColumns({ t, actionPolicy, busy, actions })}
+        {...(rowSelection ? { rowSelection } : {})}
+        expandable={{
+          expandedRowKeys: expandedIds,
+          expandIcon: ({ expanded, expandable, onExpand, record }) =>
+            expandable ? (
+              <button
+                type="button"
+                className={styles.expandButton}
+                aria-label={t(expanded ? 'alert.collapseDetails' : 'alert.expandDetails')}
+                aria-expanded={expanded}
+                onClick={event => {
+                  event.stopPropagation();
+                  onExpand(record, event);
+                }}
+              >
+                <RightOutlined className={styles.expandIcon} aria-hidden="true" />
+              </button>
+            ) : (
+              <span className={styles.expandPlaceholder} aria-hidden="true" />
+            ),
+          expandedRowRender: group => <AlertCenterGroupDetails alerts={group.alerts} />,
+          onExpand: (expanded, group) => {
+            setExpandedIds(ids => {
+              if (!expanded) return ids.filter(id => id !== group.id);
+              return ids.includes(group.id) ? ids : [...ids, group.id];
+            });
+          },
+          rowExpandable: group => group.alerts.length > 0
+        }}
+        pagination={{
+          current: pageIndex + 1,
+          disabled: busy,
+          pageSize,
+          pageSizeOptions: [...alertPageSizes],
+          showSizeChanger: true,
+          total: state.kind === 'ready' ? state.total : 0,
+          onChange: onPageChange
+        }}
+      />
+    </div>
   );
 }
 
@@ -138,54 +183,76 @@ function alertListFailureMessageKey(kind: 'permission' | 'unavailable' | 'error'
 
 function buildColumns({ t, actionPolicy, busy, actions }: AlertCenterColumnsOptions): ColumnsType<AlertGroup> {
   const columns: ColumnsType<AlertGroup> = [
-    { title: t('alert.name'), render: (_value, row) => alertGroupName(row) },
+    {
+      title: t('alert.name'),
+      width: 380,
+      render: (_value, row) => <AlertIdentityCell group={row} />
+    },
     {
       title: t('alert.status.label'),
       dataIndex: 'status',
-      width: 150,
-      render: (value: AlertStatus) => <Tag color={alertStatusColor(value)}>{t(`alert.status.${value}`)}</Tag>
+      width: 126,
+      render: (value: AlertStatus) => <AlertStatusBadge status={value} label={t(`alert.status.${value}`)} />
     },
     {
       title: t('alert.severity.label'),
-      width: 140,
-      render: (_value, row) => severityLabel(t, row.commonLabels?.severity)
-    },
-    {
-      title: t('alert.labels'),
-      render: (_value, row) => (
-        <div className={styles.labels}>
-          {Object.entries(row.commonLabels ?? {})
-            .filter(([key]) => key !== 'severity')
-            .slice(0, 4)
-            .map(([key, value]) => (
-              <Tag key={key}>
-                {key}={value}
-              </Tag>
-            ))}
-        </div>
-      )
+      width: 112,
+      render: (_value, row) => <AlertSeverityBadge severity={row.commonLabels?.severity} t={t} />
     },
     {
       title: t('alert.updated'),
       dataIndex: 'gmtUpdate',
-      width: 190,
-      render: (value: AlertGroup['gmtUpdate']) => value ?? '—'
+      width: 168,
+      render: (value: AlertGroup['gmtUpdate']) => <span className={styles.updatedCell}>{value ?? '—'}</span>
     }
   ];
-  if (!hasAlertCenterRowActions(actionPolicy)) return columns;
   const actionColumn = alertCenterActionColumn({ t, actionPolicy, busy, actions });
   return [...columns, actionColumn];
 }
 
-function alertStatusColor(status: AlertStatus) {
-  if (status === 'firing') return 'red';
-  if (status === 'acknowledged') return 'gold';
-  if (status === 'resolved') return 'green';
-  return 'default';
+function AlertIdentityCell({ group }: { group: AlertGroup }) {
+  const summary = group.commonAnnotations?.summary || group.commonAnnotations?.description;
+  const scope = alertScopeValues(group.commonLabels);
+  return (
+    <div className={styles.alertIdentity}>
+      <strong className={styles.alertName}>{alertGroupName(group)}</strong>
+      {summary ? <span className={styles.alertSummary}>{summary}</span> : null}
+      {scope.length > 0 ? (
+        <div className={styles.alertScope}>
+          {scope.map(value => (
+            <span className={styles.alertScopeValue} key={value}>
+              {value}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
-function severityLabel(t: Translator, severity: string | undefined) {
-  return severity && alertSeverities.includes(severity as Exclude<AlertSeverity, ''>)
-    ? t(`alert.severity.${severity}`)
-    : t('alert.status.unknown');
+function alertScopeValues(labels: AlertGroup['commonLabels']) {
+  if (!labels) return [];
+  return alertScopeLabelAliases
+    .map(keys => keys.map(key => labels[key]).find(Boolean))
+    .filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index)
+    .slice(0, 3);
+}
+
+function AlertStatusBadge({ status, label }: { status: AlertStatus; label: string }) {
+  return (
+    <span className={styles.statusBadge} data-alert-status={status}>
+      {label}
+    </span>
+  );
+}
+
+function AlertSeverityBadge({ t, severity }: { t: Translator; severity: string | undefined }) {
+  const normalized =
+    severity && alertSeverities.includes(severity as Exclude<AlertSeverity, ''>) ? severity : 'unknown';
+  const label = normalized === 'unknown' ? t('alert.status.unknown') : t(`alert.severity.${normalized}`);
+  return (
+    <span className={styles.severityBadge} data-alert-severity={normalized}>
+      {label}
+    </span>
+  );
 }

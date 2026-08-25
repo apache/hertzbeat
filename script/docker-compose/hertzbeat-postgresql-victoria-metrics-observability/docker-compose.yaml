@@ -63,7 +63,7 @@ services:
       - hertzbeat
 
   hertzbeat:
-    image: "${HERTZBEAT_SERVER_IMAGE:-apache/hertzbeat}:${HERTZBEAT_RELEASE_VERSION:-1.8.0}"
+    image: "${HERTZBEAT_SERVER_IMAGE:-apache/hertzbeat}:${HERTZBEAT_RELEASE_VERSION:-2.0.0}"
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always

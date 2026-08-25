@@ -174,6 +174,8 @@ const detailSchema = z
   })
   .merge(entityOperationalSchema);
 
+const entityIdentityResponseSchema = z.object({ entity: entitySchema });
+
 export function parseEntityPage(value: unknown): EntityPage {
   const parsed = entityPageResponseSchema.safeParse(value);
   if (!parsed.success) throw new EntityContractError();
@@ -212,6 +214,12 @@ export function parseEntityDetail(value: unknown): EntityDetail {
     ...copyRichDetail(wire),
     relations: (wire.topologyNeighbors ?? []).map(value => clean(value) as EntityRelation)
   };
+}
+
+export function parseEntityIdentity(value: unknown): EntityRecord {
+  const parsed = entityIdentityResponseSchema.safeParse(value);
+  if (!parsed.success) throw new EntityContractError('Entity identity response is invalid');
+  return mapEntity(parsed.data.entity);
 }
 
 export function parseEntityMonitorPage(value: unknown): EntityMonitorPage {

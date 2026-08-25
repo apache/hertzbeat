@@ -38,7 +38,13 @@ export function AlertRuleListHeading({
   return (
     <OperationalPageHeader
       title={t('alertRules.title')}
-      description={t('alertRules.description')}
+      description={
+        <span>
+          {t('alertRules.description')} <a href="/alerts">{t('alertRules.guide.alertCenter')}</a>
+          {' · '}
+          <a href="/settings/notifications/rules">{t('alertRules.guide.deliveryRules')}</a>
+        </span>
+      }
       actions={
         <Space>
           <AlertRuleSelectedActions

@@ -37,9 +37,9 @@ final class TargetSchemaBaseline {
 
     private static final Pattern CREATE_TABLE = Pattern.compile(
             "(?i)^create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?([a-z][a-z0-9_]*)\\s*\\(");
-    static final String VERSION = "206";
+    static final String VERSION = "200";
     static final String DESCRIPTION = "current schema";
-    static final String SCRIPT = "B206__current_schema.sql";
+    static final String SCRIPT = "B200__current_schema.sql";
     static final String TYPE = "SQL_BASELINE";
 
     private final List<String> statements;

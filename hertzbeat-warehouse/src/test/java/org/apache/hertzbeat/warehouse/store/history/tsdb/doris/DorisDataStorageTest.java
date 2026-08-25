@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.warehouse.store.history.tsdb.doris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
@@ -30,12 +31,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +56,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DorisDataStorageTest {
 
     private static final long NANOS_PER_MILLISECOND = 1_000_000L;
+    private static final String WILDCARD_WORKSPACE = "team_%\\ops";
+    private static final String WORKSPACE_SELECTOR = "COALESCE("
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"hertzbeat.workspace_id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"hertzbeat_workspace_id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"workspace.id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"workspace_id\"')), ''), "
+            + "'default') = ?";
 
     @Mock
     private WarehouseWorkerPool workerPool;
@@ -130,6 +141,133 @@ class DorisDataStorageTest {
     }
 
     @Test
+    void queryLogsWorkspaceAliasOnlyAppliesWhenCanonicalWorkspaceIsAbsentOrBlank() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(false);
+
+        context.storage().queryLogsByMultipleConditionsWithPagination(
+                null, null, null, null, null, null, null, 0, 20,
+                Set.of(), false, "team-a", null, null, null);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
+        assertThat(sqlCaptor.getValue()).contains(WORKSPACE_SELECTOR);
+        verifyWorkspacePrecedenceBindings(context.queryPreparedStatement(), "team-a");
+        verify(context.queryPreparedStatement()).setObject(2, 20);
+    }
+
+    @Test
+    void scopedLogRowsBindAllWorkspaceAliasesInCanonicalPrecedenceOrder() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(false);
+
+        context.storage().queryLogsByMultipleConditionsWithPagination(
+                null, null, null, null, null, null, null, 0, 20,
+                Set.of(), false, "team-a", null, null, null);
+
+        verifyWorkspacePrecedenceBindings(context.queryPreparedStatement(), "team-a");
+        verify(context.queryPreparedStatement()).setObject(2, 20);
+    }
+
+    @Test
+    void scopedLogCountBindsAllWorkspaceAliasesInCanonicalPrecedenceOrder() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        stubValidZeroCount(context.resultSet());
+
+        context.storage().countLogsByMultipleConditions(
+                null, null, null, null, null, null, null,
+                Set.of(), false, "team-a", null, null, null);
+
+        verifyWorkspacePrecedenceBindings(context.queryPreparedStatement(), "team-a");
+    }
+
+    @Test
+    void scopedLogRowsTreatTrustedWorkspaceLikeMetacharactersAsLiterals() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(false);
+
+        context.storage().queryLogsByMultipleConditionsWithPagination(
+                null, null, null, null, null, null, null, 0, 20,
+                Set.of(), false, WILDCARD_WORKSPACE, null, null, null);
+
+        assertWorkspaceLikeLiterals(context, true);
+    }
+
+    @Test
+    void scopedLogCountTreatsTrustedWorkspaceLikeMetacharactersAsLiterals() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        stubValidZeroCount(context.resultSet());
+
+        context.storage().countLogsByMultipleConditions(
+                null, null, null, null, null, null, null,
+                Set.of(), false, WILDCARD_WORKSPACE, null, null, null);
+
+        assertWorkspaceLikeLiterals(context, false);
+    }
+
+    @Test
+    void defaultWorkspaceStillRequiresEveryAliasToBeMissingOrBlank() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        stubValidZeroCount(context.resultSet());
+
+        context.storage().countLogsByMultipleConditions(
+                null, null, null, null, null, null, null,
+                Set.of(), false, "default", null, null, null);
+
+        verifyWorkspacePrecedenceBindings(context.queryPreparedStatement(), "default");
+    }
+
+    @Test
+    void scopedLogQueryReportsStorageUnavailableInsteadOfEmptyOnProviderFailure() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery())
+                .thenThrow(new SQLException("provider details"));
+
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> context.storage().queryLogsByMultipleConditionsWithPagination(
+                        null, null, null, null, null, null, null, 0, 20,
+                        Set.of(), false, "team-a", null, null, null));
+    }
+
+    private void verifyWorkspacePrecedenceBindings(PreparedStatement statement, String workspaceId)
+            throws SQLException {
+        verify(statement).setObject(1, workspaceId);
+    }
+
+    private void stubValidZeroCount(ResultSet resultSet) throws SQLException {
+        when(resultSet.next()).thenReturn(true, false);
+        when(resultSet.getLong("count")).thenReturn(0L);
+        when(resultSet.wasNull()).thenReturn(false);
+    }
+
+    private void assertWorkspaceLikeLiterals(QueryStorageContext context, boolean paged) throws Exception {
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+        assertThat(sql).contains(WORKSPACE_SELECTOR).doesNotContain("resource LIKE ? ESCAPE");
+        verify(context.queryPreparedStatement()).setObject(1, WILDCARD_WORKSPACE);
+        if (paged) {
+            verify(context.queryPreparedStatement()).setObject(2, 20);
+        }
+    }
+
+    @Test
+    void legacyLogQueryRetainsEmptyCompatibilityOnProviderFailure() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery())
+                .thenThrow(new SQLException("provider details"));
+
+        assertThat(context.storage().queryLogsByMultipleConditionsWithPagination(
+                null, null, null, null, null, null, null, 0, 20)).isEmpty();
+    }
+
+    @Test
     void countLogsShouldReturnCountAndBindConditions() throws Exception {
         QueryStorageContext context = createQueryStorageContext(createProperties(false));
         when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
@@ -151,6 +289,18 @@ class DorisDataStorageTest {
         assertThat(sql).contains("trace_id = ?");
         verify(context.queryPreparedStatement()).setObject(1, 1000L * NANOS_PER_MILLISECOND);
         verify(context.queryPreparedStatement()).setObject(2, "trace-1");
+    }
+
+    @Test
+    void scopedLogCountReportsStorageUnavailableInsteadOfZeroOnProviderFailure() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery())
+                .thenThrow(new SQLException("provider details"));
+
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> context.storage().countLogsByMultipleConditions(
+                        null, null, null, null, null, null, null,
+                        Set.of(), false, "team-a", null, null, null));
     }
 
     @Test

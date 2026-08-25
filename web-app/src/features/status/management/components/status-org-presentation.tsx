@@ -16,7 +16,11 @@
  */
 
 import { Button, Form, Input, Space } from 'antd';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import styles from './status-org-settings.module.css';
+import type { StatusOrg } from '../model/status-management-contract';
 
 interface StatusOrgFieldsProps {
   disabled: boolean;
@@ -28,6 +32,7 @@ interface StatusOrgActionsProps {
   saving: boolean;
   locked: boolean;
   canCancel: boolean;
+  initialSetup: boolean;
   writeRecovery: 'proof' | 'commit-uncertain' | undefined;
   onCancel: () => void;
   onEdit: () => void;
@@ -54,9 +59,66 @@ export function StatusOrgFields({ disabled }: StatusOrgFieldsProps) {
       <Form.Item name="feedback" label={t('statusManagement.feedback')}>
         <Input disabled={disabled} />
       </Form.Item>
-      <Form.Item name="color" label={t('statusManagement.color')}>
-        <Input disabled={disabled} type="color" />
+      <Form.Item name="color" label={t('statusManagement.color')} extra={t('statusManagement.colorDescription')}>
+        <Input className={styles.colorInput} disabled={disabled} type="color" />
       </Form.Item>
+    </div>
+  );
+}
+
+export function StatusOrgSummary({ org }: { org: StatusOrg }) {
+  const { t } = useTranslation();
+  return (
+    <div role="group" aria-label={t('statusManagement.organizationDetails')}>
+      <dl className={styles.settingsList}>
+        <StatusOrgSummaryRow label={t('statusManagement.name')}>{org.name}</StatusOrgSummaryRow>
+        <StatusOrgSummaryRow label={t('status.descriptionLabel')}>{org.description}</StatusOrgSummaryRow>
+        <StatusOrgSummaryRow label={t('statusManagement.home')}>
+          <StatusOrgLinkValue value={org.home} />
+        </StatusOrgSummaryRow>
+        <StatusOrgSummaryRow label={t('statusManagement.logo')}>
+          <span className={styles.logoValue}>
+            <img src={org.logo} alt="" />
+            <span>{org.logo}</span>
+          </span>
+        </StatusOrgSummaryRow>
+        <StatusOrgSummaryRow label={t('statusManagement.feedback')}>
+          {org.feedback ? <StatusOrgLinkValue value={org.feedback} /> : <span className={styles.emptyValue}>—</span>}
+        </StatusOrgSummaryRow>
+        <StatusOrgSummaryRow label={t('statusManagement.color')}>
+          <span className={styles.colorValue}>
+            <span className={styles.colorSwatch} style={{ backgroundColor: org.color ?? undefined }} />
+            {org.color || '—'}
+          </span>
+        </StatusOrgSummaryRow>
+      </dl>
+    </div>
+  );
+}
+
+function StatusOrgLinkValue({ value }: { value: string }) {
+  return (
+    <span className={styles.linkValue}>
+      <strong>{publicLinkLabel(value)}</strong>
+      <span>{value}</span>
+    </span>
+  );
+}
+
+function publicLinkLabel(value: string) {
+  if (value.startsWith('/')) return value;
+  try {
+    return new URL(value).host || value;
+  } catch {
+    return value;
+  }
+}
+
+function StatusOrgSummaryRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className={styles.settingsRow}>
+      <dt>{label}</dt>
+      <dd>{children}</dd>
     </div>
   );
 }
@@ -67,6 +129,7 @@ export function StatusOrgActions({
   saving,
   locked,
   canCancel,
+  initialSetup,
   writeRecovery,
   onCancel,
   onEdit,
@@ -86,7 +149,7 @@ export function StatusOrgActions({
             disabled={writeRecovery === 'commit-uncertain' || (locked && writeRecovery !== 'proof')}
             onClick={writeRecovery === 'proof' ? onRetry : undefined}
           >
-            {t(writeRecovery === 'proof' ? 'common.retry' : 'common.save')}
+            {t(statusOrgActionKey(writeRecovery, initialSetup))}
           </Button>
           {canCancel && (
             <Button htmlType="button" disabled={locked} onClick={onCancel}>
@@ -101,4 +164,10 @@ export function StatusOrgActions({
       )}
     </Space>
   );
+}
+
+function statusOrgActionKey(writeRecovery: StatusOrgActionsProps['writeRecovery'], initialSetup: boolean) {
+  if (writeRecovery === 'proof') return 'common.retry';
+  if (initialSetup) return 'statusManagement.createPage';
+  return 'common.save';
 }

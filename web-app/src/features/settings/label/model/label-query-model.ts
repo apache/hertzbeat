@@ -19,7 +19,7 @@ import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 export type LabelQuery = { search: string; pageIndex: number; pageSize: LabelPageSize };
 export type LabelPageSize = (typeof labelPageSizes)[number];
-export type LabelDeletePageReceipt = { query: LabelQuery; visibleRecords: number };
+export type LabelDeletePageReceipt = { query: LabelQuery; visibleRecords: number; deletedRecords: number };
 
 export const labelPageSizes = [20, 50, 100] as const;
 
@@ -45,7 +45,12 @@ export function isLabelPageSize(value: number): value is LabelPageSize {
 }
 
 export function labelQueryAfterConfirmedDelete(current: LabelQuery, receipt: LabelDeletePageReceipt) {
-  if (!sameLabelQuery(current, receipt.query) || current.pageIndex === 0 || receipt.visibleRecords !== 1) {
+  if (
+    !sameLabelQuery(current, receipt.query) ||
+    current.pageIndex === 0 ||
+    receipt.deletedRecords < 1 ||
+    receipt.visibleRecords !== receipt.deletedRecords
+  ) {
     return undefined;
   }
   return { ...current, pageIndex: current.pageIndex - 1 };

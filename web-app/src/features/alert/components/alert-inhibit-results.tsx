@@ -19,10 +19,12 @@ import { Button, Skeleton, Table } from 'antd';
 import type { Key } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
+import { OperationalStatePanel, OperationalTableEmptyState } from '@/shared/operational-page/operational-page';
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
 
 import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import { alertInhibitPageSizes, type AlertInhibit } from '../model/alert-inhibit-model';
+import { alertPolicyTableViewport } from '../model/alert-policy-table-viewport';
 import type { AlertInhibitDetailState, AlertInhibitListState } from '../model/alert-inhibit-state';
 import { buildAlertInhibitColumns } from './alert-inhibit-table-columns';
 
@@ -49,15 +51,19 @@ export function AlertInhibitResults(props: ResultsProps) {
     return (
       <RetryFailure kind="error" busy={props.busy} message={t('common.routeError.description')} retry={props.retry} />
     );
-  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertInhibits.empty')} />;
   const records = props.state.kind === 'ready' ? props.state.records : [];
   const total = props.state.kind === 'ready' ? props.state.total : 0;
+  const viewport = alertPolicyTableViewport(records.length, 1200);
   return (
     <Table<AlertInhibit>
       rowKey="id"
+      data-table-overflow={viewport.mode}
       size="small"
       loading={props.state.kind === 'loading'}
       dataSource={records}
+      locale={{
+        emptyText: props.state.kind === 'empty' ? <OperationalTableEmptyState title={t('alertInhibits.empty')} /> : null
+      }}
       columns={buildAlertInhibitColumns(t, props.busy, props.capabilities, {
         edit: props.edit,
         toggle: props.toggle,
@@ -67,6 +73,12 @@ export function AlertInhibitResults(props: ResultsProps) {
         ? {
             rowSelection: {
               selectedRowKeys: props.selectedIds,
+              getTitleCheckboxProps: () =>
+                pageSelectionTitleCheckboxProps(
+                  props.selectedIds,
+                  records.map(record => record.id),
+                  pageSelectionLabels(t)
+                ),
               getCheckboxProps: () => ({ disabled: props.busy }),
               onChange: (keys: Key[]) => {
                 if (!props.busy) props.selectIds(keys.filter((key): key is number => typeof key === 'number'));
@@ -74,7 +86,7 @@ export function AlertInhibitResults(props: ResultsProps) {
             }
           }
         : {})}
-      scroll={{ x: 1200 }}
+      scroll={viewport.scroll}
       pagination={{
         current: props.pageIndex + 1,
         pageSize: props.pageSize,

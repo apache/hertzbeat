@@ -86,7 +86,7 @@ public class MonitorsController {
         return ResponseEntity.ok(Message.success(responsePage));
     }
 
-    @GetMapping(path = "/{app}")
+    @GetMapping(path = "/{app:^(?!manage$).+}")
     @Operation(summary = "Filter all acquired monitoring information lists of the specified monitoring type according to the query",
             description = "Filter all acquired monitoring information lists of the specified monitoring type according to the query")
     public ResponseEntity<Message<List<MonitorInfo>>> getAppMonitors(
@@ -126,17 +126,6 @@ public class MonitorsController {
             monitorService.cancelManageMonitors(effectiveIds);
         }
         return ResponseEntity.ok(Message.success());
-    }
-
-    @GetMapping("manage")
-    @Operation(summary = "Start the managed monitoring items in batches according to the monitoring ID list",
-            description = "Start the managed monitoring items in batches according to the monitoring ID list")
-    public ResponseEntity<Message<Void>> enableManageMonitors(
-            @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids,
-            @Parameter(description = "Legacy monitor ID", example = "6565463543") @RequestParam(required = false) String id,
-            @Parameter(description = "Legacy monitor ID JSON body", example = "[6565463543]") @RequestBody(required = false) List<Long> bodyIds
-    ) {
-        return enableManageMonitorsByIds(ids, id, bodyIds);
     }
 
     @PostMapping("manage")

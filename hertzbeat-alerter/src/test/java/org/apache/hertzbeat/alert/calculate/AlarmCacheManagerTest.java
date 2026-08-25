@@ -21,6 +21,7 @@ import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +56,9 @@ public class AlarmCacheManagerTest {
         SingleAlert alert = new SingleAlert();
         alert.setContent("Alert cache manager test");
         alert.setLabels(labels);
-        when(singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING)).thenReturn(Collections.singletonList(alert));
+        when(singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, CommonConstants.ALERT_STATUS_FIRING))
+                .thenReturn(Collections.singletonList(alert));
         alarmCacheManager = new AlarmCacheManager(singleAlertDao);
     }
 
@@ -121,7 +124,9 @@ public class AlarmCacheManagerTest {
         SingleAlert alert = new SingleAlert();
         alert.setContent("Alert cache manager test");
         alert.setLabels(Collections.singletonMap(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
-        when(singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING)).thenReturn(Collections.singletonList(alert));
+        when(singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, CommonConstants.ALERT_STATUS_FIRING))
+                .thenReturn(Collections.singletonList(alert));
         alarmCacheManager = new AlarmCacheManager(singleAlertDao);
 
         String fingerprint = AlertUtil.calculateFingerprint(alert.getLabels());
@@ -131,5 +136,20 @@ public class AlarmCacheManagerTest {
         assertNotNull(singleAlert);
         historicalSingleAlert = alarmCacheManager.getFiring(4L, fingerprint);
         assertNull(historicalSingleAlert);
+    }
+
+    @Test
+    void sameFingerprintIsIsolatedByWorkspace() {
+        SingleAlert teamA = SingleAlert.builder().workspaceId("team-a").build();
+        SingleAlert teamB = SingleAlert.builder().workspaceId("team-b").build();
+
+        alarmCacheManager.putFiring(9L, "same", teamA);
+        alarmCacheManager.putFiring(9L, "same", teamB);
+
+        assertEquals(teamA, alarmCacheManager.getFiring("team-a", 9L, "same"));
+        assertEquals(teamB, alarmCacheManager.getFiring("team-b", 9L, "same"));
+        alarmCacheManager.removeFiring("team-a", 9L, "same");
+        assertNull(alarmCacheManager.getFiring("team-a", 9L, "same"));
+        assertEquals(teamB, alarmCacheManager.getFiring("team-b", 9L, "same"));
     }
 }

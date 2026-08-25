@@ -15,7 +15,8 @@ import {
   OperationalPageHeader,
   OperationalResultRegion,
   OperationalSection,
-  OperationalStatePanel
+  OperationalStatePanel,
+  OperationalTableEmptyState
 } from './operational-page';
 import { OperationalSearchControl } from './operational-search-control';
 import operationalPageStyles from './operational-page.module.css?raw';
@@ -99,6 +100,29 @@ describe('OperationalPage', () => {
 
     view.rerender(<OperationalStatePanel kind="error" title="Monitor query failed" />);
     expect(screen.getByRole('alert', { name: 'Monitor query failed' })).toHaveAttribute('data-state', 'error');
+  });
+
+  it('uses the same rail-free state geometry for every presentation', () => {
+    render(<OperationalStatePanel kind="empty" presentation="quiet" title="No incidents" />);
+
+    const state = screen.getByRole('status', { name: 'No incidents' });
+    expect(state).toHaveAttribute('data-presentation', 'quiet');
+    expect(operationalPageStyles).toMatch(
+      /\.statePanel\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+max-content;/s
+    );
+    expect(operationalPageStyles).not.toMatch(/\.statePanel::before\s*\{/s);
+    expect(operationalPageStyles).toMatch(
+      /\.statePanel\[data-presentation='quiet'\]\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+max-content;[^}]*border:\s*0;[^}]*background:\s*transparent;/s
+    );
+  });
+
+  it('owns one low-chrome empty state for data tables', () => {
+    render(<OperationalTableEmptyState title="No grouping policies" />);
+
+    const state = screen.getByRole('status', { name: 'No grouping policies' });
+    expect(state.closest('[data-hb-operational-table-empty]')).not.toBeNull();
+    expect(state).toHaveAttribute('data-state', 'empty');
+    expect(state).toHaveAttribute('data-presentation', 'quiet');
   });
 
   it('keeps form actions in a stable shared footer', () => {

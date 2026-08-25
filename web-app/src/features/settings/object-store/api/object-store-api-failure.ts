@@ -3,7 +3,11 @@
 import { ApiMessageError } from '@/core/http/api-message';
 import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
-import { ObjectStoreRequestFailure, type ObjectStoreFailureKind } from '../model/object-store-failure';
+import {
+  objectStoreMigrationConflictCode,
+  ObjectStoreRequestFailure,
+  type ObjectStoreFailureKind
+} from '../model/object-store-failure';
 import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
 
 export type ObjectStoreRequestPhase = 'read' | 'write';
@@ -20,7 +24,12 @@ export function normalizeObjectStoreApiFailure(reason: unknown, phase: ObjectSto
     return new ObjectStoreRequestFailure('invalid', 'uncertain', { code: 'OBJECT_STORE_RESPONSE_INVALID' });
   }
   if (!(reason instanceof ApiMessageError)) return new ObjectStoreRequestFailure('error', 'uncertain');
-  return new ObjectStoreRequestFailure(failureKind(reason), writeOutcome(reason, phase));
+  const code = failureCode(reason);
+  return new ObjectStoreRequestFailure(
+    failureKind(reason),
+    writeOutcome(reason, phase),
+    code === undefined ? {} : { code }
+  );
 }
 
 export async function objectStoreApiRequest<T>(
@@ -40,6 +49,7 @@ function failureKind(reason: ApiMessageError): ObjectStoreFailureKind {
   }
   if (reason.status === 401 || reason.status === 403) return 'permission';
   if (reason.message === 'Object store storage unavailable') return 'unavailable';
+  if (reason.message === objectStoreMigrationConflictCode) return 'invalid';
   if (reason.message === 'Invalid object store config') return 'invalid';
   return 'error';
 }
@@ -48,5 +58,10 @@ function writeOutcome(reason: ApiMessageError, phase: ObjectStoreRequestPhase) {
   // A read-side response cannot establish whether an earlier write committed.
   if (phase === 'read') return 'uncertain';
   if (reason.message === 'Invalid object store config') return 'rejected';
+  if (reason.message === objectStoreMigrationConflictCode) return 'rejected';
   return apiMessageWriteOutcome(reason);
+}
+
+function failureCode(reason: ApiMessageError) {
+  return reason.message === objectStoreMigrationConflictCode ? objectStoreMigrationConflictCode : undefined;
 }

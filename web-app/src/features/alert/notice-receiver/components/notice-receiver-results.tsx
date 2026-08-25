@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalStatePanel } from '@/shared/operational-page';
+import { OperationalStatePanel, OperationalTableEmptyState } from '@/shared/operational-page';
 
 import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
 import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
@@ -50,9 +50,6 @@ export function NoticeReceiverResults({
       />
     );
   }
-  if (state.records.length === 0) {
-    return <OperationalStatePanel kind="empty" title={t('noticeReceivers.empty')} />;
-  }
   return (
     <Table<NoticeReceiver>
       rowKey="id"
@@ -60,6 +57,7 @@ export function NoticeReceiverResults({
       dataSource={state.records}
       columns={receiverColumns({ t, actionPolicy, busy, edit, remove })}
       scroll={{ x: 1060 }}
+      locale={{ emptyText: <OperationalTableEmptyState title={t('noticeReceivers.empty')} /> }}
       pagination={{
         current: pageIndex + 1,
         pageSize,

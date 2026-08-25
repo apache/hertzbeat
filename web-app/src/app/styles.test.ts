@@ -31,4 +31,20 @@ describe('application interaction styles', () => {
     expect(appStyles).toMatch(/\*::-webkit-scrollbar\s*\{[^}]*width:\s*6px[^}]*height:\s*6px/s);
     expect(appStyles).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*\{[^}]*var\(--hb-scrollbar-thumb-hover\)/s);
   });
+
+  it('reserves the root scrollbar gutter so route content does not shift when its height changes', () => {
+    expect(appStyles).toMatch(/html\s*\{[^}]*scrollbar-gutter:\s*stable/s);
+  });
+
+  it('keeps every Ant table empty row text-only and low chrome', () => {
+    expect(appStyles).toMatch(
+      /\.ant-table-wrapper\s+\.ant-table-placeholder\s+\.ant-table-cell\s*\{[^}]*padding-block:\s*var\(--hb-space-3\)/s
+    );
+    expect(appStyles).toMatch(
+      /\.ant-table-wrapper\s+\.ant-table-placeholder\s+\.ant-empty-image\s*\{[^}]*display:\s*none/s
+    );
+    expect(appStyles).toMatch(
+      /\.ant-table-wrapper\s+\.ant-table-placeholder\s+\.ant-empty-description\s*\{[^}]*color:\s*var\(--hb-text-secondary\)/s
+    );
+  });
 });

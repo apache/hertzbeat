@@ -19,12 +19,15 @@ package org.apache.hertzbeat.ai.gateway.conversation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptContent;
@@ -92,6 +95,75 @@ class AgentTranscriptRecorderTest {
         assertEquals("operator", input.get("username"));
         assertFalse(entry.getPayloadJson().contains("nested-secret"));
         assertTrue(entry.getPayloadJson().contains("[REDACTED]"));
+    }
+
+    @Test
+    void shouldBoundAndRedactEveryRetrySnapshotFieldBeforePersistence() {
+        when(sessionService.recordTranscriptEntry(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(sessionService);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("session-1").build();
+        AgentRun run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).build();
+        UserInput userInput = UserInput.builder().messageId("message-1").conversationId("conversation-1")
+                .message(Message.builder().text("inspect token=message-secret")
+                        .attachments(List.of("https://example.invalid/data?token=attachment-secret")).build())
+                .build();
+        AgentRunRequestSnapshot request = AgentRunRequestSnapshot.builder()
+                .version(AgentRunRequestSnapshot.VERSION)
+                .conversationId("conversation-1")
+                .messageId("message-1")
+                .entryType("USER_INPUT")
+                .target(AgentTargetRef.builder().collector("token=target-secret").build())
+                .message(userInput.getMessage().getText())
+                .attachments(userInput.getMessage().getAttachments())
+                .preferredLanguage("en-US")
+                .approvalHandling("WAIT_FOR_DECISION")
+                .replyMode("STREAM")
+                .build();
+
+        AgentTranscriptEntry entry = recorder.recordUserTranscriptEntry(
+                session, run, userInput, "1", "original-fingerprint", request);
+        TranscriptMessage persisted = message(entry);
+
+        assertFalse(entry.getPayloadJson().contains("message-secret"));
+        assertFalse(entry.getPayloadJson().contains("attachment-secret"));
+        assertFalse(entry.getPayloadJson().contains("target-secret"));
+        assertTrue(persisted.getRequestSnapshot().message().contains("[REDACTED]"));
+        assertTrue(persisted.getRequestSnapshot().attachments().getFirst().contains("[REDACTED]"));
+        assertTrue(persisted.getRequestSnapshot().target().getCollector().contains("[REDACTED]"));
+        assertEquals("original-fingerprint", persisted.getRequestFingerprint());
+    }
+
+    @Test
+    void shouldOmitRecoverySnapshotWhenFinalUtf8PayloadWouldExceedTextBudget() {
+        when(sessionService.recordTranscriptEntry(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(sessionService);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("session-1").build();
+        AgentRun run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).build();
+        String messageText = "\uD83D\uDD2D".repeat(4096);
+        List<String> attachments = List.of(
+                "\uD83D\uDCCA".repeat(4096), "\uD83D\uDCC8".repeat(4096));
+        UserInput userInput = UserInput.builder().messageId("message-1").conversationId("conversation-1")
+                .message(Message.builder().text(messageText).attachments(attachments).build()).build();
+        AgentRunRequestSnapshot request = AgentRunRequestSnapshot.builder()
+                .version(AgentRunRequestSnapshot.VERSION)
+                .conversationId("conversation-1")
+                .messageId("message-1")
+                .entryType("USER_INPUT")
+                .message(messageText)
+                .attachments(attachments)
+                .preferredLanguage("en-US")
+                .approvalHandling("WAIT_FOR_DECISION")
+                .replyMode("STREAM")
+                .build();
+
+        AgentTranscriptEntry entry = recorder.recordUserTranscriptEntry(
+                session, run, userInput, "1", "original-fingerprint", request);
+        TranscriptMessage persisted = message(entry);
+
+        assertEquals(messageText, persisted.text());
+        assertEquals("original-fingerprint", persisted.getRequestFingerprint());
+        assertNull(persisted.getRequestSnapshot());
+        assertTrue(entry.getPayloadJson().getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 65535);
     }
 
     private TranscriptMessage message(AgentTranscriptEntry entry) {

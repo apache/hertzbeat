@@ -40,6 +40,7 @@ import org.apache.hertzbeat.ai.gateway.application.ModelProviderConfigurationVie
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderOption;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,11 +67,13 @@ class ModelProviderConfigControllerTest {
     @AfterEach
     void tearDown() {
         SurenessContextHolder.clear();
+        AuthTokenRequestContext.clear();
     }
 
     @Test
     void optionsShouldRouteCurrentWebUiActorThroughGatewayCommandRouter() {
         bindSubject();
+        AuthTokenRequestContext.bindWorkspaceId("workspace-a");
         AgentModelProviderOption option = new AgentModelProviderOption(
                 "openai-compatible", "openai", "OpenAI",
                 "https://api.openai.com/v1", "gpt-5", List.of("apiKey", "baseUrl", "model"));
@@ -81,6 +84,7 @@ class ModelProviderConfigControllerTest {
 
         assertInstanceOf(ListModelProviderOptionsCommand.class, commandCaptor.getValue());
         assertWebUiActor(commandCaptor.getValue());
+        assertEquals("workspace-a", commandCaptor.getValue().envelope().getWorkspaceId());
     }
 
     @Test

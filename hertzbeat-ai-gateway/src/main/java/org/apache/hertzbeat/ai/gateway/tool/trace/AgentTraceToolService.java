@@ -29,12 +29,16 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService.TraceDetailQuery;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /** Bounded trace investigation tools backed by the product trace query service. */
 @Service
@@ -68,9 +72,10 @@ public class AgentTraceToolService {
         int resolvedPageIndex = AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, 10_000);
         int resolvedPageSize = AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 50);
         boolean resolvedHideInternal = hideInternal == null || hideInternal;
-        Page<TraceListItemDto> page = traceQueryService.queryTraceList(entityId, range[0], range[1], traceId,
-                errorOnly, serviceName, serviceNamespace, environment, operationName, null, null,
-                resolvedPageIndex, resolvedPageSize, resolvedHideInternal);
+        Page<TraceListItemDto> page = traceQueryService.queryTraceList(workspaceId(), entityId,
+                range[0], range[1], traceId, errorOnly, serviceName, serviceNamespace, environment,
+                null, operationName, null, null, resolvedPageIndex, resolvedPageSize, resolvedHideInternal,
+                null, null);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("content", page.getContent().stream().map(this::traceRow).toList());
         result.put("pageIndex", page.getNumber());
@@ -85,19 +90,25 @@ public class AgentTraceToolService {
     @Tool(name = "traces.get", description = "Get a bounded trace span tree using exact trace context.")
     @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> getTrace(
-            @ToolParam(required = false, description = "Observable entity id.") Long entityId,
             @ToolParam(description = "Exact trace id.") String traceId,
+            @ToolParam(required = false, description = "Selected exact span id.") String spanId,
             @ToolParam(required = false, description = "Start Unix timestamp in milliseconds.") Long start,
             @ToolParam(required = false, description = "End Unix timestamp in milliseconds.") Long end,
             @ToolParam(required = false, description = "OpenTelemetry service name.") String serviceName,
             @ToolParam(required = false, description = "OpenTelemetry service namespace.") String serviceNamespace,
-            @ToolParam(required = false, description = "Deployment environment.") String environment) {
+            @ToolParam(required = false, description = "Deployment environment.") String environment,
+            @ToolParam(required = false, description = "Exact resource attribute filter.") String resourceFilter,
+            @ToolParam(required = false, description = "Exact span attribute filter.") String attributeFilter,
+            @ToolParam(required = false, description = "Minimum trace duration in milliseconds.") Long minDurationMs,
+            @ToolParam(required = false, description = "Maximum trace duration in milliseconds.") Long maxDurationMs) {
         if (traceId == null || traceId.isBlank()) {
             throw new IllegalArgumentException("traces.get requires traceId");
         }
         validateOptionalRange(start, end);
-        TraceDetailDto detail = traceQueryService.getTraceDetail(new TraceDetailQuery(entityId, traceId,
-                null, start, end, serviceName, serviceNamespace, environment, null, null, null, null));
+        validateDurationRange(minDurationMs, maxDurationMs);
+        TraceDetailDto detail = traceQueryService.getTraceDetail(workspaceId(), new TraceDetailQuery(null, traceId,
+                spanId, start, end, serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                minDurationMs, maxDurationMs));
         if (detail == null) {
             throw new IllegalArgumentException("Trace not found: " + traceId);
         }
@@ -173,6 +184,21 @@ public class AgentTraceToolService {
         if (start < 0 || end <= start || end - start > MAX_RANGE_MILLIS) {
             throw new IllegalArgumentException("Trace time range must be positive, ordered, and no longer than 7 days");
         }
+    }
+
+    private void validateDurationRange(Long minimum, Long maximum) {
+        if (minimum != null && minimum < 0 || maximum != null && maximum < 0
+                || minimum != null && maximum != null && minimum > maximum) {
+            throw new IllegalArgumentException("Trace duration range must be positive and ordered");
+        }
+    }
+
+    private String workspaceId() {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new CommonException("trace_workspace_unavailable");
+        }
+        return AuthTokenScopes.normalizeWorkspaceId(workspaceId);
     }
 
     private String safe(String value, int maxLength) {

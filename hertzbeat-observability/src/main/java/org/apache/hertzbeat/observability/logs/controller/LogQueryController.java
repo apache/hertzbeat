@@ -24,6 +24,9 @@ import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.PageResponse;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
@@ -95,9 +98,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        Page<LogEntry> result = logQueryService.list(entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+        Page<LogEntry> result = logQueryService.list(workspaceId, entityId, start, end, traceId, spanId,
+                severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 pageIndex, pageSize, hideInternal, hideNoise);
         return ResponseEntity.ok(Message.success(PageResponse.from(result)));
@@ -140,10 +145,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.context(
-                entityId, logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
+                workspaceId, entityId, logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
                 scopedFilters.resourceFilter(), scopedFilters.attributeFilter(), limit, direction,
                 cursorLogTimeUnixNano, hideInternal, hideNoise)));
     }
@@ -187,10 +193,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.overviewStats(
-                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 hideInternal, hideNoise)));
     }
@@ -234,10 +241,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.traceCoverageStats(
-                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 hideInternal, hideNoise)));
     }
@@ -281,10 +289,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.trendStats(
-                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 hideInternal, hideNoise)));
     }
@@ -336,10 +345,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.groupByStats(
-                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(),
                 scopedFilters.attributeFilter(), groupBy,
                 limit, orderBy, minCount, hideInternal, hideNoise)));
@@ -368,6 +378,14 @@ public class LogQueryController {
         return StringUtils.hasText(scopedResourceFilter)
                 ? scopedResourceFilter + " and " + entityTypeFilter
                 : entityTypeFilter;
+    }
+
+    private String trustedWorkspaceId() {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return AuthTokenScopes.normalizeWorkspaceId(workspaceId);
     }
 
     private ScopedFilters scopeFilters(Long entityId, String entityType, String collectorId, String instance,

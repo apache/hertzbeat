@@ -20,7 +20,8 @@ import {
   buildMonitorListPath,
   buildMonitorDetailPath,
   buildMonitorEditPath,
-  monitorRoutePaths
+  monitorRoutePaths,
+  normalizeAlertCenterReturnTo
 } from '@/shared/navigation/app-paths';
 import { authoritativePageIndexCorrection } from '@/shared/pagination';
 
@@ -129,6 +130,8 @@ export function safeMonitorReturnTo(value?: string | null) {
   // Dashboard is the only non-list origin allowed to resume monitor creation.
   // Exact matching prevents arbitrary query data from crossing this boundary.
   if (value === applicationRoutePaths.dashboard) return applicationRoutePaths.dashboard;
+  const alertReturnTo = normalizeAlertCenterReturnTo(value);
+  if (alertReturnTo) return alertReturnTo;
 
   const withoutHash = value.split('#', 1)[0] ?? '';
   const querySeparator = withoutHash.indexOf('?');

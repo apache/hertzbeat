@@ -25,6 +25,7 @@ import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -52,11 +53,11 @@ public class AgentScheduleNoticeService {
         this.workerPool = workerPool;
     }
 
-    public void send(AgentSchedule schedule, AgentRun run, boolean succeeded, String result) {
+    public void send(AgentSchedule schedule, AgentRun run, AgentRunStatus runStatus, String result) {
         NoticeTemplate template = schedule.getTemplateId() == null
                 ? null
                 : noticeConfigService.getOneTemplateById(schedule.getTemplateId());
-        GroupAlert alert = scheduleAlert(schedule, run, succeeded, result);
+        GroupAlert alert = scheduleAlert(schedule, run, runStatus, result);
         for (Long receiverId : schedule.getReceiverIds()) {
             NoticeReceiver receiver = noticeConfigService.getReceiverById(receiverId);
             if (receiver == null || receiver.getType() == null) {
@@ -79,9 +80,11 @@ public class AgentScheduleNoticeService {
         }
     }
 
-    private GroupAlert scheduleAlert(AgentSchedule schedule, AgentRun run, boolean succeeded, String result) {
+    private GroupAlert scheduleAlert(AgentSchedule schedule, AgentRun run, AgentRunStatus runStatus, String result) {
+        boolean succeeded = runStatus == AgentRunStatus.SUCCEEDED;
+        boolean recoveryRequired = runStatus == AgentRunStatus.RECOVERY_REQUIRED;
         String status = succeeded ? "resolved" : "firing";
-        String severity = succeeded ? "info" : "critical";
+        String severity = succeeded ? "info" : recoveryRequired ? "warning" : "critical";
         // Model output crosses into external notification channels, so bound it to the existing alert content limit.
         String content = GatewayText.safeSummary(
                 StringUtils.hasText(result) ? result : "Agent schedule execution failed", 4096);
@@ -99,7 +102,8 @@ public class AgentScheduleNoticeService {
         SingleAlert singleAlert = SingleAlert.builder()
                 .status(status)
                 .labels(labels)
-                .annotations(succeeded ? Map.of() : Map.of("error", content))
+                .annotations(succeeded ? Map.of()
+                        : Map.of(recoveryRequired ? "recoveryRequired" : "error", content))
                 .content(content)
                 .triggerTimes(1)
                 .startAt(startAt)
@@ -114,7 +118,7 @@ public class AgentScheduleNoticeService {
                 .commonAnnotations(Map.of(
                         "scheduleName", schedule.getName(),
                         "runUid", run.getRunUid(),
-                        "resultStatus", succeeded ? "SUCCEEDED" : "FAILED",
+                        "resultStatus", runStatus.name(),
                         "triggeredAt", String.valueOf(schedule.getLastTriggerAt())))
                 .alerts(List.of(singleAlert))
                 .build();

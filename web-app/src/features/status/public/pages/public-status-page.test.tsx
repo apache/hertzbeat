@@ -184,8 +184,14 @@ describe('PublicStatusPage failure states', () => {
     mockStatusQueries({ componentResponse: [], incidentResponse: incidentPage() });
     renderPage();
 
-    expect(await screen.findByText('No public components are configured.')).toBeInTheDocument();
-    expect(screen.getByText('No incidents in the selected period.')).toBeInTheDocument();
+    expect((await screen.findByText('No public components are configured.')).closest('[data-state]')).toHaveAttribute(
+      'data-presentation',
+      'quiet'
+    );
+    expect(screen.getByText('No incidents in the selected period.').closest('[data-state]')).toHaveAttribute(
+      'data-presentation',
+      'quiet'
+    );
     expect(screen.getByText('All systems operational')).toBeInTheDocument();
     expect(screen.queryByText('The public status page has not been configured yet.')).not.toBeInTheDocument();
   });
@@ -223,7 +229,7 @@ describe('PublicStatusPage failure states', () => {
     });
     renderPage();
 
-    expect((await screen.findAllByText('Incident')).length).toBeGreaterThanOrEqual(2);
+    expect((await screen.findAllByText('Incident')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Unknown')).toHaveLength(3);
     expect(screen.getByText('Investigating')).toBeInTheDocument();
     expect(screen.queryByText('Abnormal')).not.toBeInTheDocument();
@@ -307,9 +313,59 @@ describe('PublicStatusPage failure states', () => {
     const logo = await screen.findByRole('img', { name: 'HertzBeat' });
     expect(logo.closest('a')).toHaveAttribute('href', 'https://hertzbeat.apache.org');
     expect(screen.getByRole('link', { name: 'Feedback' })).toHaveAttribute('href', 'mailto:ops@example.test');
-    expect(screen.getByText('99.50%')).toBeInTheDocument();
-    expect(screen.getByText('Mitigation in progress')).toBeInTheDocument();
-    expect(screen.getAllByText('Public API').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole('status', { name: 'All systems operational' })).toHaveAttribute(
+      'data-overall-state',
+      'healthy'
+    );
+    expect(screen.getAllByText('99.50%').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('img', { name: '90 days: 1 operational, 0 incident, 89 unknown.' })).toHaveAttribute(
+      'data-history-points',
+      '90'
+    );
+    expect(document.querySelectorAll('[data-status-history] [data-state="unknown"]')).toHaveLength(89);
+    expect(screen.getByText('Mitigation in progress')).not.toBeVisible();
+
+    fireEvent.click(screen.getByText('Gateway latency'));
+
+    expect(screen.getByText('Mitigation in progress')).toBeVisible();
+  });
+
+  it('keeps raw component evidence collapsed and does not invent availability when uptime is absent', async () => {
+    mockStatusQueries({
+      componentResponse: [
+        {
+          info: { id: 1, name: 'Public API', state: 2 },
+          history: [{ componentId: 1, state: 2, timestamp: 1_700_000_000_000 }]
+        }
+      ]
+    });
+    renderPage();
+
+    expect(await screen.findByText('Public API')).toBeInTheDocument();
+    expect(screen.getByText('Availability unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Unknown seconds')).not.toBeVisible();
+
+    fireEvent.click(screen.getByText('View history evidence'));
+
+    expect(screen.getByText('Unknown seconds')).toBeVisible();
+  });
+
+  it('does not present partial history coverage as a full-period availability rate', async () => {
+    mockStatusQueries({
+      componentResponse: [
+        {
+          info: { id: 1, name: 'Public API', state: 0 },
+          history: [
+            { componentId: 1, state: 2, timestamp: 1_700_000_000_000 },
+            { componentId: 1, state: 0, timestamp: 1_700_086_400_000, uptime: 1 }
+          ]
+        }
+      ]
+    });
+    renderPage();
+
+    expect(await screen.findByText('Availability unavailable')).toBeInTheDocument();
+    expect(screen.getByText('100.00%')).not.toBeVisible();
   });
 
   it('keeps an HTTPS feedback URL containing user information as HTTPS', async () => {

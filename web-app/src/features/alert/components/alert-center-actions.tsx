@@ -11,120 +11,48 @@ import { useTranslation } from 'react-i18next';
 import type { AlertGroup } from '../model/alert-model';
 import type { AlertCenterActionPolicy } from '../model/alert-capability-model';
 import styles from '../shared/alert-center.module.css';
-import { AlertCenterConfirmedAction } from './alert-center-confirmed-action';
+import { AlertCenterDeleteDialog } from './alert-center-delete-dialog';
 
 type BulkActions = {
-  acknowledge: () => void | Promise<unknown>;
+  cancelPreparation: () => void;
   clear: () => void;
-  remove: () => void | Promise<unknown>;
-  reopen: () => void | Promise<unknown>;
-  resolve: () => void | Promise<unknown>;
-  unacknowledge: () => void | Promise<unknown>;
+  prepareFiltered: () => Promise<number[]>;
+  removeFiltered: (ids: number[]) => void | Promise<unknown>;
+  removeSelected: () => void | Promise<unknown>;
 };
 
 export function AlertCenterBulkActions({
   actionPolicy,
   busy,
+  filteredTotal,
   selectedGroups,
   actions
 }: {
   actionPolicy: AlertCenterActionPolicy;
   busy: boolean;
+  filteredTotal: number;
   selectedGroups: AlertGroup[];
   actions: BulkActions;
 }) {
   const { t } = useTranslation();
-  const counts = countSelectedStatuses(selectedGroups);
   const selectedCount = selectedGroups.length;
   if (!actionPolicy.canSelect || selectedCount === 0) return null;
   return (
     <div className={styles.bulkActions}>
       <Typography.Text>{t('alert.selected', { count: selectedCount })}</Typography.Text>
       <Space wrap size="small">
-        {actionPolicy.canUpdateStatus ? (
-          <AlertCenterBulkStatusActions busy={busy} counts={counts} actions={actions} />
-        ) : null}
         {actionPolicy.canDeleteGroups ? (
-          <AlertCenterConfirmedAction
-            danger
-            label={t('alert.deleteSelected')}
-            confirm={t('alert.deleteSelectedConfirm', { count: selectedCount })}
-            confirmLabel={t('alert.confirmDelete')}
-            disabled={busy}
-            run={actions.remove}
+          <AlertCenterDeleteDialog
+            actions={actions}
+            busy={busy}
+            filteredTotal={filteredTotal}
+            selectedCount={selectedCount}
           />
         ) : null}
         <Button size="small" disabled={busy} onClick={actions.clear}>
-          {t('common.clear')}
+          {t('alert.clearSelection')}
         </Button>
       </Space>
     </div>
-  );
-}
-
-function AlertCenterBulkStatusActions({
-  busy,
-  counts,
-  actions
-}: {
-  busy: boolean;
-  counts: ReturnType<typeof countSelectedStatuses>;
-  actions: BulkActions;
-}) {
-  const { t } = useTranslation();
-  const resolvableCount = counts.firing + counts.acknowledged;
-  return (
-    <>
-      {counts.firing > 0 ? (
-        <>
-          <AlertCenterConfirmedAction
-            label={t('alert.acknowledgeSelected')}
-            confirm={t('alert.acknowledgeSelectedConfirm', { count: counts.firing })}
-            confirmLabel={t('alert.confirmAcknowledge')}
-            disabled={busy}
-            run={actions.acknowledge}
-          />
-        </>
-      ) : null}
-      {counts.acknowledged > 0 ? (
-        <AlertCenterConfirmedAction
-          label={t('alert.unacknowledgeSelected')}
-          confirm={t('alert.unacknowledgeSelectedConfirm', { count: counts.acknowledged })}
-          confirmLabel={t('alert.confirmUnacknowledge')}
-          disabled={busy}
-          run={actions.unacknowledge}
-        />
-      ) : null}
-      {resolvableCount > 0 ? (
-        <AlertCenterConfirmedAction
-          label={t('alert.resolveSelected')}
-          confirm={t('alert.resolveSelectedConfirm', { count: resolvableCount })}
-          confirmLabel={t('alert.confirmResolve')}
-          disabled={busy}
-          run={actions.resolve}
-        />
-      ) : null}
-      {counts.resolved > 0 ? (
-        <AlertCenterConfirmedAction
-          label={t('alert.reopenSelected')}
-          confirm={t('alert.reopenSelectedConfirm', { count: counts.resolved })}
-          confirmLabel={t('alert.confirmReopen')}
-          disabled={busy}
-          run={actions.reopen}
-        />
-      ) : null}
-    </>
-  );
-}
-
-function countSelectedStatuses(groups: AlertGroup[]) {
-  return groups.reduce(
-    (counts, group) => {
-      if (group.status === 'firing') counts.firing += 1;
-      if (group.status === 'acknowledged') counts.acknowledged += 1;
-      if (group.status === 'resolved') counts.resolved += 1;
-      return counts;
-    },
-    { firing: 0, acknowledged: 0, resolved: 0 }
   );
 }

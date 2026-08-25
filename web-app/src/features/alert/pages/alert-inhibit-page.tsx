@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-import { AlertManagementNav } from '../components/alert-management-nav';
 import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page/operational-page';
 import { AlertInhibitPageHeader } from '../components/alert-inhibit-page-header';
-import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { AlertNoiseControlManagementContextBar } from '../components/alert-noise-control-management-context';
 import { AlertInhibitRecovery } from '../components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from '../components/alert-inhibit-results';
@@ -45,8 +43,6 @@ export function AlertInhibitPage() {
         create={controller.create}
         removeSelected={removeSelected}
       />
-      <AlertManagementNav />
-      <AlertNoiseControlNav />
       <AlertInhibitManagement controller={controller} management={management} busy={busy} />
       <AlertInhibitToolbar
         busy={busy}

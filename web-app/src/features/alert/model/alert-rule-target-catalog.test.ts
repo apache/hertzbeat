@@ -150,5 +150,8 @@ describe('metric alert target catalog', () => {
     ]);
     expect(metricAlertFieldsForTarget(hierarchy, { kind: 'availability', app: 'springboot3' })).toBeNull();
     expect(metricAlertFieldsForTarget(hierarchy, { kind: 'metric', app: 'springboot3', metric: 'missing' })).toBeNull();
+    expect(
+      metricAlertFieldsForTarget(hierarchy, { kind: 'metric', app: 'springboot3', metric: 'summary' }, 'Value rows')
+    ).toContainEqual({ value: '__row__', label: 'Value rows', type: 0, unit: null });
   });
 });

@@ -20,11 +20,15 @@ package org.apache.hertzbeat.ai.gateway.tool.topology;
 import java.time.Duration;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /** Bounded workspace-aware entity and trace-call topology tools. */
 @Service
@@ -54,11 +58,17 @@ public class AgentTopologyToolService {
             @ToolParam(required = false, description = "Hide internal trace calls.") Boolean hideInternal,
             @ToolParam(required = false, description = "Zero-based edge page index.") Integer pageIndex,
             @ToolParam(required = false, description = "Edge page size; maximum 100.") Integer pageSize) {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new CommonException("topology_workspace_unavailable");
+        }
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         validateRange(start, end);
         int resolvedDepth = AgentToolContextSupport.bound(depth == null ? 1 : depth, 1, 2);
         int resolvedPageIndex = AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, 10_000);
         int resolvedPageSize = AgentToolContextSupport.bound(pageSize == null ? 50 : pageSize, 1, 100);
-        return topologyQueryService.buildFocusedTopology(entityId, resolvedDepth, environment, sourceKind,
+        return topologyQueryService.buildFocusedTopology(normalizedWorkspaceId, entityId, resolvedDepth,
+                environment, sourceKind,
                 start, end, relationType, hideInternal, resolvedPageIndex, resolvedPageSize);
     }
 

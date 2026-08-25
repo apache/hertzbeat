@@ -117,11 +117,27 @@ describe('Alert Rule metric binding controller', () => {
     act(() => result.current.open());
     await waitFor(() => expect(result.current.state.evidence.kind).toBe('empty'));
 
-    expect(result.current.state.labelChoices).toEqual(['team:retired']);
+    expect(result.current.state.selectedLabels).toEqual(['team:retired']);
     act(() => result.current.changeLabels([]));
     act(() => result.current.confirm());
 
     expect(updateDraft).toHaveBeenCalledWith(buildMetricAlertBindingsPatch(draft, [], [], []));
+  });
+
+  it('accepts a safe free-form label association without pretending it came from the monitor catalog', async () => {
+    const updateDraft = vi.fn();
+    const draft = targetedDraft('availability');
+    const { result } = renderBinding(draft, updateDraft);
+    act(() => result.current.open());
+    await waitFor(() => expect(result.current.state.evidence.kind).toBe('ready'));
+
+    act(() => result.current.changeLabels(['region:east']));
+    expect(result.current.state.selectedLabels).toEqual(['region:east']);
+    act(() => result.current.changeLabels(['unsafe"label']));
+    expect(result.current.state.selectedLabels).toEqual(['region:east']);
+    act(() => result.current.confirm());
+
+    expect(updateDraft).toHaveBeenCalledWith(buildMetricAlertBindingsPatch(draft, [], ['region:east'], []));
   });
 
   it('permanently retires staged bindings when the application or target changes', async () => {

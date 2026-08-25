@@ -10,6 +10,7 @@ export type MetricAlertField = {
   label: string;
   type: number;
   unit: string | null;
+  acceptsAttribute?: boolean;
 };
 
 export type MetricAlertNumericOperator = '>' | '<' | '==' | '!=' | '<=' | '>=';

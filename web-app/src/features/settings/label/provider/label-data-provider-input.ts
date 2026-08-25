@@ -63,6 +63,18 @@ export function readLabelId(value: string | number) {
   return value;
 }
 
+export function readLabelDeleteRecords(ids: Array<string | number>, value: unknown): LabelRecord[] {
+  if (!Array.isArray(value) || value.length === 0 || value.length !== ids.length) invalidVariables();
+  const canonicalIds = ids.map(readLabelId);
+  if (new Set(canonicalIds).size !== canonicalIds.length) invalidVariables();
+  return value.map((record, index) => {
+    const id = canonicalIds[index];
+    if (id === undefined || !record || typeof record !== 'object' || Reflect.get(record, 'id') !== id)
+      invalidVariables();
+    return { ...readLabelDraft(record), id };
+  });
+}
+
 export function toLabelIdentity(label: LabelIdentity, id?: number): LabelIdentity {
   const canonicalId = id ?? label.id;
   return {

@@ -101,6 +101,13 @@ public class EntityMonitorBindQueryService {
         return entityMonitorBindDao.countByEntityId(entityId);
     }
 
+    public long countMonitorBinds(String workspaceId, Long entityId) {
+        if (!org.springframework.util.StringUtils.hasText(workspaceId) || entityId == null) {
+            return 0;
+        }
+        return entityMonitorBindDao.countOwnedByWorkspaceIdAndEntityId(workspaceId, entityId);
+    }
+
     public Map<Long, Long> countMonitorBindsByEntityIds(List<Long> entityIds) {
         if (CollectionUtils.isEmpty(entityIds)) {
             return Map.of();

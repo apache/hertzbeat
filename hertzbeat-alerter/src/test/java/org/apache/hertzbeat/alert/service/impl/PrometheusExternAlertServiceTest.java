@@ -24,6 +24,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
@@ -59,10 +60,11 @@ class PrometheusExternAlertServiceTest {
                 .endsAt(Instant.parse("0001-01-01T00:00:00Z"))
                 .build();
 
-        externAlertService.addExternAlert(JsonUtil.toJson(List.of(alert)));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(List.of(alert)));
 
         ArgumentCaptor<SingleAlert> captured = ArgumentCaptor.forClass(SingleAlert.class);
-        verify(alarmCommonReduce).reduceAndSendAlarm(captured.capture());
+        verify(alarmCommonReduce).reduceAndSendAlarm(eq("default"), captured.capture());
+        assertEquals("default", captured.getValue().getWorkspaceId());
         assertEquals(ALERT_STATUS_FIRING, captured.getValue().getStatus());
         assertNull(captured.getValue().getEndAt());
         assertNotNull(captured.getValue().getActiveAt());
@@ -78,10 +80,11 @@ class PrometheusExternAlertServiceTest {
                 .endsAt(endsAt)
                 .build();
 
-        externAlertService.addExternAlert(JsonUtil.toJson(List.of(alert)));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(List.of(alert)));
 
         ArgumentCaptor<SingleAlert> captured = ArgumentCaptor.forClass(SingleAlert.class);
-        verify(alarmCommonReduce).reduceAndSendAlarm(captured.capture());
+        verify(alarmCommonReduce).reduceAndSendAlarm(eq("default"), captured.capture());
+        assertEquals("default", captured.getValue().getWorkspaceId());
         assertEquals(ALERT_STATUS_RESOLVED, captured.getValue().getStatus());
         assertEquals(endsAt.toEpochMilli(), captured.getValue().getEndAt());
         assertNull(captured.getValue().getActiveAt());

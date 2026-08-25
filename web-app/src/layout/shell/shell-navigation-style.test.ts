@@ -22,4 +22,15 @@ describe('shell navigation visual hierarchy', () => {
   it('gives expanded first-level areas a restrained shared open state', () => {
     expect(shellStyles).toMatch(/\.navigationParentOpen\s*\{[^}]*background:\s*var\(--hb-nav-hover\)/);
   });
+
+  it('animates accordion height and chevrons while respecting reduced-motion preferences', () => {
+    expect(shellStyles).toMatch(
+      /\.navigationChildrenMotion\s*\{[^}]*grid-template-rows:\s*0fr[^}]*transition:[^}]*grid-template-rows/s
+    );
+    expect(shellStyles).toMatch(/\.navigationChildrenMotion\[data-open='true'\]\s*\{[^}]*grid-template-rows:\s*1fr/s);
+    expect(shellStyles).toMatch(/\.navigationChevron[^}]*transition:[^}]*transform/s);
+    expect(shellStyles).toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*\.navigationChildrenMotion[\s\S]*transition-duration:\s*0\.01ms/
+    );
+  });
 });

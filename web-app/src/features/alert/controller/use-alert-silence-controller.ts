@@ -43,9 +43,11 @@ import {
   type AlertSilenceVisibleProjection
 } from './alert-silence-visible-projection';
 import { createAlertSilenceControllerActions } from './alert-silence-controller-actions';
+import { useAlertLabelSuggestionController } from './use-alert-label-suggestion-controller';
 
 export function useAlertSilenceController() {
   const capabilities = useAlertSilenceActionCapabilities();
+  const labelSuggestions = useAlertLabelSuggestionController();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { query, management, setParams } = useAlertSilenceRouteQuery();
@@ -89,6 +91,7 @@ export function useAlertSilenceController() {
   return {
     state: {
       capabilities,
+      labelSuggestions,
       query,
       search,
       detail: detail.detail,

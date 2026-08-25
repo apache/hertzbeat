@@ -30,6 +30,7 @@ const hierarchyNodeSchema: z.ZodType<WireHierarchyNode> = z.lazy(() =>
 );
 
 const appHierarchySchema = z.array(hierarchyNodeSchema).length(1);
+const appHierarchyCatalogSchema = z.array(hierarchyNodeSchema);
 
 function normalizeHierarchyNode(node: WireHierarchyNode): MonitorAppHierarchyNode {
   return {
@@ -52,4 +53,16 @@ export function parseMonitorAppHierarchy(value: unknown, requestedApp: string): 
   const root = normalizeHierarchyNode(wireRoot);
   if (root.value !== requestedApp) throw new MonitorContractError();
   return root;
+}
+
+export function parseMonitorAppHierarchyCatalog(value: unknown): MonitorAppHierarchyNode[] {
+  const result = appHierarchyCatalogSchema.safeParse(value);
+  if (!result.success) throw new MonitorContractError();
+  const roots = result.data.map(normalizeHierarchyNode);
+  const identities = new Set<string>();
+  for (const root of roots) {
+    if (identities.has(root.value)) throw new MonitorContractError();
+    identities.add(root.value);
+  }
+  return roots;
 }

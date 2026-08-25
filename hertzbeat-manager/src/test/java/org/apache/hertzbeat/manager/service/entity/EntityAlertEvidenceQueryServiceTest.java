@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -35,12 +36,20 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 /**
  * Contract for monitor-linked raw alert evidence lookup and workspace eligibility.
@@ -58,35 +67,89 @@ class EntityAlertEvidenceQueryServiceTest {
     private EntityWorkspaceAccessService entityWorkspaceAccessService;
 
     @Test
-    void findActiveAlertsFiltersByRequestWorkspaceLabels() {
-        Monitor monitor = monitor("checkout-api", "checkout.default.svc.cluster.local");
-        SingleAlert teamAlphaAlert = alert(
-                701L,
-                CommonConstants.ALERT_STATUS_FIRING,
-                "critical",
-                LocalDateTime.of(2026, 5, 10, 9, 0),
-                Map.of(
-                        "hertzbeat.workspace_id", "team-a",
-                        CommonConstants.LABEL_INSTANCE, "checkout.default.svc.cluster.local"
-                )
-        );
-        SingleAlert teamBetaAlert = alert(
-                702L,
-                CommonConstants.ALERT_STATUS_FIRING,
-                "critical",
-                LocalDateTime.of(2026, 5, 10, 9, 5),
-                Map.of(
-                        "hertzbeat.workspace_id", "team-b",
-                        CommonConstants.LABEL_INSTANCE, "checkout.default.svc.cluster.local"
-                )
-        );
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void findActiveAlertsScopesTheDatabaseQueryByPersistedWorkspace() {
+        Monitor monitor = monitor(null, null);
         when(singleAlertDao.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(teamAlphaAlert, teamBetaAlert)));
+                .thenReturn(new PageImpl<>(List.of()));
 
-        List<SingleAlert> alerts =
-                entityAlertEvidenceQueryService.findActiveAlerts(List.of(monitor), 20, "team-a");
+        entityAlertEvidenceQueryService.findActiveAlerts(List.of(monitor), 20, "team-a");
 
-        assertEquals(List.of(teamAlphaAlert), alerts);
+        ArgumentCaptor<Specification<SingleAlert>> specification = ArgumentCaptor.forClass(Specification.class);
+        verify(singleAlertDao).findAll(specification.capture(), any(Pageable.class));
+        Root<SingleAlert> root = Mockito.mock(Root.class);
+        CriteriaQuery<?> query = Mockito.mock(CriteriaQuery.class);
+        CriteriaBuilder criteriaBuilder = Mockito.mock(CriteriaBuilder.class);
+        Path<String> workspacePath = Mockito.mock(Path.class);
+        Predicate workspacePredicate = Mockito.mock(Predicate.class);
+        when(root.get("workspaceId")).thenReturn((Path) workspacePath);
+        when(criteriaBuilder.equal(workspacePath, "team-a")).thenReturn(workspacePredicate);
+
+        specification.getValue().toPredicate(root, query, criteriaBuilder);
+
+        verify(criteriaBuilder).equal(workspacePath, "team-a");
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void blankMonitorCoordinatesProduceAnAlwaysFalseSpecification() {
+        when(singleAlertDao.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
+
+        entityAlertEvidenceQueryService.findAlerts(
+                List.of(monitor(" ", null)), CommonConstants.ALERT_STATUS_FIRING, "team-a");
+
+        ArgumentCaptor<Specification<SingleAlert>> specification = ArgumentCaptor.forClass(Specification.class);
+        verify(singleAlertDao).findAll(specification.capture(), any(Sort.class));
+        Root<SingleAlert> root = Mockito.mock(Root.class);
+        CriteriaQuery<?> query = Mockito.mock(CriteriaQuery.class);
+        CriteriaBuilder criteriaBuilder = Mockito.mock(CriteriaBuilder.class);
+        Path<String> workspacePath = Mockito.mock(Path.class);
+        Path<String> statusPath = Mockito.mock(Path.class);
+        Predicate falsePredicate = Mockito.mock(Predicate.class);
+        when(root.get("workspaceId")).thenReturn((Path) workspacePath);
+        when(root.get("status")).thenReturn((Path) statusPath);
+        when(criteriaBuilder.equal(any(), anyString())).thenReturn(Mockito.mock(Predicate.class));
+        when(criteriaBuilder.disjunction()).thenReturn(falsePredicate);
+
+        assertEquals(falsePredicate, specification.getValue().toPredicate(root, query, criteriaBuilder));
+        verify(criteriaBuilder).disjunction();
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void monitorCoordinatesEscapeSqlLikeWildcards() {
+        when(singleAlertDao.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
+
+        entityAlertEvidenceQueryService.findAlerts(
+                List.of(monitor(null, "db_1")), CommonConstants.ALERT_STATUS_FIRING, "team-a");
+
+        ArgumentCaptor<Specification<SingleAlert>> specification = ArgumentCaptor.forClass(Specification.class);
+        verify(singleAlertDao).findAll(specification.capture(), any(Sort.class));
+        Root<SingleAlert> root = Mockito.mock(Root.class);
+        CriteriaQuery<?> query = Mockito.mock(CriteriaQuery.class);
+        CriteriaBuilder criteriaBuilder = Mockito.mock(CriteriaBuilder.class);
+        Path<String> workspacePath = Mockito.mock(Path.class);
+        Path<String> statusPath = Mockito.mock(Path.class);
+        Path<String> labelsPath = Mockito.mock(Path.class);
+        Path<String> contentPath = Mockito.mock(Path.class);
+        Expression<String> loweredLabels = Mockito.mock(Expression.class);
+        Expression<String> loweredContent = Mockito.mock(Expression.class);
+        when(root.get("workspaceId")).thenReturn((Path) workspacePath);
+        when(root.get("status")).thenReturn((Path) statusPath);
+        when(root.get("labels")).thenReturn((Path) labelsPath);
+        when(root.get("content")).thenReturn((Path) contentPath);
+        when(criteriaBuilder.lower(labelsPath)).thenReturn(loweredLabels);
+        when(criteriaBuilder.lower(contentPath)).thenReturn(loweredContent);
+        when(criteriaBuilder.equal(any(), anyString())).thenReturn(Mockito.mock(Predicate.class));
+        when(criteriaBuilder.like(any(Expression.class), anyString(), any(Character.class)))
+                .thenReturn(Mockito.mock(Predicate.class));
+        when(criteriaBuilder.and(any(Predicate[].class))).thenReturn(Mockito.mock(Predicate.class));
+        when(criteriaBuilder.or(any(Predicate[].class))).thenReturn(Mockito.mock(Predicate.class));
+
+        specification.getValue().toPredicate(root, query, criteriaBuilder);
+
+        verify(criteriaBuilder).like(loweredLabels, "%\"instance\":\"db\\_1\"%", '\\');
+        verify(criteriaBuilder).like(loweredContent, "%db\\_1%", '\\');
     }
 
     @Test
@@ -114,7 +177,7 @@ class EntityAlertEvidenceQueryServiceTest {
         );
         when(entityWorkspaceAccessService.currentRequestWorkspaceId()).thenReturn("team-a");
         when(singleAlertDao.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(teamAlphaAlert, teamBetaAlert)));
+                .thenReturn(new PageImpl<>(List.of(teamAlphaAlert)));
 
         List<SingleAlert> alerts = entityAlertEvidenceQueryService.findActiveAlerts(List.of(monitor), 20);
 
@@ -143,7 +206,8 @@ class EntityAlertEvidenceQueryServiceTest {
                 )
         );
         when(singleAlertDao.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of(unlabeledDefault, teamAlphaAlert));
+                .thenReturn(List.of(unlabeledDefault))
+                .thenReturn(List.of(teamAlphaAlert));
 
         List<SingleAlert> defaultAlerts = entityAlertEvidenceQueryService.findAlerts(
                 List.of(monitor), CommonConstants.ALERT_STATUS_FIRING, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
@@ -179,7 +243,7 @@ class EntityAlertEvidenceQueryServiceTest {
         );
         when(entityWorkspaceAccessService.currentRequestWorkspaceId()).thenReturn("team-a");
         when(singleAlertDao.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of(teamAlphaAlert, teamBetaAlert));
+                .thenReturn(List.of(teamAlphaAlert));
 
         List<SingleAlert> alerts = entityAlertEvidenceQueryService.findAlerts(
                 List.of(monitor), CommonConstants.ALERT_STATUS_FIRING);

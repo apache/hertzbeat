@@ -35,6 +35,7 @@ import {
   buildLabelPayload,
   classifyLabelSuggestionFailure,
   deleteLabel,
+  deleteLabels,
   findCanonicalLabel,
   LabelCanonicalProofLimitError,
   labelEndpoint,
@@ -84,10 +85,20 @@ describe('label API', () => {
     await expect(saveLabel({ name: '   ' }, true)).rejects.toBeInstanceOf(LabelContractError);
     await expect(saveLabel({ id: 0, name: 'env', type: 1 }, false)).rejects.toBeInstanceOf(LabelContractError);
     await expect(deleteLabel(0)).rejects.toBeInstanceOf(LabelContractError);
+    await expect(deleteLabels([])).rejects.toBeInstanceOf(LabelContractError);
+    await expect(deleteLabels([7, 7])).rejects.toBeInstanceOf(LabelContractError);
     expect(apiMessageGet).not.toHaveBeenCalled();
     expect(apiMessagePost).not.toHaveBeenCalled();
     expect(apiMessagePut).not.toHaveBeenCalled();
     expect(apiMessageDelete).not.toHaveBeenCalled();
+  });
+
+  it('sends one repeated-id request for a validated batch delete', async () => {
+    apiMessageDelete.mockResolvedValue(null);
+
+    await expect(deleteLabels([7, 9])).resolves.toBeNull();
+
+    expect(apiMessageDelete).toHaveBeenCalledWith(`${labelEndpoint}?ids=7&ids=9`);
   });
 
   it.each([

@@ -47,7 +47,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "hzb_agent_session", indexes = {
         @Index(name = "idx_agent_session_uid", columnList = "session_uid"),
         @Index(name = "idx_agent_session_key", columnList = "session_key"),
-        @Index(name = "idx_agent_session_owner", columnList = "channel, actor_type, actor_id")
+        @Index(name = "idx_agent_session_owner", columnList = "workspace_id, channel, actor_type, actor_id")
 }, uniqueConstraints = {
         @UniqueConstraint(name = "uk_agent_session_uid", columnNames = "session_uid"),
         @UniqueConstraint(name = "uk_agent_session_key", columnNames = "session_key")
@@ -65,6 +65,10 @@ public class AgentSession {
 
     @Column(name = "session_key", nullable = false, length = 128)
     private String sessionKey;
+
+    @Builder.Default
+    @Column(name = "workspace_id", nullable = false, length = 128)
+    private String workspaceId = "default";
 
     @Column(length = 64)
     private String channel;

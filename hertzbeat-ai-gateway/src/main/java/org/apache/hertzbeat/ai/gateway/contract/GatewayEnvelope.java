@@ -22,6 +22,7 @@ import jakarta.validation.constraints.Size;
 import java.util.Objects;
 import lombok.Builder;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.util.StringUtils;
 
 /**
@@ -32,7 +33,8 @@ public record GatewayEnvelope(
         @Size(max = 64) String channelId,
         Long receivedAt,
         @Valid AgentActor actor,
-        @Size(max = 16) String preferredLanguage) {
+        @Size(max = 16) String preferredLanguage,
+        @Size(max = 128) String workspaceId) {
 
     public GatewayEnvelope {
         if (!StringUtils.hasText(channelId)) {
@@ -42,6 +44,7 @@ public record GatewayEnvelope(
         if (receivedAt < 0) {
             throw new IllegalArgumentException("Gateway envelope received time must not be negative");
         }
+        workspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
     }
 
     public String getChannelId() {
@@ -58,5 +61,9 @@ public record GatewayEnvelope(
 
     public String getPreferredLanguage() {
         return preferredLanguage;
+    }
+
+    public String getWorkspaceId() {
+        return workspaceId;
     }
 }

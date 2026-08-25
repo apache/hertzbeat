@@ -24,28 +24,52 @@ export const alertSilenceWeekdayOrder = [7, 1, 2, 3, 4, 5, 6] as const;
 
 export function createDefaultAlertSilenceSchedule(now = new Date()) {
   const end = new Date(now.getTime() + defaultAlertSilenceDurationMilliseconds);
-  return {
-    days: [...alertSilenceWeekdayOrder],
+  const once = {
     periodStart: localDateTimeValue(now),
     periodEnd: localDateTimeValue(end)
+  };
+  const recurring = {
+    periodStart: timeValue(now),
+    periodEnd: timeValue(end)
+  };
+  return {
+    days: [...alertSilenceWeekdayOrder],
+    ...once,
+    scheduleMemory: { once, recurring }
   };
 }
 
 export function changeAlertSilenceType(draft: AlertSilenceDraft, type: AlertSilenceType): AlertSilenceDraft {
   if (draft.type === type) return draft;
   if (type === 1) {
+    const once = { periodStart: draft.periodStart, periodEnd: draft.periodEnd };
+    const recurring = draft.scheduleMemory?.recurring ?? {
+      periodStart: displayedClock(draft.periodStart),
+      periodEnd: displayedClock(draft.periodEnd)
+    };
     return {
       ...draft,
       type,
-      periodStart: draft.periodStart.includes('T') ? draft.periodStart.slice(11, 16) : draft.periodStart,
-      periodEnd: draft.periodEnd.includes('T') ? draft.periodEnd.slice(11, 16) : draft.periodEnd
+      ...recurring,
+      scheduleMemory: { once, recurring }
+    };
+  }
+  const recurring = { periodStart: draft.periodStart, periodEnd: draft.periodEnd };
+  const rememberedOnce = draft.scheduleMemory?.once;
+  if (rememberedOnce) {
+    return {
+      ...draft,
+      type,
+      ...rememberedOnce,
+      scheduleMemory: { once: rememberedOnce, recurring }
     };
   }
   const start = dateAtTime(draft.periodStart);
   const end = dateAtTime(draft.periodEnd);
   if (!start || !end) return { ...draft, type, periodStart: '', periodEnd: '' };
   if (end <= start) end.setDate(end.getDate() + 1);
-  return { ...draft, type, periodStart: localDateTimeValue(start), periodEnd: localDateTimeValue(end) };
+  const once = { periodStart: localDateTimeValue(start), periodEnd: localDateTimeValue(end) };
+  return { ...draft, type, ...once, scheduleMemory: { once, recurring } };
 }
 
 export function invalidAlertSilenceScheduleFields(draft: AlertSilenceDraft): InvalidScheduleField[] {
@@ -61,8 +85,10 @@ export function invalidAlertSilenceScheduleFields(draft: AlertSilenceDraft): Inv
     ) {
       invalid.push('period');
     }
-  } else if (!toIsoTime(draft.periodStart) || !toIsoTime(draft.periodEnd)) {
-    invalid.push('period');
+  } else {
+    const start = toIsoTime(draft.periodStart);
+    const end = toIsoTime(draft.periodEnd);
+    if (!start || !end || draft.periodStart === draft.periodEnd) invalid.push('period');
   }
   return invalid;
 }
@@ -120,6 +146,10 @@ function localDateTimeValue(date: Date) {
 
 function timeValue(date: Date) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function displayedClock(value: string) {
+  return value.includes('T') ? value.slice(11, 16) : value;
 }
 
 function dateAtTime(value: string) {

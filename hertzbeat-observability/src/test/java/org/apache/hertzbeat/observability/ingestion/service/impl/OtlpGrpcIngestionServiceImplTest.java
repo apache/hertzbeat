@@ -3355,9 +3355,10 @@ class OtlpGrpcIngestionServiceImplTest {
     void logsGrpcResolveEntityIdBeforeForwardingAndRealtimePublication() {
         AuthTokenRequestContext.bindWorkspaceId("prod-west");
         try {
-            when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(any(), any()))
+            when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                    "prod-west", Set.of("service.name"), Set.of("checkout")))
                     .thenReturn(List.of(entityIdentity(42L, "service.name", "checkout", "checkout", 90, true)));
-            when(workspaceQueryGateway.findEntitiesByIds(Set.of(42L)))
+            when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
                     .thenReturn(Map.of(42L, observeEntity(42L, "prod-west")));
             when(otlpCorrelationEnricher.enrichLogs(any(ExportLogsServiceRequest.class),
                     any(OtlpCorrelationContext.class)))
@@ -3649,7 +3650,7 @@ class OtlpGrpcIngestionServiceImplTest {
                                             KeyValue::getKey,
                                             attribute -> attribute.getValue().getStringValue(),
                                             (left, right) -> right));
-                            return "upstream-entity".equals(attributes.get("hertzbeat.entity_id"))
+                            return !attributes.containsKey("hertzbeat.entity_id")
                                     && "prod-west".equals(attributes.get("hertzbeat.workspace_id"));
                         } catch (Exception ex) {
                             return false;
@@ -3658,7 +3659,7 @@ class OtlpGrpcIngestionServiceImplTest {
                     eq(byte[].class));
             verify(observabilitySignalIntakeGateway).recordOtlpTraceIntake(
                     org.mockito.ArgumentMatchers.argThat(resource ->
-                            "upstream-entity".equals(resource.get("hertzbeat.entity_id"))
+                            !resource.containsKey("hertzbeat.entity_id")
                                     && "prod-west".equals(resource.get("hertzbeat.workspace_id"))),
                     eq(1_710_000_000_000L),
                     eq("1234567890abcdef1234567890abcdef"),
@@ -3840,9 +3841,10 @@ class OtlpGrpcIngestionServiceImplTest {
     void shouldResolveEntityIdFromMetricResourceIdentityBeforeForwardingAndReadModelIntake() {
         AuthTokenRequestContext.bindWorkspaceId("prod-west");
         try {
-            when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(any(), any()))
+            when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                    "prod-west", Set.of("service.name"), Set.of("checkout")))
                     .thenReturn(List.of(entityIdentity(42L, "service.name", "checkout", "checkout", 90, true)));
-            when(workspaceQueryGateway.findEntitiesByIds(Set.of(42L)))
+            when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
                     .thenReturn(Map.of(42L, observeEntity(42L, "prod-west")));
             ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
                     .addResourceMetrics(ResourceMetrics.newBuilder()
@@ -4697,7 +4699,8 @@ class OtlpGrpcIngestionServiceImplTest {
                                 .build())
                         .build())
                 .build();
-        when(otlpCorrelationEnricher.enrichTraces(eq(request), eq(OtlpCorrelationContext.empty())))
+        when(otlpCorrelationEnricher.enrichTraces(
+                any(ExportTraceServiceRequest.class), eq(OtlpCorrelationContext.empty())))
                 .thenReturn(enriched);
         when(greptimePropertiesProvider.getIfAvailable()).thenReturn(greptimeProperties);
         when(greptimeProperties.enabled()).thenReturn(true);

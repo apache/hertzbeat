@@ -184,6 +184,25 @@ describe('notice receiver model', () => {
     ).toEqual([]);
   });
 
+  it('matches the source phone-list validation for robot recipients', () => {
+    const wecomRobot = {
+      ...createNoticeReceiverDraft(),
+      name: 'WeCom robot',
+      type: 4 as const,
+      wechatId: 'key'
+    };
+    expect(validateNoticeReceiverDraft({ ...wecomRobot, phone: 'not-a-phone' })).toContain('phone');
+    expect(validateNoticeReceiverDraft({ ...wecomRobot, phone: '13800138000, 13900139000' })).toEqual([]);
+
+    const dingtalk = {
+      ...createNoticeReceiverDraft(),
+      name: 'DingTalk robot',
+      type: 5 as const,
+      accessToken: 'token'
+    };
+    expect(validateNoticeReceiverDraft({ ...dingtalk, phone: '13800138000,broken' })).toContain('phone');
+  });
+
   it('rejects duplicate secret metadata at the draft boundary', () => {
     const webhook = {
       ...createNoticeReceiverDraft(),

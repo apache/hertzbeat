@@ -54,6 +54,8 @@ public class RuntimePromptBuilder {
             ## Diagnostic Workflow
 
             - Start diagnosis by resolving exact monitor or alert identifiers, then inspect current state before historical evidence.
+            - Every investigation must obtain a successful, semantically non-empty READ observation from HertzBeat before giving a final answer.
+            - Discovery, catalog, interaction, and mutation tools do not satisfy the required READ observation.
             - Never invent monitor types, metric names, field names, identifiers, units, timestamps, or current HertzBeat state.
 
             ## Tools and Approval
@@ -131,24 +133,74 @@ public class RuntimePromptBuilder {
         }
         PromptText text = PromptText.create()
             .section("Investigation Target", section -> section
+                .line("Target version", safePromptValue(target.getVersion()))
                 .line("Monitor ID", target.getMonitorId())
                 .line("Alert ID", target.getAlertId())
+                .line("Alert type", safePromptValue(target.getAlertType()))
                 .line("Collector", safePromptValue(target.getCollector()))
                 .line("Entity ID", target.getEntityId()));
+        if (target.getService() != null) {
+            text.section("Service", section -> section
+                .line("Service name", safePromptValue(target.getService().getName()))
+                .line("Service namespace", safePromptValue(target.getService().getNamespace()))
+                .line("Service environment", safePromptValue(target.getService().getEnvironment())));
+        }
         if (target.getSignal() != null) {
             text.section("Signal", section -> section
                 .line("Signal type", safePromptValue(target.getSignal().getType()))
                 .line("Signal query", safePromptValue(target.getSignal().getQuery()))
                 .line("Time range", safePromptValue(target.getSignal().getTimeRange()))
                 .line("Start epoch millis", target.getSignal().getStart())
-                .line("End epoch millis", target.getSignal().getEnd()));
+                .line("End epoch millis", target.getSignal().getEnd())
+                .line("Timezone", safePromptValue(target.getSignal().getTimezone())));
         }
         if (target.getTopology() != null) {
             text.section("Topology", section -> section
                 .line("Topology root entity ID", target.getTopology().getRootEntityId())
                 .line("Topology node ID", safePromptValue(target.getTopology().getNodeId()))
                 .line("Topology edge ID", safePromptValue(target.getTopology().getEdgeId()))
-                .line("Topology depth", target.getTopology().getDepth()));
+                .line("Topology depth", target.getTopology().getDepth())
+                .line("Topology environment", safePromptValue(target.getTopology().getEnvironment()))
+                .line("Topology source kind", safePromptValue(target.getTopology().getSourceKind()))
+                .line("Topology start epoch millis", target.getTopology().getStart())
+                .line("Topology end epoch millis", target.getTopology().getEnd())
+                .line("Topology relation type", safePromptValue(target.getTopology().getRelationType()))
+                .line("Topology hide internal", target.getTopology().getHideInternal())
+                .line("Topology edge page index", target.getTopology().getPageIndex())
+                .line("Topology edge page size", target.getTopology().getPageSize()));
+        }
+        if (target.getTrace() != null) {
+            text.section("Trace", section -> section
+                .line("Trace ID", safePromptValue(target.getTrace().getTraceId()))
+                .line("Selected span ID", safePromptValue(target.getTrace().getSpanId()))
+                .line("Trace start epoch millis", target.getTrace().getStart())
+                .line("Trace end epoch millis", target.getTrace().getEnd())
+                .line("Trace service name", safePromptValue(target.getTrace().getServiceName()))
+                .line("Trace service namespace", safePromptValue(target.getTrace().getServiceNamespace()))
+                .line("Trace environment", safePromptValue(target.getTrace().getEnvironment()))
+                .line("Trace resource filter", safePromptValue(target.getTrace().getResourceFilter()))
+                .line("Trace attribute filter", safePromptValue(target.getTrace().getAttributeFilter()))
+                .line("Trace minimum duration millis", target.getTrace().getMinDurationMs())
+                .line("Trace maximum duration millis", target.getTrace().getMaxDurationMs()));
+        }
+        if (target.getLog() != null) {
+            text.section("Log", section -> section
+                .line("Log start epoch millis", target.getLog().getStart())
+                .line("Log end epoch millis", target.getLog().getEnd())
+                .line("Log trace ID", safePromptValue(target.getLog().getTraceId()))
+                .line("Log span ID", safePromptValue(target.getLog().getSpanId()))
+                .line("Log severity number", target.getLog().getSeverityNumber())
+                .line("Log severity text", safePromptValue(target.getLog().getSeverityText()))
+                .line("Log body search", safePromptValue(target.getLog().getSearch()))
+                .line("Log service name", safePromptValue(target.getLog().getServiceName()))
+                .line("Log service namespace", safePromptValue(target.getLog().getServiceNamespace()))
+                .line("Log environment", safePromptValue(target.getLog().getEnvironment()))
+                .line("Log resource filter", safePromptValue(target.getLog().getResourceFilter()))
+                .line("Log attribute filter", safePromptValue(target.getLog().getAttributeFilter()))
+                .line("Log hide internal", target.getLog().getHideInternal())
+                .line("Log hide noise", target.getLog().getHideNoise())
+                .line("Log page index", target.getLog().getPageIndex())
+                .line("Log page size", target.getLog().getPageSize()));
         }
         return text;
     }

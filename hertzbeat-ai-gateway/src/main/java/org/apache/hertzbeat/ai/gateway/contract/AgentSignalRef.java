@@ -23,6 +23,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,7 +34,7 @@ import lombok.NoArgsConstructor;
  * Signal query and time-window context selected by an operator.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class AgentSignalRef {
@@ -53,6 +55,9 @@ public class AgentSignalRef {
     @PositiveOrZero
     private Long end;
 
+    @Size(max = 64)
+    private String timezone;
+
     /**
      * Absolute windows must be complete and ordered; relative-only windows leave both boundaries absent.
      */
@@ -62,6 +67,21 @@ public class AgentSignalRef {
         if (start == null && end == null) {
             return true;
         }
-        return start != null && end != null && start <= end;
+        return start != null && end != null && start < end;
+    }
+
+    /** A supplied timezone must be a real IANA or fixed-offset zone. */
+    @AssertTrue
+    @JsonIgnore
+    public boolean isTimezoneValid() {
+        if (timezone == null) {
+            return true;
+        }
+        try {
+            ZoneId.of(timezone);
+            return true;
+        } catch (DateTimeException ignored) {
+            return false;
+        }
     }
 }

@@ -24,7 +24,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -80,15 +79,13 @@ public class AgentRun {
     @Column(name = "target_collector", length = 128)
     private String targetCollector;
 
-    @Lob
-    @Column(name = "target_context_json")
+    @Column(name = "target_context_json", columnDefinition = "TEXT")
     private String targetContextJson;
 
     @Column(nullable = false, length = 32)
     private String status;
 
-    @Lob
-    @Column(name = "result_summary")
+    @Column(name = "result_summary", columnDefinition = "TEXT")
     private String resultSummary;
 
     @Column(name = "error_message", length = 1024)

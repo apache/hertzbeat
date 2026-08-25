@@ -1,0 +1,261 @@
+.drawer {
+  pointer-events: none;
+}
+
+.drawer :global(.ant-drawer-content-wrapper) {
+  top: 62px !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  height: auto !important;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  border: 1px solid rgb(15 23 42 / 10%);
+  border-radius: 12px;
+  box-shadow:
+    0 18px 50px rgb(15 23 42 / 16%),
+    0 2px 8px rgb(15 23 42 / 8%);
+  pointer-events: auto;
+}
+
+.drawer :global(.ant-drawer-content) {
+  background: var(--ant-color-bg-container);
+}
+
+.drawer :global(.ant-drawer-header) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.drawer :global(.ant-drawer-body) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.drawer :global(.ant-drawer-footer) {
+  padding: 14px 22px;
+  border: 0;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 -10px 28px rgb(15 23 42 / 6%);
+  backdrop-filter: blur(12px);
+}
+
+.inspector {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.resizeHandle {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 0;
+  display: grid;
+  width: 18px;
+  height: 48px;
+  place-items: center;
+  color: transparent;
+  cursor: ew-resize;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+}
+
+.resizeHandle::after {
+  width: 3px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--ant-color-border-secondary);
+  content: '';
+  transition:
+    height 160ms ease,
+    background-color 160ms ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:focus-visible::after {
+  height: 36px;
+  background: var(--ant-color-primary);
+}
+
+.resizeHandle > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.header {
+  padding: 20px 24px 18px;
+}
+
+.headerTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 28px;
+}
+
+.position {
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.headerTopline :global(.ant-btn) {
+  width: 28px;
+  height: 28px;
+  color: var(--ant-color-text-secondary);
+}
+
+.identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.identityCopy {
+  min-width: 0;
+}
+
+.name {
+  margin: 0 0 9px !important;
+  font-size: 22px !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere;
+}
+
+.identityMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.statusOnline,
+.statusOffline {
+  flex: none;
+  margin-top: 3px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.statusOnline {
+  background: var(--ant-green-1);
+}
+
+.statusOffline {
+  background: var(--ant-red-1);
+}
+
+.statusOnline :global(.ant-badge-status-text),
+.statusOffline :global(.ant-badge-status-text) {
+  margin-inline-start: 6px;
+  font-size: 12px;
+}
+
+.content {
+  display: grid;
+  gap: 30px;
+  padding: 10px 24px 34px;
+  overflow-y: auto;
+}
+
+.section {
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 14px !important;
+  color: var(--ant-color-text-tertiary) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.02em;
+}
+
+.propertyList {
+  display: grid;
+  gap: 13px;
+  margin: 0;
+}
+
+.fact,
+.factAlignStart {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.72fr) minmax(0, 1.28fr);
+  gap: 18px;
+  min-height: 24px;
+}
+
+.fact {
+  align-items: center;
+}
+
+.factAlignStart {
+  align-items: start;
+}
+
+.factLabel {
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.factValue {
+  min-width: 0;
+  margin: 0;
+  color: var(--ant-color-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.factValue :global(.ant-typography-secondary) {
+  font-weight: 400;
+}
+
+@media (max-width: 720px) {
+  .drawer :global(.ant-drawer-content-wrapper) {
+    top: 50px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    max-width: 100vw;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .resizeHandle {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .header {
+    padding-inline: 18px;
+  }
+
+  .content {
+    padding-inline: 18px;
+  }
+
+  .identity {
+    gap: 12px;
+  }
+
+  .fact,
+  .factAlignStart {
+    grid-template-columns: minmax(96px, 0.7fr) minmax(0, 1.3fr);
+    gap: 12px;
+  }
+}

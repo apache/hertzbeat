@@ -9,7 +9,8 @@ import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
+import { OperationalStatePanel, OperationalTableEmptyState } from '@/shared/operational-page/operational-page';
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
 
 import { alertRulePageSizes, type AlertRule, type AlertRuleListState } from '../model/alert-rule-model';
 
@@ -48,7 +49,6 @@ export function AlertRuleListResults(props: AlertRuleListResultsProps) {
       />
     );
   }
-  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertRules.empty')} />;
   const records = props.state.kind === 'ready' ? props.state.records : [];
   const total = props.state.kind === 'ready' ? props.state.total : 0;
   return (
@@ -58,8 +58,17 @@ export function AlertRuleListResults(props: AlertRuleListResultsProps) {
       loading={props.state.kind === 'loading'}
       dataSource={records}
       columns={props.columns}
+      locale={{
+        emptyText: <OperationalTableEmptyState title={t('alertRules.empty')} />
+      }}
       rowSelection={{
         selectedRowKeys: props.selectedIds,
+        getTitleCheckboxProps: () =>
+          pageSelectionTitleCheckboxProps(
+            props.selectedIds,
+            records.map(record => record.id),
+            pageSelectionLabels(t)
+          ),
         getCheckboxProps: () => ({ disabled: props.busy }),
         onChange: keys => {
           if (!props.busy) props.selectIds(keys.filter((key): key is number => typeof key === 'number'));

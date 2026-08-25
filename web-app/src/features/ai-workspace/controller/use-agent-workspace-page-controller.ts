@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
 
-import { deriveAgentTargetFromLocation } from '../model/agent-workspace-context';
+import { parseAgentTargetContextFromLocation } from '../model/agent-workspace-context';
 import { useAgentProviderController } from './use-agent-provider-controller';
 import { useAgentWorkspaceController } from './use-agent-workspace-controller';
 
@@ -16,8 +16,11 @@ export function useAgentWorkspacePageController() {
   const { session } = useSession();
   const [providersOpen, setProvidersOpen] = useState(false);
   const isAdmin = session?.roles.includes('ADMIN') ?? false;
+  const targetContext = parseAgentTargetContextFromLocation(location);
   const workspace = useAgentWorkspaceController({
-    target: deriveAgentTargetFromLocation(location),
+    ...(targetContext.kind === 'valid' ? { target: targetContext.target } : {}),
+    contextKey: targetContext.key,
+    invalidTarget: targetContext.kind === 'invalid',
     language: i18n.resolvedLanguage
   });
   const providers = useAgentProviderController(isAdmin && providersOpen);

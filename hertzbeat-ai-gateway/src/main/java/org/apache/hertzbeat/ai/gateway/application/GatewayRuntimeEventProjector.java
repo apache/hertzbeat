@@ -216,6 +216,7 @@ public class GatewayRuntimeEventProjector {
         return ErrorPayload.builder()
                 .traceId(event.getTraceId())
                 .errorMessage(errorMessage)
+                .status(event.getStatus() == null ? null : event.getStatus().externalName())
                 .build();
     }
 

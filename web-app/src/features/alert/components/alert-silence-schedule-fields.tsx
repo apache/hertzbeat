@@ -15,12 +15,19 @@
  * limitations under the License.
  */
 
+import { RightCircleOutlined } from '@ant-design/icons';
 import { Checkbox, DatePicker, Radio, TimePicker } from 'antd';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
-import { changeAlertSilenceType, type AlertSilenceDraft, type AlertSilenceType } from '../model/alert-silence-model';
+import {
+  changeAlertSilenceType,
+  type AlertSilenceDraft,
+  type AlertSilenceInvalidDraftField,
+  type AlertSilenceType
+} from '../model/alert-silence-model';
 import styles from '../shared/alert-silence-editor.module.css';
+import { AlertSilenceFieldRow } from './alert-silence-field-row';
 
 const weekdayOrder = [7, 1, 2, 3, 4, 5, 6] as const;
 
@@ -31,19 +38,26 @@ interface ScheduleWindowProps {
 }
 
 interface AlertSilenceScheduleFieldsProps extends ScheduleWindowProps {
+  invalidFields: AlertSilenceInvalidDraftField[];
   replace: (draft: AlertSilenceDraft) => void;
 }
 
 /** Owns schedule presentation while type normalization remains in the model. */
-export function AlertSilenceScheduleFields({ draft, disabled, update, replace }: AlertSilenceScheduleFieldsProps) {
+export function AlertSilenceScheduleFields({
+  draft,
+  disabled,
+  invalidFields,
+  update,
+  replace
+}: AlertSilenceScheduleFieldsProps) {
   const { t } = useTranslation();
   const changeType = (type: AlertSilenceType) => replace(changeAlertSilenceType(draft, type));
 
   return (
     <>
-      <label className={`${styles.field} ${styles.wide}`}>
-        {t('alertSilences.type')}
+      <AlertSilenceFieldRow label={t('alertSilences.type')}>
         <Radio.Group
+          aria-label={t('alertSilences.type')}
           disabled={disabled}
           optionType="button"
           buttonStyle="solid"
@@ -54,26 +68,44 @@ export function AlertSilenceScheduleFields({ draft, disabled, update, replace }:
           ]}
           onChange={event => changeType(event.target.value as AlertSilenceType)}
         />
-      </label>
+      </AlertSilenceFieldRow>
       {draft.type === 0 ? (
-        <AlertSilenceOnceWindow draft={draft} disabled={disabled} update={update} />
+        <AlertSilenceOnceWindow
+          draft={draft}
+          disabled={disabled}
+          invalid={invalidFields.includes('period')}
+          update={update}
+        />
       ) : (
-        <AlertSilenceRecurringWindow draft={draft} disabled={disabled} update={update} />
+        <AlertSilenceRecurringWindow
+          draft={draft}
+          disabled={disabled}
+          invalidDays={invalidFields.includes('days')}
+          invalidPeriod={invalidFields.includes('period')}
+          update={update}
+        />
       )}
     </>
   );
 }
 
-function AlertSilenceOnceWindow({ draft, disabled, update }: ScheduleWindowProps) {
+function AlertSilenceOnceWindow({ draft, disabled, invalid, update }: ScheduleWindowProps & { invalid: boolean }) {
   const { t } = useTranslation();
 
   return (
-    <label className={`${styles.field} ${styles.wide}`}>
-      {t('alertSilences.timeWindow')}
+    <AlertSilenceFieldRow
+      error={t('alertSilences.periodInvalid')}
+      invalid={invalid}
+      label={t('alertSilences.timeWindow')}
+      wideControl
+    >
       <DatePicker.RangePicker
+        aria-label={t('alertSilences.timeWindow')}
+        aria-invalid={invalid}
         disabled={disabled}
         showTime={{ format: 'HH:mm' }}
         format="YYYY-MM-DD HH:mm"
+        {...(invalid ? { status: 'error' as const } : {})}
         value={[dayjs(draft.periodStart), dayjs(draft.periodEnd)]}
         onChange={range => {
           if (!range?.[0] || !range[1]) return;
@@ -83,45 +115,67 @@ function AlertSilenceOnceWindow({ draft, disabled, update }: ScheduleWindowProps
           });
         }}
       />
-    </label>
+    </AlertSilenceFieldRow>
   );
 }
 
-function AlertSilenceRecurringWindow({ draft, disabled, update }: ScheduleWindowProps) {
+function AlertSilenceRecurringWindow({
+  draft,
+  disabled,
+  invalidDays,
+  invalidPeriod,
+  update
+}: ScheduleWindowProps & { invalidDays: boolean; invalidPeriod: boolean }) {
   const { t } = useTranslation();
 
   return (
     <>
-      <label className={`${styles.field} ${styles.wide} ${styles.weekdays}`}>
-        {t('alertSilences.days')}
-        <Checkbox.Group
-          disabled={disabled}
-          value={draft.days}
-          options={weekdayOrder.map(day => ({ value: day, label: t(`alertSilences.week.${day}`) }))}
-          onChange={days => update({ days })}
-        />
-      </label>
-      <label className={styles.field}>
-        {t('alertSilences.start')}
-        <TimePicker
-          disabled={disabled}
-          format="HH:mm"
-          minuteStep={5}
-          value={timePickerValue(draft.periodStart)}
-          onChange={value => value && update({ periodStart: value.format('HH:mm') })}
-        />
-      </label>
-      <label className={styles.field}>
-        {t('alertSilences.end')}
-        <TimePicker
-          disabled={disabled}
-          format="HH:mm"
-          minuteStep={5}
-          value={timePickerValue(draft.periodEnd)}
-          onChange={value => value && update({ periodEnd: value.format('HH:mm') })}
-        />
-      </label>
-      <span className={`${styles.hint} ${styles.wide}`}>{t('alertSilences.crossMidnightHelp')}</span>
+      <AlertSilenceFieldRow
+        error={t('alertSilences.daysRequired')}
+        invalid={invalidDays}
+        label={t('alertSilences.days')}
+      >
+        <div className={styles.weekdays} role="group" aria-label={t('alertSilences.days')} aria-invalid={invalidDays}>
+          <Checkbox.Group
+            disabled={disabled}
+            value={draft.days}
+            options={weekdayOrder.map(day => ({ value: day, label: t(`alertSilences.week.${day}`) }))}
+            onChange={days => update({ days })}
+          />
+        </div>
+      </AlertSilenceFieldRow>
+      <AlertSilenceFieldRow
+        error={t(
+          draft.periodStart === draft.periodEnd ? 'alertSilences.recurringPeriodInvalid' : 'alertSilences.periodInvalid'
+        )}
+        invalid={invalidPeriod}
+        label={t('alertSilences.timeWindow')}
+        wideControl
+      >
+        <div className={styles.recurringTime} role="group" aria-label={t('alertSilences.timeWindow')}>
+          <TimePicker
+            aria-label={t('alertSilences.start')}
+            aria-invalid={invalidPeriod}
+            disabled={disabled}
+            format="HH:mm"
+            minuteStep={5}
+            {...(invalidPeriod ? { status: 'error' as const } : {})}
+            value={timePickerValue(draft.periodStart)}
+            onChange={value => value && update({ periodStart: value.format('HH:mm') })}
+          />
+          <RightCircleOutlined aria-hidden="true" />
+          <TimePicker
+            aria-label={t('alertSilences.end')}
+            aria-invalid={invalidPeriod}
+            disabled={disabled}
+            format="HH:mm"
+            minuteStep={5}
+            {...(invalidPeriod ? { status: 'error' as const } : {})}
+            value={timePickerValue(draft.periodEnd)}
+            onChange={value => value && update({ periodEnd: value.format('HH:mm') })}
+          />
+        </div>
+      </AlertSilenceFieldRow>
     </>
   );
 }

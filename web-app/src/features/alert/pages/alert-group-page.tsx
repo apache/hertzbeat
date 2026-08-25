@@ -19,8 +19,6 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page/operational-page';
 
-import { AlertManagementNav } from '../components/alert-management-nav';
-import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { buildAlertGroupColumns } from '../components/alert-group-columns';
 import { AlertGroupEditor } from '../components/alert-group-editor';
 import { AlertGroupPageHeader } from '../components/alert-group-page-header';
@@ -65,8 +63,6 @@ export function AlertGroupPage() {
         selectedCount={state.selectedIds.length}
         removeSelected={removeSelected}
       />
-      <AlertManagementNav />
-      <AlertNoiseControlNav />
       <AlertGroupToolbar
         refreshing={state.refreshing}
         search={state.search}

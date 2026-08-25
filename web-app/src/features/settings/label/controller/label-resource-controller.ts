@@ -64,9 +64,12 @@ export function useLabelResourceController(
   );
   const visibleRecords = list.result.data.length;
   // The callback captured when DELETE starts is its immutable query/page receipt across later renders.
-  const onDeleteConfirmed = useCallback(() => {
-    reconcileConfirmedDelete?.({ query, visibleRecords });
-  }, [query, reconcileConfirmedDelete, visibleRecords]);
+  const onDeleteConfirmed = useCallback(
+    (deletedRecords: number) => {
+      reconcileConfirmedDelete?.({ query, visibleRecords, deletedRecords });
+    },
+    [query, reconcileConfirmedDelete, visibleRecords]
+  );
   const mutations = useLabelMutationController(convergeProjection, onDeleteConfirmed, capabilities);
   const actions = useLabelActionsController();
   const isMutationInFlight = mutations.isInFlight;

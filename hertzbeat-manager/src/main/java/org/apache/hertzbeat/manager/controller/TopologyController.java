@@ -23,9 +23,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,8 +72,13 @@ public class TopologyController {
             @RequestParam(required = false) Integer pageIndex,
             @Parameter(description = "Edge page size", example = "50")
             @RequestParam(required = false) Integer pageSize) {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new CommonException("topology_workspace_unavailable");
+        }
+        String trustedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
-                focusEntityId, depth, environment, sourceKind, start, end,
+                trustedWorkspaceId, focusEntityId, depth, environment, sourceKind, start, end,
                 relationType, hideInternal, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(graph));
     }

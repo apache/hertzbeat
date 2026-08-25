@@ -21,6 +21,7 @@ export { MonitorListPage } from './pages/monitor-list-page';
 export {
   classifyMonitorReadError,
   loadMonitorAppHierarchy,
+  loadMonitorAppHierarchyCatalog,
   loadMonitorApps,
   loadMonitorNavigationApps,
   loadMonitorMetricCatalog,

@@ -5,6 +5,8 @@ export type {
   MetadataDatabaseConfiguration,
   MetadataDatabaseKind,
   SetupApplyMode,
+  SetupStatus,
   SetupWarningCode
 } from './model/setup-contract';
+export { loadSetupStatus } from './api/setup-api';
 export type { SetupExportArtifact as ExportResponse } from './api/setup-api';

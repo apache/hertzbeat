@@ -29,17 +29,24 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,6 +70,7 @@ class GreptimeSqlQueryExecutorTest {
     private RestTemplate restTemplate;
 
     private GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
+    private GreptimeQueryGuard queryGuard;
 
     @BeforeEach
     void setUp() {
@@ -71,7 +79,13 @@ class GreptimeSqlQueryExecutorTest {
         when(greptimeProperties.username()).thenReturn("username");
         when(greptimeProperties.password()).thenReturn("password");
 
-        greptimeSqlQueryExecutor = new GreptimeSqlQueryExecutor(greptimeProperties, restTemplate);
+        queryGuard = new GreptimeQueryGuard(2, Duration.ofSeconds(2), Duration.ofMillis(10));
+        greptimeSqlQueryExecutor = new GreptimeSqlQueryExecutor(greptimeProperties, restTemplate, queryGuard);
+    }
+
+    @AfterEach
+    void tearDown() {
+        queryGuard.close();
     }
 
     @Test
@@ -177,6 +191,33 @@ class GreptimeSqlQueryExecutorTest {
         assertEquals(1, rows.size());
         assertTrue(rows.getFirst().containsKey("last_received_at"));
         assertNull(rows.getFirst().get("last_received_at"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedStrictSchemaResponses")
+    void testExecuteStrictRejectsMalformedSchemaForNonEmptyRows(GreptimeSqlQueryContent response) {
+        when(restTemplate.exchange(
+                any(String.class),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+
+        assertThrows(IllegalStateException.class,
+                () -> greptimeSqlQueryExecutor.executeStrict("SELECT value FROM hertzbeat_logs"));
+    }
+
+    @Test
+    void testExecuteStrictAllowsTrulyEmptyRowsWithoutSchema() {
+        GreptimeSqlQueryContent response = createResponse(null, List.of());
+        when(restTemplate.exchange(
+                any(String.class),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+
+        assertEquals(List.of(), greptimeSqlQueryExecutor.executeStrict("SELECT value FROM hertzbeat_logs"));
     }
 
     @Test
@@ -408,5 +449,39 @@ class GreptimeSqlQueryExecutorTest {
         output.setRecords(records);
         response.setOutput(List.of(output));
         return response;
+    }
+
+    private static Stream<Arguments> malformedStrictSchemaResponses() {
+        return Stream.of(
+                Arguments.of(createResponse(null, List.of(List.of(1)))),
+                Arguments.of(createResponse(List.of(column("only")), List.of(List.of(1, 2)))),
+                Arguments.of(createResponse(Arrays.asList((GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema) null),
+                        List.of(List.of(1)))),
+                Arguments.of(createResponse(List.of(column(" ")), List.of(List.of(1)))),
+                Arguments.of(createResponse(List.of(column("duplicate"), column("duplicate")),
+                        List.of(List.of(1, 2)))));
+    }
+
+    private static GreptimeSqlQueryContent createResponse(
+            List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columns,
+            List<List<Object>> rows) {
+        GreptimeSqlQueryContent.Output.Records records = new GreptimeSqlQueryContent.Output.Records();
+        if (columns != null) {
+            GreptimeSqlQueryContent.Output.Records.Schema schema =
+                    new GreptimeSqlQueryContent.Output.Records.Schema();
+            schema.setColumnSchemas(columns);
+            records.setSchema(schema);
+        }
+        records.setRows(rows);
+        GreptimeSqlQueryContent.Output output = new GreptimeSqlQueryContent.Output();
+        output.setRecords(records);
+        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
+        response.setCode(0);
+        response.setOutput(List.of(output));
+        return response;
+    }
+
+    private static GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema column(String name) {
+        return new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema(name, "String");
     }
 }

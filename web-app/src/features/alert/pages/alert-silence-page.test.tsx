@@ -159,7 +159,7 @@ describe('AlertSilencePage', () => {
     expect(await screen.findByText('No silence policies match the current query.')).toBeInTheDocument();
   });
 
-  it('uses the shared operational frame and a compact empty result', async () => {
+  it('preserves the official list schema when the result is empty', async () => {
     api.loadAlertSilences.mockResolvedValueOnce({ content: [], totalElements: 0 });
     renderPage();
 
@@ -167,7 +167,13 @@ describe('AlertSilencePage', () => {
     expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
-    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Silence Strategy Name' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Silence Type' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Silenced Alerts Num' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Enable' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Edit Time' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Actions' })).not.toHaveClass('ant-table-cell-fix-right');
+    expect(screen.getByRole('table').closest('[data-table-overflow]')).toHaveAttribute('data-table-overflow', 'fit');
   });
 
   it('normalizes nonzero out-of-range content without presenting an empty result', async () => {
@@ -199,8 +205,10 @@ describe('AlertSilencePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'New silence' }));
     dialog = screen.getByRole('dialog');
-    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Planned maintenance' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    fireEvent.change(within(dialog).getByLabelText('Silence Strategy Name'), {
+      target: { value: 'Planned maintenance' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
     await waitFor(() =>
       expect(api.saveAlertSilence).toHaveBeenCalledWith(expect.objectContaining({ name: 'Planned maintenance' }))
     );
@@ -219,8 +227,10 @@ describe('AlertSilencePage', () => {
     const create = screen.getByRole('button', { name: 'New silence' });
     fireEvent.click(create);
     const dialog = screen.getByRole('dialog');
-    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Planned maintenance' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    fireEvent.change(within(dialog).getByLabelText('Silence Strategy Name'), {
+      target: { value: 'Planned maintenance' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
     await waitFor(() => expect(api.saveAlertSilence).toHaveBeenCalled());
     expect(create).toBeDisabled();
     const draft = api.saveAlertSilence.mock.calls[0]?.[0];
@@ -239,11 +249,13 @@ describe('AlertSilencePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'New silence' }));
     const dialog = screen.getByRole('dialog');
-    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Planned maintenance' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    fireEvent.change(within(dialog).getByLabelText('Silence Strategy Name'), {
+      target: { value: 'Planned maintenance' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
 
     expect(await within(dialog).findByText('Silence policy could not be saved.')).toBeInTheDocument();
-    const save = within(dialog).getByText('Save').closest('button');
+    const save = within(dialog).getByText('Confirm').closest('button');
     expect(save).toBeDisabled();
     expect(save).not.toHaveClass('ant-btn-loading');
     expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeEnabled();
@@ -276,12 +288,14 @@ describe('AlertSilencePage', () => {
     const row = await screen.findByRole('row', { name: /Database maintenance/ });
     fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
     const dialog = await screen.findByRole('dialog');
-    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Updated maintenance' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    fireEvent.change(within(dialog).getByLabelText('Silence Strategy Name'), {
+      target: { value: 'Updated maintenance' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
 
     const retry = await within(dialog).findByRole('button', { name: 'Retry' });
     expect(retry).toBeEnabled();
-    expect(within(dialog).getByText('Save').closest('button')).toBeDisabled();
+    expect(within(dialog).getByText('Confirm').closest('button')).toBeDisabled();
     expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeEnabled();
 
     api.loadAlertSilence.mockResolvedValueOnce({ ...detailRecord, name: 'Updated maintenance' });
@@ -299,11 +313,13 @@ describe('AlertSilencePage', () => {
     fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
     const dialog = await screen.findByRole('dialog');
     await waitFor(() => expect(api.loadAlertSilence).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
-    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Updated maintenance' } });
+    fireEvent.change(within(dialog).getByLabelText('Silence Strategy Name'), {
+      target: { value: 'Updated maintenance' }
+    });
     api.loadAlertSilence
       .mockResolvedValueOnce({ ...detailRecord, name: 'Updated maintenance' })
       .mockRejectedValueOnce(new AlertSilenceMissingError());
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
     await waitFor(() =>
       expect(api.saveAlertSilence).toHaveBeenCalledWith(expect.objectContaining({ id: 7, name: 'Updated maintenance' }))
     );
@@ -319,9 +335,10 @@ describe('AlertSilencePage', () => {
     api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
     renderPage();
 
-    const checkboxes = await screen.findAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]!);
-    fireEvent.click(checkboxes[2]!);
+    const firstRow = await screen.findByRole('row', { name: /Database maintenance/ });
+    const secondRow = await screen.findByRole('row', { name: /API maintenance/ });
+    fireEvent.click(within(firstRow).getByRole('checkbox'));
+    fireEvent.click(within(secondRow).getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }));
     const confirmation = await screen.findByText('Delete 2 selected silence policies?');
     const popover = confirmation.closest('.ant-popover');

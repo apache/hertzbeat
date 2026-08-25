@@ -178,6 +178,9 @@ function activeValueErrors(draft: NoticeReceiverDraft) {
 
 function channelValidationErrors(draft: NoticeReceiverDraft) {
   if (draft.type === 1 && draft.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email)) return ['email'];
+  if ((draft.type === 4 || draft.type === 5) && draft.phone && !/^(1\d{10})(,\s*1\d{10})*$/.test(draft.phone)) {
+    return ['phone'];
+  }
   if (draft.type === 2 && draft.hookAuthType !== 'None' && !hasSecret(draft, 'hookAuthToken')) return ['hookAuthToken'];
   if (draft.type === 10 && ![draft.userId, draft.partyId, draft.tagId].some(value => value.trim()))
     return ['recipientTarget'];

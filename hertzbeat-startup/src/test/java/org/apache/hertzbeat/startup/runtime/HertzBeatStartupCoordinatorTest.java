@@ -101,6 +101,24 @@ class HertzBeatStartupCoordinatorTest {
     }
 
     @Test
+    void factoryResetReplacesNormalWithGatedCleanupThenSetupOnly() {
+        RecordingLauncher launcher = new RecordingLauncher();
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                ignored -> StartupDecision.normal(), launcher);
+
+        coordinator.start(new String[0]);
+        SetupRuntimeTransition transition = launcher.transitions.getFirst();
+        transition.factoryResetRequested();
+        transition.factoryResetCompleted();
+        transition.factoryResetCompleted();
+
+        assertEquals(List.of(
+                "open:normal", "close:normal", "open:full_setup_gated",
+                "close:full_setup_gated", "open:setup_only"), launcher.events);
+        assertEquals(RuntimeMode.SETUP_ONLY, coordinator.mode());
+    }
+
+    @Test
     void normalLaunchFallbackToRecoveryCanReprobeAndConvergeAfterConfiguration() {
         RecordingLauncher launcher = new RecordingLauncher();
         launcher.failMode = RuntimeMode.NORMAL;

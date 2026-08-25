@@ -49,7 +49,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
-/** Real B206 copy proof against the supported external metadata databases. */
+/** Real B200 copy proof against the supported external metadata databases. */
 @EnabledIfSystemProperty(named = "hertzbeat.test.database-containers", matches = "true")
 class JdbcMetadataMigrationDatabaseTest {
 
@@ -58,7 +58,7 @@ class JdbcMetadataMigrationDatabaseTest {
     private static final String PASSWORD = "test-only-password";
 
     @Test
-    void copiesAndVerifiesB206MetadataIntoMysql() throws Exception {
+    void copiesAndVerifiesB200MetadataIntoMysql() throws Exception {
         try (MySQLContainer database = new MySQLContainer("mysql:8.4")
                 .withDatabaseName(DATABASE)
                 .withUsername(USERNAME)
@@ -70,7 +70,7 @@ class JdbcMetadataMigrationDatabaseTest {
     }
 
     @Test
-    void copiesAndVerifiesB206MetadataAndOidTextIntoPostgresql() throws Exception {
+    void copiesAndVerifiesB200MetadataAndOidTextIntoPostgresql() throws Exception {
         try (PostgreSQLContainer database = new PostgreSQLContainer("postgres:17.6")
                 .withDatabaseName(DATABASE)
                 .withUsername(USERNAME)
@@ -333,7 +333,7 @@ class JdbcMetadataMigrationDatabaseTest {
                     .map(definition -> loadClass(definition.getBeanClassName()))
                     .forEach(sources::addAnnotatedClass);
             try (SessionFactory factory = sources.buildMetadata().buildSessionFactory()) {
-                assertThat(factory.getMetamodel().getEntities()).hasSize(48);
+                assertThat(factory.getMetamodel().getEntities()).hasSize(55);
             }
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);

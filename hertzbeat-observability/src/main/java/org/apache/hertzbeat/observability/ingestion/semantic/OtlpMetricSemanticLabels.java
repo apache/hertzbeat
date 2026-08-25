@@ -17,16 +17,36 @@
 
 package org.apache.hertzbeat.observability.ingestion.semantic;
 
+import java.util.Locale;
+
 /**
  * Canonical Prometheus-compatible label names produced from HertzBeat OTLP resource attributes.
  */
 public final class OtlpMetricSemanticLabels {
 
+    public static final String HERTZBEAT_WORKSPACE_ID = "hertzbeat_workspace_id";
     public static final String HERTZBEAT_COLLECTOR_ID = "hertzbeat_collector_id";
     public static final String HERTZBEAT_COLLECTOR = "hertzbeat_collector";
     public static final String HTTP_ROUTE = "http_route";
     public static final String SERVICE_INSTANCE_ID = "service_instance_id";
 
     private OtlpMetricSemanticLabels() {
+    }
+
+    /**
+     * Whether a resource or promoted metric label names workspace authority.
+     *
+     * @param label label name before an operator is applied
+     * @return {@code true} for canonical and historical workspace aliases
+     */
+    public static boolean isWorkspaceIdentifier(String label) {
+        if (label == null) {
+            return false;
+        }
+        String normalized = label.trim()
+                .toLowerCase(Locale.ROOT)
+                .replace('.', '_')
+                .replace('-', '_');
+        return "workspace_id".equals(normalized) || HERTZBEAT_WORKSPACE_ID.equals(normalized);
     }
 }

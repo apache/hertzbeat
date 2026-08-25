@@ -31,8 +31,6 @@ import {
   type AlertGroup,
   type AlertPage,
   type AlertQuery,
-  type AlertSeverity,
-  type AlertStatusFilter,
   type AlertSummary
 } from '../model/alert-model';
 import type {
@@ -101,8 +99,6 @@ export function useAlertCenterController() {
     state,
     setDraft,
     submitFilters,
-    changeStatus: (status: AlertStatusFilter) => updateQuery({ status, pageIndex: 0 }),
-    changeSeverity: (severity: AlertSeverity) => updateQuery({ severity, pageIndex: 0 }),
     changePage: (page: number, pageSize: number) => updateQuery(zeroBasedPageChange(page, pageSize, query.pageSize)),
     retryList: refetchList,
     retrySummary: refetchSummary,
@@ -118,6 +114,8 @@ function submitAlertFilters(draft: AlertFilterDraft, updateQuery: (patch: Partia
     serviceName: draft.serviceName.trim(),
     serviceNamespace: draft.serviceNamespace.trim(),
     environment: draft.environment.trim(),
+    status: draft.status,
+    severity: draft.severity,
     pageIndex: 0
   });
 }
@@ -128,9 +126,11 @@ function useAlertFilterDraft(query: AlertQuery, source: string) {
       search: query.search,
       serviceName: query.serviceName,
       serviceNamespace: query.serviceNamespace,
-      environment: query.environment
+      environment: query.environment,
+      status: query.status,
+      severity: query.severity
     }),
-    [query.environment, query.search, query.serviceName, query.serviceNamespace]
+    [query.environment, query.search, query.serviceName, query.serviceNamespace, query.severity, query.status]
   );
   return useQueryDraft(source, canonicalDraft);
 }

@@ -46,11 +46,12 @@ class MonitorRouteAuthorizationConfigTest {
             "  - /api/monitors/export/all===get===[admin]"
     );
     private static final List<String> REQUIRED_EXACT_MONITOR_MANAGE_RULES = List.of(
-            "  - /api/monitors/manage===get===[admin,user,guest]",
             "  - /api/monitors/manage===post===[admin,user]",
             "  - /api/monitors/manage===put===[admin,user]",
             "  - /api/monitors/manage===delete===[admin]"
     );
+    private static final String LEGACY_MONITOR_MANAGE_GET_RULE =
+            "  - /api/monitors/manage===get===[admin,user,guest]";
     private static final List<String> REQUIRED_EXACT_MONITOR_ROOT_RULES = List.of(
             "  - /api/monitor===get===[admin,user,guest]",
             "  - /api/monitor===post===[admin,user]",
@@ -141,10 +142,11 @@ class MonitorRouteAuthorizationConfigTest {
     private static void assertExactMonitorManageRules(String config) throws IOException {
         Path configPath = repoRoot().resolve(config);
         List<String> lines = Files.readAllLines(configPath);
-        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(0), MONITORS_WILDCARD_GET_RULE);
-        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(1), MONITORS_WILDCARD_POST_RULE);
-        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(2), MONITORS_WILDCARD_PUT_RULE);
-        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(3), MONITORS_WILDCARD_DELETE_RULE);
+        assertFalse(lines.contains(LEGACY_MONITOR_MANAGE_GET_RULE),
+                () -> config + " must not expose the removed GET mutation route");
+        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(0), MONITORS_WILDCARD_POST_RULE);
+        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(1), MONITORS_WILDCARD_PUT_RULE);
+        assertRuleBeforeWildcard(config, lines, REQUIRED_EXACT_MONITOR_MANAGE_RULES.get(2), MONITORS_WILDCARD_DELETE_RULE);
     }
 
     private static void assertRuleBeforeWildcard(String config, List<String> lines, String exactRule, String wildcardRule) {

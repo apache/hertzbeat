@@ -14,10 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.searchInput {
-  width: min(460px, 100%);
-}
 .labelLink {
   height: auto;
   padding: 0;
+}
+.actionTrigger {
+  color: var(--hb-text-secondary);
+}
+
+.bulkActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 7px 10px 7px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--hb-primary) 7%, var(--hb-surface));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--hb-primary) 11%, transparent);
 }

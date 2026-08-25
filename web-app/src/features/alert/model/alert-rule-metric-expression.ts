@@ -38,6 +38,19 @@ const maximumAlertExpressionLength = 2048;
  * Reserved target clauses stay separate from the operator-authored threshold.
  */
 export function buildRealtimeMetricExpression(context: RealtimeMetricExpressionContext) {
+  if (context.target.kind === 'metric' && !context.condition.trim()) {
+    throw contract('metric target requires a threshold');
+  }
+  return buildRealtimeMetricAuthoringExpression(context);
+}
+
+/**
+ * Builds the live authoring evidence, including the selected metric context
+ * before its required threshold is complete. The write contract rejects that
+ * transient state, while the editor can still show the same final-expression
+ * evidence as the legacy authoring flow.
+ */
+export function buildRealtimeMetricAuthoringExpression(context: RealtimeMetricExpressionContext) {
   const app = reservedValue(context.target.app, 'application');
   const target =
     context.target.kind === 'availability'
@@ -47,10 +60,6 @@ export function buildRealtimeMetricExpression(context: RealtimeMetricExpressionC
   if (context.target.kind === 'availability' && condition) {
     throw contract('availability target cannot have a threshold');
   }
-  if (context.target.kind === 'metric' && !condition) {
-    throw contract('metric target requires a threshold');
-  }
-
   const { monitorIds, monitorLabels } = normalizeRealtimeMetricBindings(context.monitorIds, context.monitorLabels);
   const clauses = [
     ...target,

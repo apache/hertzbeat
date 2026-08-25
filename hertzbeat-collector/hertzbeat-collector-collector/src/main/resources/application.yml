@@ -55,7 +55,7 @@ spring:
 
 collector:
   info:
-    version: ${COLLECTOR_VERSION:1.8.0}
+    version: ${COLLECTOR_VERSION:2.0.0}
     ip: ${COLLECTOR_IP:}
   otel-runtime:
     enabled: ${HERTZBEAT_OTEL_RUNTIME_ENABLED:false}

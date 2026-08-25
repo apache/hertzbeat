@@ -10,10 +10,13 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
+import { OperationalStatePanel, OperationalTableEmptyState } from '@/shared/operational-page/operational-page';
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
 
 import { alertGroupPageSizes, type AlertGroupConverge } from '../model/alert-group-model';
+import { alertPolicyTableViewport } from '../model/alert-policy-table-viewport';
 import type { AlertGroupDetailState, AlertGroupListState } from '../model/alert-group-state';
+import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertGroupResults({
   state,
@@ -43,23 +46,34 @@ export function AlertGroupResults({
     return <Failure kind="unavailable" message={t('common.unavailable')} retry={retry} />;
   if (state.kind === 'error')
     return <Failure kind="error" message={t('common.routeError.description')} retry={retry} />;
-  if (state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertGroups.empty')} />;
   const records = state.kind === 'ready' ? state.records : [];
   const total = state.kind === 'ready' ? state.total : 0;
+  const viewport = alertPolicyTableViewport(records.length, 1100);
   const rowSelection: TableRowSelection<AlertGroupConverge> = {
     selectedRowKeys: selectedIds,
+    getTitleCheckboxProps: () =>
+      pageSelectionTitleCheckboxProps(
+        selectedIds,
+        records.map(record => record.id),
+        pageSelectionLabels(t)
+      ),
     getCheckboxProps: () => ({ disabled: busy }),
     onChange: keys => selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };
   return (
     <Table<AlertGroupConverge>
       rowKey="id"
+      className={styles.tableHeaderNoWrap!}
+      data-table-overflow={viewport.mode}
       size="small"
       loading={state.kind === 'loading'}
       dataSource={records}
       columns={columns}
+      locale={{
+        emptyText: state.kind === 'empty' ? <OperationalTableEmptyState title={t('alertGroups.empty')} /> : null
+      }}
       {...(canDelete ? { rowSelection } : {})}
-      scroll={{ x: 1100 }}
+      scroll={viewport.scroll}
       pagination={{
         current: pageIndex + 1,
         pageSize,

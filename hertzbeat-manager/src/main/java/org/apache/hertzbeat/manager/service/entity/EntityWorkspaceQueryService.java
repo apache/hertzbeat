@@ -46,6 +46,13 @@ public class EntityWorkspaceQueryService {
         return observeEntityDao.findAllById(entityIds);
     }
 
+    public List<ObserveEntity> findEntitiesByIds(String workspaceId, Collection<Long> entityIds) {
+        if (!StringUtils.hasText(workspaceId) || entityIds == null || entityIds.isEmpty()) {
+            return List.of();
+        }
+        return observeEntityDao.findAllByWorkspaceIdAndIdIn(workspaceId, entityIds);
+    }
+
     public List<ObserveEntity> findEntities(String workspaceId, Sort sort) {
         if (StringUtils.hasText(workspaceId)) {
             return observeEntityDao.findAllByWorkspaceId(workspaceId, sort);
@@ -83,6 +90,13 @@ public class EntityWorkspaceQueryService {
 
     public Optional<ObserveEntity> findEntityById(long entityId) {
         return observeEntityDao.findById(entityId);
+    }
+
+    public Optional<ObserveEntity> findEntityById(String workspaceId, long entityId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return Optional.empty();
+        }
+        return observeEntityDao.findFirstByWorkspaceIdAndId(workspaceId, entityId);
     }
 
     public Optional<ObserveEntity> findEntityByReference(String workspaceId,

@@ -35,16 +35,24 @@ export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigatio
     () => activeNavigationTrail(tree, `${location.pathname}${location.search}`),
     [location.pathname, location.search, tree]
   );
-  // Keep the current product area open without expanding unrelated domains into a long, noisy rail.
-  const [open, setOpen] = useState<Set<string>>(() => new Set());
-  const visibleOpen = useMemo(() => new Set([...open, ...trail.slice(0, -1)]), [open, trail]);
+  const navigationContextKey = `${location.pathname}${location.search}:${trail.join('/')}`;
+  const activeOpenAtDepth = useMemo(() => openTrailAtDepth(trail), [trail]);
+  const [accordion, setAccordion] = useState(() => ({
+    contextKey: navigationContextKey,
+    openAtDepth: activeOpenAtDepth
+  }));
+  const openAtDepth = accordion.contextKey === navigationContextKey ? accordion.openAtDepth : activeOpenAtDepth;
+  const visibleOpen = useMemo(() => new Set(openAtDepth.values()), [openAtDepth]);
 
-  const toggle = (name: string) => {
-    setOpen(current => {
-      const next = new Set(current);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
+  const toggle = (name: string, depth: number) => {
+    setAccordion(() => {
+      const next = new Map(openAtDepth);
+      if (next.get(depth) === name) next.delete(depth);
+      else next.set(depth, name);
+      for (const openDepth of next.keys()) {
+        if (openDepth > depth) next.delete(openDepth);
+      }
+      return { contextKey: navigationContextKey, openAtDepth: next };
     });
   };
 
@@ -86,7 +94,7 @@ function NavigationBranches({
 }: {
   activeTrail: string[];
   collapsed: boolean;
-  onToggle: (name: string) => void;
+  onToggle: (name: string, depth: number) => void;
   open: Set<string>;
   tree: ShellNavigationItem[];
 }) {
@@ -113,7 +121,7 @@ type NavigationBranchProps = {
   item: ShellNavigationItem;
   flyout: string | undefined;
   onFlyoutChange: (name: string | undefined) => void;
-  onToggle: (name: string) => void;
+  onToggle: (name: string, depth: number) => void;
   open: Set<string>;
 };
 
@@ -141,11 +149,15 @@ function NavigationBranch(props: NavigationBranchProps) {
   return (
     <div className={styles.navigationBranch} data-depth={depth}>
       <NavigationBranchControl {...props} active={active} hasChildren={hasChildren} isOpen={isOpen} label={label} />
-      {hasChildren && isOpen && !collapsed && (
-        <div className={styles.navigationChildren}>
-          {item.children.map(child => (
-            <NavigationBranch key={child.name} {...props} item={child} depth={depth + 1} />
-          ))}
+      {hasChildren && !collapsed && (
+        <div className={styles.navigationChildrenMotion} data-open={String(isOpen)} aria-hidden={!isOpen}>
+          <div className={styles.navigationChildrenClip}>
+            <div className={styles.navigationChildren}>
+              {item.children.map(child => (
+                <NavigationBranch key={child.name} {...props} item={child} depth={depth + 1} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -172,7 +184,7 @@ function NavigationBranchControl(
           type="button"
           aria-label={t('shell.navigation.toggleGroup', { label })}
           aria-expanded={isOpen}
-          onClick={() => onToggle(item.name)}
+          onClick={() => onToggle(item.name, props.depth)}
         >
           <UpOutlined className={isOpen ? '' : styles.navigationToggleClosed} />
         </button>
@@ -198,7 +210,7 @@ function NavigationGroupControl(
         } ${isOpen ? styles.navigationParentOpen : ''}`}
         type="button"
         aria-expanded={hasChildren ? isOpen : undefined}
-        onClick={() => onToggle(item.name)}
+        onClick={() => onToggle(item.name, props.depth)}
       >
         <span className={styles.navigationIcon} aria-hidden="true">
           {item.icon}
@@ -212,4 +224,8 @@ function NavigationGroupControl(
       </button>
     </div>
   );
+}
+
+function openTrailAtDepth(trail: string[]) {
+  return new Map(trail.slice(0, -1).map((name, depth) => [depth, name]));
 }

@@ -24,6 +24,7 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.common.entity.alerter.AlertAnalysisPolicy;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,7 @@ public class AgentAlertAnalysisPolicyToolService {
             Integer minimumAlertCount,
             @ToolParam(required = false, description = "Cooldown for the same context in seconds; default 1800.")
             Long cooldownSeconds) {
-        return policyService.create(name, matchLabels, groupByLabels, windowSeconds, minimumAlertCount,
+        return policyService.create(workspaceId(), name, matchLabels, groupByLabels, windowSeconds, minimumAlertCount,
                 cooldownSeconds);
     }
 
@@ -60,7 +61,7 @@ public class AgentAlertAnalysisPolicyToolService {
     @AgentToolPolicy(
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public List<AlertAnalysisPolicy> list() {
-        return policyService.findAll();
+        return policyService.findAll(workspaceId());
     }
 
     @Tool(name = "alert_analysis_policy.toggle", description = "Enable or disable an alert analysis policy.")
@@ -68,7 +69,7 @@ public class AgentAlertAnalysisPolicyToolService {
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public AlertAnalysisPolicy toggle(@ToolParam(description = "Policy id.") Long policyId,
                                            @ToolParam(description = "Whether the policy is enabled.") boolean enabled) {
-        return policyService.toggle(policyId, enabled);
+        return policyService.toggle(workspaceId(), policyId, enabled);
     }
 
     @Tool(name = "alert_analysis_policy.delete", description = "Delete an automatic alert analysis policy.")
@@ -80,7 +81,15 @@ public class AgentAlertAnalysisPolicyToolService {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for alert_analysis_policy.delete");
         }
-        policyService.delete(policyId);
+        policyService.delete(workspaceId(), policyId);
         return "Alert analysis policy deleted: " + policyId;
+    }
+
+    private static String workspaceId() {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
     }
 }

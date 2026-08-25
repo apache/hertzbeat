@@ -265,25 +265,25 @@ CREATE INDEX IF NOT EXISTS idx_hzb_signal_dashboard_update
 
 -- HertzBeat 2.0.0 baseline additions.
 
--- V201  add collector intake token boundary.sql.
+-- Add the collector intake token boundary.
 ALTER TABLE hzb_auth_token ADD COLUMN IF NOT EXISTS token_audience VARCHAR(32);
 ALTER TABLE hzb_auth_token ADD COLUMN IF NOT EXISTS collector_id VARCHAR(128);
 ALTER TABLE hzb_auth_token ADD COLUMN IF NOT EXISTS allowed_signals VARCHAR(64);
 CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_collector ON hzb_auth_token(collector_id);
 
--- V202  add collector runtime config.sql.
+-- Add collector runtime configuration.
 ALTER TABLE hzb_collector ADD COLUMN IF NOT EXISTS runtime_config CLOB;
 
--- V203  add collector instrumentation intake.sql.
+-- Add collector instrumentation intake.
 ALTER TABLE hzb_collector ADD COLUMN IF NOT EXISTS instrumentation_intake CLOB;
 
--- V204  add config revision.sql.
+-- Add managed configuration revision tracking.
 ALTER TABLE hzb_config ADD COLUMN IF NOT EXISTS config_revision VARCHAR(36);
 UPDATE hzb_config SET config_revision = CAST(RANDOM_UUID() AS VARCHAR)
     WHERE config_revision IS NULL;
 ALTER TABLE hzb_config ALTER COLUMN config_revision SET NOT NULL;
 
--- V205  add monitor metric layout.sql.
+-- Add persisted monitor metric layouts.
 CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     creator VARCHAR(255) NOT NULL,
@@ -298,11 +298,27 @@ CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
 CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_monitor_metric_layout_creator_app
     ON hzb_monitor_metric_layout(creator, application);
 
--- V206  add agent gateway.sql.
+-- Scope persisted alerts by workspace.
+ALTER TABLE hzb_alert_single ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+ALTER TABLE hzb_alert_single DROP CONSTRAINT IF EXISTS unique_fingerprint;
+DROP INDEX IF EXISTS unique_fingerprint;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_fingerprint
+    ON hzb_alert_single(workspace_id, fingerprint);
+CREATE INDEX IF NOT EXISTS idx_alert_single_workspace ON hzb_alert_single(workspace_id);
+
+ALTER TABLE hzb_alert_group ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+ALTER TABLE hzb_alert_group DROP CONSTRAINT IF EXISTS unique_group_key;
+DROP INDEX IF EXISTS unique_group_key;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_group_key
+    ON hzb_alert_group(workspace_id, group_key);
+CREATE INDEX IF NOT EXISTS idx_alert_group_workspace ON hzb_alert_group(workspace_id);
+
+-- Add the agent gateway persistence model.
 CREATE TABLE IF NOT EXISTS hzb_agent_session (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     session_uid VARCHAR(64) NOT NULL,
     session_key VARCHAR(128) NOT NULL,
+    workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     channel VARCHAR(64),
     origin_entry_type VARCHAR(32) NOT NULL,
     conversation_id VARCHAR(256),
@@ -317,7 +333,8 @@ CREATE TABLE IF NOT EXISTS hzb_agent_session (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_session_uid ON hzb_agent_session(session_uid);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_session_key ON hzb_agent_session(session_key);
-CREATE INDEX IF NOT EXISTS idx_agent_session_owner ON hzb_agent_session(channel, actor_type, actor_id);
+CREATE INDEX IF NOT EXISTS idx_agent_session_owner
+    ON hzb_agent_session(workspace_id, channel, actor_type, actor_id);
 
 CREATE TABLE IF NOT EXISTS hzb_agent_run (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -365,7 +382,7 @@ CREATE TABLE IF NOT EXISTS hzb_agent_tool_call (
     approval_reason VARCHAR(1024),
     result_output TEXT,
     elapsed_ms BIGINT,
-    error_message TEXT,
+    error_message VARCHAR(1024),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -419,6 +436,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_schedule_session
 
 CREATE TABLE IF NOT EXISTS hzb_alert_analysis_policy (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     name VARCHAR(128) NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     match_labels VARCHAR(4096) NOT NULL,
@@ -429,7 +447,10 @@ CREATE TABLE IF NOT EXISTS hzb_alert_analysis_policy (
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX IF NOT EXISTS idx_alert_analysis_enabled ON hzb_alert_analysis_policy(enabled);
+ALTER TABLE hzb_alert_analysis_policy
+    ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+CREATE INDEX IF NOT EXISTS idx_alert_analysis_workspace_enabled
+    ON hzb_alert_analysis_policy(workspace_id, enabled);
 
 ALTER TABLE hzb_config ALTER COLUMN content CLOB;
 

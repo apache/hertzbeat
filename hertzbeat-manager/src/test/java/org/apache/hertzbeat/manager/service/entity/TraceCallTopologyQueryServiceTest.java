@@ -23,8 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,11 +39,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -62,6 +70,72 @@ class TraceCallTopologyQueryServiceTest {
 
     @Mock
     private EntityWorkspaceAccessService entityWorkspaceAccessService;
+
+    @BeforeEach
+    void bridgeLegacyDefaultFixturesToScopedContracts() {
+        lenient().when(entityIdentityQueryService.findIdentities(
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), anyLong())).thenAnswer(invocation ->
+                entityIdentityQueryService.findIdentities(invocation.getArgument(1)));
+        lenient().when(entityIdentityQueryService.findMatchingIdentities(
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), any(), any())).thenAnswer(invocation ->
+                entityIdentityQueryService.findMatchingIdentities(
+                        invocation.getArgument(1), invocation.getArgument(2)));
+        lenient().when(entityWorkspaceAccessService.findAccessibleEntitiesByIds(
+                any(), eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID))).thenAnswer(invocation ->
+                entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(
+                        invocation.getArgument(0)));
+        lenient().when(entityWorkspaceAccessService.findAccessibleEntities(
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), any(Sort.class))).thenAnswer(invocation ->
+                entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                        invocation.getArgument(1, Sort.class)));
+        lenient().when(traceQueryRepository.queryTraceServiceGraphRows(
+                anyInt(), any(), any(), any(), eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), any(), any()))
+                .thenAnswer(invocation -> traceQueryRepository.queryTraceServiceGraphRows(
+                        invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2),
+                        invocation.getArgument(3), invocation.getArgument(5), invocation.getArgument(6)));
+        lenient().when(traceQueryRepository.queryRecentTraceRows(
+                anyInt(), any(), any(), any(), any(), any(),
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), anyMap(), any())).thenAnswer(invocation ->
+                traceQueryRepository.queryRecentTraceRows(
+                        invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2),
+                        invocation.getArgument(3), invocation.getArgument(5), invocation.getArgument(8)));
+    }
+
+    @Test
+    void explicitWorkspaceSurvivesThreadLocalLossAcrossTraceQueryCallable() {
+        ObserveEntity checkout = entity(10L, "checkout-api", "commerce", "prod");
+        ObserveEntity payment = entity(20L, "payment-api", "commerce", "prod");
+        when(entityIdentityQueryService.findIdentities("team-a", 10L)).thenReturn(List.of(
+                identity(10L, "service.name", "checkout-api")));
+        when(traceQueryRepository.queryTraceServiceGraphRows(
+                eq(1500), eq(1710000000000L), eq(1710003600000L), eq("prod"), eq("team-a"),
+                argThat(serviceNames -> serviceNames != null && serviceNames.contains("checkout-api")), eq(true)))
+                .thenReturn(List.of(serviceGraphRow(
+                        "checkout-api", "payment-api", 4L, 1L, 240D, 120D,
+                        "trace-9", "span-9", "POST /pay",
+                        "2026-05-20T03:01:00Z", "2026-05-20T03:08:00Z")));
+        when(entityIdentityQueryService.findMatchingIdentities(
+                eq("team-a"), argThat(keys -> keys != null && keys.contains("service.name")),
+                argThat(values -> values != null && values.containsAll(Set.of("checkout api", "payment api")))))
+                .thenReturn(List.of(
+                        identity(10L, "service.name", "checkout-api"),
+                        identity(20L, "service.name", "payment-api")));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIds(
+                argThat(ids -> ids != null && ids.containsAll(Set.of(10L, 20L))), eq("team-a")))
+                .thenReturn(List.of(checkout, payment));
+
+        TraceCallTopologyReadModel readModel = traceCallTopologyQueryService.findTraceCallEdges(
+                "team-a", List.of(checkout), "prod", 1710000000000L, 1710003600000L, true);
+
+        assertEquals(1, readModel.edges().size());
+        verify(traceQueryRepository).queryTraceServiceGraphRows(
+                eq(1500), eq(1710000000000L), eq(1710003600000L), eq("prod"), eq("team-a"),
+                argThat(serviceNames -> serviceNames != null && serviceNames.contains("checkout-api")), eq(true));
+        verify(entityIdentityQueryService, times(2)).findIdentities("team-a", 10L);
+        verify(entityIdentityQueryService).findMatchingIdentities(
+                eq("team-a"), any(), any());
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesByIds(any(), eq("team-a"));
+    }
 
     @Test
     void derivesServiceCallEdgesFromParentChildTraceSpans() {
@@ -205,6 +279,8 @@ class TraceCallTopologyQueryServiceTest {
         ObserveEntity checkout = entity(10L, "checkout-api", "commerce", "prod");
         ObserveEntity payment = entity(20L, "payment-api", "commerce", "prod");
         CountDownLatch releaseServiceGraphQuery = new CountDownLatch(1);
+        CountDownLatch cancellationObserved = new CountDownLatch(1);
+        AtomicBoolean queryInterrupted = new AtomicBoolean();
         when(entityIdentityQueryService.findIdentities(10L)).thenReturn(List.of(
                 identity(10L, "service.name", "checkout-api")));
         when(traceQueryRepository.queryTraceServiceGraphRows(
@@ -212,7 +288,13 @@ class TraceCallTopologyQueryServiceTest {
                 argThat(serviceNames -> serviceNames != null && serviceNames.contains("checkout-api")),
                 eq(true)))
                 .thenAnswer(invocation -> {
-                    releaseServiceGraphQuery.await(5, TimeUnit.SECONDS);
+                    try {
+                        releaseServiceGraphQuery.await(5, TimeUnit.SECONDS);
+                    } catch (InterruptedException exception) {
+                        queryInterrupted.set(true);
+                        cancellationObserved.countDown();
+                        throw exception;
+                    }
                     return List.of(serviceGraphRow(
                             "checkout-api", "payment-api", 1L, 0L, 100D, 80D,
                             "trace-late", "span-late", "POST /pay",
@@ -237,6 +319,8 @@ class TraceCallTopologyQueryServiceTest {
         try {
             readModel = boundedService.findTraceCallEdges(
                     List.of(checkout), "prod", 1710000000000L, 1710003600000L);
+            assertTrue(cancellationObserved.await(1, TimeUnit.SECONDS));
+            assertTrue(queryInterrupted.get());
         } finally {
             releaseServiceGraphQuery.countDown();
         }
@@ -260,6 +344,8 @@ class TraceCallTopologyQueryServiceTest {
                 Duration.ofMillis(25));
         ObserveEntity checkout = entity(10L, "checkout-api", "commerce", "prod");
         CountDownLatch releaseRawTraceQuery = new CountDownLatch(1);
+        CountDownLatch cancellationObserved = new CountDownLatch(1);
+        AtomicBoolean queryInterrupted = new AtomicBoolean();
         when(entityIdentityQueryService.findIdentities(10L)).thenReturn(List.of(
                 identity(10L, "service.name", "checkout-api")));
         when(traceQueryRepository.queryTraceServiceGraphRows(
@@ -269,7 +355,13 @@ class TraceCallTopologyQueryServiceTest {
                 .thenReturn(List.of());
         when(traceQueryRepository.queryRecentTraceRows(1500, 1710000000000L, 1710003600000L, null, "prod", true))
                 .thenAnswer(invocation -> {
-                    releaseRawTraceQuery.await(5, TimeUnit.SECONDS);
+                    try {
+                        releaseRawTraceQuery.await(5, TimeUnit.SECONDS);
+                    } catch (InterruptedException exception) {
+                        queryInterrupted.set(true);
+                        cancellationObserved.countDown();
+                        throw exception;
+                    }
                     return List.of(traceRow("trace-late", "root", null, "GET /checkout",
                             "checkout-api", "STATUS_CODE_OK", 20D));
                 });
@@ -279,6 +371,8 @@ class TraceCallTopologyQueryServiceTest {
         try {
             readModel = boundedService.findTraceCallEdges(
                     List.of(checkout), "prod", 1710000000000L, 1710003600000L);
+            assertTrue(cancellationObserved.await(1, TimeUnit.SECONDS));
+            assertTrue(queryInterrupted.get());
         } finally {
             releaseRawTraceQuery.countDown();
         }

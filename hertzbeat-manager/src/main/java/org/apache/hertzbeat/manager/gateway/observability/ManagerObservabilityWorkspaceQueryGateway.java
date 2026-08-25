@@ -82,8 +82,19 @@ public class ManagerObservabilityWorkspaceQueryGateway implements ObservabilityW
     }
 
     @Override
+    public long countDistinctBoundEntityIdsByIdentityKeys(String workspaceId, Set<String> identityKeys) {
+        return entityIdentityQueryService.countDistinctEntityIdsByIdentityKeys(workspaceId, identityKeys);
+    }
+
+    @Override
     public List<EntityIdentity> findIdentitiesByKeysAndNormalizedValues(Set<String> identityKeys, Set<String> normalizedValues) {
         return entityIdentityQueryService.findMatchingIdentities(identityKeys, normalizedValues);
+    }
+
+    @Override
+    public List<EntityIdentity> findIdentitiesByKeysAndNormalizedValues(
+            String workspaceId, Set<String> identityKeys, Set<String> normalizedValues) {
+        return entityIdentityQueryService.findMatchingIdentities(workspaceId, identityKeys, normalizedValues);
     }
 
     @Override
@@ -96,8 +107,22 @@ public class ManagerObservabilityWorkspaceQueryGateway implements ObservabilityW
     }
 
     @Override
+    public Map<Long, ObserveEntity> findEntitiesByIds(String workspaceId, Set<Long> entityIds) {
+        if (!StringUtils.hasText(workspaceId) || CollectionUtils.isEmpty(entityIds)) {
+            return Collections.emptyMap();
+        }
+        return entityWorkspaceQueryService.findEntitiesByIds(workspaceId, entityIds).stream()
+                .collect(LinkedHashMap::new, (map, entity) -> map.put(entity.getId(), entity), Map::putAll);
+    }
+
+    @Override
     public long countMonitorBindsByEntityId(Long entityId) {
         return entityMonitorBindQueryService.countMonitorBinds(entityId);
+    }
+
+    @Override
+    public long countMonitorBindsByEntityId(String workspaceId, Long entityId) {
+        return entityMonitorBindQueryService.countMonitorBinds(workspaceId, entityId);
     }
 
     @Override
@@ -106,8 +131,24 @@ public class ManagerObservabilityWorkspaceQueryGateway implements ObservabilityW
     }
 
     @Override
+    public Optional<ObserveEntity> findEntityById(String workspaceId, Long entityId) {
+        if (!StringUtils.hasText(workspaceId) || entityId == null) {
+            return Optional.empty();
+        }
+        return entityWorkspaceQueryService.findEntityById(workspaceId, entityId);
+    }
+
+    @Override
     public List<EntityIdentity> findIdentitiesByEntityId(Long entityId) {
         return entityIdentityQueryService.findIdentities(entityId);
+    }
+
+    @Override
+    public List<EntityIdentity> findIdentitiesByEntityId(String workspaceId, Long entityId) {
+        if (!StringUtils.hasText(workspaceId) || entityId == null) {
+            return List.of();
+        }
+        return entityIdentityQueryService.findIdentities(workspaceId, entityId);
     }
 
     @Override

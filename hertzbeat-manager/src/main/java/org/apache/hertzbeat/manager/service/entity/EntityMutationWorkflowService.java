@@ -79,6 +79,7 @@ public class EntityMutationWorkflowService {
     }
 
     public long addEntity(EntityDto entityDto) {
+        requireServerGeneratedEntityIds(List.of(entityDto));
         return withMutationReferenceLocks(List.of(entityDto), () -> {
             requireNewEntityReferences(List.of(entityDto));
             return addEntity(entityDto, true);
@@ -92,6 +93,7 @@ public class EntityMutationWorkflowService {
     public long addEntityByDefinition(EntityDefinitionRequest definitionRequest) {
         EntityDto entityDto = entityDefinitionDraftService.parseEntityDefinition(definitionRequest, null);
         entityValidationService.validate(entityDto, false);
+        requireServerGeneratedEntityIds(List.of(entityDto));
         return withMutationReferenceLocks(List.of(entityDto), () -> {
             requireNewEntityReferences(List.of(entityDto));
             long entityId = addEntity(entityDto, false);
@@ -109,6 +111,7 @@ public class EntityMutationWorkflowService {
         if (CollectionUtils.isEmpty(entityDtos)) {
             return Collections.emptyList();
         }
+        requireServerGeneratedEntityIds(entityDtos);
         if (entityDtos.size() == 1) {
             EntityDto entityDto = entityDtos.getFirst();
             entityValidationService.validate(entityDto, false);
@@ -247,6 +250,18 @@ public class EntityMutationWorkflowService {
                             entity.getType(), entity.getName()).isPresent();
             if (exists) {
                 throw new IllegalArgumentException("Entity already exists: " + displayReference(entity) + ".");
+            }
+        }
+    }
+
+    private void requireServerGeneratedEntityIds(List<EntityDto> entityDtos) {
+        if (CollectionUtils.isEmpty(entityDtos)) {
+            return;
+        }
+        for (EntityDto entityDto : entityDtos) {
+            ObserveEntity entity = entityDto == null ? null : entityDto.getEntity();
+            if (entity != null && entity.getId() != null) {
+                throw new IllegalArgumentException("Entity create request must not contain an id.");
             }
         }
     }

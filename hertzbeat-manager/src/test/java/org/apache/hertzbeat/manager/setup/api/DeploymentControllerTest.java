@@ -36,6 +36,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.FactoryResetResponse;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
@@ -63,14 +64,34 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class DeploymentControllerTest {
 
     private final DeploymentWorkflow workflow = mock(DeploymentWorkflow.class);
+    private final FactoryResetWorkflow factoryResetWorkflow = mock(FactoryResetWorkflow.class);
     private ObjectProvider<DeploymentWorkflow> workflowProvider;
+    private ObjectProvider<FactoryResetWorkflow> factoryResetWorkflowProvider;
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         StaticListableBeanFactory factory = providerFactory(List.of(workflow));
         workflowProvider = factory.getBeanProvider(DeploymentWorkflow.class);
-        mvc = mvc(workflowProvider);
+        factory.addBean("factory-reset-workflow", factoryResetWorkflow);
+        factoryResetWorkflowProvider = factory.getBeanProvider(FactoryResetWorkflow.class);
+        mvc = mvc(workflowProvider, factoryResetWorkflowProvider);
+    }
+
+    @Test
+    void acceptsAnExplicitFactoryResetConfirmationWithoutEchoingIt() throws Exception {
+        when(factoryResetWorkflow.reset(any())).thenReturn(new FactoryResetResponse(true));
+
+        mvc.perform(post(DeploymentApiContract.FACTORY_RESET_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"confirmation\":\"RESET HERTZBEAT\"}"))
+                .andExpect(status().isAccepted())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.accepted").value(true))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("RESET HERTZBEAT"))));
+
+        verify(factoryResetWorkflow).reset(argThat(request -> "RESET HERTZBEAT".equals(request.confirmation())));
     }
 
     @Test
@@ -241,11 +262,13 @@ class DeploymentControllerTest {
 
     private MockMvc mvc(List<DeploymentWorkflow> workflows) {
         StaticListableBeanFactory factory = providerFactory(workflows);
-        return mvc(factory.getBeanProvider(DeploymentWorkflow.class));
+        return mvc(factory.getBeanProvider(DeploymentWorkflow.class),
+                factory.getBeanProvider(FactoryResetWorkflow.class));
     }
 
-    private MockMvc mvc(ObjectProvider<DeploymentWorkflow> workflows) {
-        return MockMvcBuilders.standaloneSetup(new DeploymentController(workflows))
+    private MockMvc mvc(ObjectProvider<DeploymentWorkflow> workflows,
+                        ObjectProvider<FactoryResetWorkflow> resets) {
+        return MockMvcBuilders.standaloneSetup(new DeploymentController(workflows, resets))
                 .setControllerAdvice(new SetupExceptionHandler()).build();
     }
 

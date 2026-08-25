@@ -47,7 +47,7 @@ export type ObjectStoreCanonicalRead = () => Promise<{
 export type ObjectStoreSaveNotifications = {
   notifyFailure: () => void;
   notifyReconciled: () => void;
-  notifyRejected: () => void;
+  notifyRejected: (reason: unknown) => void;
   notifySuccess: () => void;
 };
 
@@ -124,7 +124,7 @@ async function handleSaveFailure(
   if (!runtime.isCurrent(owner)) return;
   if (isObjectStoreWriteRejection(reason)) {
     runtime.publish(owner, null);
-    options.notifyRejected();
+    options.notifyRejected(reason);
     runtime.finish(owner);
     return;
   }

@@ -22,6 +22,8 @@ import jakarta.validation.Valid;
 import java.io.IOException;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.ActivateMigrationRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.FactoryResetRequest;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.FactoryResetResponse;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigrationRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigrationValidationRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationExportRequest;
@@ -31,6 +33,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationRespons
 import org.apache.hertzbeat.manager.setup.workflow.PreparedMigrationExport;
 import org.apache.hertzbeat.manager.setup.workflow.StagedMigrationExport;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,9 +47,18 @@ import org.springframework.web.bind.annotation.RestController;
 public final class DeploymentController {
 
     private final ObjectProvider<DeploymentWorkflow> workflowProvider;
+    private final ObjectProvider<FactoryResetWorkflow> factoryResetWorkflowProvider;
 
     public DeploymentController(ObjectProvider<DeploymentWorkflow> workflowProvider) {
+        this(workflowProvider, null);
+    }
+
+    @Autowired
+    public DeploymentController(
+            ObjectProvider<DeploymentWorkflow> workflowProvider,
+            ObjectProvider<FactoryResetWorkflow> factoryResetWorkflowProvider) {
         this.workflowProvider = workflowProvider;
+        this.factoryResetWorkflowProvider = factoryResetWorkflowProvider;
     }
 
     @GetMapping(DeploymentApiContract.DEPLOYMENT_PATH)
@@ -63,6 +75,12 @@ public final class DeploymentController {
     @PostMapping(DeploymentApiContract.MIGRATION_PATH)
     public ResponseEntity<MigrationView> migrate(@Valid @RequestBody MetadataMigrationRequest request) {
         return SetupHttpContract.noStore().body(workflow().migrate(request));
+    }
+
+    @PostMapping(DeploymentApiContract.FACTORY_RESET_PATH)
+    public ResponseEntity<FactoryResetResponse> factoryReset(
+            @Valid @RequestBody FactoryResetRequest request) {
+        return SetupHttpContract.noStore(HttpStatus.ACCEPTED).body(factoryResetWorkflow().reset(request));
     }
 
     @GetMapping(DeploymentApiContract.MIGRATION_OPERATION_PATH)
@@ -106,6 +124,15 @@ public final class DeploymentController {
 
     private DeploymentWorkflow workflow() {
         DeploymentWorkflow workflow = workflowProvider.getIfUnique();
+        if (workflow == null) {
+            throw unavailable();
+        }
+        return workflow;
+    }
+
+    private FactoryResetWorkflow factoryResetWorkflow() {
+        FactoryResetWorkflow workflow = factoryResetWorkflowProvider == null
+                ? null : factoryResetWorkflowProvider.getIfUnique();
         if (workflow == null) {
             throw unavailable();
         }

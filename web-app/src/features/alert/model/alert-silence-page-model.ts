@@ -18,6 +18,7 @@
 import type { RemotePageState } from '@/shared/remote-state';
 
 import type { AlertActionCapabilities } from './alert-action-capability';
+import type { AlertLabelSuggestionState } from './alert-label-suggestion-model';
 import type {
   AlertSilence,
   AlertSilenceDraft,
@@ -43,6 +44,7 @@ export type AlertSilenceDetailState =
 
 export type AlertSilenceViewState = {
   capabilities: AlertActionCapabilities;
+  labelSuggestions: AlertLabelSuggestionState;
   query: AlertSilenceQuery;
   search: string;
   detail: AlertSilenceDetailState;

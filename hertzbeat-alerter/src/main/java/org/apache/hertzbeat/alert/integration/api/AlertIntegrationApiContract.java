@@ -42,6 +42,18 @@ public final class AlertIntegrationApiContract {
     }
 
     /**
+     * Whether the current workspace has completed a real sender verification.
+     */
+    public enum VerificationStatus {
+        @JsonProperty("unverified")
+        UNVERIFIED,
+        @JsonProperty("waiting")
+        WAITING,
+        @JsonProperty("verified")
+        VERIFIED
+    }
+
+    /**
      * Safe public error codes.
      */
     public enum RequestErrorCode {
@@ -76,10 +88,20 @@ public final class AlertIntegrationApiContract {
             String displayNameKey,
             String iconKey,
             Readiness readiness,
-            List<String> limitations) {
+            List<String> limitations,
+            IntegrationVerification verification) {
         public CatalogItem {
             limitations = List.copyOf(limitations);
         }
+    }
+
+    /**
+     * Workspace-scoped evidence for one sender verification attempt.
+     */
+    public record IntegrationVerification(
+            VerificationStatus status,
+            Long startedAt,
+            Long verifiedAt) {
     }
 
     /**
@@ -107,8 +129,8 @@ public final class AlertIntegrationApiContract {
             limitations = List.copyOf(limitations);
         }
 
-        public CatalogItem toCatalogItem() {
-            return new CatalogItem(source, displayNameKey, iconKey, readiness, limitations);
+        public CatalogItem toCatalogItem(IntegrationVerification verification) {
+            return new CatalogItem(source, displayNameKey, iconKey, readiness, limitations, verification);
         }
     }
 }

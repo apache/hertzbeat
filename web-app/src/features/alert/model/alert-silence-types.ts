@@ -20,6 +20,16 @@ import type { PagedCollection } from '@/shared/pagination';
 export type AlertSilenceQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertSilenceType = 0 | 1;
 
+type AlertSilenceScheduleWindow = {
+  periodStart: string;
+  periodEnd: string;
+};
+
+export type AlertSilenceScheduleMemory = {
+  once: AlertSilenceScheduleWindow;
+  recurring: AlertSilenceScheduleWindow;
+};
+
 type AlertSilenceWritableSnapshot = {
   matchAll: boolean;
   type: AlertSilenceType;
@@ -39,6 +49,7 @@ export type AlertSilenceDraft = {
   days: number[];
   periodStart: string;
   periodEnd: string;
+  scheduleMemory?: AlertSilenceScheduleMemory;
   persisted?: AlertSilenceWritableSnapshot;
 };
 

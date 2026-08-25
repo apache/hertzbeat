@@ -49,6 +49,7 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 /** Full application context proof for the metadata write admission advisor chain. */
 @ActiveProfiles("test")
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TrustedStartup
 class MetadataWriteAdmissionStartupContextTest {
 
     @Autowired

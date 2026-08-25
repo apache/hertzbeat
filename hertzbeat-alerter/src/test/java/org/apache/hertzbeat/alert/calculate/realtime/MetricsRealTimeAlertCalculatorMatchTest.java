@@ -29,11 +29,13 @@ import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -49,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -136,7 +139,8 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(singleAlertDao.querySingleAlertsByStatus(any())).thenReturn(new ArrayList<>());
+        when(singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(eq("default"), any()))
+                .thenReturn(new ArrayList<>());
         metricsRealTimeAlertCalculator = new MetricsRealTimeAlertCalculator(
                 workerPool,
                 dataQueue,
@@ -357,7 +361,10 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         metricsRealTimeAlertCalculator.calculate(metricsData);
 
         verify(alarmCacheManager).putFiring(any(), any(), any());
-        verify(alarmCommonReduce).reduceAndSendAlarm(any());
+        ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
+        verify(alarmCommonReduce).reduceAndSendAlarm(alertCaptor.capture());
+        assertEquals("518679137103104",
+                alertCaptor.getValue().getLabels().get(CommonConstants.LABEL_MONITOR_ID));
     }
 
 }

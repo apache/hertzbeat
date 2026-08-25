@@ -1,0 +1,136 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.dialog :global(.ant-modal-content) {
+  overflow: clip;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--hb-border-subtle) 82%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 24px 72px rgb(24 30 42 / 22%);
+}
+
+.dialog :global(.ant-modal-header) {
+  margin: 0;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.dialog :global(.ant-modal-title) {
+  color: var(--hb-text-primary);
+  font-size: 16px;
+  font-weight: 680;
+}
+
+.dialog :global(.ant-modal-close) {
+  inset-block-start: 14px;
+  inset-inline-end: 14px;
+}
+
+.dialog :global(.ant-modal-body) {
+  padding: 18px 22px 8px;
+}
+
+.intro {
+  margin: 0 0 14px;
+  color: var(--hb-text-secondary);
+  line-height: 1.55;
+}
+
+.scopeGroup {
+  display: grid;
+  width: 100%;
+  border-block: 1px solid var(--hb-border-subtle);
+}
+
+.scopeOption {
+  width: 100%;
+  margin: 0 !important;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+  transition: background-color 140ms ease;
+}
+
+.scopeOption:last-child {
+  border-bottom: 0;
+}
+
+.scopeOption:hover,
+.scopeOption:global(.ant-radio-wrapper-checked) {
+  background: color-mix(in srgb, var(--hb-brand-accent) 7%, transparent);
+}
+
+.scopeOption :global(.ant-radio) {
+  align-self: start;
+  margin-top: 2px;
+}
+
+.scopeCopy {
+  display: grid;
+  gap: 3px;
+  padding-inline-start: 4px;
+}
+
+.scopeTitle {
+  color: var(--hb-text-primary);
+  font-weight: 640;
+}
+
+.scopeDescription {
+  color: var(--hb-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.limit,
+.prepareFailure {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-inline-start: 3px solid var(--hb-status-degraded);
+  background: color-mix(in srgb, var(--hb-status-degraded) 7%, transparent);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.prepareFailure {
+  border-inline-start-color: var(--hb-status-unavailable);
+  background: color-mix(in srgb, var(--hb-status-unavailable) 7%, transparent);
+}
+
+.review {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 8px;
+}
+
+.reviewCount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--hb-text-secondary);
+}
+
+.reviewCount strong {
+  color: var(--hb-status-unavailable);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.reviewDescription {
+  margin: 0;
+  color: var(--hb-text-secondary);
+  line-height: 1.6;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--hb-border-subtle);
+}

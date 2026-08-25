@@ -29,7 +29,10 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
 import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.service.AppService;
+import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.metric.MonitorMetricQueryContract;
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -47,12 +50,17 @@ public class AgentMetricsToolService {
     private static final long MAX_INTERVAL_HISTORY_SECONDS = 7L * 24 * 60 * 60;
     private static final int DEFAULT_HISTORY_MAX_POINTS = 300;
     private static final int MAX_HISTORY_MAX_POINTS = 300;
+    private static final long MAX_EXACT_RAW_MILLIS = 6L * 60 * 60 * 1_000;
+    private static final String STEP_PATTERN = "^[1-9][0-9]*(ms|s|m|h|d)$";
 
     private final AppService appService;
+    private final MonitorService monitorService;
     private final MetricsDataService metricsDataService;
 
-    public AgentMetricsToolService(AppService appService, MetricsDataService metricsDataService) {
+    public AgentMetricsToolService(AppService appService, MonitorService monitorService,
+                                   MetricsDataService metricsDataService) {
         this.appService = appService;
+        this.monitorService = monitorService;
         this.metricsDataService = metricsDataService;
     }
 
@@ -82,14 +90,15 @@ public class AgentMetricsToolService {
     }
 
     @Tool(name = "metrics.history",
-        description = "Get bounded historical metrics. Raw windows are limited to 6h; interval windows are limited to 1w.")
+        description = "Get bounded historical metrics. Relative raw windows are limited to 6h and relative interval "
+            + "windows to 1w; exact target-bound windows return at most 300 sampled points.")
     @AgentToolPolicy
     public Map<String, Object> metricsHistory(
-        @ToolParam(description = "Monitor instance label.")
+        @ToolParam(required = false, description = "Monitor instance label for a relative query.")
         String instance,
-        @ToolParam(description = "Application type.")
+        @ToolParam(required = false, description = "Application type for a relative query.")
         String app,
-        @ToolParam(description = "Metrics name to query.")
+        @ToolParam(required = false, description = "Metrics group for a relative query.")
         String metrics,
         @ToolParam(required = false, description = "Optional field parameter.")
         String fieldParameter,
@@ -98,7 +107,20 @@ public class AgentMetricsToolService {
         @ToolParam(required = false, description = "Whether to query interval data, default true.")
         Boolean interval,
         @ToolParam(required = false, description = "Maximum returned points, bounded to 1..300.")
-        Integer maxPoints) {
+        Integer maxPoints,
+        @ToolParam(required = false, description = "Monitor id for an exact target-bound query.")
+        Long monitorId,
+        @ToolParam(required = false, description = "Exact metric key in group.field form.")
+        String metricKey,
+        @ToolParam(required = false, description = "Exact inclusive query start in epoch milliseconds.")
+        Long start,
+        @ToolParam(required = false, description = "Exact exclusive query end in epoch milliseconds.")
+        Long end,
+        @ToolParam(required = false, description = "Optional exact query step such as 60s.")
+        String step) {
+        if (monitorId != null || metricKey != null || start != null || end != null || step != null) {
+            return exactMetricsHistory(monitorId, metricKey, start, end, step, interval, maxPoints);
+        }
         String resolvedInstance = required(instance, "instance");
         String resolvedApp = required(app, "app");
         String resolvedMetrics = required(metrics, "metrics");
@@ -109,6 +131,97 @@ public class AgentMetricsToolService {
             AgentToolArguments.firstNonBlank(fieldParameter), boundedHistory, resolvedInterval);
         return boundedHistoricalMetrics(data, resolvedInstance, resolvedApp, resolvedMetrics, boundedHistory,
             resolvedInterval, resolvedMaxPoints);
+    }
+
+    /** Compatibility seam for internal callers of the original relative-window tool method. */
+    public Map<String, Object> metricsHistory(String instance, String app, String metrics, String fieldParameter,
+                                              String history, Boolean interval, Integer maxPoints) {
+        return metricsHistory(instance, app, metrics, fieldParameter, history, interval, maxPoints,
+                null, null, null, null, null);
+    }
+
+    private Map<String, Object> exactMetricsHistory(Long monitorId, String metricKey, Long start, Long end,
+                                                    String step, Boolean interval, Integer maxPoints) {
+        if (monitorId == null || monitorId <= 0) {
+            throw new IllegalArgumentException("metrics.history exact query requires monitorId");
+        }
+        String resolvedMetricKey = required(metricKey, "metricKey");
+        long duration = MonitorMetricQueryContract.exactDurationMillis(start, end);
+        if (duration < 0) {
+            throw new IllegalArgumentException("metrics.history exact query requires start < end");
+        }
+        if (duration > MonitorMetricQueryContract.MAX_EXACT_DURATION_MILLIS) {
+            throw new IllegalArgumentException("metrics.history exact query must be <= 12w");
+        }
+        String resolvedStep = AgentToolArguments.firstNonBlank(step);
+        if (resolvedStep != null && !resolvedStep.matches(STEP_PATTERN)) {
+            throw new IllegalArgumentException("step must use a positive duration such as 60s or 5m");
+        }
+        int separator = resolvedMetricKey.indexOf('.');
+        if (separator <= 0 || separator == resolvedMetricKey.length() - 1) {
+            throw new IllegalArgumentException("metricKey must use group.field form");
+        }
+        var monitorDto = monitorService.getMonitorDto(monitorId);
+        Monitor monitor = monitorDto == null ? null : monitorDto.getMonitor();
+        if (monitor == null) {
+            throw new IllegalArgumentException("Monitor is unavailable");
+        }
+        String resolvedApp = MonitorMetricQueryContract.historyApp(monitor);
+        String resolvedMetrics = resolvedMetricKey.substring(0, separator);
+        String resolvedField = resolvedMetricKey.substring(separator + 1);
+        Boolean resolvedInterval = duration > MAX_EXACT_RAW_MILLIS
+                ? Boolean.TRUE : interval == null ? Boolean.TRUE : interval;
+        int resolvedMaxPoints = historyMaxPoints(maxPoints);
+        String queryStep = Boolean.TRUE.equals(resolvedInterval)
+                ? intervalStep(duration, resolvedMaxPoints) : null;
+        String exactHistory = Math.max(1, (duration + 999) / 1_000) + "s";
+        MetricsHistoryData data = metricsDataService.getMetricHistoryData(monitor.getInstance(), resolvedApp,
+                resolvedMetrics, resolvedField, exactHistory, resolvedInterval, start, end,
+                queryStep);
+        MetricsHistoryData exactData = filterExactWindow(data, start, end);
+        Map<String, Object> result = boundedHistoricalMetrics(exactData, monitor.getInstance(), resolvedApp,
+                resolvedMetrics, exactHistory, resolvedInterval, resolvedMaxPoints);
+        result.put("monitorId", monitorId);
+        result.put("metricKey", resolvedMetricKey);
+        result.put("start", start);
+        result.put("end", end);
+        return result;
+    }
+
+    private String intervalStep(long durationMillis, int maxPoints) {
+        long stepMillis = durationMillis / maxPoints;
+        if (durationMillis % maxPoints != 0) {
+            stepMillis++;
+        }
+        if (stepMillis < 1_000) {
+            return Math.max(1, stepMillis) + "ms";
+        }
+        long stepSeconds = stepMillis / 1_000;
+        if (stepMillis % 1_000 != 0) {
+            stepSeconds++;
+        }
+        return stepSeconds + "s";
+    }
+
+    private MetricsHistoryData filterExactWindow(MetricsHistoryData data, long start, long end) {
+        if (data == null) {
+            return null;
+        }
+        Map<String, List<Value>> filtered = new LinkedHashMap<>();
+        if (data.getValues() != null) {
+            data.getValues().forEach((labels, values) -> filtered.put(labels,
+                    values == null ? List.of() : values.stream()
+                            .filter(value -> value != null && value.getTime() != null
+                                    && value.getTime() >= start && value.getTime() < end)
+                            .toList()));
+        }
+        return MetricsHistoryData.builder()
+                .instance(data.getInstance())
+                .app(data.getApp())
+                .metrics(data.getMetrics())
+                .field(data.getField())
+                .values(filtered)
+                .build();
     }
 
     @Tool(name = "metrics.related",

@@ -38,6 +38,9 @@ import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +62,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  */
 @ExtendWith(MockitoExtension.class)
 class AlertsControllerTest {
+    private static final String WORKSPACE_ID = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     private MockMvc mockMvc;
 
@@ -79,8 +83,14 @@ class AlertsControllerTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId(WORKSPACE_ID);
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertsController, alertSummaryController).build();
         ids = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -101,8 +111,8 @@ class AlertsControllerTest {
                 PageRequest.of(pageIndex, pageSize, Sort.by(sortField).descending()),
                 ids.size()
         );
-        Mockito.when(alertService.getGroupAlerts(status, content, severity, serviceName, serviceNamespace, environment,
-                        sortField, orderType, pageIndex, pageSize))
+        Mockito.when(alertService.getGroupAlerts(WORKSPACE_ID, status, content, severity, serviceName,
+                        serviceNamespace, environment, sortField, orderType, pageIndex, pageSize))
                 .thenReturn(alertPage);
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -141,7 +151,7 @@ class AlertsControllerTest {
                         new AlertGroupStatusEvidence(2L, CommonConstants.ALERT_STATUS_PENDING)),
                 List.of(3L),
                 123456789L);
-        Mockito.when(alertGroupEvidenceService.getEvidence(requestedIds)).thenReturn(evidence);
+        Mockito.when(alertGroupEvidenceService.getEvidence(WORKSPACE_ID, requestedIds)).thenReturn(evidence);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
                         .param("ids", "2", "1", "3", "1"))
@@ -155,12 +165,12 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.data.missingIds[0]").value(3))
                 .andExpect(jsonPath("$.data.observedAt").value(123456789L));
 
-        Mockito.verify(alertGroupEvidenceService).getEvidence(requestedIds);
+        Mockito.verify(alertGroupEvidenceService).getEvidence(WORKSPACE_ID, requestedIds);
     }
 
     @Test
     void getGroupAlertEvidenceInvalidRequestReturnsStableSafeFailure() throws Exception {
-        Mockito.when(alertGroupEvidenceService.getEvidence(List.of("-6565463543")))
+        Mockito.when(alertGroupEvidenceService.getEvidence(WORKSPACE_ID, List.of("-6565463543")))
                 .thenThrow(new AlertGroupEvidenceRequestException());
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
@@ -173,7 +183,7 @@ class AlertsControllerTest {
 
     @Test
     void getGroupAlertEvidenceFailureDoesNotExposeExceptionDetails() throws Exception {
-        Mockito.when(alertGroupEvidenceService.getEvidence(List.of("7")))
+        Mockito.when(alertGroupEvidenceService.getEvidence(WORKSPACE_ID, List.of("7")))
                 .thenThrow(new IllegalStateException(
                         "token=private-evidence-token payload=private-alert-payload"));
 
@@ -203,7 +213,7 @@ class AlertsControllerTest {
     void deleteGroupAlertsMissingTargetReturnsStableSafeFailure() throws Exception {
         HashSet<Long> missingIds = new HashSet<>(List.of(6565463543L));
         Mockito.doThrow(new AlertGroupNotFoundException())
-                .when(alertService).deleteGroupAlerts(missingIds);
+                .when(alertService).deleteGroupAlerts(WORKSPACE_ID, missingIds);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/alerts/group")
@@ -219,7 +229,7 @@ class AlertsControllerTest {
         HashSet<Long> ids = new HashSet<>(List.of(7L));
         Mockito.doThrow(new IllegalStateException(
                         "token=private-delete-token payload=private-alert-payload"))
-                .when(alertService).deleteGroupAlerts(ids);
+                .when(alertService).deleteGroupAlerts(WORKSPACE_ID, ids);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/alerts/group")
@@ -260,7 +270,7 @@ class AlertsControllerTest {
     @Test
     void applyGroupAlertStatusMissingTargetReturnsStableSafeFailure() throws Exception {
         Mockito.doThrow(new AlertGroupNotFoundException())
-                .when(alertService).editGroupAlertStatus("acknowledged", List.of(6565463543L));
+                .when(alertService).editGroupAlertStatus(WORKSPACE_ID, "acknowledged", List.of(6565463543L));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .put("/api/alerts/group/status/acknowledged")
@@ -275,7 +285,7 @@ class AlertsControllerTest {
     void applyGroupAlertStatusGenericFailureDoesNotExposeExceptionDetails() throws Exception {
         Mockito.doThrow(new IllegalStateException(
                         "token=private-alert-token payload=private-alert-payload"))
-                .when(alertService).editGroupAlertStatus("resolved", List.of(7L));
+                .when(alertService).editGroupAlertStatus(WORKSPACE_ID, "resolved", List.of(7L));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .put("/api/alerts/group/status/resolved")
@@ -290,7 +300,8 @@ class AlertsControllerTest {
     @Test
     void applyGroupAlertStatusRejectsUnsupportedPathValueWithStableSafeFailure() throws Exception {
         Mockito.doThrow(new AlertGroupStatusNotSupportedException())
-                .when(alertService).editGroupAlertStatus("private-arbitrary-status", List.of(6565463543L));
+                .when(alertService).editGroupAlertStatus(
+                        WORKSPACE_ID, "private-arbitrary-status", List.of(6565463543L));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .put("/api/alerts/group/status/private-arbitrary-status")
@@ -328,7 +339,7 @@ class AlertsControllerTest {
 
     @Test
     void getAlertsSummary() throws Exception {
-        Mockito.when(alertService.getAlertsSummary()).thenReturn(new AlertSummary());
+        Mockito.when(alertService.getAlertsSummary(WORKSPACE_ID)).thenReturn(new AlertSummary());
 
         mockMvc.perform(
                         MockMvcRequestBuilders

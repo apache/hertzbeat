@@ -35,6 +35,8 @@ public sealed interface GatewayCommand permits
         GatewayCommand.ApprovalDecisionCommand,
         GatewayCommand.CancelRunCommand,
         GatewayCommand.GetSessionCommand,
+        GatewayCommand.GetRunCommand,
+        GatewayCommand.GetLatestSessionRunCommand,
         GatewayCommand.ListSessionsCommand,
         GatewayCommand.GetSessionTranscriptCommand,
         GatewayCommand.ListModelProviderOptionsCommand,
@@ -84,12 +86,14 @@ public sealed interface GatewayCommand permits
             GatewayEnvelope envelope,
             ReplyMode replyMode,
             String commandId,
+            AgentRuntimeEntryType originEntryType,
             String approvalId,
             AgentApprovalDecision decision) implements GatewayCommand {
 
         public ApprovalDecisionCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
             replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
             decision = Objects.requireNonNull(decision, "approval decision is required");
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(approvalId)) {
                 throw new IllegalArgumentException("commandId and approvalId are required");
@@ -105,12 +109,14 @@ public sealed interface GatewayCommand permits
             GatewayEnvelope envelope,
             ReplyMode replyMode,
             String commandId,
+            AgentRuntimeEntryType originEntryType,
             String runUid,
             String reason) implements GatewayCommand {
 
         public CancelRunCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
             replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(runUid)) {
                 throw new IllegalArgumentException("commandId and runUid are required");
             }
@@ -138,6 +144,50 @@ public sealed interface GatewayCommand permits
             }
             if (!ActorSupport.hasIdentity(envelope.getActor())) {
                 throw new IllegalArgumentException("Session query actor is required");
+            }
+        }
+    }
+
+    /** Owner-scoped durable run query. */
+    @Builder
+    record GetRunCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            AgentRuntimeEntryType originEntryType,
+            String runUid) implements GatewayCommand {
+
+        public GetRunCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
+            if (!StringUtils.hasText(commandId) || !StringUtils.hasText(runUid)) {
+                throw new IllegalArgumentException("commandId and runUid are required");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Run query actor is required");
+            }
+        }
+    }
+
+    /** Owner-scoped latest durable run for one session. */
+    @Builder
+    record GetLatestSessionRunCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            AgentRuntimeEntryType originEntryType,
+            String sessionUid) implements GatewayCommand {
+
+        public GetLatestSessionRunCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
+            if (!StringUtils.hasText(commandId) || !StringUtils.hasText(sessionUid)) {
+                throw new IllegalArgumentException("commandId and sessionUid are required");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Latest run query actor is required");
             }
         }
     }

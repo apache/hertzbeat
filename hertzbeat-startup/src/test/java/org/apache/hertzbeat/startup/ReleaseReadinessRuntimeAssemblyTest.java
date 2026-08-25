@@ -135,17 +135,17 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
-    void aiMcpRuntimeCarriesCommonAutoconfigure() throws IOException {
+    void aiRuntimeKeepsMcpServerTransportOutOfTheReleaseClasspath() throws IOException {
         String startupPom = readRepoFile("hertzbeat-startup/pom.xml");
         String aiPom = readRepoFile("hertzbeat-ai/pom.xml");
 
         assertThat(dependencyBlock(startupPom, "hertzbeat-ai"))
                 .doesNotContain("<scope>test</scope>")
                 .doesNotContain("<scope>provided</scope>");
-        assertThat(dependencyBlock(aiPom, "spring-ai-autoconfigure-mcp-server-common"))
-                .contains("<groupId>org.springframework.ai</groupId>")
-                .doesNotContain("<scope>test</scope>")
-                .doesNotContain("<scope>provided</scope>");
+        assertThat(aiPom)
+                .doesNotContain("spring-ai-autoconfigure-mcp-server-common")
+                .doesNotContain("spring-ai-starter-mcp-server-webmvc")
+                .doesNotContain("modelcontextprotocol");
     }
 
     @Test
@@ -171,7 +171,7 @@ class ReleaseReadinessRuntimeAssemblyTest {
             String migration = readRepoFile(
                     "hertzbeat-startup/src/main/resources/db/migration/"
                             + database
-                            + "/V201__add_collector_intake_token_boundary.sql"
+                            + "/V200__create_entity_foundation.sql"
             ).toLowerCase();
 
             assertThat(migration)
@@ -189,7 +189,7 @@ class ReleaseReadinessRuntimeAssemblyTest {
             String migration = readRepoFile(
                     "hertzbeat-startup/src/main/resources/db/migration/"
                             + database
-                            + "/V202__add_collector_runtime_config.sql"
+                            + "/V200__create_entity_foundation.sql"
             ).toLowerCase();
 
             assertThat(migration)
@@ -208,7 +208,7 @@ class ReleaseReadinessRuntimeAssemblyTest {
             String migration = readRepoFile(
                     "hertzbeat-startup/src/main/resources/db/migration/"
                             + database.getKey()
-                            + "/V203__add_collector_instrumentation_intake.sql"
+                            + "/V200__create_entity_foundation.sql"
             ).toLowerCase();
 
             assertThat(migration)

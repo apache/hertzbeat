@@ -80,11 +80,15 @@ export function isMetricAlertTargetInHierarchy(hierarchy: MonitorAppHierarchyNod
 
 export function metricAlertFieldsForTarget(
   hierarchy: MonitorAppHierarchyNode,
-  target: RealtimeMetricTarget
+  target: RealtimeMetricTarget,
+  rowCountLabel = 'row count'
 ): MetricAlertField[] | null {
   if (target.kind !== 'metric') return null;
   try {
-    return validationCatalog(hierarchy).targets.find(option => sameTarget(option.target, target))?.fields ?? null;
+    return (
+      validationCatalog(hierarchy, rowCountLabel).targets.find(option => sameTarget(option.target, target))?.fields ??
+      null
+    );
   } catch {
     return null;
   }
@@ -140,10 +144,10 @@ function sameTarget(left: RealtimeMetricTarget, right: RealtimeMetricTarget) {
   return left.kind === 'availability' || (right.kind === 'metric' && left.metric === right.metric);
 }
 
-function validationCatalog(hierarchy: MonitorAppHierarchyNode) {
+function validationCatalog(hierarchy: MonitorAppHierarchyNode, rowCountLabel = 'row count') {
   return buildMetricAlertTargetCatalog(hierarchy, {
     // These labels are validation-only and never reach the UI.
     availability: 'availability',
-    rowCount: 'row count'
+    rowCount: rowCountLabel
   });
 }

@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +45,7 @@ public class AlertSummaryController {
     @GetMapping
     @Operation(summary = "Get alarm statistics", description = "Get alarm statistics information")
     public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
-        return ResponseEntity.ok(Message.success(alertService.getAlertsSummary()));
+        return ResponseEntity.ok(Message.success(
+                alertService.getAlertsSummary(AuthTokenRequestContext.currentWorkspaceId())));
     }
 }

@@ -43,13 +43,14 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * Alert SSE delivery and reconnection contract tests.
  */
 class AlertSseManagerTest {
+    private static final String WORKSPACE_ID = "default";
 
     @Test
     void newSubscriberReceivesImmediateReconnectContract() {
         RecordingSseEmitter emitter = new RecordingSseEmitter();
         AlertSseManager manager = new AlertSseManager(() -> emitter);
 
-        assertEquals(emitter, manager.createEmitter(1L));
+        assertEquals(emitter, manager.createEmitter(WORKSPACE_ID, 1L));
         assertEquals(1, emitter.events.size());
         String event = eventText(emitter.events.get(0));
         assertTrue(event.contains("event:ALERT_STREAM_READY"));
@@ -61,10 +62,10 @@ class AlertSseManagerTest {
     void broadcastDeliversNamedEventsWithDistinctIds() {
         RecordingSseEmitter emitter = new RecordingSseEmitter();
         AlertSseManager manager = new AlertSseManager(() -> emitter);
-        manager.createEmitter(1L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
 
-        manager.broadcast("{\"id\":7,\"status\":\"firing\"}");
-        manager.broadcast("{\"id\":7,\"status\":\"acknowledged\"}");
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"firing\"}");
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"acknowledged\"}");
 
         assertEquals(3, emitter.events.size());
         String first = eventText(emitter.events.get(1));
@@ -82,10 +83,10 @@ class AlertSseManagerTest {
         RecordingSseEmitter secondEmitter = new RecordingSseEmitter();
         Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(firstEmitter, secondEmitter));
         AlertSseManager manager = new AlertSseManager(emitters::remove);
-        manager.createEmitter(1L);
-        manager.createEmitter(2L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        manager.createEmitter(WORKSPACE_ID, 2L);
 
-        manager.broadcastGroupMutation("{\"id\":7,\"mutation\":\"GROUP_DELETED\"}");
+        manager.broadcastGroupMutation(WORKSPACE_ID, "{\"id\":7,\"mutation\":\"GROUP_DELETED\"}");
 
         String first = eventText(firstEmitter.events.get(1));
         String second = eventText(secondEmitter.events.get(1));
@@ -95,20 +96,36 @@ class AlertSseManagerTest {
     }
 
     @Test
+    void broadcastsOnlyToSubscribersInTheSameWorkspace() {
+        RecordingSseEmitter teamA = new RecordingSseEmitter();
+        RecordingSseEmitter teamB = new RecordingSseEmitter();
+        Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(teamA, teamB));
+        AlertSseManager manager = new AlertSseManager(emitters::remove);
+        manager.createEmitter("team-a", 1L);
+        manager.createEmitter("team-b", 1L);
+
+        manager.broadcast("team-a", "{\"id\":7,\"status\":\"firing\"}");
+
+        assertEquals(2, teamA.events.size());
+        assertTrue(eventText(teamA.events.get(1)).contains("\"id\":7"));
+        assertEquals(1, teamB.events.size());
+    }
+
+    @Test
     void failedConnectionCanReconnectAndReceiveLaterAlerts() {
         RecordingSseEmitter failedEmitter = new RecordingSseEmitter();
         RecordingSseEmitter reconnectedEmitter = new RecordingSseEmitter();
         AtomicReference<RecordingSseEmitter> current = new AtomicReference<>(failedEmitter);
         AlertSseManager manager = new AlertSseManager(current::get);
-        manager.createEmitter(1L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
         failedEmitter.failSends = true;
 
-        manager.broadcast("{\"id\":7,\"status\":\"firing\"}");
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"firing\"}");
 
         assertTrue(failedEmitter.completed);
         current.set(reconnectedEmitter);
-        manager.createEmitter(1L);
-        manager.broadcast("{\"id\":7,\"status\":\"resolved\"}");
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"resolved\"}");
 
         assertEquals(2, reconnectedEmitter.events.size());
         assertTrue(eventText(reconnectedEmitter.events.get(1)).contains("\"status\":\"resolved\""));
@@ -121,10 +138,10 @@ class AlertSseManagerTest {
         Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(oldEmitter, newEmitter));
         AlertSseManager manager = new AlertSseManager(emitters::remove);
 
-        manager.createEmitter(1L);
-        manager.createEmitter(1L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
         oldEmitter.signalCompletion();
-        manager.broadcast("{\"id\":7,\"status\":\"resolved\"}");
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"resolved\"}");
 
         assertTrue(oldEmitter.completed);
         assertEquals(2, newEmitter.events.size());
@@ -143,11 +160,11 @@ class AlertSseManagerTest {
         logger.addAppender(appender);
         logger.setLevel(Level.DEBUG);
         try {
-            manager.createEmitter(1L);
+            manager.createEmitter(WORKSPACE_ID, 1L);
             emitter.runtimeFailure = new UnsupportedOperationException(privateDetail);
             emitter.completeFailure = new IllegalArgumentException(privateDetail);
 
-            manager.broadcast("{\"content\":\"" + privateDetail + "\"}");
+            manager.broadcast(WORKSPACE_ID, "{\"content\":\"" + privateDetail + "\"}");
 
             String logs = appender.list.stream()
                     .map(ILoggingEvent::getFormattedMessage)
@@ -168,11 +185,11 @@ class AlertSseManagerTest {
         RecordingSseEmitter lateEmitter = new RecordingSseEmitter();
         Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(activeEmitter, lateEmitter));
         AlertSseManager manager = new AlertSseManager(emitters::remove);
-        manager.createEmitter(1L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
 
         manager.onApplicationEvent(new ContextClosedEvent(mock(ConfigurableApplicationContext.class)));
-        manager.createEmitter(2L);
-        manager.broadcast("{\"id\":7,\"status\":\"resolved\"}");
+        manager.createEmitter(WORKSPACE_ID, 2L);
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"resolved\"}");
 
         assertTrue(activeEmitter.completed);
         assertTrue(lateEmitter.completed);

@@ -16,44 +16,577 @@
  */
 
 .page {
-  width: min(1080px, calc(100% - 48px));
+  --status-surface: #fff;
+  --status-text: #202124;
+  --status-text-secondary: #5f6368;
+  --status-text-tertiary: #697078;
+  --status-text-table: #555c64;
+  --status-text-table-heading: #707780;
+  --status-icon-muted: #81868d;
+  --status-border: #d9dde2;
+  --status-border-banner: #d9dedb;
+  --status-border-subtle: #eceef1;
+  --status-divider: #e6e9ec;
+  --status-timeline-border: #d7dce1;
+  --status-fill-subtle: #fafbfc;
+  --status-fill-tag: #f3f4f6;
+  --status-state-healthy: #19713d;
+  --status-state-healthy-icon: #1f8f4e;
+  --status-state-healthy-marker: #27a85f;
+  --status-state-healthy-fill: #f3f8f5;
+  --status-state-degraded: #9a6200;
+  --status-state-degraded-fill: #fff8e8;
+  --status-state-incident: #b3261e;
+  --status-state-incident-icon: #c23b32;
+  --status-state-incident-marker: #de5047;
+  --status-state-incident-fill: #fff2f0;
+  --status-state-warning-marker: #d88632;
+  --status-state-resolved-marker: #39a565;
+  --status-state-unknown: #60656d;
+  --status-state-unknown-icon: #7a8088;
+  --status-state-unknown-marker: #9ba1a8;
+  --status-state-unknown-history: #dfe3e7;
+  --status-state-unknown-fill: #f5f6f7;
+  --status-shadow-subtle: 0 1px 2px rgb(18 23 20 / 4%);
+  --status-header-gap: 24px;
+  --status-section-gap: 26px;
+
+  width: min(720px, calc(100% - 40px));
+  min-height: 100vh;
   margin: 0 auto;
-  padding: 40px 0 64px;
+  padding: 48px 0 72px;
+  background: var(--status-surface);
+  box-shadow: 0 0 0 100vmax var(--status-surface);
+  color: var(--status-text);
 }
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 28px;
-  padding-top: 16px;
-  border-top: 3px solid var(--status-accent);
+  gap: 24px;
+  margin-bottom: var(--status-header-gap);
 }
 
-.header :global(.ant-typography) {
+.header :global(.ant-typography),
+.surfaceHeader :global(.ant-typography),
+.incidentHeader :global(.ant-typography),
+.overallStatus :global(.ant-typography) {
   margin: 0;
 }
 
+.brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.brandCopy :global(.ant-typography:first-child) {
+  overflow: hidden;
+  font-size: 20px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brandCopy :global(.ant-typography:last-child) {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .logo {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: auto;
+  max-height: 36px;
   object-fit: contain;
 }
 
+.headerActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
 .languageSelect {
-  width: 160px;
+  width: 132px;
+}
+
+.overallStatus {
+  overflow: hidden;
+  border: 1px solid var(--status-border-banner);
+  border-radius: 10px;
+  background: var(--status-surface);
+  box-shadow: var(--status-shadow-subtle);
+}
+
+.overallHeadline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  background: var(--status-state-healthy-fill);
+  color: var(--status-state-healthy);
+}
+
+.overallHeadline :global(.anticon) {
+  font-size: 18px;
+}
+
+.overallHeadline :global(h3.ant-typography) {
+  color: inherit;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.overallStatus > :global(.ant-typography) {
+  display: block;
+  padding: 15px 20px 16px;
+  color: var(--status-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.overallStatus[data-overall-state='degraded'] .overallHeadline {
+  background: var(--status-state-degraded-fill);
+  color: var(--status-state-degraded);
+}
+
+.overallStatus[data-overall-state='incident'] .overallHeadline {
+  background: var(--status-state-incident-fill);
+  color: var(--status-state-incident);
+}
+
+.overallStatus[data-overall-state='unknown'] .overallHeadline {
+  background: var(--status-state-unknown-fill);
+  color: var(--status-state-unknown);
 }
 
 .section {
-  margin-top: 28px;
+  margin-top: var(--status-section-gap);
 }
 
-.sectionHeader {
+.statusSurface {
+  overflow: hidden;
+  border: 1px solid var(--status-border);
+  border-radius: 10px;
+  background: var(--status-surface);
+}
+
+.surfaceHeader {
   display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--status-divider);
+}
+
+.surfaceHeader :global(h3.ant-typography),
+.incidentHeader :global(h3.ant-typography) {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.surfaceHeader > :global(.ant-typography:last-child) {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.componentList {
+  display: grid;
+}
+
+.component {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px 0;
+}
+
+.component + .component {
+  border-top: 1px solid var(--status-border-subtle);
+}
+
+.componentSummary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.componentIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.componentIdentity > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.componentIdentity :global(.ant-typography:last-child) {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.componentStateIcon {
+  margin-top: 3px;
+  color: var(--status-state-healthy-icon);
+  font-size: 15px;
+}
+
+.component[data-component-state='incident'] .componentStateIcon {
+  color: var(--status-state-incident-icon);
+}
+
+.component[data-component-state='unknown'] .componentStateIcon {
+  color: var(--status-state-unknown-icon);
+}
+
+.componentAvailability {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: end;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.componentAvailability :global(.ant-typography:first-child) {
+  font-weight: 550;
+}
+
+.historyStrip {
+  display: grid;
+  grid-template-columns: repeat(var(--history-point-count), minmax(0, 1fr));
+  width: 100%;
+  height: 18px;
+  align-items: stretch;
+}
+
+.historyPoint {
+  width: clamp(2px, 70%, 8px);
+  height: 100%;
+  justify-self: center;
+  border-radius: 2px;
+  background: var(--status-state-healthy-marker);
+}
+
+.historyPoint[data-state='incident'] {
+  background: var(--status-state-incident-marker);
+}
+
+.historyPoint[data-state='unknown'] {
+  background: var(--status-state-unknown-history);
+}
+
+.disclosure {
+  margin: 0 -20px;
+  border-top: 1px solid var(--status-border-subtle);
+}
+
+.disclosure summary {
+  display: flex;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure summary::-webkit-details-marker,
+.incident summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure summary {
   align-items: center;
   justify-content: space-between;
+  padding: 10px 20px 11px;
+  color: var(--status-text-tertiary);
+  font-size: 12px;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.disclosure summary:hover {
+  background: var(--status-fill-subtle);
+  color: var(--status-accent);
+}
+
+.disclosure summary :global(.anticon),
+.disclosureIcon {
+  transition: transform 180ms ease;
+}
+
+.disclosure[open] summary :global(.anticon),
+.incident[open] .disclosureIcon {
+  transform: rotate(180deg);
+}
+
+.historyTableWrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--status-border-subtle);
+  background: var(--status-fill-subtle);
+}
+
+.historyTable {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  color: var(--status-text-table);
+  font-size: 12px;
+}
+
+.historyTable th,
+.historyTable td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--status-border-subtle);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.historyTable th {
+  color: var(--status-text-table-heading);
+  font-weight: 550;
+}
+
+.incidentHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.incidentHeader > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.incidentHeader :global(.ant-typography:last-child) {
+  font-size: 12px;
+}
+
+.incidentToolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.incidentToolbar :global(.ant-input-number) {
+  width: 88px;
+}
+
+.incidentList {
+  overflow: visible;
+  border-block: 1px solid var(--status-border);
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.incident + .incident {
+  border-top: 1px solid var(--status-border-subtle);
+}
+
+.incident summary {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  list-style: none;
+  transition: background 160ms ease;
+}
+
+.incident summary:hover {
+  background: var(--status-fill-subtle);
+}
+
+.incidentMarker {
+  width: 3px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+  background: var(--status-state-warning-marker);
+}
+
+.incident[data-incident-state='resolved'] .incidentMarker {
+  background: var(--status-state-resolved-marker);
+}
+
+.incident[data-incident-state='unknown'] .incidentMarker {
+  background: var(--status-state-unknown-marker);
+}
+
+.incidentCopy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 3px;
+}
+
+.incidentCopy :global(.ant-typography:last-child) {
+  font-size: 12px;
+}
+
+.incident summary :global(.ant-tag) {
+  margin: 0;
+  background: var(--status-state-degraded-fill);
+  color: var(--status-state-degraded);
+}
+
+.incident[data-incident-state='resolved'] summary :global(.ant-tag) {
+  background: var(--status-state-healthy-fill);
+  color: var(--status-state-healthy);
+}
+
+.incident[data-incident-state='unknown'] summary :global(.ant-tag) {
+  background: var(--status-state-unknown-fill);
+  color: var(--status-state-unknown);
+}
+
+.disclosureIcon {
+  color: var(--status-icon-muted);
+  font-size: 11px;
 }
 
 .incidentEvidence {
-  width: 100%;
+  display: grid;
+  gap: 16px;
+  padding: 2px 16px 22px 32px;
+  border-top: 0;
+  background: transparent;
+}
+
+.affectedComponents {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.affectedComponents > :global(.ant-typography) {
+  color: var(--status-text-secondary);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.affectedComponents > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.affectedComponents :global(.ant-tag) {
+  margin: 0;
+  background: var(--status-fill-tag);
+}
+
+.incidentTimeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.incidentTimeline li {
+  position: relative;
+  padding: 0 0 20px 20px;
+  border-left: 1px solid var(--status-timeline-border);
+}
+
+.incidentTimeline li::before {
+  position: absolute;
+  top: 3px;
+  left: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-state-warning-marker);
+  content: '';
+}
+
+.incidentTimeline li[data-update-state='resolved']::before {
+  background: var(--status-state-resolved-marker);
+}
+
+.incidentTimeline li[data-update-state='unknown']::before {
+  background: var(--status-state-unknown-marker);
+}
+
+.incidentTimeline li:last-child {
+  padding-bottom: 0;
+}
+
+.timelineMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.timelineMeta :global(.ant-typography:first-child) {
+  font-weight: 600;
+}
+
+.incidentTimeline :global(.ant-typography) {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .page {
+    width: min(100% - 28px, 720px);
+    padding: 28px 0 48px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .languageSelect {
+    flex: 1 1 auto;
+  }
+
+  .surfaceHeader,
+  .incidentHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .componentSummary {
+    gap: 12px;
+  }
+
+  .componentAvailability {
+    max-width: 130px;
+  }
+
+  .historyStrip {
+    height: 16px;
+  }
+
+  .incidentToolbar {
+    width: 100%;
+  }
 }

@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -53,7 +54,9 @@ import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.service.AlertGroupMutationPublisher;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -75,6 +78,7 @@ import tools.jackson.core.type.TypeReference;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TrustedStartup
 @TestPropertySource(properties = {
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "spring.datasource.url=jdbc:h2:mem:alert-lifecycle;MODE=MySQL;DB_CLOSE_DELAY=-1",
@@ -83,6 +87,8 @@ import tools.jackson.core.type.TypeReference;
     "warehouse.store.duckdb.enabled=false"
 })
 class AlertLifecycleIntegrationTest {
+
+    private static final String WORKSPACE_ID = "default";
 
     private MockMvc mockMvc;
 
@@ -106,7 +112,13 @@ class AlertLifecycleIntegrationTest {
 
     @BeforeEach
     void setUpMockMvc() {
+        AuthTokenRequestContext.bindWorkspaceId(WORKSPACE_ID);
         mockMvc = MockMvcBuilders.standaloneSetup(alertsController).build();
+    }
+
+    @AfterEach
+    void clearRequestContext() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -135,7 +147,8 @@ class AlertLifecycleIntegrationTest {
                 .andExpect(jsonPath("$.msg").value("Alert group was not found."))
                 .andExpect(content().string(not(containsString(String.valueOf(missingId)))));
         assertStatus(targetGroup.getId(), targetAlert.getId(), ALERT_STATUS_RESOLVED, true);
-        verify(alertSseManager, timeout(5_000).times(2)).broadcastGroupMutation(anyString());
+        verify(alertSseManager, timeout(5_000).times(2))
+                .broadcastGroupMutation(eq(WORKSPACE_ID), anyString());
 
         mockMvc.perform(delete("/api/alerts/group").param("ids", String.valueOf(targetGroup.getId())))
                 .andExpect(status().isOk())
@@ -285,6 +298,7 @@ class AlertLifecycleIntegrationTest {
 
     private static SingleAlert singleAlert(String marker, String suffix) {
         return SingleAlert.builder()
+                .workspaceId(WORKSPACE_ID)
                 .fingerprint(marker + '-' + suffix)
                 .labels(Map.of("service.name", "checkout", "severity", "critical"))
                 .annotations(Map.of("summary", marker + '-' + suffix))
@@ -298,6 +312,7 @@ class AlertLifecycleIntegrationTest {
 
     private static GroupAlert groupAlert(String marker, String suffix, SingleAlert alert) {
         return GroupAlert.builder()
+                .workspaceId(WORKSPACE_ID)
                 .groupKey(marker + '-' + suffix)
                 .status(ALERT_STATUS_FIRING)
                 .groupLabels(Map.of("alertname", marker + '-' + suffix))
@@ -309,7 +324,8 @@ class AlertLifecycleIntegrationTest {
 
     private void assertCommittedMutationEvents() {
         ArgumentCaptor<String> events = ArgumentCaptor.forClass(String.class);
-        verify(alertSseManager, timeout(5_000).times(3)).broadcastGroupMutation(events.capture());
+        verify(alertSseManager, timeout(5_000).times(3))
+                .broadcastGroupMutation(eq(WORKSPACE_ID), events.capture());
         List<String> payloads = events.getAllValues();
         Set<String> mutations = payloads.stream()
                 .map(payload -> JsonUtil.fromJson(payload, new TypeReference<Map<String, Object>>() {
@@ -329,9 +345,9 @@ class AlertLifecycleIntegrationTest {
     private void assertRollbackDoesNotPublishMutation() {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.executeWithoutResult(status -> {
-            alertGroupMutationPublisher.publishDeleted(List.of(Long.MAX_VALUE));
+            alertGroupMutationPublisher.publishDeleted(WORKSPACE_ID, List.of(Long.MAX_VALUE));
             status.setRollbackOnly();
         });
-        verify(alertSseManager, never()).broadcastGroupMutation(anyString());
+        verify(alertSseManager, never()).broadcastGroupMutation(eq(WORKSPACE_ID), anyString());
     }
 }

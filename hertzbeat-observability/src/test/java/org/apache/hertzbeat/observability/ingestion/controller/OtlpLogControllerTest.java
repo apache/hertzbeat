@@ -575,10 +575,11 @@ class OtlpLogControllerTest {
     void binaryLogsResolveEntityIdBeforeForwardingAndRealtimePublication() throws Exception {
         AuthTokenRequestContext.bindWorkspaceId("prod-west");
         try {
-            when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(any(), any()))
+            when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                    "prod-west", Set.of("service.name"), Set.of("checkout")))
                     .thenReturn(java.util.List.of(
                             entityIdentity(42L, "service.name", "checkout", "checkout", 90, true)));
-            when(workspaceQueryGateway.findEntitiesByIds(Set.of(42L)))
+            when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
                     .thenReturn(Map.of(42L, observeEntity(42L, "prod-west")));
             byte[] content = ExportLogsServiceRequest.newBuilder()
                     .addResourceLogs(ResourceLogs.newBuilder()

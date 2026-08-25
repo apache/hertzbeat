@@ -18,11 +18,13 @@ import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-targ
 
 const monitor = vi.hoisted(() => ({
   loadMonitorAppHierarchy: vi.fn(),
+  loadMonitorAppHierarchyCatalog: vi.fn(),
   loadMonitorNavigationApps: vi.fn()
 }));
 vi.mock('@/features/monitor', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor')>()),
   loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy,
+  loadMonitorAppHierarchyCatalog: monitor.loadMonitorAppHierarchyCatalog,
   loadMonitorNavigationApps: monitor.loadMonitorNavigationApps
 }));
 vi.mock('react-i18next', () => ({
@@ -49,6 +51,7 @@ describe('Alert Rule metric target controller', () => {
       { category: '__system__', value: 'system', label: 'System', hide: false }
     ]);
     monitor.loadMonitorAppHierarchy.mockResolvedValue(hierarchy);
+    monitor.loadMonitorAppHierarchyCatalog.mockResolvedValue([hierarchy]);
   });
 
   it('loads the localized visible application catalog through the Monitor public boundary', async () => {
@@ -57,6 +60,7 @@ describe('Alert Rule metric target controller', () => {
     await waitFor(() => expect(result.current.state.apps.kind).toBe('ready'));
 
     expect(monitor.loadMonitorNavigationApps).toHaveBeenCalledWith('en-US', expect.any(AbortSignal));
+    expect(monitor.loadMonitorAppHierarchyCatalog).toHaveBeenCalledWith('en-US', expect.any(AbortSignal));
     expect(result.current.state.apps).toEqual({
       kind: 'ready',
       apps: [{ category: 'application', value: 'springboot3', label: 'Spring Boot 3' }]

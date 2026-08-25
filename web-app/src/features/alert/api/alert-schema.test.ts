@@ -257,6 +257,22 @@ describe('alert center wire schemas', () => {
     });
   });
 
+  it('keeps provider-specific severity labels as inspectable evidence', () => {
+    const providerAlert = {
+      ...group,
+      commonLabels: { ...group.commonLabels, severity: 'error', source: 'zabbix' },
+      alerts: group.alerts.map(alert => ({
+        ...alert,
+        labels: { ...alert.labels, severity: 'error', source: 'zabbix' }
+      }))
+    };
+
+    expect(parseAlertGroupPage(pageResponse([providerAlert]), firstPageQuery).content[0]).toMatchObject({
+      commonLabels: { severity: 'error', source: 'zabbix' },
+      alerts: [{ labels: { severity: 'error', source: 'zabbix' } }]
+    });
+  });
+
   it('keeps a canonical empty page distinct from malformed page evidence', () => {
     expect(parseAlertGroupPage(pageResponse([]), firstPageQuery)).toEqual({
       content: [],
@@ -271,7 +287,7 @@ describe('alert center wire schemas', () => {
   it.each([
     ['zero id', { ...group, id: 0 }],
     ['unsupported status', { ...group, status: 'unknown' }],
-    ['unsupported severity', { ...group, commonLabels: { severity: 'debug' } }],
+    ['non-string severity', { ...group, commonLabels: { severity: 7 } }],
     ['unsupported child status', { ...group, alerts: [{ ...group.alerts[0], status: 'pending' }] }],
     ['negative child trigger count', { ...group, alerts: [{ ...group.alerts[0], triggerTimes: -1 }] }],
     ['unsafe child timestamp', { ...group, alerts: [{ ...group.alerts[0], activeAt: Number.MAX_SAFE_INTEGER + 1 }] }],

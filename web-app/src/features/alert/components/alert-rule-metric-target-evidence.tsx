@@ -27,35 +27,40 @@ export function AlertRuleMetricTargetEvidence(props: TargetEvidenceProps) {
   if (props.state.apps.kind === 'ready' && props.state.apps.apps.length === 0) {
     return <Alert className={wideClassName} type="info" showIcon message={t('alertRules.metricTarget.appsEmpty')} />;
   }
-  if (props.state.apps.kind === 'unavailable' || props.state.apps.kind === 'error') {
-    return (
-      <RetryEvidence
-        message={t(
-          props.state.apps.kind === 'unavailable'
-            ? 'alertRules.metricTarget.appsUnavailable'
-            : 'alertRules.metricTarget.appsError'
-        )}
-        retry={props.retryApps}
-      />
-    );
-  }
-  if (props.state.hierarchy.kind === 'unavailable' || props.state.hierarchy.kind === 'error') {
-    return (
-      <RetryEvidence
-        message={t(
-          props.state.hierarchy.kind === 'unavailable'
-            ? 'alertRules.metricTarget.hierarchyUnavailable'
-            : 'alertRules.metricTarget.hierarchyError'
-        )}
-        retry={props.retryHierarchy}
-      />
-    );
-  }
+  const failure = targetEvidenceFailure(props);
+  if (failure) return <RetryEvidence message={t(failure.key)} retry={failure.retry} />;
   if (props.state.hierarchy.kind === 'ready' && !props.catalog) {
     return (
       <Alert className={wideClassName} type="error" showIcon message={t('alertRules.metricTarget.hierarchyError')} />
     );
   }
+  return null;
+}
+
+function targetEvidenceFailure(props: TargetEvidenceProps) {
+  const appKey = failureKey(
+    props.state.apps.kind,
+    'alertRules.metricTarget.appsUnavailable',
+    'alertRules.metricTarget.appsError'
+  );
+  if (appKey) return { key: appKey, retry: props.retryApps };
+  const catalogKey = failureKey(
+    props.state.catalog?.kind,
+    'alertRules.metricTarget.hierarchyUnavailable',
+    'alertRules.metricTarget.hierarchyError'
+  );
+  if (catalogKey) return { key: catalogKey, retry: props.retryApps };
+  const hierarchyKey = failureKey(
+    props.state.hierarchy.kind,
+    'alertRules.metricTarget.hierarchyUnavailable',
+    'alertRules.metricTarget.hierarchyError'
+  );
+  return hierarchyKey ? { key: hierarchyKey, retry: props.retryHierarchy } : null;
+}
+
+function failureKey(kind: string | undefined, unavailableKey: string, errorKey: string) {
+  if (kind === 'unavailable') return unavailableKey;
+  if (kind === 'error') return errorKey;
   return null;
 }
 

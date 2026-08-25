@@ -142,6 +142,10 @@
   background-clip: padding-box;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 html,
 body,
 #root {
@@ -152,6 +156,22 @@ body,
 body {
   min-width: 1024px;
   font-size: 13px;
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-table-cell {
+  padding-block: var(--hb-space-3);
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-empty {
+  margin-block: 0;
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-empty-image {
+  display: none;
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-empty-description {
+  color: var(--hb-text-secondary);
 }
 
 :where(a, button, [role='button'], [tabindex]):focus-visible {

@@ -24,6 +24,7 @@ import { BasicLayout } from '@/layout/basic/basic-layout';
 import { RouteLoadingState } from '@/shared/route-state/route-state';
 
 import {
+  AdministrativeDeploymentMigrationRoutePage,
   AdministrativeDeploymentRoutePage,
   AdministrativePluginRoutePage,
   AdministrativeTokenRoutePage
@@ -354,6 +355,14 @@ export const appRoutes: RouteObject[] = [
                 element: (
                   <ResourceRouteAccess routeId="deployment-settings">
                     <AdministrativeDeploymentRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('deployment-migration'),
+                element: (
+                  <ResourceRouteAccess routeId="deployment-settings">
+                    <AdministrativeDeploymentMigrationRoutePage />
                   </ResourceRouteAccess>
                 )
               },

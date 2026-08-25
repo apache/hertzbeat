@@ -2,3 +2,4 @@
 
 export { AgentWorkspacePage } from './pages/agent-workspace-page';
 export { AgentSchedulePage } from './pages/agent-schedule-page';
+export { buildAgentWorkspacePath } from './model/agent-workspace-context';

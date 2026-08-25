@@ -34,6 +34,8 @@ class SystemConfigRouteAuthorizationConfigTest {
     private static final List<String> SYSTEM_CONFIG_RULES = List.of(
             "  - /api/config/system===get===[admin,user,guest]",
             "  - /api/config/system===post===[admin]",
+            "  - /api/config/public-access===get===[admin,user,guest]",
+            "  - /api/config/public-access===post===[admin]",
             "  - /api/config/timezones===get===[admin,user,guest]");
     private static final List<String> SURENESS_CONFIGS = List.of(
             "hertzbeat-startup/src/main/resources/sureness.yml",
@@ -57,7 +59,9 @@ class SystemConfigRouteAuthorizationConfigTest {
 
     private static void assertSystemConfigRules(String config) throws IOException {
         List<String> matchingRules = Files.readAllLines(repoRoot().resolve(config)).stream()
-                .filter(line -> line.contains("/api/config/system") || line.contains("/api/config/timezones"))
+                .filter(line -> line.contains("/api/config/system")
+                        || line.contains("/api/config/public-access")
+                        || line.contains("/api/config/timezones"))
                 .toList();
         assertEquals(SYSTEM_CONFIG_RULES, matchingRules,
                 () -> config + " must restrict system-wide config writes to admin");

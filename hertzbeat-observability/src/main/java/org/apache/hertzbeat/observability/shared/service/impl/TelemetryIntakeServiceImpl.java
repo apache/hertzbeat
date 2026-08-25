@@ -350,14 +350,46 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 .toList();
     }
 
+    public List<TelemetryIdentitySnapshot> collectRecentExternalIdentitySnapshots(
+            String workspaceId, List<LogEntry> logs, List<TraceListItemDto> traces, List<Monitor> monitors) {
+        String requiredWorkspace = normalizeValue(workspaceId);
+        if (!StringUtils.hasText(requiredWorkspace)) {
+            return List.of();
+        }
+        return collectRecentExternalIdentitySnapshots(logs, traces, monitors).stream()
+                .filter(snapshot -> matchesWorkspace(snapshot.getCanonicalIdentities(), requiredWorkspace))
+                .toList();
+    }
+
     @Override
     public TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(String serviceName,
                                                                     String serviceNamespace,
                                                                     String environment) {
+        return resolveRecentOtlpMetricContextInternal(null, serviceName, serviceNamespace, environment);
+    }
+
+    public TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(String workspaceId,
+                                                                    String serviceName,
+                                                                    String serviceNamespace,
+                                                                    String environment) {
+        String requiredWorkspace = normalizeValue(workspaceId);
+        if (!StringUtils.hasText(requiredWorkspace)) {
+            return null;
+        }
+        return resolveRecentOtlpMetricContextInternal(
+                requiredWorkspace, serviceName, serviceNamespace, environment);
+    }
+
+    private TelemetryIdentitySnapshot resolveRecentOtlpMetricContextInternal(
+            String requiredWorkspace, String serviceName, String serviceNamespace, String environment) {
         String requiredServiceName = normalizeValue(serviceName);
         String requiredServiceNamespace = normalizeValue(serviceNamespace);
         String requiredEnvironment = normalizeValue(environment);
         for (RecentMetricSignal signal : orderedMetricSignals()) {
+            if (StringUtils.hasText(requiredWorkspace)
+                    && !matchesWorkspace(signal.canonicalIdentities(), requiredWorkspace)) {
+                continue;
+            }
             if (!matchesMetricContext(signal.canonicalIdentities(),
                     requiredServiceName, requiredServiceNamespace, requiredEnvironment)) {
                 continue;
@@ -376,9 +408,26 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
 
     @Override
     public List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContexts(int limit) {
+        return collectRecentOtlpMetricContextsInternal(null, limit);
+    }
+
+    public List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContexts(String workspaceId, int limit) {
+        String requiredWorkspace = normalizeValue(workspaceId);
+        if (!StringUtils.hasText(requiredWorkspace)) {
+            return List.of();
+        }
+        return collectRecentOtlpMetricContextsInternal(requiredWorkspace, limit);
+    }
+
+    private List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContextsInternal(
+            String requiredWorkspace, int limit) {
         int resolvedLimit = limit <= 0 ? 1 : limit;
         LinkedHashMap<String, TelemetryIdentitySnapshot> contexts = new LinkedHashMap<>();
         for (RecentMetricSignal signal : orderedMetricSignals()) {
+            if (StringUtils.hasText(requiredWorkspace)
+                    && !matchesWorkspace(signal.canonicalIdentities(), requiredWorkspace)) {
+                continue;
+            }
             TelemetryIdentitySnapshot snapshot = buildMetricIdentitySnapshot(signal);
             if (!StringUtils.hasText(snapshot.getServiceName())
                     || isSelfTelemetrySnapshot(snapshot)
@@ -405,6 +454,29 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                                                      String serviceNamespace,
                                                      String environment,
                                                      int limit) {
+        return collectRecentOtlpMetricNamesInternal(
+                null, serviceName, serviceNamespace, environment, limit);
+    }
+
+    public List<String> collectRecentOtlpMetricNames(String workspaceId,
+                                                     String serviceName,
+                                                     String serviceNamespace,
+                                                     String environment,
+                                                     int limit) {
+        String requiredWorkspace = normalizeValue(workspaceId);
+        if (!StringUtils.hasText(requiredWorkspace)) {
+            return List.of();
+        }
+        return collectRecentOtlpMetricNamesInternal(
+                requiredWorkspace, serviceName, serviceNamespace, environment, limit);
+    }
+
+    private List<String> collectRecentOtlpMetricNamesInternal(
+            String requiredWorkspace,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            int limit) {
         String requiredServiceName = normalizeValue(serviceName);
         String requiredServiceNamespace = normalizeValue(serviceNamespace);
         String requiredEnvironment = normalizeValue(environment);
@@ -412,6 +484,10 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
         List<MetricNameCandidate> candidates = new ArrayList<>();
         long sequence = 0L;
         for (RecentMetricSignal signal : orderedMetricSignals()) {
+            if (StringUtils.hasText(requiredWorkspace)
+                    && !matchesWorkspace(signal.canonicalIdentities(), requiredWorkspace)) {
+                continue;
+            }
             if (!matchesMetricContext(signal.canonicalIdentities(),
                     requiredServiceName, requiredServiceNamespace, requiredEnvironment)) {
                 continue;
@@ -443,6 +519,11 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                     }
                 });
         return List.copyOf(metricNames);
+    }
+
+    private boolean matchesWorkspace(Map<String, String> canonicalIdentities, String workspaceId) {
+        return canonicalIdentities != null
+                && workspaceId.equals(normalizeValue(canonicalIdentities.get(HERTZBEAT_WORKSPACE_ID)));
     }
 
     private int metricNamePriority(String metricName) {

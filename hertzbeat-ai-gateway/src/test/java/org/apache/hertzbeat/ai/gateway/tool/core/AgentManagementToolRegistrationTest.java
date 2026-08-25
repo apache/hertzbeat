@@ -39,7 +39,7 @@ import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.GenericApplicationContext;
 
@@ -59,7 +59,7 @@ class AgentManagementToolRegistrationTest {
                     () -> new AgentCollectorToolService(mock(CollectorService.class), mock(MonitorService.class),
                             mock(AppService.class), mock(CollectJobScheduling.class)));
             context.registerBean(AgentLogToolService.class,
-                    () -> new AgentLogToolService(mock(HistoryDataReader.class)));
+                    () -> new AgentLogToolService(mock(LogQueryService.class)));
             context.registerBean(AgentMonitorToolService.class,
                     () -> new AgentMonitorToolService(mock(MonitorService.class), mock(AppService.class),
                             mock(CollectorMonitorBindDao.class)));

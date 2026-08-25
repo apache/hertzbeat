@@ -1,0 +1,102 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.sessions {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--ai-divider);
+  background: var(--hb-bg-chrome);
+}
+.paneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  min-height: 64px;
+  padding: var(--hb-space-3) var(--hb-space-4);
+}
+.paneHeader :global(.ant-btn) {
+  color: var(--hb-brand-accent);
+}
+.sessionSearch {
+  padding: 0 var(--hb-space-3) var(--hb-space-3);
+}
+.sessionSearch :global(.ant-input-affix-wrapper) {
+  min-height: 36px;
+  border-color: var(--ai-divider);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.sessionList {
+  display: grid;
+  align-content: start;
+  padding: 0 var(--hb-space-3) var(--hb-space-4);
+  overflow: auto;
+}
+.sessionButton {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--ai-divider-muted);
+  border-radius: 0;
+  color: var(--hb-text-primary);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sessionButton:hover {
+  background: color-mix(in srgb, var(--hb-bg-hover) 48%, transparent);
+}
+.sessionButton[data-selected='true'] {
+  color: var(--hb-text-primary);
+  background: transparent;
+  font-weight: 600;
+}
+.sessionButton[data-selected='true']::before {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: -12px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--hb-brand-accent);
+  content: '';
+}
+.sessionTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sessionMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  color: var(--hb-text-secondary);
+  font-weight: 400;
+}
+.sessionMeta time,
+.sessionButton small {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.adminActions {
+  display: grid;
+  gap: 2px;
+  margin: auto var(--hb-space-2) var(--hb-space-2);
+  padding: var(--hb-space-2) 0 0;
+  border-top: 1px solid var(--ai-divider-muted);
+}
+.adminActions :global(.ant-btn) {
+  justify-content: flex-start;
+}
+@media (max-width: 700px) {
+  .sessions {
+    display: none;
+  }
+}

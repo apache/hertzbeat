@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
@@ -39,32 +42,42 @@ import org.springframework.data.domain.PageRequest;
 /** Test Agent alert query contracts. */
 class AgentAlertToolServiceTest {
 
+    private static final String WORKSPACE_ID = "team-a";
+
     private AlertService alertService;
     private AgentAlertToolService service;
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId(WORKSPACE_ID);
         alertService = mock(AlertService.class);
         service = new AgentAlertToolService(alertService);
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
     void shouldTreatAllStatusAsNoDatabaseFilter() {
         SingleAlert alert = SingleAlert.builder().id(42L).status("firing").content("CPU high").build();
-        when(alertService.getSingleAlerts(isNull(), isNull(), eq("gmtUpdate"), eq("desc"), eq(0), eq(10)))
+        when(alertService.getSingleAlerts(eq(WORKSPACE_ID), isNull(), isNull(), eq("gmtUpdate"), eq("desc"),
+                eq(0), eq(10)))
                 .thenReturn(new PageImpl<>(List.of(alert), PageRequest.of(0, 10), 1));
 
         Map<String, Object> response = service.alertQuery("single", "all", null, null, null, null, null);
 
-        verify(alertService).getSingleAlerts(isNull(), isNull(), eq("gmtUpdate"), eq("desc"), eq(0), eq(10));
+        verify(alertService).getSingleAlerts(eq(WORKSPACE_ID), isNull(), isNull(), eq("gmtUpdate"), eq("desc"),
+                eq(0), eq(10));
         assertEquals("single", response.get("alertType"));
     }
 
     @Test
     void shouldGetAlertByExactId() {
         SingleAlert alert = SingleAlert.builder().id(42L).status("resolved").content("Recovered").build();
-        when(alertService.findSingleAlert(42L)).thenReturn(Optional.of(alert));
-        when(alertService.findGroupAlert(42L)).thenReturn(Optional.empty());
+        when(alertService.findSingleAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.of(alert));
+        when(alertService.findGroupAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.empty());
 
         Map<String, Object> response = service.alertGet(42L);
 
@@ -74,20 +87,60 @@ class AgentAlertToolServiceTest {
     }
 
     @Test
+    void exactSingleTypeShouldNeverReadOrReturnTheGroupSibling() {
+        SingleAlert alert = SingleAlert.builder().id(42L).status("firing").content("High latency").build();
+        when(alertService.findSingleAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.of(alert));
+
+        Map<String, Object> response = service.alertGet(42L, "single");
+
+        assertEquals("single", response.get("alertType"));
+        assertEquals(42L, ((Map<?, ?>) response.get("single")).get("id"));
+        assertFalse(response.containsKey("group"));
+        verify(alertService, never()).findGroupAlert(WORKSPACE_ID, 42L);
+    }
+
+    @Test
     void shouldResolveExactExistingAlerts() {
-        when(alertService.findSingleAlert(42L)).thenReturn(Optional.of(SingleAlert.builder().id(42L).build()));
+        when(alertService.findSingleAlert(WORKSPACE_ID, 42L))
+                .thenReturn(Optional.of(SingleAlert.builder().id(42L).build()));
 
         Map<String, Object> result = service.resolveAlerts("single", List.of(42L), "incident recovered");
 
-        verify(alertService).editSingleAlertStatus("resolved", List.of(42L));
+        verify(alertService).editSingleAlertStatus(WORKSPACE_ID, "resolved", List.of(42L));
         assertEquals(1, result.get("affectedCount"));
     }
 
     @Test
     void shouldRejectMissingAlertBeforeMutation() {
-        when(alertService.findSingleAlert(42L)).thenReturn(Optional.empty());
+        when(alertService.findSingleAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
                 () -> service.resolveAlerts("single", List.of(42L), "incident recovered"));
+        verify(alertService, never()).editSingleAlertStatus(
+                WORKSPACE_ID, "resolved", List.of(42L));
+    }
+
+    @Test
+    void mixedOwnedAndForeignBatchIsRejectedBeforeMutation() {
+        when(alertService.findSingleAlert(WORKSPACE_ID, 41L))
+                .thenReturn(Optional.of(SingleAlert.builder().id(41L).build()));
+        when(alertService.findSingleAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.resolveAlerts("single", List.of(41L, 42L), "incident recovered"));
+
+        verify(alertService, never()).editSingleAlertStatus(
+                WORKSPACE_ID, "resolved", List.of(41L, 42L));
+    }
+
+    @Test
+    void foreignWorkspaceAlertIsIndistinguishableFromMissing() {
+        when(alertService.findSingleAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.empty());
+        when(alertService.findGroupAlert(WORKSPACE_ID, 42L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.alertGet(42L));
+
+        verify(alertService).findSingleAlert(WORKSPACE_ID, 42L);
+        verify(alertService).findGroupAlert(WORKSPACE_ID, 42L);
     }
 }

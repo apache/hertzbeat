@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AgentSessionKeyBuilder {
 
-    private static final String KEY_VERSION = "v1:";
+    private static final String KEY_VERSION = "v2:";
 
     /**
      * Build a stable session key from transport metadata and user input identity.
@@ -38,6 +38,7 @@ public class AgentSessionKeyBuilder {
         AgentActor actor = envelope.getActor();
         String canonical = String.join("", List.of(
             component("channel", envelope.getChannelId()),
+            component("workspace", envelope.getWorkspaceId()),
             component("actorType", actor.getType()),
             component("actorId", actor.getId()),
             component("conversation", conversationId)

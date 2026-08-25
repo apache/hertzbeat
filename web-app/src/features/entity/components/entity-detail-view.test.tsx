@@ -64,6 +64,24 @@ describe('EntityDetailView', () => {
     expect(screen.queryByText(/service · 7/)).not.toBeInTheDocument();
   });
 
+  it('keeps source-backed identity actionable without inventing unavailable telemetry evidence', () => {
+    const topology = vi.fn();
+    renderView(
+      { kind: 'degraded', entity: { ...entity, owner: 'payments-sre' }, unavailable: 'telemetry' },
+      { topology }
+    );
+
+    expect(screen.getByRole('heading', { name: 'checkout' })).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('entity.degraded.title'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('entity.degraded.description'))).toBeInTheDocument();
+    expect(screen.getByText('payments-sre')).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('entity.values.status.healthy'))).not.toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('entity.missing.evidence'))).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('entity.topology.view') })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeEnabled();
+    expect(topology).not.toHaveBeenCalled();
+  });
+
   it('offers only evidence-backed Explore handoffs', () => {
     const explore = vi.fn();
     renderView(

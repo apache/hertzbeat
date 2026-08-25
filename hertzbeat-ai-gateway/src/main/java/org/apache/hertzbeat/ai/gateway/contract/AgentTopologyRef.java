@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.ai.gateway.contract;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +33,7 @@ import lombok.NoArgsConstructor;
  * Topology scope and selection selected by an operator.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class AgentTopologyRef {
@@ -38,13 +41,50 @@ public class AgentTopologyRef {
     @Positive
     private Long rootEntityId;
 
-    @Size(max = 128)
+    @Size(max = 512)
     private String nodeId;
 
-    @Size(max = 128)
+    @Size(max = 512)
     private String edgeId;
 
     @Min(1)
-    @Max(10)
+    @Max(2)
     private Integer depth;
+
+    @Size(max = 128)
+    private String environment;
+
+    @Size(max = 64)
+    private String sourceKind;
+
+    @Positive
+    private Long start;
+
+    @Positive
+    private Long end;
+
+    @Size(max = 128)
+    private String relationType;
+
+    private Boolean hideInternal;
+
+    @PositiveOrZero
+    @Max(10_000)
+    private Integer pageIndex;
+
+    @Min(1)
+    @Max(100)
+    private Integer pageSize;
+
+    @AssertTrue
+    @JsonIgnore
+    public boolean isSingleSelectionValid() {
+        return nodeId == null || edgeId == null;
+    }
+
+    @AssertTrue
+    @JsonIgnore
+    public boolean isTimeWindowValid() {
+        return start == null && end == null || start != null && end != null && start < end;
+    }
 }

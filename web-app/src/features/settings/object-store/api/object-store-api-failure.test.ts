@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { ObjectStoreRequestFailure } from '../model/object-store-failure';
+import { objectStoreMigrationConflictCode, ObjectStoreRequestFailure } from '../model/object-store-failure';
 import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
 import { normalizeObjectStoreApiFailure } from './object-store-api-failure';
 
@@ -66,5 +66,18 @@ describe('Object Store API failure boundary', () => {
   it('preserves domain failure identity', () => {
     const failure = new ObjectStoreRequestFailure('unavailable', 'uncertain');
     expect(normalizeObjectStoreApiFailure(failure, 'read')).toBe(failure);
+  });
+
+  it('classifies a migration conflict as a safe, definite rejection', () => {
+    const failure = normalizeObjectStoreApiFailure(
+      new ApiMessageError(objectStoreMigrationConflictCode, { code: 20, status: 200 }),
+      'write'
+    );
+
+    expect(failure).toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'rejected',
+      code: objectStoreMigrationConflictCode
+    });
   });
 });

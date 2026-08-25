@@ -22,7 +22,9 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ApprovalDecisi
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CancelRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CreateModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.DeleteModelProviderConfigurationCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetLatestSessionRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderConfigurationsCommand;
@@ -66,6 +68,8 @@ public class GatewayCommandRouter {
             case ApprovalDecisionCommand approvalCommand -> approvalCommandService.decide(approvalCommand);
             case CancelRunCommand cancelCommand -> runCommandService.cancel(cancelCommand);
             case GetSessionCommand getSessionCommand -> queryService.getSession(getSessionCommand);
+            case GetRunCommand getRunCommand -> queryService.getRun(getRunCommand);
+            case GetLatestSessionRunCommand latestRunCommand -> queryService.getLatestSessionRun(latestRunCommand);
             case ListSessionsCommand listSessionsCommand -> queryService.listSessions(listSessionsCommand);
             case GetSessionTranscriptCommand transcriptCommand ->
                     queryService.getSessionTranscript(transcriptCommand);

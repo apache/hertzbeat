@@ -40,9 +40,10 @@ public class AlertAnalysisPolicyService {
     }
 
     @Transactional
-    public AlertAnalysisPolicy create(String name, Map<String, String> matchLabels,
+    public AlertAnalysisPolicy create(String workspaceId, String name, Map<String, String> matchLabels,
                                       List<String> groupByLabels, Long windowSeconds,
                                       Integer minimumAlertCount, Long cooldownSeconds) {
+        String workspace = requireWorkspace(workspaceId);
         requireAgentClientConfigured();
         if (!StringUtils.hasText(name) || groupByLabels == null || groupByLabels.isEmpty()) {
             throw new IllegalArgumentException("Policy name and groupByLabels are required");
@@ -54,6 +55,7 @@ public class AlertAnalysisPolicyService {
             throw new IllegalArgumentException("minimumAlertCount must be positive");
         }
         return policyDao.save(AlertAnalysisPolicy.builder()
+                .workspaceId(workspace)
                 .name(name)
                 .enabled(true)
                 .matchLabels(matchLabels == null ? Map.of() : Map.copyOf(matchLabels))
@@ -64,12 +66,12 @@ public class AlertAnalysisPolicyService {
                 .build());
     }
 
-    public List<AlertAnalysisPolicy> findEnabled() {
-        return policyDao.findByEnabledTrueOrderByIdAsc();
+    public List<AlertAnalysisPolicy> findEnabled(String workspaceId) {
+        return policyDao.findByWorkspaceIdAndEnabledTrueOrderByIdAsc(requireWorkspace(workspaceId));
     }
 
-    public List<AlertAnalysisPolicy> findAll() {
-        return policyDao.findAllByOrderByIdAsc();
+    public List<AlertAnalysisPolicy> findAll(String workspaceId) {
+        return policyDao.findAllByWorkspaceIdOrderByIdAsc(requireWorkspace(workspaceId));
     }
 
     public boolean isAgentClientConfigured() {
@@ -78,19 +80,18 @@ public class AlertAnalysisPolicyService {
     }
 
     @Transactional
-    public AlertAnalysisPolicy toggle(Long id, boolean enabled) {
+    public AlertAnalysisPolicy toggle(String workspaceId, Long id, boolean enabled) {
+        AlertAnalysisPolicy policy = ownedPolicy(workspaceId, id);
         if (enabled) {
             requireAgentClientConfigured();
         }
-        AlertAnalysisPolicy policy = policyDao.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Alert analysis policy was not found: " + id));
         policy.setEnabled(enabled);
         return policyDao.save(policy);
     }
 
     @Transactional
-    public void delete(Long id) {
-        policyDao.deleteById(id);
+    public void delete(String workspaceId, Long id) {
+        policyDao.delete(ownedPolicy(workspaceId, id));
     }
 
     private void requireAgentClientConfigured() {
@@ -105,5 +106,20 @@ public class AlertAnalysisPolicyService {
             throw new IllegalArgumentException(field + " must be positive");
         }
         return resolved;
+    }
+
+    private AlertAnalysisPolicy ownedPolicy(String workspaceId, Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Alert analysis policy was not found");
+        }
+        return policyDao.findByWorkspaceIdAndId(requireWorkspace(workspaceId), id)
+                .orElseThrow(() -> new IllegalArgumentException("Alert analysis policy was not found"));
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId.trim();
     }
 }

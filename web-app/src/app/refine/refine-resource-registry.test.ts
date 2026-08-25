@@ -70,6 +70,7 @@ describe('Refine shell resource registry', () => {
       'shell-application-observability',
       'shell-resources',
       'shell-alerting',
+      'status-management',
       'shell-administration'
     ]);
     expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual(['monitors', 'bulletin', 'monitor-definitions']);
@@ -94,8 +95,7 @@ describe('Refine shell resource registry', () => {
       'collectors',
       'tokens',
       'labels',
-      'object-store',
-      'status-management'
+      'object-store'
     ]);
   });
 

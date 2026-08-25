@@ -40,15 +40,30 @@ public interface ObservabilityWorkspaceQueryGateway {
 
     long countDistinctBoundEntityIdsByIdentityKeys(Set<String> identityKeys);
 
+    long countDistinctBoundEntityIdsByIdentityKeys(String workspaceId, Set<String> identityKeys);
+
     List<EntityIdentity> findIdentitiesByKeysAndNormalizedValues(Set<String> identityKeys, Set<String> normalizedValues);
+
+    List<EntityIdentity> findIdentitiesByKeysAndNormalizedValues(
+            String workspaceId, Set<String> identityKeys, Set<String> normalizedValues);
 
     Map<Long, ObserveEntity> findEntitiesByIds(Set<Long> entityIds);
 
+    Map<Long, ObserveEntity> findEntitiesByIds(String workspaceId, Set<Long> entityIds);
+
     long countMonitorBindsByEntityId(Long entityId);
+
+    long countMonitorBindsByEntityId(String workspaceId, Long entityId);
 
     Optional<ObserveEntity> findEntityById(Long entityId);
 
+    /** Find an entity only when it belongs to the explicit trusted workspace. */
+    Optional<ObserveEntity> findEntityById(String workspaceId, Long entityId);
+
     List<EntityIdentity> findIdentitiesByEntityId(Long entityId);
+
+    /** Find identities only after the owning entity is verified in the explicit trusted workspace. */
+    List<EntityIdentity> findIdentitiesByEntityId(String workspaceId, Long entityId);
 
     default void recordEntityDiscoveryGovernanceActivity(String workspaceId, String action, String status,
                                                          String summary, String detail,

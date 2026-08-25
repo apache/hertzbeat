@@ -1,0 +1,61 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.section {
+  display: grid;
+  padding-block: var(--hb-space-5) var(--hb-space-2);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.header {
+  display: grid;
+  gap: var(--hb-space-1);
+  padding-bottom: var(--hb-space-3);
+}
+
+.operation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-5);
+  padding-block: var(--hb-space-4);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.copy {
+  display: grid;
+  gap: var(--hb-space-1);
+  min-width: 0;
+}
+
+.title {
+  margin: 0 !important;
+}
+
+.dialog {
+  display: grid;
+  gap: var(--hb-space-4);
+  padding-top: var(--hb-space-2);
+}
+
+.scope {
+  display: grid;
+  gap: var(--hb-space-1);
+  margin: var(--hb-space-2) 0 0;
+  padding-inline-start: 22px;
+}
+
+.externalNote {
+  margin: var(--hb-space-2) 0 0 !important;
+}
+
+.confirmation {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+
+@media (max-width: 640px) {
+  .operation {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -4,6 +4,7 @@ import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-mode
 import { AgentWorkspaceContextPane } from './agent-workspace-context-pane';
 import { AgentWorkspaceConversation } from './agent-workspace-conversation';
 import { AgentWorkspaceSessionPane } from './agent-workspace-session-pane';
+import { useState } from 'react';
 import styles from './agent-workspace-view.module.css';
 
 export function AgentWorkspaceView({
@@ -17,16 +18,23 @@ export function AgentWorkspaceView({
   onOpenProviders: () => void;
   onOpenSchedules: () => void;
 }) {
+  const [contextOpen, setContextOpen] = useState(false);
   return (
-    <div className={styles.workspace}>
+    <div className={styles.workspace} data-context-open={contextOpen}>
       <AgentWorkspaceSessionPane
         controller={controller}
         isAdmin={isAdmin}
         onOpenProviders={onOpenProviders}
         onOpenSchedules={onOpenSchedules}
       />
-      <AgentWorkspaceConversation controller={controller} />
-      <AgentWorkspaceContextPane controller={controller} isAdmin={isAdmin} />
+      <AgentWorkspaceConversation
+        contextOpen={contextOpen}
+        controller={controller}
+        onToggleContext={() => setContextOpen(current => !current)}
+      />
+      {contextOpen ? (
+        <AgentWorkspaceContextPane controller={controller} isAdmin={isAdmin} onClose={() => setContextOpen(false)} />
+      ) : null}
     </div>
   );
 }

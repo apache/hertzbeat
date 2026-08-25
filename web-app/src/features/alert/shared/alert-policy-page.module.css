@@ -35,6 +35,9 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+.tableHeaderNoWrap :global(.ant-table-thead > tr > th) {
+  white-space: nowrap;
+}
 .form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -28,6 +28,7 @@ import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStorageMigrationService;
 import org.apache.hertzbeat.manager.service.ObjectStoreConfigMapper;
 import org.apache.hertzbeat.manager.service.ObjectStoreConfigService;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -58,10 +59,14 @@ public class ObjectStoreConfigServiceImpl extends
     private ApplicationContext ctx;
 
     private final ObjectStoreConfigMapper mapper;
+    private final MonitorDefinitionStorageMigrationService migrationService;
 
-    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectStoreConfigMapper mapper) {
+    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao,
+                                        ObjectStoreConfigMapper mapper,
+                                        MonitorDefinitionStorageMigrationService migrationService) {
         super(generalConfigDao);
         this.mapper = mapper;
+        this.migrationService = migrationService;
     }
 
     @Override
@@ -85,7 +90,9 @@ public class ObjectStoreConfigServiceImpl extends
     @Transactional(rollbackFor = Exception.class)
     public ObjectStoreConfigResponse saveAndGetSafeConfig(ObjectStoreConfigRequest request) {
         generalConfigDao.findByTypeForUpdate(type());
-        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> merged = mapper.toConfig(request, getConfig());
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> current = getConfig();
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> merged = mapper.toConfig(request, current);
+        migrationService.migrate(current, merged);
         persist(merged);
         ObjectStoreDTO<ObjectStoreDTO.ObsConfig> saved = getConfig();
         if (saved == null) {

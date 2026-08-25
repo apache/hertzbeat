@@ -21,13 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalFormActions, OperationalStatePanel } from '@/shared/operational-page';
 
-import {
-  systemLocales,
-  systemThemes,
-  type SystemConfigDraft,
-  type SystemLocale,
-  type SystemTheme
-} from '../model/system-config-model';
+import { systemLocales, type SystemConfigDraft, type SystemLocale } from '../model/system-config-model';
 import styles from './system-config-editor.module.css';
 
 type SystemConfigEditorProps = {
@@ -72,14 +66,6 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
             onChange={value => props.onUpdate('timeZoneId', value)}
           />
         </SystemConfigField>
-        <SystemConfigField label={t('systemConfig.theme.label')} help={t('systemConfig.theme.help')}>
-          <Select<SystemTheme>
-            disabled={!props.canConfigure || props.locked}
-            value={current.theme || null}
-            options={systemThemes.map(theme => ({ value: theme, label: t(`systemConfig.theme.${theme}`) }))}
-            onChange={value => props.onUpdate('theme', value)}
-          />
-        </SystemConfigField>
       </div>
       <SystemConfigActions {...props} />
     </>
@@ -104,21 +90,15 @@ function TimezoneFailure(props: SystemConfigEditorProps) {
 
 function SystemConfigActions(props: SystemConfigEditorProps) {
   const { t } = useTranslation();
-  if (!props.canConfigure) return null;
+  if (!props.canConfigure || !props.dirty) return null;
   return (
     <OperationalFormActions>
-      <Button
-        type="primary"
-        loading={props.saving}
-        disabled={!props.dirty || !props.valid || props.locked}
-        onClick={props.onSave}
-      >
+      <Button type="primary" loading={props.saving} disabled={!props.valid || props.locked} onClick={props.onSave}>
         {t('common.save')}
       </Button>
-      <Button disabled={!props.dirty || props.locked} onClick={props.onDiscard}>
+      <Button disabled={props.locked} onClick={props.onDiscard}>
         {t('systemConfig.discard')}
       </Button>
-      {!props.dirty && <Typography.Text type="secondary">{t('systemConfig.noChanges')}</Typography.Text>}
     </OperationalFormActions>
   );
 }

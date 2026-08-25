@@ -20,7 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,7 +38,9 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingle
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.junit.jupiter.api.AfterEach;
@@ -104,12 +109,13 @@ class AgentScheduleExecutorTest {
         assertTrue(handled.await(5, TimeUnit.SECONDS));
         assertThrows(IllegalStateException.class, () -> executor.executeNow(7L));
         release.countDown();
-        verify(noticeService, timeout(5000)).send(schedule, run, true, "Healthy");
+        verify(noticeService, timeout(5000)).send(schedule, run, AgentRunStatus.SUCCEEDED, "Healthy");
         ArgumentCaptor<InvokeCommand> command = ArgumentCaptor.forClass(InvokeCommand.class);
         verify(commandRouter).handle(command.capture());
         assertEquals(ChannelId.SYSTEM.id(), command.getValue().envelope().getChannelId());
         assertEquals(ActorSupport.TYPE_SYSTEM, command.getValue().envelope().getActor().getType());
         assertEquals(ActorSupport.ID_SCHEDULE, command.getValue().envelope().getActor().getId());
+        assertEquals(AuthTokenScopes.DEFAULT_WORKSPACE_ID, command.getValue().envelope().getWorkspaceId());
         assertEquals("schedule:7", command.getValue().userInput().getConversationId());
         assertEquals(AgentRuntimeEntryType.SCHEDULE_TRIGGER, command.getValue().entryType());
     }
@@ -127,7 +133,60 @@ class AgentScheduleExecutorTest {
         executor.failInterruptedRuns();
 
         verify(runService).markFailed(running, "Agent schedule execution was interrupted by process restart");
-        verify(noticeService).send(schedule, failed, false,
+        verify(noticeService).send(schedule, failed, AgentRunStatus.FAILED,
                 "Agent schedule execution was interrupted by process restart");
+    }
+
+    @Test
+    void recoveryRequiredRunShouldKeepItsStatusAndSendAnUncertainNotice() {
+        AgentSchedule schedule = AgentSchedule.builder()
+                .id(7L).sessionId(21L).instruction("Inspect monitor").receiverIds(List.of(10L)).build();
+        AgentRun run = AgentRun.builder().runUid("run_recovery").sessionId(21L)
+                .messageId("schedule:7:manual:2").status(AgentRunStatus.CREATED.name()).build();
+        AgentRun recovery = AgentRun.builder().runUid("run_recovery").sessionId(21L)
+                .messageId("schedule:7:manual:2").status(AgentRunStatus.RECOVERY_REQUIRED.name()).build();
+        when(scheduleService.claimManualRun(7L)).thenReturn(run);
+        when(scheduleService.get(7L)).thenReturn(schedule);
+        when(commandRouter.handle(any())).thenReturn(GatewaySingleResponse.builder()
+                .meta(Meta.builder().commandId(run.getMessageId()).terminal(true).message("error").build())
+                .body(Map.of("status", AgentRunStatus.RECOVERY_REQUIRED.name(),
+                        "message", "Check the target state before continuing."))
+                .events(List.of()).build());
+        when(runService.findRun("run_recovery")).thenReturn(Optional.of(recovery));
+
+        executor = new AgentScheduleExecutor(scheduleService, runService, commandRouter, noticeService);
+        executor.executeNow(7L);
+
+        verify(noticeService, timeout(5000)).send(schedule, recovery,
+                AgentRunStatus.RECOVERY_REQUIRED, "Check the target state before continuing.");
+        verify(runService, never()).markFailed(any(), any());
+    }
+
+
+    @Test
+    void noticeFailureMustNotDowngradeRecoveryRequiredRun() {
+        AgentSchedule schedule = AgentSchedule.builder()
+                .id(8L).sessionId(22L).instruction("Inspect monitor").receiverIds(List.of(11L)).build();
+        AgentRun run = AgentRun.builder().runUid("run_recovery_notice").sessionId(22L)
+                .messageId("schedule:8:manual:1").status(AgentRunStatus.CREATED.name()).build();
+        AgentRun recovery = AgentRun.builder().runUid("run_recovery_notice").sessionId(22L)
+                .messageId("schedule:8:manual:1").status(AgentRunStatus.RECOVERY_REQUIRED.name()).build();
+        String message = "Check the target state before continuing.";
+        when(scheduleService.claimManualRun(8L)).thenReturn(run);
+        when(scheduleService.get(8L)).thenReturn(schedule);
+        when(commandRouter.handle(any())).thenReturn(GatewaySingleResponse.builder()
+                .meta(Meta.builder().commandId(run.getMessageId()).terminal(true).message("error").build())
+                .body(Map.of("status", AgentRunStatus.RECOVERY_REQUIRED.name(), "message", message))
+                .events(List.of()).build());
+        when(runService.findRun("run_recovery_notice")).thenReturn(Optional.of(recovery));
+        doThrow(new IllegalStateException("notice unavailable"))
+                .when(noticeService).send(schedule, recovery, AgentRunStatus.RECOVERY_REQUIRED, message);
+
+        executor = new AgentScheduleExecutor(scheduleService, runService, commandRouter, noticeService);
+        executor.executeNow(8L);
+
+        verify(noticeService, timeout(5000)).send(
+                schedule, recovery, AgentRunStatus.RECOVERY_REQUIRED, message);
+        verify(runService, after(500).never()).markFailed(any(), any());
     }
 }

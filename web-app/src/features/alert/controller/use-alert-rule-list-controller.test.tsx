@@ -95,7 +95,7 @@ describe('Alert Rule list controller', () => {
     await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
 
     act(() => {
-      routed.current().create();
+      routed.current().create('realtime');
       routed.current().edit(persisted.id);
     });
     await act(async () => {
@@ -134,8 +134,18 @@ describe('Alert Rule list controller', () => {
     expect(routed.current().state.search).toBe('A');
     act(() => routed.current().changePage(3, 25));
     await waitFor(() => expect(routed.current().state.query.pageIndex).toBe(0));
-    act(() => routed.current().create());
+    act(() => routed.current().create('periodic'));
     expect(routed.router.state.location.pathname).toBe('/alerts/rules/new');
+    expect(routed.router.state.location.search).toBe('?kind=periodic');
+  });
+
+  it('preserves the editor strategy query while the list is the masked dialog background', async () => {
+    const routed = renderListControllerOnEditor('/alerts/rules/new?kind=realtime');
+
+    await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
+
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules/new');
+    expect(routed.router.state.location.search).toBe('?kind=realtime');
   });
 
   it.each([
@@ -192,7 +202,7 @@ describe('Alert Rule list controller', () => {
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     api.loadAlertRule.mockRejectedValue(new AlertRuleMissingError());
     await act(async () => result.current.remove(7));
-    expect(notify.success).toHaveBeenCalled();
+    expect(notify.success).toHaveBeenCalledWith('alertRules.deleteSuccess');
     vi.clearAllMocks();
     api.deleteAlertRules.mockResolvedValue(undefined);
     api.loadAlertRule.mockRejectedValue(new AlertRuleMissingError());
@@ -218,6 +228,7 @@ describe('Alert Rule list controller', () => {
     expect(api.deleteAlertRules).toHaveBeenCalledWith([7, 8]);
     expect(api.loadAlertRule).toHaveBeenCalledTimes(2);
     expect(notify.success).toHaveBeenCalledTimes(1);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.deleteSuccess');
   });
 
   it('never repeats an uncertain batch delete while every selected id is proved', async () => {
@@ -351,7 +362,7 @@ describe('Alert Rule list controller', () => {
       routed.current().setSearch('blocked');
       routed.current().submitSearch();
       routed.current().changePage(3, 25);
-      routed.current().create();
+      routed.current().create('realtime');
       routed.current().edit(persisted.id);
       void routed.current().toggle(persisted, true);
       void routed.current().remove(persisted.id);
@@ -445,6 +456,10 @@ function renderRouted(entries: string[]) {
   const router = createMemoryRouter(
     [
       {
+        path: '/alerts/rules/new',
+        element: null
+      },
+      {
         path: '*',
         element: (
           <QueryClientProvider client={client}>
@@ -457,6 +472,36 @@ function renderRouted(entries: string[]) {
       initialEntries: entries,
       initialIndex: 0
     }
+  );
+  render(<RouterProvider router={router} />);
+  return {
+    router,
+    current: () => {
+      if (!controller) throw new Error('not mounted');
+      return controller;
+    }
+  };
+}
+
+function renderListControllerOnEditor(entry: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let controller: ReturnType<typeof useAlertRuleListController> | undefined;
+  function Probe() {
+    controller = useAlertRuleListController();
+    return null;
+  }
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/alerts/rules/new',
+        element: (
+          <QueryClientProvider client={client}>
+            <Probe />
+          </QueryClientProvider>
+        )
+      }
+    ],
+    { initialEntries: [entry] }
   );
   render(<RouterProvider router={router} />);
   return {

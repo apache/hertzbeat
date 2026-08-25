@@ -12,6 +12,7 @@ const defaultAlertLabelKeys = ['alertname', 'instance', 'job', 'severity', 'serv
 export type AlertLabelSuggestionState = {
   kind: 'loading' | 'received' | 'fallback';
   keys: string[];
+  catalog?: LabelSuggestionCatalog;
 };
 
 /** Keeps manual authoring useful while enriching it with canonical Label records. */
@@ -19,13 +20,29 @@ export function buildAlertLabelSuggestionState(
   catalog?: LabelSuggestionCatalog,
   kind: AlertLabelSuggestionState['kind'] = catalog ? 'received' : 'fallback'
 ): AlertLabelSuggestionState {
+  const normalizedCatalog = catalog ? normalizeLabelSuggestionCatalog(catalog) : undefined;
   const keys: string[] = [...defaultAlertLabelKeys];
   const seen = new Set<string>(keys);
-  catalog?.keys.forEach(candidate => {
-    const key = candidate.trim();
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    keys.push(key);
+  normalizedCatalog?.keys.forEach(key => {
+    if (!seen.has(key)) {
+      seen.add(key);
+      keys.push(key);
+    }
   });
-  return { kind, keys };
+  return { kind, keys, ...(normalizedCatalog ? { catalog: normalizedCatalog } : {}) };
+}
+
+function normalizeLabelSuggestionCatalog(catalog: LabelSuggestionCatalog): LabelSuggestionCatalog {
+  const keys: string[] = [];
+  const valuesByKey: Record<string, string[]> = {};
+  const seenKeys = new Set<string>();
+  catalog.keys.forEach(candidate => {
+    const key = candidate.trim();
+    if (!key || seenKeys.has(key)) return;
+    seenKeys.add(key);
+    keys.push(key);
+    const values = catalog.valuesByKey[candidate] ?? catalog.valuesByKey[key] ?? [];
+    valuesByKey[key] = [...new Set(values.map(value => value.trim()).filter(Boolean))];
+  });
+  return { keys, valuesByKey };
 }

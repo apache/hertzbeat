@@ -24,10 +24,12 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.util.StringUtils;
 
 /**
@@ -44,11 +46,15 @@ public class AgentToolExecutionRequest {
 
     private final Long runSessionId;
 
+    private final String workspaceId;
+
     private final AgentActor actor;
 
     private final AgentRuntimeEntryType entryType;
 
     private final AgentApprovalHandling approvalHandling;
+
+    private final AgentTargetRef effectiveTarget;
 
     private final String toolName;
 
@@ -62,12 +68,16 @@ public class AgentToolExecutionRequest {
 
     private final Consumer<AgentRuntimeEvent> eventConsumer;
 
+    private final AgentApprovalConsumption approvalConsumption;
+
     @Builder(toBuilder = true)
-    private AgentToolExecutionRequest(String sessionUid, Long runId, String runUid, Long runSessionId, AgentActor actor,
-                                       AgentRuntimeEntryType entryType, AgentApprovalHandling approvalHandling,
+    private AgentToolExecutionRequest(String sessionUid, Long runId, String runUid, Long runSessionId,
+                                       String workspaceId, AgentActor actor, AgentRuntimeEntryType entryType,
+                                       AgentApprovalHandling approvalHandling, AgentTargetRef effectiveTarget,
                                        String toolName, String toolCallId, String approvalId,
                                        Map<String, Object> arguments, String approvalStatus,
-                                       Consumer<AgentRuntimeEvent> eventConsumer) {
+                                       Consumer<AgentRuntimeEvent> eventConsumer,
+                                       AgentApprovalConsumption approvalConsumption) {
         if (!StringUtils.hasText(sessionUid)) {
             throw new IllegalArgumentException("Agent tool execution session uid is required");
         }
@@ -78,10 +88,12 @@ public class AgentToolExecutionRequest {
         }
         this.runUid = runUid;
         this.runSessionId = Objects.requireNonNull(runSessionId, "Agent tool execution run session id is required");
+        this.workspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         this.actor = Objects.requireNonNull(actor, "Agent tool execution actor is required");
         this.entryType = Objects.requireNonNull(entryType, "Agent tool execution entry type is required");
         this.approvalHandling = Objects.requireNonNull(approvalHandling,
                 "Agent tool execution approval handling is required");
+        this.effectiveTarget = effectiveTarget;
         if (!StringUtils.hasText(toolName)) {
             throw new IllegalArgumentException("Agent tool name is required");
         }
@@ -96,9 +108,15 @@ public class AgentToolExecutionRequest {
         this.arguments = Collections.unmodifiableMap(new LinkedHashMap<>(requiredArguments));
         this.approvalStatus = approvalStatus;
         this.eventConsumer = eventConsumer == null ? event -> { } : eventConsumer;
+        this.approvalConsumption = approvalConsumption == null
+                ? AgentApprovalConsumption.NONE : approvalConsumption;
     }
 
     public void publishEvent(AgentRuntimeEvent event) {
         eventConsumer.accept(event);
+    }
+
+    public AgentApprovalConsumption.Claim beginApprovalConsumption() {
+        return approvalConsumption.begin();
     }
 }

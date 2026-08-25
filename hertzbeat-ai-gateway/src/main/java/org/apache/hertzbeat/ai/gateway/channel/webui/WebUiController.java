@@ -32,6 +32,8 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CancelRunComma
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
+import org.apache.hertzbeat.ai.gateway.application.AgentTargetCanonicalizationService.FailureKind;
+import org.apache.hertzbeat.ai.gateway.application.AgentTargetCanonicalizationService.TargetCanonicalizationException;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.channel.webui.dto.WebUiChatStreamRequest;
 import org.apache.hertzbeat.ai.gateway.contract.AgentResponseLanguage;
@@ -43,6 +45,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.GatewayEventType
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStreamResponse;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
@@ -89,10 +92,10 @@ public class WebUiController {
     public Flux<ServerSentEvent<GatewayEvent>> streamChat(
             @Valid @RequestBody WebUiChatStreamRequest request,
             @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage) {
-        return ((GatewayStreamResponse) commandRouter.handle(
-                chatCommand(request, ReplyMode.STREAM, acceptLanguage))).events()
+        InvokeCommand command = chatCommand(request, ReplyMode.STREAM, acceptLanguage);
+        return Flux.defer(() -> ((GatewayStreamResponse) commandRouter.handle(command)).events())
                 .map(this::toServerSentEvent)
-                .onErrorResume(exception -> Flux.just(toServerSentEvent(errorEvent())));
+                .onErrorResume(exception -> Flux.just(toServerSentEvent(errorEvent(exception))));
     }
 
     @PostMapping("/runs/{runUid}/stop")
@@ -104,6 +107,7 @@ public class WebUiController {
                         .envelope(envelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("stop-run:" + runUid)
+                        .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                         .runUid(runUid)
                         .reason("Stopped by the WebUI user.")
                         .build())));
@@ -117,6 +121,7 @@ public class WebUiController {
                 .envelope(envelope())
                 .replyMode(ReplyMode.FINAL_ONLY)
                 .commandId(approvalId)
+                .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                 .approvalId(approvalId)
                 .decision(AgentApprovalDecision.APPROVED)
                 .build();
@@ -131,6 +136,7 @@ public class WebUiController {
                 .envelope(envelope())
                 .replyMode(ReplyMode.FINAL_ONLY)
                 .commandId(approvalId)
+                .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                 .approvalId(approvalId)
                 .decision(AgentApprovalDecision.REJECTED)
                 .build();
@@ -142,7 +148,8 @@ public class WebUiController {
     public ResponseEntity<Message<String>> submitInteraction(
             @Parameter(description = "Interaction ID") @PathVariable String interactionId,
             @RequestBody InteractionSubmission submission) {
-        interactionInputService.submit(interactionId, ActorSupport.requireCurrentSurenessActor(),
+        GatewayEnvelope envelope = envelope();
+        interactionInputService.submit(interactionId, envelope.getActor(), envelope.getWorkspaceId(),
                 submission == null ? Map.of() : submission.values());
         return ResponseEntity.ok(Message.success("submitted"));
     }
@@ -177,6 +184,7 @@ public class WebUiController {
                 .channelId(ChannelId.WEB_UI.id())
                 .receivedAt(System.currentTimeMillis())
                 .actor(ActorSupport.requireCurrentSurenessActor())
+                .workspaceId(AuthTokenRequestContext.currentWorkspaceId())
                 .build();
     }
 
@@ -187,9 +195,16 @@ public class WebUiController {
                 .build();
     }
 
-    private GatewayEvent errorEvent() {
+    private GatewayEvent errorEvent(Throwable failure) {
+        if (failure instanceof TargetCanonicalizationException canonicalization) {
+            boolean mismatch = canonicalization.kind() == FailureKind.MISMATCH;
+            return new GatewayEvent(GatewayEventType.ERROR, "webui:error", null, null, null, null,
+                    new ErrorPayload(null, mismatch ? "Investigation target does not match"
+                            : "Investigation target is unavailable",
+                            mismatch ? "TARGET_MISMATCH" : "TARGET_UNAVAILABLE"), System.currentTimeMillis());
+        }
         return new GatewayEvent(GatewayEventType.ERROR, "webui:error", null, null, null, null,
-                new ErrorPayload(null, "Agent Gateway stream failed"), System.currentTimeMillis());
+                new ErrorPayload(null, "Agent Gateway stream failed", null), System.currentTimeMillis());
     }
 
     /** Values supplied to a pending interaction request. */

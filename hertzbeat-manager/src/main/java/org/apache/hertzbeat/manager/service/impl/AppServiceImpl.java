@@ -18,8 +18,6 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
@@ -28,23 +26,24 @@ import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
-import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.HertzBeatKeywordsUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
-import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCommandExecutor;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCommandState;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionIdentity;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMutationCoordinator;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSource;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStateCommand;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSourceReader;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSourceRegistry;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStore;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStoreFactory;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -52,7 +51,6 @@ import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
@@ -65,7 +63,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -91,7 +88,8 @@ import static java.util.Objects.isNull;
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
-public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader, MonitorDefinitionCommandExecutor {
+public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader,
+        MonitorDefinitionCommandExecutor {
 
     private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
     private static final String[] RISKY_DEFINE_TOKENS = {"ScriptEngineManager", "URLClassLoader", "!!",
@@ -101,35 +99,31 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             "ClassPathXmlApplicationContext", "MarshalOutputStream", "InflaterOutputStream", "FileOutputStream"};
 
     private final MonitorDao monitorDao;
-    private final ObjectStoreConfigServiceImpl objectStoreConfigService;
     private final ParamDao paramDao;
-    private final DefineDao defineDao;
     private final WarehouseService warehouseService;
     private final ObjectProvider<MonitorService> monitorServiceProvider;
-    private final ObjectProvider<ObjectStoreService> objectStoreServiceProvider;
+    private final MonitorDefinitionStoreFactory definitionStoreFactory;
+    private final MonitorDefinitionMutationCoordinator mutationCoordinator;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
     private final MonitorDefinitionSourceRegistry definitionSourceRegistry = new MonitorDefinitionSourceRegistry();
-    private AppDefineStore appDefineStore;
-    private final AppDefineStore jarAppDefineStore = new JarAppDefineStoreImpl();
+    private MonitorDefinitionStore appDefineStore;
 
     /**
      * warehouseService is marked @Lazy to prevent potential circular dependencies.
      */
     public AppServiceImpl(MonitorDao monitorDao,
-                          ObjectStoreConfigServiceImpl objectStoreConfigService,
                           ParamDao paramDao,
-                          DefineDao defineDao,
                           @Lazy WarehouseService warehouseService,
                           ObjectProvider<MonitorService> monitorServiceProvider,
-                          ObjectProvider<ObjectStoreService> objectStoreServiceProvider) {
+                          MonitorDefinitionStoreFactory definitionStoreFactory,
+                          MonitorDefinitionMutationCoordinator mutationCoordinator) {
         this.monitorDao = monitorDao;
-        this.objectStoreConfigService = objectStoreConfigService;
         this.paramDao = paramDao;
-        this.defineDao = defineDao;
         this.warehouseService = warehouseService;
         this.monitorServiceProvider = monitorServiceProvider;
-        this.objectStoreServiceProvider = objectStoreServiceProvider;
+        this.definitionStoreFactory = definitionStoreFactory;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     @Override
@@ -416,9 +410,9 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
 
     @Override
     public String getMonitorDefineFileContent(String app) {
-        var appDefine = appDefineStore.loadAppDefine(app);
+        var appDefine = appDefineStore.load(app);
         if (isNull(appDefine)) {
-            appDefine = jarAppDefineStore.loadAppDefine(app);
+            appDefine = loadBuiltinDefinition(app);
         }
         if (isNull(appDefine)) {
             throw new IllegalArgumentException("can not find " + app + " define yml");
@@ -427,16 +421,18 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     @Override
-    public synchronized void applyMonitorDefineYml(String ymlContent, boolean isModify) {
-        Job app = parseAndValidateMonitorDefinition(ymlContent, isModify);
-        appDefineStore.save(app.getApp(), ymlContent);
-        Job originalJob = appDefines.get(MonitorDefinitionIdentity.normalize(app.getApp()));
-        if (Objects.nonNull(originalJob)) {
-            boolean hide = originalJob.isHide();
-            app.setHide(hide);
-        }
-        registerActiveDefinition(app, ymlContent);
-        getMonitorService().updateAppCollectJob(app);
+    public void applyMonitorDefineYml(String ymlContent, boolean isModify) {
+        mutationCoordinator.execute(() -> {
+            Job app = parseAndValidateMonitorDefinition(ymlContent, isModify);
+            appDefineStore.save(app.getApp(), ymlContent);
+            Job originalJob = appDefines.get(MonitorDefinitionIdentity.normalize(app.getApp()));
+            if (Objects.nonNull(originalJob)) {
+                boolean hide = originalJob.isHide();
+                app.setHide(hide);
+            }
+            registerActiveDefinition(app, ymlContent);
+            getMonitorService().updateAppCollectJob(app);
+        });
     }
 
     @Override
@@ -450,8 +446,8 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     @Override
-    public synchronized <T> T executeSerialized(MonitorDefinitionStateCommand<T> command) {
-        return command.execute(new CommandState());
+    public <T> T executeSerialized(MonitorDefinitionStateCommand<T> command) {
+        return mutationCoordinator.execute(() -> command.execute(new CommandState()));
     }
 
     private Job parseAndValidateMonitorDefinition(String definition, boolean isModify) {
@@ -550,25 +546,16 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         return monitorService;
     }
 
-    private ObjectStoreService getObjectStoreService() {
-        if (objectStoreServiceProvider == null) {
-            throw new IllegalStateException("ObjectStoreService provider is not available.");
-        }
-        ObjectStoreService objectStoreService = objectStoreServiceProvider.getIfAvailable();
-        if (objectStoreService == null) {
-            throw new IllegalStateException("ObjectStoreService bean is not available.");
-        }
-        return objectStoreService;
-    }
-
     @Override
-    public synchronized void deleteMonitorDefine(String app) {
-        var monitors = monitorDao.findMonitorsByAppEquals(app);
-        if (monitors != null && !monitors.isEmpty()) {
-            throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
-        }
-        appDefineStore.delete(app);
-        publishActiveRemoval(app);
+    public void deleteMonitorDefine(String app) {
+        mutationCoordinator.execute(() -> {
+            var monitors = monitorDao.findMonitorsByAppEquals(app);
+            if (monitors != null && !monitors.isEmpty()) {
+                throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
+            }
+            appDefineStore.delete(app);
+            publishActiveRemoval(app);
+        });
     }
 
     private void publishActiveRemoval(String app) {
@@ -581,7 +568,73 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     @Override
-    public synchronized void updateCustomTemplateConfig(TemplateConfig config) {
+    public void updateCustomTemplateConfig(TemplateConfig config) {
+        mutationCoordinator.execute(() -> updateCustomTemplateConfigLocked(config));
+    }
+
+    /** Loads the definition store when the normal business runtime opens. */
+    public void initializeRuntimeDefinitions(ObjectStoreDTO<?> objectStoreConfig) {
+        refreshStore(objectStoreConfig);
+    }
+
+    @EventListener(ObjectStoreConfigChangeEvent.class)
+    public void onObjectStoreConfigChange(ObjectStoreConfigChangeEvent event) {
+        refreshStore(event.getConfig());
+    }
+
+    private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
+        mutationCoordinator.execute(() -> refreshStoreLocked(objectStoreConfig));
+    }
+
+    private void refreshStoreLocked(ObjectStoreDTO<?> objectStoreConfig) {
+        Map<String, Job> previousAppDefines = Map.copyOf(appDefines);
+        MonitorDefinitionStore previousStore = appDefineStore;
+        MonitorDefinitionStore replacementStore = definitionStoreFactory.open(objectStoreConfig);
+        try {
+            definitionSourceRegistry.rebuild(() -> {
+                appDefines.clear();
+                loadBuiltinDefinitions();
+                replacementStore.loadAll().values().forEach(this::registerActiveDefinition);
+            });
+            appDefineStore = replacementStore;
+            closePreviousStore(previousStore);
+        } catch (RuntimeException | Error error) {
+            appDefines.clear();
+            appDefines.putAll(previousAppDefines);
+            closeReplacementStore(replacementStore, error);
+            throw error;
+        }
+    }
+
+    private void registerActiveDefinition(String definition) {
+        Job app = new Yaml().loadAs(definition, Job.class);
+        if (app == null || StringUtils.isBlank(app.getApp())) {
+            throw new IllegalStateException("stored monitor definition is invalid");
+        }
+        registerActiveDefinition(app, definition);
+    }
+
+    private void closePreviousStore(MonitorDefinitionStore previousStore) {
+        if (previousStore == null) {
+            return;
+        }
+        try {
+            previousStore.close();
+        } catch (RuntimeException error) {
+            log.warn("Previous monitor definition store could not be closed: {}",
+                    error.getClass().getSimpleName());
+        }
+    }
+
+    private void closeReplacementStore(MonitorDefinitionStore replacementStore, Throwable original) {
+        try {
+            replacementStore.close();
+        } catch (RuntimeException closeFailure) {
+            original.addSuppressed(closeFailure);
+        }
+    }
+
+    private void updateCustomTemplateConfigLocked(TemplateConfig config) {
         if (config == null) {
             return;
         }
@@ -600,49 +653,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
                 continue;
             }
             appDefine.setHide(appTemplate.isHide());
-            // The registry and runtime inventory are one logical authority. Keeping both
-            // synchronized prevents a later definition update from reviving stale visibility.
             definitionSourceRegistry.updateHidden(app, appTemplate.isHide());
-        }
-    }
-
-    /** Loads the definition store when the normal business runtime opens. */
-    public void initializeRuntimeDefinitions() {
-        // Guaranteed to be non-null due to constructor injection
-        var objectStoreConfig = objectStoreConfigService.getConfig();
-        refreshStore(objectStoreConfig);
-    }
-
-    @EventListener(ObjectStoreConfigChangeEvent.class)
-    public void onObjectStoreConfigChange(ObjectStoreConfigChangeEvent event) {
-        refreshStore(event.getConfig());
-    }
-
-    private synchronized void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
-        Map<String, Job> previousAppDefines = Map.copyOf(appDefines);
-        AppDefineStore previousAppDefineStore = appDefineStore;
-        try {
-            definitionSourceRegistry.rebuild(() -> {
-                appDefines.clear();
-                if (objectStoreConfig == null) {
-                    appDefineStore = new DatabaseAppDefineStoreImpl();
-                } else {
-                    if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
-                        appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                    } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
-                        appDefineStore = new DatabaseAppDefineStoreImpl();
-                    } else {
-                        appDefineStore = new LocalFileAppDefineStoreImpl();
-                    }
-                }
-                jarAppDefineStore.loadAppDefines();
-                appDefineStore.loadAppDefines();
-            });
-        } catch (RuntimeException | Error error) {
-            appDefines.clear();
-            appDefines.putAll(previousAppDefines);
-            appDefineStore = previousAppDefineStore;
-            throw error;
         }
     }
 
@@ -691,205 +702,36 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         }
     }
 
-    private interface AppDefineStore {
-
-        /**
-         * The configuration of all collection tasks is loaded
-         *
-         */
-        boolean loadAppDefines();
-
-        /**
-         * Load a collection task configuration
-         *
-         * @param app app name
-         * @return collect task configuration text
-         */
-        String loadAppDefine(String app);
-
-        void save(String app, String ymlContent);
-
-        void delete(String app);
-    }
-
-    private class JarAppDefineStoreImpl implements AppDefineStore {
-        @Override
-        public boolean loadAppDefines() {
-            try {
-                Yaml yaml = new Yaml();
-                log.info("load define app yml in internal jar");
-                var resolver = new PathMatchingResourcePatternResolver();
-                var resources = resolver.getResources("classpath:define/*.yml");
-                for (var resource : resources) {
-                    try (var inputStream = resource.getInputStream()) {
-                        String definition = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-                        var app = yaml.loadAs(definition, Job.class);
-                        if (app == null || StringUtils.isBlank(app.getApp())) {
-                            log.warn("skip invalid internal app define resource: {}", resource.getDescription());
-                            continue;
-                        }
-                        registerBuiltinDefinition(app, definition);
-                    } catch (IOException | RuntimeException e) {
-                        log.error("load internal app define failed: {}", resource.getDescription(), e);
-                    }
-                }
-                return true;
-            } catch (IOException e) {
-                log.error("define app yml not exist");
-                return false;
-            }
-        }
-
-        @Override
-        public String loadAppDefine(String app) {
+    private void loadBuiltinDefinitions() {
+        try {
+            Yaml yaml = new Yaml();
             var resolver = new PathMatchingResourcePatternResolver();
-            var resource = resolver.getResource("classpath:define/app-" + app + ".yml");
-            try (var inputStream = resource.getInputStream()) {
-                return StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                log.error(e.getMessage());
-                return null;
-            }
-        }
-
-        @Override
-        public void save(String app, String ymlContent) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void delete(String app) {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    private class LocalFileAppDefineStoreImpl implements AppDefineStore {
-        @Override
-        public boolean loadAppDefines() {
-            var rootUrl = this.getClass().getClassLoader().getResource("");
-            if (rootUrl == null) return false;
-            var directory = new File(rootUrl.getPath() + "define");
-            if (!directory.exists()) return false;
-            Yaml yaml = new Yaml();
-            for (var appFile : Objects.requireNonNull(directory.listFiles())) {
-                if (appFile.isFile() && (appFile.getName().endsWith("yml") || appFile.getName().endsWith("yaml"))) {
-                    try {
-                        String definition = FileUtils.readFileToString(appFile, StandardCharsets.UTF_8);
-                        var app = yaml.loadAs(definition, Job.class);
-                        if (app != null) registerActiveDefinition(app, definition);
-                    } catch (Exception e) {
-                        log.error(e.getMessage());
+            for (var resource : resolver.getResources("classpath:define/*.yml")) {
+                try (var inputStream = resource.getInputStream()) {
+                    String definition = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+                    Job app = yaml.loadAs(definition, Job.class);
+                    if (app == null || StringUtils.isBlank(app.getApp())) {
+                        log.warn("Skip invalid built-in monitor definition: {}", resource.getDescription());
+                        continue;
                     }
+                    registerBuiltinDefinition(app, definition);
+                } catch (IOException | RuntimeException error) {
+                    log.error("Built-in monitor definition could not be loaded: {}",
+                            resource.getDescription(), error);
                 }
             }
-            return true;
-        }
-
-        @Override
-        public String loadAppDefine(String app) {
-            var rootUrl = this.getClass().getClassLoader().getResource("");
-            if (rootUrl == null) return null;
-            var file = new File(rootUrl.getPath() + "define" + File.separator + "app-" + app + ".yml");
-            try {
-                return file.exists() ? FileUtils.readFileToString(file, StandardCharsets.UTF_8) : null;
-            } catch (Exception e) {
-                return null;
-            }
-        }
-
-        @Override
-        public void save(String app, String ymlContent) {
-            var rootUrl = this.getClass().getClassLoader().getResource("");
-            if (rootUrl == null) return;
-            var file = new File(rootUrl.getPath() + "define" + File.separator + "app-" + app + ".yml");
-            try {
-                FileUtils.writeStringToFile(file, ymlContent, StandardCharsets.UTF_8, false);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void delete(String app) {
-            var rootUrl = this.getClass().getClassLoader().getResource("");
-            if (rootUrl == null) return;
-            var file = new File(rootUrl.getPath() + "define" + File.separator + "app-" + app + ".yml");
-            if (file.exists()) file.delete();
-            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
+        } catch (IOException error) {
+            throw new IllegalStateException("built-in monitor definitions could not be listed", error);
         }
     }
 
-    private class ObjectStoreAppDefineStoreImpl implements AppDefineStore {
-        @Override
-        public boolean loadAppDefines() {
-            var objectStoreService = getObjectStoreService();
-            Yaml yaml = new Yaml();
-            objectStoreService.list("define").forEach(it -> {
-                var inputStream = it.getInputStream();
-                if (inputStream != null) {
-                    try (inputStream) {
-                        String definition = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                        var app = yaml.loadAs(definition, Job.class);
-                        if (app != null) registerActiveDefinition(app, definition);
-                    } catch (IOException error) {
-                        throw new IllegalStateException("monitor definition object could not be read");
-                    }
-                }
-            });
-            return true;
-        }
-
-        @Override
-        public String loadAppDefine(String app) {
-            var objectStoreService = getObjectStoreService();
-            var file = objectStoreService.download("define/app-" + app + ".yml");
-            try {
-                return file != null ? IOUtils.toString(file.getInputStream(), StandardCharsets.UTF_8) : null;
-            } catch (IOException e) {
-                return null;
-            }
-        }
-
-        @Override
-        public void save(String app, String ymlContent) {
-            getObjectStoreService().upload("define/app-" + app + ".yml", IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
-        }
-
-        @Override
-        public void delete(String app) {
-            getObjectStoreService().remove("define/app-" + app + ".yml");
-            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
-        }
-    }
-
-    private class DatabaseAppDefineStoreImpl implements AppDefineStore {
-        @Override
-        public boolean loadAppDefines() {
-            Yaml yaml = new Yaml();
-            defineDao.findAll().forEach(define -> {
-                var app = yaml.loadAs(define.getContent(), Job.class);
-                if (app != null) registerActiveDefinition(app, define.getContent());
-            });
-            return true;
-        }
-
-        @Override
-        public String loadAppDefine(String app) {
-            return defineDao.findById(app).map(Define::getContent).orElse(null);
-        }
-
-        @Override
-        public void save(String app, String ymlContent) {
-            Define define = new Define();
-            define.setApp(app);
-            define.setContent(ymlContent);
-            defineDao.save(define);
-        }
-
-        @Override
-        public void delete(String app) {
-            defineDao.deleteById(app);
-            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
+    private String loadBuiltinDefinition(String app) {
+        var resource = new PathMatchingResourcePatternResolver()
+                .getResource("classpath:define/app-" + MonitorDefinitionIdentity.normalize(app) + ".yml");
+        try (var inputStream = resource.getInputStream()) {
+            return StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+        } catch (IOException error) {
+            return null;
         }
     }
 }

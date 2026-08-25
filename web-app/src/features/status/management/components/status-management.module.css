@@ -4,6 +4,7 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
+/* Hallmark · genre: modern-minimal · tone: technical · anchor: HertzBeat primary · macrostructure: incident-style settings workbench · pre-emit critique: P5 H4 E5 S5 R5 V4 */
 .sectionHeading {
   display: flex;
   align-items: flex-start;
@@ -18,17 +19,492 @@
   gap: 16px;
   padding-top: 20px;
 }
-:global(.status-org-grid) {
+
+:global(.status-management-workspaces > .ant-tabs-nav) {
+  margin: 0;
+}
+
+:global(.status-management-workspaces > .ant-tabs-nav::before) {
+  border-bottom-color: var(--ant-color-border-secondary);
+}
+
+:global(.status-management-workspaces > .ant-tabs-content-holder) {
+  min-height: 0;
+}
+
+.setupWorkspace,
+.configurationWorkspace {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 16px;
-  max-width: 920px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.setupIntro {
+  display: grid;
+  gap: 4px;
+  max-width: 640px;
+}
+
+.setupIntro :global(.ant-typography) {
+  margin: 0;
+}
+
+.configurationPanel {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.componentList {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border-block: 1px solid var(--ant-color-border-secondary);
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
+  list-style: none;
+}
+
+.componentRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 72px;
+  padding: 12px 0;
+}
+
+.componentRow + .componentRow {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.componentCopy,
+.componentMeta > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.componentCopy strong {
+  overflow: hidden;
+  color: var(--ant-color-text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.componentCopy span,
+.componentMeta small {
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.componentMeta {
+  display: flex;
+  grid-column: 1;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.componentMeta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.componentMeta :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.componentActions {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  justify-self: end;
+}
+
+.incidentEmpty {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 100px;
+  padding: 18px 0;
+  border-block: 1px solid var(--ant-color-border-secondary);
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.incidentEmptyIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+  font-size: 18px;
+}
+
+.incidentEmptyCopy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.incidentEmptyCopy strong {
+  color: var(--ant-color-text);
+  font-weight: 600;
+}
+
+.incidentEmptyCopy span {
+  color: var(--ant-color-text-secondary);
+}
+
+:global(.status-incident-steps) {
+  margin-bottom: 22px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 999px;
+  background: var(--ant-color-bg-container);
+}
+
+:global(.status-incident-editor .ant-modal-content) {
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow:
+    0 28px 80px rgb(15 23 42 / 22%),
+    0 6px 18px rgb(15 23 42 / 12%);
+}
+
+:global(.status-incident-editor .ant-modal-header) {
+  margin-bottom: 18px;
+}
+
+:global(.status-incident-editor .ant-modal-body) {
+  margin-inline: -24px;
+  padding: 20px 24px 22px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+:global(.status-incident-editor .ant-modal-footer) {
+  margin-top: 0;
+  padding-top: 18px;
+}
+
+:global(.status-incident-steps.ant-steps-navigation) {
+  padding-top: 0;
+}
+
+:global(.status-incident-steps.ant-steps-navigation .ant-steps-item) {
+  padding-inline-start: 0;
+}
+
+:global(.status-incident-steps.ant-steps-navigation .ant-steps-item-container) {
+  min-height: 38px;
+  padding: 7px 18px;
+}
+
+:global(.status-incident-steps.ant-steps-navigation .ant-steps-item::before) {
+  display: none;
+}
+
+:global(.status-incident-steps.ant-steps-navigation .ant-steps-item:not(:last-child)::after) {
+  display: none;
+}
+
+:global(.status-incident-steps .ant-steps-item-active) {
+  background: var(--ant-color-primary-bg);
+}
+
+:global(.status-incident-form .ant-form-item) {
+  margin-bottom: 22px;
+}
+
+:global(.status-incident-form .ant-form-item:last-child) {
+  margin-bottom: 0;
+}
+
+:global(.status-incident-form .ant-form-item-extra) {
+  order: -1;
+  min-height: 0;
+  margin-bottom: 7px;
+  color: var(--ant-color-text-secondary);
+}
+
+:global(.status-incident-form .ant-input),
+:global(.status-incident-form .ant-input-affix-wrapper),
+:global(.status-incident-form textarea.ant-input) {
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+}
+
+:global(.status-incident-components) {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:global(.status-incident-components .ant-checkbox-wrapper) {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 54px;
+  margin-inline-start: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+:global(.status-incident-components .ant-checkbox-wrapper::after) {
+  display: none;
+}
+
+:global(.status-incident-components .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover) {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-fill-quaternary);
+}
+
+:global(.status-incident-components .ant-checkbox-wrapper-checked) {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
+}
+
+:global(.status-incident-components .ant-checkbox-wrapper-checked:hover) {
+  background: var(--ant-color-primary-bg);
+}
+
+:global(.status-incident-components .ant-checkbox-wrapper > span:last-child) {
+  min-width: 0;
+  padding-inline: 0;
+}
+
+:global(.status-incident-components .ant-checkbox-inner) {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+:global(.status-incident-component-copy) {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+:global(.status-incident-component-copy strong) {
+  overflow: hidden;
+  color: var(--ant-color-text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.status-incident-component-copy small) {
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.status-incident-state) {
+  display: flex;
+}
+
+:global(.status-incident-state .ant-radio-button-wrapper) {
+  flex: 1;
+  text-align: center;
+}
+
+:global(.status-incident-review) {
+  padding: 18px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
+}
+
+:global(.status-incident-review-workspace) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+:global(.status-incident-review .ant-typography) {
+  margin-top: 0;
+}
+
+:global(.status-incident-review-header) {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+:global(.status-incident-review-header .ant-typography:last-child) {
+  margin-bottom: 0;
+}
+
+:global(.status-incident-review-list) {
+  margin: 0;
+}
+
+:global(.status-incident-review-list > div) {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 18px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+:global(.status-incident-review-list > div:last-child) {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+:global(.status-incident-review-list dt) {
+  color: var(--ant-color-text-secondary);
+}
+
+:global(.status-incident-review-list dd) {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ant-color-text);
+}
+
+:global(.status-incident-review-message dd) {
+  white-space: pre-wrap;
+}
+
+:global(.status-incident-review-components) {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:global(.status-incident-review-components li) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:global(.status-incident-review-components .anticon) {
+  color: var(--ant-color-warning);
+}
+
+:global(.status-incident-public-preview) {
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 9%);
+}
+
+:global(.status-incident-public-preview > header) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+
+:global(.status-incident-public-preview > header .ant-typography) {
+  margin: 0;
+}
+
+:global(.status-incident-public-preview > header .ant-tag) {
+  flex: none;
+  margin-inline-end: 0;
+}
+
+:global(.status-incident-public-update) {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 188px;
+  padding: 20px 18px 20px 20px;
+}
+
+:global(.status-incident-public-update::before) {
+  position: absolute;
+  top: 32px;
+  bottom: 20px;
+  left: 26px;
+  width: 1px;
+  background: var(--ant-color-border-secondary);
+  content: '';
+}
+
+:global(.status-incident-public-marker) {
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  margin-top: 4px;
+  border: 3px solid var(--ant-color-bg-container);
+  border-radius: 50%;
+  background: var(--ant-color-warning);
+  box-shadow: 0 0 0 1px var(--ant-color-warning-border);
+}
+
+:global(.status-incident-public-update[data-resolved='true'] .status-incident-public-marker) {
+  background: var(--ant-color-success);
+  box-shadow: 0 0 0 1px var(--ant-color-success-border);
+}
+
+:global(.status-incident-public-update .ant-typography) {
+  margin-top: 0;
+}
+
+:global(.status-incident-public-update .ant-typography:last-of-type) {
+  margin-bottom: 16px;
+  white-space: pre-wrap;
 }
 @media (max-width: 700px) {
   .sectionHeading {
     flex-direction: column;
   }
-  :global(.status-org-grid) {
+  :global(.status-incident-review-workspace) {
     grid-template-columns: 1fr;
+  }
+
+  .incidentEmpty {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .incidentEmpty :global(.ant-btn) {
+    grid-column: 1 / -1;
+    justify-self: stretch;
   }
 }

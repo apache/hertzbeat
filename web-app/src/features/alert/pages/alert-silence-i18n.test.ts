@@ -16,8 +16,26 @@ import zhTw from '@/assets/i18n/zh-tw.json';
 describe('Alert Silence locales', () => {
   it('keeps batch deletion copy complete in every locale', () => {
     for (const locale of [enUs, jaJp, ptBr, zhCn, zhTw]) {
+      expect(locale.alertSilences.createTitle).toBeTruthy();
       expect(locale.alertSilences.deleteSelected).toBeTruthy();
       expect(locale.alertSilences.deleteSelectedConfirm).toContain('{{count}}');
+      expect(locale.alertSilences.deleteSuccess).toBeTruthy();
+    }
+  });
+
+  it('uses the source-length weekday labels and date prompt in both Chinese catalogs', () => {
+    for (const locale of [zhCn, zhTw]) {
+      expect(locale.alertSilences.days).toHaveLength(4);
+      expect(locale.alertSilences.week['1']).toHaveLength(3);
+      expect(locale.alertSilences.week['7']).toHaveLength(3);
+    }
+  });
+
+  it('keeps schedule validation specific in every locale', () => {
+    for (const locale of [enUs, jaJp, ptBr, zhCn, zhTw]) {
+      expect(locale.alertSilences.periodInvalid).toBeTruthy();
+      expect(locale.alertSilences.recurringPeriodInvalid).toBeTruthy();
+      expect(locale.alertSilences.daysRequired).toBeTruthy();
     }
   });
 });

@@ -23,6 +23,10 @@ const DeploymentRoutePage = lazy(async () => {
   const { DeploymentPage } = await import('@/features/deployment');
   return { default: DeploymentPage };
 });
+const DeploymentMigrationRoutePage = lazy(async () => {
+  const { DeploymentMigrationPage } = await import('@/features/deployment');
+  return { default: DeploymentMigrationPage };
+});
 
 export function AdministrativeTokenRoutePage() {
   return (
@@ -44,6 +48,14 @@ export function AdministrativeDeploymentRoutePage() {
   return (
     <Suspense fallback={<RouteLoadingState />}>
       <DeploymentRoutePage />
+    </Suspense>
+  );
+}
+
+export function AdministrativeDeploymentMigrationRoutePage() {
+  return (
+    <Suspense fallback={<RouteLoadingState />}>
+      <DeploymentMigrationRoutePage />
     </Suspense>
   );
 }

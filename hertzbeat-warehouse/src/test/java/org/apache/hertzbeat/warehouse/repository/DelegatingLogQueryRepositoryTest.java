@@ -21,14 +21,19 @@ package org.apache.hertzbeat.warehouse.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.util.List;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -110,5 +115,67 @@ class DelegatingLogQueryRepositoryTest {
         LogQueryRepository repository = new DelegatingLogQueryRepository(historyDataReaderProvider);
 
         assertTrue(repository.queryRecentLogs(1000L, 2000L, 10).isEmpty());
+    }
+
+    @Test
+    void workspaceRecentLogsUsesOnlyWorkspaceScopedReaderContract() {
+        LogEntry logEntry = LogEntry.builder().body("team-a log").build();
+        when(historyDataReaderProvider.orderedStream()).thenAnswer(invocation -> Stream.of(firstReader));
+        when(firstReader.queryLogsByMultipleConditionsWithPagination(
+                1000L, 2000L, null, null, null, null, null, 0, 20,
+                null, false, "team-a"))
+                .thenReturn(List.of(logEntry));
+
+        LogQueryRepository repository = new DelegatingLogQueryRepository(historyDataReaderProvider);
+
+        assertEquals(List.of(logEntry), repository.queryRecentLogs("team-a", 1000L, 2000L, 20));
+        verify(firstReader).queryLogsByMultipleConditionsWithPagination(
+                1000L, 2000L, null, null, null, null, null, 0, 20,
+                null, false, "team-a");
+    }
+
+    @Test
+    void blankWorkspaceFailsBeforeReaderLookup() {
+        LogQueryRepository repository = new DelegatingLogQueryRepository(historyDataReaderProvider);
+
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> repository.queryRecentLogs(" ", 1000L, 2000L, 20));
+        verifyNoInteractions(historyDataReaderProvider, firstReader, secondReader);
+    }
+
+    @Test
+    void unavailableWorkspaceReaderNeverFallsBackToUnscopedRead() {
+        when(historyDataReaderProvider.orderedStream()).thenAnswer(invocation -> Stream.of(firstReader));
+        when(firstReader.queryLogsByMultipleConditionsWithPagination(
+                1000L, 2000L, null, null, null, null, null, 0, 20,
+                null, false, "team-a"))
+                .thenThrow(new UnsupportedOperationException("unsupported"));
+
+        LogQueryRepository repository = new DelegatingLogQueryRepository(historyDataReaderProvider);
+
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> repository.queryRecentLogs("team-a", 1000L, 2000L, 20));
+        verify(firstReader).queryLogsByMultipleConditionsWithPagination(
+                1000L, 2000L, null, null, null, null, null, 0, 20,
+                null, false, "team-a");
+    }
+
+    @Test
+    void scopedReaderFailureIsStableUnavailableAndNeverProbesAnotherStore() {
+        when(historyDataReaderProvider.orderedStream()).thenAnswer(invocation -> Stream.of(firstReader, secondReader));
+        when(firstReader.queryLogsByMultipleConditionsWithPagination(
+                1000L, 2000L, null, null, null, null, null, 0, 20,
+                null, false, "team-a"))
+                .thenThrow(new IllegalStateException("provider details"));
+
+        LogQueryRepository repository = new DelegatingLogQueryRepository(historyDataReaderProvider);
+
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> repository.queryRecentLogs("team-a", 1000L, 2000L, 20));
+        verify(firstReader).queryLogsByMultipleConditionsWithPagination(
+                1000L, 2000L, null, null, null, null, null, 0, 20,
+                null, false, "team-a");
+        verifyNoInteractions(secondReader);
+        verifyNoMoreInteractions(firstReader);
     }
 }

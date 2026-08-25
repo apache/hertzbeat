@@ -25,6 +25,8 @@ import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMigrationConflictException;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStorageMigrationService;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,11 +63,15 @@ class ObjectStoreConfigServiceTest {
     @Mock
     private GeneralConfigDao generalConfigDao;
 
+    @Mock
+    private MonitorDefinitionStorageMigrationService migrationService;
+
     private ObjectStoreConfigServiceImpl objectStoreConfigService;
 
     @BeforeEach
     void setUp() {
-        objectStoreConfigService = new ObjectStoreConfigServiceImpl(generalConfigDao, new ObjectStoreConfigMapper());
+        objectStoreConfigService = new ObjectStoreConfigServiceImpl(
+                generalConfigDao, new ObjectStoreConfigMapper(), migrationService);
         ReflectionTestUtils.setField(objectStoreConfigService, "beanFactory", beanFactory);
         ReflectionTestUtils.setField(objectStoreConfigService, "ctx", ctx);
     }
@@ -162,6 +168,28 @@ class ObjectStoreConfigServiceTest {
         assertEquals(ObjectStoreDTO.Type.DATABASE, response.type());
         verify(generalConfigDao).findByTypeForUpdate("oss");
         verify(generalConfigDao).save(any());
+        verify(migrationService).migrate(null, authoritative);
+    }
+
+    @Test
+    void migrationConflictLeavesTheCurrentConfigurationUntouched() {
+        ObjectStoreConfigRequest request = new ObjectStoreConfigRequest();
+        request.setType(ObjectStoreDTO.Type.FILE.name());
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> current =
+                new ObjectStoreDTO<>(ObjectStoreDTO.Type.DATABASE, null);
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(current))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(persisted);
+        org.mockito.Mockito.doThrow(new MonitorDefinitionMigrationConflictException(java.util.List.of("mysql")))
+                .when(migrationService).migrate(any(), any());
+
+        assertThrows(MonitorDefinitionMigrationConflictException.class,
+                () -> objectStoreConfigService.saveAndGetSafeConfig(request));
+
+        verify(generalConfigDao, never()).save(any());
+        verify(ctx, never()).publishEvent(any());
     }
 
     @Test

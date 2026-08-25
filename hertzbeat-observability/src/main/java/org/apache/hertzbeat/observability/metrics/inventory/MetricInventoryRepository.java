@@ -27,6 +27,7 @@ public interface MetricInventoryRepository {
 
     /** Exact metric inventory scope. */
     record Query(
+            String workspaceId,
             String serviceName,
             String serviceNamespace,
             String environment,

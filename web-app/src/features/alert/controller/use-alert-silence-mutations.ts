@@ -43,6 +43,7 @@ const operationFeedback = {
   error: 'alertSilences.operationFailed'
 } as const;
 const saveFeedback = { success: 'alertSilences.saveSuccess', error: 'alertSilences.saveFailed' } as const;
+const deleteFeedback = { success: 'alertSilences.deleteSuccess', error: 'alertSilences.operationFailed' } as const;
 
 export function useAlertSilenceMutations(rereadList: () => Promise<AlertSilencePage>) {
   const { t } = useTranslation();
@@ -91,7 +92,7 @@ export function useAlertSilenceMutations(rereadList: () => Promise<AlertSilenceP
           requireAlertSilencesAbsent(await rereadList(), commandIds);
         }
       },
-      operationFeedback
+      deleteFeedback
     );
   };
   const remove = (id: number) => removeMany([id]);

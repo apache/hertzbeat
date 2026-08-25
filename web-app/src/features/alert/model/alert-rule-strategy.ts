@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertRuleDraft } from './alert-rule-draft';
+import { alertRuleLabelValue, updateAlertRuleLabel, type AlertRuleDraft } from './alert-rule-draft';
 import { createMetricAlertEditorDraft } from './alert-rule-metric-draft';
 import type { AlertRuleDataType, AlertRuleKind } from './alert-rule-types';
 
@@ -22,12 +22,21 @@ export function buildAlertRuleStrategyPatch(
   dataType: AlertRuleDataType
 ): Partial<AlertRuleDraft> {
   if (draft.kind === kind && draft.dataType === dataType) return {};
+  let labelsText = draft.labelsText;
+  labelsText = updateAlertRuleLabel(
+    labelsText,
+    'alert_mode',
+    dataType === 'log' ? alertRuleLabelValue(labelsText, 'alert_mode') : ''
+  );
   return {
     kind,
     dataType,
     expr: kind === 'periodic' && dataType === 'log' ? periodicLogStarterExpression : '',
     period: kind === 'periodic' ? (draft.period ?? 300) : draft.period,
-    ...(kind === 'realtime' && dataType === 'metric' ? { metricEditor: createMetricAlertEditorDraft() } : {}),
+    labelsText,
+    ...(kind === 'realtime' && dataType === 'metric'
+      ? { metricEditor: createMetricAlertEditorDraft(draft.authoringMode) }
+      : {}),
     strategyChanged: true
   };
 }

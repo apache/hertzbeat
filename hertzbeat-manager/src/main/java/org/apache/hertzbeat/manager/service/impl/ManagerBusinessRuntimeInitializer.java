@@ -48,7 +48,7 @@ public final class ManagerBusinessRuntimeInitializer implements CommandLineRunne
     @Override
     public void run(String... args) {
         objectStoreConfigService.initializeRuntimeState();
-        appService.initializeRuntimeDefinitions();
+        appService.initializeRuntimeDefinitions(objectStoreConfigService.getConfig());
         pluginParameterService.loadStoredParameters();
         pluginService.syncPluginStatus();
         pluginService.loadJarToClassLoader();

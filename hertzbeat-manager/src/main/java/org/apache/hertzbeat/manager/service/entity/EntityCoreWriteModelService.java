@@ -47,7 +47,7 @@ public class EntityCoreWriteModelService {
 
     public ObserveEntity createEntity(ObserveEntity input, String fallbackSource) {
         ObserveEntity entity = new ObserveEntity();
-        entity.setId(input.getId() == null ? SnowFlakeIdGenerator.generateId() : input.getId());
+        entity.setId(SnowFlakeIdGenerator.generateId());
         return saveEntityCore(entity, input, fallbackSource);
     }
 
@@ -58,7 +58,7 @@ public class EntityCoreWriteModelService {
         List<ObserveEntity> entities = inputs.stream()
                 .map(input -> {
                     ObserveEntity entity = new ObserveEntity();
-                    entity.setId(input.getId() == null ? SnowFlakeIdGenerator.generateId() : input.getId());
+                    entity.setId(SnowFlakeIdGenerator.generateId());
                     applyEntityCore(entity, input, fallbackSource);
                     return entity;
                 })

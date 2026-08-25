@@ -27,6 +27,7 @@ import jakarta.persistence.Entity;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Duration;
@@ -198,6 +199,7 @@ class TargetSchemaProvisionerDatabaseTest {
     }
 
     private static void verify(String jdbcUrl, MetadataDatabaseKind kind, String dialect) throws Exception {
+        assertStandardFlywayCreatesFreshBaseline(jdbcUrl, kind);
         MetadataDatabaseConfiguration target =
                 new MetadataDatabaseConfiguration(kind, jdbcUrl, USERNAME, PASSWORD);
         TargetSchemaProvisioner provisioner = new FlywayTargetSchemaProvisioner();
@@ -215,7 +217,7 @@ class TargetSchemaProvisionerDatabaseTest {
                             "SELECT version, type, installed_by, success "
                                     + "FROM flyway_schema_history ORDER BY installed_rank")) {
                 assertThat(history.next()).isTrue();
-                assertThat(history.getString("version")).isEqualTo("206");
+                assertThat(history.getString("version")).isEqualTo("200");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
                 assertThat(history.getString("installed_by")).isEqualTo("hertzbeat-migration");
                 assertThat(history.getBoolean("success")).isTrue();
@@ -232,8 +234,9 @@ class TargetSchemaProvisionerDatabaseTest {
         assertThat(historyRows(jdbcUrl))
                 .extracting(HistoryRow::version)
                 .containsExactly("159", "160", "170", "172", "173", "180", "181",
-                        "200", "201", "202", "203", "204", "205", "206");
+                        "200");
         try (Connection connection = DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD)) {
+            assertLargeAgentTextRoundTrip(connection);
             MetadataSchemaSnapshot migrated = MetadataSchemaSnapshot.capture(connection);
             assertThat(migrated.indexes())
                     .filteredOn(index -> index.table().equals("hzb_monitor")
@@ -242,6 +245,99 @@ class TargetSchemaProvisionerDatabaseTest {
                     .extracting(MetadataSchemaSnapshot.Index::columns)
                     .isEqualTo(List.of(new MetadataSchemaSnapshot.IndexColumn((short) 1, "app", "a")));
             assertThat(schemaDifferences(baseline, migrated)).isEmpty();
+        }
+    }
+
+    private static void assertStandardFlywayCreatesFreshBaseline(
+            String jdbcUrl, MetadataDatabaseKind kind) throws Exception {
+        String vendor = kind == MetadataDatabaseKind.MYSQL ? "mysql" : "postgresql";
+        Flyway flyway = Flyway.configure()
+                .dataSource(jdbcUrl, USERNAME, PASSWORD)
+                .locations("classpath:db/migration/" + vendor)
+                .cleanDisabled(false)
+                .validateMigrationNaming(true)
+                .load();
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
+        flyway.validate();
+        assertThat(flyway.migrate().migrationsExecuted).isZero();
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD)) {
+            assertThat(metadataTables(connection)).containsExactlyInAnyOrderElementsOf(
+                    TargetSchemaBaselineResourceTest.mappedTables());
+            assertLargeAgentTextRoundTrip(connection);
+            try (Statement statement = connection.createStatement();
+                    ResultSet history = statement.executeQuery(
+                            "SELECT version, type, script FROM flyway_schema_history ORDER BY installed_rank")) {
+                assertThat(history.next()).isTrue();
+                assertThat(history.getString("version")).isEqualTo("200");
+                assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
+                assertThat(history.getString("script")).isEqualTo("B200__current_schema.sql");
+                assertThat(history.next()).isFalse();
+            }
+        }
+        flyway.clean();
+    }
+
+    private static void assertLargeAgentTextRoundTrip(Connection connection) throws Exception {
+        long sessionId = 9_000_001L;
+        long runId = 9_000_002L;
+        long transcriptId = 9_000_003L;
+        String largeText = "request-snapshot:" + "x".repeat(32 * 1024);
+        try (PreparedStatement session = connection.prepareStatement(
+                "INSERT INTO hzb_agent_session "
+                        + "(id, session_uid, session_key, workspace_id, origin_entry_type, transcript_sequence) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)");
+                PreparedStatement run = connection.prepareStatement(
+                        "INSERT INTO hzb_agent_run "
+                                + "(id, run_uid, session_id, message_id, entry_type, target_context_json, "
+                                + "status, result_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                PreparedStatement transcript = connection.prepareStatement(
+                        "INSERT INTO hzb_agent_transcript_entry "
+                                + "(id, session_id, run_id, session_sequence, payload_json, message_role) "
+                                + "VALUES (?, ?, ?, ?, ?, ?)");
+                PreparedStatement query = connection.prepareStatement(
+                        "SELECT r.target_context_json, r.result_summary, t.payload_json "
+                                + "FROM hzb_agent_run r JOIN hzb_agent_transcript_entry t ON t.run_id = r.id "
+                                + "WHERE r.id = ?")) {
+            session.setLong(1, sessionId);
+            session.setString(2, "large-text-session");
+            session.setString(3, "large-text-session-key");
+            session.setString(4, "default");
+            session.setString(5, "SYSTEM");
+            session.setLong(6, 1L);
+            session.executeUpdate();
+
+            run.setLong(1, runId);
+            run.setString(2, "large-text-run");
+            run.setLong(3, sessionId);
+            run.setString(4, "large-text-message");
+            run.setString(5, "USER_INPUT");
+            run.setString(6, largeText);
+            run.setString(7, "SUCCEEDED");
+            run.setString(8, largeText);
+            run.executeUpdate();
+
+            transcript.setLong(1, transcriptId);
+            transcript.setLong(2, sessionId);
+            transcript.setLong(3, runId);
+            transcript.setLong(4, 1L);
+            transcript.setString(5, largeText);
+            transcript.setString(6, "USER");
+            transcript.executeUpdate();
+
+            query.setLong(1, runId);
+            try (ResultSet rows = query.executeQuery()) {
+                assertThat(rows.next()).isTrue();
+                assertThat(rows.getString("target_context_json")).isEqualTo(largeText);
+                assertThat(rows.getString("result_summary")).isEqualTo(largeText);
+                assertThat(rows.getString("payload_json")).isEqualTo(largeText);
+                assertThat(rows.next()).isFalse();
+            }
+        } finally {
+            try (Statement cleanup = connection.createStatement()) {
+                cleanup.executeUpdate("DELETE FROM hzb_agent_transcript_entry WHERE id = " + transcriptId);
+                cleanup.executeUpdate("DELETE FROM hzb_agent_run WHERE id = " + runId);
+                cleanup.executeUpdate("DELETE FROM hzb_agent_session WHERE id = " + sessionId);
+            }
         }
     }
 
@@ -524,7 +620,7 @@ class TargetSchemaProvisionerDatabaseTest {
                     .map(TargetSchemaProvisionerDatabaseTest::loadClass)
                     .forEach(sources::addAnnotatedClass);
             try (SessionFactory ignored = sources.buildMetadata().buildSessionFactory()) {
-                assertThat(ignored.getMetamodel().getEntities()).hasSize(48);
+                assertThat(ignored.getMetamodel().getEntities()).hasSize(55);
             }
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);

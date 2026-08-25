@@ -219,6 +219,8 @@ public class MetricsRealTimeAlertCalculator {
             if (labels != null) {
                 commonFingerPrints.putAll(labels);
             }
+            // This source-backed identity is written last so rule or metric labels cannot replace it.
+            commonFingerPrints.put(CommonConstants.LABEL_MONITOR_ID, instance);
             {
                 // trigger the expr before the metrics data, due the available up down or others
                 try {

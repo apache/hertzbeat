@@ -2,3 +2,4 @@
 
 export { TopologyPage } from './pages/topology-page';
 export { buildTopologyFocusPath, safeTopologyReturnTo } from './model/topology-navigation-model';
+export { materializeTopologyInvestigation } from './model/topology-agent-handoff';

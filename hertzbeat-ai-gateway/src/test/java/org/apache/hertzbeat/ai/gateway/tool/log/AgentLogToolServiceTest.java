@@ -17,55 +17,98 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.log;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.support.exception.CommonException;
+import org.apache.hertzbeat.observability.logs.service.LogQueryService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
-/** Test bounded and redacted log queries. */
+/** Test exact workspace-bounded and redacted log queries. */
 class AgentLogToolServiceTest {
 
-    private HistoryDataReader historyDataReader;
+    private LogQueryService logQueryService;
     private AgentLogToolService service;
 
     @BeforeEach
     void setUp() {
-        historyDataReader = mock(HistoryDataReader.class);
-        service = new AgentLogToolService(historyDataReader);
+        logQueryService = mock(LogQueryService.class);
+        service = new AgentLogToolService(logQueryService);
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+    }
+
+    @AfterEach
+    void clearContext() {
+        AuthTokenRequestContext.bindWorkspaceId(null);
     }
 
     @Test
-    void shouldRedactTelemetryBeforeReturningItToModelContext() {
+    void shouldUseExactWorkspaceScopeAndRedactTelemetryBeforeModelContext() {
         LogEntry log = LogEntry.builder().timeUnixNano(1_000_000L).severityNumber(17).severityText("ERROR")
                 .body("request failed password=super-secret")
                 .attributes(Map.of("api_key", "another-secret"))
                 .resource(Map.of("service.name", "checkout"))
                 .build();
-        when(historyDataReader.countLogsByMultipleConditions(1_000L, 2_000L, null, null, 17, "ERROR", null))
-                .thenReturn(1L);
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(
-                1_000L, 2_000L, null, null, 17, "ERROR", null, 0, 20)).thenReturn(List.of(log));
+        when(logQueryService.list("team-a", null, 1_000L, 2_000L, null, null, 17, "ERROR", null,
+                "checkout", "commerce", "prod", "service.version=1", "http.route=/pay",
+                0, 20, true, false))
+                .thenReturn(new PageImpl<>(List.of(log), PageRequest.of(0, 20), 1));
 
-        Map<String, Object> result = service.queryLogs(1_000L, 2_000L, null, null, 17, "error",
-                null, 0, 20);
+        Map<String, Object> result = service.queryLogs(1_000L, 2_000L, null, null, 17, "error", null,
+                "checkout", "commerce", "prod", "service.version=1", "http.route=/pay",
+                true, false, 0, 20);
 
         Map<?, ?> row = (Map<?, ?>) ((List<?>) result.get("content")).getFirst();
         assertFalse(((String) row.get("body")).contains("super-secret"));
         assertFalse(((String) row.get("attributes")).contains("another-secret"));
+        verify(logQueryService).list("team-a", null, 1_000L, 2_000L, null, null, 17, "ERROR", null,
+                "checkout", "commerce", "prod", "service.version=1", "http.route=/pay",
+                0, 20, true, false);
     }
 
     @Test
     void shouldRejectQueriesWiderThanSevenDays() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.queryLogs(1_000L, 1_000L + Duration.ofDays(8).toMillis(), null, null,
-                        null, null, null, null, null));
+                        null, null, null, null, null, null, null, null,
+                        false, false, 0, 20));
+        verifyNoInteractions(logQueryService);
+    }
+
+    @Test
+    void shouldFailClosedBeforeQueryWhenWorkspaceIsMissing() {
+        AuthTokenRequestContext.bindWorkspaceId(null);
+
+        CommonException failure = assertThrows(CommonException.class,
+                () -> service.queryLogs(1_000L, 2_000L, null, null, null, null, null,
+                        null, null, null, null, null, false, false, 0, 20));
+
+        assertEquals("log_workspace_unavailable", failure.getMessage());
+        verifyNoInteractions(logQueryService);
+    }
+
+    @Test
+    void shouldReportUnavailableWhenProductQueryServiceIsNotConfigured() {
+        AgentLogToolService unavailable = new AgentLogToolService((LogQueryService) null);
+
+        CommonException failure = assertThrows(CommonException.class,
+                () -> unavailable.queryLogs(1_000L, 2_000L, null, null, null, null, null,
+                        null, null, null, null, null, false, false, 0, 20));
+
+        assertEquals("log_query_service_unavailable", failure.getMessage());
     }
 }

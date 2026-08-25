@@ -33,6 +33,7 @@ import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.manager.setup.installation.LocalInstallationFingerprintStore;
+import org.apache.hertzbeat.manager.setup.runtime.FileFactoryResetStateStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -57,6 +58,19 @@ class LocalInstallationStartupProbeTest {
                 new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
         new LocalInstallationFingerprintStore(root,
                 root.resolve("data/config/.installation-fingerprint"), new SecureRandom()).create();
+        assertEquals(RuntimeMode.FULL_SETUP_GATED,
+                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
+    }
+
+    @Test
+    void pendingFactoryResetAlwaysStartsTheGatedCleanupRuntime() throws Exception {
+        FileFactoryResetStateStore reset = new FileFactoryResetStateStore(root);
+
+        reset.request();
+        assertEquals(RuntimeMode.FULL_SETUP_GATED,
+                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
+
+        reset.markCleaned();
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
                 new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
     }

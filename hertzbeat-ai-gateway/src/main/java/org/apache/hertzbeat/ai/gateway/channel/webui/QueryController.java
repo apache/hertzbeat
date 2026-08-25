@@ -26,6 +26,8 @@ import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetRunCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetLatestSessionRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
@@ -33,9 +35,12 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingle
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
-import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunSnapshot;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionListItem;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,10 +77,40 @@ public class QueryController {
                         .build())));
     }
 
+    @GetMapping("/runs/{runUid}")
+    @Operation(summary = "Get an owned Agent Gateway run")
+    public ResponseEntity<Message<AgentRunSnapshot>> getRun(
+            @Parameter(description = "Run UID") @PathVariable String runUid) {
+        GatewaySingleResponse response = (GatewaySingleResponse) commandRouter.handle(
+                GetRunCommand.builder()
+                        .envelope(webUiEnvelope())
+                        .replyMode(ReplyMode.FINAL_ONLY)
+                        .commandId("get-run:" + runUid)
+                        .originEntryType(AgentRuntimeEntryType.USER_INPUT)
+                        .runUid(runUid)
+                        .build());
+        return ResponseEntity.ok(Message.success((AgentRunSnapshot) response.body()));
+    }
+
+    @GetMapping("/sessions/{sessionUid}/latest-run")
+    @Operation(summary = "Get the latest owned Agent Gateway run for a session")
+    public ResponseEntity<Message<AgentRunSnapshot>> getLatestSessionRun(
+            @Parameter(description = "Session UID") @PathVariable String sessionUid) {
+        GatewaySingleResponse response = (GatewaySingleResponse) commandRouter.handle(
+                GetLatestSessionRunCommand.builder()
+                        .envelope(webUiEnvelope())
+                        .replyMode(ReplyMode.FINAL_ONLY)
+                        .commandId("get-latest-run:" + sessionUid)
+                        .originEntryType(AgentRuntimeEntryType.USER_INPUT)
+                        .sessionUid(sessionUid)
+                        .build());
+        return ResponseEntity.ok(Message.success((AgentRunSnapshot) response.body()));
+    }
+
     @GetMapping("/sessions")
     @Operation(summary = "List current WebUI user's Agent Gateway sessions")
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Message<Page<AgentSession>>> listSessions(
+    public ResponseEntity<Message<Page<AgentSessionListItem>>> listSessions(
             @RequestParam(defaultValue = "0") int pageIndex,
             @RequestParam(defaultValue = "50") int pageSize) {
         GatewaySingleResponse response = (GatewaySingleResponse) commandRouter.handle(
@@ -88,13 +123,13 @@ public class QueryController {
                         .pageIndex(pageIndex)
                         .pageSize(pageSize)
                         .build());
-        return ResponseEntity.ok(Message.success((Page<AgentSession>) response.body()));
+        return ResponseEntity.ok(Message.success((Page<AgentSessionListItem>) response.body()));
     }
 
     @GetMapping("/alert-analysis/sessions")
     @Operation(summary = "List automatic alert analysis sessions")
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Message<Page<AgentSession>>> listAlertAnalysisSessions(
+    public ResponseEntity<Message<Page<AgentSessionListItem>>> listAlertAnalysisSessions(
             @RequestParam(defaultValue = "0") int pageIndex,
             @RequestParam(defaultValue = "50") int pageSize,
             @RequestParam(required = false) String search) {
@@ -108,7 +143,7 @@ public class QueryController {
                         .pageIndex(pageIndex)
                         .pageSize(pageSize)
                         .build());
-        return ResponseEntity.ok(Message.success((Page<AgentSession>) response.body()));
+        return ResponseEntity.ok(Message.success((Page<AgentSessionListItem>) response.body()));
     }
 
     @GetMapping("/alert-analysis/sessions/{sessionId}")
@@ -170,6 +205,7 @@ public class QueryController {
                 .channelId(ChannelId.WEB_UI.id())
                 .receivedAt(System.currentTimeMillis())
                 .actor(ActorSupport.requireCurrentSurenessActor())
+                .workspaceId(AuthTokenRequestContext.currentWorkspaceId())
                 .build();
     }
 
@@ -179,6 +215,7 @@ public class QueryController {
                 .channelId(ChannelId.SYSTEM.id())
                 .receivedAt(System.currentTimeMillis())
                 .actor(AgentActor.alertAnalysisActor())
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .build();
     }
 }

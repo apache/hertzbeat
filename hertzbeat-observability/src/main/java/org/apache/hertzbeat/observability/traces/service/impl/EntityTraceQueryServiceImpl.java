@@ -48,6 +48,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.common.observability.model.EntityCanonicalIdentityRegistry;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceQueryHintDto;
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
@@ -126,6 +127,35 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
 
     private final TraceQueryRepository traceQueryRepository;
     private final ObservabilityWorkspaceQueryGateway workspaceQueryGateway;
+
+    @Override
+    public Page<TraceListItemDto> queryRecentTraces(String workspaceId, Long start, Long end, int limit) {
+        String trustedWorkspaceId = requireTrustedWorkspaceId(workspaceId);
+        if (!traceQueryRepository.supportsTraceListRows()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        int pageSize = normalizeTraceListPageSize(limit);
+        List<Map<String, Object>> rows = traceQueryRepository.queryTraceListRows(
+                start, end, false, null, null, null, trustedWorkspaceId, Map.of(), false, 0, pageSize);
+        List<TraceListItemDto> items = rows == null ? List.of() : rows.stream().map(this::toTraceListItem).toList();
+        long total = rows == null ? 0L : rows.stream()
+                .map(row -> readLongValue(row, "total_count", "totalCount"))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse((long) items.size());
+        return new PageImpl<>(items, PageRequest.of(0, pageSize), total);
+    }
+
+    private String trustedWorkspaceId() {
+        return requireTrustedWorkspaceId(AuthTokenRequestContext.currentWorkspaceId());
+    }
+
+    private String requireTrustedWorkspaceId(String workspaceId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+    }
 
     @Override
     public EntityTraceSummaryDto buildEntityTraceSummary(ObservedEntityContext entityContext) {
@@ -255,9 +285,23 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                  String resourceFilter, String operationName, Long minDurationMs,
                                                  Long maxDurationMs, int pageIndex, int pageSize,
                                                  Boolean hideInternal, String spanScope, String attributeFilter) {
+        return queryTraceList(trustedWorkspaceId(), entityId, start, end, traceId, errorOnly, serviceName,
+                serviceNamespace, environment, resourceFilter, operationName, minDurationMs, maxDurationMs,
+                pageIndex, pageSize, hideInternal, spanScope, attributeFilter);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(String workspaceId, Long entityId, Long start, Long end,
+                                                 String traceId, Boolean errorOnly, String serviceName,
+                                                 String serviceNamespace, String environment, String resourceFilter,
+                                                 String operationName, Long minDurationMs, Long maxDurationMs,
+                                                 int pageIndex, int pageSize, Boolean hideInternal, String spanScope,
+                                                 String attributeFilter) {
+        String trustedWorkspaceId = requireTrustedWorkspaceId(workspaceId);
         PageRequest pageRequest = PageRequest.of(
                 normalizeTraceListPageIndex(pageIndex), normalizeTraceListPageSize(pageSize));
-        ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
+        ObservedEntityContext entityContext = entityId == null
+                ? null : loadEntityContext(trustedWorkspaceId, entityId);
         if (missingRequestedEntity(entityId, entityContext)) {
             return new PageImpl<>(List.of(), pageRequest, 0);
         }
@@ -285,7 +329,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal,
                             normalizedSpanScope,
@@ -302,7 +346,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal,
                             repositoryOffset,
@@ -318,10 +362,10 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                     .orElse((long) pageRequest.getOffset() + items.size());
             return new PageImpl<>(items, pageRequest, total);
         }
-        List<TraceAggregate> filtered = aggregateTraceRows(queryRowsForList(traceId, start, end, queryScope.serviceName(),
-                queryScope.serviceNamespace(), queryScope.environment(), operationName, minDurationNanos,
-                maxDurationNanos, pushedResourceFilters, pushableSpanAttributeFilters(attributeFilters),
-                hideInternal)).stream()
+        List<TraceAggregate> filtered = aggregateTraceRows(trustedWorkspaceId, queryRowsForList(
+                trustedWorkspaceId, traceId, start, end, queryScope.serviceName(), queryScope.serviceNamespace(),
+                queryScope.environment(), operationName, minDurationNanos, maxDurationNanos, pushedResourceFilters,
+                pushableSpanAttributeFilters(attributeFilters), hideInternal)).stream()
                 .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
                 .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
                         queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
@@ -349,10 +393,17 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
 
     @Override
     public TraceDetailDto getTraceDetail(TraceDetailQuery query) {
+        return getTraceDetail(trustedWorkspaceId(), query);
+    }
+
+    @Override
+    public TraceDetailDto getTraceDetail(String workspaceId, TraceDetailQuery query) {
+        String trustedWorkspaceId = requireTrustedWorkspaceId(workspaceId);
         if (query == null || !StringUtils.hasText(query.traceId())) {
             return null;
         }
-        ObservedEntityContext entityContext = query.entityId() == null ? null : loadEntityContext(query.entityId());
+        ObservedEntityContext entityContext = query.entityId() == null
+                ? null : loadEntityContext(trustedWorkspaceId, query.entityId());
         if (missingRequestedEntity(query.entityId(), entityContext)) {
             return null;
         }
@@ -362,13 +413,6 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(query.resourceFilter()));
         ResourceFilterSet attributeFilters = parseResourceFilters(query.attributeFilter());
-        if (entityContext == null && !hasTraceDetailScope(query, resourceFilters, attributeFilters)) {
-            TraceAggregate unscoped = aggregateTraceRows(
-                    traceQueryRepository.queryTraceRows(query.traceId(), TRACE_DETAIL_LIMIT)).stream()
-                    .findFirst()
-                    .orElse(null);
-            return unscoped == null ? null : toTraceDetail(unscoped);
-        }
         TraceRowQuery rowQuery = new TraceRowQuery(
                 query.traceId(),
                 trimText(query.spanId()),
@@ -380,11 +424,11 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 null,
                 durationMillisToNanos(query.minDurationMs()),
                 durationMillisToNanos(query.maxDurationMs()),
-                AuthTokenRequestContext.currentWorkspaceId(),
+                trustedWorkspaceId,
                 mergeResourceFilters(identityValues, resourceFilters.pushableInclude()),
                 pushableSpanAttributeFilters(attributeFilters),
                 false);
-        TraceAggregate aggregate = aggregateTraceRows(
+        TraceAggregate aggregate = aggregateTraceRows(trustedWorkspaceId,
                 traceQueryRepository.queryTraceRows(rowQuery, TRACE_DETAIL_LIMIT)).stream()
                 .filter(trace -> identityValues.isEmpty() || matchesEntity(trace, identityValues))
                 .filter(trace -> matchesResourceFilters(trace, resourceFilters))
@@ -392,21 +436,6 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 .findFirst()
                 .orElse(null);
         return aggregate == null ? null : toTraceDetail(aggregate);
-    }
-
-    private boolean hasTraceDetailScope(
-            TraceDetailQuery query, ResourceFilterSet resourceFilters, ResourceFilterSet attributeFilters) {
-        return StringUtils.hasText(query.spanId())
-                || query.start() != null
-                || query.end() != null
-                || StringUtils.hasText(query.serviceName())
-                || StringUtils.hasText(query.serviceNamespace())
-                || StringUtils.hasText(query.environment())
-                || !resourceFilters.isEmpty()
-                || !attributeFilters.isEmpty()
-                || query.minDurationMs() != null
-                || query.maxDurationMs() != null
-                || StringUtils.hasText(AuthTokenRequestContext.currentWorkspaceId());
     }
 
     private Map<String, Set<String>> pushableSpanAttributeFilters(ResourceFilterSet attributeFilters) {
@@ -460,7 +489,20 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                              String serviceName, String serviceNamespace, String environment,
                                              String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
                                              Boolean hideInternal, String spanScope, String attributeFilter) {
-        ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
+        return getTraceOverview(trustedWorkspaceId(), entityId, start, end, traceId, errorOnly, serviceName,
+                serviceNamespace, environment, resourceFilter, operationName, minDurationMs, maxDurationMs,
+                hideInternal, spanScope, attributeFilter);
+    }
+
+    @Override
+    public TraceOverviewDto getTraceOverview(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                             Boolean errorOnly, String serviceName, String serviceNamespace,
+                                             String environment, String resourceFilter, String operationName,
+                                             Long minDurationMs, Long maxDurationMs, Boolean hideInternal,
+                                             String spanScope, String attributeFilter) {
+        String trustedWorkspaceId = requireTrustedWorkspaceId(workspaceId);
+        ObservedEntityContext entityContext = entityId == null
+                ? null : loadEntityContext(trustedWorkspaceId, entityId);
         if (missingRequestedEntity(entityId, entityContext)) {
             return new TraceOverviewDto(0, 0, null, false);
         }
@@ -488,7 +530,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal,
                             normalizedSpanScope
@@ -504,7 +546,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal
                     );
@@ -527,7 +569,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal,
                             normalizedSpanScope
@@ -542,7 +584,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal
                     );
@@ -551,7 +593,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 return overview;
             }
         }
-        Page<TraceListItemDto> result = queryTraceList(entityId, start, end, traceId, errorOnly,
+        Page<TraceListItemDto> result = queryTraceList(trustedWorkspaceId, entityId, start, end, traceId, errorOnly,
                 queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(),
                 resourceFilter, operationName, minDurationMs, maxDurationMs, 0, TRACE_LIST_SAMPLE_LIMIT, hideInternal,
                 normalizedSpanScope, attributeFilter);
@@ -595,6 +637,19 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                     Long minDurationMs, Long maxDurationMs, String groupBy,
                                                     Integer limit, String orderBy, Integer minCount, Boolean hideInternal,
                                                     String spanScope, String attributeFilter) {
+        return getTraceGroupByStats(trustedWorkspaceId(), entityId, start, end, traceId, errorOnly, serviceName,
+                serviceNamespace, environment, resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy,
+                limit, orderBy, minCount, hideInternal, spanScope, attributeFilter);
+    }
+
+    @Override
+    public Map<String, Object> getTraceGroupByStats(String workspaceId, Long entityId, Long start, Long end,
+                                                    String traceId, Boolean errorOnly, String serviceName,
+                                                    String serviceNamespace, String environment, String resourceFilter,
+                                                    String operationName, Long minDurationMs, Long maxDurationMs,
+                                                    String groupBy, Integer limit, String orderBy, Integer minCount,
+                                                    Boolean hideInternal, String spanScope, String attributeFilter) {
+        String trustedWorkspaceId = requireTrustedWorkspaceId(workspaceId);
         String normalizedGroupBy = normalizeTraceGroupBy(groupBy);
         int resolvedLimit = resolveTraceGroupByLimit(limit);
         long resolvedMinCount = resolveTraceGroupByMinCount(minCount);
@@ -605,7 +660,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             result.put("groups", List.of());
             return result;
         }
-        ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
+        ObservedEntityContext entityContext = entityId == null
+                ? null : loadEntityContext(trustedWorkspaceId, entityId);
         if (missingRequestedEntity(entityId, entityContext)) {
             result.put("groups", List.of());
             return result;
@@ -633,7 +689,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal,
                             normalizedSpanScope,
@@ -652,7 +708,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             operationName,
                             minDurationNanos,
                             maxDurationNanos,
-                            AuthTokenRequestContext.currentWorkspaceId(),
+                            trustedWorkspaceId,
                             pushedResourceFilters,
                             hideInternal,
                             normalizedGroupBy,
@@ -663,10 +719,10 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             result.put("groups", rows.stream().map(this::toTraceGroupResult).toList());
             return result;
         }
-        List<TraceAggregate> traces = aggregateTraceRows(queryRowsForList(traceId, start, end, queryScope.serviceName(),
-                queryScope.serviceNamespace(), queryScope.environment(), operationName, minDurationNanos,
-                maxDurationNanos, pushedResourceFilters, pushableSpanAttributeFilters(attributeFilters),
-                hideInternal)).stream()
+        List<TraceAggregate> traces = aggregateTraceRows(trustedWorkspaceId, queryRowsForList(
+                trustedWorkspaceId, traceId, start, end, queryScope.serviceName(), queryScope.serviceNamespace(),
+                queryScope.environment(), operationName, minDurationNanos, maxDurationNanos, pushedResourceFilters,
+                pushableSpanAttributeFilters(attributeFilters), hideInternal)).stream()
                 .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
                 .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
                         queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
@@ -902,15 +958,16 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return new EntityTraceSummaryDto(totalTraceCount, errorTraceCount, latestObservedAt, active, latestTraceId);
     }
 
-    private ObservedEntityContext loadEntityContext(Long entityId) {
+    private ObservedEntityContext loadEntityContext(String workspaceId, Long entityId) {
         if (entityId == null || entityId <= 0) {
             return null;
         }
-        Optional<ObserveEntity> entityOptional = workspaceQueryGateway.findEntityById(entityId);
+        Optional<ObserveEntity> entityOptional = workspaceQueryGateway.findEntityById(workspaceId, entityId);
         if (entityOptional.isEmpty()) {
             return null;
         }
-        return ObservedEntityContext.from(entityOptional.get(), workspaceQueryGateway.findIdentitiesByEntityId(entityId));
+        return ObservedEntityContext.from(
+                entityOptional.get(), workspaceQueryGateway.findIdentitiesByEntityId(workspaceId, entityId));
     }
 
     private boolean missingRequestedEntity(Long entityId, ObservedEntityContext entityContext) {
@@ -962,7 +1019,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         );
     }
 
-    private List<Map<String, Object>> queryRowsForList(String traceId,
+    private List<Map<String, Object>> queryRowsForList(String workspaceId,
+                                                       String traceId,
                                                        Long start,
                                                        Long end,
                                                        String serviceName,
@@ -976,7 +1034,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                        Boolean hideInternal) {
         if (CollectionUtils.isEmpty(attributeFilters)) {
             if (StringUtils.hasText(traceId)) {
-                return queryTraceRows(traceId, start, end, serviceName, serviceNamespace, environment,
+                return queryTraceRows(workspaceId, traceId, start, end, serviceName, serviceNamespace, environment,
                         operationName, minDurationNanos, maxDurationNanos, identityValues, hideInternal);
             }
             return traceQueryRepository.queryRecentTraceRows(
@@ -989,7 +1047,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                     operationName,
                     minDurationNanos,
                     maxDurationNanos,
-                    AuthTokenRequestContext.currentWorkspaceId(),
+                    workspaceId,
                     identityValues,
                     hideInternal);
         }
@@ -1004,7 +1062,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 operationName,
                 minDurationNanos,
                 maxDurationNanos,
-                AuthTokenRequestContext.currentWorkspaceId(),
+                workspaceId,
                 identityValues,
                 attributeFilters,
                 hideInternal);
@@ -1013,23 +1071,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 : traceQueryRepository.queryRecentTraceRows(rowQuery, TRACE_LIST_SAMPLE_LIMIT);
     }
 
-    private List<Map<String, Object>> queryTraceRows(String traceId) {
-        return queryTraceRows(traceId, null, null, null, null, null, Collections.emptyMap(), false);
-    }
-
-    private List<Map<String, Object>> queryTraceRows(String traceId,
-                                                     Long start,
-                                                     Long end,
-                                                     String serviceName,
-                                                     String serviceNamespace,
-                                                     String environment,
-                                                     Map<String, Set<String>> identityValues,
-                                                     Boolean hideInternal) {
-        return queryTraceRows(traceId, start, end, serviceName, serviceNamespace, environment,
-                null, null, null, identityValues, hideInternal);
-    }
-
-    private List<Map<String, Object>> queryTraceRows(String traceId,
+    private List<Map<String, Object>> queryTraceRows(String workspaceId,
+                                                     String traceId,
                                                      Long start,
                                                      Long end,
                                                      String serviceName,
@@ -1040,11 +1083,6 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                      Long maxDurationNanos,
                                                      Map<String, Set<String>> identityValues,
                                                      Boolean hideInternal) {
-        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
-        if (!hasTraceRowPushdownFilters(start, end, serviceName, serviceNamespace, environment,
-                operationName, minDurationNanos, maxDurationNanos, workspaceId, identityValues, hideInternal)) {
-            return traceQueryRepository.queryTraceRows(traceId, TRACE_DETAIL_LIMIT);
-        }
         return traceQueryRepository.queryTraceRows(
                 traceId,
                 TRACE_DETAIL_LIMIT,
@@ -1062,31 +1100,11 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         );
     }
 
-    private boolean hasTraceRowPushdownFilters(Long start,
-                                               Long end,
-                                               String serviceName,
-                                               String serviceNamespace,
-                                               String environment,
-                                               String operationName,
-                                               Long minDurationNanos,
-                                               Long maxDurationNanos,
-                                               String workspaceId,
-                                               Map<String, Set<String>> identityValues,
-                                               Boolean hideInternal) {
-        return start != null
-                || end != null
-                || StringUtils.hasText(serviceName)
-                || StringUtils.hasText(serviceNamespace)
-                || StringUtils.hasText(environment)
-                || StringUtils.hasText(operationName)
-                || minDurationNanos != null
-                || maxDurationNanos != null
-                || StringUtils.hasText(workspaceId)
-                || !CollectionUtils.isEmpty(identityValues)
-                || Boolean.TRUE.equals(hideInternal);
+    private List<TraceAggregate> aggregateTraceRows(List<Map<String, Object>> rows) {
+        return aggregateTraceRows(AuthTokenRequestContext.currentWorkspaceId(), rows);
     }
 
-    private List<TraceAggregate> aggregateTraceRows(List<Map<String, Object>> rows) {
+    private List<TraceAggregate> aggregateTraceRows(String workspaceId, List<Map<String, Object>> rows) {
         if (CollectionUtils.isEmpty(rows)) {
             return Collections.emptyList();
         }
@@ -1096,7 +1114,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             if (!StringUtils.hasText(span.getTraceId())) {
                 continue;
             }
-            if (!matchesRequestWorkspace(span)) {
+            if (!matchesRequestWorkspace(workspaceId, span)) {
                 continue;
             }
             TraceAggregate aggregate = traceMap.computeIfAbsent(span.getTraceId(), TraceAggregate::new);
@@ -1105,8 +1123,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return traceMap.values().stream().map(TraceAggregate::normalize).toList();
     }
 
-    private boolean matchesRequestWorkspace(TraceSpanNodeDto span) {
-        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+    private boolean matchesRequestWorkspace(String workspaceId, TraceSpanNodeDto span) {
         if (!StringUtils.hasText(workspaceId)) {
             return true;
         }

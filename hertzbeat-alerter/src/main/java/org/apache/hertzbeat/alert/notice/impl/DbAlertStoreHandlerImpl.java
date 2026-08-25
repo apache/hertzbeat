@@ -17,22 +17,16 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import com.google.common.util.concurrent.Striped;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.GroupAlertDao;
-import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.notice.AlertStoreHandler;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
-import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Alarm data persistence - landing in the database
@@ -42,9 +36,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
 
-    private final GroupAlertDao groupAlertDao;
-    
-    private final SingleAlertDao singleAlertDao;
+    private static final Striped<Lock> STORE_LOCKS = Striped.lazyWeakLock(1024);
+
+    private final DbAlertStoreTransaction storeTransaction;
 
     @Override
     public GroupAlert store(GroupAlert groupAlert) {
@@ -52,95 +46,64 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             log.error("The Group Alerts is empty, ignore store");
             return groupAlert;
         }
-        // Process individual alerts
-        Set<String> alertFingerprints = new HashSet<>(8);
-        List<SingleAlert> originalAlerts = groupAlert.getAlerts();
-        List<SingleAlert> newAlerts = new ArrayList<>();
-
-        for (SingleAlert singleAlert : originalAlerts) {
-            synchronized (singleAlert.getFingerprint().intern()) {
-                SingleAlert existAlert = singleAlertDao.findByFingerprint(singleAlert.getFingerprint());
-                if (existAlert != null) {
-                    // Update the existing alert with the ID and creation time from the database
-                    singleAlert.setId(existAlert.getId());
-                    singleAlert.setGmtCreate(existAlert.getGmtCreate());
-                    // Status transition logic
-                    if (CommonConstants.ALERT_STATUS_FIRING.equals(singleAlert.getStatus())) {
-                        // If the alert is firing and the existing alert is not resolved, update the start time and trigger times
-                        if (!CommonConstants.ALERT_STATUS_RESOLVED.equals(existAlert.getStatus())) {
-                            singleAlert.setStartAt(existAlert.getStartAt());
-                            int triggerTimes = Optional.ofNullable(existAlert.getTriggerTimes()).orElse(1)
-                                    + Optional.ofNullable(singleAlert.getTriggerTimes()).orElse(1);
-                            singleAlert.setTriggerTimes(triggerTimes);
-                        }
-                    } else if (CommonConstants.ALERT_STATUS_RESOLVED.equals(singleAlert.getStatus())) {
-                        // If the alert is resolved, set the end time (if not already set) and copy other fields from the existing alert
-                        if (singleAlert.getEndAt() == null) {
-                            singleAlert.setEndAt(System.currentTimeMillis());
-                        }
-                        singleAlert.setStartAt(existAlert.getStartAt());
-                        singleAlert.setActiveAt(existAlert.getActiveAt());
-                        singleAlert.setTriggerTimes(existAlert.getTriggerTimes());
-                    }
-                }
-                SingleAlert savedSingleAlert = singleAlertDao.save(singleAlert);
-                newAlerts.add(savedSingleAlert);
-                alertFingerprints.add(savedSingleAlert.getFingerprint());
-            }
+        String workspaceId = requireWorkspace(groupAlert.getWorkspaceId());
+        groupAlert.setWorkspaceId(workspaceId);
+        if (groupAlert.getAlerts().stream().anyMatch(alert -> alert == null
+                || !workspaceId.equals(alert.getWorkspaceId()))) {
+            throw new IllegalArgumentException("alert_workspace_mismatch");
         }
-        groupAlert.setAlerts(newAlerts);
-        // Find existing alert group
-        synchronized (groupAlert.getGroupKey().intern()) {
-            GroupAlert existGroupAlert = groupAlertDao.findByGroupKey(groupAlert.getGroupKey());
-            // Process resolved alerts
-            if (existGroupAlert != null) {
-                List<String> existFingerprints = existGroupAlert.getAlertFingerprints();
-                if (existFingerprints != null) {
-                    alertFingerprints.addAll(existFingerprints);
-                }
-                // Merge group information
-                groupAlert.setId(existGroupAlert.getId());
-                groupAlert.setGmtCreate(existGroupAlert.getGmtCreate());
-                // Merge other historical information to preserve
-                Map<String, String> existCommonLabels = existGroupAlert.getCommonLabels();
-                if (existCommonLabels != null) {
-                    Map<String, String> commonLabels = groupAlert.getCommonLabels();
-                    if (commonLabels != null) {
-                        groupAlert.setCommonLabels(retainHistoricalKeys(commonLabels, existCommonLabels));
-                    }
-                }
-                Map<String, String> existCommonAnnotations = existGroupAlert.getCommonAnnotations();
-                if (existCommonAnnotations != null) {
-                    Map<String, String> commonAnnotations = groupAlert.getCommonAnnotations();
-                    if (commonAnnotations != null) {
-                        groupAlert.setCommonAnnotations(retainHistoricalKeys(commonAnnotations, existCommonAnnotations));
-                    }
-                }
+        List<Lock> locks = locksFor(STORE_LOCKS, lockKeys(groupAlert, workspaceId));
+        locks.forEach(Lock::lock);
+        boolean releaseAfterDelegate = true;
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+                unlockReverse(locks);
+                throw new IllegalStateException("transaction_synchronization_required");
             }
-            // Save alert group
-            groupAlert.setAlertFingerprints(alertFingerprints.stream().toList());
-            GroupAlert savedGroupAlert = groupAlertDao.save(groupAlert);
-            savedGroupAlert.setAlerts(groupAlert.getAlerts());
-            return savedGroupAlert;
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    unlockReverse(locks);
+                }
+            });
+            releaseAfterDelegate = false;
+        }
+        try {
+            return storeTransaction.storeLocked(groupAlert);
+        } finally {
+            if (releaseAfterDelegate) {
+                unlockReverse(locks);
+            }
         }
     }
 
-    /**
-     * Keeps the current values for keys that belong to the persisted group.
-     *
-     * <p>Alert dimensions can legitimately be unknown and therefore null. A
-     * mutable map is used here because the stream collectors reject null
-     * values and would turn a Collector recovery notification into a storage
-     * failure.</p>
-     */
-    private static Map<String, String> retainHistoricalKeys(
-            Map<String, String> current, Map<String, String> persisted) {
-        Map<String, String> retained = new LinkedHashMap<>();
-        current.forEach((key, value) -> {
-            if (persisted.containsKey(key)) {
-                retained.put(key, value);
-            }
-        });
-        return retained;
+    private static List<String> lockKeys(GroupAlert groupAlert, String workspaceId) {
+        List<String> keys = groupAlert.getAlerts().stream()
+                .map(alert -> workspaceId + "\0single\0" + alert.getFingerprint())
+                .distinct()
+                .sorted()
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+        keys.add(workspaceId + "\0group\0" + groupAlert.getGroupKey());
+        keys.sort(String::compareTo);
+        return keys;
     }
+
+    static List<Lock> locksFor(Striped<Lock> stripes, List<String> keys) {
+        return java.util.stream.StreamSupport.stream(
+                stripes.bulkGet(keys).spliterator(), false).toList();
+    }
+
+    private static void unlockReverse(List<Lock> locks) {
+        for (int index = locks.size() - 1; index >= 0; index--) {
+            locks.get(index).unlock();
+        }
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
+    }
+
 }

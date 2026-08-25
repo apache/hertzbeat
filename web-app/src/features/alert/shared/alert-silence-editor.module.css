@@ -17,40 +17,103 @@
 
 .form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
+  padding-block: 24px;
 }
-.field {
+
+.fieldRow {
   display: grid;
-  align-content: start;
-  gap: 7px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 12fr) minmax(0, 5fr);
+  align-items: start;
+  column-gap: 0;
+}
+
+.fieldLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 12px;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
 }
-.field :global(.ant-switch) {
-  justify-self: start;
+
+.requiredMark,
+.fieldError {
+  color: var(--ant-color-error);
 }
-.wide {
-  grid-column: 1 / -1;
+
+.fieldControl {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
 }
-.hint {
-  color: var(--ant-color-text-tertiary);
-  font-size: 12px;
-}
-.wide :global(.ant-picker),
-.field :global(.ant-picker) {
+
+.fieldControl > :global(.ant-select),
+.fieldControl > :global(.ant-picker) {
   width: 100%;
 }
-.weekdays :global(.ant-checkbox-group) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
+
+.wideControl .fieldControl {
+  grid-column: 2 / -1;
+  padding-inline-end: 12px;
 }
-@media (max-width: 700px) {
-  .form {
-    grid-template-columns: 1fr;
+
+.fieldError {
+  font-size: 12px;
+}
+
+.weekdays :global(.ant-checkbox-group) {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 0 16px;
+}
+
+.recurringTime {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.recurringTime :global(.ant-picker) {
+  width: 100%;
+}
+
+.modal :global(.ant-modal-footer) {
+  margin: 24px -24px -20px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+@media (max-width: 800px) {
+  .modal :global(.ant-modal) {
+    width: calc(100vw - 32px) !important;
   }
-  .wide {
-    grid-column: auto;
+
+  .form {
+    gap: 16px;
+    padding-block: 0;
+  }
+
+  .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .fieldLabel {
+    justify-content: flex-start;
+    padding-inline-end: 0;
+    text-align: left;
+  }
+
+  .wideControl .fieldControl {
+    grid-column: 1;
+    padding-inline-end: 0;
+  }
+
+  .fieldRow > [aria-hidden='true']:last-child {
+    display: none;
   }
 }

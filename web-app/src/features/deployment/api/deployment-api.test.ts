@@ -8,6 +8,7 @@ vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 import {
   activateMigration,
   exportMigration,
+  factoryResetDeployment,
   loadDeployment,
   loadMigration,
   startMigration,
@@ -42,6 +43,22 @@ describe('deployment API', () => {
       '/api/config/deployment/metadata-migrations/migration-1/activate'
     ]);
     expect(calls.every(([, init]) => init.cache === 'no-store' && init.signal === signal)).toBe(true);
+  });
+
+  it('admits a factory reset only through the dedicated destructive endpoint', async () => {
+    apiFetch.mockResolvedValue(jsonResponse({ accepted: true }, 202));
+
+    await expect(factoryResetDeployment('RESET HERTZBEAT')).resolves.toEqual({ accepted: true });
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/config/deployment/factory-reset',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        body: JSON.stringify({ confirmation: 'RESET HERTZBEAT' })
+      })
+    );
   });
 
   it.each(['yaml', 'env', 'kubernetes_secret'] as const)('exports %s with exact one-time credentials', async format => {

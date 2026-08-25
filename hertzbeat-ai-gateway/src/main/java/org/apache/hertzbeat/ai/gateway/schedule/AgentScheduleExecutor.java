@@ -39,6 +39,7 @@ import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -77,7 +78,7 @@ public class AgentScheduleExecutor {
             runService.findRunningRun(schedule.getSessionId()).ifPresent(run -> {
                 String message = "Agent schedule execution was interrupted by process restart";
                 AgentRun failed = runService.markFailed(run, message);
-                noticeService.send(schedule, failed, false, message);
+                noticeService.send(schedule, failed, AgentRunStatus.FAILED, message);
             });
         }
     }
@@ -138,29 +139,69 @@ public class AgentScheduleExecutor {
     }
 
     private void execute(AgentSchedule schedule, AgentRun run) {
+        AgentRun terminalRun = run;
+        AgentRunStatus terminalStatus = AgentRunStatus.FAILED;
+        String message = "Agent schedule failed";
         try {
             GatewaySingleResponse response = (GatewaySingleResponse) commandRouter.handle(command(schedule, run));
             Map<?, ?> body = response.body() instanceof Map<?, ?> map ? map : Map.of();
-            boolean succeeded = AgentRunStatus.SUCCEEDED.name().equals(body.get("status"));
+            terminalStatus = terminalStatus(body.get("status"));
             Object responseMessage = body.get("message");
-            String message = responseMessage == null
-                    ? (succeeded ? "Agent schedule completed" : "Agent schedule failed")
+            message = responseMessage == null
+                    ? defaultMessage(terminalStatus)
                     : String.valueOf(responseMessage);
-            noticeService.send(schedule, runService.findRun(run.getRunUid()).orElse(run), succeeded, message);
+            terminalRun = runService.findRun(run.getRunUid()).orElse(run);
         } catch (RuntimeException exception) {
             AgentRun current = runService.findRun(run.getRunUid()).orElse(run);
             // Runtime failures such as interrupted providers may not carry a message; persist a useful terminal reason.
             String failureMessage = StringUtils.hasText(exception.getMessage())
                     ? exception.getMessage()
                     : "Agent schedule execution failed";
-            if (!AgentRunStatus.FAILED.name().equals(current.getStatus())) {
+            if (!isTerminal(current.getStatus())) {
                 current = runService.markFailed(current, failureMessage);
             }
-            noticeService.send(schedule, current, false, failureMessage);
+            terminalRun = current;
+            terminalStatus = terminalStatus(current.getStatus());
+            message = failureMessage;
             log.error("Agent schedule {} run {} failed", schedule.getId(), run.getRunUid(), exception);
         } finally {
+            try {
+                noticeService.send(schedule, terminalRun, terminalStatus, message);
+            } catch (RuntimeException exception) {
+                log.warn("Agent schedule {} run {} notification failed: {}",
+                        schedule.getId(), run.getRunUid(), exception.getMessage());
+            }
             submittedSchedules.remove(schedule.getId());
         }
+    }
+
+    private AgentRunStatus terminalStatus(Object value) {
+        if (value instanceof String status) {
+            try {
+                AgentRunStatus parsed = AgentRunStatus.valueOf(status);
+                if (isTerminal(parsed.name())) {
+                    return parsed;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // An unknown response status cannot be represented as a successful schedule result.
+            }
+        }
+        return AgentRunStatus.FAILED;
+    }
+
+    private boolean isTerminal(String status) {
+        return AgentRunStatus.SUCCEEDED.name().equals(status)
+                || AgentRunStatus.FAILED.name().equals(status)
+                || AgentRunStatus.CANCELLED.name().equals(status)
+                || AgentRunStatus.RECOVERY_REQUIRED.name().equals(status);
+    }
+
+    private String defaultMessage(AgentRunStatus status) {
+        return switch (status) {
+            case SUCCEEDED -> "Agent schedule completed";
+            case RECOVERY_REQUIRED -> "Agent schedule result requires verification";
+            default -> "Agent schedule failed";
+        };
     }
 
     private InvokeCommand command(AgentSchedule schedule, AgentRun run) {
@@ -171,6 +212,7 @@ public class AgentScheduleExecutor {
                         .receivedAt(now)
                         .preferredLanguage(AgentResponseLanguage.systemDefault())
                         .actor(AgentActor.scheduleActor())
+                        .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                         .build())
                 .replyMode(ReplyMode.FINAL_ONLY)
                 .commandId(run.getMessageId())

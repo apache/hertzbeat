@@ -5,19 +5,21 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { useCanonicalQuerySearch, useStringQueryDraft } from '@/shared/query-context';
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
 import { readAlertRuleQuery, writeAlertRuleQuery, type AlertRuleQuery } from '../model/alert-rule-model';
 
 /** Owns the Alert Rule list URL and its unsent search draft. */
 export function useAlertRuleListQueryController() {
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const locationSearch = params.toString();
   const query = readAlertRuleQuery(params);
   const source = writeAlertRuleQuery(query).toString();
-  useCanonicalQuerySearch(locationSearch, source, setParams);
+  useCanonicalQuerySearch(locationSearch, source, setParams, location.pathname === alertRoutePaths.rules);
   const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const updateQuery = (patch: Partial<AlertRuleQuery>) => {
     setParams(writeAlertRuleQuery({ ...query, ...patch }));

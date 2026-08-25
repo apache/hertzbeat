@@ -3,6 +3,8 @@
 import { Checkbox, Input, InputNumber, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import alignmentStyles from '@/shared/horizontal-field/horizontal-field-alignment.module.css';
+
 import {
   noticeReceiverLarkReceiveTypes,
   noticeReceiverAgentIdMax,
@@ -19,12 +21,14 @@ export function NoticeReceiverField({
   definition,
   draft,
   busy,
+  invalid,
   update,
   setSecretCleared
 }: {
   definition: ReceiverFieldDefinition;
   draft: NoticeReceiverDraft;
   busy: boolean;
+  invalid: boolean;
   update: (patch: Partial<NoticeReceiverDraft>) => void;
   setSecretCleared: (key: NoticeReceiverSecretKey, cleared: boolean) => void;
 }) {
@@ -33,30 +37,41 @@ export function NoticeReceiverField({
   const secretKey = definition.secret ? (definition.key as NoticeReceiverSecretKey) : null;
   const configured = secretKey ? draft.configuredSecrets.includes(secretKey) : false;
   const cleared = secretKey ? draft.clearSecrets.includes(secretKey) : false;
+  const required = fieldIsRequired(definition, draft);
+  const label = t(definition.labelKey);
   return (
-    <label className={styles.field}>
-      {t(definition.labelKey)}
-      <ReceiverControl
-        definition={definition}
-        draft={draft}
-        busy={busy}
-        update={update}
-        configured={configured}
-        cleared={cleared}
-      />
-      {secretKey && configured ? (
-        <span className={styles.secretState}>
-          <Typography.Text type="secondary">{t('noticeReceivers.secret.configured')}</Typography.Text>
-          <Checkbox
-            checked={cleared}
-            disabled={busy}
-            onChange={event => setSecretCleared(secretKey, event.target.checked)}
-          >
-            {t('noticeReceivers.secret.clearSaved')}
-          </Checkbox>
-        </span>
-      ) : null}
-    </label>
+    <div className={styles.fieldRow}>
+      <span className={`${styles.fieldLabel} ${alignmentStyles.label}`}>
+        {required ? <span className={styles.requiredMark}>*</span> : null}
+        {label}
+      </span>
+      <span className={`${styles.fieldControl} ${alignmentStyles.control}`}>
+        <ReceiverControl
+          definition={definition}
+          draft={draft}
+          busy={busy}
+          invalid={invalid}
+          label={label}
+          update={update}
+          configured={configured}
+          cleared={cleared}
+        />
+        {invalid ? <span className={styles.fieldError}>{t(fieldErrorKey(definition, required))}</span> : null}
+        {secretKey && configured ? (
+          <span className={styles.secretState}>
+            <Typography.Text type="secondary">{t('noticeReceivers.secret.configured')}</Typography.Text>
+            <Checkbox
+              checked={cleared}
+              disabled={busy}
+              onChange={event => setSecretCleared(secretKey, event.target.checked)}
+            >
+              {t('noticeReceivers.secret.clearSaved')}
+            </Checkbox>
+          </span>
+        ) : null}
+      </span>
+      <span aria-hidden="true" />
+    </div>
   );
 }
 
@@ -64,6 +79,8 @@ type ReceiverControlProps = {
   definition: ReceiverFieldDefinition;
   draft: NoticeReceiverDraft;
   busy: boolean;
+  invalid: boolean;
+  label: string;
   update: (patch: Partial<NoticeReceiverDraft>) => void;
   configured: boolean;
   cleared: boolean;
@@ -77,6 +94,9 @@ function ReceiverControl(props: ReceiverControlProps) {
   if (definition.secret) return <SecretReceiverControl {...props} />;
   return (
     <Input
+      aria-label={props.label}
+      aria-invalid={props.invalid}
+      status={props.invalid ? 'error' : ''}
       type={definition.kind}
       disabled={props.busy}
       value={String(props.draft[definition.key] ?? '')}
@@ -85,9 +105,13 @@ function ReceiverControl(props: ReceiverControlProps) {
   );
 }
 
-function WebhookAuthControl({ draft, busy, update }: ReceiverControlProps) {
+function WebhookAuthControl(props: ReceiverControlProps) {
+  const { draft, busy, update } = props;
   return (
     <Select
+      aria-label={props.label}
+      aria-invalid={props.invalid}
+      status={props.invalid ? 'error' : ''}
       value={draft.hookAuthType}
       disabled={busy}
       options={noticeReceiverWebhookAuthTypes.map(item => ({ value: item, label: item }))}
@@ -96,10 +120,14 @@ function WebhookAuthControl({ draft, busy, update }: ReceiverControlProps) {
   );
 }
 
-function LarkReceiveTypeControl({ draft, busy, update }: ReceiverControlProps) {
+function LarkReceiveTypeControl(props: ReceiverControlProps) {
   const { t } = useTranslation();
+  const { draft, busy, update } = props;
   return (
     <Select
+      aria-label={props.label}
+      aria-invalid={props.invalid}
+      status={props.invalid ? 'error' : ''}
       value={draft.larkReceiveType}
       disabled={busy}
       options={noticeReceiverLarkReceiveTypes.map(item => ({
@@ -111,9 +139,13 @@ function LarkReceiveTypeControl({ draft, busy, update }: ReceiverControlProps) {
   );
 }
 
-function NumberReceiverControl({ draft, busy, update }: ReceiverControlProps) {
+function NumberReceiverControl(props: ReceiverControlProps) {
+  const { draft, busy, update } = props;
   return (
     <InputNumber
+      aria-label={props.label}
+      aria-invalid={props.invalid}
+      status={props.invalid ? 'error' : ''}
       min={0}
       max={noticeReceiverAgentIdMax}
       disabled={busy}
@@ -123,10 +155,14 @@ function NumberReceiverControl({ draft, busy, update }: ReceiverControlProps) {
   );
 }
 
-function SecretReceiverControl({ definition, draft, busy, update, configured, cleared }: ReceiverControlProps) {
+function SecretReceiverControl(props: ReceiverControlProps) {
   const { t } = useTranslation();
+  const { definition, draft, busy, update, configured, cleared } = props;
   return (
     <Input.Password
+      aria-label={props.label}
+      aria-invalid={props.invalid}
+      status={props.invalid ? 'error' : ''}
       autoComplete="new-password"
       disabled={busy || cleared}
       value={String(draft[definition.key] ?? '')}
@@ -143,6 +179,22 @@ function fieldIsVisible(field: ReceiverFieldDefinition, draft: NoticeReceiverDra
   if (field.key === 'chatId') return draft.larkReceiveType === 1;
   if (field.key === 'partyId') return draft.larkReceiveType === 2;
   return true;
+}
+
+function fieldIsRequired(field: ReceiverFieldDefinition, draft: NoticeReceiverDraft) {
+  if (field.required) return true;
+  if (field.key === 'hookAuthToken') return draft.hookAuthType !== 'None';
+  if (draft.type !== 14) return false;
+  if (field.key === 'userId') return draft.larkReceiveType === 0;
+  if (field.key === 'chatId') return draft.larkReceiveType === 1;
+  if (field.key === 'partyId') return draft.larkReceiveType === 2;
+  return false;
+}
+
+function fieldErrorKey(field: ReceiverFieldDefinition, required: boolean) {
+  if (field.kind === 'email') return 'noticeReceivers.emailInvalid';
+  if (field.kind === 'tel') return 'noticeReceivers.phoneInvalid';
+  return required ? 'noticeReceivers.required' : 'noticeReceivers.invalidField';
 }
 
 function secretPlaceholderKey(configured: boolean, cleared: boolean) {

@@ -242,6 +242,7 @@ public class AlarmGroupReduce implements DisposableBean {
      * Process single alert and group by defined rules
      */
     public void processGroupAlert(SingleAlert alert) {
+        String workspaceId = requireWorkspace(alert == null ? null : alert.getWorkspaceId());
         Map<String, String> labels = alert.getLabels();
         if (labels == null || labels.isEmpty() || groupDefines.isEmpty()) {
             sendSingleAlert(alert);
@@ -257,7 +258,7 @@ public class AlarmGroupReduce implements DisposableBean {
             // Check if alert has all required group labels
             if (hasRequiredLabels(labels, ruleConfig.getGroupLabels())) {
                 matched = true;
-                processAlertByGroupDefine(alert, defineName, ruleConfig);
+                processAlertByGroupDefine(workspaceId, alert, defineName, ruleConfig);
             }
         }
 
@@ -267,7 +268,9 @@ public class AlarmGroupReduce implements DisposableBean {
     }
 
     public void processGroupAlert(Map<String, String> groupLabels, List<SingleAlert> alertList) {
+        String workspaceId = requireCommonWorkspace(alertList);
         GroupAlert groupAlert = GroupAlert.builder()
+                .workspaceId(workspaceId)
                 .groupKey(generateGroupKey(groupLabels))
                 .groupLabels(groupLabels)
                 .commonLabels(extractCommonLabels(alertList))
@@ -283,7 +286,8 @@ public class AlarmGroupReduce implements DisposableBean {
         return requiredLabels.stream().allMatch(labels::containsKey);
     }
 
-    private void processAlertByGroupDefine(SingleAlert alert, String defineName, AlertGroupConverge ruleConfig) {
+    private void processAlertByGroupDefine(String workspaceId, SingleAlert alert, String defineName,
+                                           AlertGroupConverge ruleConfig) {
         // Extract group labels based on define
         Map<String, String> extractedLabels = new HashMap<>();
         for (String labelKey : ruleConfig.getGroupLabels()) {
@@ -294,8 +298,10 @@ public class AlarmGroupReduce implements DisposableBean {
         String groupKey = generateGroupKey(extractedLabels);
 
         // Get or create group cache
-        GroupAlertCache cache = groupCacheMap.computeIfAbsent(groupKey, k -> {
+        String cacheKey = workspaceId + '\0' + groupKey;
+        GroupAlertCache cache = groupCacheMap.computeIfAbsent(cacheKey, k -> {
             GroupAlertCache newCache = new GroupAlertCache();
+            newCache.setWorkspaceId(workspaceId);
             newCache.setGroupKey(groupKey);
             newCache.setGroupLabels(extractedLabels);
             newCache.setGroupDefineName(defineName);
@@ -344,6 +350,7 @@ public class AlarmGroupReduce implements DisposableBean {
             }
 
             GroupAlert groupAlert = GroupAlert.builder()
+                    .workspaceId(cache.getWorkspaceId())
                     .groupKey(cache.getGroupKey())
                     .groupLabels(cache.getGroupLabels())
                     .commonLabels(extractCommonLabels(snapshot.values()))
@@ -389,6 +396,7 @@ public class AlarmGroupReduce implements DisposableBean {
         // Wrap single alert as group alert
         String groupKey = generateGroupKey(alert.getLabels());
         GroupAlert groupAlert = GroupAlert.builder()
+                .workspaceId(requireWorkspace(alert.getWorkspaceId()))
                 .groupKey(groupKey)
                 .groupLabels(alert.getLabels())
                 .commonLabels(alert.getLabels())
@@ -405,6 +413,24 @@ public class AlarmGroupReduce implements DisposableBean {
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> e.getKey() + ":" + e.getValue())
                 .collect(Collectors.joining(","));
+    }
+
+    private static String requireCommonWorkspace(List<SingleAlert> alerts) {
+        if (alerts == null || alerts.isEmpty() || alerts.getFirst() == null) {
+            throw new IllegalArgumentException("alerts_required");
+        }
+        String workspaceId = requireWorkspace(alerts.getFirst().getWorkspaceId());
+        if (alerts.stream().anyMatch(alert -> alert == null || !workspaceId.equals(alert.getWorkspaceId()))) {
+            throw new IllegalArgumentException("alert_workspace_mismatch");
+        }
+        return workspaceId;
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
     }
 
     private Map<String, String> extractCommonLabels(Collection<SingleAlert> alerts) {
@@ -444,6 +470,7 @@ public class AlarmGroupReduce implements DisposableBean {
 
     @Data
     private static class GroupAlertCache {
+        private String workspaceId;
         private String groupDefineName;
         private String groupKey;
         private Map<String, String> groupLabels;

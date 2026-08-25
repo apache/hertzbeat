@@ -13,6 +13,7 @@ import {
   changeMetricAlertConditionField,
   changeMetricAlertConditionOperator,
   removeMetricAlertConditionItem,
+  updateMetricAlertConditionAttribute,
   updateMetricAlertConditionGroupJoin,
   updateMetricAlertConditionValue
 } from './alert-rule-condition-edit';
@@ -32,7 +33,7 @@ describe('metric alert condition editing', () => {
       kind: 'condition',
       field: 'responseTime',
       operator: '>',
-      value: 0
+      value: null
     });
 
     const string = changeMetricAlertConditionField(numeric, [0], 'status', fields);
@@ -60,20 +61,20 @@ describe('metric alert condition editing', () => {
 
     expect(string.items[0]).toMatchObject({ field: 'status', operator: 'equals', value: '' });
     expect(existence.items[0]).toMatchObject({ field: 'status', operator: 'exists', value: null });
-    expect(numericAgain.items[0]).toMatchObject({ field: 'responseTime', operator: '>', value: 0 });
+    expect(numericAgain.items[0]).toMatchObject({ field: 'responseTime', operator: '>', value: null });
   });
 
   it('adds nested groups, changes joins, and removes only the addressed item', () => {
-    const root = addMetricAlertConditionGroup(addMetricAlertCondition(group(), [], fields), [], fields);
+    const root = addMetricAlertConditionGroup(addMetricAlertCondition(group(), [], fields), []);
     const joined = updateMetricAlertConditionGroupJoin(root, [1], 'or');
     expect(joined.items[1]).toMatchObject({
       kind: 'group',
       join: 'or',
-      items: [{ kind: 'condition', field: 'responseTime' }]
+      items: []
     });
 
     expect(removeMetricAlertConditionItem(joined, [0]).items).toHaveLength(1);
-    expect((removeMetricAlertConditionItem(joined, [1, 0]).items[1] as MetricAlertConditionGroup).items).toEqual([]);
+    expect(removeMetricAlertConditionItem(joined, [1]).items).toHaveLength(1);
   });
 
   it('enforces the visual editor depth, item, path, and field boundaries', () => {
@@ -81,11 +82,35 @@ describe('metric alert condition editing', () => {
     for (let index = 0; index < 5; index += 1) five = addMetricAlertCondition(five, [], fields);
     expect(() => addMetricAlertCondition(five, [], fields)).toThrow(AlertRuleContractError);
 
-    const depthTwo = addMetricAlertConditionGroup(group(), [], fields);
-    const depthThree = addMetricAlertConditionGroup(depthTwo, [0], fields);
-    expect(() => addMetricAlertConditionGroup(depthThree, [0, 0], fields)).toThrow(AlertRuleContractError);
+    const depthTwo = addMetricAlertConditionGroup(group(), []);
+    const depthThree = addMetricAlertConditionGroup(depthTwo, [0]);
+    expect(() => addMetricAlertConditionGroup(depthThree, [0, 0])).toThrow(AlertRuleContractError);
     expect(() => changeMetricAlertConditionField(five, [8], 'status', fields)).toThrow(AlertRuleContractError);
     expect(() => changeMetricAlertConditionField(five, [0], 'missing', fields)).toThrow(AlertRuleContractError);
+  });
+
+  it('updates only attributes accepted by an object field', () => {
+    const logFields: MetricAlertField[] = [
+      { value: 'log.attributes', label: 'Attributes', type: 2, unit: null, acceptsAttribute: true },
+      { value: 'log.body', label: 'Body', type: 1, unit: null }
+    ];
+    const objectRule = changeMetricAlertConditionField(
+      addMetricAlertCondition(group(), [], logFields),
+      [0],
+      'log.attributes',
+      logFields
+    );
+
+    expect(updateMetricAlertConditionAttribute(objectRule, [0], 'http.method', logFields).items[0]).toMatchObject({
+      field: 'log.attributes.http.method'
+    });
+    expect(() => updateMetricAlertConditionAttribute(objectRule, [0], 'bad-name', logFields)).toThrow(
+      AlertRuleContractError
+    );
+    const stringRule = changeMetricAlertConditionField(objectRule, [0], 'log.body', logFields);
+    expect(() => updateMetricAlertConditionAttribute(stringRule, [0], 'http.method', logFields)).toThrow(
+      AlertRuleContractError
+    );
   });
 });
 

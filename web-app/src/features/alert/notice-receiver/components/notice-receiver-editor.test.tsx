@@ -67,7 +67,7 @@ describe('NoticeReceiverEditor', () => {
     expect(screen.getByRole('combobox')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'noticeReceivers.test' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
-    expect(screen.getByText('common.save').closest('button')).toBeDisabled();
+    expect(screen.getByText('common.confirm').closest('button')).toBeDisabled();
   });
 
   it('publishes the backend name limit on the name control', () => {
@@ -98,6 +98,37 @@ describe('NoticeReceiverEditor', () => {
     expect(screen.getByDisplayValue('WeCom')).toHaveAttribute('maxlength', '100');
   });
 
+  it('uses the source modal geometry and field-local validation before write', () => {
+    const submit = vi.fn();
+    render(
+      <NoticeReceiverEditor
+        draft={createNoticeReceiverDraft()}
+        saving={false}
+        testing={false}
+        busy={false}
+        canTest
+        update={vi.fn()}
+        selectType={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={vi.fn()}
+        submit={submit}
+        test={vi.fn()}
+      />
+    );
+
+    expect(document.querySelector('.ant-modal')).toHaveStyle({ width: '40%' });
+    fireEvent.click(screen.getByRole('button', { name: 'common.confirm' }));
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'noticeReceivers.nameField' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('textbox', { name: 'noticeReceivers.fields.email' })).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
+    expect(screen.getByText('noticeReceivers.required')).toBeInTheDocument();
+    expect(screen.getByText('noticeReceivers.emailInvalid')).toBeInTheDocument();
+  });
+
   it('hides normal and retained test controls when test admission is unavailable', () => {
     const draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
     const base = {
@@ -115,7 +146,7 @@ describe('NoticeReceiverEditor', () => {
     const view = render(<NoticeReceiverEditor {...base} test={vi.fn()} />);
 
     expect(screen.queryByRole('button', { name: 'noticeReceivers.test' })).not.toBeInTheDocument();
-    expect(screen.getByText('common.save').closest('button')).toBeInTheDocument();
+    expect(screen.getByText('common.confirm').closest('button')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeInTheDocument();
 
     view.rerender(

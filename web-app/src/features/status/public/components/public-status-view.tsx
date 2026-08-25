@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { Button, Select, Space, Tag, Typography } from 'antd';
+import { CheckCircleFilled, ExclamationCircleFilled, QuestionCircleFilled, WarningFilled } from '@ant-design/icons';
+import { Button, Select, Typography } from 'antd';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,6 +36,7 @@ export function PublicStatusView(props: PublicStatusViewModel) {
       style={{ '--status-accent': props.org?.color ?? defaultStatusAccent } as CSSProperties}
     >
       <StatusHeader locale={props.locale} org={props.org} onLocaleChange={props.selectLocale} />
+      {props.org && <OverallStatus org={props.org} />}
       <StatusBody
         incidentRange={props.incidentRange}
         componentState={props.componentState}
@@ -61,14 +63,14 @@ function StatusHeader({
   const { t } = useTranslation();
   return (
     <header className={styles.header}>
-      <Space align="start">
+      <div className={styles.brand}>
         <StatusBrand org={org} />
-        <div>
+        <div className={styles.brandCopy}>
           <Typography.Title level={2}>{org?.name ?? t('status.title')}</Typography.Title>
           <Typography.Text type="secondary">{org?.description ?? t('status.description')}</Typography.Text>
         </div>
-      </Space>
-      <Space>
+      </div>
+      <div className={styles.headerActions}>
         <Select<SupportedLocale>
           aria-label={t('shell.actions.language')}
           className={styles.languageSelect ?? ''}
@@ -81,14 +83,38 @@ function StatusHeader({
           onChange={value => void onLocaleChange(value)}
         />
         {org?.feedback && (
-          <Button href={publicStatusFeedbackHref(org.feedback)} target="_blank" rel="noreferrer">
+          <Button size="small" href={publicStatusFeedbackHref(org.feedback)} target="_blank" rel="noreferrer">
             {t('status.feedback')}
           </Button>
         )}
-        {org && <Tag color={orgStateColor(org.state)}>{t(publicOrgStateKey(org.state))}</Tag>}
-      </Space>
+      </div>
     </header>
   );
+}
+
+function OverallStatus({ org }: { org: PublicStatusOrg }) {
+  const { t } = useTranslation();
+  return (
+    <section
+      aria-label={t(publicOrgStateKey(org.state))}
+      className={styles.overallStatus}
+      data-overall-state={org.state}
+      role="status"
+    >
+      <div className={styles.overallHeadline}>
+        <OrgStateIcon state={org.state} />
+        <Typography.Title level={3}>{t(publicOrgStateKey(org.state))}</Typography.Title>
+      </div>
+      <Typography.Text>{t(`status.overallDescription.${org.state}`)}</Typography.Text>
+    </section>
+  );
+}
+
+function OrgStateIcon({ state }: { state: PublicStatusOrgState }) {
+  if (state === 'healthy') return <CheckCircleFilled aria-hidden />;
+  if (state === 'degraded') return <WarningFilled aria-hidden />;
+  if (state === 'incident') return <ExclamationCircleFilled aria-hidden />;
+  return <QuestionCircleFilled aria-hidden />;
 }
 
 function StatusBrand({ org }: { org: PublicStatusOrg | undefined }) {
@@ -124,13 +150,6 @@ function StatusBody(props: StatusBodyProps) {
       />
     </>
   );
-}
-
-function orgStateColor(state: PublicStatusOrgState) {
-  if (state === 'healthy') return 'green';
-  if (state === 'degraded') return 'orange';
-  if (state === 'incident') return 'red';
-  return 'default';
 }
 
 function publicStatusFeedbackHref(feedback: string) {

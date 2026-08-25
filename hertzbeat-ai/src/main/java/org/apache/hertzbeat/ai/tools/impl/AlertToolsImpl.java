@@ -26,6 +26,7 @@ import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.ai.tool.annotation.Tool;
@@ -87,6 +88,7 @@ public class AlertToolsImpl implements AlertTools {
             log.info("Querying alerts: alertType={}, status={}, search={}, sort={}, order={}", alertType, status, search, sort, order);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in query_alerts tool: {}", subjectSum);
+            String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
 
             // Set defaults
             if (alertType == null || alertType.trim().isEmpty()) {
@@ -114,7 +116,8 @@ public class AlertToolsImpl implements AlertTools {
 
             // Handle different alert types
             if ("single".equalsIgnoreCase(alertType) || "both".equalsIgnoreCase(alertType)) {
-                Page<SingleAlert> singleResult = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
+                Page<SingleAlert> singleResult = alertService.getSingleAlerts(
+                        workspaceId, status, search, sort, order, pageIndex, pageSize);
 
                 response.append("SINGLE ALERTS:\n");
                 response.append("Found ").append(singleResult.getContent().size()).append(" single alerts (Total: ").append(singleResult.getTotalElements()).append("):\n\n");
@@ -152,8 +155,8 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("\n");
                 }
 
-                Page<GroupAlert> groupResult = alertService.getGroupAlerts(status, search, null, null, null, null,
-                        sort, order, pageIndex, pageSize);
+                Page<GroupAlert> groupResult = alertService.getGroupAlerts(workspaceId, status, search, null, null,
+                        null, null, sort, order, pageIndex, pageSize);
 
                 response.append("GROUP ALERTS:\n");
                 response.append("Found ").append(groupResult.getContent().size()).append(" group alerts (Total: ").append(groupResult.getTotalElements()).append("):\n\n");
@@ -203,7 +206,7 @@ public class AlertToolsImpl implements AlertTools {
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in get_alerts_summary tool: {}", subjectSum);
 
-            AlertSummary summary = alertService.getAlertsSummary();
+            AlertSummary summary = alertService.getAlertsSummary(AuthTokenRequestContext.currentWorkspaceId());
 
             StringBuilder response = new StringBuilder();
             response.append("ALERTS SUMMARY\n");

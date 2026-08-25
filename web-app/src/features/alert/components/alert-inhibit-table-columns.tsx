@@ -48,6 +48,7 @@ export function buildAlertInhibitColumns(
     {
       title: t('common.actions'),
       width: 150,
+      fixed: 'right',
       render: (_value, inhibit) => (
         <AlertInhibitActions
           t={t}

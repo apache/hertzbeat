@@ -28,7 +28,7 @@ import type { AlertSilence, AlertSilenceDraft } from './alert-silence-types';
 
 export { changeAlertSilenceType } from './alert-silence-schedule-model';
 
-type InvalidDraftField = 'id' | 'name' | 'strategy' | 'labels' | 'days' | 'period';
+export type AlertSilenceInvalidDraftField = 'id' | 'name' | 'strategy' | 'labels' | 'days' | 'period';
 
 export class AlertSilenceContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -79,7 +79,7 @@ export function buildAlertSilenceTogglePayload(silence: AlertSilence, enable: bo
 }
 
 export function validateAlertSilenceDraft(draft: AlertSilenceDraft) {
-  const invalid: InvalidDraftField[] = [];
+  const invalid: AlertSilenceInvalidDraftField[] = [];
   if (draft.id !== undefined && !isPositiveInteger(draft.id)) invalid.push('id');
   if (!validBoundedText(draft.name, 100)) invalid.push('name');
   if (!validStrategy(draft)) invalid.push('strategy');
@@ -89,7 +89,7 @@ export function validateAlertSilenceDraft(draft: AlertSilenceDraft) {
   return invalid;
 }
 
-function validateMatchers(draft: AlertSilenceDraft, invalid: InvalidDraftField[]) {
+function validateMatchers(draft: AlertSilenceDraft, invalid: AlertSilenceInvalidDraftField[]) {
   if (!labelsAreUnchanged(draft) && !draft.matchAll && !tryParseLabels(draft.labelsText)) invalid.push('labels');
 }
 

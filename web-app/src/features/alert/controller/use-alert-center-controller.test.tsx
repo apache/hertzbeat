@@ -150,6 +150,27 @@ describe('Alert Center controller', () => {
     await waitFor(() => expect(result.current.state.query).toMatchObject({ pageIndex: 0, pageSize: 15 }));
   });
 
+  it('stages status and severity until the operator submits the complete filter draft', async () => {
+    const { result } = renderController('/alerts?status=firing&severity=warning&pageIndex=2&pageSize=8');
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+
+    act(() => result.current.setDraft('status', 'resolved'));
+    act(() => result.current.setDraft('severity', 'critical'));
+
+    expect(result.current.state.query).toMatchObject({ status: 'firing', severity: 'warning' });
+    expect(result.current.state.draft).toMatchObject({ status: 'resolved', severity: 'critical' });
+
+    act(() => result.current.submitFilters());
+
+    await waitFor(() =>
+      expect(result.current.state.query).toMatchObject({
+        status: 'resolved',
+        severity: 'critical',
+        pageIndex: 0
+      })
+    );
+  });
+
   it('returns an authoritative empty alert page to the first page', async () => {
     const { result } = renderController('/alerts?search=missing&pageIndex=2&pageSize=8');
 

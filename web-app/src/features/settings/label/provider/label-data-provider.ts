@@ -20,6 +20,7 @@ import type {
   CreateResponse,
   DataProvider,
   DeleteOneResponse,
+  DeleteManyResponse,
   GetListParams,
   GetListResponse,
   UpdateResponse
@@ -32,8 +33,19 @@ import { labelEndpoint, loadLabels } from '../api/label-api';
 import { LabelTransportFailure } from '../api/label-api-failure';
 import { LabelRequestFailure } from '../model/label-failure';
 import { LabelContractError } from '../model/label-model';
-import { assertLabelResource, readLabelDraft, readLabelId, readLabelListQuery } from './label-data-provider-input';
-import { deleteAndProveLabel, toLabelRequestFailure, writeAndProveLabel } from './label-data-provider-mutation';
+import {
+  assertLabelResource,
+  readLabelDeleteRecords,
+  readLabelDraft,
+  readLabelId,
+  readLabelListQuery
+} from './label-data-provider-input';
+import {
+  deleteAndProveLabel,
+  deleteAndProveLabels,
+  toLabelRequestFailure,
+  writeAndProveLabel
+} from './label-data-provider-mutation';
 
 export const labelDataProvider: DataProvider = {
   async getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
@@ -92,6 +104,18 @@ export const labelDataProvider: DataProvider = {
       const id = readLabelId(params.id);
       const canonical = await deleteAndProveLabel(id, readLabelDraft(params.variables));
       return { data: adaptRefineRecord<TData>(canonical) };
+    });
+  },
+
+  async deleteMany<TData extends BaseRecord = BaseRecord, TVariables = object>(params: {
+    resource: string;
+    ids: Array<string | number>;
+    variables?: TVariables;
+  }): Promise<DeleteManyResponse<TData>> {
+    return protectMutation(async () => {
+      assertLabelResource(params.resource);
+      const canonical = await deleteAndProveLabels(readLabelDeleteRecords(params.ids, params.variables));
+      return { data: adaptRefineRecords<TData>(canonical) };
     });
   },
 

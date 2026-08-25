@@ -17,13 +17,18 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const http = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
+const http = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePut: vi.fn() }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
-  apiMessageGet: http.apiMessageGet
+  apiMessageGet: http.apiMessageGet,
+  apiMessagePut: http.apiMessagePut
 }));
 
-import { loadAlertIntegrationCatalog, loadAlertIntegrationGuide } from './alert-integration-api';
+import {
+  loadAlertIntegrationCatalog,
+  loadAlertIntegrationGuide,
+  startAlertIntegrationVerification
+} from './alert-integration-api';
 
 describe('alert integration API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -49,6 +54,18 @@ describe('alert integration API', () => {
     expect(http.apiMessageGet).toHaveBeenCalledWith('/api/alerts/integrations/webhook%2Fnext', { signal });
     expect(http.apiMessageGet.mock.calls[0]?.[1]).not.toHaveProperty('headers');
   });
+
+  it('starts verification without sending credentials or invented state', async () => {
+    http.apiMessagePut.mockResolvedValue({ status: 'waiting', startedAt: 100, verifiedAt: null });
+
+    await expect(startAlertIntegrationVerification('volcengine')).resolves.toEqual({
+      status: 'waiting',
+      startedAt: 100,
+      verifiedAt: null
+    });
+
+    expect(http.apiMessagePut).toHaveBeenCalledWith('/api/alerts/integrations/volcengine/verification', null);
+  });
 });
 
 const catalogItem = {
@@ -56,7 +73,8 @@ const catalogItem = {
   displayNameKey: 'alert.integration.source.webhook',
   iconKey: 'hertzbeat',
   readiness: 'ready',
-  limitations: []
+  limitations: [],
+  verification: { status: 'unverified', startedAt: null, verifiedAt: null }
 };
 
 const guide = {

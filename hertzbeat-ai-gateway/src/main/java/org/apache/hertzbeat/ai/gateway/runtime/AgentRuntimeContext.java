@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.gateway.runtime;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import org.apache.hertzbeat.ai.gateway.contract.AgentAlertIncidentContext;
@@ -35,6 +36,7 @@ public final class AgentRuntimeContext {
     private final AgentRuntimeEntryType entryType;
     private final AgentApprovalHandling approvalHandling;
     private final String channelId;
+    private final String workspaceId;
     private final long receivedAt;
     private final String preferredLanguage;
     private final AgentAlertIncidentContext alertIncident;
@@ -49,10 +51,20 @@ public final class AgentRuntimeContext {
     private final String timezone;
     private final String traceId;
     private final List<TranscriptMessage> chatHistory;
+    @Getter(AccessLevel.NONE)
+    private final boolean durableGroundingVerified;
+
+    AgentRuntimeContext withVerifiedChatHistory(AgentGroundingEvidenceVerifier.VerifiedHistory verified) {
+        return new AgentRuntimeContext(this, Objects.requireNonNull(verified, "verified history is required"));
+    }
+
+    boolean hasVerifiedDurableGrounding() {
+        return durableGroundingVerified;
+    }
 
     @Builder
     private AgentRuntimeContext(AgentRuntimeEntryType entryType, AgentApprovalHandling approvalHandling,
-                                String channelId, Long receivedAt, String preferredLanguage,
+                                String channelId, String workspaceId, Long receivedAt, String preferredLanguage,
                                 AgentAlertIncidentContext alertIncident, AgentActor actor, String userMessage,
                                 String sessionUid, Long runId, String runUid, Long runSessionId,
                                 AgentTargetRef effectiveTarget, String currentTimeIso, String timezone, String traceId,
@@ -67,6 +79,9 @@ public final class AgentRuntimeContext {
         this.runSessionId = Objects.requireNonNull(runSessionId, "Agent runtime context run session id is required");
         if (!StringUtils.hasText(channelId)) {
             throw new IllegalArgumentException("Agent runtime context channel id is required");
+        }
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new IllegalArgumentException("Agent runtime context workspace id is required");
         }
         if (!StringUtils.hasText(userMessage)) {
             throw new IllegalArgumentException("Agent runtime context user message is required");
@@ -87,6 +102,7 @@ public final class AgentRuntimeContext {
             throw new IllegalArgumentException("Agent runtime context trace id is required");
         }
         this.channelId = channelId;
+        this.workspaceId = workspaceId;
         this.preferredLanguage = preferredLanguage;
         this.alertIncident = alertIncident;
         this.userMessage = userMessage;
@@ -98,6 +114,30 @@ public final class AgentRuntimeContext {
         this.traceId = traceId;
         // Context builders may omit history for a new session; supplied history must not contain null messages.
         this.chatHistory = chatHistory == null ? List.of() : List.copyOf(chatHistory);
+        this.durableGroundingVerified = false;
+    }
+
+    private AgentRuntimeContext(AgentRuntimeContext source,
+                                AgentGroundingEvidenceVerifier.VerifiedHistory verified) {
+        this.entryType = source.entryType;
+        this.approvalHandling = source.approvalHandling;
+        this.channelId = source.channelId;
+        this.workspaceId = source.workspaceId;
+        this.receivedAt = source.receivedAt;
+        this.preferredLanguage = source.preferredLanguage;
+        this.alertIncident = source.alertIncident;
+        this.actor = source.actor;
+        this.userMessage = source.userMessage;
+        this.sessionUid = source.sessionUid;
+        this.runId = source.runId;
+        this.runUid = source.runUid;
+        this.runSessionId = source.runSessionId;
+        this.effectiveTarget = source.effectiveTarget;
+        this.currentTimeIso = source.currentTimeIso;
+        this.timezone = source.timezone;
+        this.traceId = source.traceId;
+        this.chatHistory = verified.messages();
+        this.durableGroundingVerified = verified.grounded();
     }
 
 }

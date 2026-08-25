@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.core.persistence;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -43,5 +47,48 @@ public interface AgentToolCallDao extends JpaRepository<AgentToolCall, Long> {
      * Find an approval-backed tool call by public approval ID.
      */
     Optional<AgentToolCall> findByApprovalId(String approvalId);
+
+    /** Serialize runtime resume against approval compensation for the same ledger row. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select toolCall from AgentToolCall toolCall where toolCall.approvalId = :approvalId")
+    Optional<AgentToolCall> findApprovalForRuntimeResume(@Param("approvalId") String approvalId);
+
+    /** Serialize one approval decision lifecycle only after its session owner scope matches. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select toolCall from AgentToolCall toolCall, AgentSession session
+            where toolCall.sessionId = session.id
+              and toolCall.approvalId = :approvalId
+              and session.workspaceId = :workspaceId
+              and session.channel = :channel
+              and session.actorType = :actorType
+              and session.actorId = :actorId
+              and session.originEntryType = :originEntryType
+            """)
+    Optional<AgentToolCall> findOwnedApprovalForUpdate(
+            @Param("approvalId") String approvalId,
+            @Param("workspaceId") String workspaceId,
+            @Param("channel") String channel,
+            @Param("actorType") String actorType,
+            @Param("actorId") String actorId,
+            @Param("originEntryType") String originEntryType);
+
+    @Query("""
+            select count(toolCall) > 0 from AgentToolCall toolCall, AgentSession session
+            where toolCall.sessionId = session.id
+              and toolCall.approvalId = :approvalId
+              and session.workspaceId = :workspaceId
+              and session.channel = :channel
+              and session.actorType = :actorType
+              and session.actorId = :actorId
+              and session.originEntryType = :originEntryType
+            """)
+    boolean existsOwnedApproval(
+            @Param("approvalId") String approvalId,
+            @Param("workspaceId") String workspaceId,
+            @Param("channel") String channel,
+            @Param("actorType") String actorType,
+            @Param("actorId") String actorId,
+            @Param("originEntryType") String originEntryType);
 
 }

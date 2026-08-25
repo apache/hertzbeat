@@ -34,9 +34,11 @@ import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedS
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,9 +63,15 @@ class OtlpIngestionControllerTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
         OtlpIngestionController controller = new OtlpIngestionController(
                 otlpIngestionWorkspaceService, otlpIngestionRedSummaryService, collectorScopedMetricsQueryService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -83,7 +91,7 @@ class OtlpIngestionControllerTest {
                         "collector", "Collector cluster", "success", "1 / 1 online",
                         "Collector nodes can receive tasks.", 1_710_000_000_100L)
         ));
-        when(otlpIngestionWorkspaceService.getOverview()).thenReturn(overview);
+        when(otlpIngestionWorkspaceService.getOverview("team-a")).thenReturn(overview);
 
         mockMvc.perform(get("/api/ingestion/otlp/overview"))
                 .andExpect(status().isOk())
@@ -94,7 +102,7 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.readinessChecks[0].key").value("collector"))
                 .andExpect(jsonPath("$.data.readinessChecks[0].summary").value("1 / 1 online"));
 
-        verify(otlpIngestionWorkspaceService).getOverview();
+        verify(otlpIngestionWorkspaceService).getOverview("team-a");
     }
 
     @Test
@@ -134,7 +142,7 @@ class OtlpIngestionControllerTest {
                         "commerce", "service.name", "checkout", 2L)),
                 List.of()
         );
-        when(otlpIngestionWorkspaceService.getBindingSummary()).thenReturn(summary);
+        when(otlpIngestionWorkspaceService.getBindingSummary("team-a")).thenReturn(summary);
 
         mockMvc.perform(get("/api/ingestion/otlp/bindings"))
                 .andExpect(status().isOk())
@@ -143,7 +151,7 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.recentBoundEntities[0].entityId").value(1))
                 .andExpect(jsonPath("$.data.recentBoundEntities[0].primaryIdentityValue").value("checkout"));
 
-        verify(otlpIngestionWorkspaceService).getBindingSummary();
+        verify(otlpIngestionWorkspaceService).getBindingSummary("team-a");
     }
 
     @Test
@@ -292,7 +300,7 @@ class OtlpIngestionControllerTest {
         );
         when(collectorScopedMetricsQueryService.inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
-                        42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                        "team-a", 42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
                         "collector-a", "checkout-01", "/orders", "20")))
                 .thenReturn(inventory);
 
@@ -320,7 +328,7 @@ class OtlpIngestionControllerTest {
 
         verify(collectorScopedMetricsQueryService).inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
-                        42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                        "team-a", 42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
                         "collector-a", "checkout-01", "/orders", "20"));
     }
 
@@ -343,7 +351,8 @@ class OtlpIngestionControllerTest {
                         java.util.Map.of("k8s_pod_name", "checkout-7d9")
                 ))
         );
-        when(otlpIngestionWorkspaceService.getRelatedMetrics(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+        when(otlpIngestionWorkspaceService.getRelatedMetrics("team-a", 42L, "service", 1000L, 2000L,
+                "checkout", "commerce", "prod",
                 "k8s.pod.name=\"checkout-7d9\"", "POST /checkout", "8")).thenReturn(related);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/related")
@@ -369,7 +378,7 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.candidates[0].source").value("pod"));
 
         verify(otlpIngestionWorkspaceService)
-                .getRelatedMetrics(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                .getRelatedMetrics("team-a", 42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
                         "k8s.pod.name=\"checkout-7d9\"", "POST /checkout", "8");
     }
 }

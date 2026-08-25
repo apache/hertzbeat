@@ -34,33 +34,37 @@ export function StatusComponentSection(props: StatusComponentSectionProps) {
   const { t } = useTranslation();
   return (
     <section className={styles.section}>
-      <StatusSectionHeading
-        title={t('status.components')}
-        description={t('statusManagement.componentsDescription')}
-        action={
-          <Space>
-            <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
-              {t('common.refresh')}
-            </Button>
-            {props.canCreate && (
-              <Button type="primary" disabled={!props.orgId || props.commandLocked} onClick={props.onNew}>
-                {t('statusManagement.newComponent')}
-              </Button>
-            )}
-          </Space>
-        }
-      />
-      {props.deleteRecovery && (
-        <StatusDeleteRecoveryAlert pending={props.deleteRecoveryPending} onRetry={() => void props.onRefresh()} />
-      )}
-      <ComponentResults
-        state={props.state}
-        canUpdate={props.canUpdate}
-        canDelete={props.canDelete}
-        commandLocked={props.commandLocked}
-        onEdit={props.onEdit}
-        onDelete={props.onDelete}
-      />
+      <div className={styles.configurationWorkspace}>
+        <div className={styles.configurationPanel}>
+          <StatusSectionHeading
+            title={t('status.components')}
+            description={t('statusManagement.componentsDescription')}
+            action={
+              <Space>
+                <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
+                  {t('common.refresh')}
+                </Button>
+                {props.canCreate && (
+                  <Button type="primary" disabled={!props.orgId || props.commandLocked} onClick={props.onNew}>
+                    {t('statusManagement.newComponent')}
+                  </Button>
+                )}
+              </Space>
+            }
+          />
+          {props.deleteRecovery && (
+            <StatusDeleteRecoveryAlert pending={props.deleteRecoveryPending} onRetry={() => void props.onRefresh()} />
+          )}
+          <ComponentResults
+            state={props.state}
+            canUpdate={props.canUpdate}
+            canDelete={props.canDelete}
+            commandLocked={props.commandLocked}
+            onEdit={props.onEdit}
+            onDelete={props.onDelete}
+          />
+        </div>
+      </div>
     </section>
   );
 }

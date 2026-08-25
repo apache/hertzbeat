@@ -12,9 +12,10 @@ type SetSearchParams = (search: string, options: { replace: boolean }) => void;
 export function useCanonicalQuerySearch(
   currentSearch: string,
   canonicalSearch: string,
-  setSearchParams: SetSearchParams
+  setSearchParams: SetSearchParams,
+  enabled = true
 ) {
   useEffect(() => {
-    if (currentSearch !== canonicalSearch) setSearchParams(canonicalSearch, { replace: true });
-  }, [canonicalSearch, currentSearch, setSearchParams]);
+    if (enabled && currentSearch !== canonicalSearch) setSearchParams(canonicalSearch, { replace: true });
+  }, [canonicalSearch, currentSearch, enabled, setSearchParams]);
 }

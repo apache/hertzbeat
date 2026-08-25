@@ -26,6 +26,43 @@ import org.springframework.data.domain.Page;
  */
 public interface LogQueryService {
 
+    Page<LogEntry> list(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
+                        Integer severityNumber, String severityText, String search,
+                        String serviceName, String serviceNamespace, String environment,
+                        String resourceFilter, String attributeFilter,
+                        Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> context(String workspaceId, Long entityId, Long logTimeUnixNano, Long start, Long end,
+                                String serviceName, String serviceNamespace, String environment,
+                                String resourceFilter, String attributeFilter,
+                                Integer limit, String direction, Long cursorLogTimeUnixNano,
+                                boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> overviewStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                      String spanId, Integer severityNumber, String severityText, String search,
+                                      String serviceName, String serviceNamespace, String environment,
+                                      String resourceFilter, String attributeFilter,
+                                      boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> traceCoverageStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                           String spanId, Integer severityNumber, String severityText, String search,
+                                           String serviceName, String serviceNamespace, String environment,
+                                           String resourceFilter, String attributeFilter,
+                                           boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> trendStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                   String spanId, Integer severityNumber, String severityText, String search,
+                                   String serviceName, String serviceNamespace, String environment,
+                                   String resourceFilter, String attributeFilter,
+                                   boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> groupByStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String search,
+                                     String serviceName, String serviceNamespace, String environment,
+                                     String resourceFilter, String attributeFilter, String groupBy,
+                                     Integer limit, String orderBy, Integer minCount,
+                                     boolean hideInternal, boolean hideNoise);
+
     default Page<LogEntry> list(Long start, Long end, String traceId, String spanId,
                                 Integer severityNumber, String severityText, String search,
                                 Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {

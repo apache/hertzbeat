@@ -1,191 +1,868 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+.editorDialogBody {
+  display: grid;
+  gap: 14px;
+  padding: 24px 4px 4px;
+}
 
-.page {
+.typeChooser {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 16px;
+}
+
+.typeChooserDialogBody {
+  display: grid;
+  gap: 16px;
+  padding: 24px 0 20px;
+}
+
+.typeChoice:global(.ant-btn) {
+  display: flex;
+  width: 200px;
+  height: auto;
+  min-height: 160px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  border-color: var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+  padding: 30px 16px 20px;
+  text-align: center;
+  white-space: normal;
+}
+
+.typeChoice:global(.ant-btn:not(:disabled):hover) {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
+}
+
+.typeChoice:global(.ant-btn:focus-visible) {
+  outline: 2px solid var(--ant-color-primary-border-hover);
+  outline-offset: 2px;
+}
+
+.typeChoice:global(.ant-btn:not(:disabled):active) {
+  border-color: var(--ant-color-primary-active);
+  background: var(--ant-color-primary-bg-hover);
+}
+
+.typeChoice:global(.ant-btn:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.typeChoiceContent {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.typeChoiceContent strong {
+  color: var(--ant-color-text);
+  font-size: 16px;
+}
+
+.typeChoiceContent small {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.typeChoiceIcon {
+  color: var(--ant-color-primary);
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.form {
   display: grid;
   width: 100%;
   gap: 20px;
-  max-width: 1040px;
-  margin-inline: auto;
 }
-.heading :global(.ant-typography) {
-  margin: 0;
-}
-.form {
+
+.metricSection {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
+  gap: 14px;
+  grid-column: 1 / -1;
 }
-.form > label {
+
+.fieldRow,
+.conditionModeRow,
+.conditionAuthoringRow,
+.metricAvailabilityRow,
+.metricSection > label {
   display: grid;
-  gap: 7px;
-  align-content: start;
+  grid-template-columns: minmax(150px, 7fr) minmax(0, 12fr) minmax(80px, 5fr);
+  column-gap: 0;
+  align-items: start;
+}
+
+.metricSection > label {
   color: var(--ant-color-text-secondary);
   font-size: 13px;
 }
-.form > label :global(.ant-input-number),
-.form > label :global(.ant-select) {
+
+.metricLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 12px;
+  text-align: right;
+}
+
+.metricLabel > .requiredMark {
+  color: var(--ant-color-error);
+}
+
+.fieldHelpIcon {
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+}
+
+.metricSection > label > :global(.ant-select),
+.metricSection > label > :global(.ant-input) {
   width: 100%;
 }
-.form > label :global(.ant-switch) {
-  justify-self: start;
+
+.availabilityRule {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 32px;
+  color: var(--ant-color-error);
 }
+
+.availabilityRule > :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.fieldLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 12px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.requiredMark {
+  color: var(--ant-color-error);
+}
+
+.fieldControl {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.fieldControl > :global(.ant-select),
+.fieldControl > :global(.ant-input-number) {
+  width: 100%;
+}
+
+.dataTypeOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.finalExpression {
+  display: block;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-fill-quaternary);
+  padding: 12px;
+}
+
+.finalExpression pre {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ant-color-text-secondary);
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+.fieldError {
+  color: var(--ant-color-error);
+  font-size: 12px;
+}
+
+.queryLanguage,
+.queryEditor,
+.templateEditor {
+  display: grid;
+  gap: 8px;
+}
+
+.queryDescription {
+  display: grid;
+  gap: 4px;
+  border-radius: 4px;
+  background: var(--ant-color-fill-quaternary);
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.queryDescription ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-inline-start: 18px;
+}
+
+.queryExamplesTitle {
+  margin-top: 12px;
+}
+
+.queryDescription code {
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-size: inherit;
+}
+
+.queryEditor > :global(.ant-input-textarea-show-count) {
+  margin-bottom: 16px;
+}
+
+.templateEditor > :global(.ant-input-textarea-show-count) {
+  margin-bottom: 16px;
+}
+
+.queryEditor > :global(.ant-btn) {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.numberWithUnit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.numberWithUnit > :global(.ant-input-number) {
+  width: 90px;
+}
+
+.variableList {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 480px;
+  overflow-y: auto;
+  gap: 10px;
+  border: 1px dashed var(--ant-color-primary-border);
+  margin-bottom: 16px;
+  padding: 12px;
+}
+
+.variableButton:global(.ant-btn) {
+  display: grid;
+  height: auto;
+  min-width: 140px;
+  justify-items: start;
+  gap: 4px;
+  border-color: var(--ant-color-primary-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: move;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.variableButton:global(.ant-btn:not(:disabled):hover) {
+  border-color: var(--ant-color-primary-border-hover);
+  background: var(--ant-color-primary-bg);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 10%);
+  transform: translateY(-2px);
+}
+
+.variableButton:global(.ant-btn:not(:disabled):active) {
+  transform: scale(0.95);
+}
+
+.variableDragging:global(.ant-btn) {
+  opacity: 0.8;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
+  transform: scale(0.98);
+}
+
+.variableButton code {
+  color: var(--ant-color-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.variableTokenLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.variableButton small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.templateDropTarget {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.templateDropTargetActive {
+  border-color: var(--ant-color-primary) !important;
+  box-shadow: 0 0 8px var(--ant-color-primary-bg) !important;
+}
+
+.mapEditor {
+  display: grid;
+  gap: 8px;
+}
+
+.labelSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.labelRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  gap: 5px;
+  align-items: center;
+}
+
+.labelButtons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.mapRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) 10px minmax(160px, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+
 .wide {
   grid-column: 1 / -1;
 }
-.form > :global(.ant-alert).wide {
-  grid-column: 1 / -1;
-}
+
 .conditionEditor {
   display: grid;
   gap: 10px;
-  border-top: 1px solid var(--ant-color-border-secondary);
-  padding-top: 12px;
 }
-.conditionEditorHeader,
+
+.conditionEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .conditionGroupHeader,
 .conditionRow {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.conditionEditorHeader {
-  justify-content: space-between;
+
+.conditionModeLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 12px;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
 }
+
+.conditionModeControl,
+.conditionAuthoringControl {
+  display: grid;
+  grid-column: 2;
+  min-width: 0;
+  gap: 10px;
+}
+
+.conditionAuthoringControl {
+  overflow: visible;
+}
+
+.conditionModeSelector {
+  display: inline-flex;
+  justify-self: start;
+}
+
+.conditionModeSelector :global(.ant-radio-button-wrapper) {
+  min-width: 72px;
+  text-align: center;
+}
+
 .conditionGroup {
   display: grid;
+  overflow-x: auto;
   gap: 8px;
 }
-.conditionGroupHeader > :global(.ant-select) {
-  width: 104px;
+
+.conditionGroupHeader > :global(.ant-radio-group) {
+  flex: 0 0 auto;
 }
+
+.conditionGroupHeader {
+  justify-content: space-between;
+}
+
+.conditionGroupActions {
+  display: flex;
+  gap: 8px;
+}
+
 .conditionRow {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(140px, 0.8fr) minmax(180px, 1fr) 32px;
+  grid-template-columns: minmax(80px, 0.7fr) minmax(56px, 0.5fr) minmax(160px, 1.5fr) 32px;
 }
+
+.conditionRowWithAttribute {
+  grid-template-columns: minmax(56px, 0.45fr) minmax(160px, 1.55fr) 32px;
+  row-gap: 8px;
+}
+
+.conditionRowWithAttribute > .conditionFieldControlWithAttribute {
+  grid-column: 1 / 3;
+  grid-row: 1;
+}
+
+.conditionRowWithAttribute > .conditionOperator {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.conditionRowWithAttribute > :global(.ant-input),
+.conditionRowWithAttribute > :global(.ant-input-number) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.conditionRowWithAttribute > .conditionRemove {
+  grid-column: 3;
+  grid-row: 1;
+}
+
 .conditionRow > :global(.ant-input-number) {
   width: 100%;
 }
+
+.conditionOperator :global(.ant-select-selection-item) {
+  font-weight: 600;
+  text-align: center;
+}
+
+.conditionFieldOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 210px;
+  gap: 16px;
+}
+
+.conditionFieldControl {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.conditionFieldControl > :global(.ant-select) {
+  width: 100%;
+  min-width: 0;
+}
+
+.conditionFieldControlWithAttribute > :global(.ant-select) {
+  width: auto;
+  min-width: 180px;
+}
+
+.conditionAttribute {
+  display: flex;
+  align-items: center;
+  min-width: 132px;
+  gap: 4px;
+}
+
+.conditionAttribute > span {
+  color: var(--ant-color-text-secondary);
+}
+
+.conditionAttribute > :global(.ant-input) {
+  width: 120px;
+}
+
+.conditionFieldMeta {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.conditionFieldMeta > :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
 .conditionNested {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 32px;
   gap: 8px;
   border-left: 2px solid var(--ant-color-border-secondary);
-  padding-left: 12px;
+  padding-left: 48px;
 }
+
+.conditionGroup > .conditionRow {
+  margin-left: 48px;
+}
+
 .conditionNoValue,
 .conditionEmpty {
   color: var(--ant-color-text-tertiary);
   font-size: 13px;
 }
+
 .conditionNoValue {
   padding: 6px 11px;
 }
+
 .conditionExpert {
   display: grid;
-  gap: 7px;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
 }
-.bindingField {
+
+.expressionInputWrapper {
+  position: relative;
+}
+
+.expressionInputWrapper > :global(.ant-input-textarea) {
+  display: block;
+}
+
+.expressionInputWrapper textarea {
+  padding-right: 38px;
+}
+
+.expressionInsertButton {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  color: var(--ant-color-primary);
+  background: var(--ant-color-bg-container);
+}
+
+.expressionDropdown :global(.ant-dropdown-menu) {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-block: 4px;
+}
+
+.expressionMenuItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-top: 1px solid var(--ant-color-border-secondary);
-  padding-top: 12px;
+  gap: 12px;
+  min-width: 280px;
 }
-.bindingField > div {
+
+.expressionMenuItem code {
+  flex: 0 0 auto;
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}
+
+.expressionMenuItem > span {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.expressionMenuItem > :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.bindingField {
   display: grid;
-  gap: 2px;
+  grid-template-columns: minmax(150px, 7fr) minmax(0, 12fr) minmax(80px, 5fr);
+  align-items: center;
+  column-gap: 0;
 }
+
+.bindingLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-inline-end: 12px;
+  color: var(--ant-color-text-secondary);
+  text-align: right;
+}
+
+.bindingManageButton {
+  justify-self: start;
+}
+
 .bindingEvidence {
   display: flex;
   align-items: center;
-  gap: 8px;
   min-height: 96px;
   justify-content: center;
+  gap: 8px;
 }
+
 .bindingDialog {
   display: grid;
-  gap: 18px;
-}
-.bindingDialog fieldset {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  border: 0;
-  padding: 0;
-}
-.bindingDialog legend {
-  color: var(--ant-color-text-secondary);
-  font-size: 13px;
-}
-.bindingInstances {
-  display: grid;
-  max-height: 240px;
+  max-height: calc(100vh - 240px);
   overflow: auto;
+  gap: 20px;
+  padding: 2px 0;
+}
+
+.bindingCard {
+  min-width: 0;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: var(--ant-color-bg-container);
+}
+
+.bindingCard > h3 {
+  margin: 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  padding: 18px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.bindingTransfer {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 30px minmax(260px, 1fr);
+  align-items: center;
+  min-width: 590px;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 24px;
+}
+
+.bindingTransferPane {
+  min-width: 260px;
+  overflow: hidden;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius);
-  padding: 6px 10px;
+  background: var(--ant-color-bg-container);
 }
-.bindingInstances :global(.ant-checkbox-wrapper) {
+
+.bindingTransferCount {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  padding: 8px 12px;
+  color: var(--ant-color-text);
+  font-size: 13px;
+}
+
+.bindingTransferFilters {
+  display: grid;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.bindingTransferFilters > :global(.ant-select) {
+  width: 100%;
+}
+
+.bindingTransferHeading {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
-  gap: 8px;
-  margin-inline-start: 0;
-  padding: 5px 0;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  padding: 8px 12px;
+  background: var(--ant-color-fill-quaternary);
+  font-size: 13px;
 }
-.bindingInstances :global(.ant-checkbox-label) {
+
+.bindingTransferList {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(140px, 1fr);
-  gap: 8px;
+  align-content: start;
+  height: 150px;
+  max-height: 240px;
+  overflow: auto;
 }
-.bindingLabels {
+
+.bindingTransferList > :global(.ant-empty) {
+  align-self: center;
+  margin: 20px 0;
+}
+
+.bindingTransferRow {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.bindingTransferActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bindingLabelInput {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  min-height: 58px;
+  gap: 6px;
+  padding: 14px 24px;
 }
+
+.bindingLabelInput :global(.ant-tag) {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-end: 0;
+}
+
+.bindingLabelRemove:global(.ant-btn) {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+  color: inherit;
+  font-size: 10px;
+}
+
+.bindingLabelInputControl {
+  width: 110px;
+}
+
+.bindingLabelMatches {
+  margin: 0 24px 24px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+}
+
+.bindingLabelMatch {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 2fr);
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  padding: 9px 12px;
+}
+
+.bindingLabelMatch:last-child {
+  border-bottom: 0;
+}
+
+.bindingLabelMatch > span:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.bindingLabelMatch :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.bindingCard > :global(.ant-empty) {
+  margin: 36px 0 48px;
+}
+
 .previewEvidence {
   display: grid;
-  gap: 8px;
   width: 100%;
   min-width: 0;
+  gap: 8px;
 }
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 16px;
 }
+
 @media (max-width: 760px) {
-  .form {
+  .typeChooser {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .typeChoice:global(.ant-btn) {
+    width: 100%;
+  }
+
+  .variableButton:global(.ant-btn) {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .fieldRow,
+  .conditionModeRow,
+  .conditionAuthoringRow,
+  .metricAvailabilityRow,
+  .metricSection > label,
+  .bindingField {
     grid-template-columns: 1fr;
+    gap: 6px;
   }
-  .wide {
-    grid-column: auto;
+
+  .fieldLabel,
+  .metricLabel,
+  .conditionModeLabel,
+  .bindingLabel {
+    justify-content: flex-start;
+    padding-inline-end: 0;
+    text-align: left;
   }
+
+  .conditionModeControl,
+  .conditionAuthoringControl {
+    grid-column: 1;
+  }
+
+  .availabilityRule {
+    grid-column: 1;
+  }
+
+  .mapRow,
   .conditionRow {
     grid-template-columns: 1fr;
   }
+
   .conditionGroupHeader {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .conditionGroupActions {
+    flex-wrap: wrap;
   }
 }

@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.service.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.alert.util.AlertWorkspaceLabelKeys;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 
 /**
@@ -58,14 +59,21 @@ final class ExternalAlertIngressValidator {
         if (labels == null || labels.isEmpty()) {
             throw rejected();
         }
-        return new HashMap<>(labels);
+        Map<String, String> normalized = new HashMap<>(labels);
+        normalized.keySet().removeIf(key -> AlertWorkspaceLabelKeys.isReserved(key)
+                || AlertWorkspaceLabelKeys.isInternalResourceAuthority(key));
+        if (normalized.isEmpty()) {
+            throw rejected();
+        }
+        return normalized;
     }
 
     static Map<String, String> normalizeAnnotations(Map<String, String> annotations) {
         return annotations == null ? new HashMap<>(8) : new HashMap<>(annotations);
     }
 
-    private static IllegalArgumentException rejected() {
+    static IllegalArgumentException rejected() {
         return new IllegalArgumentException(ALERT_REJECTED);
     }
+
 }

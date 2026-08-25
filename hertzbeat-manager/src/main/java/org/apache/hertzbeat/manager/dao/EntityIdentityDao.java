@@ -35,12 +35,32 @@ public interface EntityIdentityDao extends JpaRepository<EntityIdentity, Long>, 
 
     List<EntityIdentity> findAllByEntityIdOrderByPriorityDescIdAsc(Long entityId);
 
+    @Query("SELECT identity FROM EntityIdentity identity, ObserveEntity entity "
+            + "WHERE identity.entityId = entity.id AND entity.workspaceId = :workspaceId "
+            + "AND identity.entityId = :entityId ORDER BY identity.priority DESC, identity.id ASC")
+    List<EntityIdentity> findAllOwnedByWorkspaceIdAndEntityId(
+            @Param("workspaceId") String workspaceId, @Param("entityId") Long entityId);
+
     List<EntityIdentity> findAllByIdentityKeyInAndNormalizedValueIn(Set<String> identityKeys, Set<String> normalizedValues);
+
+    @Query("SELECT identity FROM EntityIdentity identity, ObserveEntity entity "
+            + "WHERE identity.entityId = entity.id AND entity.workspaceId = :workspaceId "
+            + "AND identity.identityKey IN :identityKeys AND identity.normalizedValue IN :normalizedValues")
+    List<EntityIdentity> findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
+            @Param("workspaceId") String workspaceId,
+            @Param("identityKeys") Set<String> identityKeys,
+            @Param("normalizedValues") Set<String> normalizedValues);
 
     List<EntityIdentity> findAllByIdentityKeyInOrderByIdDesc(Set<String> identityKeys, Pageable pageable);
 
     @Query("SELECT COUNT(DISTINCT identity.entityId) FROM EntityIdentity identity WHERE identity.identityKey IN :identityKeys")
     long countDistinctEntityIdsByIdentityKeyIn(@Param("identityKeys") Set<String> identityKeys);
+
+    @Query("SELECT COUNT(DISTINCT identity.entityId) FROM EntityIdentity identity, ObserveEntity entity "
+            + "WHERE identity.entityId = entity.id AND entity.workspaceId = :workspaceId "
+            + "AND identity.identityKey IN :identityKeys")
+    long countDistinctOwnedEntityIdsByWorkspaceIdAndIdentityKeyIn(
+            @Param("workspaceId") String workspaceId, @Param("identityKeys") Set<String> identityKeys);
 
     @Query("SELECT identity.entityId, COUNT(identity) FROM EntityIdentity identity WHERE identity.entityId IN :entityIds GROUP BY identity.entityId")
     List<Object[]> countByEntityIdInGroupByEntityId(@Param("entityIds") Collection<Long> entityIds);

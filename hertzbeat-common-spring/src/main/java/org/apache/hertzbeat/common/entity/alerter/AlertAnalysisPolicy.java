@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.entity.alerter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -24,6 +25,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +35,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonStringListAttributeConverter;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -42,10 +45,17 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "hzb_alert_analysis_policy")
+@Table(name = "hzb_alert_analysis_policy", indexes = {
+    @Index(name = "idx_alert_analysis_workspace_enabled", columnList = "workspace_id, enabled")
+})
 @AllArgsConstructor
 @NoArgsConstructor
 public class AlertAnalysisPolicy {
+
+    @JsonIgnore
+    @Builder.Default
+    @Column(name = "workspace_id", nullable = false, length = 128)
+    private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

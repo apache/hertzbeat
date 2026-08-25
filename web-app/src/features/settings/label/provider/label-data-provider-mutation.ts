@@ -7,10 +7,11 @@
 
 import { createRefineHttpError, isRefineHttpError } from '@/shared/refine/refine-http-error';
 
-import { deleteLabel, findCanonicalLabel, saveLabel } from '../api/label-api';
+import { deleteLabel, deleteLabels, findCanonicalLabel, saveLabel } from '../api/label-api';
 import { isExplicitLabelTransportRejection, LabelTransportFailure } from '../api/label-api-failure';
 import {
   createLabelDeleteEvidence,
+  createLabelDeleteManyEvidence,
   createLabelWriteEvidence,
   LabelRequestFailure,
   type LabelFailureKind,
@@ -70,6 +71,30 @@ export async function deleteAndProveLabel(id: number, draft: Partial<LabelRecord
     return canonical;
   } catch (reason) {
     throw mutationFailure(reason, createLabelDeleteEvidence('proof', 'proof', canonical));
+  }
+}
+
+export async function deleteAndProveLabels(records: LabelRecord[]) {
+  let canonical: LabelRecord[];
+  try {
+    canonical = await Promise.all(records.map(record => requireCanonicalLabel(toLabelIdentity(record, record.id))));
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteManyEvidence('preflight', 'rewrite', records), 'not-attempted');
+  }
+  const ids = canonical.map(record => record.id);
+  try {
+    await deleteLabels(ids);
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteManyEvidence('write', deleteRecovery(reason), canonical));
+  }
+  try {
+    const matches = await Promise.all(canonical.map(record => findCanonicalLabel(toLabelIdentity(record, record.id))));
+    if (matches.some(Boolean)) {
+      throw new LabelRequestFailure('invalid', 'uncertain', { code: 'LABEL_DELETE_NOT_CONFIRMED' });
+    }
+    return canonical;
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteManyEvidence('proof', 'proof', canonical));
   }
 }
 

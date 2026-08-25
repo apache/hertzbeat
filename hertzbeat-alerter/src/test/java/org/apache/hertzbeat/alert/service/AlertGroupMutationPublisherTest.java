@@ -53,9 +53,9 @@ class AlertGroupMutationPublisherTest {
         AlertGroupMutationPublisher publisher = new AlertGroupMutationPublisher(manager);
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishStatusChanged(List.of(2L, 1L, 2L), "acknowledged");
+            publisher.publishStatusChanged("default", List.of(2L, 1L, 2L), "acknowledged");
 
-            verify(manager, never()).broadcastGroupMutation(anyString());
+            verify(manager, never()).broadcastGroupMutation(anyString(), anyString());
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(TransactionSynchronization::afterCommit);
 
@@ -71,9 +71,9 @@ class AlertGroupMutationPublisherTest {
         AlertGroupMutationPublisher publisher = new AlertGroupMutationPublisher(manager);
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishDeleted(List.of(2L, 1L));
+            publisher.publishDeleted("default", List.of(2L, 1L));
 
-            verify(manager, never()).broadcastGroupMutation(anyString());
+            verify(manager, never()).broadcastGroupMutation(anyString(), anyString());
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(TransactionSynchronization::afterCommit);
 
@@ -89,13 +89,13 @@ class AlertGroupMutationPublisherTest {
         AlertGroupMutationPublisher publisher = new AlertGroupMutationPublisher(manager);
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishDeleted(List.of(1L));
+            publisher.publishDeleted("default", List.of(1L));
 
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(synchronization ->
                             synchronization.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
 
-            verify(manager, never()).broadcastGroupMutation(anyString());
+            verify(manager, never()).broadcastGroupMutation(anyString(), anyString());
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
@@ -107,11 +107,11 @@ class AlertGroupMutationPublisherTest {
         AlertGroupMutationPublisher publisher = new AlertGroupMutationPublisher(manager);
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishDeleted(List.of());
-            publisher.publishStatusChanged(null, "acknowledged");
+            publisher.publishDeleted("default", List.of());
+            publisher.publishStatusChanged("default", null, "acknowledged");
 
             assertTrue(TransactionSynchronizationManager.getSynchronizations().isEmpty());
-            verify(manager, never()).broadcastGroupMutation(anyString());
+            verify(manager, never()).broadcastGroupMutation(anyString(), anyString());
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
@@ -122,7 +122,7 @@ class AlertGroupMutationPublisherTest {
         String privateDetail = "private-mutation-body-and-exception";
         AlertSseManager manager = Mockito.mock(AlertSseManager.class);
         doThrow(new IllegalStateException(privateDetail))
-                .when(manager).broadcastGroupMutation(anyString());
+                .when(manager).broadcastGroupMutation(anyString(), anyString());
         AlertGroupMutationPublisher publisher = new AlertGroupMutationPublisher(manager);
         Logger logger = (Logger) LoggerFactory.getLogger(AlertGroupMutationPublisher.class);
         Level originalLevel = logger.getLevel();
@@ -131,7 +131,7 @@ class AlertGroupMutationPublisherTest {
         logger.addAppender(appender);
         logger.setLevel(Level.DEBUG);
         try {
-            publisher.publishDeleted(List.of(1L));
+            publisher.publishDeleted("default", List.of(1L));
 
             String logs = appender.list.stream()
                     .map(ILoggingEvent::getFormattedMessage)
@@ -148,7 +148,7 @@ class AlertGroupMutationPublisherTest {
     private static void assertMutationEvent(
             AlertSseManager manager, List<Long> ids, String status, String mutation) {
         ArgumentCaptor<String> payload = ArgumentCaptor.forClass(String.class);
-        verify(manager).broadcastGroupMutation(payload.capture());
+        verify(manager).broadcastGroupMutation(org.mockito.ArgumentMatchers.eq("default"), payload.capture());
         Map<String, Object> event = JsonUtil.fromJson(payload.getValue(), new TypeReference<>() {
         });
         assertEquals(ids.get(0).longValue(), ((Number) event.get("id")).longValue());

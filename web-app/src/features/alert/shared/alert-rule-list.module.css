@@ -16,13 +16,22 @@
  */
 
 .name {
-  display: grid;
+  display: block;
   min-width: 0;
-}
-.name span {
   overflow: hidden;
-  color: var(--ant-color-text-secondary);
-  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.truncated {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labels {
+  max-height: 50px;
+  overflow: hidden;
 }

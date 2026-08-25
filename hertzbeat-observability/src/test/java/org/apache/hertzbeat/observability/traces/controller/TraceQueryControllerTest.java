@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.observability.traces.controller;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,8 +30,11 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService.TraceDetailQuery;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,8 +55,34 @@ class TraceQueryControllerTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
         TraceQueryController controller = new TraceQueryController(entityTraceQueryService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void externalTraceReadsFailClosedWithoutTrustedWorkspace() {
+        AuthTokenRequestContext.clear();
+
+        for (String path : List.of(
+                "/api/traces/list",
+                "/api/traces/stats/overview",
+                "/api/traces/stats/group-by?groupBy=service",
+                "/api/traces/trace-7",
+                "/api/traces/trace-7/spans")) {
+            Exception exception = assertThrows(Exception.class, () -> mockMvc.perform(get(path)));
+            Throwable rootCause = exception;
+            while (rootCause.getCause() != null) {
+                rootCause = rootCause.getCause();
+            }
+            assertInstanceOf(TelemetryStorageUnavailableException.class, rootCause);
+        }
+        verifyNoInteractions(entityTraceQueryService);
     }
 
     @Test
@@ -68,7 +100,7 @@ class TraceQueryControllerTest {
                 Map.of("service.name", "checkout")
         );
         when(entityTraceQueryService.queryTraceList(
-                1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
+                "team-a", 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
                 "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
                 100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout"))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
@@ -98,7 +130,7 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.content[0].serviceName").value("checkout"));
 
         verify(entityTraceQueryService).queryTraceList(
-                1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
+                "team-a", 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
                 "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
                 100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout");
     }
@@ -118,7 +150,7 @@ class TraceQueryControllerTest {
                 Map.of("service.name", "checkout")
         );
         when(entityTraceQueryService.queryTraceList(
-                null, 100L, 200L, null, false, "checkout", null, "prod",
+                "team-a", null, 100L, 200L, null, false, "checkout", null, "prod",
                 null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(0, 20), 1));
 
@@ -137,14 +169,14 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.content[0].traceId").value("trace-entry"));
 
         verify(entityTraceQueryService).queryTraceList(
-                null, 100L, 200L, null, false, "checkout", null, "prod",
+                "team-a", null, 100L, 200L, null, false, "checkout", null, "prod",
                 null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null);
     }
 
     @Test
     void shouldMapInstanceAndHttpRouteToStrictTraceFilters() throws Exception {
         when(entityTraceQueryService.queryTraceList(
-                null, 100L, 200L, null, false, "checkout", "commerce", "prod",
+                "team-a", null, 100L, 200L, null, false, "checkout", "commerce", "prod",
                 "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
                 "http.route=\"/checkout\""))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
@@ -161,7 +193,7 @@ class TraceQueryControllerTest {
                 .andExpect(status().isOk());
 
         verify(entityTraceQueryService).queryTraceList(
-                null, 100L, 200L, null, false, "checkout", "commerce", "prod",
+                "team-a", null, 100L, 200L, null, false, "checkout", "commerce", "prod",
                 "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
                 "http.route=\"/checkout\"");
     }
@@ -197,7 +229,7 @@ class TraceQueryControllerTest {
                         .param("maxDurationMs", "500"))
                 .andExpect(status().isOk());
 
-        verify(entityTraceQueryService).getTraceDetail(query);
+        verify(entityTraceQueryService).getTraceDetail("team-a", query);
     }
 
     @Test
@@ -228,14 +260,14 @@ class TraceQueryControllerTest {
                         .param("endpoint", "/checkout"))
                 .andExpect(status().isOk());
 
-        verify(entityTraceQueryService).getTraceDetail(query);
+        verify(entityTraceQueryService).getTraceDetail("team-a", query);
     }
 
     @Test
     void shouldForwardHideInternalFilterToTraceOverviewQuery() throws Exception {
         TraceOverviewDto overview = new TraceOverviewDto(2, 1, 1_710_000_000_000L, true);
         when(entityTraceQueryService.getTraceOverview(
-                9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
+                "team-a", 9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
                 "service.version=2.0.0", "POST /pay", 200L, 900L, true, null, null))
                 .thenReturn(overview);
 
@@ -260,7 +292,7 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.hasActiveTrace").value(true));
 
         verify(entityTraceQueryService).getTraceOverview(
-                9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
+                "team-a", 9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
                 "service.version=2.0.0", "POST /pay", 200L, 900L, true, null, null);
     }
 
@@ -268,7 +300,7 @@ class TraceQueryControllerTest {
     void shouldForwardSpanScopeToTraceOverviewQuery() throws Exception {
         TraceOverviewDto overview = new TraceOverviewDto(3, 0, 1_710_000_000_000L, true);
         when(entityTraceQueryService.getTraceOverview(
-                null, 100L, 200L, null, false, "checkout", null, "prod",
+                "team-a", null, 100L, 200L, null, false, "checkout", null, "prod",
                 null, "POST /checkout", 100L, 500L, null, "entrypoint", null))
                 .thenReturn(overview);
 
@@ -287,7 +319,7 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.totalTraceCount").value(3));
 
         verify(entityTraceQueryService).getTraceOverview(
-                null, 100L, 200L, null, false, "checkout", null, "prod",
+                "team-a", null, 100L, 200L, null, false, "checkout", null, "prod",
                 null, "POST /checkout", 100L, 500L, null, "entrypoint", null);
     }
 
@@ -304,7 +336,7 @@ class TraceQueryControllerTest {
                 ))
         );
         when(entityTraceQueryService.getTraceGroupByStats(
-                3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
+                "team-a", 3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
                 "host.name=checkout-1", "GET /checkout", 100L, 500L,
                 "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint", null))
                 .thenReturn(result);
@@ -338,7 +370,7 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.groups[0].latencyP95Ms").value(210.0));
 
         verify(entityTraceQueryService).getTraceGroupByStats(
-                3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
+                "team-a", 3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
                 "host.name=checkout-1", "GET /checkout", 100L, 500L,
                 "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint", null);
     }

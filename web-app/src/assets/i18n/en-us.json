@@ -17,9 +17,14 @@
     "query": "Query",
     "refresh": "Refresh",
     "actions": "Actions",
+    "tableSelection": {
+      "selectAll": "Select all items on this page",
+      "clearAll": "Clear all selected items on this page"
+    },
     "view": "View",
     "edit": "Edit",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "unsavedChangesConfirm": "Discard your unsaved changes?",
     "discardChanges": "Discard changes",
     "save": "Save",
@@ -164,6 +169,10 @@
     "description": "Services, hosts, databases, and other resources are automatically unified here—no abstract data modeling required.",
     "empty": "No resources match the current filters.",
     "loading": "Loading resources…",
+    "degraded": {
+      "title": "Operational evidence is unavailable",
+      "description": "Resource identity is available, but telemetry-backed status and evidence could not be loaded. No health state or zero values are inferred."
+    },
     "filters": {
       "search": "Search resources",
       "type": "Type",
@@ -1396,14 +1405,6 @@
       "resizeHistory": "Resize history panel"
     }
   },
-  "alertNavigation": {
-    "events": "Alert events",
-    "rules": "Rules",
-    "noiseControl": "Noise control",
-    "groups": "Grouping",
-    "inhibits": "Inhibition",
-    "silences": "Silences"
-  },
   "settingsNavigation": {
     "receivers": "Receivers",
     "rules": "Delivery rules",
@@ -1497,7 +1498,6 @@
       "not-found": "This alert integration is not in the server catalog."
     },
     "readiness": {
-      "ready": "This backend guide is ready to configure.",
       "configuration_required": "This source requires sender or gateway configuration before it can run.",
       "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
     },
@@ -1507,17 +1507,44 @@
     "snippets": "Payload examples",
     "limitations": "Known limitations",
     "menu": "External alert integrations",
-    "title": "{{source}} integration",
     "description": "Configure an external sender to report alerts through HertzBeat's authenticated ingress.",
-    "sourcesLabel": "Integration sources",
-    "method": "Method",
+    "sourcesLabel": "Integrated alert sources",
+    "sourceGroups": {
+      "ready": "Directly available",
+      "configuration_required": "Gateway required",
+      "guide_blocked": "Unavailable"
+    },
     "endpoint": "Ingress path",
-    "endpointHint": "This is the ingress path only. Prefix it with the HertzBeat server address reachable by the sender.",
-    "authorizationHeader": "Required header",
-    "manageTokens": "Manage API tokens",
+    "endpointConfiguredHint": "This callback URL combines the public access address from System Settings with the ingress path {{path}}.",
+    "endpointRelativeHint": "A public access address is not configured, so only the ingress path is shown. Add it in System Settings to generate the full callback URL.",
+    "requestHeaders": "Request headers",
+    "generateToken": "Generate token",
+    "dataFlow": "What success means",
     "copy": "Copy",
     "copied": "Copied",
-    "copyFailed": "Copy failed"
+    "copyFailed": "Copy failed",
+    "workspace": {
+      "prepare": "Prepare access",
+      "configure": "Configure the sender",
+      "verify": "Verify the alert lifecycle"
+    },
+    "verification": {
+      "unverified": "Not verified",
+      "unverifiedHint": "Start verification, then trigger one real alert from this sender.",
+      "waiting": "Waiting for a sender event",
+      "waitingHint": "Waiting since {{time}} for a valid event from this source.",
+      "verified": "Event received",
+      "verifiedHint": "Last verified by an accepted event at {{time}}.",
+      "start": "Start verification",
+      "restart": "Verify again",
+      "starting": "Starting…",
+      "startFailed": "Verification could not be started. Try again.",
+      "verifiedRail": "Verified by a real sender event"
+    },
+    "zabbix": {
+      "parameters": "Media type parameters",
+      "script": "Webhook script"
+    }
   },
   "plugins": {
     "title": "Plugin management",
@@ -1609,6 +1636,23 @@
     "takeSelectedOffline": "Take selected offline",
     "deleteSelected": "Delete selected",
     "mutationSuccess": "Collector state refreshed.",
+    "details": {
+      "action": "Details",
+      "actionNamed": "View {{name}} details",
+      "title": "Collector details: {{name}}",
+      "updatedAt": "Last updated",
+      "overview": "Overview",
+      "configuration": "Configuration",
+      "properties": "Properties",
+      "assignments": "Task assignment",
+      "operations": "Operational configuration",
+      "position": "{{current}} of {{total}}",
+      "previous": "Previous Collector",
+      "next": "Next Collector",
+      "close": "Close Collector details",
+      "resize": "Resize Collector details",
+      "moreActions": "More Collector actions"
+    },
     "deploy": {
       "action": "Generate deployment information",
       "title": "Collector deployment information",
@@ -1833,6 +1877,12 @@
     "copy": "Copy",
     "delete": "Delete",
     "deleteConfirm": "Delete this label?",
+    "selectRow": "Select row",
+    "selected": "{{count}} selected",
+    "clearSelection": "Clear selection",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedConfirm_one": "Delete {{count}} selected label?",
+    "deleteSelectedConfirm_other": "Delete {{count}} selected labels?",
     "nameRequired": "Enter a label name.",
     "saveSuccess": "Label saved.",
     "saveFailed": "Label could not be saved.",
@@ -1849,7 +1899,7 @@
   },
   "systemConfig": {
     "title": "System settings",
-    "description": "Configure the shared language, time zone, and interface density.",
+    "description": "Configure the shared language and time zone.",
     "loading": "Loading system settings…",
     "readOnly": "Only administrators can change system settings.",
     "recovery": "The saved settings could not be confirmed. Verify the current server settings before continuing.",
@@ -1862,7 +1912,23 @@
     "saveSuccess": "System settings saved.",
     "saveFailed": "System settings could not be saved.",
     "discard": "Discard changes",
-    "noChanges": "No unsaved changes.",
+    "publicAccess": {
+      "title": "Public access",
+      "description": "Addresses that operators, alert senders, and telemetry clients use to reach this HertzBeat installation.",
+      "loading": "Loading public access settings…",
+      "unavailable": "Public access settings are unavailable.",
+      "invalid": "Public access settings returned an invalid response.",
+      "publicBaseUrl": "Public base URL",
+      "publicBaseUrlHelp": "Used to generate complete external alert callback URLs. Include any reverse-proxy path prefix.",
+      "advancedTitle": "Advanced OTLP endpoints",
+      "advancedHelp": "Standard ports are used by default: HTTP 4318 and gRPC 4317. Configure these only when OTLP uses a different host or port.",
+      "otlpHttp": "Server OTLP HTTP endpoint",
+      "otlpHttpHelp": "Leave empty to use the public HertzBeat host on standard port 4318, or enter a complete HTTP(S) address.",
+      "otlpGrpc": "Server OTLP gRPC endpoint",
+      "otlpGrpcHelp": "Leave empty to use the public HertzBeat host on standard port 4317, or enter a complete HTTP(S) address.",
+      "saveSuccess": "Public access settings saved.",
+      "saveFailed": "Public access settings could not be saved."
+    },
     "locale": {
       "label": "Language",
       "help": "Applies to this browser after saving.",
@@ -1875,18 +1941,11 @@
     "timezone": {
       "label": "Time zone",
       "help": "Used for shared server-side time display and scheduling."
-    },
-    "theme": {
-      "label": "Interface",
-      "help": "Choose the standard, dark, or compact operator interface.",
-      "light-ops": "Standard light",
-      "dark-ops": "Dark",
-      "compact": "Compact dark"
     }
   },
   "objectStore": {
     "title": "Object storage",
-    "description": "Choose where HertzBeat stores generated files and binary objects.",
+    "description": "Choose where custom monitoring template YAML definitions are stored. Metrics, logs, traces, and alert data are not affected.",
     "loading": "Loading object storage configuration…",
     "recoveryProof": "The saved configuration could not be confirmed. Retry to verify the current server configuration.",
     "recoveryUncertain": "The save result is uncertain. Verify the server configuration later before making more changes.",
@@ -1894,23 +1953,40 @@
     "reconcileComplete": "The current server configuration was reloaded. The secret write result was not assumed.",
     "unavailable": "Object storage configuration is unavailable.",
     "missing": "Object storage has not been configured.",
+    "status": {
+      "unconfigured": "Not configured",
+      "configured": "Configured"
+    },
     "invalid": "The object storage response is invalid.",
     "readOnly": "Only administrators can change object storage configuration.",
     "validation": "Complete the required object storage fields.",
     "saveSuccess": "Object storage configuration saved.",
     "saveFailed": "Object storage configuration could not be saved.",
+    "migrationConflict": "The target has same-name custom templates with different content. Resolve the conflicts before switching.",
+    "migrateAndSave": "Migrate and save",
     "discard": "Discard changes",
     "noChanges": "No unsaved changes.",
+    "searchTypes": "Search storage methods",
+    "noMatchingTypes": "No matching storage methods.",
+    "activationHint": "Saving copies existing custom templates first, verifies them, and then enables this location. The source copy is retained.",
+    "unsavedHint": "Existing custom templates are copied and verified before the storage method changes. Same-name conflicts are never overwritten.",
+    "obsSectionTitle": "Huawei Cloud OBS configuration",
+    "obsSectionDescription": "Configured credentials stay write-only; leave them blank to keep the current values.",
+    "activate": {
+      "database": "Migrate and use database storage",
+      "file": "Migrate and use local file system",
+      "obs": "Migrate and use Huawei Cloud OBS"
+    },
     "type": {
-      "label": "Storage provider",
+      "label": "Storage method",
       "database": "Database",
       "file": "Local file system",
       "obs": "Huawei Cloud OBS"
     },
     "typeHelp": {
-      "database": "Store objects in the configured HertzBeat database.",
-      "file": "Store objects on the HertzBeat server file system.",
-      "obs": "Store objects in a Huawei Cloud OBS bucket."
+      "database": "Store custom monitoring templates in the database currently used by HertzBeat.",
+      "file": "Store custom monitoring templates as define/app-*.yml files on the HertzBeat server.",
+      "obs": "Store custom monitoring template YAML files under the configured path in a Huawei Cloud OBS bucket."
     },
     "obs": {
       "accessKey": "Access key",
@@ -1959,6 +2035,13 @@
     "unavailable": "Token data is unavailable.",
     "invalid": "The token response is invalid.",
     "empty": "No API tokens have been generated.",
+    "emptyTitle": "Create your first API token",
+    "emptyDescription": "Create a dedicated credential for an integration or telemetry client.",
+    "emptyName": "Name it for the client or integration that will use it.",
+    "emptyScope": "Choose the smallest access scope it needs.",
+    "emptyExpiry": "Set an expiry or keep it active until revoked.",
+    "emptyOneTime": "The secret is shown once after creation.",
+    "emptyAction": "Create first token",
     "scope": {
       "label": "Access",
       "apiAdmin": "Administration API",
@@ -1977,18 +2060,34 @@
   "alertGroups": {
     "title": "Alert grouping",
     "description": "Control how related alerts are batched before notification.",
-    "new": "New policy",
-    "edit": "Edit policy",
+    "new": "New grouping policy",
+    "edit": "Edit grouping policy",
     "search": "Search policies",
     "empty": "No grouping policies match the current query.",
-    "name": "Policy",
+    "name": "Policy name",
     "labels": "Group labels",
-    "wait": "Initial wait",
-    "interval": "Group interval",
+    "labelsPlaceholder": "Please enter label",
+    "wait": "Wait Time",
+    "interval": "Interval Time",
     "repeat": "Repeat interval",
-    "enabled": "Enabled",
+    "enabled": "Enable",
     "updated": "Updated",
     "seconds": "{{value}} s",
+    "secondsUnit": "Seconds",
+    "durationUnit": "Unit",
+    "units": {
+      "seconds": "Seconds",
+      "minutes": "Minutes",
+      "hours": "Hours"
+    },
+    "required": "Please fill in this required field.",
+    "help": {
+      "name": "Name to identify this grouping policy; it must be unique.",
+      "labels": "Group alert messages by label key. Multiple keys such as alertname, severity, and instance are supported.",
+      "wait": "Wait after a new alert is received so matching alerts can be grouped; the default is 30 seconds.",
+      "interval": "Minimum interval between grouped notifications to avoid excessive messages; the default is 5 minutes.",
+      "repeat": "Minimum notification interval for continuously firing alerts; the default is 4 hours."
+    },
     "delete": "Delete",
     "deleteConfirm": "Delete this grouping policy?",
     "deleteSelected": "Delete selected",
@@ -2003,19 +2102,38 @@
   "alertInhibits": {
     "title": "Alert inhibition",
     "description": "Suppress target alerts while a matching source alert is active.",
-    "new": "New inhibition",
-    "edit": "Edit inhibition",
+    "new": "New Inhibit Rule",
+    "edit": "Edit Inhibit Rule",
     "search": "Search inhibitions",
     "empty": "No inhibition policies match the current query.",
-    "name": "Policy",
-    "sourceLabels": "Source matchers",
-    "targetLabels": "Target matchers",
+    "name": "Inhibit Rule Name",
+    "nameHelp": "Name to identify this inhibition rule; it must be unique.",
+    "sourceLabels": "Source Labels",
+    "targetLabels": "Target Labels",
     "equalLabels": "Equal labels",
+    "equalPlaceholder": "Input or select labels",
+    "matcherKey": "Key",
+    "matcherValue": "Value",
+    "addMatcher": "Add label matcher",
+    "removeMatcher": "Remove label matcher",
+    "required": "Please fill in this required field.",
+    "logicPreview": {
+      "title": "What this rule does",
+      "trigger": "Trigger:",
+      "triggerDetail": "An active alert whose labels match {{source}} is detected.",
+      "effect": "Suppress:",
+      "effectDetail": "An alert whose labels match {{target}} will not be forwarded to notification delivery.",
+      "condition": "Only when:",
+      "conditionDetail": "The triggering and suppressed alerts have the same value for {{equal}}.",
+      "sourceEmpty": "Set the alert that starts suppression.",
+      "targetEmpty": "Set the alert that should stop sending notifications.",
+      "equalEmpty": "Set the labels whose values must match on both alerts."
+    },
     "matcherPlaceholder": "severity:critical, service:checkout",
     "sourceHelp": "The active alert that suppresses lower-priority alerts.",
     "targetHelp": "The alert to suppress while the source is active.",
     "equalHelp": "These label values must be equal on the source and target alerts.",
-    "enabled": "Enabled",
+    "enabled": "Enable",
     "updated": "Updated",
     "delete": "Delete",
     "deleteConfirm": "Delete this inhibition policy?",
@@ -2050,29 +2168,38 @@
     "title": "Alert silences",
     "description": "Mute matching alerts during one-time or recurring maintenance windows.",
     "new": "New silence",
+    "createTitle": "New Silence Strategy",
     "edit": "Edit silence",
     "search": "Search silences",
     "empty": "No silence policies match the current query.",
-    "name": "Policy",
-    "matchAll": "Match all alerts",
-    "labels": "Label matchers",
+    "name": "Silence Strategy Name",
+    "matchAll": "Match All",
+    "labels": "Label Match",
+    "matcherKey": "Key",
+    "matcherValue": "Value",
+    "addMatcher": "Add label matcher",
+    "removeMatcher": "Remove label matcher",
+    "required": "Please fill in this required field.",
+    "periodInvalid": "Choose a valid time range.",
+    "recurringPeriodInvalid": "Start and end times must be different.",
+    "daysRequired": "Select at least one day.",
     "matcherPlaceholder": "service:checkout, environment:staging",
     "labelsHelp": "Only alerts matching every label are silenced.",
-    "enabled": "Enabled",
-    "type": "Schedule type",
-    "once": "One time",
-    "recurring": "Recurring",
-    "days": "Active days",
-    "timeWindow": "Time window",
+    "enabled": "Enable",
+    "type": "Silence Type",
+    "once": "One Time Silence",
+    "recurring": "Periodic Silence",
+    "days": "Active Days",
+    "timeWindow": "Silence Period",
     "start": "Starts",
     "end": "Ends",
     "crossMidnightHelp": "An end time earlier than the start time creates an overnight window.",
     "scope": "Scope",
     "schedule": "Schedule",
-    "times": "Matched",
+    "times": "Silenced Alerts Num",
     "allAlerts": "All alerts",
     "selectedDays": "{{count}} days",
-    "updated": "Updated",
+    "updated": "Edit Time",
     "delete": "Delete",
     "deleteConfirm": "Delete this silence policy?",
     "deleteSelected": "Delete selected",
@@ -2083,6 +2210,7 @@
     "unavailable": "Silence policies are unavailable.",
     "saveSuccess": "Silence policy saved.",
     "saveFailed": "Silence policy could not be saved.",
+    "deleteSuccess": "Silence policy deleted.",
     "operationSuccess": "Silence policy updated.",
     "operationFailed": "Silence policy operation failed.",
     "management": {
@@ -2112,16 +2240,21 @@
     "loading": "Loading notification receivers…",
     "new": "New receiver",
     "edit": "Edit receiver",
-    "search": "Search receivers",
+    "search": "Receiver name",
     "empty": "No receivers match the current query.",
     "name": "Receiver",
-    "type": "Channel type",
-    "setting": "Destination",
-    "updated": "Updated",
+    "nameField": "Receiver name",
+    "type": "Notification method",
+    "setting": "Configuration",
+    "updated": "Edit time",
     "configured": "Configured securely",
-    "test": "Send test",
+    "test": "Send alert test",
     "delete": "Delete",
     "deleteConfirm": "Delete this receiver?",
+    "required": "Please fill in this required field.",
+    "emailInvalid": "Invalid email address.",
+    "phoneInvalid": "Invalid phone number.",
+    "invalidField": "Invalid value.",
     "validation": "Complete the receiver name and all required channel settings.",
     "loadFailed": "The receiver could not be loaded.",
     "saveSuccess": "Receiver saved.",
@@ -2243,14 +2376,26 @@
     "saveSuccess": "Template saved.",
     "saveFailed": "Template could not be saved.",
     "deleteSuccess": "Template deleted.",
-    "deleteFailed": "Template could not be deleted."
+    "deleteFailed": "Template could not be deleted.",
+    "previewSource": "Template source",
+    "previewSearch": "Search template source",
+    "previewSearchPlaceholder": "Search source",
+    "previewMatchCount": "{{current}} / {{total}}",
+    "previewNoMatches": "No matches",
+    "previewPreviousMatch": "Previous match",
+    "previewNextMatch": "Next match",
+    "previewJumpToBody": "Template body",
+    "previewBodyUnavailable": "No leading comment was found.",
+    "previewCopy": "Copy source",
+    "previewCopied": "Copied",
+    "previewCopyFailed": "Copy failed"
   },
   "notificationWorkspace": {
     "label": "Notification configuration workflow",
     "title": "Notification setup",
     "description": "Configure delivery dependencies in order, then maintain each area independently.",
     "steps": {
-      "channels": { "label": "Channels", "dependency": "Provide email and SMS delivery services." },
+      "channels": { "label": "Channel services", "dependency": "Provide email and SMS delivery services." },
       "receivers": { "label": "Receivers", "dependency": "Add destinations that use configured channels." },
       "templates": { "label": "Templates", "dependency": "Optionally customize messages for a channel." },
       "rules": { "label": "Rules", "dependency": "Route alerts to one or more receivers." }
@@ -2426,15 +2571,105 @@
   "alertRules": {
     "title": "Alert rules",
     "description": "Manage alert evaluation rules and their current state.",
+    "guide": { "alertCenter": "View alert center", "deliveryRules": "Configure delivery rules" },
     "manage": "Manage rules",
     "new": "New rule",
     "edit": "Edit rule",
+    "newRealtime": "New RealTime Threshold",
+    "newPeriodic": "New Periodic Threshold",
+    "editRealtime": "Edit RealTime Threshold",
+    "editPeriodic": "Edit Periodic Threshold",
     "editorDescription": "Define the condition, evaluate it, then save the rule.",
     "search": "Search rules",
     "empty": "No alert rules match the current query.",
-    "name": "Rule",
+    "required": "Please fill in the required fields!",
+    "confirm": "OK",
+    "typeChoice": {
+      "title": "Choose an alert evaluation",
+      "realtimeDescription": "Evaluate each monitoring data collection as it arrives.",
+      "periodicDescription": "Run a PromQL or SQL query on a schedule.",
+      "periodicUnavailable": "Configure a supported query executor before creating a periodic rule."
+    },
+    "help": {
+      "name": "Rule name need to be unique",
+      "dataType": "Select the data type for this threshold rule",
+      "target": "The selected metric object",
+      "rule": "Graphical setting alarm threshold rules, support multiple rules &&",
+      "bindings": "Configure this threshold rule to apply to specific monitoring tasks, default is not associated with all",
+      "period": "Time interval for periodic threshold calculation, in seconds, minimum 60 seconds",
+      "window": "Time window for real-time threshold calculation, in seconds",
+      "severity": "The alarm level that triggers the threshold, from low to high:Warning，Critical，Emergency",
+      "mode": "Select alert mode, alert group mode will merge alerts with the same conditions, individual alert mode will send each alert separately",
+      "times": "Set how many times the threshold is triggered before sending an alert",
+      "template": "Supported notification template environment variables",
+      "labels": "You can use labels for classification management.eg: assign labels to resources in production environment and test environment.",
+      "annotations": "You can use annotations to mark entity information, such as binding annotations of important events to resources.",
+      "enable": "This alarm threshold configuration is enabled or disabled",
+      "queryMetric": "Graphical setting alarm threshold rules, support multiple rules &&",
+      "queryLog": "Configure log query conditions to filter logs that need to be monitored"
+    },
+    "query": {
+      "label": "Query language",
+      "promql": "PromQL",
+      "sql": "SQL",
+      "expression": "Query expression",
+      "examples": "Examples:",
+      "promqlUnsupportedLog": "PromQL queries are not supported for periodic log alerts yet",
+      "sqlUnsupportedMetric": "SQL queries are not supported for periodic metric alerts yet",
+      "promqlPlaceholder": "PromQL Query: sum(rate(process_cpu_seconds_total[5m])) > 0.8",
+      "promqlDescription": "PromQL Query Language",
+      "sqlDescription": "SQL Query Language",
+      "sqlValidation": {
+        "selectOnly": "Only SELECT statements are allowed",
+        "union": "UNION is not allowed",
+        "intersect": "INTERSECT is not allowed",
+        "except": "EXCEPT is not allowed",
+        "subquery": "Subqueries are not allowed",
+        "from": "SQL query must contain FROM clause",
+        "table": "Only the hertzbeat_logs table is allowed",
+        "parentheses": "Mismatched parentheses"
+      }
+    },
+    "severity": { "label": "Severity", "placeholder": "Select Priorities" },
+    "mode": {
+      "label": "Alert mode",
+      "placeholder": "Please select alert mode",
+      "group": "Grouped",
+      "individual": "Individual"
+    },
+    "window": "Calculation window",
+    "seconds": "seconds",
+    "finalExpression": "Final expression",
+    "annotations": "Annotations",
+    "map": {
+      "key": "Key",
+      "value": "Value",
+      "addLabel": "Add label",
+      "addAnnotation": "Add annotation",
+      "remove": "Remove entry"
+    },
+    "variables": {
+      "title": "Available variables",
+      "__instance__": "Instance ID",
+      "__labels__": "Labels",
+      "__instancename__": "Instance name",
+      "__instancehost__": "Instance host",
+      "__app__": "Application",
+      "__metrics__": "Metric name",
+      "log": {
+        "timestamp": "Timestamp",
+        "severityText": "Severity text",
+        "body": "Log body",
+        "traceId": "Trace ID",
+        "spanId": "Span ID",
+        "attributes": "Log attributes",
+        "resource": "Resource attributes"
+      }
+    },
+    "name": "Rule Name",
     "type": "Type",
     "enabled": "Enabled",
+    "enabledThreshold": "Enable Threshold",
     "updated": "Updated",
     "delete": "Delete",
     "deleteConfirm": "Delete this alert rule?",
@@ -2475,20 +2710,25 @@
       }
     },
     "operationSuccess": "Alert rule updated.",
+    "deleteSuccess": "Alert rule deletion confirmed.",
     "operationFailed": "Alert rule operation failed.",
     "saveSuccess": "Alert rule saved.",
     "saveFailed": "Alert rule could not be saved.",
     "validation": "Complete the required rule fields.",
-    "expressionRequired": "Enter an expression before previewing.",
     "expression": "Expression",
     "metricTarget": {
+      "type": "Metric type",
+      "typePlaceholder": "Search or select a metric target",
       "application": "Application",
       "applicationPlaceholder": "Select an application",
       "target": "Metric target",
       "targetPlaceholder": "Select availability or a metric",
       "availability": "Availability",
       "availabilityDescription": "Triggers when the selected application becomes unavailable.",
-      "rowCount": "Row count",
+      "availabilityDown": "Down",
+      "availabilityUnreachable": "Unreachable",
+      "availabilityTrigger": "Trigger alarms",
+      "rowCount": "Value rows",
       "appsEmpty": "No visible monitoring applications are available.",
       "appsUnavailable": "The application catalog is temporarily unavailable.",
       "appsError": "The application catalog could not be loaded.",
@@ -2498,10 +2738,26 @@
     },
     "metricBindings": {
       "title": "Monitor bindings",
+      "dialogTitle": "Alert Threshold Associate Monitors",
       "description": "Limit this rule to selected monitor instances or labels.",
       "manage": "Manage bindings",
-      "instances": "Monitor instances",
-      "labels": "Monitor labels",
+      "instances": "Instance Associate",
+      "labels": "Label Associate",
+      "unassociated": "No Associate",
+      "associated": "Associated",
+      "count": "{{count}} items",
+      "filterName": "Input name to filter...",
+      "filterLabels": "Input labels to filter...",
+      "moveLeft": "Move selected monitors to no association",
+      "moveRight": "Move selected monitors to associated",
+      "selectAll": {
+        "unassociated": "Select all visible unassociated monitors",
+        "associated": "Select all visible associated monitors"
+      },
+      "noData": "No data",
+      "addLabel": "Input Label",
+      "removeLabel": "Remove label",
+      "labelEmpty": "No matching monitoring objects found, please add labels",
       "loading": "Loading monitor choices.",
       "empty": "No monitors are configured for this application.",
       "unavailable": "Monitor choices are temporarily unavailable.",
@@ -2510,20 +2766,36 @@
       "noLabels": "No monitor labels are available."
     },
     "metricCondition": {
+      "rule": "Threshold Rule",
       "title": "Threshold",
-      "structured": "Guided",
-      "expert": "Expert",
+      "structured": "Template Threshold",
+      "expert": "Coding Threshold",
       "expertExpression": "Threshold expression",
+      "insertExpression": "Supported threshold expression variables and operators",
+      "expressionPlaceholder": "Calculate whether to trigger the threshold according to this expression. Eg",
+      "expressionTypes": {
+        "number": "Numeric",
+        "string": "String",
+        "time": "Time",
+        "object": "Object"
+      },
       "expertOnly": "This threshold uses syntax that the guided editor cannot represent safely.",
       "join": "Match",
-      "and": "All",
-      "or": "Any",
+      "and": "AND",
+      "or": "OR",
       "addCondition": "Add condition",
       "addGroup": "Add group",
+      "ruleButton": "Rule",
+      "rulesetButton": "Ruleset",
       "empty": "Add a condition to complete this rule.",
+      "emptyGroup": "A ruleset cannot be empty. Please add a rule or remove it all together.",
       "field": "Metric field",
       "operator": "Operator",
       "value": "Value",
+      "objectAttribute": "Object attribute",
+      "objectAttributePlaceholder": "Enter an object attribute",
+      "numberPlaceholder": "Enter a number",
+      "stringPlaceholder": "Enter a matching string",
       "noValue": "No value",
       "remove": "Remove condition",
       "operators": {
@@ -2540,13 +2812,23 @@
         "matches": "Matches",
         "!matches": "Does not match",
         "exists": "Exists",
-        "!exists": "Does not exist"
+        "!exists": "Does not exist",
+        "&&": "And",
+        "||": "Or",
+        "()": "Brackets"
       }
     },
-    "template": "Message template",
+    "logCondition": {
+      "expression": "Log expression",
+      "expressionPlaceholder": "Please enter alert expression, e.g.: count > 10"
+    },
+    "template": "Alarm Content",
+    "templatePlaceholder": "High CPU usage detected on instance localhost",
     "labels": "Labels",
     "labelsPlaceholder": "team:ops, severity:critical",
-    "period": "Evaluation period (seconds)",
+    "period": "Execution Period",
+    "periodPlaceholder": "Please enter execution period, minimum 60 seconds",
+    "windowPlaceholder": "Please enter calculation window time",
     "times": "Trigger count",
     "preview": "Preview",
     "previewSuccess": "Preview returned {{count}} rows; up to {{pageSize}} rows are shown per page.",
@@ -2567,7 +2849,7 @@
       "periodic": "Periodic"
     },
     "dataType": {
-      "label": "Signal",
+      "label": "Data Type",
       "metric": "Metric",
       "log": "Log",
       "trace": "Trace"
@@ -2622,8 +2904,8 @@
       "interval": "Every {{seconds}} seconds",
       "created": "Created",
       "updated": "Updated",
-      "labels": "Labels",
-      "annotations": "Annotations",
+      "labels": "Bind Labels",
+      "annotations": "Bind Annotation",
       "parameters": "Parameters",
       "summary": "Monitor summary",
       "configuration": "Monitor configuration",
@@ -2779,6 +3061,7 @@
     }
   },
   "alert": {
+    "diagnosticActions": "Diagnostic actions",
     "integration": {
       "source": {
         "webhook": "Webhook",
@@ -2797,6 +3080,12 @@
       },
       "limit": {
         "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "huaweicloud-ces": {
+          "confirmation_may_be_billable": "Huawei Cloud counts subscription-confirmation messages as billable messages; confirm pricing before running the live subscription test."
+        },
+        "volcengine": {
+          "event_recovery_unavailable": "Volcengine event callbacks are firing-only; metric and no-data callbacks support recovery."
+        },
         "zabbix": {
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
@@ -2827,25 +3116,93 @@
           "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
         }
       },
+      "skywalking": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_webhook": "Configure the SkyWalking webhook and recovery URL with the endpoint and Authorization header below.",
+          "verify_lifecycle": "Trigger and recover one controlled alarm; confirm the same UUID moves one HertzBeat alert to resolved."
+        }
+      },
+      "uptime-kuma": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_webhook": "Create a Webhook notification using POST, the JSON preset, and the additional Authorization header shown below.",
+          "verify_lifecycle": "Send a DOWN and subsequent UP heartbeat; confirm one monitor alert moves to resolved."
+        }
+      },
+      "tencent": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_template": "Create a custom Webhook notification template for Trigger and Recovery, then map the native object and policy fields shown below.",
+          "verify_lifecycle": "Send Trigger and Recovery for one instance; confirm only that instance's alert is resolved."
+        }
+      },
+      "alibabacloud-sls": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_action": "Create a WebHook-Custom action using POST, JSON, the Authorization header, and a template that includes alert_instance_id.",
+          "verify_lifecycle": "Fire and recover one alert instance; confirm the same instance moves to resolved and the endpoint returns HTTP 200."
+        }
+      },
+      "huaweicloud-ces": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_subscription": "Create an HTTP/HTTPS SMN subscription for this endpoint and add X-HertzBeat-Token as a custom request header.",
+          "verify_subscription": "Run the availability test, confirm the subscription, then trigger and recover one controlled CES alarm."
+        }
+      },
+      "volcengine": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_callback": "Configure the Volcengine callback endpoint and place the managed token in its native Token header.",
+          "verify_lifecycle": "Trigger and recover one metric alert; confirm the same resource moves to resolved."
+        }
+      },
       "zabbix": {
         "step": {
-          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix.",
+          "create_token": "Create an API token with alert-ingress write access and store it as the secret Zabbix user macro {$HERTZBEAT_API_TOKEN}.",
+          "configure_media_type": "Create a Zabbix Webhook media type with the parameters and script below, then use it in both problem and recovery operations.",
+          "verify_problem_and_recovery": "Trigger one controlled problem, resolve it, and confirm that HertzBeat shows one alert moving from firing to resolved."
         }
       }
     },
     "title": "Alert center",
     "description": "Inspect grouped alerts and current handling state.",
+    "expandDetails": "Expand alert details",
+    "collapseDetails": "Collapse alert details",
     "search": "Search alerts",
+    "filters": {
+      "more": "More filters",
+      "less": "Hide filters",
+      "moreActive": "More filters ({{count}})"
+    },
     "empty": "No alerts match the current query.",
     "name": "Alert",
     "labels": "Labels",
     "updated": "Updated",
+    "viewDetails": "View details",
     "delete": "Delete",
+    "moreActions": "More alert actions",
     "confirmDelete": "Confirm delete",
     "deleteConfirm": "Delete alert group {{target}} and its alert records?",
     "deleteSuccess": "Alert group deleted.",
     "deleteFailed": "The alert group could not be deleted or verified.",
     "selected": "{{count}} selected",
+    "export": {
+      "label": "Export",
+      "selected": "Export selected",
+      "timeRange": "Export by time range",
+      "filtered": "Export current filtered results",
+      "all": "Export all",
+      "timeRangeTitle": "Export alerts by time range",
+      "updatedTime": "Alert updated time",
+      "timeRangeHelp": "The range uses the server-local alert update time. Alerts without an update time are excluded.",
+      "confirm": "Export",
+      "success": "Exported {{count}} alert groups.",
+      "failure": "The alert export could not be completed."
+    },
+    "clearSelection": "Clear selection",
     "acknowledge": "Acknowledge",
     "acknowledgeSelected": "Acknowledge selected",
     "acknowledgeConfirm": "Acknowledge this alert group?",
@@ -2876,7 +3233,26 @@
     "reopenFailed": "The alert group could not be reopened or verified.",
     "deleteSelected": "Delete selected",
     "deleteSelectedConfirm": "Delete {{count}} selected alert groups and their alert records?",
+    "deleteScope": {
+      "title": "Delete alert groups",
+      "description": "Choose the exact scope for this deletion. Each group's alert records will be deleted with it.",
+      "selectedTitle": "Selected groups ({{count}})",
+      "selectedDescription": "Delete only the groups selected on this page.",
+      "filteredTitle": "All current filtered results ({{count}})",
+      "filteredDescription": "Include every page in the last submitted filter, not unsaved filter edits.",
+      "limitDescription": "This filter matches more than {{limit}} alert groups, the maximum that can be deleted and verified as one operation. Narrow the filters first.",
+      "prepareFailure": "The complete filtered scope could not be prepared. Nothing was deleted.",
+      "review": "Review deletion",
+      "reviewTitle": "Confirm filtered deletion",
+      "reviewCount": "alert groups in this deletion",
+      "reviewDescription": "Delete this exact review-time snapshot of {{count}} alert groups and their alert records? This cannot be undone. Alerts created afterward are not included.",
+      "confirmSelected": "Delete selected",
+      "confirmFiltered": "Confirm delete all"
+    },
     "summaryUnavailable": "Alert summary is unavailable; alert results remain queryable.",
+    "investigate": "Investigate",
+    "openMonitor": "Monitor",
+    "openEntity": "Resource",
     "listUnavailable": "Alert results are unavailable.",
     "listLoadFailed": "Alert results could not be loaded.",
     "summaryLoadFailed": "Alert summary could not be loaded.",
@@ -2891,8 +3267,8 @@
     "summary": {
       "total": "Total",
       "acknowledged": "Acknowledged",
-      "nonFiring": "Non-firing",
-      "scope": "Global individual alerts",
+      "handled": "Handled",
+      "workspaceScope": "Current workspace",
       "warning": "Warning",
       "critical": "Critical",
       "emergency": "Emergency"
@@ -2918,18 +3294,36 @@
   "statusManagement": {
     "title": "Status page",
     "description": "Publish component health and communicate service incidents.",
+    "navComponents": "Components",
+    "navIncidents": "Incidents",
+    "navSettings": "Settings",
+    "publishIncident": "Publish incident",
+    "reviewIncident": "Review incident",
+    "incidentInfo": "Incident details",
+    "reviewAndPublish": "Review and publish",
+    "reviewTitle": "Review the public update",
+    "reviewDescription": "Confirm what visitors will see before publishing this incident update.",
+    "publicUpdatePreview": "Public update preview",
+    "previewNotPublished": "This draft has not been published.",
+    "backToIncident": "Back to editing",
     "loadingOrganization": "Loading page identity…",
     "loadingComponents": "Loading status components…",
     "loadingIncidents": "Loading incidents…",
     "openPublicPage": "Open public page",
     "organization": "Page identity",
+    "organizationDetails": "Page identity details",
     "organizationDescription": "Set the public name, description and links.",
+    "componentCollection": "Public components",
+    "setupTitle": "Create your public status page",
+    "setupDescription": "Start with the public identity. Components and incidents become available after this page is created.",
+    "createPage": "Create status page",
     "notConfigured": "Configure the page identity before adding components.",
     "name": "Name",
     "home": "Home URL",
     "logo": "Logo URL",
     "feedback": "Feedback URL",
-    "color": "Accent color",
+    "color": "Status page theme color",
+    "colorDescription": "Used for the public page accent line, buttons and links. Service state colors do not change.",
     "componentsDescription": "Choose automatic label matching or a manually managed state.",
     "newComponent": "New component",
     "editComponent": "Edit component",
@@ -2941,10 +3335,15 @@
     "componentUpdateHint": "Changes are reflected on the public status page after saving.",
     "unknown": "Unknown",
     "incidentsDescription": "Create incidents and append updates as the response progresses.",
+    "emptyIncidentsDescription": "Published incidents and response updates will be collected here.",
+    "emptyIncidentsNeedsComponent": "Add a public component before publishing an incident.",
     "newIncident": "New incident",
     "updateIncident": "Update incident",
     "incidentName": "Incident name",
+    "incidentNameHint": "This name is shown on the public status page.",
     "updateMessage": "Update message",
+    "updateMessageHint": "This message appears in the incident timeline.",
+    "affectedComponentsHint": "Select the public components affected by this incident.",
     "updateHistory": "Update history",
     "investigating": "Investigating",
     "identified": "Identified",
@@ -2965,6 +3364,20 @@
   "status": {
     "title": "Service status",
     "description": "Public component health and incident history.",
+    "systemStatus": "System status",
+    "availabilityUnavailable": "Availability unavailable",
+    "periodUnavailable": "Availability period unavailable",
+    "historySummary": "{{count}} days: {{healthy}} operational, {{incident}} incident, {{unknown}} unknown.",
+    "viewHistoryEvidence": "View history evidence",
+    "incidentHistory": "Incident history",
+    "incidentHistoryDescription": "Service events published for the selected year.",
+    "timeUnavailable": "Time unavailable",
+    "overallDescription": {
+      "healthy": "No active disruption is reported by the configured public components.",
+      "degraded": "Some public components are reporting degraded service.",
+      "incident": "An active service incident is affecting one or more public components.",
+      "unknown": "Current overall status cannot be determined from the available data."
+    },
     "loading": "Loading public status…",
     "loadingIncidents": "Loading incident history…",
     "operational": "All systems operational",
@@ -2999,14 +3412,26 @@
   },
   "deployment": {
     "title": "Deployment configuration",
-    "description": "Inspect active database sources and safely migrate HertzBeat metadata from H2.",
+    "description": "Review the current deployment and use guided operations when a database migration or complete reset is required.",
     "loading": "Loading deployment configuration…",
     "unavailable": "Deployment configuration is unavailable.",
+    "danger": {
+      "title": "Danger zone",
+      "description": "These actions change or erase persistent data. Confirm the scope and recovery plan before continuing."
+    },
     "current": {
       "title": "Current deployment",
       "description": "Server-observed configuration sources and restart requirements.",
+      "summary": "Management data is stored in {{managementDatabase}} and telemetry data in {{telemetryDatabase}}; configuration is {{applyMode}}, running in {{topology}} mode.",
+      "scope": "Configuration areas",
+      "databaseConnections": "Database connections",
+      "configurationManagement": "Configuration management",
+      "viewDetails": "View current configuration",
+      "hideDetails": "Hide current configuration",
       "managementDatabase": "Management database",
+      "managementDatabaseDescription": "Stores accounts, monitors, alerts, and system configuration",
       "greptimeDatabase": "GreptimeDB telemetry database",
+      "greptimeDatabaseDescription": "Stores metrics, logs, and traces",
       "applyMode": "Apply mode",
       "maintenanceMode": "Maintenance mode",
       "topology": "Deployment topology",
@@ -3021,6 +3446,7 @@
       "command_line": "Command line"
     },
     "applyMode": { "managed_write": "Managed configuration", "external_apply": "External / GitOps configuration" },
+    "applyModeInline": { "managed_write": "managed by HertzBeat", "external_apply": "managed externally" },
     "maintenance": {
       "active": "Maintenance mode is active",
       "inactive": "Maintenance mode is inactive",
@@ -3029,10 +3455,31 @@
       "acknowledgementAutoEnter": "I understand starting migration will automatically enter maintenance mode and pause monitoring writes."
     },
     "topology": { "single_node": "Single node", "multi_node": "Multiple nodes", "unknown": "Unknown" },
+    "topologyInline": { "single_node": "single-node", "multi_node": "multi-node", "unknown": "unknown" },
     "migration": {
-      "title": "H2 metadata migration",
-      "description": "Validate an empty MySQL or PostgreSQL target before copying metadata.",
+      "title": "HertzBeat database migration wizard",
+      "description": "Move HertzBeat management metadata from H2 to an empty MySQL or PostgreSQL database. Validate the target before any data is copied.",
+      "open": "Open migration wizard",
+      "close": "Back to deployment configuration",
       "blocked": "The server has blocked migration for the current deployment."
+    },
+    "reset": {
+      "description": "Erase this HertzBeat instance and return to initial setup. This cannot be undone.",
+      "action": "Reset HertzBeat",
+      "modalTitle": "Reset the entire HertzBeat instance",
+      "warning": "This permanently deletes every account, configuration, and monitoring record in this instance.",
+      "scopeTitle": "This reset erases",
+      "scope": {
+        "management": "Accounts, permissions, monitors, alerts, and system configuration in the management database",
+        "telemetry": "Every metric, log, trace, and table in the configured GreptimeDB database",
+        "local": "Managed setup state and the standard local H2 and DuckDB data files"
+      },
+      "externalObjects": "Files in external object storage are retained to avoid deleting unrelated content from shared storage.",
+      "inputLabel": "Confirmation phrase",
+      "instruction": "Enter the following phrase to continue:",
+      "confirm": "Erase everything and restart setup",
+      "failed": "The reset could not be started. No data was cleared; try again.",
+      "transitionDelayed": "The reset request was saved, but setup is not ready yet. Refresh this page shortly; the server will resume the reset automatically."
     },
     "fields": {
       "target": "Target database",
@@ -3153,13 +3600,14 @@
       }
     },
     "optional": {
-      "description": "Configure public endpoints, retention, and mail now, or leave them empty and configure them later in Settings.",
+      "description": "Confirm the external access address, retention, and mail now, or adjust them later in Settings.",
       "publicAccess": {
-        "title": "Public access",
-        "description": "Enter the addresses that operators and telemetry senders should use. HertzBeat does not infer them from this browser.",
-        "publicBaseUrl": "Public base URL",
-        "otlpHttp": "Server OTLP HTTP endpoint",
-        "otlpGrpc": "Server OTLP gRPC endpoint"
+        "title": "External address",
+        "description": "The current installation address is used by default. Enter another address only when HertzBeat is exposed through a load balancer, reverse proxy, or gateway.",
+        "defaultAddress": "Current installation address:",
+        "useProxy": "Use a load balancer or proxy",
+        "proxyPublicBaseUrl": "External public URL",
+        "proxyPublicBaseUrlHelp": "Enter the complete address used by users and external systems, including the scheme and any custom port or path prefix."
       },
       "retention": {
         "title": "Data retention",
@@ -3275,7 +3723,17 @@
       "loading": "Loading investigations…",
       "unavailable": "Investigations are unavailable.",
       "empty": "No investigations yet.",
-      "untitled": "Untitled investigation"
+      "untitled": "Untitled investigation",
+      "search": "Search investigations",
+      "noMatches": "No matching investigations.",
+      "status": {
+        "active": "In progress",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "recoveryRequired": "Check required",
+        "noRun": "No runs"
+      }
     },
     "investigation": { "label": "Investigation" },
     "roles": { "you": "You", "assistant": "HertzBeat AI" },
@@ -3284,11 +3742,35 @@
       "description": "Ask about a monitor, entity, alert, metric, log stream, trace, or topology scope."
     },
     "composer": { "label": "Investigation prompt", "placeholder": "Ask HertzBeat to inspect an operational problem…" },
-    "actions": { "send": "Send", "stop": "Stop", "approve": "Approve", "reject": "Reject", "submit": "Submit" },
+    "actions": {
+      "send": "Send",
+      "stop": "Stop",
+      "recover": "Check same run",
+      "retryNew": "Start new run",
+      "approve": "Approve",
+      "reject": "Reject",
+      "submit": "Submit"
+    },
     "failure": "The investigation stream is unavailable. No action was assumed to have completed.",
+    "sessionLoadIncomplete": "Some saved investigation details could not be loaded. Refresh or select the investigation again.",
+    "recoveryRequired": "The tool may have completed, but HertzBeat could not save the result. Check the target before continuing.",
+    "targetMismatch": "This investigation target is no longer valid. Return to its source and start a new investigation.",
+    "targetUnavailable": "HertzBeat cannot verify this investigation target right now. No investigation was started.",
+    "invalidTarget": "This investigation link has an invalid or unsupported target. Return to the source page and start again.",
+    "activeObservationPaused": "Live observation paused. The durable run is still in progress; no completion was assumed.",
     "context": {
       "label": "Run context",
+      "open": "Open run details",
+      "close": "Close run details",
+      "shortLabel": "Details",
+      "panelClose": "Close run details panel",
       "target": "Target",
+      "monitorTarget": "Monitor {{id}}",
+      "singleAlertTarget": "Single alert {{id}}",
+      "entityTarget": "Entity {{id}}",
+      "topologyTarget": "Topology root {{id}}",
+      "traceTarget": "Trace {{id}}",
+      "logTarget": "Log page",
       "none": "No page context attached",
       "activity": "Tool activity",
       "noActivity": "No tools used yet",

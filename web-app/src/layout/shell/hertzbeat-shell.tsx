@@ -10,6 +10,7 @@ import { useResourceParams } from '@refinedev/core';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
+import { ShellInvestigationProvider } from '@/shared/investigation';
 import { QueryContextProvider } from '@/shared/query-context';
 import { GlobalTimeProvider, RouteTimeProvider, type TimeOwnership } from '@/shared/time';
 
@@ -39,15 +40,17 @@ function RouteOwnedShell() {
       policy={policy}
       canonicalizeInvalidExact={location.pathname !== applicationRoutePaths.explore}
     >
-      <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
-        <ShellHeader />
-        <div className={styles.shellBody}>
-          <ShellNavigation collapsed={collapsed} onCollapsedChange={setCollapsed} />
-          <main className={styles.content}>
-            <Outlet />
-          </main>
+      <ShellInvestigationProvider>
+        <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
+          <ShellHeader />
+          <div className={styles.shellBody}>
+            <ShellNavigation collapsed={collapsed} onCollapsedChange={setCollapsed} />
+            <main className={styles.content}>
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
+      </ShellInvestigationProvider>
     </RouteTimeProvider>
   );
 }

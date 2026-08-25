@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-const api = vi.hoisted(() => ({ deleteEntity: vi.fn(), loadEntityDetail: vi.fn(), loadEntityMonitors: vi.fn() }));
+const api = vi.hoisted(() => ({
+  deleteEntity: vi.fn(),
+  loadEntityDetail: vi.fn(),
+  loadEntityIdentity: vi.fn(),
+  loadEntityMonitors: vi.fn()
+}));
 const modal = vi.hoisted(() => ({ confirm: vi.fn() }));
 const capability = vi.hoisted(() => ({ useEntityCapabilities: vi.fn() }));
 vi.mock('../api/entity-api', async importOriginal => ({
@@ -45,6 +50,7 @@ describe('useEntityDetailController deletion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadEntityDetail.mockResolvedValue(detail);
+    api.loadEntityIdentity.mockResolvedValue(detail.entity);
     api.loadEntityMonitors.mockResolvedValue(monitorPage);
     api.deleteEntity.mockResolvedValue(undefined);
     capability.useEntityCapabilities.mockReturnValue({ canWrite: true, canDelete: true });
@@ -121,6 +127,19 @@ describe('useEntityDetailController deletion', () => {
     await act(() => routed.router.navigate(-1));
     expect(routed.router.state.location.pathname).toBe('/entities/7');
     expect(new URLSearchParams(routed.router.state.location.search).get('returnTo')).toBe(returnTo);
+  });
+
+  it('round-trips through the exact sanitized alert return context', async () => {
+    const returnTo = '/alerts?status=firing&pageIndex=0&pageSize=8&password=private#selection';
+    const routed = renderController(`/entities/7?returnTo=${encodeURIComponent(returnTo)}`);
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+
+    act(() => routed.current().actions.back());
+
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/alerts'));
+    expect(`${routed.router.state.location.pathname}${routed.router.state.location.search}`).toBe(
+      '/alerts?status=firing&pageIndex=0&pageSize=8'
+    );
   });
 
   it('retires an open delete confirmation when the session loses permission', async () => {
@@ -227,6 +246,27 @@ describe('useEntityDetailController deletion', () => {
     await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
     await waitFor(() => expect(routed.current().state.monitors.evidence.kind).toBe('permission'));
     expect(JSON.stringify(routed.current().state)).not.toContain('private');
+  });
+
+  it('keeps source-backed entity identity usable when telemetry detail is unavailable', async () => {
+    api.loadEntityDetail.mockRejectedValueOnce(
+      new ApiMessageError('private telemetry storage unavailable', { status: 503 })
+    );
+    api.loadEntityIdentity.mockResolvedValueOnce({
+      ...detail.entity,
+      environment: 'prod',
+      owner: 'payments-sre'
+    });
+    const routed = renderController('/entities/7');
+
+    await waitFor(() => expect(routed.current().state.evidence).toMatchObject({ kind: 'degraded' }));
+    expect(routed.current().state.evidence).toEqual({
+      kind: 'degraded',
+      entity: { ...detail.entity, environment: 'prod', owner: 'payments-sre' },
+      unavailable: 'telemetry'
+    });
+    expect(api.loadEntityIdentity).toHaveBeenCalledWith(7, expect.any(AbortSignal));
+    expect(JSON.stringify(routed.current().state)).not.toContain('private telemetry');
   });
 
   it('cancels an old entity scope and never publishes its late detail', async () => {

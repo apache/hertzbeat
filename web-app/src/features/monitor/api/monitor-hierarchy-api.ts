@@ -3,7 +3,7 @@
 import { apiMessageGet } from '@/core/http/api-message';
 
 import { MonitorContractError } from '../model/monitor-contract';
-import { parseMonitorAppHierarchy } from './monitor-hierarchy-schema';
+import { parseMonitorAppHierarchy, parseMonitorAppHierarchyCatalog } from './monitor-hierarchy-schema';
 
 function normalizeHierarchyInput(value: string) {
   const normalized = value.trim();
@@ -23,4 +23,11 @@ export async function loadMonitorAppHierarchy(app: string, locale: string, signa
   const path = buildMonitorAppHierarchyPath(requestedApp, locale);
   const value = await apiMessageGet(path, signal ? { signal } : undefined);
   return parseMonitorAppHierarchy(value, requestedApp);
+}
+
+export async function loadMonitorAppHierarchyCatalog(locale: string, signal?: AbortSignal) {
+  const requestedLocale = normalizeHierarchyInput(locale);
+  const query = new URLSearchParams({ lang: requestedLocale });
+  const value = await apiMessageGet(`/api/apps/hierarchy?${query.toString()}`, signal ? { signal } : undefined);
+  return parseMonitorAppHierarchyCatalog(value);
 }

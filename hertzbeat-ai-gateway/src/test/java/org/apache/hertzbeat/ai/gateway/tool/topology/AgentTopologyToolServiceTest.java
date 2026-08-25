@@ -21,11 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,15 +41,21 @@ class AgentTopologyToolServiceTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("team-b");
         topologyQueryService = mock(EntityTopologyQueryService.class);
         service = new AgentTopologyToolService(topologyQueryService);
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
     void shouldDelegateToWorkspaceAwareTopologyReadModelWithBounds() {
         EntityTopologyGraphInfo graph = new EntityTopologyGraphInfo();
         when(topologyQueryService.buildFocusedTopology(
-                11L, 2, "prod", "otlp-trace-call", 1_000L, 2_000L,
+                "team-b", 11L, 2, "prod", "otlp-trace-call", 1_000L, 2_000L,
                 "trace-call", true, 0, 100)).thenReturn(graph);
 
         EntityTopologyGraphInfo result = service.queryTopology(11L, 50, "prod", "otlp-trace-call",
@@ -53,8 +63,19 @@ class AgentTopologyToolServiceTest {
 
         assertSame(graph, result);
         verify(topologyQueryService).buildFocusedTopology(
-                11L, 2, "prod", "otlp-trace-call", 1_000L, 2_000L,
+                "team-b", 11L, 2, "prod", "otlp-trace-call", 1_000L, 2_000L,
                 "trace-call", true, 0, 100);
+    }
+
+    @Test
+    void shouldRejectMissingRuntimeWorkspaceBeforeTopologyRead() {
+        AuthTokenRequestContext.clear();
+
+        assertThrows(CommonException.class, () -> service.queryTopology(
+                11L, 1, "prod", "otlp-trace-call", 1_000L, 2_000L,
+                null, true, 0, 50));
+
+        verifyNoInteractions(topologyQueryService);
     }
 
     @Test

@@ -25,6 +25,7 @@ import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
 import org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -49,10 +50,12 @@ public class AlertGroupEvidenceService {
     }
 
     @Transactional(readOnly = true)
-    public AlertGroupEvidence getEvidence(List<String> ids) {
+    public AlertGroupEvidence getEvidence(String workspaceId, List<String> ids) {
+        String workspace = requireWorkspace(workspaceId);
         List<Long> requestedIds = normalizeIds(ids);
         Map<Long, String> foundStatuses = new HashMap<>();
-        for (AlertGroupStatusEvidence evidence : groupAlertDao.findStatusEvidenceByIdIn(requestedIds)) {
+        for (AlertGroupStatusEvidence evidence
+                : groupAlertDao.findStatusEvidenceByWorkspaceIdAndIdIn(workspace, requestedIds)) {
             requireSupportedStatus(evidence.status());
             if (evidence.id() == null || foundStatuses.putIfAbsent(evidence.id(), evidence.status()) != null) {
                 throw new IllegalStateException();
@@ -94,5 +97,12 @@ public class AlertGroupEvidenceService {
         if (status == null || !SUPPORTED_STATUSES.contains(status)) {
             throw new AlertGroupStatusNotSupportedException();
         }
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new AlertGroupEvidenceRequestException();
+        }
+        return AuthTokenScopes.normalizeWorkspaceId(workspaceId);
     }
 }

@@ -36,6 +36,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ApprovalDecisi
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
@@ -88,6 +89,7 @@ class WebUiApprovalTest {
         assertEquals("agp-1", command.approvalId());
         assertEquals(ReplyMode.FINAL_ONLY, command.replyMode());
         assertEquals(AgentApprovalDecision.APPROVED, command.decision());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
         assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
         assertEquals("trusted-user", command.envelope().getActor().getId());
     }

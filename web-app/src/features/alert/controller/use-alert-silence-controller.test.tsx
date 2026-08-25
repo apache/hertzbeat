@@ -538,6 +538,8 @@ describe('useAlertSilenceController', () => {
     expect(api.loadAlertSilence).not.toHaveBeenCalled();
     expect(view.result.current.controller.state.recovery).toBeNull();
     expect(view.result.current.controller.state.list.kind).toBe('empty');
+    expect(await screen.findByText(i18n.t('alertSilences.deleteSuccess'))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('alertSilences.operationSuccess'))).not.toBeInTheDocument();
     expect(screen.queryByText(i18n.t('alertSilences.operationFailed'))).not.toBeInTheDocument();
   });
 

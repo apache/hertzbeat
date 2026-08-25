@@ -15,6 +15,7 @@ export const settingsPaths = {
   plugins: '/settings/plugins',
   monitorDefinitions: '/settings/monitor-definitions',
   deployment: '/settings/deployment',
+  deploymentMigration: '/settings/deployment/migration',
   system: '/settings/system',
   labels: '/settings/labels',
   objectStore: '/settings/storage/object-store',

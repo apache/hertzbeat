@@ -31,6 +31,7 @@ export type LabelDeleteEvidence = {
   phase: 'preflight' | 'write' | 'proof';
   recovery: 'rewrite' | 'proof';
   identity: LabelIdentity;
+  identities?: LabelIdentity[];
 };
 
 export type LabelMutationEvidence = LabelWriteEvidence | LabelDeleteEvidence;
@@ -88,6 +89,17 @@ export function createLabelDeleteEvidence(
   return { operation: 'delete', phase, recovery, identity: labelRecordIdentity(record) };
 }
 
+export function createLabelDeleteManyEvidence(
+  phase: LabelDeleteEvidence['phase'],
+  recovery: LabelDeleteEvidence['recovery'],
+  records: LabelRecord[]
+): LabelDeleteEvidence {
+  const identities = records.map(labelRecordIdentity);
+  const identity = identities[0];
+  if (!identity) throw new LabelRequestFailure('invalid', 'not-attempted', { code: 'LABEL_IDS_INVALID' });
+  return { operation: 'delete', phase, recovery, identity, identities };
+}
+
 export function enrichCreateEvidence(evidence: LabelWriteEvidence, canonical: LabelRecord): LabelWriteEvidence {
   if (evidence.operation !== 'create') return evidence;
   return {
@@ -100,11 +112,13 @@ export function enrichCreateEvidence(evidence: LabelWriteEvidence, canonical: La
 /** Checks the visible Refine projection without assuming the target belongs to the current page/filter. */
 export function labelProjectionConverged(evidence: LabelMutationEvidence, records: LabelRecord[], total: number) {
   if (!Number.isSafeInteger(total) || total < 0 || records.length > total) return false;
-  const targetId = evidence.identity.id;
-  if (targetId === undefined) return false;
-  const matches = records.filter(record => record.id === targetId);
-  if (matches.length > 1) return false;
+  const identities =
+    evidence.operation === 'delete' ? (evidence.identities ?? [evidence.identity]) : [evidence.identity];
+  const targetIds = identities.map(identity => identity.id);
+  if (targetIds.some(id => id === undefined) || new Set(targetIds).size !== targetIds.length) return false;
+  const matches = records.filter(record => targetIds.includes(record.id));
   if (evidence.operation === 'delete') return matches.length === 0;
+  if (matches.length > 1) return false;
   const match = matches[0];
   if (!match) return evidence.operation === 'update';
   return labelSaveConverged(evidence.expected, match);

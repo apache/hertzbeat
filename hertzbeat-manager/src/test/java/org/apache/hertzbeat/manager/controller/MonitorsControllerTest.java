@@ -24,6 +24,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -285,31 +287,29 @@ class MonitorsControllerTest {
     }
 
     @Test
-    void enableManageMonitors() throws Exception {
+    void getManageMonitorsIsSideEffectFree() throws Exception {
         List<Long> ids = new ArrayList<>();
         ids.add(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/manage")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(ids)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(status().isMethodNotAllowed())
                 .andReturn();
 
-        verify(monitorService).enableManageMonitors(eq(new HashSet<>(ids)));
+        verifyNoInteractions(monitorService);
     }
 
     @Test
-    void enableManageMonitorsKeepsLegacyIdQueryAsIdsAlias() throws Exception {
+    void getManageMonitorsLegacyIdIsSideEffectFree() throws Exception {
         List<Long> ids = List.of(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/manage")
                         .param("id", String.valueOf(ids.get(0))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(status().isMethodNotAllowed())
                 .andReturn();
 
-        verify(monitorService).enableManageMonitors(eq(new HashSet<>(ids)));
+        verifyNoInteractions(monitorService);
     }
 
     @Test
@@ -323,6 +323,7 @@ class MonitorsControllerTest {
                 .andReturn();
 
         verify(monitorService).enableManageMonitors(eq(new HashSet<>(ids)));
+        verifyNoMoreInteractions(monitorService);
     }
 
     @Test
@@ -337,6 +338,7 @@ class MonitorsControllerTest {
                 .andReturn();
 
         verify(monitorService).enableManageMonitors(eq(new HashSet<>(ids)));
+        verifyNoMoreInteractions(monitorService);
     }
 
     @Test

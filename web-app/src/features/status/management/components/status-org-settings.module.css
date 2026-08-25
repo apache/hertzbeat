@@ -1,0 +1,175 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+/* Hallmark · genre: modern-minimal · tone: technical · anchor: HertzBeat primary · macrostructure: incident-style settings workbench · pre-emit critique: P5 H4 E5 S5 R5 V4 */
+.configurationWorkspace,
+.setupWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.setupForm,
+.settingsBody {
+  min-width: 0;
+}
+
+.setupForm :global(.status-org-grid) {
+  max-width: none;
+}
+
+.settingsBody :global(.status-org-grid) {
+  max-width: none;
+  padding-top: 20px;
+}
+
+.settingsPanel {
+  display: grid;
+  min-width: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settingsContent {
+  min-width: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settingsContentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: transparent;
+}
+
+.settingsContentHeader h3 {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.settingsList {
+  margin: 0;
+}
+
+.settingsRow {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.settingsList > .settingsRow:last-child {
+  border-bottom: 0;
+}
+
+.settingsRow dt,
+.emptyValue {
+  color: var(--ant-color-text-secondary);
+}
+
+.settingsRow dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.settingsBody :global(.ant-form-item) {
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+
+.colorInput {
+  width: 76px;
+  height: 38px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.colorInput:disabled {
+  cursor: not-allowed;
+}
+
+.colorValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colorSwatch {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 5px;
+}
+
+.logoValue {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.logoValue img {
+  width: 76px;
+  height: 30px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.logoValue span,
+.linkValue span {
+  overflow-wrap: break-word;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.linkValue {
+  display: grid;
+  gap: 2px;
+}
+
+.linkValue strong {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+:global(.status-org-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+  max-width: 920px;
+}
+
+@media (max-width: 700px) {
+  .settingsRow,
+  :global(.status-org-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settingsRow {
+    gap: 4px;
+  }
+}

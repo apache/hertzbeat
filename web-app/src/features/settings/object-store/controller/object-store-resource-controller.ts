@@ -27,7 +27,11 @@ import {
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord
 } from '../model/object-store-model';
-import { classifyObjectStoreReadFailure, ObjectStoreRequestFailure } from '../model/object-store-failure';
+import {
+  classifyObjectStoreReadFailure,
+  isObjectStoreMigrationConflict,
+  ObjectStoreRequestFailure
+} from '../model/object-store-failure';
 import { useObjectStoreEditorController } from './object-store-editor-controller';
 import type { ObjectStoreMutation } from './object-store-save-transaction';
 
@@ -64,7 +68,13 @@ export function useObjectStoreResourceController() {
     {
       notifyFailure: () => notification.open?.({ message: t('objectStore.unavailable'), type: 'error' }),
       notifyReconciled: () => notification.open?.({ message: t('objectStore.reconcileComplete'), type: 'progress' }),
-      notifyRejected: () => notification.open?.({ message: t('objectStore.saveFailed'), type: 'error' }),
+      notifyRejected: reason =>
+        notification.open?.({
+          message: t(
+            isObjectStoreMigrationConflict(reason) ? 'objectStore.migrationConflict' : 'objectStore.saveFailed'
+          ),
+          type: 'error'
+        }),
       notifySuccess: () => notification.open?.({ message: t('objectStore.saveSuccess'), type: 'success' })
     },
     canWrite

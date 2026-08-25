@@ -1,10 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Form, Input, InputNumber, Typography } from 'antd';
+import { Button, Checkbox, Form, Input, InputNumber, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
   optionalMailValidationReady,
+  setupPublicAccessValidationReady,
   type SetupOptionalDraft,
   type SetupOptionalValidationEvidence
 } from '../model/setup-optional';
@@ -17,6 +18,7 @@ type Props = {
   disabled: boolean;
   updateDraft: (patch: Partial<SetupOptionalDraft>) => void;
   validation: { publicAccess: SetupOptionalValidationEvidence; mail: SetupOptionalValidationEvidence };
+  publicOrigin: string;
   validatePublicAccess: () => void;
   validateMail: () => void;
 };
@@ -24,7 +26,6 @@ type Props = {
 export function PublicAccessSection(props: Props) {
   const { t } = useTranslation();
   const validating = props.validation.publicAccess?.state === 'checking';
-  const update = (patch: Partial<Pick<SetupOptionalDraft, PublicField>>) => props.updateDraft(patch);
   return (
     <section className={styles.section} aria-labelledby="setup-public-access-title">
       <SectionHeading
@@ -32,29 +33,38 @@ export function PublicAccessSection(props: Props) {
         title={t('setup.optional.publicAccess.title')}
         description={t('setup.optional.publicAccess.description')}
       />
-      <TextField
-        id="setup-public-base-url"
-        label={t('setup.optional.publicAccess.publicBaseUrl')}
-        value={props.draft.publicBaseUrl}
-        disabled={props.disabled}
-        update={value => update({ publicBaseUrl: value })}
-      />
-      <TextField
-        id="setup-otlp-http-endpoint"
-        label={t('setup.optional.publicAccess.otlpHttp')}
-        value={props.draft.serverOtlpHttpEndpoint}
-        disabled={props.disabled}
-        update={value => update({ serverOtlpHttpEndpoint: value })}
-      />
-      <TextField
-        id="setup-otlp-grpc-endpoint"
-        label={t('setup.optional.publicAccess.otlpGrpc')}
-        value={props.draft.serverOtlpGrpcEndpoint}
-        disabled={props.disabled}
-        update={value => update({ serverOtlpGrpcEndpoint: value })}
-      />
+      <Typography.Paragraph type="secondary">
+        {t('setup.optional.publicAccess.defaultAddress')} <Typography.Text code>{props.publicOrigin}</Typography.Text>
+      </Typography.Paragraph>
+      <Form.Item>
+        <Checkbox
+          checked={props.draft.useProxy}
+          disabled={props.disabled}
+          onChange={event => props.updateDraft({ useProxy: event.target.checked })}
+        >
+          {t('setup.optional.publicAccess.useProxy')}
+        </Checkbox>
+      </Form.Item>
+      {props.draft.useProxy && (
+        <Form.Item
+          label={t('setup.optional.publicAccess.proxyPublicBaseUrl')}
+          htmlFor="setup-proxy-public-base-url"
+          extra={t('setup.optional.publicAccess.proxyPublicBaseUrlHelp')}
+        >
+          <Input
+            id="setup-proxy-public-base-url"
+            value={props.draft.proxyPublicBaseUrl}
+            disabled={props.disabled}
+            onChange={event => props.updateDraft({ proxyPublicBaseUrl: event.target.value })}
+          />
+        </Form.Item>
+      )}
       <SetupOptionalValidation evidence={props.validation.publicAccess} />
-      <Button disabled={props.disabled || validating} loading={validating} onClick={props.validatePublicAccess}>
+      <Button
+        disabled={props.disabled || validating || !setupPublicAccessValidationReady(props.draft)}
+        loading={validating}
+        onClick={props.validatePublicAccess}
+      >
         {t('setup.optional.validatePublicAccess')}
       </Button>
     </section>
@@ -106,28 +116,6 @@ export function MailSection(props: Props) {
         {t('setup.optional.validateMail')}
       </Button>
     </section>
-  );
-}
-
-type PublicField = 'publicBaseUrl' | 'serverOtlpHttpEndpoint' | 'serverOtlpGrpcEndpoint';
-
-function TextField({
-  id,
-  label,
-  value,
-  disabled,
-  update
-}: {
-  id: string;
-  label: string;
-  value: string;
-  disabled: boolean;
-  update: (value: string) => void;
-}) {
-  return (
-    <Form.Item label={label} htmlFor={id}>
-      <Input id={id} disabled={disabled} value={value} onChange={event => update(event.target.value)} />
-    </Form.Item>
   );
 }
 

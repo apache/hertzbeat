@@ -1103,7 +1103,7 @@ class ObserveEntityServiceTest {
     }
 
     @Test
-    void getEntityDetailFiltersActiveAlertsByRequestWorkspaceLabels() {
+    void getEntityDetailUsesPersistedWorkspaceScopedActiveAlerts() {
         ObserveEntity entity = ObserveEntity.builder()
                 .id(73L)
                 .type("service")
@@ -1137,20 +1137,15 @@ class ObserveEntityServiceTest {
                 .build();
         when(monitorDao.findMonitorsByIdIn(Set.of(7301L))).thenReturn(List.of(monitor));
 
-        SingleAlert teamBetaAlert = SingleAlert.builder()
-                .id(7302L)
-                .status(CommonConstants.ALERT_STATUS_FIRING)
-                .content("checkout-api latency high")
-                .labels(Map.of("workspace_id", "team-b", "severity", "critical"))
-                .build();
         SingleAlert teamAlphaAlert = SingleAlert.builder()
                 .id(7303L)
+                .workspaceId("team-a")
                 .status(CommonConstants.ALERT_STATUS_FIRING)
                 .content("checkout-api error burst")
                 .labels(Map.of("hertzbeat.workspace_id", "team-a", "severity", "warning"))
                 .build();
         when(singleAlertDao.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(teamBetaAlert, teamAlphaAlert)));
+                .thenReturn(new PageImpl<>(List.of(teamAlphaAlert)));
 
         AuthTokenRequestContext.bindWorkspaceId("team-a");
 
@@ -2112,7 +2107,7 @@ class ObserveEntityServiceTest {
     }
 
     @Test
-    void getEntityAlertsFilterByRequestWorkspaceLabels() {
+    void getEntityAlertsUsePersistedWorkspaceScopedRows() {
         ObserveEntity entity = ObserveEntity.builder()
                 .id(47L)
                 .type("service")
@@ -2139,26 +2134,15 @@ class ObserveEntityServiceTest {
                 .build();
         when(monitorDao.findMonitorsByIdIn(Set.of(407L))).thenReturn(List.of(monitor));
 
-        SingleAlert teamBetaAlert = SingleAlert.builder()
-                .id(621L)
-                .status(CommonConstants.ALERT_STATUS_FIRING)
-                .labels(Map.of("workspace_id", "team-b", "severity", "critical"))
-                .content("checkout-api latency high")
-                .build();
-        SingleAlert legacyDefaultAlert = SingleAlert.builder()
-                .id(622L)
-                .status(CommonConstants.ALERT_STATUS_FIRING)
-                .labels(Map.of("severity", "warning"))
-                .content("checkout-api warning")
-                .build();
         SingleAlert teamAlphaAlert = SingleAlert.builder()
                 .id(623L)
+                .workspaceId("team-a")
                 .status(CommonConstants.ALERT_STATUS_FIRING)
                 .labels(Map.of("workspace_id", "team-a", "severity", "critical"))
                 .content("checkout-api error burst")
                 .build();
         when(singleAlertDao.findAll(any(Specification.class), any(Sort.class)))
-                .thenReturn(List.of(teamBetaAlert, legacyDefaultAlert, teamAlphaAlert));
+                .thenReturn(List.of(teamAlphaAlert));
 
         AuthTokenRequestContext.bindWorkspaceId("team-a");
 

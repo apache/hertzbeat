@@ -23,7 +23,7 @@ import { defaultStatusAccent } from '@/features/status/shared/status-constants';
 
 import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 import { StatusOrgActions, StatusOrgFields } from './status-org-presentation';
-import { StatusWriteRecoveryAlert } from './status-write-recovery-alert';
+import { StatusOrgFormWorkspace } from './status-org-settings-workspace';
 
 const emptyOrg: StatusOrg = {
   name: '',
@@ -63,22 +63,31 @@ export function StatusOrgForm({
     onRetry,
     onSubmit
   });
+  const fields = <StatusOrgFields disabled={controller.fieldsDisabled} />;
+  const actions = (
+    <StatusOrgActions
+      canWrite={canWrite}
+      editing={controller.editing}
+      saving={saving}
+      locked={controller.locked}
+      canCancel={Boolean(org)}
+      initialSetup={!org}
+      writeRecovery={writeRecovery}
+      onCancel={controller.cancel}
+      onEdit={controller.edit}
+      onRetry={controller.retry}
+    />
+  );
   return (
-    <Form form={controller.form} layout="vertical" onFinish={controller.save}>
-      {writeRecovery && <StatusWriteRecoveryAlert />}
-      <StatusOrgFields disabled={controller.fieldsDisabled} />
-      <StatusOrgActions
-        canWrite={canWrite}
-        editing={controller.editing}
-        saving={saving}
-        locked={controller.locked}
-        canCancel={Boolean(org)}
-        writeRecovery={writeRecovery}
-        onCancel={controller.cancel}
-        onEdit={controller.edit}
-        onRetry={controller.retry}
-      />
-    </Form>
+    <StatusOrgFormWorkspace
+      org={org}
+      editing={controller.editing}
+      form={controller.form}
+      onFinish={controller.save}
+      actions={actions}
+      fields={fields}
+      writeRecovery={writeRecovery}
+    />
   );
 }
 

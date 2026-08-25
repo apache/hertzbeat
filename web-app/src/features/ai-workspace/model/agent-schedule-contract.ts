@@ -23,7 +23,7 @@ export type AgentScheduleDraft = Pick<
   'name' | 'instruction' | 'cronExpression' | 'enabled' | 'receiverIds' | 'templateId'
 >;
 
-export type AgentScheduleOption = { id: number; name: string; type: number };
+type AgentScheduleOption = { id: number; name: string; type: number };
 export type AgentScheduleOptions = {
   receivers: AgentScheduleOption[];
   templates: AgentScheduleOption[];
@@ -41,12 +41,4 @@ export type AgentScheduleTranscriptPage = {
   entries: AgentScheduleTranscriptEntry[];
   pageIndex: number;
   hasEarlier: boolean;
-};
-
-export type AgentSchedulePage = {
-  content: AgentSchedule[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
 };

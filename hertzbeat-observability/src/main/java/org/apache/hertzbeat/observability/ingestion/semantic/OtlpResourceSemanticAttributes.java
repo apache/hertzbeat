@@ -59,6 +59,22 @@ public final class OtlpResourceSemanticAttributes {
             "collector_id"
     );
 
+    /**
+     * Resource keys that have historically represented a workspace identifier.
+     *
+     * <p>Authenticated ingestion must remove every occurrence of every key in this set before it appends the
+     * canonical HertzBeat workspace attribute. This prevents an untrusted legacy alias or duplicate protobuf
+     * attribute from competing with the authenticated workspace.</p>
+     */
+    public static final List<String> HERTZBEAT_WORKSPACE_ID_KEYS_IN_PRECEDENCE_ORDER = List.of(
+            HERTZBEAT_WORKSPACE_ID,
+            "hertzbeat_workspace_id",
+            "workspace.id",
+            "workspace_id"
+    );
+    public static final Set<String> HERTZBEAT_WORKSPACE_ID_KEYS =
+            Set.copyOf(HERTZBEAT_WORKSPACE_ID_KEYS_IN_PRECEDENCE_ORDER);
+
     public static final List<String> PRIMARY_OTEL_IDENTITY_KEYS = List.of(
             SERVICE_NAME,
             SERVICE_NAMESPACE,

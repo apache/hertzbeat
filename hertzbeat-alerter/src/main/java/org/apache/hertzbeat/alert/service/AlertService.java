@@ -40,7 +40,8 @@ public interface AlertService {
      * @param pageSize pageSize
      * @return single alerts
      */
-    Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
+    Page<SingleAlert> getSingleAlerts(String workspaceId, String status, String search, String sort, String order,
+                                      int pageIndex, int pageSize);
 
     /**
      * Dynamic conditional query
@@ -51,7 +52,8 @@ public interface AlertService {
      * @param pageSize      Number of list pagination
      * @return search result
      */
-    Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String serviceName,
+    Page<GroupAlert> getGroupAlerts(String workspaceId, String status, String search, String severity,
+                                    String serviceName,
                                     String serviceNamespace, String environment, String sort, String order,
                                     int pageIndex, int pageSize);
 
@@ -61,7 +63,7 @@ public interface AlertService {
      * @param id alert identifier
      * @return matching alert
      */
-    Optional<SingleAlert> findSingleAlert(long id);
+    Optional<SingleAlert> findSingleAlert(String workspaceId, long id);
 
     /**
      * Find one grouped alert by its exact persistent identifier.
@@ -69,37 +71,37 @@ public interface AlertService {
      * @param id grouped alert identifier
      * @return matching grouped alert
      */
-    Optional<GroupAlert> findGroupAlert(long id);
+    Optional<GroupAlert> findGroupAlert(String workspaceId, long id);
 
     /**
      * delete the group alarm according to the alarm ID
      * @param ids Alarm ID List
      */
-    void deleteGroupAlerts(HashSet<Long> ids);
+    void deleteGroupAlerts(String workspaceId, HashSet<Long> ids);
 
     /**
      * delete the single alarm according to the alarm ID
      * @param ids Alarm ID List
      */
-    void deleteSingleAlerts(HashSet<Long> ids);
+    void deleteSingleAlerts(String workspaceId, HashSet<Long> ids);
 
     /**
      * Update the alarm status according to the alarm ID-status value
      * @param status Alarm status to be modified
      * @param ids   Alarm ID List to be modified
      */
-    void editGroupAlertStatus(String status, List<Long> ids);
+    void editGroupAlertStatus(String workspaceId, String status, List<Long> ids);
 
     /**
      * Update the alarm status according to the alarm ID-status value
      * @param status Alarm status to be modified
      * @param ids  Alarm ID List to be modified
      */
-    void editSingleAlertStatus(String status, List<Long> ids);
+    void editSingleAlertStatus(String workspaceId, String status, List<Long> ids);
 
     /**
      * Get alarm statistics information
      * @return Alarm statistics information
      */
-    AlertSummary getAlertsSummary();
+    AlertSummary getAlertsSummary(String workspaceId);
 }

@@ -32,11 +32,13 @@ const refine = vi.hoisted(() => ({
   createMutate: vi.fn(),
   clipboardWrite: vi.fn(),
   deleteMutate: vi.fn(),
+  deleteManyMutate: vi.fn(),
   notificationOpen: vi.fn(),
   refetch: vi.fn(),
   updateMutate: vi.fn(),
   useCreate: vi.fn(),
   useDelete: vi.fn(),
+  useDeleteMany: vi.fn(),
   useList: vi.fn(),
   useNotification: vi.fn(),
   useUpdate: vi.fn()
@@ -47,6 +49,7 @@ const labelApi = vi.hoisted(() => ({ findCanonicalLabel: vi.fn() }));
 vi.mock('@refinedev/core', () => ({
   useCreate: refine.useCreate,
   useDelete: refine.useDelete,
+  useDeleteMany: refine.useDeleteMany,
   useList: refine.useList,
   useNotification: refine.useNotification,
   useUpdate: refine.useUpdate
@@ -101,6 +104,7 @@ describe('Label resource controller', () => {
     refine.useCreate.mockReturnValue({ mutate: refine.createMutate, mutation: { isPending: false } });
     refine.useUpdate.mockReturnValue({ mutate: refine.updateMutate, mutation: { isPending: false } });
     refine.useDelete.mockReturnValue({ mutate: refine.deleteMutate, mutation: { isPending: false } });
+    refine.useDeleteMany.mockReturnValue({ mutate: refine.deleteManyMutate, mutation: { isPending: false } });
     refine.useNotification.mockReturnValue({ open: refine.notificationOpen });
     refine.useList.mockReturnValue(buildListResult({ data: [serverLabel], total: 1 }));
     refine.refetch.mockResolvedValue({ isError: false, data: { data: [serverLabel], total: 1 } });
@@ -177,6 +181,41 @@ describe('Label resource controller', () => {
     );
     expect(deleteParams.successNotification).toBe(false);
     expect(deleteParams.errorNotification).toBe(false);
+  });
+
+  it('submits selected labels as one pessimistic batch and records the deleted page count', () => {
+    const second = { ...serverLabel, id: 9, name: 'region', tagValue: 'west' };
+    const reconcileDelete = vi.fn();
+    const clearSelection = vi.fn();
+    refine.useList.mockReturnValue(buildListResult({ result: { data: [serverLabel, second], total: 2 } }));
+    const { result } = renderHook(() =>
+      useLabelResourceController({ search: '', pageIndex: 2, pageSize: 20 }, reconcileDelete)
+    );
+
+    act(() => {
+      expect(result.current.deleteLabels([serverLabel, second], clearSelection)).toBe(true);
+    });
+
+    expect(refine.deleteManyMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ids: [7, 9],
+        resource: 'labels',
+        dataProviderName: 'labels',
+        invalidates: ['list'],
+        mutationMode: 'pessimistic',
+        values: [serverLabel, second]
+      }),
+      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
+    );
+    act(() => {
+      void refine.deleteManyMutate.mock.calls[0]?.[1]?.onSuccess?.({ data: [serverLabel, second] });
+    });
+    expect(reconcileDelete).toHaveBeenCalledWith({
+      query: { search: '', pageIndex: 2, pageSize: 20 },
+      visibleRecords: 2,
+      deletedRecords: 2
+    });
+    expect(clearSelection).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -400,7 +439,7 @@ describe('Label resource controller', () => {
     expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
     expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(confirmDelete).toHaveBeenCalledOnce();
-    expect(confirmDelete).toHaveBeenCalledWith({ query, visibleRecords: 1 });
+    expect(confirmDelete).toHaveBeenCalledWith({ query, visibleRecords: 1, deletedRecords: 1 });
   });
 
   it('retries ambiguous delete with exact GET proof and never repeats DELETE', async () => {
@@ -431,7 +470,7 @@ describe('Label resource controller', () => {
     expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
     expect(confirmDelete).toHaveBeenCalledOnce();
-    expect(confirmDelete).toHaveBeenCalledWith({ query, visibleRecords: 1 });
+    expect(confirmDelete).toHaveBeenCalledWith({ query, visibleRecords: 1, deletedRecords: 1 });
     expect(result.current.recovery).toBeNull();
     expect(refine.notificationOpen).toHaveBeenCalledWith({ message: 'labels.deleteSuccess', type: 'success' });
   });

@@ -13,7 +13,10 @@ import { describe, expect, it } from 'vitest';
 
 import { AlertRuleContractError } from './alert-rule-types';
 import {
+  metricAlertFieldTypeKey,
+  metricAlertFieldTypes,
   parseMetricAlertCondition,
+  serializeMetricAlertConditionAuthoring,
   serializeMetricAlertCondition,
   type MetricAlertConditionGroup,
   type MetricAlertField
@@ -26,6 +29,16 @@ const fields: MetricAlertField[] = [
 ];
 
 describe('metric alert structured condition', () => {
+  it('maps every supported backend field type without silently relabeling unknown values', () => {
+    expect(metricAlertFieldTypeEntries()).toEqual([
+      ['number', 'number'],
+      ['string', 'string'],
+      ['object', 'object'],
+      ['time', 'time']
+    ]);
+    expect(() => metricAlertFieldTypeKey(99)).toThrow(AlertRuleContractError);
+  });
+
   it('serializes and parses the supported nested condition grammar losslessly', () => {
     const condition: MetricAlertConditionGroup = {
       kind: 'group',
@@ -134,6 +147,51 @@ describe('metric alert structured condition', () => {
     ).toThrow(AlertRuleContractError);
   });
 
+  it('mirrors the source editor draft expression without weakening complete serialization', () => {
+    const condition: MetricAlertConditionGroup = {
+      kind: 'group',
+      join: 'and',
+      items: [
+        { kind: 'condition', field: 'responseTime', operator: '>', value: null },
+        { kind: 'group', join: 'or', items: [] },
+        { kind: 'condition', field: 'status', operator: 'equals', value: '' }
+      ]
+    };
+
+    expect(serializeMetricAlertConditionAuthoring(condition, fields)).toBe(
+      'responseTime > undefined and equals(status, "undefined")'
+    );
+    expect(() => serializeMetricAlertCondition(condition, fields)).toThrow(AlertRuleContractError);
+  });
+
+  it('round-trips source object attributes through the typed visual condition model', () => {
+    const logFields: MetricAlertField[] = [
+      {
+        value: 'log.attributes',
+        label: 'Attributes',
+        type: metricAlertFieldTypes.object,
+        unit: null,
+        acceptsAttribute: true
+      }
+    ];
+    const condition: MetricAlertConditionGroup = {
+      kind: 'group',
+      join: 'and',
+      items: [
+        {
+          kind: 'condition',
+          field: 'log.attributes.http.method',
+          operator: 'equals',
+          value: 'GET'
+        }
+      ]
+    };
+
+    expect(serializeMetricAlertCondition(condition, logFields)).toBe('equals(log.attributes.http.method, "GET")');
+    expect(parseMetricAlertCondition('equals(log.attributes.http.method, "GET")', logFields)).toEqual(condition);
+    expect(parseMetricAlertCondition('equals(log.attributes.bad-name, "GET")', logFields)).toBeNull();
+  });
+
   it('enforces the retired editor depth and per-group rule limits', () => {
     const tooDeep: MetricAlertConditionGroup = {
       kind: 'group',
@@ -180,3 +238,7 @@ describe('metric alert structured condition', () => {
     expect(parseMetricAlertCondition('equals(status, "unsafe\\"value")', fields)).toBeNull();
   });
 });
+
+function metricAlertFieldTypeEntries() {
+  return Object.entries(metricAlertFieldTypes).map(([name, value]) => [name, metricAlertFieldTypeKey(value)]);
+}

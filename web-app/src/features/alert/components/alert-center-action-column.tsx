@@ -36,7 +36,7 @@ export function alertCenterActionColumn({
 }: AlertCenterActionColumnOptions): ColumnsType<AlertGroup>[number] {
   return {
     title: t('common.actions'),
-    width: 210,
+    width: 56,
     render: (_value, group) => (
       <AlertCenterRowActions
         actionPolicy={actionPolicy}

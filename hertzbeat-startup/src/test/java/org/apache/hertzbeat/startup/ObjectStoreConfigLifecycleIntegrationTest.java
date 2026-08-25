@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.controller.ObjectStoreConfigController;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStorageMigrationService;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigOptions;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
@@ -60,6 +61,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TrustedStartup
 @Import(ObjectStoreConfigLifecycleIntegrationTest.RecorderConfiguration.class)
 @TestPropertySource(properties = {
     "spring.jpa.hibernate.ddl-auto=create-drop",
@@ -78,6 +80,9 @@ class ObjectStoreConfigLifecycleIntegrationTest {
 
     @Autowired
     private ObjectStoreConfigMapper mapper;
+
+    @Autowired
+    private MonitorDefinitionStorageMigrationService migrationService;
 
     @Autowired
     private GeneralConfigDao generalConfigDao;
@@ -130,7 +135,8 @@ class ObjectStoreConfigLifecycleIntegrationTest {
                 .andExpect(content().string(not(containsString("access-one"))))
                 .andExpect(content().string(not(containsString("secret-one"))));
 
-        ObjectStoreConfigServiceImpl restarted = new ObjectStoreConfigServiceImpl(generalConfigDao, mapper);
+        ObjectStoreConfigServiceImpl restarted = new ObjectStoreConfigServiceImpl(
+                generalConfigDao, mapper, migrationService);
         assertEquals("bucket-two", restarted.getSafeConfig().config().bucketName());
         assertEquals("access-one", restarted.getConfig().getConfig().getAccessKey());
         assertEquals("secret-one", restarted.getConfig().getConfig().getSecretKey());

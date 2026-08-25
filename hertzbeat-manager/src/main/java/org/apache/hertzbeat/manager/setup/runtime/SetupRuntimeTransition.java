@@ -30,5 +30,13 @@ public interface SetupRuntimeTransition {
         completeSetup();
     }
 
+    default void factoryResetRequested() {
+        // Implemented by the standalone startup coordinator.
+    }
+
+    default void factoryResetCompleted() {
+        // Implemented by the standalone startup coordinator.
+    }
+
     void completeSetup();
 }

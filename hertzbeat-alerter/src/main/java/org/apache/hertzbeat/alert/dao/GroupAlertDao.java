@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.dao;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,14 +38,16 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
      * @param groupKey group key identifier
      * @return alert group
      */
-    GroupAlert findByGroupKey(String groupKey);
+    GroupAlert findByWorkspaceIdAndGroupKey(String workspaceId, String groupKey);
+
+    Optional<GroupAlert> findByWorkspaceIdAndId(String workspaceId, Long id);
 
     /**
      * Delete alerts based on ID list
      * @param ids Alert ID List
      */
     @Modifying
-    void deleteGroupAlertsByIdIn(HashSet<Long> ids);
+    void deleteGroupAlertsByWorkspaceIdAndIdIn(String workspaceId, HashSet<Long> ids);
 
     /**
      * Updates the alarm status based on the alarm ID-status value
@@ -52,15 +55,19 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
      * @param ids  alarm ids
      */
     @Modifying
-    @Query("update GroupAlert set status = :status where id in :ids")
-    void updateGroupAlertsStatus(@Param(value = "status") String status, @Param(value = "ids") List<Long> ids);
+    @Query("update GroupAlert set status = :status where workspaceId = :workspaceId and id in :ids")
+    int updateGroupAlertsStatus(@Param("workspaceId") String workspaceId,
+                                @Param("status") String status,
+                                @Param("ids") List<Long> ids);
 
     /**
      * find group alerts by id list
      * @param ids ids
      * @return group alerts
      */
-    List<GroupAlert> findGroupAlertsByIdIn(HashSet<Long> ids);
+    List<GroupAlert> findGroupAlertsByWorkspaceIdAndIdIn(String workspaceId, HashSet<Long> ids);
+
+    List<GroupAlert> findGroupAlertsByWorkspaceIdAndIdIn(String workspaceId, List<Long> ids);
 
     /**
      * Find only persisted status evidence for the requested group IDs.
@@ -68,6 +75,7 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
      * @return minimal ID/status projections
      */
     @Query("select new org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence(alert.id, alert.status) "
-            + "from GroupAlert alert where alert.id in :ids")
-    List<AlertGroupStatusEvidence> findStatusEvidenceByIdIn(@Param("ids") List<Long> ids);
+            + "from GroupAlert alert where alert.workspaceId = :workspaceId and alert.id in :ids")
+    List<AlertGroupStatusEvidence> findStatusEvidenceByWorkspaceIdAndIdIn(
+            @Param("workspaceId") String workspaceId, @Param("ids") List<Long> ids);
 }

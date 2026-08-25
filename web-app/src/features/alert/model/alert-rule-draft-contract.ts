@@ -36,6 +36,8 @@ export type AlertRuleDraft = {
   enable: boolean;
   period: number | null;
   times: number | null;
+  /** Transient visual/expression mode shared by realtime metric and log editors. */
+  authoringMode?: MetricAlertAuthoring['mode'];
   /** Transient editor evidence; explicit payload builders never serialize it. */
   strategyChanged?: boolean;
   metricEditor?: MetricAlertEditorDraft;

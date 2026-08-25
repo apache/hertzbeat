@@ -174,11 +174,51 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
                 + "= 'prod'"));
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
-                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+                + "OR ((json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') IS NULL "
+                + "OR json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = '') "
+                + "AND json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'))"));
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
                 + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
         assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
         assertTrue(sql.endsWith("ORDER BY timestamp DESC LIMIT 75"));
+    }
+
+    @Test
+    void workspaceQueryUsesCanonicalFlattenedColumnWithoutRequiringLegacyAlias() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.startsWith("DESC hzb_traces")) {
+                return List.of(
+                        Map.of("Column", "timestamp"),
+                        Map.of("Column", "resource_attributes.hertzbeat.workspace_id"));
+            }
+            return List.of(Map.of("trace_id", "trace-1"));
+        });
+
+        repository.queryRecentTraceRows(
+                20, 1000L, 2000L, null, null, null, null, null, null,
+                "team-a", Map.of(), false);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
+        String sql = sqlCaptor.getAllValues().get(1);
+        assertTrue(sql.contains("\"resource_attributes.hertzbeat.workspace_id\" = 'team-a'"));
+        assertFalse(sql.contains("workspace.id"));
+    }
+
+    @Test
+    void workspaceQueryFailsBeforeDataReadWhenCanonicalWorkspaceCannotBeExpressed() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("Column", "timestamp")));
+
+        assertThrows(TelemetryStorageUnavailableException.class, () -> repository.queryRecentTraceRows(
+                20, 1000L, 2000L, null, null, null, null, null, null,
+                "team-a", Map.of(), false));
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor).executeStrict(sqlCaptor.capture());
+        assertTrue(sqlCaptor.getValue().startsWith("DESC hzb_traces"));
     }
 
     @Test
@@ -224,8 +264,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
                 + "= 'prod'"));
-        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
-                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertCanonicalWorkspacePrecedence(sql, "team-a");
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
                 + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
         assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
@@ -312,8 +351,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
                 + "= 'prod'"));
-        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
-                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertCanonicalWorkspacePrecedence(sql, "team-a");
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
                 + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
         assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
@@ -365,8 +403,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
                 + "= 'prod'"));
-        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
-                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertCanonicalWorkspacePrecedence(sql, "team-a");
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
                 + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
         assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
@@ -413,8 +450,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
                 + "= 'prod'"));
-        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
-                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertCanonicalWorkspacePrecedence(sql, "team-a");
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
                 + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
         assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
@@ -478,8 +514,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
                 + "= 'prod'"));
-        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
-                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertCanonicalWorkspacePrecedence(sql, "team-a");
         assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
                 + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
         assertTrue(sql.endsWith("GROUP BY group_value HAVING COUNT(*) >= 5 ORDER BY latency_p95_ms DESC LIMIT 7"));
@@ -538,6 +573,44 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("LOWER(child.service_name) != LOWER(parent.service_name)"));
         assertTrue(sql.contains("GROUP BY parent.service_name, child.service_name"));
         assertTrue(sql.endsWith("ORDER BY request_count DESC LIMIT 100"));
+    }
+
+    @Test
+    void scopedServiceGraphFiltersBothSidesByCanonicalWorkspacePrecedence() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
+                "source_service_name", "checkout-api",
+                "target_service_name", "payment-api",
+                "request_count", 2L)));
+
+        repository.queryTraceServiceGraphRows(
+                100, 1710000000000L, 1710003600000L, "prod", "team-a",
+                List.of("checkout-api", "payment-api"), true);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
+        String sql = sqlCaptor.getAllValues().get(1);
+        assertTrue(sql.contains("json_get_string(child.resource_attributes, "
+                + "'$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+        assertTrue(sql.contains("json_get_string(parent.resource_attributes, "
+                + "'$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+        assertTrue(sql.contains("json_get_string(child.resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+        assertTrue(sql.contains("json_get_string(parent.resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+    }
+
+    @Test
+    void scopedServiceGraphIsUnavailableBeforeDataSelectWhenCanonicalWorkspaceCannotBeExpressed() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(
+                Map.of("Column", "timestamp"),
+                Map.of("Column", "service_name"),
+                Map.of("Column", "resource_attributes.workspace.id")));
+
+        assertThrows(TelemetryStorageUnavailableException.class, () -> repository.queryTraceServiceGraphRows(
+                100, 1710000000000L, 1710003600000L, "prod", "team-a",
+                List.of("checkout-api", "payment-api"), true));
+
+        verify(greptimeSqlQueryExecutor).executeStrict("DESC hzb_traces");
     }
 
     @Test
@@ -796,6 +869,16 @@ class GreptimeTraceQueryRepositoryTest {
     private void assertTraceSqlProjectsAttribution(String sql) {
         assertTrue(sql.startsWith("SELECT * FROM hzb_traces"));
         assertTrue(sql.contains("ORDER BY timestamp"));
+    }
+
+    private void assertCanonicalWorkspacePrecedence(String sql, String workspaceId) {
+        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = '"
+                + workspaceId
+                + "' OR ((json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') IS NULL "
+                + "OR json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = '') "
+                + "AND json_get_string(resource_attributes, '$[\"workspace.id\"]') = '"
+                + workspaceId
+                + "'))"));
     }
 
     private GreptimeSqlQueryContent sqlResponse() {

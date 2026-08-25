@@ -27,6 +27,7 @@ import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspe
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.State;
 import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.manager.setup.installation.LocalInstallationFingerprintStore;
+import org.apache.hertzbeat.manager.setup.runtime.FileFactoryResetStateStore;
 
 /** Filesystem-first startup convergence with an explicit legacy/external upgrade entry. */
 public final class LocalInstallationStartupProbe implements StartupDecisionProbe {
@@ -57,6 +58,13 @@ public final class LocalInstallationStartupProbe implements StartupDecisionProbe
         Path root = fixedRoot == null ? installationRoot : fixedRoot;
         boolean externalDatabaseConfigured = fixedExternalDatabaseConfigured == null
                 ? externalDatabaseConfigured(args) : fixedExternalDatabaseConfigured;
+        try {
+            if (new FileFactoryResetStateStore(root).load().isPresent()) {
+                return new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
+            }
+        } catch (IOException invalidResetState) {
+            return StartupDecision.recovery();
+        }
         State managed = new ManagedActiveConfigurationInspector(root).inspect().state();
         if (managed == State.RECOVERY_REQUIRED) {
             return StartupDecision.recovery();

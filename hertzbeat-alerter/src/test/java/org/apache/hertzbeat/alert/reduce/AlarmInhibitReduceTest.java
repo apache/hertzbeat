@@ -48,12 +48,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,6 +66,7 @@ import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -169,6 +170,32 @@ class AlarmInhibitReduceTest {
 
         verify(alarmSilenceReduce).silenceAlarm(sourceGroupAlert);
         verify(alarmSilenceReduce, never()).silenceAlarm(targetGroupAlert);
+    }
+
+    @Test
+    void sourceAlertNeverInhibitsAnotherWorkspace() {
+        AlertInhibit rule = AlertInhibit.builder()
+                .id(1L)
+                .enable(true)
+                .sourceLabels(createLabels("severity", "critical"))
+                .targetLabels(createLabels("severity", "warning"))
+                .equalLabels(Collections.singletonList("instance"))
+                .build();
+        alarmInhibitReduce.refreshInhibitRules(List.of(rule));
+        GroupAlert source = createGroupAlert("team-a", "firing",
+                createLabels("severity", "critical", "instance", "host1"),
+                new ArrayList<>(List.of(createSingleAlert("team-a", "firing", "fp-a",
+                        createLabels("severity", "critical", "instance", "host1")))));
+        GroupAlert target = createGroupAlert("team-b", "firing",
+                createLabels("severity", "warning", "instance", "host1"),
+                new ArrayList<>(List.of(createSingleAlert("team-b", "firing", "fp-b",
+                        createLabels("severity", "warning", "instance", "host1")))));
+
+        alarmInhibitReduce.inhibitAlarm(source);
+        alarmInhibitReduce.inhibitAlarm(target);
+
+        verify(alarmSilenceReduce).silenceAlarm(source);
+        verify(alarmSilenceReduce).silenceAlarm(target);
     }
 
     @Test
@@ -439,7 +466,13 @@ class AlarmInhibitReduceTest {
     }
 
     private GroupAlert createGroupAlert(String status, Map<String, String> labels, List<SingleAlert> alerts) {
+        return createGroupAlert(AuthTokenScopes.DEFAULT_WORKSPACE_ID, status, labels, alerts);
+    }
+
+    private GroupAlert createGroupAlert(String workspaceId, String status, Map<String, String> labels,
+                                        List<SingleAlert> alerts) {
         return GroupAlert.builder()
+                .workspaceId(workspaceId)
                 .status(status)
                 .commonLabels(labels)
                 .alerts(alerts)
@@ -455,7 +488,13 @@ class AlarmInhibitReduceTest {
     }
 
     private SingleAlert createSingleAlert(String status, String fingerprint, Map<String, String> labels) {
+        return createSingleAlert(AuthTokenScopes.DEFAULT_WORKSPACE_ID, status, fingerprint, labels);
+    }
+
+    private SingleAlert createSingleAlert(String workspaceId, String status, String fingerprint,
+                                          Map<String, String> labels) {
         return SingleAlert.builder()
+                .workspaceId(workspaceId)
                 .status(status)
                 .fingerprint(fingerprint)
                 .labels(labels)

@@ -1,0 +1,78 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.context {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border-left: 1px solid var(--ai-divider);
+  background: var(--hb-bg-chrome);
+}
+.contextHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: var(--hb-space-3) var(--hb-space-4);
+  border-bottom: 1px solid var(--ai-divider-muted);
+}
+.contextSection {
+  padding: var(--hb-space-3) var(--hb-space-4);
+}
+.contextSection + .contextSection {
+  border-top: 1px solid var(--ai-divider-muted);
+}
+.contextBody,
+.activity,
+.approval,
+.inputRequest {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+.contextBody {
+  margin-top: var(--hb-space-2);
+}
+.activity {
+  gap: var(--hb-space-1);
+}
+.activitySummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+}
+.activity code,
+.approval code {
+  overflow-wrap: anywhere;
+}
+.approvalActions {
+  display: flex;
+  gap: var(--hb-space-2);
+}
+.inputField {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.activityError {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+@media (max-width: 1000px) {
+  .context {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, calc(100% - 216px));
+    border-left: 1px solid var(--ai-divider);
+    box-shadow: var(--hb-shadow-surface);
+  }
+}
+@media (max-width: 700px) {
+  .context {
+    width: 100%;
+  }
+}

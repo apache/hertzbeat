@@ -108,7 +108,7 @@ class FlywayTargetSchemaProvisionerTest {
                     .isInstanceOfSatisfying(TargetSchemaProvisioningException.class, exception -> {
                         assertThat(exception.failure()).isEqualTo(new TargetSchemaProvisioningFailure(
                                 TargetSchemaProvisioningFailure.Phase.CONNECTION,
-                                "206",
+                                "200",
                                 "08006",
                                 1045));
                         assertThat(exception).hasNoCause();

@@ -28,6 +28,11 @@ export type AgentWorkspaceRunState = {
   approvals: AgentApproval[];
   inputs: AgentInputRequest[];
   errorMessage?: string;
+  observationExpired?: boolean;
+  recoveryAvailable?: boolean;
+  retryAvailable?: boolean;
+  recoveryRequired?: boolean;
+  targetFailure?: 'mismatch' | 'unavailable';
 };
 
 export const initialAgentWorkspaceRun: AgentWorkspaceRunState = {
@@ -54,14 +59,83 @@ function reduceLifecycleEvent(
 ): AgentWorkspaceRunState | undefined {
   switch (event.type) {
     case 'RUN_STARTED':
-      return { ...state, status: 'running', ...(event.runUid ? { runUid: event.runUid } : {}) };
+      return {
+        ...state,
+        status: 'running',
+        recoveryAvailable: true,
+        retryAvailable: false,
+        ...(event.runUid ? { runUid: event.runUid } : {})
+      };
     case 'RUN_COMPLETED':
-      return { ...state, status: 'complete', messages: state.messages.map(item => ({ ...item, status: 'complete' })) };
-    case 'ERROR':
-      return { ...state, status: 'error', errorMessage: stringField(event.payload, 'errorMessage') };
+      return {
+        ...state,
+        status: 'complete',
+        recoveryAvailable: false,
+        retryAvailable: false,
+        messages: state.messages.map(item => ({ ...item, status: 'complete' }))
+      };
+    case 'RUN_STATUS':
+      return reduceRunStatus(state, event);
+    case 'ERROR': {
+      const status = stringField(event.payload, 'status').toUpperCase();
+      const recoveryRequired = status === 'RECOVERY_REQUIRED';
+      const targetFailure =
+        status === 'TARGET_MISMATCH' ? 'mismatch' : status === 'TARGET_UNAVAILABLE' ? 'unavailable' : undefined;
+      return {
+        ...state,
+        ...(event.runUid ? { runUid: event.runUid } : {}),
+        status: 'error',
+        recoveryAvailable: false,
+        retryAvailable: !recoveryRequired && targetFailure === undefined,
+        recoveryRequired,
+        ...(targetFailure ? { targetFailure } : {}),
+        errorMessage: stringField(event.payload, 'errorMessage')
+      };
+    }
     default:
       return undefined;
   }
+}
+
+function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent): AgentWorkspaceRunState {
+  const status = stringField(event.payload, 'status').toUpperCase();
+  const runUid = event.runUid ? { runUid: event.runUid } : {};
+  if (status === 'CREATED' || status === 'RUNNING') {
+    return {
+      ...state,
+      ...runUid,
+      status: 'running',
+      recoveryAvailable: event.payload.recoveryAvailable === true,
+      retryAvailable: false,
+      ...(event.payload.observationExpired === true ? { observationExpired: true } : {})
+    };
+  }
+  if (status === 'SUCCEEDED') {
+    const result = stringField(event.payload, 'result');
+    if (!result || event.payload.replayAvailable === false) {
+      return { ...state, ...runUid, status: 'error', errorMessage: stringField(event.payload, 'errorMessage') };
+    }
+    return {
+      ...state,
+      ...runUid,
+      status: 'complete',
+      recoveryAvailable: false,
+      retryAvailable: false,
+      messages:
+        event.payload.resultAlreadyVisible === true
+          ? state.messages
+          : completeMessage(upsertMessage(state.messages, `${event.eventId}:result`, result), `${event.eventId}:result`)
+    };
+  }
+  return {
+    ...state,
+    ...runUid,
+    status: 'error',
+    recoveryAvailable: false,
+    retryAvailable: event.payload.retryAvailable === true,
+    recoveryRequired: status === 'RECOVERY_REQUIRED',
+    errorMessage: stringField(event.payload, 'errorMessage')
+  };
 }
 
 function reduceMessageEvent(

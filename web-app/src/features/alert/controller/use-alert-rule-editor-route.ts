@@ -10,8 +10,10 @@ import { loadAlertRule } from '../api/alert-rule-api';
 import {
   alertRuleDraftFromDetail,
   alertRuleFailureKind,
+  buildAlertRuleStrategyPatch,
   createAlertRuleDraft,
-  type AlertRuleDraft
+  type AlertRuleDraft,
+  type AlertRuleKind
 } from '../model/alert-rule-model';
 import {
   freshAlertRuleRouteState,
@@ -26,10 +28,11 @@ export function useAlertRuleEditorRoute(mode: 'new' | 'edit') {
   const location = useLocation();
   const { ruleId = '' } = useParams();
   const validId = canonicalId(ruleId);
-  const routeSource = `${mode}:${ruleId}:${location.key}`;
+  const requestedKind = mode === 'new' ? parseAlertRuleKind(location.search) : null;
+  const routeSource = `${mode}:${ruleId}:${location.key}:${requestedKind ?? 'missing'}`;
   const routeToken = useMemo(() => Symbol(routeSource), [routeSource]);
   const identity = useAlertRuleEditorIdentity(routeToken);
-  const initialDraft = useMemo(() => (mode === 'new' ? createAlertRuleDraft() : null), [mode]);
+  const initialDraft = useMemo(() => createInitialDraft(mode, requestedKind), [mode, requestedKind]);
   const [routeState, setRouteState] = useState<AlertRuleRouteState>(() =>
     freshAlertRuleRouteState(routeSource, routeToken, initialDraft)
   );
@@ -52,6 +55,7 @@ export function useAlertRuleEditorRoute(mode: 'new' | 'edit') {
     active,
     detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
     draft,
+    requestedKind,
     identity,
     updateRoute,
     retryDetail: () =>
@@ -60,6 +64,17 @@ export function useAlertRuleEditorRoute(mode: 'new' | 'edit') {
       void navigate(alertRoutePaths.rules);
     }
   };
+}
+
+export function parseAlertRuleKind(search: string): AlertRuleKind | null {
+  const value = new URLSearchParams(search).get('kind');
+  return value === 'realtime' || value === 'periodic' ? value : null;
+}
+
+function createInitialDraft(mode: 'new' | 'edit', kind: AlertRuleKind | null) {
+  if (mode === 'edit' || kind === null) return null;
+  const draft = createAlertRuleDraft();
+  return { ...draft, ...buildAlertRuleStrategyPatch(draft, kind, 'metric') };
 }
 
 function resolveCanonicalDraft(

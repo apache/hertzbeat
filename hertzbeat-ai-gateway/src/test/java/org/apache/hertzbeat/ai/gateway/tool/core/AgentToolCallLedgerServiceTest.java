@@ -108,7 +108,7 @@ class AgentToolCallLedgerServiceTest {
             .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()))
             .approvalStatus(AgentApprovalStatus.APPROVED.name())
             .build();
-        when(toolCallDao.findByApprovalId("agp_pending")).thenReturn(Optional.of(pending));
+        when(toolCallDao.findApprovalForRuntimeResume("agp_pending")).thenReturn(Optional.of(pending));
         when(toolCallDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         AgentToolCall started = service.recordApprovedToolResumed(request, changeDescriptor(), approvedChangePolicy());

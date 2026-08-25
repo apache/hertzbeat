@@ -35,7 +35,10 @@ public class AgentRuntimeControlRegistry {
         // RuntimeService registers only controls created from a validated runtime context.
         Objects.requireNonNull(control, "control must not be null");
         String runUid = control.getRunUid();
-        controls.put(runUid, control);
+        AgentRuntimeControl existing = controls.putIfAbsent(runUid, control);
+        if (existing != null) {
+            throw new IllegalStateException("Agent runtime control is already registered for this run");
+        }
         return () -> controls.remove(runUid, control);
     }
 

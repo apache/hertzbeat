@@ -31,12 +31,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,13 +65,20 @@ class GreptimePromqlQueryExecutorTest {
     private RestTemplate restTemplate;
 
     private GreptimePromqlQueryExecutor greptimePromqlQueryExecutor;
+    private GreptimeQueryGuard queryGuard;
 
     @BeforeEach
     void setUp() {
         when(greptimeProperties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
         when(greptimeProperties.username()).thenReturn("greptime");
         when(greptimeProperties.password()).thenReturn("greptime");
-        greptimePromqlQueryExecutor = new GreptimePromqlQueryExecutor(greptimeProperties, restTemplate);
+        queryGuard = new GreptimeQueryGuard(2, Duration.ofSeconds(2), Duration.ofMillis(10));
+        greptimePromqlQueryExecutor = new GreptimePromqlQueryExecutor(greptimeProperties, restTemplate, queryGuard);
+    }
+
+    @AfterEach
+    void tearDown() {
+        queryGuard.close();
     }
 
     @Test

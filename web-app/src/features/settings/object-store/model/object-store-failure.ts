@@ -3,6 +3,8 @@
 export type ObjectStoreFailureKind = 'missing' | 'permission' | 'invalid' | 'unavailable' | 'error';
 export type ObjectStoreWriteOutcome = 'rejected' | 'uncertain';
 
+export const objectStoreMigrationConflictCode = 'object_store_migration_conflict';
+
 type ObjectStoreFailureOptions = { code?: string };
 
 /** Redacted failure evidence shared by Object Store API, provider, and controllers. */
@@ -31,4 +33,8 @@ export function classifyObjectStoreReadFailure(reason: unknown): ObjectStoreFail
 /** Only explicit domain rejection evidence permits a deliberate write retry. */
 export function isObjectStoreWriteRejection(reason: unknown) {
   return reason instanceof ObjectStoreRequestFailure && reason.writeOutcome === 'rejected';
+}
+
+export function isObjectStoreMigrationConflict(reason: unknown) {
+  return reason instanceof ObjectStoreRequestFailure && reason.code === objectStoreMigrationConflictCode;
 }

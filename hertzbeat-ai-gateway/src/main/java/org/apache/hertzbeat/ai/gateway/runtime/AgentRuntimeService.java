@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillDefinition;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillRegistry;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCompletionIndeterminateException;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionOrchestrator;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry;
 import org.springframework.beans.factory.ObjectProvider;
@@ -50,6 +51,7 @@ public class AgentRuntimeService {
     private final AgentRuntimeModelClient modelClient;
     private final AgentRuntimeControlRegistry controlRegistry;
     private final AgentTranscriptRecorder transcriptRecorder;
+    private final AgentGroundingEvidenceVerifier groundingVerifier;
     private final Clock clock;
     private final List<AgentSkillDefinition> availableSkills;
 
@@ -61,6 +63,7 @@ public class AgentRuntimeService {
                                AgentRuntimeControlRegistry controlRegistry,
                                AgentRuntimeApprovalRegistry approvalRegistry,
                                AgentTranscriptRecorder transcriptRecorder,
+                               AgentGroundingEvidenceVerifier groundingVerifier,
                                AgentSkillRegistry skillRegistry) {
         this(runtimeProperties,
                 new AgentRuntimeContextBuilder(Clock.systemUTC(), () -> java.util.UUID.randomUUID().toString()),
@@ -68,6 +71,7 @@ public class AgentRuntimeService {
                 modelClientProvider.getIfUnique(),
                 controlRegistry,
                 transcriptRecorder,
+                groundingVerifier,
                 Clock.systemUTC(),
                 skillRegistry.definitions());
     }
@@ -80,7 +84,7 @@ public class AgentRuntimeService {
                         AgentTranscriptRecorder transcriptRecorder,
                         Clock clock) {
         this(runtimeProperties, contextBuilder, toolBridge, modelClient, controlRegistry,
-                transcriptRecorder, clock, List.of());
+                transcriptRecorder, null, clock, List.of());
     }
 
     AgentRuntimeService(AgentRuntimeProperties runtimeProperties,
@@ -89,6 +93,7 @@ public class AgentRuntimeService {
                         AgentRuntimeModelClient modelClient,
                         AgentRuntimeControlRegistry controlRegistry,
                         AgentTranscriptRecorder transcriptRecorder,
+                        AgentGroundingEvidenceVerifier groundingVerifier,
                         Clock clock,
                         List<AgentSkillDefinition> availableSkills) {
         // Runtime properties and collaborators are fixed at construction; null would defer a composition failure.
@@ -99,6 +104,7 @@ public class AgentRuntimeService {
         this.modelClient = modelClient;
         this.controlRegistry = Objects.requireNonNull(controlRegistry, "controlRegistry must not be null");
         this.transcriptRecorder = Objects.requireNonNull(transcriptRecorder, "transcriptRecorder must not be null");
+        this.groundingVerifier = groundingVerifier;
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.availableSkills = List.copyOf(availableSkills);
     }
@@ -127,6 +133,11 @@ public class AgentRuntimeService {
         AgentRuntimeLoop.EventPublisher publisher = streamingPublisher(sink, controlRef, config.getStream());
         try {
             context = contextBuilder.build(request, config);
+            if (groundingVerifier != null) {
+                AgentGroundingEvidenceVerifier.VerifiedHistory verified = groundingVerifier.verifyHistory(
+                        request.getRun(), context.getEffectiveTarget(), context.getChatHistory());
+                context = context.withVerifiedChatHistory(verified);
+            }
             if (modelClient == null) {
                 publishStarted(publisher, context);
                 publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
@@ -144,10 +155,24 @@ public class AgentRuntimeService {
         } catch (AgentRuntimeStoppedException exception) {
             publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR, exception.getMessage());
             completeStream(sink);
+        } catch (AgentToolCompletionIndeterminateException exception) {
+            String traceId = context == null ? null : context.getTraceId();
+            publisher.publish(AgentRuntimeEvent.runRecoveryRequired(
+                    traceId, AgentToolCompletionIndeterminateException.MESSAGE, Instant.now(clock)));
+            completeStream(sink);
         } catch (RuntimeException exception) {
             log.debug("Agent Gateway runtime stream invocation failed", exception);
             publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
                     "Agent Gateway runtime failed: " + exception.getMessage());
+            completeStream(sink);
+        } catch (Error error) {
+            if (isFatalJvmError(error)) {
+                signalFatalFailure(sink, error);
+                throw error;
+            }
+            log.debug("Agent Gateway runtime stream invocation failed with a non-fatal error");
+            publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
+                    "Agent Gateway runtime failed.");
             completeStream(sink);
         } finally {
             closeQuietly(controlRegistration);
@@ -206,6 +231,12 @@ public class AgentRuntimeService {
         }
     }
 
+    private void signalFatalFailure(FluxSink<AgentRuntimeEvent> sink, Error error) {
+        if (!sink.isCancelled()) {
+            sink.error(error);
+        }
+    }
+
     private void publishStarted(AgentRuntimeLoop.EventPublisher publisher, AgentRuntimeContext context) {
         publisher.publish(AgentRuntimeEvent.runStarted(context.getTraceId(), Instant.now(clock)));
     }
@@ -228,5 +259,9 @@ public class AgentRuntimeService {
         } catch (Exception ignored) {
             // Runtime control cleanup is best effort after terminal result publication.
         }
+    }
+
+    private boolean isFatalJvmError(Error error) {
+        return error instanceof VirtualMachineError || error instanceof ThreadDeath || error instanceof LinkageError;
     }
 }

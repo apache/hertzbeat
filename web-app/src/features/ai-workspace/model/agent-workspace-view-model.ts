@@ -20,17 +20,19 @@ export type AgentWorkspaceViewModel = {
   draftMessages: AgentDraftMessage[];
   run: AgentWorkspaceRunState;
   target?: AgentTargetRef;
+  invalidTarget: boolean;
   composer: string;
   streaming: boolean;
   stopping: boolean;
   failure?: 'unavailable';
   actions: {
-    selectSession: (sessionUid: string) => void;
+    selectSession: (sessionUid: string) => Promise<void>;
     newInvestigation: () => void;
     setComposer: (value: string) => void;
     send: () => Promise<void>;
     stop: () => Promise<void>;
     retry: () => Promise<void>;
+    recover: () => Promise<void>;
     decideApproval: (approvalId: string, decision: 'approve' | 'reject') => Promise<void>;
     submitInteraction: (interactionId: string, values: Record<string, unknown>) => Promise<void>;
   };

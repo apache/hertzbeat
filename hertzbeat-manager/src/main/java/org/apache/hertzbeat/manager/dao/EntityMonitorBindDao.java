@@ -52,6 +52,12 @@ public interface EntityMonitorBindDao extends JpaRepository<EntityMonitorBind, L
 
     long countByEntityId(Long entityId);
 
+    @Query("SELECT COUNT(bind) FROM EntityMonitorBind bind, ObserveEntity entity "
+            + "WHERE bind.entityId = entity.id AND entity.workspaceId = :workspaceId "
+            + "AND bind.entityId = :entityId")
+    long countOwnedByWorkspaceIdAndEntityId(
+            @Param("workspaceId") String workspaceId, @Param("entityId") Long entityId);
+
     @Query("SELECT bind.entityId, COUNT(bind) FROM EntityMonitorBind bind WHERE bind.entityId IN :entityIds GROUP BY bind.entityId")
     List<Object[]> countByEntityIdInGroupByEntityId(@Param("entityIds") Collection<Long> entityIds);
 }

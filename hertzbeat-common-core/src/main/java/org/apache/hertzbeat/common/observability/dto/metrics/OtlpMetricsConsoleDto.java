@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.observability.dto.metrics;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -52,6 +53,9 @@ public class OtlpMetricsConsoleDto {
     @Data
     @NoArgsConstructor
     public static class Context {
+
+        @JsonIgnore
+        private String workspaceId;
 
         private Long entityId;
 

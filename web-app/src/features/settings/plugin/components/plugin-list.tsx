@@ -10,6 +10,8 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
+
 import type { PluginPageSize, PluginQuery, PluginRecord } from '../model/plugin-model';
 
 type PluginListProps = {
@@ -38,6 +40,12 @@ export function PluginList(props: PluginListProps) {
         pagination={false}
         rowSelection={{
           selectedRowKeys: props.selectedIds,
+          getTitleCheckboxProps: () =>
+            pageSelectionTitleCheckboxProps(
+              props.selectedIds,
+              props.records.map(record => record.id),
+              pageSelectionLabels(t)
+            ),
           onChange: keys => props.onSelected(keys.map(Number)),
           getCheckboxProps: () => ({ disabled: !props.canWrite || props.busy })
         }}

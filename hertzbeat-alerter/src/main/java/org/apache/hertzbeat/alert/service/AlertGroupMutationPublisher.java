@@ -39,15 +39,15 @@ public class AlertGroupMutationPublisher {
         this.alertSseManager = alertSseManager;
     }
 
-    public void publishStatusChanged(Collection<Long> ids, String status) {
-        publishAfterCommit(ids, status, GroupMutation.STATUS_CHANGED);
+    public void publishStatusChanged(String workspaceId, Collection<Long> ids, String status) {
+        publishAfterCommit(workspaceId, ids, status, GroupMutation.STATUS_CHANGED);
     }
 
-    public void publishDeleted(Collection<Long> ids) {
-        publishAfterCommit(ids, null, GroupMutation.DELETED);
+    public void publishDeleted(String workspaceId, Collection<Long> ids) {
+        publishAfterCommit(workspaceId, ids, null, GroupMutation.DELETED);
     }
 
-    private void publishAfterCommit(Collection<Long> ids, String status, GroupMutation mutation) {
+    private void publishAfterCommit(String workspaceId, Collection<Long> ids, String status, GroupMutation mutation) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
@@ -55,7 +55,7 @@ public class AlertGroupMutationPublisher {
         AlertGroupMutationEvent event =
                 new AlertGroupMutationEvent(sortedIds.get(0), sortedIds, status, mutation.eventName);
         String payload = JsonUtil.toJson(event);
-        Runnable publication = () -> safelyBroadcast(payload);
+        Runnable publication = () -> safelyBroadcast(workspaceId, payload);
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             // AlertService is transactional in production. Immediate publication is the explicit
             // boundary for direct non-transactional calls such as maintenance tools and unit tests.
@@ -70,9 +70,9 @@ public class AlertGroupMutationPublisher {
         });
     }
 
-    private void safelyBroadcast(String payload) {
+    private void safelyBroadcast(String workspaceId, String payload) {
         try {
-            alertSseManager.broadcastGroupMutation(payload);
+            alertSseManager.broadcastGroupMutation(workspaceId, payload);
         } catch (RuntimeException exception) {
             log.warn("Failed to broadcast committed alert mutation: {}",
                     exception.getClass().getSimpleName());

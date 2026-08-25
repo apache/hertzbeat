@@ -11,6 +11,7 @@ import type {
   MetricAlertConditionOperator,
   MetricAlertField
 } from './alert-rule-condition-contract';
+import { resolveMetricAlertFieldSource } from './alert-rule-condition-field';
 
 type OperatorsForType = (type: number) => readonly MetricAlertConditionOperator[];
 
@@ -113,9 +114,9 @@ function parsedCondition(
   operator: MetricAlertConditionOperator,
   value: string | number | null
 ): MetricAlertCondition | null {
-  const field = fields.get(fieldName);
-  if (!field || !operatorsForType(field.type).includes(operator)) return null;
-  return { kind: 'condition', field: fieldName, operator, value };
+  const resolved = resolveMetricAlertFieldSource(fields, fieldName);
+  if (!resolved || !operatorsForType(resolved.field.type).includes(operator)) return null;
+  return { kind: 'condition', field: resolved.source, operator, value };
 }
 
 function splitLogical(source: string): { items: string[]; operators: Array<'and' | 'or'> } | null {

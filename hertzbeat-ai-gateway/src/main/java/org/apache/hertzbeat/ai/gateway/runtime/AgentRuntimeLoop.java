@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillDefinition;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCompletionIndeterminateException;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
@@ -37,6 +38,9 @@ import org.springframework.util.StringUtils;
 public class AgentRuntimeLoop {
 
     private static final String TOOL_SEARCH = "tool.search";
+
+    private static final String GROUNDING_REQUIRED =
+            "Investigation requires a successful HertzBeat data observation before a final answer.";
 
     private static final String COMPACTION_INSTRUCTIONS = String.join("\n",
             "You compact HertzBeat Agent conversation history for a later model request.",
@@ -86,7 +90,9 @@ public class AgentRuntimeLoop {
         // Runtime context and control are the mandatory execution inputs; only output side channels are optional.
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(control, "control must not be null");
-        AgentRuntimeLoopState state = new AgentRuntimeLoopState(initialModelHistory(context));
+        AgentRuntimeLoopState state = new AgentRuntimeLoopState(
+                initialModelHistory(context), context.getRunUid(), context.getEffectiveTarget(),
+                groundingEligible(context), context);
         restoreDiscoveredTools(state);
         // Event and transcript outputs are optional runtime side channels at this public boundary.
         LoopRun loopRun = new LoopRun(context, state, control,
@@ -111,6 +117,11 @@ public class AgentRuntimeLoop {
                 AgentRuntimeModelResponse modelResponse = modelCall.response();
                 switch (modelResponse.getType()) {
                     case FINAL_ANSWER:
+                        if (requiresGrounding(context) && !state.hasSuccessfulReadObservation()) {
+                            state.finishAssistantMessageStream(modelCall.itemId());
+                            publishRunCompleted(loopRun, AgentRuntimeEventType.ERROR, GROUNDING_REQUIRED);
+                            return;
+                        }
                         finalResult(loopRun, modelCall);
                         return;
                     case INVALID_RESPONSE:
@@ -149,7 +160,7 @@ public class AgentRuntimeLoop {
                         "model request",
                         config.getModelRequestTimeout(),
                         control,
-                        () -> modelClient.stream(modelRequest, control, delta -> publishMessageDelta(run, delta)));
+                        () -> modelClient.stream(modelRequest, control, delta -> publishModelDelta(run, delta)));
                 state.incrementModelRequestCount();
                 return response == null ? modelError(itemId) : new ModelCallResult(response, itemId);
             } catch (AgentRuntimeOperationTimeoutException exception) {
@@ -283,7 +294,7 @@ public class AgentRuntimeLoop {
                     toolCall.getToolName(),
                     toolCall.getArguments()));
         }
-        String content = modelResponse.getAssistantText();
+        String content = state.hasSuccessfulReadObservation() ? modelResponse.getAssistantText() : "";
         TranscriptMessage assistantToolCallMessage = TranscriptMessage.assistantToolCalls(
                 content, toolCallBlocks, modelResponse.getUsage());
         state.addTurnMessage(assistantToolCallMessage);
@@ -309,7 +320,8 @@ public class AgentRuntimeLoop {
                 result = toolBridge.execute(context, config, toolCall, control,
                         toolExecutionEventSink(run, toolExecution.itemId()));
             } catch (RuntimeException exception) {
-                if (exception instanceof AgentRuntimeStoppedException) {
+                if (exception instanceof AgentRuntimeStoppedException
+                        || exception instanceof AgentToolCompletionIndeterminateException) {
                     throw exception;
                 }
                 publishRunCompleted(run, AgentRuntimeEventType.ERROR,
@@ -317,16 +329,53 @@ public class AgentRuntimeLoop {
                 return true;
             }
             state.incrementToolCallCount();
+            AgentGroundingProof groundingProof = state.hasSuccessfulReadObservation()
+                    ? null : groundingProof(context, toolCall, result);
             Instant completedAt = Instant.now(clock);
-            TranscriptMessage toolResultMessage = toolResultMessage(toolCall, result);
+            TranscriptMessage toolResultMessage = toolResultMessage(
+                    toolCall, result, groundingProof);
+            Long durableSequence = recordTranscriptMessage(run, toolResultMessage);
+            if (groundingProof != null && durableSequence == null) {
+                toolResultMessage.setGroundingProof(null);
+            }
             state.addTurnMessage(toolResultMessage);
-            recordTranscriptMessage(run, toolResultMessage);
+            if (groundingProof != null && durableSequence != null) {
+                state.recordSuccessfulReadObservation();
+            }
             if (TOOL_SEARCH.equals(toolCall.getToolName()) && result.getStatus() == AgentToolStatus.SUCCEEDED) {
                 loadDiscoveredTools(state, toolCall.getArguments());
             }
             publishToolItemCompleted(run, result, toolExecution.itemId(), completedAt);
         }
         return false;
+    }
+
+    private boolean requiresGrounding(AgentRuntimeContext context) {
+        return true;
+    }
+
+    private AgentGroundingProof groundingProof(AgentRuntimeContext context, AgentRuntimeToolCall toolCall,
+                                               AgentToolExecutionResult result) {
+        if (!groundingEligible(context)) {
+            return null;
+        }
+        if (context.getEffectiveTarget() != null) {
+            return new AgentTargetGroundingEvaluator()
+                    .evaluate(context.getRunUid(), context.getEffectiveTarget(), toolCall, result)
+                    .orElse(null);
+        }
+        return new AgentReadGroundingEvaluator()
+                .evaluate(context.getRunUid(), toolCall, result)
+                .orElse(null);
+    }
+
+    private boolean groundingEligible(AgentRuntimeContext context) {
+        if (context.getAlertIncident() != null || context.getEntryType() == AgentRuntimeEntryType.ALERT_TRIGGER) {
+            return false;
+        }
+        return context.getEffectiveTarget() != null
+                || context.getEntryType() == AgentRuntimeEntryType.USER_INPUT
+                || context.getEntryType() == AgentRuntimeEntryType.SCHEDULE_TRIGGER;
     }
 
     private void restoreDiscoveredTools(AgentRuntimeLoopState state) {
@@ -377,12 +426,14 @@ public class AgentRuntimeLoop {
     }
 
     private TranscriptMessage toolResultMessage(AgentRuntimeToolCall toolCall,
-                                                AgentToolExecutionResult result) {
-        return TranscriptMessage.toolResult(
+                                                AgentToolExecutionResult result,
+                                                AgentGroundingProof groundingProof) {
+        return TranscriptMessage.groundedToolResult(
                 result.getToolCallId(),
                 result.getToolName(),
                 result.getOutput(),
-                result.getErrorMessage());
+                result.getErrorMessage(),
+                groundingProof);
     }
 
     private void finalResult(LoopRun run, ModelCallResult modelCall) {
@@ -402,6 +453,13 @@ public class AgentRuntimeLoop {
 
     private boolean isRetryableModelException(RuntimeException exception) {
         return exception instanceof AgentRuntimeModelException modelException && modelException.isRetryable();
+    }
+
+    private void publishModelDelta(LoopRun run, String delta) {
+        if (requiresGrounding(run.context()) && !run.state().hasSuccessfulReadObservation()) {
+            return;
+        }
+        publishMessageDelta(run, delta);
     }
 
     private void publishMessageDelta(LoopRun run, String delta) {
@@ -426,7 +484,7 @@ public class AgentRuntimeLoop {
         AgentRuntimeContext context = run.context();
         AgentRuntimeEvent event = type == AgentRuntimeEventType.ERROR
                 ? AgentRuntimeEvent.runError(context.getTraceId(), message, Instant.now(clock))
-                : AgentRuntimeEvent.runCompleted(context.getTraceId(), Instant.now(clock));
+                : AgentRuntimeEvent.runCompleted(context.getTraceId(), Instant.now(clock), message);
         publish(run, event);
     }
 
@@ -486,14 +544,16 @@ public class AgentRuntimeLoop {
         }
     }
 
-    private void recordTranscriptMessage(LoopRun run, TranscriptMessage message) {
+    private Long recordTranscriptMessage(LoopRun run, TranscriptMessage message) {
         try {
             Long sessionSequence = run.transcriptSink().recordMessage(message);
             if (sessionSequence != null) {
                 message.setSessionSequence(sessionSequence);
             }
+            return sessionSequence;
         } catch (RuntimeException ignored) {
             // Transcript sinks are best-effort and must not affect runtime outcome.
+            return null;
         }
     }
 

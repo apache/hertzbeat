@@ -40,6 +40,7 @@ import org.springframework.test.context.TestPropertySource;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TrustedStartup
 @TestPropertySource(properties = {
     "spring.datasource.url=jdbc:h2:mem:legacy-config-revision-startup;MODE=MySQL;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa",
@@ -47,7 +48,7 @@ import org.springframework.test.context.TestPropertySource;
     "spring.jpa.hibernate.ddl-auto=update",
     "spring.flyway.enabled=true",
     "spring.flyway.baseline-on-migrate=true",
-    "spring.flyway.baseline-version=203",
+    "spring.flyway.baseline-version=199",
     "spring.flyway.locations=classpath:db/migration/h2",
     "warehouse.store.duckdb.enabled=false"
 })

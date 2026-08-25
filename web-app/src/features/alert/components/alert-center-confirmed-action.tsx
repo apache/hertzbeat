@@ -8,6 +8,7 @@
 import { Button, Popconfirm } from 'antd';
 
 type AlertCenterConfirmedActionProps = {
+  className?: string;
   confirm: string;
   confirmLabel: string;
   danger?: boolean;
@@ -19,6 +20,7 @@ type AlertCenterConfirmedActionProps = {
 
 /** Centralizes confirmation semantics for destructive and status-changing alert actions. */
 export function AlertCenterConfirmedAction({
+  className,
   confirm,
   confirmLabel,
   danger = false,
@@ -35,7 +37,7 @@ export function AlertCenterConfirmedAction({
       okButtonProps={{ danger, disabled }}
       onConfirm={() => !disabled && void run()}
     >
-      <Button size="small" type={type} danger={danger} disabled={disabled}>
+      <Button {...(className ? { className } : {})} size="small" type={type} danger={danger} disabled={disabled}>
         {label}
       </Button>
     </Popconfirm>

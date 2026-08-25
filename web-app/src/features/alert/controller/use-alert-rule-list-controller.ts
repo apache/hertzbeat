@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   alertRuleFailureKind,
   type AlertRule,
+  type AlertRuleKind,
   type AlertRuleListState,
   type AlertRulePage
 } from '../model/alert-rule-model';
@@ -46,8 +47,8 @@ export function useAlertRuleListController() {
   const exportOperation = useAlertRuleExport();
   const importOperation = useAlertRuleImport(rereadLatest);
   const operations = useAlertRuleListOperations(rereadLatest, {
-    success: () => {
-      void message.success(t('alertRules.operationSuccess'));
+    success: kind => {
+      void message.success(t(kind === 'delete' ? 'alertRules.deleteSuccess' : 'alertRules.operationSuccess'));
     },
     failure: () => {
       void message.error(t('alertRules.operationFailed'));
@@ -78,8 +79,8 @@ export function useAlertRuleListController() {
     },
     exportSelected: exportOperation.exportSelected,
     ...actions,
-    create: () => {
-      if (capabilities.canWrite) actions.create();
+    create: (kind: AlertRuleKind) => {
+      if (capabilities.canWrite) actions.create(kind);
     },
     edit: (id: number) => {
       if (capabilities.canWrite) actions.edit(id);

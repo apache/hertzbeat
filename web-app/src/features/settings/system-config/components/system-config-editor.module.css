@@ -22,6 +22,20 @@
   margin-inline: 0;
   gap: 18px;
 }
+.section {
+  display: grid;
+  gap: 18px;
+  padding-top: 24px;
+  margin-top: 26px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.sectionHeading {
+  display: grid;
+  gap: 4px;
+}
+.sectionHeading :global(.ant-typography) {
+  margin: 0;
+}
 .field {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -36,4 +50,50 @@
   display: grid;
   gap: 6px;
   min-width: 0;
+}
+
+.advanced {
+  min-width: 0;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.advancedSummary {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding-block: 14px 2px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.advancedSummary::-webkit-details-marker {
+  display: none;
+}
+
+.advancedChevron {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+  transition: transform 160ms ease;
+}
+
+.advanced[open] .advancedChevron {
+  transform: rotate(90deg);
+}
+
+.advancedCopy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.advancedTitle {
+  font-weight: 600;
+}
+
+.advancedFields {
+  display: grid;
+  gap: 18px;
+  padding-block: 18px 2px;
 }

@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.SkyWalkingExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
@@ -31,12 +30,12 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import tools.jackson.core.type.TypeReference;
 
 /**
  * SkyWalking external alarm service impl
  */
-@Slf4j
 @Service
 public class SkyWalkingExternAlertService implements ExternAlertService {
 
@@ -45,24 +44,13 @@ public class SkyWalkingExternAlertService implements ExternAlertService {
 
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         TypeReference<List<SkyWalkingExternAlert>> typeReference = new TypeReference<>() {};
         List<SkyWalkingExternAlert> alerts = JsonUtil.fromJsonQuietly(content, typeReference);
-        if (alerts == null || alerts.isEmpty()) {
-            log.warn("Failed to parse SkyWalking external alert content");
-            return;
-        }
-        for (SkyWalkingExternAlert alert : alerts) {
-            SingleAlert singleAlert = SingleAlert.builder()
-                    .content(alert.getAlarmMessage())
-                    .status(CommonConstants.ALERT_STATUS_FIRING)
-                    .activeAt(Instant.now().toEpochMilli())
-                    .startAt(alert.getStartTime() != null ? alert.getStartTime() : Instant.now().toEpochMilli())
-                    .labels(acquireAlertLabels(alert))
-                    .annotations(acquireAlertAnnotations(alert))
-                    .triggerTimes(1)
-                    .build();
-            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+        alerts = ExternalAlertIngressValidator.requireBatch(alerts);
+        List<SingleAlert> singleAlerts = alerts.stream().map(this::convert).toList();
+        for (SingleAlert singleAlert : singleAlerts) {
+            alarmCommonReduce.reduceAndSendAlarm(workspaceId, singleAlert);
         }
     }
 
@@ -71,15 +59,43 @@ public class SkyWalkingExternAlertService implements ExternAlertService {
         return "skywalking";
     }
 
+    private SingleAlert convert(SkyWalkingExternAlert alert) {
+        Long recoveryTime = alert.getRecoveryTime();
+        long observedAt = recoveryTime == null ? Instant.now().toEpochMilli() : recoveryTime;
+        return SingleAlert.builder()
+                .content(alert.getAlarmMessage())
+                .status(recoveryTime == null
+                        ? CommonConstants.ALERT_STATUS_FIRING
+                        : CommonConstants.ALERT_STATUS_RESOLVED)
+                .activeAt(observedAt)
+                .startAt(alert.getStartTime() != null ? alert.getStartTime() : observedAt)
+                .endAt(recoveryTime)
+                .labels(acquireAlertLabels(alert))
+                .annotations(acquireAlertAnnotations(alert))
+                .triggerTimes(1)
+                .build();
+    }
+
     private Map<String, String> acquireAlertLabels(SkyWalkingExternAlert externAlert){
         Map<String, String> labels = new HashMap<>(8);
         labels.put("__source__", "skywalking");
+        putIfNotBlank(labels, "skywalking_uuid", externAlert.getUuid());
+        putIfNotBlank(labels, "alertname", externAlert.getRuleName());
+        putIfNotBlank(labels, "scope", externAlert.getScope());
+        putIfNotBlank(labels, "entity_id", externAlert.getId0());
+        putIfNotBlank(labels, "relation_destination_id", externAlert.getId1());
         List<SkyWalkingExternAlert.Tag> tags = externAlert.getTags();
         if (tags == null || tags.isEmpty()){
             return labels;
         }
-        tags.forEach(tag -> labels.put(tag.getKey(), tag.getValue()));
+        tags.forEach(tag -> putIfNotBlank(labels, tag.getKey(), tag.getValue()));
         return labels;
+    }
+
+    private void putIfNotBlank(Map<String, String> target, String key, String value) {
+        if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+            target.put(key, value);
+        }
     }
 
     private Map<String, String> acquireAlertAnnotations(SkyWalkingExternAlert externAlert){

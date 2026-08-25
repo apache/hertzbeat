@@ -67,7 +67,7 @@ function useRecoveryRetry(
     const owner = operation.begin();
     if (!owner) return false;
     try {
-      const canonical = await findCanonicalLabel(receipt.evidence.identity);
+      const canonical = await readCanonicalReceipt(receipt);
       if (!operation.isCurrent(owner)) return false;
       if (!proofConverged(receipt, canonical)) {
         notifyReceiptFailure(receipt, notifyFailure, notifyDeleteFailure);
@@ -105,9 +105,9 @@ function useRecoveryRetry(
 
 function enrichRecoveryReceipt(
   receipt: RecoveryReceipt,
-  canonical: Awaited<ReturnType<typeof findCanonicalLabel>>
+  canonical: Awaited<ReturnType<typeof findCanonicalLabel>> | Array<Awaited<ReturnType<typeof findCanonicalLabel>>>
 ): RecoveryReceipt {
-  if (receipt.command !== 'save' || !canonical) return receipt;
+  if (receipt.command !== 'save' || !canonical || Array.isArray(canonical)) return receipt;
   const evidence = enrichCreateEvidence(receipt.evidence, canonical);
   return evidence === receipt.evidence ? receipt : { ...receipt, evidence };
 }
@@ -172,8 +172,19 @@ function readRecovery(evidence: LabelWriteEvidence | LabelDeleteEvidence): Label
   return evidence.recovery === 'proof' || evidence.recovery === 'commit-uncertain' ? evidence.recovery : null;
 }
 
-function proofConverged(receipt: RecoveryReceipt, canonical: Awaited<ReturnType<typeof findCanonicalLabel>>) {
-  if (receipt.command === 'delete') return canonical === undefined;
+async function readCanonicalReceipt(receipt: RecoveryReceipt) {
+  if (receipt.command === 'save') return findCanonicalLabel(receipt.evidence.identity);
+  return Promise.all(
+    (receipt.evidence.identities ?? [receipt.evidence.identity]).map(identity => findCanonicalLabel(identity))
+  );
+}
+
+function proofConverged(
+  receipt: RecoveryReceipt,
+  canonical: Awaited<ReturnType<typeof findCanonicalLabel>> | Array<Awaited<ReturnType<typeof findCanonicalLabel>>>
+) {
+  if (receipt.command === 'delete') return Array.isArray(canonical) && canonical.every(item => item === undefined);
+  if (Array.isArray(canonical)) return false;
   return canonical !== undefined && labelSaveConverged(receipt.evidence.expected, canonical);
 }
 

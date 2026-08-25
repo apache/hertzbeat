@@ -72,4 +72,6 @@ public interface WarehouseConstants {
 
     String LOG_TABLE_NAME = "hertzbeat_logs";
 
+    String GREPTIME_QUERY_REST_TEMPLATE = "greptimeQueryRestTemplate";
+
 }

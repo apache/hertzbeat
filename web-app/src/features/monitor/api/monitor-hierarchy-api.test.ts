@@ -9,7 +9,7 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 }));
 
 import { MonitorContractError } from '../model/monitor-contract';
-import { loadMonitorAppHierarchy } from './monitor-api';
+import { loadMonitorAppHierarchy, loadMonitorAppHierarchyCatalog } from './monitor-api';
 
 const hierarchy = [
   {
@@ -73,6 +73,20 @@ describe('monitor application hierarchy API', () => {
         }
       ]
     });
+  });
+
+  it('loads the complete hierarchy catalog used by searchable metric-target authoring', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue([
+      hierarchy[0],
+      { ...hierarchy[0], value: 'linux', label: 'Linux', children: [] }
+    ]);
+
+    await expect(loadMonitorAppHierarchyCatalog('zh-CN', signal)).resolves.toMatchObject([
+      { value: 'website', children: [{ value: 'summary' }] },
+      { value: 'linux', label: 'Linux', children: [] }
+    ]);
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/hierarchy?lang=zh-CN', { signal });
   });
 
   it('normalizes the nullable and defaulted fields emitted by the Java hierarchy DTO', async () => {

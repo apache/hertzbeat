@@ -16,8 +16,9 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { useId } from 'react';
 
-import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page/operational-page';
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import type { AlertSummary } from '../model/alert-model';
 import styles from '../shared/alert-center.module.css';
@@ -59,24 +60,41 @@ export function AlertCenterSummary({ state, retry }: { state: AlertSummaryState;
 
 function SummaryValues({ summary }: { summary: AlertSummary }) {
   const { t } = useTranslation();
-  const items = [
-    ['alert.summary.total', summary.total],
-    ['alert.summary.nonFiring', summary.dealNum],
-    ['alert.summary.warning', summary.priorityWarningNum],
-    ['alert.summary.critical', summary.priorityCriticalNum],
-    ['alert.summary.emergency', summary.priorityEmergencyNum]
+  const summaryLabelId = useId();
+  const groups = [
+    {
+      key: 'lifecycle',
+      items: [
+        ['alert.summary.total', summary.total, 'total'],
+        ['alert.status.firing', Math.max(summary.total - summary.dealNum, 0), 'firing'],
+        ['alert.summary.handled', summary.dealNum, 'handled']
+      ]
+    },
+    {
+      key: 'severity',
+      items: [
+        ['alert.summary.emergency', summary.priorityEmergencyNum, 'emergency'],
+        ['alert.summary.critical', summary.priorityCriticalNum, 'critical'],
+        ['alert.summary.warning', summary.priorityWarningNum, 'warning']
+      ]
+    }
   ] as const;
 
   return (
-    <OperationalSection title={t('alert.summary.scope')}>
-      <div className={styles.summary}>
-        {items.map(([key, value]) => (
-          <div className={styles.metric} key={key}>
-            <span>{t(key)}</span>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </div>
-    </OperationalSection>
+    <section className={styles.summaryLine} aria-labelledby={summaryLabelId} data-summary-layout="inline">
+      <span className={styles.summaryScope} id={summaryLabelId}>
+        {t('alert.summary.workspaceScope')}
+      </span>
+      {groups.map(group => (
+        <dl className={styles.summaryFamily} key={group.key} data-summary-family={group.key}>
+          {group.items.map(([key, value, kind]) => (
+            <div className={styles.summaryItem} key={key} data-summary-kind={kind} data-summary-zero={value === 0}>
+              <dt>{t(key)}</dt>
+              <dd data-testid={`alert-summary-${kind}`}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ))}
+    </section>
   );
 }

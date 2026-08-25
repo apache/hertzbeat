@@ -15,10 +15,14 @@
  * limitations under the License.
  */
 
-import { apiMessageGet } from '@/core/http/api-message';
+import { apiMessageGet, apiMessagePut } from '@/core/http/api-message';
 
 import { alertIntegrationApiRequest } from './alert-integration-api-failure';
-import { parseAlertIntegrationCatalog, parseAlertIntegrationGuide } from './alert-integration-schema';
+import {
+  parseAlertIntegrationCatalog,
+  parseAlertIntegrationGuide,
+  parseAlertIntegrationVerification
+} from './alert-integration-schema';
 
 const catalogPath = '/api/alerts/integrations';
 
@@ -33,6 +37,14 @@ export function loadAlertIntegrationGuide(source: string, signal?: AbortSignal) 
     parseAlertIntegrationGuide(
       await apiMessageGet(`${catalogPath}/${encodeURIComponent(source)}`, signal ? { signal } : undefined),
       source
+    )
+  );
+}
+
+export function startAlertIntegrationVerification(source: string) {
+  return alertIntegrationApiRequest(async () =>
+    parseAlertIntegrationVerification(
+      await apiMessagePut(`${catalogPath}/${encodeURIComponent(source)}/verification`, null)
     )
   );
 }

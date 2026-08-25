@@ -19,6 +19,8 @@ package org.apache.hertzbeat.ai.gateway.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,6 +36,7 @@ import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeControlRegistry;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.junit.jupiter.api.Test;
@@ -80,12 +83,44 @@ class RunCommandServiceTest {
         verifyNoInteractions(controlRegistry);
     }
 
+    @Test
+    void shouldHideRunFromSameActorInDifferentWorkspace() {
+        AgentActor actor = actor("alice");
+        stubRunningRun(actor);
+
+        GatewaySingleResponse response = (GatewaySingleResponse) service().cancel(command(actor, "workspace-b"));
+
+        assertEquals(1, response.events().size());
+        assertEquals("Agent run not found.",
+                ((GatewayEvent.ErrorPayload) response.events().get(0).payload()).errorMessage());
+        verifyNoInteractions(controlRegistry);
+    }
+
+    @Test
+    void shouldNotCancelOrProbeRecoveryRequiredRun() {
+        AgentActor actor = actor("alice");
+        stubRun(actor, AgentRunStatus.RECOVERY_REQUIRED);
+
+        GatewaySingleResponse response = (GatewaySingleResponse) service().cancel(command(actor));
+
+        assertEquals(1, response.events().size());
+        assertEquals("Agent run is already stopped.",
+                ((GatewayEvent.ErrorPayload) response.events().getFirst().payload()).errorMessage());
+        verifyNoInteractions(controlRegistry);
+        verify(runService, never()).markCancelled(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
+    }
+
     private void stubRunningRun(AgentActor owner) {
+        stubRun(owner, AgentRunStatus.RUNNING);
+    }
+
+    private void stubRun(AgentActor owner, AgentRunStatus status) {
         AgentRun run = AgentRun.builder()
                 .id(2L)
                 .runUid("run-1")
                 .sessionId(1L)
-                .status(AgentRunStatus.RUNNING.name())
+                .status(status.name())
                 .build();
         AgentSession session = AgentSession.builder()
                 .id(1L)
@@ -94,18 +129,26 @@ class RunCommandServiceTest {
                 .actorId(owner.getId())
                 .build();
         when(runService.findRun("run-1")).thenReturn(Optional.of(run));
-        when(sessionService.findSession("1")).thenReturn(Optional.of(session));
+        lenient().when(sessionService.findOwnedSession(
+                        "1", command(owner).envelope(), AgentRuntimeEntryType.USER_INPUT))
+                .thenReturn(Optional.of(session));
     }
 
     private CancelRunCommand command(AgentActor actor) {
+        return command(actor, null);
+    }
+
+    private CancelRunCommand command(AgentActor actor, String workspaceId) {
         return CancelRunCommand.builder()
                 .envelope(GatewayEnvelope.builder()
                         .channelId("web-ui")
                         .receivedAt(1L)
                         .actor(actor)
+                        .workspaceId(workspaceId)
                         .build())
                 .replyMode(ReplyMode.FINAL_ONLY)
                 .commandId("stop-run:run-1")
+                .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                 .runUid("run-1")
                 .reason("Stopped by user.")
                 .build();

@@ -43,7 +43,9 @@ import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -81,6 +83,20 @@ class EntityTopologyQueryServiceTest {
 
     @Mock
     private EntityActivityReadModelService entityActivityReadModelService;
+
+    @BeforeEach
+    void bridgeLegacyDefaultFixturesToScopedTraceContract() {
+        lenient().when(traceCallTopologyQueryService.findTraceCallEdges(
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> traceCallTopologyQueryService.findTraceCallEdges(
+                        invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3),
+                        invocation.getArgument(4), invocation.getArgument(5)));
+        lenient().when(traceCallTopologyQueryService.findTraceCallEdgesForOverview(
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID), any(), any(), any(), any()))
+                .thenAnswer(invocation -> traceCallTopologyQueryService.findTraceCallEdgesForOverview(
+                        invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3),
+                        invocation.getArgument(4)));
+    }
 
     @Test
     void rejectsUnknownSourceKindBeforeQueryingTopologyData() {

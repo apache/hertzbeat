@@ -31,6 +31,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.EventStatus;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionContext;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionRequest;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -57,7 +58,8 @@ public class AgentInteractionInputService {
         CompletableFuture<InteractionResult> completion = new CompletableFuture<>();
         AgentToolExecutionRequest request = context.getRequest();
         pendingInteractions.put(interactionId, new PendingInteraction(targetTool, requestedFields,
-                request.getSessionUid(), request.getActor(), completion));
+                request.getWorkspaceId(), request.getSessionUid(), request.getRunUid(), request.getActor(),
+                completion));
         context.publishEvent(AgentRuntimeEvent.userInputRequested(interactionId,
                 Map.of("targetTool", targetTool,
                         "title", title,
@@ -88,9 +90,11 @@ public class AgentInteractionInputService {
                 : AgentRuntimeEvent.userInputFailed(interactionId, errorMessage));
     }
 
-    public void submit(String interactionId, AgentActor actor, Map<String, Object> values) {
+    public void submit(String interactionId, AgentActor actor, String workspaceId, Map<String, Object> values) {
         PendingInteraction pending = pendingInteractions.get(interactionId);
-        if (pending == null || !sameActor(pending.actor(), actor)) {
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+        if (pending == null || !pending.workspaceId().equals(normalizedWorkspaceId)
+                || !sameActor(pending.actor(), actor)) {
             throw new IllegalArgumentException("User input request was not found");
         }
         Map<String, Object> submitted = new LinkedHashMap<>();
@@ -104,7 +108,8 @@ public class AgentInteractionInputService {
         validateSubmission(pending.fields(), submitted);
         String inputRef = id("air");
         storedInputs.put(inputRef, new StoredInput(pending.targetTool(), pending.fields(), Map.copyOf(submitted),
-                pending.sessionUid(), pending.actor(), System.currentTimeMillis() + INPUT_REF_TTL_MS));
+                pending.workspaceId(), pending.sessionUid(), pending.runUid(), pending.actor(),
+                System.currentTimeMillis() + INPUT_REF_TTL_MS));
         if (!pending.completion().complete(new InteractionResult(inputRef, pending.targetTool(),
                 List.copyOf(submitted.keySet())))) {
             storedInputs.remove(inputRef);
@@ -147,7 +152,9 @@ public class AgentInteractionInputService {
             throw new IllegalArgumentException("Input reference is invalid or expired");
         }
         if (!input.targetTool().equals(request.getToolName())
+                || !input.workspaceId().equals(request.getWorkspaceId())
                 || !input.sessionUid().equals(request.getSessionUid())
+                || !input.runUid().equals(request.getRunUid())
                 || !sameActor(input.actor(), request.getActor())) {
             throw new IllegalArgumentException("Input reference does not belong to this tool execution");
         }
@@ -242,11 +249,13 @@ public class AgentInteractionInputService {
     public record InteractionResult(String inputRef, String targetTool, List<String> providedFields) {
     }
 
-    private record PendingInteraction(String targetTool, List<InputField> fields, String sessionUid,
-                                      AgentActor actor, CompletableFuture<InteractionResult> completion) {
+    private record PendingInteraction(String targetTool, List<InputField> fields, String workspaceId,
+                                      String sessionUid, String runUid, AgentActor actor,
+                                      CompletableFuture<InteractionResult> completion) {
     }
 
     private record StoredInput(String targetTool, List<InputField> fields, Map<String, Object> values,
-                               String sessionUid, AgentActor actor, long expiresAt) {
+                               String workspaceId, String sessionUid, String runUid, AgentActor actor,
+                               long expiresAt) {
     }
 }

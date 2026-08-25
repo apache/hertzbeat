@@ -90,7 +90,8 @@ class AgentToolRegistryExecutionTest {
                 return output(AgentToolStatus.SUCCEEDED, "{\"status\":\"change-ok\"}");
             }));
         orchestrator = new AgentToolExecutionOrchestrator(
-                registry, policyService, toolCallLedgerService, interactionInputService);
+                registry, policyService, toolCallLedgerService, interactionInputService,
+                new AgentTargetToolAuthorizer());
         stubLedger();
     }
 

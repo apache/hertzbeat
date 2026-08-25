@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.controller;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,10 +28,14 @@ import java.util.Map;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.CatalogItem;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.CatalogResponse;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.IntegrationGuide;
+import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.IntegrationVerification;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.Readiness;
+import org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.VerificationStatus;
 import org.apache.hertzbeat.alert.integration.api.AlertIntegrationRequestException;
 import org.apache.hertzbeat.alert.integration.service.AlertIntegrationCatalogService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,26 +55,51 @@ class AlertIntegrationCatalogControllerTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("workspace-a");
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new AlertIntegrationCatalogController(service))
                 .build();
     }
 
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
+    }
+
     @Test
     void exposesTheUnversionedCatalogEndpoint() throws Exception {
-        when(service.catalog()).thenReturn(new CatalogResponse(List.of(
+        IntegrationVerification verification = new IntegrationVerification(
+                VerificationStatus.UNVERIFIED, null, null);
+        when(service.catalog("workspace-a")).thenReturn(new CatalogResponse(List.of(
                 new CatalogItem(
                         "webhook",
                         "alert.integration.source.webhook",
                         "hertzbeat",
                         org.apache.hertzbeat.alert.integration.api.AlertIntegrationApiContract.Readiness.READY,
-                        List.of()))));
+                        List.of(),
+                        verification))));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/integrations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.items[0].source").value("webhook"))
-                .andExpect(jsonPath("$.data.items[0].readiness").value("ready"));
+                .andExpect(jsonPath("$.data.items[0].readiness").value("ready"))
+                .andExpect(jsonPath("$.data.items[0].verification.status").value("unverified"));
+    }
+
+    @Test
+    void startsWorkspaceScopedVerification() throws Exception {
+        IntegrationVerification waiting = new IntegrationVerification(
+                VerificationStatus.WAITING, 100L, null);
+        when(service.startVerification("workspace-a", "volcengine")).thenReturn(waiting);
+
+        mockMvc.perform(MockMvcRequestBuilders.put(
+                        "/api/alerts/integrations/volcengine/verification"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("waiting"))
+                .andExpect(jsonPath("$.data.startedAt").value(100L));
+
+        verify(service).startVerification("workspace-a", "volcengine");
     }
 
     @Test

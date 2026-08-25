@@ -60,7 +60,12 @@ describe('status page management model', () => {
         method: 1,
         configState: 2
       })
-    ).toEqual({ ...component, name: 'Updated', labels: {}, configState: 2 });
+    ).toEqual({
+      ...component,
+      name: 'Updated',
+      labels: {},
+      configState: 2
+    });
     expect(
       buildStatusComponentPayload({
         component,
@@ -103,7 +108,12 @@ describe('status page management model', () => {
       components: [{ id: 4, orgId: 2, name: 'API', method: 0, configState: 0, state: 1 }],
       contents: [
         { message: 'Investigating', state: 0, timestamp: 100 },
-        { incidentId: 9, message: 'Monitoring recovery', state: 2, timestamp: 200 }
+        {
+          incidentId: 9,
+          message: 'Monitoring recovery',
+          state: 2,
+          timestamp: 200
+        }
       ]
     });
   });

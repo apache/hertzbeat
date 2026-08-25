@@ -29,6 +29,9 @@ describe('Public Status locale contract', () => {
 
     for (const locale of [ja, pt, zhCn, zhTw]) {
       expect(Object.keys(locale.status).sort()).toEqual(expected);
+      expect(Object.keys(locale.status.overallDescription).sort()).toEqual(
+        Object.keys(en.status.overallDescription).sort()
+      );
     }
     expect(expected).toEqual(
       expect.arrayContaining(['feedback', 'historyUnavailable', 'incidentYear', 'invalid', 'permission'])

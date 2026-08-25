@@ -25,7 +25,13 @@ export type TargetHierarchyState =
   | { kind: AlertRuleMetricTargetFailure }
   | { kind: 'ready'; hierarchy: MonitorAppHierarchyNode };
 
+export type TargetHierarchyCatalogState =
+  | { kind: 'idle' | 'loading' }
+  | { kind: AlertRuleMetricTargetFailure }
+  | { kind: 'ready'; hierarchies: MonitorAppHierarchyNode[] };
+
 export type AlertRuleMetricTargetState = {
   apps: TargetApplicationsState;
   hierarchy: TargetHierarchyState;
+  catalog?: TargetHierarchyCatalogState;
 };

@@ -27,9 +27,13 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.contract.AgentAlertIncidentContext;
+import org.apache.hertzbeat.ai.gateway.contract.AgentLogRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentServiceRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetAuthority;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTraceRef;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
@@ -40,12 +44,146 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link RuntimePromptBuilder}.
  */
 class RuntimePromptBuilderTest {
+
+    @Test
+    void shouldExposeOnlySafeCanonicalTargetMetadata() {
+        AgentTargetAuthority authority = AgentTargetAuthority.builder()
+                .bindingId(91L)
+                .version("single-alert-authority.v1")
+                .hash("sha256:" + "a".repeat(64))
+                .build();
+        AgentTargetRef monitorTarget = AgentTargetRef.builder()
+                .version("entity-monitor-metric.v1")
+                .monitorId(42L)
+                .entityId(84L)
+                .service(AgentServiceRef.builder()
+                        .name("checkout")
+                        .namespace("payments")
+                        .environment("production")
+                        .build())
+                .signal(AgentSignalRef.builder()
+                        .type("metrics")
+                        .query("basic.max_connections")
+                        .start(1_000L)
+                        .end(2_000L)
+                        .timezone("Asia/Shanghai")
+                        .build())
+                .authority(authority)
+                .build();
+        AgentTargetRef alertTarget = AgentTargetRef.builder()
+                .version("single-alert.v1")
+                .alertId(73L)
+                .alertType("single")
+                .authority(authority)
+                .build();
+        AgentTargetRef entityTarget = AgentTargetRef.builder()
+                .version("entity.v1")
+                .entityId(84L)
+                .authority(authority)
+                .build();
+        AgentTargetRef traceTarget = AgentTargetRef.builder()
+                .version("trace-detail.v1")
+                .trace(AgentTraceRef.builder().traceId("trace-42").spanId("span-7")
+                        .start(1_000L).end(2_000L).serviceName("checkout").serviceNamespace("commerce")
+                        .environment("prod").resourceFilter("service.version=1")
+                        .attributeFilter("http.status_code=503").minDurationMs(10L).maxDurationMs(20L).build())
+                .authority(authority)
+                .build();
+        AgentTargetRef logTarget = AgentTargetRef.builder()
+                .version("log-page.v1")
+                .log(AgentLogRef.builder().start(1_000L).end(2_000L).traceId("trace-42").spanId("span-7")
+                        .severityNumber(17).severityText("ERROR").search("failed")
+                        .serviceName("checkout").serviceNamespace("commerce").environment("prod")
+                        .resourceFilter("service.version=1").attributeFilter("http.route=/pay")
+                        .hideInternal(true).hideNoise(false).pageIndex(0).pageSize(20).build())
+                .authority(authority)
+                .build();
+
+        for (AgentTargetRef target : List.of(monitorTarget, alertTarget, entityTarget, traceTarget, logTarget)) {
+            AgentRuntimeRequest request = AgentRuntimeRequest.builder()
+                    .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
+                    .envelope(GatewayEnvelope.builder()
+                            .channelId("web-ui")
+                            .workspaceId("team-a")
+                            .receivedAt(100L)
+                            .actor(AgentActor.builder().type("user").id("alice").roles(List.of("user")).build())
+                            .build())
+                    .session(AgentSession.builder()
+                            .id(1L)
+                            .sessionUid("session-prompt")
+                            .workspaceId("team-a")
+                            .build())
+                    .run(AgentRun.builder()
+                            .id(2L)
+                            .runUid("run-prompt")
+                            .sessionId(1L)
+                            .targetContextJson(JsonUtil.toJson(target))
+                            .build())
+                    .entryType(AgentRuntimeEntryType.USER_INPUT)
+                    .userInput(UserInput.builder()
+                            .conversationId("conversation-1")
+                            .target(target)
+                            .message(Message.builder()
+                                    .text("diagnose")
+                                    .build())
+                            .build())
+                    .build();
+            AgentRuntimeContext context = new AgentRuntimeContextBuilder(
+                    Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), () -> "trace-target")
+                    .build(request, new AgentRuntimeProperties());
+
+            RuntimePrompt.Block targetBlock = new RuntimePromptBuilder().build(context, List.of(), List.of())
+                    .getBlocks().stream()
+                    .filter(block -> block.getFrame() == RuntimePrompt.Frame.TARGET)
+                    .findFirst()
+                    .orElseThrow();
+            String content = targetBlock.getContent();
+
+            assertFalse(content.contains("Authority"));
+            assertFalse(content.contains("binding"));
+            assertFalse(content.contains("sha256:"));
+            assertFalse(content.contains("team-a"));
+            assertFalse(content.contains("returnTo"));
+            if (target == traceTarget) {
+                assertTrue(content.contains("Trace ID: trace-42"));
+                assertTrue(content.contains("Selected span ID: span-7"));
+                assertTrue(content.contains("Trace start epoch millis: 1000"));
+                assertTrue(content.contains("Trace end epoch millis: 2000"));
+                assertTrue(content.contains("Trace service name: checkout"));
+                assertTrue(content.contains("Trace service namespace: commerce"));
+                assertTrue(content.contains("Trace environment: prod"));
+                assertTrue(content.contains("Trace resource filter: service.version=1"));
+                assertTrue(content.contains("Trace attribute filter: http.status_code=503"));
+                assertTrue(content.contains("Trace minimum duration millis: 10"));
+                assertTrue(content.contains("Trace maximum duration millis: 20"));
+            }
+            if (target == logTarget) {
+                assertTrue(content.contains("Log start epoch millis: 1000"));
+                assertTrue(content.contains("Log end epoch millis: 2000"));
+                assertTrue(content.contains("Log trace ID: trace-42"));
+                assertTrue(content.contains("Log span ID: span-7"));
+                assertTrue(content.contains("Log severity number: 17"));
+                assertTrue(content.contains("Log severity text: ERROR"));
+                assertTrue(content.contains("Log body search: failed"));
+                assertTrue(content.contains("Log service name: checkout"));
+                assertTrue(content.contains("Log service namespace: commerce"));
+                assertTrue(content.contains("Log environment: prod"));
+                assertTrue(content.contains("Log resource filter: service.version=1"));
+                assertTrue(content.contains("Log attribute filter: http.route=/pay"));
+                assertTrue(content.contains("Log hide internal: true"));
+                assertTrue(content.contains("Log hide noise: false"));
+                assertTrue(content.contains("Log page index: 0"));
+                assertTrue(content.contains("Log page size: 20"));
+            }
+        }
+    }
 
     @Test
     void shouldBuildReadOnlyPromptWithoutLeakingSecrets() {
@@ -69,6 +207,14 @@ class RuntimePromptBuilderTest {
                                 .nodeId("30")
                                 .edgeId("edge-30-31")
                                 .depth(2)
+                                .environment("prod")
+                                .sourceKind("otlp-trace-call")
+                                .start(1_000L)
+                                .end(2_000L)
+                                .relationType("trace-call")
+                                .hideInternal(true)
+                                .pageIndex(0)
+                                .pageSize(50)
                                 .build())
                         .build())
                 .message(Message.builder().text("why is cpu high password=hunter2").build())
@@ -88,6 +234,10 @@ class RuntimePromptBuilderTest {
                         .id(2L)
                         .runUid("run-2")
                         .sessionId(1L)
+                        .targetMonitorId(userInput.getTarget().getMonitorId())
+                        .targetAlertId(userInput.getTarget().getAlertId())
+                        .targetCollector(userInput.getTarget().getCollector())
+                        .targetContextJson(JsonUtil.toJson(userInput.getTarget()))
                         .status("RUNNING")
                         .resultSummary("previous result")
                         .build())
@@ -158,6 +308,14 @@ class RuntimePromptBuilderTest {
         assertTrue(targetContext.getContent().contains("Topology node ID: 30"));
         assertTrue(targetContext.getContent().contains("Topology edge ID: edge-30-31"));
         assertTrue(targetContext.getContent().contains("Topology depth: 2"));
+        assertTrue(targetContext.getContent().contains("Topology environment: prod"));
+        assertTrue(targetContext.getContent().contains("Topology source kind: otlp-trace-call"));
+        assertTrue(targetContext.getContent().contains("Topology start epoch millis: 1000"));
+        assertTrue(targetContext.getContent().contains("Topology end epoch millis: 2000"));
+        assertTrue(targetContext.getContent().contains("Topology relation type: trace-call"));
+        assertTrue(targetContext.getContent().contains("Topology hide internal: true"));
+        assertTrue(targetContext.getContent().contains("Topology edge page index: 0"));
+        assertTrue(targetContext.getContent().contains("Topology edge page size: 50"));
         assertFalse(runtimeContext.contains("### Run"));
         assertFalse(runtimeContext.contains("Status: RUNNING"));
         assertFalse(runtimeContext.contains("Phase: diagnose"));

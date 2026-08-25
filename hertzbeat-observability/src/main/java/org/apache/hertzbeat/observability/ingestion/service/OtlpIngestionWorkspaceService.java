@@ -30,19 +30,21 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsD
  */
 public interface OtlpIngestionWorkspaceService {
 
-    OtlpIngestionOverviewDto getOverview();
+    OtlpIngestionOverviewDto getOverview(String workspaceId);
 
     OtlpIngestionGuideDto getGuide(HttpServletRequest request);
 
-    OtlpEntityBindingSummaryDto getBindingSummary();
+    OtlpEntityBindingSummaryDto getBindingSummary(String workspaceId);
 
-    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end, String serviceName,
+    OtlpMetricsConsoleDto getMetricsConsole(String workspaceId, Long entityId, String entityType, Long start, Long end,
+                                            String serviceName,
                                             String serviceNamespace, String environment, String query,
                                             String filter, String groupBy, String aggregation,
                                             String temporalAggregation, String step, String limit,
                                             String operationName);
 
     default OtlpMetricsConsoleDto getMetricsConsole(
+            String workspaceId,
             Long entityId,
             String entityType,
             Long start,
@@ -61,15 +63,16 @@ public interface OtlpIngestionWorkspaceService {
             String step,
             String limit,
             String operationName) {
-        return getMetricsConsole(entityId, entityType, start, end, serviceName, serviceNamespace, environment, query,
-                filter, groupBy, aggregation, temporalAggregation, step, limit, operationName);
+        return getMetricsConsole(workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
+                environment, query, filter, groupBy, aggregation, temporalAggregation, step, limit, operationName);
     }
 
-    OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
+    OtlpMetricsInventoryDto getMetricsInventory(String workspaceId, Long entityId, String entityType, Long start, Long end,
                                                 String serviceName, String serviceNamespace, String environment,
                                                 String limit);
 
     default OtlpMetricsInventoryDto getMetricsInventory(
+            String workspaceId,
             Long entityId,
             String entityType,
             Long start,
@@ -81,11 +84,12 @@ public interface OtlpIngestionWorkspaceService {
             String instance,
             String endpoint,
             String limit) {
-        return getMetricsInventory(
-                entityId, entityType, start, end, serviceName, serviceNamespace, environment, limit);
+        return getMetricsInventory(workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
+                environment, limit);
     }
 
-    OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
+    OtlpRelatedMetricsDto getRelatedMetrics(String workspaceId, Long entityId, String entityType, Long start, Long end,
+                                            String serviceName,
                                             String serviceNamespace, String environment, String filter,
                                             String operationName, String limit);
 }

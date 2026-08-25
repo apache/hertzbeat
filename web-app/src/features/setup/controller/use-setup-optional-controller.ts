@@ -16,13 +16,14 @@ export function useSetupOptionalController(
   onCompleted: (response: SetupCompleteResponse) => void
 ) {
   const startWrite = useSetupWriteBoundary();
+  const publicOrigin = window.location.origin;
   const draft = useSetupOptionalDraft();
-  const validation = useSetupOptionalValidation(draft.draftRef, startWrite, draft.clearMailSecret);
+  const validation = useSetupOptionalValidation(draft.draftRef, startWrite, draft.clearMailSecret, publicOrigin);
   const updateDraft = useCallback(
     (patch: Partial<SetupOptionalDraft>) => {
       draft.updateDraft(patch);
       if (patch.mail) validation.reset('mail');
-      if ('publicBaseUrl' in patch || 'serverOtlpHttpEndpoint' in patch || 'serverOtlpGrpcEndpoint' in patch) {
+      if ('useProxy' in patch || 'proxyPublicBaseUrl' in patch) {
         validation.reset('public_access');
       }
     },
@@ -35,11 +36,13 @@ export function useSetupOptionalController(
     startWrite,
     clearMailSecret: draft.clearMailSecret,
     resetMailValidation: () => validation.reset('mail'),
+    publicOrigin,
     onCompleted
   });
   return {
     ...commands,
     draft: draft.draft,
+    publicOrigin,
     updateDraft,
     validation: validation.validation,
     validateMail: validation.validateMail,

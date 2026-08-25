@@ -72,9 +72,12 @@ public class AlertServiceImpl implements AlertService {
     private AlertGroupMutationPublisher alertGroupMutationPublisher;
 
     @Override
-    public Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
+    public Page<SingleAlert> getSingleAlerts(String workspaceId, String status, String search, String sort, String order,
+                                             int pageIndex, int pageSize) {
+        String workspace = requireWorkspace(workspaceId);
         Specification<SingleAlert> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
+            andList.add(criteriaBuilder.equal(root.get("workspaceId"), workspace));
             if (status != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
@@ -108,11 +111,14 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
-    public Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String serviceName,
+    public Page<GroupAlert> getGroupAlerts(String workspaceId, String status, String search, String severity,
+                                           String serviceName,
                                            String serviceNamespace, String environment, String sort, String order,
                                            int pageIndex, int pageSize) {
+        String workspace = requireWorkspace(workspaceId);
         Specification<GroupAlert> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
+            andList.add(criteriaBuilder.equal(root.get("workspaceId"), workspace));
             if (status != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
@@ -153,7 +159,7 @@ public class AlertServiceImpl implements AlertService {
                     .filter(groupAlert -> matchesAlertScope(groupAlert, normalizedServiceName, normalizedServiceNamespace, normalizedEnvironment))
                     .peek(groupAlert -> {
                         if (normalizedSeverity != null) {
-                            hydrateGroupAlerts(groupAlert);
+                            hydrateGroupAlerts(workspace, groupAlert);
                         }
                     })
                     .filter(groupAlert -> normalizedSeverity == null
@@ -163,49 +169,55 @@ public class AlertServiceImpl implements AlertService {
             int end = Math.min(start + pageRequest.getPageSize(), filteredAlerts.size());
             List<GroupAlert> pageContent = filteredAlerts.subList(start, end);
             if (normalizedSeverity == null) {
-                pageContent.forEach(this::hydrateGroupAlerts);
+                pageContent.forEach(groupAlert -> hydrateGroupAlerts(workspace, groupAlert));
             }
             return new PageImpl<>(pageContent, pageRequest, filteredAlerts.size());
         }
         Page<GroupAlert> groupAlertPage = groupAlertDao.findAll(specification, pageRequest);
-        groupAlertPage.getContent().forEach(this::hydrateGroupAlerts);
+        groupAlertPage.getContent().forEach(groupAlert -> hydrateGroupAlerts(workspace, groupAlert));
         return groupAlertPage;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<SingleAlert> findSingleAlert(long id) {
-        return singleAlertDao.findById(id);
+    public Optional<SingleAlert> findSingleAlert(String workspaceId, long id) {
+        return singleAlertDao.findByWorkspaceIdAndId(requireWorkspace(workspaceId), id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<GroupAlert> findGroupAlert(long id) {
-        return groupAlertDao.findById(id);
+    public Optional<GroupAlert> findGroupAlert(String workspaceId, long id) {
+        return groupAlertDao.findByWorkspaceIdAndId(requireWorkspace(workspaceId), id);
     }
 
     @Override
-    public void deleteGroupAlerts(HashSet<Long> ids) {
+    public void deleteGroupAlerts(String workspaceId, HashSet<Long> ids) {
+        String workspace = requireWorkspace(workspaceId);
         if (ids.contains(null)) {
             throw new AlertGroupNotFoundException();
         }
-        List<GroupAlert> groupAlerts = groupAlertDao.findGroupAlertsByIdIn(ids);
+        List<GroupAlert> groupAlerts = groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(workspace, ids);
         requireExactGroupAlertTargets(ids, groupAlerts);
         for (GroupAlert groupAlert : groupAlerts) {
             List<String> firingAlerts = groupAlert.getAlertFingerprints();
-            singleAlertDao.deleteSingleAlertsByFingerprintIn(firingAlerts);
+            singleAlertDao.deleteSingleAlertsByWorkspaceIdAndFingerprintIn(workspace, firingAlerts);
         }
-        groupAlertDao.deleteGroupAlertsByIdIn(ids);
-        alertGroupMutationPublisher.publishDeleted(ids);
+        groupAlertDao.deleteGroupAlertsByWorkspaceIdAndIdIn(workspace, ids);
+        alertGroupMutationPublisher.publishDeleted(workspace, ids);
     }
 
     @Override
-    public void deleteSingleAlerts(HashSet<Long> ids) {
-        singleAlertDao.deleteSingleAlertsByIdIn(ids);
+    public void deleteSingleAlerts(String workspaceId, HashSet<Long> ids) {
+        String workspace = requireWorkspace(workspaceId);
+        List<Long> requestedIds = ids == null ? List.of() : ids.stream().toList();
+        List<SingleAlert> alerts = singleAlertDao.findAllByWorkspaceIdAndIdIn(workspace, requestedIds);
+        requireExactSingleAlertTargets(requestedIds, alerts);
+        singleAlertDao.deleteSingleAlertsByWorkspaceIdAndIdIn(workspace, ids);
     }
 
     @Override
-    public void editGroupAlertStatus(String status, List<Long> ids) {
+    public void editGroupAlertStatus(String workspaceId, String status, List<Long> ids) {
+        String workspace = requireWorkspace(workspaceId);
         if (!StringUtils.hasText(status) || ids == null || ids.isEmpty()) {
             return;
         }
@@ -214,7 +226,7 @@ public class AlertServiceImpl implements AlertService {
         if (requestedIds.contains(null)) {
             throw new AlertGroupNotFoundException();
         }
-        List<GroupAlert> groupAlerts = groupAlertDao.findAllById(requestedIds);
+        List<GroupAlert> groupAlerts = groupAlertDao.findGroupAlertsByWorkspaceIdAndIdIn(workspace, requestedIds);
         requireExactGroupAlertTargets(requestedIds, groupAlerts);
         long now = Instant.now().toEpochMilli();
         List<String> fingerprints = groupAlerts.stream()
@@ -225,7 +237,7 @@ public class AlertServiceImpl implements AlertService {
                 .toList();
         List<SingleAlert> singleAlerts = fingerprints.isEmpty()
                 ? List.of()
-                : singleAlertDao.findSingleAlertsByFingerprintIn(fingerprints);
+                : singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(workspace, fingerprints);
         for (GroupAlert groupAlert : groupAlerts) {
             groupAlert.setStatus(status);
         }
@@ -245,7 +257,7 @@ public class AlertServiceImpl implements AlertService {
         if (!singleAlerts.isEmpty()) {
             singleAlertDao.saveAll(singleAlerts);
         }
-        alertGroupMutationPublisher.publishStatusChanged(requestedIds, status);
+        alertGroupMutationPublisher.publishStatusChanged(workspace, requestedIds, status);
     }
 
     private static void requireSupportedGroupAlertStatus(String status) {
@@ -265,16 +277,28 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
-    public void editSingleAlertStatus(String status, List<Long> ids) {
-        singleAlertDao.updateSingleAlertsStatus(status, ids);
+    public void editSingleAlertStatus(String workspaceId, String status, List<Long> ids) {
+        String workspace = requireWorkspace(workspaceId);
+        List<Long> requestedIds = ids == null ? List.of() : ids.stream().distinct().toList();
+        if (requestedIds.isEmpty()) {
+            return;
+        }
+        List<SingleAlert> alerts = singleAlertDao.findAllByWorkspaceIdAndIdInForUpdate(workspace, requestedIds);
+        requireExactSingleAlertTargets(requestedIds, alerts);
+        int affected = singleAlertDao.updateSingleAlertsStatus(workspace, status, requestedIds);
+        if (affected != requestedIds.size()) {
+            throw new AlertGroupNotFoundException();
+        }
     }
 
 
     @Override
-    public AlertSummary getAlertsSummary() {
+    public AlertSummary getAlertsSummary(String workspaceId) {
+        String workspace = requireWorkspace(workspaceId);
         AlertSummary alertSummary = new AlertSummary();
         // Statistics on the alarm information in the alarm state
-        List<SingleAlert> firingAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
+        List<SingleAlert> firingAlerts = singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(
+                workspace, CommonConstants.ALERT_STATUS_FIRING);
         // severity - emergency critical warning info
         int emergencyNum = 0;
         int criticalNum = 0;
@@ -294,7 +318,7 @@ public class AlertServiceImpl implements AlertService {
             alertSummary.setPriorityWarningNum(warningNum);
         }
 
-        long total = singleAlertDao.count();
+        long total = singleAlertDao.countByWorkspaceId(workspace);
         alertSummary.setTotal(total);
         long resolved = total - firingAlerts.size();
         alertSummary.setDealNum(resolved);
@@ -313,9 +337,10 @@ public class AlertServiceImpl implements AlertService {
         return alertSummary;
     }
 
-    private void hydrateGroupAlerts(GroupAlert groupAlert) {
+    private void hydrateGroupAlerts(String workspaceId, GroupAlert groupAlert) {
         List<String> firingAlerts = groupAlert.getAlertFingerprints();
-        List<SingleAlert> singleAlerts = new ArrayList<>(singleAlertDao.findSingleAlertsByFingerprintIn(firingAlerts));
+        List<SingleAlert> singleAlerts = new ArrayList<>(
+                singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(workspaceId, firingAlerts));
         singleAlerts.sort(Comparator.comparing(SingleAlert::getGmtUpdate, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(SingleAlert::getId, Comparator.nullsLast(Comparator.reverseOrder())));
         groupAlert.setAlerts(singleAlerts);
@@ -372,5 +397,19 @@ public class AlertServiceImpl implements AlertService {
         }
         String annotationSeverity = alert.getAnnotations() == null ? null : alert.getAnnotations().get("severity");
         return StringUtils.hasText(annotationSeverity) && severity.equalsIgnoreCase(annotationSeverity.trim());
+    }
+
+    private static void requireExactSingleAlertTargets(Collection<Long> requestedIds, List<SingleAlert> alerts) {
+        List<Long> foundIds = alerts.stream().map(SingleAlert::getId).distinct().toList();
+        if (foundIds.size() != requestedIds.size() || !foundIds.containsAll(requestedIds)) {
+            throw new AlertGroupNotFoundException();
+        }
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new IllegalArgumentException("workspace is required");
+        }
+        return workspaceId.trim();
     }
 }

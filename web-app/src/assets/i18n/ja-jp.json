@@ -17,9 +17,14 @@
     "query": "検索",
     "refresh": "更新",
     "actions": "操作",
+    "tableSelection": {
+      "selectAll": "このページの項目をすべて選択",
+      "clearAll": "このページの項目の選択をすべて解除"
+    },
     "view": "表示",
     "edit": "編集",
     "cancel": "キャンセル",
+    "confirm": "確認",
     "unsavedChangesConfirm": "保存していない変更を破棄しますか？",
     "discardChanges": "変更を破棄",
     "save": "保存",
@@ -164,6 +169,10 @@
     "description": "サービス、ホスト、データベースなどのリソースは自動的に統合され、抽象エンティティの理解や手動モデリングは不要です。",
     "empty": "現在の条件に一致するリソースはありません。",
     "loading": "リソースを読み込んでいます…",
+    "degraded": {
+      "title": "運用エビデンスを利用できません",
+      "description": "リソースの識別情報は利用できますが、テレメトリに基づく状態とエビデンスを読み込めません。正常状態やゼロ値を推定して表示することはありません。"
+    },
     "filters": {
       "search": "リソースを検索",
       "type": "タイプ",
@@ -1393,14 +1402,6 @@
       "resizeHistory": "履歴パネルの高さを変更"
     }
   },
-  "alertNavigation": {
-    "events": "アラートイベント",
-    "rules": "ルール",
-    "noiseControl": "ノイズ制御",
-    "groups": "グループ化",
-    "inhibits": "抑制",
-    "silences": "サイレンス"
-  },
   "settingsNavigation": {
     "receivers": "通知先",
     "rules": "配信ルール",
@@ -1490,7 +1491,6 @@
       "not-found": "This alert integration is not in the server catalog."
     },
     "readiness": {
-      "ready": "This backend guide is ready to configure.",
       "configuration_required": "This source requires sender or gateway configuration before it can run.",
       "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
     },
@@ -1500,17 +1500,41 @@
     "snippets": "Payload examples",
     "limitations": "Known limitations",
     "menu": "外部アラート連携",
-    "title": "{{source}} 連携",
     "description": "認証済みの HertzBeat 受信エンドポイントへ外部送信元からアラートを送信します。",
-    "sourcesLabel": "連携元",
-    "method": "メソッド",
+    "sourcesLabel": "連携アラートソース",
+    "sourceGroups": {
+      "ready": "直接接続可能",
+      "configuration_required": "ゲートウェイが必要",
+      "guide_blocked": "利用不可"
+    },
     "endpoint": "受信パス",
-    "endpointHint": "ここには受信パスのみを表示します。送信元から到達可能な HertzBeat サーバーアドレスを先頭に付けてください。",
-    "authorizationHeader": "必須ヘッダー",
-    "manageTokens": "API トークンを管理",
+    "endpointConfiguredHint": "このコールバック URL は、システム設定の公開アクセスアドレスと受信パス {{path}} を組み合わせています。",
+    "endpointRelativeHint": "公開アクセスアドレスが未設定のため、受信パスのみを表示しています。システム設定で追加すると完全なコールバック URL が生成されます。",
+    "requestHeaders": "リクエストヘッダー",
+    "generateToken": "トークンを生成",
+    "dataFlow": "成功レスポンスの意味",
     "copy": "コピー",
-    "copied": "コピー済み",
-    "copyFailed": "コピー失敗"
+    "copied": "コピーしました",
+    "copyFailed": "コピーに失敗しました",
+    "workspace": {
+      "prepare": "認証情報を準備",
+      "configure": "送信元を設定",
+      "verify": "アラートのライフサイクルを確認"
+    },
+    "verification": {
+      "unverified": "未検証",
+      "unverifiedHint": "検証を開始してから、この送信元で実際のアラートを1件発生させてください。",
+      "waiting": "送信元イベントを待機中",
+      "waitingHint": "{{time}} から、この送信元の有効なイベントを待機しています。",
+      "verified": "イベント受信済み",
+      "verifiedHint": "{{time}} に受信したイベントで最後に検証されました。",
+      "start": "検証を開始",
+      "restart": "再検証",
+      "starting": "開始中…",
+      "startFailed": "検証を開始できませんでした。再試行してください。",
+      "verifiedRail": "実際の送信元イベントで検証済み"
+    },
+    "zabbix": { "parameters": "メディアタイプパラメーター", "script": "Webhook スクリプト" }
   },
   "plugins": {
     "title": "プラグイン管理",
@@ -1605,6 +1629,23 @@
     "takeSelectedOffline": "選択項目をオフラインにする",
     "deleteSelected": "選択項目を削除",
     "mutationSuccess": "コレクターの状態を更新しました。",
+    "details": {
+      "action": "詳細",
+      "actionNamed": "{{name}} の詳細を表示",
+      "title": "コレクター詳細: {{name}}",
+      "updatedAt": "最終更新",
+      "overview": "概要",
+      "configuration": "構成",
+      "properties": "プロパティ",
+      "assignments": "タスク割り当て",
+      "operations": "運用構成",
+      "position": "{{total}} 件中 {{current}} 件目",
+      "previous": "前のコレクター",
+      "next": "次のコレクター",
+      "close": "コレクター詳細を閉じる",
+      "resize": "コレクター詳細の幅を変更",
+      "moreActions": "その他のコレクター操作"
+    },
     "deploy": {
       "action": "デプロイ情報を生成",
       "title": "Collector デプロイ情報",
@@ -1835,6 +1876,12 @@
     "copy": "コピー",
     "delete": "削除",
     "deleteConfirm": "このラベルを削除しますか？",
+    "selected": "{{count}} 件選択中",
+    "selectRow": "この行を選択",
+    "clearSelection": "選択を解除",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm_one": "選択した {{count}} 件のラベルを削除しますか？",
+    "deleteSelectedConfirm_other": "選択した {{count}} 件のラベルを削除しますか？",
     "nameRequired": "ラベル名を入力してください。",
     "saveSuccess": "ラベルを保存しました。",
     "saveFailed": "ラベルを保存できませんでした。",
@@ -1851,7 +1898,7 @@
   },
   "systemConfig": {
     "title": "システム設定",
-    "description": "共通の言語、タイムゾーン、画面密度を設定します。",
+    "description": "共通の言語とタイムゾーンを設定します。",
     "loading": "システム設定を読み込んでいます…",
     "readOnly": "システム設定を変更できるのは管理者のみです。",
     "recovery": "保存した設定を確認できませんでした。続行する前に現在のサーバー設定を確認してください。",
@@ -1864,7 +1911,23 @@
     "saveSuccess": "システム設定を保存しました。",
     "saveFailed": "システム設定を保存できませんでした。",
     "discard": "変更を破棄",
-    "noChanges": "未保存の変更はありません。",
+    "publicAccess": {
+      "title": "公開アクセス",
+      "description": "運用担当者、アラート送信元、テレメトリクライアントがこの HertzBeat に接続するためのアドレスです。",
+      "loading": "公開アクセス設定を読み込んでいます…",
+      "unavailable": "公開アクセス設定を取得できません。",
+      "invalid": "公開アクセス設定から無効な応答が返されました。",
+      "publicBaseUrl": "公開ベース URL",
+      "publicBaseUrlHelp": "外部アラートの完全なコールバック URL の生成に使用します。リバースプロキシのパス接頭辞を含めてください。",
+      "advancedTitle": "高度な OTLP エンドポイント",
+      "advancedHelp": "既定では標準ポート HTTP 4318 と gRPC 4317 を使用します。OTLP が別のホストまたはポートを使用する場合のみ設定してください。",
+      "otlpHttp": "サーバー OTLP HTTP エンドポイント",
+      "otlpHttpHelp": "空欄の場合は HertzBeat の公開ホストと標準ポート 4318 を使用します。完全な HTTP(S) アドレスも指定できます。",
+      "otlpGrpc": "サーバー OTLP gRPC エンドポイント",
+      "otlpGrpcHelp": "空欄の場合は HertzBeat の公開ホストと標準ポート 4317 を使用します。完全な HTTP(S) アドレスも指定できます。",
+      "saveSuccess": "公開アクセス設定を保存しました。",
+      "saveFailed": "公開アクセス設定を保存できませんでした。"
+    },
     "locale": {
       "label": "言語",
       "help": "保存後にこのブラウザーへ適用します。",
@@ -1877,18 +1940,11 @@
     "timezone": {
       "label": "タイムゾーン",
       "help": "サーバーの時刻表示とスケジュールに使用します。"
-    },
-    "theme": {
-      "label": "インターフェース",
-      "help": "標準、ダーク、コンパクト表示を選択します。",
-      "light-ops": "標準ライト",
-      "dark-ops": "ダーク",
-      "compact": "コンパクトダーク"
     }
   },
   "objectStore": {
     "title": "オブジェクトストレージ",
-    "description": "HertzBeat が生成するファイルとバイナリオブジェクトの保存先を選択します。",
+    "description": "カスタム監視テンプレート（YAML 定義）の保存先を選択します。メトリクス、ログ、トレース、アラートデータには影響しません。",
     "loading": "オブジェクトストレージ設定を読み込んでいます…",
     "recoveryProof": "保存した設定を確認できませんでした。再試行して現在のサーバー設定を確認してください。",
     "recoveryUncertain": "保存結果が不明です。変更を続ける前に、後ほどサーバー設定を確認してください。",
@@ -1896,13 +1952,30 @@
     "reconcileComplete": "現在のサーバー設定を再読み込みしました。シークレットの書き込み結果は推定していません。",
     "unavailable": "オブジェクトストレージ設定を取得できません。",
     "missing": "オブジェクトストレージはまだ設定されていません。",
+    "status": {
+      "unconfigured": "未設定",
+      "configured": "設定済み"
+    },
     "invalid": "オブジェクトストレージの応答が無効です。",
     "readOnly": "オブジェクトストレージ設定を変更できるのは管理者のみです。",
     "validation": "必須のストレージ項目を入力してください。",
     "saveSuccess": "オブジェクトストレージ設定を保存しました。",
     "saveFailed": "オブジェクトストレージ設定を保存できませんでした。",
+    "migrationConflict": "移行先に同名で内容の異なるカスタムテンプレートがあります。競合を解消してから切り替えてください。",
+    "migrateAndSave": "移行して保存",
     "discard": "変更を破棄",
     "noChanges": "未保存の変更はありません。",
+    "searchTypes": "保存先を検索",
+    "noMatchingTypes": "一致する保存先はありません。",
+    "activationHint": "保存時に既存のカスタムテンプレートをコピーして検証し、その後この保存先を有効にします。移行元のコピーは保持されます。",
+    "unsavedHint": "保存先を切り替える前に既存のカスタムテンプレートをコピーして検証します。同名の競合は上書きしません。",
+    "obsSectionTitle": "Huawei Cloud OBS 設定",
+    "obsSectionDescription": "設定済みの認証情報は表示されません。空欄のままにすると現在の値を保持します。",
+    "activate": {
+      "database": "移行してデータベースを使用",
+      "file": "移行してローカルファイルシステムを使用",
+      "obs": "移行して Huawei Cloud OBS を使用"
+    },
     "type": {
       "label": "保存先",
       "database": "データベース",
@@ -1910,9 +1983,9 @@
       "obs": "Huawei Cloud OBS"
     },
     "typeHelp": {
-      "database": "HertzBeat が使用するデータベースに保存します。",
-      "file": "HertzBeat サーバーのファイルシステムに保存します。",
-      "obs": "Huawei Cloud OBS バケットに保存します。"
+      "database": "カスタム監視テンプレートを HertzBeat が現在使用しているデータベースに保存します。",
+      "file": "カスタム監視テンプレートを HertzBeat サーバー上の define/app-*.yml ファイルとして保存します。",
+      "obs": "カスタム監視テンプレートの YAML ファイルを Huawei Cloud OBS バケットの指定パスに保存します。"
     },
     "obs": {
       "accessKey": "アクセスキー",
@@ -1961,6 +2034,13 @@
     "unavailable": "トークンデータを取得できません。",
     "invalid": "トークンの応答が無効です。",
     "empty": "API トークンはまだありません。",
+    "emptyTitle": "最初の API トークンを作成",
+    "emptyDescription": "連携またはテレメトリクライアント専用の認証情報を作成します。",
+    "emptyName": "使用するクライアントまたは連携に合わせて名前を付けます。",
+    "emptyScope": "必要最小限のアクセス範囲を選択します。",
+    "emptyExpiry": "有効期限を設定するか、失効するまで有効にします。",
+    "emptyOneTime": "シークレットは作成後に一度だけ表示されます。",
+    "emptyAction": "最初のトークンを作成",
     "scope": {
       "label": "アクセス",
       "apiAdmin": "管理 API",
@@ -1979,18 +2059,34 @@
   "alertGroups": {
     "title": "アラートグループ",
     "description": "関連するアラートを通知前にまとめる方法を設定します。",
-    "new": "ポリシーを追加",
-    "edit": "ポリシーを編集",
+    "new": "グループポリシーを追加",
+    "edit": "グループポリシーを編集",
     "search": "ポリシーを検索",
     "empty": "条件に一致するグループポリシーはありません。",
-    "name": "ポリシー",
+    "name": "ポリシー名",
     "labels": "グループラベル",
-    "wait": "初回待機",
-    "interval": "グループ間隔",
+    "labelsPlaceholder": "ラベルを入力してください",
+    "wait": "待機時間",
+    "interval": "間隔時間",
     "repeat": "再通知間隔",
-    "enabled": "有効",
+    "enabled": "有効化",
     "updated": "更新日時",
     "seconds": "{{value}} 秒",
+    "secondsUnit": "秒",
+    "durationUnit": "単位",
+    "units": {
+      "seconds": "秒",
+      "minutes": "分",
+      "hours": "時間"
+    },
+    "required": "必須項目を入力してください。",
+    "help": {
+      "name": "このグループポリシーを識別する一意の名前です。",
+      "labels": "アラートラベルキーでメッセージをグループ化します。alertname、severity、instance など複数のキーを設定できます。",
+      "wait": "新しいアラートを受信後、同じアラートをグループ化するための待機時間です。デフォルトは 30 秒です。",
+      "interval": "通知が頻繁になりすぎないようにするグループ通知の最小間隔です。デフォルトは 5 分です。",
+      "repeat": "継続中のアラートに対する繰り返し通知の最小間隔です。デフォルトは 4 時間です。"
+    },
     "delete": "削除",
     "deleteConfirm": "このグループポリシーを削除しますか？",
     "deleteSelected": "選択項目を削除",
@@ -2005,19 +2101,38 @@
   "alertInhibits": {
     "title": "アラート抑制",
     "description": "送信元アラートが有効な間、条件に一致する対象アラートを抑制します。",
-    "new": "抑制ポリシーを追加",
-    "edit": "抑制ポリシーを編集",
+    "new": "新規抑制ルール",
+    "edit": "抑制ルールを編集",
     "search": "抑制ポリシーを検索",
     "empty": "条件に一致する抑制ポリシーはありません。",
-    "name": "ポリシー",
-    "sourceLabels": "送信元ラベル",
-    "targetLabels": "対象ラベル",
-    "equalLabels": "一致ラベル",
+    "name": "抑制ルール名",
+    "nameHelp": "この抑制ルールを識別する一意の名前です。",
+    "sourceLabels": "ソースラベル",
+    "targetLabels": "ターゲットラベル",
+    "equalLabels": "同じラベル",
+    "equalPlaceholder": "ラベルを入力または選択",
+    "matcherKey": "キー",
+    "matcherValue": "値",
+    "addMatcher": "ラベル条件を追加",
+    "removeMatcher": "ラベル条件を削除",
+    "required": "必須項目を入力してください。",
+    "logicPreview": {
+      "title": "このルールの動作",
+      "trigger": "開始条件：",
+      "triggerDetail": "{{source}} に一致するラベルを持つ発報中のアラートを検出します。",
+      "effect": "抑制結果：",
+      "effectDetail": "{{target}} に一致するラベルを持つアラートは通知処理へ転送されません。",
+      "condition": "適用条件：",
+      "conditionDetail": "開始側と抑制対象のアラートで {{equal}} ラベルの値が一致する場合にのみ適用します。",
+      "sourceEmpty": "抑制を開始するアラートを設定してください。",
+      "targetEmpty": "通知を抑制する対象アラートを設定してください。",
+      "equalEmpty": "2つのアラートで値が一致する必要があるラベルを設定してください。"
+    },
     "matcherPlaceholder": "severity:critical, service:checkout",
     "sourceHelp": "抑制を開始する有効なアラートです。",
     "targetHelp": "送信元アラートが有効な間に抑制するアラートです。",
     "equalHelp": "送信元と対象のアラートで、これらのラベル値が一致する必要があります。",
-    "enabled": "有効",
+    "enabled": "有効化",
     "updated": "更新日時",
     "delete": "削除",
     "deleteConfirm": "この抑制ポリシーを削除しますか？",
@@ -2052,29 +2167,38 @@
     "title": "アラートサイレンス",
     "description": "一回限りまたは定期的なメンテナンス時間中に一致するアラートを停止します。",
     "new": "サイレンスを追加",
+    "createTitle": "新規サイレンス戦略",
     "edit": "サイレンスを編集",
     "search": "サイレンスを検索",
     "empty": "条件に一致するサイレンスポリシーはありません。",
-    "name": "ポリシー",
-    "matchAll": "すべてのアラートに一致",
-    "labels": "ラベル条件",
+    "name": "サイレンス戦略名",
+    "matchAll": "すべて一致",
+    "labels": "タグ一致",
+    "matcherKey": "キー",
+    "matcherValue": "値",
+    "addMatcher": "ラベル条件を追加",
+    "removeMatcher": "ラベル条件を削除",
+    "required": "必須項目を入力してください。",
+    "periodInvalid": "有効な時間範囲を選択してください。",
+    "recurringPeriodInvalid": "開始時刻と終了時刻は異なる時刻にしてください。",
+    "daysRequired": "少なくとも1日を選択してください。",
     "matcherPlaceholder": "service:checkout, environment:staging",
     "labelsHelp": "すべてのラベルに一致するアラートのみ停止します。",
-    "enabled": "有効",
-    "type": "スケジュール種別",
-    "once": "一回限り",
-    "recurring": "定期",
+    "enabled": "有効化",
+    "type": "サイレンスタイプ",
+    "once": "一時的サイレンス",
+    "recurring": "周期的サイレンス",
     "days": "有効な曜日",
-    "timeWindow": "停止時間",
+    "timeWindow": "サイレンス期間",
     "start": "開始",
     "end": "終了",
     "crossMidnightHelp": "終了時刻が開始時刻より前の場合は、日をまたぐ時間帯になります。",
     "scope": "対象",
     "schedule": "スケジュール",
-    "times": "一致回数",
+    "times": "サイレンスされたアラート数",
     "allAlerts": "すべてのアラート",
     "selectedDays": "週 {{count}} 日",
-    "updated": "更新日時",
+    "updated": "編集時間",
     "delete": "削除",
     "deleteConfirm": "このサイレンスポリシーを削除しますか？",
     "deleteSelected": "選択項目を削除",
@@ -2085,6 +2209,7 @@
     "unavailable": "サイレンスポリシーを利用できません。",
     "saveSuccess": "サイレンスポリシーを保存しました。",
     "saveFailed": "サイレンスポリシーを保存できませんでした。",
+    "deleteSuccess": "サイレンスポリシーを削除しました。",
     "operationSuccess": "サイレンスポリシーを更新しました。",
     "operationFailed": "サイレンスポリシーの操作に失敗しました。",
     "management": {
@@ -2114,16 +2239,21 @@
     "loading": "通知先を読み込んでいます…",
     "new": "通知先を追加",
     "edit": "通知先を編集",
-    "search": "通知先を検索",
+    "search": "通知先名",
     "empty": "条件に一致する通知先はありません。",
     "name": "通知先",
-    "type": "チャネル種別",
-    "setting": "送信先",
-    "updated": "更新日時",
+    "nameField": "通知先名",
+    "type": "通知方法",
+    "setting": "設定",
+    "updated": "編集日時",
     "configured": "安全に設定済み",
-    "test": "テスト送信",
+    "test": "アラート送信テスト",
     "delete": "削除",
     "deleteConfirm": "この通知先を削除しますか？",
+    "required": "必須項目を入力してください。",
+    "emailInvalid": "メールアドレスが無効です。",
+    "phoneInvalid": "電話番号が無効です。",
+    "invalidField": "入力値が無効です。",
     "validation": "通知先名と必須のチャネル設定を入力してください。",
     "loadFailed": "通知先を読み込めませんでした。",
     "saveSuccess": "通知先を保存しました。",
@@ -2245,14 +2375,26 @@
     "saveSuccess": "テンプレートを保存しました。",
     "saveFailed": "テンプレートを保存できませんでした。",
     "deleteSuccess": "テンプレートを削除しました。",
-    "deleteFailed": "テンプレートを削除できませんでした。"
+    "deleteFailed": "テンプレートを削除できませんでした。",
+    "previewSource": "テンプレートソース",
+    "previewSearch": "テンプレートソースを検索",
+    "previewSearchPlaceholder": "ソースを検索",
+    "previewMatchCount": "{{current}} / {{total}}",
+    "previewNoMatches": "一致なし",
+    "previewPreviousMatch": "前の一致",
+    "previewNextMatch": "次の一致",
+    "previewJumpToBody": "テンプレート本文",
+    "previewBodyUnavailable": "先頭コメントが見つかりません。",
+    "previewCopy": "ソースをコピー",
+    "previewCopied": "コピーしました",
+    "previewCopyFailed": "コピーできませんでした"
   },
   "notificationWorkspace": {
     "label": "通知設定ワークフロー",
     "title": "通知設定",
     "description": "配信の依存関係を順番に設定し、各領域を個別に管理します。",
     "steps": {
-      "channels": { "label": "チャネル", "dependency": "メールと SMS の配信サービスを設定します。" },
+      "channels": { "label": "チャネルサービス", "dependency": "メールと SMS の配信サービスを設定します。" },
       "receivers": { "label": "受信先", "dependency": "設定済みチャネルを使用する送信先を追加します。" },
       "templates": { "label": "テンプレート", "dependency": "必要に応じてチャネルのメッセージを調整します。" },
       "rules": { "label": "ルール", "dependency": "アラートを 1 つ以上の受信先へ配信します。" }
@@ -2428,15 +2570,105 @@
   "alertRules": {
     "title": "アラートルール",
     "description": "アラート評価ルールと有効状態を管理します。",
+    "guide": { "alertCenter": "アラートセンターを表示", "deliveryRules": "配信ルールを設定" },
     "manage": "ルール管理",
     "new": "ルールを追加",
     "edit": "ルールを編集",
+    "newRealtime": "新規リアルタイム閾値",
+    "newPeriodic": "新規周期閾値",
+    "editRealtime": "リアルタイム閾値を編集",
+    "editPeriodic": "周期閾値を編集",
     "editorDescription": "条件を設定し、結果を確認してから保存します。",
     "search": "ルールを検索",
     "empty": "条件に一致するアラートルールはありません。",
-    "name": "ルール",
+    "required": "必須項目を入力してください！",
+    "confirm": "OK",
+    "typeChoice": {
+      "title": "アラート評価方式を選択",
+      "realtimeDescription": "監視データを受信するたびに評価します。",
+      "periodicDescription": "PromQL または SQL クエリを定期実行します。",
+      "periodicUnavailable": "定期ルールを作成する前に対応するクエリエグゼキューターを設定してください。"
+    },
+    "help": {
+      "name": "ルール名はユニークである必要があります",
+      "dataType": "この閾値ルールのデータタイプを選択してください",
+      "target": "選択されたメトリクスオブジェクト",
+      "rule": "グラフィカルにアラーム閾値ルールを設定。複数のルール && をサポート",
+      "bindings": "この閾値ルールを特定の監視タスクに適用するように設定します。デフォルトではすべてに関連付けられていません",
+      "period": "周期的な閾値計算の時間間隔（秒単位）、最小60秒",
+      "window": "リアルタイム閾値計算のウィンドウ時間（秒単位）",
+      "severity": "閾値をトリガーするアラームレベル。低から高へ：警告、クリティカル、緊急",
+      "mode": "アラートモードを選択してください。アラートグループモードは同じ条件のアラートを統合し、個別アラートモードは各アラートを個別に送信します",
+      "times": "アラームを送信する前に閾値が何回トリガーされるかを設定",
+      "template": "サポートされている通知テンプレート環境変数",
+      "labels": "ラベルを使用して分類管理できます。例：本番環境とテスト環境でリソースにラベルを割り当てる。",
+      "annotations": "リソースに重要なイベントの注釈をバインドするなど、エンティティ情報をマークするために注釈を使用できます。",
+      "enable": "このアラーム閾値設定が有効か無効か",
+      "queryMetric": "グラフィカルにアラーム閾値ルールを設定。複数のルール && をサポート",
+      "queryLog": "監視するログをフィルタリングするためのログクエリ条件を設定"
+    },
+    "query": {
+      "label": "クエリ言語",
+      "promql": "PromQL",
+      "sql": "SQL",
+      "expression": "クエリ式",
+      "examples": "例：",
+      "promqlUnsupportedLog": "PromQL はログアラートルールをサポートしていません",
+      "sqlUnsupportedMetric": "SQL はメトリクスアラートルールをサポートしていません",
+      "promqlPlaceholder": "PromQLクエリ：sum(rate(process_cpu_seconds_total[5m])) > 0.8",
+      "promqlDescription": "PromQL クエリ言語",
+      "sqlDescription": "SQL クエリ言語",
+      "sqlValidation": {
+        "selectOnly": "SELECT 文のみ使用できます",
+        "union": "UNION は使用できません",
+        "intersect": "INTERSECT は使用できません",
+        "except": "EXCEPT は使用できません",
+        "subquery": "サブクエリは使用できません",
+        "from": "SQL クエリには FROM 句が必要です",
+        "table": "hertzbeat_logs テーブルのみ検索できます",
+        "parentheses": "括弧が一致していません"
+      }
+    },
+    "severity": { "label": "重大度", "placeholder": "優先度を選択してください" },
+    "mode": {
+      "label": "アラートモード",
+      "placeholder": "アラートモードを選択してください",
+      "group": "グループ",
+      "individual": "個別"
+    },
+    "window": "計算ウィンドウ",
+    "seconds": "秒",
+    "finalExpression": "最終式",
+    "annotations": "注釈",
+    "map": {
+      "key": "キー",
+      "value": "値",
+      "addLabel": "ラベルを追加",
+      "addAnnotation": "注釈を追加",
+      "remove": "項目を削除"
+    },
+    "variables": {
+      "title": "利用可能な変数",
+      "__instance__": "インスタンス ID",
+      "__labels__": "ラベル",
+      "__instancename__": "インスタンス名",
+      "__instancehost__": "インスタンスホスト",
+      "__app__": "アプリケーション",
+      "__metrics__": "メトリクス名",
+      "log": {
+        "timestamp": "タイムスタンプ",
+        "severityText": "重大度テキスト",
+        "body": "ログ本文",
+        "traceId": "Trace ID",
+        "spanId": "Span ID",
+        "attributes": "ログ属性",
+        "resource": "リソース属性"
+      }
+    },
+    "name": "ルール名",
     "type": "種類",
     "enabled": "有効",
+    "enabledThreshold": "閾値を有効化",
     "updated": "更新日時",
     "delete": "削除",
     "deleteConfirm": "このアラートルールを削除しますか？",
@@ -2477,20 +2709,25 @@
       }
     },
     "operationSuccess": "アラートルールを更新しました。",
+    "deleteSuccess": "アラートルールの削除を確認しました。",
     "operationFailed": "アラートルールの操作に失敗しました。",
     "saveSuccess": "アラートルールを保存しました。",
     "saveFailed": "アラートルールを保存できませんでした。",
     "validation": "必須項目を入力してください。",
-    "expressionRequired": "プレビューする前に式を入力してください。",
     "expression": "式",
     "metricTarget": {
+      "type": "メトリックタイプ",
+      "typePlaceholder": "メトリック対象を検索または選択",
       "application": "アプリケーション",
       "applicationPlaceholder": "アプリケーションを選択",
       "target": "メトリクスターゲット",
       "targetPlaceholder": "可用性またはメトリクスを選択",
       "availability": "可用性",
       "availabilityDescription": "選択したアプリケーションが利用できなくなったときにアラートを発火します。",
-      "rowCount": "行数",
+      "availabilityDown": "ダウン",
+      "availabilityUnreachable": "到達不能",
+      "availabilityTrigger": "アラームをトリガー",
+      "rowCount": "値の行数",
       "appsEmpty": "表示できる監視アプリケーションがありません。",
       "appsUnavailable": "アプリケーションカタログは一時的に利用できません。",
       "appsError": "アプリケーションカタログを読み込めませんでした。",
@@ -2500,10 +2737,26 @@
     },
     "metricBindings": {
       "title": "モニターのバインド",
+      "dialogTitle": "アラート閾値をモニターに関連付ける",
       "description": "このルールを選択したモニターインスタンスまたはラベルに限定します。",
       "manage": "バインドを管理",
-      "instances": "モニターインスタンス",
-      "labels": "モニターラベル",
+      "instances": "インスタンス関連",
+      "labels": "ラベル関連",
+      "unassociated": "関連付けなし",
+      "associated": "関連付け済み",
+      "count": "{{count}} 項",
+      "filterName": "名前を入力してフィルター...",
+      "filterLabels": "ラベルを入力してフィルター...",
+      "moveLeft": "選択したモニターの関連付けを解除",
+      "moveRight": "選択したモニターを関連付ける",
+      "selectAll": {
+        "unassociated": "表示中の未関連モニターをすべて選択",
+        "associated": "表示中の関連済みモニターをすべて選択"
+      },
+      "noData": "データなし",
+      "addLabel": "ラベルを入力",
+      "removeLabel": "ラベルを削除",
+      "labelEmpty": "関連するモニターが見つかりません。ラベルを追加してください",
       "loading": "モニター候補を読み込んでいます。",
       "empty": "このアプリケーションにはモニターが設定されていません。",
       "unavailable": "モニター候補は一時的に利用できません。",
@@ -2512,20 +2765,36 @@
       "noLabels": "利用できるモニターラベルがありません。"
     },
     "metricCondition": {
+      "rule": "閾値ルール",
       "title": "しきい値",
-      "structured": "ガイド",
-      "expert": "エキスパート",
+      "structured": "テンプレート閾値",
+      "expert": "コーディング閾値",
       "expertExpression": "条件式",
+      "insertExpression": "サポートされている閾値トリガー式の環境変数と演算子",
+      "expressionPlaceholder": "この式に基づいて閾値をトリガーするかどうかを計算します。例",
+      "expressionTypes": {
+        "number": "数値",
+        "string": "文字列",
+        "time": "時間",
+        "object": "オブジェクト"
+      },
       "expertOnly": "この条件にはガイド付きエディターで安全に表現できない構文が含まれています。",
       "join": "一致方式",
-      "and": "すべて",
-      "or": "いずれか",
+      "and": "AND",
+      "or": "OR",
       "addCondition": "条件を追加",
       "addGroup": "グループを追加",
+      "ruleButton": "Rule",
+      "rulesetButton": "Ruleset",
       "empty": "条件を追加してルールを完成させてください。",
+      "emptyGroup": "ルールセットを空にすることはできません。ルールを追加するか、ルールセット全体を削除してください。",
       "field": "メトリクスフィールド",
       "operator": "演算子",
       "value": "値",
+      "objectAttribute": "オブジェクト属性",
+      "objectAttributePlaceholder": "オブジェクト属性を入力",
+      "numberPlaceholder": "数値を入力してください",
+      "stringPlaceholder": "一致する文字列を入力してください",
       "noValue": "値は不要",
       "remove": "条件を削除",
       "operators": {
@@ -2542,13 +2811,23 @@
         "matches": "一致する",
         "!matches": "一致しない",
         "exists": "存在する",
-        "!exists": "存在しない"
+        "!exists": "存在しない",
+        "&&": "そして",
+        "||": "または",
+        "()": "括弧"
       }
     },
-    "template": "メッセージテンプレート",
+    "logCondition": {
+      "expression": "ログ式",
+      "expressionPlaceholder": "アラート式を入力してください。例: count > 10"
+    },
+    "template": "アラーム内容",
+    "templatePlaceholder": "通知テンプレートを入力してください。例：${app}.${metrics}.${metric}の値が高すぎます",
     "labels": "ラベル",
     "labelsPlaceholder": "team:ops, severity:critical",
-    "period": "評価周期（秒）",
+    "period": "実行期間",
+    "periodPlaceholder": "実行期間を入力してください。最小60秒",
+    "windowPlaceholder": "計算ウィンドウ時間を入力してください",
     "times": "発火回数",
     "preview": "プレビュー",
     "previewSuccess": "プレビューで {{count}} 行が返されました。1 ページあたり最大 {{pageSize}} 行を表示します。",
@@ -2569,13 +2848,14 @@
       "periodic": "周期"
     },
     "dataType": {
-      "label": "シグナル",
+      "label": "データタイプ",
       "metric": "メトリクス",
       "log": "ログ",
       "trace": "トレース"
     }
   },
   "alert": {
+    "diagnosticActions": "診断アクション",
     "integration": {
       "source": {
         "webhook": "Webhook",
@@ -2594,6 +2874,12 @@
       },
       "limit": {
         "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "huaweicloud-ces": {
+          "confirmation_may_be_billable": "Huawei Cloud ではサブスクリプション確認メッセージも課金対象です。実環境でテストする前に料金を確認してください。"
+        },
+        "volcengine": {
+          "event_recovery_unavailable": "Volcengine のイベントコールバックは発火のみです。メトリクスおよびデータなしコールバックは復旧をサポートします。"
+        },
         "zabbix": {
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
@@ -2624,25 +2910,93 @@
           "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
         }
       },
+      "skywalking": {
+        "step": {
+          "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
+          "configure_webhook": "以下の受信 URL と Authorization ヘッダーを使用して、SkyWalking のアラートおよび復旧 Webhook を設定します。",
+          "verify_lifecycle": "制御されたアラームを発火・復旧し、同じ UUID の HertzBeat アラートが解決済みになることを確認します。"
+        }
+      },
+      "uptime-kuma": {
+        "step": {
+          "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
+          "configure_webhook": "POST、JSON プリセット、以下の追加 Authorization ヘッダーを使用して Webhook 通知を作成します。",
+          "verify_lifecycle": "DOWN とその後の UP ハートビートを送信し、同じ監視アラートが解決済みになることを確認します。"
+        }
+      },
+      "tencent": {
+        "step": {
+          "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
+          "configure_template": "Trigger と Recovery 用のカスタム Webhook 通知テンプレートを作成し、以下のネイティブオブジェクトとポリシーフィールドを割り当てます。",
+          "verify_lifecycle": "同じインスタンスの Trigger と Recovery を送信し、そのインスタンスのアラートだけが解決済みになることを確認します。"
+        }
+      },
+      "alibabacloud-sls": {
+        "step": {
+          "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
+          "configure_action": "POST、JSON、Authorization ヘッダーを使用し、alert_instance_id を含むテンプレートで WebHook-Custom アクションを作成します。",
+          "verify_lifecycle": "同じアラートインスタンスを発火・復旧し、そのインスタンスが解決済みになり、受信側が HTTP 200 を返すことを確認します。"
+        }
+      },
+      "huaweicloud-ces": {
+        "step": {
+          "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
+          "configure_subscription": "この受信 URL の HTTP/HTTPS SMN サブスクリプションを作成し、X-HertzBeat-Token をカスタムリクエストヘッダーに追加します。",
+          "verify_subscription": "可用性テストを実行してサブスクリプションを確認し、制御された CES アラームを発火・復旧します。"
+        }
+      },
+      "volcengine": {
+        "step": {
+          "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
+          "configure_callback": "Volcengine のコールバック URL を設定し、管理対象トークンをネイティブの Token ヘッダーに設定します。",
+          "verify_lifecycle": "メトリクスアラートを発火・復旧し、同じリソースのアラートが解決済みになることを確認します。"
+        }
+      },
       "zabbix": {
         "step": {
-          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix.",
+          "create_token": "Create an API token with alert-ingress write access and store it as the secret Zabbix user macro {$HERTZBEAT_API_TOKEN}.",
+          "configure_media_type": "Create a Zabbix Webhook media type with the parameters and script below, then use it in both problem and recovery operations.",
+          "verify_problem_and_recovery": "Trigger one controlled problem, resolve it, and confirm that HertzBeat shows one alert moving from firing to resolved."
         }
       }
     },
     "title": "アラートセンター",
     "description": "グループ化されたアラートと処理状態を確認します。",
+    "expandDetails": "アラートの詳細を展開",
+    "collapseDetails": "アラートの詳細を折りたたむ",
     "search": "アラートを検索",
+    "filters": {
+      "more": "その他のフィルター",
+      "less": "フィルターを閉じる",
+      "moreActive": "その他のフィルター（{{count}}）"
+    },
     "empty": "条件に一致するアラートはありません。",
     "name": "アラート",
     "labels": "ラベル",
     "updated": "更新日時",
+    "viewDetails": "詳細を表示",
     "delete": "削除",
+    "moreActions": "その他のアラート操作",
     "confirmDelete": "削除を確認",
     "deleteConfirm": "アラートグループ {{target}} とそのアラートレコードを削除しますか？",
     "deleteSuccess": "アラートグループを削除しました。",
     "deleteFailed": "アラートグループを削除または検証できませんでした。",
     "selected": "{{count}} 件選択中",
+    "export": {
+      "label": "エクスポート",
+      "selected": "選択項目をエクスポート",
+      "timeRange": "時間範囲でエクスポート",
+      "filtered": "現在の絞り込み結果をエクスポート",
+      "all": "すべてエクスポート",
+      "timeRangeTitle": "時間範囲でアラートをエクスポート",
+      "updatedTime": "アラート更新時刻",
+      "timeRangeHelp": "時間範囲はサーバーのローカル更新時刻を使用します。更新時刻のないアラートは除外されます。",
+      "confirm": "エクスポート",
+      "success": "アラートグループ {{count}} 件をエクスポートしました。",
+      "failure": "アラートをエクスポートできませんでした。"
+    },
+    "clearSelection": "選択を解除",
     "acknowledge": "確認済みにする",
     "acknowledgeSelected": "選択項目を確認済みにする",
     "acknowledgeConfirm": "このアラートグループを確認済みにしますか？",
@@ -2673,14 +3027,33 @@
     "reopenFailed": "アラートグループを再発生または検証できませんでした。",
     "deleteSelected": "選択項目を削除",
     "deleteSelectedConfirm": "選択した {{count}} 件のアラートグループと配下のアラートを削除しますか？",
+    "deleteScope": {
+      "title": "アラートグループを削除",
+      "description": "今回削除する正確な範囲を選択してください。グループ配下のアラートも削除されます。",
+      "selectedTitle": "選択したグループ（{{count}} 件）",
+      "selectedDescription": "このページで選択したグループだけを削除します。",
+      "filteredTitle": "現在の絞り込み結果をすべて削除（{{count}} 件）",
+      "filteredDescription": "未送信の変更ではなく、最後に送信した絞り込みの全ページを対象にします。",
+      "limitDescription": "この絞り込みは、1 回の操作で削除と検証ができる上限 {{limit}} 件を超えています。先に条件を絞り込んでください。",
+      "prepareFailure": "絞り込み範囲全体を準備できませんでした。削除は行われていません。",
+      "review": "削除内容を確認",
+      "reviewTitle": "絞り込み結果の削除を確認",
+      "reviewCount": "件のアラートグループを削除",
+      "reviewDescription": "確認時点で一致した {{count}} 件のアラートグループと配下のアラートを削除しますか？この操作は元に戻せません。以降に作成されたアラートは含まれません。",
+      "confirmSelected": "選択項目を削除",
+      "confirmFiltered": "すべて削除を確認"
+    },
     "summaryUnavailable": "アラート概要を利用できません。リストは引き続き検索できます。",
+    "investigate": "調査",
+    "openMonitor": "モニター",
+    "openEntity": "リソース",
     "listUnavailable": "アラート一覧を利用できません。",
     "listLoadFailed": "アラート一覧を読み込めませんでした。",
     "summaryLoadFailed": "アラート概要を読み込めませんでした。",
     "details": {
       "triggerTimes": "発生回数",
-      "labels": "ラベル",
-      "annotations": "注釈",
+      "labels": "ラベルをバインド",
+      "annotations": "注釈をバインド",
       "startAt": "初回発生",
       "activeAt": "最終発生",
       "endAt": "解決日時"
@@ -2688,8 +3061,8 @@
     "summary": {
       "total": "合計",
       "acknowledged": "確認済み",
-      "nonFiring": "発生中以外",
-      "scope": "全体の個別アラート",
+      "handled": "対応済み",
+      "workspaceScope": "現在のワークスペース",
       "warning": "警告",
       "critical": "重大",
       "emergency": "緊急"
@@ -2915,18 +3288,36 @@
   "statusManagement": {
     "title": "ステータスページ",
     "description": "コンポーネントの状態を公開し、サービス障害を通知します。",
+    "navComponents": "コンポーネント",
+    "navIncidents": "インシデント",
+    "navSettings": "設定",
+    "publishIncident": "インシデントを公開",
+    "reviewIncident": "インシデントを確認",
+    "incidentInfo": "インシデント情報",
+    "reviewAndPublish": "確認して公開",
+    "reviewTitle": "公開内容を確認",
+    "reviewDescription": "公開前に、訪問者に表示されるインシデント情報を確認してください。",
+    "publicUpdatePreview": "公開更新プレビュー",
+    "previewNotPublished": "この下書きはまだ公開されていません。",
+    "backToIncident": "編集に戻る",
     "loadingOrganization": "ページ情報を読み込んでいます…",
     "loadingComponents": "ステータスコンポーネントを読み込んでいます…",
     "loadingIncidents": "インシデントを読み込んでいます…",
     "openPublicPage": "公開ページを開く",
     "organization": "ページ情報",
+    "organizationDetails": "ページ情報の詳細",
     "organizationDescription": "公開名、説明、リンクを設定します。",
+    "componentCollection": "公開コンポーネント",
+    "setupTitle": "公開ステータスページを作成",
+    "setupDescription": "まず公開ページの情報を設定します。作成後にコンポーネントとインシデントを管理できます。",
+    "createPage": "ステータスページを作成",
     "notConfigured": "コンポーネントを追加する前にページ情報を設定してください。",
     "name": "名前",
     "home": "ホーム URL",
     "logo": "ロゴ URL",
     "feedback": "フィードバック URL",
-    "color": "アクセントカラー",
+    "color": "ステータスページのテーマカラー",
+    "colorDescription": "公開ページのアクセントライン、ボタン、リンクに使用します。サービス状態の色は変わりません。",
     "componentsDescription": "ラベルによる自動判定または手動状態を選択します。",
     "newComponent": "コンポーネントを追加",
     "editComponent": "コンポーネントを編集",
@@ -2938,10 +3329,15 @@
     "componentUpdateHint": "保存後に公開ページへ反映されます。",
     "unknown": "不明",
     "incidentsDescription": "障害を作成し、対応の進行に合わせて更新を追加します。",
+    "emptyIncidentsDescription": "公開した障害と対応状況はここにまとめて表示されます。",
+    "emptyIncidentsNeedsComponent": "障害を公開する前に公開コンポーネントを追加してください。",
     "newIncident": "障害を作成",
     "updateIncident": "障害を更新",
     "incidentName": "障害名",
+    "incidentNameHint": "この名前は公開ステータスページに表示されます。",
     "updateMessage": "更新内容",
+    "updateMessageHint": "このメッセージは障害のタイムラインに表示されます。",
+    "affectedComponentsHint": "この障害の影響を受ける公開コンポーネントを選択します。",
     "updateHistory": "更新履歴",
     "investigating": "調査中",
     "identified": "原因特定済み",
@@ -2962,6 +3358,20 @@
   "status": {
     "title": "サービスステータス",
     "description": "公開コンポーネントの状態と障害履歴。",
+    "systemStatus": "システムステータス",
+    "availabilityUnavailable": "可用性データなし",
+    "periodUnavailable": "可用性の集計期間なし",
+    "historySummary": "{{count}} 日間：正常 {{healthy}} 日、インシデント {{incident}} 日、不明 {{unknown}} 日。",
+    "viewHistoryEvidence": "履歴の証拠を表示",
+    "incidentHistory": "インシデント履歴",
+    "incidentHistoryDescription": "選択した年に公開されたサービスイベント。",
+    "timeUnavailable": "時刻を利用できません",
+    "overallDescription": {
+      "healthy": "現在、公開コンポーネントからサービス中断は報告されていません。",
+      "degraded": "一部の公開コンポーネントでサービス低下が報告されています。",
+      "incident": "現在のサービス障害が1つ以上の公開コンポーネントに影響しています。",
+      "unknown": "利用可能なデータから現在の全体ステータスを判断できません。"
+    },
     "loading": "公開ステータスを読み込んでいます…",
     "loadingIncidents": "障害履歴を読み込んでいます…",
     "operational": "すべて正常",
@@ -2996,14 +3406,26 @@
   },
   "deployment": {
     "title": "デプロイ設定",
-    "description": "有効なデータベース設定元を確認し、HertzBeat メタデータを H2 から安全に移行します。",
+    "description": "現在のデプロイを確認し、データベース移行や完全なリセットが必要な場合は下のガイド付き操作を使用します。",
     "loading": "デプロイ設定を読み込んでいます…",
     "unavailable": "デプロイ設定を利用できません。",
+    "danger": {
+      "title": "危険な操作",
+      "description": "これらの操作は永続データを変更または削除します。続行前に影響範囲と復旧手順を確認してください。"
+    },
     "current": {
       "title": "現在のデプロイ",
       "description": "サーバーが確認した設定元と再起動要件です。",
+      "summary": "管理データは {{managementDatabase}}、テレメトリデータは {{telemetryDatabase}} に保存されています。設定は{{applyMode}}、{{topology}}モードで稼働しています。",
+      "scope": "設定範囲",
+      "databaseConnections": "データベース接続",
+      "configurationManagement": "設定管理方式",
+      "viewDetails": "現在の設定を表示",
+      "hideDetails": "現在の設定を閉じる",
       "managementDatabase": "管理データベース",
+      "managementDatabaseDescription": "アカウント、監視、アラート、システム設定を保存します",
       "greptimeDatabase": "GreptimeDB テレメトリデータベース",
+      "greptimeDatabaseDescription": "メトリクス、ログ、トレースを保存します",
       "applyMode": "適用方法",
       "maintenanceMode": "メンテナンスモード",
       "topology": "デプロイトポロジ",
@@ -3018,6 +3440,7 @@
       "command_line": "コマンドライン"
     },
     "applyMode": { "managed_write": "管理対象設定", "external_apply": "外部 / GitOps 設定" },
+    "applyModeInline": { "managed_write": "HertzBeat が管理", "external_apply": "外部で管理" },
     "maintenance": {
       "active": "メンテナンスモードは有効です",
       "inactive": "メンテナンスモードは無効です",
@@ -3026,10 +3449,31 @@
       "acknowledgementAutoEnter": "移行を開始するとサーバーが自動でメンテナンスモードに入り、監視書き込みを停止することを理解しました。"
     },
     "topology": { "single_node": "単一ノード", "multi_node": "複数ノード", "unknown": "不明" },
+    "topologyInline": { "single_node": "単一ノード", "multi_node": "複数ノード", "unknown": "不明" },
     "migration": {
-      "title": "H2 メタデータ移行",
-      "description": "メタデータをコピーする前に、空の MySQL または PostgreSQL 移行先を検証します。",
+      "title": "HertzBeat データベース移行ウィザード",
+      "description": "HertzBeat の管理データを H2 から空の MySQL または PostgreSQL データベースへ移行します。データをコピーする前に移行先を検証します。",
+      "open": "移行ウィザードを開く",
+      "close": "デプロイ設定に戻る",
       "blocked": "サーバーは現在のデプロイでの移行をブロックしています。"
+    },
+    "reset": {
+      "description": "この HertzBeat インスタンスを消去して初期セットアップに戻します。この操作は元に戻せません。",
+      "action": "HertzBeat をリセット",
+      "modalTitle": "HertzBeat インスタンス全体をリセット",
+      "warning": "このインスタンスのすべてのアカウント、設定、監視データが完全に削除されます。",
+      "scopeTitle": "削除される内容",
+      "scope": {
+        "management": "管理データベース内のアカウント、権限、監視、アラート、システム設定",
+        "telemetry": "設定済み GreptimeDB データベース内のすべてのメトリクス、ログ、トレース、テーブル",
+        "local": "管理対象のセットアップ状態と標準のローカル H2／DuckDB データファイル"
+      },
+      "externalObjects": "共有ストレージ上の無関係な内容を誤って削除しないよう、外部オブジェクトストレージのファイルは保持されます。",
+      "inputLabel": "確認フレーズ",
+      "instruction": "続行するには次のフレーズを入力してください：",
+      "confirm": "すべて消去してセットアップを再開",
+      "failed": "リセットを開始できませんでした。データは削除されていません。再試行してください。",
+      "transitionDelayed": "リセット要求は保存されましたが、セットアップ画面はまだ準備できていません。しばらくしてから更新してください。サーバーは自動的にリセットを再開します。"
     },
     "fields": {
       "target": "移行先データベース",
@@ -3147,13 +3591,14 @@
       "optional": { "title": "任意設定", "pending": "管理者設定が完了しました。次の手順は任意のサーバー設定です。" }
     },
     "optional": {
-      "description": "公開エンドポイント、保持期間、メールを今設定するか、空のままにして後で設定できます。",
+      "description": "外部アクセス先、保持期間、メールを今確認するか、後でシステム設定から変更できます。",
       "publicAccess": {
-        "title": "公開アクセス",
-        "description": "利用者とテレメトリ送信元が使用するアドレスを入力してください。このブラウザーから自動推測されません。",
-        "publicBaseUrl": "公開ベース URL",
-        "otlpHttp": "サーバー OTLP HTTP エンドポイント",
-        "otlpGrpc": "サーバー OTLP gRPC エンドポイント"
+        "title": "外部アクセス先",
+        "description": "既定では現在のインストール先を使用します。ロードバランサー、リバースプロキシ、またはゲートウェイ経由で公開する場合のみ別のアドレスを入力してください。",
+        "defaultAddress": "現在のインストール先:",
+        "useProxy": "ロードバランサーまたはプロキシを使用する",
+        "proxyPublicBaseUrl": "外部公開 URL",
+        "proxyPublicBaseUrlHelp": "利用者と外部システムが実際に使用する完全なアドレスを、スキームと必要なポートまたはパス接頭辞を含めて入力してください。"
       },
       "retention": {
         "title": "データ保持",
@@ -3269,7 +3714,17 @@
       "loading": "調査履歴を読み込んでいます…",
       "unavailable": "調査履歴を利用できません。",
       "empty": "調査履歴はまだありません。",
-      "untitled": "無題の調査"
+      "untitled": "無題の調査",
+      "search": "調査を検索",
+      "noMatches": "一致する調査はありません。",
+      "status": {
+        "active": "進行中",
+        "completed": "完了",
+        "failed": "失敗",
+        "cancelled": "キャンセル済み",
+        "recoveryRequired": "確認が必要",
+        "noRun": "実行なし"
+      }
     },
     "investigation": { "label": "調査" },
     "roles": { "you": "あなた", "assistant": "HertzBeat AI" },
@@ -3278,11 +3733,35 @@
       "description": "監視、エンティティ、アラート、メトリクス、ログ、トレース、トポロジーについて質問できます。"
     },
     "composer": { "label": "調査プロンプト", "placeholder": "運用上の問題を HertzBeat に調査させる…" },
-    "actions": { "send": "送信", "stop": "停止", "approve": "承認", "reject": "拒否", "submit": "送信" },
+    "actions": {
+      "send": "送信",
+      "stop": "停止",
+      "recover": "同じ実行を確認",
+      "retryNew": "新しい実行を開始",
+      "approve": "承認",
+      "reject": "拒否",
+      "submit": "送信"
+    },
     "failure": "調査ストリームを利用できません。操作が完了したとは見なしません。",
+    "sessionLoadIncomplete": "保存済みの調査情報の一部を読み込めませんでした。再読み込みするか、調査を選び直してください。",
+    "recoveryRequired": "ツールは実行済みの可能性がありますが、HertzBeat は結果を保存できませんでした。続行する前に対象の状態を確認してください。",
+    "targetMismatch": "この調査対象は無効です。対象の画面に戻って新しい調査を開始してください。",
+    "targetUnavailable": "現在、この調査対象を確認できません。調査は開始されていません。",
+    "invalidTarget": "この調査リンクの対象は無効か、まだ対応していません。元の画面に戻ってやり直してください。",
+    "activeObservationPaused": "ライブ監視を一時停止しました。永続化された実行は進行中のままで、完了したとは見なしません。",
     "context": {
       "label": "実行コンテキスト",
+      "open": "実行の詳細を開く",
+      "close": "実行の詳細を閉じる",
+      "shortLabel": "詳細",
+      "panelClose": "実行詳細パネルを閉じる",
       "target": "対象",
+      "monitorTarget": "監視 {{id}}",
+      "singleAlertTarget": "単一アラート {{id}}",
+      "entityTarget": "エンティティ {{id}}",
+      "topologyTarget": "トポロジールート {{id}}",
+      "traceTarget": "トレース {{id}}",
+      "logTarget": "ログページ",
       "none": "ページコンテキストなし",
       "activity": "ツールの実行",
       "noActivity": "ツールはまだ使用されていません",

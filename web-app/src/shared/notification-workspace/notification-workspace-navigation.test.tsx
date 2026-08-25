@@ -11,6 +11,11 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
+import en from '@/assets/i18n/en-us.json';
+import ja from '@/assets/i18n/ja-jp.json';
+import pt from '@/assets/i18n/pt-br.json';
+import zhCn from '@/assets/i18n/zh-cn.json';
+import zhTw from '@/assets/i18n/zh-tw.json';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -38,5 +43,11 @@ describe('NotificationWorkspaceNavigation', () => {
       'configured'
     );
     expect(screen.getAllByText('notificationWorkspace.status.notLoaded')).toHaveLength(3);
+  });
+
+  it('uses the same channel-service term in the guide and the primary navigation for every locale', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.notificationWorkspace.steps.channels.label).toBe(locale.settingsNavigation.channels);
+    }
   });
 });

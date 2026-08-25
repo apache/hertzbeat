@@ -22,7 +22,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { requireDomElement } from '@/test/dom-element';
+import { requireDomElement, requireHtmlElement } from '@/test/dom-element';
 
 const controller = vi.hoisted(() => ({
   closeGeneratedToken: vi.fn(),
@@ -139,11 +139,24 @@ describe('TokenPage', () => {
     expect(controller.retry).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    ['loading', 'Loading API tokens…'],
-    ['empty', 'No API tokens have been generated.']
-  ] as const)('renders the %s collection state in the shared result frame', (kind, message) => {
-    controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind } }));
+  it('turns the empty collection into a guided first-token action', () => {
+    controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind: 'empty' } }));
+
+    renderTokenPage();
+
+    const empty = requireHtmlElement(document.querySelector('[data-state="empty"]'), 'Token empty state');
+    expect(within(empty).getByRole('heading', { name: 'Create your first API token' })).toBeInTheDocument();
+    expect(within(empty).getByText('Name it for the client or integration that will use it.')).toBeInTheDocument();
+    expect(within(empty).getByText('Choose the smallest access scope it needs.')).toBeInTheDocument();
+    expect(within(empty).getByText('Set an expiry or keep it active until revoked.')).toBeInTheDocument();
+    expect(within(empty).getByText('The secret is shown once after creation.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Generate token' })).not.toBeInTheDocument();
+    fireEvent.click(within(empty).getByRole('button', { name: 'Create first token' }));
+    expect(controller.openGenerator).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the loading collection state in the shared result frame', () => {
+    controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind: 'loading' } }));
 
     renderTokenPage();
 
@@ -151,7 +164,7 @@ describe('TokenPage', () => {
       document.querySelector('[data-hb-operational-result-region]'),
       'Operational result region'
     );
-    expect(result.querySelector(`[data-state="${kind}"]`)).toHaveTextContent(message);
+    expect(result.querySelector('[data-state="loading"]')).toHaveTextContent('Loading API tokens…');
     expect(result.querySelector('.ant-empty-image')).not.toBeInTheDocument();
     expect(result.querySelector('table')).not.toBeInTheDocument();
   });
@@ -161,7 +174,7 @@ describe('TokenPage', () => {
 
     renderTokenPage();
 
-    expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('No API tokens have been generated.');
+    expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('Create your first API token');
     expect(document.querySelector('table')).not.toBeInTheDocument();
   });
 

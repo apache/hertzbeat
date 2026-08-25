@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.gateway.observability;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -121,6 +122,25 @@ class ManagerObservabilityWorkspaceQueryGatewayTest {
     void returnsEmptyEntityMapWhenIdsAreEmpty() {
         assertTrue(gateway.findEntitiesByIds(Set.of()).isEmpty());
         verify(entityWorkspaceQueryService, org.mockito.Mockito.never()).findEntitiesByIds(org.mockito.Mockito.anyCollection());
+    }
+
+    @Test
+    void scopedIdentityLookupUsesOneOwnedQueryWithoutCheckThenGlobalRead() {
+        EntityIdentity identity = EntityIdentity.builder()
+                .id(11L)
+                .entityId(7L)
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .build();
+        when(entityIdentityQueryService.findIdentities("team-a", 7L)).thenReturn(List.of(identity));
+
+        assertEquals(List.of(identity), gateway.findIdentitiesByEntityId("team-a", 7L));
+        assertTrue(gateway.findIdentitiesByEntityId("team-b", 7L).isEmpty());
+
+        verify(entityIdentityQueryService).findIdentities("team-a", 7L);
+        verify(entityIdentityQueryService).findIdentities("team-b", 7L);
+        verify(entityIdentityQueryService, never()).findIdentities(7L);
+        verify(entityWorkspaceQueryService, never()).findEntityById(org.mockito.ArgumentMatchers.anyString(), eq(7L));
     }
 
     @Test

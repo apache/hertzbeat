@@ -54,6 +54,18 @@ public interface AgentTranscriptEntryDao extends JpaRepository<AgentTranscriptEn
     Optional<AgentTranscriptEntry> findTopBySessionIdAndMessageRoleOrderBySessionSequenceDesc(
         Long sessionId, String messageRole);
 
+    Optional<AgentTranscriptEntry> findFirstByRunIdAndMessageRoleOrderBySessionSequenceAsc(
+        Long runId, String messageRole);
+
+    List<AgentTranscriptEntry> findTop2ByRunIdAndMessageRoleOrderBySessionSequenceAsc(
+        Long runId, String messageRole);
+
+    Optional<AgentTranscriptEntry> findTopByRunIdAndMessageRoleOrderBySessionSequenceDesc(
+        Long runId, String messageRole);
+
+    List<AgentTranscriptEntry> findByRunIdAndMessageRoleOrderBySessionSequenceAsc(
+        Long runId, String messageRole);
+
     /**
      * Find transcript entries from a session sequence in append order.
      */

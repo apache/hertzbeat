@@ -39,9 +39,14 @@ export function createAlertRuleMetricEditorCommands(
       updateDraft(buildMetricAlertApplicationPatch(draft, application));
     },
     changeMetricTarget: (target: RealtimeMetricTarget) => {
-      if (!draft || targetState.hierarchy.kind !== 'ready') return;
-      if (!isMetricAlertTargetInHierarchy(targetState.hierarchy.hierarchy, target)) return;
-      updateDraft(buildMetricAlertTargetPatch(draft, target));
+      if (!draft) return;
+      const hierarchy = hierarchyForTarget(targetState, target.app);
+      if (!hierarchy || !isMetricAlertTargetInHierarchy(hierarchy, target)) return;
+      const stagedDraft =
+        draft.metricEditor?.kind === 'targeted' && draft.metricEditor.app === target.app
+          ? draft
+          : { ...draft, ...buildMetricAlertApplicationPatch(draft, target.app) };
+      updateDraft(buildMetricAlertTargetPatch(stagedDraft, target));
     },
     changeMetricStructuredCondition: (condition: MetricAlertConditionGroup) => {
       if (!draft || !fields) return;
@@ -56,6 +61,16 @@ export function createAlertRuleMetricEditorCommands(
       updateDraft(buildMetricAlertAuthoringModePatch(draft, mode, fields));
     }
   };
+}
+
+function hierarchyForTarget(state: AlertRuleMetricTargetState, app: string) {
+  if (state.hierarchy.kind === 'ready' && state.hierarchy.hierarchy.value === app) {
+    return state.hierarchy.hierarchy;
+  }
+  if (state.catalog?.kind === 'ready') {
+    return state.catalog.hierarchies.find(hierarchy => hierarchy.value === app) ?? null;
+  }
+  return null;
 }
 
 function currentMetricFields(draft: AlertRuleDraft | null, state: AlertRuleMetricTargetState) {

@@ -18,6 +18,22 @@ describe('Alert Inhibit locales', () => {
     for (const locale of [enUs, jaJp, ptBr, zhCn, zhTw]) {
       expect(locale.alertInhibits.deleteSelected).toBeTruthy();
       expect(locale.alertInhibits.deleteSelectedConfirm).toContain('{{count}}');
+      expect(locale.alertInhibits.equalPlaceholder).toBeTruthy();
+      expect(locale.alertInhibits.matcherKey).toBeTruthy();
+      expect(locale.alertInhibits.matcherValue).toBeTruthy();
+      expect(locale.alertInhibits.addMatcher).toBeTruthy();
+      expect(locale.alertInhibits.removeMatcher).toBeTruthy();
+      expect(locale.alertInhibits.required).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.title).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.trigger).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.triggerDetail).toContain('{{source}}');
+      expect(locale.alertInhibits.logicPreview.effect).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.effectDetail).toContain('{{target}}');
+      expect(locale.alertInhibits.logicPreview.condition).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.conditionDetail).toContain('{{equal}}');
+      expect(locale.alertInhibits.logicPreview.sourceEmpty).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.targetEmpty).toBeTruthy();
+      expect(locale.alertInhibits.logicPreview.equalEmpty).toBeTruthy();
       expect(locale.alertInhibits.management.title).toBeTruthy();
       expect(locale.alertInhibits.management.entityFallback).toContain('{{id}}');
       expect(locale.alertInhibits.management.empty).toBeTruthy();
@@ -38,5 +54,11 @@ describe('Alert Inhibit locales', () => {
       expect(locale.alertSilences.management.viewMatched).toBeTruthy();
       expect(locale.alertSilences.management.return).toBeTruthy();
     }
+
+    expect(enUs.alertInhibits.new).toBe('New Inhibit Rule');
+    expect(enUs.alertInhibits.name).toBe('Inhibit Rule Name');
+    expect(enUs.alertInhibits.sourceLabels).toBe('Source Labels');
+    expect(enUs.alertInhibits.targetLabels).toBe('Target Labels');
+    expect(enUs.alertInhibits.enabled).toBe('Enable');
   });
 });

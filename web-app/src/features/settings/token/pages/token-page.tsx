@@ -41,6 +41,9 @@ export function TokenPage() {
           list={controller.state.list}
           refreshing={controller.state.refreshing}
           revokingId={controller.state.revokingId}
+          generating={controller.state.generating}
+          generationDisabled={controller.state.generationRecovery !== null}
+          onGenerate={controller.openGenerator}
           onRetry={controller.retry}
           onRevoke={controller.revoke}
         />
@@ -55,6 +58,9 @@ type TokenNavigation = ReturnType<typeof useTokenReturnNavigation>;
 
 function TokenPageHeader({ controller, navigation }: { controller: TokenController; navigation: TokenNavigation }) {
   const { t } = useTranslation();
+  const hasGuidedEmptyState =
+    controller.state.list.kind === 'empty' ||
+    (controller.state.list.kind === 'ready' && controller.state.list.records.length === 0);
   return (
     <OperationalPageHeader
       title={t('token.title')}
@@ -66,15 +72,17 @@ function TokenPageHeader({ controller, navigation }: { controller: TokenControll
               {t('common.back')}
             </Button>
           )}
-          <Button
-            type="primary"
-            aria-label={t('token.generate')}
-            disabled={controller.state.generationRecovery !== null}
-            loading={controller.state.generating}
-            onClick={controller.openGenerator}
-          >
-            {t('token.generate')}
-          </Button>
+          {!hasGuidedEmptyState && (
+            <Button
+              type="primary"
+              aria-label={t('token.generate')}
+              disabled={controller.state.generationRecovery !== null}
+              loading={controller.state.generating}
+              onClick={controller.openGenerator}
+            >
+              {t('token.generate')}
+            </Button>
+          )}
         </>
       }
     />

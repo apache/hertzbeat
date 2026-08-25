@@ -24,9 +24,10 @@ package org.apache.hertzbeat.ai.gateway.runtime;
  * tool result) is appended to durable storage as
  * soon as it is produced inside the loop, rather than being buffered until the
  * whole run finishes. Implementations must be safe to call from the loop thread
- * and must not throw; persistence failures are swallowed so they cannot change
- * the loop outcome (mirroring the "observability only" contract of
- * {@link AgentRuntimeLoop.EventPublisher}).
+ * and should return {@code null} instead of throwing when persistence fails.
+ * Most transcript messages are replay metadata, but a grounding proof is an
+ * execution prerequisite: the loop does not accept the READ evidence unless
+ * this sink returns its durable session sequence.
  */
 public interface AgentRuntimeTranscriptSink {
 

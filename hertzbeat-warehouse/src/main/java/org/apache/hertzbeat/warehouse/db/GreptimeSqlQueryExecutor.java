@@ -22,9 +22,12 @@ package org.apache.hertzbeat.warehouse.db;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
@@ -32,6 +35,8 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -55,17 +60,22 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
     private static final String DATASOURCE = "Greptime-sql";
 
     private final GreptimeProperties greptimeProperties;
+    private final GreptimeQueryGuard queryGuard;
 
 
-    public GreptimeSqlQueryExecutor(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
+    public GreptimeSqlQueryExecutor(GreptimeProperties greptimeProperties,
+                                    @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
+                                    RestTemplate restTemplate,
+                                    GreptimeQueryGuard queryGuard) {
         super(restTemplate, new SqlQueryExecutor.HttpSqlProperties(sqlEndpoint(greptimeProperties.httpEndpoint()),
                 trimmed(greptimeProperties.username()), trimmed(greptimeProperties.password())));
         this.greptimeProperties = greptimeProperties;
+        this.queryGuard = queryGuard;
     }
 
     @Override
     public List<Map<String, Object>> execute(String queryString) {
-        return execute(queryString, false);
+        return executeGuarded(queryString, false);
     }
 
     /**
@@ -79,10 +89,17 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
      * @return mapped result rows, possibly empty for a valid query with no rows
      */
     public List<Map<String, Object>> executeStrict(String queryString) {
-        return execute(queryString, true);
+        return executeGuarded(queryString, true);
     }
 
-    private List<Map<String, Object>> execute(String queryString, boolean strict) {
+    private List<Map<String, Object>> executeGuarded(String queryString, boolean strict) {
+        if (isReadQuery(queryString)) {
+            return queryGuard.execute(() -> executeDirect(queryString, strict));
+        }
+        return executeDirect(queryString, strict);
+    }
+
+    private List<Map<String, Object>> executeDirect(String queryString, boolean strict) {
         List<Map<String, Object>> results = new LinkedList<>();
 
         HttpHeaders headers = new HttpHeaders();
@@ -134,6 +151,7 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
                     if (output != null && output.getRecords() != null && output.getRecords().getRows() != null) {
                         GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
                         List<List<Object>> rows = output.getRecords().getRows();
+                        validateStrictSchema(schema, rows, strict);
 
                         for (List<Object> row : rows) {
                             if (strict && row == null) {
@@ -184,6 +202,54 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
         if (output == null || output.getRecords() == null || output.getRecords().getRows() == null) {
             throw new IllegalStateException("GreptimeDB SQL query returned malformed output");
         }
+    }
+
+    private void validateStrictSchema(
+            GreptimeSqlQueryContent.Output.Records.Schema schema,
+            List<List<Object>> rows,
+            boolean strict) {
+        if (!strict || rows.isEmpty()) {
+            return;
+        }
+        if (schema == null || schema.getColumnSchemas() == null) {
+            throw new IllegalStateException("GreptimeDB SQL query returned no schema for nonempty rows");
+        }
+        List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columns = schema.getColumnSchemas();
+        Set<String> names = new HashSet<>();
+        int maximumRowSize = 0;
+        for (List<Object> row : rows) {
+            if (row != null) {
+                maximumRowSize = Math.max(maximumRowSize, row.size());
+            }
+        }
+        if (columns.size() < maximumRowSize) {
+            throw new IllegalStateException("GreptimeDB SQL query schema does not cover every row value");
+        }
+        for (int index = 0; index < maximumRowSize; index++) {
+            GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema column = columns.get(index);
+            if (column == null || !StringUtils.hasText(column.getName())) {
+                throw new IllegalStateException("GreptimeDB SQL query returned an unnamed column");
+            }
+            if (!names.add(column.getName().trim().toLowerCase(Locale.ROOT))) {
+                throw new IllegalStateException("GreptimeDB SQL query returned duplicate column names");
+            }
+        }
+    }
+
+    private boolean isReadQuery(String queryString) {
+        if (!StringUtils.hasText(queryString)) {
+            return false;
+        }
+        String normalized = queryString.stripLeading().toUpperCase(Locale.ROOT);
+        int commandEnd = 0;
+        while (commandEnd < normalized.length() && Character.isLetter(normalized.charAt(commandEnd))) {
+            commandEnd++;
+        }
+        String command = normalized.substring(0, commandEnd);
+        return switch (command) {
+            case "SELECT", "WITH", "SHOW", "DESCRIBE", "DESC", "EXPLAIN" -> true;
+            default -> false;
+        };
     }
 
     @Override

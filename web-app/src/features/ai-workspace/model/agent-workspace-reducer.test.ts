@@ -67,6 +67,79 @@ describe('Agent workspace event projection', () => {
     );
     expect(completed.approvals[0]).toMatchObject({ approvalId: 'approval-1', status: 'REJECTED' });
   });
+
+  it('projects a durable terminal replay without fabricating a live start', () => {
+    const state = agentWorkspaceReducer(
+      initialAgentWorkspaceRun,
+      event(
+        'RUN_STATUS',
+        { status: 'SUCCEEDED', result: 'Durable answer', errorMessage: null, replayAvailable: true },
+        { runUid: 'run-1' }
+      )
+    );
+
+    expect(state).toMatchObject({
+      runUid: 'run-1',
+      status: 'complete',
+      messages: [expect.objectContaining({ text: 'Durable answer', status: 'complete' })]
+    });
+  });
+
+  it('projects an indeterminate completion as manual recovery without retry', () => {
+    const live = agentWorkspaceReducer(
+      initialAgentWorkspaceRun,
+      event('ERROR', { status: 'recovery_required', errorMessage: 'Internal completion detail' }, { runUid: 'run-1' })
+    );
+
+    expect(live).toMatchObject({
+      runUid: 'run-1',
+      status: 'error',
+      recoveryRequired: true,
+      recoveryAvailable: false,
+      retryAvailable: false,
+      errorMessage: 'Internal completion detail'
+    });
+
+    const replay = agentWorkspaceReducer(
+      initialAgentWorkspaceRun,
+      event(
+        'RUN_STATUS',
+        {
+          status: 'RECOVERY_REQUIRED',
+          errorMessage: 'Durable completion could not be confirmed',
+          replayAvailable: true,
+          retryAvailable: false
+        },
+        { runUid: 'run-1' }
+      )
+    );
+
+    expect(replay).toMatchObject({
+      runUid: 'run-1',
+      status: 'error',
+      recoveryRequired: true,
+      recoveryAvailable: false,
+      retryAvailable: false,
+      errorMessage: 'Durable completion could not be confirmed'
+    });
+  });
+
+  it.each([
+    ['TARGET_MISMATCH', 'mismatch'],
+    ['TARGET_UNAVAILABLE', 'unavailable']
+  ] as const)('projects %s without fabricating a retryable run', (status, targetFailure) => {
+    const state = agentWorkspaceReducer(
+      initialAgentWorkspaceRun,
+      event('ERROR', { status, errorMessage: 'Safe target error' })
+    );
+
+    expect(state).toMatchObject({
+      status: 'error',
+      targetFailure,
+      retryAvailable: false,
+      recoveryAvailable: false
+    });
+  });
 });
 
 function event(

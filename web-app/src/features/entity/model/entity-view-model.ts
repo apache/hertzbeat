@@ -4,11 +4,19 @@ import {
   alertRoutePaths,
   applicationRoutePaths,
   buildEntityEditPath,
-  entityRoutePaths
+  entityRoutePaths,
+  normalizeAlertCenterReturnTo
 } from '@/shared/navigation/app-paths';
 import { safeTopologyReturnTo } from '@/features/topology';
 import { compactTablePageSizes } from '@/shared/pagination';
-import type { EntityDetail, EntityMonitor, EntityMonitorQuery, EntityQuery, EntitySummary } from './entity-contract';
+import type {
+  EntityDetail,
+  EntityMonitor,
+  EntityMonitorQuery,
+  EntityQuery,
+  EntityRecord,
+  EntitySummary
+} from './entity-contract';
 import {
   buildEntityDiscoveryPath,
   defaultEntityDiscoveryQuery,
@@ -47,6 +55,7 @@ export type EntityDetailEvidence =
   | { kind: 'permission' }
   | { kind: 'unavailable' }
   | { kind: 'error' }
+  | { kind: 'degraded'; entity: EntityRecord; unavailable: 'telemetry' }
   | { kind: 'ready'; detail: EntityDetail };
 export type EntityMonitorEvidence =
   | { kind: 'loading' }
@@ -90,6 +99,8 @@ export function buildEntityDetailPath(id: number, query: EntityQuery) {
 }
 
 export function safeEntityReturnTo(value: string | null) {
+  const alertReturnTo = normalizeAlertCenterReturnTo(value);
+  if (alertReturnTo) return alertReturnTo;
   if (value?.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
   if (value?.startsWith('/')) {
     const url = new URL(value, 'https://hertzbeat.local');

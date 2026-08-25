@@ -25,17 +25,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({
   loadAlertIntegrationCatalog: vi.fn(),
-  loadAlertIntegrationGuide: vi.fn()
+  loadAlertIntegrationGuide: vi.fn(),
+  startAlertIntegrationVerification: vi.fn()
 }));
+const publicAccess = vi.hoisted(() => ({ load: vi.fn() }));
 const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/alert-integration-api', () => api);
+vi.mock('@/features/settings/system-config/api/public-access-config-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/settings/system-config/api/public-access-config-api')>()),
+  loadPublicAccessConfig: publicAccess.load
+}));
 vi.mock('@/core/auth/session-context', () => ({
   useSession: () => ({ session: { authenticated: true, roles: auth.roles } })
 }));
 
-import { AlertIntegrationRequestFailure } from '../model/alert-integration-model';
+import { AlertIntegrationRequestFailure, type AlertIntegrationCatalog } from '../model/alert-integration-model';
 import { alertIntegrationQueryKeys } from './alert-integration-query-keys';
-import { useAlertIntegrationController } from './use-alert-integration-controller';
+import {
+  alertIntegrationCatalogRefreshInterval,
+  useAlertIntegrationController
+} from './use-alert-integration-controller';
 
 describe('useAlertIntegrationController', () => {
   beforeEach(() => {
@@ -45,6 +54,12 @@ describe('useAlertIntegrationController', () => {
     api.loadAlertIntegrationGuide.mockImplementation((source: string) =>
       Promise.resolve({ ...guide, source, displayNameKey: `alert.integration.source.${source}` })
     );
+    api.startAlertIntegrationVerification.mockResolvedValue({ status: 'waiting', startedAt: 100, verifiedAt: null });
+    publicAccess.load.mockResolvedValue({
+      publicBaseUrl: null,
+      serverOtlpHttpEndpoint: null,
+      serverOtlpGrpcEndpoint: null
+    });
   });
 
   it('fails closed for token management when the guide remains readable to a guest', async () => {
@@ -72,6 +87,25 @@ describe('useAlertIntegrationController', () => {
     const tokenPath = new URL(view.result.current.tokenSettingsPath, 'https://hertzbeat.local');
     expect(tokenPath.searchParams.get('scope')).toBe('api-admin');
     expect(tokenPath.searchParams.get('returnTo')).toBe('/alerts/integrations/webhook');
+  });
+
+  it('uses the persisted public access address to generate a full callback URL', async () => {
+    publicAccess.load.mockResolvedValue({
+      publicBaseUrl: 'https://hertzbeat.example.test/ops',
+      serverOtlpHttpEndpoint: null,
+      serverOtlpGrpcEndpoint: null
+    });
+    const view = renderController('/alerts/integrations/webhook');
+
+    await waitFor(() =>
+      expect(view.result.current.contract).toMatchObject({
+        endpoint: 'https://hertzbeat.example.test/ops/api/alerts/report',
+        ingressPath: '/api/alerts/report',
+        publicBaseUrlConfigured: true
+      })
+    );
+
+    expect(publicAccess.load).toHaveBeenCalledWith(expect.any(AbortSignal));
   });
 
   it('replaces an unknown deep link with the first source owned by the backend catalog', async () => {
@@ -128,40 +162,86 @@ describe('useAlertIntegrationController', () => {
     expect(api.loadAlertIntegrationGuide).toHaveBeenCalledTimes(2);
   });
 
-  it('retires copy state when the selected source changes', async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText }
-    });
+  it('navigates between sources without inventing client-side guide state', async () => {
     const view = renderController('/alerts/integrations/webhook');
     await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
 
-    await act(() => view.result.current.actions.copyEndpoint());
-    expect(view.result.current.copyState).toMatchObject({ source: 'webhook', outcome: 'copied' });
-    expect(writeText).toHaveBeenCalledWith('/api/alerts/report');
-
     act(() => view.result.current.actions.selectSource('prometheus'));
     await waitFor(() => expect(view.result.current.selectedSource).toBe('prometheus'));
-    expect(view.result.current.copyState).toBeNull();
+    expect(api.loadAlertIntegrationGuide).toHaveBeenCalledWith('prometheus', expect.any(AbortSignal));
+  });
+
+  it('starts verification and immediately replaces the selected catalog evidence', async () => {
+    const view = renderController('/alerts/integrations/webhook');
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    await act(() => view.result.current.actions.startVerification());
+
+    expect(api.startAlertIntegrationVerification).toHaveBeenCalledWith('webhook');
+    await waitFor(() => {
+      const state = view.result.current.state;
+      expect(state.kind === 'ready' && state.catalog[1]?.verification.status).toBe('waiting');
+    });
+  });
+
+  it('applies a completed verification to its requested source after navigation', async () => {
+    let completeVerification: ((value: { status: 'waiting'; startedAt: number; verifiedAt: null }) => void) | undefined;
+    api.startAlertIntegrationVerification.mockReturnValue(
+      new Promise(resolve => {
+        completeVerification = resolve;
+      })
+    );
+    const view = renderController('/alerts/integrations/webhook');
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    let request: Promise<unknown> | undefined;
+    act(() => {
+      request = view.result.current.actions.startVerification();
+    });
+    act(() => view.result.current.actions.selectSource('prometheus'));
+    await waitFor(() => expect(view.result.current.selectedSource).toBe('prometheus'));
+    act(() => completeVerification?.({ status: 'waiting', startedAt: 100, verifiedAt: null }));
+    await act(async () => request);
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    const state = view.result.current.state;
+    if (state.kind !== 'ready') throw new Error('Expected the integration guide to be ready');
+    expect(state.catalog.find(item => item.source === 'webhook')?.verification.status).toBe('waiting');
+    expect(state.catalog.find(item => item.source === 'prometheus')?.verification.status).toBe('unverified');
+  });
+
+  it('polls only while at least one real-event verification is waiting', () => {
+    expect(alertIntegrationCatalogRefreshInterval(catalog)).toBe(false);
+    expect(
+      alertIntegrationCatalogRefreshInterval({
+        items: [
+          {
+            ...catalog.items[0]!,
+            verification: { status: 'waiting', startedAt: 100, verifiedAt: null }
+          }
+        ]
+      })
+    ).toBe(2_000);
   });
 });
 
-const catalog = {
+const catalog: AlertIntegrationCatalog = {
   items: [
     {
       source: 'prometheus',
       displayNameKey: 'alert.integration.source.prometheus',
       iconKey: 'prometheus',
       readiness: 'ready',
-      limitations: []
+      limitations: [],
+      verification: { status: 'unverified', startedAt: null, verifiedAt: null }
     },
     {
       source: 'webhook',
       displayNameKey: 'alert.integration.source.webhook',
       iconKey: 'hertzbeat',
       readiness: 'ready',
-      limitations: []
+      limitations: [],
+      verification: { status: 'unverified', startedAt: null, verifiedAt: null }
     }
   ]
 };

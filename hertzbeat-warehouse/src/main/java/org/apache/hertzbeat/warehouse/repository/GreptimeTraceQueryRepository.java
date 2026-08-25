@@ -28,13 +28,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -50,7 +51,6 @@ import org.springframework.web.util.UriUtils;
  * Greptime-backed trace row repository.
  */
 @Repository
-@RequiredArgsConstructor
 @Slf4j
 public class GreptimeTraceQueryRepository implements TraceQueryRepository {
 
@@ -64,6 +64,15 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     private final GreptimeProperties greptimeProperties;
     private final RestTemplate restTemplate;
     private volatile Set<String> traceTableColumns;
+
+    public GreptimeTraceQueryRepository(
+            ObjectProvider<GreptimeSqlQueryExecutor> greptimeSqlQueryExecutorProvider,
+            GreptimeProperties greptimeProperties,
+            @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE) RestTemplate restTemplate) {
+        this.greptimeSqlQueryExecutorProvider = greptimeSqlQueryExecutorProvider;
+        this.greptimeProperties = greptimeProperties;
+        this.restTemplate = restTemplate;
+    }
 
     @Override
     public List<Map<String, Object>> queryRecentTraceRows(int limit) {
@@ -626,6 +635,32 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                                 String environment,
                                                                 Collection<String> serviceNames,
                                                                 Boolean hideInternal) {
+        return queryTraceServiceGraphRowsInternal(
+                limit, start, end, environment, null, serviceNames, hideInternal);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                Long start,
+                                                                Long end,
+                                                                String environment,
+                                                                String workspaceId,
+                                                                Collection<String> serviceNames,
+                                                                Boolean hideInternal) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return queryTraceServiceGraphRowsInternal(
+                limit, start, end, environment, workspaceId.trim(), serviceNames, hideInternal);
+    }
+
+    private List<Map<String, Object>> queryTraceServiceGraphRowsInternal(int limit,
+                                                                         Long start,
+                                                                         Long end,
+                                                                         String environment,
+                                                                         String workspaceId,
+                                                                         Collection<String> serviceNames,
+                                                                         Boolean hideInternal) {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append("parent.service_name AS source_service_name, ")
                 .append("child.service_name AS target_service_name, ")
@@ -673,6 +708,10 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             if (StringUtils.hasText(parentFilter)) {
                 filters.add(parentFilter);
             }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            filters.add(workspaceFilter("child", workspaceId));
+            filters.add(workspaceFilter("parent", workspaceId));
         }
         String serviceScopeFilter = serviceGraphServiceScopeFilter(serviceNames);
         if (StringUtils.hasText(serviceScopeFilter)) {
@@ -1000,23 +1039,19 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
 
     private String workspaceFilter(String alias, String workspaceId) {
         String normalizedWorkspaceId = workspaceId.trim();
-        List<String> workspaceFilters = new LinkedList<>();
-        String hertzbeatWorkspaceFilter = resourceAttributeFilter(alias, "hertzbeat.workspace_id",
-                normalizedWorkspaceId);
-        if (StringUtils.hasText(hertzbeatWorkspaceFilter)) {
-            workspaceFilters.add(hertzbeatWorkspaceFilter);
+        String canonicalWorkspace = resourceAttributeExpression(alias, "hertzbeat.workspace_id");
+        if (!StringUtils.hasText(canonicalWorkspace)) {
+            throw new TelemetryStorageUnavailableException();
         }
-        String workspaceIdFilter = resourceAttributeFilter(alias, "workspace.id", normalizedWorkspaceId);
-        if (StringUtils.hasText(workspaceIdFilter)) {
-            workspaceFilters.add(workspaceIdFilter);
+        String hertzbeatWorkspaceFilter = canonicalWorkspace + " = '"
+                + escapeSql(normalizedWorkspaceId) + "'";
+        String legacyWorkspace = resourceAttributeExpression(alias, "workspace.id");
+        if (!StringUtils.hasText(legacyWorkspace)) {
+            return hertzbeatWorkspaceFilter;
         }
-        if (workspaceFilters.isEmpty()) {
-            return null;
-        }
-        if (workspaceFilters.size() == 1) {
-            return workspaceFilters.getFirst();
-        }
-        return "(" + String.join(" OR ", workspaceFilters) + ")";
+        String workspaceIdFilter = legacyWorkspace + " = '" + escapeSql(normalizedWorkspaceId) + "'";
+        String canonicalMissing = "(" + canonicalWorkspace + " IS NULL OR " + canonicalWorkspace + " = '')";
+        return "(" + hertzbeatWorkspaceFilter + " OR (" + canonicalMissing + " AND " + workspaceIdFilter + "))";
     }
 
     private String resourceAttributeAnyFilter(String alias, String key, Collection<String> values) {

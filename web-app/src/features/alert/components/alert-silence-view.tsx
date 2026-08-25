@@ -29,9 +29,7 @@ import {
   type AlertSilenceViewActions,
   type AlertSilenceViewState
 } from '../model/alert-silence-page-model';
-import { AlertManagementNav } from './alert-management-nav';
 import { AlertNoiseControlManagementContextBar } from './alert-noise-control-management-context';
-import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import { AlertSilenceEditor } from './alert-silence-editor';
 import { AlertSilenceResults } from './alert-silence-results';
 import { AlertSilenceToolbar } from './alert-silence-toolbar';
@@ -50,13 +48,12 @@ export function AlertSilenceView({
   return (
     <OperationalPage mode="data">
       <AlertSilenceHeader state={state} actions={actions} />
-      <AlertManagementNav />
-      <AlertNoiseControlNav />
       <AlertSilenceManagement state={state} actions={actions} />
       <AlertSilencePolicyResults state={state} actions={actions} pageRecovery={pageRecovery} />
       {state.capabilities.canWrite && draft && (
         <AlertSilenceEditor
           draft={draft}
+          labelSuggestions={state.labelSuggestions}
           recovery={editorRecovery}
           saving={state.busy}
           writeLocked={state.writeLocked}

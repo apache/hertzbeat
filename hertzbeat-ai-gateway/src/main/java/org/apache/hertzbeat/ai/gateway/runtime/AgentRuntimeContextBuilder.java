@@ -58,7 +58,7 @@ public class AgentRuntimeContextBuilder {
         GatewayEnvelope envelope = request.getEnvelope();
         UserInput userInput = request.getUserInput();
         AgentRun run = request.getRun();
-        AgentTargetRef effectiveTarget = effectiveTarget(entryType, userInput, run);
+        AgentTargetRef effectiveTarget = effectiveTarget(run);
         List<TranscriptMessage> chatHistory = List.copyOf(request.getChatHistory());
         Instant now = Instant.now(clock);
         ZoneId systemZone = ZoneId.systemDefault();
@@ -69,6 +69,7 @@ public class AgentRuntimeContextBuilder {
                 .entryType(entryType)
                 .approvalHandling(request.getApprovalHandling())
                 .channelId(envelope.getChannelId())
+                .workspaceId(request.getSession().getWorkspaceId())
                 .receivedAt(envelope.getReceivedAt())
                 .preferredLanguage(envelope.getPreferredLanguage())
                 .alertIncident(userInput.getAlertIncident())
@@ -86,10 +87,9 @@ public class AgentRuntimeContextBuilder {
                 .build();
     }
 
-    private static AgentTargetRef effectiveTarget(AgentRuntimeEntryType entryType, UserInput userInput, AgentRun run) {
-        if (entryType == AgentRuntimeEntryType.USER_INPUT && userInput.getTarget() != null) {
-            return userInput.getTarget();
-        }
+    private static AgentTargetRef effectiveTarget(AgentRun run) {
+        // The run is the durable idempotency boundary. A retry can carry a changed request body, but it must not
+        // change the target snapshot already recorded for the same message id.
         return AgentRunService.targetFromRun(run);
     }
 

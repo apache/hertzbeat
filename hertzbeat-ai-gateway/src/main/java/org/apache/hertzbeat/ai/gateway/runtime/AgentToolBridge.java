@@ -27,10 +27,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalConsumption;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalStatus;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentPolicyDecision;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCompletionIndeterminateException;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionRequest;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
@@ -84,7 +86,8 @@ public class AgentToolBridge {
         Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
         Objects.requireNonNull(control, "control must not be null");
         Objects.requireNonNull(eventSink, "eventSink must not be null");
-        AgentToolExecutionResult result = executeOnce(context, runtimeProperties, toolCall, control, eventSink, null);
+        AgentToolExecutionResult result = executeOnce(
+                context, runtimeProperties, toolCall, control, eventSink, null, null);
         if (!isWaitingApproval(result)) {
             return result;
         }
@@ -95,7 +98,8 @@ public class AgentToolBridge {
                                                   AgentRuntimeProperties runtimeProperties,
                                                   AgentRuntimeToolCall toolCall, AgentRuntimeControl control,
                                                   AgentToolBridge.ExecutionListener eventSink,
-                                                  AgentToolExecutionResult approvedResult) {
+                                                  AgentToolExecutionResult approvedResult,
+                                                  AgentApprovalDecision approvalDecision) {
         control.checkpoint();
         long startedAt = clock.millis();
         AgentToolDescriptor descriptor = executableDescriptor(toolCall.getToolName());
@@ -111,15 +115,18 @@ public class AgentToolBridge {
                     .runId(context.getRunId())
                     .runUid(context.getRunUid())
                     .runSessionId(context.getRunSessionId())
+                    .workspaceId(context.getWorkspaceId())
                     .actor(context.getActor())
                     .entryType(context.getEntryType())
                     .approvalHandling(context.getApprovalHandling())
+                    .effectiveTarget(context.getEffectiveTarget())
                     .toolName(toolCall.getToolName())
                     .toolCallId(toolCallId)
                     .approvalId(approvedResult == null ? null : approvedResult.getApprovalId())
                     .approvalStatus(approvedResult == null ? null : approvedResult.getApprovalStatus().name())
                     .arguments(toolCall.getArguments())
                     .eventConsumer(event -> eventSink.toolEvent(toolCall, event))
+                    .approvalConsumption(approvalConsumption(approvedResult, approvalDecision))
                     .build();
             AgentToolExecutionResult rawResult = taskRunner.run(
                     "tool " + descriptor.getName(),
@@ -130,7 +137,8 @@ public class AgentToolBridge {
         } catch (AgentRuntimeOperationTimeoutException exception) {
             return timeoutResult(toolCall, descriptor, exception.getTimeout(), clock.millis() - startedAt);
         } catch (RuntimeException exception) {
-            if (exception instanceof AgentRuntimeStoppedException) {
+            if (exception instanceof AgentRuntimeStoppedException
+                    || exception instanceof AgentToolCompletionIndeterminateException) {
                 throw exception;
             }
             // Bridge exceptions cross into model-visible tool results and client events.
@@ -163,6 +171,19 @@ public class AgentToolBridge {
             AgentApprovalDecision decision = awaitApprovalDecision(control, approval);
             eventSink.approvalCompleted(toolCall, waitingResult, decision);
             if (decision == AgentApprovalDecision.REJECTED) {
+                AgentApprovalConsumption.Claim consumption = beginApprovalConsumption(approvalId, decision);
+                boolean completed = false;
+                try {
+                    completed = consumption.complete();
+                } finally {
+                    if (!completed) {
+                        consumption.release();
+                    }
+                }
+                if (!completed) {
+                    throw new AgentRuntimeStoppedException(
+                            "Approval runtime stopped before rejection was consumed.");
+                }
                 return waitingResult.toBuilder()
                         .status(AgentToolStatus.DENIED)
                         .decision(AgentPolicyDecision.DENY)
@@ -171,10 +192,26 @@ public class AgentToolBridge {
                         .errorMessage("Tool execution rejected by approval decision.")
                         .build();
             }
-            return executeOnce(context, runtimeProperties, toolCall, control, eventSink, waitingResult);
+            return executeOnce(
+                    context, runtimeProperties, toolCall, control, eventSink, waitingResult, decision);
         } finally {
             approval.cancel(false);
         }
+    }
+
+    private AgentApprovalConsumption approvalConsumption(AgentToolExecutionResult approvedResult,
+                                                         AgentApprovalDecision decision) {
+        if (approvedResult == null || decision == null) {
+            return AgentApprovalConsumption.NONE;
+        }
+        return () -> beginApprovalConsumption(approvedResult.getApprovalId(), decision);
+    }
+
+    private AgentApprovalConsumption.Claim beginApprovalConsumption(
+            String approvalId, AgentApprovalDecision decision) {
+        return approvalRegistry.beginConsumption(approvalId, decision)
+                .orElseThrow(() -> new AgentRuntimeStoppedException(
+                        "Approval runtime is no longer active."));
     }
 
     private AgentApprovalDecision awaitApprovalDecision(AgentRuntimeControl control,

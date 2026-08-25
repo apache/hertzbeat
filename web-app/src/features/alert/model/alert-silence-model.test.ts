@@ -125,7 +125,7 @@ describe('alert silence model', () => {
     ).toEqual(['days', 'period']);
   });
 
-  it('preserves the visible time window when changing schedule type', () => {
+  it('starts a recurring policy with the same useful six-hour window and retains the one-time range', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 6, 20, 12, 0));
     const once = {
@@ -134,12 +134,12 @@ describe('alert silence model', () => {
       periodEnd: '2026-07-14T02:00'
     };
     const recurring = changeAlertSilenceType(once, 1);
-    expect(recurring).toMatchObject({ type: 1, periodStart: '22:00', periodEnd: '02:00' });
+    expect(recurring).toMatchObject({ type: 1, periodStart: '12:00', periodEnd: '18:00' });
     const restored = changeAlertSilenceType(recurring, 0);
     expect(restored).toMatchObject({
       type: 0,
-      periodStart: '2026-07-20T22:00',
-      periodEnd: '2026-07-21T02:00'
+      periodStart: '2026-07-13T22:00',
+      periodEnd: '2026-07-14T02:00'
     });
   });
 
@@ -151,9 +151,45 @@ describe('alert silence model', () => {
 
     expect(draft.days).toEqual([7, 1, 2, 3, 4, 5, 6]);
     expect(new Date(draft.periodEnd).getTime() - new Date(draft.periodStart).getTime()).toBe(6 * 60 * 60 * 1000);
+    expect(draft.scheduleMemory?.recurring).toEqual({ periodStart: '10:30', periodEnd: '16:30' });
   });
 
-  it('keeps an invalid recurring clock editable when changing schedule type', () => {
+  it('rejects equal recurring clocks before the backend contract boundary', () => {
+    expect(
+      validateAlertSilenceDraft({
+        ...createAlertSilenceDraft(),
+        name: 'Invalid recurring window',
+        type: 1,
+        periodStart: '10:30',
+        periodEnd: '10:30'
+      })
+    ).toContain('period');
+  });
+
+  it('derives both recurring clocks from an existing one-time policy without transient schedule memory', () => {
+    const draft = alertSilenceDraftFromDetail({
+      id: 19,
+      name: 'Existing one-time policy',
+      enable: true,
+      matchAll: true,
+      type: 0,
+      times: 0,
+      labels: {},
+      days: [],
+      periodStart: '2026-07-13T22:00:00Z',
+      periodEnd: '2026-07-14T02:00:00Z'
+    });
+
+    const recurring = changeAlertSilenceType(draft, 1);
+
+    expect(recurring.periodStart).not.toBe(recurring.periodEnd);
+    expect(recurring.scheduleMemory?.once).toEqual({
+      periodStart: draft.periodStart,
+      periodEnd: draft.periodEnd
+    });
+  });
+
+  it('keeps an invalid recurring clock editable without destroying the remembered one-time range', () => {
     const invalidRecurring = {
       ...createAlertSilenceDraft(),
       type: 1 as const,
@@ -164,8 +200,8 @@ describe('alert silence model', () => {
     expect(() => changeAlertSilenceType(invalidRecurring, 0)).not.toThrow();
     expect(changeAlertSilenceType(invalidRecurring, 0)).toMatchObject({
       type: 0,
-      periodStart: '',
-      periodEnd: ''
+      periodStart: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+      periodEnd: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
     });
   });
 

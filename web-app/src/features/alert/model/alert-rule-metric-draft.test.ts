@@ -96,7 +96,7 @@ describe('metric alert draft transitions', () => {
     expect(buildMetricAlertApplicationPatch(draft, 'linux')).toEqual({});
   });
 
-  it('composes availability immediately and metrics only after a valid condition exists', () => {
+  it('composes selected target evidence immediately and adds a valid metric condition when complete', () => {
     const appDraft = {
       ...createAlertRuleDraft(),
       ...buildMetricAlertApplicationPatch(createAlertRuleDraft(), 'springboot3')
@@ -111,7 +111,7 @@ describe('metric alert draft transitions', () => {
       metric: 'summary'
     });
     const metricDraft = { ...appDraft, ...targetPatch };
-    expect(metricDraft.expr).toBe('');
+    expect(metricDraft.expr).toBe('equals(__app__,"springboot3") && equals(__metrics__,"summary")');
     expect(
       buildMetricAlertStructuredConditionPatch(
         metricDraft,
@@ -177,7 +177,23 @@ describe('metric alert draft transitions', () => {
         }
       }
     };
-    expect(buildMetricAlertAuthoringModePatch(incomplete, 'expert', fields)).toEqual({});
+    expect(buildMetricAlertAuthoringModePatch(incomplete, 'expert', fields)).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__metrics__,"summary")',
+      metricEditor: { authoring: { mode: 'expert', condition: '' } }
+    });
+    const emptyExpert = {
+      ...incomplete,
+      metricEditor: {
+        ...targetedMetricEditor(incomplete),
+        authoring: { mode: 'expert' as const, condition: '' }
+      }
+    };
+    expect(buildMetricAlertAuthoringModePatch(emptyExpert, 'structured', fields)).toMatchObject({
+      expr: emptyExpert.expr,
+      metricEditor: {
+        authoring: { mode: 'structured', condition: { kind: 'group', join: 'and', items: [] } }
+      }
+    });
 
     const unknown = alertRuleDraftFromDetail(
       rule('equals(__app__,"springboot3") && equals(__metrics__,"summary") && custom(value)')
@@ -185,7 +201,7 @@ describe('metric alert draft transitions', () => {
     expect(buildMetricAlertAuthoringModePatch(unknown, 'structured', fields)).toEqual({});
   });
 
-  it('keeps an incomplete structured threshold transient and clears the writable expression', () => {
+  it('keeps an incomplete structured threshold transient while preserving selected target evidence', () => {
     const draft = alertRuleDraftFromDetail(
       rule('equals(__app__,"springboot3") && equals(__metrics__,"summary") && responseTime > 100')
     );
@@ -196,7 +212,7 @@ describe('metric alert draft transitions', () => {
     };
 
     expect(buildMetricAlertStructuredConditionPatch(draft, condition, fields)).toMatchObject({
-      expr: '',
+      expr: 'equals(__app__,"springboot3") && equals(__metrics__,"summary") && equals(status, "undefined")',
       metricEditor: { authoring: { mode: 'structured', condition } }
     });
   });
@@ -231,7 +247,9 @@ describe('metric alert draft transitions', () => {
       ...buildMetricAlertTargetPatch(appDraft, { kind: 'metric', app: 'springboot3', metric: 'summary' })
     };
     expect(buildMetricAlertBindingsPatch(targetDraft, [7], ['team:ops'], fields)).toMatchObject({
-      expr: '',
+      expr:
+        'equals(__app__,"springboot3") && equals(__metrics__,"summary") && ' +
+        'equals(__instance__, "7") && contains(__labels__, "team:ops")',
       metricEditor: { monitorIds: [7], monitorLabels: ['team:ops'], authoring: { mode: 'structured' } }
     });
     expect(() => buildMetricAlertBindingsPatch(targetDraft, [0], [], fields)).toThrow();

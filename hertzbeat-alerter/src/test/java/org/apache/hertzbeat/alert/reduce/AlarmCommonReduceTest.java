@@ -42,9 +42,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * test case for {@link AlarmCommonReduce}
@@ -55,9 +56,6 @@ class AlarmCommonReduceTest {
 
     @Mock
     private AlarmGroupReduce alarmGroupReduce;
-
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
 
     private AlarmCommonReduce alarmCommonReduce;
 
@@ -78,11 +76,9 @@ class AlarmCommonReduceTest {
 
     @Test
     void testReduceAndSendAlarm() {
-        alarmCommonReduce.destroy();
-        alarmCommonReduce = new AlarmCommonReduce(alarmGroupReduce, VirtualThreadProperties.defaults(), eventPublisher);
         alarmCommonReduce.reduceAndSendAlarm(testAlert);
 
-        verify(eventPublisher, timeout(2000)).publishEvent(any(SingleAlert.CreatedEvent.class));
+        verify(alarmGroupReduce, timeout(2000)).processGroupAlert(testAlert);
     }
 
     @Test
@@ -99,6 +95,33 @@ class AlarmCommonReduceTest {
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "workspace",
+        "workspace_id",
+        "workspace.id",
+        "hertzbeat.workspace_id",
+        "x-hertzbeat-workspace-id"
+    })
+    void reservedWorkspaceLabelsNeverReachFingerprintOrReducer(String reservedLabel) throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        testAlert.setLabels(new HashMap<>(Map.of(
+                "alertname", "test",
+                reservedLabel, "forged")));
+        doAnswer(invocation -> {
+            SingleAlert alert = invocation.getArgument(0);
+            assertFalse(alert.getLabels().containsKey(reservedLabel));
+            assertEquals("alertname:test", alert.getFingerprint());
+            latch.countDown();
+            return null;
+        }).when(alarmGroupReduce).processGroupAlert(any(SingleAlert.class));
+
+        alarmCommonReduce.reduceAndSendAlarm("team-a", testAlert);
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertEquals("team-a", testAlert.getWorkspaceId());
     }
 
     @Test

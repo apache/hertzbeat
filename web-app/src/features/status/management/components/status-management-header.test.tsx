@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -34,5 +34,21 @@ describe('StatusManagementHeader', () => {
     expect(publicStatusLink).toHaveAttribute('href', '/public-status-proof');
     expect(publicStatusLink).toHaveAttribute('target', '_blank');
     expect(publicStatusLink).toHaveAttribute('rel', 'noreferrer');
+  });
+
+  it('omits the public route action until the caller has a configured page', () => {
+    render(<StatusManagementHeader />);
+
+    expect(screen.queryByRole('link', { name: 'statusManagement.openPublicPage' })).not.toBeInTheDocument();
+  });
+
+  it('promotes incident publishing as the configured page primary action', () => {
+    const onPublish = vi.fn();
+    render(<StatusManagementHeader publicStatusHref="/status" canPublish onPublish={onPublish} />);
+
+    const publish = screen.getByRole('button', { name: 'statusManagement.publishIncident' });
+    expect(publish).toHaveClass('ant-btn-primary');
+    fireEvent.click(publish);
+    expect(onPublish).toHaveBeenCalledOnce();
   });
 });

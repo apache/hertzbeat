@@ -1,0 +1,83 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.workspace {
+  min-width: 0;
+}
+
+.toolbar {
+  position: sticky;
+  top: -24px;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 8px;
+  margin: -24px -24px 16px;
+  padding: 16px 24px 12px;
+  background: var(--ant-color-bg-elevated);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.search {
+  min-width: 0;
+}
+
+.matchCount {
+  min-width: 52px;
+  color: var(--ant-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.matchActions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.source {
+  margin: 0;
+  padding: 16px;
+  color: var(--ant-color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+}
+
+.bodyAnchor {
+  scroll-margin-top: 72px;
+}
+
+.match,
+.activeMatch {
+  color: inherit;
+  background: var(--ant-color-warning-bg);
+  border-radius: 2px;
+}
+
+.activeMatch {
+  background: var(--ant-color-warning-bg-hover);
+  outline: 1px solid var(--ant-color-warning-border);
+}
+
+@media (max-width: 700px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .search {
+    grid-column: 1 / -1;
+  }
+
+  .matchCount {
+    text-align: start;
+  }
+}

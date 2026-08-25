@@ -74,6 +74,12 @@ export const objectStoreTypeDefinitions = [
   { value: 'OBS', labelKey: 'objectStore.type.obs' }
 ] as const satisfies readonly { value: ObjectStoreType; labelKey: string }[];
 
+const objectStoreTypeSearchThreshold = 5;
+
+export function objectStoreTypePickerNeedsSearch(optionCount: number) {
+  return optionCount > objectStoreTypeSearchThreshold;
+}
+
 export const objectStoreObsFieldNames = [
   'accessKey',
   'secretKey',

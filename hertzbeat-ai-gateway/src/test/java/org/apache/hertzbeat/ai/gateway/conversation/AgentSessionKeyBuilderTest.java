@@ -45,7 +45,7 @@ class AgentSessionKeyBuilderTest {
         String second = keyBuilder.build(envelope, conversationId);
 
         assertEquals(first, second);
-        assertTrue(first.startsWith("v1:"));
+        assertTrue(first.startsWith("v2:"));
         assertEquals(67, first.length());
     }
 
@@ -67,6 +67,17 @@ class AgentSessionKeyBuilderTest {
         String second = keyBuilder.build(envelope, "chat-2");
 
         assertNotEquals(first, second);
+    }
+
+    @Test
+    void buildShouldSeparateTheSamePrincipalAndConversationByTrustedWorkspace() {
+        GatewayEnvelope first = envelope("web-ui", "user", "alice").toBuilder()
+            .workspaceId("workspace-a")
+            .build();
+        GatewayEnvelope second = first.toBuilder().workspaceId("workspace-b").build();
+
+        assertNotEquals(keyBuilder.build(first, "chat-1"), keyBuilder.build(second, "chat-1"));
+        assertEquals("default", envelope("web-ui", "user", "alice").getWorkspaceId());
     }
 
     private GatewayEnvelope envelope(String channelId, String actorType, String actorId) {

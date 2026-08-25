@@ -38,6 +38,7 @@ import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderOption;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -167,6 +168,7 @@ public class ModelProviderConfigController {
                 .channelId(ChannelId.WEB_UI.id())
                 .receivedAt(System.currentTimeMillis())
                 .actor(ActorSupport.requireCurrentAdminSurenessActor())
+                .workspaceId(AuthTokenRequestContext.currentWorkspaceId())
                 .build();
     }
 }

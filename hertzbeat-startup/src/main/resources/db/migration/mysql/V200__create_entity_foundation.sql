@@ -228,42 +228,56 @@ CREATE TABLE hzb_signal_dashboard (
 
 -- HertzBeat 2.0.0 baseline additions.
 
--- V201  add collector intake token boundary.sql.
+-- Add the collector intake token boundary.
 ALTER TABLE hzb_auth_token
     ADD COLUMN token_audience VARCHAR(32) NULL,
     ADD COLUMN collector_id VARCHAR(128) NULL,
     ADD COLUMN allowed_signals VARCHAR(64) NULL,
     ADD INDEX idx_hzb_auth_token_collector (collector_id);
 
--- V202  add collector runtime config.sql.
+-- Add collector runtime configuration.
 ALTER TABLE hzb_collector ADD COLUMN runtime_config TEXT NULL;
 
--- V203  add collector instrumentation intake.sql.
+-- Add collector instrumentation intake.
 ALTER TABLE hzb_collector ADD COLUMN instrumentation_intake TEXT NULL;
 
--- V204  add config revision.sql.
+-- Add managed configuration revision tracking.
 ALTER TABLE hzb_config ADD COLUMN config_revision VARCHAR(36) NULL;
 UPDATE hzb_config SET config_revision = UUID() WHERE config_revision IS NULL;
 ALTER TABLE hzb_config MODIFY COLUMN config_revision VARCHAR(36) NOT NULL;
 
--- V205  add monitor metric layout.sql.
+-- Add persisted monitor metric layouts.
 CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     creator VARCHAR(255) NOT NULL,
     application VARCHAR(128) NOT NULL,
     schema_version INT NOT NULL,
-    layout_document LONGTEXT NOT NULL,
+    layout_document TEXT NOT NULL,
     revision VARCHAR(64) NOT NULL,
     create_time DATETIME NOT NULL,
     update_time DATETIME NOT NULL,
     UNIQUE KEY uk_hzb_monitor_metric_layout_creator_app (creator, application)
 );
 
--- V206  add agent gateway.sql.
+-- Scope persisted alerts by workspace.
+ALTER TABLE hzb_alert_single
+    ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
+    DROP INDEX unique_fingerprint,
+    ADD CONSTRAINT unique_fingerprint UNIQUE (workspace_id, fingerprint),
+    ADD INDEX idx_alert_single_workspace (workspace_id);
+
+ALTER TABLE hzb_alert_group
+    ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
+    DROP INDEX unique_group_key,
+    ADD CONSTRAINT unique_group_key UNIQUE (workspace_id, group_key),
+    ADD INDEX idx_alert_group_workspace (workspace_id);
+
+-- Add the agent gateway persistence model.
 CREATE TABLE hzb_agent_session (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     session_uid VARCHAR(64) NOT NULL,
     session_key VARCHAR(128) NOT NULL,
+    workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     channel VARCHAR(64), origin_entry_type VARCHAR(32) NOT NULL,
     conversation_id VARCHAR(256), actor_type VARCHAR(64),
     actor_id VARCHAR(128), actor_roles VARCHAR(1024), status VARCHAR(32), title VARCHAR(256),
@@ -272,7 +286,7 @@ CREATE TABLE hzb_agent_session (
     gmt_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_agent_session_uid (session_uid),
     UNIQUE KEY uk_agent_session_key (session_key),
-    KEY idx_agent_session_owner (channel, actor_type, actor_id)
+    KEY idx_agent_session_owner (workspace_id, channel, actor_type, actor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE hzb_agent_run (
@@ -303,7 +317,7 @@ CREATE TABLE hzb_agent_tool_call (
     input_json TEXT, input_hash VARCHAR(64), approval_id VARCHAR(64),
     approval_status VARCHAR(32), approval_expires_at DATETIME, approval_decided_at DATETIME,
     approval_actor_type VARCHAR(64), approval_actor_id VARCHAR(128), approval_reason VARCHAR(1024),
-    result_output TEXT, elapsed_ms BIGINT, error_message TEXT,
+    result_output TEXT, elapsed_ms BIGINT, error_message VARCHAR(1024),
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP,
     gmt_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_agent_tool_call_run_call (run_id, tool_call_id),
@@ -338,13 +352,14 @@ CREATE TABLE hzb_agent_schedule (
 
 CREATE TABLE hzb_alert_analysis_policy (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     name VARCHAR(128) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
     match_labels VARCHAR(4096) NOT NULL, group_by_labels VARCHAR(2048) NOT NULL,
     window_seconds BIGINT NOT NULL, minimum_alert_count INT NOT NULL,
     cooldown_seconds BIGINT NOT NULL,
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP,
     gmt_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY idx_alert_analysis_enabled (enabled)
+    KEY idx_alert_analysis_workspace_enabled (workspace_id, enabled)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE hzb_config MODIFY COLUMN content TEXT;

@@ -82,14 +82,14 @@ class AgentSessionServiceTest {
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         GatewayEnvelope envelope = envelope("bob");
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags-1").build();
-        when(sessionDao.findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-            "ags-1", "web-ui", "user", "bob", "USER_INPUT")).thenReturn(Optional.of(session));
+        when(sessionDao.findBySessionUidAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            "ags-1", "default", "web-ui", "user", "bob", "USER_INPUT")).thenReturn(Optional.of(session));
 
         assertSame(session, service.findOwnedSession(
             " ags-1 ", envelope, AgentRuntimeEntryType.USER_INPUT).orElseThrow());
 
-        verify(sessionDao).findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-            "ags-1", "web-ui", "user", "bob", "USER_INPUT");
+        verify(sessionDao).findBySessionUidAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            "ags-1", "default", "web-ui", "user", "bob", "USER_INPUT");
     }
 
     @Test
@@ -98,14 +98,14 @@ class AgentSessionServiceTest {
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         GatewayEnvelope envelope = envelope("bob");
         AgentSession session = AgentSession.builder().id(42L).sessionUid("ags-42").build();
-        when(sessionDao.findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-            42L, "web-ui", "user", "bob", "USER_INPUT")).thenReturn(Optional.of(session));
+        when(sessionDao.findByIdAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            42L, "default", "web-ui", "user", "bob", "USER_INPUT")).thenReturn(Optional.of(session));
 
         assertSame(session, service.findOwnedSession(
             "42", envelope, AgentRuntimeEntryType.USER_INPUT).orElseThrow());
 
-        verify(sessionDao).findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
-            42L, "web-ui", "user", "bob", "USER_INPUT");
+        verify(sessionDao).findByIdAndWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            42L, "default", "web-ui", "user", "bob", "USER_INPUT");
     }
 
     @Test
@@ -120,15 +120,16 @@ class AgentSessionServiceTest {
         PageRequest pageRequest = PageRequest.of(0, 8);
         Page<AgentSession> page = Page.empty(pageRequest);
         when(sessionDao
-            .findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-                "system", "system", "alert-analysis", "ALERT_TRIGGER", "database", pageRequest)).thenReturn(page);
+            .findByWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                "default", "system", "system", "alert-analysis", "ALERT_TRIGGER", "database", pageRequest))
+            .thenReturn(page);
 
         assertSame(page, service.findSessions(
             envelope, AgentRuntimeEntryType.ALERT_TRIGGER, "database", pageRequest));
 
         verify(sessionDao)
-            .findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-                "system", "system", "alert-analysis", "ALERT_TRIGGER", "database", pageRequest);
+            .findByWorkspaceIdAndChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                "default", "system", "system", "alert-analysis", "ALERT_TRIGGER", "database", pageRequest);
     }
 
     @Test
@@ -281,6 +282,38 @@ class AgentSessionServiceTest {
         assertSame(page, result);
         assertEquals(8L, result.getContent().get(0).getSessionSequence());
         assertEquals(2, result.getTotalPages());
+    }
+
+    @Test
+    void findUniqueRunRequestShouldRejectAmbiguousUserEntries() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        AgentTranscriptEntry first = transcriptEntry(1L, TranscriptMessage.userText("first"));
+        AgentTranscriptEntry second = transcriptEntry(2L, TranscriptMessage.userText("second"));
+        when(transcriptEntryDao.findTop2ByRunIdAndMessageRoleOrderBySessionSequenceAsc(
+                9L, TranscriptMessage.TranscriptRole.USER.wireValue()))
+                .thenReturn(List.of(first, second));
+
+        assertTrue(service.findUniqueRunTranscriptMessage(
+                9L, TranscriptMessage.TranscriptRole.USER).isEmpty());
+    }
+
+    @Test
+    void findUniqueRunRequestShouldFailClosedOnMalformedPayload() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        AgentTranscriptEntry malformed = AgentTranscriptEntry.builder()
+                .runId(9L)
+                .messageRole(TranscriptMessage.TranscriptRole.USER.wireValue())
+                .sessionSequence(1L)
+                .payloadJson("not-json")
+                .build();
+        when(transcriptEntryDao.findTop2ByRunIdAndMessageRoleOrderBySessionSequenceAsc(
+                9L, TranscriptMessage.TranscriptRole.USER.wireValue()))
+                .thenReturn(List.of(malformed));
+
+        assertTrue(service.findUniqueRunTranscriptMessage(
+                9L, TranscriptMessage.TranscriptRole.USER).isEmpty());
     }
 
     @Test

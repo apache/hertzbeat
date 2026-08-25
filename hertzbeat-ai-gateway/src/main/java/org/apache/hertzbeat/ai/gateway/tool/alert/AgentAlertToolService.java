@@ -34,6 +34,7 @@ import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.data.domain.Page;
@@ -73,16 +74,17 @@ public class AgentAlertToolService {
         Integer pageIndex,
         @ToolParam(required = false, description = "Page size, bounded to 1..50, default 10.")
         Integer pageSize) {
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
         String resolvedAlertType = AgentToolArguments.firstNonBlank(alertType, "single").toLowerCase(Locale.ROOT);
         // Model-generated enum values can vary in case; canonicalize before the fixed branch comparison.
         return switch (resolvedAlertType) {
             case "single" -> Map.of("alertType", "single", "result",
-                    querySingleAlerts(status, search, sort, order, pageIndex, pageSize));
+                    querySingleAlerts(workspaceId, status, search, sort, order, pageIndex, pageSize));
             case "group" -> Map.of("alertType", "group", "result",
-                    queryGroupAlerts(status, search, sort, order, pageIndex, pageSize));
+                    queryGroupAlerts(workspaceId, status, search, sort, order, pageIndex, pageSize));
             case "both" -> Map.of("alertType", "both",
-                    "single", querySingleAlerts(status, search, sort, order, pageIndex, pageSize),
-                    "group", queryGroupAlerts(status, search, sort, order, pageIndex, pageSize));
+                    "single", querySingleAlerts(workspaceId, status, search, sort, order, pageIndex, pageSize),
+                    "group", queryGroupAlerts(workspaceId, status, search, sort, order, pageIndex, pageSize));
             default -> throw new IllegalArgumentException("alertType must be single, group, or both");
         };
     }
@@ -91,7 +93,7 @@ public class AgentAlertToolService {
         description = "Get total, handled, and priority alert statistics.")
     @AgentToolPolicy
     public AlertSummary alertSummary() {
-        return alertService.getAlertsSummary();
+        return alertService.getAlertsSummary(AuthTokenRequestContext.currentWorkspaceId());
     }
 
     @Tool(name = "alert.get",
@@ -99,21 +101,43 @@ public class AgentAlertToolService {
     @AgentToolPolicy
     public Map<String, Object> alertGet(
         @ToolParam(description = "Alert id.")
-        Long alertId) {
+        Long alertId,
+        @ToolParam(required = false, description = "Exact alert type: single or group; omitted checks both.")
+        String alertType) {
         Long resolvedAlertId = alertId;
         if (resolvedAlertId == null) {
             throw new IllegalArgumentException("alert.get requires alertId");
         }
+        String resolvedAlertType = AgentToolArguments.firstNonBlank(alertType);
+        if (resolvedAlertType != null) {
+            resolvedAlertType = resolvedAlertType.toLowerCase(Locale.ROOT);
+            if (!"single".equals(resolvedAlertType) && !"group".equals(resolvedAlertType)) {
+                throw new IllegalArgumentException("alertType must be single or group");
+            }
+        }
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("alertId", resolvedAlertId);
-        alertService.findSingleAlert(resolvedAlertId)
-                .ifPresent(alert -> result.put("single", singleAlertRow(alert)));
-        alertService.findGroupAlert(resolvedAlertId)
-                .ifPresent(alert -> result.put("group", groupAlertRow(alert)));
-        if (result.size() == 1) {
+        if (resolvedAlertType != null) {
+            result.put("alertType", resolvedAlertType);
+        }
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (!"group".equals(resolvedAlertType)) {
+            alertService.findSingleAlert(workspaceId, resolvedAlertId)
+                    .ifPresent(alert -> result.put("single", singleAlertRow(alert)));
+        }
+        if (!"single".equals(resolvedAlertType)) {
+            alertService.findGroupAlert(workspaceId, resolvedAlertId)
+                    .ifPresent(alert -> result.put("group", groupAlertRow(alert)));
+        }
+        if (!result.containsKey("single") && !result.containsKey("group")) {
             throw new IllegalArgumentException("Alert not found: " + resolvedAlertId);
         }
         return result;
+    }
+
+    /** Internal compatibility path for callers that intentionally request either persisted alert shape. */
+    public Map<String, Object> alertGet(Long alertId) {
+        return alertGet(alertId, null);
     }
 
     @Tool(name = "alert.similar",
@@ -132,8 +156,8 @@ public class AgentAlertToolService {
         String resolvedType = AgentToolArguments.firstNonBlank(alertType, "single").toLowerCase(Locale.ROOT);
         int resolvedLimit = AgentToolContextSupport.bound(limit == null ? 10 : limit, 1, 20);
         return switch (resolvedType) {
-            case "single" -> similarSingleAlerts(alertId, resolvedLimit);
-            case "group" -> similarGroupAlerts(alertId, resolvedLimit);
+            case "single" -> similarSingleAlerts(AuthTokenRequestContext.currentWorkspaceId(), alertId, resolvedLimit);
+            case "group" -> similarGroupAlerts(AuthTokenRequestContext.currentWorkspaceId(), alertId, resolvedLimit);
             default -> throw new IllegalArgumentException("alertType must be single or group");
         };
     }
@@ -149,11 +173,12 @@ public class AgentAlertToolService {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for alert.resolve");
         }
-        Set<Long> ids = alertIds(alertType, alertIds);
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        Set<Long> ids = alertIds(workspaceId, alertType, alertIds);
         if ("single".equals(alertType)) {
-            alertService.editSingleAlertStatus("resolved", List.copyOf(ids));
+            alertService.editSingleAlertStatus(workspaceId, "resolved", List.copyOf(ids));
         } else {
-            alertService.editGroupAlertStatus("resolved", List.copyOf(ids));
+            alertService.editGroupAlertStatus(workspaceId, "resolved", List.copyOf(ids));
         }
         return operationResult("resolve", alertType, ids);
     }
@@ -169,26 +194,29 @@ public class AgentAlertToolService {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for alert.delete");
         }
-        Set<Long> ids = alertIds(alertType, alertIds);
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        Set<Long> ids = alertIds(workspaceId, alertType, alertIds);
         if ("single".equals(alertType)) {
-            alertService.deleteSingleAlerts(new HashSet<>(ids));
+            alertService.deleteSingleAlerts(workspaceId, new HashSet<>(ids));
         } else {
-            alertService.deleteGroupAlerts(new HashSet<>(ids));
+            alertService.deleteGroupAlerts(workspaceId, new HashSet<>(ids));
         }
         return operationResult("delete", alertType, ids);
     }
 
-    private Map<String, Object> querySingleAlerts(String status, String search, String sort, String order,
+    private Map<String, Object> querySingleAlerts(String workspaceId, String status, String search,
+                                                  String sort, String order,
                                                   Integer pageIndex, Integer pageSize) {
-        Page<SingleAlert> page = alertService.getSingleAlerts(resolvedStatus(status),
+        Page<SingleAlert> page = alertService.getSingleAlerts(workspaceId, resolvedStatus(status),
                 AgentToolArguments.firstNonBlank(search), resolvedSort(sort), resolvedOrder(order),
                 resolvedPageIndex(pageIndex), resolvedPageSize(pageSize));
         return pageResult(page, this::singleAlertRow);
     }
 
-    private Map<String, Object> queryGroupAlerts(String status, String search, String sort, String order,
+    private Map<String, Object> queryGroupAlerts(String workspaceId, String status, String search,
+                                                 String sort, String order,
                                                  Integer pageIndex, Integer pageSize) {
-        Page<GroupAlert> page = alertService.getGroupAlerts(resolvedStatus(status),
+        Page<GroupAlert> page = alertService.getGroupAlerts(workspaceId, resolvedStatus(status),
                 AgentToolArguments.firstNonBlank(search), null, null, null, null,
                 resolvedSort(sort), resolvedOrder(order),
                 resolvedPageIndex(pageIndex), resolvedPageSize(pageSize));
@@ -241,11 +269,11 @@ public class AgentAlertToolService {
         return result;
     }
 
-    private Map<String, Object> similarSingleAlerts(long alertId, int limit) {
-        SingleAlert baseline = alertService.findSingleAlert(alertId)
+    private Map<String, Object> similarSingleAlerts(String workspaceId, long alertId, int limit) {
+        SingleAlert baseline = alertService.findSingleAlert(workspaceId, alertId)
                 .orElseThrow(() -> new IllegalArgumentException("Single alert not found: " + alertId));
         String matchValue = similarityValue(baseline.getLabels(), baseline.getContent());
-        List<Map<String, Object>> content = alertService.getSingleAlerts(null, matchValue,
+        List<Map<String, Object>> content = alertService.getSingleAlerts(workspaceId, null, matchValue,
                         "gmtUpdate", "desc", 0, limit + 1).getContent().stream()
                 .filter(alert -> !Long.valueOf(alertId).equals(alert.getId()))
                 .limit(limit)
@@ -255,11 +283,11 @@ public class AgentAlertToolService {
                 "matchValue", matchValue, "content", content, "returnedCount", content.size());
     }
 
-    private Map<String, Object> similarGroupAlerts(long alertId, int limit) {
-        GroupAlert baseline = alertService.findGroupAlert(alertId)
+    private Map<String, Object> similarGroupAlerts(String workspaceId, long alertId, int limit) {
+        GroupAlert baseline = alertService.findGroupAlert(workspaceId, alertId)
                 .orElseThrow(() -> new IllegalArgumentException("Group alert not found: " + alertId));
         String matchValue = similarityValue(baseline.getCommonLabels(), baseline.getGroupKey());
-        List<Map<String, Object>> content = alertService.getGroupAlerts(null, matchValue,
+        List<Map<String, Object>> content = alertService.getGroupAlerts(workspaceId, null, matchValue,
                         null, null, null, null, "gmtUpdate", "desc", 0, limit + 1).getContent().stream()
                 .filter(alert -> !Long.valueOf(alertId).equals(alert.getId()))
                 .limit(limit)
@@ -269,7 +297,7 @@ public class AgentAlertToolService {
                 "matchValue", matchValue, "content", content, "returnedCount", content.size());
     }
 
-    private Set<Long> alertIds(String alertType, List<Long> alertIds) {
+    private Set<Long> alertIds(String workspaceId, String alertType, List<Long> alertIds) {
         if (!"single".equals(alertType) && !"group".equals(alertType)) {
             throw new IllegalArgumentException("alertType must be single or group");
         }
@@ -280,8 +308,8 @@ public class AgentAlertToolService {
         LinkedHashSet<Long> ids = new LinkedHashSet<>(alertIds);
         List<Long> missingIds = ids.stream()
                 .filter(id -> "single".equals(alertType)
-                        ? alertService.findSingleAlert(id).isEmpty()
-                        : alertService.findGroupAlert(id).isEmpty())
+                        ? alertService.findSingleAlert(workspaceId, id).isEmpty()
+                        : alertService.findGroupAlert(workspaceId, id).isEmpty())
                 .toList();
         if (!missingIds.isEmpty()) {
             throw new IllegalArgumentException("Alerts were not found: " + missingIds);

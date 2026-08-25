@@ -265,24 +265,24 @@ CREATE INDEX idx_hzb_signal_dashboard_update
 
 -- HertzBeat 2.0.0 baseline additions.
 
--- V201  add collector intake token boundary.sql.
+-- Add the collector intake token boundary.
 ALTER TABLE hzb_auth_token ADD COLUMN token_audience VARCHAR(32);
 ALTER TABLE hzb_auth_token ADD COLUMN collector_id VARCHAR(128);
 ALTER TABLE hzb_auth_token ADD COLUMN allowed_signals VARCHAR(64);
 CREATE INDEX idx_hzb_auth_token_collector ON hzb_auth_token(collector_id);
 
--- V202  add collector runtime config.sql.
+-- Add collector runtime configuration.
 ALTER TABLE hzb_collector ADD COLUMN runtime_config TEXT;
 
--- V203  add collector instrumentation intake.sql.
+-- Add collector instrumentation intake.
 ALTER TABLE hzb_collector ADD COLUMN instrumentation_intake TEXT;
 
--- V204  add config revision.sql.
+-- Add managed configuration revision tracking.
 ALTER TABLE hzb_config ADD COLUMN config_revision VARCHAR(36);
 UPDATE hzb_config SET config_revision = gen_random_uuid()::text WHERE config_revision IS NULL;
 ALTER TABLE hzb_config ALTER COLUMN config_revision SET NOT NULL;
 
--- V205  add monitor metric layout.sql.
+-- Add persisted monitor metric layouts.
 CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
     id BIGSERIAL PRIMARY KEY,
     creator VARCHAR(255) NOT NULL,
@@ -297,11 +297,25 @@ CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
 CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_monitor_metric_layout_creator_app
     ON hzb_monitor_metric_layout(creator, application);
 
--- V206  add agent gateway.sql.
+-- Scope persisted alerts by workspace.
+ALTER TABLE hzb_alert_single ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+ALTER TABLE hzb_alert_single DROP CONSTRAINT unique_fingerprint;
+ALTER TABLE hzb_alert_single
+    ADD CONSTRAINT unique_fingerprint UNIQUE (workspace_id, fingerprint);
+CREATE INDEX idx_alert_single_workspace ON hzb_alert_single(workspace_id);
+
+ALTER TABLE hzb_alert_group ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+ALTER TABLE hzb_alert_group DROP CONSTRAINT unique_group_key;
+ALTER TABLE hzb_alert_group
+    ADD CONSTRAINT unique_group_key UNIQUE (workspace_id, group_key);
+CREATE INDEX idx_alert_group_workspace ON hzb_alert_group(workspace_id);
+
+-- Add the agent gateway persistence model.
 CREATE TABLE hzb_agent_session (
     id BIGSERIAL PRIMARY KEY,
     session_uid VARCHAR(64) NOT NULL,
     session_key VARCHAR(128) NOT NULL,
+    workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     channel VARCHAR(64), origin_entry_type VARCHAR(32) NOT NULL,
     conversation_id VARCHAR(256), actor_type VARCHAR(64),
     actor_id VARCHAR(128), actor_roles VARCHAR(1024), status VARCHAR(32), title VARCHAR(256),
@@ -311,7 +325,7 @@ CREATE TABLE hzb_agent_session (
 );
 CREATE UNIQUE INDEX uk_agent_session_uid ON hzb_agent_session(session_uid);
 CREATE UNIQUE INDEX uk_agent_session_key ON hzb_agent_session(session_key);
-CREATE INDEX idx_agent_session_owner ON hzb_agent_session(channel, actor_type, actor_id);
+CREATE INDEX idx_agent_session_owner ON hzb_agent_session(workspace_id, channel, actor_type, actor_id);
 
 CREATE TABLE hzb_agent_run (
     id BIGSERIAL PRIMARY KEY,
@@ -337,7 +351,7 @@ CREATE TABLE hzb_agent_tool_call (
     input_json TEXT, input_hash VARCHAR(64), approval_id VARCHAR(64),
     approval_status VARCHAR(32), approval_expires_at TIMESTAMP, approval_decided_at TIMESTAMP,
     approval_actor_type VARCHAR(64), approval_actor_id VARCHAR(128), approval_reason VARCHAR(1024),
-    result_output TEXT, elapsed_ms BIGINT, error_message TEXT,
+    result_output TEXT, elapsed_ms BIGINT, error_message VARCHAR(1024),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE UNIQUE INDEX uk_agent_tool_call_run_call ON hzb_agent_tool_call(run_id, tool_call_id);
@@ -374,13 +388,15 @@ CREATE INDEX idx_agent_schedule_session ON hzb_agent_schedule(session_id);
 
 CREATE TABLE hzb_alert_analysis_policy (
     id BIGSERIAL PRIMARY KEY,
+    workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     name VARCHAR(128) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
     match_labels VARCHAR(4096) NOT NULL, group_by_labels VARCHAR(2048) NOT NULL,
     window_seconds BIGINT NOT NULL, minimum_alert_count INTEGER NOT NULL,
     cooldown_seconds BIGINT NOT NULL,
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_alert_analysis_enabled ON hzb_alert_analysis_policy(enabled);
+CREATE INDEX idx_alert_analysis_workspace_enabled
+    ON hzb_alert_analysis_policy(workspace_id, enabled);
 
 ALTER TABLE hzb_config ALTER COLUMN content TYPE TEXT;
 

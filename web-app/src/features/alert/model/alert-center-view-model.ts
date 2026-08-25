@@ -21,7 +21,10 @@ import type { AlertFailureKind, AlertGroup, AlertQuery, AlertSummary } from './a
 import type { AlertCapabilities } from './alert-capability-model';
 import type { AlertCenterOperationCommand, AlertCenterOperationRecovery } from './alert-center-operation-state';
 
-export type AlertFilterDraft = Pick<AlertQuery, 'search' | 'serviceName' | 'serviceNamespace' | 'environment'>;
+export type AlertFilterDraft = Pick<
+  AlertQuery,
+  'search' | 'serviceName' | 'serviceNamespace' | 'environment' | 'status' | 'severity'
+>;
 
 export type AlertDraftField = keyof AlertFilterDraft;
 

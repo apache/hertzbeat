@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Popconfirm, Space, Switch } from 'antd';
+import { Button, Popconfirm, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AlertActionCapabilities } from '../model/alert-action-capability';
@@ -26,24 +26,17 @@ export function AlertSilenceActions({
   capabilities,
   writeLocked,
   edit,
-  toggle,
   remove
 }: {
   silence: AlertSilence;
   capabilities: AlertActionCapabilities;
   writeLocked: boolean;
   edit: (id: number) => void;
-  toggle: (silence: AlertSilence, enabled: boolean) => void;
   remove: (id: number) => void;
 }) {
   const { t } = useTranslation();
   return (
     <Space>
-      <Switch
-        checked={silence.enable === true}
-        disabled={!capabilities.canWrite || writeLocked || typeof silence.enable !== 'boolean'}
-        onChange={enabled => toggle(silence, enabled)}
-      />
       {capabilities.canWrite && (
         <Button type="link" disabled={writeLocked} onClick={() => edit(silence.id)}>
           {t('common.edit')}

@@ -45,14 +45,11 @@ public class TencentExternAlertService implements ExternAlertService {
     private AlarmCommonReduce alarmCommonReduce;
     
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         TencentCloudExternAlert report = JsonUtil.fromJsonQuietly(content, TencentCloudExternAlert.class);
-        if (report == null) {
-            log.warn("Failed to parse Tencent external alert content");
-            return;
-        }
+        report = ExternalAlertIngressValidator.requirePresent(report);
         SingleAlert alert = new TencentCloudAlertConverter().convert(report);
-        alarmCommonReduce.reduceAndSendAlarm(alert);
+        alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert);
     }
 
     @Override
@@ -112,12 +109,21 @@ public class TencentExternAlertService implements ExternAlertService {
         private void buildLabels(Map<String, String> labels, TencentCloudExternAlert alert) {
             labels.put("__source__", "tencent_cloud");
             labels.put("alert_type", alert.getAlarmType());
+            TencentCloudExternAlert.AlarmPolicyInfo policy = alert.getAlarmPolicyInfo();
+            TencentCloudExternAlert.AlarmObjInfo object = alert.getAlarmObjInfo();
+            TencentCloudExternAlert.Dimensions dimensions = object.getDimensions();
+            putIfNotNull(labels, "policy_id", policy.getPolicyId());
+            putIfNotNull(labels, "region", object.getRegion());
+            putIfNotNull(labels, "app_id", object.getAppId());
+            putIfNotNull(labels, "uin", object.getUin());
+            putIfNotNull(labels, "instance_id", dimensions.getUnInstanceId());
+            putIfNotNull(labels, "obj_id", dimensions.getObjId());
             if (TencentCloudExternAlert.METRIC.equals(alert.getAlarmType())) {
-                labels.put("metric_name", alert.getAlarmPolicyInfo().getConditions().getMetricName());
-                labels.put("namespace", alert.getAlarmObjInfo().getNamespace());
+                labels.put("metric_name", policy.getConditions().getMetricName());
+                labels.put("namespace", object.getNamespace());
             } else {
-                labels.put("event_name", alert.getAlarmPolicyInfo().getConditions().getEventName());
-                labels.put("product_name", alert.getAlarmPolicyInfo().getConditions().getProductName());
+                labels.put("event_name", policy.getConditions().getEventName());
+                labels.put("product_name", policy.getConditions().getProductName());
             }
         }
 

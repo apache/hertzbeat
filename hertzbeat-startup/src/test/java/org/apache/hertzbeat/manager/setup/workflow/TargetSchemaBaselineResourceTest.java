@@ -38,8 +38,14 @@ class TargetSchemaBaselineResourceTest {
             "(?im)^\\s*create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?([a-z][a-z0-9_]*)\\s*\\(");
     private static final Set<String> MAPPED_TABLES = Set.of(
             "hzb_account",
+            "hzb_agent_run",
+            "hzb_agent_schedule",
+            "hzb_agent_session",
+            "hzb_agent_tool_call",
+            "hzb_agent_transcript_entry",
             "hzb_ai_conversation",
             "hzb_ai_message",
+            "hzb_alert_analysis_policy",
             "hzb_alert_define",
             "hzb_alert_define_monitor_bind",
             "hzb_alert_group",
@@ -65,6 +71,7 @@ class TargetSchemaBaselineResourceTest {
             "hzb_metrics_favorite",
             "hzb_monitor",
             "hzb_monitor_bind",
+            "hzb_monitor_metric_layout",
             "hzb_notice_receiver",
             "hzb_notice_rule",
             "hzb_notice_template",
@@ -89,7 +96,7 @@ class TargetSchemaBaselineResourceTest {
     @ParameterizedTest
     @ValueSource(strings = {"mysql", "postgresql"})
     void currentBaselineDeclaresEveryMappedTable(String vendor) throws IOException {
-        String resource = "db/migration/" + vendor + "/B206__current_schema.sql";
+        String resource = "db/migration/" + vendor + "/B200__current_schema.sql";
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(resource)) {
             assertThat(input).as(resource).isNotNull();
             assertThat(createdTables(new String(input.readAllBytes(), StandardCharsets.UTF_8)))
@@ -97,8 +104,12 @@ class TargetSchemaBaselineResourceTest {
         }
         MetadataDatabaseKind kind = vendor.equals("mysql")
                 ? MetadataDatabaseKind.MYSQL : MetadataDatabaseKind.POSTGRESQL;
-        assertThat(TargetSchemaBaseline.load(kind).expectedTables())
+        TargetSchemaBaseline baseline = TargetSchemaBaseline.load(kind);
+        assertThat(baseline.expectedTables())
                 .containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
+        assertThat(TargetSchemaBaseline.VERSION).isEqualTo("200");
+        assertThat(TargetSchemaBaseline.SCRIPT).isEqualTo("B200__current_schema.sql");
+        assertThat(TargetSchemaBaseline.DESCRIPTION).isEqualTo("current schema");
     }
 
     @ParameterizedTest
@@ -111,7 +122,7 @@ class TargetSchemaBaselineResourceTest {
             assertThat(sql)
                     .contains("Immutable V159 schema fixture for migration-chain tests.")
                     .contains("Do not derive this fixture from the current baseline or later migrations.")
-                    .doesNotContain("Static V205 schema baseline", "Future versioned migrations start at V206");
+                    .doesNotContain("current schema baseline", "Future versioned migrations start");
         }
     }
 

@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-US', resolvedLanguage: 'en-US' } })
+}));
 
 import { StatusOrgForm } from './status-org-form';
 
@@ -42,8 +44,10 @@ describe('StatusOrgForm presentation', () => {
     renderOrgForm({ org: undefined });
 
     for (const key of fieldKeys) expect(screen.getByLabelText(key)).toBeEnabled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByLabelText('statusManagement.color')).toHaveAttribute('type', 'color');
-    expect(screen.getByText('common.save').closest('button')).toHaveAttribute('type', 'submit');
+    expect(screen.getByText('statusManagement.colorDescription')).toBeInTheDocument();
+    expect(screen.getByText('statusManagement.createPage').closest('button')).toHaveAttribute('type', 'submit');
     expect(screen.queryByText('common.cancel')).not.toBeInTheDocument();
     expect(screen.queryByText('common.edit')).not.toBeInTheDocument();
   });
@@ -56,7 +60,7 @@ describe('StatusOrgForm presentation', () => {
     fireEvent.change(screen.getByLabelText('statusManagement.home'), { target: { value: 'https://status.test' } });
     fireEvent.change(screen.getByLabelText('status.descriptionLabel'), { target: { value: 'Proof description' } });
     fireEvent.change(screen.getByLabelText('statusManagement.logo'), { target: { value: '/proof.svg' } });
-    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'statusManagement.createPage' }));
 
     await waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
@@ -72,7 +76,7 @@ describe('StatusOrgForm presentation', () => {
     renderOrgForm({ org: undefined, saving: true });
 
     for (const key of fieldKeys) expect(screen.getByLabelText(key)).toBeDisabled();
-    const save = screen.getByText('common.save').closest('button');
+    const save = screen.getByText('statusManagement.createPage').closest('button');
     expect(save).toBeDisabled();
     expect(save).toHaveClass('ant-btn-loading');
     expect(screen.queryByText('common.cancel')).not.toBeInTheDocument();
@@ -82,19 +86,68 @@ describe('StatusOrgForm presentation', () => {
     const onSubmit = vi.fn();
     renderOrgForm({ org, onSubmit });
 
-    expect(screen.getByLabelText('statusManagement.name')).toHaveValue('HertzBeat');
-    expect(screen.getByLabelText('statusManagement.name')).toBeDisabled();
+    const settings = screen.getByRole('region', { name: 'statusManagement.organization' });
+    expect(within(settings).getByRole('group', { name: 'statusManagement.organizationDetails' })).toBeInTheDocument();
+    expect(within(settings).getByText('HertzBeat')).toBeInTheDocument();
+    expect(within(settings).getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
+    expect(settings.querySelector('table')).not.toBeInTheDocument();
+    expect(settings.closest('form')).toBeNull();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(within(settings).queryByRole('navigation')).not.toBeInTheDocument();
+    expect(within(settings).getByText('HertzBeat')).toBeInTheDocument();
+    expect(within(settings).getByText('/logo.svg')).toBeInTheDocument();
+    expect(within(settings).getByText('hertzbeat.apache.org')).toBeInTheDocument();
+    expect(within(settings).getAllByText('ops@example.test')).toHaveLength(2);
+    expect(screen.queryByLabelText('statusManagement.name')).not.toBeInTheDocument();
     const edit = screen.getByText('common.edit').closest('button');
     expect(edit).toHaveAttribute('type', 'button');
     fireEvent.click(edit!);
 
+    for (const key of fieldKeys) expect(screen.getByLabelText(key)).toBeEnabled();
     fireEvent.change(screen.getByLabelText('statusManagement.name'), { target: { value: 'Local draft' } });
     const cancel = screen.getByText('common.cancel').closest('button');
     expect(cancel).toHaveAttribute('type', 'button');
     fireEvent.click(cancel!);
 
-    expect(screen.getByLabelText('statusManagement.name')).toHaveValue('HertzBeat');
-    expect(screen.getByLabelText('statusManagement.name')).toBeDisabled();
+    expect(
+      within(screen.getByRole('region', { name: 'statusManagement.organization' })).getByText('HertzBeat')
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText('statusManagement.name')).not.toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submits every organization field from one visible settings form', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(org);
+    renderOrgForm({ org, onSubmit });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    for (const key of fieldKeys) expect(screen.getByLabelText(key)).toBeVisible();
+    fireEvent.change(screen.getByLabelText('statusManagement.logo'), { target: { value: '/updated.svg' } });
+    fireEvent.change(screen.getByLabelText('statusManagement.feedback'), {
+      target: { value: 'https://feedback.test' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'HertzBeat',
+          logo: '/updated.svg',
+          feedback: 'https://feedback.test'
+        })
+      )
+    );
+  });
+
+  it('never reuses a repeated edit activation as a save submission', () => {
+    const onSubmit = vi.fn();
+    renderOrgForm({ org, onSubmit });
+
+    const edit = screen.getByRole('button', { name: 'common.edit' });
+    fireEvent.click(edit);
+    fireEvent.click(edit);
+
+    expect(screen.getByLabelText('statusManagement.name')).toBeEnabled();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -107,9 +160,9 @@ describe('StatusOrgForm presentation', () => {
 
     proof.unmount();
     renderOrgForm({ org: undefined, commandLocked: true, writeRecovery: 'commit-uncertain' });
-    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'statusManagement.createPage' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
-    expect(screen.getByText('statusManagement.unknown')).toBeInTheDocument();
+    expect(screen.getAllByText('statusManagement.unknown')).toHaveLength(1);
   });
 });
 

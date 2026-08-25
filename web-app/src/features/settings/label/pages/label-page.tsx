@@ -26,7 +26,7 @@ import { useLabelQueryController } from '../controller/label-query-controller';
 import { useLabelResourceController } from '../controller/label-resource-controller';
 import { useLabelActionCapabilities } from '../controller/use-label-action-capabilities';
 import { labelCapabilitySignature, type LabelActionCapabilities } from '../model/label-model';
-import { LabelPageActions, LabelWorkspace } from './label-page-workspace';
+import { LabelWorkspace } from './label-page-workspace';
 
 export function LabelPage() {
   const capabilities = useLabelActionCapabilities();
@@ -48,13 +48,7 @@ function LabelCapabilityWorkspace({ capabilities }: { capabilities: LabelActionC
   };
   return (
     <OperationalPage>
-      <OperationalPageHeader
-        title={t('labels.title')}
-        description={t('labels.description')}
-        actions={
-          <LabelPageActions canCreate={capabilities.canCreate} locked={writeLocked} onCreate={editor.actions.create} />
-        }
-      />
+      <OperationalPageHeader title={t('labels.title')} description={t('labels.description')} />
       <LabelWorkspace
         capabilities={capabilities}
         queryController={queryController}

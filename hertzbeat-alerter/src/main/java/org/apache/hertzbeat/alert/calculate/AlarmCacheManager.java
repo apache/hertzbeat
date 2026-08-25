@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Component;
 
@@ -56,72 +57,114 @@ public class AlarmCacheManager {
     public AlarmCacheManager(SingleAlertDao singleAlertDao) {
         this.pendingAlertMap = Tables.newCustomTable(new ConcurrentHashMap<>(8), ConcurrentHashMap::new);
         this.firingAlertMap = Tables.newCustomTable(new ConcurrentHashMap<>(8), ConcurrentHashMap::new);
-        List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
+        List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, CommonConstants.ALERT_STATUS_FIRING);
         for (SingleAlert singleAlert : singleAlerts) {
             String fingerprint = AlertUtil.calculateFingerprint(singleAlert.getLabels());
             String defineId = singleAlert.getLabels().get(CommonConstants.LABEL_DEFINE_ID);
             if (StringUtils.isBlank(defineId)) {
-                defineId = getCustomKey(fingerprint);
+                defineId = CUSTOM_FIRING_ROW_KEY + fingerprint;
             }
             singleAlert.setId(null);
-            this.firingAlertMap.put(defineId, fingerprint, singleAlert);
+            this.firingAlertMap.put(scopedDefineKey(singleAlert.getWorkspaceId(), defineId), fingerprint, singleAlert);
         }
     }
 
     public void putPending(Long defineId, String fingerPrint, SingleAlert alert) {
-        this.pendingAlertMap.put(String.valueOf(defineId), fingerPrint, alert);
+        this.pendingAlertMap.put(scopedDefineKey(alert.getWorkspaceId(), String.valueOf(defineId)), fingerPrint, alert);
     }
 
     public SingleAlert getPending(Long defineId, String fingerPrint) {
-        return this.pendingAlertMap.get(String.valueOf(defineId), fingerPrint);
+        return getPending(AuthTokenScopes.DEFAULT_WORKSPACE_ID, defineId, fingerPrint);
+    }
+
+    public SingleAlert getPending(String workspaceId, Long defineId, String fingerPrint) {
+        return this.pendingAlertMap.get(scopedDefineKey(workspaceId, String.valueOf(defineId)), fingerPrint);
     }
 
     public void removePending(Long defineId, String fingerPrint) {
-        this.pendingAlertMap.remove(String.valueOf(defineId), fingerPrint);
+        removePending(AuthTokenScopes.DEFAULT_WORKSPACE_ID, defineId, fingerPrint);
+    }
+
+    public void removePending(String workspaceId, Long defineId, String fingerPrint) {
+        this.pendingAlertMap.remove(scopedDefineKey(workspaceId, String.valueOf(defineId)), fingerPrint);
     }
 
     public Map<String, SingleAlert> getPendingAlerts(Long defineId) {
-        return new HashMap<>(this.pendingAlertMap.row(String.valueOf(defineId)));
+        return getPendingAlerts(AuthTokenScopes.DEFAULT_WORKSPACE_ID, defineId);
+    }
+
+    public Map<String, SingleAlert> getPendingAlerts(String workspaceId, Long defineId) {
+        return new HashMap<>(this.pendingAlertMap.row(scopedDefineKey(workspaceId, String.valueOf(defineId))));
     }
 
     public void putFiring(Long defineId, String fingerPrint, SingleAlert alert) {
-        this.firingAlertMap.put(String.valueOf(defineId), fingerPrint, alert);
+        this.firingAlertMap.put(scopedDefineKey(alert.getWorkspaceId(), String.valueOf(defineId)), fingerPrint, alert);
     }
 
     public Map<String, SingleAlert> getFiringAlerts(Long defineId) {
-        return new HashMap<>(this.firingAlertMap.row(String.valueOf(defineId)));
+        return getFiringAlerts(AuthTokenScopes.DEFAULT_WORKSPACE_ID, defineId);
+    }
+
+    public Map<String, SingleAlert> getFiringAlerts(String workspaceId, Long defineId) {
+        return new HashMap<>(this.firingAlertMap.row(scopedDefineKey(workspaceId, String.valueOf(defineId))));
     }
 
     public void putFiring(String fingerPrint, SingleAlert alert) {
-        this.firingAlertMap.put(getCustomKey(fingerPrint), fingerPrint, alert);
+        this.firingAlertMap.put(getCustomKey(alert.getWorkspaceId(), fingerPrint), fingerPrint, alert);
     }
 
     public SingleAlert getFiring(Long defineId, String fingerPrint) {
-        SingleAlert singleAlert = this.firingAlertMap.get(String.valueOf(defineId), fingerPrint);
+        return getFiring(AuthTokenScopes.DEFAULT_WORKSPACE_ID, defineId, fingerPrint);
+    }
+
+    public SingleAlert getFiring(String workspaceId, Long defineId, String fingerPrint) {
+        SingleAlert singleAlert = this.firingAlertMap.get(scopedDefineKey(workspaceId, String.valueOf(defineId)),
+                fingerPrint);
         if (null != singleAlert) {
             return singleAlert;
         }
-        return getFiring(fingerPrint);
+        return getFiring(workspaceId, fingerPrint);
     }
 
     public SingleAlert removeFiring(Long defineId, String fingerPrint) {
-        SingleAlert singleAlert = this.firingAlertMap.remove(String.valueOf(defineId), fingerPrint);
+        return removeFiring(AuthTokenScopes.DEFAULT_WORKSPACE_ID, defineId, fingerPrint);
+    }
+
+    public SingleAlert removeFiring(String workspaceId, Long defineId, String fingerPrint) {
+        SingleAlert singleAlert = this.firingAlertMap.remove(scopedDefineKey(workspaceId, String.valueOf(defineId)),
+                fingerPrint);
         if (null == singleAlert) {
-            return this.firingAlertMap.remove(getCustomKey(fingerPrint), fingerPrint);
+            return this.firingAlertMap.remove(getCustomKey(workspaceId, fingerPrint), fingerPrint);
         }
         return singleAlert;
     }
 
     public SingleAlert getFiring(String fingerPrint) {
-        return this.firingAlertMap.get(getCustomKey(fingerPrint), fingerPrint);
+        return getFiring(AuthTokenScopes.DEFAULT_WORKSPACE_ID, fingerPrint);
     }
 
-    private String getCustomKey(String fingerPrint) {
-        return CUSTOM_FIRING_ROW_KEY + fingerPrint;
+    public SingleAlert getFiring(String workspaceId, String fingerPrint) {
+        return this.firingAlertMap.get(getCustomKey(workspaceId, fingerPrint), fingerPrint);
+    }
+
+    private String getCustomKey(String workspaceId, String fingerPrint) {
+        return scopedDefineKey(workspaceId, CUSTOM_FIRING_ROW_KEY + fingerPrint);
     }
 
 
     public SingleAlert removeFiring(String fingerPrint) {
-        return this.firingAlertMap.remove(getCustomKey(fingerPrint), fingerPrint);
+        return removeFiring(AuthTokenScopes.DEFAULT_WORKSPACE_ID, fingerPrint);
+    }
+
+    public SingleAlert removeFiring(String workspaceId, String fingerPrint) {
+        return this.firingAlertMap.remove(getCustomKey(workspaceId, fingerPrint), fingerPrint);
+    }
+
+    private static String scopedDefineKey(String workspaceId, String defineId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId + '\0' + defineId;
     }
 }

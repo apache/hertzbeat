@@ -15,39 +15,25 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Input, Space } from 'antd';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Popconfirm, Space, Tooltip, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar, OperationalResultRegion } from '@/shared/operational-page';
+import { OperationalCommandBar, OperationalResultRegion, OperationalSearchControl } from '@/shared/operational-page';
+import { useSourceScopedValue } from '@/shared/query-context';
 
 import { LabelResults } from '../components/label-results';
-import styles from '../components/label.module.css';
 import type { useLabelEditorController } from '../controller/label-editor-controller';
 import type { useLabelQueryController } from '../controller/label-query-controller';
 import type { useLabelResourceController } from '../controller/label-resource-controller';
 import type { LabelRecovery } from '../controller/label-save-recovery-controller';
 import type { LabelActionCapabilities } from '../model/label-model';
+import type { LabelRecord } from '../model/label-model';
+import styles from '../components/label.module.css';
 
 type LabelQueryController = ReturnType<typeof useLabelQueryController>;
 type LabelResourceController = ReturnType<typeof useLabelResourceController>;
 type LabelEditorController = ReturnType<typeof useLabelEditorController>;
-
-export function LabelPageActions({
-  canCreate,
-  locked,
-  onCreate
-}: {
-  canCreate: boolean;
-  locked: boolean;
-  onCreate: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Button type="primary" disabled={!canCreate || locked} onClick={onCreate}>
-      {t('labels.new')}
-    </Button>
-  );
-}
 
 export function LabelWorkspace({
   capabilities,
@@ -69,6 +55,29 @@ export function LabelWorkspace({
   onSubmitSearch: () => void;
 }) {
   const { query } = queryController;
+  const selection = useSourceScopedValue<number[]>(
+    JSON.stringify([capabilities.canDelete, query.search, query.pageIndex, query.pageSize]),
+    []
+  );
+  const selectedIds = selection.value;
+  const setSelectedIds = selection.setValue;
+  const selectedRecords =
+    resource.listState.kind === 'ready'
+      ? resource.listState.records.filter(record => selectedIds.includes(record.id))
+      : [];
+  const clearSelection = () => setSelectedIds([]);
+  const refresh = () => {
+    clearSelection();
+    resource.refresh();
+  };
+  const submitSearch = () => {
+    clearSelection();
+    onSubmitSearch();
+  };
+  const setPage = (pageIndex: number, pageSize: Parameters<typeof queryController.setPage>[1]) => {
+    clearSelection();
+    queryController.setPage(pageIndex, pageSize);
+  };
   return (
     <>
       <LabelRecoveryAlert
@@ -78,12 +87,22 @@ export function LabelWorkspace({
         onRetry={resource.retryMutationProof}
       />
       <LabelToolbar
+        canCreate={capabilities.canCreate}
         draftSearch={draftSearch}
+        locked={writeLocked}
         refreshing={resource.refreshing}
         saving={resource.isSaving}
-        onRefresh={resource.refresh}
+        onCreate={editor.actions.create}
+        onRefresh={refresh}
         onSearchChange={onSearchChange}
-        onSubmitSearch={onSubmitSearch}
+        onSubmitSearch={submitSearch}
+      />
+      <LabelBulkActions
+        records={selectedRecords}
+        saving={resource.isSaving}
+        locked={writeLocked}
+        onClear={clearSelection}
+        onDelete={records => resource.deleteLabels(records, clearSelection)}
       />
       <OperationalResultRegion>
         <LabelResults
@@ -94,7 +113,9 @@ export function LabelWorkspace({
           state={resource.listState}
           pageIndex={query.pageIndex}
           pageSize={query.pageSize}
-          onPageChange={queryController.setPage}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onPageChange={setPage}
           onCopy={label => void resource.copyLabel(label)}
           onEdit={editor.actions.edit}
           onRemove={resource.deleteLabel}
@@ -102,6 +123,42 @@ export function LabelWorkspace({
         />
       </OperationalResultRegion>
     </>
+  );
+}
+
+function LabelBulkActions({
+  records,
+  saving,
+  locked,
+  onClear,
+  onDelete
+}: {
+  records: LabelRecord[];
+  saving: boolean;
+  locked: boolean;
+  onClear: () => void;
+  onDelete: (records: LabelRecord[]) => void;
+}) {
+  const { t } = useTranslation();
+  if (records.length === 0) return null;
+  return (
+    <div className={styles.bulkActions ?? ''} aria-live="polite">
+      <Typography.Text strong>{t('labels.selected', { count: records.length })}</Typography.Text>
+      <Space size={8}>
+        <Button type="text" disabled={saving} onClick={onClear}>
+          {t('labels.clearSelection')}
+        </Button>
+        <Popconfirm
+          title={t('labels.deleteSelectedConfirm', { count: records.length })}
+          okButtonProps={{ danger: true }}
+          onConfirm={() => onDelete(records)}
+        >
+          <Button danger disabled={locked}>
+            {t('labels.deleteSelected')}
+          </Button>
+        </Popconfirm>
+      </Space>
+    </div>
   );
 }
 
@@ -133,9 +190,12 @@ function LabelRecoveryAlert({
 }
 
 type LabelToolbarProps = {
+  canCreate: boolean;
   draftSearch: string;
+  locked: boolean;
   refreshing: boolean;
   saving: boolean;
+  onCreate: () => void;
   onRefresh: () => void;
   onSearchChange: (value: string) => void;
   onSubmitSearch: () => void;
@@ -148,24 +208,36 @@ function LabelToolbar(props: LabelToolbarProps) {
       role="search"
       ariaLabel={t('labels.search')}
       primary={
-        <Space.Compact className={styles.searchInput}>
-          <Input
-            allowClear
-            disabled={props.saving}
-            value={props.draftSearch}
-            placeholder={t('labels.search')}
-            onChange={event => props.onSearchChange(event.target.value)}
-            onPressEnter={props.onSubmitSearch}
-          />
-          <Button type="primary" disabled={props.saving} onClick={props.onSubmitSearch}>
-            {t('common.query')}
-          </Button>
-        </Space.Compact>
+        <OperationalSearchControl
+          ariaLabel={t('labels.search')}
+          disabled={props.saving}
+          placeholder={t('labels.search')}
+          submitLabel={t('common.query')}
+          value={props.draftSearch}
+          onChange={props.onSearchChange}
+          onSubmit={props.onSubmitSearch}
+        />
       }
       secondary={
-        <Button disabled={props.saving} loading={props.refreshing} onClick={props.onRefresh}>
-          {t('common.refresh')}
-        </Button>
+        <Space size={8}>
+          <Tooltip title={t('common.refresh')}>
+            <Button
+              aria-label={t('common.refresh')}
+              icon={<ReloadOutlined aria-hidden="true" />}
+              disabled={props.saving}
+              loading={props.refreshing}
+              onClick={props.onRefresh}
+            />
+          </Tooltip>
+          <Button
+            type="primary"
+            icon={<PlusOutlined aria-hidden="true" />}
+            disabled={!props.canCreate || props.locked}
+            onClick={props.onCreate}
+          >
+            {t('labels.new')}
+          </Button>
+        </Space>
       }
     />
   );

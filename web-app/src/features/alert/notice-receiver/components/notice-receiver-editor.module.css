@@ -17,35 +17,91 @@
 
 .form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
-.field {
+
+.fieldRow {
   display: grid;
-  align-content: start;
-  gap: 7px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 12fr) minmax(0, 5fr);
+  align-items: start;
+}
+
+.fieldLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 8px;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
 }
-.field :global(.ant-select),
-.field :global(.ant-input-number) {
+
+.requiredMark,
+.fieldError {
+  color: var(--ant-color-error);
+}
+
+.fieldControl {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.fieldControl > :global(.ant-select),
+.fieldControl > :global(.ant-input-number) {
   width: 100%;
 }
-.wide {
-  grid-column: 1 / -1;
+
+.fieldError {
+  font-size: 12px;
 }
+
 .test {
   justify-self: start;
+  margin-left: calc(100% * 7 / 24);
 }
+
 .secretState {
   display: grid;
   gap: 5px;
 }
-@media (max-width: 700px) {
-  .form {
-    grid-template-columns: 1fr;
+
+.modal :global(.ant-modal-body) {
+  padding-block: 24px 12px;
+}
+
+.modal :global(.ant-modal-footer) {
+  margin: 24px -24px -20px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+@media (max-width: 800px) {
+  .modal :global(.ant-modal) {
+    width: calc(100vw - 32px) !important;
   }
-  .wide {
-    grid-column: auto;
+
+  .form {
+    gap: 16px;
+  }
+
+  .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .fieldLabel {
+    justify-content: flex-start;
+    padding: 0;
+    text-align: left;
+  }
+
+  .fieldRow > :last-child {
+    display: none;
+  }
+
+  .test {
+    margin-left: 0;
   }
 }

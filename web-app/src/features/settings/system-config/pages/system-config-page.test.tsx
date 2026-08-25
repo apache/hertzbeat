@@ -37,6 +37,9 @@ const controller = vi.hoisted(() => ({
 vi.mock('../controller/system-config-resource-controller', () => ({
   useSystemConfigResourceController: controller.useSystemConfigResourceController
 }));
+vi.mock('../components/public-access-config-section', () => ({
+  PublicAccessConfigSection: () => <section aria-label="Public access settings" />
+}));
 
 import { SystemConfigPage } from './system-config-page';
 
@@ -76,7 +79,23 @@ describe('SystemConfigPage', () => {
     expect(await screen.findByText('UTC (UTC+00:00) UTC')).toBeInTheDocument();
     expect(results).toContainElement(screen.getByText('UTC (UTC+00:00) UTC'));
     expect(screen.getByText('English')).toBeInTheDocument();
-    expect(screen.getByText('Dark')).toBeInTheDocument();
+    expect(screen.queryByText('Dark')).not.toBeInTheDocument();
+  });
+
+  it('keeps the clean editor free of dead actions and reveals them for a dirty draft', async () => {
+    const view = renderPage();
+
+    await screen.findByText('UTC (UTC+00:00) UTC');
+    expect(screen.queryByRole('button', { name: /Save$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
+    expect(screen.queryByText('No unsaved changes.')).not.toBeInTheDocument();
+
+    view.unmount();
+    controller.useSystemConfigResourceController.mockReturnValue(buildController({ dirty: true }));
+    renderPage();
+
+    expect(await screen.findByRole('button', { name: /Save$/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeEnabled();
   });
 
   it('uses the shared loading state instead of a page skeleton', () => {
@@ -132,7 +151,7 @@ describe('SystemConfigPage', () => {
     renderPage();
 
     const selects = await screen.findAllByRole('combobox');
-    expect(selects).toHaveLength(3);
+    expect(selects).toHaveLength(2);
     selects.forEach(select => expect(select).toBeDisabled());
     expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
@@ -179,7 +198,7 @@ describe('SystemConfigPage', () => {
     renderPage();
 
     const selects = await screen.findAllByRole('combobox');
-    expect(selects).toHaveLength(3);
+    expect(selects).toHaveLength(2);
     selects.forEach(select => expect(select).toBeDisabled());
     expect(screen.getByText('Only administrators can change system settings.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Save$/ })).not.toBeInTheDocument();

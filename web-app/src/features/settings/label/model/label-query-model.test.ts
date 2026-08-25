@@ -41,16 +41,23 @@ describe('Label query model', () => {
   it('moves only an unchanged nonzero query with one visible record to its previous page', () => {
     const deletedFrom = { search: 'env', pageIndex: 2, pageSize: 50 as const };
 
-    expect(labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 1 })).toEqual({
+    expect(
+      labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 1, deletedRecords: 1 })
+    ).toEqual({
       search: 'env',
       pageIndex: 1,
       pageSize: 50
     });
-    expect(labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 2 })).toBeUndefined();
+    expect(
+      labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 2, deletedRecords: 1 })
+    ).toBeUndefined();
+    expect(
+      labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 2, deletedRecords: 2 })
+    ).toEqual({ search: 'env', pageIndex: 1, pageSize: 50 });
     expect(
       labelQueryAfterConfirmedDelete(
         { ...deletedFrom, search: 'production' },
-        { query: deletedFrom, visibleRecords: 1 }
+        { query: deletedFrom, visibleRecords: 1, deletedRecords: 1 }
       )
     ).toBeUndefined();
     expect(
@@ -58,7 +65,8 @@ describe('Label query model', () => {
         { ...deletedFrom, pageIndex: 0 },
         {
           query: { ...deletedFrom, pageIndex: 0 },
-          visibleRecords: 1
+          visibleRecords: 1,
+          deletedRecords: 1
         }
       )
     ).toBeUndefined();

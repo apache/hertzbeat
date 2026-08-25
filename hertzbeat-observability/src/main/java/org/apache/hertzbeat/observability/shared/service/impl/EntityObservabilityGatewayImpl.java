@@ -844,8 +844,21 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
     }
 
     @Override
+    public List<TelemetryIdentitySnapshot> collectRecentExternalIdentitySnapshots(
+            String workspaceId, List<LogEntry> logs, List<TraceListItemDto> traces, List<Monitor> monitors) {
+        return telemetryIntakeService.collectRecentExternalIdentitySnapshots(workspaceId, logs, traces, monitors);
+    }
+
+    @Override
     public TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(String serviceName, String serviceNamespace, String environment) {
         return telemetryIntakeService.resolveRecentOtlpMetricContext(serviceName, serviceNamespace, environment);
+    }
+
+    @Override
+    public TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(
+            String workspaceId, String serviceName, String serviceNamespace, String environment) {
+        return telemetryIntakeService.resolveRecentOtlpMetricContext(
+                workspaceId, serviceName, serviceNamespace, environment);
     }
 
     @Override
@@ -854,8 +867,20 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
     }
 
     @Override
+    public List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContexts(String workspaceId, int limit) {
+        return telemetryIntakeService.collectRecentOtlpMetricContexts(workspaceId, limit);
+    }
+
+    @Override
     public List<String> collectRecentOtlpMetricNames(String serviceName, String serviceNamespace, String environment, int limit) {
         return telemetryIntakeService.collectRecentOtlpMetricNames(serviceName, serviceNamespace, environment, limit);
+    }
+
+    @Override
+    public List<String> collectRecentOtlpMetricNames(
+            String workspaceId, String serviceName, String serviceNamespace, String environment, int limit) {
+        return telemetryIntakeService.collectRecentOtlpMetricNames(
+                workspaceId, serviceName, serviceNamespace, environment, limit);
     }
 
     @Override

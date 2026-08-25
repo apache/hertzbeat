@@ -27,11 +27,16 @@
         "unavailable": "不可用",
         "unknown": "未知"
       },
-      "snapshotObservedAt": "快照于 {{time}}",
+      "currentStatusObservedAt": "当前状态 · {{time}}",
       "collectorLastReportedAt": "最后上报于 {{time}}",
       "collectorCounts": "{{online}}/{{total}} 在线 · {{runtimeHealthy}} 个运行时正常",
+      "collectorOnlineCount": "在线采集器：{{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "运行时正常：{{count}} 个",
+      "collectorOfflineCount": "未在线采集器：{{count}} 个",
       "collectorNotReported": "暂无运行时上报",
       "notObserved": "尚未观测",
+      "details": "{{label}}状态详情",
+      "openManagement": "进入管理页",
       "request": {
         "permission": "无权查看运行状态",
         "unavailable": "运行状态请求不可用",

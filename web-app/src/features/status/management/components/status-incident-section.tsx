@@ -45,13 +45,14 @@ export type IncidentSectionProps = {
 
 export function StatusIncidentSection(props: IncidentSectionProps) {
   const { t } = useTranslation();
+  const inlineCreate = shouldShowInlineCreate(props);
   return (
     <section className={styles.section}>
       <StatusSectionHeading
         title={t('status.incidents')}
         description={t('statusManagement.incidentsDescription')}
         action={
-          props.canCreate ? (
+          props.canCreate && !inlineCreate ? (
             <Button
               type="primary"
               disabled={!props.orgId || props.componentCount === 0 || props.commandLocked}
@@ -91,6 +92,10 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
       <IncidentResults {...props} />
     </section>
   );
+}
+
+function shouldShowInlineCreate(props: IncidentSectionProps) {
+  return props.state.kind === 'empty' && props.draftSearch.trim() === '';
 }
 
 function detailStateKind(state: 'missing' | 'permission' | 'unavailable' | 'error') {

@@ -6,18 +6,21 @@ import {
   createOptionalDraft,
   createOptionalOptionsRequest,
   createOptionalValidationRequest,
+  optionalDraftValid,
   optionalMailComplete
 } from './setup-optional';
 
 describe('optional setup model', () => {
-  it('omits every later-configurable section when the administrator skips it', () => {
-    expect(createOptionalOptionsRequest(createOptionalDraft())).toEqual({});
+  it('uses the current setup address when no load balancer or proxy is configured', () => {
+    expect(createOptionalOptionsRequest(createOptionalDraft(), 'http://127.0.0.1:1157')).toEqual({
+      publicAccess: { publicBaseUrl: 'http://127.0.0.1:1157' }
+    });
   });
 
-  it('normalizes only entered public, retention, and complete mail values', () => {
+  it('uses the explicit public address only when a load balancer or proxy is configured', () => {
     const draft = createOptionalDraft();
-    draft.publicBaseUrl = ' https://hertzbeat.example.test ';
-    draft.serverOtlpHttpEndpoint = ' http://collector.example.test:4318 ';
+    draft.useProxy = true;
+    draft.proxyPublicBaseUrl = ' https://hertzbeat.example.test/operations ';
     draft.retentionDays = 30;
     draft.mail = {
       host: ' smtp.example.test ',
@@ -28,10 +31,9 @@ describe('optional setup model', () => {
       fromAddress: ' alerts@example.test '
     };
 
-    expect(createOptionalOptionsRequest(draft)).toEqual({
+    expect(createOptionalOptionsRequest(draft, 'https://setup.example.test:8443')).toEqual({
       publicAccess: {
-        publicBaseUrl: 'https://hertzbeat.example.test',
-        serverOtlpHttpEndpoint: 'http://collector.example.test:4318'
+        publicBaseUrl: 'https://hertzbeat.example.test/operations'
       },
       retention: { days: 30 },
       mail: {
@@ -46,9 +48,8 @@ describe('optional setup model', () => {
     expect(optionalMailComplete(draft.mail)).toBe(true);
   });
 
-  it('builds the existing validation sections without inventing browser-derived addresses', () => {
+  it('builds validation requests from the active access mode', () => {
     const draft = createOptionalDraft();
-    draft.publicBaseUrl = 'https://hertzbeat.example.test';
     draft.mail = {
       host: 'smtp.example.test',
       port: 465,
@@ -58,11 +59,11 @@ describe('optional setup model', () => {
       fromAddress: 'alerts@example.test'
     };
 
-    expect(createOptionalValidationRequest('public_access', draft)).toEqual({
+    expect(createOptionalValidationRequest('public_access', draft, 'https://setup.example.test')).toEqual({
       section: 'public_access',
-      publicAccess: { publicBaseUrl: 'https://hertzbeat.example.test' }
+      publicAccess: { publicBaseUrl: 'https://setup.example.test' }
     });
-    expect(createOptionalValidationRequest('mail', draft)).toEqual({
+    expect(createOptionalValidationRequest('mail', draft, 'https://setup.example.test')).toEqual({
       section: 'mail',
       mail: {
         host: 'smtp.example.test',
@@ -70,6 +71,35 @@ describe('optional setup model', () => {
         security: 'tls',
         fromAddress: 'alerts@example.test'
       }
+    });
+  });
+
+  it('accepts an HTTP(S) proxy address with a port or path and rejects unsafe URL forms', () => {
+    const accepted = createOptionalDraft();
+    accepted.useProxy = true;
+    accepted.proxyPublicBaseUrl = 'https://edge.example.test:9443/operations';
+    expect(optionalDraftValid(accepted)).toBe(true);
+
+    for (const value of [
+      'edge.example.test',
+      'ftp://edge.example.test',
+      'https://a:b@edge.example.test',
+      'http://0.0.0.0'
+    ]) {
+      const draft = createOptionalDraft();
+      draft.useProxy = true;
+      draft.proxyPublicBaseUrl = value;
+      expect(optionalDraftValid(draft)).toBe(false);
+    }
+  });
+
+  it('ignores a stale proxy address while the default access mode is active', () => {
+    const draft = createOptionalDraft();
+    draft.proxyPublicBaseUrl = 'not-a-url';
+
+    expect(optionalDraftValid(draft)).toBe(true);
+    expect(createOptionalOptionsRequest(draft, 'https://setup.example.test:8443')).toEqual({
+      publicAccess: { publicBaseUrl: 'https://setup.example.test:8443' }
     });
   });
 
@@ -84,6 +114,6 @@ describe('optional setup model', () => {
       fromAddress: 'alerts@example.test'
     };
 
-    expect(createOptionalOptionsRequest(draft).mail?.password).toBe('  request-secret  ');
+    expect(createOptionalOptionsRequest(draft, 'http://127.0.0.1:1157').mail?.password).toBe('  request-secret  ');
   });
 });

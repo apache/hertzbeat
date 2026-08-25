@@ -1,0 +1,33 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.matcherRows {
+  display: grid;
+  gap: 8px;
+}
+
+.matcherRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.matcherRow > :global(.ant-select) {
+  min-width: 0;
+}
+
+.matcherActions {
+  display: flex;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .matcherRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .matcherActions {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}

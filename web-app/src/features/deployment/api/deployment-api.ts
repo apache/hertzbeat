@@ -21,7 +21,8 @@ const deploymentApiPaths = {
   activate: (operationId: string) =>
     `/api/config/deployment/metadata-migrations/${encodeURIComponent(operationId)}/activate`,
   export: (operationId: string) =>
-    `/api/config/deployment/metadata-migrations/${encodeURIComponent(operationId)}/export`
+    `/api/config/deployment/metadata-migrations/${encodeURIComponent(operationId)}/export`,
+  factoryReset: '/api/config/deployment/factory-reset'
 };
 
 export async function loadDeployment(signal?: AbortSignal) {
@@ -56,6 +57,13 @@ export async function exportMigration(
 ): Promise<ExportResponse> {
   const response = await request(deploymentApiPaths.export(operationId), post(value, signal));
   return { ...attachmentMetadata(response.headers), blob: await response.blob() };
+}
+
+export async function factoryResetDeployment(confirmation: string, signal?: AbortSignal) {
+  const response = await request(deploymentApiPaths.factoryReset, post({ confirmation }, signal));
+  const value = await responseJson(response);
+  if (!isExactAcceptedReset(value)) throw new DeploymentRequestError('contract', response.status);
+  return value;
 }
 
 export class DeploymentRequestError extends Error {
@@ -152,4 +160,15 @@ function attachmentMetadata(headers: Headers) {
 
 function hasCacheDirective(value: string | null, expected: string) {
   return (value ?? '').split(',').some(directive => directive.split(';', 1)[0]?.trim().toLowerCase() === expected);
+}
+
+function isExactAcceptedReset(value: unknown): value is { accepted: true } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 1 &&
+    'accepted' in value &&
+    value.accepted === true
+  );
 }

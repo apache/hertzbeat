@@ -41,6 +41,7 @@ const api = vi.hoisted(() => ({
 }));
 const monitor = vi.hoisted(() => ({
   loadMonitorAppHierarchy: vi.fn(),
+  loadMonitorAppHierarchyCatalog: vi.fn(),
   loadMonitorNavigationApps: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
@@ -52,6 +53,7 @@ vi.mock('../api/alert-rule-api', async importOriginal => ({
 vi.mock('@/features/monitor', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor')>()),
   loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy,
+  loadMonitorAppHierarchyCatalog: monitor.loadMonitorAppHierarchyCatalog,
   loadMonitorNavigationApps: monitor.loadMonitorNavigationApps
 }));
 vi.mock('antd', async importOriginal => ({
@@ -106,6 +108,56 @@ describe('Alert Rule editor controller', () => {
       unit: null,
       children: []
     });
+    monitor.loadMonitorAppHierarchyCatalog.mockResolvedValue([
+      {
+        category: null,
+        value: 'springboot3',
+        label: 'Spring Boot 3',
+        isLeaf: false,
+        hide: false,
+        type: null,
+        unit: null,
+        children: []
+      }
+    ]);
+  });
+
+  it('selects a combined metric target atomically from the complete hierarchy catalog', async () => {
+    const { result } = renderController('new', '/alerts/rules/new?kind=realtime');
+    await waitFor(() => expect(result.current.state.metricTarget.catalog?.kind).toBe('ready'));
+
+    act(() => result.current.changeMetricTarget({ kind: 'availability', app: 'springboot3' }));
+
+    expect(result.current.state.draft).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__available__,"down")',
+      metricEditor: {
+        kind: 'targeted',
+        app: 'springboot3',
+        target: { kind: 'availability', app: 'springboot3' }
+      }
+    });
+  });
+
+  it('hydrates the new-rule strategy selected by the list modal', async () => {
+    const realtime = renderController('new', '/alerts/rules/new?kind=realtime');
+    expect(realtime.result.current.state.requestedKind).toBe('realtime');
+    expect(realtime.result.current.state.draft?.kind).toBe('realtime');
+    realtime.unmount();
+
+    const periodic = renderController('new', '/alerts/rules/new?kind=periodic');
+    await waitFor(() => expect(periodic.result.current.state.datasource.kind).toBe('ready'));
+    expect(periodic.result.current.state.requestedKind).toBe('periodic');
+    expect(periodic.result.current.state.draft?.kind).toBe('periodic');
+  });
+
+  it('blocks an incomplete new rule without transport or a global validation toast', async () => {
+    const view = renderController('new', '/alerts/rules/new?kind=realtime');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+
+    await act(async () => view.result.current.save());
+
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
+    expect(notify.warning).not.toHaveBeenCalledWith('alertRules.validation');
   });
 
   it('forwards TanStack cancellation and aborts the detail read on unmount', async () => {
@@ -382,6 +434,16 @@ describe('Alert Rule editor controller', () => {
     expect(result.current.state.preview.kind).toBe(kind);
   });
 
+  it('matches Apache master by silently ignoring a blank preview expression', async () => {
+    const { result } = renderController('new', '/alerts/rules/new?kind=periodic');
+
+    await act(async () => result.current.preview());
+
+    expect(result.current.state.preview).toEqual({ kind: 'idle' });
+    expect(api.previewAlertRule).not.toHaveBeenCalled();
+    expect(notify.warning).not.toHaveBeenCalled();
+  });
+
   it.each([
     [new AlertRuleRequestFailure('permission', 'rejected'), 'permission'],
     [new AlertRuleContractError('over-limit preview'), 'invalid']
@@ -542,7 +604,7 @@ describe('Alert Rule editor controller', () => {
               expr: 'usage > 90',
               period: 300,
               times: 3,
-              labels: {},
+              labels: { severity: 'warning' },
               annotations: {},
               template: 'Alert'
             }
@@ -571,7 +633,7 @@ describe('Alert Rule editor controller', () => {
               expr: 'usage > 90',
               period: 300,
               times: 3,
-              labels: {},
+              labels: { severity: 'warning' },
               annotations: {},
               template: 'Alert'
             }
@@ -861,7 +923,14 @@ describe('Alert Rule editor controller', () => {
 });
 
 function validDraft() {
-  return { name: ' New Rule ', expr: 'usage > 90', template: 'Alert', period: 300, times: 3 };
+  return {
+    name: ' New Rule ',
+    expr: 'usage > 90',
+    template: 'Alert',
+    labelsText: 'severity:warning',
+    period: 300,
+    times: 3
+  };
 }
 
 function previewEvidence(rowCount: number) {
@@ -875,7 +944,7 @@ function renderController(mode: 'new' | 'edit', entry = '/alerts/rules/7/edit') 
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const wrapper = ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[entry]}>
+      <MemoryRouter initialEntries={[canonicalEditorEntry(entry)]}>
         <Routes>
           <Route path="/alerts/rules/new" element={children} />
           <Route path="/alerts/rules/:ruleId/edit" element={children} />
@@ -914,7 +983,7 @@ function renderRouted(entries: string[]) {
       { path: '/alerts/rules', element: null }
     ],
     {
-      initialEntries: entries,
+      initialEntries: entries.map(canonicalEditorEntry),
       initialIndex: 0
     }
   );
@@ -926,6 +995,10 @@ function renderRouted(entries: string[]) {
       return controller;
     }
   };
+}
+
+function canonicalEditorEntry(entry: string) {
+  return entry === '/alerts/rules/new' ? '/alerts/rules/new?kind=realtime' : entry;
 }
 
 function page(query: AlertRuleQuery, content: AlertRule[]) {

@@ -5,7 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Input, Select, Typography } from 'antd';
+import { Alert, Cascader, Input, Tag } from 'antd';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -18,6 +19,7 @@ import {
 } from '../model/alert-rule-model';
 import type { AlertRuleMetricTargetState } from '../model/alert-rule-metric-target-state';
 import styles from '../shared/alert-rule-editor.module.css';
+import { AlertRuleFieldLabel } from './alert-rule-field-label';
 import { AlertRuleMetricTargetEvidence } from './alert-rule-metric-target-evidence';
 import { AlertRuleMetricConditionEditor } from './alert-rule-metric-condition-editor';
 
@@ -28,7 +30,6 @@ type AlertRuleMetricTargetFieldsProps = {
   draft: AlertRuleDraft;
   state: AlertRuleMetricTargetState;
   update: (patch: Partial<AlertRuleDraft>) => void;
-  changeApplication: (application: string) => void;
   changeAuthoringMode: (mode: MetricAlertAuthoring['mode']) => void;
   changeExpertCondition: (condition: string) => void;
   changeStructuredCondition: (condition: MetricAlertConditionGroup) => void;
@@ -39,10 +40,11 @@ type AlertRuleMetricTargetFieldsProps = {
 
 type MetricTarget = Extract<RealtimeMetricTarget, { kind: 'metric' }>;
 
-type TargetSelectOption = {
+type TargetCascadeOption = {
   value: string;
   label: string;
-  target: RealtimeMetricTarget;
+  children?: TargetCascadeOption[];
+  target?: RealtimeMetricTarget;
 };
 
 /** Renders the guided target boundary without rewriting unknown legacy expressions. */
@@ -69,38 +71,63 @@ export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsPr
 function GuidedMetricTargetFields(props: AlertRuleMetricTargetFieldsProps) {
   const { t } = useTranslation();
   const editor = props.draft.metricEditor;
-  const selectedApp = editor?.kind === 'targeted' ? editor.app : '';
-  const catalog = catalogFromState(props.state, t);
-  const selectedTarget = selectedTargetOption(editor, catalog);
+  const catalogs = useMemo(
+    () => catalogsFromState(props.state.apps, props.state.catalog, props.state.hierarchy, t),
+    [props.state.apps, props.state.catalog, props.state.hierarchy, t]
+  );
+  const selectedTarget = selectedTargetOption(editor, catalogs);
+  const selectedPath = selectedTargetPath(selectedTarget);
+  const options = useMemo(() => targetCascaderOptions(catalogs), [catalogs]);
+  const selector = targetSelectorState(props.busy, props.state);
   return (
     <>
       <label>
-        {t('alertRules.metricTarget.application')}
-        <Select<string>
-          aria-label={t('alertRules.metricTarget.application')}
-          disabled={props.busy || props.state.apps.kind !== 'ready'}
-          loading={props.state.apps.kind === 'loading'}
-          placeholder={t('alertRules.metricTarget.applicationPlaceholder')}
-          value={selectedApp || null}
-          options={
-            props.state.apps.kind === 'ready'
-              ? props.state.apps.apps.map(app => ({ value: app.value, label: app.label ?? app.value }))
-              : []
-          }
-          onChange={application => props.changeApplication(application)}
+        <AlertRuleFieldLabel
+          className={styles.metricLabel}
+          help={t('alertRules.help.target')}
+          label={t('alertRules.metricTarget.type')}
+          required
+        />
+        <Cascader<TargetCascadeOption>
+          aria-label={t('alertRules.metricTarget.type')}
+          aria-required="true"
+          disabled={selector.disabled}
+          loading={selector.loading}
+          multiple={false}
+          showSearch={{ filter: caseInsensitivePathFilter }}
+          placeholder={t('alertRules.metricTarget.typePlaceholder')}
+          {...(selectedPath ? { value: selectedPath } : {})}
+          options={options}
+          onChange={(_, selectedOptions) => {
+            const option = selectedOptions.at(-1);
+            if (option?.target) props.changeTarget(option.target);
+          }}
         />
       </label>
-      <TargetField {...props} catalog={catalog} selectedApp={selectedApp} />
       <AlertRuleMetricTargetEvidence
         state={props.state}
-        catalog={catalog}
+        catalog={selectedCatalog(editor, catalogs)}
         retryApps={props.retryApps}
         retryHierarchy={props.retryHierarchy}
       />
       {editor?.kind === 'targeted' && editor.target?.kind === 'availability' ? (
-        <Typography.Text className={wideClassName} type="secondary">
-          {t('alertRules.metricTarget.availabilityDescription')}
-        </Typography.Text>
+        <div className={styles.metricAvailabilityRow} role="note">
+          <AlertRuleFieldLabel
+            className={styles.metricLabel}
+            help={t('alertRules.help.rule')}
+            label={t('alertRules.metricCondition.rule')}
+            required
+          />
+          <div className={styles.availabilityRule}>
+            <Tag color="error" data-testid="availability-status">
+              {t('alertRules.metricTarget.availabilityDown')}
+            </Tag>
+            <Tag color="error" data-testid="availability-status">
+              {t('alertRules.metricTarget.availabilityUnreachable')}
+            </Tag>
+            <span>{t('alertRules.metricTarget.availabilityTrigger')}</span>
+          </div>
+        </div>
       ) : null}
       {selectedTarget?.target.kind === 'metric' && (
         <AlertRuleMetricConditionEditor
@@ -116,58 +143,42 @@ function GuidedMetricTargetFields(props: AlertRuleMetricTargetFieldsProps) {
   );
 }
 
-function TargetField(
-  props: AlertRuleMetricTargetFieldsProps & {
-    catalog: MetricAlertTargetCatalog | null;
-    selectedApp: string;
-  }
-) {
-  const { t } = useTranslation();
-  const editor = props.draft.metricEditor;
-  const value = selectedTargetValue(editor);
-  return (
-    <label>
-      {t('alertRules.metricTarget.target')}
-      <Select<string, TargetSelectOption>
-        aria-label={t('alertRules.metricTarget.target')}
-        disabled={props.busy || !props.selectedApp || !props.catalog}
-        loading={props.state.hierarchy.kind === 'loading'}
-        placeholder={t('alertRules.metricTarget.targetPlaceholder')}
-        value={value}
-        options={
-          props.catalog?.targets.map(option => ({
-            value: option.target.kind === 'availability' ? 'availability' : `metric:${option.target.metric}`,
-            label: option.label,
-            target: option.target
-          })) ?? []
-        }
-        onChange={(_, option) => {
-          if (isSingleTargetOption(option)) props.changeTarget(option.target);
-        }}
-      />
-    </label>
-  );
+function targetSelectorState(busy: boolean, state: AlertRuleMetricTargetState) {
+  const catalogReady = state.catalog === undefined || state.catalog.kind === 'ready';
+  return {
+    disabled: busy || state.apps.kind !== 'ready' || !catalogReady,
+    loading: state.apps.kind === 'loading' || state.catalog?.kind === 'loading'
+  };
 }
 
-function selectedTargetValue(editor: AlertRuleDraft['metricEditor']) {
+function selectedTargetOption(editor: AlertRuleDraft['metricEditor'], catalogs: MetricAlertTargetCatalog[]) {
   if (editor?.kind !== 'targeted' || !editor.target) return null;
-  return editor.target.kind === 'availability' ? 'availability' : `metric:${editor.target.metric}`;
+  const selectedTarget = editor.target;
+  return catalogs.flatMap(catalog => catalog.targets).find(option => sameTarget(option.target, selectedTarget)) ?? null;
 }
 
-function selectedTargetOption(editor: AlertRuleDraft['metricEditor'], catalog: MetricAlertTargetCatalog | null) {
-  if (editor?.kind !== 'targeted' || !editor.target || !catalog) return null;
-  const selectedTarget = editor.target;
-  return catalog.targets.find(option => sameTarget(option.target, selectedTarget)) ?? null;
+function selectedTargetPath(option: ReturnType<typeof selectedTargetOption>) {
+  return option ? [option.target.app, targetValue(option.target)] : undefined;
+}
+
+function selectedCatalog(editor: AlertRuleDraft['metricEditor'], catalogs: MetricAlertTargetCatalog[]) {
+  if (editor?.kind !== 'targeted') return null;
+  return catalogs.find(catalog => catalog.app.value === editor.app) ?? null;
+}
+
+function targetValue(target: RealtimeMetricTarget) {
+  return target.kind === 'availability' ? `${target.app}:availability` : `${target.app}:metric:${target.metric}`;
 }
 
 function ExpressionField({ busy, draft, update }: AlertRuleMetricTargetFieldsProps) {
   const { t } = useTranslation();
   return (
     <label className={wideClassName}>
-      {t('alertRules.expression')}
+      <AlertRuleFieldLabel className={styles.metricLabel} label={t('alertRules.expression')} required />
       <Input.TextArea
         aria-label={t('alertRules.expression')}
         disabled={busy}
+        required
         rows={5}
         value={draft.expr}
         onChange={event => update({ expr: event.target.value })}
@@ -176,10 +187,25 @@ function ExpressionField({ busy, draft, update }: AlertRuleMetricTargetFieldsPro
   );
 }
 
-function isSingleTargetOption(
-  option: TargetSelectOption | TargetSelectOption[] | undefined
-): option is TargetSelectOption {
-  return option !== undefined && !Array.isArray(option);
+function targetCascaderOptions(catalogs: MetricAlertTargetCatalog[]): TargetCascadeOption[] {
+  return catalogs.map(catalog => ({
+    value: catalog.app.value,
+    label: catalog.app.label,
+    children: catalog.targets.map(option => ({
+      value: targetValue(option.target),
+      label: option.label,
+      target: option.target
+    }))
+  }));
+}
+
+function caseInsensitivePathFilter(inputValue: string, path: TargetCascadeOption[]) {
+  const needle = inputValue.toLocaleLowerCase();
+  return path.some(option =>
+    String(option.label ?? '')
+      .toLocaleLowerCase()
+      .includes(needle)
+  );
 }
 
 function isMetricTarget(target: RealtimeMetricTarget): target is MetricTarget {
@@ -191,17 +217,45 @@ function sameTarget(left: RealtimeMetricTarget, right: RealtimeMetricTarget) {
   return !isMetricTarget(left) || (isMetricTarget(right) && left.metric === right.metric);
 }
 
-function catalogFromState(
-  state: AlertRuleMetricTargetState,
+function catalogsFromState(
+  apps: AlertRuleMetricTargetState['apps'],
+  catalog: AlertRuleMetricTargetState['catalog'],
+  hierarchy: AlertRuleMetricTargetState['hierarchy'],
   t: ReturnType<typeof useTranslation>['t']
-): MetricAlertTargetCatalog | null {
-  if (state.hierarchy.kind !== 'ready') return null;
-  try {
-    return buildMetricAlertTargetCatalog(state.hierarchy.hierarchy, {
-      availability: t('alertRules.metricTarget.availability'),
-      rowCount: t('alertRules.metricTarget.rowCount')
-    });
-  } catch {
-    return null;
+): MetricAlertTargetCatalog[] {
+  const hierarchies = hierarchyRoots(apps, catalog, hierarchy);
+  return hierarchies.flatMap(hierarchy => {
+    try {
+      return [
+        buildMetricAlertTargetCatalog(hierarchy, {
+          availability: t('alertRules.metricTarget.availability'),
+          rowCount: t('alertRules.metricTarget.rowCount')
+        })
+      ];
+    } catch {
+      return [];
+    }
+  });
+}
+
+function hierarchyRoots(
+  apps: AlertRuleMetricTargetState['apps'],
+  catalog: AlertRuleMetricTargetState['catalog'],
+  hierarchy: AlertRuleMetricTargetState['hierarchy']
+) {
+  if (catalog?.kind === 'ready') {
+    return catalog.hierarchies.filter(root => root.category !== '__system__');
   }
+  if (hierarchy.kind === 'ready') return [hierarchy.hierarchy];
+  if (apps.kind !== 'ready') return [];
+  return apps.apps.map(app => ({
+    category: app.category ?? null,
+    value: app.value,
+    label: app.label,
+    isLeaf: false,
+    hide: false,
+    type: null,
+    unit: null,
+    children: []
+  }));
 }

@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-import { Collapse, Descriptions, Space, Tag, Typography } from 'antd';
+import {
+  ApartmentOutlined,
+  ClusterOutlined,
+  DesktopOutlined,
+  FileTextOutlined,
+  LineChartOutlined,
+  SearchOutlined
+} from '@ant-design/icons';
+import { Button, Collapse, Descriptions, Divider, Space, Tag, Typography } from 'antd';
 import type { CollapseProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { buildAgentWorkspacePath } from '@/features/ai-workspace';
+
 import styles from '../shared/alert-center.module.css';
+import { alertResourceHandoffs, type AlertResourceHandoff } from '../model/alert-resource-handoff';
+import { alertTelemetryHandoffs, type AlertTelemetryHandoff } from '../model/alert-telemetry-handoff';
 import type { AlertRecord } from '../model/alert-model';
 
 type AlertCenterGroupDetailsProps = {
@@ -45,8 +57,49 @@ function buildAlertItem(alert: AlertRecord, t: (key: string) => string): NonNull
 }
 
 function AlertRecordEvidence({ alert, t }: { alert: AlertRecord; t: (key: string) => string }) {
+  const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const resourceHandoffs = alertResourceHandoffs(alert, returnTo);
+  const telemetryHandoffs = alertTelemetryHandoffs(alert);
   return (
     <div className={styles.alertRecordEvidence}>
+      <div className={styles.diagnosticActions} role="group" aria-label={t('alert.diagnosticActions')}>
+        <Button
+          className={styles.diagnosticPrimary ?? ''}
+          href={buildAgentWorkspacePath({ alertId: alert.id, alertType: 'single' }, returnTo)}
+          icon={<SearchOutlined aria-hidden="true" />}
+          size="small"
+          type="text"
+        >
+          {t('alert.investigate')}
+        </Button>
+        {resourceHandoffs.length + telemetryHandoffs.length > 0 ? (
+          <Divider className={styles.diagnosticDivider ?? ''} type="vertical" />
+        ) : null}
+        {resourceHandoffs.map(handoff => (
+          <Button
+            className={styles.diagnosticSecondary ?? ''}
+            href={handoff.path}
+            icon={resourceIcon(handoff.resource)}
+            key={handoff.resource}
+            size="small"
+            type="text"
+          >
+            {t(handoff.resource === 'monitor' ? 'alert.openMonitor' : 'alert.openEntity')}
+          </Button>
+        ))}
+        {telemetryHandoffs.map(handoff => (
+          <Button
+            className={styles.diagnosticSecondary ?? ''}
+            href={handoff.path}
+            icon={telemetryIcon(handoff.signal)}
+            key={handoff.signal}
+            size="small"
+            type="text"
+          >
+            {t(`explore.signals.${handoff.signal}`)}
+          </Button>
+        ))}
+      </div>
       <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }}>
         <Descriptions.Item label={t('alert.details.triggerTimes')}>{alert.triggerTimes ?? '—'}</Descriptions.Item>
         <Descriptions.Item label={t('alert.details.startAt')}>{formatTimestamp(alert.startAt)}</Descriptions.Item>
@@ -57,6 +110,16 @@ function AlertRecordEvidence({ alert, t }: { alert: AlertRecord; t: (key: string
       <EvidenceMap title={t('alert.details.annotations')} values={alert.annotations} />
     </div>
   );
+}
+
+function resourceIcon(resource: AlertResourceHandoff['resource']) {
+  return resource === 'monitor' ? <DesktopOutlined aria-hidden="true" /> : <ClusterOutlined aria-hidden="true" />;
+}
+
+function telemetryIcon(signal: AlertTelemetryHandoff['signal']) {
+  if (signal === 'metrics') return <LineChartOutlined aria-hidden="true" />;
+  if (signal === 'logs') return <FileTextOutlined aria-hidden="true" />;
+  return <ApartmentOutlined aria-hidden="true" />;
 }
 
 function EvidenceMap({

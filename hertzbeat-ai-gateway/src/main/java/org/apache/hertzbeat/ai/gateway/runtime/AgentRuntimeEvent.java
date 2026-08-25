@@ -71,6 +71,8 @@ public class AgentRuntimeEvent {
 
     String errorMessage;
 
+    String result;
+
     Long elapsedMs;
 
     Instant timestamp;
@@ -80,11 +82,21 @@ public class AgentRuntimeEvent {
     }
 
     public static AgentRuntimeEvent runCompleted(String traceId, Instant timestamp) {
-        return builder().type(AgentRuntimeEventType.RUN_COMPLETED).traceId(traceId).timestamp(timestamp).build();
+        return runCompleted(traceId, timestamp, null);
+    }
+
+    public static AgentRuntimeEvent runCompleted(String traceId, Instant timestamp, String result) {
+        return builder().type(AgentRuntimeEventType.RUN_COMPLETED).traceId(traceId).timestamp(timestamp)
+                .result(result).build();
     }
 
     public static AgentRuntimeEvent runError(String traceId, String errorMessage, Instant timestamp) {
         return builder().type(AgentRuntimeEventType.ERROR).traceId(traceId).status(EventStatus.FAILED)
+                .errorMessage(errorMessage).timestamp(timestamp).build();
+    }
+
+    public static AgentRuntimeEvent runRecoveryRequired(String traceId, String errorMessage, Instant timestamp) {
+        return builder().type(AgentRuntimeEventType.ERROR).traceId(traceId).status(EventStatus.RECOVERY_REQUIRED)
                 .errorMessage(errorMessage).timestamp(timestamp).build();
     }
 
@@ -203,7 +215,8 @@ public class AgentRuntimeEvent {
         WAITING_APPROVAL("waiting_approval"),
         APPROVED("approved"),
         REJECTED("rejected"),
-        WAITING_INPUT("waiting_input");
+        WAITING_INPUT("waiting_input"),
+        RECOVERY_REQUIRED("recovery_required");
 
         private final String externalName;
 

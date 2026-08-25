@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.ai.gateway.application;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ApprovalDecisionCommand;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ErrorPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.GatewayEventType;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
@@ -38,26 +38,47 @@ public class ApprovalCommandService {
 
     private static final String STATUS_COMPLETED = "completed";
     private static final String STATUS_FAILED = "failed";
+    private static final Duration DEFAULT_CONSUMPTION_TIMEOUT = Duration.ofSeconds(5);
 
     private final AgentToolCallLedgerService toolCallLedgerService;
     private final AgentRuntimeApprovalRegistry approvalRegistry;
+    private final Duration consumptionTimeout;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public ApprovalCommandService(AgentToolCallLedgerService toolCallLedgerService,
                                   AgentRuntimeApprovalRegistry approvalRegistry) {
+        this(toolCallLedgerService, approvalRegistry, DEFAULT_CONSUMPTION_TIMEOUT);
+    }
+
+    ApprovalCommandService(AgentToolCallLedgerService toolCallLedgerService,
+                           AgentRuntimeApprovalRegistry approvalRegistry,
+                           Duration consumptionTimeout) {
         this.toolCallLedgerService = toolCallLedgerService;
         this.approvalRegistry = approvalRegistry;
+        this.consumptionTimeout = consumptionTimeout;
     }
 
     public GatewaySingleResponse decide(ApprovalDecisionCommand command) {
-        if (!approvalRegistry.isWaiting(command.approvalId())) {
+        toolCallLedgerService.requireApprovalOwner(command.approvalId(), command.envelope(),
+                command.originEntryType());
+        var reservation = approvalRegistry.reserve(command.approvalId());
+        if (reservation.isEmpty()) {
             return response(command, null, List.of(errorEvent(command, null,
-                    "Agent approval is not waiting in an active runtime loop.")));
+                    "Agent approval runtime loop is no longer active.")));
         }
-        AgentToolCall approval = command.decision() == AgentApprovalDecision.APPROVED
-                ? toolCallLedgerService.approve(command.approvalId(), command.envelope().getActor())
-                : toolCallLedgerService.reject(command.approvalId(), command.envelope().getActor());
-        if (!approvalRegistry.complete(approval.getApprovalId(), command.decision())) {
-            return response(command, approval, List.of(errorEvent(command, approval,
+        AgentToolCall approval;
+        try {
+            approval = toolCallLedgerService.decideApproval(command.approvalId(), command.envelope(),
+                    command.originEntryType(), command.decision());
+        } catch (RuntimeException | Error failure) {
+            reservation.orElseThrow().release();
+            throw failure;
+        }
+        var delivery = reservation.orElseThrow().deliver(command.decision());
+        if (!delivery.accepted() || !delivery.awaitConsumption(consumptionTimeout)) {
+            AgentToolCall terminal = toolCallLedgerService.terminalizeUnconsumedApproval(
+                    command.approvalId(), command.envelope(), command.originEntryType(), command.decision());
+            return response(command, terminal, List.of(errorEvent(command, terminal,
                     "Agent approval runtime loop is no longer active.")));
         }
         return response(command, approval, List.of());

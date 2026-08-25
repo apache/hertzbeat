@@ -42,7 +42,7 @@ public class PrometheusExternAlertService implements ExternAlertService {
 
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
 
         TypeReference<List<PrometheusExternAlert>> typeReference = new TypeReference<>() {};
         List<PrometheusExternAlert> alerts = ExternalAlertIngressValidator.requireBatch(
@@ -50,7 +50,7 @@ public class PrometheusExternAlertService implements ExternAlertService {
         List<SingleAlert> singleAlerts = alerts.stream()
                 .map(this::toSingleAlert)
                 .toList();
-        singleAlerts.forEach(alarmCommonReduce::reduceAndSendAlarm);
+        singleAlerts.forEach(alert -> alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert));
     }
 
     private SingleAlert toSingleAlert(PrometheusExternAlert alert) {

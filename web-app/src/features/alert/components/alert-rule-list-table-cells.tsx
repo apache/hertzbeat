@@ -21,19 +21,39 @@ export type AlertRuleColumnActions = {
 };
 
 export function AlertRuleIdentityCell({ rule }: { rule: AlertRule }) {
+  return <strong className={styles.name}>{rule.name || `#${rule.id}`}</strong>;
+}
+
+export function AlertRuleTypeCell({ rule, t }: { rule: AlertRule; t: TFunction }) {
+  if (rule.type === null) return '—';
+  const [kind, dataType] = rule.type.split('_');
   return (
-    <div className={styles.name}>
-      <strong>{rule.name || `#${rule.id}`}</strong>
-      <span>{rule.expr ?? '—'}</span>
-    </div>
+    <Space direction="vertical" size={2}>
+      <Tag>
+        {t(`alertRules.kind.${kind}`)} · {t(`alertRules.dataType.${dataType}`)}
+      </Tag>
+      <Typography.Text type="secondary">{rule.datasource ?? '—'}</Typography.Text>
+    </Space>
   );
 }
 
-export function AlertRuleTypeCell({ rule }: { rule: AlertRule }) {
+export function AlertRuleTextCell({ value }: { value: string | null }) {
+  if (!value) return '—';
   return (
-    <Space direction="vertical" size={2}>
-      {rule.type === null ? '—' : <Tag>{rule.type}</Tag>}
-      <Typography.Text type="secondary">{rule.datasource ?? '—'}</Typography.Text>
+    <Typography.Text className={styles.truncated ?? ''} ellipsis={{ tooltip: value }}>
+      {value}
+    </Typography.Text>
+  );
+}
+
+export function AlertRuleLabelsCell({ labels }: { labels: Record<string, string> | null }) {
+  const entries = Object.entries(labels ?? {});
+  if (entries.length === 0) return '—';
+  return (
+    <Space className={styles.labels ?? ''} size={[4, 4]} wrap>
+      {entries.map(([key, value]) => (
+        <Tag key={key}>{`${key}:${value}`}</Tag>
+      ))}
     </Space>
   );
 }

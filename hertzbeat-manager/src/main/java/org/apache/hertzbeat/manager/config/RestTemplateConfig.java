@@ -21,8 +21,11 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Collections;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
@@ -37,23 +40,51 @@ public class RestTemplateConfig {
      * Create RestTemplate with JDK native request factory and custom interceptors.
      */
     @Bean
-    public RestTemplate restTemplate(ClientHttpRequestFactory factory) {
+    @Primary
+    public RestTemplate restTemplate(
+            @Qualifier("clientHttpRequestFactory") ClientHttpRequestFactory factory) {
+        return createRestTemplate(factory);
+    }
+
+    /**
+     * Query-only client so slow Greptime reads cannot consume the write and audit client.
+     *
+     * @param factory bounded query request factory
+     * @return query-only RestTemplate
+     */
+    @Bean(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
+    public RestTemplate greptimeQueryRestTemplate(
+            @Qualifier("greptimeQueryClientHttpRequestFactory") ClientHttpRequestFactory factory) {
+        return createRestTemplate(factory);
+    }
+
+    @Bean
+    @Primary
+    public ClientHttpRequestFactory clientHttpRequestFactory() {
+        return createRequestFactory(NetworkConstants.HttpClientConstants.CONNECT_TIMEOUT,
+                NetworkConstants.HttpClientConstants.READ_TIMEOUT);
+    }
+
+    @Bean("greptimeQueryClientHttpRequestFactory")
+    public ClientHttpRequestFactory greptimeQueryClientHttpRequestFactory() {
+        return createRequestFactory(NetworkConstants.HttpClientConstants.GREPTIME_QUERY_CONNECT_TIMEOUT,
+                NetworkConstants.HttpClientConstants.GREPTIME_QUERY_READ_TIMEOUT);
+    }
+
+    private RestTemplate createRestTemplate(ClientHttpRequestFactory factory) {
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setInterceptors(Collections.singletonList(new HeaderRequestInterceptor()));
         return restTemplate;
     }
 
-    @Bean
-    public ClientHttpRequestFactory clientHttpRequestFactory() {
+    private ClientHttpRequestFactory createRequestFactory(Duration connectTimeout, Duration readTimeout) {
         HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(NetworkConstants.HttpClientConstants.CONNECT_TIME_OUT))
+            .connectTimeout(connectTimeout)
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
 
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-
-        factory.setReadTimeout(Duration.ofSeconds(NetworkConstants.HttpClientConstants.READ_TIME_OUT));
-
+        factory.setReadTimeout(readTimeout);
         return factory;
     }
 

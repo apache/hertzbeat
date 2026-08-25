@@ -29,14 +29,22 @@ import lombok.NoArgsConstructor;
  * HertzBeat resource target referenced by an Agent Gateway request.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class AgentTargetRef {
 
+    @Size(max = 64)
+    private String version;
+
+    @Positive
     private Long monitorId;
 
+    @Positive
     private Long alertId;
+
+    @Size(max = 16)
+    private String alertType;
 
     @Positive
     private Long entityId;
@@ -49,4 +57,16 @@ public class AgentTargetRef {
 
     @Valid
     private AgentTopologyRef topology;
+
+    @Valid
+    private AgentTraceRef trace;
+
+    @Valid
+    private AgentLogRef log;
+
+    @Valid
+    private AgentServiceRef service;
+
+    @Valid
+    private AgentTargetAuthority authority;
 }

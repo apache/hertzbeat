@@ -16,6 +16,7 @@ import { MailSection, PublicAccessSection, RetentionSection } from './setup-opti
 
 export type SetupOptionalFormProps = {
   draft: SetupOptionalDraft;
+  publicOrigin: string;
   updateDraft: (patch: Partial<SetupOptionalDraft>) => void;
   save: () => void;
   savePending: boolean;

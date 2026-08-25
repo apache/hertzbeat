@@ -27,6 +27,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -41,9 +43,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Test case for Alert Notice Dispatch
@@ -69,6 +77,9 @@ class AlertNoticeDispatchTest {
     @Mock
     private AlertSseManager emitterManager;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private AlertNoticeDispatch alertNoticeDispatch;
 
     private static final int DISPATCH_THREADS = 3;
@@ -87,7 +98,8 @@ class AlertNoticeDispatchTest {
                 alertStoreHandler,
                 alertNotifyHandlerList,
                 pluginRunner,
-                emitterManager
+                emitterManager,
+                eventPublisher
         );
 
         receiver = NoticeReceiver.builder()
@@ -98,8 +110,11 @@ class AlertNoticeDispatchTest {
 
         alert = GroupAlert.builder()
                 .id(1L)
+                .workspaceId("default")
                 .status("firing")
                 .alerts(Collections.singletonList(SingleAlert.builder()
+                        .id(2L)
+                        .workspaceId("default")
                         .content("test-content")
                         .build()))
                 .build();
@@ -180,7 +195,12 @@ class AlertNoticeDispatchTest {
 
         verify(workerPool).executeNotify(eq((byte) 1), any(Runnable.class));
         verify(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
-        verify(emitterManager).broadcast(any(String.class));
+        verify(emitterManager).broadcast(eq("default"), any(String.class));
+        ArgumentCaptor<SingleAlert.CreatedEvent> createdEvent =
+                ArgumentCaptor.forClass(SingleAlert.CreatedEvent.class);
+        verify(eventPublisher).publishEvent(createdEvent.capture());
+        org.junit.jupiter.api.Assertions.assertEquals(2L, createdEvent.getValue().alert().getId());
+        org.junit.jupiter.api.Assertions.assertEquals("default", createdEvent.getValue().alert().getWorkspaceId());
     }
 
     @Test
@@ -189,11 +209,64 @@ class AlertNoticeDispatchTest {
         when(noticeConfigService.getReceiverFilterRule(alert))
                 .thenThrow(new IllegalStateException("notice unavailable"));
         doThrow(new IllegalStateException("broadcast unavailable"))
-                .when(emitterManager).broadcast(any(String.class));
+                .when(emitterManager).broadcast(eq("default"), any(String.class));
 
         assertTrue(alertNoticeDispatch.dispatchAlarm(alert));
 
         verify(alertStoreHandler, times(1)).store(alert);
-        verify(emitterManager).broadcast(any(String.class));
+        verify(emitterManager).broadcast(eq("default"), any(String.class));
+    }
+
+    @Test
+    void storeFailureDoesNotPublishCreatedEvent() {
+        when(alertStoreHandler.store(alert)).thenThrow(new IllegalStateException("store failed"));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> alertNoticeDispatch.dispatchAlarm(alert));
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void outerRollbackDoesNotPublishAnyPostStoreSideEffect() {
+        when(alertStoreHandler.store(alert)).thenReturn(alert);
+        TransactionTemplate transaction = new TransactionTemplate(new RecordingTransactionManager());
+
+        transaction.executeWithoutResult(status -> {
+            assertTrue(alertNoticeDispatch.dispatchAlarm(alert));
+            verify(eventPublisher, never()).publishEvent(any());
+            verify(noticeConfigService, never()).getReceiverFilterRule(any());
+            verifyNoInteractions(pluginRunner);
+            verify(emitterManager, never()).broadcast(any(), any());
+            status.setRollbackOnly();
+        });
+
+        verify(eventPublisher, never()).publishEvent(any());
+        verify(noticeConfigService, never()).getReceiverFilterRule(any());
+        verifyNoInteractions(pluginRunner);
+        verify(emitterManager, never()).broadcast(any(), any());
+    }
+
+    private static final class RecordingTransactionManager extends AbstractPlatformTransactionManager {
+
+        @Override
+        protected Object doGetTransaction() {
+            return new Object();
+        }
+
+        @Override
+        protected void doBegin(Object transaction, TransactionDefinition definition) {
+            // Synchronization callbacks are the contract under test.
+        }
+
+        @Override
+        protected void doCommit(DefaultTransactionStatus status) {
+            // No external resource is needed.
+        }
+
+        @Override
+        protected void doRollback(DefaultTransactionStatus status) {
+            // No external resource is needed.
+        }
     }
 }

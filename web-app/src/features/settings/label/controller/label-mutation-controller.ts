@@ -15,13 +15,17 @@
  * limitations under the License.
  */
 
-import { useDelete, useNotification, type HttpError } from '@refinedev/core';
-import { useCallback, useRef } from 'react';
+import { useDelete, useDeleteMany, useNotification, type HttpError } from '@refinedev/core';
+import { useCallback, useRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useExclusiveOperation, type ExclusiveOperation } from '@/shared/exclusive-operation';
 
-import { createLabelDeleteEvidence, type LabelMutationEvidence } from '../model/label-failure';
+import {
+  createLabelDeleteEvidence,
+  createLabelDeleteManyEvidence,
+  type LabelMutationEvidence
+} from '../model/label-failure';
 import { labelResourceName, type LabelActionCapabilities, type LabelRecord } from '../model/label-model';
 import { useLabelSaveMutationController } from './label-save-mutation-controller';
 import type { LabelSaveRecoveryController } from './label-save-recovery-controller';
@@ -31,14 +35,16 @@ type Translate = ReturnType<typeof useTranslation>['t'];
 
 export function useLabelMutationController(
   convergeProjection: (evidence: LabelMutationEvidence) => Promise<boolean>,
-  onDeleteConfirmed: () => void,
+  onDeleteConfirmed: (deletedRecords: number) => void,
   capabilities: LabelActionCapabilities
 ) {
   const { t } = useTranslation();
   const notification = useNotification();
   const remove = useDelete<LabelRecord, HttpError, LabelRecord>();
+  const removeMany = useDeleteMany<LabelRecord, HttpError, LabelRecord[]>();
   const operation = useExclusiveOperation('label-mutation');
   const save = useLabelSaveMutationController(operation, notification, t, convergeProjection);
+  const confirmedDeletedIdsRef = useRef(new Set<number>());
   const deleteLabel = useDeleteLabel(
     remove,
     operation,
@@ -46,16 +52,26 @@ export function useLabelMutationController(
     notification,
     t,
     onDeleteConfirmed,
-    capabilities.canDelete
+    capabilities.canDelete,
+    confirmedDeletedIdsRef
+  );
+  const deleteLabels = useDeleteLabels(
+    removeMany,
+    operation,
+    save.recoveryController,
+    onDeleteConfirmed,
+    capabilities.canDelete,
+    confirmedDeletedIdsRef
   );
 
   return {
     createLabel: (...args: Parameters<typeof save.createLabel>) =>
       capabilities.canCreate ? save.createLabel(...args) : false,
     deleteLabel,
+    deleteLabels,
     isInFlight: save.isInFlight,
     isLocked: save.isLocked,
-    isSaving: save.isSaving || remove.mutation.isPending,
+    isSaving: save.isSaving || remove.mutation.isPending || removeMany.mutation.isPending,
     recovery: save.recovery,
     recoveryCommand: save.recoveryCommand,
     retryMutationProof: save.retryMutationProof,
@@ -70,11 +86,10 @@ function useDeleteLabel(
   recovery: LabelSaveRecoveryController,
   notification: ReturnType<typeof useNotification>,
   t: Translate,
-  onDeleteConfirmed: () => void,
-  canDelete: boolean
+  onDeleteConfirmed: (deletedRecords: number) => void,
+  canDelete: boolean,
+  confirmedDeletedIdsRef: RefObject<Set<number>>
 ) {
-  // Provider proof can precede list projection, so retire IDs from stale table rows.
-  const confirmedDeletedIdsRef = useRef(new Set<number>());
   return useCallback(
     (record: LabelRecord) => {
       if (!canDelete) return false;
@@ -91,12 +106,49 @@ function useDeleteLabel(
         deleteLabelParams(record),
         recovery.deleteCallbacks(owner, createLabelDeleteEvidence('write', 'proof', record), () => {
           confirmedDeletedIdsRef.current.add(id);
-          onDeleteConfirmed();
+          onDeleteConfirmed(1);
         })
       );
       return true;
     },
-    [canDelete, notification, onDeleteConfirmed, operation, recovery, remove, t]
+    [canDelete, confirmedDeletedIdsRef, notification, onDeleteConfirmed, operation, recovery, remove, t]
+  );
+}
+
+function useDeleteLabels(
+  remove: ReturnType<typeof useDeleteMany<LabelRecord, HttpError, LabelRecord[]>>,
+  operation: ExclusiveOperation,
+  recovery: LabelSaveRecoveryController,
+  onDeleteConfirmed: (deletedRecords: number) => void,
+  canDelete: boolean,
+  confirmedDeletedIdsRef: RefObject<Set<number>>
+) {
+  return useCallback(
+    (records: LabelRecord[], onConfirmed?: () => void) => {
+      const ids = records.map(record => record.id);
+      if (
+        !canDelete ||
+        records.length === 0 ||
+        ids.some(id => !Number.isSafeInteger(id) || id < 1) ||
+        new Set(ids).size !== ids.length ||
+        ids.some(id => confirmedDeletedIdsRef.current.has(id)) ||
+        recovery.isLocked()
+      ) {
+        return false;
+      }
+      const owner = operation.begin();
+      if (!owner) return false;
+      remove.mutate(
+        deleteLabelsParams(records),
+        recovery.deleteCallbacks(owner, createLabelDeleteManyEvidence('write', 'proof', records), () => {
+          ids.forEach(id => confirmedDeletedIdsRef.current.add(id));
+          onDeleteConfirmed(records.length);
+          onConfirmed?.();
+        })
+      );
+      return true;
+    },
+    [canDelete, confirmedDeletedIdsRef, onDeleteConfirmed, operation, recovery, remove]
   );
 }
 
@@ -108,6 +160,19 @@ function deleteLabelParams(record: LabelRecord) {
     invalidates: [...listInvalidation],
     mutationMode: 'pessimistic' as const,
     values: record,
+    successNotification: false as const,
+    errorNotification: false as const
+  };
+}
+
+function deleteLabelsParams(records: LabelRecord[]) {
+  return {
+    ids: records.map(record => record.id),
+    resource: labelResourceName,
+    dataProviderName: labelResourceName,
+    invalidates: [...listInvalidation],
+    mutationMode: 'pessimistic' as const,
+    values: records,
     successNotification: false as const,
     errorNotification: false as const
   };

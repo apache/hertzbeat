@@ -43,9 +43,14 @@ const controller = vi.hoisted(() => ({
   returnToEntity: vi.fn()
 }));
 vi.mock('../controller/use-alert-inhibit-controller', () => ({ useAlertInhibitController: () => controller }));
-vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
-vi.mock('../components/alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, unknown>) =>
+      key.startsWith('alertInhibits.logicPreview.') && values
+        ? `${key}|${Object.values(values).map(String).join('|')}`
+        : key
+  })
+}));
 
 const record = {
   id: 7,
@@ -89,8 +94,14 @@ describe('AlertInhibitPage', () => {
     expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByText('alertInhibits.name').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('alertInhibits.sourceLabels').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('alertInhibits.targetLabels').length).toBeGreaterThan(0);
     expect(screen.getByRole('status', { name: 'alertInhibits.empty' })).toBeVisible();
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
+    expect(screen.getByRole('table').closest('[data-table-overflow]')).toHaveAttribute('data-table-overflow', 'fit');
   });
 
   it.each([
@@ -178,7 +189,16 @@ describe('AlertInhibitPage', () => {
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
-  it('offers canonical server label keys without disabling manual tags', () => {
+  it('localizes both current-page selection states', () => {
+    const view = render(<AlertInhibitPage />);
+    expect(screen.getByRole('checkbox', { name: 'common.tableSelection.selectAll' })).not.toBeChecked();
+
+    controller.state = buildState({ selectedIds: [record.id] });
+    view.rerender(<AlertInhibitPage />);
+    expect(screen.getByRole('checkbox', { name: 'common.tableSelection.clearAll' })).toBeChecked();
+  });
+
+  it('keeps both source and target matcher editors interactive when suggestions are available', () => {
     controller.state = buildState({
       draft: {
         name: 'Policy',
@@ -189,8 +209,79 @@ describe('AlertInhibitPage', () => {
       }
     });
     render(<AlertInhibitPage />);
-    fireEvent.mouseDown(within(screen.getByRole('dialog')).getByRole('combobox'));
-    expect(screen.getByText('environment')).toBeInTheDocument();
+    const keyEditors = within(screen.getByRole('dialog')).getAllByRole('combobox', {
+      name: 'alertInhibits.matcherKey'
+    });
+    expect(keyEditors).toHaveLength(2);
+    keyEditors.forEach(editor => expect(editor).toBeEnabled());
+  });
+
+  it('states the resulting inhibition rule and refreshes the explanation with the draft', () => {
+    controller.state = buildState({
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: 'severity:critical, :, service:checkout',
+        targetLabelsText: 'severity:warning, service:checkout',
+        equalLabels: ['service'],
+        enable: true
+      }
+    });
+    const view = render(<AlertInhibitPage />);
+
+    const explanation = screen.getByRole('region', { name: 'alertInhibits.logicPreview.title' });
+    expect(explanation).toHaveTextContent(
+      'alertInhibits.logicPreview.triggerDetail|severity=critical, service=checkout'
+    );
+    expect(explanation).toHaveTextContent('alertInhibits.logicPreview.effectDetail|severity=warning, service=checkout');
+    expect(explanation).toHaveTextContent('alertInhibits.logicPreview.conditionDetail|service');
+
+    controller.state = buildState({
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: '',
+        targetLabelsText: '',
+        equalLabels: [],
+        enable: true
+      }
+    });
+    view.rerender(<AlertInhibitPage />);
+
+    const emptyExplanation = screen.getByRole('region', { name: 'alertInhibits.logicPreview.title' });
+    expect(emptyExplanation).toHaveTextContent('alertInhibits.logicPreview.sourceEmpty');
+    expect(emptyExplanation).toHaveTextContent('alertInhibits.logicPreview.targetEmpty');
+    expect(emptyExplanation).toHaveTextContent('alertInhibits.logicPreview.equalEmpty');
+  });
+
+  it('matches the source editor shell, label rows, and inline required feedback', () => {
+    controller.state = buildState({
+      draft: {
+        name: '',
+        sourceLabelsText: '',
+        targetLabelsText: '',
+        equalLabels: [],
+        enable: true
+      }
+    });
+    render(<AlertInhibitPage />);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveStyle({ width: '40%' });
+    expect(within(dialog).getAllByRole('combobox', { name: 'alertInhibits.matcherKey' })).toHaveLength(2);
+    expect(within(dialog).getAllByRole('combobox', { name: 'alertInhibits.matcherValue' })).toHaveLength(2);
+    expect(within(dialog).getByText('alertInhibits.equalPlaceholder')).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.confirm' }));
+
+    expect(within(dialog).getAllByText('alertInhibits.required')).toHaveLength(1);
+    expect(within(dialog).getByRole('textbox', { name: 'alertInhibits.name' })).toHaveAttribute('aria-invalid', 'true');
+    within(dialog)
+      .getAllByRole('combobox', { name: /alertInhibits\.matcher(Key|Value)/ })
+      .forEach(control => expect(control).toHaveAttribute('aria-invalid', 'true'));
+    expect(within(dialog).getByRole('combobox', { name: 'alertInhibits.equalLabels' })).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
+    expect(controller.submit).not.toHaveBeenCalled();
   });
 
   it('explains entity-matched mode and delegates all, matched, and return actions', () => {
@@ -247,7 +338,7 @@ describe('AlertInhibitPage', () => {
 
     const editor = within(screen.getByRole('dialog'));
     editor.getAllByRole('textbox').forEach(input => expect(input).toBeDisabled());
-    expect(editor.getByRole('combobox')).toBeDisabled();
+    editor.getAllByRole('combobox').forEach(input => expect(input).toBeDisabled());
     expect(editor.getByRole('switch')).toBeDisabled();
     expect(editor.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
     expect(editor.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();

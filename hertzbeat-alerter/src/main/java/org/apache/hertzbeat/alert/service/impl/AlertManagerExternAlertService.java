@@ -42,7 +42,7 @@ public class AlertManagerExternAlertService implements ExternAlertService {
 
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
 
         AlertManagerExternAlert alert = ExternalAlertIngressValidator.requirePresent(
                 JsonUtil.fromJsonQuietly(content, AlertManagerExternAlert.class));
@@ -51,7 +51,7 @@ public class AlertManagerExternAlertService implements ExternAlertService {
         List<SingleAlert> singleAlerts = alerts.stream()
                 .map(this::toSingleAlert)
                 .toList();
-        singleAlerts.forEach(alarmCommonReduce::reduceAndSendAlarm);
+        singleAlerts.forEach(singleAlert -> alarmCommonReduce.reduceAndSendAlarm(workspaceId, singleAlert));
     }
 
     private SingleAlert toSingleAlert(PrometheusExternAlert prometheusAlert) {

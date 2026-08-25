@@ -40,8 +40,6 @@ const controller = vi.hoisted(() => ({
   updateDraft: vi.fn()
 }));
 vi.mock('../controller/use-alert-group-controller', () => ({ useAlertGroupController: () => controller }));
-vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
-vi.mock('../components/alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const record = {
@@ -87,8 +85,14 @@ describe('AlertGroupPage', () => {
     expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
-    expect(screen.getByRole('status', { name: 'alertGroups.empty' })).toBeVisible();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByText('alertGroups.name').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('alertGroups.labels').length).toBeGreaterThan(0);
+    const emptyState = screen.getByRole('status', { name: 'alertGroups.empty' });
+    expect(emptyState.closest('[data-hb-operational-table-empty]')).not.toBeNull();
+    expect(emptyState).toHaveAttribute('data-presentation', 'quiet');
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(screen.getByRole('table').closest('[data-table-overflow]')).toHaveAttribute('data-table-overflow', 'fit');
   });
 
   it('renders loading as table progress without fake empty copy', () => {
@@ -135,9 +139,24 @@ describe('AlertGroupPage', () => {
     expect(screen.queryByRole('button', { name: 'alertGroups.new' }) !== null).toBe(canWrite);
     expect(screen.queryByRole('button', { name: 'common.edit' }) !== null).toBe(canWrite);
     expect(screen.queryByRole('button', { name: 'alertGroups.delete' }) !== null).toBe(canDelete);
-    expect(screen.queryByRole('checkbox', { name: 'Select all' }) !== null).toBe(canDelete);
+    expect(screen.queryByRole('checkbox', { name: 'common.tableSelection.selectAll' }) !== null).toBe(canDelete);
     expect(screen.getByRole('switch')).toHaveProperty('disabled', !canWrite);
     expect(screen.getByText('By service')).toBeInTheDocument();
+  });
+
+  it('describes the selected current page as a clear-selection action', () => {
+    controller.state = buildState({ selectedIds: [record.id] });
+    render(<AlertGroupPage />);
+
+    expect(screen.getByRole('checkbox', { name: 'common.tableSelection.clearAll' })).toBeChecked();
+  });
+
+  it('keeps the policy-name header readable at the compact table width', () => {
+    controller.state = buildState({ list: { kind: 'empty' } });
+    render(<AlertGroupPage />);
+
+    expect(screen.getByRole('columnheader', { name: 'alertGroups.name' })).toBeInTheDocument();
+    expect(document.querySelectorAll('colgroup col').item(1)).toHaveStyle({ width: '140px' });
   });
 
   it('keeps retained recovery evidence visible without offering a role-forbidden retry', () => {
@@ -173,8 +192,61 @@ describe('AlertGroupPage', () => {
       }
     });
     render(<AlertGroupPage />);
-    fireEvent.mouseDown(within(screen.getByRole('dialog')).getByRole('combobox'));
+    fireEvent.mouseDown(within(screen.getByRole('dialog')).getByRole('combobox', { name: 'alertGroups.labels' }));
     expect(screen.getByText('environment')).toBeInTheDocument();
+  });
+
+  it('matches the source editor structure and reports required fields inline', () => {
+    controller.state = buildState({
+      draft: {
+        name: '',
+        groupLabels: [],
+        groupWait: 30,
+        groupInterval: 300,
+        repeatInterval: 14_400,
+        enable: true
+      }
+    });
+    render(<AlertGroupPage />);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveStyle({ width: '40%' });
+    expect(within(dialog).getByText('alertGroups.new')).toBeInTheDocument();
+    expect(within(dialog).getByText('alertGroups.labelsPlaceholder')).toBeInTheDocument();
+    expect(within(dialog).getByRole('spinbutton', { name: 'alertGroups.wait' })).toHaveValue('30');
+    expect(within(dialog).getByRole('spinbutton', { name: 'alertGroups.interval' })).toHaveValue('5');
+    expect(within(dialog).getByRole('spinbutton', { name: 'alertGroups.repeat' })).toHaveValue('4');
+    expect(within(dialog).getByText('alertGroups.units.seconds')).toBeInTheDocument();
+    expect(within(dialog).getByText('alertGroups.units.minutes')).toBeInTheDocument();
+    expect(within(dialog).getByText('alertGroups.units.hours')).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.confirm' }));
+
+    expect(within(dialog).getByRole('textbox', { name: 'alertGroups.name' })).toHaveAttribute('aria-invalid', 'true');
+    expect(within(dialog).getByRole('combobox', { name: 'alertGroups.labels' })).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
+    expect(within(dialog).getAllByText('alertGroups.required')).toHaveLength(2);
+    expect(controller.submit).not.toHaveBeenCalled();
+  });
+
+  it('converts edited display durations back to the existing seconds contract', () => {
+    controller.state = buildState({
+      draft: {
+        name: 'New',
+        groupLabels: ['service'],
+        groupWait: 30,
+        groupInterval: 300,
+        repeatInterval: 14_400,
+        enable: true
+      }
+    });
+    render(<AlertGroupPage />);
+
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'alertGroups.interval' }), { target: { value: '7' } });
+
+    expect(controller.updateDraft).toHaveBeenCalledWith({ groupInterval: 420 });
   });
 
   it('restores current-page selection and confirms one batch delete', () => {
@@ -231,7 +303,7 @@ describe('AlertGroupPage', () => {
     render(<AlertGroupPage />);
 
     expect(screen.getByDisplayValue('New')).toBeDisabled();
-    const save = screen.getByRole('button', { name: 'common.save' });
+    const save = screen.getByRole('button', { name: 'common.confirm' });
     const cancel = screen.getByRole('button', { name: 'common.cancel' });
     expect(save).toBeDisabled();
     expect(cancel).toBeDisabled();

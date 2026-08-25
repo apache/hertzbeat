@@ -78,7 +78,7 @@ class DeploymentMigrationCommandRunnerFailureTest {
         assertNonterminal(new TargetSchemaProvisioningException(
                 MetadataDatabaseKind.MYSQL,
                 new TargetSchemaProvisioningFailure(
-                        TargetSchemaProvisioningFailure.Phase.PRECONDITION, "B206", null, 0)));
+                        TargetSchemaProvisioningFailure.Phase.PRECONDITION, "B200", null, 0)));
         assertNonterminal(new TargetJdbcConnectionException(TargetJdbcConnectionErrorCode.UNAVAILABLE));
         assertNonterminal(MigrationMaintenanceException.maintenanceFailure());
         assertNonterminal(new RetainedCutoverException(RetainedCutoverErrorCode.EXECUTION_FAILED));

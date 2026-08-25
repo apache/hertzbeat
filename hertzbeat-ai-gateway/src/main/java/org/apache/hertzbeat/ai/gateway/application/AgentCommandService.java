@@ -21,30 +21,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ErrorPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.GatewayEventType;
-import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageDeltaPayload;
+import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunStatusPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStreamResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
-import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunSnapshot;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunSnapshotService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
-import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.EventStatus;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEventType;
-import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeItemKind;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeRequest;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeService;
-import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
-import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -57,20 +55,20 @@ import reactor.core.publisher.SignalType;
 @Service
 public class AgentCommandService {
 
-    private final AgentSessionService sessionService;
+    private final AgentRunAdmissionService admissionService;
     private final AgentRunService runService;
+    private final AgentRunSnapshotService snapshotService;
     private final AgentRuntimeService runtimeService;
-    private final AgentTranscriptRecorder transcriptRecorder;
     private final GatewayRuntimeEventProjector runtimeEventProjector;
 
-    public AgentCommandService(AgentSessionService sessionService, AgentRunService runService,
+    public AgentCommandService(AgentRunAdmissionService admissionService, AgentRunService runService,
+                               AgentRunSnapshotService snapshotService,
                                AgentRuntimeService runtimeService,
-                               AgentTranscriptRecorder transcriptRecorder,
                                GatewayRuntimeEventProjector runtimeEventProjector) {
-        this.sessionService = sessionService;
+        this.admissionService = admissionService;
         this.runService = runService;
+        this.snapshotService = snapshotService;
         this.runtimeService = runtimeService;
-        this.transcriptRecorder = transcriptRecorder;
         this.runtimeEventProjector = runtimeEventProjector;
     }
 
@@ -79,9 +77,14 @@ public class AgentCommandService {
     }
 
     GatewaySingleResponse invokeFinal(GatewayCommand command, UserInput userInput) {
-        AgentRuntimeRequest request = prepare(command, userInput);
+        AgentRunAdmission admission = admit(command);
+        if (admission.decision() != AgentRunAdmission.Decision.EXECUTE_NEW) {
+            return replayFinal(command, userInput, admission);
+        }
+        AgentRuntimeRequest request = runtimeRequest((InvokeCommand) command, admission);
         String conversationId = userInput.getConversationId();
-        List<GatewayEvent> events = gatewayEvents(command, request, conversationId)
+        AtomicReference<String> reliableFinalResult = new AtomicReference<>();
+        List<GatewayEvent> events = gatewayEvents(command, request, conversationId, reliableFinalResult)
                 .collectList()
                 .block();
         GatewayEvent terminalEvent = terminalEvent(events);
@@ -95,14 +98,17 @@ public class AgentCommandService {
                         .terminal(true)
                         .message(failed ? "error" : "completed")
                         .build())
-                .body(body(finalMessage(events, terminalEvent), failed
-                        ? AgentRunStatus.FAILED.name() : AgentRunStatus.SUCCEEDED.name()))
+                .body(body(finalMessage(terminalEvent, reliableFinalResult.get()), terminalStatus(terminalEvent)))
                 .events(events)
                 .build();
     }
 
     GatewayStreamResponse invokeStream(GatewayCommand command, UserInput userInput) {
-        AgentRuntimeRequest request = prepare(command, userInput);
+        AgentRunAdmission admission = admit(command);
+        if (admission.decision() != AgentRunAdmission.Decision.EXECUTE_NEW) {
+            return replayStream(command, userInput, admission);
+        }
+        AgentRuntimeRequest request = runtimeRequest((InvokeCommand) command, admission);
         String conversationId = userInput.getConversationId();
         return GatewayStreamResponse.builder()
                 .meta(Meta.builder()
@@ -113,29 +119,36 @@ public class AgentCommandService {
                         .terminal(false)
                         .message("streaming")
                         .build())
-                .events(gatewayEvents(command, request, conversationId))
+                .events(gatewayEvents(command, request, conversationId, new AtomicReference<>()))
                 .build();
     }
 
     AgentRuntimeRequest prepare(GatewayCommand command, UserInput userInput) {
-        GatewayEnvelope envelope = command.envelope();
-        AgentRuntimeEntryType entryType = ((InvokeCommand) command).entryType();
-        AgentSession session = sessionService.findOrCreateSession(envelope, userInput, entryType);
-        AgentRun run = runService.createOrResumeRun(session, userInput, entryType);
-        List<TranscriptMessage> chatHistory = transcriptRecorder.chatHistory(session.getId());
-        transcriptRecorder.recordUserTranscriptEntry(session, run, userInput);
-        AgentRun runningRun = runService.markRunning(run);
+        AgentRunAdmission admission = admit(command);
+        if (admission.decision() != AgentRunAdmission.Decision.EXECUTE_NEW) {
+            throw new IllegalStateException("Agent run admission did not authorize execution");
+        }
+        return runtimeRequest((InvokeCommand) command, admission);
+    }
+
+    private AgentRuntimeRequest runtimeRequest(InvokeCommand command, AgentRunAdmission admission) {
         return AgentRuntimeRequest.builder()
-                .entryType(entryType)
-                .approvalHandling(command.replyMode() == ReplyMode.STREAM
-                        ? AgentApprovalHandling.WAIT_FOR_DECISION
-                        : AgentApprovalHandling.DENY)
-                .envelope(envelope)
-                .userInput(userInput)
-                .session(session)
-                .run(runningRun)
-                .chatHistory(chatHistory)
+                .entryType(command.entryType())
+                .approvalHandling(admission.approvalHandling())
+                .envelope(command.envelope())
+                .userInput(command.userInput())
+                .session(admission.session())
+                .run(admission.run())
+                .chatHistory(admission.chatHistory())
                 .build();
+    }
+
+    private AgentRunAdmission admit(GatewayCommand command) {
+        AgentRunAdmission admission = admissionService.admit((InvokeCommand) command);
+        if (admission.decision() == AgentRunAdmission.Decision.REJECT_MISMATCH) {
+            throw new IllegalArgumentException("Agent message identity conflicts with the durable run");
+        }
+        return admission;
     }
 
     /**
@@ -150,16 +163,36 @@ public class AgentCommandService {
     }
 
     private Flux<GatewayEvent> gatewayEvents(GatewayCommand command, AgentRuntimeRequest request,
-                                             String conversationId) {
+                                             String conversationId, AtomicReference<String> reliableFinalResult) {
         AtomicBoolean completed = new AtomicBoolean();
-        return Flux.defer(() -> runtimeService.streamInvoke(request))
+        AssistantCompletionTracker assistantCompletion = new AssistantCompletionTracker();
+        AgentGatewayLifecycleRelay relay = new AgentGatewayLifecycleRelay(request.getRun().getRunUid());
+        Flux<GatewayEvent> lifecycle = Flux.defer(() -> runtimeService.streamInvoke(request))
                 .map(event -> {
                     GatewayEvent gatewayEvent = runtimeEventProjector.project(event, conversationId,
                             request.getSession().getSessionUid(), request.getRun().getRunUid());
-                    completeInvocationOnTerminalEvent(request.getRun(), event, completed);
+                    assistantCompletion.observe(event);
+                    try {
+                        completeInvocationOnTerminalEvent(request.getRun(), event, completed,
+                                assistantCompletion, reliableFinalResult);
+                    } catch (Error error) {
+                        if (isFatalJvmError(error)) {
+                            completed.set(true);
+                            relay.fail(error);
+                        }
+                        throw error;
+                    }
                     return gatewayEvent;
                 })
                 .onErrorResume(exception -> {
+                    if (exception instanceof Error error && isFatalJvmError(error)) {
+                        completed.set(true);
+                        return Flux.error(error);
+                    }
+                    if (exception instanceof RecoveryRequiredPersistenceException recoveryFailure) {
+                        return Flux.just(recoveryRequiredErrorEvent(
+                                command, request, conversationId, recoveryFailure.operatorMessage()));
+                    }
                     log.debug("Agent Gateway runtime failed for run {}", request.getRun().getRunUid(), exception);
                     failInvocationIfIncomplete(request.getRun(), completed, "Agent Gateway runtime failed.");
                     return Flux.just(errorEvent(command, request, conversationId,
@@ -175,10 +208,12 @@ public class AgentCommandService {
                 }))
                 .doFinally(signalType -> completeInvocationIfStreamFinishedWithoutTerminal(request.getRun(),
                         signalType, completed));
+        return relay.connect(lifecycle);
     }
 
     private void completeInvocationOnTerminalEvent(AgentRun run, AgentRuntimeEvent event,
-                                                   AtomicBoolean completed) {
+                                                   AtomicBoolean completed, AssistantCompletionTracker assistantCompletion,
+                                                   AtomicReference<String> reliableFinalResult) {
         if (completed.get()) {
             return;
         }
@@ -189,18 +224,48 @@ public class AgentCommandService {
         if (!completed.compareAndSet(false, true)) {
             return;
         }
+        String terminalMessage = StringUtils.hasText(event.getErrorMessage())
+                ? event.getErrorMessage()
+                : "Agent Gateway runtime failed.";
         try {
             if (event.getType() == AgentRuntimeEventType.RUN_COMPLETED) {
-                runService.markSucceeded(run, "Runtime completed.");
+                if (!assistantCompletion.latestAssistantCompleted()) {
+                    throw new IllegalStateException("Agent runtime completed without an assistant message completion");
+                }
+                if (!StringUtils.hasText(event.getResult())) {
+                    throw new IllegalStateException("Agent runtime completed without a durable result");
+                }
+                AgentRun succeededRun = runService.markSucceeded(run, event.getResult());
+                if (succeededRun == null || !StringUtils.hasText(succeededRun.getResultSummary())) {
+                    throw new IllegalStateException("Succeeded agent run must expose its persisted result");
+                }
+                reliableFinalResult.compareAndSet(null, succeededRun.getResultSummary());
                 return;
             }
-            runService.markFailed(run, StringUtils.hasText(event.getErrorMessage())
-                    ? event.getErrorMessage()
-                    : "Agent Gateway runtime failed.");
+            if (event.getStatus() == EventStatus.RECOVERY_REQUIRED) {
+                runService.markRecoveryRequired(run, terminalMessage);
+            } else {
+                runService.markFailed(run, terminalMessage);
+            }
         } catch (RuntimeException exception) {
+            if (event.getStatus() == EventStatus.RECOVERY_REQUIRED) {
+                throw new RecoveryRequiredPersistenceException(terminalMessage, exception);
+            }
             completed.set(false);
             throw exception;
+        } catch (Error error) {
+            if (event.getStatus() == EventStatus.RECOVERY_REQUIRED && !isFatalJvmError(error)) {
+                throw new RecoveryRequiredPersistenceException(terminalMessage, error);
+            }
+            completed.set(false);
+            throw error;
         }
+    }
+
+    private boolean isFatalJvmError(Error error) {
+        return error instanceof VirtualMachineError
+                || error instanceof ThreadDeath
+                || error instanceof LinkageError;
     }
 
     private void failInvocationIfIncomplete(AgentRun run, AtomicBoolean completed, String message) {
@@ -241,7 +306,7 @@ public class AgentCommandService {
         throw new IllegalStateException("Mapped runtime events must contain a terminal event");
     }
 
-    private String finalMessage(List<GatewayEvent> events, GatewayEvent terminalEvent) {
+    private String finalMessage(GatewayEvent terminalEvent, String reliableFinalResult) {
         if (terminalEvent.type() == GatewayEventType.ERROR) {
             if (terminalEvent.payload() instanceof ErrorPayload payload
                     && StringUtils.hasText(payload.errorMessage())) {
@@ -249,35 +314,79 @@ public class AgentCommandService {
             }
             return "Agent Gateway runtime failed.";
         }
-        String itemId = lastCompletedAssistantItemId(events);
-        if (!StringUtils.hasText(itemId)) {
-            return "Runtime completed.";
+        if (!StringUtils.hasText(reliableFinalResult)) {
+            throw new IllegalStateException("Completed agent run must expose its reliable final result");
         }
-        StringBuilder text = new StringBuilder();
-        for (GatewayEvent event : events) {
-            if (event.type() == GatewayEventType.MESSAGE_DELTA
-                    && Objects.equals(itemId, event.itemId())
-                    && event.payload() instanceof MessageDeltaPayload payload
-                    && payload.delta() != null) {
-                text.append(payload.delta());
-            }
-        }
-        return text.length() == 0 ? "Runtime completed." : text.toString();
+        return reliableFinalResult;
     }
 
-    private String lastCompletedAssistantItemId(List<GatewayEvent> events) {
-        String itemId = null;
-        for (GatewayEvent event : events) {
-            if (event.type() == GatewayEventType.MESSAGE_COMPLETED) {
-                itemId = event.itemId();
-            }
+    private String terminalStatus(GatewayEvent terminalEvent) {
+        if (terminalEvent.type() != GatewayEventType.ERROR) {
+            return AgentRunStatus.SUCCEEDED.name();
         }
-        return itemId;
+        if (terminalEvent.payload() instanceof ErrorPayload payload
+                && EventStatus.RECOVERY_REQUIRED.externalName().equals(payload.status())) {
+            return AgentRunStatus.RECOVERY_REQUIRED.name();
+        }
+        return AgentRunStatus.FAILED.name();
     }
 
     private boolean isTerminal(GatewayEvent event) {
         return event.type() == GatewayEventType.RUN_COMPLETED
+                || event.type() == GatewayEventType.RUN_STATUS
                 || event.type() == GatewayEventType.ERROR;
+    }
+
+    private GatewayStreamResponse replayStream(GatewayCommand command, UserInput userInput,
+                                               AgentRunAdmission admission) {
+        AgentRunSnapshot snapshot = snapshotService.snapshot(admission.session(), admission.run());
+        boolean terminal = admission.decision() == AgentRunAdmission.Decision.REPLAY_TERMINAL;
+        return GatewayStreamResponse.builder()
+                .meta(replayMeta(command, userInput, snapshot, terminal))
+                .events(Flux.just(runStatusEvent(command, userInput, snapshot)))
+                .build();
+    }
+
+    private GatewaySingleResponse replayFinal(GatewayCommand command, UserInput userInput,
+                                              AgentRunAdmission admission) {
+        AgentRunSnapshot snapshot = snapshotService.snapshot(admission.session(), admission.run());
+        boolean terminal = admission.decision() == AgentRunAdmission.Decision.REPLAY_TERMINAL;
+        GatewayEvent event = runStatusEvent(command, userInput, snapshot);
+        String message = StringUtils.hasText(snapshot.result()) ? snapshot.result() : snapshot.errorMessage();
+        return GatewaySingleResponse.builder()
+                .meta(replayMeta(command, userInput, snapshot, terminal))
+                .body(body(message, snapshot.status()))
+                .events(List.of(event))
+                .build();
+    }
+
+    private Meta replayMeta(GatewayCommand command, UserInput userInput, AgentRunSnapshot snapshot,
+                            boolean terminal) {
+        return Meta.builder()
+                .commandId(command.commandId())
+                .conversationId(userInput.getConversationId())
+                .sessionUid(snapshot.sessionUid())
+                .runUid(snapshot.runUid())
+                .terminal(terminal)
+                .message(terminal ? "replayed" : "running")
+                .build();
+    }
+
+    private GatewayEvent runStatusEvent(GatewayCommand command, UserInput userInput, AgentRunSnapshot snapshot) {
+        return GatewayEvent.builder()
+                .type(GatewayEventType.RUN_STATUS)
+                .eventId(snapshot.runUid() + ":status:" + snapshot.status().toLowerCase(java.util.Locale.ROOT))
+                .conversationId(userInput.getConversationId())
+                .sessionUid(snapshot.sessionUid())
+                .runUid(snapshot.runUid())
+                .payload(RunStatusPayload.builder()
+                        .status(snapshot.status())
+                        .result(snapshot.result())
+                        .errorMessage(snapshot.errorMessage())
+                        .replayAvailable(snapshot.replayAvailable())
+                        .build())
+                .timestamp(System.currentTimeMillis())
+                .build();
     }
 
     private GatewayEvent errorEvent(GatewayCommand command, AgentRuntimeRequest request, String conversationId,
@@ -293,6 +402,73 @@ public class AgentCommandService {
                         .build())
                 .timestamp(System.currentTimeMillis())
                 .build();
+    }
+
+    private GatewayEvent recoveryRequiredErrorEvent(GatewayCommand command, AgentRuntimeRequest request,
+                                                    String conversationId, String message) {
+        return GatewayEvent.builder()
+                .type(GatewayEventType.ERROR)
+                .eventId(command.commandId() + ":recovery-required")
+                .conversationId(conversationId)
+                .sessionUid(request.getSession().getSessionUid())
+                .runUid(request.getRun().getRunUid())
+                .payload(ErrorPayload.builder()
+                        .errorMessage(message)
+                        .status(EventStatus.RECOVERY_REQUIRED.externalName())
+                        .build())
+                .timestamp(System.currentTimeMillis())
+                .build();
+    }
+
+    private static final class RecoveryRequiredPersistenceException extends RuntimeException {
+
+        private final String operatorMessage;
+
+        private RecoveryRequiredPersistenceException(String operatorMessage, Throwable cause) {
+            super("Agent recovery-required state could not be persisted", cause);
+            this.operatorMessage = operatorMessage;
+        }
+
+        private String operatorMessage() {
+            return operatorMessage;
+        }
+    }
+
+    private static final class AssistantCompletionTracker {
+
+        private String latestAssistantItemId;
+        private String completedAssistantItemId;
+
+        private void observe(AgentRuntimeEvent event) {
+            if (event.getItemKind() == AgentRuntimeItemKind.TOOL_CALL) {
+                invalidate();
+                return;
+            }
+            if (event.getItemKind() != AgentRuntimeItemKind.ASSISTANT_MESSAGE) {
+                return;
+            }
+            if (event.getType() == AgentRuntimeEventType.ITEM_STARTED) {
+                latestAssistantItemId = event.getItemId();
+                completedAssistantItemId = null;
+            } else if (event.getType() == AgentRuntimeEventType.ITEM_DELTA
+                    && !Objects.equals(latestAssistantItemId, event.getItemId())) {
+                invalidate();
+            } else if (event.getType() == AgentRuntimeEventType.ITEM_COMPLETED) {
+                completedAssistantItemId = Objects.equals(latestAssistantItemId, event.getItemId())
+                        ? event.getItemId()
+                        : null;
+            }
+        }
+
+        private void invalidate() {
+            latestAssistantItemId = null;
+            completedAssistantItemId = null;
+        }
+
+        private boolean latestAssistantCompleted() {
+            return StringUtils.hasText(latestAssistantItemId)
+                    && Objects.equals(latestAssistantItemId, completedAssistantItemId);
+        }
     }
 
     private Map<String, Object> body(String message, String status) {

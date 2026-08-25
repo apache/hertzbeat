@@ -64,6 +64,56 @@ export const alertRoutePaths = {
   integrations: alertIntegrationPath
 } as const;
 
+/** Builds the new-rule route only after the operator has selected its evaluation strategy. */
+export function buildAlertRuleNewPath(kind: 'realtime' | 'periodic') {
+  return `${alertRoutePaths.ruleNew}?${new URLSearchParams({ kind }).toString()}`;
+}
+
+const alertReturnStatuses = ['firing', 'acknowledged', 'resolved'];
+const alertReturnSeverities = ['info', 'warning', 'critical', 'emergency'];
+
+/** Returns undefined unless the target is the exact same-origin Alert Center route. */
+export function normalizeAlertCenterReturnTo(value: string | null | undefined) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value, 'http://hertzbeat.local');
+    if (url.origin !== 'http://hertzbeat.local' || url.pathname !== alertCenterPath) return undefined;
+    const output = new URLSearchParams();
+    for (const field of ['search', 'serviceName', 'serviceNamespace', 'environment']) {
+      const text = url.searchParams.get(field)?.trim();
+      if (text) output.set(field, text);
+    }
+    appendAlertReturnEnum(output, url.searchParams, 'status', alertReturnStatuses);
+    appendAlertReturnEnum(output, url.searchParams, 'severity', alertReturnSeverities);
+    appendAlertReturnPage(output, url.searchParams, 'pageIndex', 0);
+    appendAlertReturnPage(output, url.searchParams, 'pageSize', 8, [8, 15, 25]);
+    const search = output.toString();
+    return search ? `${alertCenterPath}?${search}` : alertCenterPath;
+  } catch {
+    return undefined;
+  }
+}
+
+function appendAlertReturnEnum(output: URLSearchParams, input: URLSearchParams, field: string, allowed: string[]) {
+  const value = input.get(field)?.trim().toLowerCase();
+  if (value && allowed.includes(value)) output.set(field, value);
+}
+
+function appendAlertReturnPage(
+  output: URLSearchParams,
+  input: URLSearchParams,
+  field: string,
+  fallback: number,
+  allowed?: number[]
+) {
+  if (!input.has(field)) return;
+  const value = Number(input.get(field));
+  output.set(
+    field,
+    String(Number.isSafeInteger(value) && value >= 0 && (!allowed || allowed.includes(value)) ? value : fallback)
+  );
+}
+
 export function buildAlertIntegrationPath(source: string) {
   return alertIntegrationPath.replace(':source', encodeURIComponent(source));
 }

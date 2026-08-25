@@ -84,6 +84,7 @@ class GreptimeMetricInventoryRepositoryTest {
         assertTrue(sql.contains("JOIN information_schema.tables AS t"));
         assertTrue(sql.contains("p.__table_id = t.table_id"));
         assertTrue(sql.contains("p.service_name = 'checkout''s-api'"));
+        assertTrue(sql.contains("p.hertzbeat_workspace_id = 'team-a'"));
         assertTrue(sql.contains("p.service_namespace = 'commerce''s'"));
         assertTrue(sql.contains("p.deployment_environment_name = 'prod''s'"));
         assertTrue(sql.contains("p.hertzbeat_collector_id = 'collector''s'"));
@@ -135,6 +136,16 @@ class GreptimeMetricInventoryRepositoryTest {
                 "checkout", null, "prod", "collector-a", "instance-a", "/checkout", 20));
 
         assertEquals(UNSUPPORTED, result.status());
+        verify(executor, never()).executeStrict(anyString());
+    }
+
+    @Test
+    void rejectsMissingWorkspaceBeforeResolvingOrExecutingInventory() {
+        MetricInventoryRepository.Query query = new MetricInventoryRepository.Query(
+                null, "checkout", "commerce", "prod", null, null, null, 1_000L, 2_000L, 20);
+
+        assertEquals(UNSUPPORTED, repository.findMetricNames(query).status());
+        verify(executorProvider, never()).getIfAvailable();
         verify(executor, never()).executeStrict(anyString());
     }
 
@@ -192,6 +203,6 @@ class GreptimeMetricInventoryRepositoryTest {
             String endpoint,
             int limit) {
         return new MetricInventoryRepository.Query(
-                serviceName, namespace, environment, collectorId, instance, endpoint, 1000L, 2000L, limit);
+                "team-a", serviceName, namespace, environment, collectorId, instance, endpoint, 1000L, 2000L, limit);
     }
 }

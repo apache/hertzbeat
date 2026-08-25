@@ -32,6 +32,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.entity.alerter.AlertAnalysisPolicy;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.AfterEach;
@@ -64,6 +65,7 @@ class AgentAlertAnalysisEventHandlerTest {
     void singleAlertPolicyUsesStableAnalysisConversation() {
         AlertAnalysisPolicy policy = AlertAnalysisPolicy.builder()
                 .id(7L)
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .name("Production host failures")
                 .enabled(true)
                 .matchLabels(Map.of("environment", "production"))
@@ -72,7 +74,7 @@ class AgentAlertAnalysisEventHandlerTest {
                 .minimumAlertCount(1)
                 .cooldownSeconds(1800)
                 .build();
-        when(policyService.findEnabled()).thenReturn(List.of(policy));
+        when(policyService.findEnabled(AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(List.of(policy));
         handler = new AgentAlertAnalysisEventHandler(policyService, commandRouter);
 
         handler.onSingleAlertCreated(new SingleAlert.CreatedEvent(SingleAlert.builder()
@@ -88,6 +90,7 @@ class AgentAlertAnalysisEventHandlerTest {
         ArgumentCaptor<InvokeCommand> command = ArgumentCaptor.forClass(InvokeCommand.class);
         verify(commandRouter, org.mockito.Mockito.timeout(2000)).handle(command.capture());
         assertEquals(ChannelId.SYSTEM.id(), command.getValue().envelope().getChannelId());
+        assertEquals(AuthTokenScopes.DEFAULT_WORKSPACE_ID, command.getValue().envelope().getWorkspaceId());
         assertEquals(AgentRuntimeEntryType.ALERT_TRIGGER, command.getValue().entryType());
         assertEquals(List.of(ActorSupport.ROLE_ALERT_ANALYSIS),
                 command.getValue().envelope().getActor().getRoles());
@@ -105,6 +108,7 @@ class AgentAlertAnalysisEventHandlerTest {
     void twoDistinctAlertsInTheSameInstanceTriggerAnalysis() {
         AlertAnalysisPolicy policy = AlertAnalysisPolicy.builder()
                 .id(1L)
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .name("Same host correlation")
                 .enabled(true)
                 .matchLabels(Map.of())
@@ -113,7 +117,7 @@ class AgentAlertAnalysisEventHandlerTest {
                 .minimumAlertCount(2)
                 .cooldownSeconds(1800)
                 .build();
-        when(policyService.findEnabled()).thenReturn(List.of(policy));
+        when(policyService.findEnabled(AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(List.of(policy));
         handler = new AgentAlertAnalysisEventHandler(policyService, commandRouter);
 
         handler.onSingleAlertCreated(new SingleAlert.CreatedEvent(alert("mytest", "4")));
@@ -126,9 +130,68 @@ class AgentAlertAnalysisEventHandlerTest {
         verify(commandRouter, times(1)).handle(any(InvokeCommand.class));
     }
 
+    @Test
+    void workspacesNeverShareAnAnalysisWindow() throws Exception {
+        AlertAnalysisPolicy policy = AlertAnalysisPolicy.builder()
+                .id(1L)
+                .workspaceId("team-a")
+                .name("Same host correlation")
+                .enabled(true)
+                .matchLabels(Map.of())
+                .groupByLabels(List.of("instance"))
+                .windowSeconds(300)
+                .minimumAlertCount(2)
+                .cooldownSeconds(1800)
+                .build();
+        when(policyService.findEnabled("team-a")).thenReturn(List.of(policy));
+        when(policyService.findEnabled("team-b")).thenReturn(List.of());
+        handler = new AgentAlertAnalysisEventHandler(policyService, commandRouter);
+
+        handler.onSingleAlertCreated(new SingleAlert.CreatedEvent(alert("team-a", "first", "41")));
+        handler.onSingleAlertCreated(new SingleAlert.CreatedEvent(alert("team-b", "foreign", "51")));
+
+        verify(commandRouter, org.mockito.Mockito.after(300).never()).handle(any(InvokeCommand.class));
+
+        handler.onSingleAlertCreated(new SingleAlert.CreatedEvent(alert("team-a", "second", "42")));
+        ArgumentCaptor<InvokeCommand> command = ArgumentCaptor.forClass(InvokeCommand.class);
+        verify(commandRouter, org.mockito.Mockito.timeout(2000)).handle(command.capture());
+        assertEquals("team-a", command.getValue().envelope().getWorkspaceId());
+        assertEquals(List.of(41L, 42L), command.getValue().userInput().getAlertIncident().alertIds());
+        assertTrue(command.getValue().userInput().getMessage().getText().contains("first"));
+        assertTrue(command.getValue().userInput().getMessage().getText().contains("second"));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                command.getValue().userInput().getMessage().getText().contains("foreign"));
+    }
+
+    @Test
+    void foreignWorkspacePolicyReturnedByTheRepositoryIsNotApplied() {
+        AlertAnalysisPolicy foreignPolicy = AlertAnalysisPolicy.builder()
+                .id(1L)
+                .workspaceId("team-a")
+                .name("Foreign policy")
+                .enabled(true)
+                .matchLabels(Map.of())
+                .groupByLabels(List.of("instance"))
+                .windowSeconds(300)
+                .minimumAlertCount(1)
+                .cooldownSeconds(1800)
+                .build();
+        when(policyService.findEnabled("team-b")).thenReturn(List.of(foreignPolicy));
+        handler = new AgentAlertAnalysisEventHandler(policyService, commandRouter);
+
+        handler.onSingleAlertCreated(new SingleAlert.CreatedEvent(alert("team-b", "foreign", "51")));
+
+        verify(commandRouter, org.mockito.Mockito.after(300).never()).handle(any(InvokeCommand.class));
+    }
+
     private SingleAlert alert(String alertName, String defineId) {
+        return alert(AuthTokenScopes.DEFAULT_WORKSPACE_ID, alertName, defineId);
+    }
+
+    private SingleAlert alert(String workspaceId, String alertName, String defineId) {
         return SingleAlert.builder()
                 .id(Long.parseLong(defineId))
+                .workspaceId(workspaceId)
                 .fingerprint("alertname:" + alertName + ",defineid:" + defineId
                         + ",instance:8.137.157.93:22")
                 .status("firing")

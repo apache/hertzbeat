@@ -18,11 +18,14 @@
 package org.apache.hertzbeat.ai.gateway.tool.core;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeStoppedException;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredTool;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -39,18 +42,34 @@ public class AgentToolExecutionOrchestrator {
     private final AgentPolicyService policyService;
     private final AgentToolCallLedgerService toolCallLedgerService;
     private final AgentInteractionInputService interactionInputService;
+    private final AgentTargetToolAuthorizer targetToolAuthorizer;
 
     public AgentToolExecutionOrchestrator(AgentToolRegistry registry, AgentPolicyService policyService,
                                            AgentToolCallLedgerService toolCallLedgerService,
-                                           AgentInteractionInputService interactionInputService) {
+                                           AgentInteractionInputService interactionInputService,
+                                           AgentTargetToolAuthorizer targetToolAuthorizer) {
         this.registry = registry;
         this.policyService = policyService;
         this.toolCallLedgerService = toolCallLedgerService;
         this.interactionInputService = interactionInputService;
+        this.targetToolAuthorizer = targetToolAuthorizer;
     }
 
     public AgentToolExecutionResult execute(AgentToolExecutionRequest request) {
-        PreparedToolExecution execution = prepareExecution(request);
+        AgentToolExecutionRequest requiredRequest =
+                Objects.requireNonNull(request, "Agent tool execution request is required");
+        try (WorkspaceScope ignored = WorkspaceScope.bind(requiredRequest.getWorkspaceId())) {
+            return executeScoped(requiredRequest);
+        }
+    }
+
+    private AgentToolExecutionResult executeScoped(AgentToolExecutionRequest request) {
+        PreparedToolExecution rawExecution = prepareRawExecution(request);
+        var targetDenial = targetToolAuthorizer.denialReason(rawExecution.request(), rawExecution.descriptor());
+        if (targetDenial.isPresent()) {
+            return targetDenied(rawExecution, targetDenial.get());
+        }
+        PreparedToolExecution execution = validateInteractionReference(rawExecution);
         AgentPolicyResult policy = policyService.decide(execution.request().getActor(), execution.descriptor());
 
         if (execution.request().getEntryType() == AgentRuntimeEntryType.SCHEDULE_TRIGGER
@@ -80,15 +99,16 @@ public class AgentToolExecutionOrchestrator {
         return executeHandler(execution, policy);
     }
 
-    private PreparedToolExecution prepareExecution(AgentToolExecutionRequest request) {
-        // This public boundary must fail before creating ledger rows or invoking handlers with incomplete context.
-        AgentToolExecutionRequest requiredRequest =
-                Objects.requireNonNull(request, "Agent tool execution request is required");
-        requiredRequest = interactionInputService.validateReference(requiredRequest);
-        String toolName = requiredRequest.getToolName();
+    private PreparedToolExecution prepareRawExecution(AgentToolExecutionRequest request) {
+        String toolName = request.getToolName();
         RegisteredTool handler = registry.find(toolName)
             .orElseThrow(() -> new IllegalArgumentException("Agent tool is not registered: " + toolName));
-        return new PreparedToolExecution(requiredRequest, handler, handler.descriptor());
+        return new PreparedToolExecution(request, handler, handler.descriptor());
+    }
+
+    private PreparedToolExecution validateInteractionReference(PreparedToolExecution execution) {
+        AgentToolExecutionRequest validated = interactionInputService.validateReference(execution.request());
+        return new PreparedToolExecution(validated, execution.handler(), execution.descriptor());
     }
 
     private AgentToolExecutionResult handleApproval(PreparedToolExecution execution, AgentPolicyResult policy) {
@@ -128,38 +148,177 @@ public class AgentToolExecutionOrchestrator {
     private AgentToolExecutionResult executeHandler(PreparedToolExecution execution, AgentPolicyResult policy) {
         AgentToolCall toolCall = toolCallLedgerService.recordToolStarted(execution.request(), execution.descriptor(),
             policy);
-        AgentToolExecutionRequest request = interactionInputService.mergeAndTake(execution.request());
+        return mergeAndExecuteHandler(execution, toolCall, AgentApprovalConsumption.Claim.NONE, false);
+    }
+
+    private AgentToolExecutionResult executeApprovedHandler(PreparedToolExecution execution, AgentPolicyResult policy) {
+        AgentApprovalConsumption.Claim consumption = execution.request().beginApprovalConsumption();
+        AgentToolCall toolCall;
+        try {
+            toolCall = toolCallLedgerService.recordApprovedToolResumed(execution.request(),
+                    execution.descriptor(), policy);
+        } catch (RuntimeException | Error failure) {
+            consumption.release();
+            throw failure;
+        }
+        return mergeAndExecuteHandler(execution, toolCall, consumption, true);
+    }
+
+    private AgentToolExecutionResult mergeAndExecuteHandler(PreparedToolExecution execution, AgentToolCall toolCall,
+                                                             AgentApprovalConsumption.Claim consumption,
+                                                             boolean approved) {
+        long startedAt = System.currentTimeMillis();
+        AgentToolExecutionRequest request;
+        try {
+            request = interactionInputService.mergeAndTake(execution.request());
+        } catch (RuntimeException failure) {
+            try {
+                AgentToolCall failedCall = failBeforeHandler(
+                        toolCall, failure.getMessage(), startedAt, approved, failure);
+                return executionResult(failedCall);
+            } finally {
+                consumption.release();
+            }
+        } catch (Error error) {
+            if (isFatal(error)) {
+                consumption.release();
+                throw error;
+            }
+            try {
+                failBeforeHandler(toolCall, "Agent tool execution failed.", startedAt, approved, error);
+            } finally {
+                consumption.release();
+            }
+            throw error;
+        }
+        if (!consumption.complete()) {
+            AgentRuntimeStoppedException stopped = new AgentRuntimeStoppedException(
+                    "Approval runtime stopped before tool execution.");
+            try {
+                failBeforeHandler(toolCall, "Agent tool execution stopped before the handler started.",
+                        startedAt, approved, stopped);
+            } finally {
+                consumption.release();
+            }
+            throw stopped;
+        }
         return executeRecordedHandler(new PreparedToolExecution(request, execution.handler(), execution.descriptor()),
                 toolCall);
     }
 
-    private AgentToolExecutionResult executeApprovedHandler(PreparedToolExecution execution, AgentPolicyResult policy) {
-        AgentToolCall toolCall = toolCallLedgerService.recordApprovedToolResumed(execution.request(),
-            execution.descriptor(), policy);
-        AgentToolExecutionRequest request = interactionInputService.mergeAndTake(execution.request());
-        return executeRecordedHandler(new PreparedToolExecution(request, execution.handler(), execution.descriptor()),
-                toolCall);
+    private AgentToolCall failBeforeHandler(AgentToolCall toolCall, String errorMessage, long startedAt,
+                                            boolean approved, Throwable primaryFailure) {
+        try {
+            long elapsedMs = System.currentTimeMillis() - startedAt;
+            return approved
+                    ? toolCallLedgerService.failApprovedToolBeforeExecution(toolCall, errorMessage, elapsedMs)
+                    : toolCallLedgerService.failToolCall(toolCall, errorMessage, elapsedMs);
+        } catch (RuntimeException ledgerFailure) {
+            addSuppressed(primaryFailure, ledgerFailure);
+            throw propagatePrimary(primaryFailure);
+        } catch (Error ledgerFailure) {
+            if (isFatal(ledgerFailure)) {
+                addSuppressed(ledgerFailure, primaryFailure);
+                throw ledgerFailure;
+            }
+            addSuppressed(primaryFailure, ledgerFailure);
+            throw propagatePrimary(primaryFailure);
+        }
+    }
+
+    private void addSuppressed(Throwable primary, Throwable secondary) {
+        if (primary != secondary) {
+            primary.addSuppressed(secondary);
+        }
+    }
+
+    private RuntimeException propagatePrimary(Throwable primaryFailure) {
+        if (primaryFailure instanceof RuntimeException runtimeException) {
+            return runtimeException;
+        }
+        throw (Error) primaryFailure;
     }
 
     private AgentToolExecutionResult executeRecordedHandler(PreparedToolExecution execution, AgentToolCall toolCall) {
         AgentToolExecutionContext context = new AgentToolExecutionContext(execution.request(), toolCall);
         long startedAt = System.currentTimeMillis();
+        AgentToolOutput output;
         try {
-            AgentToolOutput output = execution.handler().execute(context);
-            AgentToolCall savedCall = toolCallLedgerService.completeToolCall(toolCall, output,
-                System.currentTimeMillis() - startedAt);
-            return executionResult(savedCall);
+            output = execution.handler().execute(context);
         } catch (RuntimeException exception) {
-            AgentToolCall failedCall = toolCallLedgerService.failToolCall(toolCall, exception.getMessage(),
-                System.currentTimeMillis() - startedAt);
+            AgentToolCall failedCall = failAfterHandler(toolCall, exception.getMessage(), startedAt, exception);
+            return executionResult(failedCall);
+        } catch (Error error) {
+            if (isFatal(error)) {
+                throw error;
+            }
+            failAfterHandler(toolCall, "Agent tool execution failed.", startedAt, error);
+            throw error;
+        }
+        var postExecutionDenial = targetToolAuthorizer.postExecutionDenialReason(
+                execution.request(), execution.descriptor());
+        if (postExecutionDenial.isPresent()) {
+            AgentToolCall failedCall = persistTerminalOutcome(() -> toolCallLedgerService.failToolCall(toolCall,
+                    postExecutionDenial.get(), System.currentTimeMillis() - startedAt));
             return executionResult(failedCall);
         }
+        AgentToolCall savedCall = persistTerminalOutcome(() -> toolCallLedgerService.completeToolCall(toolCall,
+                output, System.currentTimeMillis() - startedAt));
+        return executionResult(savedCall);
+    }
+
+    private AgentToolCall persistTerminalOutcome(Supplier<AgentToolCall> persistence) {
+        try {
+            return persistence.get();
+        } catch (RuntimeException failure) {
+            throw new AgentToolCompletionIndeterminateException(failure);
+        } catch (Error failure) {
+            if (isFatal(failure)) {
+                throw failure;
+            }
+            throw new AgentToolCompletionIndeterminateException(failure);
+        }
+    }
+
+    private AgentToolCall failAfterHandler(AgentToolCall toolCall, String errorMessage, long startedAt,
+                                           Throwable primaryFailure) {
+        try {
+            return toolCallLedgerService.failToolCall(
+                    toolCall, errorMessage, System.currentTimeMillis() - startedAt);
+        } catch (RuntimeException ledgerFailure) {
+            addSuppressed(primaryFailure, ledgerFailure);
+            throw propagatePrimary(primaryFailure);
+        } catch (Error ledgerFailure) {
+            if (isFatal(ledgerFailure)) {
+                addSuppressed(ledgerFailure, primaryFailure);
+                throw ledgerFailure;
+            }
+            addSuppressed(primaryFailure, ledgerFailure);
+            throw propagatePrimary(primaryFailure);
+        }
+    }
+
+    private boolean isFatal(Error error) {
+        return error instanceof VirtualMachineError || error instanceof ThreadDeath || error instanceof LinkageError;
     }
 
     private AgentToolExecutionResult denied(PreparedToolExecution execution, AgentPolicyResult policy) {
         AgentToolCall deniedCall = toolCallLedgerService.recordToolDenied(execution.request(), execution.descriptor(),
             policy);
         return executionResult(deniedCall);
+    }
+
+    private AgentToolExecutionResult targetDenied(PreparedToolExecution execution, String reason) {
+        return AgentToolExecutionResult.builder()
+                .toolCallId(execution.request().getToolCallId())
+                .toolName(execution.descriptor().getName())
+                .status(AgentToolStatus.DENIED)
+                .decision(AgentPolicyDecision.DENY)
+                .risk(execution.descriptor().getRisk())
+                .approvalStatus(AgentApprovalStatus.NOT_REQUIRED)
+                .output(reason)
+                .errorMessage(reason)
+                .build();
     }
 
     private AgentToolExecutionResult executionResult(AgentToolCall toolCall) {
@@ -199,5 +358,27 @@ public class AgentToolExecutionOrchestrator {
      */
     private record PreparedToolExecution(AgentToolExecutionRequest request, RegisteredTool handler,
                                          AgentToolDescriptor descriptor) {
+    }
+
+    private record WorkspaceScope(String workspaceId, String authenticatedWorkspaceId,
+                                  String collectorId) implements AutoCloseable {
+
+        private static WorkspaceScope bind(String workspaceId) {
+            WorkspaceScope previous = new WorkspaceScope(
+                    AuthTokenRequestContext.currentWorkspaceId(),
+                    AuthTokenRequestContext.currentAuthenticatedWorkspaceId(),
+                    AuthTokenRequestContext.currentCollectorId());
+            AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+            AuthTokenRequestContext.bindAuthenticatedWorkspaceId(workspaceId);
+            AuthTokenRequestContext.bindCollectorId(null);
+            return previous;
+        }
+
+        @Override
+        public void close() {
+            AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+            AuthTokenRequestContext.bindAuthenticatedWorkspaceId(authenticatedWorkspaceId);
+            AuthTokenRequestContext.bindCollectorId(collectorId);
+        }
     }
 }

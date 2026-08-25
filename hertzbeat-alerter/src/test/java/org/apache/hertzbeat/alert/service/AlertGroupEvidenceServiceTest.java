@@ -33,6 +33,7 @@ import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
 import org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 class AlertGroupEvidenceServiceTest {
+    private static final String WORKSPACE_ID = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     @Mock
     private GroupAlertDao groupAlertDao;
@@ -55,14 +57,14 @@ class AlertGroupEvidenceServiceTest {
     void sortsGroupsAndMissingIdsWithoutChildHydration() {
         List<String> rawIds = List.of("4", "1", "5", "2", "3", "1");
         List<Long> normalizedIds = List.of(1L, 2L, 3L, 4L, 5L);
-        when(groupAlertDao.findStatusEvidenceByIdIn(normalizedIds)).thenReturn(List.of(
+        when(groupAlertDao.findStatusEvidenceByWorkspaceIdAndIdIn(WORKSPACE_ID, normalizedIds)).thenReturn(List.of(
                 new AlertGroupStatusEvidence(4L, CommonConstants.ALERT_STATUS_RESOLVED),
                 new AlertGroupStatusEvidence(2L, CommonConstants.ALERT_STATUS_PENDING),
                 new AlertGroupStatusEvidence(1L, CommonConstants.ALERT_STATUS_FIRING),
                 new AlertGroupStatusEvidence(3L, CommonConstants.ALERT_STATUS_ACKNOWLEDGED)));
         long before = System.currentTimeMillis();
 
-        AlertGroupEvidence result = evidenceService.getEvidence(rawIds);
+        AlertGroupEvidence result = evidenceService.getEvidence(WORKSPACE_ID, rawIds);
 
         long after = System.currentTimeMillis();
         assertEquals(List.of(
@@ -73,7 +75,7 @@ class AlertGroupEvidenceServiceTest {
         assertEquals(List.of(5L), result.missingIds());
         assertTrue(result.observedAt() >= before);
         assertTrue(result.observedAt() <= after);
-        verify(groupAlertDao).findStatusEvidenceByIdIn(normalizedIds);
+        verify(groupAlertDao).findStatusEvidenceByWorkspaceIdAndIdIn(WORKSPACE_ID, normalizedIds);
         verify(groupAlertDao, never()).findAllById(any());
     }
 
@@ -89,7 +91,7 @@ class AlertGroupEvidenceServiceTest {
 
         for (List<String> invalidRequest : invalidRequests) {
             assertThrows(AlertGroupEvidenceRequestException.class,
-                    () -> evidenceService.getEvidence(invalidRequest));
+                    () -> evidenceService.getEvidence(WORKSPACE_ID, invalidRequest));
         }
         verifyNoInteractions(groupAlertDao);
     }
@@ -99,27 +101,27 @@ class AlertGroupEvidenceServiceTest {
         List<String> repeatedIds = Collections.nCopies(101, "1");
 
         assertThrows(AlertGroupEvidenceRequestException.class,
-                () -> evidenceService.getEvidence(repeatedIds));
+                () -> evidenceService.getEvidence(WORKSPACE_ID, repeatedIds));
 
         verifyNoInteractions(groupAlertDao);
     }
 
     @Test
     void rejectsUnknownPersistedStatus() {
-        when(groupAlertDao.findStatusEvidenceByIdIn(List.of(1L))).thenReturn(List.of(
+        when(groupAlertDao.findStatusEvidenceByWorkspaceIdAndIdIn(WORKSPACE_ID, List.of(1L))).thenReturn(List.of(
                 new AlertGroupStatusEvidence(1L, "private-unknown-status")));
 
         assertThrows(AlertGroupStatusNotSupportedException.class,
-                () -> evidenceService.getEvidence(List.of("1")));
+                () -> evidenceService.getEvidence(WORKSPACE_ID, List.of("1")));
     }
 
     @Test
     void doesNotHideDuplicateDaoRows() {
-        when(groupAlertDao.findStatusEvidenceByIdIn(List.of(1L))).thenReturn(List.of(
+        when(groupAlertDao.findStatusEvidenceByWorkspaceIdAndIdIn(WORKSPACE_ID, List.of(1L))).thenReturn(List.of(
                 new AlertGroupStatusEvidence(1L, CommonConstants.ALERT_STATUS_FIRING),
                 new AlertGroupStatusEvidence(1L, CommonConstants.ALERT_STATUS_RESOLVED)));
 
         assertThrows(IllegalStateException.class,
-                () -> evidenceService.getEvidence(List.of("1")));
+                () -> evidenceService.getEvidence(WORKSPACE_ID, List.of("1")));
     }
 }

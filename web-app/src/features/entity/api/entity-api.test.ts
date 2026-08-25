@@ -18,6 +18,7 @@ import {
   classifyEntityDeleteError,
   deleteEntity,
   loadEntityDetail,
+  loadEntityIdentity,
   loadEntityMonitors,
   loadEntities
 } from './entity-api';
@@ -315,6 +316,19 @@ describe('entity API', () => {
     await expect(loadEntityDetail(7)).resolves.toMatchObject({
       monitorPreview: { total: 1, complete: true }
     });
+  });
+
+  it('loads only the source-backed identity contract for degraded detail recovery', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet.mockResolvedValue({
+      entity: { ...entity, workspaceId: 'private-workspace', unknownInternalField: 'private' },
+      identities: [{ identityType: 'manual', identityValue: 'checkout' }],
+      monitorBinds: [],
+      relations: []
+    });
+
+    await expect(loadEntityIdentity(7, signal)).resolves.toEqual(entity);
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/entities/7', { signal });
   });
 
   it('rejects a monitor summary whose total is smaller than its preview', async () => {

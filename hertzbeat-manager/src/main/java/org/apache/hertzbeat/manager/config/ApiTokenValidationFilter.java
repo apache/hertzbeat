@@ -66,6 +66,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
 
     private static final String ROLES_CLAIM = "roles";
     private static final String TOKEN_VALIDATION_UNAVAILABLE = "Token validation unavailable";
+    private static final String WORKSPACE_ACCESS_DENIED = "Workspace access denied";
 
     private final AccountService accountService;
 
@@ -79,9 +80,10 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         AuthTokenRequestContext.clear();
         SubjectSum subject = SurenessContextHolder.getBindSubject();
         bindAuthenticatedWorkspace(subject);
-        bindRequestedWorkspace(request, subject);
+        String authenticatedWorkspaceId = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
         if (subject == null || !isManagedToken(subject)) {
-            return true;
+            return bindAuthorizedWorkspace(request, authenticatedWorkspaceId)
+                    || writeWorkspaceError(response);
         }
         String authorization = request.getHeader(NetworkConstants.AUTHORIZATION);
 
@@ -93,9 +95,12 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
                             subject,
                             token,
                             resolveRequiredScope(request),
-                            AuthTokenRequestContext.currentWorkspaceId());
+                            authenticatedWorkspaceId);
                     if (rejectReason != null) {
                         return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
+                    }
+                    if (!bindAuthorizedWorkspace(request, authenticatedWorkspaceId)) {
+                        return writeWorkspaceError(response);
                     }
                     rejectReason = bindManagedCollectorBoundary(request, subject);
                     if (rejectReason != null) {
@@ -109,7 +114,8 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
             }
         }
 
-        return true;
+        return bindAuthorizedWorkspace(request, authenticatedWorkspaceId)
+                || writeWorkspaceError(response);
     }
 
     @Override
@@ -243,34 +249,32 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         return AuthTokenScopes.API_ADMIN;
     }
 
-    private void bindRequestedWorkspace(HttpServletRequest request, SubjectSum subject) {
-        String workspaceId = resolveRequestedWorkspaceId(request, subject);
-        if (workspaceId != null) {
-            AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+    private boolean bindAuthorizedWorkspace(HttpServletRequest request, String authenticatedWorkspaceId) {
+        String[] requestedWorkspaceIds = {
+                request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER),
+                request.getParameter("workspaceId"),
+                request.getParameter("workspace_id")
+        };
+        for (String requestedWorkspaceId : requestedWorkspaceIds) {
+            String requested = StringUtils.trimToNull(requestedWorkspaceId);
+            if (requested != null && (authenticatedWorkspaceId == null
+                    || !authenticatedWorkspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(requested)))) {
+                return false;
+            }
         }
+        if (authenticatedWorkspaceId != null) {
+            AuthTokenRequestContext.bindWorkspaceId(authenticatedWorkspaceId);
+        }
+        return true;
     }
 
     private void bindAuthenticatedWorkspace(SubjectSum subject) {
+        if (subject == null) {
+            return;
+        }
         String workspaceId = resolveSubjectWorkspaceId(subject);
-        if (workspaceId != null) {
-            AuthTokenRequestContext.bindAuthenticatedWorkspaceId(workspaceId);
-        }
-    }
-
-    private String resolveRequestedWorkspaceId(HttpServletRequest request, SubjectSum subject) {
-        String workspaceId = StringUtils.trimToNull(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER));
-        if (workspaceId != null) {
-            return workspaceId;
-        }
-        workspaceId = StringUtils.trimToNull(request.getParameter("workspaceId"));
-        if (workspaceId != null) {
-            return workspaceId;
-        }
-        workspaceId = StringUtils.trimToNull(request.getParameter("workspace_id"));
-        if (workspaceId != null) {
-            return workspaceId;
-        }
-        return resolveSubjectWorkspaceId(subject);
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId(
+                workspaceId == null ? AuthTokenScopes.DEFAULT_WORKSPACE_ID : workspaceId);
     }
 
     private String resolveSubjectWorkspaceId(SubjectSum subject) {
@@ -279,6 +283,14 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         }
         Object workspaceId = subject.getPrincipalMap().getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID);
         return workspaceId == null ? null : StringUtils.trimToNull(String.valueOf(workspaceId));
+    }
+
+    private boolean writeWorkspaceError(HttpServletResponse response) throws IOException {
+        try {
+            return writeError(response, HttpStatus.FORBIDDEN, WORKSPACE_ACCESS_DENIED);
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
     }
 
     private boolean writeError(HttpServletResponse response, HttpStatus status, String message) throws IOException {

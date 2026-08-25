@@ -1,0 +1,45 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. */
+
+.editor {
+  height: 150px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.editor:hover {
+  border-color: var(--ant-color-primary-hover);
+}
+
+.editor:focus-within {
+  border-color: var(--ant-color-primary-hover);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 20%, transparent);
+}
+
+.editor :global(.cm-editor) {
+  height: 100%;
+  background: transparent;
+  color: var(--ant-color-text);
+  font-size: 13px;
+}
+
+.editor :global(.cm-scroller) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.5;
+}
+
+.editor :global(.cm-gutters) {
+  border-inline-end: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+  color: var(--ant-color-text-quaternary);
+}
+
+.editor :global(.cm-focused) {
+  outline: none;
+}

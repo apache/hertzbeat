@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.shared.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -365,6 +366,34 @@ class TelemetryIntakeServiceImplTest {
 
         assertEquals(1, contexts.size());
         assertEquals("flagd", contexts.getFirst().getServiceName());
+    }
+
+    @Test
+    void explicitWorkspaceRecentMetricsNeverMixOrFallBackWhenScopeIsMissing() {
+        telemetryIntakeService.recordOtlpMetricIntake(
+                Map.of(
+                        "hertzbeat.workspace_id", "team-a",
+                        "service.name", "checkout",
+                        "service.namespace", "commerce"),
+                20L, "team_a_requests", "sum", "1", 1.0, Map.of());
+        telemetryIntakeService.recordOtlpMetricIntake(
+                Map.of(
+                        "hertzbeat.workspace_id", "team-b",
+                        "service.name", "checkout",
+                        "service.namespace", "commerce"),
+                30L, "team_b_requests", "sum", "1", 1.0, Map.of());
+
+        assertEquals(List.of("team_a_requests"), telemetryIntakeService.collectRecentOtlpMetricNames(
+                "team-a", "checkout", "commerce", null, 10));
+        assertEquals("team-a", telemetryIntakeService.resolveRecentOtlpMetricContext(
+                "team-a", "checkout", "commerce", null).getCanonicalIdentities()
+                .get("hertzbeat.workspace_id"));
+        assertEquals(1, telemetryIntakeService.collectRecentOtlpMetricContexts("team-a", 10).size());
+        assertNull(telemetryIntakeService.resolveRecentOtlpMetricContext(
+                null, "checkout", "commerce", null));
+        assertTrue(telemetryIntakeService.collectRecentOtlpMetricContexts(" ", 10).isEmpty());
+        assertTrue(telemetryIntakeService.collectRecentOtlpMetricNames(
+                null, "checkout", "commerce", null, 10).isEmpty());
     }
 
     @Test

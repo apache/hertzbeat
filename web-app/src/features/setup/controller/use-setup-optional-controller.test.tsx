@@ -29,7 +29,10 @@ describe('useSetupOptionalController', () => {
     await act(() => result.current.save());
 
     expect(api.saveSetupOptions).toHaveBeenCalledWith(
-      { mail: { ...completeMail('request-secret'), port: 587 } },
+      {
+        publicAccess: { publicBaseUrl: window.location.origin },
+        mail: { ...completeMail('request-secret'), port: 587 }
+      },
       expect.any(AbortSignal)
     );
     expect(api.saveSetupOptions).toHaveBeenCalledOnce();

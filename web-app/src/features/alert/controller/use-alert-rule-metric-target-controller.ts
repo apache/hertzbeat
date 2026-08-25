@@ -12,13 +12,18 @@ import { resolveLocale } from '@/core/i18n/i18n';
 import {
   classifyMonitorReadError,
   loadMonitorAppHierarchy,
+  loadMonitorAppHierarchyCatalog,
   loadMonitorNavigationApps,
   monitorNavigationApps,
   type MonitorAppHierarchyNode
 } from '@/features/monitor';
 
 import { parseRealtimeMetricExpression, type AlertRuleDraft } from '../model/alert-rule-model';
-import type { TargetApplicationsState, TargetHierarchyState } from '../model/alert-rule-metric-target-state';
+import type {
+  TargetApplicationsState,
+  TargetHierarchyCatalogState,
+  TargetHierarchyState
+} from '../model/alert-rule-metric-target-state';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 type TargetFailure = 'unavailable' | 'error';
@@ -45,13 +50,20 @@ export function useAlertRuleMetricTargetController(draft: AlertRuleDraft | null)
     queryFn: selectedApp && enabled ? ({ signal }) => loadMonitorAppHierarchy(selectedApp, locale, signal) : skipToken,
     retry: false
   });
+  const catalog = useQuery({
+    queryKey: alertRuleQueryKeys.targetCatalog(locale),
+    queryFn: ({ signal }) => loadMonitorAppHierarchyCatalog(locale, signal),
+    enabled,
+    retry: false
+  });
   return {
     state: {
       apps: enabled ? resolveApplicationsState(apps) : { kind: 'idle' as const },
-      hierarchy: selectedApp ? resolveHierarchyState(hierarchy) : { kind: 'idle' as const }
+      hierarchy: selectedApp ? resolveHierarchyState(hierarchy) : { kind: 'idle' as const },
+      catalog: enabled ? resolveHierarchyCatalogState(catalog) : { kind: 'idle' as const }
     },
     retryApps: async () => {
-      if (enabled) await apps.refetch();
+      if (enabled) await Promise.all([apps.refetch(), catalog.refetch()]);
     },
     retryHierarchy: async () => {
       if (selectedApp) await hierarchy.refetch();
@@ -80,6 +92,12 @@ function resolveHierarchyState(query: QueryEvidence<MonitorAppHierarchyNode>): T
   if (query.isPending || query.fetchStatus !== 'idle') return { kind: 'loading' };
   if (query.isError) return { kind: targetFailure(query.error) };
   return query.data === undefined ? { kind: 'error' } : { kind: 'ready', hierarchy: query.data };
+}
+
+function resolveHierarchyCatalogState(query: QueryEvidence<MonitorAppHierarchyNode[]>): TargetHierarchyCatalogState {
+  if (query.isPending || query.fetchStatus !== 'idle') return { kind: 'loading' };
+  if (query.isError) return { kind: targetFailure(query.error) };
+  return query.data === undefined ? { kind: 'error' } : { kind: 'ready', hierarchies: query.data };
 }
 
 type QueryEvidence<T> = {

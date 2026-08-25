@@ -54,16 +54,40 @@ describe('Alert Center presentation action access', () => {
     renderResults(capabilities);
 
     expect(screen.getByText('Latency')).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox', { name: 'Select all' }) !== null).toBe(capabilities.canSelect);
-    expect(screen.queryByRole('button', { name: 'alert.acknowledge' }) !== null).toBe(capabilities.canUpdateStatus);
-    expect(screen.queryByRole('button', { name: 'alert.delete' }) !== null).toBe(capabilities.canDeleteGroups);
+    expect(screen.queryByRole('checkbox', { name: 'common.tableSelection.selectAll' }) !== null).toBe(
+      capabilities.canSelect
+    );
+    expect(screen.getByRole('button', { name: 'alert.expandDetails' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.viewDetails' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.acknowledge' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.moreActions' }) !== null).toBe(
+      capabilities.canUpdateStatus || capabilities.canDeleteGroups
+    );
+  });
+
+  it('keeps row disclosure separate and moves every lifecycle mutation behind the compact menu', () => {
+    renderResults(admin);
+
+    expect(screen.getByRole('button', { name: 'alert.expandDetails' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.viewDetails' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.acknowledge' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.resolve' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.delete' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.moreActions' }));
+
+    expect(screen.getByRole('menuitem', { name: 'alert.acknowledge' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'alert.resolve' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'alert.delete' })).toBeInTheDocument();
   });
 
   it('keeps row-action admission independent from selection admission', () => {
     renderResults({ ...user, canSelect: false });
 
-    expect(screen.queryByRole('checkbox', { name: 'Select all' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'alert.acknowledge' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'common.tableSelection.selectAll' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'alert.expandDetails' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.viewDetails' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'alert.moreActions' })).toBeInTheDocument();
   });
 
   it.each([
@@ -75,23 +99,23 @@ describe('Alert Center presentation action access', () => {
       <AlertCenterBulkActions
         busy={false}
         actionPolicy={capabilities}
+        filteredTotal={1}
         selectedGroups={[group]}
         actions={{
-          acknowledge: vi.fn(),
+          cancelPreparation: vi.fn(),
           clear: vi.fn(),
-          remove: vi.fn(),
-          reopen: vi.fn(),
-          resolve: vi.fn(),
-          unacknowledge: vi.fn()
+          prepareFiltered: vi.fn(() => Promise.resolve([group.id])),
+          removeFiltered: vi.fn(),
+          removeSelected: vi.fn()
         }}
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'alert.acknowledgeSelected' }) !== null).toBe(
-      capabilities.canUpdateStatus
-    );
+    expect(screen.queryByRole('button', { name: 'alert.exportSelected' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.acknowledgeSelected' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alert.resolveSelected' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'alert.deleteSelected' }) !== null).toBe(capabilities.canDeleteGroups);
-    expect(screen.queryByRole('button', { name: 'common.clear' }) !== null).toBe(capabilities.canSelect);
+    expect(screen.queryByRole('button', { name: 'alert.clearSelection' }) !== null).toBe(capabilities.canSelect);
   });
 
   it('hides recovery retry when the current role cannot recover that operation kind', () => {
@@ -119,28 +143,16 @@ describe('Alert Center presentation action access', () => {
 
   it('keeps guest list details and filtering available without action admission', () => {
     renderResults(guest);
-    fireEvent.click(screen.getByRole('button', { name: 'Expand row' }));
+    fireEvent.click(screen.getByRole('button', { name: 'alert.expandDetails' }));
     expect(screen.getByText('Checkout latency is above threshold.')).toBeInTheDocument();
 
     const toolbar = render(
       <AlertCenterToolbar
         disabled={false}
-        draft={{ search: '', serviceName: '', serviceNamespace: '', environment: '' }}
-        query={{
-          search: '',
-          status: '',
-          severity: '',
-          serviceName: '',
-          serviceNamespace: '',
-          environment: '',
-          pageIndex: 0,
-          pageSize: 8
-        }}
+        draft={{ search: '', serviceName: '', serviceNamespace: '', environment: '', status: '', severity: '' }}
         refreshing={false}
         onDraftChange={vi.fn()}
         onSubmit={vi.fn()}
-        onStatusChange={vi.fn()}
-        onSeverityChange={vi.fn()}
         onRefresh={vi.fn()}
       />
     );

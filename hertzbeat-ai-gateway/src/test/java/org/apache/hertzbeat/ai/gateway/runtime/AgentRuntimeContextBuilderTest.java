@@ -67,7 +67,7 @@ class AgentRuntimeContextBuilderTest {
                 .entryType(AgentRuntimeEntryType.USER_INPUT)
                 .userInput(userInput)
                 .session(session())
-                .run(run())
+                .run(runWithTarget(userInput.getTarget()))
                 .chatHistory(List.of(
                         chatMessage("user", "first"),
                         chatMessage("assistant", "second apiKey=history-key")))
@@ -192,6 +192,45 @@ class AgentRuntimeContextBuilderTest {
     }
 
     @Test
+    void shouldKeepPersistedRunTargetWhenAnIdempotentRetryCarriesDifferentTarget() {
+        AgentTargetRef persistedTarget = AgentTargetRef.builder()
+                .monitorId(100L)
+                .signal(AgentSignalRef.builder()
+                        .type("metrics")
+                        .query("basic.max_connections")
+                        .timeRange("30m")
+                        .build())
+                .build();
+        AgentRun run = AgentRun.builder()
+                .id(2L)
+                .runUid("run-target-retry")
+                .sessionId(1L)
+                .targetContextJson(JsonUtil.toJson(persistedTarget))
+                .build();
+        UserInput retryInput = UserInput.builder()
+                .conversationId("conversation-1")
+                .messageId("msg-1")
+                .target(AgentTargetRef.builder().monitorId(999L).build())
+                .message(Message.builder().text("retry the same investigation").build())
+                .build();
+        AgentRuntimeRequest request = AgentRuntimeRequest.builder()
+                .envelope(envelope())
+                .session(session())
+                .run(run)
+                .entryType(AgentRuntimeEntryType.USER_INPUT)
+                .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
+                .userInput(retryInput)
+                .build();
+
+        AgentTargetRef effectiveTarget = builder("trace").build(request, new AgentRuntimeProperties())
+                .getEffectiveTarget();
+
+        assertEquals(100L, effectiveTarget.getMonitorId());
+        assertEquals("basic.max_connections", effectiveTarget.getSignal().getQuery());
+        assertEquals("30m", effectiveTarget.getSignal().getTimeRange());
+    }
+
+    @Test
     void shouldRestoreDurableEntitySignalAndTopologyContextFromRun() {
         AgentTargetRef target = AgentTargetRef.builder()
             .entityId(42L)
@@ -257,6 +296,20 @@ class AgentRuntimeContextBuilderTest {
         }
     }
 
+    @Test
+    void shouldRejectEnvelopeAndDurableSessionWorkspaceDrift() {
+        AgentRuntimeRequest.AgentRuntimeRequestBuilder request = AgentRuntimeRequest.builder()
+                .envelope(envelope().toBuilder().workspaceId("workspace-b").build())
+                .session(AgentSession.builder().id(1L).sessionUid("session-context")
+                        .workspaceId("workspace-a").build())
+                .run(run())
+                .entryType(AgentRuntimeEntryType.USER_INPUT)
+                .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
+                .userInput(userInput("inspect"));
+
+        assertThrows(IllegalArgumentException.class, request::build);
+    }
+
     private AgentRuntimeContextBuilder builder(String traceId) {
         return new AgentRuntimeContextBuilder(Clock.fixed(NOW, ZoneOffset.UTC), () -> traceId);
     }
@@ -275,6 +328,18 @@ class AgentRuntimeContextBuilderTest {
 
     private AgentRun run() {
         return AgentRun.builder().id(2L).runUid("run-context").sessionId(1L).build();
+    }
+
+    private AgentRun runWithTarget(AgentTargetRef target) {
+        return AgentRun.builder()
+                .id(2L)
+                .runUid("run-context")
+                .sessionId(1L)
+                .targetMonitorId(target.getMonitorId())
+                .targetAlertId(target.getAlertId())
+                .targetCollector(target.getCollector())
+                .targetContextJson(JsonUtil.toJson(target))
+                .build();
     }
 
     private UserInput userInput(String text) {

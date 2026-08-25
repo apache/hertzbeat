@@ -69,7 +69,9 @@ jobs:
             pnpm-${{ runner.os }}-
 
       - name: Verify server release layout
-        run: ./script/ci/verify-server-release-layout.sh
+        run: |
+          ./script/ci/verify-server-release-layout.sh
+          python3 -m unittest script.ci.test_verify_server_release_package
 
       - name: Build frontend release assets
         working-directory: web-app
@@ -79,6 +81,13 @@ jobs:
 
       - name: Build with Maven
         run: mvnd clean -B package -Prelease -Dmaven.test.skip=false --file pom.xml
+
+      - name: Verify server release package
+        run: |
+          release_version=$(sed -n 's:.*<hzb.version>\([^<][^<]*\)</hzb.version>.*:\1:p' pom.xml | head -1)
+          server_archive="dist/apache-hertzbeat-${release_version}-bin.tar.gz"
+          test -f "$server_archive"
+          python3 script/ci/verify-server-release-package.py "$server_archive"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1

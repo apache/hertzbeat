@@ -55,7 +55,7 @@ class MigrationStartupTargetInspectorTest {
     }
 
     @Test
-    void confirmsOnlyCurrentB206WithExactCompleteInstallationSingleton() throws Exception {
+    void confirmsOnlyCurrentB200WithExactCompleteInstallationSingleton() throws Exception {
         assertThat(inspector().inspect(
                 connection, MetadataDatabaseKind.POSTGRESQL, FINGERPRINT, deadline))
                 .isEqualTo(MigrationStartupTargetVerification.CONFIRMED);
