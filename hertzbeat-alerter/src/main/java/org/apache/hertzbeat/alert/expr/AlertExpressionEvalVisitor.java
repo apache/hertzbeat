@@ -39,6 +39,11 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     private static final String VALUE = "__value__";
     private static final String TIMESTAMP = "__timestamp__";
 
+    /**
+     * Every statement this visitor evaluates goes to this executor, so whether a statement is
+     * allowed to run is decided there rather than at each visit method, see
+     * {@code DataSourceServiceImpl}.
+     */
     private final QueryExecutor executor;
     private final CommonTokenStream tokens;
 
@@ -259,17 +264,16 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
 
     @Override
     public List<Map<String, Object>> visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx) {
-        return callSqlOrPromql(tokens.getText(ctx.string()));
+        return executor.execute(unquote(tokens.getText(ctx.string())));
     }
 
     @Override
     public List<Map<String, Object>> visitPromqlCallExpr(AlertExpressionParser.PromqlCallExprContext ctx) {
-        return callSqlOrPromql(tokens.getText(ctx.string()));
+        return executor.execute(unquote(tokens.getText(ctx.string())));
     }
 
-    private List<Map<String, Object>> callSqlOrPromql(String text) {
-        String script = text.substring(1, text.length() - 1);
-        return executor.execute(script);
+    private String unquote(String text) {
+        return text.substring(1, text.length() - 1);
     }
 
     /**
