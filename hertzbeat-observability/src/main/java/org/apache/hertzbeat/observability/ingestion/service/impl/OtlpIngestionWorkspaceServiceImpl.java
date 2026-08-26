@@ -66,7 +66,6 @@ import org.apache.hertzbeat.warehouse.repository.MetricQueryRepository;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -81,8 +80,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private static final long LOOKBACK_MILLIS = Duration.ofHours(24).toMillis();
     private static final long DEFAULT_CONSOLE_LOOKBACK_MILLIS = Duration.ofHours(1).toMillis();
     private static final int SAMPLE_LIMIT = 20;
-    private static final String OTLP_HTTP_PATH = "/api/otlp";
-    private static final String OTLP_HOST_PLACEHOLDER = "<your-hertzbeat-host>";
     private static final List<String> METRICS_ENTITY_CONTEXT_GROUP_LABELS = List.of(
             "__name__",
             "service_name",
@@ -131,6 +128,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private final EntityTraceQueryService entityTraceQueryService;
     private final ObservabilityWorkspaceQueryGateway workspaceQueryGateway;
     private final ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway;
+    private final OtlpIngestionGuideFactory guideFactory;
     private final LogQueryRepository logQueryRepository;
     private final MetricQueryRepository metricQueryRepository;
     private final List<MetricInventoryRepository> metricInventoryRepositories;
@@ -142,6 +140,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                              ObservabilityWorkspaceQueryGateway workspaceQueryGateway,
                                              @Qualifier("telemetryIntakeServiceImpl")
                                              ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway,
+                                             OtlpIngestionGuideFactory guideFactory,
                                              LogQueryRepository logQueryRepository,
                                              MetricQueryRepository metricQueryRepository,
                                              List<MetricInventoryRepository> metricInventoryRepositories,
@@ -151,6 +150,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         this.entityTraceQueryService = entityTraceQueryService;
         this.workspaceQueryGateway = workspaceQueryGateway;
         this.observabilitySignalIntakeGateway = observabilitySignalIntakeGateway;
+        this.guideFactory = guideFactory;
         this.logQueryRepository = logQueryRepository;
         this.metricQueryRepository = metricQueryRepository;
         this.metricInventoryRepositories = safeBeanList(metricInventoryRepositories);
@@ -158,15 +158,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         this.greptimeSqlQueryExecutors = safeBeanList(greptimeSqlQueryExecutors);
         this.greptimeProperties = safeBeanList(greptimeProperties);
     }
-
-    @Value("${server.ssl.enabled:false}")
-    private boolean sslEnabled = false;
-
-    @Value("${server.port:1157}")
-    private int serverPort = 1157;
-
-    @Value("${hertzbeat.otlp.grpc.port:4317}")
-    private int otlpGrpcPort = 4317;
 
     OtlpIngestionOverviewDto getOverview() {
         return getOverview(AuthTokenScopes.DEFAULT_WORKSPACE_ID);
@@ -436,179 +427,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
 
     @Override
     public OtlpIngestionGuideDto getGuide(HttpServletRequest request) {
-        String unifiedBaseEndpoint = resolveOtlpHttpBaseEndpoint(request);
-        String grpcEndpoint = resolveOtlpGrpcEndpoint(request);
-        String traceEndpoint = unifiedBaseEndpoint + "/v1/traces";
-        String metricsEndpoint = unifiedBaseEndpoint + "/v1/metrics";
-        String logsEndpoint = unifiedBaseEndpoint + "/v1/logs";
-        String collectorSnippet = """
-                receivers:
-                  otlp:
-                    protocols:
-                      http:
-                      grpc:
-
-                processors:
-                  batch:
-
-                exporters:
-                  otlphttp/hertzbeat:
-                    endpoint: %s
-                    headers:
-                      Authorization: "Bearer <api-token>"
-
-                service:
-                  pipelines:
-                    logs:
-                      receivers: [otlp]
-                      processors: [batch]
-                      exporters: [otlphttp/hertzbeat]
-                    traces:
-                      receivers: [otlp]
-                      processors: [batch]
-                      exporters: [otlphttp/hertzbeat]
-                    metrics:
-                      receivers: [otlp]
-                      processors: [batch]
-                      exporters: [otlphttp/hertzbeat]
-                """.formatted(unifiedBaseEndpoint);
-        String collectorGrpcSnippet = """
-                receivers:
-                  otlp:
-                    protocols:
-                      http:
-                      grpc:
-
-                processors:
-                  batch:
-
-                exporters:
-                  otlp/hertzbeat:
-                    endpoint: %s
-                    headers:
-                      Authorization: "Bearer <api-token>"
-                    tls:
-                      insecure: true
-
-                service:
-                  pipelines:
-                    logs:
-                      receivers: [otlp]
-                      processors: [batch]
-                      exporters: [otlp/hertzbeat]
-                    traces:
-                      receivers: [otlp]
-                      processors: [batch]
-                      exporters: [otlp/hertzbeat]
-                    metrics:
-                      receivers: [otlp]
-                      processors: [batch]
-                      exporters: [otlp/hertzbeat]
-                """.formatted(grpcEndpoint);
-        String javaSnippet = """
-                export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-                export OTEL_EXPORTER_OTLP_ENDPOINT=%s
-                export OTEL_EXPORTER_OTLP_HEADERS=\"Authorization=Bearer <api-token>\"
-                export OTEL_RESOURCE_ATTRIBUTES=\"service.name=checkout,service.namespace=commerce,deployment.environment.name=prod\"
-                """.formatted(unifiedBaseEndpoint);
-        String javaGrpcSnippet = """
-                export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
-                export OTEL_EXPORTER_OTLP_ENDPOINT=%s
-                export OTEL_EXPORTER_OTLP_HEADERS=\"Authorization=Bearer <api-token>\"
-                export OTEL_RESOURCE_ATTRIBUTES=\"service.name=checkout,service.namespace=commerce,deployment.environment.name=prod\"
-                """.formatted("http://" + grpcEndpoint);
-        String pythonSnippet = """
-                from opentelemetry.sdk.resources import Resource
-                resource = Resource.create({
-                    "service.name": "checkout",
-                    "service.namespace": "commerce",
-                    "deployment.environment.name": "prod",
-                })
-
-                # %s
-                # %s
-                """.formatted(message("observability.otlp.guide.snippet.python.http.comment"), unifiedBaseEndpoint);
-        String pythonGrpcSnippet = """
-                from opentelemetry.sdk.resources import Resource
-                resource = Resource.create({
-                    "service.name": "checkout",
-                    "service.namespace": "commerce",
-                    "deployment.environment.name": "prod",
-                })
-
-                # %s
-                # %s
-                """.formatted(message("observability.otlp.guide.snippet.python.grpc.comment"), grpcEndpoint);
-
-        return new OtlpIngestionGuideDto(
-                "OTLP HTTP",
-                "OTLP gRPC",
-                "Authorization",
-                "Bearer <api-token>",
-                grpcEndpoint,
-                List.of(
-                        new OtlpIngestionGuideDto.SignalGuide(
-                                "metrics",
-                                "http",
-                                "OTLP HTTP",
-                                metricsEndpoint,
-                                message("observability.otlp.guide.metrics.http.description"),
-                                message("observability.otlp.guide.metrics.http.note")
-                        ),
-                        new OtlpIngestionGuideDto.SignalGuide(
-                                "logs",
-                                "http",
-                                "OTLP HTTP",
-                                logsEndpoint,
-                                message("observability.otlp.guide.logs.http.description"),
-                                message("observability.otlp.guide.logs.http.note")
-                        ),
-                        new OtlpIngestionGuideDto.SignalGuide(
-                                "traces",
-                                "http",
-                                "OTLP HTTP",
-                                traceEndpoint,
-                                message("observability.otlp.guide.traces.http.description"),
-                                message("observability.otlp.guide.traces.http.note")
-                        ),
-                        new OtlpIngestionGuideDto.SignalGuide(
-                                "metrics",
-                                "grpc",
-                                "OTLP gRPC",
-                                grpcEndpoint,
-                                message("observability.otlp.guide.metrics.grpc.description"),
-                                message("observability.otlp.guide.metrics.grpc.note")
-                        ),
-                        new OtlpIngestionGuideDto.SignalGuide(
-                                "logs",
-                                "grpc",
-                                "OTLP gRPC",
-                                grpcEndpoint,
-                                message("observability.otlp.guide.logs.grpc.description"),
-                                message("observability.otlp.guide.logs.grpc.note")
-                        ),
-                        new OtlpIngestionGuideDto.SignalGuide(
-                                "traces",
-                                "grpc",
-                                "OTLP gRPC",
-                                grpcEndpoint,
-                                message("observability.otlp.guide.traces.grpc.description"),
-                                message("observability.otlp.guide.traces.grpc.note")
-                        )
-                ),
-                List.of(
-                        new OtlpIngestionGuideDto.Snippet("collector-http", "http", "OpenTelemetry Collector", "yaml", collectorSnippet),
-                        new OtlpIngestionGuideDto.Snippet("java-http", "http",
-                                message("observability.otlp.guide.snippet.java-env"), "bash", javaSnippet),
-                        new OtlpIngestionGuideDto.Snippet("python-http", "http",
-                                message("observability.otlp.guide.snippet.python-resource"), "python", pythonSnippet),
-                        new OtlpIngestionGuideDto.Snippet("collector-grpc", "grpc", "OpenTelemetry Collector", "yaml", collectorGrpcSnippet),
-                        new OtlpIngestionGuideDto.Snippet("java-grpc", "grpc",
-                                message("observability.otlp.guide.snippet.java-env"), "bash", javaGrpcSnippet),
-                        new OtlpIngestionGuideDto.Snippet("python-grpc", "grpc",
-                                message("observability.otlp.guide.snippet.python-resource"), "python", pythonGrpcSnippet)
-                )
-        );
+        return guideFactory.create(request);
     }
 
     OtlpEntityBindingSummaryDto getBindingSummary() {
@@ -1758,87 +1577,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
-    private String resolveOtlpHttpBaseEndpoint(HttpServletRequest request) {
-        String scheme = firstText(
-                extractForwardedComponent(request, "proto"),
-                headerValue(request, "X-Forwarded-Proto"),
-                sslEnabled ? "https" : "http"
-        );
-        String host = resolveExternalHost(request);
-        if (!StringUtils.hasText(host)) {
-            return scheme + "://" + OTLP_HOST_PLACEHOLDER + OTLP_HTTP_PATH;
-        }
-        return scheme + "://" + appendPortIfNeeded(host, resolveExternalPort(request, scheme), scheme) + OTLP_HTTP_PATH;
-    }
-
-    private String resolveOtlpGrpcEndpoint(HttpServletRequest request) {
-        String host = resolveExternalHost(request);
-        if (!StringUtils.hasText(host)) {
-            return OTLP_HOST_PLACEHOLDER + ":" + otlpGrpcPort;
-        }
-        return stripPort(host) + ":" + otlpGrpcPort;
-    }
-
-    private String resolveExternalHost(HttpServletRequest request) {
-        String forwardedHost = firstText(
-                extractForwardedComponent(request, "host"),
-                headerValue(request, "X-Forwarded-Host"),
-                headerValue(request, "Host")
-        );
-        if (StringUtils.hasText(forwardedHost)) {
-            return trimForwardedValue(forwardedHost);
-        }
-        if (request == null || !StringUtils.hasText(request.getServerName())) {
-            return null;
-        }
-        return request.getServerName();
-    }
-
-    private Integer resolveExternalPort(HttpServletRequest request, String scheme) {
-        String host = resolveExternalHost(request);
-        String forwardedPort = firstText(
-                extractForwardedComponent(request, "port"),
-                headerValue(request, "X-Forwarded-Port")
-        );
-        if (StringUtils.hasText(forwardedPort)) {
-            try {
-                return Integer.parseInt(trimForwardedValue(forwardedPort));
-            } catch (NumberFormatException ignored) {
-                // Ignore invalid forwarded port and fall back to request or server defaults.
-            }
-        }
-        Integer explicitHostPort = extractPortFromHost(host);
-        if (explicitHostPort != null) {
-            return explicitHostPort;
-        }
-        if (request != null && request.getServerPort() > 0) {
-            return request.getServerPort();
-        }
-        return "https".equalsIgnoreCase(scheme) ? 443 : serverPort;
-    }
-
-    private String extractForwardedComponent(HttpServletRequest request, String key) {
-        String forwarded = headerValue(request, "Forwarded");
-        if (!StringUtils.hasText(forwarded)) {
-            return null;
-        }
-        String firstPart = forwarded.split(",", 2)[0];
-        for (String token : firstPart.split(";")) {
-            String[] pair = token.split("=", 2);
-            if (pair.length == 2 && key.equalsIgnoreCase(pair[0].trim())) {
-                return trimForwardedValue(pair[1]);
-            }
-        }
-        return null;
-    }
-
-    private String headerValue(HttpServletRequest request, String headerName) {
-        if (request == null) {
-            return null;
-        }
-        return request.getHeader(headerName);
-    }
-
     private String firstText(String... candidates) {
         for (String candidate : candidates) {
             if (StringUtils.hasText(candidate)) {
@@ -1863,62 +1601,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return trimmed.trim();
     }
 
-    private String appendPortIfNeeded(String host, Integer port, String scheme) {
-        String normalizedHost = stripPort(host);
-        if (!StringUtils.hasText(normalizedHost) || port == null) {
-            return normalizedHost;
+    private String metricsIntakeMode(long monitorTotalCount, long otlpMetricCount) {
+        if (monitorTotalCount > 0 && otlpMetricCount > 0) {
+            return message("observability.otlp.overview.metrics.mode.mixed");
         }
-        if (("http".equalsIgnoreCase(scheme) && port == 80)
-                || ("https".equalsIgnoreCase(scheme) && port == 443)) {
-            return normalizedHost;
+        if (otlpMetricCount > 0) {
+            return "OTLP";
         }
-        return normalizedHost + ":" + port;
-    }
-
-    private String stripPort(String host) {
-        if (!StringUtils.hasText(host)) {
-            return host;
-        }
-        String trimmed = host.trim();
-        if (trimmed.startsWith("[") && trimmed.contains("]")) {
-            return trimmed.substring(0, trimmed.indexOf(']') + 1);
-        }
-        int colonIndex = trimmed.lastIndexOf(':');
-        if (colonIndex > 0 && trimmed.indexOf(':') == colonIndex) {
-            return trimmed.substring(0, colonIndex);
-        }
-        if (colonIndex > 0 && trimmed.indexOf(':') != colonIndex) {
-            return "[" + trimmed + "]";
-        }
-        return trimmed;
-    }
-
-    private Integer extractPortFromHost(String host) {
-        if (!StringUtils.hasText(host)) {
-            return null;
-        }
-        String trimmed = host.trim();
-        if (trimmed.startsWith("[") && trimmed.contains("]")) {
-            int lastColon = trimmed.lastIndexOf(':');
-            int closingBracket = trimmed.lastIndexOf(']');
-            if (lastColon > closingBracket) {
-                try {
-                    return Integer.parseInt(trimmed.substring(lastColon + 1));
-                } catch (NumberFormatException ignored) {
-                    return null;
-                }
-            }
-            return null;
-        }
-        int colonIndex = trimmed.lastIndexOf(':');
-        if (colonIndex > 0 && trimmed.indexOf(':') == colonIndex) {
-            try {
-                return Integer.parseInt(trimmed.substring(colonIndex + 1));
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
+        return message("observability.otlp.overview.metrics.mode.monitor");
     }
 
     private static String message(String key) {

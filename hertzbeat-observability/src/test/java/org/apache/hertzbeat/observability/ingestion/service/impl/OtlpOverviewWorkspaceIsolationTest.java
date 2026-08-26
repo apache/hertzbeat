@@ -67,6 +67,7 @@ class OtlpOverviewWorkspaceIsolationTest {
                 traceQueryService,
                 workspaceQueryGateway,
                 intakeGateway,
+                new OtlpIngestionGuideFactory(false, 1157, 4317),
                 logQueryRepository,
                 metricQueryRepository,
                 List.of(metricInventoryRepository),
