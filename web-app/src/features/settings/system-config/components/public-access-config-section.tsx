@@ -7,14 +7,37 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalFormActions, OperationalStatePanel } from '@/shared/operational-page';
 
-import { usePublicAccessConfigController } from '../controller/use-public-access-config-controller';
 import { derivePublicAccessEndpoints, type PublicAccessConfigDraft } from '../model/public-access-config-model';
 import styles from './system-config-editor.module.css';
 
-export function PublicAccessConfigSection({ canConfigure }: { canConfigure: boolean }) {
+type PublicAccessConfigSectionState =
+  | { kind: 'loading' }
+  | { kind: 'unavailable' | 'invalid' }
+  | {
+      kind: 'ready';
+      current: PublicAccessConfigDraft;
+      dirty: boolean;
+      saving: boolean;
+      valid: boolean;
+    };
+
+type PublicAccessConfigSectionActions = {
+  discard: () => unknown;
+  retry: () => unknown;
+  save: () => unknown;
+  update: (field: keyof PublicAccessConfigDraft, value: string) => void;
+};
+
+export function PublicAccessConfigSection({
+  canConfigure,
+  state,
+  actions
+}: {
+  canConfigure: boolean;
+  state: PublicAccessConfigSectionState;
+  actions: PublicAccessConfigSectionActions;
+}) {
   const { t } = useTranslation();
-  const controller = usePublicAccessConfigController(canConfigure);
-  const state = controller.state;
 
   return (
     <section className={styles.section} aria-labelledby="public-access-config-title">
@@ -32,7 +55,7 @@ export function PublicAccessConfigSection({ canConfigure }: { canConfigure: bool
           kind={state.kind === 'invalid' ? 'error' : 'unavailable'}
           title={t(`systemConfig.publicAccess.${state.kind}`)}
           action={
-            <Button size="small" onClick={controller.actions.retry}>
+            <Button size="small" onClick={actions.retry}>
               {t('common.retry')}
             </Button>
           }
@@ -40,35 +63,47 @@ export function PublicAccessConfigSection({ canConfigure }: { canConfigure: bool
         />
       )}
       {state.kind === 'ready' && (
-        <>
-          <div className={styles.form}>
-            <PublicAddressField
-              field="publicBaseUrl"
-              label={t('systemConfig.publicAccess.publicBaseUrl')}
-              help={t('systemConfig.publicAccess.publicBaseUrlHelp')}
-              value={state.current.publicBaseUrl}
-              disabled={!canConfigure || state.saving}
-              update={controller.actions.update}
-            />
-            <OtlpOverrideFields
-              draft={state.current}
-              disabled={!canConfigure || state.saving}
-              update={controller.actions.update}
-            />
-          </div>
-          {canConfigure && state.dirty && (
-            <OperationalFormActions>
-              <Button type="primary" loading={state.saving} disabled={!state.valid} onClick={controller.actions.save}>
-                {t('common.save')}
-              </Button>
-              <Button disabled={state.saving} onClick={controller.actions.discard}>
-                {t('systemConfig.discard')}
-              </Button>
-            </OperationalFormActions>
-          )}
-        </>
+        <PublicAccessReadySection canConfigure={canConfigure} state={state} actions={actions} />
       )}
     </section>
+  );
+}
+
+function PublicAccessReadySection({
+  canConfigure,
+  state,
+  actions
+}: {
+  canConfigure: boolean;
+  state: Extract<PublicAccessConfigSectionState, { kind: 'ready' }>;
+  actions: PublicAccessConfigSectionActions;
+}) {
+  const { t } = useTranslation();
+  const disabled = !canConfigure || state.saving;
+  return (
+    <>
+      <div className={styles.form}>
+        <PublicAddressField
+          field="publicBaseUrl"
+          label={t('systemConfig.publicAccess.publicBaseUrl')}
+          help={t('systemConfig.publicAccess.publicBaseUrlHelp')}
+          value={state.current.publicBaseUrl}
+          disabled={disabled}
+          update={actions.update}
+        />
+        <OtlpOverrideFields draft={state.current} disabled={disabled} update={actions.update} />
+      </div>
+      {canConfigure && state.dirty && (
+        <OperationalFormActions>
+          <Button type="primary" loading={state.saving} disabled={!state.valid} onClick={actions.save}>
+            {t('common.save')}
+          </Button>
+          <Button disabled={state.saving} onClick={actions.discard}>
+            {t('systemConfig.discard')}
+          </Button>
+        </OperationalFormActions>
+      )}
+    </>
   );
 }
 

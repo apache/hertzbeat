@@ -28,7 +28,7 @@ export type InstrumentationDraft = Omit<Selection, 'sourceKind'> & {
 };
 export type ApplicationQuestion = 'framework' | 'method' | 'environment' | 'platform';
 export type InstrumentationStage = 'source' | 'configure';
-export const INSTRUMENTATION_STAGES: InstrumentationStage[] = ['source', 'configure'];
+const INSTRUMENTATION_STAGES: InstrumentationStage[] = ['source', 'configure'];
 
 export function previousInstrumentationStage(stage: InstrumentationStage): InstrumentationStage {
   const index = INSTRUMENTATION_STAGES.indexOf(stage);

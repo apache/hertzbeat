@@ -1,10 +1,20 @@
-.progress {
-  max-width: 1320px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
+.guidedProgress {
+  position: sticky;
+  top: 24px;
+}
+
+.guidedProgress :global(.ant-steps-item-title) {
+  color: var(--hb-text-secondary) !important;
+  font-size: 13px;
+}
+
+.guidedProgress :global(.ant-steps-item-active .ant-steps-item-title) {
+  color: var(--hb-text-primary) !important;
+  font-weight: 600;
+}
+
+.guidedProgress :global(.ant-steps-item-description) {
+  display: none;
 }
 
 .section h4 {
@@ -43,12 +53,12 @@
 
 .sourceTile {
   min-width: max-content;
-  min-height: 44px;
+  min-height: 36px;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 10px;
-  padding: 9px 14px;
+  gap: 8px;
+  padding: 6px 10px;
   border: var(--ant-line-width) solid var(--hb-border);
   border-radius: var(--hb-radius-control);
   background: var(--hb-bg-raised);
@@ -91,11 +101,11 @@
 }
 
 .sourceIcon {
-  width: var(--ant-font-size-lg);
-  height: var(--ant-font-size-lg);
+  width: var(--ant-font-size);
+  height: var(--ant-font-size);
   flex: 0 0 auto;
   object-fit: contain;
-  font-size: var(--ant-font-size-lg);
+  font-size: var(--ant-font-size);
   color: var(--hb-brand-accent);
 }
 
@@ -153,8 +163,9 @@
 
 .categoryActionSelected,
 .categoryActionSelected:hover {
+  border-radius: 0;
   color: var(--hb-text-primary) !important;
-  background: var(--hb-bg-selected) !important;
+  background: transparent !important;
   box-shadow: inset 2px 0 0 var(--hb-brand-accent);
 }
 
@@ -172,6 +183,22 @@
 
 .sourceStatus[data-support='preview'] {
   color: var(--hb-status-degraded);
+}
+
+@media (max-width: 760px) {
+  .guidedProgress {
+    position: static;
+    min-width: 620px;
+  }
+
+  .guidedProgress :global(.ant-steps) {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .guidedProgress :global(.ant-steps-item) {
+    flex: 1;
+  }
 }
 
 .sourceAssistiveText {

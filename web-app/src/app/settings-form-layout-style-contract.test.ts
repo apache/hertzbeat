@@ -18,16 +18,23 @@ function ruleBody(css: string, selector: RegExp) {
 }
 
 describe('settings form layout contract', () => {
-  it.each([
-    ['object storage', objectStoreStyles],
-    ['system settings', systemConfigStyles]
-  ])('keeps the %s controls in a compact stacked rail', (_name, styles) => {
-    const form = ruleBody(styles, /\.form\s*\{(?<body>[^}]*)\}/);
-    const field = ruleBody(styles, /\.field\s*\{(?<body>[^}]*)\}/);
+  it('keeps system settings controls in a compact stacked rail', () => {
+    const form = ruleBody(systemConfigStyles, /\.form\s*\{(?<body>[^}]*)\}/);
+    const field = ruleBody(systemConfigStyles, /\.field\s*\{(?<body>[^}]*)\}/);
 
     expect(form).toMatch(/max-width:\s*520px/);
     expect(form).toMatch(/margin-inline:\s*0/);
     expect(field).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+    expect(field).not.toMatch(/190px/);
+  });
+
+  it('keeps object storage as an adaptive provider workspace', () => {
+    const surface = ruleBody(objectStoreStyles, /\.surface\s*\{(?<body>[^}]*)\}/);
+    const workspace = ruleBody(objectStoreStyles, /\.workspace\s*\{(?<body>[^}]*)\}/);
+    const field = ruleBody(objectStoreStyles, /\.field\s*\{(?<body>[^}]*)\}/);
+
+    expect(surface).toMatch(/width:\s*min\(100%,\s*840px\)/);
+    expect(workspace).toMatch(/grid-template-columns:\s*238px minmax\(0,\s*1fr\)/);
     expect(field).not.toMatch(/190px/);
   });
 

@@ -27,11 +27,7 @@ export function MonitorNavigationResourceLoader({ onChange }: { onChange: (apps:
   });
 
   useEffect(() => {
-    onChange(emptyMonitorApps);
-  }, [enabled, locale, onChange]);
-
-  useEffect(() => {
-    if (enabled && query.isSuccess) onChange(query.data);
+    onChange(enabled && query.isSuccess ? query.data : emptyMonitorApps);
   }, [enabled, onChange, query.data, query.isSuccess]);
 
   return null;

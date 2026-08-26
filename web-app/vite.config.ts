@@ -79,7 +79,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    exclude: [...configDefaults.exclude, '.tmp/**', 'scripts/**'],
+    exclude: [...configDefaults.exclude, '.tmp/**', 'scripts/**', 'tests/browser/**'],
     maxWorkers: vitestResourcePolicy.maxWorkers,
     pool: 'forks',
     setupFiles: ['./src/test/setup.ts'],

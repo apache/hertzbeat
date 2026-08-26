@@ -38,6 +38,28 @@ describe('explore query state', () => {
     expect(parseExploreQuery(new URLSearchParams())).toMatchObject({ signal: 'metrics', timeRange: 'last-30m' });
   });
 
+  it('round-trips authoritative investigation identity and timezone without changing the exact epoch window', () => {
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=logs&timeRange=last-30m&entityId=7&monitorId=42&serviceName=checkout' +
+          '&start=1723454400000&end=1723456200000&timeZone=Asia%2FShanghai'
+      )
+    );
+
+    expect(query).toMatchObject({
+      entityId: '7',
+      monitorId: '42',
+      serviceName: 'checkout',
+      start: 1_723_454_400_000,
+      end: 1_723_456_200_000,
+      timeZone: 'Asia/Shanghai'
+    });
+    expect(buildExplorePath(query)).toBe(
+      '/explore?signal=logs&timeRange=last-30m&start=1723454400000&end=1723456200000' +
+        '&timeZone=Asia%2FShanghai&entityId=7&monitorId=42&serviceName=checkout'
+    );
+  });
+
   it('keeps only supported values and trims empty context', () => {
     const query = parseExploreQuery(
       new URLSearchParams('signal=logs&timeRange=last-1h&serviceName=%20checkout%20&query=timeout&errorOnly=true')

@@ -652,6 +652,27 @@
       "contextTitle": "サービスと送信先",
       "configureTitle": "設定",
       "configureDescription": "サービス名と送信先を設定し、正確な接続手順を生成します。",
+      "guided": {
+        "stage": {
+          "source": "接続元",
+          "service": "サービス情報",
+          "destination": "取り込み経路",
+          "guide": "接続ガイド"
+        },
+        "serviceTitle": "このテレメトリはどのサービスのものですか？",
+        "serviceDescription": "これらの値は、検索、絞り込み、関連付けに使用するリソース属性になります。",
+        "destinationTitle": "テレメトリを最初にどこへ送信しますか？",
+        "destinationDescription": "取り込み経路を選択してください。接続情報は現在の選択にのみ表示されます。",
+        "guideTitle": "接続手順を生成",
+        "guideDescription": "送信先と認証方式を確認し、このサービス向けの手順を生成します。",
+        "currentIntake": "現在の取り込み先",
+        "selectAvailableDestination": "利用可能な取り込み経路を選択すると、接続情報が表示されます。",
+        "selectedDestination": "取り込み経路",
+        "online": "オンライン",
+        "collectorId": "Collector ID",
+        "destinationInstance": "取り込みインスタンス",
+        "copyEndpoint": "{{transport}} エンドポイントをコピー"
+      },
       "serviceContext": "サービスコンテキスト",
       "installTitle": "インストールと設定",
       "recipeLabel": "計装レシピ",
@@ -892,6 +913,15 @@
     "tokenMissing": "未入力",
     "token": {
       "generateAccess": "アクセストークンを生成",
+      "create": "アクセストークンを作成",
+      "useExisting": "既存のトークンを使用",
+      "cancelExisting": "キャンセル",
+      "setupTitle": "トークンを作成して続行",
+      "setupDescription": "トークンはこのセットアップに自動的に追加されます。作成後、次へ進めます。",
+      "existingTitle": "既存のトークンを使用",
+      "existingDescription": "OTLP 取り込み用トークンがすでに発行されている場合のみ貼り付けてください。",
+      "readyTitle": "アクセストークンの準備ができました",
+      "readyDescription": "次の手順でセットアップガイドに自動的に挿入されます。",
       "generateTitle": "アクセストークンを生成",
       "generate": "生成",
       "name": "トークン名",
@@ -902,6 +932,7 @@
       "notGenerated": "アクセストークンは未生成です",
       "generateError": "アクセストークンを生成できませんでした。",
       "acknowledgementRequired": "終了または最初からやり直す前に、この一度だけ表示されるトークンを保存してください。このページのメモリにのみ保持されています。",
+      "guideAcknowledgementRequired": "一度だけ表示されるトークンが下の接続ガイドにあります。終了または最初からやり直す前に保存してください。",
       "acknowledge": "トークンを保存しました",
       "plaintextBearerWarning": "Bearer トークンは暗号化されていない接続で送信されます。"
     },
@@ -947,6 +978,8 @@
     },
     "action": {
       "exit": "ダッシュボードに戻る",
+      "previous": "前へ",
+      "next": "次へ",
       "continue": "続行",
       "render": "手順を生成",
       "reviewContext": "コンテキストを確認",
@@ -1293,6 +1326,8 @@
     "selectedPauseConfirm_other": "選択した {{count}} 件の監視を一時停止しますか？",
     "delete": "削除",
     "deleteConfirm": "選択した監視データを削除しますか？",
+    "selectAll": "すべての監視を選択",
+    "selectOne": "{{name}} を選択",
     "selected": "{{count}} 件を選択",
     "clearSelection": "選択を解除",
     "success": "監視操作が完了しました。",
@@ -1369,6 +1404,9 @@
     "average": "平均",
     "samples": "サンプル",
     "refreshHistory": "履歴を更新",
+    "investigation": {
+      "open": "関連シグナル"
+    },
     "collapseHistory": "履歴を折りたたむ",
     "expandHistory": "履歴を展開",
     "layout": {

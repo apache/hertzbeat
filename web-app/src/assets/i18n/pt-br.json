@@ -658,6 +658,27 @@
       "contextTitle": "Serviço e destino",
       "configureTitle": "Configurar",
       "configureDescription": "Nomeie o serviço, escolha o destino da telemetria e gere as instruções exatas.",
+      "guided": {
+        "stage": {
+          "source": "Origem",
+          "service": "Serviço",
+          "destination": "Rota de entrada",
+          "guide": "Guia de configuração"
+        },
+        "serviceTitle": "A qual serviço esta telemetria pertence?",
+        "serviceDescription": "Estes valores se tornam atributos de recurso usados em consultas, filtros e correlações.",
+        "destinationTitle": "Para onde a telemetria deve ser enviada primeiro?",
+        "destinationDescription": "Escolha uma rota de entrada. Os detalhes de conexão aparecem apenas para a seleção atual.",
+        "guideTitle": "Gerar instruções de configuração",
+        "guideDescription": "Confirme o destino e a autorização para gerar as etapas deste serviço.",
+        "currentIntake": "Entrada atual",
+        "selectAvailableDestination": "Escolha uma rota disponível para ver os detalhes de conexão.",
+        "selectedDestination": "Rota de entrada",
+        "online": "Online",
+        "collectorId": "ID do Collector",
+        "destinationInstance": "Instância de entrada",
+        "copyEndpoint": "Copiar endpoint {{transport}}"
+      },
       "serviceContext": "Contexto do serviço",
       "installTitle": "Instalar e configurar",
       "recipeLabel": "Receita de instrumentação",
@@ -900,6 +921,15 @@
     "tokenMissing": "Não informado",
     "token": {
       "generateAccess": "Gerar token de acesso",
+      "create": "Criar token de acesso",
+      "useExisting": "Usar um token existente",
+      "cancelExisting": "Cancelar",
+      "setupTitle": "Crie um token para continuar",
+      "setupDescription": "Ele será adicionado automaticamente a esta configuração. Continue quando estiver pronto.",
+      "existingTitle": "Usar um token existente",
+      "existingDescription": "Cole um token somente se ele já tiver sido emitido para a ingestão OTLP.",
+      "readyTitle": "Token de acesso pronto",
+      "readyDescription": "Ele será inserido automaticamente no guia de configuração.",
       "generateTitle": "Gerar token de acesso",
       "generate": "Gerar",
       "name": "Nome do token",
@@ -910,6 +940,7 @@
       "notGenerated": "Nenhum token de acesso gerado",
       "generateError": "Não foi possível gerar o token de acesso.",
       "acknowledgementRequired": "Salve este token de exibição única antes de sair ou recomeçar. Ele existe apenas na memória desta página.",
+      "guideAcknowledgementRequired": "Este token de exibição única está visível no guia abaixo. Salve-o antes de sair ou recomeçar.",
       "acknowledge": "Salvei este token",
       "plaintextBearerWarning": "O token Bearer será transmitido por uma conexão não criptografada."
     },
@@ -955,6 +986,8 @@
     },
     "action": {
       "exit": "Voltar ao painel",
+      "previous": "Anterior",
+      "next": "Próximo",
       "continue": "Continuar",
       "render": "Gerar instruções",
       "reviewContext": "Revisar contexto",
@@ -1306,6 +1339,8 @@
     "selectedPauseConfirm_other": "Pausar {{count}} monitores selecionados?",
     "delete": "Excluir",
     "deleteConfirm": "Excluir os dados dos monitores selecionados?",
+    "selectAll": "Selecionar todos os monitores",
+    "selectOne": "Selecionar {{name}}",
     "selected": "{{count}} selecionados",
     "clearSelection": "Limpar seleção",
     "success": "Operação de monitor concluída.",
@@ -1382,6 +1417,9 @@
     "average": "Média",
     "samples": "Amostras",
     "refreshHistory": "Atualizar histórico",
+    "investigation": {
+      "open": "Sinais relacionados"
+    },
     "collapseHistory": "Recolher histórico",
     "expandHistory": "Expandir histórico",
     "layout": {

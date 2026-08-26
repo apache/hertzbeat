@@ -166,6 +166,7 @@ describe('Alert route ownership', () => {
         name: 'Canonical rule',
         expr: 'usage > 90',
         template: 'Alert',
+        labelsText: 'severity:warning',
         period: 300,
         times: 3
       })

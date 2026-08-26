@@ -69,7 +69,7 @@ function StatusOrgConfiguredWorkspace(props: ConfiguredWorkspaceProps) {
   );
 }
 
-export function StatusOrgSetupWorkspace({
+function StatusOrgSetupWorkspace({
   actions,
   fields,
   writeRecovery

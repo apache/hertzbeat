@@ -25,7 +25,7 @@ type AlertSilenceScheduleWindow = {
   periodEnd: string;
 };
 
-export type AlertSilenceScheduleMemory = {
+type AlertSilenceScheduleMemory = {
   once: AlertSilenceScheduleWindow;
   recurring: AlertSilenceScheduleWindow;
 };

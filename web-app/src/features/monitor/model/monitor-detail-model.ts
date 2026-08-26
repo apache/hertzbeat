@@ -16,6 +16,7 @@
  */
 
 import type { RemotePayloadState } from '@/shared/remote-state';
+import type { SignalKind } from '@/shared/query-context';
 
 import type {
   MonitorDetail,
@@ -152,6 +153,7 @@ export type MonitorMetricWorkbenchController = {
     historyAvailability: MonitorHistoryAvailability;
     historyCharts: MonitorHistoryChart[];
     selectedHistoryChart?: MonitorHistoryChart | undefined;
+    investigationSignals: SignalKind[];
     hasMoreHistoryCharts: boolean;
     realtime: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
     historical: MonitorMetricRowsEvidence<ReturnType<typeof monitorHistoryRows>[number]>;
@@ -169,6 +171,7 @@ export type MonitorMetricWorkbenchController = {
     setHistoryChartRange: (metricKey: string, value: MonitorMetricHistory) => void;
     setHistoryChartMode: (metricKey: string, interval: boolean) => void;
     refreshHistoryChart: (metricKey: string) => void;
+    openInvestigationSignal: (signal: SignalKind) => void;
     loadMoreHistoryCharts: () => void;
     refresh: () => void;
     layout: MonitorMetricLayoutActions;

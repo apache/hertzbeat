@@ -66,7 +66,7 @@ export function useAlertRuleEditorRoute(mode: 'new' | 'edit') {
   };
 }
 
-export function parseAlertRuleKind(search: string): AlertRuleKind | null {
+function parseAlertRuleKind(search: string): AlertRuleKind | null {
   const value = new URLSearchParams(search).get('kind');
   return value === 'realtime' || value === 'periodic' ? value : null;
 }

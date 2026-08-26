@@ -21,7 +21,7 @@ import { settingsPaths } from '@/shared/settings/settings-routes';
 
 const alertIntegrationWriterScope: AccessTokenScope = 'api-admin';
 
-export type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
+type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
 export type AlertIntegrationVerification =
   | { status: 'unverified'; startedAt: null; verifiedAt: null }
   | { status: 'waiting'; startedAt: number; verifiedAt: null }
@@ -47,7 +47,7 @@ export type AlertIntegrationCatalogItem = AlertIntegrationDescriptor & {
   verification: AlertIntegrationVerification;
 };
 export type AlertIntegrationCatalog = { items: AlertIntegrationCatalogItem[] };
-export type AlertIntegrationRequiredHeaders =
+type AlertIntegrationRequiredHeaders =
   { Authorization: 'Bearer {token}' } | { 'X-HertzBeat-Token': '{token}' } | { Token: '{token}' };
 export type AlertIntegrationGuide = AlertIntegrationDescriptor & {
   method: 'POST';

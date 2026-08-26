@@ -29,6 +29,7 @@ import { defaultMonitorDetailRefreshSeconds } from '../model/monitor-detail-mode
 const api = vi.hoisted(() => ({
   loadFavoriteMetrics: vi.fn(),
   loadHistoryMetric: vi.fn(),
+  loadMonitorInvestigationBinding: vi.fn(),
   loadMonitorMetricCatalog: vi.fn(),
   loadRealtimeMetric: vi.fn(),
   updateFavoriteMetric: vi.fn()
@@ -64,6 +65,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     vi.clearAllMocks();
     runtimeStatus.useRuntimeStatusController.mockReturnValue(runtimeStatusEvidence('available'));
     api.loadMonitorMetricCatalog.mockResolvedValue(catalog());
+    api.loadMonitorInvestigationBinding.mockResolvedValue(undefined);
     api.loadFavoriteMetrics.mockResolvedValue([]);
     api.loadRealtimeMetric.mockResolvedValue({ fields: [], valueRows: [] });
     api.loadHistoryMetric.mockResolvedValue({ values: {} });
@@ -114,6 +116,52 @@ describe('useMonitorMetricWorkbenchController', () => {
       () => expect(view.result.current.location.search).toContain('metric=other.value'),
       routeConvergenceWait
     );
+  });
+
+  it('opens only an advertised signal with the selected exact history window and canonical identity', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    api.loadMonitorInvestigationBinding.mockResolvedValue({
+      monitorId: 7,
+      entityId: 17,
+      entityType: 'service',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'production',
+      signals: ['metrics', 'logs']
+    });
+    try {
+      const view = renderController(monitor(), [], '/monitors/7?metric=summary.value&history=1h');
+      await waitFor(() =>
+        expect(view.result.current.controller.state.investigationSignals).toEqual(['metrics', 'logs'])
+      );
+
+      act(() => view.result.current.controller.actions.openInvestigationSignal('logs'));
+
+      const params = new URLSearchParams(view.result.current.location.search);
+      expect(view.result.current.location.pathname).toBe('/explore');
+      expect(params.get('signal')).toBe('logs');
+      expect(params.get('monitorId')).toBe('7');
+      expect(params.get('entityId')).toBe('17');
+      expect(params.get('serviceName')).toBe('checkout');
+      expect(params.get('start')).toBe(String(1_800_000_000_000 - 60 * 60_000));
+      expect(params.get('end')).toBe('1800000000000');
+      expect(params.get('timeZone')).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+      act(() => view.result.current.controller.actions.openInvestigationSignal('traces'));
+      expect(view.result.current.location.search).toBe(`?${params.toString()}`);
+      expect(api.loadMonitorInvestigationBinding).toHaveBeenCalledWith(7, expect.any(AbortSignal));
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it('keeps the cross-signal handoff absent without an authoritative binding', async () => {
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() => expect(api.loadMonitorInvestigationBinding).toHaveBeenCalledOnce());
+    expect(view.result.current.controller.state.investigationSignals).toEqual([]);
+    act(() => view.result.current.controller.actions.openInvestigationSignal('logs'));
+    expect(view.result.current.location.pathname).toBe('/monitors/7');
   });
 
   it('keeps embedded realtime groups available when the history catalog is unavailable', async () => {

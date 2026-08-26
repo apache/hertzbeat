@@ -21,6 +21,8 @@ import {
 import { compactTablePageSizes } from '@/shared/pagination';
 import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
+import { channelValidationErrors } from './notice-receiver-channel-validation';
+
 export * from './notice-receiver-catalog';
 
 export const noticeReceiverPageSizes = compactTablePageSizes;
@@ -146,7 +148,7 @@ export function validateNoticeReceiverDraft(draft: NoticeReceiverDraft) {
   const invalid: string[] = normalizedName && normalizedName.length <= noticeReceiverNameMaxLength ? [] : ['name'];
   invalid.push(...requiredFieldErrors(draft));
   invalid.push(...activeValueErrors(draft));
-  invalid.push(...channelValidationErrors(draft));
+  invalid.push(...channelValidationErrors(draft, hasSecret));
   if (!hasUniqueSecrets(draft.configuredSecrets)) invalid.push('configuredSecrets');
   if (!hasUniqueSecrets(draft.clearSecrets)) invalid.push('clearSecrets');
   const recipientKey = draft.type === 14 ? feiShuRecipientKeys[draft.larkReceiveType] : undefined;
@@ -174,17 +176,6 @@ function activeValueErrors(draft: NoticeReceiverDraft) {
     invalid.push('agentId');
   }
   return invalid;
-}
-
-function channelValidationErrors(draft: NoticeReceiverDraft) {
-  if (draft.type === 1 && draft.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email)) return ['email'];
-  if ((draft.type === 4 || draft.type === 5) && draft.phone && !/^(1\d{10})(,\s*1\d{10})*$/.test(draft.phone)) {
-    return ['phone'];
-  }
-  if (draft.type === 2 && draft.hookAuthType !== 'None' && !hasSecret(draft, 'hookAuthToken')) return ['hookAuthToken'];
-  if (draft.type === 10 && ![draft.userId, draft.partyId, draft.tagId].some(value => value.trim()))
-    return ['recipientTarget'];
-  return [];
 }
 
 export function buildNoticeReceiverPayload(draft: NoticeReceiverDraft) {

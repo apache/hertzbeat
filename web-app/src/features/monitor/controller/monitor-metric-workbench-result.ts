@@ -10,6 +10,7 @@ import type {
   MonitorMetricHistory,
   MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
+import type { SignalKind } from '@/shared/query-context';
 
 type MetricUrlActions = Pick<MonitorMetricWorkbenchController['actions'], 'setMetric' | 'setHistory'>;
 
@@ -27,6 +28,7 @@ type MonitorMetricWorkbenchResultInput = {
   historyAvailability: MonitorMetricWorkbenchController['state']['historyAvailability'];
   historyCharts: MonitorMetricWorkbenchController['state']['historyCharts'];
   selectedHistoryChart?: MonitorMetricWorkbenchController['state']['selectedHistoryChart'];
+  investigationSignals: SignalKind[];
   hasMoreHistoryCharts: boolean;
   realtime: MonitorMetricWorkbenchController['state']['realtime'];
   historical: MonitorMetricWorkbenchController['state']['historical'];
@@ -43,6 +45,7 @@ type MonitorMetricWorkbenchResultInput = {
   setHistoryChartMode: MonitorMetricWorkbenchController['actions']['setHistoryChartMode'];
   refreshHistoryChart: MonitorMetricWorkbenchController['actions']['refreshHistoryChart'];
   loadMoreHistoryCharts: MonitorMetricWorkbenchController['actions']['loadMoreHistoryCharts'];
+  openInvestigationSignal: MonitorMetricWorkbenchController['actions']['openInvestigationSignal'];
   refresh: () => void;
 };
 
@@ -68,6 +71,7 @@ function buildWorkbenchState(input: MonitorMetricWorkbenchResultInput): MonitorM
     historyAvailability: input.historyAvailability,
     historyCharts: input.historyCharts,
     selectedHistoryChart: input.selectedHistoryChart,
+    investigationSignals: input.investigationSignals,
     hasMoreHistoryCharts: input.hasMoreHistoryCharts,
     realtime: input.realtime,
     historical: input.historical,
@@ -88,6 +92,7 @@ function buildWorkbenchActions(input: MonitorMetricWorkbenchResultInput): Monito
     setHistoryChartMode: input.setHistoryChartMode,
     refreshHistoryChart: input.refreshHistoryChart,
     loadMoreHistoryCharts: input.loadMoreHistoryCharts,
+    openInvestigationSignal: input.openInvestigationSignal,
     refresh: input.refresh,
     layout: input.layoutActions
   };

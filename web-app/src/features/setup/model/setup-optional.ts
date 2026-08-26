@@ -117,7 +117,7 @@ function normalizedPublicAccess(draft: SetupOptionalDraft, publicOrigin: string)
   return { publicBaseUrl };
 }
 
-export function setupPublicAccessValid(draft: SetupOptionalDraft) {
+function setupPublicAccessValid(draft: SetupOptionalDraft) {
   return !draft.useProxy || normalizeSetupPublicBaseUrl(draft.proxyPublicBaseUrl) !== null;
 }
 

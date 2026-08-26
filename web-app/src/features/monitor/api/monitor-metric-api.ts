@@ -52,9 +52,14 @@ export function buildHistoryMetricPath(
 ) {
   const sourceApp = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
   const app = sourceApp === 'prometheus' ? `_prometheus_${monitor.name}` : sourceApp;
-  const fullMetric = `${app}.${metric.group}.${metric.field}`;
-  const params = new URLSearchParams({ history, interval: String(interval) });
-  return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric/${fullMetric}?${params.toString()}`;
+  const params = new URLSearchParams({
+    app,
+    metrics: metric.group,
+    metric: metric.field,
+    history,
+    interval: String(interval)
+  });
+  return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric?${params.toString()}`;
 }
 
 export async function loadFavoriteMetrics(monitorId: number, signal?: AbortSignal) {

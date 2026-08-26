@@ -16,6 +16,13 @@ describe('HertzBeat semantic theme', () => {
 
     expect(theme.token).toMatchObject({
       colorPrimary: '#9b5bb3',
+      colorError: '#e15b5d',
+      colorErrorText: '#e15b5d',
+      colorErrorTextActive: '#e15b5d',
+      colorErrorTextHover: '#e46a6b',
+      colorLink: '#b97bca',
+      colorLinkActive: '#b97bca',
+      colorLinkHover: '#c18ad0',
       colorBgElevated: '#14171e',
       borderRadius: 6,
       borderRadiusLG: 8,
@@ -29,6 +36,9 @@ describe('HertzBeat semantic theme', () => {
     });
     expect(theme.components?.Button).toMatchObject({
       borderRadius: 5,
+      colorError: '#e15b5d',
+      colorErrorActive: '#e15b5d',
+      colorErrorHover: '#e46a6b',
       controlHeight: 32,
       defaultShadow: 'none',
       fontWeight: 600,
@@ -68,7 +78,16 @@ describe('HertzBeat semantic theme', () => {
       components: { Menu: { itemSelectedBg: '#211a26' } }
     });
     expect(createHertzBeatTheme('default')).toMatchObject({
-      token: { colorBgElevated: '#ffffff' },
+      token: {
+        colorBgElevated: '#ffffff',
+        colorError: '#b42318',
+        colorErrorText: '#b42318',
+        colorErrorTextActive: '#8f1c13',
+        colorErrorTextHover: '#9f2117',
+        colorLink: '#71357f',
+        colorLinkActive: '#512459',
+        colorLinkHover: '#63306f'
+      },
       components: {
         Input: { hoverBorderColor: '#89919e' },
         Menu: { itemSelectedBg: '#f7f0f8' },

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,7 +13,13 @@ import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-m
 import type { MonitorMetricLayoutActions, MonitorMetricLayoutState } from '../model/monitor-metric-layout-model';
 import { MonitorRealtimeLayoutGrid } from './monitor-realtime-layout-grid';
 
-const gridHarness = vi.hoisted(() => ({ width: 876 }));
+const gridHarness = vi.hoisted(() => ({
+  width: 876,
+  onDragStop: undefined as
+    undefined | ((layout: Array<{ i: string; x: number; y: number; w: number; h: number }>) => void),
+  onResizeStop: undefined as
+    undefined | ((layout: Array<{ i: string; x: number; y: number; w: number; h: number }>) => void)
+}));
 
 vi.mock('react-grid-layout', () => ({
   default: ({
@@ -21,33 +27,45 @@ vi.mock('react-grid-layout', () => ({
     dragConfig,
     gridConfig,
     layout,
+    onDragStop,
+    onResizeStop,
     resizeConfig
   }: {
     children: ReactNode;
     dragConfig: { enabled: boolean; handle?: string; cancel?: string };
     gridConfig: { cols: number };
-    layout: Array<{ i: string; x: number; w: number }>;
+    layout: Array<{ i: string; x: number; y: number; w: number; h: number }>;
+    onDragStop: (layout: Array<{ i: string; x: number; y: number; w: number; h: number }>) => void;
+    onResizeStop: (layout: Array<{ i: string; x: number; y: number; w: number; h: number }>) => void;
     resizeConfig: { enabled: boolean };
-  }) => (
-    <div
-      data-testid="grid-layout"
-      data-cols={gridConfig.cols}
-      data-drag-enabled={dragConfig.enabled}
-      data-drag-handle={dragConfig.handle}
-      data-drag-cancel={dragConfig.cancel}
-      data-resize-enabled={resizeConfig.enabled}
-      data-layout={JSON.stringify(layout)}
-    >
-      {children}
-    </div>
-  ),
+  }) => {
+    gridHarness.onDragStop = onDragStop;
+    gridHarness.onResizeStop = onResizeStop;
+    return (
+      <div
+        data-testid="grid-layout"
+        data-cols={gridConfig.cols}
+        data-drag-enabled={dragConfig.enabled}
+        data-drag-handle={dragConfig.handle}
+        data-drag-cancel={dragConfig.cancel}
+        data-resize-enabled={resizeConfig.enabled}
+        data-layout={JSON.stringify(layout)}
+      >
+        {children}
+      </div>
+    );
+  },
   useContainerWidth: () => ({ width: gridHarness.width, containerRef: { current: null }, mounted: true }),
   verticalCompactor: {}
 }));
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  gridHarness.onDragStop = undefined;
+  gridHarness.onResizeStop = undefined;
+});
 
 describe('MonitorRealtimeLayoutGrid', () => {
   it('opens a canonical desktop editing canvas at an ordinary tablet-width work surface', () => {
@@ -89,9 +107,29 @@ describe('MonitorRealtimeLayoutGrid', () => {
       expect.objectContaining({ i: 'cache', x: 3, w: 3 })
     ]);
   });
+
+  it.each(['onDragStop', 'onResizeStop'] as const)(
+    'forwards %s geometry through the canonical snap boundary',
+    callback => {
+      const actions = layoutActions();
+      renderGrid(layoutState({ editing: true }), actions);
+
+      act(() =>
+        gridHarness[callback]?.([
+          { i: 'basic', x: 4, y: 0, w: 5, h: 13 },
+          { i: 'cache', x: 0, y: 0, w: 4, h: 10 }
+        ])
+      );
+
+      expect(actions.changeItems).toHaveBeenCalledWith([
+        { group: 'cache', x: 0, y: 0, w: 4, h: 10, collapsed: false, order: 0 },
+        { group: 'basic', x: 4, y: 0, w: 6, h: 13, collapsed: false, order: 1 }
+      ]);
+    }
+  );
 });
 
-function renderGrid(state: MonitorMetricLayoutState) {
+function renderGrid(state: MonitorMetricLayoutState, actions = layoutActions()) {
   const groups = [
     { group: 'basic' },
     { group: 'cache' }
@@ -99,7 +137,7 @@ function renderGrid(state: MonitorMetricLayoutState) {
   render(
     <MonitorRealtimeLayoutGrid
       state={state}
-      actions={layoutActions()}
+      actions={actions}
       groups={groups}
       renderGroup={group => <article>{group.group}</article>}
     />

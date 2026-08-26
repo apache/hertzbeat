@@ -81,6 +81,44 @@ describe('useMonitorMetricLayoutController', () => {
     expect(result.current.state.revision).toBe('layout-r2');
   });
 
+  it('persists changed panel geometry and history dock through the confirmed readback', async () => {
+    const changedItems = [
+      { group: 'basic', x: 0, y: 0, w: 8, h: 14, collapsed: false, order: 0 },
+      { group: 'status', x: 8, y: 0, w: 4, h: 12, collapsed: false, order: 1 }
+    ];
+    const savedReadback = {
+      ...saved(),
+      revision: 'layout-r2',
+      items: changedItems,
+      historyDock: { collapsed: false, height: 18 }
+    };
+    api.loadMonitorMetricLayout.mockResolvedValue(saved());
+    api.saveMonitorMetricLayout.mockResolvedValue(savedReadback);
+    const { result } = renderHook(() => useMonitorMetricLayoutController('mysql', ['basic', 'status']), {
+      wrapper: wrapper()
+    });
+    await waitFor(() => expect(result.current.state.readState).toBe('ready'));
+
+    act(() => result.current.actions.beginEdit());
+    act(() => {
+      result.current.actions.changeItems(changedItems);
+      result.current.actions.changeHistoryDock({ collapsed: false, height: 18 });
+    });
+    await act(async () => result.current.actions.save());
+
+    expect(api.saveMonitorMetricLayout).toHaveBeenCalledWith('mysql', {
+      schemaVersion: 1,
+      mode: 'custom',
+      columns: 12,
+      items: changedItems,
+      historyDock: { collapsed: false, height: 18 },
+      expectedRevision: 'layout-r1'
+    });
+    await waitFor(() => expect(result.current.state.editing).toBe(false));
+    expect(result.current.state.layout.items).toEqual(changedItems);
+    expect(result.current.state.layout.historyDock).toEqual({ collapsed: false, height: 18 });
+  });
+
   it('keeps the draft open and reloads canonical state after a cross-tab conflict', async () => {
     api.loadMonitorMetricLayout.mockResolvedValue(saved());
     api.saveMonitorMetricLayout.mockRejectedValue(new ApiMessageError('redacted', { status: 409 }));
@@ -96,12 +134,108 @@ describe('useMonitorMetricLayoutController', () => {
     expect(notifications.warning).toHaveBeenCalledWith('monitorMetrics.layout.conflict');
     expect(api.loadMonitorMetricLayout).toHaveBeenCalledTimes(2);
   });
+
+  it('does not let an earlier application save clear a later application draft', async () => {
+    const save = deferred<ReturnType<typeof saved>>();
+    api.loadMonitorMetricLayout.mockImplementation((application: string) => Promise.resolve(saved(application)));
+    api.saveMonitorMetricLayout.mockReturnValue(save.promise);
+    const { result, rerender } = renderHook(
+      ({ application }) => useMonitorMetricLayoutController(application, ['basic', 'status']),
+      { initialProps: { application: 'mysql' }, wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.readState).toBe('ready'));
+
+    act(() => result.current.actions.beginEdit());
+    let pendingSave!: Promise<void>;
+    act(() => {
+      pendingSave = result.current.actions.save();
+    });
+    await waitFor(() => expect(result.current.state.saving).toBe(true));
+
+    rerender({ application: 'redis' });
+    await waitFor(() => expect(result.current.state.revision).toBe('layout-r1-redis'));
+    act(() => result.current.actions.beginEdit());
+    act(() =>
+      result.current.actions.changeItems([
+        { group: 'basic', x: 0, y: 0, w: 12, h: 16, collapsed: false, order: 0 },
+        { group: 'status', x: 0, y: 16, w: 12, h: 10, collapsed: false, order: 1 }
+      ])
+    );
+
+    save.resolve({ ...saved('mysql'), revision: 'layout-r2-mysql' });
+    await act(async () => pendingSave);
+
+    expect(result.current.state.editing).toBe(true);
+    expect(result.current.state.layout.items[0]).toMatchObject({ group: 'basic', w: 12, h: 16 });
+    expect(notifications.success).not.toHaveBeenCalled();
+  });
+
+  it('does not let an earlier save clear a new draft after an application ABA transition', async () => {
+    const save = deferred<ReturnType<typeof saved>>();
+    api.loadMonitorMetricLayout.mockImplementation((application: string) => Promise.resolve(saved(application)));
+    api.saveMonitorMetricLayout.mockReturnValue(save.promise);
+    const { result, rerender } = renderHook(
+      ({ application }) => useMonitorMetricLayoutController(application, ['basic', 'status']),
+      { initialProps: { application: 'mysql' }, wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.readState).toBe('ready'));
+
+    act(() => result.current.actions.beginEdit());
+    let pendingSave!: Promise<void>;
+    act(() => {
+      pendingSave = result.current.actions.save();
+    });
+    rerender({ application: 'redis' });
+    await waitFor(() => expect(result.current.state.revision).toBe('layout-r1-redis'));
+    rerender({ application: 'mysql' });
+    await waitFor(() => expect(result.current.state.revision).toBe('layout-r1'));
+    act(() => result.current.actions.beginEdit());
+
+    save.resolve({ ...saved('mysql'), revision: 'layout-r2-mysql' });
+    await act(async () => pendingSave);
+
+    expect(result.current.state.editing).toBe(true);
+    expect(notifications.success).not.toHaveBeenCalled();
+  });
+
+  it('does not let an earlier application reset clear a later application draft', async () => {
+    const reset = deferred<void>();
+    api.loadMonitorMetricLayout.mockImplementation((application: string) => Promise.resolve(saved(application)));
+    api.resetMonitorMetricLayout.mockReturnValue(reset.promise);
+    const { result, rerender } = renderHook(
+      ({ application }) => useMonitorMetricLayoutController(application, ['basic', 'status']),
+      { initialProps: { application: 'mysql' }, wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.readState).toBe('ready'));
+
+    let pendingReset!: Promise<void>;
+    act(() => {
+      pendingReset = result.current.actions.reset();
+    });
+    await waitFor(() => expect(result.current.state.saving).toBe(true));
+    rerender({ application: 'redis' });
+    await waitFor(() => expect(result.current.state.revision).toBe('layout-r1-redis'));
+    act(() => result.current.actions.beginEdit());
+    act(() =>
+      result.current.actions.changeItems([
+        { group: 'basic', x: 0, y: 0, w: 12, h: 16, collapsed: false, order: 0 },
+        { group: 'status', x: 0, y: 16, w: 12, h: 10, collapsed: false, order: 1 }
+      ])
+    );
+
+    reset.resolve(undefined);
+    await act(async () => pendingReset);
+
+    expect(result.current.state.editing).toBe(true);
+    expect(result.current.state.layout.items[0]).toMatchObject({ group: 'basic', w: 12, h: 16 });
+    expect(notifications.success).not.toHaveBeenCalled();
+  });
 });
 
-function saved() {
+function saved(application = 'mysql') {
   return {
-    application: 'mysql',
-    revision: 'layout-r1',
+    application,
+    revision: application === 'mysql' ? 'layout-r1' : `layout-r1-${application}`,
     schemaVersion: 1 as const,
     mode: 'custom' as const,
     columns: 12 as const,
@@ -111,6 +245,14 @@ function saved() {
     ],
     historyDock: { collapsed: false, height: 12 }
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(value => {
+    resolve = value;
+  });
+  return { promise, resolve };
 }
 
 function wrapper() {

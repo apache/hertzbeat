@@ -24,8 +24,8 @@ export type AlertRulePreviewRequest = {
 
 export const alertRuleSeverities = ['emergency', 'critical', 'warning'] as const;
 export const alertRuleModes = ['group', 'individual'] as const;
-export type AlertRuleSeverity = (typeof alertRuleSeverities)[number];
-export type AlertRuleMode = (typeof alertRuleModes)[number];
+type AlertRuleSeverity = (typeof alertRuleSeverities)[number];
+type AlertRuleMode = (typeof alertRuleModes)[number];
 
 const strategyForType: Record<AlertRuleType, { kind: AlertRuleKind; dataType: AlertRuleDataType }> = {
   realtime_metric: { kind: 'realtime', dataType: 'metric' },

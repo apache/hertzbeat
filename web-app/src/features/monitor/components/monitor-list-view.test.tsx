@@ -244,6 +244,21 @@ describe('MonitorListView evidence states', () => {
     expect(actions.selectIds).not.toHaveBeenCalled();
   });
 
+  it('labels bulk and row selection controls with their exact scope', () => {
+    renderView({
+      monitors: {
+        kind: 'ready',
+        records: [{ id: 7, name: 'checkout-api', app: 'website', instance: 'prod', status: 1 }],
+        total: 1
+      }
+    });
+
+    expect(screen.getByRole('checkbox', { name: i18n.t('common.tableSelection.selectAll') })).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', { name: i18n.t('monitorActions.selectOne', { name: 'checkout-api' }) })
+    ).toBeInTheDocument();
+  });
+
   it('preserves endpoint copy, application drilldown, and discovery target semantics', () => {
     const copyInstance = vi.fn();
     const changeApp = vi.fn();

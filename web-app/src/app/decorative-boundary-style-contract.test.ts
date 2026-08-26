@@ -34,7 +34,8 @@ describe('decorative boundary style contract', () => {
   });
 
   it('does not frame settings forms or table wrappers with decorative rules', () => {
-    expect(ruleBody(objectStoreStyles, /\.form\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
+    expect(ruleBody(objectStoreStyles, /\.workspace\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
+    expect(ruleBody(objectStoreStyles, /\.actions\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
     expect(objectStoreStyles).not.toMatch(/\.field\s*\+\s*\.field\s*\{[^}]*border-top:/s);
     expect(ruleBody(systemConfigStyles, /\.form\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
     expect(systemConfigStyles).not.toMatch(/\.field\s*\+\s*\.field\s*\{[^}]*border-top:/s);

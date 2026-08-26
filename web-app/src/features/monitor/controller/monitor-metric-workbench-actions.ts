@@ -8,6 +8,7 @@
 import type { Monitor } from '../model/monitor-contract';
 import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
 import type { useMonitorFavoriteMutation } from './use-monitor-favorite-mutation';
+import type { useMonitorInvestigation } from './use-monitor-investigation';
 import type { useMonitorMetricData } from './use-monitor-metric-data';
 import type { useMonitorMetricSources } from './use-monitor-metric-sources';
 
@@ -21,6 +22,7 @@ export function buildWorkbenchActions(input: {
   realtimeSelection: ReturnType<typeof useMonitorMetricSources>['realtimeSelection'];
   historySelection: ReturnType<typeof useMonitorMetricSources>['historySelection'];
   refreshDetail: () => void;
+  investigation: ReturnType<typeof useMonitorInvestigation>;
 }) {
   const selectedGroup = input.metric?.group ?? '';
   return {
@@ -42,6 +44,7 @@ export function buildWorkbenchActions(input: {
     loadMoreHistoryCharts: input.historySelection.loadMore,
     refresh: () => {
       input.refreshDetail();
+      void input.investigation.refetch();
       refreshMonitorMetricQueries(
         input.queries,
         Boolean(input.monitor && (input.metric || input.realtimeGroups.length > 0)),

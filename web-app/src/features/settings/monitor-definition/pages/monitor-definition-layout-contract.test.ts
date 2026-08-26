@@ -41,6 +41,14 @@ describe('monitor definition split layout contract', () => {
     );
     expect(pageStyles).toMatch(/@media\s*\(max-width:\s*760px\)[\s\S]*\.workspace\s*\{[^}]*overflow:\s*visible/);
   });
+
+  it('uses a line-only marker for the selected catalog definition', () => {
+    const selected = catalogStyles.match(/\.item\.itemSelected,[\s\S]*?\{[^}]*\}/)?.[0] ?? '';
+
+    expect(selected).toMatch(/box-shadow:\s*inset 2px 0 0 var\(--hb-brand-accent\)/);
+    expect(selected).toMatch(/background:\s*transparent/);
+    expect(selected).not.toMatch(/background:\s*var\(--hb-nav-selected\)/);
+  });
 });
 
 function cssRule(source: string, name: string) {

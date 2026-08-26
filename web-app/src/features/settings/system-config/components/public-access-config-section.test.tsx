@@ -20,9 +20,6 @@ const controller = vi.hoisted(() => ({
   }
 }));
 
-vi.mock('../controller/use-public-access-config-controller', () => ({
-  usePublicAccessConfigController: () => controller
-}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { PublicAccessConfigSection } from './public-access-config-section';
@@ -36,7 +33,7 @@ describe('PublicAccessConfigSection', () => {
   });
 
   it('keeps OTLP overrides collapsed until the operator opens advanced settings', () => {
-    render(<PublicAccessConfigSection canConfigure />);
+    renderSection();
 
     const summary = screen.getByText('systemConfig.publicAccess.advancedTitle').closest('summary');
     const details = summary?.closest('details');
@@ -50,7 +47,7 @@ describe('PublicAccessConfigSection', () => {
   });
 
   it('shows derived defaults as placeholders without turning them into persisted overrides', () => {
-    render(<PublicAccessConfigSection canConfigure />);
+    renderSection();
 
     expect(screen.getByPlaceholderText('https://hertzbeat.example.test:4318')).toHaveValue('');
     expect(screen.getByPlaceholderText('https://hertzbeat.example.test:4317')).toHaveValue('');
@@ -60,8 +57,12 @@ describe('PublicAccessConfigSection', () => {
   it('opens advanced settings when an OTLP override is already configured', () => {
     controller.state.current.serverOtlpHttpEndpoint = 'https://collector.example.test/v1/metrics';
 
-    render(<PublicAccessConfigSection canConfigure />);
+    renderSection();
 
     expect(screen.getByText('systemConfig.publicAccess.advancedTitle').closest('details')).toHaveAttribute('open');
   });
 });
+
+function renderSection() {
+  return render(<PublicAccessConfigSection canConfigure state={controller.state} actions={controller.actions} />);
+}

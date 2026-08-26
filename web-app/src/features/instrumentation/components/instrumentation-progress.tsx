@@ -7,17 +7,28 @@
 import { Steps } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { INSTRUMENTATION_STAGES, type InstrumentationStage } from '../model/instrumentation-flow';
+import {
+  INSTRUMENTATION_CONFIGURE_PHASES,
+  type InstrumentationConfigurePhase
+} from '../model/instrumentation-guided-flow';
+import type { InstrumentationStage } from '../model/instrumentation-flow';
 import styles from './instrumentation-shell.module.css';
 
-export function InstrumentationProgress(props: { stage: InstrumentationStage }) {
+const GUIDED_STEPS = ['source', ...INSTRUMENTATION_CONFIGURE_PHASES] as const;
+
+export function InstrumentationProgress(props: {
+  stage: InstrumentationStage;
+  configurePhase: InstrumentationConfigurePhase;
+}) {
   const { t } = useTranslation();
+  const current = props.stage === 'source' ? 0 : GUIDED_STEPS.indexOf(props.configurePhase);
   return (
-    <div className={styles.progress}>
+    <div className={styles.guidedProgress}>
       <Steps
         size="small"
-        current={INSTRUMENTATION_STAGES.indexOf(props.stage)}
-        items={INSTRUMENTATION_STAGES.map(stage => ({ title: t(`instrumentation.v2.stage.${stage}`) }))}
+        direction="vertical"
+        current={current}
+        items={GUIDED_STEPS.map(step => ({ title: t(`instrumentation.v2.guided.stage.${step}`) }))}
       />
     </div>
   );

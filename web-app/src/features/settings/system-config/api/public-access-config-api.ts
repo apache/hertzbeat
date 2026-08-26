@@ -5,7 +5,7 @@ import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import type { PublicAccessConfig } from '../model/public-access-config-model';
 import { parsePublicAccessConfig } from './public-access-config-schema';
 
-export const publicAccessConfigEndpoint = '/api/config/public-access';
+const publicAccessConfigEndpoint = '/api/config/public-access';
 export const publicAccessConfigQueryKey = ['settings', 'public-access'] as const;
 
 export async function loadPublicAccessConfig(signal?: AbortSignal) {

@@ -235,7 +235,8 @@ describe('alert rule API', () => {
       ...createAlertRuleDraft(),
       name: 'CPU high',
       expr: 'usage > 90',
-      template: 'CPU'
+      template: 'CPU',
+      labelsText: 'severity:warning'
     };
 
     vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());

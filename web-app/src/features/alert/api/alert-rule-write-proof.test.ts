@@ -40,7 +40,8 @@ const expected = buildAlertRulePayload({
   ...createAlertRuleDraft(),
   name: 'New Rule',
   expr: 'usage > 90',
-  template: 'Alert'
+  template: 'Alert',
+  labelsText: 'severity:warning'
 });
 const matching: AlertRule = {
   id: 9,

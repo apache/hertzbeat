@@ -34,8 +34,16 @@ const controller = vi.hoisted(() => ({
   useCurrentServerSettings: vi.fn(),
   useSystemConfigResourceController: vi.fn()
 }));
+const publicAccessController = vi.hoisted(() => ({
+  actions: { discard: vi.fn(), retry: vi.fn(), save: vi.fn(), update: vi.fn() },
+  state: { kind: 'loading' as const },
+  usePublicAccessConfigController: vi.fn()
+}));
 vi.mock('../controller/system-config-resource-controller', () => ({
   useSystemConfigResourceController: controller.useSystemConfigResourceController
+}));
+vi.mock('../controller/use-public-access-config-controller', () => ({
+  usePublicAccessConfigController: publicAccessController.usePublicAccessConfigController
 }));
 vi.mock('../components/public-access-config-section', () => ({
   PublicAccessConfigSection: () => <section aria-label="Public access settings" />
@@ -53,6 +61,7 @@ describe('SystemConfigPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     controller.useSystemConfigResourceController.mockReturnValue(buildController());
+    publicAccessController.usePublicAccessConfigController.mockReturnValue(publicAccessController);
   });
   afterEach(cleanup);
 

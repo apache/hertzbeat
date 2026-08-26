@@ -19,7 +19,7 @@ import { Refine } from '@refinedev/core';
 import { useNotificationProvider } from '@refinedev/antd';
 import routerProvider from '@refinedev/react-router';
 import { QueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
@@ -87,6 +87,9 @@ function RefineGenerationRuntime({
   queryClient: QueryClient;
 }) {
   const [monitorApps, setMonitorApps] = useState<readonly MonitorApp[]>([]);
+  const updateMonitorApps = useCallback((next: readonly MonitorApp[]) => {
+    setMonitorApps(current => (sameMonitorApps(current, next) ? current : next));
+  }, []);
   const resources = useMemo(() => buildRefineResources(monitorApps), [monitorApps]);
   return (
     <Refine
@@ -104,9 +107,22 @@ function RefineGenerationRuntime({
       }}
     >
       <SessionProvider>
-        <MonitorNavigationResourceLoader onChange={setMonitorApps} />
+        <MonitorNavigationResourceLoader onChange={updateMonitorApps} />
         <Outlet />
       </SessionProvider>
     </Refine>
+  );
+}
+
+function sameMonitorApps(current: readonly MonitorApp[], next: readonly MonitorApp[]) {
+  return (
+    current.length === next.length &&
+    current.every(
+      (app, index) =>
+        app.category === next[index]?.category &&
+        app.value === next[index]?.value &&
+        app.label === next[index]?.label &&
+        app.hide === next[index]?.hide
+    )
   );
 }

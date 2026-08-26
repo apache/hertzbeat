@@ -232,6 +232,31 @@ describe('SessionQueryRuntime', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('keeps the current QueryClient when a safe-read refresh confirms the same identity', async () => {
+    const clients: QueryClient[] = [];
+    sessionApi.refreshSession.mockResolvedValue({ ...userA, roles: [...userA.roles] });
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
+    currentClient?.setQueryData(['protected', 'workspace-a'], 'operator-a');
+    convergence.broadcast.mockClear();
+
+    await expect(apiFetch('/api/protected')).resolves.toMatchObject({ status: 200 });
+
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    expect(clients).toHaveLength(2);
+    expect(clients.at(-1)).toBe(currentClient);
+    expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(userA);
+    expect(currentClient?.getQueryData(['protected', 'workspace-a'])).toBe('operator-a');
+    expect(convergence.broadcast).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('converges a failed safe-read refresh to a new anonymous QueryClient', async () => {
     const clients: QueryClient[] = [];
     sessionApi.refreshSession.mockRejectedValue(new SessionRequestError('error', { status: 200 }));

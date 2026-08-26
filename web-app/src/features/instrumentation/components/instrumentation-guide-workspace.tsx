@@ -4,7 +4,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
+import { Alert, Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { InstrumentationDraft } from '../model/instrumentation-flow';
@@ -26,6 +26,7 @@ export function InstrumentationGuideWorkspace(props: {
   draft: InstrumentationDraft;
   guide: RenderResponse;
   token: string;
+  tokenAcknowledgementRequired?: boolean;
   detection?: DetectionResponse;
   detecting: boolean;
   detectionError: boolean;
@@ -33,10 +34,17 @@ export function InstrumentationGuideWorkspace(props: {
   onEdit: () => void;
   onDetect: () => void;
   onOpen: (signal: Signal) => void;
+  onAcknowledgeToken?: () => void;
 }) {
   return (
     <div className={styles.workspace}>
-      <SelectionSummary catalog={props.catalog} draft={props.draft} onEdit={props.onEdit} />
+      {props.tokenAcknowledgementRequired && <TokenAcknowledgement onAcknowledge={props.onAcknowledgeToken} />}
+      <SelectionSummary
+        catalog={props.catalog}
+        draft={props.draft}
+        editingDisabled={Boolean(props.tokenAcknowledgementRequired)}
+        onEdit={props.onEdit}
+      />
       <div className={styles.workspaceBody}>
         <InstrumentationGuideBlocks guide={props.guide} token={props.token} onCopy={props.onCopy} />
         <DestinationRail {...props} />
@@ -45,7 +53,28 @@ export function InstrumentationGuideWorkspace(props: {
   );
 }
 
-function SelectionSummary(props: { catalog: CatalogResponse; draft: InstrumentationDraft; onEdit: () => void }) {
+function TokenAcknowledgement(props: { onAcknowledge: (() => void) | undefined }) {
+  const { t } = useTranslation();
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={t('instrumentation.token.guideAcknowledgementRequired')}
+      action={
+        <Button size="small" onClick={() => props.onAcknowledge?.()}>
+          {t('instrumentation.token.acknowledge')}
+        </Button>
+      }
+    />
+  );
+}
+
+function SelectionSummary(props: {
+  catalog: CatalogResponse;
+  draft: InstrumentationDraft;
+  editingDisabled: boolean;
+  onEdit: () => void;
+}) {
   const { t } = useTranslation();
   const source = props.catalog.sources.find(item => item.id === props.draft.sourceId);
   const dimensions = ['framework', 'method', 'environment', 'platform'] as const;
@@ -53,7 +82,7 @@ function SelectionSummary(props: { catalog: CatalogResponse; draft: Instrumentat
     <aside className={styles.summary}>
       <div className={styles.railHeading}>
         <Typography.Text strong>{t('instrumentation.v2.selection')}</Typography.Text>
-        <Button size="small" type="link" onClick={props.onEdit}>
+        <Button size="small" type="link" disabled={props.editingDisabled} onClick={props.onEdit}>
           {t('common.edit')}
         </Button>
       </div>

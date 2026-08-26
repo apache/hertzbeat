@@ -21,9 +21,10 @@ describe('notification workspace layout contract', () => {
     expect(dependencyRule).not.toMatch(/overflow:\s*hidden/);
   });
 
-  it('uses semantic hover and selected surfaces instead of the page canvas', () => {
+  it('uses a hover surface and a line-only current-step marker', () => {
     expect(styles).toMatch(/\.steps\s+a:hover\s*\{[^}]*background:\s*var\(--hb-bg-hover\)/s);
-    expect(styles).toMatch(/\.current\s+a\s*\{[^}]*background:\s*var\(--hb-nav-selected\)/s);
-    expect(styles).not.toMatch(/\.current\s+a\s*\{[^}]*background:\s*var\(--hb-bg-canvas\)/s);
+    expect(styles).toMatch(/\.current\s+a\s*\{[^}]*border-left-color:\s*var\(--hb-brand-accent\)/s);
+    expect(styles).toMatch(/\.current\s+a\s*\{[^}]*background:\s*transparent/s);
+    expect(styles).not.toMatch(/\.current\s+a\s*\{[^}]*background:\s*var\(--hb-nav-selected\)/s);
   });
 });

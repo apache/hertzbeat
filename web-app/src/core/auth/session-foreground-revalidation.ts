@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { hasSessionIdentityBoundaryChanged } from './session-cache-boundary';
 import { anonymousSession, getSession, SessionRequestError, type UiSession } from './session-api';
 import type { ReplaceSessionIdentity } from './session-identity-context';
 
@@ -64,7 +65,9 @@ export function startForegroundSessionRevalidation({
     try {
       const nextSession = await getSession({ signal });
       if (!ownsCurrentGeneration(owner.generation)) return;
-      if (hasSessionIdentityBoundaryChanged(owner.session, nextSession)) replaceIdentity(nextSession);
+      if (hasSessionIdentityBoundaryChanged(owner.session, nextSession)) {
+        replaceIdentity(nextSession);
+      }
     } catch (reason) {
       if (!ownsCurrentGeneration(owner.generation) || signal.aborted) return;
       if (isAuthoritativeSessionRejection(reason)) replaceIdentity(anonymousSession);
@@ -89,22 +92,6 @@ export function startForegroundSessionRevalidation({
     pending?.controller.abort();
     pending = undefined;
   };
-}
-
-function hasSessionIdentityBoundaryChanged(current: UiSession, next: UiSession) {
-  return (
-    current.authenticated !== next.authenticated ||
-    current.username !== next.username ||
-    current.workspaceId !== next.workspaceId ||
-    current.expiresAt !== next.expiresAt ||
-    !haveSameRoles(current.roles, next.roles)
-  );
-}
-
-function haveSameRoles(current: string[], next: string[]) {
-  if (current.length !== next.length) return false;
-  const nextRoles = new Set(next);
-  return current.every(role => nextRoles.has(role));
 }
 
 function isAuthoritativeSessionRejection(reason: unknown) {

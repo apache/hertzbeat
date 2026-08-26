@@ -30,6 +30,7 @@ import { SystemConfigEditor } from '../components/system-config-editor';
 import { PublicAccessConfigSection } from '../components/public-access-config-section';
 import { RetryButton, SystemConfigReadFailure } from '../components/system-config-state';
 import { useSystemConfigResourceController } from '../controller/system-config-resource-controller';
+import { usePublicAccessConfigController } from '../controller/use-public-access-config-controller';
 
 export function SystemConfigPage() {
   const { t } = useTranslation();
@@ -58,8 +59,15 @@ function SystemConfigContent({ controller }: { controller: SystemConfigControlle
 }
 
 function SystemConfigReadyContent({ controller }: { controller: SystemConfigController }) {
+  const { state } = controller;
+  if (state.kind !== 'ready') return null;
+  return <SystemConfigReadyBody controller={controller} />;
+}
+
+function SystemConfigReadyBody({ controller }: { controller: SystemConfigController }) {
   const { t } = useTranslation();
   const { state } = controller;
+  const publicAccessController = usePublicAccessConfigController(state.kind === 'ready' && state.canConfigure);
   if (state.kind !== 'ready') return null;
   return (
     <>
@@ -94,7 +102,11 @@ function SystemConfigReadyContent({ controller }: { controller: SystemConfigCont
         onSave={controller.save}
         onDiscard={controller.discard}
       />
-      <PublicAccessConfigSection canConfigure={state.canConfigure} />
+      <PublicAccessConfigSection
+        canConfigure={state.canConfigure}
+        state={publicAccessController.state}
+        actions={publicAccessController.actions}
+      />
     </>
   );
 }

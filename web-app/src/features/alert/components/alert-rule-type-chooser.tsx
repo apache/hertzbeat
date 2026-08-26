@@ -9,10 +9,7 @@ import type { AlertRuleDatasourceState, AlertRuleKind } from '../model/alert-rul
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleDatasourceEvidence } from './alert-rule-editor-evidence';
 
-export function AlertRuleTypeChooser(props: {
-  datasource: AlertRuleDatasourceState;
-  choose: (kind: AlertRuleKind) => void;
-}) {
+function AlertRuleTypeChooser(props: { datasource: AlertRuleDatasourceState; choose: (kind: AlertRuleKind) => void }) {
   const { t } = useTranslation();
   const realtimeTitleId = useId();
   const realtimeDescriptionId = useId();

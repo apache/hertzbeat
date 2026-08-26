@@ -21,6 +21,7 @@ import { MonitorContractError, type MonitorAction, type MonitorQuery } from '../
 import { writeMonitorQuery } from '../model/monitor-query';
 import { parseMonitorApps, parseMonitorNavigationApps } from './monitor-apps-schema';
 import { parseMonitorDetail } from './monitor-detail-schema';
+import { parseMonitorInvestigationBinding } from './monitor-investigation-schema';
 import { parseMonitorPage } from './monitor-page-schema';
 
 export { detectMonitor, loadMonitorCollectors, loadMonitorParamDefines, saveMonitor } from './monitor-editor-api';
@@ -129,6 +130,13 @@ export async function loadMonitorDetail(id: string | number, signal?: AbortSigna
   const value = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
   if (value === null || value === undefined) throw new MonitorMissingError();
   return parseMonitorDetail(value, requestedId);
+}
+
+export async function loadMonitorInvestigationBinding(id: number, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(id) || id <= 0) throw new MonitorContractError();
+  const path = `/api/monitor/${id}/investigation`;
+  const value = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
+  return parseMonitorInvestigationBinding(value, id);
 }
 
 export function mutateMonitors(action: MonitorAction, ids: number[], signal?: AbortSignal) {

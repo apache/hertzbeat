@@ -27,6 +27,7 @@ import { buildWorkbenchActions } from './monitor-metric-workbench-actions';
 import { useMonitorMetricData } from './use-monitor-metric-data';
 import { useMonitorMetricLayoutController } from './use-monitor-metric-layout-controller';
 import { useMonitorMetricSources } from './use-monitor-metric-sources';
+import { useMonitorInvestigation } from './use-monitor-investigation';
 
 type MonitorMetricWorkbenchOptions = {
   notifications?: Notifications;
@@ -68,6 +69,7 @@ function useMonitorMetricContext(
   const layout = useMonitorMetricLayoutController(monitorLayoutApplication(monitor), realtimeSelection.names);
   const historyCharts = buildHistoryChartEvidence(historySelection, queries);
   const selectedHistoryChart = buildSelectedHistoryChart(metric, historySelection, queries);
+  const investigation = useMonitorInvestigation(monitor, selectedHistoryChart);
   const actions = buildWorkbenchActions({
     monitor,
     metric,
@@ -77,7 +79,8 @@ function useMonitorMetricContext(
     favoriteMutation,
     realtimeSelection,
     historySelection,
-    refreshDetail: options.refreshDetail
+    refreshDetail: options.refreshDetail,
+    investigation
   });
   const sources = { catalog, history, metric, metricKey, urlActions, queries, realtimeSelection, historySelection };
   const evidence = { favorite, favoriteCollection, historical, historySupported, realtime };
@@ -90,6 +93,7 @@ function useMonitorMetricContext(
     layout,
     historyCharts,
     selectedHistoryChart,
+    investigation,
     actions
   };
 }
@@ -112,6 +116,7 @@ function composeMonitorMetricWorkbench(
     historyAvailability: context.historySelection.availability,
     historyCharts: context.historyCharts,
     selectedHistoryChart: context.selectedHistoryChart,
+    investigationSignals: context.investigation.signals,
     hasMoreHistoryCharts: context.historySelection.hasMore,
     realtime: context.realtime,
     historical: context.historical,
@@ -119,6 +124,7 @@ function composeMonitorMetricWorkbench(
     layoutActions: context.layout.actions,
     refreshControl,
     urlActions: context.urlActions,
+    openInvestigationSignal: context.investigation.open,
     ...context.actions
   });
 }

@@ -33,4 +33,12 @@ describe('shell navigation visual hierarchy', () => {
       /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*\.navigationChildrenMotion[\s\S]*transition-duration:\s*0\.01ms/
     );
   });
+
+  it('marks the active destination with a line instead of a filled selection block', () => {
+    const activeRule = shellStyles.match(/\.navigationLinkActive\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(activeRule).toMatch(/border-left-color:\s*var\(--hb-brand-accent\)/);
+    expect(activeRule).toMatch(/background:\s*transparent/);
+    expect(activeRule).not.toMatch(/background:\s*var\(--hb-nav-selected\)/);
+  });
 });

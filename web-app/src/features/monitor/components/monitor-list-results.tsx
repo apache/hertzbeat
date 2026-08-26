@@ -79,17 +79,7 @@ export function MonitorListResults({
     return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
   if (evidence.kind === 'error')
     return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
-  const rowSelection: TableRowSelection<MonitorListRow> = {
-    selectedRowKeys: selectedIds,
-    getTitleCheckboxProps: () =>
-      pageSelectionTitleCheckboxProps(
-        selectedIds,
-        evidence.records.filter(record => !isMonitorRowDisappeared(record)).map(record => record.id),
-        pageSelectionLabels(t)
-      ),
-    getCheckboxProps: row => ({ disabled: operating || isMonitorRowDisappeared(row) }),
-    onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
-  };
+  const rowSelection = monitorRowSelection(t, evidence.records, selectedIds, operating, actions.selectIds);
   const selectionProps = canSelect ? { rowSelection } : {};
   return (
     <Table<MonitorListRow>
@@ -110,6 +100,29 @@ export function MonitorListResults({
       }}
     />
   );
+}
+
+function monitorRowSelection(
+  t: TFunction,
+  records: readonly MonitorListRow[],
+  selectedIds: number[],
+  operating: boolean,
+  selectIds: MonitorResultActions['selectIds']
+): TableRowSelection<MonitorListRow> {
+  return {
+    selectedRowKeys: selectedIds,
+    getTitleCheckboxProps: () =>
+      pageSelectionTitleCheckboxProps(
+        selectedIds,
+        records.filter(record => !isMonitorRowDisappeared(record)).map(record => record.id),
+        pageSelectionLabels(t)
+      ),
+    getCheckboxProps: row => ({
+      'aria-label': t('monitorActions.selectOne', { name: row.name }),
+      disabled: operating || isMonitorRowDisappeared(row)
+    }),
+    onChange: keys => selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
+  };
 }
 
 function monitorTableChange(
