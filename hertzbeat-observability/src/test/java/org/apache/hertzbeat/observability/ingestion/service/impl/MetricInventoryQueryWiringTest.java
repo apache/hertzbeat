@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.observability.metrics.inventory.greptime;
+package org.apache.hertzbeat.observability.ingestion.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -34,8 +34,8 @@ import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilitySignalIntakeGateway;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
-import org.apache.hertzbeat.observability.ingestion.service.impl.OtlpIngestionWorkspaceServiceImpl;
 import org.apache.hertzbeat.observability.metrics.inventory.MetricInventoryRepository;
+import org.apache.hertzbeat.observability.metrics.inventory.greptime.GreptimeMetricInventoryRepository;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.repository.LogQueryRepository;
@@ -77,6 +77,8 @@ class MetricInventoryQueryWiringTest {
                 .withBean(GreptimeSqlQueryExecutor.class, () -> sqlExecutor)
                 .withBean("greptimeMetricInventoryRepository", MetricInventoryRepository.class,
                         () -> inventoryRepository)
+                .withBean(OtlpIngestionGuideFactory.class,
+                        () -> new OtlpIngestionGuideFactory(false, 1157, 4317))
                 .withBean(OtlpIngestionWorkspaceServiceImpl.class)
                 .run(context -> {
                     assertThat(context).hasNotFailed();
