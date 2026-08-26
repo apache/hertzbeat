@@ -20,6 +20,9 @@ package org.apache.hertzbeat.observability.ingestion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.observability.fixture.GreptimeE2eSupport;
+import org.apache.hertzbeat.observability.fixture.VectorE2eContainer;
+import org.apache.hertzbeat.startup.TrustedStartup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -27,11 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -45,14 +44,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * E2E tests for log ingestion.
  */
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TrustedStartup
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class LogIngestionE2eTest {
+public class LogIngestionE2eTest extends GreptimeE2eSupport {
 
-    private static final String VECTOR_IMAGE = "timberio/vector:latest-alpine";
-    private static final int VECTOR_PORT = 8686;
-    private static final String VECTOR_CONFIG_PATH = "/etc/vector/vector.yml";
-    private static final String ENV_HERTZBEAT_PORT = "HERTZBEAT_PORT";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
 
     @LocalServerPort
@@ -65,21 +61,16 @@ public class LogIngestionE2eTest {
 
     @BeforeAll
     void setUpAll() throws InterruptedException {
+        initializeAdministrator();
         Testcontainers.exposeHostPorts(port);
 
         // Wait for HertzBeat to be fully ready before starting Vector
         log.info("Waiting for HertzBeat to be fully ready on port {}...", port);
         Thread.sleep(5000); // Give HertzBeat time to fully initialize
 
-        vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
-                .withExposedPorts(VECTOR_PORT)
-                .withCopyFileToContainer(MountableFile.forClasspathResource("vector.yml"), VECTOR_CONFIG_PATH)
-                .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
-                .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
-                .withNetwork(Network.newNetwork())
-                .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
-                .waitingFor(Wait.forListeningPort())
-                .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
+        vector = VectorE2eContainer.create(
+                port, CONTAINER_STARTUP_TIMEOUT,
+                outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()));
         vector.start();
     }
 

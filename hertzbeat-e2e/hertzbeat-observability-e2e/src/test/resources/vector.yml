@@ -61,7 +61,7 @@ transforms:
         "resource": {
           "attributes": [
             { "key": "source_type", "value": { "stringValue": .source_type } },
-            { "key": "service.name", "value": { "stringValue": syslog.appname } },
+            { "key": "service.name", "value": { "stringValue": "hertzbeat-vector-e2e" } },
             { "key": "host.hostname", "value": { "stringValue": syslog.hostname } }
           ]
         },
@@ -102,25 +102,19 @@ sinks:
     type: opentelemetry
     protocol:
       type: http
-      uri: "http://host.testcontainers.internal:${HERTZBEAT_PORT:-1157}/api/logs/ingest/otlp"
+      uri: "http://host.testcontainers.internal:__HERTZBEAT_PORT__/api/logs/otlp/v1/logs"
       method: post
       encoding:
-        codec: json
-      framing:
-        method: newline_delimited
-      headers:
-        content-type: application/json
+        codec: otlp
       auth:
         strategy: basic
         user: admin
         password: hertzbeat
-    # Increase timeout and retry settings for stability in CI environments
-    request:
-      timeout_secs: 60
-      retry_attempts: 10
-      retry_initial_backoff_secs: 2
-      retry_max_duration_secs: 120
-    # Batch settings for better throughput
-    batch:
-      max_bytes: 524288
-      timeout_secs: 5
+      request:
+        timeout_secs: 60
+        retry_attempts: 10
+        retry_initial_backoff_secs: 2
+        retry_max_duration_secs: 120
+      batch:
+        max_bytes: 524288
+        timeout_secs: 5

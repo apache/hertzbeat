@@ -1,0 +1,25 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0.
+
+# Keep managed values classpath-backed so the production setup projection can
+# retain honest source attribution when a full application context starts.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/h2
+
+warehouse:
+  store:
+    greptime:
+      enabled: true
+hertzbeat:
+  instrumentation:
+    server:
+      profile-id: server-e2e
+      otlp-http-endpoint: http://127.0.0.1:4318
+      authentication: bearer_token

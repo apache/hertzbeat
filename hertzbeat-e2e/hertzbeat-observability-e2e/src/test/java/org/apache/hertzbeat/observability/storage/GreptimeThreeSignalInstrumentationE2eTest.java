@@ -27,16 +27,10 @@ import static org.awaitility.Awaitility.await;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
-import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementCodec;
-import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
-import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
-import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpGrpcIngestionService;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionResponse;
@@ -74,7 +68,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
                 "scheduler.server.enabled=false",
                 "spring.datasource.url=jdbc:h2:mem:hertzbeat-e2e;MODE=MYSQL;DB_CLOSE_DELAY=-1",
                 "warehouse.store.duckdb.enabled=false",
-                "warehouse.store.greptime.enabled=true",
                 "warehouse.store.greptime.username=",
                 "warehouse.store.greptime.password="
         })
@@ -89,9 +82,6 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
 
     @Autowired
     private InstrumentationDetectionV2Service currentDetectionService;
-
-    @Autowired
-    private CollectorDao collectorDao;
 
     @Autowired
     private InstrumentationSignalDetectionStore signalDetectionStore;
@@ -114,9 +104,15 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
         long startedAt = System.currentTimeMillis() - 1_000;
         long signalTimeNanos = System.currentTimeMillis() * 1_000_000L;
 
-        ingestionService.ingestMetricsGrpc(metrics(signalTimeNanos));
-        ingestionService.ingestLogsGrpc(logs(signalTimeNanos));
-        ingestionService.ingestTracesGrpc(traces(signalTimeNanos));
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        AuthTokenRequestContext.bindCollectorId(COLLECTOR_ID);
+        try {
+            ingestionService.ingestMetricsGrpc(metrics(signalTimeNanos));
+            ingestionService.ingestLogsGrpc(logs(signalTimeNanos));
+            ingestionService.ingestTracesGrpc(traces(signalTimeNanos));
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
 
         await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
             List<Map<String, Object>> rows = queryExecutor.executeStrict(
@@ -194,39 +190,15 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
         assertNotReceived(requestWithContext(request, INSTANCE_ID, "/other"));
 
         DetectionResponse detected = detectionService.detect(request);
-        assertProductionQueries(
-                enabledJump(detected, METRICS).context(),
-                enabledJump(detected, LOGS).context(),
-                enabledJump(detected, TRACES).context());
-    }
-
-    private void advertiseCollectorProfile() {
-        CollectorIntakeAdvertisementCodec codec = new CollectorIntakeAdvertisementCodec();
-        String advertisement = codec.encode(
-                new CollectorIntakeAdvertisementRequest(
-                        1,
-                        Gateway.COLLECTOR,
-                        List.of(Capability.OTLP_HTTP_PROTOBUF),
-                        "http://127.0.0.1:4318",
-                        null));
-        collectorDao.save(Collector.builder()
-                .name(COLLECTOR_ID)
-                .ip("127.0.0.1")
-                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
-                .instrumentationIntake(advertisement)
-                .build());
-        String serverAdvertisement = codec.encode(new CollectorIntakeAdvertisementRequest(
-                1,
-                Gateway.SERVER,
-                List.of(Capability.OTLP_HTTP_PROTOBUF),
-                "http://127.0.0.1:4318",
-                null));
-        collectorDao.save(Collector.builder()
-                .name(SERVER_PROFILE_ID)
-                .ip("127.0.0.1")
-                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
-                .instrumentationIntake(serverAdvertisement)
-                .build());
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        try {
+            assertProductionQueries(
+                    enabledJump(detected, METRICS).context(),
+                    enabledJump(detected, LOGS).context(),
+                    enabledJump(detected, TRACES).context());
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
     }
 
     private void assertCurrentDetectionContract(long startedAt) {
@@ -265,7 +237,7 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
                         Platform.LINUX_AMD64,
                         new ServiceIdentity(
                                 SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID, ENDPOINT),
-                        "server:" + SERVER_PROFILE_ID,
+                        SERVER_PROFILE_ID,
                         startedAt));
         assertThat(directServerResponse.signals().values())
                 .allMatch(signal -> signal.status()
@@ -277,8 +249,11 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
         assertThat(queryExecutor.executeStrict("""
                 SELECT service_name, resource_attributes, log_attributes, timestamp
                 FROM hertzbeat_logs
+                WHERE service_name = '%s'
+                  AND timestamp >= to_timestamp_millis(%d)
+                  AND timestamp < to_timestamp_millis(%d)
                 ORDER BY timestamp DESC LIMIT 1
-                """))
+                """.formatted(SERVICE_NAME, startedAt, detectedAt + 1)))
                 .singleElement()
                 .satisfies(row -> {
                     assertThat(String.valueOf(row.get("resource_attributes")))
@@ -313,8 +288,11 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
                   "span_attributes.http.route" AS http_route,
                   timestamp
                 FROM hzb_traces
+                WHERE service_name = '%s'
+                  AND timestamp >= to_timestamp_millis(%d)
+                  AND timestamp < to_timestamp_millis(%d)
                 ORDER BY timestamp DESC LIMIT 1
-                """))
+                """.formatted(SERVICE_NAME, startedAt, detectedAt + 1)))
                 .singleElement()
                 .satisfies(row -> {
                     assertThat(row.get("service_instance_id")).hasToString(INSTANCE_ID);
@@ -335,7 +313,7 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
             QueryJumpContext tracesContext) {
         long end = metricsContext.detectedAt() + 60_000;
         OtlpMetricsConsoleDto metrics = metricsQueryService.query(new CollectorScopedMetricsQueryService.Request(
-                null, null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
+                "default", null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
                 metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
                 INSTANCE_ID, ENDPOINT, "hertzbeat_e2e_requests", null, null,
                 null, null, "1s", "20", null));
@@ -354,7 +332,7 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
                 .anySatisfy(row -> assertThat(Double.parseDouble(String.valueOf(row[1]))).isEqualTo(1.0));
         OtlpMetricsConsoleDto missingInstanceMetrics = metricsQueryService.query(
                 new CollectorScopedMetricsQueryService.Request(
-                        null, null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
+                        "default", null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
                         metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
                         "other-instance", ENDPOINT, "hertzbeat_e2e_requests", null, null,
                         null, null, "1s", "20", null));

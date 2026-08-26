@@ -22,16 +22,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.Collector;
-import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementCodec;
-import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
-import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
-import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -46,7 +38,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
                 "scheduler.server.enabled=false",
                 "spring.datasource.url=jdbc:h2:mem:hertzbeat-active-prometheus-e2e;MODE=MYSQL;DB_CLOSE_DELAY=-1",
                 "warehouse.store.duckdb.enabled=false",
-                "warehouse.store.greptime.enabled=true",
                 "warehouse.store.greptime.username=",
                 "warehouse.store.greptime.password="
         })
@@ -61,14 +52,12 @@ class PrometheusActiveSourcePublicApiE2eTest extends GreptimeThreeSignalE2eSuppo
     @LocalServerPort
     private int serverPort;
 
-    @Autowired
-    private CollectorDao collectorDao;
-
     @TempDir
     private Path tempDir;
 
     @Test
     void managedPrometheusSourceScrapesWritesAndSurfacesPersistedEvidence() throws Exception {
+        initializeAdministrator();
         advertiseCollectorProfile();
         String adminToken = login();
         long entityId = createEntity(adminToken);
@@ -189,23 +178,6 @@ class PrometheusActiveSourcePublicApiE2eTest extends GreptimeThreeSignalE2eSuppo
         request.put("intakeProfileId", "collector:" + COLLECTOR_ID);
         request.put("startedAt", startedAt);
         return OBJECT_MAPPER.writeValueAsBytes(request);
-    }
-
-    /** Collector persistence is control-plane setup; telemetry starts only at the real scrape endpoint. */
-    private void advertiseCollectorProfile() {
-        String advertisement = new CollectorIntakeAdvertisementCodec().encode(
-                new CollectorIntakeAdvertisementRequest(
-                        1,
-                        Gateway.COLLECTOR,
-                        java.util.List.of(Capability.OTLP_HTTP_PROTOBUF),
-                        "http://127.0.0.1:4318",
-                        null));
-        collectorDao.save(Collector.builder()
-                .name(COLLECTOR_ID)
-                .ip("127.0.0.1")
-                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
-                .instrumentationIntake(advertisement)
-                .build());
     }
 
     private JsonNode successfulJson(HttpResponse<byte[]> response) throws Exception {

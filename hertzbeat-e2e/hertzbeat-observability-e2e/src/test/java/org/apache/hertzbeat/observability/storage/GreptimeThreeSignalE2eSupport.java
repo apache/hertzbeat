@@ -35,18 +35,25 @@ import io.opentelemetry.proto.resource.v1.Resource;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
 import io.opentelemetry.proto.trace.v1.ScopeSpans;
 import io.opentelemetry.proto.trace.v1.Span;
-import java.time.Duration;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.utility.DockerImageName;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
+import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementCodec;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
+import org.apache.hertzbeat.observability.fixture.GreptimeE2eSupport;
+import org.apache.hertzbeat.startup.TrustedStartup;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /** Shared real-Greptime container and deterministic OTLP payloads for three-signal E2E tests. */
-abstract class GreptimeThreeSignalE2eSupport {
+@TrustedStartup
+abstract class GreptimeThreeSignalE2eSupport extends GreptimeE2eSupport {
 
     static final String SERVICE_NAME = "checkout-api";
     static final String SERVICE_NAMESPACE = "commerce";
@@ -62,26 +69,46 @@ abstract class GreptimeThreeSignalE2eSupport {
     static final String LOG_BODY = "three-signal-e2e";
     static final String SPAN_NAME = "GET /checkout";
 
-    private static final int GREPTIME_HTTP_PORT = 4000;
-    private static final int GREPTIME_GRPC_PORT = 4001;
+    @Autowired
+    private CollectorDao collectorDao;
 
-    @Container
-    @SuppressWarnings("resource")
-    static final GenericContainer<?> GREPTIME = new GenericContainer<>(
-            DockerImageName.parse("greptime/greptimedb:v1.0.1"))
-            .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
-            .withCommand("standalone", "start",
-                    "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                    "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-            .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
-            .withStartupTimeout(Duration.ofSeconds(120));
+    @Autowired
+    private CollectorRuntimeStatusRegistry collectorRuntimeStatusRegistry;
 
-    @DynamicPropertySource
-    static void greptimeProperties(DynamicPropertyRegistry registry) {
-        registry.add("warehouse.store.greptime.http-endpoint", () -> "http://" + GREPTIME.getHost()
-                + ":" + GREPTIME.getMappedPort(GREPTIME_HTTP_PORT));
-        registry.add("warehouse.store.greptime.grpc-endpoints", () -> GREPTIME.getHost()
-                + ":" + GREPTIME.getMappedPort(GREPTIME_GRPC_PORT));
+    final void advertiseCollectorProfile() {
+        String advertisement = new CollectorIntakeAdvertisementCodec().encode(
+                new CollectorIntakeAdvertisementRequest(
+                        1,
+                        Gateway.COLLECTOR,
+                        List.of(Capability.OTLP_HTTP_PROTOBUF),
+                        "http://127.0.0.1:4318",
+                        null));
+        collectorDao.save(Collector.builder()
+                .name(COLLECTOR_ID)
+                .ip("127.0.0.1")
+                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                .instrumentationIntake(advertisement)
+                .build());
+        collectorRuntimeStatusRegistry.report(COLLECTOR_ID, availableCollectorGateway());
+    }
+
+    private ManagedOtelRuntimeStatus availableCollectorGateway() {
+        return new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                1,
+                1,
+                -1,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.now(),
+                "",
+                ManagedOtelRuntimeStatus.FailureCode.NONE,
+                ManagedOtelRuntimeStatus.RuntimeTelemetry.unavailable(false),
+                List.of(),
+                ManagedOtelRuntimeStatus.OtlpGatewayStatus.available(
+                        List.of(ManagedOtelRuntimeStatus.OtlpGatewayTransport.HTTP_PROTOBUF)));
     }
 
     static ExportMetricsServiceRequest metrics(long timeNanos) {

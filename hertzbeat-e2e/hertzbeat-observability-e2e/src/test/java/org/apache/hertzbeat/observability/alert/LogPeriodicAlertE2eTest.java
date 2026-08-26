@@ -23,6 +23,9 @@ import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.observability.fixture.GreptimeE2eSupport;
+import org.apache.hertzbeat.observability.fixture.VectorE2eContainer;
+import org.apache.hertzbeat.startup.TrustedStartup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,15 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -61,21 +58,14 @@ import static org.mockito.Mockito.doAnswer;
  * E2E tests for periodic log alert processing.
  */
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TrustedStartup
 @TestPropertySource(properties = {
-        "warehouse.store.duckdb.enabled=false",
-        "warehouse.store.greptime.enabled=true"
+        "warehouse.store.duckdb.enabled=false"
 })
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class LogPeriodicAlertE2eTest {
+public class LogPeriodicAlertE2eTest extends GreptimeE2eSupport {
 
-    private static final String VECTOR_IMAGE = "timberio/vector:latest-alpine";
-    private static final int VECTOR_PORT = 8686;
-    private static final String VECTOR_CONFIG_PATH = "/etc/vector/vector.yml";
-    private static final String ENV_HERTZBEAT_PORT = "HERTZBEAT_PORT";
-    private static final String GREPTIME_IMAGE = "greptime/greptimedb:latest";
-    private static final int GREPTIME_HTTP_PORT = 4000;
-    private static final int GREPTIME_GRPC_PORT = 4001;
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
 
     @LocalServerPort
@@ -92,30 +82,9 @@ public class LogPeriodicAlertE2eTest {
 
     static GenericContainer<?> vector;
 
-    static GenericContainer<?> greptimedb;
-
-    static {
-        greptimedb = new GenericContainer<>(DockerImageName.parse(GREPTIME_IMAGE))
-                .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
-                .withCommand("standalone", "start",
-                        "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                        "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
-                .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
-        greptimedb.start();
-    }
-
-    @DynamicPropertySource
-    static void greptimeProps(DynamicPropertyRegistry r) {
-        // Configure GreptimeDB storage endpoints (dynamic ports)
-        r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
-        r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
-        r.add("warehouse.store.greptime.username", () -> "");
-        r.add("warehouse.store.greptime.password", () -> "");
-    }
-
     @BeforeAll
     void setUpAll() throws InterruptedException {
+        initializeAdministrator();
         // Setup test alert definitions
         setupTestAlertDefines();
         Testcontainers.exposeHostPorts(port);
@@ -124,15 +93,9 @@ public class LogPeriodicAlertE2eTest {
         log.info("Waiting for HertzBeat to be fully ready on port {}...", port);
         Thread.sleep(5000); // Give HertzBeat time to fully initialize
 
-        vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
-                .withExposedPorts(VECTOR_PORT)
-                .withCopyFileToContainer(MountableFile.forClasspathResource("vector.yml"), VECTOR_CONFIG_PATH)
-                .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
-                .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
-                .withNetwork(Network.newNetwork())
-                .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
-                .waitingFor(Wait.forListeningPort())
-                .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
+        vector = VectorE2eContainer.create(
+                port, CONTAINER_STARTUP_TIMEOUT,
+                outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()));
         vector.start();
     }
 
@@ -207,7 +170,8 @@ public class LogPeriodicAlertE2eTest {
                 .id(10L)
                 .name("periodic_error_count_alert_group")
                 .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC)
-                .expr("SELECT COUNT(*) as error_count FROM hertzbeat_logs WHERE time_unix_nano > NOW() - INTERVAL '10 minute'")
+                .expr("SELECT COUNT(*) as error_count FROM hertzbeat_logs "
+                        + "WHERE timestamp > NOW() - INTERVAL '10 minutes'")
                 .period(10) // Faster schedule for tests
                 .template("High error count detected: {{ error_count }} errors in last period")
                 .datasource("sql")
@@ -226,7 +190,8 @@ public class LogPeriodicAlertE2eTest {
                 .name("periodic_error_count_alert_individual")
                 .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC)
                 .expr("SELECT COUNT(*) as error_count, severity_text FROM hertzbeat_logs "
-                        + "WHERE severity_text = 'ERROR' AND time_unix_nano > NOW() - INTERVAL '5 minute' GROUP BY severity_text HAVING COUNT(*) > 2")
+                        + "WHERE severity_text = 'ERROR' AND timestamp > NOW() - INTERVAL '5 minutes' "
+                        + "GROUP BY severity_text HAVING COUNT(*) > 2")
                 .period(10) // Faster schedule for tests
                 .template("High error count detected: {{ error_count }} errors in last period")
                 .datasource("sql")

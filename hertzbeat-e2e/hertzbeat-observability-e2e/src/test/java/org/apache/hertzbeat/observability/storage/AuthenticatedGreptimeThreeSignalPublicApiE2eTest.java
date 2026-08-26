@@ -33,15 +33,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.Collector;
-import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementCodec;
-import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
-import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
-import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -58,7 +50,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
                 "scheduler.server.enabled=false",
                 "spring.datasource.url=jdbc:h2:mem:hertzbeat-authenticated-greptime-e2e;MODE=MYSQL;DB_CLOSE_DELAY=-1",
                 "warehouse.store.duckdb.enabled=false",
-                "warehouse.store.greptime.enabled=true",
                 "warehouse.store.greptime.username=",
                 "warehouse.store.greptime.password="
         })
@@ -75,11 +66,9 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
     @LocalServerPort
     private int serverPort;
 
-    @Autowired
-    private CollectorDao collectorDao;
-
     @Test
     void authenticatedPublicApiIngestsDetectsAndQueriesThreeSignalsInGreptime() throws Exception {
+        initializeAdministrator();
         advertiseCollectorProfile();
         long startedAt = System.currentTimeMillis() - 1_000;
         long signalTimeNanos = System.currentTimeMillis() * 1_000_000L;
@@ -180,7 +169,9 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
         HttpResponse<byte[]> response = send(postJson("/api/instrumentation/detect", detectionBody, adminToken));
         assertThat(response.statusCode()).isEqualTo(200);
         JsonNode envelope = OBJECT_MAPPER.readTree(response.body());
-        assertThat(envelope.path("code").asInt()).isZero();
+        assertThat(envelope.path("code").asInt())
+                .as("scoped detection response: %s", envelope)
+                .isZero();
         JsonNode data = envelope.path("data");
         assertThat(data.path("signals").path("metrics").path("status").asText()).isNotEqualTo("received");
         assertThat(data.path("signals").path("logs").path("status").asText()).isNotEqualTo("received");
@@ -405,26 +396,6 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
                 "identityKey", key,
                 "identityValue", value,
                 "primaryIdentity", primary);
-    }
-
-    /**
-     * Collector persistence is deterministic test setup only. All behavior under proof starts at the public HTTP
-     * boundary; no ingestion, detection, or query service is invoked directly.
-     */
-    private void advertiseCollectorProfile() {
-        String advertisement = new CollectorIntakeAdvertisementCodec().encode(
-                new CollectorIntakeAdvertisementRequest(
-                        1,
-                        Gateway.COLLECTOR,
-                        List.of(Capability.OTLP_HTTP_PROTOBUF),
-                        "http://127.0.0.1:4318",
-                        null));
-        collectorDao.save(Collector.builder()
-                .name(COLLECTOR_ID)
-                .ip("127.0.0.1")
-                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
-                .instrumentationIntake(advertisement)
-                .build());
     }
 
     private HttpRequest postProtobuf(String path, byte[] body, String token) {
