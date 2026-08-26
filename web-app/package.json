@@ -21,6 +21,9 @@
     "hooks:install": "git config extensions.worktreeConfig true && git config --worktree core.hooksPath \"$(git rev-parse --show-toplevel)/.githooks\"",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:browser:install": "playwright install chromium",
+    "test:browser": "playwright test",
+    "smoke:production": "pnpm build && pnpm test:browser",
     "architecture": "node --test scripts/dependency-rules.test.mjs scripts/source-conventions.test.mjs && depcruise --config dependency-cruiser.config.cjs --output-type err-long src && node scripts/check-architecture.mjs",
     "i18n:check": "node scripts/check-cjk.mjs",
     "budget": "node scripts/check-bundle.mjs",
@@ -58,7 +61,9 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@eslint/js": "9.39.2",
+    "@playwright/test": "1.61.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
     "@types/node": "24.10.1",
