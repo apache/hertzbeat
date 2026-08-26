@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -569,7 +568,7 @@ class GreptimeOtlpForwarderTest {
     }
 
     @Test
-    void logsGrpcBackendTooManyRequestsDropsMalformedRetryAfterTrailerAfterRetries() {
+    void logsGrpcBackendTooManyRequestsUsesDefaultForMalformedRetryAfter() {
         ExportLogsServiceRequest request = ExportLogsServiceRequest.getDefaultInstance();
         configureGreptimeProperties();
         when(restTemplate.exchange(
@@ -586,7 +585,9 @@ class GreptimeOtlpForwarderTest {
                 () -> forwarder.forwardLogsGrpc(request));
 
         assertEquals(Status.Code.RESOURCE_EXHAUSTED, exception.getStatus().getCode());
-        assertNull(exception.getTrailers());
+        assertNotNull(exception.getTrailers());
+        assertEquals("1", exception.getTrailers().get(
+                Metadata.Key.of("retry-after", Metadata.ASCII_STRING_MARSHALLER)));
         verify(restTemplate, times(2)).exchange(
                 eq("http://greptime:4000/v1/otlp/v1/logs"),
                 eq(HttpMethod.POST),

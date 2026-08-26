@@ -76,6 +76,10 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         this.httpPromqlProperties = httpPromqlProperties;
     }
 
+    protected UriComponentsBuilder queryUri(String path) {
+        return UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + path);
+    }
+
     /**
      * record class for promql http connection
      */
@@ -118,7 +122,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         }
         HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + QUERY_PATH);
+        UriComponentsBuilder uriComponentsBuilder = queryUri(QUERY_PATH);
         uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
         if (limitResult) {
             uriComponentsBuilder.queryParam(HTTP_LIMIT_PARAM, CommonConstants.ALERT_PREVIEW_RESULT_LIMIT);
@@ -172,14 +176,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
-                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_RANGE_PATH)
+                uri = queryUri(QUERY_RANGE_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .queryParam(HTTP_START_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getStart()))
                         .queryParam(HTTP_END_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getEnd()))
                         .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
-                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_PATH)
+                uri = queryUri(QUERY_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .build().toUri();
             } else {

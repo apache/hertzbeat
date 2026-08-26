@@ -72,6 +72,7 @@ class GreptimePromqlQueryExecutorTest {
         when(greptimeProperties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
         when(greptimeProperties.username()).thenReturn("greptime");
         when(greptimeProperties.password()).thenReturn("greptime");
+        when(greptimeProperties.database()).thenReturn("public");
         queryGuard = new GreptimeQueryGuard(2, Duration.ofSeconds(2), Duration.ofMillis(10));
         greptimePromqlQueryExecutor = new GreptimePromqlQueryExecutor(greptimeProperties, restTemplate, queryGuard);
     }
@@ -96,6 +97,7 @@ class GreptimePromqlQueryExecutorTest {
         when(restTemplate.exchange(
                 argThat((URI uri) -> uri.toString().contains("start=1775034288")
                         && uri.toString().contains("end=1775037888")
+                        && uri.toString().contains("db=public")
                         && uri.toString().contains("/v1/prometheus/api/v1/query_range")),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),

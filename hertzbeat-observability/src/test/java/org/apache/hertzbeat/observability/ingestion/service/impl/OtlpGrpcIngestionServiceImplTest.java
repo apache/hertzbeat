@@ -2194,7 +2194,7 @@ class OtlpGrpcIngestionServiceImplTest {
     }
 
     @Test
-    void metricsHttpBackendTooManyRequestsDropsMalformedRetryAfterHeader() {
+    void metricsHttpBackendTooManyRequestsUsesDefaultForMalformedRetryAfter() {
         ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
                 .addResourceMetrics(ResourceMetrics.newBuilder()
                         .addScopeMetrics(ScopeMetrics.newBuilder()
@@ -2233,7 +2233,7 @@ class OtlpGrpcIngestionServiceImplTest {
         ResponseEntity<byte[]> response = service.ingestMetricsHttp(request.toByteArray(), requestHeaders);
 
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
-        assertNull(response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER));
+        assertEquals("1", response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER));
         OtlpIngestionAuditEvent event = auditService.recentEvents().getFirst();
         assertEquals("RESOURCE_EXHAUSTED", event.statusCode());
         verify(restTemplate, times(2)).exchange(

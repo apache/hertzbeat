@@ -122,8 +122,8 @@ public class GreptimeOtlpForwarder {
         GreptimeProperties greptimeProperties = greptimePropertiesOrUnavailable();
         if (greptimeProperties == null || !greptimeProperties.enabled()
                 || StringUtils.isBlank(greptimeProperties.httpEndpoint())) {
-            throw io.grpc.Status.UNAVAILABLE.withDescription("OTLP backend is not configured.")
-                    .asRuntimeException();
+            throw OtlpIngestionBackpressureHeaders.statusRuntimeException(
+                    io.grpc.Status.UNAVAILABLE, "OTLP backend is not configured.", null);
         }
         addGreptimeCommonHeaders(headers, greptimeProperties);
         addAuthenticationHeader(headers, greptimeProperties);
@@ -136,8 +136,8 @@ public class GreptimeOtlpForwarder {
             ), retryableResponse -> retryableResponse == null
                     || retryService.isRetryableStatus(retryableResponse.getStatusCode()));
             if (response == null) {
-                throw io.grpc.Status.UNAVAILABLE.withDescription("OTLP backend returned no response.")
-                        .asRuntimeException();
+                throw OtlpIngestionBackpressureHeaders.statusRuntimeException(
+                        io.grpc.Status.UNAVAILABLE, "OTLP backend returned no response.", null);
             }
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw backendStatusException(response.getStatusCode(), response.getHeaders());
@@ -148,10 +148,9 @@ public class GreptimeOtlpForwarder {
             throw backendStatusException(ex.getStatusCode(), ex.getResponseHeaders());
         } catch (RestClientException ex) {
             log.error("Failed to forward OTLP payload to Greptime path {}: {}", path, ex.getMessage(), ex);
-            throw io.grpc.Status.UNAVAILABLE
-                    .withDescription(StringUtils.defaultIfBlank(ex.getMessage(), "OTLP backend request failed."))
-                    .withCause(ex)
-                    .asRuntimeException();
+            throw OtlpIngestionBackpressureHeaders.statusRuntimeException(
+                    io.grpc.Status.UNAVAILABLE.withCause(ex),
+                    StringUtils.defaultIfBlank(ex.getMessage(), "OTLP backend request failed."), null);
         }
     }
 
@@ -160,9 +159,8 @@ public class GreptimeOtlpForwarder {
             return greptimePropertiesProvider.getIfAvailable();
         } catch (RuntimeException ex) {
             log.warn("Failed to resolve Greptime OTLP log backend properties: {}", ex.toString());
-            throw io.grpc.Status.UNAVAILABLE.withDescription("OTLP backend is not configured.")
-                    .withCause(ex)
-                    .asRuntimeException();
+            throw OtlpIngestionBackpressureHeaders.statusRuntimeException(
+                    io.grpc.Status.UNAVAILABLE.withCause(ex), "OTLP backend is not configured.", null);
         }
     }
 

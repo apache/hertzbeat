@@ -76,6 +76,16 @@ class OtlpIngestionBackpressureHeadersTest {
     }
 
     @Test
+    void suppliesDefaultRetryAfterWhenBackendIsUnavailableWithoutHint() {
+        StatusRuntimeException exception = OtlpIngestionBackpressureHeaders.statusRuntimeException(
+                Status.UNAVAILABLE, "backend unavailable", null);
+
+        assertEquals("1", exception.getTrailers()
+                .get(OtlpIngestionBackpressureHeaders.RETRY_AFTER_TRAILER_KEY));
+        assertEquals("1", OtlpIngestionBackpressureHeaders.retryAfter(exception));
+    }
+
+    @Test
     void dropsRetryAfterForNonBackpressureGrpcStatus() {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.RETRY_AFTER, "30");

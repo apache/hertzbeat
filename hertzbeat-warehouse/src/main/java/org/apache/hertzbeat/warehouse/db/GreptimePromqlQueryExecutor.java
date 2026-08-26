@@ -21,6 +21,7 @@ package org.apache.hertzbeat.warehouse.db;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 
 /**
@@ -43,6 +45,7 @@ public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
 
     private static final String Datasource = "Greptime-promql";
 
+    private final GreptimeProperties greptimeProperties;
     private final GreptimeQueryGuard queryGuard;
 
     public GreptimePromqlQueryExecutor(GreptimeProperties greptimeProperties,
@@ -51,6 +54,7 @@ public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
                                        GreptimeQueryGuard queryGuard) {
         super(restTemplate, new HttpPromqlProperties(greptimeProperties.httpEndpoint() + QUERY_PATH,
                 greptimeProperties.username(), greptimeProperties.password()));
+        this.greptimeProperties = greptimeProperties;
         this.queryGuard = queryGuard;
     }
 
@@ -67,6 +71,15 @@ public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
     @Override
     public String getDatasource() {
         return Datasource;
+    }
+
+    @Override
+    protected UriComponentsBuilder queryUri(String path) {
+        UriComponentsBuilder builder = super.queryUri(path);
+        if (StringUtils.isNotBlank(greptimeProperties.database())) {
+            builder.queryParam("db", greptimeProperties.database());
+        }
+        return builder;
     }
 
 }

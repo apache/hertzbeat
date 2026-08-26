@@ -43,6 +43,7 @@ import io.opentelemetry.proto.metrics.v1.Sum;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
 import io.opentelemetry.proto.trace.v1.ScopeSpans;
 import io.opentelemetry.proto.trace.v1.Span;
+import org.apache.hertzbeat.observability.ingestion.error.OtlpIngestionBackpressureHeaders;
 import org.junit.jupiter.api.Test;
 
 class OtlpIngestionQuotaServiceTest {
@@ -64,6 +65,7 @@ class OtlpIngestionQuotaServiceTest {
 
         assertEquals(Status.Code.RESOURCE_EXHAUSTED, Status.fromThrowable(exception).getCode());
         assertEquals("OTLP metrics grpc payload exceeds 2 bytes.", Status.fromThrowable(exception).getDescription());
+        assertEquals("1", OtlpIngestionBackpressureHeaders.retryAfter(exception));
     }
 
     @Test
@@ -85,6 +87,7 @@ class OtlpIngestionQuotaServiceTest {
         assertEquals(Status.Code.RESOURCE_EXHAUSTED, Status.fromThrowable(exception).getCode());
         assertEquals("OTLP logs http batch exceeds 1 signal items.",
                 Status.fromThrowable(exception).getDescription());
+        assertEquals("1", OtlpIngestionBackpressureHeaders.retryAfter(exception));
     }
 
     @Test
@@ -187,6 +190,7 @@ class OtlpIngestionQuotaServiceTest {
         assertEquals(Status.Code.RESOURCE_EXHAUSTED, Status.fromThrowable(exception).getCode());
         assertEquals("OTLP metrics grpc ingestion paused because heap usage is 76% (limit 75%).",
                 Status.fromThrowable(exception).getDescription());
+        assertEquals("1", OtlpIngestionBackpressureHeaders.retryAfter(exception));
     }
 
     @Test

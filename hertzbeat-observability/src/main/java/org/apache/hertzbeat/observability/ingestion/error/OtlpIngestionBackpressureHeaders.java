@@ -34,6 +34,7 @@ import org.springframework.http.HttpHeaders;
  */
 public final class OtlpIngestionBackpressureHeaders {
 
+    private static final String DEFAULT_RETRY_AFTER_SECONDS = "1";
     private static final long MAX_RETRY_AFTER_SECONDS = 60L;
 
     public static final Metadata.Key<String> RETRY_AFTER_TRAILER_KEY =
@@ -62,11 +63,9 @@ public final class OtlpIngestionBackpressureHeaders {
 
     private static Metadata retryAfterTrailers(HttpHeaders responseHeaders) {
         String retryAfter = retryAfter(responseHeaders);
-        if (retryAfter == null) {
-            return null;
-        }
         Metadata trailers = new Metadata();
-        trailers.put(RETRY_AFTER_TRAILER_KEY, retryAfter);
+        trailers.put(RETRY_AFTER_TRAILER_KEY,
+                StringUtils.defaultIfBlank(retryAfter, DEFAULT_RETRY_AFTER_SECONDS));
         return trailers;
     }
 

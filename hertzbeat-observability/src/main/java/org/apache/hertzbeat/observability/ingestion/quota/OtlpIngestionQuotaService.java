@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.ingestion.quota;
 
 import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
@@ -36,6 +37,7 @@ import java.lang.management.MemoryUsage;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.observability.ingestion.error.OtlpIngestionBackpressureHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -81,10 +83,8 @@ public class OtlpIngestionQuotaService {
 
     public void checkRequestBytes(String signal, String protocol, long requestBytes) {
         if (maxRequestBytes > 0 && Math.max(requestBytes, 0L) > maxRequestBytes) {
-            throw Status.RESOURCE_EXHAUSTED
-                    .withDescription("OTLP " + dimension(signal) + " " + dimension(protocol)
-                            + " payload exceeds " + maxRequestBytes + " bytes.")
-                    .asRuntimeException();
+            throw resourceExhausted("OTLP " + dimension(signal) + " " + dimension(protocol)
+                    + " payload exceeds " + maxRequestBytes + " bytes.");
         }
         checkMemoryPressure(signal, protocol);
     }
@@ -118,10 +118,8 @@ public class OtlpIngestionQuotaService {
             checkMemoryPressure(signal, protocol);
             return;
         }
-        throw Status.RESOURCE_EXHAUSTED
-                .withDescription("OTLP " + dimension(signal) + " " + dimension(protocol)
-                        + " batch exceeds " + maxSignalItems + " signal items.")
-                .asRuntimeException();
+        throw resourceExhausted("OTLP " + dimension(signal) + " " + dimension(protocol)
+                + " batch exceeds " + maxSignalItems + " signal items.");
     }
 
     private void checkMemoryPressure(String signal, String protocol) {
@@ -132,11 +130,14 @@ public class OtlpIngestionQuotaService {
         if (heapUsageRatio < maxHeapUsageRatio) {
             return;
         }
-        throw Status.RESOURCE_EXHAUSTED
-                .withDescription("OTLP " + dimension(signal) + " " + dimension(protocol)
-                        + " ingestion paused because heap usage is " + percent(heapUsageRatio)
-                        + "% (limit " + percent(maxHeapUsageRatio) + "%).")
-                .asRuntimeException();
+        throw resourceExhausted("OTLP " + dimension(signal) + " " + dimension(protocol)
+                + " ingestion paused because heap usage is " + percent(heapUsageRatio)
+                + "% (limit " + percent(maxHeapUsageRatio) + "%).");
+    }
+
+    private StatusRuntimeException resourceExhausted(String description) {
+        return OtlpIngestionBackpressureHeaders.statusRuntimeException(
+                Status.RESOURCE_EXHAUSTED, description, null);
     }
 
     private boolean isValidHeapPressureLimit() {
