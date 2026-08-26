@@ -17,18 +17,14 @@
  * under the License.
  */
 
-export class EmailNoticeSender {
-  id!: number;
-  emailHost!: string;
-  emailPort!: number;
-  emailUsername!: string;
-  emailPassword!: string;
-  emailSsl: boolean = true;
-  emailStarttls: boolean = false;
-  emailSslCertVerify: boolean = true;
-  enable!: boolean;
-  creator!: string;
-  modifier!: string;
-  gmtCreate!: number;
-  gmtUpdate!: number;
+package org.apache.hertzbeat.warehouse.service;
+
+/**
+ * Operator-visible status for the configured warehouse history storage.
+ *
+ * @param available whether the storage's read-side health check is available
+ * @param droppedMetrics cumulative metric samples discarded by bounded writer backpressure
+ * @param pendingMetrics metric samples currently buffered or retained for retry
+ */
+public record WarehouseStorageStatus(boolean available, long droppedMetrics, int pendingMetrics) {
 }

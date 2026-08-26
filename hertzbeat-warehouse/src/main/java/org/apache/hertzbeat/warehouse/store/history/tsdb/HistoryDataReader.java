@@ -34,6 +34,20 @@ public interface HistoryDataReader {
     boolean isServerAvailable();
 
     /**
+     * @return cumulative metric samples dropped by the history writer
+     */
+    default long getDroppedMetricCount() {
+        return 0;
+    }
+
+    /**
+     * @return metric samples currently waiting for history persistence
+     */
+    default int getPendingMetricCount() {
+        return 0;
+    }
+
+    /**
      * @return whether this storage supports observability log query
      */
     default boolean supportsLogQuery() {

@@ -146,6 +146,7 @@
   "alert.notice.sender.mail.port": "メールポート",
   "alert.notice.sender.mail.ssl": "SSLを有効化",
   "alert.notice.sender.mail.starttls": "STARTTLSを有効化",
+  "alert.notice.sender.mail.ssl-cert-verify": "SSL証明書を検証",
   "alert.notice.sender.mail.username": "メールアカウント",
   "alert.notice.sender.sms.tencent.appId": "Tencent Sms AppId",
   "alert.notice.sender.sms.tencent.secretId": "Tencent Sms SecretId",
