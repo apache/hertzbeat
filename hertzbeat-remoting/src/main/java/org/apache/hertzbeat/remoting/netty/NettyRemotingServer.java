@@ -43,6 +43,7 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Supplier;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
@@ -75,8 +76,19 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         this.threadPool = threadPool;
     }
 
+    public NettyRemotingServer(final NettyServerConfig nettyServerConfig,
+                               final NettyEventListener nettyEventListener,
+                               final BackgroundTaskExecutor threadPool,
+                               final ClusterMessageAuthConfig authConfig,
+                               final Supplier<String> fallbackSecretSupplier) {
+        super(nettyEventListener, EndpointRole.SERVER, authConfig, fallbackSecretSupplier);
+        this.nettyServerConfig = nettyServerConfig;
+        this.threadPool = threadPool;
+    }
+
     @Override
     public void start() {
+        initializeAuthentication();
         this.threadPool.executeLongRunning(() -> {
             int port = this.nettyServerConfig.getPort();
             ThreadFactory bossThreadFactory = new ThreadFactoryBuilder()

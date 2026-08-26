@@ -65,6 +65,10 @@ The native collector package uses the same `config/application.yml` layout as th
 That means:
 
 - Collector connection settings are edited in the same place
+- The same 16/24/32-byte `COMMON_SECRET` used by Manager must be provisioned
+  before startup
+- The same independent `CLUSTER_AUTH_ACTIVE_SECRET` used by Manager must also
+  be provisioned; do not reuse its value as `COMMON_SECRET`
 - Virtual-thread related configuration is edited in the same place
 - Native-only boot adjustments are applied by code at runtime instead of maintaining a second `application.yml`
 

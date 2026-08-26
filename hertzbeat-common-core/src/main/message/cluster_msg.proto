@@ -28,6 +28,18 @@ message Message
     MessageType type = 3;
     // message content
     bytes msg = 4;
+    // sender timestamp used to reject stale messages
+    int64 auth_timestamp = 5;
+    // per-message random value used to reject replay
+    bytes auth_nonce = 6;
+    // HMAC-SHA256 over the message with this field cleared
+    bytes auth_signature = 7;
+    // authentication envelope version; zero identifies a legacy unsigned message
+    uint32 auth_version = 8;
+    // key identifier used for non-disruptive key rotation
+    string auth_key_id = 9;
+    // server-generated nonce binding a signed message to one Netty connection
+    bytes auth_channel_nonce = 10;
 }
 
 enum MessageType
@@ -52,6 +64,8 @@ enum MessageType
     RESPONSE_CYCLIC_TASK_DATA = 8;
     // response cyclic service discovery data
     RESPONSE_CYCLIC_TASK_SD_DATA = 9;
+    // internal authentication capability and channel-binding challenge
+    AUTH_CHALLENGE = 10;
 }
 
 enum Direction {

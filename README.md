@@ -59,10 +59,16 @@
 
 ##### 1：Install quickly via docker
 
-1. Just one command to get started
+1. Create and preserve two independent install-specific secrets, then start
+   HertzBeat. `COMMON_SECRET` is a 32-byte AES key shared by Manager and every
+   standalone Collector. `CLUSTER_AUTH_ACTIVE_SECRET` is a separate message
+   authentication secret. Do not commit `.env` or reuse one value for both.
 
    ```shell
-   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   umask 077
+   printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   docker run -d --env-file .env -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
@@ -70,7 +76,7 @@
 3. Deploy collector clusters (Optional)
 
    ```shell
-   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   docker run -d --env-file .env -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
    - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
@@ -84,10 +90,14 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 ##### 2：Install via package
 
 1. Download the release package `apache-hertzbeat-xx-bin.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
-2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
-3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
-4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
-5. Deploy collector clusters (Optional)
+2. Generate two independent secrets with the commands above. Configure the
+   same 16/24/32-byte `COMMON_SECRET` on Manager and every standalone
+   Collector, and separately configure the same
+   `CLUSTER_AUTH_ACTIVE_SECRET` on both sides. Preserve both across upgrades.
+3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
+4. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+5. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
+6. Deploy collector clusters (Optional)
     - Download the release package `apache-hertzbeat-collector-xx-bin.tar.gz` (JVM collector) or the native collector package for your platform, such as `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz` or `apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`, to the new machine [Download](https://hertzbeat.apache.org/docs/download)
     - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
       ```yaml

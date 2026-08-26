@@ -24,7 +24,19 @@
    If you want HertzBeat to prefer JDBC after restart, place `mysql-connector-j` in `ext-lib`.
    Oracle and DB2 still require external JDBC jars in `ext-lib`.
 
-3. Enter the deployment script docker-compose directory, execute
+3. Create two independent, private install-specific secrets. `COMMON_SECRET`
+   is a 32-byte AES key that must be identical on Manager and every standalone
+   Collector. `CLUSTER_AUTH_ACTIVE_SECRET` is a separate message
+   authentication secret. Preserve both across upgrades and do not commit
+   `.env`.
+
+   ```shell
+   umask 077
+   printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   ```
+
+4. Enter the deployment script docker-compose directory, execute
 
    `docker compose up -d`
 
