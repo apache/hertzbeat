@@ -28,12 +28,19 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.manager.dao.DefineDao;
+import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMutationCoordinator;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStoreFactory;
+import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
+import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
+import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.junit.jupiter.api.Assertions;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +56,6 @@ import static org.mockito.Mockito.when;
 @Slf4j
 public abstract class AbstractCollectE2eTest {
 
-    @InjectMocks
     protected AppServiceImpl appService;
 
     protected AbstractCollect collect;
@@ -58,8 +64,16 @@ public abstract class AbstractCollectE2eTest {
 
     protected Metrics metrics;
 
+    @MockitoBean
+    protected SetupRuntimeTransition setupRuntimeTransition;
     @Mock
-    protected ObjectStoreConfigServiceImpl objectStoreConfigService;
+    private MonitorDao monitorDao;
+    @Mock
+    private ParamDao paramDao;
+    @Mock
+    private WarehouseService warehouseService;
+    @Mock
+    private ObjectProvider<MonitorService> monitorServiceProvider;
     @Mock
     private WheelTimerTask timerJob;
     @Mock
@@ -78,7 +92,14 @@ public abstract class AbstractCollectE2eTest {
         metricsCollect = new MetricsCollect(mock(Metrics.class), timeout, mock(CollectDataDispatch.class), null, List.of());
 
         // Initialize services and components
-        appService.afterPropertiesSet();
+        appService = new AppServiceImpl(
+                monitorDao,
+                paramDao,
+                warehouseService,
+                monitorServiceProvider,
+                new MonitorDefinitionStoreFactory(defineDao),
+                new MonitorDefinitionMutationCoordinator());
+        appService.initializeRuntimeDefinitions(null);
         metrics = new Metrics();
     }
 
