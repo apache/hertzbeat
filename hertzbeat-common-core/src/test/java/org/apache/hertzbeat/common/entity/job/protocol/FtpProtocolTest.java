@@ -41,6 +41,34 @@ class FtpProtocolTest {
     }
 
     @Test
+    void isValidPlainFtpWhenSftpOnlyOptionRemainsUnresolved() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("ftp.example.com")
+                .port("21")
+                .direction("/")
+                .timeout("3000")
+                .ssl("false")
+                .insecureSkipVerify("^_^insecureSkipVerify^_^")
+                .build();
+
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isValidLegacyFtpWhenSslOptionRemainsUnresolved() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("ftp.example.com")
+                .port("21")
+                .direction("/")
+                .timeout("3000")
+                .ssl("^_^ssl^_^")
+                .insecureSkipVerify("^_^insecureSkipVerify^_^")
+                .build();
+
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
     void isInvalidValidSftp() {
         FtpProtocol protocol = FtpProtocol.builder()
                 .host("sftp.example.com")
@@ -101,6 +129,23 @@ class FtpProtocolTest {
                 .username("admin")
                 .password("secret")
                 .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidSftpWhenSkipVerificationOptionRemainsUnresolved() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint(VALID_SHA256_FINGERPRINT)
+                .insecureSkipVerify("^_^insecureSkipVerify^_^")
+                .build();
+
         assertTrue(protocol.isInvalid());
     }
 

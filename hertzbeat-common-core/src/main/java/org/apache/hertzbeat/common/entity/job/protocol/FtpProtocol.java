@@ -41,6 +41,7 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
 
     private static final Pattern SHA256_FINGERPRINT_PATTERN =
             Pattern.compile("SHA256:[A-Za-z0-9+/]{43}=?");
+    private static final String UNRESOLVED_SSL_PLACEHOLDER = "^_^ssl^_^";
     /**
      * Peer host ip or domain name
      */
@@ -111,18 +112,21 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
         if (StringUtils.isBlank(timeout) || !CommonUtil.isNumeric(timeout)) {
             return "Ftp Protocol timeout must be numeric.";
         }
+        if (UNRESOLVED_SSL_PLACEHOLDER.equals(ssl)) {
+            return null;
+        }
         if (StringUtils.isNotBlank(ssl)
                 && !"true".equalsIgnoreCase(ssl)
                 && !"false".equalsIgnoreCase(ssl)) {
             return "Ftp Protocol SFTP option must be true or false.";
         }
+        if (!"true".equalsIgnoreCase(ssl)) {
+            return null;
+        }
         if (StringUtils.isNotBlank(insecureSkipVerify)
                 && !"true".equalsIgnoreCase(insecureSkipVerify)
                 && !"false".equalsIgnoreCase(insecureSkipVerify)) {
             return "Sftp Protocol skip-verification option must be true or false.";
-        }
-        if (!"true".equalsIgnoreCase(ssl)) {
-            return null;
         }
         if (StringUtils.isAnyBlank(username, password)) {
             return "Sftp Protocol username and password are required.";
