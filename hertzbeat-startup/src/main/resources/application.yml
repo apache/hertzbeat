@@ -363,6 +363,11 @@ hertzbeat:
       enabled: true
       host: 0.0.0.0
       port: 4317
+    ingestion:
+      admission:
+        max-concurrent-requests: ${HERTZBEAT_OTLP_MAX_CONCURRENT_REQUESTS:32}
+        queue-capacity: ${HERTZBEAT_OTLP_QUEUE_CAPACITY:32}
+        max-queue-wait: ${HERTZBEAT_OTLP_MAX_QUEUE_WAIT:100ms}
   # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
   vthreads:
     enabled: true

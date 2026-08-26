@@ -70,8 +70,8 @@ import java.util.zip.GZIPInputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilitySignalIntakeGateway;
-import org.apache.hertzbeat.observability.ingestion.service.OtlpGrpcIngestionService;
 import org.apache.hertzbeat.observability.ingestion.adapter.OtlpLogProtocolAdapter;
+import org.apache.hertzbeat.observability.ingestion.admission.OtlpIngestionAdmissionService;
 import org.apache.hertzbeat.observability.ingestion.audit.OtlpIngestionAuditService;
 import org.apache.hertzbeat.observability.ingestion.enricher.OtlpCorrelationContext;
 import org.apache.hertzbeat.observability.ingestion.enricher.OtlpCorrelationEnricher;
@@ -85,6 +85,7 @@ import org.apache.hertzbeat.observability.ingestion.redaction.OtlpIngestionRedac
 import org.apache.hertzbeat.observability.ingestion.retry.OtlpIngestionRetryService;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.ingestion.security.OtlpIngestionRequestContextResolver;
+import org.apache.hertzbeat.observability.ingestion.service.OtlpGrpcIngestionService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -177,6 +178,7 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
     private final OtlpIngestionAuditService auditService;
     private final OtlpIngestionGovernanceService governanceService;
     private final OtlpIngestionQuotaService quotaService;
+    private final OtlpIngestionAdmissionService admissionService;
     private final ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway;
     private final OtlpEntityIdentityResolver otlpEntityIdentityResolver;
     private final OtlpIngestionRedactionService redactionService = new OtlpIngestionRedactionService();
@@ -198,7 +200,27 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
         this(restTemplate, greptimePropertiesProvider, otlpLogProtocolAdapter, greptimeOtlpForwarder,
                 otlpCorrelationEnricher, errorResponseFactory, requestContextResolver, auditService, governanceService,
                 quotaService, observabilitySignalIntakeGateway, otlpEntityIdentityResolver,
-                new OtlpIngestionRetryService());
+                new OtlpIngestionRetryService(), defaultAdmissionService());
+    }
+
+    public OtlpGrpcIngestionServiceImpl(RestTemplate restTemplate,
+                                        ObjectProvider<GreptimeProperties> greptimePropertiesProvider,
+                                        OtlpLogProtocolAdapter otlpLogProtocolAdapter,
+                                        GreptimeOtlpForwarder greptimeOtlpForwarder,
+                                        OtlpCorrelationEnricher otlpCorrelationEnricher,
+                                        OtlpIngestionErrorResponseFactory errorResponseFactory,
+                                        OtlpIngestionRequestContextResolver requestContextResolver,
+                                        OtlpIngestionAuditService auditService,
+                                        OtlpIngestionGovernanceService governanceService,
+                                        OtlpIngestionQuotaService quotaService,
+                                        @Qualifier("telemetryIntakeServiceImpl")
+                                        ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway,
+                                        OtlpEntityIdentityResolver otlpEntityIdentityResolver,
+                                        OtlpIngestionRetryService retryService) {
+        this(restTemplate, greptimePropertiesProvider, otlpLogProtocolAdapter, greptimeOtlpForwarder,
+                otlpCorrelationEnricher, errorResponseFactory, requestContextResolver, auditService, governanceService,
+                quotaService, observabilitySignalIntakeGateway, otlpEntityIdentityResolver,
+                retryService, defaultAdmissionService());
     }
 
     @Autowired
@@ -215,7 +237,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                                         @Qualifier("telemetryIntakeServiceImpl")
                                         ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway,
                                         OtlpEntityIdentityResolver otlpEntityIdentityResolver,
-                                        OtlpIngestionRetryService retryService) {
+                                        OtlpIngestionRetryService retryService,
+                                        OtlpIngestionAdmissionService admissionService) {
         this.restTemplate = restTemplate;
         this.greptimePropertiesProvider = greptimePropertiesProvider;
         this.otlpLogProtocolAdapter = otlpLogProtocolAdapter;
@@ -226,9 +249,14 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
         this.auditService = auditService;
         this.governanceService = governanceService;
         this.quotaService = quotaService;
+        this.admissionService = admissionService == null ? defaultAdmissionService() : admissionService;
         this.observabilitySignalIntakeGateway = observabilitySignalIntakeGateway;
         this.otlpEntityIdentityResolver = otlpEntityIdentityResolver;
         this.retryService = retryService == null ? new OtlpIngestionRetryService() : retryService;
+    }
+
+    private static OtlpIngestionAdmissionService defaultAdmissionService() {
+        return new OtlpIngestionAdmissionService(32, 32, java.time.Duration.ofMillis(100));
     }
 
     @Override
@@ -254,8 +282,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                         governanceDecision.reason(), durationMillis(startedAtNanos));
                 return emptySignalHttpSuccess(contentType, safeRequestHeaders.getAccept(), false);
             }
-            ResponseEntity<byte[]> response = proxySignalHttp(
-                    safeContent, safeRequestHeaders, "/v1/otlp/v1/metrics", false, correlationContext);
+            ResponseEntity<byte[]> response = admissionService.execute("metrics", () -> proxySignalHttp(
+                    safeContent, safeRequestHeaders, "/v1/otlp/v1/metrics", false, correlationContext));
             if (response.getStatusCode().is2xxSuccessful()) {
                 recordMetricIntake(request);
                 auditService.recordAccepted("metrics", "http", correlationContext, requestBytes, signalItems,
@@ -298,7 +326,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                         governanceDecision.reason(), durationMillis(startedAtNanos));
                 return emptyLogsHttpSuccess(contentType, safeRequestHeaders.getAccept());
             }
-            ResponseEntity<byte[]> forwardResponse = greptimeOtlpForwarder.forwardLogsProtobuf(redactedContent);
+            ResponseEntity<byte[]> forwardResponse = admissionService.execute(
+                    "logs", () -> greptimeOtlpForwarder.forwardLogsProtobuf(redactedContent));
             if (forwardResponse == null) {
                 throw io.grpc.Status.UNAVAILABLE.withDescription("OTLP backend returned no response.")
                         .asRuntimeException();
@@ -363,8 +392,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                         governanceDecision.reason(), durationMillis(startedAtNanos));
                 return emptySignalHttpSuccess(contentType, safeRequestHeaders.getAccept(), true);
             }
-            ResponseEntity<byte[]> response = proxySignalHttp(
-                    safeContent, safeRequestHeaders, "/v1/otlp/v1/traces", true, correlationContext);
+            ResponseEntity<byte[]> response = admissionService.execute("traces", () -> proxySignalHttp(
+                    safeContent, safeRequestHeaders, "/v1/otlp/v1/traces", true, correlationContext));
             if (response.getStatusCode().is2xxSuccessful()) {
                 recordTraceIntake(request);
                 auditService.recordAccepted("traces", "http", correlationContext, requestBytes, signalItems,
@@ -396,8 +425,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                         governanceDecision.reason(), durationMillis(startedAtNanos));
                 return ExportMetricsServiceResponse.getDefaultInstance();
             }
-            byte[] response = proxySignalBinary(redactedRequest.toByteArray(), "/v1/otlp/v1/metrics", false,
-                    correlationContext);
+            byte[] response = admissionService.execute("metrics", () -> proxySignalBinary(
+                    redactedRequest.toByteArray(), "/v1/otlp/v1/metrics", false, correlationContext));
             ExportMetricsServiceResponse parsedResponse = response.length == 0
                     ? ExportMetricsServiceResponse.getDefaultInstance()
                     : ExportMetricsServiceResponse.parseFrom(response);
@@ -440,7 +469,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                         governanceDecision.reason(), durationMillis(startedAtNanos));
                 return ExportLogsServiceResponse.getDefaultInstance();
             }
-            byte[] response = greptimeOtlpForwarder.forwardLogsGrpc(redactedRequest);
+            byte[] response = admissionService.execute(
+                    "logs", () -> greptimeOtlpForwarder.forwardLogsGrpc(redactedRequest));
             if (response == null) {
                 throw io.grpc.Status.UNAVAILABLE.withDescription("OTLP backend returned no response.")
                         .asRuntimeException();
@@ -495,8 +525,8 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                         governanceDecision.reason(), durationMillis(startedAtNanos));
                 return ExportTraceServiceResponse.getDefaultInstance();
             }
-            byte[] response = proxySignalBinary(
-                    enrichedRequest.toByteArray(), "/v1/otlp/v1/traces", true, correlationContext);
+            byte[] response = admissionService.execute("traces", () -> proxySignalBinary(
+                    enrichedRequest.toByteArray(), "/v1/otlp/v1/traces", true, correlationContext));
             ExportTraceServiceResponse parsedResponse = response.length == 0
                     ? ExportTraceServiceResponse.getDefaultInstance()
                     : ExportTraceServiceResponse.parseFrom(response);
