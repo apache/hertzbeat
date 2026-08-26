@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { NoticeReceiverDraft, NoticeReceiverSecretKey } from './notice-receiver-model';
+import type { NoticeReceiverSecretKey } from './notice-receiver-catalog';
+import type { NoticeReceiverDraft } from './notice-receiver-types';
 
 type SecretAvailable = (draft: NoticeReceiverDraft, key: NoticeReceiverSecretKey) => boolean;
 

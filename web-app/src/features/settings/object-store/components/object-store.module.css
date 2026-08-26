@@ -152,7 +152,7 @@
   place-items: center;
   border-radius: 8px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 2px 8px rgb(15 23 42 / 6%);
+  box-shadow: var(--hb-shadow-xs);
   color: var(--ant-color-text-secondary);
   font-size: 15px;
 }
@@ -205,7 +205,7 @@
   place-items: center;
   border-radius: 11px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 4px 12px rgb(15 23 42 / 7%);
+  box-shadow: var(--hb-shadow-sm);
   color: var(--ant-color-primary);
   font-size: 19px;
 }

@@ -9,11 +9,9 @@
   height: auto !important;
   max-width: calc(100vw - 24px);
   overflow: hidden;
-  border: 1px solid rgb(15 23 42 / 10%);
+  border: 1px solid var(--hb-border-overlay);
   border-radius: 12px;
-  box-shadow:
-    0 18px 50px rgb(15 23 42 / 16%),
-    0 2px 8px rgb(15 23 42 / 8%);
+  box-shadow: var(--hb-shadow-overlay);
   pointer-events: auto;
 }
 
@@ -40,8 +38,8 @@
 .drawer :global(.ant-drawer-footer) {
   padding: 14px 22px;
   border: 0;
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 -10px 28px rgb(15 23 42 / 6%);
+  background: var(--hb-bg-overlay);
+  box-shadow: var(--hb-shadow-inset-top);
   backdrop-filter: blur(12px);
 }
 

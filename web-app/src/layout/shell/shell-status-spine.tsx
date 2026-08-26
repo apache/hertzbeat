@@ -18,7 +18,7 @@ import type {
 } from '@/features/runtime-status';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 
-import styles from './hertzbeat-shell.module.css';
+import styles from './hertzbeat-shell-status.module.css';
 
 export function ShellStatusSpine({
   locale,

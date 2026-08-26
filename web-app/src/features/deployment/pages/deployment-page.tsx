@@ -30,7 +30,10 @@ export function DeploymentPage() {
           {deployment => (
             <>
               <DeploymentSummary deployment={deployment} />
-              <DeploymentDangerZone onOpenMigration={() => void navigate(settingsPaths.deploymentMigration)} />
+              <DeploymentDangerZone
+                onOpenMigration={() => void navigate(settingsPaths.deploymentMigration)}
+                onReset={controller.factoryReset}
+              />
             </>
           )}
         </DeploymentContent>

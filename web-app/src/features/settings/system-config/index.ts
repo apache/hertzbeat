@@ -16,3 +16,5 @@
  */
 
 export { SystemConfigPage } from './pages/system-config-page';
+export { loadPublicAccessConfig, publicAccessConfigQueryKey } from './api/public-access-config-api';
+export type { PublicAccessConfig } from './model/public-access-config-model';

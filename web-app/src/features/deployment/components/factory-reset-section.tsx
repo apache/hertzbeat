@@ -4,7 +4,6 @@ import { Alert, Button, Input, Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { factoryResetDeployment } from '../api/deployment-api';
 import styles from './factory-reset-section.module.css';
 import { waitForFactoryResetSetup } from './factory-reset-transition';
 
@@ -12,9 +11,11 @@ const CONFIRMATION = 'RESET HERTZBEAT';
 
 export function DeploymentDangerZone({
   onOpenMigration,
+  onReset,
   onAccepted = redirectToSetup
 }: {
   onOpenMigration: () => void;
+  onReset: (confirmation: string) => Promise<unknown>;
   onAccepted?: () => void | Promise<void>;
 }) {
   const { t } = useTranslation();
@@ -35,45 +36,20 @@ export function DeploymentDangerZone({
         <Button onClick={onOpenMigration}>{t('deployment.migration.open')}</Button>
       </div>
 
-      <FactoryResetOperation onAccepted={onAccepted} />
+      <FactoryResetOperation onReset={onReset} onAccepted={onAccepted} />
     </section>
   );
 }
 
-function FactoryResetOperation({ onAccepted }: { onAccepted: () => void | Promise<void> }) {
+function FactoryResetOperation({
+  onReset,
+  onAccepted
+}: {
+  onReset: (confirmation: string) => Promise<unknown>;
+  onAccepted: () => void | Promise<void>;
+}) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [confirmation, setConfirmation] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [transitionDelayed, setTransitionDelayed] = useState(false);
-
-  const close = () => {
-    if (submitting) return;
-    setOpen(false);
-    setConfirmation('');
-    setFailed(false);
-    setTransitionDelayed(false);
-  };
-
-  const submit = async () => {
-    if (confirmation !== CONFIRMATION || submitting) return;
-    setSubmitting(true);
-    setFailed(false);
-    setTransitionDelayed(false);
-    try {
-      await factoryResetDeployment(confirmation);
-      try {
-        await onAccepted();
-      } catch {
-        setTransitionDelayed(true);
-        setSubmitting(false);
-      }
-    } catch {
-      setFailed(true);
-      setSubmitting(false);
-    }
-  };
+  const operation = useFactoryResetState(onReset, onAccepted);
 
   return (
     <div className={styles.operation}>
@@ -81,26 +57,26 @@ function FactoryResetOperation({ onAccepted }: { onAccepted: () => void | Promis
         <Typography.Text strong>{t('deployment.reset.action')}</Typography.Text>
         <Typography.Text type="secondary">{t('deployment.reset.description')}</Typography.Text>
       </div>
-      <Button danger onClick={() => setOpen(true)}>
+      <Button danger onClick={() => operation.setOpen(true)}>
         {t('deployment.reset.action')}
       </Button>
 
       <Modal
-        open={open}
+        open={operation.open}
         title={t('deployment.reset.modalTitle')}
-        onCancel={close}
+        onCancel={operation.close}
         destroyOnHidden
         footer={[
-          <Button key="cancel" disabled={submitting} onClick={close}>
+          <Button key="cancel" disabled={operation.submitting} onClick={operation.close}>
             {t('common.cancel')}
           </Button>,
           <Button
             key="confirm"
             danger
             type="primary"
-            disabled={confirmation !== CONFIRMATION}
-            loading={submitting}
-            onClick={() => void submit()}
+            disabled={operation.confirmation !== CONFIRMATION}
+            loading={operation.submitting}
+            onClick={() => void operation.submit()}
           >
             {t('deployment.reset.confirm')}
           </Button>
@@ -127,20 +103,70 @@ function FactoryResetOperation({ onAccepted }: { onAccepted: () => void | Promis
             <Input
               id="factory-reset-confirmation"
               aria-label={t('deployment.reset.inputLabel')}
-              value={confirmation}
+              value={operation.confirmation}
               autoComplete="off"
-              disabled={submitting}
-              onChange={event => setConfirmation(event.target.value)}
+              disabled={operation.submitting}
+              onChange={event => operation.setConfirmation(event.target.value)}
             />
           </label>
-          {failed ? <Alert type="error" showIcon message={t('deployment.reset.failed')} /> : null}
-          {transitionDelayed ? (
+          {operation.failed ? <Alert type="error" showIcon message={t('deployment.reset.failed')} /> : null}
+          {operation.transitionDelayed ? (
             <Alert type="warning" showIcon message={t('deployment.reset.transitionDelayed')} />
           ) : null}
         </div>
       </Modal>
     </div>
   );
+}
+
+function useFactoryResetState(
+  onReset: (confirmation: string) => Promise<unknown>,
+  onAccepted: () => void | Promise<void>
+) {
+  const [open, setOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [transitionDelayed, setTransitionDelayed] = useState(false);
+
+  const close = () => {
+    if (submitting) return;
+    setOpen(false);
+    setConfirmation('');
+    setFailed(false);
+    setTransitionDelayed(false);
+  };
+
+  const submit = async () => {
+    if (confirmation !== CONFIRMATION || submitting) return;
+    setSubmitting(true);
+    setFailed(false);
+    setTransitionDelayed(false);
+    try {
+      await onReset(confirmation);
+      try {
+        await onAccepted();
+      } catch {
+        setTransitionDelayed(true);
+        setSubmitting(false);
+      }
+    } catch {
+      setFailed(true);
+      setSubmitting(false);
+    }
+  };
+
+  return {
+    open,
+    confirmation,
+    submitting,
+    failed,
+    transitionDelayed,
+    close,
+    submit,
+    setOpen,
+    setConfirmation
+  };
 }
 
 async function redirectToSetup() {

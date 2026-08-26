@@ -189,9 +189,7 @@
 :global(.status-incident-editor .ant-modal-content) {
   overflow: hidden;
   border-radius: 16px;
-  box-shadow:
-    0 28px 80px rgb(15 23 42 / 22%),
-    0 6px 18px rgb(15 23 42 / 12%);
+  box-shadow: var(--hb-shadow-modal);
 }
 
 :global(.status-incident-editor .ant-modal-header) {
@@ -348,7 +346,7 @@
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 10px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
+  box-shadow: var(--hb-shadow-card);
 }
 
 :global(.status-incident-review-workspace) {
@@ -426,7 +424,7 @@
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: 10px;
   background: var(--ant-color-bg-container);
-  box-shadow: 0 12px 28px rgb(15 23 42 / 9%);
+  box-shadow: var(--hb-shadow-floating);
 }
 
 :global(.status-incident-public-preview > header) {

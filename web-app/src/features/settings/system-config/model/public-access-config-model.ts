@@ -30,9 +30,9 @@ export function createPublicAccessConfigDraft(config: PublicAccessConfig): Publi
 
 export function buildPublicAccessConfigPayload(draft: PublicAccessConfigDraft): PublicAccessConfig {
   return {
-    publicBaseUrl: text(draft.publicBaseUrl),
-    serverOtlpHttpEndpoint: text(draft.serverOtlpHttpEndpoint),
-    serverOtlpGrpcEndpoint: text(draft.serverOtlpGrpcEndpoint)
+    publicBaseUrl: normalizedOptionalAddress(draft.publicBaseUrl),
+    serverOtlpHttpEndpoint: normalizedOptionalAddress(draft.serverOtlpHttpEndpoint),
+    serverOtlpGrpcEndpoint: normalizedOptionalAddress(draft.serverOtlpGrpcEndpoint)
   };
 }
 
@@ -88,7 +88,7 @@ function wildcardHost(value: string) {
   return host === '0.0.0.0' || host === '::' || host === '0:0:0:0:0:0:0:0';
 }
 
-function text(value: string) {
+function normalizedOptionalAddress(value: string) {
   return value.trim() || null;
 }
 

@@ -10,7 +10,7 @@
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--hb-border-subtle) 82%, transparent);
   border-radius: 14px;
-  box-shadow: 0 24px 72px rgb(24 30 42 / 22%);
+  box-shadow: var(--hb-shadow-dialog);
 }
 
 .dialog :global(.ant-modal-header) {

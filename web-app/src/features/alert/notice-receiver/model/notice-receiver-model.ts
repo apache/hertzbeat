@@ -15,57 +15,19 @@ import {
   type FeiShuReceiveType,
   type NoticeReceiverOptionKey,
   type NoticeReceiverSecretKey,
-  type NoticeReceiverType,
-  type WebHookAuthType
+  type NoticeReceiverType
 } from './notice-receiver-catalog';
+import type { NoticeReceiver, NoticeReceiverDraft } from './notice-receiver-types';
 import { compactTablePageSizes } from '@/shared/pagination';
 import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 import { channelValidationErrors } from './notice-receiver-channel-validation';
 
 export * from './notice-receiver-catalog';
+export type * from './notice-receiver-types';
 
 export const noticeReceiverPageSizes = compactTablePageSizes;
 export type NoticeReceiverQuery = { name: string; pageIndex: number; pageSize: number };
-
-export type NoticeReceiverOptions = Partial<Record<NoticeReceiverOptionKey, string | number>> & {
-  hookAuthType?: WebHookAuthType;
-  larkReceiveType?: FeiShuReceiveType;
-};
-
-export type NoticeReceiverDraft = Record<
-  Exclude<NoticeReceiverOptionKey, 'agentId' | 'hookAuthType' | 'larkReceiveType'>,
-  string
-> & {
-  id?: number;
-  name: string;
-  type: NoticeReceiverType;
-  agentId: number | null;
-  hookAuthType: WebHookAuthType;
-  larkReceiveType: FeiShuReceiveType;
-  configuredSecrets: readonly NoticeReceiverSecretKey[];
-  clearSecrets: readonly NoticeReceiverSecretKey[];
-};
-
-export type NoticeReceiver = {
-  id: number;
-  name: string;
-  type: NoticeReceiverType;
-  typeKey: string;
-  options: NoticeReceiverOptions;
-  configuredSecrets: readonly NoticeReceiverSecretKey[];
-  creator?: string | null;
-  modifier?: string | null;
-  gmtCreate?: string | null;
-  gmtUpdate?: string | null;
-};
-
-export type NoticeReceiverOption = Pick<NoticeReceiver, 'id' | 'name' | 'type'>;
-export type NoticeReceiverMutation = {
-  id: number;
-  status: 'created' | 'updated' | 'deleted' | 'missing';
-  receiver: NoticeReceiver | null;
-};
 
 export function readNoticeReceiverQuery(params: URLSearchParams): NoticeReceiverQuery {
   return {

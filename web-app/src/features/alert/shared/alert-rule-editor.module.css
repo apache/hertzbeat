@@ -279,7 +279,7 @@
 .variableButton:global(.ant-btn:not(:disabled):hover) {
   border-color: var(--ant-color-primary-border-hover);
   background: var(--ant-color-primary-bg);
-  box-shadow: 0 3px 8px rgb(0 0 0 / 10%);
+  box-shadow: var(--hb-shadow-control);
   transform: translateY(-2px);
 }
 
@@ -289,7 +289,7 @@
 
 .variableDragging:global(.ant-btn) {
   opacity: 0.8;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
+  box-shadow: var(--hb-shadow-control-compact);
   transform: scale(0.98);
 }
 

@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { DeploymentRequestError, loadDeployment, loadMigration } from '../api/deployment-api';
+import { DeploymentRequestError, factoryResetDeployment, loadDeployment, loadMigration } from '../api/deployment-api';
 import type { DeploymentDraft, MigrationExportFormat } from '../model/deployment-workflow';
 import { createDeploymentDraft, deploymentPollInterval, selectMigrationTarget } from '../model/deployment-workflow';
 import {
@@ -44,6 +44,7 @@ export function useDeploymentController() {
     commandErrorKey: deploymentCommandErrorKey(commands.error, operation.error),
     retry: () => deployment.refetch(),
     refreshOperation: () => operation.refetch(),
+    factoryReset: (confirmation: string) => factoryResetDeployment(confirmation),
     startNewMigration: core.resetLifecycle,
     continueCurrentMigration: () => activeOperationId && core.route.setOperationId(activeOperationId),
     updateDraft: core.updateDraft,

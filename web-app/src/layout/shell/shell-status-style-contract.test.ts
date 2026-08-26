@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import appStyles from '../../app/styles.css?raw';
-import shellStyles from './hertzbeat-shell.module.css?raw';
+import shellStyles from './hertzbeat-shell-status.module.css?raw';
 
 describe('shell runtime status style contract', () => {
   it.each(['loading', 'available', 'degraded', 'unavailable', 'unknown'])(

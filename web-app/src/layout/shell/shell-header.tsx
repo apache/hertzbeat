@@ -27,6 +27,7 @@ import {
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
+import statusStyles from './hertzbeat-shell-status.module.css';
 import { ShellBrand, ShellHeaderActions } from './shell-header-presentation';
 import { ShellStatusSpine } from './shell-status-spine';
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
@@ -120,7 +121,7 @@ function ShellTimeControl({ time, t, locale }: { time: SharedTimeValue; t: TFunc
   if (time.headerMode === 'hidden' || !time.window) return null;
   if (time.headerMode === 'exact_window') {
     return (
-      <div className={styles.timePolicy} data-testid="shell-time-policy">
+      <div className={statusStyles.timePolicy} data-testid="shell-time-policy">
         <ClockCircleOutlined aria-hidden="true" />
         <span>{formatExactWindow(time.window, locale)}</span>
       </div>
@@ -129,7 +130,7 @@ function ShellTimeControl({ time, t, locale }: { time: SharedTimeValue; t: TFunc
   const items = globalTimeMenuItems(time, t);
   return (
     <Dropdown menu={{ items, onClick: info => updateGlobalTime(time, info.key) }} trigger={['click']}>
-      <Button className={styles.timePolicy ?? ''} data-testid="shell-time-policy" type="text">
+      <Button className={statusStyles.timePolicy ?? ''} data-testid="shell-time-policy" type="text">
         <ClockCircleOutlined aria-hidden="true" />
         <span>{globalTimeLabel(time, t)}</span>
       </Button>

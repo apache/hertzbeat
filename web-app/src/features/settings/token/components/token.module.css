@@ -29,9 +29,7 @@
   align-items: center;
   border-radius: 14px;
   background: var(--ant-color-bg-container);
-  box-shadow:
-    0 20px 46px rgb(15 23 42 / 9%),
-    0 2px 8px rgb(15 23 42 / 5%);
+  box-shadow: var(--hb-shadow-raised);
   flex-direction: column;
   text-align: center;
 }

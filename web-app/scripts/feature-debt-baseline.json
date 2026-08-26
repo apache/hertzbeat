@@ -1,4 +1,88 @@
 {
   "version": 1,
-  "entries": []
+  "entries": [
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-center-delete-dialog.tsx",
+      "allowedMax": 216
+    },
+    { "rule": "feature-module-size", "path": "features/alert/components/alert-center-results.tsx", "allowedMax": 226 },
+    { "rule": "feature-module-size", "path": "features/alert/components/alert-center-toolbar.tsx", "allowedMax": 215 },
+    { "rule": "feature-module-size", "path": "features/alert/components/alert-group-editor.tsx", "allowedMax": 293 },
+    { "rule": "feature-module-size", "path": "features/alert/components/alert-inhibit-editor.tsx", "allowedMax": 272 },
+    { "rule": "feature-module-size", "path": "features/alert/components/alert-rule-fields.tsx", "allowedMax": 483 },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-rule-metric-binding-field.tsx",
+      "allowedMax": 359
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-rule-metric-target-fields.tsx",
+      "allowedMax": 233
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/integration/components/integration-guide.tsx",
+      "allowedMax": 322
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/integration/components/integration.module.css",
+      "allowedMax": 339
+    },
+    { "rule": "feature-module-size", "path": "features/alert/model/alert-rule-draft.ts", "allowedMax": 359 },
+    { "rule": "feature-module-size", "path": "features/alert/pages/alert-rule-editor-page.tsx", "allowedMax": 192 },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/collector/components/collector-details-drawer.module.css",
+      "allowedMax": 221
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/collector/components/collector-details-drawer.tsx",
+      "allowedMax": 269
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/label/controller/label-save-recovery-controller.ts",
+      "allowedMax": 208
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/label/pages/label-page-workspace.tsx",
+      "allowedMax": 219
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/object-store/components/object-store-editor.tsx",
+      "allowedMax": 311
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/object-store/components/object-store.module.css",
+      "allowedMax": 266
+    },
+    { "rule": "feature-module-size", "path": "features/settings/token/components/token-list.tsx", "allowedMax": 251 },
+    {
+      "rule": "feature-module-size",
+      "path": "features/status/management/components/status-incident-editor.tsx",
+      "allowedMax": 283
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/status/management/components/status-management.module.css",
+      "allowedMax": 425
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/status/management/pages/status-management-page.tsx",
+      "allowedMax": 163
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/status/public/components/public-status.module.css",
+      "allowedMax": 484
+    }
+  ]
 }

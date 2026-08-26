@@ -1,4 +1,227 @@
 {
   "version": 1,
-  "entries": []
+  "entries": [
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-center-delete-dialog.tsx",
+      "identity": "function:useDeleteDialogState",
+      "allowedMax": 64
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-center-results.tsx",
+      "identity": "function:AlertCenterResults",
+      "allowedMax": 87
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-center-toolbar.tsx",
+      "identity": "function:AlertCenterToolbar",
+      "allowedMax": 65
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-center-toolbar.tsx",
+      "identity": "function:AlertPrimaryFilters",
+      "allowedMax": 63
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-group-editor.tsx",
+      "identity": "function:AlertGroupFields",
+      "allowedMax": 72
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-group-results.tsx",
+      "identity": "function:AlertGroupResults",
+      "allowedMax": 67
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-inhibit-editor.tsx",
+      "identity": "function:AlertInhibitFields",
+      "allowedMax": 88
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-inhibit-editor.tsx",
+      "identity": "function:AlertInhibitEditor",
+      "allowedMax": 61
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-label-matcher-editor.tsx",
+      "identity": "function:AlertLabelMatcherEditor",
+      "allowedMax": 88
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-condition-group.tsx",
+      "identity": "function:AlertRuleConditionGroup",
+      "allowedMax": 65
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-condition-row.tsx",
+      "identity": "function:AlertRuleConditionRow",
+      "allowedMax": 77
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-label-selector.tsx",
+      "identity": "function:AlertRuleLabelSelector",
+      "allowedMax": 78
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-log-condition-editor.tsx",
+      "identity": "function:AlertRuleLogConditionEditor",
+      "allowedMax": 77
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-map-field.tsx",
+      "identity": "function:AlertRuleMapField",
+      "allowedMax": 75
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-metric-binding-field.tsx",
+      "identity": "function:BindingWorkspace",
+      "allowedMax": 71
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-metric-binding-field.tsx",
+      "identity": "function:BindingTransferPane",
+      "allowedMax": 74
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-metric-binding-field.tsx",
+      "identity": "function:BindingLabels",
+      "allowedMax": 78
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-metric-expression-editor.tsx",
+      "identity": "function:AlertRuleMetricExpressionEditor",
+      "allowedMax": 85
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-metric-target-fields.tsx",
+      "identity": "function:GuidedMetricTargetFields",
+      "allowedMax": 74
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-sql-editor.tsx",
+      "identity": "function:AlertRuleSqlEditor",
+      "allowedMax": 87
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-rule-template-field.tsx",
+      "identity": "function:AlertRuleTemplateField",
+      "allowedMax": 100
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-silence-editor.tsx",
+      "identity": "function:AlertSilenceEditor",
+      "allowedMax": 78
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-silence-results.tsx",
+      "identity": "function:columns",
+      "allowedMax": 66
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-rule-editor-controller.ts",
+      "identity": "function:useAlertRuleEditorController",
+      "allowedMax": 72
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-silence-controller.ts",
+      "identity": "function:useAlertSilenceController",
+      "allowedMax": 62
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/integration/controller/use-alert-integration-controller.ts",
+      "identity": "function:useAlertIntegrationController",
+      "allowedMax": 66
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/notice-receiver/components/notice-receiver-editor.tsx",
+      "identity": "function:NoticeReceiverForm",
+      "allowedMax": 63
+    },
+    {
+      "rule": "function-size",
+      "path": "features/deployment/components/deployment-summary.tsx",
+      "identity": "function:DeploymentSummary",
+      "allowedMax": 66
+    },
+    {
+      "rule": "function-size",
+      "path": "features/deployment/components/factory-reset-section.tsx",
+      "identity": "function:FactoryResetOperation",
+      "allowedMax": 75
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/collector/components/collector-details-drawer.tsx",
+      "identity": "function:CollectorDetailsDrawer",
+      "allowedMax": 85
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/collector/components/collector-details-drawer.tsx",
+      "identity": "function:InspectorHeader",
+      "allowedMax": 67
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/label/controller/label-resource-controller.ts",
+      "identity": "function:useLabelResourceController",
+      "allowedMax": 63
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/label/pages/label-page-workspace.tsx",
+      "identity": "function:LabelWorkspace",
+      "allowedMax": 90
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/object-store/components/object-store-editor.tsx",
+      "identity": "function:ObjectStoreTypeField",
+      "allowedMax": 81
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/system-config/controller/use-public-access-config-controller.ts",
+      "identity": "function:usePublicAccessConfigController",
+      "allowedMax": 68
+    },
+    {
+      "rule": "function-size",
+      "path": "features/status/management/components/status-incident-editor.tsx",
+      "identity": "function:StatusIncidentEditor",
+      "allowedMax": 89
+    },
+    {
+      "rule": "function-size",
+      "path": "features/status/management/pages/status-management-page.tsx",
+      "identity": "function:StatusManagementPage",
+      "allowedMax": 67
+    }
+  ]
 }

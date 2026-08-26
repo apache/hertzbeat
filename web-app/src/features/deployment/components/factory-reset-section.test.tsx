@@ -6,8 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const factoryResetDeployment = vi.hoisted(() => vi.fn());
-vi.mock('../api/deployment-api', () => ({ factoryResetDeployment }));
+const factoryResetDeployment = vi.fn();
 
 import { DeploymentDangerZone } from './factory-reset-section';
 
@@ -66,7 +65,11 @@ describe('FactoryResetSection', () => {
 function renderSection(onOpenMigration: () => void, onAccepted: () => void | Promise<void>) {
   return render(
     <I18nextProvider i18n={i18n}>
-      <DeploymentDangerZone onOpenMigration={onOpenMigration} onAccepted={onAccepted} />
+      <DeploymentDangerZone
+        onOpenMigration={onOpenMigration}
+        onReset={factoryResetDeployment}
+        onAccepted={onAccepted}
+      />
     </I18nextProvider>
   );
 }

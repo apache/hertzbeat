@@ -20,10 +20,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
-import {
-  loadPublicAccessConfig,
-  publicAccessConfigQueryKey
-} from '@/features/settings/system-config/api/public-access-config-api';
+import { loadPublicAccessConfig, publicAccessConfigQueryKey, type PublicAccessConfig } from '@/features/settings';
 import { buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
 
 import {
@@ -108,7 +105,7 @@ export function useAlertIntegrationController() {
   };
 }
 
-function configuredPublicBaseUrl(config: Awaited<ReturnType<typeof loadPublicAccessConfig>> | undefined) {
+function configuredPublicBaseUrl(config: PublicAccessConfig | undefined) {
   return config?.publicBaseUrl;
 }
 
