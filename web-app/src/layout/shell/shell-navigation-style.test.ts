@@ -22,4 +22,12 @@ describe('shell navigation visual hierarchy', () => {
   it('gives expanded first-level areas a restrained shared open state', () => {
     expect(shellStyles).toMatch(/\.navigationParentOpen\s*\{[^}]*background:\s*var\(--hb-nav-hover\)/);
   });
+
+  it('marks the active destination with a line instead of a filled selection block', () => {
+    const activeRule = shellStyles.match(/\.navigationLinkActive\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(activeRule).toMatch(/border-left-color:\s*var\(--hb-brand-accent\)/);
+    expect(activeRule).toMatch(/background:\s*transparent/);
+    expect(activeRule).not.toMatch(/background:\s*var\(--hb-nav-selected\)/);
+  });
 });

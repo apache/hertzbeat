@@ -41,7 +41,7 @@
 
 .current a {
   border-left-color: var(--hb-brand-accent);
-  background: var(--hb-nav-selected);
+  background: transparent;
 }
 
 .index {

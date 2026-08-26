@@ -11,6 +11,10 @@
   padding: 40px clamp(24px, 5vw, 72px);
   overflow-x: hidden;
   background: var(--hb-bg-canvas);
+  background-image: url('/assets/bg.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
 }
 
 .shell {
@@ -82,15 +86,15 @@
 
 .introductionBrand {
   display: block;
-  width: 280px;
-  height: 70px;
-  margin-bottom: 4px;
+  width: 300px;
+  height: 75px;
+  margin-bottom: 12px;
 }
 
 .introductionPositioning {
   display: block;
   max-width: 540px;
-  margin-bottom: clamp(26px, 2.5vw, 32px);
+  margin-bottom: clamp(44px, 4vw, 56px);
   font-size: clamp(16px, 1.45vw, 20px);
   font-weight: 520;
   letter-spacing: -0.01em;
@@ -101,9 +105,9 @@
   position: relative;
   display: block;
   width: 100%;
-  block-size: 1.45em;
+  block-size: 1.55em;
   overflow: hidden;
-  font-size: 34px;
+  font-size: 36px;
   line-height: 1.18;
 }
 
@@ -133,7 +137,7 @@
 .introductionMeasure {
   position: absolute;
   visibility: hidden;
-  font-size: 34px;
+  font-size: 36px;
   white-space: nowrap;
   pointer-events: none;
 }
@@ -190,10 +194,12 @@
 .panel {
   width: 100%;
   padding: 30px;
-  border: 1px solid var(--hb-border-subtle);
+  border: 1px solid color-mix(in srgb, var(--hb-bg-raised) 72%, transparent);
   border-radius: var(--hb-radius-surface);
-  background: var(--hb-bg-raised);
+  background: color-mix(in srgb, var(--hb-bg-raised) 58%, transparent);
   box-shadow: var(--hb-shadow-surface);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
 }
 
 .brand {
@@ -238,11 +244,7 @@
   }
 
   .page {
-    background-image: url('/assets/bg.png');
-    background-repeat: no-repeat;
-    background-position: center;
     background-attachment: fixed;
-    background-size: cover;
   }
 
   .introduction {
@@ -251,10 +253,21 @@
   }
 
   .panel {
-    border-color: color-mix(in srgb, var(--hb-bg-raised) 72%, transparent);
-    background: color-mix(in srgb, var(--hb-bg-raised) 58%, transparent);
-    -webkit-backdrop-filter: blur(18px) saturate(1.15);
-    backdrop-filter: blur(18px) saturate(1.15);
+    padding: 36px;
+  }
+
+  .panel > :global(h2.ant-typography) {
+    margin-bottom: 22px;
+  }
+
+  .panel :global(.ant-input),
+  .panel :global(.ant-input-affix-wrapper),
+  .panel :global(.ant-btn) {
+    min-height: 42px;
+  }
+
+  .panel :global(.ant-input-affix-wrapper .ant-input) {
+    min-height: auto;
   }
 }
 

@@ -137,12 +137,14 @@ describe('actual administrative app routes', () => {
     await waitFor(() => expect(probes.pluginApi).toHaveBeenCalledOnce());
   });
 
-  it('admits ADMIN to the guarded Deployment loader and page API', async () => {
+  it('keeps the incomplete Deployment route unavailable to ADMIN without loading feature code or APIs', async () => {
     renderAppRoute('/settings/deployment', 'ADMIN');
 
-    expect(await screen.findByTestId('deployment-page')).toBeInTheDocument();
-    expect(probes.deploymentLoader).toHaveBeenCalledOnce();
-    await waitFor(() => expect(probes.deploymentApi).toHaveBeenCalledOnce());
+    expect(
+      (await screen.findByText(i18n.t('common.permission.additionalRequiredTitle'))).closest('[data-state]')
+    ).toHaveAttribute('data-state', 'permission');
+    expect(probes.deploymentLoader).not.toHaveBeenCalled();
+    expect(probes.deploymentApi).not.toHaveBeenCalled();
   });
 
   it('converges the legacy Plugin path on the guarded canonical route', async () => {

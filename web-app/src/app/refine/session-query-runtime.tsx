@@ -19,7 +19,11 @@ import type { QueryClient } from '@tanstack/react-query';
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 
-import { createCheckingSessionQueryClient, createSessionQueryClient } from '@/core/auth/session-cache-boundary';
+import {
+  createCheckingSessionQueryClient,
+  createSessionQueryClient,
+  hasSessionIdentityBoundaryChanged
+} from '@/core/auth/session-cache-boundary';
 import { createSessionConvergenceChannel } from '@/core/auth/session-convergence-channel';
 import {
   anonymousSession,
@@ -137,7 +141,10 @@ function useSessionRefresh(
           if (!mountedRef.current || runtimeRef.current.generation !== generation) {
             return { status: 'retired' } satisfies BrowserSessionRefreshResult;
           }
-          replaceIdentity(refreshedSession, options);
+          const currentSession = runtimeRef.current.queryClient.getQueryData<UiSession>(sessionQueryKey);
+          if (hasSessionIdentityBoundaryChanged(currentSession, refreshedSession)) {
+            replaceIdentity(refreshedSession, options);
+          }
           return {
             status: refreshedSession.authenticated ? 'renewed' : 'rejected'
           } satisfies BrowserSessionRefreshResult;

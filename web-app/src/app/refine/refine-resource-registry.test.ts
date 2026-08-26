@@ -72,7 +72,7 @@ describe('Refine shell resource registry', () => {
       'shell-administration'
     ]);
     expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual(['monitors', 'bulletin', 'monitor-definitions']);
-    expect(navigationChildren(tree, 'shell-application-observability')).toEqual(['explore', 'instrumentation']);
+    expect(navigationChildren(tree, 'shell-application-observability')).toEqual(['instrumentation', 'explore']);
     expect(navigationChildren(tree, 'shell-resources')).toEqual(['entities', 'topology']);
     expect(navigationChildren(tree, 'shell-alerting')).toEqual([
       'alerts',
@@ -88,7 +88,6 @@ describe('Refine shell resource registry', () => {
     ]);
     expect(navigationChildren(tree, 'shell-administration')).toEqual([
       'system-config',
-      'deployment-settings',
       'plugins',
       'collectors',
       'tokens',
@@ -113,6 +112,7 @@ describe('Refine shell resource registry', () => {
     const names = flattenNavigationNames(buildShellNavigation(refineResources, ['ADMIN']));
 
     expect(names).not.toContain('settings');
+    expect(names).not.toContain('deployment-settings');
     expect(names.some(name => name.startsWith('monitor-category:'))).toBe(false);
     expect(names.some(name => name.startsWith('monitor-app:'))).toBe(false);
   });

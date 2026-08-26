@@ -144,6 +144,7 @@ describe('production Refine runtime', () => {
     expect(mountedClients).toContain(observedClient);
     expect(mountedClients.filter(client => client.getQueryData(sessionQueryKey))).toEqual([observedClient]);
     expect(observedClient.getQueryData(sessionQueryKey)).toEqual(authenticatedSession);
+    expect(monitorApi.loadMonitorNavigationApps).toHaveBeenCalledTimes(1);
   });
 });
 

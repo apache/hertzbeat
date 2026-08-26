@@ -162,17 +162,17 @@ const staticRefineResources: ResourceProps[] = [
     order: 20,
     timePolicy: 'global'
   }),
-  routedNavigationResource('explore', {
-    parent: 'shell-application-observability',
-    icon: <AreaChartOutlined />,
-    order: 10,
-    timePolicy: 'route_owned'
-  }),
   routedNavigationResource('instrumentation', {
     parent: 'shell-application-observability',
     icon: <ApiOutlined />,
-    order: 20,
+    order: 10,
     timePolicy: 'none'
+  }),
+  routedNavigationResource('explore', {
+    parent: 'shell-application-observability',
+    icon: <AreaChartOutlined />,
+    order: 20,
+    timePolicy: 'route_owned'
   }),
   routedNavigationResource('alerts', {
     parent: 'shell-alerting',
@@ -288,6 +288,8 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('deployment-settings', {
     parent: 'shell-administration',
     icon: <DeploymentUnitOutlined />,
+    capability: 'unsupported',
+    navigation: false,
     order: 15,
     timePolicy: 'none'
   }),

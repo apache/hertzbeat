@@ -89,6 +89,7 @@ export async function initializeCandidateGraph(
   bindTopologyInteractionEvents(graph, module, resources.input, ownsGraph);
   resources.observer = observeSize(container, graph);
   await graph.render();
+  removeGeneratedCanvasTabStops(layer);
   if (cancelled()) return;
   const previousViewport = refs.graph.current ? readTopologyViewport(refs.graph.current) : refs.viewport.current;
   await restoreOrFitTopologyGraph(graph, previousViewport);
@@ -154,6 +155,10 @@ function activateGraphLayer(layer: HTMLDivElement) {
   layer.removeAttribute('aria-hidden');
   layer.style.pointerEvents = 'auto';
   layer.style.visibility = 'visible';
+}
+
+export function removeGeneratedCanvasTabStops(layer: HTMLElement) {
+  for (const canvas of layer.querySelectorAll('canvas')) canvas.tabIndex = -1;
 }
 
 function observeSize(container: HTMLDivElement, graph: TopologyG6Graph) {

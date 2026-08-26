@@ -32,3 +32,20 @@ export function createSessionQueryClient(createQueryClient: () => QueryClient, n
 export function createCheckingSessionQueryClient(createQueryClient: () => QueryClient) {
   return createQueryClient();
 }
+
+export function hasSessionIdentityBoundaryChanged(current: UiSession | undefined, next: UiSession) {
+  return (
+    current === undefined ||
+    current.authenticated !== next.authenticated ||
+    current.username !== next.username ||
+    current.workspaceId !== next.workspaceId ||
+    current.expiresAt !== next.expiresAt ||
+    !haveSameRoles(current.roles, next.roles)
+  );
+}
+
+function haveSameRoles(current: string[], next: string[]) {
+  if (current.length !== next.length) return false;
+  const nextRoles = new Set(next);
+  return current.every(role => nextRoles.has(role));
+}
