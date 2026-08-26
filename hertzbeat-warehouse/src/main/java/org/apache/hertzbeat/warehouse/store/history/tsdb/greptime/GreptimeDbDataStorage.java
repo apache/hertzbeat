@@ -45,9 +45,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -101,6 +104,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_END_TIME = "end";
     private static final String LABEL_KEY_TS = "ts";
     private static final int LOG_BATCH_SIZE = 500;
+    private static final Map<String, String> OTLP_RESOURCE_KEY_ALIASES = Map.of(
+            "service_name", "service.name",
+            "service_namespace", "service.namespace",
+            "deployment_environment_name", "deployment.environment.name");
 
     private GreptimeDB greptimeDb;
 
@@ -109,6 +116,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private final RestTemplate restTemplate;
 
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     public GreptimeDbDataStorage(GreptimeProperties greptimeProperties,
                                  @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
@@ -160,6 +168,16 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         List<CollectRep.Field> fields = metricsData.getFields();
         Map<String, String> customLabels = metricsData.getLabels();
         List<String> fieldNames = fields.stream().map(CollectRep.Field::getName).collect(Collectors.toList());
+        Set<String> labelCollisions = findLabelCollisions(customLabels, fieldNames);
+        if (!labelCollisions.isEmpty()) {
+            long previousCount = ignoredLabelCollisionCount.getAndAdd(labelCollisions.size());
+            long ignoredCount = previousCount + labelCollisions.size();
+            if (shouldLogLabelCollisions(previousCount, ignoredCount)) {
+                log.warn("[warehouse greptime] ignore custom labels {} from metrics data {} because "
+                                + "the keys are storage-managed; cumulative ignored labels: {}.",
+                        labelCollisions, metricsData.getId(), ignoredCount);
+            }
+        }
         fields.forEach(field -> {
             if (field.getLabel()) {
                 tableSchemaBuilder.addTag(field.getName(), DataType.String);
@@ -231,6 +249,27 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         } catch (Throwable throwable) {
             log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
         }
+    }
+
+    private Set<String> findLabelCollisions(Map<String, String> customLabels, List<String> fieldNames) {
+        if (customLabels == null || customLabels.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> collisions = new TreeSet<>();
+        for (String key : customLabels.keySet()) {
+            if (LABEL_KEY_INSTANCE.equals(key) || LABEL_KEY_TS.equals(key) || fieldNames.contains(key)) {
+                collisions.add(key);
+            }
+        }
+        return collisions;
+    }
+
+    private boolean shouldLogLabelCollisions(long previousCount, long currentCount) {
+        return previousCount == 0 || previousCount / 100 < currentCount / 100;
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
     }
 
     @Override
@@ -756,7 +795,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         addJsonCondition(resourceConditions, "deployment.environment.name", filter.environment());
         if (StringUtils.hasText(filter.resourceFilter())) {
             for (ResourceFilterExpression.Clause clause : ResourceFilterExpression.parse(filter.resourceFilter())) {
-                String attribute = "json_get_string(resource, '$[\"" + clause.key() + "\"]')";
+                String attribute = resourceAttributeExpression(clause.key());
                 switch (clause.operator()) {
                     case EQUALS -> resourceConditions.add(attribute + " = '" + safeString(clause.value()) + "'");
                     case NOT_EQUALS -> resourceConditions.add(attribute + " <> '" + safeString(clause.value()) + "'");
@@ -774,8 +813,18 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private void addJsonCondition(List<String> conditions, String key, String value) {
         if (StringUtils.hasText(value)) {
-            conditions.add("json_get_string(resource, '$[\"" + key + "\"]') = '" + safeString(value) + "'");
+            conditions.add(resourceAttributeExpression(key) + " = '" + safeString(value) + "'");
         }
+    }
+
+    private String resourceAttributeExpression(String key) {
+        String normalizedKey = key.replace('.', '_');
+        String canonical = "json_get_string(resource, '$[\"" + key + "\"]')";
+        if (normalizedKey.equals(key)) {
+            return canonical;
+        }
+        String normalized = "json_get_string(resource, '$[\"" + normalizedKey + "\"]')";
+        return "COALESCE(" + canonical + ", " + normalized + ")";
     }
 
     private static long msToNs(Long ms) {
@@ -857,7 +906,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
                 Object bodyObj = parseJsonMaybe(row.get("body"));
                 Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
-                Map<String, Object> resource = castToMap(parseJsonMaybe(row.get("resource")));
+                Map<String, Object> resource = canonicalizeOtlpResource(
+                        castToMap(parseJsonMaybe(row.get("resource"))));
 
                 LogEntry entry = LogEntry.builder()
                         .timeUnixNano(castToLong(row.get("time_unix_nano")))
@@ -911,6 +961,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return (Map<String, Object>) obj;
         }
         return null;
+    }
+
+    private static Map<String, Object> canonicalizeOtlpResource(Map<String, Object> resource) {
+        if (resource == null || resource.isEmpty()) {
+            return resource;
+        }
+        Map<String, Object> canonical = new LinkedHashMap<>(resource);
+        OTLP_RESOURCE_KEY_ALIASES.forEach((normalized, dotted) -> {
+            if (!canonical.containsKey(dotted) && resource.containsKey(normalized)) {
+                canonical.put(dotted, resource.get(normalized));
+            }
+        });
+        return canonical;
     }
 
     private static Long castToLong(Object obj) {

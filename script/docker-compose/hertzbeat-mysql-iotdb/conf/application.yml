@@ -246,6 +246,17 @@ grafana:
   password: admin
 
 hertzbeat:
+  otlp:
+    grpc:
+      # OTLP/gRPC ingestion listener, started when greptime storage is enabled. Point exporters at
+      # this port on every deployment - docker publishes it unchanged.
+      # 14317 rather than the OpenTelemetry standard 4317, which an OTel Collector on the same host
+      # normally holds already. Set 4317 here if you want the standard port and know it is free.
+      # A port that cannot be bound only disables gRPC ingestion - OTLP/HTTP on /api/otlp/v1 keeps
+      # working either way.
+      enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
+      host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
+      port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
   collector:
     mysql:
       # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.

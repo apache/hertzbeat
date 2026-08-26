@@ -44,6 +44,7 @@ import {
 } from '../../observability/signal-query-context';
 import { SignalStorageGuideComponent } from '../../observability/signal-storage-guide.component';
 import { SignalTimeRangeComponent } from '../../observability/signal-time-range.component';
+import { SignalWorkspaceComponent } from '../../observability/signal-workspace.component';
 import { LogStreamComponent } from '../log-stream/log-stream.component';
 
 type LogViewMode = 'query' | 'stream';
@@ -72,6 +73,7 @@ export function trendBucketMillis(value: string): number {
     SignalNavigationComponent,
     SignalStorageGuideComponent,
     SignalTimeRangeComponent,
+    SignalWorkspaceComponent,
     LogStreamComponent
   ],
   templateUrl: './log-manage.component.html',

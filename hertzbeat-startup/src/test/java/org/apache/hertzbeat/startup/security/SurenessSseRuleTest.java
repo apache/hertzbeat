@@ -39,7 +39,8 @@ import org.yaml.snakeyaml.Yaml;
  * `curl -N` stayed subscribed and received every alert the deployment raised - internal
  * hostnames, addresses, metric values and alert content - because
  * `AlertNoticeDispatch` broadcasts each alert to every subscriber with no per subscriber
- * filtering. `/api/logs/sse/**` was already scoped this way; these now match it.
+ * filtering. The log stream at `/api/observability/logs/stream` was already scoped this
+ * way; these now match it.
  */
 class SurenessSseRuleTest {
 
@@ -98,6 +99,6 @@ class SurenessSseRuleTest {
     @Test
     void theLogStreamScopingIsUnchanged() {
         assertEquals("[admin,user,guest]",
-                roleTree.searchPathFilterRoles("/api/logs/sse/subscribe" + SEPARATOR + "get"));
+                roleTree.searchPathFilterRoles("/api/observability/logs/stream" + SEPARATOR + "get"));
     }
 }

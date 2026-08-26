@@ -33,7 +33,7 @@
 -- under the License.
 
 -- Scheduled SOP execution configurations
-CREATE TABLE hzb_sop_schedule (
+CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT NOT NULL COMMENT 'Conversation ID to push results to',
     sop_name VARCHAR(64) NOT NULL COMMENT 'Name of the SOP skill to execute',

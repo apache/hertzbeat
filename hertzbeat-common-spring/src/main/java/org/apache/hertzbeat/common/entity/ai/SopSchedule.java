@@ -51,6 +51,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "hzb_sop_schedule", indexes = {
     @Index(name = "idx_schedule_conversation_id", columnList = "conversation_id"),
+    @Index(name = "idx_schedule_creator_conversation", columnList = "creator, conversation_id"),
     @Index(name = "idx_schedule_enabled_next", columnList = "enabled, next_run_time")
 })
 @AllArgsConstructor

@@ -787,4 +787,111 @@ class DataSourceServiceTest {
                 () -> dataSourceService.query("sql", "SELEC * FORM hertzbeat_logs"));
         verify(mockExecutor, never()).execute(anyString());
     }
+
+    /**
+     * The expression grammar offers three ways to reach the executor, and the datasource the
+     * caller names is what picks that executor. So a statement written with the
+     * {@code promql("...")} spelling still lands on the sql executor, with the server side
+     * database credentials behind it, whenever the caller names the sql datasource: whether a
+     * statement may run cannot be decided from the spelling.
+     */
+    @Test
+    void calculateRejectsWritesWhateverSpellingTheyArrivedIn() {
+        final QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.calculate("sql", "sql(\"drop table cpu\") > 0"));
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.calculate("sql", "promql(\"drop table cpu\") > 0"));
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.calculate("sql", "sql(\"select 1; drop table cpu\") > 0"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    /**
+     * Only a datasource that speaks sql is guarded. A promql endpoint takes a query string
+     * rather than a statement, so running it through a sql parser would reject valid promql
+     * without denying an attacker anything.
+     */
+    @Test
+    void calculateLeavesPromqlDatasourcesAlone() {
+        final QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(List.of(new HashMap<>(Map.of("__value__", 100.0))));
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        final List<Map<String, Object>> result = dataSourceService.calculate(
+                "promql", "promql(\"rate(http_requests_total[5m])\") > 70");
+
+        assertEquals(1, result.size());
+        verify(mockExecutor).execute("rate(http_requests_total[5m])");
+    }
+
+    /**
+     * A read still has to run, including the GreptimeDB range query syntax that the sql
+     * parser cannot read.
+     */
+    @Test
+    void calculateStillRunsReadsOnSqlDatasources() {
+        final QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(List.of(new HashMap<>(Map.of("__value__", 100.0))));
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        final String rangeQuery = "select avg(value) RANGE '10s' from cpu ALIGN '5s'";
+        final List<Map<String, Object>> result =
+                dataSourceService.calculate("sql", "sql(\"" + rangeQuery + "\") > 70");
+
+        assertEquals(1, result.size());
+        verify(mockExecutor).execute(rangeQuery);
+    }
+
+    @Test
+    void rejectsQueriesThatExceedTheInputBudget() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        String oversized = "m".repeat(8193);
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("promql", oversized));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void rejectsPromqlAndSqlRangesBeyondOneDay() {
+        QueryExecutor promqlExecutor = Mockito.mock(QueryExecutor.class);
+        when(promqlExecutor.support("promql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(promqlExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("promql", "rate(http_requests_total[2d])"));
+        verify(promqlExecutor, never()).execute(anyString());
+
+        QueryExecutor sqlExecutor = Mockito.mock(QueryExecutor.class);
+        when(sqlExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(sqlExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.calculate(
+                        "sql", "sql(\"select avg(value) RANGE '2d' from cpu ALIGN '5m'\") > 1"));
+        verify(sqlExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void rejectsResultSetsBeyondTheAlertBudget() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (int index = 0; index < 1001; index++) {
+            rows.add(Map.of("__value__", index));
+        }
+        when(mockExecutor.execute("metric_name")).thenReturn(rows);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("promql", "metric_name"));
+    }
 }

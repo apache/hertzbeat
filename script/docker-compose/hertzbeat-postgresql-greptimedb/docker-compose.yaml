@@ -109,5 +109,8 @@ services:
     ports:
       - "1157:1157"
       - "1158:1158"
+      # OTLP/gRPC ingestion. 14317 rather than the OpenTelemetry standard 4317, which a local
+      # OTel Collector normally holds - and a clash on a published port stops the container.
+      - "14317:14317"
     networks:
       - hertzbeat

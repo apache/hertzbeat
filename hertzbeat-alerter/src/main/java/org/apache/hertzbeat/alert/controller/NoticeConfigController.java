@@ -29,8 +29,11 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.alert.notice.NoticeTemplateRenderer;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +57,9 @@ public class NoticeConfigController {
 
     @Autowired
     private NoticeConfigService noticeConfigService;
+
+    @Autowired
+    private AlerterProperties alerterProperties;
 
     @PostMapping(path = "/receiver")
     @Operation(summary = "Add a recipient", description = "Add a recipient")
@@ -227,5 +233,19 @@ public class NoticeConfigController {
             return ResponseEntity.ok(Message.success());
         }
         return ResponseEntity.ok(Message.fail(FAIL_CODE, "Notify service not available, please check config!"));
+    }
+
+    @PostMapping(path = "/template/preview")
+    @Operation(summary = "Preview how a notice template renders against a sample alert",
+            description = "Preview how a notice template renders against a sample alert, without sending anything")
+    public ResponseEntity<Message<String>> previewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
+        try {
+            String rendered = NoticeTemplateRenderer.renderContent(
+                    noticeTemplate, NoticeTemplateRenderer.sampleGroupAlert(), alerterProperties.getConsoleUrl(),
+                    ResourceBundleUtil.getBundle("alerter"));
+            return ResponseEntity.ok(Message.successWithData(rendered));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Failed to render template: " + e.getMessage()));
+        }
     }
 }
