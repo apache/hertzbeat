@@ -53,12 +53,12 @@ class AesUtilTest {
 
         byte[] encryptedPayload = Base64.getDecoder().decode(encryptedText);
         byte[] secondEncryptedPayload = Base64.getDecoder().decode(secondEncryptedText);
-        assertArrayEquals(new byte[] {'H', 'B', 'A', '2'}, Arrays.copyOfRange(encryptedPayload, 0, 4));
+        assertArrayEquals(new byte[] {'H', 'B', 'A', '3'}, Arrays.copyOfRange(encryptedPayload, 0, 4));
         assertFalse(Arrays.equals(
-                VALID_KEY.getBytes(StandardCharsets.UTF_8), Arrays.copyOfRange(encryptedPayload, 4, 20)));
+                VALID_KEY.getBytes(StandardCharsets.UTF_8), Arrays.copyOfRange(encryptedPayload, 4, 16)));
         assertFalse(Arrays.equals(
-                Arrays.copyOfRange(encryptedPayload, 4, 20),
-                Arrays.copyOfRange(secondEncryptedPayload, 4, 20)));
+                Arrays.copyOfRange(encryptedPayload, 4, 16),
+                Arrays.copyOfRange(secondEncryptedPayload, 4, 16)));
 
         String decryptedText = aesDecode(encryptedText, VALID_KEY);
         assertEquals(originalText, decryptedText);
@@ -70,6 +70,15 @@ class AesUtilTest {
 
         assertEquals("This is a secret message", aesDecode(legacyCiphertext, VALID_KEY));
         assertTrue(isCiphertext(legacyCiphertext, VALID_KEY));
+    }
+
+    @Test
+    void testRandomIvCbcCiphertextCanBeDecoded() {
+        String randomIvCbcCiphertext =
+                "SEJBMgABAgMEBQYHCAkKCwwNDg9SvG5xbeL65ozxm7IHkzrexBLPr0EyDlh+5BupKDWZ/Q==";
+
+        assertEquals("This is a secret message", aesDecode(randomIvCbcCiphertext, VALID_KEY));
+        assertTrue(isCiphertext(randomIvCbcCiphertext, VALID_KEY));
     }
 
     @Test
@@ -111,6 +120,10 @@ class AesUtilTest {
         encryptedText = aesEncode(originalText, VALID_KEY);
         String invalidKey = "6543210987654321";
         assertFalse(isCiphertext(encryptedText, invalidKey));
+
+        byte[] tamperedPayload = Base64.getDecoder().decode(encryptedText);
+        tamperedPayload[tamperedPayload.length - 1] ^= 1;
+        assertFalse(isCiphertext(Base64.getEncoder().encodeToString(tamperedPayload), VALID_KEY));
     }
 
     @Test

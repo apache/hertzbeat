@@ -26,6 +26,7 @@ import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
@@ -45,13 +46,21 @@ public final class AesUtil {
     /**
      * Default algorithm
      */
-    private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
+    private static final String CBC_ALGORITHM_STR = "AES/CBC/PKCS5Padding";
 
     private static final String AES = "AES";
 
-    private static final byte[] PAYLOAD_HEADER = {'H', 'B', 'A', '2'};
+    private static final String AUTHENTICATED_ALGORITHM_STR = "AES/GCM/NoPadding";
 
-    private static final int IV_LENGTH = 16;
+    private static final byte[] CBC_PAYLOAD_HEADER = {'H', 'B', 'A', '2'};
+
+    private static final byte[] AUTHENTICATED_PAYLOAD_HEADER = {'H', 'B', 'A', '3'};
+
+    private static final int CBC_IV_LENGTH = 16;
+
+    private static final int GCM_NONCE_LENGTH = 12;
+
+    private static final int GCM_TAG_LENGTH_BITS = 128;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -84,7 +93,7 @@ public final class AesUtil {
     }
 
     /**
-     * Encrypted plaintext aes cbc mode
+     * Encrypt plaintext in the authenticated payload format.
      *
      * @param content content
      * @param encryptKey secretKey
@@ -92,21 +101,19 @@ public final class AesUtil {
      */
     public static String aesEncode(String content, String encryptKey) {
         try {
-            // todo consider not init cipher every time and test performance
             SecretKeySpec keySpec = new SecretKeySpec(encryptKey.getBytes(StandardCharsets.UTF_8), AES);
-            // cipher based on the algorithm AES
-            Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-            byte[] initializationVector = new byte[IV_LENGTH];
-            SECURE_RANDOM.nextBytes(initializationVector);
-            // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(initializationVector));
+            Cipher cipher = Cipher.getInstance(AUTHENTICATED_ALGORITHM_STR);
+            byte[] nonce = new byte[GCM_NONCE_LENGTH];
+            SECURE_RANDOM.nextBytes(nonce);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce));
+            cipher.updateAAD(AUTHENTICATED_PAYLOAD_HEADER);
             // get content bytes, must utf-8
             byte[] byteEncode = content.getBytes(StandardCharsets.UTF_8);
             // encode content to byte array
             byte[] byteAes = cipher.doFinal(byteEncode);
-            byte[] payload = ByteBuffer.allocate(PAYLOAD_HEADER.length + initializationVector.length + byteAes.length)
-                    .put(PAYLOAD_HEADER)
-                    .put(initializationVector)
+            byte[] payload = ByteBuffer.allocate(AUTHENTICATED_PAYLOAD_HEADER.length + nonce.length + byteAes.length)
+                    .put(AUTHENTICATED_PAYLOAD_HEADER)
+                    .put(nonce)
                     .put(byteAes)
                     .array();
             // base64 encode content
@@ -149,33 +156,52 @@ public final class AesUtil {
     
     private static byte[] getBytes(final String content, final String decryptKey) throws Exception {
         SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
-        // cipher based on the algorithm AES
-        Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
         byte[] bytesContent = Base64.getDecoder().decode(content);
+        if (hasPayloadHeader(bytesContent, AUTHENTICATED_PAYLOAD_HEADER)) {
+            return decryptAuthenticatedPayload(bytesContent, keySpec);
+        }
+        return decryptCbcPayload(bytesContent, decryptKey, keySpec);
+    }
+
+    private static byte[] decryptAuthenticatedPayload(byte[] payload, SecretKeySpec keySpec) throws Exception {
+        int encryptedOffset = AUTHENTICATED_PAYLOAD_HEADER.length + GCM_NONCE_LENGTH;
+        int minimumPayloadLength = encryptedOffset + GCM_TAG_LENGTH_BITS / Byte.SIZE;
+        if (payload.length < minimumPayloadLength) {
+            throw new IllegalArgumentException("Invalid authenticated encrypted payload");
+        }
+        byte[] nonce = Arrays.copyOfRange(
+                payload, AUTHENTICATED_PAYLOAD_HEADER.length, encryptedOffset);
+        Cipher cipher = Cipher.getInstance(AUTHENTICATED_ALGORITHM_STR);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce));
+        cipher.updateAAD(AUTHENTICATED_PAYLOAD_HEADER);
+        return cipher.doFinal(payload, encryptedOffset, payload.length - encryptedOffset);
+    }
+
+    private static byte[] decryptCbcPayload(byte[] bytesContent, String decryptKey, SecretKeySpec keySpec)
+            throws Exception {
         byte[] initializationVector;
-        if (hasPayloadHeader(bytesContent)) {
-            if (bytesContent.length <= PAYLOAD_HEADER.length + IV_LENGTH) {
+        if (hasPayloadHeader(bytesContent, CBC_PAYLOAD_HEADER)) {
+            if (bytesContent.length <= CBC_PAYLOAD_HEADER.length + CBC_IV_LENGTH) {
                 throw new IllegalArgumentException("Invalid encrypted payload");
             }
             initializationVector = Arrays.copyOfRange(
-                    bytesContent, PAYLOAD_HEADER.length, PAYLOAD_HEADER.length + IV_LENGTH);
+                    bytesContent, CBC_PAYLOAD_HEADER.length, CBC_PAYLOAD_HEADER.length + CBC_IV_LENGTH);
             bytesContent = Arrays.copyOfRange(
-                    bytesContent, PAYLOAD_HEADER.length + IV_LENGTH, bytesContent.length);
+                    bytesContent, CBC_PAYLOAD_HEADER.length + CBC_IV_LENGTH, bytesContent.length);
         } else {
             initializationVector = decryptKey.getBytes(StandardCharsets.UTF_8);
         }
-        // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
+        Cipher cipher = Cipher.getInstance(CBC_ALGORITHM_STR);
         cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(initializationVector));
-        // decode content to byte array
         return cipher.doFinal(bytesContent);
     }
 
-    private static boolean hasPayloadHeader(byte[] payload) {
-        if (payload.length < PAYLOAD_HEADER.length) {
+    private static boolean hasPayloadHeader(byte[] payload, byte[] expectedHeader) {
+        if (payload.length < expectedHeader.length) {
             return false;
         }
-        for (int index = 0; index < PAYLOAD_HEADER.length; index++) {
-            if (payload[index] != PAYLOAD_HEADER[index]) {
+        for (int index = 0; index < expectedHeader.length; index++) {
+            if (payload[index] != expectedHeader[index]) {
                 return false;
             }
         }
