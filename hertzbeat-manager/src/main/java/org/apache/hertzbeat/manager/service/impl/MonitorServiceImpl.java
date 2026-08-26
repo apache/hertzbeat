@@ -341,7 +341,8 @@ public class MonitorServiceImpl implements MonitorService {
                 paramDefines.addAll(scrapeParamDefines);
             }
         }
-        boolean restoresMaskedCredential = Boolean.TRUE.equals(isModify)
+        boolean restoresMaskedCredential = (Boolean.TRUE.equals(isModify)
+                || (isModify == null && monitor.getId() != null))
                 && !CollectionUtils.isEmpty(paramDefines)
                 && paramDefines.stream()
                         .filter(paramDefine -> "password".equals(paramDefine.getType()))
@@ -364,7 +365,7 @@ public class MonitorServiceImpl implements MonitorService {
                 if ("password".equals(paramDefine.getType())
                         && param != null
                         && MonitorParam.isSecretMask(param.getParamValue())) {
-                    if (!Boolean.TRUE.equals(isModify)) {
+                    if (!restoresMaskedCredential) {
                         throw new IllegalArgumentException("The credential mask cannot be used as a new value.");
                     }
                     Param storedParam = storedParams.get(field);

@@ -172,7 +172,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 param.setType(it.type);
                 param.setParamValue(it.value);
                 return param;
-            }).toList());
+            }).toList(), false);
         } else {
             monitorDto.setParams(Collections.emptyList());
         }

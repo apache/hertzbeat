@@ -131,6 +131,23 @@ class JsonImExportServiceTest {
     }
 
     @Test
+    void testImportConfigPreservesEncryptedCredentialForImportRoundTrip() {
+        String ciphertext = "HBA2-import-ciphertext";
+        String json = "[{\"monitor\":{\"name\":\"ollama-import\",\"app\":\"ollama\","
+                + "\"intervals\":6000,\"status\":1},\"params\":[{\"field\":\"apiKey\","
+                + "\"type\":2,\"value\":\"" + ciphertext + "\"}]}]";
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        doNothing().when(monitorService).addMonitor(
+                org.mockito.Mockito.any(), paramsCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        jsonImExportService.importConfig(
+                "ollama.json", new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+
+        assertEquals(ciphertext, paramsCaptor.getValue().get(0).getParamValue());
+    }
+
+    @Test
     void testImportConfig_shouldSetInstanceFromHostAndPortParams() {
         String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"windows\",\"intervals\":6000,\"status\":1},"
                 + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"localhost\"},"

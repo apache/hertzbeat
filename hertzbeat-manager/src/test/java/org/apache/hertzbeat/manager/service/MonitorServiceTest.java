@@ -211,6 +211,47 @@ class MonitorServiceTest {
     }
 
     @Test
+    void validateDetectRestoresStoredCredentialForAnExistingMonitor() {
+        long monitorId = 103L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .name("ollama-detect")
+                .app("ollama")
+                .scrape("static")
+                .instance("127.0.0.1")
+                .intervals(60)
+                .build();
+        Param submitted = Param.builder()
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(MonitorParam.SECRET_MASK)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        String storedCiphertext = AesUtil.aesEncode("stored-detect-key");
+        Param stored = Param.builder()
+                .id(31L)
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(storedCiphertext)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submitted));
+        when(appService.getAppParamDefines("ollama"))
+                .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
+        Job job = new Job();
+        job.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("ollama")).thenReturn(job);
+
+        monitorService.validate(dto, null);
+
+        assertEquals(storedCiphertext, dto.getParams().get(0).getParamValue());
+        verify(paramValidatorManager).validate(any(ParamDefineInfo.class), any(MonitorParam.class));
+    }
+
+    @Test
     void validateModifyRejectsMaskedCredentialWhenDestinationChanges() {
         long monitorId = 102L;
         Monitor monitor = Monitor.builder()
