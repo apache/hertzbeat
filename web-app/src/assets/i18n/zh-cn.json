@@ -639,6 +639,27 @@
       "contextTitle": "服务与目标位置",
       "configureTitle": "配置",
       "configureDescription": "命名服务、选择遥测数据的目标位置，然后生成准确的接入步骤。",
+      "guided": {
+        "stage": {
+          "source": "接入来源",
+          "service": "服务信息",
+          "destination": "接入路径",
+          "guide": "接入指南"
+        },
+        "serviceTitle": "这批遥测数据属于哪个服务？",
+        "serviceDescription": "这些字段会写入遥测资源属性，用于查询、筛选和关联。",
+        "destinationTitle": "遥测数据先发到哪里？",
+        "destinationDescription": "先选一条接入路径。地址和连接状态只在当前选择中展开。",
+        "guideTitle": "生成接入说明",
+        "guideDescription": "确认目标位置和授权方式，然后生成适用于当前服务的配置步骤。",
+        "currentIntake": "当前接入",
+        "selectAvailableDestination": "选择一个可用的接入路径后，这里会显示连接地址。",
+        "selectedDestination": "接入路径",
+        "online": "在线",
+        "collectorId": "Collector ID",
+        "destinationInstance": "接入实例",
+        "copyEndpoint": "复制 {{transport}} 地址"
+      },
       "serviceContext": "服务上下文",
       "installTitle": "安装并配置",
       "recipeLabel": "插桩方案",
@@ -879,6 +900,15 @@
     "tokenMissing": "未提供",
     "token": {
       "generateAccess": "生成访问令牌",
+      "create": "创建访问令牌",
+      "useExisting": "使用已有令牌",
+      "cancelExisting": "取消",
+      "setupTitle": "创建令牌后继续",
+      "setupDescription": "令牌会自动加入本次接入配置，创建完成后即可进入下一步。",
+      "existingTitle": "使用已有令牌",
+      "existingDescription": "仅在已有 OTLP 接入令牌时粘贴。",
+      "readyTitle": "访问令牌已准备好",
+      "readyDescription": "下一步会自动将它写入接入指南。",
       "generateTitle": "生成访问令牌",
       "generate": "生成",
       "name": "令牌名称",
@@ -889,6 +919,7 @@
       "notGenerated": "尚未生成访问令牌",
       "generateError": "无法生成访问令牌。",
       "acknowledgementRequired": "请在退出或重新开始前保存此一次性令牌。它仅存在于当前页面的内存中。",
+      "guideAcknowledgementRequired": "一次性令牌已写入下方接入指南，请在退出或重新开始前保存。",
       "acknowledge": "我已保存此令牌",
       "plaintextBearerWarning": "Bearer 令牌将通过未加密连接传输。"
     },
@@ -934,6 +965,8 @@
     },
     "action": {
       "exit": "返回仪表盘",
+      "previous": "上一步",
+      "next": "下一步",
       "continue": "继续",
       "render": "生成操作说明",
       "reviewContext": "检查上下文",
@@ -1280,6 +1313,8 @@
     "selectedPauseConfirm_other": "确认暂停所选 {{count}} 项监控？",
     "delete": "删除",
     "deleteConfirm": "确认删除所选监控数据？",
+    "selectAll": "选择全部监控",
+    "selectOne": "选择 {{name}}",
     "selected": "已选择 {{count}} 项",
     "clearSelection": "清除选择",
     "success": "监控操作已完成。",
@@ -1356,6 +1391,9 @@
     "average": "平均值",
     "samples": "样本数",
     "refreshHistory": "刷新历史趋势",
+    "investigation": {
+      "open": "关联信号"
+    },
     "collapseHistory": "收起历史趋势",
     "expandHistory": "展开历史趋势",
     "layout": {

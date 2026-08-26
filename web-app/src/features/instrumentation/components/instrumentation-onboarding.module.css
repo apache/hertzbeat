@@ -2,7 +2,7 @@
   min-height: 100dvh;
   width: 100%;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   background: var(--hb-bg-canvas);
 }
 
@@ -37,16 +37,23 @@
   justify-self: end;
 }
 
-.progressBand {
-  border-bottom: 1px solid var(--hb-border);
-  padding: 22px 32px;
+.onboardingBody {
+  width: min(100%, 1440px);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  margin: 0 auto;
+}
+
+.flowRail {
+  border-right: 1px solid var(--hb-border);
+  padding: 34px 22px;
   background: var(--hb-bg-chrome);
 }
 
 .onboardingContent {
-  width: min(100%, 1384px);
-  margin: 0 auto;
-  padding: 32px;
+  min-width: 0;
+  padding: 34px 40px 28px;
 }
 
 .sourceStage {
@@ -76,7 +83,17 @@
     justify-self: stretch;
   }
 
-  .progressBand,
+  .onboardingBody {
+    grid-template-columns: 1fr;
+  }
+
+  .flowRail {
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--hb-border);
+    padding: 16px;
+  }
+
   .onboardingContent {
     padding: 20px 16px;
   }

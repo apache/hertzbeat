@@ -6,22 +6,36 @@
 
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
-import { InstrumentationConfigureStep } from '../components/instrumentation-configure-step';
-import { InstrumentationGuideWorkspace } from '../components/instrumentation-guide-workspace';
 import { InstrumentationInitializationEvidence } from '../components/instrumentation-initialization-evidence';
 import { InstrumentationProgress } from '../components/instrumentation-progress';
-import { InstrumentationSourceStep } from '../components/instrumentation-source-step';
 import styles from '../components/instrumentation-onboarding.module.css';
 import { useInstrumentationPageController } from '../controller/use-instrumentation-page-controller';
+import type { InstrumentationConfigurePhase } from '../model/instrumentation-guided-flow';
+import { InstrumentationStageContent } from './instrumentation-stage-content';
 
 export function InstrumentationPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const page = useInstrumentationPageController();
+  const [configurePhase, setConfigurePhase] = useState<InstrumentationConfigurePhase>('service');
+  const hasLocalBack = page.stage === 'configure' && configurePhase !== 'service';
+  const hasBack = page.hasFlowBack || hasLocalBack;
+  const goBack = () => {
+    if (page.stage !== 'configure' || configurePhase === 'service') {
+      page.goBack();
+      return;
+    }
+    setConfigurePhase(configurePhase === 'guide' ? 'destination' : 'service');
+  };
+  const reset = () => {
+    setConfigurePhase('service');
+    page.reset();
+  };
   return (
     <div className={styles.page}>
       <header className={styles.onboardingHeader}>
@@ -30,116 +44,36 @@ export function InstrumentationPage() {
           type="text"
           icon={<ArrowLeftOutlined aria-hidden="true" />}
           disabled={page.tokenAcknowledgementRequired}
-          onClick={() => (page.hasFlowBack ? page.goBack() : void navigate(applicationRoutePaths.dashboard))}
+          onClick={() => (hasBack ? goBack() : void navigate(applicationRoutePaths.dashboard))}
         >
-          {t(page.hasFlowBack ? 'common.back' : 'instrumentation.action.exit')}
+          {t(hasBack ? 'common.back' : 'instrumentation.action.exit')}
         </Button>
         <div className={styles.brand}>
           <img src="/assets/logo.svg" alt="HertzBeat" width={24} height={23} />
           <strong>HertzBeat</strong>
         </div>
-        <Button className={styles.startOver!} disabled={page.tokenAcknowledgementRequired} onClick={page.reset}>
+        <Button className={styles.startOver!} disabled={page.tokenAcknowledgementRequired} onClick={reset}>
           {t('instrumentation.v2.startOver')}
         </Button>
       </header>
-      <div className={styles.progressBand}>
-        <InstrumentationProgress stage={page.stage} />
+      <div className={styles.onboardingBody}>
+        <aside className={styles.flowRail} aria-label={t('instrumentation.progress')}>
+          <InstrumentationProgress stage={page.stage} configurePhase={configurePhase} />
+        </aside>
+        <main className={styles.onboardingContent}>
+          <InstrumentationInitializationEvidence
+            catalogState={page.catalogState}
+            profilesState={page.profilesState}
+            retrying={page.initializationRetrying}
+            onRetry={() => void page.retryInitialization()}
+          />
+          <InstrumentationStageContent
+            page={page}
+            configurePhase={configurePhase}
+            onConfigurePhase={setConfigurePhase}
+          />
+        </main>
       </div>
-      <main className={styles.onboardingContent}>
-        <InstrumentationInitializationEvidence
-          catalogState={page.catalogState}
-          profilesState={page.profilesState}
-          retrying={page.initializationRetrying}
-          onRetry={() => void page.retryInitialization()}
-        />
-        <InstrumentationStageContent page={page} />
-      </main>
     </div>
-  );
-}
-
-type PageController = ReturnType<typeof useInstrumentationPageController>;
-
-function InstrumentationStageContent({ page }: { page: PageController }) {
-  if (page.stage === 'source') return <SourceStage page={page} />;
-  return <ConfigureStage page={page} />;
-}
-
-function SourceStage({ page }: { page: PageController }) {
-  const { t } = useTranslation();
-  if (!page.catalog) return null;
-  return (
-    <div className={styles.sourceStage}>
-      <InstrumentationSourceStep
-        key={page.sourceDirectoryRevision}
-        catalog={page.catalog}
-        {...(page.draft.sourceId ? { sourceId: page.draft.sourceId } : {})}
-        {...(page.draft.recipeId ? { recipeId: page.draft.recipeId } : {})}
-        {...(page.draft.framework ? { framework: page.draft.framework } : {})}
-        {...(page.draft.method ? { method: page.draft.method } : {})}
-        {...(page.draft.environment ? { environment: page.draft.environment } : {})}
-        {...(page.draft.platform ? { platform: page.draft.platform } : {})}
-        onSource={page.chooseSource}
-        onApplicationAnswer={page.answerApplication}
-      />
-      <Button
-        className={styles.sourceContinue!}
-        type="primary"
-        disabled={!page.canContinueSource}
-        onClick={() => page.setStage('configure')}
-      >
-        {t('instrumentation.action.continue')}
-      </Button>
-    </div>
-  );
-}
-
-function ConfigureStage({ page }: { page: PageController }) {
-  if (!page.profiles || !page.catalog) return null;
-  return (
-    <>
-      <InstrumentationConfigureStep
-        profiles={page.profiles}
-        profileId={page.draft.intakeProfileId}
-        service={page.draft.service}
-        platform={page.draft.platform}
-        platformOptions={page.platformOptions}
-        canRender={page.canRender}
-        rendering={page.rendering}
-        renderError={page.renderError}
-        token={page.token}
-        tokenDraft={page.tokenDraft}
-        tokenGenerating={page.tokenGenerating}
-        tokenError={page.tokenError}
-        tokenAcknowledgementRequired={page.tokenAcknowledgementRequired}
-        requiresToken={page.requiresToken}
-        canGenerateToken={page.canGenerateToken}
-        onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
-        onService={page.patchService}
-        onPlatform={platform => page.patchDraft({ platform })}
-        onToken={page.setToken}
-        onRender={() => void page.renderGuide()}
-        onOpenToken={page.openTokenGenerator}
-        onCloseToken={page.closeTokenGenerator}
-        onTokenDraft={page.updateTokenDraft}
-        onGenerateToken={() => void page.generateToken()}
-        onAcknowledgeToken={page.acknowledgeGeneratedToken}
-      />
-      {page.guide && (
-        <InstrumentationGuideWorkspace
-          catalog={page.catalog}
-          draft={page.draft}
-          guide={page.guide}
-          token={page.token}
-          onCopy={page.copyBlock}
-          detecting={page.detecting}
-          detectionError={page.detectionError}
-          {...(page.detection ? { detection: page.detection } : {})}
-          onEdit={page.goBack}
-          onDetect={() => void page.detect()}
-          onOpen={page.openQuery}
-        />
-      )}
-    </>
   );
 }

@@ -1,0 +1,68 @@
+.guidePreparation {
+  width: min(100%, 760px);
+  display: grid;
+  gap: 20px;
+}
+
+.tokenSetup {
+  display: grid;
+  gap: 14px;
+}
+.tokenSetupPrompt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 4px 0;
+}
+.tokenSetupCopy {
+  display: grid;
+  gap: 3px;
+}
+.tokenSetupActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cancelExistingToken {
+  width: fit-content;
+  padding-inline: 0;
+}
+
+.selectedDestinationInline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 14px;
+  border-bottom: 1px solid var(--hb-border);
+  padding-bottom: 16px;
+}
+
+.selectedDestinationInline > span,
+.selectedDestinationInline small {
+  color: var(--hb-text-secondary);
+}
+.selectedDestinationInline small {
+  grid-column: 2;
+}
+.selectedDestinationEndpoints {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.selectedDestinationEndpoints > span {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .tokenSetupPrompt {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .tokenSetupActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

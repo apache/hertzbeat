@@ -25,6 +25,7 @@ import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
 import { InstrumentationGuideWorkspace } from './instrumentation-guide-workspace';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
 import configureCss from './instrumentation-configure.module.css?raw';
+import destinationCss from './instrumentation-destination-selector.module.css?raw';
 import guideCss from './instrumentation-guide.module.css?raw';
 import questionCss from './instrumentation-question.module.css?raw';
 import shellCss from './instrumentation-shell.module.css?raw';
@@ -53,8 +54,9 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
     expect(shellCss).toMatch(/\.sourceGrid\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
     expect(shellCss).toMatch(
-      /\.sourceTile\s*\{[^}]*min-width:\s*max-content[^}]*min-height:\s*44px[^}]*flex:\s*0\s+0\s+auto/
+      /\.sourceTile\s*\{[^}]*min-width:\s*max-content[^}]*min-height:\s*36px[^}]*flex:\s*0\s+0\s+auto/
     );
+    expect(shellCss).toMatch(/\.sourceTile\s*\{[^}]*gap:\s*8px[^}]*padding:\s*6px 10px/);
     expect(shellCss).toMatch(
       /\.sourceTile\s*\{[^}]*border:\s*var\(--ant-line-width\) solid var\(--hb-border\)[^}]*background:\s*var\(--hb-bg-raised\)/
     );
@@ -67,8 +69,12 @@ describe('instrumentation v2 interaction', () => {
     );
     expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*font-weight:\s*600[^}]*white-space:\s*nowrap/);
     expect(shellCss).toMatch(
-      /\.sourceIcon\s*\{[^}]*width:\s*var\(--ant-font-size-lg\)[^}]*height:\s*var\(--ant-font-size-lg\)/
+      /\.sourceIcon\s*\{[^}]*width:\s*var\(--ant-font-size\)[^}]*height:\s*var\(--ant-font-size\)/
     );
+    expect(shellCss).toMatch(
+      /\.categoryActionSelected,[\s\S]*?\{[^}]*border-radius:\s*0[^}]*background:\s*transparent[^}]*box-shadow:\s*inset 2px 0 0 var\(--hb-brand-accent\)/
+    );
+    expect(shellCss).not.toMatch(/\.categoryActionSelected,[\s\S]*?\{[^}]*background:\s*var\(--hb-bg-selected\)/);
     const assistiveDescription = within(javaSource).getByText('instrumentation.v2.directory.source.java_description');
     expect(assistiveDescription).toHaveClass(/sourceAssistiveText/);
     expect(within(assistiveDescription).getByText(/instrumentation\.signal\.metrics/)).toBeInTheDocument();
@@ -143,7 +149,25 @@ describe('instrumentation v2 interaction', () => {
   });
 
   it('explains all three telemetry routes and keeps missing destinations visible without inventing endpoints', () => {
+    const availableProfiles = {
+      schemaVersion: 2 as const,
+      status: 'available' as const,
+      defaultProfileId: 'server-default',
+      profiles: [
+        guide.intakeProfile,
+        {
+          id: 'hybrid-edge',
+          kind: 'hertzbeat_collector' as const,
+          availability: 'unavailable' as const,
+          supportedTransports: [],
+          endpoints: {},
+          authorizationHeader: null,
+          errorCode: 'intake_profile_unavailable'
+        }
+      ]
+    };
     const props = {
+      phase: 'destination' as const,
       profileId: '',
       service: {
         name: '',
@@ -168,52 +192,33 @@ describe('instrumentation v2 interaction', () => {
       onPlatform: vi.fn(),
       onToken: vi.fn(),
       onRender: vi.fn(),
+      onPrevious: vi.fn(),
+      onNext: vi.fn(),
       onOpenToken: vi.fn(),
       onCloseToken: vi.fn(),
       onTokenDraft: vi.fn(),
       onGenerateToken: vi.fn(),
       onAcknowledgeToken: vi.fn()
     };
-    const view = render(
-      <InstrumentationConfigureStep
-        profiles={{
-          schemaVersion: 2,
-          status: 'available',
-          defaultProfileId: 'server-default',
-          profiles: [
-            guide.intakeProfile,
-            {
-              id: 'hybrid-edge',
-              kind: 'hertzbeat_collector',
-              availability: 'unavailable',
-              supportedTransports: [],
-              endpoints: {},
-              authorizationHeader: null,
-              errorCode: 'intake_profile_unavailable'
-            }
-          ]
-        }}
-        {...props}
-      />
-    );
-    expect(screen.getByRole('heading', { name: 'instrumentation.v2.configureTitle', level: 3 })).toBeVisible();
-    expect(screen.getByRole('region', { name: 'instrumentation.v2.serviceContext' })).toBeVisible();
+    const view = render(<InstrumentationConfigureStep profiles={availableProfiles} {...props} />);
+    expect(screen.getByRole('heading', { name: 'instrumentation.v2.guided.destinationTitle', level: 3 })).toBeVisible();
     expect(screen.getByRole('region', { name: 'instrumentation.v2.destination' })).toBeVisible();
-    expect(screen.getByText('instrumentation.v2.destinationDescription')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.guided.destinationDescription')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profileRoute.server')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profileRoute.hertzbeat_collector')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profileRoute.external_otel_collector')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profilePurpose.server')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profilePurpose.hertzbeat_collector')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profilePurpose.external_otel_collector')).toBeVisible();
-    expect(screen.getByText('instrumentation.v2.profileBoundary.server')).toBeVisible();
-    expect(screen.getByText('instrumentation.v2.profileBoundary.hertzbeat_collector')).toBeVisible();
-    expect(screen.getByText('instrumentation.v2.profileBoundary.external_otel_collector')).toBeVisible();
-    expect(configureCss).toMatch(/\.destinationList\s*\{[^}]*display:\s*grid/);
-    expect(configureCss).toMatch(
+    expect(screen.queryByText('instrumentation.v2.profileBoundary.server')).toBeNull();
+    expect(screen.queryByText('instrumentation.v2.profileBoundary.hertzbeat_collector')).toBeNull();
+    expect(screen.queryByText('instrumentation.v2.profileBoundary.external_otel_collector')).toBeNull();
+    expect(destinationCss).toMatch(/\.destinationList\s*\{[^}]*display:\s*grid/);
+    expect(destinationCss).toMatch(
       /\.destinationAvailability\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*1[^}]*justify-self:\s*end/
     );
     expect(configureCss).toMatch(/\.configureActions\s*\{[^}]*border-top:\s*1px solid var\(--hb-border\)/);
+    view.rerender(<InstrumentationConfigureStep profiles={availableProfiles} {...props} phase="service" />);
     const serviceName = screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' });
     const serviceEnvironment = screen.getByRole('textbox', {
       name: 'instrumentation.field.serviceEnvironment'
@@ -239,6 +244,7 @@ describe('instrumentation v2 interaction', () => {
     expect(props.onService).toHaveBeenNthCalledWith(4, { serviceInstanceId: 'checkout-7d9' });
     expect(props.onService).toHaveBeenNthCalledWith(5, { endpoint: '/checkout' });
     expect(screen.queryByText(/entity/iu)).toBeNull();
+    view.rerender(<InstrumentationConfigureStep profiles={availableProfiles} {...props} />);
     expect(screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.server/ })).toBeEnabled();
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.hertzbeat_collector/ })
@@ -279,6 +285,7 @@ describe('instrumentation v2 interaction', () => {
     const onGenerateToken = vi.fn();
     render(
       <InstrumentationConfigureStep
+        phase="guide"
         profiles={{
           schemaVersion: 2,
           status: 'available',
@@ -303,6 +310,8 @@ describe('instrumentation v2 interaction', () => {
         onPlatform={vi.fn()}
         onToken={vi.fn()}
         onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
         onOpenToken={onOpenToken}
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
@@ -325,6 +334,7 @@ describe('instrumentation v2 interaction', () => {
     const onToken = vi.fn();
     render(
       <InstrumentationConfigureStep
+        phase="guide"
         profiles={{
           schemaVersion: 2,
           status: 'available',
@@ -348,6 +358,8 @@ describe('instrumentation v2 interaction', () => {
         onPlatform={vi.fn()}
         onToken={onToken}
         onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
         onOpenToken={vi.fn()}
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
@@ -365,6 +377,7 @@ describe('instrumentation v2 interaction', () => {
   it('shows endpoint security and an explicit Bearer risk for a selected plaintext destination', () => {
     render(
       <InstrumentationConfigureStep
+        phase="guide"
         profiles={{
           schemaVersion: 2,
           status: 'available',
@@ -395,6 +408,8 @@ describe('instrumentation v2 interaction', () => {
         onPlatform={vi.fn()}
         onToken={vi.fn()}
         onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
         onOpenToken={vi.fn()}
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
@@ -410,6 +425,7 @@ describe('instrumentation v2 interaction', () => {
   it('shows an unauthenticated destination without token controls, status, or Bearer warnings', () => {
     render(
       <InstrumentationConfigureStep
+        phase="guide"
         profiles={{
           schemaVersion: 2,
           status: 'available',
@@ -433,6 +449,8 @@ describe('instrumentation v2 interaction', () => {
         onPlatform={vi.fn()}
         onToken={vi.fn()}
         onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
         onOpenToken={vi.fn()}
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
@@ -445,10 +463,11 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.queryByText('instrumentation.token.notGenerated')).not.toBeInTheDocument();
     expect(screen.queryByText('instrumentation.token.plaintextBearerWarning')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'instrumentation.token.generateAccess' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'instrumentation.action.render' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'instrumentation.action.next' })).toBeEnabled();
   });
 
   it('materializes the memory-only token visibly without mutating the backend guide', () => {
+    const onAcknowledgeToken = vi.fn();
     render(
       <InstrumentationGuideWorkspace
         catalog={catalog}
@@ -461,6 +480,7 @@ describe('instrumentation v2 interaction', () => {
         }}
         guide={guide}
         token="valid-token-123"
+        tokenAcknowledgementRequired
         detection={detection}
         detecting={false}
         detectionError={false}
@@ -468,8 +488,13 @@ describe('instrumentation v2 interaction', () => {
         onEdit={vi.fn()}
         onDetect={vi.fn()}
         onOpen={vi.fn()}
+        onAcknowledgeToken={onAcknowledgeToken}
       />
     );
+    expect(screen.getByText('instrumentation.token.guideAcknowledgementRequired')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.token.acknowledge' }));
+    expect(onAcknowledgeToken).toHaveBeenCalledOnce();
     expect(screen.getByText('token=valid-token-123')).toBeVisible();
     expect(screen.getByText('https://example.test/otlp')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.security.tls')).toBeVisible();

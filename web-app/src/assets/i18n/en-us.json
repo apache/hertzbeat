@@ -645,6 +645,27 @@
       "contextTitle": "Service and destination",
       "configureTitle": "Configure",
       "configureDescription": "Name the service, choose where telemetry is sent, then generate the exact instructions.",
+      "guided": {
+        "stage": {
+          "source": "Source",
+          "service": "Service details",
+          "destination": "Intake path",
+          "guide": "Setup guide"
+        },
+        "serviceTitle": "Which service owns this telemetry?",
+        "serviceDescription": "These values become telemetry resource attributes used for querying, filtering, and correlation.",
+        "destinationTitle": "Where should telemetry be sent first?",
+        "destinationDescription": "Choose one intake path. Connection details are shown only for the current selection.",
+        "guideTitle": "Generate setup instructions",
+        "guideDescription": "Confirm the destination and authorization, then generate steps for this service.",
+        "currentIntake": "Current intake",
+        "selectAvailableDestination": "Choose an available intake path to review its connection details.",
+        "selectedDestination": "Intake path",
+        "online": "Online",
+        "collectorId": "Collector ID",
+        "destinationInstance": "Intake instance",
+        "copyEndpoint": "Copy {{transport}} endpoint"
+      },
       "serviceContext": "Service context",
       "installTitle": "Install and configure",
       "recipeLabel": "Instrumentation recipe",
@@ -885,6 +906,15 @@
     "tokenMissing": "Not provided",
     "token": {
       "generateAccess": "Generate access token",
+      "create": "Create access token",
+      "useExisting": "Use an existing token",
+      "cancelExisting": "Cancel",
+      "setupTitle": "Create a token to continue",
+      "setupDescription": "It will be added to this setup automatically. Continue once it is ready.",
+      "existingTitle": "Use an existing token",
+      "existingDescription": "Paste a token only if one has already been issued for OTLP ingestion.",
+      "readyTitle": "Access token ready",
+      "readyDescription": "It will be inserted into the setup guide automatically.",
       "generateTitle": "Generate access token",
       "generate": "Generate",
       "name": "Token name",
@@ -895,6 +925,7 @@
       "notGenerated": "No access token generated",
       "generateError": "The access token could not be generated.",
       "acknowledgementRequired": "Save this one-time token before leaving or starting over. It exists only in this page's memory.",
+      "guideAcknowledgementRequired": "This one-time token is visible in the guide below. Save it before leaving or starting over.",
       "acknowledge": "I saved this token",
       "plaintextBearerWarning": "The Bearer token will be transmitted over an unencrypted connection."
     },
@@ -940,6 +971,8 @@
     },
     "action": {
       "exit": "Back to dashboard",
+      "previous": "Previous",
+      "next": "Next",
       "continue": "Continue",
       "render": "Render instructions",
       "reviewContext": "Review context",
@@ -1286,6 +1319,8 @@
     "selectedPauseConfirm_other": "Pause {{count}} selected monitors?",
     "delete": "Delete",
     "deleteConfirm": "Delete the selected monitor data?",
+    "selectAll": "Select all monitors",
+    "selectOne": "Select {{name}}",
     "selected": "{{count}} selected",
     "clearSelection": "Clear selection",
     "success": "Monitor operation completed.",
@@ -1362,6 +1397,9 @@
     "average": "Avg",
     "samples": "Samples",
     "refreshHistory": "Refresh history",
+    "investigation": {
+      "open": "Related signals"
+    },
     "collapseHistory": "Collapse history",
     "expandHistory": "Expand history",
     "layout": {

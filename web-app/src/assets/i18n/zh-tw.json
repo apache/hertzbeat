@@ -639,6 +639,27 @@
       "contextTitle": "服務與目的地",
       "configureTitle": "設定",
       "configureDescription": "命名服務、選擇遙測資料的目的地，然後產生準確的接入步驟。",
+      "guided": {
+        "stage": {
+          "source": "接入來源",
+          "service": "服務資訊",
+          "destination": "接入路徑",
+          "guide": "接入指南"
+        },
+        "serviceTitle": "這批遙測資料屬於哪個服務？",
+        "serviceDescription": "這些欄位會寫入遙測資源屬性，用於查詢、篩選和關聯。",
+        "destinationTitle": "遙測資料先傳到哪裡？",
+        "destinationDescription": "先選一條接入路徑。位址和連線狀態只在目前選擇中展開。",
+        "guideTitle": "產生接入說明",
+        "guideDescription": "確認目的地和授權方式，然後產生適用於目前服務的設定步驟。",
+        "currentIntake": "目前接入",
+        "selectAvailableDestination": "選擇一個可用的接入路徑後，這裡會顯示連線位址。",
+        "selectedDestination": "接入路徑",
+        "online": "在線",
+        "collectorId": "Collector ID",
+        "destinationInstance": "接入實例",
+        "copyEndpoint": "複製 {{transport}} 位址"
+      },
       "serviceContext": "服務上下文",
       "installTitle": "安裝並設定",
       "recipeLabel": "插樁方案",
@@ -879,6 +900,15 @@
     "tokenMissing": "未提供",
     "token": {
       "generateAccess": "產生存取權杖",
+      "create": "建立存取權杖",
+      "useExisting": "使用現有權杖",
+      "cancelExisting": "取消",
+      "setupTitle": "建立權杖後繼續",
+      "setupDescription": "權杖會自動加入本次接入設定，建立完成後即可進入下一步。",
+      "existingTitle": "使用現有權杖",
+      "existingDescription": "僅在已有 OTLP 接入權杖時貼上。",
+      "readyTitle": "存取權杖已準備好",
+      "readyDescription": "下一步會自動將它寫入接入指南。",
       "generateTitle": "產生存取權杖",
       "generate": "產生",
       "name": "權杖名稱",
@@ -889,6 +919,7 @@
       "notGenerated": "尚未產生存取權杖",
       "generateError": "無法產生存取權杖。",
       "acknowledgementRequired": "請在離開或重新開始前儲存此一次性權杖。它只存在於目前頁面的記憶體中。",
+      "guideAcknowledgementRequired": "一次性權杖已寫入下方接入指南，請在離開或重新開始前儲存。",
       "acknowledge": "我已儲存此權杖",
       "plaintextBearerWarning": "Bearer 權杖將透過未加密連線傳輸。"
     },
@@ -934,6 +965,8 @@
     },
     "action": {
       "exit": "返回儀表板",
+      "previous": "上一步",
+      "next": "下一步",
       "continue": "繼續",
       "render": "產生操作說明",
       "reviewContext": "檢查情境",
@@ -1280,6 +1313,8 @@
     "selectedPauseConfirm_other": "確認暫停所選 {{count}} 項監控？",
     "delete": "刪除",
     "deleteConfirm": "確認刪除所選監控資料？",
+    "selectAll": "選擇全部監控",
+    "selectOne": "選擇 {{name}}",
     "selected": "已選擇 {{count}} 項",
     "clearSelection": "清除選取",
     "success": "監控操作已完成。",
@@ -1356,6 +1391,9 @@
     "average": "平均值",
     "samples": "樣本數",
     "refreshHistory": "重新整理歷史趨勢",
+    "investigation": {
+      "open": "關聯訊號"
+    },
     "collapseHistory": "收合歷史趨勢",
     "expandHistory": "展開歷史趨勢",
     "layout": {

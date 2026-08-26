@@ -129,6 +129,15 @@ describe('instrumentation v2 locale contract', () => {
       expect(loadError, localeName).not.toContain('instrumentation.v2');
     });
   });
+
+  it('uses short, task-oriented labels for the guided intake steps', () => {
+    expect(en.instrumentation.v2.guided.stage).toEqual({
+      source: 'Source',
+      service: 'Service details',
+      destination: 'Intake path',
+      guide: 'Setup guide'
+    });
+  });
 });
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {
