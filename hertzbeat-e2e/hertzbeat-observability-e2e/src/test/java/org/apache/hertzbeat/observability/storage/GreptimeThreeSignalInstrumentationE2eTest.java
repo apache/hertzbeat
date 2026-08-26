@@ -335,7 +335,7 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
             QueryJumpContext tracesContext) {
         long end = metricsContext.detectedAt() + 60_000;
         OtlpMetricsConsoleDto metrics = metricsQueryService.query(new CollectorScopedMetricsQueryService.Request(
-                null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
+                null, null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
                 metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
                 INSTANCE_ID, ENDPOINT, "hertzbeat_e2e_requests", null, null,
                 null, null, "1s", "20", null));
@@ -354,7 +354,7 @@ class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSu
                 .anySatisfy(row -> assertThat(Double.parseDouble(String.valueOf(row[1]))).isEqualTo(1.0));
         OtlpMetricsConsoleDto missingInstanceMetrics = metricsQueryService.query(
                 new CollectorScopedMetricsQueryService.Request(
-                        null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
+                        null, null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
                         metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
                         "other-instance", ENDPOINT, "hertzbeat_e2e_requests", null, null,
                         null, null, "1s", "20", null));
