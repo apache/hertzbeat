@@ -97,6 +97,7 @@ class MessageServerConfigLegacyStartupIntegrationTest {
     private static void seedLegacyConfigRows() {
         try (Connection connection = DriverManager.getConnection(JDBC_URL, "sa", "123456");
                 Statement statement = connection.createStatement()) {
+            seedLegacySchemaDependencies(statement);
             statement.execute("""
                     CREATE TABLE hzb_config (
                         type VARCHAR(255) PRIMARY KEY,
@@ -115,5 +116,25 @@ class MessageServerConfigLegacyStartupIntegrationTest {
         } catch (SQLException exception) {
             throw new ExceptionInInitializerError(exception);
         }
+    }
+
+    private static void seedLegacySchemaDependencies(Statement statement) throws SQLException {
+        statement.execute("""
+                CREATE TABLE hzb_collector (
+                    id BIGINT AUTO_INCREMENT PRIMARY KEY
+                )
+                """);
+        statement.execute("""
+                CREATE TABLE hzb_alert_single (
+                    id BIGINT PRIMARY KEY,
+                    fingerprint VARCHAR(255) NOT NULL
+                )
+                """);
+        statement.execute("""
+                CREATE TABLE hzb_alert_group (
+                    id BIGINT PRIMARY KEY,
+                    group_key VARCHAR(255) NOT NULL
+                )
+                """);
     }
 }

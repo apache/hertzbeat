@@ -15,7 +15,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 class MetadataWriteAdmissionConfigurationTest {
 
     @Test
-    void loadsWithoutTransactionInfrastructureAndOmitsOnlyTheAdvisor() {
+    void loadsWithoutTransactionInfrastructureWithAnInertAdvisor() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.register(MetadataWriteAdmissionConfiguration.class);
             context.refresh();
@@ -23,7 +23,7 @@ class MetadataWriteAdmissionConfigurationTest {
             assertThat(context.getBeansOfType(MetadataWriteAdmissionCoordinator.class)).hasSize(1);
             assertThat(context.getBeansOfType(TransactionCompletionPermitRegistry.class)).hasSize(1);
             assertThat(context.getBeansOfType(SpringDataWriteAdmissionBeanPostProcessor.class)).hasSize(1);
-            assertThat(context.getBeansOfType(MetadataWriteAdmissionAdvisor.class)).isEmpty();
+            assertThat(context.getBeansOfType(MetadataWriteAdmissionAdvisor.class)).hasSize(1);
         }
     }
 }

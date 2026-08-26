@@ -136,7 +136,7 @@ class TargetJdbcCleanupLaneTest {
     void closeHandsOffRetainedCleanupAfterZeroQueueWorkerLeavesAfterExecute() throws Exception {
         CountDownLatch afterExecuteEntered = new CountDownLatch(1);
         CountDownLatch releaseAfterExecute = new CountDownLatch(1);
-        CountDownLatch cleanupCompleted = new CountDownLatch(1);
+        CountDownLatch cleanupFinished = new CountDownLatch(1);
         AtomicBoolean firstTask = new AtomicBoolean(true);
         ThreadPoolExecutor worker = new ThreadPoolExecutor(
                 0, 1, 30, TimeUnit.SECONDS, new SynchronousQueue<>(),
@@ -147,16 +147,15 @@ class TargetJdbcCleanupLaneTest {
                 if (firstTask.getAndSet(false)) {
                     afterExecuteEntered.countDown();
                     awaitUninterruptibly(releaseAfterExecute);
+                } else {
+                    cleanupFinished.countDown();
                 }
             }
         };
         worker.allowCoreThreadTimeOut(true);
         Connection connection = mock(Connection.class);
         doThrow(new SQLException("private first cleanup"))
-                .doAnswer(ignored -> {
-                    cleanupCompleted.countDown();
-                    return null;
-                })
+                .doNothing()
                 .when(connection).close();
         TargetJdbcCleanupLane lane = new TargetJdbcCleanupLane(worker, Runnable::run);
         try {
@@ -166,7 +165,7 @@ class TargetJdbcCleanupLaneTest {
             lane.close();
             releaseAfterExecute.countDown();
 
-            assertThat(cleanupCompleted.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(cleanupFinished.await(5, TimeUnit.SECONDS)).isTrue();
             assertThat(lane.acquisitionFailure()).isEqualTo(TargetJdbcConnectionErrorCode.FACTORY_CLOSED);
             verify(connection, times(2)).close();
         } finally {

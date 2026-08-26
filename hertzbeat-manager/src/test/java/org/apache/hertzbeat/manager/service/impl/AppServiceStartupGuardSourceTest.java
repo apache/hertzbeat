@@ -28,17 +28,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AppServiceStartupGuardSourceTest {
 
     @Test
-    void jarAppDefineLoadingShouldSkipInvalidResourcesWithoutBlockingStartup() throws IOException {
+    void builtInAppDefineLoadingShouldSkipInvalidResourcesWithoutBlockingStartup() throws IOException {
         String source = Files.readString(Path.of("src/main/java/org/apache/hertzbeat/manager/service/impl/AppServiceImpl.java"));
-        String jarStore = source.substring(source.indexOf("private class JarAppDefineStoreImpl"));
+        int loaderStart = source.indexOf("private void loadBuiltinDefinitions()");
 
-        assertTrue(jarStore.contains("app == null"),
+        assertTrue(loaderStart >= 0, "The built-in monitor definition loader must remain present.");
+        String builtInLoader = source.substring(loaderStart);
+
+        assertTrue(builtInLoader.contains("app == null"),
                 "Jar app define loading must skip null YAML documents from packaged resources.");
-        assertTrue(jarStore.contains("StringUtils.isBlank(app.getApp())"),
+        assertTrue(builtInLoader.contains("StringUtils.isBlank(app.getApp())"),
                 "Jar app define loading must skip app defines without an app key.");
-        assertTrue(jarStore.contains("continue;"),
+        assertTrue(builtInLoader.contains("continue;"),
                 "Invalid packaged app define resources should not abort the remaining valid resources.");
-        assertTrue(jarStore.contains("RuntimeException"),
+        assertTrue(builtInLoader.contains("RuntimeException"),
                 "Malformed packaged app define resources should be isolated from startup.");
     }
 }

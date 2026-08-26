@@ -83,11 +83,12 @@ class MetadataWriteAdmissionStartupContextTest {
         assertThat(participants).noneMatch(DataStorageDispatch.class::isInstance);
 
         assertThat(context.getBeansOfType(MetadataWriteAdmissionCoordinator.class)).hasSize(1);
-        assertThat(context.getBeansOfType(MetadataWriteAdmissionAdvisor.class)).hasSize(1);
-        assertThat(context.getBeansOfType(TransactionAttributeSource.class)).hasSize(1);
         MetadataWriteAdmissionAdvisor admissionAdvisor = context.getBean(MetadataWriteAdmissionAdvisor.class);
         BeanFactoryTransactionAttributeSourceAdvisor transactionAdvisor =
                 context.getBean(BeanFactoryTransactionAttributeSourceAdvisor.class);
+        TransactionInterceptor applicationTransactionInterceptor =
+                (TransactionInterceptor) transactionAdvisor.getAdvice();
+        assertThat(applicationTransactionInterceptor.getTransactionAttributeSource()).isNotNull();
         assertThat(admissionAdvisor.getOrder()).isLessThan(transactionAdvisor.getOrder());
 
         JdbcMonitorStatusMetadataWriter writer = context.getBean(JdbcMonitorStatusMetadataWriter.class);

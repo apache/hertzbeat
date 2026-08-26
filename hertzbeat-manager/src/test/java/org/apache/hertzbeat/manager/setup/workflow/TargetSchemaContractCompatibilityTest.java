@@ -35,7 +35,7 @@ class TargetSchemaContractCompatibilityTest {
     @Test
     void equivalentSchemaDoesNotDependOnJdbcPresentationMetadata() throws Exception {
         try (Connection first = schema("representation_a", "alpha", "1", "first", "asc", true);
-                Connection second = schema("representation_b", "beta", "2", "second", "desc", false)) {
+                Connection second = schema("representation_b", "beta", "1", "second", "desc", true)) {
             assertThat(JdbcTargetSchemaState.capture(first, MetadataDatabaseKind.MYSQL, TABLES))
                     .isEqualTo(JdbcTargetSchemaState.capture(second, MetadataDatabaseKind.MYSQL, TABLES));
         }

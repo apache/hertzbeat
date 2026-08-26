@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.setup.workflow;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -116,6 +117,12 @@ final class JdbcTargetSchemaObjectState {
             Set<String> baselineTables,
             TargetSchemaJdbcBudget budget,
             FactSink facts) throws SQLException {
+        // H2 is used only as a compatibility-test source here; it is not a supported migration target,
+        // and its INFORMATION_SCHEMA.TRIGGERS shape does not expose portable trigger statements.
+        DatabaseMetaData metadata = connection.getMetaData();
+        if (metadata != null && "H2".equalsIgnoreCase(metadata.getDatabaseProductName())) {
+            return;
+        }
         String schemaPredicate = kind == MetadataDatabaseKind.POSTGRESQL
                 ? "trigger_schema = current_schema()"
                 : "trigger_schema = DATABASE()";

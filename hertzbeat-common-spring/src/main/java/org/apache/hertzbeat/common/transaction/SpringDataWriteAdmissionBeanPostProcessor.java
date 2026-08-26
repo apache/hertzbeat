@@ -11,6 +11,7 @@ import org.springframework.aop.Advisor;
 import org.springframework.aop.framework.Advised;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.Ordered;
 import org.springframework.data.repository.Repository;
@@ -21,12 +22,12 @@ import org.springframework.transaction.interceptor.TransactionalProxy;
 /** Inserts write admission into each existing Spring Data transaction proxy. */
 final class SpringDataWriteAdmissionBeanPostProcessor implements BeanPostProcessor, Ordered {
 
-    private final MetadataWriteAdmissionCoordinator coordinator;
-    private final TransactionCompletionPermitRegistry transactionPermits;
+    private final ObjectProvider<MetadataWriteAdmissionCoordinator> coordinator;
+    private final ObjectProvider<TransactionCompletionPermitRegistry> transactionPermits;
 
     SpringDataWriteAdmissionBeanPostProcessor(
-            MetadataWriteAdmissionCoordinator coordinator,
-            TransactionCompletionPermitRegistry transactionPermits) {
+            ObjectProvider<MetadataWriteAdmissionCoordinator> coordinator,
+            ObjectProvider<TransactionCompletionPermitRegistry> transactionPermits) {
         this.coordinator = coordinator;
         this.transactionPermits = transactionPermits;
     }
@@ -57,7 +58,8 @@ final class SpringDataWriteAdmissionBeanPostProcessor implements BeanPostProcess
             throw new BeanInitializationException("Spring Data transaction attributes are unavailable");
         }
         advised.addAdvisor(transactionAdvisorIndex,
-                new MetadataWriteAdmissionAdvisor(attributes, coordinator, transactionPermits, true));
+                new MetadataWriteAdmissionAdvisor(
+                        attributes, coordinator.getObject(), transactionPermits.getObject(), true));
         return bean;
     }
 
