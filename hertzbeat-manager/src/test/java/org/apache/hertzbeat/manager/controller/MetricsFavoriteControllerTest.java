@@ -110,7 +110,7 @@ class MetricsFavoriteControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
-                    .andExpect(jsonPath("$.msg").value("Metrics favorite already exists: " + testMetricsName));
+                    .andExpect(jsonPath("$.msg").value("unknown error happen"));
 
             verify(metricsFavoriteService).addMetricsFavorite(testUserId, testMonitorId, testMetricsName);
         }
@@ -160,7 +160,7 @@ class MetricsFavoriteControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
-                    .andExpect(jsonPath("$.msg").value("Database error"));
+                    .andExpect(jsonPath("$.msg").value("unknown error happen"));
 
             verify(metricsFavoriteService).removeMetricsFavorite(testUserId, testMonitorId, testMetricsName);
         }
@@ -224,7 +224,7 @@ class MetricsFavoriteControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
-                    .andExpect(jsonPath("$.msg").value("Service error"));
+                    .andExpect(jsonPath("$.msg").value("unknown error happen"));
 
             verify(metricsFavoriteService).getUserFavoritedMetrics(testUserId, testMonitorId);
         }

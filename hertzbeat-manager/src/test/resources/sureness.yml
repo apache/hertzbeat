@@ -81,6 +81,7 @@ resourceRole:
   - /api/config/deployment/metadata-migrations/*===get===[admin]
   - /api/config/deployment/metadata-migrations/*/activate===post===[admin]
   - /api/config/deployment/metadata-migrations/*/export===post===[admin]
+  - /api/config/deployment/factory-reset===post===[admin]
   - /api/config/email===get===[admin,user,guest]
   - /api/config/email===post===[admin]
   - /api/config/sms===get===[admin,user,guest]

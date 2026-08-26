@@ -85,7 +85,9 @@ class GeneralConfigRouteAuthorizationConfigTest {
             assertEquals(referenceRules, generalConfigRules(config),
                     () -> config + " must match the startup general config policy");
             for (Map.Entry<GeneralConfigTypeEnum, RolePolicy> policy : ROLE_POLICIES.entrySet()) {
-                String path = "/api/config/" + policy.getKey().name();
+                String path = policy.getKey() == GeneralConfigTypeEnum.public_access
+                        ? "/api/config/public-access"
+                        : "/api/config/" + policy.getKey().name();
                 assertExactRule(config, lines, path, "get", policy.getValue().getRoles());
                 assertExactRule(config, lines, path, "post", policy.getValue().postRoles());
             }
@@ -115,6 +117,7 @@ class GeneralConfigRouteAuthorizationConfigTest {
         policies.put(GeneralConfigTypeEnum.secret, new RolePolicy(ADMIN_ROLE, ADMIN_ROLE));
         policies.put(GeneralConfigTypeEnum.sms, new RolePolicy(ALL_ROLES, ADMIN_ROLE));
         policies.put(GeneralConfigTypeEnum.system, new RolePolicy(ALL_ROLES, ADMIN_ROLE));
+        policies.put(GeneralConfigTypeEnum.public_access, new RolePolicy(ALL_ROLES, ADMIN_ROLE));
         policies.put(GeneralConfigTypeEnum.email, new RolePolicy(ALL_ROLES, ADMIN_ROLE));
         policies.put(GeneralConfigTypeEnum.oss, new RolePolicy(ALL_ROLES, ADMIN_ROLE));
         policies.put(GeneralConfigTypeEnum.provider, new RolePolicy(ADMIN_ROLE, ADMIN_ROLE));
