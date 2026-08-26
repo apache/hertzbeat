@@ -88,7 +88,7 @@ function SelectedHistoryHeader({
         </span>
         <time>{formatMetricTime(current.time)}</time>
       </div>
-      <SelectedHistoryControls chart={chart} actions={actions} />
+      <SelectedHistoryControls chart={chart} actions={actions} investigationSignals={state.investigationSignals} />
     </header>
   );
 }

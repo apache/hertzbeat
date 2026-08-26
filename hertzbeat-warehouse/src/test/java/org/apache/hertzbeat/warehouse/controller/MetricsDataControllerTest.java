@@ -178,4 +178,38 @@ class MetricsDataControllerTest {
         verify(metricsDataService).getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history),
                 eq(interval), eq(start), eq(end), eq(step));
     }
+
+    @Test
+    void getMetricHistoryDataWithStructuredIdentityPreservesDottedApplication() throws Exception {
+        final String instance = "127.0.0.1:9090";
+        final String app = "_prometheus_node.prod.example";
+        final String metrics = "system";
+        final String metric = "cpu_usage";
+        final String history = "30m";
+        final Boolean interval = false;
+        MetricsHistoryData historyData = MetricsHistoryData.builder()
+                .instance(instance)
+                .metrics(metrics)
+                .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
+                .build();
+
+        when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
+        when(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval,
+                null, null, null)).thenReturn(historyData);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor/{instance}/metric", instance)
+                        .param("app", app)
+                        .param("metrics", metrics)
+                        .param("metric", metric)
+                        .param("history", history)
+                        .param("interval", String.valueOf(interval)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.instance").value(instance))
+                .andExpect(jsonPath("$.data.metrics").value(metrics))
+                .andExpect(jsonPath("$.data.field.name").value(metric));
+
+        verify(metricsDataService).getMetricHistoryData(instance, app, metrics, metric, history, interval,
+                null, null, null);
+    }
 }

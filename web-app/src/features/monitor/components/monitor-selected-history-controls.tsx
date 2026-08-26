@@ -5,8 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { ReloadOutlined } from '@ant-design/icons';
-import { Button, Select } from 'antd';
+import { DownOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -19,10 +19,12 @@ import { MonitorSegmentedSwitch } from './monitor-segmented-switch';
 
 export function SelectedHistoryControls({
   chart,
-  actions
+  actions,
+  investigationSignals
 }: {
   chart: MonitorHistoryChart;
   actions: MonitorMetricWorkbenchController['actions'];
+  investigationSignals: MonitorMetricWorkbenchController['state']['investigationSignals'];
 }) {
   const { t } = useTranslation();
   const aggregated = chart.interval;
@@ -52,6 +54,36 @@ export function SelectedHistoryControls({
         aria-label={t('monitorMetrics.refreshHistory')}
         onClick={() => actions.refreshHistoryChart(chart.metric.key)}
       />
+      <InvestigationMenu signals={investigationSignals} actions={actions} />
     </div>
+  );
+}
+
+function InvestigationMenu({
+  signals,
+  actions
+}: {
+  signals: MonitorMetricWorkbenchController['state']['investigationSignals'];
+  actions: MonitorMetricWorkbenchController['actions'];
+}) {
+  const { t } = useTranslation();
+  if (signals.length === 0) return null;
+  return (
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        items: signals.map(signal => ({ key: signal, label: t(`explore.signals.${signal}`) })),
+        onClick: item => actions.openInvestigationSignal(item.key as (typeof signals)[number])
+      }}
+    >
+      <Button
+        size="small"
+        icon={<DownOutlined />}
+        iconPosition="end"
+        aria-label={t('monitorMetrics.investigation.open')}
+      >
+        {t('monitorMetrics.investigation.open')}
+      </Button>
+    </Dropdown>
   );
 }

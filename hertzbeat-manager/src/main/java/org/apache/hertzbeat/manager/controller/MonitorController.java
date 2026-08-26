@@ -24,7 +24,9 @@ import jakarta.validation.Valid;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorInvestigationBindingInfo;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.entity.MonitorInvestigationReadModelService;
 import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +57,9 @@ public class MonitorController {
 
     @Autowired
     private MonitorService monitorService;
+
+    @Autowired
+    private MonitorInvestigationReadModelService monitorInvestigationReadModelService;
 
     @PostMapping
     @Operation(summary = "Add a monitoring application", description = "Add a monitoring application")
@@ -120,6 +125,15 @@ public class MonitorController {
         } else {
             return ResponseEntity.ok(Message.success(monitorDto));
         }
+    }
+
+    @GetMapping(path = "/{id}/investigation")
+    @Operation(summary = "Get the exact Entity investigation binding for a Monitor",
+            description = "Get the workspace-visible Entity and observed signals bound to one Monitor")
+    public ResponseEntity<Message<MonitorInvestigationBindingInfo>> getMonitorInvestigation(
+            @Parameter(description = "Monitoring task ID", example = "6565463543")
+            @PathVariable("id") final long id) {
+        return ResponseEntity.ok(Message.success(monitorInvestigationReadModelService.resolve(id).orElse(null)));
     }
 
     @DeleteMapping(path = "/{id}")

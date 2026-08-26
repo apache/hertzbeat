@@ -8,7 +8,7 @@
 import { apiMessageDelete, apiMessageGet, apiMessagePut } from '@/core/http/api-message';
 
 import type { MonitorMetricLayoutDocument } from '../model/monitor-metric-layout-model';
-import { parseMonitorMetricLayout } from './monitor-metric-layout-schema';
+import { MonitorMetricLayoutContractError, parseMonitorMetricLayout } from './monitor-metric-layout-schema';
 
 export type MonitorMetricLayoutSavePayload = MonitorMetricLayoutDocument & { expectedRevision: string };
 
@@ -18,14 +18,25 @@ function buildMonitorMetricLayoutPath(application: string) {
 
 export async function loadMonitorMetricLayout(application: string, signal?: AbortSignal) {
   const value = await apiMessageGet(buildMonitorMetricLayoutPath(application), signal ? { signal } : undefined);
-  return parseMonitorMetricLayout(value);
+  return parseMatchingMonitorMetricLayout(value, application);
 }
 
 export async function saveMonitorMetricLayout(application: string, payload: MonitorMetricLayoutSavePayload) {
-  return parseMonitorMetricLayout(await apiMessagePut(buildMonitorMetricLayoutPath(application), payload));
+  const layout = parseMatchingMonitorMetricLayout(
+    await apiMessagePut(buildMonitorMetricLayoutPath(application), payload),
+    application
+  );
+  if (!layout) throw new MonitorMetricLayoutContractError();
+  return layout;
 }
 
 export async function resetMonitorMetricLayout(application: string, expectedRevision: string) {
   const params = new URLSearchParams({ expectedRevision });
   await apiMessageDelete(`${buildMonitorMetricLayoutPath(application)}?${params.toString()}`);
+}
+
+function parseMatchingMonitorMetricLayout(value: unknown, application: string) {
+  const layout = parseMonitorMetricLayout(value);
+  if (layout && layout.application !== application) throw new MonitorMetricLayoutContractError();
+  return layout;
 }

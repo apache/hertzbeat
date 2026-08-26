@@ -9,6 +9,8 @@ import { isSensitiveFieldName } from '@/core/security/sensitive-field';
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 export type QueryContext = {
+  entityId?: string | undefined;
+  monitorId?: string | undefined;
   intakeProfileId?: string | undefined;
   collectorId?: string | undefined;
   serviceName?: string | undefined;
@@ -21,8 +23,11 @@ export type QueryContext = {
 export type QueryContextField = keyof QueryContext;
 export type SignalKind = 'metrics' | 'logs' | 'traces';
 export type ExactTimeWindow = { from: number; to: number };
+export type InvestigationTimeWindow = ExactTimeWindow & { timeZone: string };
 
 export const QUERY_CONTEXT_FIELDS = {
+  entityId: 'entityId',
+  monitorId: 'monitorId',
   intakeProfileId: 'intakeProfileId',
   collectorId: 'collectorId',
   serviceName: 'serviceName',
@@ -92,6 +97,8 @@ export function buildSignalHandoffPath(signal: SignalKind, context: QueryContext
   requireExactWindow(window);
   rejectSensitiveRecord(context);
   const params = new URLSearchParams({ signal });
+  append(params, 'entityId', context.entityId);
+  append(params, 'monitorId', context.monitorId);
   append(params, 'serviceName', context.serviceName);
   append(params, 'serviceNamespace', context.serviceNamespace);
   append(params, 'environment', context.environment);
@@ -102,6 +109,35 @@ export function buildSignalHandoffPath(signal: SignalKind, context: QueryContext
   params.set('start', String(window.from));
   params.set('end', String(window.to));
   return `${applicationRoutePaths.explore}?${params.toString()}`;
+}
+
+export function buildInvestigationSignalHandoffPath(
+  signal: SignalKind,
+  context: QueryContext,
+  window: InvestigationTimeWindow
+) {
+  const timeZone = normalizeInvestigationTimeZone(window.timeZone);
+  if (!timeZone) throw new Error('Cross-signal investigation requires an IANA time zone');
+  const url = new URL(buildSignalHandoffPath(signal, context, window), 'https://hertzbeat.local');
+  url.searchParams.set('timeZone', timeZone);
+  return `${url.pathname}?${url.searchParams.toString()}`;
+}
+
+export function normalizeInvestigationTimeZone(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (!normalized || normalized.length > 128 || [...normalized].some(isControlCharacter)) return undefined;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: normalized }).format(0);
+    return normalized;
+  } catch {
+    return undefined;
+  }
+}
+
+function isControlCharacter(value: string) {
+  const code = value.charCodeAt(0);
+  return code <= 31 || code === 127;
 }
 
 export function scopedQueryKey(

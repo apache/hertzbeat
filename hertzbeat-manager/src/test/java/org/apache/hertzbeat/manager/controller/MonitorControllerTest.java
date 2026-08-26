@@ -24,11 +24,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorInvestigationBindingInfo;
+import org.apache.hertzbeat.manager.service.entity.MonitorInvestigationReadModelService;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +56,9 @@ class MonitorControllerTest {
 
     @Mock
     private MonitorServiceImpl monitorService;
+
+    @Mock
+    private MonitorInvestigationReadModelService monitorInvestigationReadModelService;
 
     @InjectMocks
     private MonitorController monitorController;
@@ -195,6 +201,44 @@ class MonitorControllerTest {
                 .andReturn();
 
         Mockito.verify(monitorService).getMonitorDto(6565463543L);
+    }
+
+    @Test
+    void getMonitorInvestigationReturnsOnlyTheResolvedExactBinding() throws Exception {
+        Mockito.when(monitorInvestigationReadModelService.resolve(6565463543L))
+                .thenReturn(Optional.of(new MonitorInvestigationBindingInfo(
+                        6565463543L,
+                        7L,
+                        "service",
+                        "checkout",
+                        "commerce",
+                        "production",
+                        List.of("metrics", "logs"))));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor/{id}/investigation", 6565463543L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.monitorId").value(6565463543L))
+                .andExpect(jsonPath("$.data.entityId").value(7L))
+                .andExpect(jsonPath("$.data.entityType").value("service"))
+                .andExpect(jsonPath("$.data.serviceName").value("checkout"))
+                .andExpect(jsonPath("$.data.signals[0]").value("metrics"))
+                .andExpect(jsonPath("$.data.signals[1]").value("logs"));
+
+        Mockito.verify(monitorInvestigationReadModelService).resolve(6565463543L);
+    }
+
+    @Test
+    void getMonitorInvestigationDoesNotFabricateMissingBinding() throws Exception {
+        Mockito.when(monitorInvestigationReadModelService.resolve(6565463543L))
+                .thenReturn(Optional.empty());
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor/{id}/investigation", 6565463543L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        Mockito.verify(monitorInvestigationReadModelService).resolve(6565463543L);
     }
 
     @Test

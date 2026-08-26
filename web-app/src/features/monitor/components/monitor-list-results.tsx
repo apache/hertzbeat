@@ -80,7 +80,11 @@ export function MonitorListResults({
     return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   const rowSelection: TableRowSelection<MonitorListRow> = {
     selectedRowKeys: selectedIds,
-    getCheckboxProps: row => ({ disabled: operating || isMonitorRowDisappeared(row) }),
+    getTitleCheckboxProps: () => ({ 'aria-label': t('monitorActions.selectAll') }),
+    getCheckboxProps: row => ({
+      'aria-label': t('monitorActions.selectOne', { name: row.name }),
+      disabled: operating || isMonitorRowDisappeared(row)
+    }),
     onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };
   const selectionProps = canSelect ? { rowSelection } : {};

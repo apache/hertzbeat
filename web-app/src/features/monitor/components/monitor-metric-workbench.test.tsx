@@ -317,6 +317,26 @@ describe('MonitorMetricWorkbench', () => {
     expect(screen.queryByRole('button', { name: i18n.t('monitorMetrics.expandHistory') })).not.toBeInTheDocument();
   });
 
+  it('offers one compact cross-signal menu containing only authoritative signal bindings', async () => {
+    const value = controller({
+      selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }),
+      investigationSignals: ['metrics', 'logs']
+    });
+    renderWorkbench(value);
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.investigation.open') }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: i18n.t('explore.signals.logs') }));
+
+    expect(value.actions.openInvestigationSignal).toHaveBeenCalledWith('logs');
+    expect(screen.queryByRole('menuitem', { name: i18n.t('explore.signals.traces') })).not.toBeInTheDocument();
+  });
+
+  it('does not render an investigation affordance without an authoritative binding', () => {
+    renderWorkbench(controller({ selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }) }));
+
+    expect(screen.queryByRole('button', { name: i18n.t('monitorMetrics.investigation.open') })).not.toBeInTheDocument();
+  });
+
   it('integrates layout editing into the dashboard command bar and places history before realtime panels', () => {
     renderWorkbench(controller({ selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }) }));
 
@@ -327,6 +347,32 @@ describe('MonitorMetricWorkbench', () => {
     expect(within(commandBar).getByRole('button', { name: i18n.t('monitorMetrics.layout.edit') })).toBeVisible();
     expect(history.compareDocumentPosition(realtime) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'summary' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['ArrowUp', 8, 8],
+    ['ArrowDown', 20, 20],
+    ['ArrowUp', 12, 11],
+    ['ArrowDown', 12, 13]
+  ] as const)('resizes the editable history dock with %s and clamps it to the saved range', (key, height, expected) => {
+    const value = controller({
+      selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }),
+      layout: {
+        ...controller().state.layout,
+        editing: true,
+        layout: {
+          ...controller().state.layout.layout,
+          historyDock: { collapsed: false, height }
+        }
+      }
+    });
+    renderWorkbench(value);
+
+    fireEvent.keyDown(screen.getByRole('separator', { name: i18n.t('monitorMetrics.layout.resizeHistory') }), {
+      key
+    });
+
+    expect(value.actions.layout.changeHistoryDock).toHaveBeenCalledWith({ collapsed: false, height: expected });
   });
 
   it('pauses and resumes shared live refresh without hiding current values', () => {
@@ -369,6 +415,7 @@ function controller(
       hasMoreRealtimeGroups: false,
       historyAvailability: { kind: 'available' },
       historyCharts: [],
+      investigationSignals: [],
       hasMoreHistoryCharts: false,
       realtime: { kind: 'ready', rows: [metricRow('value', '12')] },
       historical: { kind: 'empty', rows: [] },
@@ -400,6 +447,7 @@ function controller(
       setHistoryChartRange: vi.fn(),
       setHistoryChartMode: vi.fn(),
       refreshHistoryChart: vi.fn(),
+      openInvestigationSignal: vi.fn(),
       loadMoreHistoryCharts: vi.fn(),
       refresh: vi.fn(),
       layout: {

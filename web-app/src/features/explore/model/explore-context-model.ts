@@ -28,6 +28,8 @@ const exploreContextFields = Object.values(QUERY_CONTEXT_FIELDS);
 
 export function exploreQueryContext(query: ExploreQuery): QueryContext {
   return {
+    entityId: query.entityId,
+    monitorId: query.monitorId,
     intakeProfileId: query.intakeProfileId,
     collectorId: query.collectorId,
     serviceName: query.serviceName,
@@ -51,6 +53,8 @@ export function mergeExploreContextChanges(context: QueryContext, changes: Explo
     operationName: undefined,
     pageIndex: undefined,
     ...changes,
+    entityId: next.entityId,
+    monitorId: next.monitorId,
     intakeProfileId: next.intakeProfileId,
     collectorId: next.collectorId,
     serviceName: next.serviceName,

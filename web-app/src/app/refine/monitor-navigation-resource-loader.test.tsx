@@ -84,6 +84,23 @@ describe('MonitorNavigationResourceLoader', () => {
       ])
     );
   });
+
+  it('replays a cached authenticated catalog without clearing resources during a remount', async () => {
+    runtime.session = { loading: false, session: { authenticated: true } };
+    const apps = [{ category: 'db', value: 'mysql', label: 'MySQL', hide: false }];
+    runtime.load.mockResolvedValue(apps);
+    const onChange = vi.fn();
+    const view = renderLoader(onChange);
+
+    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(apps));
+    onChange.mockClear();
+
+    view.unmount();
+    render(loader(onChange, view.client));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(apps));
+    expect(onChange).not.toHaveBeenCalledWith([]);
+  });
 });
 
 function renderLoader(onChange: (apps: readonly MonitorApp[]) => void) {

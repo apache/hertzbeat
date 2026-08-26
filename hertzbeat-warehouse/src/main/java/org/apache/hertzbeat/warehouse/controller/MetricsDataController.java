@@ -103,6 +103,42 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
+        return queryMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+    }
+
+    @GetMapping("/api/monitor/{instance}/metric")
+    @Operation(summary = "Query metric history by structured identity",
+            description = "Queries historical data without combining application, group, and field names")
+    public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryDataByIdentity(
+            @Parameter(description = "monitor instance", example = "127.0.0.1:8080")
+            @PathVariable String instance,
+            @Parameter(description = "monitor application", example = "linux")
+            @RequestParam String app,
+            @Parameter(description = "metric group", example = "cpu")
+            @RequestParam String metrics,
+            @Parameter(description = "metric field", example = "usage")
+            @RequestParam String metric,
+            @RequestParam(required = false) String history,
+            @RequestParam(required = false) Boolean interval,
+            @RequestParam(required = false) Long start,
+            @RequestParam(required = false) Long end,
+            @RequestParam(required = false) String step) {
+        if (!metricsDataService.getWarehouseStorageServerStatus()) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
+        }
+        return queryMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+    }
+
+    private ResponseEntity<Message<MetricsHistoryData>> queryMetricHistoryData(
+            String instance,
+            String app,
+            String metrics,
+            String metric,
+            String history,
+            Boolean interval,
+            Long start,
+            Long end,
+            String step) {
         MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric,
                 history, interval, start, end, step);
         return ResponseEntity.ok(Message.success(historyData));

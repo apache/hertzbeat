@@ -361,7 +361,7 @@ describe('monitor metric API paths', () => {
     const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' };
 
     expect(buildHistoryMetricPath(monitor, metric, history, interval)).toBe(
-      `/api/monitor/example.com%3A443/metric/website.summary.responseTime?history=${history}&interval=${interval}`
+      `/api/monitor/example.com%3A443/metric?app=website&metrics=summary&metric=responseTime&history=${history}&interval=${interval}`
     );
   });
 });

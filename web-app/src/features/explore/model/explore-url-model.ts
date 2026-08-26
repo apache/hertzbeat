@@ -16,7 +16,7 @@
  */
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
-import { parseQueryContext, writeQueryContext } from '@/shared/query-context';
+import { normalizeInvestigationTimeZone, parseQueryContext, writeQueryContext } from '@/shared/query-context';
 
 import { parseExploreFilterParams } from './explore-field-contract';
 import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
@@ -44,6 +44,7 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     autoRefreshMs: readAutoRefresh(params.get('autoRefresh')),
     start: time.start,
     end: time.end,
+    timeZone: normalizeInvestigationTimeZone(params.get('timeZone')),
     live: readLiveMode(params),
     severityText: readValue(params.get('severityText')),
     spanId: readValue(params.get('spanId')),
@@ -68,17 +69,17 @@ export function buildExplorePath(query: ExploreQuery) {
   if (normalized.autoRefreshMs) params.set('autoRefresh', String(normalized.autoRefreshMs));
   if (normalized.start) params.set('start', String(normalized.start));
   if (normalized.end) params.set('end', String(normalized.end));
+  if (normalized.timeZone) params.set('timeZone', normalized.timeZone);
   return `${applicationRoutePaths.explore}?${writeQueryContext(params, normalized).toString()}`;
 }
 
 export function normalizeExploreQuery(
   query: ExploreQueryPatch & { signal: ExploreSignal; timeRange: ExploreTimeRange }
 ): ExploreQuery {
-  const exactWindow = query.start != null && query.end != null && query.start < query.end;
-  // A preset with residual timestamps is invalid handoff evidence. Preserve it so URL repair cannot widen scope.
-  const invalidPresetEvidence = query.windowMode === 'preset' && (query.start != null || query.end != null);
   const shared = {
     timeRange: query.timeRange,
+    entityId: query.entityId,
+    monitorId: query.monitorId,
     intakeProfileId: query.intakeProfileId,
     serviceName: query.serviceName,
     serviceNamespace: query.serviceNamespace,
@@ -88,9 +89,7 @@ export function normalizeExploreQuery(
     endpoint: query.endpoint,
     query: query.query,
     windowMode: query.windowMode,
-    autoRefreshMs: exactWindow ? undefined : query.autoRefreshMs,
-    start: exactWindow || invalidPresetEvidence ? query.start : undefined,
-    end: exactWindow || invalidPresetEvidence ? query.end : undefined
+    ...normalizeExploreTimeEvidence(query)
   };
   if (query.signal === 'metrics')
     return {
@@ -129,6 +128,18 @@ export function normalizeExploreQuery(
     hideInternal: enabledFilterValue(query.hideInternal),
     minDurationMs: query.minDurationMs,
     maxDurationMs: query.maxDurationMs
+  };
+}
+
+function normalizeExploreTimeEvidence(query: ExploreQueryPatch) {
+  const exactWindow = query.start != null && query.end != null && query.start < query.end;
+  // A preset with residual timestamps is invalid handoff evidence. Preserve it so URL repair cannot widen scope.
+  const invalidPresetEvidence = query.windowMode === 'preset' && (query.start != null || query.end != null);
+  return {
+    autoRefreshMs: exactWindow ? undefined : query.autoRefreshMs,
+    start: exactWindow || invalidPresetEvidence ? query.start : undefined,
+    end: exactWindow || invalidPresetEvidence ? query.end : undefined,
+    timeZone: exactWindow ? normalizeInvestigationTimeZone(query.timeZone) : undefined
   };
 }
 

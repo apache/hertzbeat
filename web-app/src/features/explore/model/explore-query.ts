@@ -24,6 +24,8 @@ export type TraceSpanScope = 'root' | 'entrypoint';
 
 type SharedExploreQuery = {
   timeRange: ExploreTimeRange;
+  entityId?: string | undefined;
+  monitorId?: string | undefined;
   serviceName?: string | undefined;
   serviceNamespace?: string | undefined;
   environment?: string | undefined;
@@ -36,6 +38,7 @@ type SharedExploreQuery = {
   autoRefreshMs?: number | undefined;
   start?: number | undefined;
   end?: number | undefined;
+  timeZone?: string | undefined;
 };
 
 export type MetricExploreQuery = SharedExploreQuery & {
@@ -80,6 +83,8 @@ export type ExploreQuery = MetricExploreQuery | LogExploreQuery | TraceExploreQu
 export type ExploreQueryPatch = {
   signal?: ExploreSignal | undefined;
   timeRange?: ExploreTimeRange | undefined;
+  entityId?: string | undefined;
+  monitorId?: string | undefined;
   serviceName?: string | undefined;
   serviceNamespace?: string | undefined;
   environment?: string | undefined;
@@ -92,6 +97,7 @@ export type ExploreQueryPatch = {
   autoRefreshMs?: number | undefined;
   start?: number | undefined;
   end?: number | undefined;
+  timeZone?: string | undefined;
   traceId?: string | undefined;
   errorOnly?: boolean | undefined;
   live?: boolean | undefined;
@@ -125,6 +131,12 @@ export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
 }
 
 export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
+  if ([query.entityId, query.monitorId, query.timeZone].some(isPresent)) {
+    return [query.entityId, query.monitorId, query.serviceName, query.timeZone].every(isPresent) &&
+      validExactWindow(query.start, query.end)
+      ? 'scoped'
+      : 'invalid';
+  }
   // Ordinary Explore filters can include a namespace. Only onboarding-owned identity/window markers activate
   // the stricter handoff contract.
   if (![query.intakeProfileId, query.collectorId, query.windowMode].some(isPresent)) {
