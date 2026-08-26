@@ -19,16 +19,8 @@
 set -eu
 
 repository_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-compose_file="${repository_root}/script/docker-compose/hertzbeat-postgresql-greptimedb/docker-compose.yaml"
-default_config=$(mktemp)
-override_config=$(mktemp)
-trap 'rm -f "$default_config" "$override_config"' EXIT HUP INT TERM
-
-unset HERTZBEAT_BIND_ADDRESS HERTZBEAT_OTLP_BIND_ADDRESS
-docker compose -f "$compose_file" config --format json > "$default_config"
-HERTZBEAT_BIND_ADDRESS=192.0.2.10 \
-HERTZBEAT_OTLP_BIND_ADDRESS=192.0.2.20 \
-  docker compose -f "$compose_file" config --format json > "$override_config"
+temporary_directory=$(mktemp -d)
+trap 'rm -f "$temporary_directory"/*.json; rmdir "$temporary_directory"' EXIT HUP INT TERM
 
 assert_binding() {
   config_file=$1
@@ -49,18 +41,52 @@ assert_binding() {
     "$config_file" > /dev/null
 }
 
-for service_port in 1157 1158; do
-  assert_binding "$default_config" hertzbeat "$service_port" "$service_port" 127.0.0.1
-  assert_binding "$override_config" hertzbeat "$service_port" "$service_port" 192.0.2.10
-done
-assert_binding "$default_config" hertzbeat 14317 14317 127.0.0.1
-assert_binding "$override_config" hertzbeat 14317 14317 192.0.2.20
+assert_all_bindings() {
+  config_file=$1
+  expected_host=$2
 
-assert_binding "$default_config" postgres 5432 15432 127.0.0.1
-assert_binding "$override_config" postgres 5432 15432 127.0.0.1
-for datastore_port in 4000 4001 4002 4003; do
-  assert_binding "$default_config" greptime "$datastore_port" "1${datastore_port}" 127.0.0.1
-  assert_binding "$override_config" greptime "$datastore_port" "1${datastore_port}" 127.0.0.1
+  jq -e \
+    --arg expected_host "$expected_host" \
+    '[.services[]?.ports[]?] | length > 0 and all(.host_ip == $expected_host)' \
+    "$config_file" > /dev/null
+}
+
+assert_non_hertzbeat_bindings() {
+  config_file=$1
+  expected_host=$2
+
+  jq -e \
+    --arg expected_host "$expected_host" \
+    '[.services | to_entries[] | select(.key != "hertzbeat") | .value.ports[]?]
+      | all(.host_ip == $expected_host)' \
+    "$config_file" > /dev/null
+}
+
+for variant in \
+  hertzbeat-mysql-iotdb \
+  hertzbeat-mysql-tdengine \
+  hertzbeat-mysql-victoria-metrics \
+  hertzbeat-postgresql-greptimedb \
+  hertzbeat-postgresql-victoria-metrics
+do
+  compose_file="${repository_root}/script/docker-compose/${variant}/docker-compose.yaml"
+  default_config="${temporary_directory}/${variant}-default.json"
+  override_config="${temporary_directory}/${variant}-override.json"
+
+  unset HERTZBEAT_BIND_ADDRESS HERTZBEAT_OTLP_BIND_ADDRESS
+  POSTGRES_PASSWORD=compose-config-test \
+    docker compose -f "$compose_file" config --format json > "$default_config"
+  HERTZBEAT_BIND_ADDRESS=192.0.2.10 \
+  HERTZBEAT_OTLP_BIND_ADDRESS=192.0.2.20 \
+  POSTGRES_PASSWORD=compose-config-test \
+    docker compose -f "$compose_file" config --format json > "$override_config"
+
+  assert_all_bindings "$default_config" 127.0.0.1
+  for service_port in 1157 1158; do
+    assert_binding "$override_config" hertzbeat "$service_port" "$service_port" 192.0.2.10
+  done
+  assert_binding "$override_config" hertzbeat 14317 14317 192.0.2.20
+  assert_non_hertzbeat_bindings "$override_config" 127.0.0.1
 done
 
 echo "Quick-start Compose listener bindings are valid."

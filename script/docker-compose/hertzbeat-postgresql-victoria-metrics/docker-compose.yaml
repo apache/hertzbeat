@@ -32,7 +32,7 @@ services:
       retries: 5
       start_period: 30s
     ports:
-      - '15432:5432'
+      - '127.0.0.1:15432:5432'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-root}
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD (e.g., in .env)}"
@@ -58,7 +58,7 @@ services:
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "18428:8428"
+      - "127.0.0.1:18428:8428"
     volumes:
       - ./dbdata/tsdbdata:/victoria-metrics-data
     networks:
@@ -86,10 +86,10 @@ services:
       - ./logs:/opt/hertzbeat/logs
       - ./ext-lib:/opt/hertzbeat/ext-lib
     ports:
-      - "1157:1157"
-      - "1158:1158"
+      - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1157:1157"
+      - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1158:1158"
       # OTLP/gRPC ingestion. 14317 rather than the OpenTelemetry standard 4317, which a local
       # OTel Collector normally holds - and a clash on a published port stops the container.
-      - "14317:14317"
+      - "${HERTZBEAT_OTLP_BIND_ADDRESS:-127.0.0.1}:14317:14317"
     networks:
       - hertzbeat

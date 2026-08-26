@@ -44,15 +44,26 @@ Recommended upgrade steps:
 ### New OTLP/gRPC listener on port 14317
 
 When `warehouse.store.greptime.enabled=true`, 1.9.0 additionally starts an OTLP/gRPC listener on
-`0.0.0.0:14317` so exporters can push metrics, logs and traces over gRPC. The packaged Dockerfile and
-the docker-compose files publish it unchanged, so the port is the same on every deployment.
+`0.0.0.0:14317` inside the HertzBeat container so exporters can push metrics, logs and traces over
+gRPC. The packaged Dockerfile exposes that container port. The repository's five Docker Compose
+quick-start variants publish it as host port `14317`, bound to `127.0.0.1` by default.
 
 - **It is not the OpenTelemetry standard 4317.** An OTel Collector, Jaeger or Tempo on the same host
   normally holds 4317 already, and a clash on a published port makes `docker compose up` fail
   outright. HertzBeat serves OTLP/HTTP on its own port as well, so 14317 is consistent with the rest
   of the product.
-- Existing deployments gain one newly bound port. If your firewall or security policy enumerates
-  listening ports, add 14317.
+- Existing non-Compose deployments gain one newly bound port. If your firewall or security policy
+  enumerates listening ports, add 14317.
+- Every 1.9.0 Docker Compose quick-start now binds all published ports to `127.0.0.1` by default,
+  including `1157`, `1158`, `14317`, and the development database/time-series ports. Upgrading an
+  older Compose checkout therefore preserves local access but intentionally stops remote browser,
+  Collector, OTLP, and datastore access until explicitly configured.
+- For a remote Collector, copy the selected variant's `.env.example` to `.env`, set
+  `HERTZBEAT_BIND_ADDRESS` to the manager's reachable address, and allow `1158` only from Collector
+  source networks. This setting also controls `1157`; prefer a TLS reverse proxy for remote web/API
+  access. Set `HERTZBEAT_OTLP_BIND_ADDRESS` separately only for trusted OTLP senders. Before using a
+  wildcard address, replace default credentials and apply firewall or security-group restrictions.
+  Render `docker compose config` and inspect every final host binding before restarting.
 - A port that cannot be bound does **not** stop HertzBeat: the failure is logged and the process
   starts without gRPC ingestion, while OTLP/HTTP on `/api/otlp/v1` keeps working.
 - To move the listener to 4317, or disable it, set these in `application.yml` or through the matching

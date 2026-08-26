@@ -13,15 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copy this file to .env and set your own strong password before running docker compose up
-POSTGRES_USER=root
-POSTGRES_PASSWORD=
-
-# Bind the web/API listener (1157) and manager/collector transport (1158) to
-# loopback for a local quick start. Set this to a reachable manager address only
-# when remote access is required and network controls are ready.
-HERTZBEAT_BIND_ADDRESS=127.0.0.1
-
-# Bind OTLP/gRPC ingestion (14317) separately so enabling a remote Collector does
-# not also expose telemetry ingestion. Change this only for trusted OTLP senders.
-HERTZBEAT_OTLP_BIND_ADDRESS=127.0.0.1
+.env
