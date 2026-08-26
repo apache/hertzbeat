@@ -147,6 +147,7 @@
   "alert.notice.sender.mail.port": "이메일 포트",
   "alert.notice.sender.mail.ssl": "SSL 활성화",
   "alert.notice.sender.mail.starttls": "STARTTLS 활성화",
+  "alert.notice.sender.mail.ssl-cert-verify": "SSL 인증서 검증",
   "alert.notice.sender.mail.username": "이메일 계정",
   "alert.notice.sender.sms.tencent.appId": "Tencent SMS AppId",
   "alert.notice.sender.sms.tencent.secretId": "Tencent SMS SecretId",

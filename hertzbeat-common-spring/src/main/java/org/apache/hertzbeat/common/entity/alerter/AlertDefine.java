@@ -69,8 +69,8 @@ public class AlertDefine {
     private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
-    @Size(max = 2048)
-    @Column(length = 2048)
+    @Size(max = 65535)
+    @Column(columnDefinition = "TEXT")
     private String expr;
 
     @Schema(title = "Execution Period/ Window Size (seconds) - For periodic rules/ For log realtime", example = "300")
