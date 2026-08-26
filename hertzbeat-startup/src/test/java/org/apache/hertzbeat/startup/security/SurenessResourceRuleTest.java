@@ -117,6 +117,28 @@ class SurenessResourceRuleTest {
         assertEquals("[admin,user,guest]", roleTree.searchPathFilterRoles("/api/monitors" + SEPARATOR + "get"));
     }
 
+    @Test
+    void readingAlertDefinitionsExcludesGuest() {
+        assertEquals("[admin,user]",
+                roleTree.searchPathFilterRoles("/api/alert/define/1" + SEPARATOR + "get"));
+        assertEquals("[admin,user]",
+                roleTree.searchPathFilterRoles("/api/alert/defines" + SEPARATOR + "get"));
+        assertEquals("[admin,user]",
+                roleTree.searchPathFilterRoles("/api/alert/defines/export" + SEPARATOR + "get"));
+    }
+
+    @Test
+    void previewingAndAuthoringPeriodicQueriesIsRestrictedToAdmin() {
+        assertEquals("[admin]",
+                roleTree.searchPathFilterRoles("/api/alert/define/preview/sql" + SEPARATOR + "get"));
+        assertEquals("[admin]",
+                roleTree.searchPathFilterRoles("/api/alert/define" + SEPARATOR + "post"));
+        assertEquals("[admin]",
+                roleTree.searchPathFilterRoles("/api/alert/define" + SEPARATOR + "put"));
+        assertEquals("[admin]",
+                roleTree.searchPathFilterRoles("/api/alert/defines/import" + SEPARATOR + "post"));
+    }
+
     /**
      * Only the {@code get} verb under {@code /api/apps} used to be listed, so the monitoring
      * template writes behind {@code AppController} reached any authenticated caller, down to
@@ -197,6 +219,32 @@ class SurenessResourceRuleTest {
                     "overwriting a monitoring template is unruled or over-granted in " + copy);
             assertEquals("[admin]", copyTree.searchPathFilterRoles("/api/apps/linux/define/yml" + SEPARATOR + "delete"),
                     "deleting a monitoring template is unruled or over-granted in " + copy);
+        }
+    }
+
+    @Test
+    void deploymentCopiesRestrictAlertQueryAuthoring() throws IOException {
+        for (Path copy : deploymentCopies()) {
+            TirePathTree copyTree = new TirePathTree();
+            copyTree.buildTree(new LinkedHashSet<>(sectionOf(copy, "resourceRole")));
+            assertEquals("[admin,user]",
+                    copyTree.searchPathFilterRoles("/api/alert/define/1" + SEPARATOR + "get"),
+                    "alert definitions expose query expressions to guest in " + copy);
+            assertEquals("[admin,user]",
+                    copyTree.searchPathFilterRoles("/api/alert/defines" + SEPARATOR + "get"),
+                    "alert definition lists expose query expressions to guest in " + copy);
+            assertEquals("[admin]",
+                    copyTree.searchPathFilterRoles("/api/alert/define/preview/sql" + SEPARATOR + "get"),
+                    "alert query preview is over-granted in " + copy);
+            assertEquals("[admin]",
+                    copyTree.searchPathFilterRoles("/api/alert/define" + SEPARATOR + "post"),
+                    "alert query authoring is over-granted in " + copy);
+            assertEquals("[admin]",
+                    copyTree.searchPathFilterRoles("/api/alert/define" + SEPARATOR + "put"),
+                    "alert query modification is over-granted in " + copy);
+            assertEquals("[admin]",
+                    copyTree.searchPathFilterRoles("/api/alert/defines/import" + SEPARATOR + "post"),
+                    "alert query import is over-granted in " + copy);
         }
     }
 

@@ -33,9 +33,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,7 +71,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -107,6 +108,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private final VictoriaMetricsSelectProperties vmSelectProps;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
@@ -186,6 +188,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
+        var managedLabelCollisions =
+                VictoriaMetricsDataStorage.findManagedLabelCollisions(metricsData.getLabels());
+        if (!managedLabelCollisions.isEmpty()) {
+            recordIgnoredLabelCollisions(metricsData.getId(), managedLabelCollisions);
+        }
+        Map<String, String> customizedLabels = VictoriaMetricsDataStorage.withoutManagedLabels(
+                metricsData.getLabels(), managedLabelCollisions);
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto;
@@ -243,10 +252,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 }
                                 labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
-                                var customizedLabels = metricsData.getLabels();
-                                if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                    labels.putAll(customizedLabels);
-                                }
+                                VictoriaMetricsDataStorage.addCustomizedLabels(labels, customizedLabels);
                                 VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
                                     .metric(new HashMap<>(labels))
                                     .values(new Double[]{entry.getValue()})
@@ -274,6 +280,20 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         } catch (Exception e) {
             log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
         }
+    }
+
+    private void recordIgnoredLabelCollisions(long monitorId, Set<String> collisions) {
+        long previousCount = ignoredLabelCollisionCount.getAndAdd(collisions.size());
+        long ignoredCount = previousCount + collisions.size();
+        if (previousCount == 0 || previousCount / 100 < ignoredCount / 100) {
+            log.warn("[warehouse victoria-metrics-cluster] ignore custom labels {} from metrics data {} because "
+                            + "the keys are HertzBeat-managed; cumulative ignored labels: {}.",
+                    collisions, monitorId, ignoredCount);
+        }
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
     }
 
     @Override
