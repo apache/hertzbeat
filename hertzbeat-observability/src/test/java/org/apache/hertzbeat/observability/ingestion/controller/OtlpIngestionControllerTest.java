@@ -20,6 +20,8 @@ package org.apache.hertzbeat.observability.ingestion.controller;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.time.Duration;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,6 +40,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,13 +68,18 @@ class OtlpIngestionControllerTest {
     void setUp() {
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         OtlpIngestionController controller = new OtlpIngestionController(
-                otlpIngestionWorkspaceService, otlpIngestionRedSummaryService, collectorScopedMetricsQueryService);
+                otlpIngestionWorkspaceService, otlpIngestionRedSummaryService, collectorScopedMetricsQueryService,
+                queryAdmissionService());
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @AfterEach
     void tearDown() {
         AuthTokenRequestContext.clear();
+    }
+
+    private ObservabilityQueryAdmissionService queryAdmissionService() {
+        return new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100));
     }
 
     @Test

@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -34,12 +35,14 @@ import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
 import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -58,6 +61,10 @@ class TopologyControllerTest {
 
     @Mock
     private EntityTopologyQueryService entityTopologyQueryService;
+
+    @Spy
+    private ObservabilityQueryAdmissionService queryAdmissionService =
+            new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100));
 
     @BeforeEach
     void setUp() {

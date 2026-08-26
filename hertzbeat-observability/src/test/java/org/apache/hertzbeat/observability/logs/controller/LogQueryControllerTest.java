@@ -33,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -50,6 +51,7 @@ import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.observability.logs.service.impl.LogQueryServiceImpl;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +83,8 @@ class LogQueryControllerTest {
     void setUp() {
         AuthTokenRequestContext.bindWorkspaceId("default");
         this.logQueryController = new LogQueryController(
-                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader))));
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader))),
+                queryAdmissionService());
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
     }
 
@@ -325,7 +328,7 @@ class LogQueryControllerTest {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
                 new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
-                        Optional.of(workspaceQueryGateway)));
+                        Optional.of(workspaceQueryGateway)), queryAdmissionService());
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
         EntityIdentity serviceName = EntityIdentity.builder()
                 .entityId(42L)
@@ -400,7 +403,7 @@ class LogQueryControllerTest {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
                 new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
-                        Optional.of(workspaceQueryGateway)));
+                        Optional.of(workspaceQueryGateway)), queryAdmissionService());
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
         when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
                 .id(42L)
@@ -653,7 +656,7 @@ class LogQueryControllerTest {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
                 new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
-                        Optional.of(workspaceQueryGateway)));
+                        Optional.of(workspaceQueryGateway)), queryAdmissionService());
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
         when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
                 .id(42L)
@@ -1520,7 +1523,7 @@ class LogQueryControllerTest {
         MockMvc fallbackMockMvc = MockMvcBuilders
                 .standaloneSetup(new LogQueryController(new LogQueryServiceImpl(List.of(
                         workspaceCompatibleReader(historyDataReader),
-                        workspaceCompatibleReader(secondaryHistoryDataReader)))))
+                        workspaceCompatibleReader(secondaryHistoryDataReader))), queryAdmissionService()))
                 .build();
 
         when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
@@ -1958,4 +1961,7 @@ class LogQueryControllerTest {
                 org.mockito.ArgumentMatchers.<Map<String, String>>any(), eq("resource:service.version"));
     }
 
+    private ObservabilityQueryAdmissionService queryAdmissionService() {
+        return new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100));
+    }
 }

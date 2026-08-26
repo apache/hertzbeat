@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import java.time.Duration;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,6 +36,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService.TraceDetailQuery;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +59,8 @@ class TraceQueryControllerTest {
     @BeforeEach
     void setUp() {
         AuthTokenRequestContext.bindWorkspaceId("team-a");
-        TraceQueryController controller = new TraceQueryController(entityTraceQueryService);
+        TraceQueryController controller = new TraceQueryController(entityTraceQueryService,
+                new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100)));
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

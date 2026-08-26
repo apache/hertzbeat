@@ -33,7 +33,9 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.manager.support.exception.MonitorMetricsException;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -57,6 +59,19 @@ public class GlobalExceptionHandler {
     private static final String CONNECT_STR = "||";
     private static final String UNKNOWN_ERROR_MESSAGE = "unknown error happen";
     private static final String TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE = "telemetry storage unavailable";
+
+    /** Return an explicit retryable response when a bounded signal-query lane cannot accept work. */
+    @ExceptionHandler(ObservabilityQueryAdmissionException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleObservabilityQueryAdmissionException(
+            ObservabilityQueryAdmissionException exception) {
+        HttpStatus status = exception.getReason() == ObservabilityQueryAdmissionException.Reason.OVERLOADED
+                ? HttpStatus.TOO_MANY_REQUESTS
+                : HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(status)
+                .header(HttpHeaders.RETRY_AFTER, "1")
+                .body(Message.fail(FAIL_CODE, exception.getMessage()));
+    }
 
     /**
      * Preserve the difference between a valid empty telemetry query and an unavailable store.

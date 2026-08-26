@@ -19,6 +19,8 @@ package org.apache.hertzbeat.observability.logs.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+
+import java.time.Duration;
 import static org.mockito.Mockito.mockingDetails;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,6 +29,7 @@ import java.util.Map;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +59,8 @@ class LogQueryWorkspaceControllerContractTest {
             return null;
         });
         mockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
-                .standaloneSetup(new LogQueryController(logQueryService))
+                .standaloneSetup(new LogQueryController(logQueryService,
+                        new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100))))
                 .setControllerAdvice(new UnavailableAdvice())
                 .build();
     }

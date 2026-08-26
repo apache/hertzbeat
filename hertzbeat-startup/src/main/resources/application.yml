@@ -368,6 +368,19 @@ hertzbeat:
         max-concurrent-requests: ${HERTZBEAT_OTLP_MAX_CONCURRENT_REQUESTS:32}
         queue-capacity: ${HERTZBEAT_OTLP_QUEUE_CAPACITY:32}
         max-queue-wait: ${HERTZBEAT_OTLP_MAX_QUEUE_WAIT:100ms}
+  observability:
+    query:
+      admission:
+        metrics:
+          max-concurrent-requests: ${HERTZBEAT_METRICS_QUERY_MAX_CONCURRENT_REQUESTS:8}
+        logs:
+          max-concurrent-requests: ${HERTZBEAT_LOGS_QUERY_MAX_CONCURRENT_REQUESTS:8}
+        traces:
+          max-concurrent-requests: ${HERTZBEAT_TRACES_QUERY_MAX_CONCURRENT_REQUESTS:8}
+        topology:
+          max-concurrent-requests: ${HERTZBEAT_TOPOLOGY_QUERY_MAX_CONCURRENT_REQUESTS:4}
+        queue-capacity: ${HERTZBEAT_QUERY_QUEUE_CAPACITY:8}
+        max-queue-wait: ${HERTZBEAT_QUERY_MAX_QUEUE_WAIT:100ms}
   # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
   vthreads:
     enabled: true

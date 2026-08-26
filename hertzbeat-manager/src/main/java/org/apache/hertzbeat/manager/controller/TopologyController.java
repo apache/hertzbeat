@@ -28,6 +28,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,9 +45,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class TopologyController {
 
     private final EntityTopologyQueryService entityTopologyQueryService;
+    private final ObservabilityQueryAdmissionService queryAdmissionService;
 
-    public TopologyController(EntityTopologyQueryService entityTopologyQueryService) {
+    public TopologyController(EntityTopologyQueryService entityTopologyQueryService,
+                              ObservabilityQueryAdmissionService queryAdmissionService) {
         this.entityTopologyQueryService = entityTopologyQueryService;
+        this.queryAdmissionService = queryAdmissionService;
     }
 
     @GetMapping
@@ -77,9 +81,10 @@ public class TopologyController {
             throw new CommonException("topology_workspace_unavailable");
         }
         String trustedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
-        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
-                trustedWorkspaceId, focusEntityId, depth, environment, sourceKind, start, end,
-                relationType, hideInternal, pageIndex, pageSize);
+        EntityTopologyGraphInfo graph = queryAdmissionService.execute("topology",
+                () -> entityTopologyQueryService.buildFocusedTopology(
+                        trustedWorkspaceId, focusEntityId, depth, environment, sourceKind, start, end,
+                        relationType, hideInternal, pageIndex, pageSize));
         return ResponseEntity.ok(Message.success(graph));
     }
 }

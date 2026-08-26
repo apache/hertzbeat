@@ -33,6 +33,7 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsD
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,6 +53,7 @@ public class OtlpIngestionController {
     private final OtlpIngestionWorkspaceService otlpIngestionWorkspaceService;
     private final OtlpIngestionRedSummaryService otlpIngestionRedSummaryService;
     private final CollectorScopedMetricsQueryService collectorScopedMetricsQueryService;
+    private final ObservabilityQueryAdmissionService queryAdmissionService;
 
     @GetMapping("/overview")
     @Operation(summary = "Unified OTLP ingestion overview")
@@ -103,11 +105,12 @@ public class OtlpIngestionController {
             @RequestParam(value = "limit", required = false) String limit,
             @RequestParam(value = "operationName", required = false) String operationName) {
         String workspaceId = currentWorkspaceId();
-        return ResponseEntity.ok(Message.success(collectorScopedMetricsQueryService.query(
-                new CollectorScopedMetricsQueryService.Request(
-                        workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment, collectorId,
-                        instance, endpoint, query, filter, groupBy, aggregation, temporalAggregation, step, limit,
-                        operationName))));
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> collectorScopedMetricsQueryService.query(
+                        new CollectorScopedMetricsQueryService.Request(
+                                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
+                                environment, collectorId, instance, endpoint, query, filter, groupBy, aggregation,
+                                temporalAggregation, step, limit, operationName)))));
     }
 
     @GetMapping("/metrics/inventory")
@@ -125,10 +128,11 @@ public class OtlpIngestionController {
             @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "limit", required = false) String limit) {
         String workspaceId = currentWorkspaceId();
-        return ResponseEntity.ok(Message.success(collectorScopedMetricsQueryService.inventory(
-                new CollectorScopedMetricsQueryService.InventoryRequest(
-                        workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment,
-                        collectorId, instance, endpoint, limit))));
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> collectorScopedMetricsQueryService.inventory(
+                        new CollectorScopedMetricsQueryService.InventoryRequest(
+                                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
+                                environment, collectorId, instance, endpoint, limit)))));
     }
 
     @GetMapping("/metrics/related")
@@ -145,9 +149,10 @@ public class OtlpIngestionController {
             @RequestParam(value = "operationName", required = false) String operationName,
             @RequestParam(value = "limit", required = false) String limit) {
         String workspaceId = currentWorkspaceId();
-        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getRelatedMetrics(
-                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment, filter,
-                operationName, limit)));
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> otlpIngestionWorkspaceService.getRelatedMetrics(
+                        workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment,
+                        filter, operationName, limit))));
     }
 
     private String currentWorkspaceId() {

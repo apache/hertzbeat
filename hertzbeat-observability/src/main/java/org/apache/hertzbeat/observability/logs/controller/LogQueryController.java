@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
+import java.util.function.Supplier;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.PageResponse;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -31,6 +32,7 @@ import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanti
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -49,10 +51,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class LogQueryController {
 
     private final LogQueryService logQueryService;
+    private final ObservabilityQueryAdmissionService queryAdmissionService;
 
     @Autowired
-    public LogQueryController(LogQueryService logQueryService) {
+    public LogQueryController(LogQueryService logQueryService,
+                              ObservabilityQueryAdmissionService queryAdmissionService) {
         this.logQueryService = logQueryService;
+        this.queryAdmissionService = queryAdmissionService;
     }
 
     @GetMapping("/list")
@@ -101,10 +106,11 @@ public class LogQueryController {
         String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        Page<LogEntry> result = logQueryService.list(workspaceId, entityId, start, end, traceId, spanId,
+        Page<LogEntry> result = executeQuery(() -> logQueryService.list(
+                workspaceId, entityId, start, end, traceId, spanId,
                 severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
-                pageIndex, pageSize, hideInternal, hideNoise);
+                pageIndex, pageSize, hideInternal, hideNoise));
         return ResponseEntity.ok(Message.success(PageResponse.from(result)));
     }
 
@@ -148,10 +154,10 @@ public class LogQueryController {
         String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        return ResponseEntity.ok(Message.success(logQueryService.context(
+        return ResponseEntity.ok(Message.success(executeQuery(() -> logQueryService.context(
                 workspaceId, entityId, logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
                 scopedFilters.resourceFilter(), scopedFilters.attributeFilter(), limit, direction,
-                cursorLogTimeUnixNano, hideInternal, hideNoise)));
+                cursorLogTimeUnixNano, hideInternal, hideNoise))));
     }
 
     @GetMapping("/stats/overview")
@@ -196,10 +202,10 @@ public class LogQueryController {
         String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        return ResponseEntity.ok(Message.success(logQueryService.overviewStats(
+        return ResponseEntity.ok(Message.success(executeQuery(() -> logQueryService.overviewStats(
                 workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
-                hideInternal, hideNoise)));
+                hideInternal, hideNoise))));
     }
 
     @GetMapping("/stats/trace-coverage")
@@ -244,10 +250,10 @@ public class LogQueryController {
         String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        return ResponseEntity.ok(Message.success(logQueryService.traceCoverageStats(
+        return ResponseEntity.ok(Message.success(executeQuery(() -> logQueryService.traceCoverageStats(
                 workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
-                hideInternal, hideNoise)));
+                hideInternal, hideNoise))));
     }
 
     @GetMapping("/stats/trend")
@@ -292,10 +298,10 @@ public class LogQueryController {
         String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        return ResponseEntity.ok(Message.success(logQueryService.trendStats(
+        return ResponseEntity.ok(Message.success(executeQuery(() -> logQueryService.trendStats(
                 workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
-                hideInternal, hideNoise)));
+                hideInternal, hideNoise))));
     }
 
     @GetMapping("/stats/group-by")
@@ -348,11 +354,15 @@ public class LogQueryController {
         String workspaceId = trustedWorkspaceId();
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
-        return ResponseEntity.ok(Message.success(logQueryService.groupByStats(
+        return ResponseEntity.ok(Message.success(executeQuery(() -> logQueryService.groupByStats(
                 workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(),
                 scopedFilters.attributeFilter(), groupBy,
-                limit, orderBy, minCount, hideInternal, hideNoise)));
+                limit, orderBy, minCount, hideInternal, hideNoise))));
+    }
+
+    private <T> T executeQuery(Supplier<T> query) {
+        return queryAdmissionService.execute("logs", query);
     }
 
     private String mergeEntityContextResourceFilter(Long entityId, String entityType, String resourceFilter) {
