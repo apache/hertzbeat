@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
 import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
+import org.apache.hertzbeat.warehouse.service.WarehouseStorageStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,14 +52,14 @@ public class MetricsDataController {
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "Query the availability status of the storage service under the warehouse")
-    public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
-        Boolean status = metricsDataService.getWarehouseStorageServerStatus();
-        if (Boolean.TRUE.equals(status)) {
-            return ResponseEntity.ok(Message.success());
+    public ResponseEntity<Message<WarehouseStorageStatus>> getWarehouseStorageServerStatus() {
+        WarehouseStorageStatus status = metricsDataService.getWarehouseStorageStatus();
+        Message<WarehouseStorageStatus> message = Message.success(status);
+        if (!status.available()) {
+            message.setCode(FAIL_CODE);
+            message.setMsg("Service not available!");
         }
-
-        // historyDataReader does not exist or is not available
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Service not available!"));
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
