@@ -147,6 +147,7 @@
   "alert.notice.sender.mail.port": "邮箱端口",
   "alert.notice.sender.mail.ssl": "是否启用SSL",
   "alert.notice.sender.mail.starttls": "是否启用STARTTLS",
+  "alert.notice.sender.mail.ssl-cert-verify": "是否校验SSL证书",
   "alert.notice.sender.mail.username": "邮箱账号",
   "alert.notice.sender.sms.tencent.appId": "腾讯短信AppId",
   "alert.notice.sender.sms.tencent.secretId": "腾讯短信SecretId",

@@ -233,6 +233,7 @@
   "alert.notice.sender.mail.port": "Porta do Email",
   "alert.notice.sender.mail.ssl": "Habilitar SSL",
   "alert.notice.sender.mail.starttls": "Habilitar STARTTLS",
+  "alert.notice.sender.mail.ssl-cert-verify": "Verificar Certificado SSL",
   "alert.notice.sender.mail.enable": "Habilitar Configuração de Email",
   "alert.notice.sender.sms.type": "Tipo de SMS",
   "alert.notice.sender.sms.type.tencent": "SMS Tencent",

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -68,7 +69,10 @@ public class MetricsDataServiceTest {
         assertFalse(metricsDataService.getWarehouseStorageServerStatus());
 
         when(historyDataReader.isServerAvailable()).thenReturn(true);
+        when(historyDataReader.getDroppedMetricCount()).thenReturn(7L);
+        when(historyDataReader.getPendingMetricCount()).thenReturn(3);
         assertTrue(metricsDataService.getWarehouseStorageServerStatus());
+        assertEquals(new WarehouseStorageStatus(true, 7, 3), metricsDataService.getWarehouseStorageStatus());
     }
 
     @Test

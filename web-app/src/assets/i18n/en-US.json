@@ -147,6 +147,7 @@
   "alert.notice.sender.mail.port": "Email Port",
   "alert.notice.sender.mail.ssl": "Enable SSL",
   "alert.notice.sender.mail.starttls": "Enable STARTTLS",
+  "alert.notice.sender.mail.ssl-cert-verify": "Verify SSL Certificate",
   "alert.notice.sender.mail.username": "Email Account",
   "alert.notice.sender.sms.tencent.appId": "Tencent Sms AppId",
   "alert.notice.sender.sms.tencent.secretId": "Tencent Sms SecretId",
