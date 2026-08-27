@@ -91,9 +91,13 @@ public class MonitorDto {
     }
 
     public void setParams(List<Param> params) {
+        setParams(params, true);
+    }
+
+    public void setParams(List<Param> params, boolean maskCredentials) {
         this.paramInfos = params == null ? null : params.stream()
                 .filter(Objects::nonNull)
-                .map(MonitorParam::fromEntity)
+                .map(param -> MonitorParam.fromEntity(param, maskCredentials))
                 .toList();
     }
 

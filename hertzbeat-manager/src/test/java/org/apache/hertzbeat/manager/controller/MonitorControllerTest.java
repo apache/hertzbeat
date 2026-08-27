@@ -123,13 +123,18 @@ class MonitorControllerTest {
 
         MonitorDto monitorDto = new MonitorDto();
         monitorDto.setMonitor(monitor);
-
+        Param secret = new Param();
+        secret.setField("apiKey");
+        secret.setParamValue("ciphertext-must-not-leave-the-api");
+        secret.setType(CommonConstants.PARAM_TYPE_PASSWORD);
+        monitorDto.setParams(List.of(secret));
 
         Mockito.when(monitorService.getMonitorDto(6565463543L))
                 .thenReturn(monitorDto);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor/{id}", 6565463543L))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.params[0].paramValue").value("******"))
                 .andExpect(status().isOk())
                 .andReturn();
     }
