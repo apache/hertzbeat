@@ -27,11 +27,14 @@ on:
       - 'hertzbeat-common-core/**'
       - 'hertzbeat-manager/**'
       - 'hertzbeat-observability/**'
+      # Negative paths: run the module-boundary contract if a legacy module reappears.
+      - 'hertzbeat-log/**'
       - 'hertzbeat-otel/**'
       - 'hertzbeat-otel-runtime/**'
       - 'hertzbeat-startup/**'
       - 'script/assembly/collector/**'
       - 'script/ci/*hybrid-collector*'
+      - 'script/ci/test_observability_module_boundary.py'
       - 'script/ci/*otel-runtime*'
       - 'script/docker/collector/**'
   workflow_dispatch:
@@ -61,6 +64,7 @@ jobs:
           cache: maven
       - name: Verify source and dependency contracts
         run: |
+          python3 script/ci/test_observability_module_boundary.py -v
           python3 script/ci/test_verify_hybrid_collector_release_content.py -v
           python3 script/ci/test_verify_hybrid_collector_jvm_package.py -v
           python3 script/ci/test_verify_otel_runtime_sbom_platform.py -v

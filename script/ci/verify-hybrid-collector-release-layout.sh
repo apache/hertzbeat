@@ -202,7 +202,6 @@ for release_path in \
   "'pom.xml'" \
   "'.github/workflows/nightly-build.yml'" \
   "'hertzbeat-observability/**'" \
-  "'hertzbeat-otel/**'" \
   "'hertzbeat-startup/**'"; do
   if ! grep -Fq -- "- $release_path" "$release_workflow"; then
     echo "Hybrid Collector release workflow does not watch $release_path" >&2
