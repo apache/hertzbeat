@@ -65,12 +65,14 @@ class DeploymentMigrationCommandRunnerRecoveryTest {
         FileMigrationOperationStore store = new FileMigrationOperationStore(root.resolve("timeout"));
         RetainedCutoverCoordinator coordinator = mock(RetainedCutoverCoordinator.class);
         CountDownLatch allowPreparation = new CountDownLatch(1);
+        CountDownLatch preparationPublished = new CountDownLatch(1);
         AtomicInteger executions = new AtomicInteger();
         when(coordinator.execute(any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> {
                     executions.incrementAndGet();
                     assertThat(allowPreparation.await(5, SECONDS)).isTrue();
                     prepare(invocation);
+                    preparationPublished.countDown();
                     return retained();
                 });
         DeploymentMigrationCommandRunner runner = runner(
@@ -83,6 +85,7 @@ class DeploymentMigrationCommandRunnerRecoveryTest {
             assertThat(runner.activeOperationId()).contains(OPERATION);
 
             allowPreparation.countDown();
+            assertThat(preparationPublished.await(5, SECONDS)).isTrue();
             MigrationViewAssert.running(runner.start(request()));
             assertThat(executions).hasValue(1);
         } finally {
