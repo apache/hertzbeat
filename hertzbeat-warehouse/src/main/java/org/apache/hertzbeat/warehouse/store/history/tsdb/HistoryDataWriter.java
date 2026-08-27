@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb;
 
+import java.util.List;
+import org.apache.hertzbeat.common.entity.event.CollectionExecutionEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
 
 /**
  * history data writer
@@ -66,5 +66,21 @@ public interface HistoryDataWriter {
         for (LogEntry logEntry : logEntries) {
             saveLogData(logEntry);
         }
+    }
+
+    /**
+     * @return whether this writer supports collection execution events
+     */
+    default boolean supportsCollectionExecutionEvents() {
+        return false;
+    }
+
+    /**
+     * Save a bounded batch of collection execution events.
+     *
+     * @param events collection execution events
+     */
+    default boolean saveCollectionExecutionEvents(List<CollectionExecutionEvent> events) {
+        throw new UnsupportedOperationException("collection execution events are not supported");
     }
 }

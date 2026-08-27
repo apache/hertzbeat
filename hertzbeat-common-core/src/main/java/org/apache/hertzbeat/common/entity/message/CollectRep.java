@@ -260,6 +260,16 @@ public final class CollectRep {
             return JsonUtil.fromJson(annotationStr, Map.class);
         }
 
+        /**
+         * Read one schema metadata value without exposing the mutable metadata map.
+         *
+         * @param key metadata key
+         * @return metadata value, or {@code null} when absent
+         */
+        public String getMetadataValue(String key) {
+            return key == null ? null : getMetadata().get(key);
+        }
+
         private Map<String, String> getMetadata() {
             return table != null ? table.getSchema().getCustomMetadata() : new HashMap<>();
         }

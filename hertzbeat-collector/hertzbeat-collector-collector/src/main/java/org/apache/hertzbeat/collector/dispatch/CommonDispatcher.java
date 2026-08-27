@@ -171,14 +171,18 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         metricsCollector.recordCollectMetrics(job, duration, "timeout");
                     }
 
-                    CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                    CollectRep.MetricsData.Builder metricsDataBuilder = CollectRep.MetricsData.newBuilder()
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
                             .setApp(job.getApp())
                             .setMetrics(metricsTime.getMetrics().getName())
                             .setPriority(metricsTime.getMetrics().getPriority())
                             .setTime(System.currentTimeMillis())
-                            .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
+                            .setCode(CollectRep.Code.TIMEOUT)
+                            .setMsg("collect timeout");
+                    MetricsCollect.addExecutionContext(
+                            metricsDataBuilder, removedMetricsTime.getStartTime(), collectorIdentity);
+                    CollectRep.MetricsData metricsData = metricsDataBuilder.build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
                     if (metricsData.getPriority() == 0) {
                         dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);

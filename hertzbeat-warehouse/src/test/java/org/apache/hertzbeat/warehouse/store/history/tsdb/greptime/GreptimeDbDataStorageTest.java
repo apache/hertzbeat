@@ -38,6 +38,7 @@ import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
+import io.greptime.v1.RowData;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.event.CollectionExecutionEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
@@ -230,8 +232,17 @@ class GreptimeDbDataStorageTest {
             // Test with valid metrics data
             CollectRep.MetricsData metricsData = createMockMetricsData(true);
             greptimeDbDataStorage.saveData(metricsData);
-            verify(greptimeDb, times(1)).write(any(Table.class));
+            ArgumentCaptor<Table> tableCaptor = ArgumentCaptor.forClass(Table.class);
+            verify(greptimeDb, times(1)).write(tableCaptor.capture());
+            Table writtenTable = tableCaptor.getValue();
+            List<RowData.Value> values = writtenTable.intoRowInsertRequest()
+                    .getRows().getRows(0).getValuesList();
+            assertEquals("server-1", values.get(0).getStringValue());
+            assertEquals(1_712_733_600_123L, values.get(1).getTimestampMillisecondValue());
+            assertEquals(85.5, values.get(2).getF64Value());
+            assertEquals("server1", values.get(3).getStringValue());
             verify(metricsData, never()).getValues();
+            verify(metricsData.readRow(), never()).cellStream();
 
             // Test with failure code
             CollectRep.MetricsData failMetricsData = mock(CollectRep.MetricsData.class);
@@ -247,6 +258,64 @@ class GreptimeDbDataStorageTest {
             verify(greptimeDb, times(1)).write(any(Table.class));
             verify(emptyMetricsData, never()).getValues();
         }
+    }
+
+    @Test
+    void testSaveCollectionExecutionEventsAsOneBatch() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            @SuppressWarnings("unchecked")
+            Result<WriteOk, Err> mockResult = mock(Result.class);
+            when(mockResult.isOk()).thenReturn(true);
+            when(greptimeDb.write(any(Table.class)))
+                    .thenReturn(CompletableFuture.completedFuture(mockResult));
+            greptimeDbDataStorage = new GreptimeDbDataStorage(
+                    greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard);
+            List<CollectionExecutionEvent> events = List.of(
+                    executionEvent(42L, 99L, "collector-1", 1_700L, 700L),
+                    executionEvent(43L, null, "", 1_800L, -1L));
+
+            assertTrue(greptimeDbDataStorage.saveCollectionExecutionEvents(events));
+
+            ArgumentCaptor<Table> tableCaptor = ArgumentCaptor.forClass(Table.class);
+            verify(greptimeDb).write(tableCaptor.capture());
+            var request = tableCaptor.getValue().intoRowInsertRequest();
+            assertEquals("hzb_collection_events", request.getTableName());
+            assertEquals(2, request.getRows().getRowsCount());
+            List<RowData.Value> first = request.getRows().getRows(0).getValuesList();
+            assertEquals("42", first.get(0).getStringValue());
+            assertEquals("99", first.get(1).getStringValue());
+            assertEquals("mysql", first.get(2).getStringValue());
+            assertEquals("availability", first.get(3).getStringValue());
+            assertEquals("SUCCESS", first.get(4).getStringValue());
+            assertEquals("NONE", first.get(5).getStringValue());
+            assertEquals("UNKNOWN", first.get(6).getStringValue());
+            assertEquals("collector-1", first.get(7).getStringValue());
+            assertEquals(1_700L, first.get(8).getTimestampMillisecondValue());
+            assertEquals(700L, first.get(9).getI64Value());
+            assertEquals("db.internal:3306", first.get(10).getStringValue());
+            assertEquals(2, first.get(11).getI32Value());
+            assertEquals(4, first.get(12).getI32Value());
+        }
+    }
+
+    private static CollectionExecutionEvent executionEvent(
+            long monitorId, Long entityId, String collectorId, long observedAt, long durationMillis) {
+        CollectionExecutionEvent.RuntimeContext runtime = collectorId.isEmpty()
+                ? null
+                : new CollectionExecutionEvent.RuntimeContext(collectorId, "db.internal:3306");
+        return new CollectionExecutionEvent(
+                new CollectionExecutionEvent.EntityReference(monitorId, entityId, "mysql"),
+                runtime,
+                new CollectionExecutionEvent.Observation(
+                        "availability",
+                        observedAt,
+                        durationMillis,
+                        CollectionExecutionEvent.Outcome.SUCCESS,
+                        CollectionExecutionEvent.FailureClass.NONE,
+                        CollectionExecutionEvent.CollectionPhase.UNKNOWN,
+                        2,
+                        4));
     }
 
     @Test
@@ -288,6 +357,27 @@ class GreptimeDbDataStorageTest {
         assertTrue(uri.contains("start=1712730000"));
         assertTrue(uri.contains("end=1712733600"));
         assertTrue(uri.contains("step=120s"));
+    }
+
+    @Test
+    void testGetHistoryMetricDataPlansAnImplicitResolution() {
+        greptimeDbDataStorage = new GreptimeDbDataStorage(
+                greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard);
+
+        PromQlQueryContent content = createMockPromQlQueryContent();
+        ResponseEntity<PromQlQueryContent> responseEntity = new ResponseEntity<>(content, HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class))).thenReturn(responseEntity);
+
+        long start = 1_712_730_000_000L;
+        greptimeDbDataStorage.getHistoryMetricData(
+                "127.0.0.1:8080", "test_app", "test_metrics", "test_metric", "1w",
+                start, start + Duration.ofDays(7).toMillis(), null);
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class));
+        assertTrue(uriCaptor.getValue().toString().contains("step=4h"));
     }
 
     @Test
@@ -936,6 +1026,9 @@ class GreptimeDbDataStorageTest {
         CollectRep.MetricsData mockMetricsData = mock(CollectRep.MetricsData.class);
         lenient().when(mockMetricsData.getCode()).thenReturn(CollectRep.Code.SUCCESS);
         lenient().when(mockMetricsData.getMetrics()).thenReturn("cpu");
+        lenient().when(mockMetricsData.getApp()).thenReturn("linux");
+        lenient().when(mockMetricsData.getInstance()).thenReturn("server-1");
+        lenient().when(mockMetricsData.getTime()).thenReturn(1_712_733_600_123L);
         lenient().when(mockMetricsData.getId()).thenReturn(1L);
         lenient().when(mockMetricsData.rowCount()).thenReturn(hasValues ? 1L : 0L);
 
@@ -962,7 +1055,7 @@ class GreptimeDbDataStorageTest {
         lenient().when(mockRowWrapper.hasNextRow()).thenReturn(true, false);
         lenient().when(mockRowWrapper.nextRow()).thenReturn(mockRowWrapper);
 
-        // Mock cell stream
+        // Mock direct Arrow cell iteration. The write hot path must not allocate a Stream per row.
         ArrowCell mockCell1 = mock(ArrowCell.class);
         lenient().when(mockCell1.getValue()).thenReturn("85.5");
         lenient().when(mockCell1.getMetadataAsBoolean(any())).thenReturn(false);
@@ -973,7 +1066,8 @@ class GreptimeDbDataStorageTest {
         lenient().when(mockCell2.getMetadataAsBoolean(any())).thenReturn(true);
         lenient().when(mockCell2.getMetadataAsByte(any())).thenReturn(CommonConstants.TYPE_STRING);
 
-        lenient().when(mockRowWrapper.cellStream()).thenReturn(java.util.stream.Stream.of(mockCell1, mockCell2));
+        lenient().when(mockRowWrapper.hasNextCell()).thenReturn(true, true, false);
+        lenient().when(mockRowWrapper.nextCell()).thenReturn(mockCell1, mockCell2);
         lenient().when(mockMetricsData.readRow()).thenReturn(mockRowWrapper);
 
         return mockMetricsData;

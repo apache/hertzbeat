@@ -20,6 +20,7 @@ package org.apache.hertzbeat.warehouse.store;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.event.CollectionExecutionEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
@@ -48,8 +49,12 @@ public class DataStorageDispatch {
     private final MonitorStatusMetadataWriter monitorStatusWriter;
     private final RealTimeDataWriter realTimeDataWriter;
     private final List<HistoryDataWriter> historyDataWriters;
+    private final List<HistoryDataWriter> collectionEventWriters;
+    private final BoundedCollectionExecutionEventBuffer collectionEventBuffer;
     private final PluginRunner pluginRunner;
     private static final int LOG_BATCH_SIZE = 1000;
+    private static final int COLLECTION_EVENT_QUEUE_CAPACITY = 8192;
+    private static final int COLLECTION_EVENT_BATCH_SIZE = 256;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
@@ -63,9 +68,16 @@ public class DataStorageDispatch {
         this.realTimeDataWriter = realTimeDataWriter;
         this.historyDataWriters = historyDataWriters == null ? List.of()
                 : historyDataWriters.stream().filter(Objects::nonNull).toList();
+        this.collectionEventWriters = this.historyDataWriters.stream()
+                .filter(HistoryDataWriter::supportsCollectionExecutionEvents)
+                .toList();
+        this.collectionEventBuffer = collectionEventWriters.isEmpty()
+                ? null
+                : new BoundedCollectionExecutionEventBuffer(COLLECTION_EVENT_QUEUE_CAPACITY);
         this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
         startLogDataStorage();
+        startCollectionExecutionEventStorage();
     }
 
     protected void startPersistentDataStorage() {
@@ -120,11 +132,55 @@ public class DataStorageDispatch {
         workerPool.executeLongRunning(runnable);
     }
 
+    protected void startCollectionExecutionEventStorage() {
+        if (collectionEventBuffer == null) {
+            return;
+        }
+        Runnable runnable = () -> {
+            Thread.currentThread().setName("warehouse-collection-event-storage");
+            List<CollectionExecutionEvent> pendingEvents = null;
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    HistoryDataWriter writer = resolveCollectionExecutionEventWriter();
+                    if (writer == null) {
+                        Thread.sleep(1000L);
+                        continue;
+                    }
+                    if (pendingEvents == null) {
+                        pendingEvents = collectionEventBuffer.takeBatch(COLLECTION_EVENT_BATCH_SIZE);
+                    }
+                    if (writer.saveCollectionExecutionEvents(pendingEvents)) {
+                        pendingEvents = null;
+                    } else {
+                        Thread.sleep(1000L);
+                    }
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception exception) {
+                    log.error("Failed to persist collection execution event batch", exception);
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException interruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        };
+        workerPool.executeLongRunning(runnable);
+    }
+
     private HistoryDataWriter resolveMetricsHistoryWriter() {
         return historyDataWriters.stream()
                 .filter(HistoryDataWriter::isServerAvailable)
                 .findFirst()
                 .or(() -> historyDataWriters.stream().findFirst())
+                .orElse(null);
+    }
+
+    private HistoryDataWriter resolveCollectionExecutionEventWriter() {
+        return collectionEventWriters.stream()
+                .filter(HistoryDataWriter::isServerAvailable)
+                .findFirst()
                 .orElse(null);
     }
 
@@ -158,6 +214,7 @@ public class DataStorageDispatch {
     }
 
     protected void persistMetricsData(CollectRep.MetricsData metricsData) {
+        publishCollectionExecutionEvent(metricsData);
         try {
             calculateMonitorStatus(metricsData);
             HistoryDataWriter historyDataWriter = resolveMetricsHistoryWriter();
@@ -169,5 +226,27 @@ public class DataStorageDispatch {
         } finally {
             realTimeDataWriter.saveData(metricsData);
         }
+    }
+
+    private void publishCollectionExecutionEvent(CollectRep.MetricsData metricsData) {
+        if (collectionEventBuffer == null) {
+            return;
+        }
+        try {
+            if (!collectionEventBuffer.offer(CollectionExecutionEvent.from(metricsData))) {
+                long rejected = collectionEventBuffer.stats().rejected();
+                if (rejected == 1L || Long.bitCount(rejected) == 1) {
+                    log.warn("Collection execution event buffer is full; rejected {} events", rejected);
+                }
+            }
+        } catch (RuntimeException exception) {
+            log.warn("Failed to publish collection execution event for monitor {}", metricsData.getId(), exception);
+        }
+    }
+
+    BoundedCollectionExecutionEventBuffer.Stats collectionExecutionEventStats() {
+        return collectionEventBuffer == null
+                ? new BoundedCollectionExecutionEventBuffer.Stats(0L, 0L, 0, 0)
+                : collectionEventBuffer.stats();
     }
 }

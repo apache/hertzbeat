@@ -79,6 +79,23 @@ class EntityIdentityQueryServiceTest {
     }
 
     @Test
+    void findIdentitiesBatchesWorkspaceOwnedEntities() {
+        EntityIdentity serviceIdentity = EntityIdentity.builder()
+                .id(901L)
+                .entityId(801L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .priority(100)
+                .build();
+        Set<Long> entityIds = Set.of(801L, 802L);
+        when(entityIdentityDao.findAllOwnedByWorkspaceIdAndEntityIdIn("team-a", entityIds))
+                .thenReturn(List.of(serviceIdentity));
+
+        assertEquals(List.of(serviceIdentity), entityIdentityQueryService.findIdentities("team-a", entityIds));
+        verify(entityIdentityDao).findAllOwnedByWorkspaceIdAndEntityIdIn("team-a", entityIds);
+    }
+
+    @Test
     void countIdentitiesUsesPersistedRowsOnly() {
         when(entityIdentityDao.countByEntityId(801L)).thenReturn(2L);
 

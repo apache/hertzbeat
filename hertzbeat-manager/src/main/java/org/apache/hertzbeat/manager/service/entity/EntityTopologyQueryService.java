@@ -58,6 +58,7 @@ public class EntityTopologyQueryService {
     private static final String SOURCE_KIND_MONITOR_BIND = "monitor-bind";
     private static final String SOURCE_KIND_OTLP_TRACE_CALL = "otlp-trace-call";
     private static final String SOURCE_KIND_K8S_WORKLOAD = "k8s-workload";
+    private static final String SOURCE_KIND_GREPTIME_SEMANTIC = "greptime-semantic";
     private static final String SOURCE_KIND_INVALID_ERROR = "topology_source_kind_invalid";
     private static final String RELATION_TYPE_MONITORS = "monitors";
     private static final String RELATION_TYPE_TRACE_CALL = "trace-call";
@@ -76,6 +77,7 @@ public class EntityTopologyQueryService {
     private final EntityIdentityReadModelService entityIdentityReadModelService;
     private final TraceCallTopologyQueryService traceCallTopologyQueryService;
     private final EntityActivityReadModelService entityActivityReadModelService;
+    private final EntitySemanticRelationQueryService entitySemanticRelationQueryService;
 
     public EntityTopologyQueryService(EntityWorkspaceAccessService entityWorkspaceAccessService,
                                       EntityRelationQueryService entityRelationQueryService,
@@ -83,7 +85,8 @@ public class EntityTopologyQueryService {
                                       EntityMonitorQueryService entityMonitorQueryService,
                                       EntityIdentityReadModelService entityIdentityReadModelService,
                                       TraceCallTopologyQueryService traceCallTopologyQueryService,
-                                      EntityActivityReadModelService entityActivityReadModelService) {
+                                      EntityActivityReadModelService entityActivityReadModelService,
+                                      EntitySemanticRelationQueryService entitySemanticRelationQueryService) {
         this.entityWorkspaceAccessService = entityWorkspaceAccessService;
         this.entityRelationQueryService = entityRelationQueryService;
         this.entityMonitorBindQueryService = entityMonitorBindQueryService;
@@ -91,6 +94,7 @@ public class EntityTopologyQueryService {
         this.entityIdentityReadModelService = entityIdentityReadModelService;
         this.traceCallTopologyQueryService = traceCallTopologyQueryService;
         this.entityActivityReadModelService = entityActivityReadModelService;
+        this.entitySemanticRelationQueryService = entitySemanticRelationQueryService;
     }
 
     public EntityTopologyGraphInfo buildFocusedTopology(Long focusEntityId,
@@ -177,6 +181,13 @@ public class EntityTopologyQueryService {
         if (traceCallEdges == null) {
             traceCallEdges = List.of();
         }
+        SemanticRelationReadModel semanticReadModel = sourceSelection.includeSemanticRelations()
+                ? entitySemanticRelationQueryService.findRelations(workspaceId, entityById.values(), start, end)
+                : SemanticRelationReadModel.empty();
+        if (semanticReadModel != null) {
+            semanticReadModel.entityById().forEach(entityById::putIfAbsent);
+            relations = mergeRelations(relations, semanticReadModel.relations());
+        }
         List<EntityMonitorBind> monitorBinds = sourceSelection.includeMonitorBinds()
                 ? collectMonitorBinds(entityById.keySet())
                 : List.of();
@@ -241,6 +252,13 @@ public class EntityTopologyQueryService {
         }
         if (traceCallEdges == null) {
             traceCallEdges = List.of();
+        }
+        SemanticRelationReadModel semanticReadModel = sourceSelection.includeSemanticRelations()
+                ? entitySemanticRelationQueryService.findRelations(workspaceId, entityById.values(), start, end)
+                : SemanticRelationReadModel.empty();
+        if (semanticReadModel != null) {
+            semanticReadModel.entityById().forEach(entityById::putIfAbsent);
+            relations = mergeRelations(relations, semanticReadModel.relations());
         }
         List<EntityMonitorBind> monitorBinds = sourceSelection.includeMonitorBinds()
                 ? collectMonitorBinds(entityById.keySet())
@@ -309,17 +327,19 @@ public class EntityTopologyQueryService {
 
     private TopologySourceSelection sourceSelection(String sourceKind) {
         if (!StringUtils.hasText(sourceKind)) {
-            return TopologySourceSelection.all();
+            return TopologySourceSelection.standard();
         }
         String normalized = sourceKind.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
-            case SOURCE_KIND_MONITOR_BIND, "monitor-ownership" -> new TopologySourceSelection(false, true, false);
-            case SOURCE_KIND_OTLP_TRACE_CALL -> new TopologySourceSelection(false, false, true);
+            case SOURCE_KIND_MONITOR_BIND, "monitor-ownership" ->
+                    new TopologySourceSelection(false, true, false, false);
+            case SOURCE_KIND_OTLP_TRACE_CALL -> new TopologySourceSelection(false, false, true, false);
+            case SOURCE_KIND_GREPTIME_SEMANTIC -> new TopologySourceSelection(false, false, false, true);
             case SOURCE_KIND_ENTITY_RELATION,
                     "cmdb-manual-label",
                     "database-middleware-connection",
                     "template-dependency",
-                    SOURCE_KIND_K8S_WORKLOAD -> new TopologySourceSelection(true, false, false);
+                    SOURCE_KIND_K8S_WORKLOAD -> new TopologySourceSelection(true, false, false, false);
             case "all", "alert-impact" -> TopologySourceSelection.all();
             default -> throw new IllegalArgumentException(SOURCE_KIND_INVALID_ERROR);
         };
@@ -327,10 +347,15 @@ public class EntityTopologyQueryService {
 
     private record TopologySourceSelection(boolean includeEntityRelations,
                                            boolean includeMonitorBinds,
-                                           boolean includeTraceCalls) {
+                                           boolean includeTraceCalls,
+                                           boolean includeSemanticRelations) {
 
         private static TopologySourceSelection all() {
-            return new TopologySourceSelection(true, true, true);
+            return new TopologySourceSelection(true, true, true, true);
+        }
+
+        private static TopologySourceSelection standard() {
+            return new TopologySourceSelection(true, true, true, false);
         }
     }
 
@@ -432,7 +457,8 @@ public class EntityTopologyQueryService {
         if (SOURCE_KIND_ENTITY_RELATION.equals(normalized)
                 || SOURCE_KIND_MONITOR_BIND.equals(normalized)
                 || SOURCE_KIND_OTLP_TRACE_CALL.equals(normalized)
-                || SOURCE_KIND_K8S_WORKLOAD.equals(normalized)) {
+                || SOURCE_KIND_K8S_WORKLOAD.equals(normalized)
+                || SOURCE_KIND_GREPTIME_SEMANTIC.equals(normalized)) {
             sourceKinds.add(normalized);
         }
     }
@@ -1189,8 +1215,12 @@ public class EntityTopologyQueryService {
 
     private List<String> relationEvidenceBadges(EntityRelation relation) {
         List<String> badges = new ArrayList<>();
-        badges.add(SOURCE_KIND_ENTITY_RELATION);
-        badges.add(valueOrUnknown(relation.getRelationSource()));
+        String relationSource = valueOrUnknown(relation.getRelationSource());
+        if (!SOURCE_KIND_K8S_WORKLOAD.equals(relationSource)
+                && !SOURCE_KIND_GREPTIME_SEMANTIC.equals(relationSource)) {
+            badges.add(SOURCE_KIND_ENTITY_RELATION);
+        }
+        badges.add(relationSource);
         String identityKey = relation.getAttributes() == null
                 ? null
                 : relation.getAttributes().get(RELATION_ATTRIBUTE_IDENTITY_KEY);

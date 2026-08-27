@@ -37,6 +37,13 @@ public interface EntityIdentityDao extends JpaRepository<EntityIdentity, Long>, 
 
     @Query("SELECT identity FROM EntityIdentity identity, ObserveEntity entity "
             + "WHERE identity.entityId = entity.id AND entity.workspaceId = :workspaceId "
+            + "AND identity.entityId IN :entityIds "
+            + "ORDER BY identity.entityId ASC, identity.priority DESC, identity.id ASC")
+    List<EntityIdentity> findAllOwnedByWorkspaceIdAndEntityIdIn(
+            @Param("workspaceId") String workspaceId, @Param("entityIds") Collection<Long> entityIds);
+
+    @Query("SELECT identity FROM EntityIdentity identity, ObserveEntity entity "
+            + "WHERE identity.entityId = entity.id AND entity.workspaceId = :workspaceId "
             + "AND identity.entityId = :entityId ORDER BY identity.priority DESC, identity.id ASC")
     List<EntityIdentity> findAllOwnedByWorkspaceIdAndEntityId(
             @Param("workspaceId") String workspaceId, @Param("entityId") Long entityId);
@@ -50,6 +57,16 @@ public interface EntityIdentityDao extends JpaRepository<EntityIdentity, Long>, 
             @Param("workspaceId") String workspaceId,
             @Param("identityKeys") Set<String> identityKeys,
             @Param("normalizedValues") Set<String> normalizedValues);
+
+    @Query("SELECT identity FROM EntityIdentity identity, ObserveEntity entity "
+            + "WHERE identity.entityId = entity.id AND entity.workspaceId = :workspaceId "
+            + "AND identity.identityKey IN :identityKeys AND identity.normalizedValue IN :normalizedValues "
+            + "ORDER BY identity.id ASC")
+    List<EntityIdentity> findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
+            @Param("workspaceId") String workspaceId,
+            @Param("identityKeys") Set<String> identityKeys,
+            @Param("normalizedValues") Set<String> normalizedValues,
+            Pageable pageable);
 
     List<EntityIdentity> findAllByIdentityKeyInOrderByIdDesc(Set<String> identityKeys, Pageable pageable);
 

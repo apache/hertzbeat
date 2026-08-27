@@ -84,6 +84,9 @@ class EntityTopologyQueryServiceTest {
     @Mock
     private EntityActivityReadModelService entityActivityReadModelService;
 
+    @Mock
+    private EntitySemanticRelationQueryService entitySemanticRelationQueryService;
+
     @BeforeEach
     void bridgeLegacyDefaultFixturesToScopedTraceContract() {
         lenient().when(traceCallTopologyQueryService.findTraceCallEdges(
@@ -112,7 +115,8 @@ class EntityTopologyQueryServiceTest {
                 entityMonitorQueryService,
                 entityIdentityReadModelService,
                 traceCallTopologyQueryService,
-                entityActivityReadModelService);
+                entityActivityReadModelService,
+                entitySemanticRelationQueryService);
     }
 
     @Test
@@ -126,6 +130,7 @@ class EntityTopologyQueryServiceTest {
                 "monitor-bind",
                 "monitor-ownership",
                 "otlp-trace-call",
+                "greptime-semantic",
                 "cmdb-manual-label",
                 "database-middleware-connection",
                 "template-dependency",
@@ -134,6 +139,46 @@ class EntityTopologyQueryServiceTest {
             assertDoesNotThrow(() ->
                     entityTopologyQueryService.buildFocusedTopology(null, 1, "prod", sourceKind));
         }
+    }
+
+    @Test
+    void keepsExperimentalSemanticGraphOffTheDefaultTopologyPath() {
+        entityTopologyQueryService.buildFocusedTopology(null, 1, "prod", null);
+
+        verify(entitySemanticRelationQueryService, never()).findRelations(any(), any(), any(), any());
+    }
+
+    @Test
+    void isolatesSemanticTopologySourceAndKeepsAuthoritativeEntityNodes() {
+        ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
+        ObserveEntity payment = entity(20L, "service", "payment-api", "commerce", "prod", "healthy");
+        EntityRelation semanticRelation = relation(
+                null, 10L, 20L, "calls", EntitySemanticRelationQueryService.RELATION_SOURCE, 98);
+
+        when(entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(10L))
+                .thenReturn(Optional.of(checkout));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(10L)))
+                .thenReturn(List.of(checkout));
+        when(entitySemanticRelationQueryService.findRelations(
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID),
+                argThat(entities -> entities != null && entities.size() == 1
+                        && entities.stream().anyMatch(entity -> Long.valueOf(10L).equals(entity.getId()))),
+                eq(1_710_000_000_000L),
+                eq(1_710_003_600_000L)))
+                .thenReturn(new SemanticRelationReadModel(Map.of(20L, payment), List.of(semanticRelation)));
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                10L, 1, "prod", "greptime-semantic",
+                1_710_000_000_000L, 1_710_003_600_000L);
+
+        assertEquals(List.of("greptime-semantic"), graph.getSourceKinds());
+        assertEquals(Set.of(10L, 20L), graph.getNodes().stream()
+                .map(EntityTopologyGraphInfo.Node::getEntityId)
+                .collect(java.util.stream.Collectors.toSet()));
+        assertEquals(1, graph.getEdges().size());
+        assertEquals("calls", graph.getEdges().getFirst().getRelationType());
+        assertEquals("greptime-semantic", graph.getEdges().getFirst().getRelationSource());
+        verifyNoInteractions(entityRelationQueryService, entityMonitorBindQueryService, traceCallTopologyQueryService);
     }
 
     @Test

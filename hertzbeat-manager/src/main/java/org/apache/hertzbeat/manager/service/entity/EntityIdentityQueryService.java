@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -50,6 +51,13 @@ public class EntityIdentityQueryService {
         return entityIdentityDao.findAllOwnedByWorkspaceIdAndEntityId(workspaceId, entityId);
     }
 
+    public List<EntityIdentity> findIdentities(String workspaceId, Set<Long> entityIds) {
+        if (!StringUtils.hasText(workspaceId) || CollectionUtils.isEmpty(entityIds)) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndEntityIdIn(workspaceId, entityIds);
+    }
+
     public List<EntityIdentity> findMatchingIdentities(Set<String> identityKeys, Set<String> normalizedValues) {
         return entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
     }
@@ -62,6 +70,17 @@ public class EntityIdentityQueryService {
         }
         return entityIdentityDao.findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
                 workspaceId, identityKeys, normalizedValues);
+    }
+
+    public List<EntityIdentity> findMatchingIdentities(
+            String workspaceId, Set<String> identityKeys, Set<String> normalizedValues, int maximumResults) {
+        if (!StringUtils.hasText(workspaceId)
+                || CollectionUtils.isEmpty(identityKeys) || CollectionUtils.isEmpty(normalizedValues)
+                || maximumResults < 1) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
+                workspaceId, identityKeys, normalizedValues, PageRequest.of(0, maximumResults));
     }
 
     public long countDistinctEntityIdsByIdentityKeys(Set<String> identityKeys) {

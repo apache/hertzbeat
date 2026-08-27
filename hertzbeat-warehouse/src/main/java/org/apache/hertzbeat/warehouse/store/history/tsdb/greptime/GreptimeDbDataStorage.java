@@ -52,7 +52,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -62,8 +61,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.event.CollectionExecutionEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
@@ -108,6 +109,22 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_INSTANCE = "instance";
     private static final String LOG_TABLE_NAME = WarehouseConstants.LOG_TABLE_NAME;
     private static final String TRACE_TABLE_NAME = "hzb_traces";
+    private static final String COLLECTION_EVENT_TABLE_NAME = "hzb_collection_events";
+    private static final TableSchema COLLECTION_EVENT_SCHEMA = TableSchema.newBuilder(COLLECTION_EVENT_TABLE_NAME)
+            .addTag("monitor_id", DataType.String)
+            .addTag("entity_id", DataType.String)
+            .addTag("app", DataType.String)
+            .addTag("metric_set", DataType.String)
+            .addTag("outcome", DataType.String)
+            .addTag("failure_class", DataType.String)
+            .addTag("phase", DataType.String)
+            .addTag("collector_id", DataType.String)
+            .addTimestamp("observed_at", DataType.TimestampMillisecond)
+            .addField("duration_ms", DataType.Int64)
+            .addField("target", DataType.String)
+            .addField("field_count", DataType.Int32)
+            .addField("row_count", DataType.Int32)
+            .build();
     private static final String HTTP_ROUTE = "http.route";
     private static final String NATIVE_LOG_SELECT_COLUMNS = "timestamp, trace_id, span_id, severity_number, "
             + "severity_text, body, log_attributes, resource_attributes, hertzbeat_event_id, log_record_uid, "
@@ -116,8 +133,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_END_TIME = "end";
     private static final int LOG_BATCH_SIZE = 500;
     private static final Pattern DAY_PATTERN = Pattern.compile("^(\\d+)[dD]$");
+    private static final MetricQueryResolutionPlanner METRIC_QUERY_RESOLUTION_PLANNER =
+            MetricQueryResolutionPlanner.defaults();
 
     private GreptimeDB greptimeDb;
+
+    private final GreptimeMetricSchemaCache metricSchemaCache = new GreptimeMetricSchemaCache();
 
     private final GreptimeProperties greptimeProperties;
 
@@ -235,53 +256,34 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         String instance = metricsData.getInstance();
         String app = metricsData.getApp();
         String tableName = getTableName(app, metricsData.getMetrics());
-        TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
-
-        tableSchemaBuilder.addTag("instance", DataType.String)
-                .addTimestamp("ts", DataType.TimestampMillisecond);
         List<CollectRep.Field> fields = metricsData.getFields();
-        fields.forEach(field -> {
-            if (field.getLabel()) {
-                tableSchemaBuilder.addTag(field.getName(), DataType.String);
-            } else {
-                if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                    tableSchemaBuilder.addField(field.getName(), DataType.Float64);
-                } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                    tableSchemaBuilder.addField(field.getName(), DataType.String);
-                }
-            }
-        });
-        Table table = Table.from(tableSchemaBuilder.build());
-        long now = System.currentTimeMillis();
+        Table table = Table.from(metricSchemaCache.getOrCreate(tableName, fields));
+        long collectionTime = metricsData.getTime();
+        long timestamp = collectionTime > 0 ? collectionTime : System.currentTimeMillis();
         Object[] values = new Object[2 + fields.size()];
         values[0] = instance;
-        values[1] = now;
+        values[1] = timestamp;
         RowWrapper rowWrapper = metricsData.readRow();
         while (rowWrapper.hasNextRow()) {
             rowWrapper = rowWrapper.nextRow();
-
-            AtomicInteger index = new AtomicInteger(-1);
-            rowWrapper.cellStream().forEach(cell -> {
-                index.getAndIncrement();
-
+            int index = 0;
+            while (rowWrapper.hasNextCell()) {
+                ArrowCell cell = rowWrapper.nextCell();
                 if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
-                    values[2 + index.get()] = null;
-                    return;
-                }
-
-                Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
-                Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
-
-                if (label) {
-                    values[2 + index.get()] = cell.getValue();
+                    values[2 + index] = null;
                 } else {
-                    if (type == CommonConstants.TYPE_NUMBER) {
-                        values[2 + index.get()] = Double.parseDouble(cell.getValue());
+                    Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                    Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+                    if (label) {
+                        values[2 + index] = cell.getValue();
+                    } else if (type == CommonConstants.TYPE_NUMBER) {
+                        values[2 + index] = Double.parseDouble(cell.getValue());
                     } else if (type == CommonConstants.TYPE_STRING) {
-                        values[2 + index.get()] = cell.getValue();
+                        values[2 + index] = cell.getValue();
                     }
                 }
-            });
+                index++;
+            }
 
             table.addRow(values);
         }
@@ -300,6 +302,54 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
+    public boolean supportsCollectionExecutionEvents() {
+        return true;
+    }
+
+    @Override
+    public boolean saveCollectionExecutionEvents(List<CollectionExecutionEvent> events) {
+        if (!isServerAvailable() || events == null || events.isEmpty()) {
+            return false;
+        }
+        try {
+            Table table = Table.from(COLLECTION_EVENT_SCHEMA);
+            for (CollectionExecutionEvent event : events) {
+                table.addRow(collectionExecutionEventValues(event));
+            }
+            Result<WriteOk, Err> result = greptimeDb.write(table).get(10, TimeUnit.SECONDS);
+            if (result.isOk()) {
+                log.debug("[warehouse greptime-collection-event] Batch write {} events successful", events.size());
+                return true;
+            } else {
+                log.warn("[warehouse greptime-collection-event] Batch write failed: {}", result.getErr());
+            }
+        } catch (Exception exception) {
+            log.error("[warehouse greptime-collection-event] Error saving event batch", exception);
+        }
+        return false;
+    }
+
+    private static Object[] collectionExecutionEventValues(CollectionExecutionEvent event) {
+        CollectionExecutionEvent.RuntimeContext runtime = event.runtime();
+        CollectionExecutionEvent.Observation observation = event.observation();
+        return new Object[] {
+                String.valueOf(event.entity().monitorId()),
+                event.entity().entityId() == null ? "" : String.valueOf(event.entity().entityId()),
+                event.entity().app(),
+                observation.metricSet(),
+                observation.outcome().name(),
+                observation.failureClass().name(),
+                observation.phase().name(),
+                runtime == null ? "" : runtime.collectorId(),
+                observation.observedAt(),
+                observation.durationMillis(),
+                runtime == null ? "" : runtime.target(),
+                observation.fieldCount(),
+                observation.rowCount()
+        };
+    }
+
+    @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String history) {
         return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
@@ -312,7 +362,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         Long startTime = timeRange.get(LABEL_KEY_START_TIME);
         Long endTime = timeRange.get(LABEL_KEY_END_TIME);
 
-        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
+        String queryStep = METRIC_QUERY_RESOLUTION_PLANNER.resolveStep(startTime, endTime, step);
 
         return getHistoryData(startTime, endTime, queryStep, instance, app, metrics, metric);
     }
@@ -335,7 +385,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         Long startTime = timeRange.get(LABEL_KEY_START_TIME);
         Long endTime = timeRange.get(LABEL_KEY_END_TIME);
 
-        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
+        String queryStep = METRIC_QUERY_RESOLUTION_PLANNER.resolveStep(startTime, endTime, step);
 
         Map<String, List<Value>> instanceValuesMap = getHistoryData(startTime, endTime, queryStep, instance, app,
                 metrics, metric);
@@ -416,24 +466,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return Map.of(LABEL_KEY_START_TIME, start / 1000, LABEL_KEY_END_TIME, end / 1000);
         }
         return getTimeRange(history);
-    }
-
-    /**
-     * Get time step
-     *
-     * @param start start time
-     * @param end   end time
-     * @return step
-     */
-    private String getTimeStep(long start, long end) {
-        // get step
-        String step = "60s";
-        if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
-            step = "1h";
-        } else if (end - start >= Duration.ofDays(7).getSeconds()) {
-            step = "4h";
-        }
-        return step;
     }
 
     private long parseStepSeconds(String step) {
