@@ -153,9 +153,9 @@ public class StrBuffer {
      */
     public static double parseDouble(String s) {
         if (POSITIVE_INF.equalsIgnoreCase(s)) {
-            return POSITIVE_INF_VALUE;
+            return Double.POSITIVE_INFINITY;
         } else if (NEGATIVE_INF.equalsIgnoreCase(s)) {
-            return NEGATIVE_INF_VALUE;
+            return Double.NEGATIVE_INFINITY;
         }
         return Double.parseDouble(s);
     }
