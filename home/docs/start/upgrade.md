@@ -16,6 +16,24 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 ## Breaking Changes In 1.9.0
 
+### SFTP monitors require an explicit host-key policy
+
+1.9.0 stops accepting any SFTP server key by default. Every SFTP monitor must
+either pin one or more trusted `SHA256:...` host-key fingerprints or explicitly
+select the dangerous temporary skip-verification option.
+
+This is a fail-closed breaking change. HertzBeat does not automatically enable
+skip verification for 1.8.x monitors, imports, or direct API/SQL-created rows.
+Before or immediately after upgrading, edit each SFTP monitor and:
+
+1. obtain the server key and verify its fingerprint through a trusted channel;
+2. add the verified fingerprint to **SFTP Host Key Fingerprints**; and
+3. use the skip-verification option only as a short-lived recovery measure.
+
+Until one of those policies is configured, the affected SFTP monitor reports a
+configuration failure and does not connect. Plain FTP monitors are unchanged.
+See [FTP Monitor](../help/ftp) for fingerprint acquisition and key rotation.
+
 ### Observability (OTLP / logs / traces) API paths moved
 
 1.9.0 consolidates the 1.8.x log module into `hertzbeat-observability`. Metrics, logs and traces now share one ingestion prefix (`/api/otlp/v1/{signal}`) and one query prefix (`/api/observability/**`). Any OpenTelemetry Collector, Vector, SDK exporter, script or dashboard that was configured against a 1.8.x path must be updated.
@@ -44,15 +62,26 @@ Recommended upgrade steps:
 ### New OTLP/gRPC listener on port 14317
 
 When `warehouse.store.greptime.enabled=true`, 1.9.0 additionally starts an OTLP/gRPC listener on
-`0.0.0.0:14317` so exporters can push metrics, logs and traces over gRPC. The packaged Dockerfile and
-the docker-compose files publish it unchanged, so the port is the same on every deployment.
+`0.0.0.0:14317` inside the HertzBeat container so exporters can push metrics, logs and traces over
+gRPC. The packaged Dockerfile exposes that container port. The repository's five Docker Compose
+quick-start variants publish it as host port `14317`, bound to `127.0.0.1` by default.
 
 - **It is not the OpenTelemetry standard 4317.** An OTel Collector, Jaeger or Tempo on the same host
   normally holds 4317 already, and a clash on a published port makes `docker compose up` fail
   outright. HertzBeat serves OTLP/HTTP on its own port as well, so 14317 is consistent with the rest
   of the product.
-- Existing deployments gain one newly bound port. If your firewall or security policy enumerates
-  listening ports, add 14317.
+- Existing non-Compose deployments gain one newly bound port. If your firewall or security policy
+  enumerates listening ports, add 14317.
+- Every 1.9.0 Docker Compose quick-start now binds all published ports to `127.0.0.1` by default,
+  including `1157`, `1158`, `14317`, and the development database/time-series ports. Upgrading an
+  older Compose checkout therefore preserves local access but intentionally stops remote browser,
+  Collector, OTLP, and datastore access until explicitly configured.
+- For a remote Collector, copy the selected variant's `.env.example` to `.env`, set
+  `HERTZBEAT_BIND_ADDRESS` to the manager's reachable address, and allow `1158` only from Collector
+  source networks. This setting also controls `1157`; prefer a TLS reverse proxy for remote web/API
+  access. Set `HERTZBEAT_OTLP_BIND_ADDRESS` separately only for trusted OTLP senders. Before using a
+  wildcard address, replace default credentials and apply firewall or security-group restrictions.
+  Render `docker compose config` and inspect every final host binding before restarting.
 - A port that cannot be bound does **not** stop HertzBeat: the failure is logged and the process
   starts without gRPC ingestion, while OTLP/HTTP on `/api/otlp/v1` keeps working.
 - To move the listener to 4317, or disable it, set these in `application.yml` or through the matching
@@ -128,5 +157,31 @@ When `warehouse.store.greptime.enabled=true`, HertzBeat writes two different kin
    - If there is a custom monitoring template, you need to back up the template YML under `/opt/hertzbeat/define`
    - `bin/shutdown.sh` stops the HertzBeat process and downloads the new installation package
    - Refer to [Installation package to install HertzBeat](./package-deploy) to start with the new installation package and configure the database connection in `application.yml`
+
+## AI Schedule Ownership After Upgrade
+
+AI conversations without a recorded creator are isolated and do not appear in
+any user's conversation list. Scheduled AI SOP tasks are owned by the creator
+of their target conversation. During upgrade, schedules without a recorded
+creator are disabled. Schedules without a target conversation or whose creator
+does not match the conversation creator are disabled before they can execute.
+The records remain in the database so an administrator can recover them after
+verifying the intended owner.
+
+Ownerless schedules are disabled by the database migration. Missing
+conversations and creator mismatches are rechecked and disabled before every
+background execution.
+
+Before re-enabling a legacy schedule:
+
+1. Back up the metadata database.
+2. Verify the owner of the target row in `hzb_ai_conversation`.
+3. Set the same verified principal in the conversation and schedule `creator`
+   columns.
+4. Re-enable only the reviewed schedule.
+
+Do not assign all legacy rows to a shared account. A schedule is executed only
+while its stored creator still owns the target conversation; ownership
+mismatches are disabled automatically.
 
 **HAVE FUN**

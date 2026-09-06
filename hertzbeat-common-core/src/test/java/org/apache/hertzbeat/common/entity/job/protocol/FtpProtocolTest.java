@@ -20,9 +20,13 @@ package org.apache.hertzbeat.common.entity.job.protocol;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 class FtpProtocolTest {
+
+    private static final String VALID_SHA256_FINGERPRINT =
+            "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     @Test
     void isInvalidValidAnonymousFtp() {
@@ -37,6 +41,34 @@ class FtpProtocolTest {
     }
 
     @Test
+    void isValidPlainFtpWhenSftpOnlyOptionRemainsUnresolved() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("ftp.example.com")
+                .port("21")
+                .direction("/")
+                .timeout("3000")
+                .ssl("false")
+                .insecureSkipVerify("^_^insecureSkipVerify^_^")
+                .build();
+
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isValidLegacyFtpWhenSslOptionRemainsUnresolved() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("ftp.example.com")
+                .port("21")
+                .direction("/")
+                .timeout("3000")
+                .ssl("^_^ssl^_^")
+                .insecureSkipVerify("^_^insecureSkipVerify^_^")
+                .build();
+
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
     void isInvalidValidSftp() {
         FtpProtocol protocol = FtpProtocol.builder()
                 .host("sftp.example.com")
@@ -46,6 +78,7 @@ class FtpProtocolTest {
                 .ssl("true")
                 .username("admin")
                 .password("secret")
+                .hostKeyFingerprint(VALID_SHA256_FINGERPRINT)
                 .build();
         assertFalse(protocol.isInvalid());
     }
@@ -86,6 +119,67 @@ class FtpProtocolTest {
     }
 
     @Test
+    void isInvalidSftpWithoutHostIdentityConfiguration() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidSftpWhenSkipVerificationOptionRemainsUnresolved() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint(VALID_SHA256_FINGERPRINT)
+                .insecureSkipVerify("^_^insecureSkipVerify^_^")
+                .build();
+
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isValidSftpWithExplicitVerificationOptOut() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .insecureSkipVerify("true")
+                .build();
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidSftpWithMalformedHostKeyFingerprint() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint("SHA256:not-a-valid-fingerprint")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
     void isInvalidInvalidTimeout() {
         FtpProtocol protocol = FtpProtocol.builder()
                 .host("ftp.example.com")
@@ -94,5 +188,24 @@ class FtpProtocolTest {
                 .timeout("abc")
                 .build();
         assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void serializationDoesNotExposeComputedValidationProperties() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint(VALID_SHA256_FINGERPRINT)
+                .build();
+
+        String json = JsonUtil.toJson(protocol);
+
+        assertFalse(json.contains("validationError"));
+        assertFalse(json.contains("parsedHostKeyFingerprints"));
     }
 }

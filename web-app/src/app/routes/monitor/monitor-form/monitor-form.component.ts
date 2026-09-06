@@ -198,16 +198,17 @@ export class MonitorFormComponent implements OnChanges {
     this.hostChange.emit(host);
   }
 
-  onParamBooleanChanged(booleanValue: boolean, field: string) {
+  onParamBooleanChanged(booleanValue: boolean | string, field: string) {
+    const enabled = booleanValue === true || String(booleanValue).toLowerCase() === 'true';
     if (this.monitor.app === 'api') {
       if (field === 'ssl') {
         const portParam = this.params.find(param => param.field === 'port');
         if (portParam) {
-          if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
+          if (enabled && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
             portParam.paramValue = 443;
             this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-https'));
           }
-          if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
+          if (!enabled && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
             portParam.paramValue = 80;
             this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-http'));
           }
@@ -217,17 +218,18 @@ export class MonitorFormComponent implements OnChanges {
       if (field === 'ssl') {
         const portParam = this.params.find(param => param.field === 'port');
         if (portParam) {
-          if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 21)) {
+          if (enabled && (portParam.paramValue == null || parseInt(portParam.paramValue) === 21)) {
             portParam.paramValue = 22;
             this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-sftp'));
           }
-          if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 22)) {
+          if (!enabled && (portParam.paramValue == null || parseInt(portParam.paramValue) === 22)) {
             portParam.paramValue = 21;
             this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-ftp'));
           }
         }
       }
     }
+    this.onDependChanged(String(enabled), field);
   }
 
   onDependChanged(dependValue: string, dependField: string) {

@@ -32,6 +32,8 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -108,6 +110,41 @@ class JsonImExportServiceTest {
     @Test
     void testType() {
         assertEquals("JSON", jsonImExportService.type());
+    }
+
+    @Test
+    void testExportConfigPreservesEncryptedCredentialForImportRoundTrip() {
+        String ciphertext = "HBA2-export-ciphertext";
+        MonitorDto monitorDto = new MonitorDto();
+        monitorDto.setMonitor(Monitor.builder().id(1L).name("ollama").app("ollama").build());
+        MonitorParam secret = new MonitorParam();
+        secret.setField("apiKey");
+        secret.setType(org.apache.hertzbeat.common.constants.CommonConstants.PARAM_TYPE_PASSWORD);
+        secret.setParamValue(ciphertext);
+        monitorDto.setParamInfos(List.of(secret));
+        org.mockito.Mockito.when(monitorService.getMonitorDtoForExport(1L)).thenReturn(monitorDto);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        jsonImExportService.exportConfig(output, List.of(1L));
+
+        assertTrue(output.toString(StandardCharsets.UTF_8).contains(ciphertext));
+    }
+
+    @Test
+    void testImportConfigPreservesEncryptedCredentialForImportRoundTrip() {
+        String ciphertext = "HBA2-import-ciphertext";
+        String json = "[{\"monitor\":{\"name\":\"ollama-import\",\"app\":\"ollama\","
+                + "\"intervals\":6000,\"status\":1},\"params\":[{\"field\":\"apiKey\","
+                + "\"type\":2,\"value\":\"" + ciphertext + "\"}]}]";
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        doNothing().when(monitorService).addMonitor(
+                org.mockito.Mockito.any(), paramsCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        jsonImExportService.importConfig(
+                "ollama.json", new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+
+        assertEquals(ciphertext, paramsCaptor.getValue().get(0).getParamValue());
     }
 
     @Test

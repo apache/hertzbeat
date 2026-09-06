@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
 import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
+import org.apache.hertzbeat.warehouse.service.WarehouseStorageStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,18 +65,24 @@ class MetricsDataControllerTest {
 
     @Test
     void getWarehouseStorageServerStatus() throws Exception {
-        when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
+        when(metricsDataService.getWarehouseStorageStatus())
+                .thenReturn(new WarehouseStorageStatus(true, 0, 0));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/warehouse/storage/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.data.available").value(true))
+                .andExpect(jsonPath("$.data.droppedMetrics").value(0))
+                .andExpect(jsonPath("$.data.pendingMetrics").value(0))
                 .andExpect(jsonPath("$.msg").isEmpty())
                 .andReturn();
-        when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(false);
+        when(metricsDataService.getWarehouseStorageStatus())
+                .thenReturn(new WarehouseStorageStatus(false, 7, 3));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/warehouse/storage/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.data").isEmpty())
+                .andExpect(jsonPath("$.data.available").value(false))
+                .andExpect(jsonPath("$.data.droppedMetrics").value(7))
+                .andExpect(jsonPath("$.data.pendingMetrics").value(3))
                 .andReturn();
     }
 
