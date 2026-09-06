@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WPushAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+public class WpushAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert)
@@ -50,7 +50,7 @@ public class WPushAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
             if (StringUtils.isBlank(receiver.getWpushToken())) {
                 throw new AlertNoticeException("WPUSH apikey (wpushToken) is required");
             }
-            WPushNotifyDto notifyDto = new WPushNotifyDto();
+            WpushNotifyDto notifyDto = new WpushNotifyDto();
             notifyDto.setApikey(receiver.getWpushToken());
             notifyDto.setTitle(bundle.getString("alerter.notify.title"));
             notifyDto.setContent(renderContent(noticeTemplate, alert));
@@ -62,7 +62,7 @@ public class WPushAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
             }
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<WPushNotifyDto> httpEntity = new HttpEntity<>(notifyDto, headers);
+            HttpEntity<WpushNotifyDto> httpEntity = new HttpEntity<>(notifyDto, headers);
             String webHookUrl = alerterProperties.getWpushWebhookUrl();
             ResponseEntity<CommonRobotNotifyResp> responseEntity =
                     restTemplate.postForEntity(webHookUrl, httpEntity, CommonRobotNotifyResp.class);
@@ -95,7 +95,7 @@ public class WPushAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    protected static class WPushNotifyDto {
+    protected static class WpushNotifyDto {
         /**
          * WPUSH API key — never log this field in cleartext
          */

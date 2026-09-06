@@ -48,10 +48,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Test case for {@link WPushAlertNotifyHandlerImpl}
+ * Test case for {@link WpushAlertNotifyHandlerImpl}
  */
 @ExtendWith(MockitoExtension.class)
-class WPushAlertNotifyHandlerImplTest {
+class WpushAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
@@ -63,7 +63,7 @@ class WPushAlertNotifyHandlerImplTest {
     private ResourceBundle bundle;
 
     @InjectMocks
-    private WPushAlertNotifyHandlerImpl wPushAlertNotifyHandler;
+    private WpushAlertNotifyHandlerImpl wpushAlertNotifyHandler;
 
     private NoticeReceiver receiver;
     private GroupAlert groupAlert;
@@ -100,7 +100,7 @@ class WPushAlertNotifyHandlerImplTest {
 
     @Test
     public void testType() {
-        assertEquals(16, wPushAlertNotifyHandler.type());
+        assertEquals(16, wpushAlertNotifyHandler.type());
     }
 
     @Test
@@ -116,15 +116,15 @@ class WPushAlertNotifyHandlerImplTest {
                 any(),
                 eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
 
-        wPushAlertNotifyHandler.send(receiver, template, groupAlert);
+        wpushAlertNotifyHandler.send(receiver, template, groupAlert);
 
         ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).postForEntity(
                 eq("https://api.wpush.cn/api/v1/send"),
                 entityCaptor.capture(),
                 eq(CommonRobotNotifyResp.class));
-        WPushAlertNotifyHandlerImpl.WPushNotifyDto body =
-                (WPushAlertNotifyHandlerImpl.WPushNotifyDto) entityCaptor.getValue().getBody();
+        WpushAlertNotifyHandlerImpl.WpushNotifyDto body =
+                (WpushAlertNotifyHandlerImpl.WpushNotifyDto) entityCaptor.getValue().getBody();
         assertEquals("wpush-test-apikey-xxxxx", body.getApikey());
         assertEquals("Alert Notification", body.getTitle());
         assertEquals("wechat", body.getChannel());
@@ -145,7 +145,7 @@ class WPushAlertNotifyHandlerImplTest {
                 eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
 
         assertThrows(AlertNoticeException.class,
-                () -> wPushAlertNotifyHandler.send(receiver, template, groupAlert));
+                () -> wpushAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
@@ -161,13 +161,13 @@ class WPushAlertNotifyHandlerImplTest {
                 eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
 
         assertThrows(AlertNoticeException.class,
-                () -> wPushAlertNotifyHandler.send(receiver, template, groupAlert));
+                () -> wpushAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
     public void testNotifyAlertFailureWhenMissingToken() {
         receiver.setWpushToken(null);
         assertThrows(AlertNoticeException.class,
-                () -> wPushAlertNotifyHandler.send(receiver, template, groupAlert));
+                () -> wpushAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }
