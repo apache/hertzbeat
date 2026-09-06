@@ -69,7 +69,7 @@ sidebar_label: Docker Compose方式安装
 
    :::note
 
-   快速启动方案默认将所有宿主机端口绑定到 `127.0.0.1`，因此 Web 页面只能在运行 Docker 的本机访问。如需从其他主机访问，请在 `.env` 中把 `HERTZBEAT_BIND_ADDRESS` 设置为其他主机可达的地址（建议通过 TLS 反向代理开放，而不是直接使用 `0.0.0.0` 这类通配地址），然后执行 `docker compose config` 检查最终端口映射，再重新 `docker-compose up -d`。该变量同时会开放 `1158` 供远程 Collector 连接；`14317`（OTLP/gRPC）由独立的 `HERTZBEAT_OTLP_BIND_ADDRESS` 控制。详见部署方案目录下的 `README.md`。
+   快速启动方案默认将所有宿主机端口绑定到 `127.0.0.1`，因此 Web 页面只能在运行 Docker 的本机访问。如需从其他主机访问，请在 `.env` 中把 `HERTZBEAT_BIND_ADDRESS` 设置为其他主机可达的地址（建议通过 TLS 反向代理开放，而不是直接使用 `0.0.0.0` 这类通配地址），然后执行 `docker compose config` 检查最终端口映射，再重新执行 `docker compose up -d`。该变量同时会开放 `1158` 供远程 Collector 连接；`14317`（OTLP/gRPC）由独立的 `HERTZBEAT_OTLP_BIND_ADDRESS` 控制。详见部署方案目录下的 `README.md`。
 
    :::
 

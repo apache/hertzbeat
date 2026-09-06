@@ -69,7 +69,7 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
    :::note
 
-   The quick-start stack publishes every host port on `127.0.0.1` by default, so the web UI is reachable only from the machine running Docker. To open it to other hosts, set `HERTZBEAT_BIND_ADDRESS` in `.env` to an address those hosts can reach (a TLS reverse proxy is preferred over a wildcard address such as `0.0.0.0`), then run `docker compose config` to inspect the final port bindings and restart with `docker-compose up -d`.
+   The quick-start stack publishes every host port on `127.0.0.1` by default, so the web UI is reachable only from the machine running Docker. To open it to other hosts, set `HERTZBEAT_BIND_ADDRESS` in `.env` to an address those hosts can reach (a TLS reverse proxy is preferred over a wildcard address such as `0.0.0.0`), then run `docker compose config` to inspect the final port bindings and restart with `docker compose up -d`.
 
    This setting also opens `1158` for remote Collectors; `14317` (OTLP/gRPC) is controlled separately by `HERTZBEAT_OTLP_BIND_ADDRESS`. See the `README.md` of the deployment solution for details.
 
