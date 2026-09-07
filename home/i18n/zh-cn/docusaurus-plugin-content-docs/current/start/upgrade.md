@@ -58,10 +58,12 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 ### 新增 OTLP/gRPC 监听端口 14317
 
-当 `warehouse.store.greptime.enabled=true` 时，1.9.0 会额外启动一个 OTLP/gRPC 监听器，绑定 `0.0.0.0:14317`，供 exporter 通过 gRPC 推送指标、日志与链路。官方 Dockerfile 与 docker-compose 原样发布该端口，因此所有部署方式下端口一致。
+当 `warehouse.store.greptime.enabled=true` 时，1.9.0 会额外启动一个 OTLP/gRPC 监听器，绑定 `0.0.0.0:14317`，供 exporter 通过 gRPC 推送指标、日志与链路。官方 Dockerfile 会暴露该容器端口；仓库内的五个 Docker Compose 快速启动方案将其发布为宿主机端口 `14317`，并默认绑定到 `127.0.0.1`。
 
 - **这里没有使用 OpenTelemetry 标准的 4317。** 同机的 OTel Collector、Jaeger 或 Tempo 通常已经占着 4317，而已发布端口一旦冲突，`docker compose up` 会直接失败。HertzBeat 的 OTLP/HTTP 同样走自有端口，因此 14317 与产品其余部分是一致的。
 - 存量部署升级后会多出一个监听端口。如果你的防火墙或安全策略按端口清单管理，请把 14317 加进去。
+- 1.9.0 的所有 Docker Compose 快速启动方案现在默认把全部已发布端口绑定到 `127.0.0.1`，包括 `1157`、`1158`、`14317` 以及开发用的数据库/时序库端口。在旧的 Compose 检出目录上升级后，本机访问不受影响，但远程浏览器、Collector、OTLP 和数据库访问会被有意关闭，直到显式配置为止。
+- 如需接入远程 Collector，请把所选方案目录下的 `.env.example` 复制为 `.env`，将 `HERTZBEAT_BIND_ADDRESS` 设置为 Manager 的可达地址，并只允许 Collector 来源网络访问 `1158`。该变量同时控制 `1157`；远程访问 Web/API 时建议使用 TLS 反向代理。仅在有可信 OTLP 发送方时单独设置 `HERTZBEAT_OTLP_BIND_ADDRESS`。在使用通配地址前，请先替换默认凭证并配置防火墙或安全组限制。重启前执行 `docker compose config`，逐项检查最终的宿主机端口绑定。
 - 端口绑定失败**不会**导致 HertzBeat 启动失败：失败会被记录到日志，进程在没有 gRPC 接收能力的情况下继续启动，`/api/otlp/v1` 上的 OTLP/HTTP 不受影响。
 - 如需把监听器改到 4317 或关闭它，可在 `application.yml` 中配置，或使用对应的环境变量，并同步修改 docker-compose 的端口映射：
 
