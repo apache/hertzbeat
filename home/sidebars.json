@@ -200,7 +200,13 @@
         {
           "type": "category",
           "label": "cache",
-          "items": ["help/redis", "help/memcached", "help/valkey"]
+          "items": [
+            "help/redis",
+            "help/redis_sentinel",
+            "help/kvrocks",
+            "help/memcached",
+            "help/valkey"
+          ]
         },
         {
           "type": "category",
