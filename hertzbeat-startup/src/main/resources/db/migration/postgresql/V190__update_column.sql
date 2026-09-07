@@ -15,10 +15,9 @@
 -- specific language governing permissions and limitations
 -- under the License.
 -- Schema changes for release 1.9.0.
--- Consolidates the pre-release V181/V182/V183 scripts, which never shipped in an
--- official release. Every statement below is safe to re-run.
+-- Every statement below is safe to re-run.
 
--- Scheduled SOP execution configurations (#4016)
+-- Scheduled SOP execution configurations
 CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
     id BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
@@ -47,11 +46,11 @@ CREATE INDEX IF NOT EXISTS idx_schedule_conversation_id ON hzb_sop_schedule(conv
 CREATE INDEX IF NOT EXISTS idx_schedule_enabled_next ON hzb_sop_schedule(enabled, next_run_time);
 -- idx_schedule_creator_conversation is declared by @Index on SopSchedule and created by Hibernate.
 
--- Disable SOP schedules that have no owner to scope them to (#4280)
+-- Disable SOP schedules that have no owner to scope them to
 UPDATE hzb_sop_schedule
 SET enabled = FALSE
 WHERE creator IS NULL
    OR BTRIM(creator) = '';
 
--- Enlarge alert define expr to fit rules binding many monitors (#4171)
+-- Enlarge alert define expr to fit rules binding many monitors
 ALTER TABLE HZB_ALERT_DEFINE ALTER COLUMN expr TYPE TEXT;

@@ -15,10 +15,9 @@
 -- specific language governing permissions and limitations
 -- under the License.
 -- Schema changes for release 1.9.0.
--- Consolidates the pre-release V181/V182/V183 scripts, which never shipped in an
--- official release. Every statement below is safe to re-run.
+-- Every statement below is safe to re-run.
 
--- Scheduled SOP execution configurations (#4016)
+-- Scheduled SOP execution configurations
 CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT NOT NULL COMMENT 'Conversation ID to push results to',
@@ -37,13 +36,13 @@ CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 -- idx_schedule_creator_conversation is declared by @Index on SopSchedule and created by Hibernate.
 
--- Disable SOP schedules that have no owner to scope them to (#4280)
+-- Disable SOP schedules that have no owner to scope them to
 UPDATE hzb_sop_schedule
 SET enabled = FALSE
 WHERE creator IS NULL
    OR TRIM(creator) = '';
 
--- Enlarge alert define expr to fit rules binding many monitors (#4171).
+-- Enlarge alert define expr to fit rules binding many monitors.
 -- Keep the DELIMITER block last so the routine body cannot swallow the plain
 -- statements above it.
 DROP PROCEDURE IF EXISTS ModifyAlertDefineExprColumn;
