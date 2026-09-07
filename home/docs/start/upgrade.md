@@ -18,9 +18,9 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 ### SFTP monitors require an explicit host-key policy
 
-1.9.0 stops accepting any SFTP server key by default. Every SFTP monitor must
-either pin one or more trusted `SHA256:...` host-key fingerprints or explicitly
-select the dangerous temporary skip-verification option.
+From 1.9.0 on, every SFTP monitor must carry an explicit host-key policy: either
+one or more trusted `SHA256:...` host-key fingerprints, or the operator explicitly
+selecting the dangerous temporary skip-verification option.
 
 This is a fail-closed breaking change. HertzBeat does not automatically enable
 skip verification for 1.8.x monitors, imports, or direct API/SQL-created rows.
@@ -47,7 +47,7 @@ See [FTP Monitor](../help/ftp) for fingerprint acquisition and key rotation.
 | `GET /api/logs/stats/overview` | `GET /api/observability/logs/overview` | Removed (`404`) |
 | `GET /api/logs/stats/trace-coverage` | `GET /api/observability/logs/trace-coverage` | Removed (`404`) |
 | `GET /api/logs/stats/trend` | `GET /api/observability/logs/trend` | Removed (`404`) |
-| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | Removed (`404`); the new route requires an authenticated `admin/user/guest` instead of anonymous access |
+| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | Removed (`404`); the new route requires an authenticated `admin/user/guest` |
 | `DELETE /api/logs` | `DELETE /api/observability/logs` | Removed (`404`) |
 
 The `POST /api/otlp/v1/{metrics,traces}` ingestion routes and the `/api/observability/metrics/**` and `/api/observability/traces/**` query routes are **new** in 1.9.0. There is no 1.8.x path for them, so nothing has to be migrated.
@@ -110,14 +110,8 @@ When `warehouse.store.greptime.enabled=true`, HertzBeat writes two different kin
 | Product OTLP traces (the traces page, trace queries) | not available on 1.8.x | `hertzbeat_traces` (new) |
 
 - **1.8.x had no product trace support**: no trace ingestion route, no trace query API and no traces page, so `hzb_traces` holds nothing but HertzBeat's own spans. Tracing is new in 1.9.0 and there is no historical business trace data to migrate.
-- No automatic migration is performed. The old `hzb_logs` / `hzb_traces` tables are left untouched but no longer receive new data. Once 1.9.0 has created the new tables you can copy the self-monitoring history over:
-
-  ```sql
-  INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;
-  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces;
-  ```
-
-  Otherwise you can `DROP` the old tables when the retention no longer matters.
+- No automatic migration is performed. The old `hzb_logs` / `hzb_traces` tables are left untouched but no longer receive new data, and stay queryable until their retention expires. This is self-monitoring history, so the simplest option is to let it age out and `DROP` the old tables afterwards.
+- If you do need that history in the new tables, compare the two schemas first and copy with an explicit column list. GreptimeDB adds columns to an OTLP table as new attributes arrive, so the old and the new table are not guaranteed to hold the same columns in the same order, and `INSERT ... SELECT *` fails with `Column count doesn't match insert query`.
 - If you have dashboards or ad-hoc SQL against `hzb_logs` / `hzb_traces`, point them at the new table names.
 
 ### The body column of hertzbeat_logs changed type

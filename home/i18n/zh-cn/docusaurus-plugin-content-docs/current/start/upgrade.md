@@ -18,7 +18,7 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 ### SFTP监控必须显式配置主机密钥策略
 
-1.9.0不再默认接受任意SFTP服务器密钥。每个SFTP监控必须配置一个或多个可信的
+从 1.9.0 起，每个SFTP监控必须显式配置主机密钥策略：一个或多个可信的
 `SHA256:...`主机密钥指纹，或者由操作员显式选择危险的临时跳过验证选项。
 
 这是一个失败关闭的不兼容变更。HertzBeat不会为1.8.x监控、导入配置或通过API/SQL
@@ -44,7 +44,7 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 | `GET /api/logs/stats/overview` | `GET /api/observability/logs/overview` | 已移除（`404`） |
 | `GET /api/logs/stats/trace-coverage` | `GET /api/observability/logs/trace-coverage` | 已移除（`404`） |
 | `GET /api/logs/stats/trend` | `GET /api/observability/logs/trend` | 已移除（`404`） |
-| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | 已移除（`404`）；新路径需要 `admin/user/guest` 登录，不再匿名放行 |
+| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | 已移除（`404`）；新路径需要 `admin/user/guest` 登录 |
 | `DELETE /api/logs` | `DELETE /api/observability/logs` | 已移除（`404`） |
 
 `POST /api/otlp/v1/{metrics,traces}` 接收接口、`/api/observability/metrics/**` 与 `/api/observability/traces/**` 查询接口是 1.9.0 **新增**的，1.8.x 没有对应路径，不涉及迁移。
@@ -89,14 +89,8 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 | 产品 OTLP 链路（链路页面、链路查询） | 1.8.x 无此功能 | `hertzbeat_traces`（新增） |
 
 - **1.8.x 没有产品链路能力**：没有链路接收接口、没有链路查询接口、也没有链路页面，`hzb_traces` 里只有 HertzBeat 自身的 span。链路是 1.9.0 新增的功能，不存在需要迁移的历史业务链路数据。
-- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留但不再写入新数据。在 1.9.0 建好新表后，可以把自监控历史数据迁过去：
-
-  ```sql
-  INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;
-  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces;
-  ```
-
-  如果不需要这些自监控历史数据，待保留期过后直接 `DROP` 旧表即可。
+- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留、不再写入新数据，在保留期内仍可查询。这些是自监控历史，最省事的做法是等它自然过期后直接 `DROP` 掉。
+- 确实需要把这些历史数据搬到新表时，请先比对两张表的结构，并用**显式列名**插入。GreptimeDB 会随着新属性的出现给 OTLP 表动态增加列，源表与目标表的列数和顺序不保证一致，`INSERT ... SELECT *` 会报 `Column count doesn't match insert query`。
 - 如果有看板或临时 SQL 直接查询 `hzb_logs` / `hzb_traces`，请改为新表名。
 
 ### 产品日志表 hertzbeat_logs 的 body 列类型变更
