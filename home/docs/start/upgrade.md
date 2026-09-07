@@ -36,7 +36,7 @@ See [FTP Monitor](../help/ftp) for fingerprint acquisition and key rotation.
 
 ### Observability (OTLP / logs / traces) API paths moved
 
-1.9.0 consolidates the 1.8.x log module into `hertzbeat-observability`. Metrics, logs and traces now share one ingestion prefix (`/api/otlp/v1/{signal}`) and one query prefix (`/api/observability/**`). Any OpenTelemetry Collector, Vector, SDK exporter, script or dashboard that was configured against a 1.8.x path must be updated.
+1.9.0 consolidates the 1.8.x log module into `hertzbeat-observability`. Metrics, logs and traces now share one ingestion prefix (`/api/otlp/v1/{signal}`) and one query prefix (`/api/observability/**`). Logs were the only signal with an API on 1.8.x, so every row below is a **log** route. Any OpenTelemetry Collector, Vector, SDK exporter, script or dashboard that was configured against a 1.8.x path must be updated.
 
 | 1.8.x path | 1.9.0 path | Status in 1.9.x |
 |---|---|---|
@@ -49,15 +49,14 @@ See [FTP Monitor](../help/ftp) for fingerprint acquisition and key rotation.
 | `GET /api/logs/stats/trend` | `GET /api/observability/logs/trend` | Removed (`404`) |
 | `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | Removed (`404`); the new route requires an authenticated `admin/user/guest` instead of anonymous access |
 | `DELETE /api/logs` | `DELETE /api/observability/logs` | Removed (`404`) |
-| `GET /api/traces/**` | `GET /api/observability/traces/**` | Removed (`404`) |
-| `GET /api/ingestion/otlp/metrics/console` | `GET /api/observability/metrics/query` | Removed (`404`) |
-| `GET /api/ingestion/otlp/metrics/inventory` | `GET /api/observability/metrics/inventory` | Removed (`404`) |
+
+The `POST /api/otlp/v1/{metrics,traces}` ingestion routes and the `/api/observability/metrics/**` and `/api/observability/traces/**` query routes are **new** in 1.9.0. There is no 1.8.x path for them, so nothing has to be migrated.
 
 Recommended upgrade steps:
 
 - Before upgrading, search your collector / exporter configuration for `/api/logs/` and change it to `/api/otlp/v1/logs`. OTLP HTTP exporters treat a `404` as a permanent error and silently drop the batch, so a stale path shows up only as "logs stopped arriving".
 - If you cannot change the exporters in the same maintenance window, the two ingestion aliases above keep accepting data on 1.9.x. Watch the HertzBeat log for `Deprecated OTLP log route ... was called` warnings and migrate before 2.0.
-- If you use a customised `sureness.yml`, add `/api/otlp/v1/**===post===[admin,user]` and `/api/observability/**===get===[admin,user,guest]` (see the packaged `sureness.yml`); the old `/api/logs/**`, `/api/traces/**` and `/api/ingestion/otlp/**` rules can be dropped once your exporters are migrated.
+- If you use a customised `sureness.yml`, add `/api/otlp/v1/**===post===[admin,user]` and `/api/observability/**===get===[admin,user,guest]` (see the packaged `sureness.yml`); the old `/api/logs/**` rules can be dropped once your exporters are migrated.
 
 ### New OTLP/gRPC listener on port 14317
 
@@ -101,33 +100,31 @@ quick-start variants publish it as host port `14317`, bound to `127.0.0.1` by de
 
 ### GreptimeDB signal tables renamed
 
-When `warehouse.store.greptime.enabled=true`, HertzBeat writes two different kinds of telemetry to GreptimeDB: the traces and logs **you** send it over OTLP, and its **own** runtime logs and traces shipped via OpenTelemetry. On 1.8.x both kinds of traces landed in the same `hzb_traces` table. 1.9.0 separates them, which renames one product table and both self-monitoring tables:
+When `warehouse.store.greptime.enabled=true`, HertzBeat writes two different kinds of telemetry to GreptimeDB: the logs **you** send it over OTLP, and its **own** runtime logs and traces shipped via OpenTelemetry. 1.9.0 gives the self-monitoring tables an `hzb_internal_` prefix so they are no longer mistaken for product tables:
 
 | Data | 1.8.x table | 1.9.0 table |
 |---|---|---|
-| Product OTLP traces (the traces page, trace queries) | `hzb_traces` | `hertzbeat_traces` |
-| Product OTLP logs (the logs page, log alerting, SQL editor) | `hertzbeat_logs` | `hertzbeat_logs` (unchanged) |
+| Product OTLP logs (the logs page, log alerting, SQL editor) | `hertzbeat_logs` | `hertzbeat_logs` (same name, but the `body` column type changed — see below) |
 | HertzBeat internal logs (self-monitoring) | `hzb_logs` | `hzb_internal_logs` |
 | HertzBeat internal traces (self-monitoring) | `hzb_traces` | `hzb_internal_traces` |
+| Product OTLP traces (the traces page, trace queries) | not available on 1.8.x | `hertzbeat_traces` (new) |
 
-- **The traces page will be empty for data ingested before the upgrade.** 1.9.0 creates `hertzbeat_traces` and queries only that table, so spans written to `hzb_traces` on 1.8.x are no longer visible in the UI until you copy them over.
-- The product log table `hertzbeat_logs` is **not** renamed; historical logs ingested on 1.8.x remain queryable with no action needed.
-- No automatic migration is performed. The old `hzb_logs` / `hzb_traces` tables are left untouched but no longer receive new data. Once 1.9.0 has created the new tables you can copy the history manually, for example:
+- **1.8.x had no product trace support**: no trace ingestion route, no trace query API and no traces page, so `hzb_traces` holds nothing but HertzBeat's own spans. Tracing is new in 1.9.0 and there is no historical business trace data to migrate.
+- No automatic migration is performed. The old `hzb_logs` / `hzb_traces` tables are left untouched but no longer receive new data. Once 1.9.0 has created the new tables you can copy the self-monitoring history over:
 
   ```sql
   INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;
-  ```
-
-  Copying traces needs more care, because `hzb_traces` holds your spans and HertzBeat's own spans mixed together. Filter by service so the self-monitoring spans do not end up in the product table:
-
-  ```sql
-  -- keep only your own services; HertzBeat's self-telemetry uses service.name = 'HertzBeat'
-  INSERT INTO hertzbeat_traces SELECT * FROM hzb_traces WHERE service_name <> 'HertzBeat';
-  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces WHERE service_name = 'HertzBeat';
+  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces;
   ```
 
   Otherwise you can `DROP` the old tables when the retention no longer matters.
 - If you have dashboards or ad-hoc SQL against `hzb_logs` / `hzb_traces`, point them at the new table names.
+
+### The body column of hertzbeat_logs changed type
+
+The `hertzbeat_logs` table keeps its name, but 1.8.x created `body` as a `JSON` column and 1.9.0 writes it as `STRING`. The 1.9.0 schema is applied with `CREATE TABLE IF NOT EXISTS`, which is a no-op against the table 1.8.x already created, so **after a plain upgrade GreptimeDB rejects every new log write**: the exporter still receives a 200, the server logs a single `[warehouse greptime-log] Write failed` warning, the UI just stops showing new logs, and log-based alerting stops with it.
+
+Rename the old table before upgrading, let 1.9.0 create the new one, then copy the history back. Do **not** run `ALTER TABLE ... MODIFY COLUMN`. The full procedure is in the [1.9.0 upgrade guide](1.9.0-update).
 
 ## Upgrade For Docker Deploy
 
