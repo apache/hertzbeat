@@ -16,9 +16,6 @@
 -- under the License.
 
 UPDATE hzb_sop_schedule
-SET enabled = 0
+SET enabled = FALSE
 WHERE creator IS NULL
    OR BTRIM(creator) = '';
-
-CREATE INDEX idx_schedule_creator_conversation
-    ON hzb_sop_schedule(creator, conversation_id);
