@@ -168,6 +168,14 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Test-only driver for the migration regression; the postgresql driver is already
+             on the test classpath transitively. Version comes from the root dependencyManagement
+             and nothing here is packaged into the distribution. -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
