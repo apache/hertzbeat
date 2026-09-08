@@ -48,7 +48,7 @@ class FlywayConfigurationTest {
     @Test
     void repairsAndRetriesWhenHistoryHasFailedMigration() {
         Mockito.when(flyway.migrate())
-                .thenThrow(validateException("Detected failed migration to version 181 (update column)"))
+                .thenThrow(validateException("Detected failed migration to version 190 (update column)"))
                 .thenReturn(null);
 
         configuration.delayedFlywayInitializer(flyway, enabledProperties());
