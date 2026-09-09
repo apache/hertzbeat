@@ -281,6 +281,7 @@
             "help/presto",
             "help/seatunnel",
             "help/spark",
+            "help/superset",
             "help/yarn",
             "help/dolphinscheduler"
           ]
