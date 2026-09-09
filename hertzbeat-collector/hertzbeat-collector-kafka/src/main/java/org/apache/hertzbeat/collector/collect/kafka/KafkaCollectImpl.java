@@ -29,6 +29,7 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
@@ -44,6 +45,7 @@ import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
 
@@ -52,6 +54,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -68,6 +71,7 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     private static final String LAG_NUM = "lag_num";
     private static final String PARTITION_OFFSET = "Partition_offset";
+    private static final String SCRAM_LOGIN_MODULE = "org.apache.kafka.common.security.scram.ScramLoginModule";
 
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
@@ -230,6 +234,7 @@ public class KafkaCollectImpl extends AbstractCollect {
         // Ensure that host and port are not empty
         requireHasText(kafkaProtocol.getHost(), "Kafka Protocol host is required.");
         requireHasText(kafkaProtocol.getPort(), "Kafka Protocol port is required.");
+        require(!kafkaProtocol.isInvalid(), "Kafka Protocol params is invalid.");
     }
 
     @Override
@@ -274,9 +279,7 @@ public class KafkaCollectImpl extends AbstractCollect {
     }
 
     protected AdminClient getAdminClient(KafkaProtocol kafkaProtocol) {
-        CacheIdentifier kafkaAdminClientIdentifier = CacheIdentifier.builder()
-                .ip(kafkaProtocol.getHost()).port(kafkaProtocol.getPort())
-                .build();
+        CacheIdentifier kafkaAdminClientIdentifier = getAdminClientIdentifier(kafkaProtocol);
         Optional<AbstractConnection<?>> kafkaClientCache =
                 connectionCommonCache.getCache(kafkaAdminClientIdentifier, true);
         if (kafkaClientCache.isPresent()) {
@@ -289,15 +292,62 @@ public class KafkaCollectImpl extends AbstractCollect {
             connectionCommonCache.removeCache(kafkaAdminClientIdentifier);
         }
         // Cached AdminClient was not present or was invalid; create a new AdminClient
-        Properties properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG,
-                kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+        Properties properties = getAdminClientProperties(kafkaProtocol);
         AdminClient adminClient = KafkaAdminClient.create(properties);
         if (adminClient == null) {
             return null;
         }
         connectionCommonCache.addCache(kafkaAdminClientIdentifier, new KafkaConnect(adminClient));
         return adminClient;
+    }
+
+    /**
+     * Build the cache identifier for a Kafka AdminClient.
+     *
+     * @param kafkaProtocol Kafka connection parameters
+     * @return cache identifier including authentication settings
+     */
+    protected CacheIdentifier getAdminClientIdentifier(KafkaProtocol kafkaProtocol) {
+        boolean hasSaslAuthentication = kafkaProtocol.hasSaslAuthentication();
+        return CacheIdentifier.builder()
+                .ip(kafkaProtocol.getHost())
+                .port(kafkaProtocol.getPort())
+                .username(hasSaslAuthentication ? kafkaProtocol.getUsername() : null)
+                .password(hasSaslAuthentication ? kafkaProtocol.getPassword() : null)
+                .customArg(hasSaslAuthentication
+                        ? kafkaProtocol.getSecurityProtocol().toUpperCase(Locale.ROOT) + ":"
+                                + kafkaProtocol.getSaslMechanism().toUpperCase(Locale.ROOT)
+                        : null)
+                .build();
+    }
+
+    /**
+     * Build Kafka AdminClient properties without logging credentials.
+     *
+     * @param kafkaProtocol Kafka connection parameters
+     * @return AdminClient properties
+     */
+    protected Properties getAdminClientProperties(KafkaProtocol kafkaProtocol) {
+        Properties properties = new Properties();
+        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+        if (kafkaProtocol.hasSaslAuthentication()) {
+            properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG,
+                    kafkaProtocol.getSecurityProtocol().toUpperCase(Locale.ROOT));
+            properties.put(SaslConfigs.SASL_MECHANISM,
+                    kafkaProtocol.getSaslMechanism().toUpperCase(Locale.ROOT));
+            properties.put(SaslConfigs.SASL_JAAS_CONFIG, buildSaslJaasConfig(kafkaProtocol));
+        }
+        return properties;
+    }
+
+    private static String buildSaslJaasConfig(KafkaProtocol kafkaProtocol) {
+        return SCRAM_LOGIN_MODULE + " required username=\"" + escapeJaasValue(kafkaProtocol.getUsername())
+                + "\" password=\"" + escapeJaasValue(kafkaProtocol.getPassword()) + "\";";
+    }
+
+    private static String escapeJaasValue(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
 
