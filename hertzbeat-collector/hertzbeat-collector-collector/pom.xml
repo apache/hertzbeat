@@ -127,6 +127,11 @@
             <artifactId>mssql-jdbc</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-collector-cloudspanner</artifactId>
+            <version>${hertzbeat.version}</version>
+        </dependency>
 
     </dependencies>
 
