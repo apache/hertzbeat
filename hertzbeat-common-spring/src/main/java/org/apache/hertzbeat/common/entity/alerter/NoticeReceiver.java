@@ -279,6 +279,27 @@ public class NoticeReceiver {
     @Column(length = 300)
     private String ntfyToken;
 
+    @Schema(title = "WPUSH API key (apikey) : The notification method is valid for WPUSH",
+            description = "WPUSH API key (apikey) : The notification method is valid for WPUSH",
+            example = "wpush-xxxxxxxxxxxxxxxx", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String wpushToken;
+
+    @Schema(title = "WPUSH channel : Optional channel, default wechat",
+            description = "WPUSH channel : Optional channel such as wechat, default wechat",
+            example = "wechat", accessMode = READ_WRITE)
+    @Size(max = 64)
+    @Column(length = 64)
+    private String wpushChannel;
+
+    @Schema(title = "WPUSH topic_code : Optional topic code for channel subscription",
+            description = "WPUSH topic_code : Optional topic code for channel subscription",
+            example = "topic_demo", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String wpushTopicCode;
+
     @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy
