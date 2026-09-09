@@ -37,6 +37,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.reflect.Field;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
@@ -210,6 +211,37 @@ class AlarmGroupReduceTest {
         assertTrue(groups.stream().anyMatch(g -> g.getAlerts().stream().anyMatch(
                         a -> "mem".equals(a.getFingerprint()) && "resolved".equals(a.getStatus()))),
                 "memory recovery was silently dropped by the firing repeat-interval throttle");
+    }
+
+    /**
+     * Regression: deleting (or renaming/disabling) a converge rule while its group cache still
+     * holds a firing alert must not break the periodic group dispatch with an NPE. The orphaned
+     * group has to fall back to the default repeat interval, like shouldSendGroup already does
+     * for the group wait/interval.
+     */
+    @Test
+    void whenRuleDeleted_firingGroupCacheMustStillBeDispatched() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(groupRule()));
+
+        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
+
+        // The rule is deleted or disabled; refresh loads only enabled rules, orphaning the cache.
+        alarmGroupReduce.refreshGroupDefines(Collections.emptyList());
+
+        // Age the cache past the default group wait so the periodic check picks the group up.
+        Field cachesField = AlarmGroupReduce.class.getDeclaredField("groupCacheMap");
+        cachesField.setAccessible(true);
+        Map<?, ?> caches = (Map<?, ?>) cachesField.get(alarmGroupReduce);
+        for (Object cache : caches.values()) {
+            Field createTimeField = cache.getClass().getDeclaredField("createTime");
+            createTimeField.setAccessible(true);
+            createTimeField.setLong(cache, System.currentTimeMillis() - 60_000);
+        }
+
+        alarmGroupReduce.runCheckAndSendGroups();
+
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(argThat(group ->
+                group.getAlerts().stream().anyMatch(a -> "cpu".equals(a.getFingerprint()))));
     }
 
     private AlertGroupConverge groupRule() {
