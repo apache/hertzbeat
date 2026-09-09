@@ -1,4 +1,4 @@
-##  docker-compose部署 HertzBeat+Postgresql+IoTDB 方案   
+##  docker-compose部署 HertzBeat+Postgresql+VictoriaMetrics 方案
 
 - 如果想自己本地快速部署的话，可以参考下面进行操作。
 
@@ -25,10 +25,49 @@
    如果你希望 HertzBeat 在重启后优先走 JDBC，可以把 `mysql-connector-j` 放到 `ext-lib`。
    Oracle、DB2 这类场景仍然需要把外部 JDBC 驱动放到 `ext-lib`。
 
-3. 进入部署脚本 docker-compose 目录, 执行
+3. 进入部署脚本 docker-compose 目录，将 `.env.example` 复制为 `.env` 并设置数据库密码
+
+   `POSTGRES_PASSWORD` 为必填项，未设置时 `docker compose up` 会直接报错退出。
+
+   ```shell
+   cp .env.example .env
+   # 编辑 .env，将 POSTGRES_PASSWORD 设置为你自己的强密码
+   ```
+
+4. 执行
 
    `docker compose up -d`
 
+##### 监听地址与远程 Collector
+
+快速启动方案默认将所有宿主机端口绑定到 `127.0.0.1`：
+
+- `1157` 是 HertzBeat Web UI 和 API 端口。
+- `1158` 是 Manager 与 Collector 的通信端口。
+- `14317` 是 OTLP/gRPC 遥测写入端口。它使用独立的监听地址变量，避免仅为
+  远程 Collector 开放网络时同时暴露遥测写入。
+- `15432`、`18428` 是 PostgreSQL 和 VictoriaMetrics 的开发调试端口。
+  容器之间通过内部 `hertzbeat` 网络访问，所以这些端口始终只监听本机。
+
+普通本地使用不需要修改配置。如果其他主机上的 Collector 需要连接 Manager，
+请编辑 `.env`，把 `HERTZBEAT_BIND_ADDRESS` 修改为 Collector 可以访问的 Manager 地址：
+
+```shell
+# 修改 .env 中的 HERTZBEAT_BIND_ADDRESS，然后检查最终端口映射。
+docker compose config
+```
+
+只允许 Collector 所在的来源网络访问 `1158`。如需远程访问 Web/API，建议通过
+TLS 反向代理开放 `1157`。如果必须设置为 `0.0.0.0`，请先替换所有内置/默认凭证，
+通过防火墙或安全组限制来源并配置 TLS。`HERTZBEAT_BIND_ADDRESS` 不会开放
+OTLP、PostgreSQL 或 VictoriaMetrics 端口。
+
+如果需要远程 OTLP/gRPC 写入，请单独设置 `HERTZBEAT_OTLP_BIND_ADDRESS`，并只允许
+可信遥测来源访问 `14317`。建议先通过具备认证和 TLS 的 Collector 或网关，再把流量
+转发到 HertzBeat。
+
+远程 Collector 应配置 Manager 的可达地址和 `1158` 端口；除非 Manager 与
+Collector 位于同一主机，否则不能使用 `127.0.0.1`。
 
 ##### 开始探索HertzBeat   
 
