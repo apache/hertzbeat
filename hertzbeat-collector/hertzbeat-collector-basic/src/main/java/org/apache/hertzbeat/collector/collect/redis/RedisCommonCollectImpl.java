@@ -305,12 +305,13 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         return RedisClient.create(defaultClientResources, redisUri(redisProtocol, host, port));
     }
 
-    private RedisURI redisUri(RedisProtocol redisProtocol, String host, String port) {
+    RedisURI redisUri(RedisProtocol redisProtocol, String host, String port) {
         RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(host).withPort(Integer.parseInt(port));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
-            redisUriBuilder.withClientName(redisProtocol.getUsername());
-        }
-        if (StringUtils.hasText(redisProtocol.getPassword())) {
+            // An ACL user without a password still authenticates with AUTH <username> "".
+            char[] password = redisProtocol.getPassword() == null ? new char[0] : redisProtocol.getPassword().toCharArray();
+            redisUriBuilder.withAuthentication(redisProtocol.getUsername(), password);
+        } else if (StringUtils.hasText(redisProtocol.getPassword())) {
             redisUriBuilder.withPassword(redisProtocol.getPassword().toCharArray());
         }
         Duration timeout = Duration.ofMillis(CollectUtil.getTimeout(redisProtocol.getTimeout()));
