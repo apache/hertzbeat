@@ -51,11 +51,8 @@ Update the member information in `src/pages/team/data/member.json` File.
 
 Please refer to the [All Contributors](https://allcontributors.org/) to auto add contributor.
 
-```console
-pnpm all-contributors generate
-```
-
-Use generate to read the contributors list from `.all-contributorsrc` file and update the contributor tables specified by the files key.
+The `.all-contributorsrc` file in the repository root directory still displays this list of contributors on the team
+page, but its `files` key is intentionally left empty.
 
 ### Avatar
 
@@ -99,7 +96,7 @@ pnpm docusaurus docs:version v1.5.x
 
 ```html
 |-- docs
-|-- blog   
+|-- blog
 |-- i18n
 |   `-- zh-CN  // internationalized chinese
 |       |-- code.json

@@ -14,23 +14,8 @@
 -- KIND, either express or implied.  See the License for the
 -- specific language governing permissions and limitations
 -- under the License.
-
--- Licensed to the Apache Software Foundation (ASF) under one
--- or more contributor license agreements.  See the NOTICE file
--- distributed with this work for additional information
--- regarding copyright ownership.  The ASF licenses this file
--- to you under the Apache License, Version 2.0 (the
--- "License"); you may not use this file except in compliance
--- with the License.  You may obtain a copy of the License at
---
---   http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing,
--- software distributed under the License is distributed on an
--- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
--- KIND, either express or implied.  See the License for the
--- specific language governing permissions and limitations
--- under the License.
+-- Schema changes for release 1.9.0.
+-- Every statement below is safe to re-run.
 
 -- Scheduled SOP execution configurations
 CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
@@ -39,7 +24,7 @@ CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
     sop_name VARCHAR(64) NOT NULL COMMENT 'Name of the SOP skill to execute',
     sop_params VARCHAR(1024) COMMENT 'SOP execution parameters in JSON format',
     cron_expression VARCHAR(64) NOT NULL COMMENT 'Cron expression for scheduling',
-    enabled TINYINT DEFAULT 1 COMMENT 'Whether the schedule is enabled',
+    enabled BOOLEAN DEFAULT TRUE COMMENT 'Whether the schedule is enabled',
     last_run_time DATETIME COMMENT 'Last execution time',
     next_run_time DATETIME COMMENT 'Next scheduled execution time',
     creator VARCHAR(64) COMMENT 'Creator of this record',
@@ -50,3 +35,13 @@ CREATE TABLE IF NOT EXISTS hzb_sop_schedule (
 
 CREATE INDEX IF NOT EXISTS idx_schedule_conversation_id ON hzb_sop_schedule(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_schedule_enabled_next ON hzb_sop_schedule(enabled, next_run_time);
+-- idx_schedule_creator_conversation is declared by @Index on SopSchedule and created by Hibernate.
+
+-- Disable SOP schedules that have no owner to scope them to
+UPDATE hzb_sop_schedule
+SET enabled = FALSE
+WHERE creator IS NULL
+   OR TRIM(creator) = '';
+
+-- Enlarge alert define expr to fit rules binding many monitors
+ALTER TABLE HZB_ALERT_DEFINE ALTER COLUMN expr CLOB;
