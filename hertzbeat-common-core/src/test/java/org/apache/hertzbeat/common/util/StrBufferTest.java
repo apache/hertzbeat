@@ -91,10 +91,10 @@ class StrBufferTest {
         assertEquals(123.45, buffer.toDouble());
 
         buffer = new StrBuffer("+inf");
-        assertEquals(POSITIVE_INF_VALUE, buffer.toDouble());
+        assertEquals(Double.POSITIVE_INFINITY, buffer.toDouble());
 
         buffer = new StrBuffer("-inf");
-        assertEquals(NEGATIVE_INF_VALUE, buffer.toDouble());
+        assertEquals(Double.NEGATIVE_INFINITY, buffer.toDouble());
     }
 
     @Test
@@ -144,8 +144,8 @@ class StrBufferTest {
     void testParseDouble() {
 
         assertEquals(123.45, StrBuffer.parseDouble("123.45"));
-        assertEquals(POSITIVE_INF_VALUE, StrBuffer.parseDouble("+inf"));
-        assertEquals(NEGATIVE_INF_VALUE, StrBuffer.parseDouble("-inf"));
+        assertEquals(Double.POSITIVE_INFINITY, StrBuffer.parseDouble("+inf"));
+        assertEquals(Double.NEGATIVE_INFINITY, StrBuffer.parseDouble("-inf"));
     }
 
 }
