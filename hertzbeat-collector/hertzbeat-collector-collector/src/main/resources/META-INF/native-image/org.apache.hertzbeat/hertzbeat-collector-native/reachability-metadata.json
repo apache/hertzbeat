@@ -1,0 +1,18 @@
+{
+  "comment": "Hand-written native hints for the native collector. NOTE: must NOT live under org.apache.hertzbeat/hertzbeat-collector-collector/ - Spring AOT generates reachability-metadata.json at that exact path and silently overwrites it.",
+  "reflection": [
+    {"type": "org.apache.coyote.AbstractProtocol", "allPublicMethods": true},
+    {"type": "org.apache.coyote.http11.AbstractHttp11Protocol", "allPublicMethods": true},
+    {"type": "org.apache.coyote.http11.Http11NioProtocol", "allPublicMethods": true},
+
+    {"type": "io.netty.channel.kqueue.KQueueDatagramChannel", "allPublicConstructors": true},
+    {"type": "io.netty.channel.kqueue.KQueueSocketChannel", "allPublicConstructors": true},
+    {"type": "io.netty.channel.kqueue.KQueueEventLoopGroup", "allPublicConstructors": true},
+    {"type": "io.netty.channel.epoll.EpollDatagramChannel", "allPublicConstructors": true},
+    {"type": "io.netty.channel.epoll.EpollSocketChannel", "allPublicConstructors": true},
+    {"type": "io.netty.channel.epoll.EpollEventLoopGroup", "allPublicConstructors": true},
+    {"type": "io.netty.channel.socket.nio.NioDatagramChannel", "allPublicConstructors": true},
+    {"type": "io.netty.channel.socket.nio.NioSocketChannel", "allPublicConstructors": true},
+    {"type": "io.netty.channel.nio.NioEventLoopGroup", "allPublicConstructors": true}
+  ]
+}
