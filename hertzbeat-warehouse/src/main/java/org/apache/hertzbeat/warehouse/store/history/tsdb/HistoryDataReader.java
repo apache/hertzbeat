@@ -67,6 +67,22 @@ public interface HistoryDataReader {
     Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history);
 
     /**
+     * query history range metrics data from tsdb for a monitor
+     *
+     * @param monitorId monitor id
+     * @param instance  instance e.g. ip:port or ip or domain
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @param history   range
+     * @return metrics data
+     */
+    default Map<String, List<Value>> getHistoryMetricData(Long monitorId, String instance, String app,
+                                                          String metrics, String metric, String history) {
+        return getHistoryMetricData(instance, app, metrics, metric, history);
+    }
+
+    /**
      * query history range interval metrics data from tsdb
      * max min mean metrics value
      *
@@ -78,6 +94,22 @@ public interface HistoryDataReader {
      * @return metrics data
      */
     Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history);
+
+    /**
+     * query history range interval metrics data from tsdb for a monitor
+     *
+     * @param monitorId monitor id
+     * @param instance  instance e.g. ip:port or ip or domain
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @param history   history range
+     * @return metrics data
+     */
+    default Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String instance, String app,
+                                                                  String metrics, String metric, String history) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history);
+    }
 
     /**
      * Query logs with multiple filter conditions

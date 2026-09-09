@@ -164,6 +164,7 @@ export class MonitorService {
   }
 
   public getMonitorMetricHistoryData(
+    monitorId: number,
     instance: string,
     app: string,
     metrics: string,
@@ -174,6 +175,7 @@ export class MonitorService {
     let metricFull = `${app}.${metrics}.${metric}`;
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
+      monitorId: monitorId,
       history: history,
       interval: interval
     });
