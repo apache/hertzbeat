@@ -212,6 +212,8 @@
   "alert.notice.type.ntfy-server-url": "Ntfy サーバーURL",
   "alert.notice.type.ntfy-topic": "Ntfy トピック",
   "alert.notice.type.ntfy-token": "Ntfy アクセストークン",
+  "alert.notice.type.teams": "Microsoft Teams",
+  "alert.notice.type.teams-webHook-url": "Teams Workflows Webhook URL",
   "alert.notice.type.phone": "電話",
   "alert.notice.type.serverchan": "ServerChan",
   "alert.notice.type.serverchan-token": "ServerChanトークン",

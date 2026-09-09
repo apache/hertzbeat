@@ -69,12 +69,13 @@ public class NoticeReceiver {
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot "
             + "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message "
-            + "11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy",
+            + "11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy 16-Microsoft Teams",
             description = "Notification information method: "
                     + "0-SMS 1-Email 2-webhook 3-WeChat Official Account "
                     + "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot "
                     + "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise "
-                    + "WeChat app message 11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy",
+                    + "WeChat app message 11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message "
+                    + "15-Ntfy 16-Microsoft Teams",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull(message = "type can not null")
@@ -278,6 +279,14 @@ public class NoticeReceiver {
     @Size(max = 300)
     @Column(length = 300)
     private String ntfyToken;
+
+    @Schema(title = "URL address: The notification method is valid for Microsoft Teams Workflows webhook",
+            description = "URL address: The notification method is valid for Microsoft Teams Workflows webhook",
+            example = "https://prod-00.westus.logic.azure.com:443/workflows/xxx/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xxx",
+            accessMode = READ_WRITE)
+    @Size(max = 1000)
+    @Column(length = 1000)
+    private String teamsWebHookUrl;
 
     @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)

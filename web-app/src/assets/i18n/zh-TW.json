@@ -211,6 +211,8 @@
   "alert.notice.type.ntfy-server-url": "Ntfy 伺服器地址",
   "alert.notice.type.ntfy-topic": "Ntfy 主題",
   "alert.notice.type.ntfy-token": "Ntfy 存取權杖",
+  "alert.notice.type.teams": "Microsoft Teams",
+  "alert.notice.type.teams-webHook-url": "Teams Workflows Webhook 地址",
   "alert.notice.type.phone": "手機號",
   "alert.notice.type.serverchan": "ServerChan",
   "alert.notice.type.serverchan-token": "ServerChanToken",
