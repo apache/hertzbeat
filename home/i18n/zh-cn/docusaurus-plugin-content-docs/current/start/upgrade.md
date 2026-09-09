@@ -18,7 +18,7 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 ### SFTP监控必须显式配置主机密钥策略
 
-1.9.0不再默认接受任意SFTP服务器密钥。每个SFTP监控必须配置一个或多个可信的
+从 1.9.0 起，每个SFTP监控必须显式配置主机密钥策略：一个或多个可信的
 `SHA256:...`主机密钥指纹，或者由操作员显式选择危险的临时跳过验证选项。
 
 这是一个失败关闭的不兼容变更。HertzBeat不会为1.8.x监控、导入配置或通过API/SQL
@@ -33,7 +33,7 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 ### 可观测（OTLP / 日志 / 链路）接口路径变更
 
-1.9.0 将 1.8.x 的日志模块合并为 `hertzbeat-observability`，指标、日志、链路统一使用 `/api/otlp/v1/{signal}` 接收、`/api/observability/**` 查询。所有按 1.8.x 路径配置的 OpenTelemetry Collector、Vector、SDK exporter、脚本或看板都需要更新。
+1.9.0 将 1.8.x 的日志模块合并为 `hertzbeat-observability`，指标、日志、链路统一使用 `/api/otlp/v1/{signal}` 接收、`/api/observability/**` 查询。1.8.x 只有日志一路信号有接口，因此下表列出的都是**日志接口**的迁移；所有按 1.8.x 路径配置的 OpenTelemetry Collector、Vector、SDK exporter、脚本或看板都需要更新。
 
 | 1.8.x 路径 | 1.9.0 路径 | 1.9.x 状态 |
 |---|---|---|
@@ -44,24 +44,25 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 | `GET /api/logs/stats/overview` | `GET /api/observability/logs/overview` | 已移除（`404`） |
 | `GET /api/logs/stats/trace-coverage` | `GET /api/observability/logs/trace-coverage` | 已移除（`404`） |
 | `GET /api/logs/stats/trend` | `GET /api/observability/logs/trend` | 已移除（`404`） |
-| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | 已移除（`404`）；新路径需要 `admin/user/guest` 登录，不再匿名放行 |
+| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | 已移除（`404`）；新路径需要 `admin/user/guest` 登录 |
 | `DELETE /api/logs` | `DELETE /api/observability/logs` | 已移除（`404`） |
-| `GET /api/traces/**` | `GET /api/observability/traces/**` | 已移除（`404`） |
-| `GET /api/ingestion/otlp/metrics/console` | `GET /api/observability/metrics/query` | 已移除（`404`） |
-| `GET /api/ingestion/otlp/metrics/inventory` | `GET /api/observability/metrics/inventory` | 已移除（`404`） |
+
+`POST /api/otlp/v1/{metrics,traces}` 接收接口、`/api/observability/metrics/**` 与 `/api/observability/traces/**` 查询接口是 1.9.0 **新增**的，1.8.x 没有对应路径，不涉及迁移。
 
 建议的升级步骤：
 
 - 升级前在 collector / exporter 配置中搜索 `/api/logs/`，改为 `/api/otlp/v1/logs`。OTLP HTTP exporter 会把 `404` 视为永久错误并静默丢弃该批数据，路径过期的表现只是"日志突然没了"。
 - 如果无法在同一维护窗口内改完 exporter，上表两条接收别名在 1.9.x 仍然可用；请关注 HertzBeat 日志中的 `Deprecated OTLP log route ... was called` 告警并在 2.0 之前完成迁移。
-- 如果使用了自定义 `sureness.yml`，请补充 `/api/otlp/v1/**===post===[admin,user]` 与 `/api/observability/**===get===[admin,user,guest]`（参考安装包内的 `sureness.yml`）；旧的 `/api/logs/**`、`/api/traces/**`、`/api/ingestion/otlp/**` 规则在 exporter 迁移完成后即可删除。
+- 如果使用了自定义 `sureness.yml`，请补充 `/api/otlp/v1/**===post===[admin,user]` 与 `/api/observability/**===get===[admin,user,guest]`（参考安装包内的 `sureness.yml`）；旧的 `/api/logs/**` 规则在 exporter 迁移完成后即可删除。
 
 ### 新增 OTLP/gRPC 监听端口 14317
 
-当 `warehouse.store.greptime.enabled=true` 时，1.9.0 会额外启动一个 OTLP/gRPC 监听器，绑定 `0.0.0.0:14317`，供 exporter 通过 gRPC 推送指标、日志与链路。官方 Dockerfile 与 docker-compose 原样发布该端口，因此所有部署方式下端口一致。
+当 `warehouse.store.greptime.enabled=true` 时，1.9.0 会额外启动一个 OTLP/gRPC 监听器，绑定 `0.0.0.0:14317`，供 exporter 通过 gRPC 推送指标、日志与链路。官方 Dockerfile 会暴露该容器端口；仓库内的五个 Docker Compose 快速启动方案将其发布为宿主机端口 `14317`，并默认绑定到 `127.0.0.1`。
 
 - **这里没有使用 OpenTelemetry 标准的 4317。** 同机的 OTel Collector、Jaeger 或 Tempo 通常已经占着 4317，而已发布端口一旦冲突，`docker compose up` 会直接失败。HertzBeat 的 OTLP/HTTP 同样走自有端口，因此 14317 与产品其余部分是一致的。
 - 存量部署升级后会多出一个监听端口。如果你的防火墙或安全策略按端口清单管理，请把 14317 加进去。
+- 1.9.0 的所有 Docker Compose 快速启动方案现在默认把全部已发布端口绑定到 `127.0.0.1`，包括 `1157`、`1158`、`14317` 以及开发用的数据库/时序库端口。在旧的 Compose 检出目录上升级后，本机访问不受影响，但远程浏览器、Collector、OTLP 和数据库访问会被有意关闭，直到显式配置为止。
+- 如需接入远程 Collector，请把所选方案目录下的 `.env.example` 复制为 `.env`，将 `HERTZBEAT_BIND_ADDRESS` 设置为 Manager 的可达地址，并只允许 Collector 来源网络访问 `1158`。该变量同时控制 `1157`；远程访问 Web/API 时建议使用 TLS 反向代理。仅在有可信 OTLP 发送方时单独设置 `HERTZBEAT_OTLP_BIND_ADDRESS`。在使用通配地址前，请先替换默认凭证并配置防火墙或安全组限制。重启前执行 `docker compose config`，逐项检查最终的宿主机端口绑定。
 - 端口绑定失败**不会**导致 HertzBeat 启动失败：失败会被记录到日志，进程在没有 gRPC 接收能力的情况下继续启动，`/api/otlp/v1` 上的 OTLP/HTTP 不受影响。
 - 如需把监听器改到 4317 或关闭它，可在 `application.yml` 中配置，或使用对应的环境变量，并同步修改 docker-compose 的端口映射：
 
@@ -78,33 +79,25 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 ### GreptimeDB 信号表改名
 
-当 `warehouse.store.greptime.enabled=true` 时，GreptimeDB 里同时存着两类遥测数据：**你**通过 OTLP 推送的日志与链路，以及 HertzBeat 通过 OpenTelemetry 写入的**自身**运行日志与链路。1.8.x 中两类链路数据落在同一张 `hzb_traces` 表里，1.9.0 将其拆开，因此一张产品表和两张自监控表都改了名：
+当 `warehouse.store.greptime.enabled=true` 时，GreptimeDB 里同时存着两类遥测数据：**你**通过 OTLP 推送的日志，以及 HertzBeat 通过 OpenTelemetry 写入的**自身**运行日志与链路。1.9.0 给自监控表加上了 `hzb_internal_` 前缀，与产品表区分开：
 
 | 数据 | 1.8.x 表名 | 1.9.0 表名 |
 |---|---|---|
-| 产品 OTLP 链路（链路页面、链路查询） | `hzb_traces` | `hertzbeat_traces` |
-| 产品 OTLP 日志（日志页面、日志告警、SQL 编辑器） | `hertzbeat_logs` | `hertzbeat_logs`（不变） |
+| 产品 OTLP 日志（日志页面、日志告警、SQL 编辑器） | `hertzbeat_logs` | `hertzbeat_logs`（表名不变，但 `body` 列类型变了，见下节） |
 | HertzBeat 自身日志（自监控） | `hzb_logs` | `hzb_internal_logs` |
 | HertzBeat 自身链路（自监控） | `hzb_traces` | `hzb_internal_traces` |
+| 产品 OTLP 链路（链路页面、链路查询） | 1.8.x 无此功能 | `hertzbeat_traces`（新增） |
 
-- **升级前接入的链路数据在链路页面上会是空的。** 1.9.0 只创建并查询 `hertzbeat_traces`，1.8.x 期间写入 `hzb_traces` 的 span 在手动迁移之前不会显示在界面上。
-- 产品日志表 `hertzbeat_logs` **没有**改名，1.8.x 期间接入的历史日志升级后无需任何操作即可正常查询。
-- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留但不再写入新数据。在 1.9.0 建好新表后可手动迁移历史数据，例如：
-
-  ```sql
-  INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;
-  ```
-
-  迁移链路数据需要更谨慎：`hzb_traces` 里混着你的 span 和 HertzBeat 自身的 span，需按服务名过滤，避免把自监控数据灌进产品表：
-
-  ```sql
-  -- 只保留业务服务；HertzBeat 自监控使用 service.name = 'HertzBeat'
-  INSERT INTO hertzbeat_traces SELECT * FROM hzb_traces WHERE service_name <> 'HertzBeat';
-  INSERT INTO hzb_internal_traces SELECT * FROM hzb_traces WHERE service_name = 'HertzBeat';
-  ```
-
-  如果不需要历史数据，待保留期过后直接 `DROP` 旧表即可。
+- **1.8.x 没有产品链路能力**：没有链路接收接口、没有链路查询接口、也没有链路页面，`hzb_traces` 里只有 HertzBeat 自身的 span。链路是 1.9.0 新增的功能，不存在需要迁移的历史业务链路数据。
+- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留、不再写入新数据，在保留期内仍可查询。这些是自监控历史，最省事的做法是等它自然过期后直接 `DROP` 掉。
+- 确实需要把这些历史数据搬到新表时，请先比对两张表的结构，并用**显式列名**插入。GreptimeDB 会随着新属性的出现给 OTLP 表动态增加列，源表与目标表的列数和顺序不保证一致，`INSERT ... SELECT *` 会报 `Column count doesn't match insert query`。
 - 如果有看板或临时 SQL 直接查询 `hzb_logs` / `hzb_traces`，请改为新表名。
+
+### 产品日志表 hertzbeat_logs 的 body 列类型变更
+
+`hertzbeat_logs` 表名虽然没变，但 1.8.x 把 `body` 列建为 `JSON`，1.9.0 改为 `STRING`。1.9.0 的建表语句是 `CREATE TABLE IF NOT EXISTS`，对 1.8.x 已经建出来的旧表是空操作，**因此直接启动后所有新写入的日志都会被 GreptimeDB 拒绝**：exporter 侧仍然收到 200，服务端只有一行 `[warehouse greptime-log] Write failed` 警告，页面上表现为"日志不再更新"，日志告警随之失效。
+
+必须在升级前重命名旧表、启动 1.9.0 建出新表后再回灌历史数据，**不要**直接 `ALTER TABLE ... MODIFY COLUMN`。完整步骤见 [1.9.0 升级指南](1.9.0-update)。
 
 ## Docker部署方式的升级
 

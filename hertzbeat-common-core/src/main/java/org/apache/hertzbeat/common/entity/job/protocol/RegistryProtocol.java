@@ -49,7 +49,7 @@ public class RegistryProtocol implements CommonRequestProtocol, Protocol {
     @Override
     public boolean isInvalid() {
 
-        return validateIpDomain(host) && validPort(port)
-            && StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
+        return !validateIpDomain(host) || !validPort(port)
+            || StringUtils.isBlank(discoveryClientTypeName);
     }
 }
