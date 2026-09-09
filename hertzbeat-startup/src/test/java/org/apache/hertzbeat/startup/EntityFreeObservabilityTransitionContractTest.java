@@ -233,7 +233,7 @@ class EntityFreeObservabilityTransitionContractTest {
             String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
             assertTrue(content.contains("`POST /api/logs/otlp/v1/logs` | `POST /api/otlp/v1/logs`"), relativePath);
             assertTrue(content.contains("`GET /api/logs/list` | `GET /api/observability/logs`"), relativePath);
-            assertTrue(content.contains("`GET /api/traces/**` | `GET /api/observability/traces/**`"), relativePath);
+            assertFalse(content.contains("`GET /api/traces/**`"), relativePath);
         }
 
         String logService = Files.readString(REPOSITORY_ROOT.resolve("web-app/src/app/service/log.service.ts"));
