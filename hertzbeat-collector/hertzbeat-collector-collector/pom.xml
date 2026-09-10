@@ -424,6 +424,7 @@
                             <imageName>${native.image.name}</imageName>
                             <buildArgs>
                                 <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
+                                <buildArg>--enable-monitoring=jmxclient</buildArg>
                                 <buildArg>-H:-AddAllFileSystemProviders</buildArg>
                                 <buildArg>-H:ServiceLoaderFeatureExcludeServiceProviders=org.apache.sshd.common.file.root.RootedFileSystemProvider,org.apache.sshd.sftp.client.fs.SftpFileSystemProvider</buildArg>
                                 <buildArg>--initialize-at-build-time=net.i2p.crypto.eddsa.EdDSASecurityProvider,org.apache.arrow.memory.util.MemoryUtil</buildArg>
