@@ -918,7 +918,7 @@ class MonitorServiceTest {
         } catch (IllegalArgumentException e) {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
-        reset();
+        reset(monitorDao);
         Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
                 .id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
@@ -926,6 +926,59 @@ class MonitorServiceTest {
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+    }
+
+    @Test
+    void modifyDynamicMonitorUsesUnknownInstance() {
+        Monitor monitor = modifyPausedMonitor("custom_sd", "stale-instance", null);
+
+        assertEquals("unknown", monitor.getInstance());
+    }
+
+    @ParameterizedTest
+    @CsvSource(nullValues = "NULL", value = {
+            "example.com, NULL, example.com",
+            "example.com, 443, example.com:443",
+            "example.com:80, NULL, example.com",
+            "example.com:80, 443, example.com:443",
+            "127.0.0.1:80, 443, 127.0.0.1:443",
+            "2001:db8::1, NULL, 2001:db8::1",
+            "2001:db8::1, 443, '[2001:db8::1]:443'",
+            "'[2001:db8::1]:80', NULL, '[2001:db8::1]'",
+            "'[2001:db8::1]:80', 443, '[2001:db8::1]:443'"
+    })
+    void modifyStaticMonitorNormalizesInstancePort(String instance, String port, String expected) {
+        Monitor monitor = modifyPausedMonitor(CommonConstants.SCRAPE_STATIC, instance, port);
+
+        assertEquals(expected, monitor.getInstance());
+    }
+
+    private Monitor modifyPausedMonitor(String scrape, String instance, String port) {
+        long monitorId = 99L;
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .jobId(1L)
+                .app("app")
+                .status(CommonConstants.MONITOR_PAUSED_CODE)
+                .build();
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .app("app")
+                .name("memory")
+                .scrape(scrape)
+                .instance(instance)
+                .intervals(1)
+                .build();
+        List<Param> params = port == null
+                ? Collections.emptyList()
+                : List.of(Param.builder()
+                        .field(MonitorServiceImpl.PARAM_FIELD_PORT)
+                        .paramValue(port)
+                        .build());
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
+
+        monitorService.modifyMonitor(monitor, params, null, null);
+        return monitor;
     }
 
     @Test
