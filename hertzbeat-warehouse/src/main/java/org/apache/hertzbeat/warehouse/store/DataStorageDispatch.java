@@ -77,17 +77,18 @@ public class DataStorageDispatch {
             ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
-                    if (metricsData == null) {
-                        continue;
-                    }
-                    backoff.reset();
-                    try {
-                        calculateMonitorStatus(metricsData);
-                        historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
-                        pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
-                    } finally {
-                        realTimeDataWriter.saveData(metricsData);
+                    try (CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage()) {
+                        if (metricsData == null) {
+                            continue;
+                        }
+                        backoff.reset();
+                        try {
+                            calculateMonitorStatus(metricsData);
+                            historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
+                            pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
+                        } finally {
+                            realTimeDataWriter.saveData(metricsData);
+                        }
                     }
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
