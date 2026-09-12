@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.collect.redfish;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,14 +26,22 @@ import java.util.Map;
  */
 public class RedfishCollectionSchema {
 
-    private static final Map<String, String> schemaMap = Map.of(
-            "Chassis", "/redfish/v1/Chassis",
-            "Fan", "/redfish/v1/Chassis/{ChassisId}/ThermalSubsystem/Fans",
-            "Battery", "/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/Batteries",
-            "PowerSupply", "/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/PowerSupplies");
+    /**
+     * Candidate collection uris per resource, most recent schema first.
+     * Redfish 2020.4 moved fans and power supplies from the embedded Thermal/Power
+     * arrays into their own collections, but shipped BMC firmware still serves only
+     * the legacy layout, so both have to be probed.
+     */
+    private static final Map<String, List<String>> SCHEMA_MAP = Map.of(
+            "Chassis", List.of("/redfish/v1/Chassis"),
+            "Fan", List.of("/redfish/v1/Chassis/{ChassisId}/ThermalSubsystem/Fans",
+                    "/redfish/v1/Chassis/{ChassisId}/Thermal#/Fans"),
+            "Battery", List.of("/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/Batteries"),
+            "PowerSupply", List.of("/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/PowerSupplies",
+                    "/redfish/v1/Chassis/{ChassisId}/Power#/PowerSupplies"));
 
-    public static String getSchema(String key) {
-        return schemaMap.get(key);
+    public static List<String> getSchemas(String key) {
+        return SCHEMA_MAP.getOrDefault(key, Collections.emptyList());
     }
 
 }
