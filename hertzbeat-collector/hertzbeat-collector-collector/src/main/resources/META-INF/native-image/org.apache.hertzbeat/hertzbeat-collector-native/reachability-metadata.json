@@ -13,6 +13,13 @@
     {"type": "io.netty.channel.epoll.EpollEventLoopGroup", "allPublicConstructors": true},
     {"type": "io.netty.channel.socket.nio.NioDatagramChannel", "allPublicConstructors": true},
     {"type": "io.netty.channel.socket.nio.NioSocketChannel", "allPublicConstructors": true},
-    {"type": "io.netty.channel.nio.NioEventLoopGroup", "allPublicConstructors": true}
+    {"type": "io.netty.channel.nio.NioEventLoopGroup", "allPublicConstructors": true},
+
+    {"type": "java.lang.management.ThreadInfo", "allPublicMethods": true},
+    {"type": "java.lang.management.LockInfo", "allPublicMethods": true},
+    {"type": "java.lang.management.MonitorInfo", "allPublicMethods": true},
+    {"type": "java.lang.StackTraceElement", "allPublicMethods": true},
+    {"type": "java.lang.management.MemoryUsage", "allPublicMethods": true},
+    {"type": "com.sun.management.GcInfo", "allPublicMethods": true}
   ]
 }
