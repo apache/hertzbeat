@@ -46,7 +46,7 @@
 
 ## 🥐 モジュール
 
-![hertzBeat](home/static/img/docs/hertzbeat-archive.png)
+![hertzBeat](home/static/img/docs/hertzbeat-architecture.png)
 
 ## 🐕 クイックスタート
 

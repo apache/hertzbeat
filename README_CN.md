@@ -47,7 +47,7 @@
 
 ## 🥐 模块
 
-![hertzBeat](home/static/img/docs/hertzbeat-archive.png)
+![hertzBeat](home/static/img/docs/hertzbeat-architecture.png)
 
 ## 🐕 快速开始
 

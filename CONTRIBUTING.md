@@ -131,7 +131,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 ## 🥐 Architecture
 
-![hertzBeat](home/static/img/docs/hertzbeat-archive.png)
+![hertzBeat](home/static/img/docs/hertzbeat-architecture.png)
 
 <br>
 
@@ -271,4 +271,4 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 ### 模块
 
-![hertzBeat](home/static/img/docs/hertzbeat-archive.png)
+![hertzBeat](home/static/img/docs/hertzbeat-architecture.png)
