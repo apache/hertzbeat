@@ -73,11 +73,26 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     private static final String UNIQUE_IDENTITY = "identity";
 
-    private final ClientResources defaultClientResources;
     private final GlobalConnectionCache connectionCache = GlobalConnectionCache.getInstance();
-    
-    public RedisCommonCollectImpl() {
-        defaultClientResources = DefaultClientResources.create();
+
+    /**
+     * Holds the lettuce client resources, created on first use.
+     * <p>
+     * Loading {@link DefaultClientResources} runs a static initializer that resolves netty's DNS
+     * address resolver group. That resolver is unavailable in a native image on Windows, where it
+     * fails with a NullPointerException from sun.net.dns.ResolverConfigurationImpl
+     * (see oracle/graal#11280 and oracle/graal#4304). Because every collector is instantiated
+     * eagerly through the ServiceLoader at startup, doing this in the constructor took the whole
+     * collector process down before it could serve anything. Deferring it keeps startup working;
+     * on the platforms where the resolver is broken only Redis collection fails, and it fails with
+     * a clear error at collect time.
+     */
+    private static final class ClientResourcesHolder {
+        private static final ClientResources INSTANCE = DefaultClientResources.create();
+    }
+
+    private static ClientResources clientResources() {
+        return ClientResourcesHolder.INSTANCE;
     }
 
     @Override
@@ -292,7 +307,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @return redis cluster client
      */
     private RedisClusterClient buildClusterClient(RedisProtocol redisProtocol, String host, String port) {
-        return RedisClusterClient.create(defaultClientResources, redisUri(redisProtocol, host, port));
+        return RedisClusterClient.create(clientResources(), redisUri(redisProtocol, host, port));
     }
 
     /**
@@ -302,7 +317,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @return redis single client
      */
     private RedisClient buildSingleClient(RedisProtocol redisProtocol, String host, String port) {
-        return RedisClient.create(defaultClientResources, redisUri(redisProtocol, host, port));
+        return RedisClient.create(clientResources(), redisUri(redisProtocol, host, port));
     }
 
     private RedisURI redisUri(RedisProtocol redisProtocol, String host, String port) {

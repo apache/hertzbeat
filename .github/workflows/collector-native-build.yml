@@ -75,6 +75,63 @@ jobs:
           }
           "archive=$($package.FullName)" >> $env:GITHUB_OUTPUT
 
+      - name: Smoke test native collector package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $archive = "${{ steps.package.outputs.archive }}"
+          $work = Join-Path ([System.IO.Path]::GetTempPath()) "hzb-smoke"
+          Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $work | Out-Null
+
+          if ($archive.EndsWith(".zip")) {
+            Expand-Archive -Path $archive -DestinationPath $work -Force
+          } else {
+            tar -xzf $archive -C $work
+          }
+
+          $binary = Get-ChildItem -Path $work -Recurse -File |
+            Where-Object { $_.Name -like "apache-hertzbeat-collector-native-*" -and $_.Name -notlike "*.txt" } |
+            Where-Object { $_.Length -gt 10MB } | Select-Object -First 1
+          if (-not $binary) { throw "native executable not found in $archive" }
+          $conf = Join-Path $binary.DirectoryName "config"
+          Write-Host "executable: $($binary.FullName)"
+
+          $out = Join-Path $work "stdout.log"
+          $err = Join-Path $work "stderr.log"
+          $env:MANAGER_HOST = "127.0.0.1"
+          $env:IDENTITY = "ci-smoke-${{ matrix.platform }}"
+          $proc = Start-Process -FilePath $binary.FullName `
+            -ArgumentList "--spring.config.location=$conf$([IO.Path]::DirectorySeparatorChar)" `
+            -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+
+          # The collector prints "Started Collector" before the runners execute, and past
+          # failures crashed after that line, so wait for the ServiceLoader registration too
+          # and then confirm the process is still alive.
+          $deadline = (Get-Date).AddSeconds(90)
+          $registered = $false
+          while ((Get-Date) -lt $deadline) {
+            Start-Sleep -Seconds 2
+            $log = (Get-Content $out, $err -ErrorAction SilentlyContinue) -join "`n"
+            if ($log -match "collect strategies") { $registered = $true; break }
+            if ($proc.HasExited) { break }
+          }
+
+          Start-Sleep -Seconds 10
+          $proc.Refresh()
+          $alive = -not $proc.HasExited
+          $exitCode = if ($alive) { $null } else { $proc.ExitCode }
+          if ($alive) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
+
+          $log = (Get-Content $out, $err -ErrorAction SilentlyContinue) -join "`n"
+          Write-Host "----- collector output (tail) -----"
+          Write-Host (($log -split "`n") | Select-Object -Last 40 | Out-String)
+          Write-Host "-----------------------------------"
+
+          if (-not $alive) { throw "collector process exited (exit code $exitCode)" }
+          if (-not $registered) { throw "collector stayed up but never registered its collect strategies" }
+          Write-Host "smoke test passed for ${{ matrix.platform }}"
+
       - name: Upload native collector package
         uses: actions/upload-artifact@v4
         with:
