@@ -39,12 +39,6 @@ jobs:
           - platform: linux-arm64
             runner: ubuntu-24.04-arm
             archive_ext: tar.gz
-          - platform: macos-amd64
-            runner: macos-13
-            archive_ext: tar.gz
-          - platform: macos-arm64
-            runner: macos-14
-            archive_ext: tar.gz
           - platform: windows-amd64
             runner: windows-latest
             archive_ext: zip
