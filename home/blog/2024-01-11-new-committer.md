@@ -10,7 +10,7 @@ cover_headline: Welcome New Committer
 cover_kicker: New Committer
 ---
 
-! [hertzBeat](/img/blog/new-committer.png)
+![hertzBeat](/img/blog/new-committer.png)
 
 > Welcome to HertzBeat's three new community committeers, let's learn more about their open source experience!
 
