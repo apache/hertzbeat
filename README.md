@@ -47,7 +47,7 @@
 
 ## 🥐 Architecture
 
-![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-archive.png)
 
 ## 🐕 Quick Start
 
