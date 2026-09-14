@@ -188,7 +188,7 @@ $ svn ci -m "add gpg key for <YOUR_APACHE_ID>"
 
 ### 准备发布物料
 
-#### 3.1 基于 master 分支，创建一个名为 release-`release_version`-rcx 的分支，例如 release-{version}-rc1。并基于 release-{version}-rc1 分支创建一个名为 v{version}-rc1 的标签，并将此标签设置为预发布
+#### 3.1 基于 master 分支，创建一个名为 release-`release_version`-rcx 的分支，例如 `release-{version}-rc1`。并基于 `release-{version}-rc1` 分支创建一个名为 `v{version}-rc1` 的标签，并将此标签设置为预发布
 
 ```shell
 git checkout master
@@ -401,7 +401,7 @@ svn co https://dist.apache.org/repos/dist/dev/hertzbeat svn/dev
 
 - 复制物料包到 SVN 仓库
 
-创建一个版本号目录，并以`release_version`-`RC_version`的形式命名。RC_version从1开始，即候选版本从RC1开始。在发布过程中，如果出现导致投票失败的问题，需要进行修正，那么RC版本需要迭代，RC版本号需要+1。例如：为版本{version}-RC1投票。如果投票顺利通过，那么RC1版本的资料将作为最终版本的资料发布。如果出现问题并需要纠正，那么修正后重新启动投票，下一次的候选版本为{version}-RC2。
+创建一个版本号目录，并以`release_version`-`RC_version`的形式命名。RC_version从1开始，即候选版本从RC1开始。在发布过程中，如果出现导致投票失败的问题，需要进行修正，那么RC版本需要迭代，RC版本号需要+1。例如：为版本 `{version}-RC1` 投票。如果投票顺利通过，那么RC1版本的资料将作为最终版本的资料发布。如果出现问题并需要纠正，那么修正后重新启动投票，下一次的候选版本为 `{version}-RC2`。
 
 ```shell
 mkdir -p svn/dev/{version}-RC1
@@ -441,7 +441,7 @@ svn commit -m "release for HertzBeat {version}-RC1"
 :::
 
 > `Send to`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
-> `Title`: [VOTE] Release Apache HertzBeat {version} rc1 <br />
+> `Title`: `[VOTE] Release Apache HertzBeat {version} rc1` <br />
 > `Body`:
 
 ```text
@@ -494,7 +494,7 @@ Thanks!
 在72小时后，将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
-> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat {version}-rc1 <br />
+> `Title`: `[RESULT][VOTE] Release Apache HertzBeat {version}-rc1` <br />
 > `Body`:
 
 ```text
@@ -543,7 +543,7 @@ svn mv https://dist.apache.org/repos/dist/dev/hertzbeat/{version}-RC1 https://di
 
 ### 5.3 Github 生成 Release
 
-基于 release-{version}-rc1 分支修改创建一个名为 v{version} 的标签，并将此标签设置为 latest release。
+基于 `release-{version}-rc1` 分支修改创建一个名为 `v{version}` 的标签，并将此标签设置为 latest release。
 
 :::tip
 在原有的 Release 上面修改，无需重新创建 Release。
@@ -566,13 +566,13 @@ release note: xxx
 
 然后点击`Publish release`按钮。
 
-然后将 release-{version}-rc1 分支重命名 为 release-{version}。
+然后将 `release-{version}-rc1` 分支重命名为 `release-{version}`。
 
 ### 5.4 发送新版本公告邮件
 
 > `Send to`: [announce@apache.org](mailto:announce@apache.org) <br />
 > `cc`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
-> `Title`: [ANNOUNCE] Apache HertzBeat {version} released <br />
+> `Title`: `[ANNOUNCE] Apache HertzBeat {version} released` <br />
 > `Body`:
 
 ```text
