@@ -14,6 +14,16 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 **升级前您需要保存备份好数据库的数据文件和监控模板文件**
 
+## 1.9.0 新增：Native 采集器安装包
+
+1.9.0 起提供预编译的 Native 采集器安装包（`apache-hertzbeat-collector-native-*`），启动快、内存占用低。
+
+它**不是 JVM 采集器的无损替代**，且对运行环境有硬性要求（x86 包需要 CPU 支持 AVX2、Linux 包需要
+glibc ≥ 2.34、Windows 包需要 VC++ 运行库），不满足时进程会**瞬间退出且没有任何日志**。
+升级时如果打算改用 Native 采集器，请先阅读 [Native 采集器](native-collector) 中的"运行环境要求"。
+
+原有的 JVM 采集器安装包 `apache-hertzbeat-collector-{version}-bin.tar.gz` 继续提供，升级方式不变。
+
 ## 1.9.0 不兼容变更
 
 ### SFTP监控必须显式配置主机密钥策略

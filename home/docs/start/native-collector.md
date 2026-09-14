@@ -33,6 +33,42 @@ The native collector package is not a drop-in replacement for every JVM collecto
 - The native collector does not support loading external JDBC driver JARs from `ext-lib` at runtime.
 - If your deployment depends on JVM-style runtime classpath extension, keep using the JVM collector package.
 
+## Runtime requirements
+
+The native collector is an ahead-of-time compiled executable, so its runtime requirements are
+**much stricter** than the JVM collector's. The JVM detects CPU features at startup and adapts;
+a native image has its instruction set baked in at build time, with no fallback.
+
+| Platform | Requirement |
+| --- | --- |
+| Linux / Windows (x86-64) | The CPU must support **AVX2**: Intel Haswell (2013) or newer, AMD Zen (2017) or newer |
+| Linux (both architectures) | **glibc 2.34 or newer** |
+| Linux (arm64) | ARMv8-A baseline, no extra instruction set required |
+| Windows | Windows 10 / Server 2016 or newer, with the **Microsoft Visual C++ 2015-2022 Redistributable** installed |
+
+Common distributions, against the glibc 2.34 line:
+
+| Works | Does not work |
+| --- | --- |
+| Ubuntu 22.04 / 24.04, Debian 12, RHEL / Rocky / AlmaLinux 9, Amazon Linux 2023 | Ubuntu 20.04, Debian 11, RHEL / Rocky / AlmaLinux 8, CentOS 7, Amazon Linux 2 |
+
+Other environments without AVX2 include some Atom-family low-end chips (J4125, N4020, N5105),
+Rosetta 2 on Apple Silicon, and Windows on ARM without the newer Prism emulator.
+
+:::caution The failure modes are misleading
+- **No AVX2**: the process exits **instantly, with no output and no log file** (`Illegal instruction`
+  on Linux, exit code `-1073741795` on Windows)
+- **glibc too old**: `version 'GLIBC_2.34' not found`
+- **Missing VC++ runtime on Windows**: `VCRUNTIME140_1.dll` not found
+
+The first one is easily mistaken for a corrupted package. If double-clicking does nothing, or the
+process starts and prints nothing at all, check for AVX2 support first.
+
+**If any requirement is not met, use the JVM collector package**
+`apache-hertzbeat-collector-{version}-bin.tar.gz` instead. It only needs JDK 25 and has none of
+these constraints.
+:::
+
 ## When should I stay on the JVM collector?
 
 Use the JVM collector package if your monitoring depends on external JDBC drivers, especially:
@@ -54,9 +90,9 @@ The native collector package is platform-specific:
 
 Examples:
 
-- `apache-hertzbeat-collector-native-1.8.0-linux-amd64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.8.0-macos-arm64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.8.0-windows-amd64-bin.zip`
+- `apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz`
+- `apache-hertzbeat-collector-native-1.9.0-macos-arm64-bin.tar.gz`
+- `apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip`
 
 ## Configuration consistency
 

@@ -14,6 +14,20 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 **You need to save and back up the data files of the database and monitoring templates yml files before upgrading**
 
+## New In 1.9.0: Native Collector Packages
+
+Starting with 1.9.0 there are pre-compiled native collector packages
+(`apache-hertzbeat-collector-native-*`), which start faster and use less memory.
+
+They are **not a drop-in replacement** for the JVM collector, and they have hard runtime
+requirements: AVX2 for the x86 packages, glibc 2.34 or newer for the Linux packages, and the VC++
+redistributable for the Windows package. When a requirement is not met the process **exits
+instantly with no log output at all**. If you plan to switch, read the runtime requirements in
+[Native collector](native-collector) first.
+
+The JVM collector package `apache-hertzbeat-collector-{version}-bin.tar.gz` is still provided and
+upgrades the same way as before.
+
 ## Breaking Changes In 1.9.0
 
 ### SFTP monitors require an explicit host-key policy
