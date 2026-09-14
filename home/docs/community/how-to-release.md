@@ -256,10 +256,14 @@ The archive package is here `dist/apache-hertzbeat-1.7.3-src.tar.gz`
 cd dist
 
 # sign
-for i in *.tar.gz; do echo $i; gpg -u 33545C76 --armor --output $i.asc --detach-sig $i ; done
+for i in *.tar.gz *.zip; do
+  [ -e "$i" ] || continue
+  [ -e "$i.asc" ]    || gpg -u EF04C474 --armor --output "$i.asc" --detach-sig "$i"
+  [ -e "$i.sha512" ] || shasum -a 512 "$i" > "$i.sha512"
+done
 
 # SHA512
-for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
+for i in *.tar.gz *.zip; do echo $i; sha512sum $i > $i.sha512 ; done
 
 # if macos sha512sum not found, you can install by brew install coreutils
 ```
@@ -279,6 +283,15 @@ apache-hertzbeat-1.7.3-docker-compose.tar.gz.sha512
 apache-hertzbeat-collector-1.7.3-bin.tar.gz
 apache-hertzbeat-collector-1.7.3-bin.tar.gz.asc
 apache-hertzbeat-collector-1.7.3-bin.tar.gz.sha512
+apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz
+apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz.asc
+apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz.sha512
+apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz
+apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz.asc
+apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz.sha512
+apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip
+apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip.asc
+apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip.sha512
 ```
 
 #### 3.6 Verify signature
