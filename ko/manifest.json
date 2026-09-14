@@ -1,0 +1,21 @@
+{
+  "name": "Apache HertzBeat",
+  "short_name": "Apache HertzBeat",
+  "theme_color": "#ea5a07",
+  "background_color": "#efefef",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./index.html",
+  "icons": [
+    {
+      "src": "img/hertzbeat-logo.svg",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "img/hertzbeat-brand.svg",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ]
+}
