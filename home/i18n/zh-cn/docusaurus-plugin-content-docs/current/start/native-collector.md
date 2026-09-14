@@ -33,6 +33,40 @@ Native 采集器并不是所有 JVM 采集器场景的无损替代。
 - Native 采集器不支持在运行时从 `ext-lib` 目录动态加载外部 JDBC 驱动 JAR。
 - 如果你的部署依赖 JVM 风格的运行时 classpath 扩展能力，仍然应该使用 JVM 采集器安装包。
 
+## 运行环境要求
+
+Native 采集器是提前编译好的原生可执行文件，运行环境的要求比 JVM 采集器**严格得多**。JVM 采集器由 JIT 在
+启动时探测 CPU 特性并自动适配，而 native 包在构建时就把指令集固化进了二进制，没有回退机制。
+
+| 平台 | 要求 |
+| --- | --- |
+| Linux / Windows（x86-64） | CPU 必须支持 **AVX2**：Intel Haswell（2013）及以后、AMD Zen（2017）及以后 |
+| Linux（两种架构） | **glibc ≥ 2.34** |
+| Linux（arm64） | ARMv8-A 基线即可，无额外指令集要求 |
+| Windows | Windows 10 / Server 2016 及以上，并安装 **Microsoft Visual C++ 2015-2022 可再发行组件包** |
+
+常见发行版对照（glibc ≥ 2.34 这条线）：
+
+| 可用 | 不可用 |
+| --- | --- |
+| Ubuntu 22.04 / 24.04、Debian 12、RHEL / Rocky / AlmaLinux 9、Amazon Linux 2023 | Ubuntu 20.04、Debian 11、RHEL / Rocky / AlmaLinux 8、CentOS 7、Amazon Linux 2 |
+
+不支持 AVX2 的环境还包括：部分 Atom 血统的低端芯片（如 J4125、N4020、N5105）、Apple Silicon 上的
+Rosetta 2、以及未更新到 Prism 新版模拟器的 Windows on ARM。
+
+:::caution 不满足要求时的表现很具有迷惑性
+
+- **CPU 不支持 AVX2**：进程**瞬间退出，没有任何输出、也没有日志文件**（Linux 上报 `Illegal instruction`，
+  Windows 上退出码为 `-1073741795`）
+- **glibc 版本过低**：报 `version 'GLIBC_2.34' not found`
+- **Windows 缺少 VC++ 运行库**：报缺少 `VCRUNTIME140_1.dll`
+
+第一种最容易被误判为"安装包损坏"。遇到"双击没反应"或"启动了什么都没打印"时，请先核对 CPU 是否支持 AVX2。
+
+**任何一项不满足，都可以改用 JVM 采集器安装包** `apache-hertzbeat-collector-{version}-bin.tar.gz`，
+它只要求 JDK 25，没有上述限制。
+:::
+
 ## 哪些场景应该继续使用 JVM 采集器？
 
 如果你的监控依赖外部 JDBC 驱动，请继续使用 JVM 采集器安装包，尤其包括：
@@ -54,9 +88,9 @@ Native 采集器安装包按平台区分：
 
 例如：
 
-- `apache-hertzbeat-collector-native-1.8.0-linux-amd64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.8.0-macos-arm64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.8.0-windows-amd64-bin.zip`
+- `apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz`
+- `apache-hertzbeat-collector-native-1.9.0-macos-arm64-bin.tar.gz`
+- `apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip`
 
 ## 配置文件是否和 JVM 采集器一致？
 
