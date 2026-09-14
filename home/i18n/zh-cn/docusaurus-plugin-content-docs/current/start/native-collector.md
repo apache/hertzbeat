@@ -55,6 +55,7 @@ Native 采集器是提前编译好的原生可执行文件，运行环境的要�
 Rosetta 2、以及未更新到 Prism 新版模拟器的 Windows on ARM。
 
 :::caution 不满足要求时的表现很具有迷惑性
+
 - **CPU 不支持 AVX2**：进程**瞬间退出，没有任何输出、也没有日志文件**（Linux 上报 `Illegal instruction`，
   Windows 上退出码为 `-1073741795`）
 - **glibc 版本过低**：报 `version 'GLIBC_2.34' not found`

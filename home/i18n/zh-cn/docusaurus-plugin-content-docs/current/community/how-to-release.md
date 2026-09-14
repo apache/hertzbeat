@@ -436,6 +436,7 @@ svn commit -m "release for HertzBeat {version}-RC1"
 发送社区投票邮件需要至少三个`+1`，且无`-1`。
 
 :::caution 发信前先确认两件事
+
 1. **你的公钥已经在 KEYS 文件里**：访问 [https://downloads.apache.org/hertzbeat/KEYS](https://downloads.apache.org/hertzbeat/KEYS) 搜索自己的邮箱，找不到则投票者无法验证签名。KEYS 的添加见 2.4。
 2. **模板里的版本号和 RC 号已全部替换**：下面的模板共有 **5 处**需要改动——邮件标题、正文第一行、Release notes 链接、候选物料链接、Git tag 链接。RC 号递增时（RC1 → RC2）这几处必须同步修改，漏改任何一处都会让投票者困惑。
 :::

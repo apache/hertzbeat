@@ -56,6 +56,7 @@ Other environments without AVX2 include some Atom-family low-end chips (J4125, N
 Rosetta 2 on Apple Silicon, and Windows on ARM without the newer Prism emulator.
 
 :::caution The failure modes are misleading
+
 - **No AVX2**: the process exits **instantly, with no output and no log file** (`Illegal instruction`
   on Linux, exit code `-1073741795` on Windows)
 - **glibc too old**: `version 'GLIBC_2.34' not found`

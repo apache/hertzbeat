@@ -412,6 +412,7 @@ svn commit -m "release for HertzBeat 1.7.3"
 Send a voting email in the community requires at least three `+1` and no `-1`.
 
 :::caution Check two things before sending
+
 1. **Your public key is already in the KEYS file.** Open [https://downloads.apache.org/hertzbeat/KEYS](https://downloads.apache.org/hertzbeat/KEYS) and search for your address. If it is not there, voters cannot verify your signatures. See 2.4 for how to add it.
 2. **Every version and RC number in the template is replaced.** The template below has **five** places to change: the mail subject, the first line of the body, the release notes link, the release candidates link and the git tag link. When the RC number goes up (RC1 to RC2) all five have to move together; missing one confuses the voters.
 :::
