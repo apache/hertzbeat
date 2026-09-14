@@ -6,7 +6,7 @@ sidebar_position: 4
 
 ## 验证候选版本
 
-详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
+详细检查列表请参考 ASF 官方的[发布策略](https://www.apache.org/legal/release-policy.html)与[发布检查清单](https://infra.apache.org/release-publishing.html)
 
 在浏览器中可访问版本内容 [https://dist.apache.org/repos/dist/dev/hertzbeat/](https://dist.apache.org/repos/dist/dev/hertzbeat/)
 
@@ -15,10 +15,13 @@ sidebar_position: 4
 > 需要依赖gpg工具，如果没有，建议安装gpg2
 
 ```shell
-#如果本地有svn，可以clone到本地
-svn co https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_version`/
-#或者 直接下载物料文件
-wget https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_version`/xxx.xxx
+# 将 {version} 与 RC1 替换为本次投票的版本号和候选版本号，例如 1.9.0 与 RC2
+
+# 如果本地有 svn，可以整个目录检出
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat/{version}-RC1/
+
+# 或者直接下载单个物料文件
+wget https://dist.apache.org/repos/dist/dev/hertzbeat/{version}-RC1/apache-hertzbeat-{version}-src.tar.gz
 
 ```
 
@@ -33,7 +36,17 @@ wget https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_vers
 1. 是否包含源码包
 2. 是否包含源码包的签名
 3. 是否包含源码包的sha512
-4. 如果上传了二进制包，则同样检查(2)-(4)所列的内容
+4. 如果上传了二进制包（含 native 采集器包），则每个包同样检查第 2、3 项
+
+> **每一个**物料都必须有对应的 `.asc` 和 `.sha512`，一个都不能少。可以用下面的命令快速核对，
+> 有输出就说明有物料缺失：
+>
+> ```shell
+> for i in *.tar.gz *.zip; do
+>   [ -e "$i.asc" ]    || echo "缺少签名: $i"
+>   [ -e "$i.sha512" ] || echo "缺少校验和: $i"
+> done
+> ```
 
 #### 2.2 检查gpg签名
 
@@ -46,9 +59,22 @@ curl  https://downloads.apache.org/hertzbeat/KEYS > KEYS # 下载KEYS
 gpg --import KEYS # 导入KEYS到本地
 ```
 
-##### 2.2.2 信任公钥
+##### 2.2.2 关于信任公钥
 
-> 信任此次版本所使用的KEY
+:::tip 验证签名并不需要信任公钥
+`gpg --verify` 对未信任的公钥同样会输出 `Good signature`，只是会附带一行提示：
+
+```text
+WARNING: This key is not certified with a trusted signature!
+```
+
+**这行 WARNING 是正常的，只要出现 `Good signature` 即视为通过。**
+
+如果你确实想消除这个提示，可以按下面的方式设置信任级别。但请注意，`5 = ultimate` 在 GPG 语义中表示
+“这是我自己的密钥”，把他人的公钥设为 ultimate 会污染本地信任网，一般选择 `4 = fully` 更合适。
+:::
+
+> 设置此次版本所使用 KEY 的信任级别（可选）
 
 ```shell
 $ gpg --edit-key xxxxxxxxxx #此次版本所使用的KEY用户
@@ -78,8 +104,13 @@ gpg>
 ##### 2.2.3 检查签名
 
 ```shell
-for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
+# 注意同时覆盖 *.zip，Windows 的 native 采集器包是 zip 格式，
+# 只写 *.tar.gz 会静默跳过它
+for i in *.tar.gz *.zip; do echo $i; gpg --verify $i.asc $i ; done
 ```
+
+> 核对签名所用的 key 与投票邮件中声明的 PGP key ID 是否一致。只有 `Good signature` 而 key 对不上，
+> 并不能说明物料是发布者签的。
 
 检查结果
 
@@ -97,8 +128,17 @@ gpg: Good signature from "XXX <xxx@apache.org>"
 > 本地计算sha512哈希后，验证是否与dist上的一致，如果上传二进制包，则同样需要检查二进制包的sha512哈希
 
 ```shell
-for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
+for i in *.tar.gz *.zip; do echo $i; sha512sum --check "$i.sha512"; done
+
+# macOS 上如果没有 sha512sum，可用系统自带的 shasum 替代
+# for i in *.tar.gz *.zip; do echo $i; shasum -a 512 -c "$i.sha512"; done
 ```
+
+> 每个物料输出 `OK` 即为通过：
+>
+> ```text
+> apache-hertzbeat-{version}-src.tar.gz: OK
+> ```
 
 #### 2.4 检查二进制包
 
@@ -121,7 +161,37 @@ tar -xzvf apache-hertzbeat-${release_version}-bin.tar.gz
 
 参考: [https://apache.org/legal/resolved.html](https://apache.org/legal/resolved.html)
 
-#### 2.5. 源码编译验证
+#### 2.5 检查 Native 采集器包
+
+Native 采集器包（`apache-hertzbeat-collector-native-{version}-*`）是**预编译的原生可执行文件**，
+不适用下面的“源码编译验证”，需要单独检查。
+
+```shell
+tar -xzf apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz
+cd apache-hertzbeat-collector-native-{version}-linux-amd64-bin
+MANAGER_HOST=127.0.0.1 ./bin/startup.sh
+tail -f logs/startup.log
+```
+
+进行如下检查：
+
+- [ ] 存在 `LICENSE`、`NOTICE` 和 `licenses/` 目录
+- [ ] 能够正常启动：日志出现 `Started Collector` 与 `Registered N collect strategies`
+- [ ] 启动十几秒后进程仍然存活（**崩溃可能发生在 `Started Collector` 之后**，只看这一行不够）
+
+:::caution Native 包有硬性运行环境要求
+不满足时的表现是**进程瞬间退出、没有任何日志输出**，很容易被误判为物料损坏。遇到这种情况请先确认环境：
+
+- **x86 包需要 CPU 支持 AVX2**：Intel Haswell（2013）及以后、AMD Zen（2017）及以后。部分 Atom 血统的低端芯片、
+  Apple Silicon 上的 Rosetta 2、旧版 Windows on ARM 模拟均不支持
+- **Linux 包需要 glibc ≥ 2.34**：Ubuntu 22.04+、Debian 12+、RHEL/Rocky 9+ 可用；
+  Ubuntu 20.04、Debian 11、RHEL 8、CentOS 7 不可用
+- **Windows 包需要** Windows 10 / Server 2016 及以上，并安装 Microsoft Visual C++ 2015-2022 可再发行组件包
+
+环境不满足属于已知限制，不应据此投 -1；请在回复中说明你的验证环境。
+:::
+
+#### 2.6 源码编译验证
 
 解压缩 `apache-hertzbeat-${release_version}-src.tar.gz`
 
@@ -156,28 +226,43 @@ PMC 在 [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) HertzBeat �
 
 非PMC成员
 
-```html
+```text
 +1 (non-binding)
-I  checked:
+I checked:
     1. All download links are valid
-    2. Checksum and signature are OK
-    3. LICENSE and NOTICE are exist
-    4. Build successfully on macOS(Big Sur)
-    5. ....
+    2. Checksums and signatures are OK for all artifacts, including the .zip
+    3. LICENSE and NOTICE exist and are correct
+    4. Built successfully from source on <你的操作系统和版本>
+    5. Native collector package starts and registers its collect strategies
+    6. ....
 ```
 
 PMC成员
 
-```html
+```text
 +1 (binding)
-I  checked:
+I checked:
     1. All download links are valid
-    2. Checksum and signature are OK
-    3. LICENSE and NOTICE are exist
-    4. Build successfully on macOS(Big Sur)
-    5. ....
+    2. Checksums and signatures are OK for all artifacts, including the .zip
+    3. LICENSE and NOTICE exist and are correct
+    4. Built successfully from source on <你的操作系统和版本>
+    5. Native collector package starts and registers its collect strategies
+    6. ....
+```
+
+发现问题时，请给出具体的复现信息，便于发布者定位：
+
+```text
+-1 (binding)
+
+The <物料名> is missing its .sha512 checksum.
+
+Checked on: macOS 26 / arm64
+Steps:
+    1. svn co https://dist.apache.org/repos/dist/dev/hertzbeat/1.9.0-RC2/
+    2. for i in *.tar.gz *.zip; do [ -e "$i.sha512" ] || echo "missing: $i"; done
+Output:
+    missing: apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip
 ```
 
 ---
-
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)
