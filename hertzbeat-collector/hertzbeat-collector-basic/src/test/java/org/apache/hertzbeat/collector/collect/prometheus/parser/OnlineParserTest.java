@@ -108,11 +108,8 @@ class OnlineParserTest {
             MetricFamily metricFamily1 = metricFamilyMap1.get(metricFamilyName);
             Set<Double> metricValueSet = metricFamily2.getMetricList().stream().map(MetricFamily.Metric::getValue).collect(Collectors.toSet());
             metricFamily1.getMetricList().forEach(metric -> {
-                // this is for something different between two algorithms above, and both of them is current on this parsing behavior.
-                if (!(metric.getValue() == Double.POSITIVE_INFINITY || metric.getValue() == Double.NEGATIVE_INFINITY)) {
-                    if (!metricValueSet.contains(metric.getValue())) {
-                        fail();
-                    }
+                if (!metricValueSet.contains(metric.getValue())) {
+                    fail();
                 }
             });
         });
