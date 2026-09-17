@@ -24,6 +24,7 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -55,6 +56,13 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                 hookUri = URI.create(hookUrl);
             } catch (IllegalArgumentException e) {
                 throw new AlertNoticeException("Invalid webhook URL: " + e.getMessage());
+            }
+
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses
+            try {
+                InternalUrlValidator.validate(hookUri);
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Webhook URL rejected: " + e.getMessage());
             }
 
             HttpHeaders headers = new HttpHeaders();
