@@ -7,24 +7,25 @@ description: Download Apache HertzBeat monitoring system - server, collector, so
 
 ## How to Download HertzBeat?
 
-Download the latest Apache HertzBeat™ release (v1.8.0) as server binary, collector binary, source code, or Docker Compose package. All releases include GPG signatures and SHA512 checksums for verification.
+Download the latest Apache HertzBeat™ release (v1.9.0) as server binary, collector binary, source code, or Docker Compose package. All releases include GPG signatures and SHA512 checksums for verification.
 
-**Latest Version:** v1.8.0 (Released: February 5, 2026)
+**Latest Version:** v1.9.0 (Released: September 17, 2026)
 
 **Quick Download:**
 
-- [Server Binary](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz)
-- [Collector Binary](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz)
-- [Source Code](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz)
+- [Server Binary](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz)
+- [Collector Binary](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz)
+- [Source Code](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz)
 
 ## Download Package Types
 
 | Package Type | Size | Purpose | Platform |
 |-------------|------|---------|----------|
-| **Server Binary** | ~200MB | Main monitoring server | Linux, macOS, Windows |
-| **Collector Binary** | ~50MB | Distributed collectors | Linux, macOS, Windows |
-| **Source Code** | ~30MB | Build from source | Any with Java 25+ |
-| **Docker Compose** | ~5MB | Full stack deployment | Docker environments |
+| **Server Binary** | ~364MB | Main monitoring server | Linux, macOS, Windows |
+| **Collector Binary** | ~163MB | Distributed collectors | Linux, macOS, Windows |
+| **Native Collector** | ~77MB | Distributed collectors, no JVM required | linux-amd64, linux-arm64, windows-amd64 |
+| **Source Code** | ~3MB | Build from source | Any with Java 25+ |
+| **Docker Compose** | ~45KB | Full stack deployment | Docker environments |
 
 :::tip Native Collector Recommendation
 If you do not need external JDBC drivers from `ext-lib`, you can choose the native collector package for faster startup and lower memory usage. MySQL, MariaDB, and OceanBase are included in this native-friendly path when `mysql-connector-j` is not provided. TiDB follows the same rule for its SQL query metric set.
@@ -44,7 +45,7 @@ Previous releases may contain security vulnerabilities. Always use the latest ve
 
 | Version | Date       | Download                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Release                                                         |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| v1.8.0  | 2026.02.05 | [apache-hertzbeat-1.8.0-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz) (Server) ( [signature](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-1.8.0-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz) (Collector) ( [signature](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.8.0-src.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz) (Source Code) ( [signature](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz.sha512) )  <br/> [apache-hertzbeat-1.8.0-docker-compose.tar.gz](https://github.com/apache/hertzbeat/releases/download/1.8.0/apache-hertzbeat-1.8.0-docker-compose.tar.gz) (Docker Compose) ( [signature](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-docker-compose.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-docker-compose.tar.gz.sha512) ) | [note](https://github.com/apache/hertzbeat/releases/tag/1.8.0) |
+| v1.9.0  | 2026.09.17 | [apache-hertzbeat-1.9.0-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz) (Server) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-1.9.0-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz) (Collector) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz) (Native Collector linux-amd64) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz) (Native Collector linux-arm64) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip) (Native Collector windows-amd64) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip.sha512) ) <br/> [apache-hertzbeat-1.9.0-src.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz) (Source Code) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.9.0-docker-compose.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-docker-compose.tar.gz) (Docker Compose) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-docker-compose.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-docker-compose.tar.gz.sha512) ) | [note](https://github.com/apache/hertzbeat/releases/tag/v1.9.0) |
 
 ## Release Docker Image
 
@@ -109,8 +110,8 @@ docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ### How do I extract and run the binary?
 
 ```bash
-tar -xzf apache-hertzbeat-1.8.0-bin.tar.gz
-cd apache-hertzbeat-1.8.0
+tar -xzf apache-hertzbeat-1.9.0-bin.tar.gz
+cd apache-hertzbeat-1.9.0
 ./bin/startup.sh
 ```
 
