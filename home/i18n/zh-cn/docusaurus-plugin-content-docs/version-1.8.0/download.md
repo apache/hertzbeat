@@ -33,4 +33,4 @@ sidebar_label: Download
 
 ## 归档版本
 
-在这里查看所有历史已归档版本：[archive](https://archive.apache.org/dist/incubator/hertzbeat/).
+在这里查看所有历史已归档版本：[archive](https://archive.apache.org/dist/hertzbeat/).
