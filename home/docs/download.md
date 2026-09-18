@@ -56,7 +56,7 @@ Previous releases may contain security vulnerabilities. Always use the latest ve
 
 ## All Archived Releases
 
-For older releases, please check the [archive](https://archive.apache.org/dist/incubator/hertzbeat/).
+For older releases, please check the [archive](https://archive.apache.org/dist/hertzbeat/).
 
 ## Download FAQ
 
@@ -125,7 +125,7 @@ Each release includes bug fixes, security patches, and new features. The release
 
 ### Where can I find old versions?
 
-Previous versions are archived at [https://archive.apache.org/dist/incubator/hertzbeat/](https://archive.apache.org/dist/incubator/hertzbeat/)
+Previous versions are archived at [https://archive.apache.org/dist/hertzbeat/](https://archive.apache.org/dist/hertzbeat/)
 
 ### How often are new versions released?
 
