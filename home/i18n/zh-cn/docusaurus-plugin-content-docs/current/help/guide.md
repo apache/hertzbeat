@@ -134,6 +134,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[配置 Telegram 通知](alert_telegram) <br />
 &emsp;&#x1F449;&emsp;[配置 Discord 通知](alert_discord) <br />
 &emsp;&#x1F449;&emsp;[配置 Slack 通知](alert_slack) <br />
+&emsp;&#x1F449;&emsp;[配置 Microsoft Teams 通知](alert_teams) <br />
 &emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert_wework) <br />
 &emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />

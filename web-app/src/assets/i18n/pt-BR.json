@@ -205,6 +205,8 @@
   "alert.notice.type.ntfy-server-url": "URL do Servidor Ntfy",
   "alert.notice.type.ntfy-topic": "Tópico Ntfy",
   "alert.notice.type.ntfy-token": "Token de Acesso Ntfy",
+  "alert.notice.type.teams": "Microsoft Teams",
+  "alert.notice.type.teams-webHook-url": "URL do Webhook Teams Workflows",
   "alert.notice.rule": "Política de Notificação",
   "alert.notice.rule.new": "Nova Política de Notificação",
   "alert.notice.rule.edit": "Editar Política de Notificação",
