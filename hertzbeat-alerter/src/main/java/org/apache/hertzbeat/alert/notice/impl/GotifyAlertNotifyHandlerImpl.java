@@ -25,6 +25,7 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -63,6 +64,14 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<GotifyWebHookDto> httpEntity = new HttpEntity<>(gotifyWebHookDto, headers);
             String webHookUrl = String.format(alerterProperties.getGotifyWebhookUrl(), receiver.getGotifyToken());
+
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses
+            try {
+                InternalUrlValidator.validate(webHookUrl);
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Gotify webhook URL rejected: " + e.getMessage());
+            }
+
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
