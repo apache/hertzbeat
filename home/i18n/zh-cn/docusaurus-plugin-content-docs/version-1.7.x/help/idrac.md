@@ -1,7 +1,7 @@
 ---
 id: idrac
 title: Dell iDRAC 监控
-sidebar_label: 服务器监控
+sidebar_label: Dell iDRAC
 keywords: [开源监控工具, 开源服务器监控, Dell iDRAC 监控]
 ---
 
