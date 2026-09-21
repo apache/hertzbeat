@@ -101,7 +101,11 @@ alerter:
 
 ### uni-sms配置
 
-uni-sms是一个聚合短信服务平台，您可以参考[UniSMS合一短信文档](https://unisms.apistd.com/docs/tutorials)进行配置。
+uni-sms是一个聚合短信服务平台。
+
+:::caution
+UniSMS 合一短信已于 2026-09-15 正式闭站，API 与控制台均已无法使用。请改用其他短信服务商，以下配置仅作参考保留。
+:::
 
 在`application.yml`新增/填写如下uni-sms短信服务配置(参数需替换为您的短信服务器配置)
 
@@ -121,10 +125,10 @@ alerter:
 ```
 
 1. 注册uni-sms账号
-   - 访问[uni-sms官网](https://unisms.apistd.com/)
+   - 访问uni-sms官网
 
 2. 创建短信签名（signature）
-   - 登录[uni-sms控制台](https://unisms.apistd.com/console/)
+   - 登录uni-sms控制台
    - 进入"短信报备-签名管理"页面
    - 点击"添加签名"
    - 填写签名信息并提交审核
@@ -142,7 +146,7 @@ alerter:
    - 提交模板等待审核
 
 4. 获取`access-key-id`和`access-key-secret`
-   - 登录[uni-sms控制台](https://unisms.apistd.com/console/)
+   - 登录uni-sms控制台
    - 进入"凭证管理"页面
    - 获取AccessKey ID和AccessKey Secret
    - 安全保存AccessKey ID和AccessKey Secret

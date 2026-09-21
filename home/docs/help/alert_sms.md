@@ -102,7 +102,11 @@ Now you can configure this information in your hertzbeat application.
 
 ### UniSMS Configuration
 
-UniSMS is an aggregated SMS service platform. You can refer to [UniSMS Documentation](https://unisms.apistd.com/docs/tutorials) for configuration.
+UniSMS is an aggregated SMS service platform.
+
+:::caution
+UniSMS officially shut down on 2026-09-15, and its API and console are no longer available. Please switch to another SMS provider. The configuration below is kept for reference only.
+:::
 
 Add/Fill in the following UniSMS configuration to `application.yml` (replace parameters with your own SMS server configuration):
 
@@ -122,10 +126,10 @@ alerter:
 ```
 
 1. Register UniSMS account
-   - Visit [UniSMS website](https://unisms.apistd.com/)
+   - Visit the UniSMS website
 
 2. Create signature
-   - Log in to [UniSMS Console](https://unisms.apistd.com/console/)
+   - Log in to the UniSMS Console
    - Go to "SMS Filing - Signature Management" page
    - Click "Add Signature"
    - Fill in signature information and submit for review
@@ -143,7 +147,7 @@ alerter:
    - Submit the template for review
 
 4. Obtain `access-key-id` and `access-key-secret`
-   - Log in to [UniSMS Console](https://unisms.apistd.com/console/)
+   - Log in to the UniSMS Console
    - Go to "Credential Management" page
    - Get AccessKey ID and AccessKey Secret
    - Securely save the AccessKey ID and AccessKey Secret
