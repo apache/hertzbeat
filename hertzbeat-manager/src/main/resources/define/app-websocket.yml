@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat monitors metrics such as the response of the WebSocket service's first handshake. <br>You can click "<i>New WebSocket</i>" and configure the uri to add it, or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 對 WebSocket 服務的首次握手的響應等相關指標進行監測。<br>您可以點擊 “<i>新建 WebSocket監控</i>” 並配置路徑進行添加，或者選擇“<i>更多操作</i>”，導入已有配置。
   ja-JP: Hertzbeat は WebSocketサービスの一般的なメトリクスを監視します。<br>「<i>新規 WebSocket</i>」をクリックしてパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/websocket
+  en-US: https://hertzbeat.apache.org/docs/help/websocket
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

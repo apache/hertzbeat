@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat monitors the relevant metrics of NTP services, including response time, timestamp, time, offset, delay, version number, mode, hierarchy, reference ID, and accuracy. <br>You can click "<i>New NTP Server</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: HertzBeat 對 NTP 服務的(響應時間、時間戳、時間、偏移量、延遲、版本號、模式、層級、參考ID、精度)相關指標進行監測。<br>您可以點擊 “<i>新建 NTP服務器</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
   ja-JP: Hertzbeat は NTPサーバーの一般的なメトリクスを監視します。<br>「<i>新規 NTPサーバー</i>」をクリックしてパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ntp
+  en-US: https://hertzbeat.apache.org/docs/help/ntp
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
