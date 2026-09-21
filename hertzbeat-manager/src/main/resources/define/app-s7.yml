@@ -28,9 +28,6 @@ help:
   en-US: HertzBeat collects metrics related to maintaining registers and coils for services that support s7 protocol
   zh-TW: HertzBeat對支持s7協定的服務進行（保持寄存器和線圈）相關名額進行採集
   ja-JP: HertzBeatはs7プロトコルをサポートするサービスのメトリクスを監視します。
-helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/s7
-  en-US: https://hertzbeat.apache.org/docs/help/s7
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
