@@ -25,6 +25,7 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,13 @@ public class NtfyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
         try {
             String content = renderContent(noticeTemplate, alert);
             String url = buildNtfyUrl(receiver);
+
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses
+            try {
+                InternalUrlValidator.validate(url);
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Ntfy server URL rejected: " + e.getMessage());
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.TEXT_PLAIN);
