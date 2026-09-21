@@ -42,6 +42,18 @@ import org.springframework.context.event.EventListener;
 @Slf4j
 public class LlmConfig {
 
+    private static final String OPENAI_CODE = "openai";
+
+    private static final String ZHIPU_CODE = "zhipu";
+
+    private static final String ZAI_CODE = "zai";
+
+    private static final String DEFAULT_BASE_URL = "https://api.openai.com/v1";
+
+    private static final String DEFAULT_MODEL = "gpt-5";
+
+    private static final Double DEFAULT_TEMPERATURE = 0.3D;
+
     private final GeneralConfigDao generalConfigDao;
     
     private ApplicationContext applicationContext;
@@ -76,37 +88,8 @@ public class LlmConfig {
             return null;
         }
 
-        if (modelProviderConfig.getBaseUrl() == null) {
-            if ("openai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
-            } else if ("zhipu".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setBaseUrl("https://open.bigmodel.cn/api/paas/v4");
-            } else if ("zai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setBaseUrl("https://api.z.ai/api/paas/v4");
-            } else {
-                modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
-            }
-        }
-        
-        if (modelProviderConfig.getModel() == null) {
-            if ("openai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setModel("gpt-5");
-            } else if ("zhipu".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setModel("glm-4.6");
-            } else if ("zai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setModel("glm-4.6");
-            } else {
-                modelProviderConfig.setModel("gpt-5");
-            }
-        }
-
-        // Create Chat Options with baseUrl and apiKey
-        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
-                .baseUrl(modelProviderConfig.getBaseUrl())
-                .apiKey(modelProviderConfig.getApiKey())
-                .model(modelProviderConfig.getModel())
-                .temperature(0.3)
-                .build();
+        // Create Chat Options with baseUrl, apiKey, model and temperature
+        OpenAiChatOptions openAiChatOptions = buildChatOptions(modelProviderConfig);
 
         // Create Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
@@ -115,6 +98,56 @@ public class LlmConfig {
         
         // Create and return ChatClient
         return ChatClient.create(openAiChatModel);
+    }
+
+    /**
+     * Build the chat options of the configured provider, falling back to the built-in defaults
+     * when baseUrl, model or temperature are not set.
+     *
+     * @param modelProviderConfig persisted provider configuration, mutated with the resolved defaults
+     * @return options used to construct the OpenAI compatible chat model
+     */
+    static OpenAiChatOptions buildChatOptions(ModelProviderConfig modelProviderConfig) {
+        String code = modelProviderConfig.getCode();
+        boolean knownCode = OPENAI_CODE.equals(code) || ZHIPU_CODE.equals(code) || ZAI_CODE.equals(code);
+        if (!knownCode && (modelProviderConfig.getBaseUrl() == null || modelProviderConfig.getModel() == null)) {
+            log.warn("Model provider code {} has no built-in defaults, the OpenAI endpoint and model are"
+                    + " used instead, please configure baseUrl and model explicitly", code);
+        }
+
+        if (modelProviderConfig.getBaseUrl() == null) {
+            if (OPENAI_CODE.equals(code)) {
+                modelProviderConfig.setBaseUrl(DEFAULT_BASE_URL);
+            } else if (ZHIPU_CODE.equals(code)) {
+                modelProviderConfig.setBaseUrl("https://open.bigmodel.cn/api/paas/v4");
+            } else if (ZAI_CODE.equals(code)) {
+                modelProviderConfig.setBaseUrl("https://api.z.ai/api/paas/v4");
+            } else {
+                modelProviderConfig.setBaseUrl(DEFAULT_BASE_URL);
+            }
+        }
+
+        if (modelProviderConfig.getModel() == null) {
+            if (OPENAI_CODE.equals(code)) {
+                modelProviderConfig.setModel(DEFAULT_MODEL);
+            } else if (ZHIPU_CODE.equals(code)) {
+                modelProviderConfig.setModel("glm-4.6");
+            } else if (ZAI_CODE.equals(code)) {
+                modelProviderConfig.setModel("glm-4.6");
+            } else {
+                modelProviderConfig.setModel(DEFAULT_MODEL);
+            }
+        }
+
+        Double temperature = modelProviderConfig.getTemperature() == null
+                ? DEFAULT_TEMPERATURE : modelProviderConfig.getTemperature();
+
+        return OpenAiChatOptions.builder()
+                .baseUrl(modelProviderConfig.getBaseUrl())
+                .apiKey(modelProviderConfig.getApiKey())
+                .model(modelProviderConfig.getModel())
+                .temperature(temperature)
+                .build();
     }
 
     /**
