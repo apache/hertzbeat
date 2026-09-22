@@ -69,9 +69,9 @@ public class NginxCollectImpl extends AbstractCollect {
     private static final String ACTIVE = "active";
     private static final String GET = "get";
     private static final String FIELD_SPLIT = "_";
-    private static final String REGEX_KEYS = "server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)";
-    private static final String REGEX_VALUES = "(\\d+) (\\d+) (\\d+)";
-    private static final String REGEX_SERVER = "(\\w+): (\\d+)";
+    private static final Pattern REGEX_KEYS = Pattern.compile("server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)");
+    private static final Pattern REGEX_VALUES = Pattern.compile("(\\d+) (\\d+) (\\d+)");
+    private static final Pattern REGEX_SERVER = Pattern.compile("(\\w+): (\\d+)");
     private static final String REGEX_SPLIT = "\\r?\\n";
     private static final String REGEX_LINE_SPLIT = "\\s+";
 
@@ -265,17 +265,14 @@ public class NginxCollectImpl extends AbstractCollect {
     private Map<String, Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
         Map<String, Object> metricsMap = new HashMap<>(aliasFieldsSize);
         // Extract monitoring information using regular expressions
-        Pattern pattern = Pattern.compile(REGEX_SERVER);
-        Matcher matcher = pattern.matcher(resp);
+        Matcher matcher = REGEX_SERVER.matcher(resp);
         while (matcher.find()) {
             String key = StringUtils.lowerCase(matcher.group(1));
             String value = matcher.group(2);
             metricsMap.put(CONNECTIONS.equals(key) ? ACTIVE : key, value);
         }
-        Pattern pattern1 = Pattern.compile(REGEX_KEYS);
-        Matcher matcher1 = pattern1.matcher(resp);
-        Pattern pattern2 = Pattern.compile(REGEX_VALUES);
-        Matcher matcher2 = pattern2.matcher(resp);
+        Matcher matcher1 = REGEX_KEYS.matcher(resp);
+        Matcher matcher2 = REGEX_VALUES.matcher(resp);
         if (matcher1.find() && matcher2.find()) {
             for (int i = 0; i < matcher1.groupCount(); i++) {
                 metricsMap.put(matcher1.group(i + 1), matcher2.group(i + 1));
