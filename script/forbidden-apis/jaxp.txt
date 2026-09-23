@@ -1,0 +1,59 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# JAXP factories must come from Apache Commons Secure XML (org.apache.commons.xml.secure),
+# see https://commons.apache.org/proper/commons-secure-xml/threat_model.html
+@ignoreUnresolvable
+
+@defaultMessage Use SecureDocumentBuilderFactory from Apache Commons Secure XML
+javax.xml.parsers.DocumentBuilderFactory#newInstance()
+javax.xml.parsers.DocumentBuilderFactory#newInstance(java.lang.String,java.lang.ClassLoader)
+javax.xml.parsers.DocumentBuilderFactory#newDefaultInstance()
+javax.xml.parsers.DocumentBuilderFactory#newNSInstance()
+javax.xml.parsers.DocumentBuilderFactory#newNSInstance(java.lang.String,java.lang.ClassLoader)
+javax.xml.parsers.DocumentBuilderFactory#newDefaultNSInstance()
+
+@defaultMessage Use SecureSAXParserFactory from Apache Commons Secure XML
+javax.xml.parsers.SAXParserFactory#newInstance()
+javax.xml.parsers.SAXParserFactory#newInstance(java.lang.String,java.lang.ClassLoader)
+javax.xml.parsers.SAXParserFactory#newDefaultInstance()
+javax.xml.parsers.SAXParserFactory#newNSInstance()
+javax.xml.parsers.SAXParserFactory#newNSInstance(java.lang.String,java.lang.ClassLoader)
+javax.xml.parsers.SAXParserFactory#newDefaultNSInstance()
+
+@defaultMessage Use SecureXMLInputFactory from Apache Commons Secure XML
+javax.xml.stream.XMLInputFactory#newInstance()
+javax.xml.stream.XMLInputFactory#newInstance(java.lang.String,java.lang.ClassLoader)
+javax.xml.stream.XMLInputFactory#newFactory()
+javax.xml.stream.XMLInputFactory#newFactory(java.lang.String,java.lang.ClassLoader)
+javax.xml.stream.XMLInputFactory#newDefaultFactory()
+
+@defaultMessage Use SecureTransformerFactory from Apache Commons Secure XML
+javax.xml.transform.TransformerFactory#newInstance()
+javax.xml.transform.TransformerFactory#newInstance(java.lang.String,java.lang.ClassLoader)
+javax.xml.transform.TransformerFactory#newDefaultInstance()
+
+@defaultMessage Use SecureSchemaFactory from Apache Commons Secure XML
+javax.xml.validation.SchemaFactory#newInstance(java.lang.String)
+javax.xml.validation.SchemaFactory#newInstance(java.lang.String,java.lang.String,java.lang.ClassLoader)
+javax.xml.validation.SchemaFactory#newDefaultInstance()
+
+@defaultMessage Use SecureXPathFactory from Apache Commons Secure XML
+javax.xml.xpath.XPathFactory#newInstance()
+javax.xml.xpath.XPathFactory#newInstance(java.lang.String)
+javax.xml.xpath.XPathFactory#newInstance(java.lang.String,java.lang.String,java.lang.ClassLoader)
+javax.xml.xpath.XPathFactory#newDefaultInstance()
