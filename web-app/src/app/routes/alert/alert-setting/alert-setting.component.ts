@@ -99,7 +99,8 @@ export class AlertSettingComponent implements OnInit {
     rules: []
   };
   qbValidator = (control: AbstractControl): ValidationErrors | null => {
-    if (!control.value || !control.value.rules || control.value.rules.length === 0) {
+    // Empty nested groups must not count as a threshold condition.
+    if (!control.value || !this.ruleset2expr(control.value)) {
       return { required: true };
     }
     return null;
@@ -1100,10 +1101,16 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalOk() {
-    if (this.cascadeValues.length == 3) {
-      this.defineForm.form.addControl('ruleset', this.qbFormCtrl);
+    const usesVisualRules =
+      !this.isExpr &&
+      (this.define.type === 'realtime_log' ||
+        (this.define.type === 'realtime_metric' && this.cascadeValues.length === 2 && this.cascadeValues[1] !== AVAILABILITY));
+    if (usesVisualRules) {
+      this.qbFormCtrl.markAsDirty();
+      this.qbFormCtrl.markAsTouched();
+      this.qbFormCtrl.updateValueAndValidity();
     }
-    if (this.defineForm?.invalid) {
+    if ((usesVisualRules && this.qbFormCtrl.invalid) || this.defineForm?.invalid) {
       Object.values(this.defineForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
