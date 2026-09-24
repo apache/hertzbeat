@@ -76,7 +76,7 @@ See the [official documentation](https://hertzbeat.apache.org/zh-cn/docs/start/d
 
    - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml` : Mount customized local configuration files to the container, i.e. use local configuration files to overwrite the container configuration files.
 
-    Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml]([https://github.com/apache/hertzbeat/raw/master/script/](https://github.com/apache/hertzbeat/raw/master/script/) application.yml)
+    Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
 
 2. Go to [http://ip:1157/](http://ip:1157/) with the default account and password admin/hertzbeat to see if HertzBeat starts successfully.
 
@@ -84,7 +84,7 @@ See the [official documentation](https://hertzbeat.apache.org/zh-cn/docs/start/d
 
 1. Modify the HertzBeat configuration file.
 
-    Modify the locally mounted HertzBeat configuration file [application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml), in package mode modify `hertzbeat/ config/application.yml
+    Modify the locally mounted HertzBeat configuration file [application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml), in package mode modify `hertzbeat/config/application.yml`
 
     **Modify the `warehouse.store.jpa.enabled` parameter in there to `false`, configure the `warehouse.store.greptime` datasource parameter in there, the URL account password, and enable `enabled` to `true`**.
 

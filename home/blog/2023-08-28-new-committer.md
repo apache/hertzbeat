@@ -10,7 +10,7 @@ cover_headline: Welcome New Committer
 cover_kicker: New Committer
 ---
 
-! [hertzBeat](/img/blog/new-committer.png)
+![hertzBeat](/img/blog/new-committer.png)
 
 It's great to welcome a new community `Committer`, unlike other contributors `logicz` comes from an Ops implementation position at Cyberoam rather than a development position, but the quality of the contributions, both in terms of code and documentation etc. is very high 👍.  
 This is also our `HertzBeat` and other open source projects are not the same place, because the user group is more oriented to the operation and maintenance of the development, in our 139 contributors in the operation and maintenance engineers accounted for more than 30%, which breaks the open source project collaboration and contribution to the object are the inherent cognition of the development position, which shows that whether it is the operation and maintenance engineers and test engineers to contribute to the open source project participation is very enthusiastic!  

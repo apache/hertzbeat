@@ -66,15 +66,15 @@ Open source is often pure, and the Apache Foundation exists to protect projects 
 
 #### Apache Community Identity
 
-Before contributing to the community, it is important to understand the community's definition of identity, where a project's Committers are located, and how to become a Committer. The Apache community has a clear definition of [Contributor Identity]([https://community.apache.org/contributor-ladder](https://community.apache.org/contributor-ladder). html): [Contributor Identity]([https://community.apache.org/contributor-ladder](https://community.apache.org/contributor-ladder). html). The Apache community has a very clear definition of [contributor status](. html):
+Before contributing to the community, it is important to understand the community's definition of identity, where a project's Committers are located, and how to become a Committer. The Apache community has a clear definition of [Contributor Identity](https://community.apache.org/contributor-ladder.html):
 
-! [Apache contributor label](/img/blog/committer/yuluo-yx/6.jpg)
+![Apache contributor label](/img/blog/committer/yuluo-yx/6.jpg)
 
 #### Project Committer Nomination Criteria
 
 The conditions for a Project PPMC Team to nominate a Committer are different. Take Apache HertzBeat™ for example:
 
-! [Apache HertzBeat™ becoming committer](/img/blog/committer/yuluo-yx/7.jpg)
+![Apache HertzBeat™ becoming committer](/img/blog/committer/yuluo-yx/7.jpg)
 
 Each project has its own standards, and these standards are not set in stone and will be adjusted at each stage of the project.
 
