@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.collect.redfish;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
@@ -50,13 +52,14 @@ public class RedfishConnectSession implements ConnectSession {
     @Override
     public void close() throws Exception {
         this.active = false;
-        String url = RedfishClient.REDFISH_SESSION_SERVICE + session.location();
-        HttpDelete httpDelete = new HttpDelete(url);
+        HttpDelete httpDelete = new HttpDelete(buildUrl(session.location()));
         httpDelete.setHeader(NetworkConstants.X_AUTH_TOKEN, session.token());
         httpDelete.setHeader(NetworkConstants.LOCATION, session.location());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpDelete)) {
             int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != HttpStatus.SC_OK) {
+            if (statusCode != HttpStatus.SC_OK
+                    && statusCode != HttpStatus.SC_ACCEPTED
+                    && statusCode != HttpStatus.SC_NO_CONTENT) {
                 throw new Exception(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
             }
         } catch (Exception e) {
@@ -71,17 +74,7 @@ public class RedfishConnectSession implements ConnectSession {
         if (uri.endsWith("/")) {
             uri = uri.substring(0, uri.length() - 1);
         }
-        String url = null;
-        if (IpDomainUtil.isHasSchema(this.session.host())) {
-            url = this.session.host() + ":" + this.session.port() + uri;
-        } else {
-            String ipAddressType = IpDomainUtil.checkIpAddressType(this.session.host());
-            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
-                    ? String.format("[%s]:%s", this.session.host(), this.session.port() + uri)
-                    : String.format("%s:%s", this.session.host(), this.session.port() + uri);
-            url = NetworkConstants.HTTPS_HEADER + baseUri;
-        }
-        HttpGet httpGet = new HttpGet(url);
+        HttpGet httpGet = new HttpGet(buildUrl(uri));
         httpGet.setHeader(NetworkConstants.X_AUTH_TOKEN, session.token());
         httpGet.setHeader(NetworkConstants.LOCATION, session.location());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet)) {
@@ -95,5 +88,50 @@ public class RedfishConnectSession implements ConnectSession {
         } finally {
             httpGet.abort();
         }
+    }
+
+    private String buildUrl(String uri) {
+        URI serviceUri = getServiceUri();
+        URI resourceUri = serviceUri.resolve(uri);
+        if (!hasSameOrigin(serviceUri, resourceUri)) {
+            throw new IllegalArgumentException("Redfish resource URI must use the monitored endpoint");
+        }
+        return resourceUri.toString();
+    }
+
+    private URI getServiceUri() {
+        String configuredHost = this.session.host();
+        if (!IpDomainUtil.isHasSchema(configuredHost)) {
+            String host = configuredHost;
+            if (NetworkConstants.IPV6.equals(IpDomainUtil.checkIpAddressType(host))) {
+                host = "[" + host + "]";
+            }
+            return URI.create(NetworkConstants.HTTPS_HEADER + host + ":" + this.session.port() + "/");
+        }
+
+        URI configuredUri = URI.create(configuredHost);
+        if (configuredUri.getHost() == null) {
+            throw new IllegalArgumentException("Invalid Redfish host: " + configuredHost);
+        }
+        int port = configuredUri.getPort() < 0 ? this.session.port() : configuredUri.getPort();
+        try {
+            return new URI(configuredUri.getScheme(), null, configuredUri.getHost(), port, "/", null, null);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid Redfish host: " + configuredHost, e);
+        }
+    }
+
+    private boolean hasSameOrigin(URI serviceUri, URI resourceUri) {
+        return resourceUri.getHost() != null
+                && serviceUri.getScheme().equalsIgnoreCase(resourceUri.getScheme())
+                && serviceUri.getHost().equalsIgnoreCase(resourceUri.getHost())
+                && effectivePort(serviceUri) == effectivePort(resourceUri);
+    }
+
+    private int effectivePort(URI uri) {
+        if (uri.getPort() >= 0) {
+            return uri.getPort();
+        }
+        return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
     }
 }
