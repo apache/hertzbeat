@@ -1,7 +1,7 @@
 ---
-id: alert_sms  
-title: 告警短信通知       
-sidebar_label: 告警短信通知   
+id: alert_sms
+title: 告警短信通知
+sidebar_label: 告警短信通知
 keywords: [开源监控系统, 开源告警系统, 开源短信告警通知]
 ---
 
@@ -12,6 +12,10 @@ keywords: [开源监控系统, 开源告警系统, 开源短信告警通知]
 只有成功配置了您自己的短信服务，监控系统内触发的告警短信才会正常发送。
 hertzbeat有两种方式配置短信服务，一种是直接修改`application.yml`配置文件，另一种是通过hertzbeat前端界面（系统设置 > 消息服务配置）配置。
 > 注意⚠️:两种方式配置的短信服务只能选择一种生效，当两种方式都配置并且开启时，hertzbeat将会优先使用前端界面配置的短信服务。
+
+:::caution
+UniSMS 合一短信已于 2026-09-15 正式闭站，hertzbeat 已不再支持该短信服务商。如果您的短信服务配置为 `type: unisms`，请改用下方其他服务商。
+:::
 
 ### 腾讯云短信配置
 
@@ -99,64 +103,6 @@ alerter:
 
 现在您可以把这些信息配置到您的hertzbeat应用中。
 
-### uni-sms配置
-
-uni-sms是一个聚合短信服务平台。
-
-:::caution
-UniSMS 合一短信已于 2026-09-15 正式闭站，API 与控制台均已无法使用。请改用其他短信服务商，以下配置仅作参考保留。
-:::
-
-在`application.yml`新增/填写如下uni-sms短信服务配置(参数需替换为您的短信服务器配置)
-
-```yaml
-alerter:
-  sms:
-    enable: true    # 启用配置
-    type: unisms   # 短信服务商类型，设置为unisms
-    unisms:        # 填写uni-sms短信配置
-       # auth-mode: simple or hmac
-       auth-mode: simple
-       access-key-id: YOUR_ACCESS_KEY_ID
-       # hmac mode need to fill in access-key-secret
-       access-key-secret: YOUR_ACCESS_KEY_SECRET
-       signature: YOUR_SMS_SIGNATURE
-       template-id: YOUR_TEMPLATE_ID
-```
-
-1. 注册uni-sms账号
-   - 访问uni-sms官网
-
-2. 创建短信签名（signature）
-   - 登录uni-sms控制台
-   - 进入"短信报备-签名管理"页面
-   - 点击"添加签名"
-   - 填写签名信息并提交审核
-   - 等待签名审核通过
-
-3. 创建短信模板（template-id）
-   - 进入"短信报备-模板管理"页面
-   - 点击"添加模板"
-   - 创建如下格式的模板：
-
-   ```text
-   监控项：{instance}，告警级别：{priority}。内容：{content}
-   ```
-
-   - 提交模板等待审核
-
-4. 获取`access-key-id`和`access-key-secret`
-   - 登录uni-sms控制台
-   - 进入"凭证管理"页面
-   - 获取AccessKey ID和AccessKey Secret
-   - 安全保存AccessKey ID和AccessKey Secret
-
-   :::note
-   UniSMS 提供以下两种鉴权方式共开发者选择，可在控制台-凭证管理中设置，默认为简易模式。
-     - 简易模式 [默认]：此模式仅核验 AccessKey ID，不对请求参数进行验签，方便开发者快速接入。
-     - HMAC模式：此模式要求使用 AccessKey Secret 对请求参数进行验签，以加强保障请求的安全与真实性。
-   :::
-
 ### AWS Cloud SMS配置
 
 要激活和使用 AWS Cloud SMS 服务，请参考官方 AWS 文档: [SMS Getting Started Guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/what-is-sms-mms.html)
@@ -172,7 +118,7 @@ alerter:
       aws:            # AWS Cloud SMS configuration
          access-key-id:      # Your AccessKey ID
          access-key-secret:  # Your AccessKey Secret
-         region:             # Region Of Your AWS 
+         region:             # Region Of Your AWS
 ```
 
 1. 创建 AWS 账户

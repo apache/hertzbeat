@@ -1,7 +1,7 @@
 ---
-id: alert_sms  
-title: Alert SMS notification       
-sidebar_label: Alert SMS notification   
+id: alert_sms
+title: Alert SMS notification
+sidebar_label: Alert SMS notification
 keywords: [open source monitoring tool, open source alerter, open source SMS alert notification]
 ---
 
@@ -9,10 +9,14 @@ keywords: [open source monitoring tool, open source alerter, open source SMS ale
 
 ## SMS Service Configuration
 
-Only when you successfully configure your own SMS service will the alert SMS triggered within the monitoring system be sent correctly.  
+Only when you successfully configure your own SMS service will the alert SMS triggered within the monitoring system be sent correctly.
 HertzBeat provides two ways to configure the SMS service: modifying the `application.yml` configuration file directly or configuring it through the HertzBeat frontend interface (Settings > Message Server Setting).
 
 > ⚠️ Note: Only one method can be effective at a time. If both methods are configured and enabled, HertzBeat will prioritize the SMS service configured in the frontend interface.
+
+:::caution
+UniSMS officially shut down on 2026-09-15, so HertzBeat no longer supports it as an SMS provider. If your SMS service is configured with `type: unisms`, please switch to another provider below.
+:::
 
 ### Tencent Cloud SMS Configuration
 
@@ -31,7 +35,7 @@ alerter:
       template-id: 1343434
 ```
 
-1. Create a signature (sign-name) in Tencent Cloud SMS  
+1. Create a signature (sign-name) in Tencent Cloud SMS
    ![image](/img/docs/help/alert-sms-tencent-cloud-signature.png)
 
 2. Create a message template (template-id) in Tencent Cloud SMS
@@ -42,10 +46,10 @@ alerter:
 
    ![image](/img/docs/help/alert-sms-tencent-cloud-template.png)
 
-3. Create an application (app-id) in Tencent Cloud SMS  
+3. Create an application (app-id) in Tencent Cloud SMS
    ![image](/img/docs/help/alert-sms-tencent-cloud-app.png)
 
-4. Obtain Tencent Cloud Access Management credentials (secret-id, secret-key)  
+4. Obtain Tencent Cloud Access Management credentials (secret-id, secret-key)
    ![image](/img/docs/help/alert-sms-tencent-cloud-access.png)
 
 ### Alibaba Cloud SMS Configuration
@@ -100,66 +104,6 @@ alerter:
 
 Now you can configure this information in your hertzbeat application.
 
-### UniSMS Configuration
-
-UniSMS is an aggregated SMS service platform.
-
-:::caution
-UniSMS officially shut down on 2026-09-15, and its API and console are no longer available. Please switch to another SMS provider. The configuration below is kept for reference only.
-:::
-
-Add/Fill in the following UniSMS configuration to `application.yml` (replace parameters with your own SMS server configuration):
-
-```yaml
-alerter:
-  sms:
-    enable: true    # Whether to enable
-    type: unisms   # SMS provider type, set to unisms
-    unisms:        # UniSMS configuration
-       # auth-mode: simple or hmac
-       auth-mode: simple
-       access-key-id: YOUR_ACCESS_KEY_ID
-       # hmac mode need to fill in access-key-secret
-       access-key-secret: YOUR_ACCESS_KEY_SECRET
-       signature: YOUR_SMS_SIGNATURE
-       template-id: YOUR_TEMPLATE_ID
-```
-
-1. Register UniSMS account
-   - Visit the UniSMS website
-
-2. Create signature
-   - Log in to the UniSMS Console
-   - Go to "SMS Filing - Signature Management" page
-   - Click "Add Signature"
-   - Fill in signature information and submit for review
-   - Wait for signature approval
-
-3. Create message template
-   - Go to "SMS Filing - Template Management" page
-   - Click "Add Template"
-   - Create a template with the following format:
-
-   ```text
-   Monitor: {instance}, Alert Level: {priority}. Content: {content}
-   ```
-
-   - Submit the template for review
-
-4. Obtain `access-key-id` and `access-key-secret`
-   - Log in to the UniSMS Console
-   - Go to "Credential Management" page
-   - Get AccessKey ID and AccessKey Secret
-   - Securely save the AccessKey ID and AccessKey Secret
-
-   :::note
-   UniSMS provides two authentication methods for developers to choose from, which can be set in Console - Credential Management, with Simple Mode as default.
-     - Simple Mode [Default]: This mode only verifies AccessKey ID without request parameter signature, making it easier for developers to integrate quickly.
-     - HMAC Mode: This mode requires signing request parameters with AccessKey Secret to enhance the security and authenticity of requests.
-   :::
-
-Now you can configure this information in your hertzbeat application.
-
 ### Smslocal SMS Configuration
 
 SMSLocal is an all-in-one SMS service for businesses, with features like multi-way sending, strong security, and 24/7 support. You can refer to smslocal's [Developer Documentation](https://www.smslocal.com/developer/) for configuration.
@@ -202,7 +146,7 @@ alerter:
       aws:            # AWS Cloud SMS configuration
          access-key-id:      # Your AccessKey ID
          access-key-secret:  # Your AccessKey Secret
-         region:             # Region Of Your AWS 
+         region:             # Region Of Your AWS
 ```
 
 1. Create an AWS Cloud account

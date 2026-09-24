@@ -23,7 +23,6 @@ import org.apache.hertzbeat.alert.service.impl.SmsLocalSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AwsSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.TwilioSmsClientImpl;
-import org.apache.hertzbeat.alert.service.impl.UniSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AlibabaSmsClientImpl;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
@@ -37,7 +36,6 @@ import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
 import static org.apache.hertzbeat.common.constants.SmsConstants.AWS;
 import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
 import static org.apache.hertzbeat.common.constants.SmsConstants.TWILIO;
-import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
 import static org.apache.hertzbeat.common.constants.SmsConstants.SMSLOCAL;
 
 /**
@@ -128,9 +126,6 @@ public class SmsClientFactory {
         switch (smsConfig.getType()) {
             case TENCENT:
                 currentSmsClient = new TencentSmsClientImpl(smsConfig.getTencent());
-                break;
-            case UNISMS:
-                currentSmsClient = new UniSmsClientImpl(smsConfig.getUnisms());
                 break;
             case ALIBABA:
                 currentSmsClient = new AlibabaSmsClientImpl(smsConfig.getAlibaba());
