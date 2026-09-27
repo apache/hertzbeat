@@ -9,6 +9,10 @@
 <b><a href="README.md">English</a></b> | <a href="README_CN.md">中文</a> | <a href="README_JP.md">日本語</a>
 </p>
 
+<p align="center">
+<a href="https://trendshift.io/repositories/9279?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-9279" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/9279" alt="apache%2Fhertzbeat | Trendshift" width="250" height="55"/></a>
+</p>
+
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
