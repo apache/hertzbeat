@@ -27,8 +27,7 @@ import { finalize } from 'rxjs/operators';
 import { AlibabaSmsConfig } from 'src/app/pojo/AlibabaSmsConfig';
 import { SmsNoticeSender } from 'src/app/pojo/SmsNoticeSender';
 import { TencentSmsConfig } from 'src/app/pojo/TencentSmsConfig';
-import { UniSmsConfig } from 'src/app/pojo/UniSmsConfig';
-import { SmsType, UniSmsAuthMode } from 'src/app/pojo/enums/sms-type.enum';
+import { SmsType } from 'src/app/pojo/enums/sms-type.enum';
 
 import { AwsSmsConfig } from '../../../../pojo/AwsSmsConfig';
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
@@ -57,7 +56,6 @@ export class MessageServerComponent implements OnInit {
   smsType: SmsType = SmsType.TENCENT;
   emailSender = new EmailNoticeSender();
   smsNoticeSender = new SmsNoticeSender();
-  uniSmsAuthModes = UniSmsAuthMode;
   SmsType = SmsType;
   private tempSmsType: SmsType = SmsType.TENCENT;
   private tempSmsNoticeSender = new SmsNoticeSender();
@@ -144,7 +142,6 @@ export class MessageServerComponent implements OnInit {
             this.smsNoticeSender = { ...newSender, ...message.data };
             this.smsNoticeSender.tencent = { ...new TencentSmsConfig(), ...message.data.tencent };
             this.smsNoticeSender.alibaba = { ...new AlibabaSmsConfig(), ...message.data.alibaba };
-            this.smsNoticeSender.unisms = { ...new UniSmsConfig(), ...message.data.unisms };
             this.smsNoticeSender.smslocal = { ...new SmslocalSmsConfig(), ...message.data.smslocal };
             this.smsNoticeSender.aws = { ...new AwsSmsConfig(), ...message.data.aws };
             this.smsNoticeSender.twilio = { ...new TwilioSmsConfig(), ...message.data.twilio };
@@ -171,7 +168,6 @@ export class MessageServerComponent implements OnInit {
       ...this.smsNoticeSender,
       tencent: { ...this.smsNoticeSender.tencent },
       alibaba: { ...this.smsNoticeSender.alibaba },
-      unisms: { ...this.smsNoticeSender.unisms },
       smslocal: { ...this.smsNoticeSender.smslocal },
       aws: { ...this.smsNoticeSender.aws },
       twilio: { ...this.smsNoticeSender.twilio }
@@ -185,7 +181,6 @@ export class MessageServerComponent implements OnInit {
       ...this.tempSmsNoticeSender,
       tencent: { ...this.tempSmsNoticeSender.tencent },
       alibaba: { ...this.tempSmsNoticeSender.alibaba },
-      unisms: { ...this.tempSmsNoticeSender.unisms },
       smslocal: { ...this.tempSmsNoticeSender.smslocal },
       aws: { ...this.tempSmsNoticeSender.aws },
       twilio: { ...this.tempSmsNoticeSender.twilio }
@@ -196,10 +191,6 @@ export class MessageServerComponent implements OnInit {
   onSmsTypeChange(value: SmsType) {
     this.smsType = value;
     this.smsNoticeSender.type = value;
-  }
-
-  isAccessKeySecretRequired(): boolean {
-    return this.smsNoticeSender.unisms.authMode === UniSmsAuthMode.HMAC;
   }
 
   onSaveSmsServer() {
