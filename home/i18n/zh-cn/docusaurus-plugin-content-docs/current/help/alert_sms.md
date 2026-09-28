@@ -149,7 +149,7 @@ alerter:
 
 ### smslocal短信配置
 
-smslocal是一款面向企业的一体化短信服务平台，具备诸如多种发送方式、强大的安全性以及全天候支持等特性。你可以参考 smslocal 的[开发者文档](https://www.smslocal.com/developer/)来进行配置。
+smslocal是一款面向企业的一体化短信服务平台，具备诸如多种发送方式、强大的安全性以及全天候支持等特性。你可以参考 smslocal 的[开发者文档](https://www.smslocal.com/resources/docs/)来进行配置。
 
 在 `application.yml` 中添加/填写以下 smslocal 配置内容（请用你自己的短信服务器配置参数替换相关参数）：
 

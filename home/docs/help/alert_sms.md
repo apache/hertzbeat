@@ -106,7 +106,7 @@ Now you can configure this information in your hertzbeat application.
 
 ### Smslocal SMS Configuration
 
-SMSLocal is an all-in-one SMS service for businesses, with features like multi-way sending, strong security, and 24/7 support. You can refer to smslocal's [Developer Documentation](https://www.smslocal.com/developer/) for configuration.
+SMSLocal is an all-in-one SMS service for businesses, with features like multi-way sending, strong security, and 24/7 support. You can refer to smslocal's [Developer Documentation](https://www.smslocal.com/resources/docs/) for configuration.
 
 Add/Fill in the following Smslocal configuration to `application.yml` (replace parameters with your own SMS server configuration):
 
