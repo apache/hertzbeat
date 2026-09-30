@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkhertzbeat=globalThis.webpackChunkhertzbeat||[]).push([[81903],{1912(t){t.exports=JSON.parse('{"blogBasePath":"/ko/blog","blogTitle":"Blog","authorsListPath":"/ko/blog/authors"}')}}]);
