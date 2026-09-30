@@ -1,7 +1,7 @@
 ---
 id: idrac
 title: Dell iDRAC Monitoring
-sidebar_label: Server Monitor
+sidebar_label: Dell iDRAC
 keywords: [open source monitoring tool, open source server Monitoring, Dell iDRAC Monitoring]
 ---
 
