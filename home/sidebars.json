@@ -159,6 +159,7 @@
             "help/websocket",
             "help/mqtt",
             "help/modbus",
+            "help/s7",
             "help/jenkins",
             "help/push",
             "help/registry"
