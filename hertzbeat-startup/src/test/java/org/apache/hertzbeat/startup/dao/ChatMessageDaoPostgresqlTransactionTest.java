@@ -34,7 +34,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.hibernate.SpringImplicitNamingStrategy;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -111,7 +110,6 @@ class ChatMessageDaoPostgresqlTransactionTest {
         assertEquals(message.getContent(), messagesByIds.getFirst().getContent());
     }
 
-    @Configuration(proxyBeanMethods = false)
     @EnableJpaRepositories(basePackageClasses = ChatMessageDao.class)
     @EnableTransactionManagement
     static class PostgresqlJpaConfiguration {
