@@ -161,7 +161,8 @@
             "help/modbus",
             "help/s7",
             "help/jenkins",
-            "help/push"
+            "help/push",
+            "help/registry"
           ]
         },
         {
