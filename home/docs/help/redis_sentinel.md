@@ -16,11 +16,10 @@ keywords: [ open source monitoring tool, open source Redis Sentinel monitoring t
 | Query Timeout(ms) | Set the timeout time when Sentinel query does not respond to data, unit: ms, default: 3000ms. |
 | Username | Connection user name, optional. |
 | Password | Connection password, optional. |
-| Pattern | Regular expression pattern for filtering Redis Sentinel info output, optional. |
 | Enable SSH Tunnel | Whether to enable SSH tunneling to access Sentinel behind a firewall, default: false. |
 | SSH Host | SSH Tunnel host IP or domain name. |
 | SSH Port | SSH Tunnel port, default: 22. |
-| SSH Timeout(ms) | SSH connection timeout in milliseconds, default: 60000ms. |
+| SSH Timeout(ms) | SSH connection timeout in milliseconds, default: 6000ms. |
 | SSH Username | SSH Tunnel login username. |
 | SSH Password | SSH Tunnel login password. |
 | Share SSH Connection | Whether to share SSH connection across requests. |
