@@ -78,6 +78,20 @@ public final class JsonPathParser {
     }
 
     /**
+     * use json path to parse content, missing paths yield an empty list instead of throwing
+     * @param content json content
+     * @param jsonPath jsonPath
+     * @return matched values, empty list when the path does not exist in the content
+     */
+    public static List<Object> parseContentWithOptionalJsonPath(String content, String jsonPath) {
+        if (StringUtils.isAnyEmpty(content, jsonPath)) {
+            return Collections.emptyList();
+        }
+        List<Object> values = ROW_PARSER.parse(content).read(jsonPath);
+        return values == null ? Collections.emptyList() : values;
+    }
+
+    /**
      * use json path to parse one already-parsed row object, missing paths yield an empty list
      * @param document parsed json object of a single row
      * @param jsonPath jsonPath relative to the row root
