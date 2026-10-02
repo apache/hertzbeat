@@ -44,6 +44,9 @@ public class ModelProviderConfig {
     @Schema(title = "use the model id name, eg: gpt-5, glm-4.6")
     private String model;
 
+    @Schema(title = "Sampling temperature, the built-in default is used when it is not set")
+    private Double temperature;
+
     @Schema(title = "API Key", description = "API key", example = "sk-...")
     @NotBlank(message = "API Key cannot be empty when enabled")
     private String apiKey;
