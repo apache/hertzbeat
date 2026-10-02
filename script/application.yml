@@ -315,14 +315,6 @@ alerter:
       access-key-secret:
       sign-name:
       template-code:
-    unisms:
-      # auth-mode: simple or hmac
-      auth-mode: simple
-      access-key-id: YOUR_ACCESS_KEY_ID
-      # hmac mode need to fill in access-key-secret
-      access-key-secret: YOUR_ACCESS_KEY_SECRET
-      signature: YOUR_SMS_SIGNATURE
-      template-id: YOUR_TEMPLATE_ID
     smslocal:
       api-key: YOUR_API_KEY_HERE
     aws:

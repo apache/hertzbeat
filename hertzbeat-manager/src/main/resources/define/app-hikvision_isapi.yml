@@ -27,7 +27,9 @@ help:
   zh-CN: 通过ISAPI接口监控海康威视设备状态，获取设备健康数据。
   en-US: Monitor Hikvision devices through ISAPI interface to collect health data.
   ja-JP: ISAPIを呼び出して健康データを収集し、Hikvisionデバイスを監視します。
-
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hikvision_isapi
+  en-US: https://hertzbeat.apache.org/docs/help/hikvision_isapi
 # Input params define for monitoring(render web ui by the definition)
 params:
   - field: host
