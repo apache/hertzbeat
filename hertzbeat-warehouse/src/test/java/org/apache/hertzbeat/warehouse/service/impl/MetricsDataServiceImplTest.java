@@ -106,6 +106,20 @@ class MetricsDataServiceImplTest {
     }
 
     @Test
+    void testMonitorIdIsForwardedToHistoryStorage() {
+        long monitorId = 599733946907392L;
+        when(historyDataReader.getHistoryMetricData(
+                monitorId, "127.0.0.1", "linux", "cpu", "usage", "6h"))
+                .thenReturn(Map.of("", List.of(new Value("1", 1L))));
+
+        metricsDataService.getMetricHistoryData(
+                monitorId, "127.0.0.1", "linux", "cpu", "usage", "6h", false);
+
+        verify(historyDataReader).getHistoryMetricData(
+                monitorId, "127.0.0.1", "linux", "cpu", "usage", "6h");
+    }
+
+    @Test
     void testIdentifierEscapingTheQuotingIsRejected() {
         // a backtick closes a tdengine identifier, a double quote closes a questdb one
         assertThrows(IllegalArgumentException.class, () -> metricsDataService.getMetricHistoryData(
