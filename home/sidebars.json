@@ -114,6 +114,7 @@
             "help/alert_webhook",
             "help/alert_discord",
             "help/alert_slack",
+            "help/alert_teams",
             "help/alert_telegram",
             "help/alert_wework",
             "help/alert_dingtalk",

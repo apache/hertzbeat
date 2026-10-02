@@ -135,6 +135,10 @@
           <i nz-icon nzTheme="outline" nzType="notification"></i>
           <span>{{ 'alert.notice.type.ntfy' | i18n }}</span>
         </nz-tag>
+        <nz-tag *ngIf="data.type == 16" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.teams' | i18n }}</span>
+        </nz-tag>
       </td>
       <td nzAlign="center">
         <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -153,6 +157,7 @@
         <span *ngIf="data.type == 13">{{ data.gotifyToken }}</span>
         <span *ngIf="data.type == 14">{{ data.appId }}</span>
         <span *ngIf="data.type == 15">{{ data.ntfyServerUrl }}/{{ data.ntfyTopic }}</span>
+        <span *ngIf="data.type == 16">{{ data.teamsWebHookUrl }}</span>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center" nzRight>
@@ -236,6 +241,7 @@
             <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.lark-app' | i18n" [nzValue]="14"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.ntfy' | i18n" [nzValue]="15"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.teams' | i18n" [nzValue]="16"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -552,6 +558,21 @@
         <nz-form-label [nzSpan]="7" nzFor="ntfyToken">{{ 'alert.notice.type.ntfy-token' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12">
           <input [(ngModel)]="receiver.ntfyToken" name="ntfyToken" nz-input type="password" placeholder="" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 16">
+        <nz-form-label [nzRequired]="receiver.type === 16" [nzSpan]="7" nzFor="teamsWebHookUrl"
+          >{{ 'alert.notice.type.teams-webHook-url' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input
+            [(ngModel)]="receiver.teamsWebHookUrl"
+            [required]="receiver.type === 16"
+            name="teamsWebHookUrl"
+            nz-input
+            type="url"
+            placeholder="https://prod-00.westus.logic.azure.com:443/workflows/..."
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 14">
