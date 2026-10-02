@@ -151,6 +151,8 @@
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
         <commons-compress.version>1.27.1</commons-compress.version>
+        <commons-secure-xml.version>1.0.0</commons-secure-xml.version>
+        <forbiddenapis.version>3.11</forbiddenapis.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <spotless.version>2.40.0</spotless.version>
 
@@ -361,6 +363,11 @@
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>
                 <version>${commons-net}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-secure-xml</artifactId>
+                <version>${commons-secure-xml.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -672,6 +679,27 @@
                     <execution>
                         <id>validate</id>
                         <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- forbid raw JAXP factories: use Apache Commons Secure XML instead -->
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>${forbiddenapis.version}</version>
+                <configuration>
+                    <failOnUnsupportedJava>false</failOnUnsupportedJava>
+                    <signaturesFiles>
+                        <signaturesFile>${maven.multiModuleProjectDirectory}/script/forbidden-apis/jaxp.txt</signaturesFile>
+                    </signaturesFiles>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-jaxp</id>
                         <goals>
                             <goal>check</goal>
                         </goals>

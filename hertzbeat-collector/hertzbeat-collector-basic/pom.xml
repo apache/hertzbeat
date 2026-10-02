@@ -67,6 +67,10 @@
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-secure-xml</artifactId>
+        </dependency>
         <!-- clickhouse -->
         <dependency>
             <groupId>com.clickhouse</groupId>
