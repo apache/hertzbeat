@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -143,12 +142,11 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private MetricsFavoriteService metricsFavoriteService;
 
-    /**
-     * Idempotent: an instance already carrying a port is left untouched, so repeated
-     * edits cannot grow it (host:443:443...). A missing instance falls back to the
-     * host param - never concatenated onto null, which produced "null:443" identities.
-     */
-    private void resolveMonitorInstance(Monitor monitor, List<Param> params) {
+    private void resolveMonitorInstance(Monitor monitor, List<Param> params, boolean isStatic) {
+        if (!isStatic) {
+            monitor.setInstance("unknown");
+            return;
+        }
         String instance = monitor.getInstance();
         if (!StringUtils.hasText(instance)) {
             instance = params.stream()
@@ -162,13 +160,38 @@ public class MonitorServiceImpl implements MonitorService {
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (!IpDomainUtil.isHasPortWithMark(instance)) {
-            instance = instance + portWithMark;
+        String port = portParam == null ? null : portParam.getParamValue();
+        String host = removeExplicitPort(instance);
+        if (!StringUtils.hasText(port)) {
+            monitor.setInstance(host);
+        } else if (host.startsWith("[") && host.endsWith("]")) {
+            monitor.setInstance(host + ":" + port);
+        } else if (host.indexOf(':') != host.lastIndexOf(':')) {
+            monitor.setInstance("[" + host + "]:" + port);
+        } else {
+            monitor.setInstance(host + ":" + port);
         }
-        monitor.setInstance(instance);
+    }
+
+    private String removeExplicitPort(String instance) {
+        if (instance.startsWith("[")) {
+            int closingBracket = instance.indexOf(']');
+            if (closingBracket > 0
+                    && closingBracket + 1 < instance.length()
+                    && instance.charAt(closingBracket + 1) == ':'
+                    && IpDomainUtil.validPort(instance.substring(closingBracket + 2))) {
+                return instance.substring(0, closingBracket + 1);
+            }
+            return instance;
+        }
+        int firstColon = instance.indexOf(':');
+        int lastColon = instance.lastIndexOf(':');
+        if (firstColon > 0
+                && firstColon == lastColon
+                && IpDomainUtil.validPort(instance.substring(lastColon + 1))) {
+            return instance.substring(0, lastColon);
+        }
+        return instance;
     }
 
     @Override
@@ -205,7 +228,6 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setInstance("unknow");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -217,7 +239,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setScheduleType(monitor.getScheduleType());
         appDefine.setCronExpression(monitor.getCronExpression());
 
-        resolveMonitorInstance(monitor, params);
+        resolveMonitorInstance(monitor, params, isStatic);
         String instance = monitor.getInstance();
 
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
@@ -470,11 +492,11 @@ public class MonitorServiceImpl implements MonitorService {
             labelDao.saveAll(addLabels);
         }
 
-        resolveMonitorInstance(monitor, params);
-        String instance = monitor.getInstance();
-
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
                 || !StringUtils.hasText(monitor.getScrape());
+        resolveMonitorInstance(monitor, params, isStatic);
+        String instance = monitor.getInstance();
+
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             String app = isStatic ? monitor.getApp() : monitor.getScrape();
