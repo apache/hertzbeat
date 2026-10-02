@@ -18,14 +18,18 @@
 package org.apache.hertzbeat.collector.collect.kafka;
 
 import org.apache.hertzbeat.collector.collect.kafka.constants.SupportedCommand;
+import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,10 +38,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -134,5 +141,84 @@ public class KafkaCollectTest {
     @Test
     void supportProtocol() {
         assertEquals(DispatchConstants.PROTOCOL_KAFKA, collect.supportProtocol());
+    }
+
+    @Test
+    void adminClientPropertiesWithoutAuthentication() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host(HOST)
+                .port(PORT)
+                .build();
+
+        Properties properties = collect.getAdminClientProperties(protocol);
+
+        assertEquals(HOST + ":" + PORT, properties.get(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG));
+        assertFalse(properties.containsKey(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+        assertFalse(properties.containsKey(SaslConfigs.SASL_MECHANISM));
+        assertFalse(properties.containsKey(SaslConfigs.SASL_JAAS_CONFIG));
+    }
+
+    @Test
+    void adminClientPropertiesWithScramAuthentication() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host(HOST)
+                .port(PORT)
+                .securityProtocol("SASL_SSL")
+                .saslMechanism("SCRAM-SHA-512")
+                .username("monitor")
+                .password("secret")
+                .build();
+
+        Properties properties = collect.getAdminClientProperties(protocol);
+
+        assertEquals("SASL_SSL", properties.get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+        assertEquals("SCRAM-SHA-512", properties.get(SaslConfigs.SASL_MECHANISM));
+        assertEquals("org.apache.kafka.common.security.scram.ScramLoginModule required "
+                        + "username=\"monitor\" password=\"secret\";",
+                properties.get(SaslConfigs.SASL_JAAS_CONFIG));
+    }
+
+    @Test
+    void adminClientPropertiesEscapeJaasCredentials() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host(HOST)
+                .port(PORT)
+                .securityProtocol("sasl_plaintext")
+                .saslMechanism("scram-sha-256")
+                .username("monitor\"user")
+                .password("secret\\value")
+                .build();
+
+        Properties properties = collect.getAdminClientProperties(protocol);
+
+        assertEquals("org.apache.kafka.common.security.scram.ScramLoginModule required "
+                        + "username=\"monitor\\\"user\" password=\"secret\\\\value\";",
+                properties.get(SaslConfigs.SASL_JAAS_CONFIG));
+    }
+
+    @Test
+    void adminClientCacheIdentifierIncludesAuthentication() {
+        KafkaProtocol firstProtocol = KafkaProtocol.builder()
+                .host(HOST)
+                .port(PORT)
+                .securityProtocol("SASL_PLAINTEXT")
+                .saslMechanism("SCRAM-SHA-256")
+                .username("monitor")
+                .password("first-secret")
+                .build();
+        KafkaProtocol secondProtocol = KafkaProtocol.builder()
+                .host(HOST)
+                .port(PORT)
+                .securityProtocol("SASL_PLAINTEXT")
+                .saslMechanism("SCRAM-SHA-256")
+                .username("monitor")
+                .password("second-secret")
+                .build();
+
+        CacheIdentifier firstIdentifier = collect.getAdminClientIdentifier(firstProtocol);
+        CacheIdentifier secondIdentifier = collect.getAdminClientIdentifier(secondProtocol);
+
+        assertNotEquals(firstIdentifier, secondIdentifier);
+        assertFalse(firstIdentifier.toString().contains("first-secret"));
     }
 }
