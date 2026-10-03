@@ -64,6 +64,26 @@ public class RestTemplateConfig {
         return createRestTemplate(factory);
     }
 
+    /**
+     * RestTemplate used by notification handlers (webhook / Gotify / Ntfy).
+     * Redirects are disabled because SSRF URL validation only covers the initial
+     * request; following a redirect to an internal address would bypass the guard.
+     */
+    @Bean("notificationRestTemplate")
+    public RestTemplate notificationRestTemplate() {
+        HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(NetworkConstants.HttpClientConstants.CONNECT_TIMEOUT)
+            .followRedirects(HttpClient.Redirect.NEVER)
+            .build();
+
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(NetworkConstants.HttpClientConstants.READ_TIMEOUT);
+
+        RestTemplate restTemplate = new RestTemplate(factory);
+        restTemplate.setInterceptors(Collections.singletonList(new HeaderRequestInterceptor()));
+        return restTemplate;
+    }
+
     private RestTemplate createRestTemplate(ClientHttpRequestFactory factory) {
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.setInterceptors(Collections.singletonList(new HeaderRequestInterceptor()));

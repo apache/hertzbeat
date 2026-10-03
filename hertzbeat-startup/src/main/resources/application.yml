@@ -298,6 +298,16 @@ alerter:
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
+  # SSRF hardening: outbound webhook/notification URLs are rejected when they resolve
+  # to internal/private addresses (loopback, link-local, RFC-1918, ULA, reserved).
+  # Self-hosted notification endpoints (e.g. Gotify on 127.0.0.1, or a webhook on a
+  # private network) must be explicitly allowlisted here. Supports exact host names
+  # and "*.example.com" wildcard subdomains. Default: empty (strict mode).
+  # internal-url-allowlist:
+  #   - 127.0.0.1
+  #   - localhost
+  #   - gotify.internal.example.com
+  #   - "*.notify.internal.example.com"
   # alert inhibit ttl unit ms, default 14400000(4 hours)
   inhibit:
     ttl: 14400000
