@@ -20,6 +20,8 @@ package org.apache.hertzbeat.common.util;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -114,5 +116,52 @@ class InternalUrlValidatorTest {
     void testMalformedUrlRejected() {
         assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate("not a url"));
         assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate("http://"));
+    }
+
+    @Test
+    void testAllowlistExactHostAllowsInternalEndpoint() {
+        // Administrator explicitly allows the self-hosted notification host
+        assertDoesNotThrow(() -> InternalUrlValidator.validate(
+                "http://localhost:8080/gotify/token", Collections.singletonList("localhost")));
+        assertDoesNotThrow(() -> InternalUrlValidator.validate(
+                "http://192.168.1.10:8080/notify", Collections.singletonList("192.168.1.10")));
+        // Host matching is case-insensitive
+        assertDoesNotThrow(() -> InternalUrlValidator.validate(
+                "http://LOCALHOST:8080/notify", Collections.singletonList("localhost")));
+        // Allowlisted host still must use http/https scheme
+        assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate(
+                "ftp://localhost/notify", Collections.singletonList("localhost")));
+    }
+
+    @Test
+    void testAllowlistWildcardSubdomain() {
+        // *.example.com matches subdomains but not the bare domain
+        assertDoesNotThrow(() -> InternalUrlValidator.validate(
+                "http://ntfy.example.com/alerts", Collections.singletonList("*.example.com")));
+        assertDoesNotThrow(() -> InternalUrlValidator.validate(
+                "http://a.b.example.com/alerts", Collections.singletonList("*.example.com")));
+        // The bare apex domain is NOT matched by *.example.com.
+        // Uses an IP literal so the assertion stays DNS-independent (127.0.0.1 is always loopback).
+        assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate(
+                "http://127.0.0.1/alerts", Collections.singletonList("*.127.0.0.1")));
+    }
+
+    @Test
+    void testAllowlistDoesNotBypassUnlistedHosts() {
+        // Without the host in the allowlist, internal addresses are still rejected
+        assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate(
+                "http://localhost/", Collections.singletonList("other.host")));
+        // Empty allowlist behaves like the strict default
+        assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate(
+                "http://localhost/", Collections.emptyList()));
+        // Null allowlist behaves like the strict default
+        assertThrows(IllegalArgumentException.class, () -> InternalUrlValidator.validate(
+                "http://localhost/", null));
+    }
+
+    @Test
+    void testAllowlistMatchingIgnoresEntriesWithWhitespace() {
+        assertDoesNotThrow(() -> InternalUrlValidator.validate(
+                "http://localhost:8080/notify", Arrays.asList(" localhost ", "other.host")));
     }
 }

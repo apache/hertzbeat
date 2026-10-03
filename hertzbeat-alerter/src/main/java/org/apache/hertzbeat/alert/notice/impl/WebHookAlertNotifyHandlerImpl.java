@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import java.net.URI;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
@@ -31,6 +32,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alarm information through WebHookAlter
@@ -38,6 +40,13 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+
+    /**
+     * RestTemplate that never follows redirects: URL validation only covers the
+     * initial request, so following redirects could bypass the SSRF guard.
+     */
+    @Resource(name = "notificationRestTemplate")
+    private RestTemplate notificationRestTemplate;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
@@ -58,9 +67,10 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                 throw new AlertNoticeException("Invalid webhook URL: " + e.getMessage());
             }
 
-            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses,
+            // unless the host is explicitly allowlisted by the administrator
             try {
-                InternalUrlValidator.validate(hookUri);
+                InternalUrlValidator.validate(hookUri, alerterProperties.getInternalUrlAllowlist());
             } catch (IllegalArgumentException e) {
                 throw new AlertNoticeException("Webhook URL rejected: " + e.getMessage());
             }
@@ -77,7 +87,7 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             webhookJson = webhookJson.replace(",\n  }", "\n }");
 
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
-            ResponseEntity<String> entity = restTemplate.postForEntity(hookUri, alertHttpEntity, String.class);
+            ResponseEntity<String> entity = notificationRestTemplate.postForEntity(hookUri, alertHttpEntity, String.class);
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
                 log.debug("Send WebHook: {} Success", hookUrl);
             } else {

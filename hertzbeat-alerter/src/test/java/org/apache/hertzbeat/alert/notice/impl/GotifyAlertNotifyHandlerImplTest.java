@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -51,10 +52,13 @@ class GotifyAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
+
+    @Mock
+    private RestTemplate notificationRestTemplate;
+
     @Mock
     private AlerterProperties alerterProperties;
-    
+
     @Mock
     private ResourceBundle bundle;
 
@@ -71,24 +75,27 @@ class GotifyAlertNotifyHandlerImplTest {
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setAccessToken("test-token");
-        
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
+
         when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
+        // Allowlist the local test endpoint so the test stays deterministic (no DNS resolution)
+        when(alerterProperties.getInternalUrlAllowlist())
+                .thenReturn(Collections.singletonList("localhost"));
     }
 
     @Test
@@ -98,12 +105,12 @@ class GotifyAlertNotifyHandlerImplTest {
         ResponseEntity<CommonRobotNotifyResp> responseEntity =
                 new ResponseEntity<>(successResp, HttpStatus.OK);
 
-        when(restTemplate.postForEntity(
+        when(notificationRestTemplate.postForEntity(
                 any(String.class),
                 any(),
                 eq(CommonRobotNotifyResp.class)
         )).thenReturn(responseEntity);
-        
+
         gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
@@ -115,13 +122,22 @@ class GotifyAlertNotifyHandlerImplTest {
         ResponseEntity<CommonRobotNotifyResp> responseEntity =
                 new ResponseEntity<>(failResp, HttpStatus.BAD_REQUEST);
 
-        when(restTemplate.postForEntity(
+        when(notificationRestTemplate.postForEntity(
                 any(String.class),
                 any(),
                 eq(CommonRobotNotifyResp.class)
         )).thenReturn(responseEntity);
-        
-        assertThrows(AlertNoticeException.class, 
+
+        assertThrows(AlertNoticeException.class,
+                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertRejectsInternalAddressWithoutAllowlist() {
+        // The default test endpoint is localhost, but without the allowlist it must be rejected
+        when(alerterProperties.getInternalUrlAllowlist()).thenReturn(Collections.emptyList());
+
+        assertThrows(AlertNoticeException.class,
                 () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }

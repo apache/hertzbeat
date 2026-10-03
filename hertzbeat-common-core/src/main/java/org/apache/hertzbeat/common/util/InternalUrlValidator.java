@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -34,6 +36,11 @@ import lombok.extern.slf4j.Slf4j;
  * </ul>
  * Used by webhook/notification handlers that issue server-side requests to
  * user-supplied URLs.
+ * <p>
+ * An administrator-controlled allowlist can explicitly permit hosts that resolve
+ * to internal/private addresses (e.g. self-hosted notification endpoints), which
+ * is required under the documented trusted-user model. Allowlisted hosts bypass
+ * the address check without DNS resolution, so behaviour stays deterministic.
  */
 @Slf4j
 public final class InternalUrlValidator {
@@ -48,6 +55,19 @@ public final class InternalUrlValidator {
      * @throws IllegalArgumentException if the URL is malformed or targets an internal address
      */
     public static void validate(String url) {
+        validate(url, null);
+    }
+
+    /**
+     * Validate that the given URL does not target an internal or reserved network address,
+     * unless the host is explicitly allowlisted by an administrator.
+     *
+     * @param url          the URL string to validate
+     * @param allowedHosts administrator-controlled allowlist of trusted hosts; supports
+     *                     exact host names and {@code *.example.com} wildcard subdomains
+     * @throws IllegalArgumentException if the URL is malformed or targets an internal address
+     */
+    public static void validate(String url, Collection<String> allowedHosts) {
         if (url == null || url.isBlank()) {
             throw new IllegalArgumentException("URL must not be null or blank");
         }
@@ -57,7 +77,7 @@ public final class InternalUrlValidator {
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URL: " + e.getMessage(), e);
         }
-        validate(uri);
+        validate(uri, allowedHosts);
     }
 
     /**
@@ -67,6 +87,19 @@ public final class InternalUrlValidator {
      * @throws IllegalArgumentException if the URI is malformed or targets an internal address
      */
     public static void validate(URI uri) {
+        validate(uri, null);
+    }
+
+    /**
+     * Validate that the given URI does not target an internal or reserved network address,
+     * unless the host is explicitly allowlisted by an administrator.
+     *
+     * @param uri          the URI to validate
+     * @param allowedHosts administrator-controlled allowlist of trusted hosts; supports
+     *                     exact host names and {@code *.example.com} wildcard subdomains
+     * @throws IllegalArgumentException if the URI is malformed or targets an internal address
+     */
+    public static void validate(URI uri, Collection<String> allowedHosts) {
         if (uri == null) {
             throw new IllegalArgumentException("URI must not be null");
         }
@@ -81,6 +114,13 @@ public final class InternalUrlValidator {
         String host = uri.getHost();
         if (host == null || host.isBlank()) {
             throw new IllegalArgumentException("URL host must not be null or empty");
+        }
+
+        // 2.1 Allowlist: explicitly trusted hosts (e.g. self-hosted internal notification
+        // endpoints) bypass the address check without DNS resolution.
+        if (isAllowedHost(host, allowedHosts)) {
+            log.debug("Allowed host {} via configured allowlist", host);
+            return;
         }
 
         // 3. Resolve and check all IPs
@@ -98,6 +138,35 @@ public final class InternalUrlValidator {
             // Fail closed: if we can't resolve, we can't verify safety
             throw new IllegalArgumentException("Unable to resolve host: " + host, e);
         }
+    }
+
+    /**
+     * Check whether the host matches the administrator-configured allowlist.
+     * Supports exact host names and {@code *.example.com} wildcard subdomains.
+     */
+    private static boolean isAllowedHost(String host, Collection<String> allowedHosts) {
+        if (allowedHosts == null || allowedHosts.isEmpty()) {
+            return false;
+        }
+        String normalized = host.toLowerCase(Locale.ROOT);
+        for (String allowed : allowedHosts) {
+            if (allowed == null) {
+                continue;
+            }
+            String entry = allowed.trim().toLowerCase(Locale.ROOT);
+            if (entry.isEmpty()) {
+                continue;
+            }
+            if (entry.startsWith("*.")) {
+                // *.example.com matches sub.example.com but not example.com itself
+                if (normalized.endsWith(entry.substring(1))) {
+                    return true;
+                }
+            } else if (normalized.equals(entry)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
