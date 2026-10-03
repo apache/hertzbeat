@@ -126,6 +126,7 @@ class AlertDefineJsonImExportServiceTest {
 
         String result = outputStream.toString(StandardCharsets.UTF_8);
         assertTrue(result.contains("promql"), "exported config should keep datasource, but got: " + result);
+        assertTrue(result.contains("queryLanguage"), "exported config should include queryLanguage, but got: " + result);
     }
 
     @Test
