@@ -66,6 +66,10 @@ resourceRole:
   - /api/collector/**===post===[admin,user]
   - /api/collector/**===put===[admin,user]
   - /api/collector/**===delete===[admin]
+  - /api/plugin/**===get===[admin]
+  - /api/plugin/**===post===[admin]
+  - /api/plugin/**===put===[admin]
+  - /api/plugin/**===delete===[admin]
   # the secret config holds the jwt signing key and the aes key protecting stored
   # credentials, so it stays admin only and is additionally refused by the controller
   - /api/config/secret===get===[admin]
@@ -117,6 +121,9 @@ resourceRole:
   - /api/logs/ingest/**===post===[admin,user]
   - /api/observability/logs===delete===[admin]
   - /api/observability/**===get===[admin,user,guest]
+  - /api/account/token===get===[admin]
+  - /api/account/token/**===post===[admin]
+  - /api/account/token/**===delete===[admin]
   # The OpenAPI document is a map of every route, parameter and model, so it is
   # scoped like any other administrative resource instead of being anonymous
   - /v3/api-docs/**===get===[admin]
