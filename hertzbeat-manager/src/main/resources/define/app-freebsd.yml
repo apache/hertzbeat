@@ -372,7 +372,7 @@ metrics:
       proxyPassword: ^_^proxyPassword^_^
       # ssh proxy private key
       proxyPrivateKey: ^_^proxyPrivateKey^_^
-      script: "dmesg | grep -i cpu | awk 'NR==1';sysctl hw.ncpu | awk '{print $2}';uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
+      script: "dmesg | grep -i cpu | awk 'NR==1';sysctl hw.ncpu | awk '{print $2}';uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';idle1=`sysctl -n kern.cp_time`; sleep 1; idle2=`sysctl -n kern.cp_time`; echo $idle1 $idle2 | awk '{for(i=1;i<=5;i++) t1+=$i; idleA=$5; for(i=6;i<=10;i++) t2+=$i; idleB=$10; d=t2-t1; if(d>0) print int(10000*(idleB-idleA)/d+0.5)/100; else print 0}'"
       parseType: oneRow
 
   - name: memory

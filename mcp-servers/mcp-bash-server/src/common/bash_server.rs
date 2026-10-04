@@ -398,7 +398,7 @@ impl BashServer {
             r#"uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs"#, // Load averages
             r#"vmstat 1 1 | awk 'NR==3{print $11}'"#, // Interrupts
             r#"vmstat 1 1 | awk 'NR==3{print $12}'"#, // Context switches
-            r#"vmstat 1 2 | awk 'NR==4{print $15}'"#, // CPU idle percentage
+            r#"cpu1=$(awk '/^cpu /{print;exit}' /proc/stat); sleep 1; cpu2=$(awk '/^cpu /{print;exit}' /proc/stat); (echo $cpu1; echo $cpu2) | awk 'NR==1{for(i=2;i<=9;i++) t1+=$i; idle1=$5} NR==2{for(i=2;i<=9;i++) t2+=$i; idle2=$5} END{d=t2-t1; if(d>0) print int(10000*(idle2-idle1)/d+0.5)/100; else print 0}'"#, // CPU idle percentage from /proc/stat
         ];
 
         format!(r#"bash -c "{}""#, cpu_commands.join(";"))
@@ -702,7 +702,7 @@ impl BashServer {
     }
 
     /// Get detailed CPU information including model, core count, load averages, and performance metrics
-    /// Combines data from lscpu, /proc/cpuinfo, uptime, and vmstat commands
+    /// Combines data from lscpu, /proc/cpuinfo, uptime, vmstat, and /proc/stat
     /// Parses the output to provide structured CPU performance data
     #[tool(description = "Get the cpu info through the default shell")]
     async fn unix_preset_get_cpu_info_via_default_shell(
@@ -716,7 +716,7 @@ impl BashServer {
                     command: command.to_string(),
                     working_dir: None,
                     env_vars: None,
-                    timeout_seconds: Some(5),
+                    timeout_seconds: Some(10),
                 },
             )
             .await?;
@@ -737,7 +737,7 @@ impl BashServer {
                 // 1.05 0.74 0.72
                 // 1261
                 // 5
-                // 92
+                // 92.35
                 let lines: Vec<&str> = response
                     .stdout
                     .lines()
@@ -753,7 +753,7 @@ impl BashServer {
                         .collect();
                     let interrupt = lines[3].parse::<u64>().unwrap_or(0);
                     let context_switch = lines[4].parse::<u64>().unwrap_or(0);
-                    let idle = lines[5].parse::<u64>().unwrap_or(0);
+                    let idle = lines[5].parse::<f64>().unwrap_or(0.0);
 
                     let parsed = serde_json::json!({
                         "cpu_model": cpu_model,
