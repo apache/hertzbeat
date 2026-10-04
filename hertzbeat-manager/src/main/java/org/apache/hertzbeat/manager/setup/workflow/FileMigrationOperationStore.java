@@ -23,6 +23,8 @@ import org.apache.hertzbeat.manager.setup.security.CommittedSetupFileDurabilityE
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock.TryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Root-bound owner-only file adapter for the single active migration operation. */
 public final class FileMigrationOperationStore implements MigrationOperationStore {
@@ -31,6 +33,7 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
     static final int HISTORY_LIMIT = 8;
     private static final String LOCK_PATH = "data/config/.metadata-migration-operations.lock";
     private static final int MAXIMUM_BYTES = 64 * 1024;
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileMigrationOperationStore.class);
     private final Path installationRoot;
     private final Path operationFile;
     private final Publisher publisher;
@@ -346,7 +349,9 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         } catch (MigrationOperationStoreException failure) {
             throw failure;
         } catch (IOException failure) {
-            throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+            LOGGER.warn("Migration operation store lock handshake failed; requiring configuration recovery",
+                    failure);
+            throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED, failure);
         }
     }
 
@@ -358,6 +363,10 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
 
     private MigrationOperationStoreException failure(SetupErrorCode errorCode) {
         return new MigrationOperationStoreException(errorCode);
+    }
+
+    private MigrationOperationStoreException failure(SetupErrorCode errorCode, Throwable cause) {
+        return new MigrationOperationStoreException(errorCode, cause);
     }
 
     private static Path normalize(Path root) {

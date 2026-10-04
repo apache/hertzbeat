@@ -74,6 +74,23 @@ class StartupFailureReporterTest {
         assertSafeDiagnostic(appender.list.getFirst(), "startup-probe", RuntimeMode.RECOVERY, probeFailure);
     }
 
+    @Test
+    void reportsCauseClassWithoutLeakingCauseMessage() {
+        RuntimeException probeFailure = new IllegalStateException("outer");
+        probeFailure.initCause(new IllegalArgumentException(SECRET + " " + JDBC_URL));
+        RecordingLauncher launcher = new RecordingLauncher();
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                ignored -> {
+                    throw probeFailure;
+                }, launcher);
+
+        RunningApplicationContext context = coordinator.start(new String[]{CLI_SECRET});
+
+        assertEquals(RuntimeMode.RECOVERY, context.mode());
+        assertSafeDiagnostic(appender.list.getFirst(), "startup-probe", RuntimeMode.RECOVERY, probeFailure);
+        assertEquals(IllegalArgumentException.class.getName(), appender.list.getFirst().getArgumentArray()[3]);
+    }
+
     @ParameterizedTest
     @EnumSource(value = RuntimeMode.class, names = {"NORMAL", "FULL_SETUP_GATED"})
     void contextFailureRetainsSafeDiagnosticWhenRecoverySucceeds(RuntimeMode failedMode) {
@@ -114,7 +131,7 @@ class StartupFailureReporterTest {
     @Test
     void diagnosticSinkFailureCannotPreventFailClosedRecovery() {
         RecordingLauncher launcher = new RecordingLauncher();
-        StartupFailureReporter reporter = new StartupFailureReporter((stage, mode, exceptionClass) -> {
+        StartupFailureReporter reporter = new StartupFailureReporter((stage, mode, exceptionClass, causeClass) -> {
             throw new IllegalStateException("diagnostic sink unavailable " + SECRET);
         });
         HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
@@ -150,15 +167,19 @@ class StartupFailureReporterTest {
 
     private static void assertSafeDiagnostic(
             ILoggingEvent event, String stage, RuntimeMode mode, RuntimeException originalFailure) {
+        String causeClass = originalFailure.getCause() == null
+                ? "none" : originalFailure.getCause().getClass().getName();
         assertEquals("Startup failure stage=" + stage + " mode=" + mode.value() + " exception="
-                + originalFailure.getClass().getName(), event.getFormattedMessage());
+                + originalFailure.getClass().getName() + " cause=" + causeClass,
+                event.getFormattedMessage());
         assertFalse(event.getFormattedMessage().contains(SECRET));
         assertFalse(event.getFormattedMessage().contains(JDBC_URL));
         assertFalse(event.getFormattedMessage().contains(CLI_SECRET));
-        assertEquals(3, event.getArgumentArray().length);
+        assertEquals(4, event.getArgumentArray().length);
         assertEquals(stage, event.getArgumentArray()[0]);
         assertEquals(mode.value(), event.getArgumentArray()[1]);
         assertEquals(originalFailure.getClass().getName(), event.getArgumentArray()[2]);
+        assertEquals(causeClass, event.getArgumentArray()[3]);
         assertNull(event.getThrowableProxy());
     }
 

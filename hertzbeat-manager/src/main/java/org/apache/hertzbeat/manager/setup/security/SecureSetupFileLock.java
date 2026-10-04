@@ -12,9 +12,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -56,8 +58,7 @@ public final class SecureSetupFileLock {
         jvmLock.lock();
         try {
             LockIdentity identity = initializeAndValidate();
-            try (FileChannel channel = FileChannel.open(
-                    lockFile, Set.of(StandardOpenOption.READ, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS));
+            try (FileChannel channel = openLockChannelWithRetry();
                  FileLock ignored = channel.lock()) {
                 validateLockedIdentity(channel, identity);
                 T result = operation.run();
@@ -84,9 +85,7 @@ public final class SecureSetupFileLock {
         }
         try {
             LockIdentity identity = initializeAndValidate();
-            try (FileChannel channel = FileChannel.open(
-                    lockFile, Set.of(StandardOpenOption.READ, StandardOpenOption.WRITE,
-                            LinkOption.NOFOLLOW_LINKS));
+            try (FileChannel channel = openLockChannelWithRetry();
                  FileLock acquired = channel.tryLock()) {
                 if (acquired == null) {
                     return TryResult.busy();
@@ -130,7 +129,9 @@ public final class SecureSetupFileLock {
             String created = IDENTITY_PREFIX + UUID.randomUUID() + '\n';
             SecureSetupFile.create(installationRoot, lockFile, created.getBytes(StandardCharsets.UTF_8));
         } catch (FileAlreadyExistsException existing) {
-            // Cooperating contexts converge on the existing owner-only inode.
+            // Cooperating contexts converge on the existing owner-only inode. Re-enforce the DACL so a
+            // stale lock created with an older owner-only permission set can still be opened on Windows.
+            SecureSetupFile.enforceOwnerOnly(lockFile);
         }
         validate();
         SecureSetupFile.forceParentDirectoryIfSupported(installationRoot, lockFile);
@@ -161,9 +162,42 @@ public final class SecureSetupFileLock {
         BasicFileAttributes attributes = Files.readAttributes(
                 lockFile, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         if (attributes.fileKey() == null) {
-            throw new IOException("Secure setup-file lock identity is unavailable");
+            // BasicFileAttributes.fileKey() is always null on Windows; fall back to a canonical-path
+            // identity so standalone setup locks remain usable there.
+            return lockFile.toRealPath();
         }
         return attributes.fileKey();
+    }
+
+    /**
+     * Windows Defender / Search Indexer can briefly hold a deny-share handle on newly-created files.
+     * Retry the reopen with backoff before failing the cooperative lock handshake.
+     */
+    private FileChannel openLockChannelWithRetry() throws IOException {
+        Set<OpenOption> options = Set.of(
+                StandardOpenOption.READ, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS);
+        long[] delaysMillis = {0L, 250L, 750L, 1500L, 3000L, 5000L, 8000L};
+        AccessDeniedException lastFailure = null;
+        for (int attempt = 0; attempt < delaysMillis.length; attempt++) {
+            long delay = delaysMillis[attempt];
+            if (delay > 0L) {
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    if (lastFailure != null) {
+                        throw lastFailure;
+                    }
+                    throw new IOException("Interrupted while retrying lock channel open", interrupted);
+                }
+            }
+            try {
+                return FileChannel.open(lockFile, options);
+            } catch (AccessDeniedException denied) {
+                lastFailure = denied;
+            }
+        }
+        throw lastFailure;
     }
 
     private String readPathIdentity() throws IOException {

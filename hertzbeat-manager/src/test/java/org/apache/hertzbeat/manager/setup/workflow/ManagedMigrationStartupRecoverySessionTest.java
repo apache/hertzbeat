@@ -16,6 +16,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
@@ -27,6 +30,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.LoggerFactory;
 
 class ManagedMigrationStartupRecoverySessionTest {
 
@@ -186,6 +190,10 @@ class ManagedMigrationStartupRecoverySessionTest {
 
     @Test
     void gatesJournalConflictAndSafeRuntimeFailuresButPreservesFatalError() {
+        Logger logger = (Logger) LoggerFactory.getLogger(ManagedMigrationStartupRecoverySession.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
         FileMigrationOperationStore corrupt = mock(FileMigrationOperationStore.class);
         when(corrupt.selectUniqueNonterminalForStartup())
                 .thenThrow(new MigrationOperationStoreException(SetupErrorCode.CONFIG_RECOVERY_REQUIRED));
@@ -194,7 +202,13 @@ class ManagedMigrationStartupRecoverySessionTest {
                      new ManagedMigrationStartupRecoverySession(root, corrupt, unused)) {
             assertThat(session.reconcile())
                     .isEqualTo(ManagedMigrationStartupRecoveryDisposition.GATED_RECOVERY);
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
         }
+        assertThat(appender.list)
+                .anySatisfy(event -> assertThat(event.getFormattedMessage())
+                        .contains("Migration startup preflight selection failed"));
         verify(unused, never()).reconcile(any());
 
         ManagedMigrationStartupRecoveryRuntime failing = mock(ManagedMigrationStartupRecoveryRuntime.class);

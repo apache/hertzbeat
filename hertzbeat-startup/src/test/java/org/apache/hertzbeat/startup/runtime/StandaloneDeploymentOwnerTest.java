@@ -87,6 +87,20 @@ class StandaloneDeploymentOwnerTest {
     }
 
     @Test
+    void ownershipFailurePreservesUnderlyingCause() throws Exception {
+        Path root = temporaryDirectory.resolve("cause");
+        Files.createDirectories(root.resolve("data/config"));
+        Path lock = root.resolve(StandaloneDeploymentOwner.LOCK_PATH);
+        Files.createDirectories(lock);
+
+        assertThatThrownBy(() -> StandaloneDeploymentOwner.acquire(resolve(root)))
+                .isInstanceOf(StandaloneDeploymentOwnerException.class)
+                .hasCauseInstanceOf(Exception.class)
+                .cause()
+                .isNotInstanceOf(StandaloneDeploymentOwnerException.class);
+    }
+
+    @Test
     void migrationLeaseCloseDoesNotReleaseProcessOwner() throws Exception {
         Path root = temporaryDirectory.resolve("lease");
         try (StandaloneDeploymentOwner owner = StandaloneDeploymentOwner.acquire(resolve(root))) {
