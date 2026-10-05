@@ -22,7 +22,7 @@ export class NoticeReceiver {
   name!: string;
   // notification mode: 0-sms 1-email 2-webhook 3-wechat public account 4-work wechat robot 5-Dingding robot 6-Feishu robot
   // 7-Telegram robot 8-SlackWebHook 9-Discord robot 10-work wechat app message 11-Huawei cloud SMN 12-ServerChan 13-Gotify
-  // 14-FeiShu app message 15-Ntfy
+  // 14-FeiShu app message 15-Ntfy 16-WPUSH
   type: number = 1;
   phone!: string;
   email!: string;
@@ -53,6 +53,9 @@ export class NoticeReceiver {
   ntfyServerUrl!: string;
   ntfyTopic!: string;
   ntfyToken!: string;
+  wpushToken!: string;
+  wpushChannel!: string;
+  wpushTopicCode!: string;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;

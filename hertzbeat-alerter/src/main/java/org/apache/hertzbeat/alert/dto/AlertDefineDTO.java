@@ -53,4 +53,6 @@ public class AlertDefineDTO {
     private Boolean enable;
     @Excel(name = "Datasource")
     private String datasource;
+    @Excel(name = "QueryLanguage")
+    private String queryLanguage;
 }
