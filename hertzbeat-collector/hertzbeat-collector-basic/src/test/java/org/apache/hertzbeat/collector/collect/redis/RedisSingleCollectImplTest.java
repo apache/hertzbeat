@@ -18,7 +18,10 @@
 package org.apache.hertzbeat.collector.collect.redis;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.TYPE_STRING;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -33,11 +36,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link RedisCommonCollectImpl}
@@ -158,5 +165,55 @@ class RedisSingleCollectImplTest {
         }
         clientMockedStatic.close();
         client.shutdown();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"monitor", "default"})
+    void testAclAuthentication(String username) {
+        RedisURI uri = redisUri(username, "redis-password");
+
+        assertEquals(username, uri.getUsername());
+        assertArrayEquals("redis-password".toCharArray(), uri.getPassword());
+        assertNull(uri.getClientName());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = " ")
+    void testPasswordOnlyAuthentication(String username) {
+        RedisURI uri = redisUri(username, "redis-password");
+
+        assertNull(uri.getUsername());
+        assertArrayEquals("redis-password".toCharArray(), uri.getPassword());
+        assertNull(uri.getClientName());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void testAclAuthenticationWithEmptyPassword(String password) {
+        RedisURI uri = redisUri("monitor", password);
+
+        assertEquals("monitor", uri.getUsername());
+        assertArrayEquals(new char[0], uri.getPassword());
+        assertNull(uri.getClientName());
+    }
+
+    @Test
+    void testNoAuthentication() {
+        RedisURI uri = redisUri(null, null);
+
+        assertNull(uri.getUsername());
+        assertNull(uri.getPassword());
+        assertNull(uri.getClientName());
+    }
+
+    private RedisURI redisUri(String username, String password) {
+        RedisProtocol protocol = RedisProtocol.builder()
+                .username(username)
+                .password(password)
+                .build();
+        RedisURI uri = ReflectionTestUtils.invokeMethod(redisSingleCollect, "redisUri", protocol, "localhost", "6379");
+        assertNotNull(uri);
+        return uri;
     }
 }

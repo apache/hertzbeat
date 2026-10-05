@@ -17,32 +17,35 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ResourceBundle;
 import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
 
 /**
  * Test case for Gotify Alert Notify
@@ -74,7 +77,7 @@ class GotifyAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
+        receiver.setGotifyToken("test-token");
 
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -91,10 +94,10 @@ class GotifyAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
 
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        lenient().when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
         // Allowlist the local test endpoint so the test stays deterministic (no DNS resolution)
-        when(alerterProperties.getInternalUrlAllowlist())
+        lenient().when(alerterProperties.getInternalUrlAllowlist())
                 .thenReturn(Collections.singletonList("localhost"));
     }
 
@@ -112,6 +115,10 @@ class GotifyAlertNotifyHandlerImplTest {
         )).thenReturn(responseEntity);
 
         gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(notificationRestTemplate).postForEntity(urlCaptor.capture(), any(), eq(CommonRobotNotifyResp.class));
+        assertEquals("http://localhost:8080/gotify/test-token", urlCaptor.getValue());
     }
 
     @Test
@@ -139,5 +146,12 @@ class GotifyAlertNotifyHandlerImplTest {
 
         assertThrows(AlertNoticeException.class,
                 () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testDefaultAlerterPropertiesUrl() {
+        AlerterProperties properties = new AlerterProperties();
+        String formattedUrl = String.format(properties.getGotifyWebhookUrl(), "test-token");
+        assertEquals("https://push.example.de/message?token=test-token", formattedUrl);
     }
 }

@@ -518,7 +518,32 @@ Open the official website address [https://hertzbeat.apache.org/docs/download/](
 
 > It should be noted that the download link may take effect after an hour, so please pay attention to it.
 
-#### 5.3 Generate a release on github
+#### 5.3 Cut the documentation version for the website
+
+The website serves the latest release at `/docs` and `master` at `/docs/next`. Snapshot the docs as a new version:
+
+```shell
+cd home
+pnpm install
+pnpm run docusaurus docs:version {version}   # plain ASCII: a full-width comma breaks routing
+```
+
+That covers `docs/` and `zh-cn`. Finish the rest by hand:
+
+- create `i18n/en/...-content-docs/version-{version}.json` and the `ko` one from each `current.json`; locales without a `current/` directory are skipped
+- set `version.label` to `{version}` in all three `version-{version}.json`, otherwise the version dropdown shows `dev`
+- point `lastVersion` at `{version}` in `docusaurus.config.js`
+
+Then verify and build:
+
+```shell
+diff -rq docs versioned_docs/version-{version}
+pnpm run md-lint && pnpm run build
+```
+
+Commit the snapshot on its own; it is several hundred files and stops being reviewable once mixed with other changes. After it is merged, the `DOC Deploy` workflow publishes the site to the `asf-site` branch.
+
+#### 5.4 Generate a release on github
 
 Update pre-release to create a tag named v1.7.3 based on the release-1.7.3-rc1 branch, and set this tag to latest release.
 
@@ -545,7 +570,7 @@ Then click the `Publish release` button.
 
 The rename the release-1.7.3-rc1 branch to release-1.7.3.
 
-#### 5.4 Send new version announcement email
+#### 5.5 Send new version announcement email
 
 > `Send to`: [announce@apache.org](mailto:announce@apache.org) <br />
 > `cc`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
@@ -582,5 +607,3 @@ Best,
 This version release is over.
 
 ---
-
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)

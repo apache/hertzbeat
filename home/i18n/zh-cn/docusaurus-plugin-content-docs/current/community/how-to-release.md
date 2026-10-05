@@ -542,7 +542,32 @@ svn mv https://dist.apache.org/repos/dist/dev/hertzbeat/{version}-RC1 https://di
 
 > 需要注意的是，下载链接可能需要一个小时后才会生效，请注意。
 
-### 5.3 Github 生成 Release
+### 5.3 切出官网文档版本
+
+官网的 `/docs` 提供最新发布版本的文档，`/docs/next` 跟随 `master`。把当前文档快照成一个新版本：
+
+```shell
+cd home
+pnpm install
+pnpm run docusaurus docs:version {version}   # 必须是纯 ASCII，全角逗号会导致无法路由
+```
+
+这一步只覆盖 `docs/` 和 `zh-cn`，剩下的需要手动完成：
+
+- 从各自的 `current.json` 创建 `i18n/en/...-content-docs/version-{version}.json` 和 `ko` 的那一份；没有 `current/` 目录的语言会被跳过
+- 把三份 `version-{version}.json` 里的 `version.label` 改成 `{version}`，否则版本下拉框会显示 `dev`
+- 把 `docusaurus.config.js` 里的 `lastVersion` 指向 `{version}`
+
+然后校验并构建：
+
+```shell
+diff -rq docs versioned_docs/version-{version}
+pnpm run md-lint && pnpm run build
+```
+
+这个快照要单独提交，它有好几百个文件，和别的改动混在一起就没法 review 了。合并后 `DOC Deploy` 工作流会把站点发布到 `asf-site` 分支。
+
+### 5.4 Github 生成 Release
 
 基于 `release-{version}-rc1` 分支修改创建一个名为 `v{version}` 的标签，并将此标签设置为 latest release。
 
@@ -569,7 +594,7 @@ release note: xxx
 
 然后将 `release-{version}-rc1` 分支重命名为 `release-{version}`。
 
-### 5.4 发送新版本公告邮件
+### 5.5 发送新版本公告邮件
 
 > `Send to`: [announce@apache.org](mailto:announce@apache.org) <br />
 > `cc`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />

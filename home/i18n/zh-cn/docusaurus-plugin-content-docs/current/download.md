@@ -56,7 +56,7 @@ description: Apache HertzBeat 监控系统下载 - 服务器、采集器、源�
 
 ## 归档版本
 
-在这里查看所有历史已归档版本：[archive](https://archive.apache.org/dist/incubator/hertzbeat/).
+在这里查看所有历史已归档版本：[archive](https://archive.apache.org/dist/hertzbeat/).
 
 ## 下载常见问题
 
@@ -125,7 +125,7 @@ cd apache-hertzbeat-1.9.0
 
 ### 在哪里可以找到旧版本？
 
-以前版本归档在 [https://archive.apache.org/dist/incubator/hertzbeat/](https://archive.apache.org/dist/incubator/hertzbeat/)
+以前版本归档在 [https://archive.apache.org/dist/hertzbeat/](https://archive.apache.org/dist/hertzbeat/)
 
 ### 新版本多久发布一次？
 
