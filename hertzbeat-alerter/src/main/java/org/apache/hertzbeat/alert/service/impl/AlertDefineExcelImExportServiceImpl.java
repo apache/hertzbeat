@@ -156,6 +156,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(7)));
         alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
         alertDefineDTO.setDatasource(getCellValueAsString(row.getCell(9)));
+        alertDefineDTO.setQueryLanguage(getCellValueAsString(row.getCell(10)));
         return alertDefineDTO;
     }
 
@@ -187,7 +188,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
             // set header
-            String[] headers = {"Name", "Type", "Expr", "Period", "Times", "Labels", "Annotations", "Template", "Enable", "Datasource"};
+            String[] headers = {"Name", "Type", "Expr", "Period", "Times", "Labels", "Annotations", "Template", "Enable", "Datasource", "QueryLanguage"};
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -231,6 +232,9 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                 Cell datasourceCell = row.createCell(9);
                 datasourceCell.setCellValue(alertDefineDTO.getDatasource());
                 datasourceCell.setCellStyle(cellStyle);
+                Cell queryLanguageCell = row.createCell(10);
+                queryLanguageCell.setCellValue(alertDefineDTO.getQueryLanguage() != null ? alertDefineDTO.getQueryLanguage() : alertDefineDTO.getDatasource());
+                queryLanguageCell.setCellStyle(cellStyle);
             }
             workbook.write(os);
             os.close();
