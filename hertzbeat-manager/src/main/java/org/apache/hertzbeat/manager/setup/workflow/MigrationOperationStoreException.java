@@ -10,13 +10,21 @@ package org.apache.hertzbeat.manager.setup.workflow;
 import java.util.Objects;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 
-/** Stable store failure that never retains provider messages, paths, or operation payloads. */
+/**
+ * Stable store failure whose own message never retains provider messages, paths, or operation payloads.
+ * An optional cause may be attached for diagnostics without changing the stable public message.
+ */
 public final class MigrationOperationStoreException extends RuntimeException {
 
     private final SetupErrorCode errorCode;
 
     MigrationOperationStoreException(SetupErrorCode errorCode) {
-        super("Migration operation store failed: " + Objects.requireNonNull(errorCode, "errorCode").value());
+        this(errorCode, null);
+    }
+
+    MigrationOperationStoreException(SetupErrorCode errorCode, Throwable cause) {
+        super("Migration operation store failed: " + Objects.requireNonNull(errorCode, "errorCode").value(),
+                cause);
         this.errorCode = errorCode;
     }
 

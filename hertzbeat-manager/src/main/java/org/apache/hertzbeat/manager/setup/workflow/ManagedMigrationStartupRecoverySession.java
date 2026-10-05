@@ -17,6 +17,8 @@ import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOpe
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Holds one exact migration startup recovery binding across retries without Spring or persistence beans.
@@ -24,6 +26,8 @@ import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
  */
 public final class ManagedMigrationStartupRecoverySession implements AutoCloseable {
 
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ManagedMigrationStartupRecoverySession.class);
     private final FileMigrationOperationStore store;
     private final ManagedMigrationStartupRecoveryRuntime runtime;
     private Selection selection;
@@ -67,8 +71,11 @@ public final class ManagedMigrationStartupRecoverySession implements AutoCloseab
             }
             return disposition;
         } catch (MigrationStartupReconciliationException | MigrationOperationStoreException failure) {
+            LOGGER.warn("Migration startup recovery reconciliation failed; gating recovery", failure);
             return ManagedMigrationStartupRecoveryDisposition.GATED_RECOVERY;
         } catch (RuntimeException failure) {
+            LOGGER.warn("Migration startup recovery reconciliation failed unexpectedly; gating recovery",
+                    failure);
             return ManagedMigrationStartupRecoveryDisposition.GATED_RECOVERY;
         }
     }
@@ -96,6 +103,7 @@ public final class ManagedMigrationStartupRecoverySession implements AutoCloseab
                     snapshot.operationId(), snapshot.target(), snapshot.applyMode(),
                     snapshot.createdAt(), snapshot.startedAt(), snapshot.managedCandidateGeneration()));
         } catch (MigrationOperationStoreException | IllegalArgumentException failure) {
+            LOGGER.warn("Migration startup preflight selection failed; gating recovery", failure);
             return Selection.fixed(ManagedMigrationStartupRecoveryDisposition.GATED_RECOVERY);
         }
     }

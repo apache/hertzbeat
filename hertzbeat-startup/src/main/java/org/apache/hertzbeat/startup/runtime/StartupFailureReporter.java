@@ -22,15 +22,19 @@ import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Emits startup diagnostics without retaining exception messages or causes. */
+/**
+ * Emits startup diagnostics without retaining exception messages.
+ * Cause class names are included so operators can distinguish wrapped failures without leaking secrets.
+ */
 final class StartupFailureReporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StartupFailureReporter.class);
     private final DiagnosticSink sink;
 
     StartupFailureReporter() {
-        this((stage, mode, exceptionClass) -> LOGGER.warn(
-                "Startup failure stage={} mode={} exception={}", stage, mode, exceptionClass));
+        this((stage, mode, exceptionClass, causeClass) -> LOGGER.warn(
+                "Startup failure stage={} mode={} exception={} cause={}",
+                stage, mode, exceptionClass, causeClass));
     }
 
     StartupFailureReporter(DiagnosticSink sink) {
@@ -39,10 +43,15 @@ final class StartupFailureReporter {
 
     void report(Stage stage, RuntimeMode mode, RuntimeException failure) {
         try {
-            sink.report(stage.value(), safeMode(mode), failure.getClass().getName());
+            sink.report(stage.value(), safeMode(mode), failure.getClass().getName(), causeClass(failure));
         } catch (RuntimeException ignored) {
             // Diagnostics are best-effort and must never change startup recovery control flow.
         }
+    }
+
+    private static String causeClass(Throwable failure) {
+        Throwable cause = failure.getCause();
+        return cause == null ? "none" : cause.getClass().getName();
     }
 
     private static String safeMode(RuntimeMode mode) {
@@ -57,7 +66,7 @@ final class StartupFailureReporter {
     @FunctionalInterface
     interface DiagnosticSink {
 
-        void report(String stage, String mode, String exceptionClass);
+        void report(String stage, String mode, String exceptionClass, String causeClass);
     }
 
     enum Stage {
