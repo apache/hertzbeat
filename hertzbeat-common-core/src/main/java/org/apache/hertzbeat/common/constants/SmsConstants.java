@@ -27,9 +27,6 @@ public interface SmsConstants {
     // Alibaba Cloud SMS
     String ALIBABA = "alibaba";
 
-    // UniSMS
-    String UNISMS = "unisms";
-
     // Smslocal SMS
     String SMSLOCAL = "smslocal";
 
