@@ -95,7 +95,7 @@ public class CommonHttpClient {
     /**
      * ssl supported version
      */
-    private static final String[] SUPPORTED_SSL = {"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"};
+    private static final String[] SUPPORTED_SSL = {"TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"};
 
     static {
         try {
@@ -174,6 +174,10 @@ public class CommonHttpClient {
 
     static void setConnectionManagerForTest(PoolingHttpClientConnectionManager manager) {
         connectionManager = manager;
+    }
+
+    static String[] supportedSslProtocolsForTest() {
+        return SUPPORTED_SSL.clone();
     }
 
     static void setBeforeCleanupHookForTest(Runnable hook) {
