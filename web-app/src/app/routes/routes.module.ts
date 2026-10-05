@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { NgModule, Type } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule, Type } from '@angular/core';
 // eslint-disable-next-line import/order
 import { SharedModule } from '@shared';
 
@@ -17,7 +17,6 @@ import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzTreeComponent } from 'ng-zorro-antd/tree';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NgxEchartsModule } from 'ngx-echarts';
-import { SlickCarouselModule } from 'ngx-slick-carousel';
 
 import { LayoutModule } from '../layout/layout.module';
 import { BulletinComponent } from './bulletin/bulletin.component';
@@ -36,7 +35,6 @@ const COMPONENTS: Array<Type<void>> = [DashboardComponent, UserLoginComponent, U
     NgxEchartsModule,
     NzTagModule,
     NzTimelineModule,
-    SlickCarouselModule,
     TagCloudComponent,
     NzDividerModule,
     NzEmptyModule,
@@ -51,6 +49,7 @@ const COMPONENTS: Array<Type<void>> = [DashboardComponent, UserLoginComponent, U
     NzSwitchComponent,
     NzTreeComponent
   ],
-  declarations: COMPONENTS
+  declarations: COMPONENTS,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class RoutesModule {}

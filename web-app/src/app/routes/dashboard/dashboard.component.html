@@ -20,8 +20,22 @@
 <div class="mobile-hide">
   <div nz-row nzGutter="16">
     <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 24 }" style="height: 100%">
-      <ngx-slick-carousel nz-row class="carousel" [config]="slideConfig" *ngIf="categoryCards.length > 0">
-        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide" *ngFor="let card of categoryCards">
+      <swiper-container
+        *ngIf="categoryCards.length > 0"
+        class="dashboard-carousel"
+        [slidesPerView]="categoryCarouselOptions.slidesPerView"
+        [slidesPerGroup]="categoryCarouselOptions.slidesPerGroup"
+        [spaceBetween]="categoryCarouselOptions.spaceBetween"
+        [speed]="categoryCarouselOptions.speed"
+        [navigation]="categoryCarouselOptions.navigation"
+        [watchOverflow]="categoryCarouselOptions.watchOverflow"
+        [observer]="categoryCarouselOptions.observer"
+        [observeParents]="categoryCarouselOptions.observeParents"
+        [rewind]="categoryCarouselOptions.rewind"
+        [autoplay]="categoryCarouselOptions.autoplay"
+        [breakpoints]="categoryCarouselOptions.breakpoints"
+      >
+        <swiper-slide class="dashboard-slide" *ngFor="let card of categoryCards">
           <div class="hoverCard">
             <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
               <div nz-col nzSpan="9" class="p-md text-white">
@@ -49,8 +63,8 @@
               </div>
             </div>
           </div>
-        </div>
-      </ngx-slick-carousel>
+        </swiper-slide>
+      </swiper-container>
       <div *ngIf="!appsCountLoading && totalMonitors === 0" class="dashboard-empty-state">
         <nz-empty [nzNotFoundContent]="emptyContent" [nzNotFoundFooter]="emptyFooter">
           <ng-template #emptyContent>

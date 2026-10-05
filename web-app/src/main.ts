@@ -3,9 +3,12 @@ import { enableProdMode, EnvironmentInjector, ViewEncapsulation, Injector, PLATF
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { stepPreloader } from '@delon/theme';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
+import { register } from 'swiper/element/bundle';
 
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
+
+register();
 
 const injector = Injector.create({
   providers: [
