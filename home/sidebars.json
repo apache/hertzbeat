@@ -316,7 +316,7 @@
           "type": "category",
           "label": "Custom",
           "key": "help-custom",
-          "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
+          "items": ["help/hertzbeat", "help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/status",
         "help/bulletin",
