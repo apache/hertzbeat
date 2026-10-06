@@ -20,6 +20,7 @@ package org.apache.hertzbeat.ai.dao;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public interface ChatMessageDao extends JpaRepository<ChatMessage, Long> {
      * @param conversationId conversation id
      * @return list of messages
      */
+    @Transactional(readOnly = true)
     List<ChatMessage> findByConversationIdOrderByGmtCreateAsc(Long conversationId);
 
     /**
@@ -41,5 +43,6 @@ public interface ChatMessageDao extends JpaRepository<ChatMessage, Long> {
      * @param conversationIds list of conversation ids
      * @return list of messages
      */
+    @Transactional(readOnly = true)
     List<ChatMessage> findByConversationIdInOrderByGmtCreateAsc(List<Long> conversationIds);
 }
