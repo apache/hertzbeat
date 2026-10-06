@@ -21,15 +21,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ResourceBundle;
 import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,32 +42,28 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
-
 /**
- * Test case for Gotify Alert Notify
+ * Test case for {@link WpushAlertNotifyHandlerImpl}
  */
 @ExtendWith(MockitoExtension.class)
-class GotifyAlertNotifyHandlerImplTest {
+class WpushAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
+
     @Mock
     private AlerterProperties alerterProperties;
-    
+
     @Mock
     private ResourceBundle bundle;
 
     @InjectMocks
-    private GotifyAlertNotifyHandlerImpl gotifyAlertNotifyHandler;
+    private WpushAlertNotifyHandlerImpl wpushAlertNotifyHandler;
 
     private NoticeReceiver receiver;
     private GroupAlert groupAlert;
@@ -73,72 +74,100 @@ class GotifyAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setGotifyToken("test-token");
-        
+        receiver.setWpushToken("wpush-test-apikey-xxxxx");
+        receiver.setWpushChannel("wechat");
+        receiver.setWpushTopicCode("topic-demo");
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
+
+        lenient().when(alerterProperties.getWpushWebhookUrl())
+                .thenReturn("https://api.wpush.cn/api/v1/send");
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
-    public void testNotifyAlertSuccess() {
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
+    public void testType() {
+        assertEquals(16, wpushAlertNotifyHandler.type());
+    }
 
+    @Test
+    public void testNotifyAlertSuccessWhenCodeIsZero() {
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
-        successResp.setErrCode(0);
+        successResp.setCode(0);
+        successResp.setMsg("success");
         ResponseEntity<CommonRobotNotifyResp> responseEntity =
                 new ResponseEntity<>(successResp, HttpStatus.OK);
 
         when(restTemplate.postForEntity(
                 any(String.class),
                 any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
-        
-        gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
 
-        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(restTemplate).postForEntity(urlCaptor.capture(), any(), eq(CommonRobotNotifyResp.class));
-        assertEquals("http://localhost:8080/gotify/test-token", urlCaptor.getValue());
+        wpushAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForEntity(
+                eq("https://api.wpush.cn/api/v1/send"),
+                entityCaptor.capture(),
+                eq(CommonRobotNotifyResp.class));
+        WpushAlertNotifyHandlerImpl.WpushNotifyDto body =
+                (WpushAlertNotifyHandlerImpl.WpushNotifyDto) entityCaptor.getValue().getBody();
+        assertEquals("wpush-test-apikey-xxxxx", body.getApikey());
+        assertEquals("Alert Notification", body.getTitle());
+        assertEquals("wechat", body.getChannel());
+        assertEquals("topic-demo", body.getTopicCode());
     }
 
     @Test
-    public void testNotifyAlertFailure() {
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
-
+    public void testNotifyAlertFailureWhenCodeNonZero() {
         CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
         failResp.setCode(1);
-        failResp.setErrMsg("Test Error");
+        failResp.setMsg("invalid apikey");
+        ResponseEntity<CommonRobotNotifyResp> responseEntity =
+                new ResponseEntity<>(failResp, HttpStatus.OK);
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
+
+        assertThrows(AlertNoticeException.class,
+                () -> wpushAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertFailureWhenHttpNotOk() {
+        CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
+        failResp.setCode(0);
         ResponseEntity<CommonRobotNotifyResp> responseEntity =
                 new ResponseEntity<>(failResp, HttpStatus.BAD_REQUEST);
 
         when(restTemplate.postForEntity(
                 any(String.class),
                 any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
-        
-        assertThrows(AlertNoticeException.class, 
-                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
+
+        assertThrows(AlertNoticeException.class,
+                () -> wpushAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
-    public void testDefaultAlerterPropertiesUrl() {
-        AlerterProperties properties = new AlerterProperties();
-        String formattedUrl = String.format(properties.getGotifyWebhookUrl(), "test-token");
-        assertEquals("https://push.example.de/message?token=test-token", formattedUrl);
+    public void testNotifyAlertFailureWhenMissingToken() {
+        receiver.setWpushToken(null);
+        assertThrows(AlertNoticeException.class,
+                () -> wpushAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }

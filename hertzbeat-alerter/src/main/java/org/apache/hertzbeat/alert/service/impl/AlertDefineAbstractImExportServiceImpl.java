@@ -91,6 +91,9 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
         var exportAlertDefine = new ExportAlertDefineDTO();
         var alertDefineDTO = new AlertDefineDTO();
         BeanUtils.copyProperties(alertDefine, alertDefineDTO);
+        if (alertDefineDTO.getQueryLanguage() == null && alertDefine.getDatasource() != null) {
+            alertDefineDTO.setQueryLanguage(alertDefine.getDatasource());
+        }
         exportAlertDefine.setAlertDefine(alertDefineDTO);
         return exportAlertDefine;
     }
@@ -99,6 +102,9 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
         var alertDefine = new AlertDefine();
         var alertDefineDTO = exportAlertDefineDTO.getAlertDefine();
         BeanUtils.copyProperties(alertDefineDTO, alertDefine);
+        if (alertDefine.getDatasource() == null && alertDefineDTO.getQueryLanguage() != null) {
+            alertDefine.setDatasource(alertDefineDTO.getQueryLanguage());
+        }
         return alertDefine;
     }
 

@@ -574,7 +574,7 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind/3.1.0 Apache-2.0
     https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-xml/3.1.0 Apache-2.0
     https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-yaml/3.1.0 Apache-2.0
-    https://mvnrepository.com/artifact/xerces/xercesImpl/2.11.0 Apache-2.0
+    https://mvnrepository.com/artifact/xerces/xercesImpl/2.12.2 Apache-2.0
     https://mvnrepository.com/artifact/xml-apis/xml-apis/1.4.01 Apache-2.0
 
 ========================================================================
