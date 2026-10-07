@@ -55,8 +55,8 @@ jobs:
       run: |
         mvnd -B clean package -Prelease,cluster -Dmaven.test.skip=false --file pom.xml
 
-    - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
-    - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+    - uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8  # v4.2.0
+    - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4.3.0
     - name: Log in to Docker Hub
       uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4.4.0
       with:
