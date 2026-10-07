@@ -315,6 +315,113 @@ class SshCollectImplTest {
         assertEquals("挂载正常", builder.getValues(0).getColumns(0));
     }
 
+    @Test
+    void collectParsesMultiRowWithAlignedAndTabSeparatedColumns() throws Exception {
+        // header and rows mix multiple spaces, tabs and leading/trailing padding; a literal
+        // single-space split shifted the columns, so every projected field must stay aligned
+        String stdout = "  NAME\t   SIZE     USED \n"
+                + "disk1\t40G   15G \n"
+                + "  disk2  20G\t5G";
+        ChannelExec channel = oneRowChannel(stdout, "", 0);
+        Metrics metrics = Metrics.builder().ssh(multiRowProtocol()).build();
+        metrics.setAliasFields(List.of("name", "size", "used"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(2, builder.getValuesCount());
+        assertEquals("disk1", builder.getValues(0).getColumns(0));
+        assertEquals("40G", builder.getValues(0).getColumns(1));
+        assertEquals("15G", builder.getValues(0).getColumns(2));
+        assertEquals("disk2", builder.getValues(1).getColumns(0));
+        assertEquals("20G", builder.getValues(1).getColumns(1));
+        assertEquals("5G", builder.getValues(1).getColumns(2));
+    }
+
+    @Test
+    void collectParsesMultiRowWithSingleSpaceColumns() throws Exception {
+        String stdout = "name size used\ndisk1 40G 15G";
+        ChannelExec channel = oneRowChannel(stdout, "", 0);
+        Metrics metrics = Metrics.builder().ssh(multiRowProtocol()).build();
+        metrics.setAliasFields(List.of("name", "size", "used"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("disk1", builder.getValues(0).getColumns(0));
+        assertEquals("40G", builder.getValues(0).getColumns(1));
+        assertEquals("15G", builder.getValues(0).getColumns(2));
+    }
+
+    @Test
+    void collectParsesMultiRowProjectsColumnsByHeaderAlias() throws Exception {
+        // alias order differs from the header order: values must follow the header name mapping
+        String stdout = "name\tsize  used\n disk1  40G\t15G";
+        ChannelExec channel = oneRowChannel(stdout, "", 0);
+        Metrics metrics = Metrics.builder().ssh(multiRowProtocol()).build();
+        metrics.setAliasFields(List.of("used", "name"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("15G", builder.getValues(0).getColumns(0));
+        assertEquals("disk1", builder.getValues(0).getColumns(1));
+    }
+
+    @Test
+    void collectParsesMultiRowReturnsNullForMissingColumns() throws Exception {
+        // a row shorter than the header and an alias absent from the header both stay NULL
+        String stdout = "name size used\ndisk1 40G";
+        ChannelExec channel = oneRowChannel(stdout, "", 0);
+        Metrics metrics = Metrics.builder().ssh(multiRowProtocol()).build();
+        metrics.setAliasFields(List.of("name", "size", "used", "vendor"));
+
+        ClientSession clientSession = channelSession(channel);
+        try (MockedStatic<SshHelper> sshHelper = mockStatic(SshHelper.class)) {
+            sshHelper.when(() -> SshHelper.getConnectSession(any(), anyInt(), anyBoolean(), anyBoolean()))
+                    .thenReturn(clientSession);
+            sshCollect.collect(builder, metrics);
+        }
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("disk1", builder.getValues(0).getColumns(0));
+        assertEquals("40G", builder.getValues(0).getColumns(1));
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(2));
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(3));
+    }
+
+    private SshProtocol multiRowProtocol() {
+        return SshProtocol.builder()
+                .host("target.example.com")
+                .port("22")
+                .username("root")
+                .password("password")
+                .timeout("1000")
+                .reuseConnection("true")
+                .useProxy("false")
+                .script("echo ok")
+                .parseType("multiRow")
+                .build();
+    }
+
     private SshProtocol oneRowProtocol() {
         return SshProtocol.builder()
                 .host("target.example.com")
