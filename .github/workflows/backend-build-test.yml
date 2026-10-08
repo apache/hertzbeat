@@ -122,7 +122,7 @@ jobs:
         working-directory: e2e
         env:
           SERVER: http://localhost:1157
-        run: python3 auth_contract_test.py
+        run: python3 ci/auth_contract_test.py
 
       - name: Run API E2E tests
         working-directory: e2e
