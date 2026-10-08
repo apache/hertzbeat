@@ -112,11 +112,20 @@ jobs:
           push: false
           tags: apache/hertzbeat:test
 
-      - name: Run E2E
+      - name: Start E2E environment
+        working-directory: e2e
         run: |
-          cd e2e
           docker compose version
-          docker compose up --exit-code-from testing --remove-orphans
+          docker compose up -d --wait hertzbeat checker
+
+      - name: Run authentication contract tests
+        env:
+          SERVER: http://localhost:1157
+        run: python3 script/ci/auth_contract_test.py
+
+      - name: Run API E2E tests
+        working-directory: e2e
+        run: docker compose up --exit-code-from testing --remove-orphans
 
       # upload application logs
       - name: Upload logs & API test reports
