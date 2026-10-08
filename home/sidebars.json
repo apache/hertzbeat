@@ -220,6 +220,7 @@
             "help/rockylinux",
             "help/euleros",
             "help/fedora",
+            "help/coreos",
             "help/linux_script",
             "help/windows_script",
             "help/macos",
@@ -283,6 +284,7 @@
             "help/presto",
             "help/seatunnel",
             "help/spark",
+            "help/superset",
             "help/yarn",
             "help/dolphinscheduler"
           ]
