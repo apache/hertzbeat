@@ -8,6 +8,31 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 
 阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。
 
+## 在请求体中使用动态 UUID v4
+
+在 HTTP 指标的 `payload` 中填写 `{{v4uuid}}`，即可插入随机 UUID v4。每轮采集开始时生成一个 UUID，同一轮的所有 HTTP 指标共用这个值，包括认证指标和后续指标。下一轮采集会生成新值，不同监控任务的 UUID 相互独立。
+
+例如，在自定义监控模板中，为后续指标的 HTTP 配置添加请求 ID：
+
+```yaml
+http:
+  host: ^_^host^_^
+  port: ^_^port^_^
+  method: POST
+  url: /api/data
+  headers:
+    Content-Type: application/json
+    Authorization: ^o^token^o^
+  payload: |
+    {"requestId":"{{v4uuid}}","correlation":{"id":"{{v4uuid}}"}}
+  parseType: jsonPath
+  parseScript: '$.data'
+```
+
+请按实际 API 调整请求路径、响应指标字段和 token 名称。上面的两个 UUID 占位符会替换为同一个值。如果认证请求也需要共用这个 ID，可在认证指标的请求体中同样添加 `"requestId":"{{v4uuid}}"`。
+
+通过监控参数传入的请求体也支持此占位符，例如 `payload: ^_^payload^_^`。静态参数和前序指标产生的变量（如 `^o^token^o^`）保持原有行为。UUID 替换仅作用于 HTTP 请求体，不修改请求头、URL 或指标名称；保存的模板仍保留占位符，供后续采集周期使用。
+
 ## 请求流程
 
 【**认证信息监控指标(优先级最高)**】【**HTTP接口携带账户密码调用**】->【**响应数据解析**】->【**解析签发TOKEN-accessToken作为指标**】->【**将accessToken作为变量参数赋值给其他采集监控指标**】
