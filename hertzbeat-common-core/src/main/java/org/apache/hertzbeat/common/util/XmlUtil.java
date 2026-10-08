@@ -64,7 +64,7 @@ public class XmlUtil {
      * Convert XML string to object with TypeReference
      */
     public static <T> T fromXml(String xml, TypeReference<T> type) {
-        if (!StringUtils.isEmpty(xml)) {
+        if (StringUtils.isEmpty(xml)) {
             return null;
         }
         try {
