@@ -40,15 +40,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.xml.secure.SecureDocumentBuilderFactory;
+import org.apache.commons.xml.secure.SecureXPathFactory;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
@@ -329,11 +329,9 @@ public class HttpCollectImpl extends AbstractCollect {
         List<String> siteUrls = new LinkedList<>();
         boolean isXmlFormat = true;
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            // see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
-            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            dbf.setXIncludeAware(false);
-            DocumentBuilder db = dbf.newDocumentBuilder();
+            // Apache Commons Secure XML ignores external resources (DTDs, entities, XInclude), see
+            // https://commons.apache.org/proper/commons-secure-xml/threat_model.html
+            DocumentBuilder db = SecureDocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document document = db.parse(new InputSource(new StringReader(resp)));
             NodeList urlList = document.getElementsByTagName("url");
             for (int i = 0; i < urlList.getLength(); i++) {
@@ -484,20 +482,12 @@ public class HttpCollectImpl extends AbstractCollect {
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
 
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-
-            // Layer 4: Enable XML secure processing and XXE protection
-            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            dbf.setXIncludeAware(false);
-            dbf.setExpandEntityReferences(false);
-
-            DocumentBuilder db = dbf.newDocumentBuilder();
+            // Layer 4: Apache Commons Secure XML ignores external resources (DTDs, entities, XInclude), see
+            // https://commons.apache.org/proper/commons-secure-xml/threat_model.html
+            DocumentBuilder db = SecureDocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document document = db.parse(new InputSource(new StringReader(resp)));
 
-            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPathFactory xpathFactory = SecureXPathFactory.newInstance();
             XPath xpath = xpathFactory.newXPath();
 
             NodeList nodeList = (NodeList) xpath.evaluate(xpathExpression, document, XPathConstants.NODESET);
