@@ -23,8 +23,12 @@ import importlib.util
 import hashlib
 import io
 import json
+import os
+import signal
+import subprocess
 import tarfile
 import tempfile
+import threading
 import unittest
 import zipfile
 from pathlib import Path
@@ -766,6 +770,177 @@ class ReleaseContentPolicyTest(unittest.TestCase):
                 )
                 with self.assertRaises(release_content.ReleasePolicyError):
                     release_content.inspect_release_archive(release)
+
+
+class NativeLauncherReadinessTest(unittest.TestCase):
+    def run_shutdown(self, mode: str) -> tuple[int, str, bool, bool]:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "native [proof] with spaces"
+            for directory in ("bin", "logs", "fake"):
+                (root / directory).mkdir(parents=True)
+            source = Path(__file__).resolve().parents[2] / "script/assembly/collector/bin-native/shutdown.sh"
+            launcher = root / "bin/shutdown.sh"
+            launcher.write_text(source.read_text().replace("${project.artifactId}", "collector")
+                                .replace("${project.build.finalName}", "native-proof"))
+            child = subprocess.Popen(["/bin/bash", "-c", 'trap "" TERM; exec /bin/sleep 30']
+                                     if mode != "graceful" else ["/bin/sleep", "30"])
+            reaper = threading.Thread(target=child.wait, daemon=True)
+            reaper.start()
+            pid_file = root / "logs/collector.pid"
+            if mode != "fallback":
+                pid_file.write_text(str(child.pid))
+            (root / "fake/sleep").write_text("#!/bin/sh\nexec /bin/sleep 0.01\n")
+            (root / "fake/ps").write_text('''#!/bin/sh
+command="$PROOF_APP --spring.config.location=$PROOF_CONF/"
+if [ "$1" = -p ]; then
+  count=$(cat "$PROOF_COUNT" 2>/dev/null || echo 0)
+  count=$((count + 1)); echo "$count" > "$PROOF_COUNT"
+  if [ "$PROOF_MODE" = changed ] && [ "$count" -ge 3 ]; then command="unrelated-process"; fi
+  if [ "$PROOF_MODE" = wrong-config ]; then command="$PROOF_APP --spring.config.location=$PROOF_CONF/other"; fi
+  printf '%s\n' "$command"
+elif [ "$PROOF_MODE" = fallback ]; then
+  printf '%s %s\n' "$PROOF_PID" "$command"
+fi
+''')
+            for name in ("sleep", "ps"):
+                (root / "fake" / name).chmod(0o755)
+            env = os.environ.copy()
+            env.pop("BASH_ENV", None)
+            env.update(PATH=str(root / "fake") + ":/usr/bin:/bin", PROOF_MODE=mode,
+                       PROOF_APP=str(root / "native-proof"), PROOF_CONF=str(root / "config"),
+                       PROOF_PID=str(child.pid), PROOF_COUNT=str(root / "ps-count"))
+            try:
+                result = subprocess.run(["/bin/bash", str(launcher)], env=env,
+                                        capture_output=True, text=True, timeout=5)
+                return result.returncode, result.stdout + result.stderr, child.poll() is None, pid_file.exists()
+            finally:
+                child.kill()
+                reaper.join(timeout=2)
+
+    def test_shutdown_deadline_and_identity_change_never_escalate(self) -> None:
+        for mode, message in (("stubborn", "still live"), ("changed", "changed identity")):
+            with self.subTest(mode=mode):
+                code, output, alive, pid_retained = self.run_shutdown(mode)
+                self.assertEqual(1, code, output)
+                self.assertTrue(alive, output)
+                self.assertTrue(pid_retained, output)
+                self.assertIn(message, output)
+                self.assertNotIn("Shutdown Apache HertzBeat collector Success", output)
+
+    def test_shutdown_literal_fallback_and_exact_config_boundary(self) -> None:
+        code, output, alive, _ = self.run_shutdown("fallback")
+        self.assertEqual(1, code, output)
+        self.assertTrue(alive, output)
+        self.assertIn("still live", output)
+        code, output, alive, _ = self.run_shutdown("wrong-config")
+        self.assertEqual(0, code, output)
+        self.assertTrue(alive, output)
+        self.assertIn("already stopped", output)
+
+    def test_shutdown_success_requires_actual_disappearance(self) -> None:
+        code, output, alive, pid_retained = self.run_shutdown("graceful")
+        self.assertEqual(0, code, output)
+        self.assertFalse(alive, output)
+        self.assertFalse(pid_retained, output)
+        self.assertIn("Shutdown Apache HertzBeat collector Success", output)
+
+    def test_stale_pid_file_does_not_stop_an_unrelated_process(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "bin").mkdir()
+            (root / "logs").mkdir()
+            (root / "fake").mkdir()
+            source_root = Path(__file__).resolve().parents[2] / "script/assembly/collector/bin-native"
+            for name in ("startup.sh", "shutdown.sh"):
+                (root / "bin" / name).write_text((source_root / name).read_text()
+                    .replace("${project.artifactId}", "collector")
+                    .replace("${project.build.finalName}", "native-proof"))
+            sleep = root / "fake/sleep"
+            sleep.write_text("#!/bin/sh\nexec /bin/sleep 0.01\n")
+            sleep.chmod(0o755)
+            env = os.environ.copy()
+            env.update(PATH=str(root / "fake") + ":/usr/bin:/bin")
+            env.pop("BASH_ENV", None)
+            child = subprocess.Popen(["/bin/sleep", "30"])
+            try:
+                (root / "logs/collector.pid").write_text(str(child.pid))
+                status = subprocess.run(["/bin/bash", str(root / "bin/startup.sh"), "status"],
+                                        env=env, capture_output=True, text=True, timeout=5)
+                shutdown = subprocess.run(["/bin/bash", str(root / "bin/shutdown.sh")],
+                                          env=env, capture_output=True, text=True, timeout=5)
+                self.assertIsNone(child.poll(), shutdown.stdout + shutdown.stderr)
+                self.assertIn("is stopped", status.stdout)
+                self.assertEqual(0, shutdown.returncode, shutdown.stderr)
+            finally:
+                child.terminate()
+                child.wait(timeout=2)
+
+    def run_native(self, mode: str) -> tuple[int, str]:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            app = root / "native with spaces"
+            fake = root / "fake"
+            (app / "bin").mkdir(parents=True)
+            (app / "config").mkdir()
+            fake.mkdir()
+            source = Path(__file__).resolve().parents[2] / "script/assembly/collector/bin-native/startup.sh"
+            launcher = app / "bin/startup.sh"
+            launcher.write_text(source.read_text().replace("${project.artifactId}", "collector")
+                                .replace("${project.build.finalName}", "native-proof"))
+            binary = app / "native-proof"
+            binary.write_text("#!/bin/sh\n" + ("exit 42\n" if mode == "dead" else "exec /bin/sleep 30\n"))
+            binary.chmod(0o755)
+            for name, body in {
+                "ps": 'if [ "$1" = -p ]; then printf "%s --spring.config.location=%s/\\n" "$PROOF_APP" "$PROOF_CONF"; fi',
+                "sleep": "exec /bin/sleep 0.01",
+                "lsof": 'if [ -f "$PROOF_PID_FILE" ]; then pid=$(cat "$PROOF_PID_FILE"); case "$PROOF_MODE" in ready) printf "native %s\\n" "$pid";; other-owner) printf "native %s7\\n" "$pid";; esac; fi',
+            }.items():
+                target = fake / name
+                target.write_text("#!/bin/sh\n" + body + "\n")
+                target.chmod(0o755)
+            env = os.environ.copy()
+            env.update(PATH=str(fake) + ":/usr/bin:/bin", PROOF_MODE=mode,
+                       PROOF_PID_FILE=str(app / "logs/collector.pid"), PROOF_APP=str(binary),
+                       PROOF_CONF=str(app / "config"))
+            env.pop("BASH_ENV", None)
+            if mode == "missing-lsof":
+                hook = root / "bash-env"
+                hook.write_text('command() { if [ "$1" = -v ] && [ "$2" = lsof ]; then return 1; fi; builtin command "$@"; }\n')
+                env["BASH_ENV"] = str(hook)
+            process = subprocess.Popen(["/bin/bash", str(launcher)], env=env,
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       text=True, start_new_session=True)
+            try:
+                output, _ = process.communicate(timeout=5)
+                return process.returncode, output
+            finally:
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                process.communicate(timeout=2)
+
+    def test_listener_deadline_does_not_claim_success(self) -> None:
+        for mode in ("never-ready", "other-owner"):
+            with self.subTest(mode=mode):
+                code, output = self.run_native(mode)
+                self.assertEqual(1, code, output)
+                self.assertIn("timed out", output)
+                self.assertNotIn("Service Start Success", output)
+
+    def test_missing_lsof_reports_only_process_launch(self) -> None:
+        code, output = self.run_native("missing-lsof")
+        self.assertEqual(0, code, output)
+        self.assertIn("readiness unverified", output)
+        self.assertNotIn("Service Start Success", output)
+
+    def test_only_live_child_listener_can_report_ready(self) -> None:
+        code, output = self.run_native("ready")
+        self.assertEqual(0, code, output)
+        self.assertIn("Service Start Success", output)
+        code, output = self.run_native("dead")
+        self.assertEqual(1, code, output)
+        self.assertNotIn("Service Start Success", output)
 
 
 if __name__ == "__main__":

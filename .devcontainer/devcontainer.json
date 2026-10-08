@@ -3,12 +3,12 @@
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
-            "version": "17",
+            "version": "25",
             "installMaven": "true",
             "installGradle": "false"
         },
         "ghcr.io/devcontainers/features/node:1": {
-            "version": "20"
+            "version": "22"
         },
         "ghcr.io/devcontainers/features/git-lfs:1.1.0": {}
     },
@@ -33,5 +33,5 @@
             "onAutoForward": "notify"
         }
     },
-    "postCreateCommand": "java -version"
+    "postCreateCommand": "java -version && corepack enable && corepack prepare pnpm@10.9.0 --activate"
 }

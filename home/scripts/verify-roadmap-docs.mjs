@@ -2,98 +2,91 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
-
-const requiredFiles = [
-  'home/docs/roadmap/index.md',
-  'home/docs/roadmap/datadog-directory-map.md',
-  'home/docs/roadmap/future-observability-pipelines.md',
-  'home/docs/roadmap/future-collector-fleet-governance.md',
-  'home/docs/roadmap/future-resource-catalog.md',
-  'home/docs/roadmap/future-software-catalog.md',
-  'home/docs/roadmap/future-application-performance.md',
-  'home/docs/roadmap/future-incident-response.md',
-  'home/docs/roadmap/future-topology-fault-analysis.md',
-  'home/docs/roadmap/future-automation-action-catalog.md',
-  'home/docs/roadmap/future-platform-governance.md',
-  'home/docs/roadmap/future-security.md',
-  'home/docs/roadmap/future-data-observability.md',
-  'home/docs/roadmap/future-digital-experience.md',
-  'home/docs/roadmap/future-software-delivery.md',
-  'home/docs/roadmap/future-cloud-cost.md',
-  'home/docs/roadmap/future-ai-observability.md',
-  'home/docs/roadmap/future-developer-integrations.md'
+const roadmapNames = [
+  'index',
+  'datadog-directory-map',
+  'future-observability-pipelines',
+  'future-collector-fleet-governance',
+  'future-resource-catalog',
+  'future-software-catalog',
+  'future-application-performance',
+  'future-incident-response',
+  'future-topology-fault-analysis',
+  'future-automation-action-catalog',
+  'future-platform-governance',
+  'future-security',
+  'future-data-observability',
+  'future-digital-experience',
+  'future-software-delivery',
+  'future-cloud-cost',
+  'future-ai-observability',
+  'future-developer-integrations'
 ];
-
-const requiredRoadmapPhrases = [
-  'Roadmap status',
-  'Current status',
-  'Planned capability',
-  'Contribution entry',
-  'Non-goals'
+const requiredIds = [
+  ...roadmapNames.map(name => `roadmap/${name}`),
+  'help/lmstudio',
+  'help/ollama',
+  'start/native-collector',
+  'help/service_observability',
+  'help/explore_saved_queries',
+  'help/perses_dashboard'
 ];
-
-const requiredDirectoryMapPhrases = [
-  'Datadog docs area',
-  'HertzBeat current coverage',
-  'Roadmap document',
-  'Open-source private deployment note'
+const locales = [
+  'home/docs',
+  'home/i18n/zh-cn/docusaurus-plugin-content-docs/current'
 ];
-
-const requiredProgressPhrases = [
-  'HertzBeat platform roadmap against Datadog docs directory',
-  'Roadmap milestones:',
-  'Roadmap 文档骨架与能力对照',
-  'Datadog 只作为能力清单参考'
-];
-
 const fail = message => {
   console.error(message);
   process.exitCode = 1;
 };
 
-for (const file of requiredFiles) {
-  const absolutePath = path.join(repoRoot, file);
-  if (!fs.existsSync(absolutePath)) {
-    fail(`Missing roadmap file: ${file}`);
-    continue;
-  }
-
-  const content = fs.readFileSync(absolutePath, 'utf8');
-  if (file.endsWith('datadog-directory-map.md')) {
-    for (const phrase of requiredDirectoryMapPhrases) {
-      if (!content.includes(phrase)) {
-        fail(`${file} is missing directory-map phrase: ${phrase}`);
-      }
-    }
-  } else if (file.includes('/future-')) {
-    for (const phrase of requiredRoadmapPhrases) {
-      if (!content.includes(phrase)) {
-        fail(`${file} is missing roadmap phrase: ${phrase}`);
-      }
+const docIds = [];
+let hasRoadmapCategory = false;
+function inspectNavigation(items) {
+  for (const item of items) {
+    if (typeof item === 'string') {
+      docIds.push(item);
+    } else if (item.type === 'doc') {
+      docIds.push(item.id);
+    } else if (item.type === 'category') {
+      hasRoadmapCategory ||= item.label === 'Roadmap';
+      if (item.link?.type === 'doc') docIds.push(item.link.id);
+      inspectNavigation(item.items);
     }
   }
 }
+const sidebars = JSON.parse(fs.readFileSync(path.join(repoRoot, 'home/sidebars.json'), 'utf8'));
+for (const items of Object.values(sidebars)) inspectNavigation(items);
+if (!hasRoadmapCategory) fail('Navigation must expose the Roadmap category.');
 
-const sidebars = fs.readFileSync(path.join(repoRoot, 'home/sidebars.json'), 'utf8');
-if (!sidebars.includes('"label": "Roadmap"')) {
-  fail('home/sidebars.json must expose a Roadmap category.');
-}
-for (const file of requiredFiles) {
-  const docId = file.replace('home/docs/', '').replace(/\.md$/, '');
-  if (!sidebars.includes(`"${docId}"`)) {
-    fail(`home/sidebars.json must include ${docId}.`);
+for (const id of requiredIds) {
+  if (docIds.filter(value => value === id).length !== 1) {
+    fail(`Navigation must include ${id} exactly once.`);
+  }
+  for (const locale of locales) {
+    const file = path.join(repoRoot, locale, `${id}.md`);
+    if (!fs.existsSync(file)) {
+      fail(`Missing current documentation: ${locale}/${id}.md`);
+      continue;
+    }
+    const content = fs.readFileSync(file, 'utf8');
+    const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(content)?.[1] ?? '';
+    const declaredId = /^id:\s*(\S+)\s*$/m.exec(frontmatter)?.[1];
+    if (declaredId !== path.posix.basename(id)) fail(`${locale}/${id}.md has an unexpected document id.`);
+    if (id.startsWith('roadmap/')) {
+      const expected = {
+        'roadmap/index': 'directional',
+        'roadmap/datadog-directory-map': 'reference'
+      }[id] ?? 'proposed';
+      const status = /^roadmap_status:\s*(\S+)\s*$/m.exec(frontmatter)?.[1];
+      if (status !== expected) fail(`${locale}/${id}.md must declare roadmap_status: ${expected}.`);
+    }
+    for (const match of content.matchAll(/\]\(([^)#]+\.md)(?:#[^)]*)?\)/g)) {
+      if (/^[a-z]+:/i.test(match[1])) continue;
+      if (!fs.existsSync(path.resolve(path.dirname(file), match[1]))) {
+        fail(`${locale}/${id}.md has a missing relative document: ${match[1]}`);
+      }
+    }
   }
 }
-
-const progress = fs.readFileSync(path.join(repoRoot, 'progress.md'), 'utf8');
-for (const phrase of requiredProgressPhrases) {
-  if (!progress.includes(phrase)) {
-    fail(`progress.md is missing roadmap phrase: ${phrase}`);
-  }
-}
-
-if (process.exitCode) {
-  process.exit();
-}
-
-console.log('Roadmap docs contract passed.');
+if (!process.exitCode) console.log(`Current docs contract passed: ${requiredIds.length} navigation IDs in both locales.`);

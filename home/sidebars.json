@@ -6,36 +6,6 @@
     },
     {
       "type": "category",
-      "label": "Roadmap",
-      "items": [
-        "roadmap/index",
-        "roadmap/datadog-directory-map",
-        {
-          "type": "category",
-          "label": "Future Capabilities",
-          "items": [
-            "roadmap/future-observability-pipelines",
-            "roadmap/future-collector-fleet-governance",
-            "roadmap/future-resource-catalog",
-            "roadmap/future-software-catalog",
-            "roadmap/future-application-performance",
-            "roadmap/future-incident-response",
-            "roadmap/future-topology-fault-analysis",
-            "roadmap/future-automation-action-catalog",
-            "roadmap/future-platform-governance",
-            "roadmap/future-security",
-            "roadmap/future-data-observability",
-            "roadmap/future-digital-experience",
-            "roadmap/future-software-delivery",
-            "roadmap/future-cloud-cost",
-            "roadmap/future-ai-observability",
-            "roadmap/future-developer-integrations"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "category",
       "label": "quickstart",
       "items": [
         {
@@ -100,6 +70,9 @@
         "help/security_model",
         "help/ai_agent",
         "help/mcp_server",
+        "help/service_observability",
+        "help/explore_saved_queries",
+        "help/perses_dashboard",
         {
           "type": "category",
           "label": "Use Case",
@@ -328,8 +301,8 @@
           "items": [
             "help/openai",
             "help/deepseek",
-            "help/ollama",
-            "help/lmstudio"
+            "help/lmstudio",
+            "help/ollama"
           ]
         },
         {
@@ -446,7 +419,30 @@
         }
       ]
     },
-
+    {
+      "type": "category",
+      "label": "Roadmap",
+      "items": [
+        "roadmap/index",
+        "roadmap/datadog-directory-map",
+        "roadmap/future-ai-observability",
+        "roadmap/future-application-performance",
+        "roadmap/future-automation-action-catalog",
+        "roadmap/future-cloud-cost",
+        "roadmap/future-collector-fleet-governance",
+        "roadmap/future-data-observability",
+        "roadmap/future-developer-integrations",
+        "roadmap/future-digital-experience",
+        "roadmap/future-incident-response",
+        "roadmap/future-observability-pipelines",
+        "roadmap/future-platform-governance",
+        "roadmap/future-resource-catalog",
+        "roadmap/future-security",
+        "roadmap/future-software-catalog",
+        "roadmap/future-software-delivery",
+        "roadmap/future-topology-fault-analysis"
+      ]
+    },
     {
       "type": "category",
       "label": "Others",

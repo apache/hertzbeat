@@ -1,46 +1,57 @@
 ---
-id: upgrade  
-title: HertzBeat 新版本更新指引
+id: upgrade
+title: HertzBeat 2.0 Alpha 升级边界
 sidebar_label: 版本更新指引
 ---
 
-**Apache HertzBeat™ 的发布版本列表**
+HertzBeat 2.0 当前为 alpha／社区预览版。存在新安装包不代表任意旧数据库都支持原地升级。在新环境完成验证前，应保留原安装和已验证的备份。
 
-- [下载页面](https://hertzbeat.apache.org/docs/download)
-- [Github Release](https://github.com/apache/hertzbeat/releases)
-- [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
+## 支持边界
 
-HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据库内, 采集指标数据存储在 TDengine, IotDB 等时序数据库内。
+本地验收覆盖全新 H2、MySQL 8.4、PostgreSQL 17 元数据库的安装、重启和原生备份恢复，以及停止后的单节点 GreptimeDB 1.1.4 数据目录备份恢复。它不证明在线或分布式备份、所有历史 1.x 升级路径，以及降级兼容性。
 
-**升级前您需要保存备份好数据库的数据文件和监控模板文件**
+较早的 alpha 快照可能具有不同的 **V200** 迁移内容。评估这些快照时应使用新数据库。不要修改迁移历史、执行 Flyway checksum repair，或在旧运行库中手工补入新表来让启动检查通过。受支持的迁移必须具有针对确切源版本和目标版本的明确、已测试流程。
 
-### Docker部署方式的升级
+H2 应保留安装包所需的 JDBC 兼容选项：`jdbc:h2:./data/hertzbeat;MODE=MYSQL`。
 
-1. 若使用了自定义监控模板
-   - 需要备份 `docker cp hertzbeat:/opt/hertzbeat/define ./define` 当前运行 docker 容器里面的 `/opt/hertzbeat/define` 目录到当前主机下
-   - `docker cp hertzbeat:/opt/hertzbeat/define ./define`
-   - 然后在后续升级启动 docker 容器的时候需要挂载上这个 define 目录，`-v $(pwd)/define:/opt/hertzbeat/define`
-   - `-v $(pwd)/define:/opt/hertzbeat/define`
-2. 若使用内置默认 H2 数据库
-   - 需挂载或备份 `-v $(pwd)/data:/opt/hertzbeat/data` 容器内的数据库文件目录 `/opt/hertzbeat/data`
-   - 停止并删除容器，删除本地 HertzBeat docker 镜像，拉取新版本镜像
-   - 参考 [Docker安装HertzBeat](docker-deploy) 使用新镜像创建新的容器，注意需要将数据库文件目录挂载 `-v $(pwd)/data:/opt/hertzbeat/data`
-3. 若使用外置关系型数据库 Mysql, PostgreSQL
-   - 无需挂载备份容器内的数据库文件目录
-   - 停止并删除容器，删除本地 HertzBeat docker 镜像，拉取新版本镜像
-   - 参考 [Docker安装HertzBeat](docker-deploy) 使用新镜像创建新的容器，`application.yml`配置数据库连接即可
+## 分别备份各类数据
 
-### 安装包部署方式的升级
+| 数据 | 应保留的内容 |
+|---|---|
+| H2 元数据 | 干净停止 HertzBeat 后，再复制完整的相关数据库文件。不能把运行中的 H2 文件复制视为一致性备份。 |
+| MySQL／PostgreSQL 元数据 | 执行并验证数据库原生备份，包含账号、监控、实体、告警、Dashboard、保存查询和迁移状态。外部数据库同样需要备份。 |
+| 遥测数据 | 按 Greptime 部署方式单独备份。本 alpha 的冷复制证明要求相关写入者停止，且单节点存储干净停止；不构成在线备份保证。 |
+| 安装状态 | 保留 `config`、`data/config`、必要的密钥材料、自定义 `define` 模板，以及有意提供的 `ext-lib` 驱动，并保留文件所有权和权限。 |
+| 制品来源 | 保留新旧制品摘要、版本、配置选择和备份清单。私有配置和数据不能进入公开提交或问题附件。 |
 
-1. 若使用内置默认 H2 数据库
-   - 备份安装包下的数据库文件目录 `/opt/hertzbeat/data`
-   - 若有自定义监控模板，需备份 `/opt/hertzbeat/define` 下的模板YML
-   - `bin/shutdown.sh` 停止 HertzBeat 进程，下载新安装包
-   - 参考 [安装包安装HertzBeat](package-deploy) 使用新安装包启动
-2. 若使用外置关系型数据库 Mysql, PostgreSQL
-   - 无需备份安装包下的数据库文件目录
-   - 若有自定义监控模板，需备份 `/opt/hertzbeat/define` 下的模板YML
-   - `bin/shutdown.sh` 停止 HertzBeat 进程，下载新安装包
-   - 参考 [安装包安装HertzBeat](package-deploy) 使用新安装包启动，`application.yml`配置数据库连接即可
+替换原环境前，应先在隔离目标验证恢复。元数据库备份不包含遥测数据；Dashboard 或查询的 JSON 导出也不能替代完整元数据库备份。
 
-**HAVE FUN**
+## 安装包或容器切换
+
+1. 阅读对应版本的兼容说明，校验选定制品。
+2. 暂停应用上报及与本次备份相关的写入者，干净停止旧 HertzBeat。安装包方式使用 `bin/shutdown.sh`，并确认进程已停止。
+3. 完成并验证上述备份，保留原安装目录或容器卷。
+4. 将新安装包解压到独立目录，或使用确切的不可变容器镜像和显式数据卷。不要混用不同构建的 JAR。按[安装与 Setup](package-deploy.md)启动；本 alpha 要求新库时必须使用新库。
+5. 审查运维覆盖项，不要把旧版完整 `application.yml` 直接覆盖到新版导入配置上。确认兼容后，再应用有意保留的设置和自定义模板。
+6. 验证登录、重启后的监控配置与采集、实体身份、告警规则和通知、保存查询及 Dashboard。查询固定遥测时间窗并对比真实记录；按需要验证保存／取消，以及 Dashboard 陈旧修订拒绝。
+7. 恢复应用上报，验证新样本。在依赖通知投递前，用隔离告警和真实通知目标验证触发与恢复。
+
+正常重启时，调度器会创建新任务并保存绑定，因此 Monitor 的任务 ID 和更新时间可能变化。这不能成为忽略监控配置、监控 ID、参数或其他元数据变化的理由。
+
+回滚时，应先停止新版本写入者，再恢复相匹配的旧制品、配置和已验证的数据备份。只替换二进制并继续使用已变更的 schema，不是经过验证的回滚。
+
+## 保存查询与 Dashboard
+
+保存查询和 Dashboard 仍是安装级共享资产，沿用管理员和普通用户的写权限。列表读取或打开历史记录不会静默重写数据。
+
+- 当前保存查询使用版本化查询文档，保留相对或精确时间模式。Payload 和历史查询快照限制为 65,535 个 UTF-8 字节。可转换的旧路由可以重开；无效或不支持的记录保留原始导出能力，不会被直接覆盖。
+- 新 Dashboard 以受支持的标准 Perses 文档为内容来源，原生修订号拒绝陈旧更新和删除。只有明确识别为空、元数据可无损表达的旧布局，才能在显式保存时升级；不会根据非空旧 widget 或 draft 引用猜测查询。参阅 [Dashboard 指南](../help/perses_dashboard.md)。
+- 部分旧 alpha 的 PostgreSQL 保存查询在 TEXT 列中存储了大对象 OID 字符串。新的映射不会自动解引用或迁移这些历史字符串。应保留数据库备份和原大对象；恢复需要基于旧数据库验证的显式离线转换，不能把数字字符串当作有效查询文档。
+
+MySQL 中保存查询的 `signal` 列需要关键字引用。原生配置处理受支持的 MySQL 数据源／方言路径，并尊重运维人员的显式设置。设置 `hibernate.auto_quote_keyword=false` 可能使该路径不可用；没有 Boot 数据源 URL 的自定义数据源需要显式方言。不要通过修改 schema 标识符补偿配置冲突。
+
+## 身份与证据
+
+自动服务归属现在要求有意义的服务名称或实例证据，并拒绝已知的服务范围冲突。仅命名空间或环境相同不能把无关遥测归属到某个服务。该修正只影响新摄入数据，不会自动重写历史归属；经过工作区校验的显式人工身份提示属于另一份合同。
+
+安装、重启、元数据恢复和遥测恢复的证据应分别标注。本地通过不代表 GA 就绪、规模性能、SLO，或对旧前端及其他可观测产品的完整功能对等。
