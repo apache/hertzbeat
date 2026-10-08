@@ -86,12 +86,18 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         this(resolveMetricsTaskDispatchSupplier(metricsTaskDispatchProvider));
     }
 
+    /**
+     * Tick duration for the shared wheel timer.
+     * Kept at 100ms so cyclic delays computed in milliseconds are not truncated to whole seconds.
+     */
+    private static final long WHEEL_TICK_DURATION_MS = 100L;
+
     private TimerDispatcher(Supplier<MetricsTaskDispatch> metricsTaskDispatchSupplier) {
         this.wheelTimer = new HashedWheelTimer(r -> {
             Thread ret = new Thread(r, "wheelTimer");
             ret.setDaemon(true);
             return ret;
-        }, 1, TimeUnit.SECONDS, 512);
+        }, WHEEL_TICK_DURATION_MS, TimeUnit.MILLISECONDS, 512);
         this.currentCyclicTaskMap = new ConcurrentHashMap<>(8);
         this.currentTempTaskMap = new ConcurrentHashMap<>(8);
         this.eventListeners = new ConcurrentHashMap<>(8);
@@ -117,8 +123,8 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         // Delay dispatcher lookup to avoid a startup cycle with CommonDispatcher.
         WheelTimerTask timerJob = new WheelTimerTask(addJob, metricsTaskDispatchSupplier);
         if (addJob.isCyclic()) {
-            long nextExecutionTime = initialCyclicDelay(addJob);
-            Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTime, TimeUnit.SECONDS);
+            long nextExecutionTimeMs = initialCyclicDelay(addJob);
+            Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTimeMs, TimeUnit.MILLISECONDS);
             cancelPreviousTimeout(currentCyclicTaskMap.put(addJob.getId(), timeout));
         } else {
             for (Metrics metric : addJob.getMetrics()) {
@@ -140,7 +146,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         Long jobId = timerTask.getJob().getId();
         // whether is the job has been canceled
         if (currentCyclicTaskMap.containsKey(jobId)) {
-            Timeout timeout = wheelTimer.newTimeout(timerTask, interval, TimeUnit.SECONDS);
+            Timeout timeout = wheelTimer.newTimeout(timerTask, interval, timeUnit);
             cancelPreviousTimeout(currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout));
         }
     }
@@ -148,8 +154,8 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
     @Override
     public void cyclicJob(WheelTimerTask timerTask) {
         Job job = timerTask.getJob();
-        Long nextExecutionTime = getNextExecutionInterval(job);
-        cyclicJob(timerTask, nextExecutionTime, TimeUnit.SECONDS);
+        Long nextExecutionTimeMs = getNextExecutionInterval(job);
+        cyclicJob(timerTask, nextExecutionTimeMs, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -210,40 +216,51 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
      * Interval jobs get a random first-run phase: a restart re-adds every job at once,
      * and a shared phase makes them all collect at the same instant forever. Cron jobs
      * keep their meaningful phase; already-executed or re-added jobs keep theirs.
+     *
+     * @return delay until the first run, in milliseconds
      */
     long initialCyclicDelay(Job addJob) {
-        long nextExecutionTime = getNextExecutionInterval(addJob);
+        long nextExecutionTimeMs = getNextExecutionInterval(addJob);
         boolean fixedPhase = ScheduleTypeEnum.CRON.getType().equals(addJob.getScheduleType());
+        // Only jitter when the configured interval is greater than one second.
         if (!fixedPhase && addJob.getDispatchTime() <= 0
-                && !currentCyclicTaskMap.containsKey(addJob.getId()) && nextExecutionTime > 1) {
-            nextExecutionTime = ThreadLocalRandom.current().nextLong(nextExecutionTime) + 1;
+                && !currentCyclicTaskMap.containsKey(addJob.getId()) && nextExecutionTimeMs > 1000L) {
+            nextExecutionTimeMs = ThreadLocalRandom.current().nextLong(nextExecutionTimeMs) + 1;
         }
-        return nextExecutionTime;
+        return nextExecutionTimeMs;
     }
 
+    /**
+     * Remaining delay until the next cyclic execution.
+     *
+     * @return delay in milliseconds; callers must schedule with {@link TimeUnit#MILLISECONDS}
+     */
     public Long getNextExecutionInterval(Job job) {
         if (ScheduleTypeEnum.CRON.getType().equals(job.getScheduleType()) && job.getCronExpression() != null && !job.getCronExpression().isEmpty()) {
             try {
                 CronExpression cronExpression = CronExpression.parse(job.getCronExpression());
                 ZonedDateTime nextExecutionTime = cronExpression.next(ZonedDateTime.now());
-                long delay = Duration.between(ZonedDateTime.now(), nextExecutionTime).toMillis();
-                // Convert to seconds and ensure non-negative
-                return Math.max(0, delay / 1000);
+                long delayMs = Duration.between(ZonedDateTime.now(), nextExecutionTime).toMillis();
+                return Math.max(0, delayMs);
             } catch (Exception e) {
                 log.error("Invalid cron expression: {}", job.getCronExpression(), e);
                 // Fall back to interval scheduling if cron is invalid
-                return job.getInterval();
+                return toMillis(job.getInterval());
             }
         } else {
             if (job.getDispatchTime() > 0) {
                 long spendTime = System.currentTimeMillis() - job.getDispatchTime();
-                // Calculate remaining interval in seconds, preserving millisecond precision
-                long intervalMs = job.getInterval() * 1000 - spendTime;
-                // Ensure non-negative
-                return Math.max(0, intervalMs / 1000);
+                // Keep millisecond remainder so a 30s interval with a 300ms collection
+                // reschedules after ~29.7s instead of truncating to 29s and drifting early.
+                long intervalMs = toMillis(job.getInterval()) - spendTime;
+                return Math.max(0, intervalMs);
             }
-            return job.getInterval();
+            return toMillis(job.getInterval());
         }
+    }
+
+    private static long toMillis(long intervalSeconds) {
+        return Math.max(0, intervalSeconds) * 1000L;
     }
 
 }

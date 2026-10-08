@@ -59,7 +59,7 @@ public class TimerDispatcherTest {
 
     /**
      * Test getNextExecutionInterval with valid CRON expression
-     * Should return the calculated interval based on cron expression
+     * Should return the calculated interval based on cron expression in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithValidCron() {
@@ -71,14 +71,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Result should be between 0 and 60 seconds
-        // since the cron expression runs every minute
-        assertEquals(true, result >= 0 && result <= 60);
+        // Verify - Result should be between 0 and 60 seconds in milliseconds
+        assertTrue(result >= 0 && result <= 60_000L);
     }
 
     /**
      * Test getNextExecutionInterval with invalid CRON expression
-     * Should fall back to interval scheduling
+     * Should fall back to interval scheduling in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithInvalidCron() {
@@ -90,13 +89,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should fall back to interval value
-        assertEquals(300L, result);
+        // Verify - Should fall back to interval value in milliseconds
+        assertEquals(300_000L, result);
     }
 
     /**
      * Test getNextExecutionInterval with empty CRON expression
-     * Should fall back to interval scheduling
+     * Should fall back to interval scheduling in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithEmptyCron() {
@@ -108,13 +107,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should fall back to interval value
-        assertEquals(120L, result);
+        // Verify - Should fall back to interval value in milliseconds
+        assertEquals(120_000L, result);
     }
 
     /**
      * Test getNextExecutionInterval with INTERVAL schedule type and no dispatchTime
-     * Should return the full interval value
+     * Should return the full interval value in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithIntervalNoDispatchTime() {
@@ -126,13 +125,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should return the full interval value
-        assertEquals(600L, result);
+        // Verify - Should return the full interval value in milliseconds
+        assertEquals(600_000L, result);
     }
 
     /**
      * Test getNextExecutionInterval with INTERVAL schedule type and dispatchTime
-     * Should return the remaining interval time
+     * Should return the remaining interval time in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithIntervalAndDispatchTime() {
@@ -150,7 +149,28 @@ public class TimerDispatcherTest {
 
         // Verify - Should return the remaining interval time (approximately 5 minutes)
         // Considering possible time differences during execution, we check a range
-        assertEquals(true, result >= 295 && result <= 305);
+        assertTrue(result >= 295_000L && result <= 305_000L);
+    }
+
+    /**
+     * A short collection must not truncate the remaining delay to whole seconds.
+     * With a 30s interval and a 300ms collection, the next delay should stay near 29.7s.
+     */
+    @Test
+    void testIntervalDispatchPreservesMillisecondRemainder() {
+        long interval = 30L;
+        long spendTime = 300L;
+        long dispatchTime = System.currentTimeMillis() - spendTime;
+
+        when(job.getScheduleType()).thenReturn(ScheduleTypeEnum.INTERVAL.getType());
+        when(job.getDispatchTime()).thenReturn(dispatchTime);
+        when(job.getInterval()).thenReturn(interval);
+
+        Long result = timerDispatcher.getNextExecutionInterval(job);
+
+        assertTrue(result >= 29_600L && result <= 29_800L,
+                "expected ~29700ms remaining delay, got " + result);
+        assertFalse(result == 29_000L, "must not truncate 29700ms to 29 seconds");
     }
 
     /**
@@ -177,7 +197,7 @@ public class TimerDispatcherTest {
 
     /**
      * Test getNextExecutionInterval with CRON schedule type and null cronExpression
-     * Should fall back to interval scheduling
+     * Should fall back to interval scheduling in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithCronAndNullExpression() {
@@ -189,8 +209,8 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should fall back to interval value
-        assertEquals(180L, result);
+        // Verify - Should fall back to interval value in milliseconds
+        assertEquals(180_000L, result);
     }
 
     @Test
@@ -313,7 +333,7 @@ public class TimerDispatcherTest {
         Set<Long> delays = new HashSet<>();
         for (int i = 0; i < 50; i++) {
             long delay = timerDispatcher.initialCyclicDelay(job);
-            assertTrue(delay >= 1 && delay <= 600, "delay out of interval: " + delay);
+            assertTrue(delay >= 1 && delay <= 600_000L, "delay out of interval: " + delay);
             delays.add(delay);
         }
         assertTrue(delays.size() > 1, "no jitter observed across 50 samples");
