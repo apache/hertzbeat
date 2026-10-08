@@ -119,10 +119,9 @@ jobs:
           docker compose up -d --wait hertzbeat checker
 
       - name: Run authentication contract tests
-        working-directory: e2e
         env:
           SERVER: http://localhost:1157
-        run: python3 ci/auth_contract_test.py
+        run: python3 script/ci/auth_contract_test.py
 
       - name: Run API E2E tests
         working-directory: e2e

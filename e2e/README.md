@@ -13,7 +13,7 @@ Please add the corresponding e2e (aka end-to-end) test cases if you add or updat
     ```
 
 * Run the E2E tests via [api-testing](https://github.com/LinuxSuRen/api-testing)
-  * `e2e/ci/auth_contract_test.py` uses only the Python standard library to verify the default Basic/JWT behavior, including the absence of browser authentication challenges
+  * `script/ci/auth_contract_test.py` uses only the Python standard library to verify the default Basic/JWT behavior, including the absence of browser authentication challenges
   * The test cases run from top to bottom
   * You can add the necessary assertions there
   * Test data files are under `e2e/data/`
@@ -30,7 +30,7 @@ Please follow these steps if you want to run the E2E tests locally.
 
   ```bash
   docker compose up -d --wait hertzbeat checker
-  SERVER=http://localhost:1157 python3 ci/auth_contract_test.py
+  SERVER=http://localhost:1157 python3 ../script/ci/auth_contract_test.py
   docker compose up --exit-code-from testing --remove-orphans
   ```
 
