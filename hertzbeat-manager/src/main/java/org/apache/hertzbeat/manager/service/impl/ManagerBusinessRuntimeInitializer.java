@@ -19,15 +19,19 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
  * Initializes Manager business runtime state after setup completes. Object-store runtime must be ready before
  * monitor definitions choose their backing store; stored plugin parameters must then precede plugin status and
- * classloader convergence so loaded plugins see their persisted configuration.
+ * classloader convergence so loaded plugins see their persisted configuration. Complete this initialization
+ * before SchedulerInit restores persisted monitors using these definitions.
  */
 @Component
 @ConditionalOnNormalBusinessRuntime
+@Order(Ordered.LOWEST_PRECEDENCE - 2)
 public final class ManagerBusinessRuntimeInitializer implements CommandLineRunner {
 
     private final ObjectStoreConfigServiceImpl objectStoreConfigService;

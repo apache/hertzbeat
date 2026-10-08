@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,6 +29,27 @@ import org.junit.jupiter.api.Test;
  * Same-run runtime control admission tests.
  */
 class AgentRuntimeControlRegistryTest {
+
+    @Test
+    void firstStopSignalKeepsItsReasonAndCancellationKind() throws Exception {
+        for (boolean userCancellationFirst : new boolean[] {true, false}) {
+            AgentRuntimeControlRegistry registry = new AgentRuntimeControlRegistry();
+            try (AgentRuntimeControl control = new AgentRuntimeControl("trace-1", "run-1", Clock.systemUTC());
+                    AutoCloseable ignored = registry.register(control)) {
+                if (userCancellationFirst) {
+                    registry.cancel("run-1", "user requested stop");
+                    control.stop("later timeout");
+                } else {
+                    control.stop("model timeout");
+                    registry.cancel("run-1", "later user request");
+                }
+                AgentRuntimeStoppedException stopped = assertThrows(
+                        AgentRuntimeStoppedException.class, control::checkpoint);
+                assertEquals(userCancellationFirst, stopped.isCancelled());
+                assertEquals(userCancellationFirst ? "user requested stop" : "model timeout", stopped.getMessage());
+            }
+        }
+    }
 
     @Test
     void duplicateRegistrationShouldNotReplaceTheFirstControl() throws Exception {

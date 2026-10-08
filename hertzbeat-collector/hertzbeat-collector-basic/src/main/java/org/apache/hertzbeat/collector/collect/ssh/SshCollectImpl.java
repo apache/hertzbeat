@@ -17,19 +17,18 @@
 
 package org.apache.hertzbeat.collector.collect.ssh;
 
+import org.apache.hertzbeat.collector.collect.script.ScriptResponseParser;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
@@ -115,8 +114,8 @@ public class SshCollectImpl extends AbstractCollect {
             }
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_NETCAT -> ScriptResponseParser.parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_ONE_ROW -> ScriptResponseParser.parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
@@ -191,56 +190,7 @@ public class SshCollectImpl extends AbstractCollect {
         }
     }
 
-    private void parseResponseDataByNetcat(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
-        String[] lines = result.split("\n");
-        if (lines.length + 1 < aliasFields.size()) {
-            log.error("ssh response data not enough: {}", result);
-            return;
-        }
-        boolean contains = lines[0].contains("=");
-        Map<String, String> mapValue = Arrays.stream(lines)
-                .map(item -> {
-                    if (contains) {
-                        return item.split("=");
-                    } else {
-                        return item.split("\t");
-                    }
-                })
-                .filter(item -> item.length == 2)
-                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
 
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (String field : aliasFields) {
-            String fieldValue = mapValue.get(field);
-            valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-        }
-        builder.addValueRow(valueRowBuilder.build());
-    }
-
-    private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
-        String[] lines = result.split("\n");
-        if (lines.length + 1 < aliasFields.size()) {
-            log.error("ssh response data not enough: {}", result);
-            return;
-        }
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        int aliasIndex = 0;
-        int lineIndex = 0;
-        while (aliasIndex < aliasFields.size()) {
-            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumn(responseTime.toString());
-            } else {
-                if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumn(lines[lineIndex].trim());
-                } else {
-                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                }
-                lineIndex++;
-            }
-            aliasIndex++;
-        }
-        builder.addValueRow(valueRowBuilder.build());
-    }
 
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
                                           CollectRep.MetricsData.Builder builder, Long responseTime) {

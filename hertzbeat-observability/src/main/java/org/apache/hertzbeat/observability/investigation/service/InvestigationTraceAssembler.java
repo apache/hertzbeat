@@ -40,63 +40,96 @@ final class InvestigationTraceAssembler {
     }
 
     static AssembledTrace assemble(String traceId, String selectedSpanId, List<TraceSpanRow> rows) {
+        return assemble(traceId, selectedSpanId, rows, false);
+    }
+
+    static AssembledTrace assemble(String traceId, String selectedSpanId, List<TraceSpanRow> rows, boolean partial) {
         if (rows == null || rows.isEmpty()) {
             throw new MalformedTraceException();
         }
-        Map<String, TraceSpanRow> byId = new LinkedHashMap<>();
-        List<TraceSpanRow> roots = new ArrayList<>();
-        for (TraceSpanRow row : rows) {
-            if (row == null || !traceId.equals(row.traceId()) || byId.put(row.spanId(), row) != null) {
-                throw new MalformedTraceException();
-            }
-            if (!StringUtils.hasText(row.parentSpanId())) {
-                roots.add(row);
-            }
-        }
-        if (roots.size() != 1) {
-            throw new MalformedTraceException();
-        }
-        for (TraceSpanRow row : rows) {
-            if (StringUtils.hasText(row.parentSpanId()) && !byId.containsKey(row.parentSpanId())) {
-                throw new MalformedTraceException();
-            }
-        }
-        Set<String> reachable = new HashSet<>();
-        reachable.add(roots.getFirst().spanId());
-        boolean changed;
-        do {
-            changed = false;
-            for (TraceSpanRow row : rows) {
-                if (StringUtils.hasText(row.parentSpanId()) && reachable.contains(row.parentSpanId())) {
-                    changed |= reachable.add(row.spanId());
-                }
-            }
-        } while (changed);
-        if (reachable.size() != rows.size()) {
-            throw new MalformedTraceException();
-        }
-        TraceSpanRow selected = roots.getFirst();
+        Map<String, TraceSpanRow> byId = validatedRows(traceId, rows);
+        List<TraceSpanRow> roots = rows.stream().filter(row -> row.parentSpanId() == null).toList();
+        TraceSpanRow representative = rows.stream().min(java.util.Comparator.comparingLong(TraceSpanRow::startTimeUnixNano)
+                .thenComparing(TraceSpanRow::spanId)).orElseThrow();
+        TraceSpanRow root = roots.size() == 1 ? roots.getFirst() : null;
+        TraceSpanRow selected = root == null ? representative : root;
         if (StringUtils.hasText(selectedSpanId)) {
             selected = byId.get(selectedSpanId);
             if (selected == null) {
                 throw new ObservabilityQueryRequestException();
             }
         }
-        TraceSpanRow root = roots.getFirst();
         List<Span> spans = rows.stream().map(InvestigationTraceAssembler::toSpan).toList();
         int errorCount = (int) rows.stream().filter(row -> isError(row.status())).count();
-        TraceDetail detail = new TraceDetail(root.spanId(), root.serviceName(), root.serviceNamespace(),
-                root.deploymentEnvironment(), root.entityId(), root.entityType(), root.spanName(),
-                Long.toString(root.durationNanos()),
-                normalizedStatus(root.status()), root.startTime(), errorCount, root.resourceAttributes(), spans);
-        return new AssembledTrace(detail, identity(selected), dependencies(rows, byId));
+        int missingParents = (int) rows.stream().filter(row -> row.parentSpanId() != null
+                && !byId.containsKey(row.parentSpanId())).count();
+        long observedEnd = rows.stream().mapToLong(InvestigationTraceAssembler::endTime).max().orElseThrow();
+        TraceDetail detail = new TraceDetail(root == null ? null : root.spanId(), root == null ? null : root.serviceName(),
+                root == null ? null : root.serviceNamespace(), root == null ? null : root.deploymentEnvironment(),
+                root == null ? null : root.entityId(), root == null ? null : root.entityType(),
+                root == null ? null : root.spanName(), root == null ? null : Long.toString(root.durationNanos()),
+                root == null ? null : normalizedStatus(root.status()), root == null ? null : root.startTime(),
+                errorCount, root == null ? null : root.resourceAttributes(), spans,
+                roots.isEmpty() ? "missing" : roots.size() == 1 ? "unique" : "ambiguous", roots.size(),
+                new org.apache.hertzbeat.common.observability.dto.trace.TraceRepresentativeSpanDto(
+                        representative.spanId(), representative.spanName(), representative.serviceName(),
+                        representative.serviceNamespace(), representative.startTime(), representative.durationNanos()),
+                representative.startTime(), observedEnd, missingParents, partial);
+        return new AssembledTrace(detail, selected.spanId(), identity(selected), dependencies(rows, byId));
+    }
+
+    private static Map<String, TraceSpanRow> validatedRows(String traceId, List<TraceSpanRow> rows) {
+        Map<String, TraceSpanRow> byId = new LinkedHashMap<>();
+        if (traceId == null || !traceId.matches("[0-9a-f]{32}") || traceId.matches("0+")) {
+            throw new MalformedTraceException();
+        }
+        for (TraceSpanRow row : rows) {
+            if (row == null || !traceId.equals(row.traceId()) || !validSpanId(row.spanId())
+                    || (row.parentSpanId() != null && !validSpanId(row.parentSpanId()))
+                    || row.spanId().equals(row.parentSpanId()) || row.startTime() < 0 || row.startTimeUnixNano() < 0
+                    || row.startTimeUnixNano() / 1_000_000L != row.startTime()
+                    || row.durationNanos() < 0 || row.durationNanos() > 9_007_199_254_740_991L
+                    || byId.put(row.spanId(), row) != null) {
+                throw new MalformedTraceException();
+            }
+            endTime(row);
+        }
+        Set<String> complete = new HashSet<>();
+        for (TraceSpanRow row : rows) {
+            Set<String> path = new HashSet<>();
+            TraceSpanRow current = row;
+            while (current != null && !complete.contains(current.spanId())) {
+                if (!path.add(current.spanId())) {
+                    throw new MalformedTraceException();
+                }
+                current = byId.get(current.parentSpanId());
+            }
+            complete.addAll(path);
+        }
+        return byId;
+    }
+
+    private static boolean validSpanId(String value) {
+        return value != null && value.matches("[0-9a-f]{16}") && !value.matches("0+");
+    }
+
+    private static long endTime(TraceSpanRow row) {
+        long durationMillis = row.durationNanos() / 1_000_000L + (row.durationNanos() % 1_000_000L == 0 ? 0 : 1);
+        if (row.startTime() > 9_007_199_254_740_991L - durationMillis) {
+            throw new MalformedTraceException();
+        }
+        if (row.observedEndTime() < row.startTime() || row.observedEndTime() > 9_007_199_254_740_991L) {
+            throw new MalformedTraceException();
+        }
+        return row.observedEndTime();
     }
 
     private static Span toSpan(TraceSpanRow row) {
         return new Span(row.spanId(), row.parentSpanId(), row.spanName(), row.serviceName(), row.serviceNamespace(),
                 row.deploymentEnvironment(), row.entityId(), row.entityType(), normalizedStatus(row.status()),
                 row.statusMessage(), row.spanKind(), row.traceState(), row.scopeName(), row.scopeVersion(),
-                Long.toString(row.durationNanos()), row.startTime(), isError(row.status()), row.resourceAttributes(),
+                Long.toString(row.durationNanos()), row.startTime(), Long.toString(row.startTimeUnixNano()),
+                isError(row.status()), row.resourceAttributes(),
                 row.spanAttributes(), row.spanEvents(), row.spanLinks(), row.codeNavigationHint());
     }
 
@@ -118,7 +151,8 @@ final class InvestigationTraceAssembler {
         Set<String> seen = new HashSet<>();
         for (TraceSpanRow child : rows) {
             TraceSpanRow parent = byId.get(child.parentSpanId());
-            if (parent == null || parent.serviceName().equals(child.serviceName())) {
+            if (parent == null || !StringUtils.hasText(parent.serviceName()) || !StringUtils.hasText(child.serviceName())
+                    || parent.serviceName().equals(child.serviceName())) {
                 continue;
             }
             String key = parent.serviceName() + '\0' + child.serviceName() + '\0' + child.spanId();
@@ -153,6 +187,7 @@ final class InvestigationTraceAssembler {
     }
 
     record AssembledTrace(TraceDetail detail,
+                          String selectedSpanId,
                           InvestigationServiceIdentity selectedIdentity,
                           List<DependencyEdge> dependencies) {
     }

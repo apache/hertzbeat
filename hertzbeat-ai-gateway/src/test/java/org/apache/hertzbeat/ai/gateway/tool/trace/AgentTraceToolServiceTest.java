@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
+import org.apache.hertzbeat.common.observability.dto.trace.TraceRepresentativeSpanDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.support.exception.CommonException;
@@ -67,6 +68,9 @@ class AgentTraceToolServiceTest {
         row.setTraceId("trace-1");
         row.setServiceName("checkout");
         row.setResourceAttributes(Map.of("api_key", "trace-secret"));
+        row.setRepresentativeSpan(new TraceRepresentativeSpanDto("0123456789abcdef",
+                "authorization=representative-secret " + "x".repeat(600),
+                "service\u0000" + "s".repeat(300), "namespace" + "n".repeat(300), 1_000L, 100L));
         when(traceQueryService.queryTraceList("team-b", 9L, 1_000L, 2_000L, null, true,
                 "checkout", null, "prod", null, null, null, null, 2, 50, true, null, null))
                 .thenReturn(new PageImpl<>(List.of(row), PageRequest.of(2, 50), 101));
@@ -76,6 +80,15 @@ class AgentTraceToolServiceTest {
 
         assertEquals(101L, result.get("totalElements"));
         assertFalse(result.toString().contains("trace-secret"));
+        assertFalse(result.toString().contains("representative-secret"));
+        Map<?, ?> content = (Map<?, ?>) ((List<?>) result.get("content")).getFirst();
+        Map<?, ?> representative = (Map<?, ?>) content.get("representativeSpan");
+        assertEquals(org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer.sanitizeAndLimit(
+                row.getRepresentativeSpan().serviceName(), 256), representative.get("serviceName"));
+        assertFalse(content.containsKey("serviceStats"));
+        assertFalse(result.toString().contains("x".repeat(513)));
+        assertFalse(result.toString().contains("s".repeat(257)));
+        assertFalse(result.toString().contains("n".repeat(257)));
         verify(traceQueryService).queryTraceList("team-b", 9L, 1_000L, 2_000L, null, true,
                 "checkout", null, "prod", null, null, null, null, 2, 50, true, null, null);
     }

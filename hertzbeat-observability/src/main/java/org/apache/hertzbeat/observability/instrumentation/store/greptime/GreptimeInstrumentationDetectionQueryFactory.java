@@ -32,20 +32,29 @@ final class GreptimeInstrumentationDetectionQueryFactory {
 
     String latestReceivedAt(Signal signal, DetectionCriteria criteria) {
         return switch (signal) {
-            case METRICS -> metricsQuery(criteria);
+            case METRICS -> metricsQuery(criteria, true);
             case LOGS -> logsQuery(criteria);
             case TRACES -> flattenedTraceResourceQuery(criteria);
             default -> throw new IllegalArgumentException("Unsupported signal");
         };
     }
 
-    private String metricsQuery(DetectionCriteria criteria) {
+    String directMetricsWithoutCollectorColumn(DetectionCriteria criteria) {
+        if (criteria.collectorId() != null) {
+            throw new IllegalArgumentException("Collector-scoped detection requires the collector column");
+        }
+        return metricsQuery(criteria, false);
+    }
+
+    private String metricsQuery(DetectionCriteria criteria, boolean includeCollectorColumn) {
         List<String> filters = new ArrayList<>();
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsColumn("service_namespace", criteria.serviceNamespace()));
         filters.add(equalsColumn("deployment_environment_name", criteria.environment()));
-        filters.add(collectorColumnPredicate(
-                OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID, criteria.collectorId()));
+        if (includeCollectorColumn) {
+            filters.add(collectorColumnPredicate(
+                    OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID, criteria.collectorId()));
+        }
         addOptionalColumn(filters, OtlpMetricSemanticLabels.SERVICE_INSTANCE_ID, criteria.serviceInstanceId());
         addOptionalColumn(filters, OtlpMetricSemanticLabels.HTTP_ROUTE, criteria.endpoint());
         addTimeWindow(filters, "greptime_timestamp", criteria);

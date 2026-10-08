@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.manager.service.impl.PublicAccessGeneralConfigServiceImpl;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
@@ -118,6 +120,30 @@ class ManagedConfigDataPrecedenceTest {
     }
 
     @Test
+    void shippedConfigurationAllowsManagedSetupAndExplicitOperatorOverrides() throws Exception {
+        Path installationRoot = Files.createDirectories(temporaryDirectory.resolve("packaged-installation"));
+        Path externalDirectory = Files.createDirectories(installationRoot.resolve("config"));
+        Path shippedConfiguration = Path.of("../script/assembly/server/config/application.yml");
+        Files.copy(shippedConfiguration, externalDirectory.resolve("application.yml"));
+        ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(installationRoot);
+        assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED, transaction.apply(
+                new ManagedConfigurationBundle(managedApplication(),
+                        ManagedSecrets.withoutTelemetryPassword(SecretValue.of(TEST_PASSWORD)))));
+        Map<String, Object> properties = Map.of(
+                INSTALLATION_ROOT, installationRoot.toString(),
+                "spring.config.location", externalDirectory.toUri().toString());
+
+        assertLayer(properties, Map.of(), new String[0], "managed",
+                ManagedActiveConfigurationInspector.MANAGED_APPLICATION_SOURCE, ConfigSource.UI_MANAGED);
+        Files.writeString(externalDirectory.resolve("application.yml"), yaml("operator"),
+                java.nio.file.StandardOpenOption.APPEND);
+        assertLayer(properties, Map.of(), new String[0], "operator", "application.yml", ConfigSource.EXTERNAL_FILE);
+        Files.writeString(externalDirectory.resolve("application-release-proof.yml"), yaml("profile-operator"));
+        assertLayer(properties, Map.of(), new String[] {"--spring.profiles.active=release-proof"},
+                "profile-operator", "application-release-proof.yml", ConfigSource.EXTERNAL_FILE);
+    }
+
+    @Test
     void managedOptionalSettingsReachRuntimeConsumers() throws Exception {
         Path installationRoot = Files.createDirectories(temporaryDirectory.resolve("runtime-consumers"));
         ManagedSecrets managedSecrets = new ManagedSecrets(SecretValue.of(TEST_PASSWORD), Optional.empty(),
@@ -142,7 +168,8 @@ class ManagedConfigDataPrecedenceTest {
             when(collectorDao.findAll(any(Pageable.class))).thenReturn(Page.empty());
             var profile = new ManagerInstrumentationIntakeProfileStore(
                     collectorDao, mock(CollectorIntakeAdvertisementReader.class), server,
-                    new ExternalOtelCollectorIntakeProperties(null, null, null, null))
+                    new ExternalOtelCollectorIntakeProperties(null, null, null, null),
+                    new PublicAccessGeneralConfigServiceImpl(mock(GeneralConfigDao.class), context.getEnvironment()))
                     .profiles().getFirst();
             assertEquals("server-direct", profile.id());
             assertEquals(Availability.AVAILABLE, profile.availability());
@@ -157,6 +184,41 @@ class ManagedConfigDataPrecedenceTest {
                     "spring.mail.properties.mail.smtp.starttls.enable"));
             assertEquals("alerts@example.test",
                     context.getEnvironment().getProperty("hertzbeat.mail.from-address"));
+        }
+    }
+
+    @Test
+    void explicitEndpointOverrideStillReachesLiveProfileConsumerWithoutSavedSettings() throws Exception {
+        Path installationRoot = Files.createDirectories(temporaryDirectory.resolve("endpoint-override"));
+        ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(installationRoot);
+        assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED, transaction.apply(new ManagedConfigurationBundle(
+                managedApplicationWithOptions(), new ManagedSecrets(SecretValue.of(TEST_PASSWORD), Optional.empty(),
+                        Optional.of(SecretValue.of("mail-secret"))))));
+        ConfigurableEnvironment environment = new StandardEnvironment();
+        environment.getPropertySources().addFirst(new MapPropertySource("testInstallationRoot",
+                Map.of(INSTALLATION_ROOT, installationRoot.toString())));
+        SpringApplication application = new SpringApplication(RuntimeConsumerBinding.class);
+        application.setEnvironment(environment);
+        application.setWebApplicationType(WebApplicationType.NONE);
+        application.setLogStartupInfo(false);
+        String endpoint = "https://operator.example.test/api/otlp";
+        try (ConfigurableApplicationContext context = application.run(
+                "--hertzbeat.instrumentation.server.otlp-http-endpoint=" + endpoint)) {
+            var server = context.getBean(ServerInstrumentationIntakeProperties.class);
+            assertEquals(endpoint, server.otlpHttpEndpoint());
+            CollectorDao dao = mock(CollectorDao.class);
+            when(dao.findAll(any(Pageable.class))).thenReturn(Page.empty());
+            var publicAccess = new PublicAccessGeneralConfigServiceImpl(mock(GeneralConfigDao.class),
+                    context.getEnvironment());
+            var profile = new ManagerInstrumentationIntakeProfileStore(dao,
+                    mock(CollectorIntakeAdvertisementReader.class), server,
+                    new ExternalOtelCollectorIntakeProperties(null, null, null, null), publicAccess)
+                    .profiles().getFirst();
+
+            assertEquals(endpoint, profile.endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+            assertEquals(server.otlpGrpcEndpoint(), profile.endpoints().get(OtlpTransport.GRPC).url());
+            assertEquals(server.profileId(), profile.id());
+            assertEquals(Authentication.BEARER_TOKEN, profile.authentication());
         }
     }
 
@@ -186,6 +248,8 @@ class ManagedConfigDataPrecedenceTest {
             assertEquals(expected, context.getEnvironment().getProperty(KEY));
             if (expectedSource == ConfigSource.UI_MANAGED) {
                 assertEquals(TEST_PASSWORD, context.getEnvironment().getProperty(SECRET_KEY));
+                assertEquals("http://greptime:4000", context.getEnvironment()
+                        .getProperty("warehouse.store.greptime.http-endpoint"));
             }
             PropertySource<?> winner = winningSource(context.getEnvironment(), KEY);
             if (expectedSource == ConfigSource.UI_MANAGED) {

@@ -24,12 +24,14 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext
 import org.apache.hertzbeat.observability.logs.service.LogSseService;
 import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
 import org.springframework.http.MediaType;
+import org.apache.hertzbeat.observability.logs.query.LogFilterQueryException;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import io.swagger.v3.oas.annotations.Operation;
 
 /**
@@ -52,22 +54,39 @@ public class LogSseController {
      */
     @GetMapping(path = "/subscribe")
     @Operation(summary = "Subscribe to log events with optional filtering", description = "Subscribe to log events with optional filtering")
-    public ResponseEntity<SseEmitter> subscribe(@ModelAttribute LogSseFilterCriteria filterCriteria) {
+    public ResponseEntity<?> subscribe(@ModelAttribute LogSseFilterCriteria filterCriteria) {
+        return withCriteria(filterCriteria, () -> ResponseEntity.ok()
+                .contentType(MediaType.TEXT_EVENT_STREAM)
+                .header("Cache-Control", "no-cache, no-transform")
+                .header("X-Accel-Buffering", "no")
+                .body(logSseService.subscribe(filterCriteria)));
+    }
+
+    @GetMapping(path = "/validate", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Validate live log filters without opening a subscription")
+    public ResponseEntity<?> validate(@ModelAttribute LogSseFilterCriteria filterCriteria) {
+        return withCriteria(filterCriteria, () -> {
+            logSseService.validate(filterCriteria);
+            return ResponseEntity.ok(Message.success(null));
+        });
+    }
+
+    private ResponseEntity<?> withCriteria(LogSseFilterCriteria filterCriteria, java.util.function.Supplier<ResponseEntity<?>> operation) {
         String workspaceId = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
         if (workspaceId == null || workspaceId.isBlank()) {
             return ResponseEntity.status(403).build();
         }
         filterCriteria.setWorkspaceId(workspaceId);
         try {
-            filterCriteria.normalizeQueryContext();
-            filterCriteria.validate();
+            return operation.get();
+        } catch (LogFilterQueryException invalid) {
+            Message<LogFilterQueryException.Detail> message = Message.fail(
+                    CommonConstants.PARAM_INVALID_CODE, LogFilterQueryException.ERROR_CODE);
+            message.setData(invalid.detail());
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(message);
         } catch (IllegalArgumentException ignored) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_EVENT_STREAM)
-                .header("Cache-Control", "no-cache, no-transform")
-                .header("X-Accel-Buffering", "no")
-                .body(logSseService.subscribe(filterCriteria));
     }
+
 }

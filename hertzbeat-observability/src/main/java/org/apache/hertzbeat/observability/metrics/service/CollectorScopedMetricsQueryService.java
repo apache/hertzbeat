@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.metrics.service;
 
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
 
 /**
  * Applies Collector identity scope before delegating to the existing metrics console.
@@ -29,6 +30,16 @@ public interface CollectorScopedMetricsQueryService {
 
     default OtlpMetricsInventoryDto inventory(InventoryRequest request) {
         throw new UnsupportedOperationException("Metric inventory is unavailable");
+    }
+
+    default OtlpMetricLabelsDto labels(LabelsRequest request) {
+        throw new UnsupportedOperationException("Metric label discovery is unavailable");
+    }
+
+    /** Exact scoped label discovery request. */
+    record LabelsRequest(String workspaceId, Long entityId, String entityType, Long start, Long end,
+                         String serviceName, String serviceNamespace, String environment, String collectorId,
+                         String instance, String endpoint, String query, String filter, String label, String limit, String operationName) {
     }
 
     /**
@@ -72,6 +83,7 @@ public interface CollectorScopedMetricsQueryService {
             String collectorId,
             String instance,
             String endpoint,
+            String search,
             String limit
     ) {
     }

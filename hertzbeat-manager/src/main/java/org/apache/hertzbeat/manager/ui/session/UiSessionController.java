@@ -57,7 +57,11 @@ public class UiSessionController {
         String accessToken = cookies.accessToken(request);
         UiSessionView session = service.inspect(accessToken);
         if (accessToken != null && !session.authenticated()) {
-            cookies.clear(request, response);
+            if (service.canRecoverExpiredAccess(accessToken)) {
+                cookies.clearAccess(request, response);
+            } else {
+                cookies.clear(request, response);
+            }
         }
         return response(Message.success(session));
     }

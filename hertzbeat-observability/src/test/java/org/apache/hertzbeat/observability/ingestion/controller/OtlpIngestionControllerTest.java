@@ -320,20 +320,18 @@ class OtlpIngestionControllerTest {
         OtlpMetricsInventoryDto inventory = new OtlpMetricsInventoryDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
                         null, null, 1000L, 2000L),
-                "promql-inventory",
-                1,
+                "greptime-inventory",
+                20,
+                false,
                 List.of(new OtlpMetricsInventoryDto.Item(
                         "http_server_duration",
-                        "latency",
-                        2,
-                        2000L,
-                        java.util.Map.of("__name__", "http_server_duration", "service_name", "checkout")
+                        "latency"
                 ))
         );
         when(collectorScopedMetricsQueryService.inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
                         "team-a", 42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                        "collector-a", "checkout-01", "/orders", "20")))
+                        "collector-a", "checkout-01", "/orders", "http", "20")))
                 .thenReturn(inventory);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/inventory")
@@ -347,21 +345,25 @@ class OtlpIngestionControllerTest {
                         .param("collectorId", "collector-a")
                         .param("instance", "checkout-01")
                         .param("endpoint", "/orders")
+                        .param("search", "http")
                         .param("limit", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
-                .andExpect(jsonPath("$.data.source").value("promql-inventory"))
-                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.source").value("greptime-inventory"))
+                .andExpect(jsonPath("$.data.limit").value(20))
+                .andExpect(jsonPath("$.data.truncated").value(false))
+                .andExpect(jsonPath("$.data.total").doesNotExist())
                 .andExpect(jsonPath("$.data.items[0].metricName").value("http_server_duration"))
                 .andExpect(jsonPath("$.data.items[0].family").value("latency"))
-                .andExpect(jsonPath("$.data.items[0].timeSeriesCount").value(2))
-                .andExpect(jsonPath("$.data.items[0].labels.service_name").value("checkout"));
+                .andExpect(jsonPath("$.data.items[0].timeSeriesCount").doesNotExist())
+                .andExpect(jsonPath("$.data.items[0].latestObservedAt").doesNotExist())
+                .andExpect(jsonPath("$.data.items[0].labels").doesNotExist());
 
         verify(collectorScopedMetricsQueryService).inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
                         "team-a", 42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                        "collector-a", "checkout-01", "/orders", "20"));
+                        "collector-a", "checkout-01", "/orders", "http", "20"));
     }
 
     @Test

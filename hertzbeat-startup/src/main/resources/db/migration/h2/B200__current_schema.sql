@@ -6,6 +6,6 @@
 -- Current V200 schema baseline for provisioning an empty embedded H2 store.
 -- H2 runs in MySQL compatibility mode, so keep the shared current-schema
 -- definition executable rather than maintaining a third divergent snapshot.
--- Shared MySQL baseline SHA-256: ba50b35f45bad81ace0d19c2077430107e4eb9753570075a59479a23378ec771
+-- Shared MySQL baseline SHA-256: e1ac255c10a573b5530ec1c14c7765bbb14473090bf8c08322fe935c5b169669
 
 RUNSCRIPT FROM 'classpath:db/migration/mysql/B200__current_schema.sql';

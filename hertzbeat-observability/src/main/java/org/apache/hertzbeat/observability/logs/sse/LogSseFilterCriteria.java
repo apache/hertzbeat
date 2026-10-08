@@ -19,11 +19,11 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -33,6 +33,10 @@ import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.observability.logs.query.LogVisibilityFilter;
+import org.apache.hertzbeat.observability.logs.query.LogSearchParser;
+import org.apache.hertzbeat.observability.logs.query.LogGroupSelectionParser;
+import org.apache.hertzbeat.observability.logs.query.LogFilterQueryException;
+import org.apache.hertzbeat.observability.logs.query.LogSearchEvaluator;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.springframework.util.StringUtils;
 
@@ -55,11 +59,22 @@ public class LogSseFilterCriteria {
     @Schema(description = "Numerical value of the severity.", example = "1", accessMode = READ_WRITE)
     private Integer severityNumber;
 
+    @Schema(description = "OpenTelemetry severity category.", example = "ERROR", accessMode = READ_WRITE)
+    private String severityCategory;
+
     @Schema(description = "The severity text.", example = "INFO", accessMode = READ_WRITE)
     private String severityText;
 
     @Schema(description = "Log content text filtering", example = "error occurred", accessMode = READ_WRITE)
     private String logContent;
+
+    private String searchSyntax;
+
+    private String logGroupSelection;
+
+    private String logSort;
+
+    private String logNumericRange;
 
     @Schema(description = "A unique identifier for a trace.", example = "1234567890", accessMode = READ_WRITE)
     private String traceId;
@@ -134,13 +149,42 @@ public class LogSseFilterCriteria {
     }
 
     Predicate<LogEntry> compile() {
-        if (!StringUtils.hasText(workspaceId)) {
-            throw new IllegalArgumentException("Workspace boundary is required");
+        var snapshot = snapshot();
+        if (snapshot.selection() != null) {
+            throw new LogFilterQueryException(LogFilterQueryException.Reason.GROUP_SELECTION_UNSUPPORTED);
         }
+        return snapshot.matcher();
+    }
+
+    /** Server-only immutable input to native preparation; not a bindable request property. */
+    public record Snapshot(org.apache.hertzbeat.common.observability.dto.log.LogGroupSelection selection, Predicate<LogEntry> matcher) { }
+
+    public Snapshot snapshot() {
+        if (logSort != null) { throw new LogFilterQueryException(); }
+        LogSearchParser.validateSyntax(searchSyntax);
+        if (!StringUtils.hasText(workspaceId)) { throw new IllegalArgumentException("Workspace boundary is required"); }
+        var selection = LogGroupSelectionParser.parse(logGroupSelection);
+        var range = org.apache.hertzbeat.observability.logs.query.LogNumericRangeParser.parse(logNumericRange);
+        var base = compileBase();
+        return new Snapshot(selection, range == null ? base : base.and(log -> matchesNumericRange(log, range)));
+    }
+
+    private static boolean matchesNumericRange(LogEntry log,
+            org.apache.hertzbeat.common.observability.dto.log.LogNumericRange range) {
+        var values = "resource".equals(range.field().source()) ? log.getResource() : log.getAttributes();
+        Object value = values == null ? null : values.get(range.field().key());
+        if (!(value instanceof Number number)) { return false; }
+        double sample = number.doubleValue();
+        return Double.isFinite(sample) && sample >= range.min() && sample <= range.max();
+    }
+
+    private Predicate<LogEntry> compileBase() {
         return new CompiledMatcher(
                 severityNumber,
+                LogSeverityCategory.parse(severityCategory),
                 severityText,
-                logContent,
+                !LogSearchParser.SYNTAX.equals(searchSyntax) && StringUtils.hasText(logContent) ? new LogBodyTermFilter(logContent) : null,
+                LogSearchParser.SYNTAX.equals(searchSyntax) ? LogSearchEvaluator.compile(LogSearchParser.parse(logContent)) : null,
                 traceId,
                 spanId,
                 serviceName,
@@ -158,20 +202,13 @@ public class LogSseFilterCriteria {
     }
 
     public void normalizeQueryContext() {
+        LogSseAttributeFilter.parse(resourceFilter);
+        LogSseAttributeFilter.parse(attributeFilter);
         TelemetryQueryContextScope scope = new TelemetryQueryContextScope(instance, endpoint);
         instance = scope.instance();
         endpoint = scope.endpoint();
         resourceFilter = scope.applyResourceFilter(resourceFilter);
         attributeFilter = scope.applyAttributeFilter(attributeFilter);
-    }
-
-    private static boolean matchesLogContent(Object body, String expectedContent) {
-        if (body == null) {
-            return false;
-        }
-        String bodyText = String.valueOf(body);
-        return StringUtils.hasText(bodyText)
-                && bodyText.toLowerCase(Locale.ROOT).contains(expectedContent.toLowerCase(Locale.ROOT));
     }
 
     private static boolean matchesServiceContext(LogEntry log, CompiledMatcher matcher) {
@@ -249,8 +286,10 @@ public class LogSseFilterCriteria {
 
     private record CompiledMatcher(
             Integer severityNumber,
+            LogSeverityCategory severityCategory,
             String severityText,
-            String logContent,
+            LogBodyTermFilter bodyFilter,
+            Predicate<LogEntry> structuredFilter,
             String traceId,
             String spanId,
             String serviceName,
@@ -271,13 +310,17 @@ public class LogSseFilterCriteria {
             if (log == null || !matchesWorkspace(log, workspaceId)) {
                 return false;
             }
-            if (StringUtils.hasText(severityText) && !severityText.equalsIgnoreCase(log.getSeverityText())) {
+            if (StringUtils.hasText(severityText) && !severityText.equals(log.getSeverityText())) {
+                return false;
+            }
+            if (severityCategory != null && !severityCategory.matches(log.getSeverityNumber())) {
                 return false;
             }
             if (severityNumber != null && !severityNumber.equals(log.getSeverityNumber())) {
                 return false;
             }
-            if (StringUtils.hasText(logContent) && !matchesLogContent(log.getBody(), logContent)) {
+            if (structuredFilter != null && !structuredFilter.test(log)) { return false; }
+            if (bodyFilter != null && !bodyFilter.test(log.getBody())) {
                 return false;
             }
             if (StringUtils.hasText(traceId) && !traceId.equalsIgnoreCase(log.getTraceId())) {

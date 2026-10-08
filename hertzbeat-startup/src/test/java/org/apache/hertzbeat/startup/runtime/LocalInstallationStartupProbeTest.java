@@ -44,11 +44,25 @@ class LocalInstallationStartupProbeTest {
     @Test
     void freshRootStartsSetupOnlyAndLegacyDatabaseStartsGated() throws Exception {
         assertEquals(RuntimeMode.SETUP_ONLY,
-                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
+                new LocalInstallationStartupProbe(root, false)
+                        .probe(new String[] {"--spring.profiles.active=test"}).mode());
         Files.createDirectories(root.resolve("data"));
         Files.createFile(root.resolve("data/hertzbeat.mv.db"));
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
-                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
+                new LocalInstallationStartupProbe(root, false)
+                        .probe(new String[] {"--spring.profiles.active=test"}).mode());
+    }
+
+    @Test
+    void explicitLocalProfileStartsTheGatedBootstrapForAnOtherwiseFreshRoot() {
+        LocalInstallationStartupProbe probe = new LocalInstallationStartupProbe(root, false);
+
+        assertEquals(RuntimeMode.FULL_SETUP_GATED,
+                probe.probe(new String[] {"--spring.profiles.active=local"}).mode());
+        assertEquals(RuntimeMode.FULL_SETUP_GATED,
+                probe.probe(new String[] {"--spring.profiles.active=dev, local"}).mode());
+        assertEquals(RuntimeMode.SETUP_ONLY,
+                probe.probe(new String[] {"--spring.profiles.active=prod"}).mode());
     }
 
     @Test

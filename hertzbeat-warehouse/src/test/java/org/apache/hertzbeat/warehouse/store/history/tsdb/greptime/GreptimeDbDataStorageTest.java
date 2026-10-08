@@ -33,6 +33,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.greptime.GreptimeDB;
 import io.greptime.models.Err;
 import io.greptime.models.Result;
@@ -43,6 +46,7 @@ import io.greptime.v1.RowData;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +63,7 @@ import org.apache.hertzbeat.common.observability.dto.log.LogTrendBucket;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.metric.NativeMetricSystemContext;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.db.GreptimeQueryGuard;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
@@ -72,6 +77,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -517,6 +523,81 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
+    void logQueriesPreservePlaintextAndDecodeStructuredBodiesWithoutParserLogs() {
+        String bracketText = "  [telemetry storage unavailable]\n";
+        String braceText = "\t{not a JSON object}  ";
+        List<Object> bodies = Arrays.asList(bracketText, braceText, "  ordinary message\n", " \t ",
+                " {\"status\":\"ready\"} ", " [1,\"ready\"] ", null);
+        List<Map<String, Object>> rows = bodies.stream().map(body -> {
+            Map<String, Object> row = new HashMap<>(createNativeLogRows().getFirst());
+            row.put("body", body);
+            return row;
+        }).toList();
+        Logger logger = (Logger) LoggerFactory.getLogger(JsonUtil.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(
+                    greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard);
+            when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(rows);
+
+            List<LogEntry> result = greptimeDbDataStorage.queryLogsByMultipleConditions(
+                    1710000000000L, 1710000060000L, null, null, null, null, null);
+
+            assertEquals(Arrays.asList(bracketText, braceText, "  ordinary message\n", " \t ",
+                    Map.of("status", "ready"), List.of(1, "ready"), null),
+                    result.stream().map(LogEntry::getBody).toList());
+            assertTrue(appender.list.isEmpty(), "Reading ordinary log bodies must not produce JSON parser logs");
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void categoryUsesTheSameNumericRangeForRowsPaginationAndEveryAggregate() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard);
+            Map<String, Object> aggregate = new HashMap<>();
+            for (String key : List.of("count", "totalCount", "fatalCount", "errorCount", "warnCount", "infoCount",
+                    "debugCount", "traceCount", "withTrace", "withSpan", "withBothTraceAndSpan")) {
+                aggregate.put(key, 0L);
+            }
+            when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(
+                    List.of(), List.of(), List.of(aggregate), List.of(aggregate), List.of(aggregate), List.of(), List.of());
+            var category = org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory.ERROR;
+            greptimeDbDataStorage.queryLogsByMultipleConditions(1710000000000L, 1710000060000L, "trace123", "span456", 18, "SEVERE", "failure",
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), category);
+            greptimeDbDataStorage.queryLogsByMultipleConditionsWithPagination(1710000000000L, 1710000060000L, "trace123", "span456", 18, "SEVERE", "failure", 0, 20,
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), category);
+            greptimeDbDataStorage.countLogsByMultipleConditions(1710000000000L, 1710000060000L, "trace123", "span456", 18, "SEVERE", "failure",
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), category);
+            greptimeDbDataStorage.countLogsBySeverityBuckets(1710000000000L, 1710000060000L, "trace123", "span456", 18, "SEVERE", "failure",
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), category);
+            greptimeDbDataStorage.countLogTraceCoverage(1710000000000L, 1710000060000L, "trace123", "span456", 18, "SEVERE", "failure",
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), category);
+            greptimeDbDataStorage.countLogsByInterval(1710000000000L, 1710000060000L, 60000L, "trace123", "span456", 18, "SEVERE", "failure",
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), category);
+            greptimeDbDataStorage.countLogsByGroup(1710000000000L, 1710000060000L, "trace123", "span456", 18, "SEVERE", "failure",
+                    Set.of(), false, "workspace-1", "checkout", "payments", "prod", Map.of(), Map.of(), "severity", category);
+            ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor, org.mockito.Mockito.times(7)).executeStrict(sql.capture());
+            for (String query : sql.getAllValues()) {
+                String where = query.substring(query.indexOf(" WHERE "));
+                assertTrue(where.contains("severity_number >= 17 AND severity_number <= 20"));
+                assertTrue(where.contains("severity_number = 18"));
+                assertTrue(where.contains("severity_text = 'SEVERE'"));
+                assertTrue(where.contains("workspace-1"));
+                assertTrue(where.contains("trace_id = 'trace123'"));
+                assertTrue(where.contains("span_id = 'span456'"));
+            }
+        }
+    }
+
+    @Test
     void testQueryAndCountLogs() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
@@ -621,7 +702,7 @@ class GreptimeDbDataStorageTest {
                     "TRIM(json_get_string(resource_attributes, '$[\"workspace.id\"]')) = 'team-a'"));
             assertTrue(sql.contains(
                     "TRIM(json_get_string(resource_attributes, '$[\"workspace_id\"]')) = 'team-a'"));
-            assertTrue(sql.contains("ORDER BY timestamp DESC LIMIT 20 OFFSET 40"));
+            assertTrue(sql.contains("ORDER BY timestamp DESC, log_record_uid DESC LIMIT 20 OFFSET 40"));
         }
     }
 
@@ -693,7 +774,7 @@ class GreptimeDbDataStorageTest {
             assertTrue(sql.contains(
                     "TRIM(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]')) = 'team-a'"));
             assertTrue(sql.contains("LOWER(service_name) NOT IN ('otelcol-contrib')"));
-            assertTrue(sql.contains("ORDER BY timestamp DESC LIMIT 20"));
+            assertTrue(sql.contains("ORDER BY timestamp DESC, log_record_uid DESC LIMIT 20"));
         }
     }
 
@@ -717,7 +798,7 @@ class GreptimeDbDataStorageTest {
             assertTrue(sql.contains(
                     "TRIM(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]')) = 'team-a'"));
             assertTrue(sql.contains("LOWER(service_name) NOT IN ('otelcol-contrib')"));
-            assertTrue(sql.contains("ORDER BY timestamp DESC LIMIT 20"));
+            assertTrue(sql.contains("ORDER BY timestamp DESC, log_record_uid DESC LIMIT 20"));
         }
     }
 

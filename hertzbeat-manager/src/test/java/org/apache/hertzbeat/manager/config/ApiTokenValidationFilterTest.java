@@ -256,6 +256,29 @@ class ApiTokenValidationFilterTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/logs/analysis/compare", "/api/logs/analysis/compare/other", "/api/monitors/manage"})
+    void comparisonPostAloneUsesReadOnlyScope(String uri) throws Exception {
+        String required = "/api/logs/analysis/compare".equals(uri) ? AuthTokenScopes.READONLY_QUERY : AuthTokenScopes.API_ADMIN;
+        String managedToken = "managed-token";
+        when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn(uri);
+        when(accountService.checkTokenStatus(
+                managedToken, required, AuthTokenScopes.DEFAULT_WORKSPACE_ID)).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
+        doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
+        SubjectSum subject = mockManagedSubjectWithClaims();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            verify(accountService).checkTokenStatus(
+                    managedToken, required, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
+        }
+    }
+
     @Test
     void testManagedTokenOtlpRequestRequiresIngestScope() throws Exception {
         String managedToken = "managed-token";

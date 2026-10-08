@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.ui.session;
 
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -68,26 +69,49 @@ public class UiSessionService {
         }
         try {
             Claims claims = JsonWebTokenUtil.parseJwt(accessToken);
-            if (!AuthTokenScopes.UI_SESSION.equals(claims.get(AuthTokenScopes.CLAIM_TOKEN_SCOPE, String.class))) {
-                return UiSessionView.anonymous();
-            }
-            String username = StringUtils.trimToNull(claims.getSubject());
-            if (username == null) {
-                return UiSessionView.anonymous();
-            }
-            List<String> roles = roles(claims.get(ROLES_CLAIM));
-            Long credentialVersion = claims.get(
-                    ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, Long.class);
-            if (accountService.checkSessionAccess(username, roles, credentialVersion) != null) {
-                return UiSessionView.anonymous();
-            }
-            String workspaceId = AuthTokenScopes.normalizeWorkspaceId(
-                    claims.get(AuthTokenScopes.CLAIM_WORKSPACE_ID, String.class));
-            return new UiSessionView(true, username, roles, workspaceId, instant(claims.getExpiration()));
+            return inspectClaims(claims);
         } catch (RuntimeException ignored) {
             return UiSessionView.anonymous();
         }
     }
+
+    /** Preserves only the refresh opportunity for a verified, naturally expired UI access token. */
+    boolean canRecoverExpiredAccess(String accessToken) {
+        try {
+            JsonWebTokenUtil.parseJwt(accessToken);
+            return false;
+        } catch (ExpiredJwtException expired) {
+            // The JWT parser verifies the signature before exposing expired claims.
+            // Current account, credential generation, and roles remain authoritative.
+            try {
+                return inspectClaims(expired.getClaims()).authenticated();
+            } catch (RuntimeException ignored) {
+                return false;
+            }
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    private UiSessionView inspectClaims(Claims claims) {
+        if (!AuthTokenScopes.UI_SESSION.equals(claims.get(AuthTokenScopes.CLAIM_TOKEN_SCOPE, String.class))) {
+            return UiSessionView.anonymous();
+        }
+        String username = StringUtils.trimToNull(claims.getSubject());
+        if (username == null) {
+            return UiSessionView.anonymous();
+        }
+        List<String> roles = roles(claims.get(ROLES_CLAIM));
+        Long credentialVersion = claims.get(
+                ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, Long.class);
+        if (accountService.checkSessionAccess(username, roles, credentialVersion) != null) {
+            return UiSessionView.anonymous();
+        }
+        String workspaceId = AuthTokenScopes.normalizeWorkspaceId(
+                claims.get(AuthTokenScopes.CLAIM_WORKSPACE_ID, String.class));
+        return new UiSessionView(true, username, roles, workspaceId, instant(claims.getExpiration()));
+    }
+
 
     private UiSessionTokens tokens(String accessToken, String refreshToken) throws AuthenticationException {
         if (StringUtils.isAnyBlank(accessToken, refreshToken)) {

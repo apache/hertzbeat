@@ -17,9 +17,10 @@
 
 package org.apache.hertzbeat.observability.ingestion.enricher;
 
+import org.apache.hertzbeat.observability.ingestion.util.OtlpJsonIdNormalizer;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
@@ -39,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.List;
@@ -379,50 +379,12 @@ public class OtlpCorrelationEnricher {
     private String normalizeOtlpJson(String content) throws InvalidProtocolBufferException {
         try {
             JsonNode root = OBJECT_MAPPER.readTree(content);
-            normalizeOtlpHexEncodedIds(root);
+            OtlpJsonIdNormalizer.normalize(root, OTLP_HEX_ID_FIELDS);
             return OBJECT_MAPPER.writeValueAsString(root);
         } catch (Exception ex) {
             throw new InvalidProtocolBufferException("Failed to normalize OTLP JSON: " + ex.getMessage());
         }
     }
 
-    private void normalizeOtlpHexEncodedIds(JsonNode node) {
-        if (node == null) {
-            return;
-        }
-        if (node.isObject()) {
-            ObjectNode objectNode = (ObjectNode) node;
-            objectNode.fieldNames().forEachRemaining(fieldName -> {
-                JsonNode child = objectNode.get(fieldName);
-                if (OTLP_HEX_ID_FIELDS.contains(fieldName) && child != null && child.isTextual()) {
-                    String normalized = tryConvertHexToBase64(child.asText());
-                    if (normalized != null) {
-                        objectNode.put(fieldName, normalized);
-                    }
-                } else {
-                    normalizeOtlpHexEncodedIds(child);
-                }
-            });
-            return;
-        }
-        if (node.isArray()) {
-            node.forEach(this::normalizeOtlpHexEncodedIds);
-        }
-    }
 
-    private String tryConvertHexToBase64(String value) {
-        if (StringUtils.isBlank(value) || (value.length() & 1) != 0) {
-            return null;
-        }
-        for (int i = 0; i < value.length(); i++) {
-            if (Character.digit(value.charAt(i), 16) < 0) {
-                return null;
-            }
-        }
-        try {
-            return Base64.getEncoder().encodeToString(HexFormat.of().parseHex(value));
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
-    }
 }

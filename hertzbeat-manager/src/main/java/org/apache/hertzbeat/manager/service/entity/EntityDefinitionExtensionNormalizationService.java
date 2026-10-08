@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinition;
 import org.springframework.stereotype.Service;
@@ -42,7 +41,7 @@ public class EntityDefinitionExtensionNormalizationService {
     }
 
     public Map<String, Object> extractDefinitionObjectNodeMap(Object value) {
-        Map<String, Object> objectMap = toObjectMap(value);
+        Map<String, Object> objectMap = EntityDefinitionMaps.toObjectMap(value);
         return objectMap.isEmpty() ? Collections.emptyMap() : objectMap;
     }
 
@@ -50,16 +49,4 @@ public class EntityDefinitionExtensionNormalizationService {
         return primary != null ? primary : fallback;
     }
 
-    private Map<String, Object> toObjectMap(Object value) {
-        if (!(value instanceof Map<?, ?> rawMap)) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            if (entry.getKey() != null) {
-                result.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
-        return result;
-    }
 }

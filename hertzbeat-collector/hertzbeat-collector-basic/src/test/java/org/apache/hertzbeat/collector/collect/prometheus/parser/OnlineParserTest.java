@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
 
 class OnlineParserTest {
 
@@ -95,25 +94,25 @@ class OnlineParserTest {
                 go_memstats_gc_sys_bytes 4.614808e+06""";
         InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
         Map<String, MetricFamily> metricFamilyMap1 = OnlineParser.parseMetrics(inputStream);
-        Map<String, MetricFamily> metricFamilyMap2 = TextParser.textToMetricFamilies(str);
         assertNotNull(metricFamilyMap1);
-        assertNotNull(metricFamilyMap2);
-        assertEquals(metricFamilyMap1.size(), metricFamilyMap2.size());
-        metricFamilyMap2.forEach((metricFamilyName, metricFamily2) -> {
-            if (!metricFamilyMap1.containsKey(metricFamilyName)) {
-                fail("parse failed, different result from two parser.");
-            }
-            MetricFamily metricFamily1 = metricFamilyMap1.get(metricFamilyName);
-            Set<Double> metricValueSet = metricFamily2.getMetricList().stream().map(MetricFamily.Metric::getValue).collect(Collectors.toSet());
-            metricFamily1.getMetricList().forEach(metric -> {
-                // this is for something different between two algorithms above, and both of them is current on this parsing behavior.
-                if (!(metric.getValue() == Double.POSITIVE_INFINITY || metric.getValue() == Double.NEGATIVE_INFINITY)) {
-                    if (!metricValueSet.contains(metric.getValue())) {
-                        fail();
-                    }
-                }
-            });
-        });
+        Map<String, Set<Double>> expected = Map.ofEntries(
+                Map.entry("jvm_gc_pause_seconds_count", Set.of(1.0, 5.0)),
+                Map.entry("jvm_gc_pause_seconds_sum", Set.of(0.139, 0.02, 0.082)),
+                Map.entry("go_gc_duration_seconds", Set.of(2.0209e-05, 6.6917e-05,
+                        Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NaN)),
+                Map.entry("go_gc_duration_seconds_sum", Set.of(0.001134793)),
+                Map.entry("go_gc_duration_seconds_count", Set.of(5.0)),
+                Map.entry("go_goroutines", Set.of(32.0)),
+                Map.entry("go_info", Set.of(1.0)),
+                Map.entry("go_memstats_alloc_bytes", Set.of(1.5716224e+07)),
+                Map.entry("go_memstats_alloc_bytes_total", Set.of(2.0707544e+07)),
+                Map.entry("go_memstats_buck_hash_sys_bytes", Set.of(1.457881e+06)),
+                Map.entry("go_memstats_frees_total", Set.of(50438.0)),
+                Map.entry("go_memstats_gc_sys_bytes", Set.of(4.614808e+06)));
+        assertEquals(expected.keySet(), metricFamilyMap1.keySet());
+        expected.forEach((name, values) -> assertEquals(values, metricFamilyMap1.get(name)
+                .getMetricList().stream().map(MetricFamily.Metric::getValue).collect(Collectors.toSet()), name));
+
     }
 
     @Test

@@ -19,12 +19,14 @@ package org.apache.hertzbeat.observability.logs.controller;
 
 import static org.hamcrest.Matchers.aMapWithSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -50,6 +52,7 @@ import org.apache.hertzbeat.common.observability.dto.investigation.Investigation
 import org.apache.hertzbeat.common.observability.dto.investigation.InvestigationWindow;
 import org.apache.hertzbeat.common.observability.dto.investigation.LogInvestigationView;
 import org.apache.hertzbeat.common.observability.dto.log.LogTrendBucket;
+import org.apache.hertzbeat.common.observability.dto.log.LogCalculated;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.observability.logs.service.impl.LogQueryServiceImpl;
@@ -70,6 +73,140 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  */
 @ExtendWith(MockitoExtension.class)
 class LogQueryControllerTest {
+
+    @Test
+    void subqueryBindsTrustedScopeWithoutPuttingMainSearchInChildScope() {
+        String request = """
+                {"version":1,"parameters":{"start":"1","end":"59999","searchSyntax":"structured-v1",
+                 "search":"service:api"},"subquery":{"version":1,"mainField":"builtin:serviceName",
+                 "operator":"not_in","child":{"field":"builtin:serviceName",
+                 "searchSyntax":"structured-v1","search":"service:worker"},"rank":{
+                 "direction":"bottom","limit":2,"measure":{"function":"count_all"}}},
+                 "operation":{"kind":"page","pageIndex":0,"pageSize":10,
+                 "sort":{"field":"timestamp","direction":"desc"}}}
+                """;
+        when(historyDataReader.calculatedPage(any())).thenReturn(new LogCalculated.PageResult(0, List.of()));
+        var response = logQueryController.subquery(request);
+        assertEquals(0L, response.getBody().getData().result().get("totalElements"));
+        var captured = org.mockito.ArgumentCaptor.forClass(LogCalculated.Query.class);
+        verify(historyDataReader).calculatedPage(captured.capture());
+        assertEquals("default", captured.getValue().scope().workspaceId());
+        assertEquals("service:worker", captured.getValue().subquery().descriptor().child().search());
+        verify(admissionService).execute(eq("logs"), any());
+        when(historyDataReader.calculatedPage(any())).thenThrow(new org.apache.hertzbeat.observability.logs.query
+                .LogFilterQueryException(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.Reason
+                .FULL_TEXT_UNSUPPORTED));
+        var invalid = assertThrows(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.class,
+                () -> logQueryController.subquery(request));
+        assertEquals("full_text_unsupported", invalid.detail().reason());
+        org.mockito.Mockito.doThrow(new org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException())
+                .when(historyDataReader).calculatedPage(any());
+        assertThrows(org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException.class,
+                () -> logQueryController.subquery(request));
+        org.mockito.Mockito.doReturn(new LogCalculated.PageResult(0, List.of()))
+                .when(historyDataReader).calculatedPage(any());
+        assertEquals(0L, logQueryController.subquery(request).getBody().getData().result().get("totalElements"));
+    }
+
+    @Test
+    void formulaRegexValidationUsesNativePatternAndSharedAdmissionWithoutPreview() throws Exception {
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"formula","name":"matches",
+                   "expression":"regexp_like(@message,\\"[z-a]\\")"}
+                ]}}
+                """;
+        doThrow(new org.apache.hertzbeat.common.observability.query.LogCalculatedFormula.ValidationException(
+                "invalid_pattern", "calculatedFields"))
+                .when(historyDataReader).calculatedPattern("[z-a]");
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(false))
+                .andExpect(jsonPath("$.data.errors[0].code").value("invalid_pattern"))
+                .andExpect(jsonPath("$.data.errors[0].path").value("fields[0].expression"));
+        verify(historyDataReader).calculatedPattern("[z-a]");
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void calculatedValidationPreviewUsesTheHistoryReadersNativeSamplePath() throws Exception {
+        when(historyDataReader.calculatedPreview(any(), eq("GET 12.5")))
+                .thenReturn(new LogCalculated.Preview("c1", Map.of("token", "GET", "latency", "12.5")));
+        when(historyDataReader.calculatedPreview(any(), eq("")))
+                .thenReturn(new LogCalculated.Preview("c2", Map.of("word", "")));
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"extraction","engine":"regex","source":"builtin:body",
+                   "pattern":"(?<token>[A-Za-z]+) (?<latency>[0-9.]+)",
+                   "captures":[{"name":"token"},{"name":"latency"}]},
+                  {"id":"c2","kind":"extraction","engine":"regex","source":"builtin:body",
+                   "pattern":"(?<word>[A-Za-z]+)","captures":[{"name":"word"}]}
+                ]},"preview":{"definitionId":"c1","sourceText":"GET 12.5"}}
+                """;
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(true))
+                .andExpect(jsonPath("$.data.preview.values.token").value("GET"));
+        verify(historyDataReader).calculatedPreview(any(), eq("GET 12.5"));
+        verify(historyDataReader).calculatedPreview(any(), eq(""));
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void calculatedValidationChecksNativePatternWithoutPreview() throws Exception {
+        when(historyDataReader.calculatedPreview(any(), eq("")))
+                .thenThrow(new org.apache.hertzbeat.common.observability.query.LogCalculatedFormula.ValidationException(
+                        "invalid_pattern", "calculatedFields"));
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"extraction","engine":"regex","source":"builtin:body",
+                   "pattern":"(?<token>[z-a])","captures":[{"name":"token"}]}
+                ]}}
+                """;
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(false))
+                .andExpect(jsonPath("$.data.errors[0].code").value("invalid_pattern"))
+                .andExpect(jsonPath("$.data.errors[0].path").value("fields[0].pattern"));
+        verify(historyDataReader).calculatedPreview(any(), eq(""));
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void formulaOnlyValidationDoesNotUseQueryAdmissionOrStorage() throws Exception {
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"formula","name":"seconds","expression":"@duration_ms/1000"}
+                ]}}
+                """;
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(true));
+        verify(admissionService, never()).execute(eq("logs"), any());
+        verifyNoInteractions(historyDataReader);
+    }
+
+    @Test
+    void calculatedQueryPreservesTheBoundedAdmissionError() {
+        when(historyDataReader.calculatedPage(any()))
+                .thenThrow(new org.apache.hertzbeat.common.observability.query.LogCalculatedFormula.ValidationException(
+                        "budget_exceeded", "calculatedFields"));
+        String request = """
+                {"version":2,"parameters":{"start":"1","end":"59999"},
+                 "calculatedFields":{"version":2,"fields":[
+                   {"id":"c1","kind":"formula","name":"label","expression":"lower(@attempt)"}
+                 ]},"operation":{"kind":"page","pageIndex":0,"pageSize":10,
+                  "sort":{"field":"timestamp","direction":"desc"}}}
+                """;
+        var failure = assertThrows(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.class,
+                () -> logQueryController.calculated(request));
+        assertEquals("calculated_budget_exceeded", failure.detail().reason());
+        verify(admissionService).execute(eq("logs"), any());
+    }
 
     private MockMvc mockMvc;
 
@@ -145,6 +282,32 @@ class LogQueryControllerTest {
     @AfterEach
     void tearDown() {
         AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void unsupportedCategoryStorageFiltersAllRowsBeforePaginationAndOverview() throws Exception {
+        var category = org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory.ERROR;
+        List<LogEntry> logs = java.util.stream.IntStream.rangeClosed(16, 21).mapToObj(number -> LogEntry.builder()
+                .timeUnixNano(1_000_001_000_000L).severityNumber(number).severityText("SEVERE")
+                .body("failure " + number).resource(Map.of("service.name", "checkout"))
+                .attributes(Map.of("log.record.uid", "event-" + number)).build()).toList();
+        when(historyDataReader.queryLogsByMultipleConditions(
+                any(), any(), any(), any(), any(), any(), any())).thenReturn(logs);
+        when(historyDataReader.queryLogsByMultipleConditions(
+                any(), any(), any(), any(), any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(),
+                any(), any(), any(), any(), any(), any(), eq(category)))
+                .thenThrow(new UnsupportedOperationException("category unavailable"));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("severityCategory", "ERROR").param("start", "1000000").param("end", "1060000")
+                        .param("pageSize", "2").param("pageIndex", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.totalElements").value(4))
+                .andExpect(jsonPath("$.data.content.length()").value(2))
+                .andExpect(jsonPath("$.data.content[0].severityNumber").value(18))
+                .andExpect(jsonPath("$.data.content[1].severityNumber").value(17));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("severityCategory", "ERROR").param("start", "1000000").param("end", "1060000"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.totalCount").value(4))
+                .andExpect(jsonPath("$.data.errorCount").value(4));
     }
 
     @Test

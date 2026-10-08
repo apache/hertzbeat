@@ -24,6 +24,8 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -227,6 +229,50 @@ class LogPeriodicAlertCalculatorTest {
                 })
             );
         }
+    }
+
+    // Observes current behavior; these tests do not approve its product semantics.
+    @ParameterizedTest
+    @ValueSource(strings = {"group", "individual"})
+    void characterizesCurrentFirstEvaluationFiringDespiteConfiguredTimesAboveOne(String mode) {
+        AlertDefine define = mode.equals("group") ? groupAlertDefine : individualAlertDefine;
+        define.setTimes(3);
+        when(dataSourceService.query(anyString(), anyString(), anyString()))
+                .thenReturn(List.of(Map.of("errorCount", 7)));
+
+        calculator.calculate(define);
+
+        if (mode.equals("group")) {
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<SingleAlert>> captor = ArgumentCaptor.forClass(List.class);
+            verify(alarmCommonReduce).reduceAndSendAlarmGroup(any(), captor.capture());
+            assertEquals(CommonConstants.ALERT_STATUS_FIRING, captor.getValue().getFirst().getStatus());
+            assertEquals(1, captor.getValue().getFirst().getTriggerTimes());
+        } else {
+            ArgumentCaptor<SingleAlert> captor = ArgumentCaptor.forClass(SingleAlert.class);
+            verify(alarmCommonReduce).reduceAndSendAlarm(captor.capture());
+            assertEquals(CommonConstants.ALERT_STATUS_FIRING, captor.getValue().getStatus());
+            assertEquals(1, captor.getValue().getTriggerTimes());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void characterizesCurrentNonemptyThenEmptyOrFailedQueryWithoutResolvedEmission(boolean failure) {
+        var query = when(dataSourceService.query(anyString(), anyString(), anyString()))
+                .thenReturn(List.of(Map.of("errorCount", 7)));
+        if (failure) query.thenThrow(new RuntimeException("characterization query failure"));
+        else query.thenReturn(List.of());
+
+        calculator.calculate(groupAlertDefine);
+        calculator.calculate(groupAlertDefine);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<SingleAlert>> captor = ArgumentCaptor.forClass(List.class);
+        verify(alarmCommonReduce, Mockito.times(1)).reduceAndSendAlarmGroup(any(), captor.capture());
+        verify(alarmCommonReduce, Mockito.never()).reduceAndSendAlarm(any());
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, captor.getValue().getFirst().getStatus());
+        verify(dataSourceService, Mockito.times(2)).query(anyString(), anyString(), anyString());
     }
 
     /**

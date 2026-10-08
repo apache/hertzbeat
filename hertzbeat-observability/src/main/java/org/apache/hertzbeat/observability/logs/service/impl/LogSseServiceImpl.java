@@ -17,12 +17,20 @@
 
 package org.apache.hertzbeat.observability.logs.service.impl;
 
+import java.util.List;
+import java.util.function.Predicate;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.observability.logs.query.LogFilterQueryException;
 import org.apache.hertzbeat.observability.logs.service.LogSseService;
+import org.apache.hertzbeat.observability.logs.sse.LogSelectedGroupMatcher;
 import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -33,20 +41,44 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class LogSseServiceImpl implements LogSseService {
 
     private final LogSseManager emitterManager;
+    private final List<HistoryDataReader> readers;
+    private final ObservabilityQueryAdmissionService admission;
 
-    public LogSseServiceImpl(LogSseManager emitterManager) {
+    public LogSseServiceImpl(LogSseManager emitterManager, List<HistoryDataReader> readers,
+                             ObservabilityQueryAdmissionService admission) {
         this.emitterManager = emitterManager;
+        this.readers = List.copyOf(readers);
+        this.admission = admission;
     }
 
     @Override
-    public SseEmitter subscribe(LogSseFilterCriteria filterCriteria) {
-        LogSseFilterCriteria effectiveCriteria = filterCriteria == null
-                ? new LogSseFilterCriteria()
-                : filterCriteria;
-        bindRequestWorkspace(effectiveCriteria);
-        effectiveCriteria.validate();
-        Long clientId = SnowFlakeIdGenerator.generateId();
-        return emitterManager.createEmitter(clientId, effectiveCriteria);
+    public void validate(LogSseFilterCriteria criteria) { prepare(criteria); }
+
+    @Override
+    public SseEmitter subscribe(LogSseFilterCriteria criteria) {
+        Predicate<LogEntry> matcher = prepare(criteria);
+        return emitterManager.createPreparedEmitter(SnowFlakeIdGenerator.generateId(), matcher);
+    }
+
+    private Predicate<LogEntry> prepare(LogSseFilterCriteria criteria) {
+        var effective = criteria == null ? new LogSseFilterCriteria() : criteria;
+        bindRequestWorkspace(effective);
+        effective.normalizeQueryContext();
+        var snapshot = effective.snapshot();
+        if (snapshot.selection() == null) { return snapshot.matcher(); }
+        String workspace = effective.getWorkspaceId();
+        return admission.execute("logs", () -> {
+            for (var reader : readers) {
+                try {
+                    var prepared = reader.prepareLogGroupSelection(workspace, snapshot.selection());
+                    if (prepared == null || !snapshot.selection().equals(prepared.selection())) { throw new TelemetryStorageUnavailableException(); }
+                    return snapshot.matcher().and(new LogSelectedGroupMatcher(prepared));
+                } catch (UnsupportedOperationException unsupported) {
+                    // Only explicitly capable readers may supply exact projection alternatives.
+                } catch (RuntimeException failure) { throw new TelemetryStorageUnavailableException(); }
+            }
+            throw new LogFilterQueryException(LogFilterQueryException.Reason.GROUP_SELECTION_UNSUPPORTED);
+        });
     }
 
     private void bindRequestWorkspace(LogSseFilterCriteria filterCriteria) {

@@ -49,11 +49,18 @@ public interface InvestigationQueryRepository {
     RowsResult<TraceSummaryRow> identityTraces(IdentityQuery query);
 
     /** Exact trusted trace scope. */
-    record TraceQuery(String workspaceId, String traceId, long start, long end) {
+    record TraceQuery(String workspaceId, String traceId, long start, long end, String selectedSpanId) {
         public TraceQuery {
             requireWindow(start, end);
             workspaceId = requireText(workspaceId, "workspaceId");
             traceId = requireIdentifier(traceId, "[0-9a-f]{32}", "traceId");
+            if (selectedSpanId != null) {
+                selectedSpanId = requireIdentifier(selectedSpanId, "[0-9a-f]{16}", "selectedSpanId");
+            }
+        }
+
+        public TraceQuery(String workspaceId, String traceId, long start, long end) {
+            this(workspaceId, traceId, start, end, null);
         }
     }
 
@@ -85,17 +92,36 @@ public interface InvestigationQueryRepository {
                        String serviceNamespace,
                        String deploymentEnvironment,
                        long start,
-                       long end) {
+                       long end,
+                       String hostName) {
         public NearbyQuery {
             requireWindow(start, end);
             workspaceId = requireText(workspaceId, "workspaceId");
             selectedLogRecordUid = requireText(selectedLogRecordUid, "selectedLogRecordUid");
             serviceName = requireText(serviceName, "serviceName");
-            entityId = requireText(entityId, "entityId");
-            entityType = requireText(entityType, "entityType");
+            entityId = optionalText(entityId, "entityId");
+            entityType = optionalText(entityType, "entityType");
+            hostName = optionalText(hostName, "hostName");
+            if ((entityId == null) != (entityType == null) || (entityId == null && hostName == null)) {
+                throw new IllegalArgumentException("Nearby query needs an entity identity or host name");
+            }
             if (selectedTimeUnixNano <= 0L) {
                 throw new IllegalArgumentException("selectedTimeUnixNano is invalid");
             }
+        }
+
+        public NearbyQuery(String workspaceId,
+                           String selectedLogRecordUid,
+                           long selectedTimeUnixNano,
+                           String serviceName,
+                           String entityId,
+                           String entityType,
+                           String serviceNamespace,
+                           String deploymentEnvironment,
+                           long start,
+                           long end) {
+            this(workspaceId, selectedLogRecordUid, selectedTimeUnixNano, serviceName, entityId, entityType,
+                    serviceNamespace, deploymentEnvironment, start, end, null);
         }
     }
 
@@ -128,6 +154,8 @@ public interface InvestigationQueryRepository {
 
     /** Strictly mapped span row. */
     record TraceSpanRow(long startTime,
+                        long startTimeUnixNano,
+                        long observedEndTime,
                         String traceId,
                         String spanId,
                         String parentSpanId,

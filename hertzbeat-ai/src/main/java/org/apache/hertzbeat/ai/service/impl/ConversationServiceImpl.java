@@ -97,7 +97,7 @@ public class ConversationServiceImpl implements ConversationService {
                 .message(message)
                 .conversationId(conversationId)
                 .conversationHistory(CollectionUtils.isEmpty(conversation.getMessages()) ? null
-                        : conversation.getMessages().subList(0, conversation.getMessages().size() - 1))
+                        : conversation.getMessages())
                 .build();
 
         // Stream response from AI service

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.support;
 
+import org.apache.hertzbeat.observability.logs.service.LogAnalysisIntervalTooSmallException;
 import static org.apache.hertzbeat.common.constants.CommonConstants.DETECT_FAILED_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
@@ -30,6 +31,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
+import org.apache.hertzbeat.observability.logs.query.LogFilterQueryException;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -61,6 +63,14 @@ public class GlobalExceptionHandler {
     private static final String UNKNOWN_ERROR_MESSAGE = "unknown error happen";
     private static final String TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE = "telemetry storage unavailable";
 
+    @ExceptionHandler(LogAnalysisIntervalTooSmallException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleLogAnalysisIntervalTooSmall() {
+        return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(Message.fail(PARAM_INVALID_CODE,
+                        LogAnalysisIntervalTooSmallException.ERROR_CODE));
+    }
+
     /** Return an explicit retryable response when a bounded signal-query lane cannot accept work. */
     @ExceptionHandler(ObservabilityQueryAdmissionException.class)
     @ResponseBody
@@ -70,6 +80,7 @@ public class GlobalExceptionHandler {
                 ? HttpStatus.TOO_MANY_REQUESTS
                 : HttpStatus.SERVICE_UNAVAILABLE;
         return ResponseEntity.status(status)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.RETRY_AFTER, "1")
                 .body(Message.fail(FAIL_CODE, exception.getMessage()));
     }
@@ -84,10 +95,19 @@ public class GlobalExceptionHandler {
     ResponseEntity<Message<Void>> handleTelemetryStorageUnavailable() {
         log.warn("[telemetry storage unavailable]");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .body(Message.fail(FAIL_CODE, TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE));
     }
 
     /** Return a stable HTTP error without echoing rejected query content. */
+    @ExceptionHandler(LogFilterQueryException.class)
+    @ResponseBody
+    ResponseEntity<Message<LogFilterQueryException.Detail>> handleLogFilterQueryException(LogFilterQueryException exception) {
+        Message<LogFilterQueryException.Detail> message = Message.fail(PARAM_INVALID_CODE, LogFilterQueryException.ERROR_CODE);
+        message.setData(exception.detail());
+        return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.APPLICATION_JSON).body(message);
+    }
+
     @ExceptionHandler(ObservabilityQueryRequestException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleObservabilityQueryRequestException() {

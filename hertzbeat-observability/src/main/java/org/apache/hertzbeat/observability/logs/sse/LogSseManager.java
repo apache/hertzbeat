@@ -128,7 +128,15 @@ public class LogSseManager {
         if (filters == null) {
             throw new IllegalArgumentException("Workspace-bound log filters are required");
         }
-        Predicate<LogEntry> matcher = filters.compile();
+        return registerEmitter(clientId, filters.compile(), emitter);
+    }
+
+    /** Register only a server-prepared immutable matcher, after all native preparation has completed. */
+    public SseEmitter createPreparedEmitter(Long clientId, Predicate<LogEntry> matcher) {
+        return registerEmitter(clientId, java.util.Objects.requireNonNull(matcher), new SseEmitter(Long.MAX_VALUE));
+    }
+
+    private SseEmitter registerEmitter(Long clientId, Predicate<LogEntry> matcher, SseEmitter emitter) {
         ExecutorService sender = new ThreadPoolExecutor(
                 1,
                 1,

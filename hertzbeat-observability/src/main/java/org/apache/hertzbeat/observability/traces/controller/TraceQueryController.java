@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.observability.traces.controller;
 
+import org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics;
+import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
@@ -35,6 +38,8 @@ import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.apache.hertzbeat.observability.investigation.service.TraceInvestigationReadModelService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureQuery;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureAnalysis;
 import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,48 +99,208 @@ public class TraceQueryController {
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
-            @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
+            @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "endExclusive", required = false) String endExclusive,
+            @RequestParam(value = "population", required = false) String population) {
         String workspaceId = trustedWorkspaceId();
+        var traceSort = EntityTraceQueryService.parseTraceSort(sort);
+        boolean exclusive;
+        try {
+            exclusive = booleanParameter(endExclusive == null ? Map.of() : Map.of("endExclusive", endExclusive), "endExclusive");
+            if (population != null && !"matched_traces".equals(population)) {
+                throw new IllegalArgumentException("Invalid trace population");
+            }
+        } catch (IllegalArgumentException exception) {
+            throw new ObservabilityQueryRequestException();
+        }
         ScopedFilters scopedFilters = scopeFilters(
                 entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         Page<TraceListItemDto> page = queryAdmissionService.execute("traces",
-                () -> requireCompleteTraceRows(entityTraceQueryService.queryTraceList(
+                () -> requireTraceEvidenceRows(entityTraceQueryService.queryTraceList(
                         workspaceId, entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                         scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, pageIndex, pageSize,
-                        hideInternal, spanScope, scopedFilters.attributeFilter())));
+                        hideInternal, spanScope, scopedFilters.attributeFilter(), traceSort, exclusive)));
         return ResponseEntity.ok(Message.success(page));
     }
 
-    private static Page<TraceListItemDto> requireCompleteTraceRows(Page<TraceListItemDto> page) {
+    @GetMapping("/structure")
+    @Operation(summary = "Query observed same-trace relationships between two named span clauses")
+    public ResponseEntity<Message<Page<TraceListItemDto>>> structure(@RequestParam Map<String, String> params) {
+        TraceStructureQuery query = parseStructureQuery(params);
+        String workspace = trustedWorkspaceId();
+        Page<TraceListItemDto> page = queryAdmissionService.execute("traces",
+                () -> requireTraceEvidenceRows(entityTraceQueryService.queryTraceStructure(workspace, query)));
+        return ResponseEntity.ok(Message.success(page));
+    }
+
+    @GetMapping("/structure/analysis")
+    @Operation(summary = "Analyze observed patterns and cross-service parent edges in a structural trace query")
+    public ResponseEntity<Message<TraceStructureAnalysis>> structureAnalysis(@RequestParam Map<String, String> params) {
+        TraceStructureQuery query = parseStructureQuery(params);
+        String workspace = trustedWorkspaceId();
+        TraceStructureAnalysis analysis = queryAdmissionService.execute("traces",
+                () -> entityTraceQueryService.queryTraceStructureAnalysis(workspace, query));
+        return ResponseEntity.ok(Message.success(analysis));
+    }
+
+    private TraceStructureQuery parseStructureQuery(Map<String, String> params) {
+        TraceStructureQuery query;
+        try {
+            if (!java.util.Set.of("start", "end", "aServiceName", "aOperationName", "aStatus", "bServiceName",
+                    "bOperationName", "bStatus", "relation", "pageIndex", "pageSize").containsAll(params.keySet())) {
+                throw new IllegalArgumentException("Unknown structural query parameter");
+            }
+            query = new TraceStructureQuery(Long.parseLong(params.get("start")), Long.parseLong(params.get("end")),
+                    new TraceStructureQuery.Clause(params.get("aServiceName"), params.get("aOperationName"),
+                            params.get("aStatus")),
+                    new TraceStructureQuery.Clause(params.get("bServiceName"), params.get("bOperationName"),
+                            params.get("bStatus")),
+                    TraceStructureQuery.Relation.valueOf(params.get("relation").toUpperCase(java.util.Locale.ROOT)),
+                    integerParameter(params, "pageIndex", 0), integerParameter(params, "pageSize", 20));
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new ObservabilityQueryRequestException();
+        }
+        return query;
+    }
+
+    @GetMapping("/spans")
+    public ResponseEntity<Message<TraceAnalytics.Evidence<?>>> spans(@RequestParam Map<String, String> params) {
+        return analytics(params, "spans");
+    }
+
+    @GetMapping("/stats/histogram")
+    public ResponseEntity<Message<TraceAnalytics.Evidence<?>>> histogram(@RequestParam Map<String, String> params) {
+        return analytics(params, "histogram");
+    }
+
+    @GetMapping("/facets/values")
+    public ResponseEntity<Message<TraceAnalytics.Evidence<?>>> facetValues(@RequestParam Map<String, String> params) {
+        return analytics(params, "facets");
+    }
+
+    @GetMapping("/stats/groups")
+    public ResponseEntity<Message<TraceAnalytics.Evidence<?>>> groups(@RequestParam Map<String, String> params) {
+        return analytics(params, "groups");
+    }
+
+    private ResponseEntity<Message<TraceAnalytics.Evidence<?>>> analytics(Map<String, String> params, String shape) {
+        String workspace = trustedWorkspaceId();
+        EntityTraceQueryService.AnalyticsQuery query;
+        TraceAnalytics.Options options;
+        try {
+            Long entityId = optionalNumber(params, "entityId");
+            String traceId = params.get("traceId");
+            if (entityId != null && entityId <= 0 || traceId != null
+                    && (!TRACE_ID.matcher(traceId).matches() || traceId.equals("0".repeat(32)))) {
+                throw new IllegalArgumentException("Invalid trace identity");
+            }
+            var filters = scopeFilters(entityId, params.get("entityType"), params.get("collectorId"),
+                    params.get("instance"), params.get("endpoint"), params.get("resourceFilter"), params.get("attributeFilter"));
+            String population = params.getOrDefault("population", "spans".equals(shape) ? "matched_spans" : "matched_traces");
+            TraceAnalytics.population(population);
+            if ("spans".equals(shape) && !"matched_spans".equals(population)) {
+                throw new IllegalArgumentException("Invalid span population");
+            }
+            var window = new TraceAnalytics.Window(Long.parseLong(params.get("start")), Long.parseLong(params.get("end")),
+                    booleanParameter(params, "endExclusive"));
+            Long minimum = optionalNumber(params, "minDurationMs");
+            Long maximum = optionalNumber(params, "maxDurationMs");
+            if (minimum != null && minimum < 0 || maximum != null && (maximum < 0 || minimum != null && maximum < minimum)) {
+                throw new IllegalArgumentException("Invalid duration range");
+            }
+            String spanScope = params.get("spanScope");
+            if (spanScope != null && !java.util.List.of("", "all", "root", "entrypoint", "entrypoint-spans", "entry").contains(spanScope)) {
+                throw new IllegalArgumentException("Invalid span scope");
+            }
+            query = new EntityTraceQueryService.AnalyticsQuery(workspace, entityId, window, population, params.get("traceId"),
+                    booleanParameter(params, "errorOnly"), params.get("serviceName"), params.get("serviceNamespace"),
+                    params.get("environment"), filters.resourceFilter(), filters.attributeFilter(), params.get("operationName"),
+                    minimum, maximum, spanScope, booleanParameter(params, "hideInternal"));
+            options = new TraceAnalytics.Options(shape, params.get("groups".equals(shape) ? "groupBy" : "field"),
+                    integerParameter(params, "limit", 20), integerParameter(params, "bucketCount", 30),
+                    integerParameter(params, "pageIndex", 0), integerParameter(params, "pageSize", 20),
+                    params.getOrDefault("groups".equals(shape) ? "orderBy" : "sort", "groups".equals(shape) ? "count-desc" : "newest"));
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new ObservabilityQueryRequestException();
+        }
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("traces",
+                () -> entityTraceQueryService.queryAnalytics(query, options))));
+    }
+
+    private static Long optionalNumber(Map<String, String> params, String key) {
+        return params.containsKey(key) ? Long.valueOf(params.get(key)) : null;
+    }
+
+    private static int integerParameter(Map<String, String> params, String key, int fallback) {
+        return params.containsKey(key) ? Integer.parseInt(params.get(key)) : fallback;
+    }
+
+    private static boolean booleanParameter(Map<String, String> params, String key) {
+        String value = params.get(key);
+        if (value != null && !"true".equals(value) && !"false".equals(value)) {
+            throw new IllegalArgumentException("Invalid boolean parameter");
+        }
+        return "true".equals(value);
+    }
+
+    private static Page<TraceListItemDto> requireTraceEvidenceRows(Page<TraceListItemDto> page) {
         if (page == null) {
             throw new TelemetryStorageUnavailableException();
         }
-        page.forEach(TraceQueryController::requireCompleteTraceRow);
+        page.forEach(TraceQueryController::requireTraceEvidenceRow);
         return page;
     }
 
-    private static void requireCompleteTraceRow(TraceListItemDto item) {
+    private static void requireTraceEvidenceRow(TraceListItemDto item) {
         if (item == null || !StringUtils.hasText(item.getTraceId()) || !TRACE_ID.matcher(item.getTraceId()).matches()
-                || !StringUtils.hasText(item.getServiceName()) || !StringUtils.hasText(item.getRootSpanName())
-                || item.getStartTime() == null || item.getStartTime() <= 0
-                || item.getStartTime() > MAX_SAFE_WIRE_INTEGER
-                || item.getDurationNanos() == null || item.getDurationNanos() < 0
-                || item.getDurationNanos() > MAX_SAFE_WIRE_INTEGER
+                || item.getTraceId().equals("0".repeat(32))
                 || item.getSpanCount() == null || item.getSpanCount() <= 0
                 || item.getSpanCount() > MAX_SAFE_WIRE_INTEGER
                 || item.getErrorSpanCount() < 0 || item.getErrorSpanCount() > item.getSpanCount()
-                || item.getServiceStats() == null || item.getServiceStats().isEmpty()) {
+                || item.getServiceStats() == null || item.getRootSpanCount() < 0
+                || item.getRootSpanCount() > item.getSpanCount()
+                || !safeNonNegative(item.getObservedStartTime()) || !safeNonNegative(item.getObservedEndTime())
+                || item.getObservedEndTime() < item.getObservedStartTime()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        String rootState = item.getRootSpanCount() == 0 ? "missing" : item.getRootSpanCount() == 1 ? "unique" : "ambiguous";
+        if (!rootState.equals(item.getRootState())) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        if (item.getRootSpanCount() == 1) {
+            if (!validSpanId(item.getRootSpanId()) || !nullableName(item.getRootSpanName())
+                    || !nullableName(item.getServiceName()) || !nullableName(item.getServiceNamespace())
+                    || !validSpanWindow(item.getStartTime(), item.getDurationNanos(), item)) {
+                throw new TelemetryStorageUnavailableException();
+            }
+        } else if (item.getRootSpanId() != null || item.getRootSpanName() != null || item.getServiceName() != null
+                || item.getServiceNamespace() != null || item.getStartTime() != null || item.getDurationNanos() != null
+                || item.getResourceAttributes() != null) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        var representative = item.getRepresentativeSpan();
+        if (representative == null || !validSpanId(representative.spanId())
+                || !nullableName(representative.spanName()) || !nullableName(representative.serviceName())
+                || !nullableName(representative.serviceNamespace())
+                || !validSpanWindow(representative.startTime(), representative.durationNanos(), item)
+                || !representative.startTime().equals(item.getObservedStartTime())) {
             throw new TelemetryStorageUnavailableException();
         }
         long totalSpans = 0L;
         long totalErrors = 0L;
         try {
+            if (item.getUnattributedServiceStats() != null) {
+                requireServiceStats(item.getUnattributedServiceStats());
+                totalSpans = item.getUnattributedServiceStats().getSpanCount();
+                totalErrors = item.getUnattributedServiceStats().getErrorCount();
+            }
             for (Map.Entry<String, TraceServiceStatsDto> entry : item.getServiceStats().entrySet()) {
                 TraceServiceStatsDto service = entry.getValue();
-                if (!StringUtils.hasText(entry.getKey()) || service == null || service.getSpanCount() <= 0
-                        || service.getErrorCount() < 0 || service.getErrorCount() > service.getSpanCount()) {
+                if (!StringUtils.hasText(entry.getKey())) {
                     throw new TelemetryStorageUnavailableException();
                 }
+                requireServiceStats(service);
                 totalSpans = Math.addExact(totalSpans, service.getSpanCount());
                 totalErrors = Math.addExact(totalErrors, service.getErrorCount());
             }
@@ -143,6 +308,31 @@ public class TraceQueryController {
             throw new TelemetryStorageUnavailableException();
         }
         if (totalSpans != item.getSpanCount() || totalErrors != item.getErrorSpanCount()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+    }
+
+    private static boolean validSpanId(String value) {
+        return value != null && value.matches("[0-9a-f]{16}") && !value.equals("0".repeat(16));
+    }
+
+    private static boolean nullableName(String value) {
+        return value == null || StringUtils.hasText(value);
+    }
+
+    private static boolean safeNonNegative(Long value) {
+        return value != null && value >= 0 && value <= MAX_SAFE_WIRE_INTEGER;
+    }
+
+    private static boolean validSpanWindow(Long start, Long duration, TraceListItemDto item) {
+        return safeNonNegative(start) && safeNonNegative(duration) && start >= item.getObservedStartTime()
+                && start <= item.getObservedEndTime()
+                && Math.ceilDiv(duration, 1_000_000L) <= item.getObservedEndTime() - start;
+    }
+
+    private static void requireServiceStats(TraceServiceStatsDto stats) {
+        if (stats == null || stats.getSpanCount() <= 0 || stats.getSpanCount() > MAX_SAFE_WIRE_INTEGER
+                || stats.getErrorCount() < 0 || stats.getErrorCount() > stats.getSpanCount()) {
             throw new TelemetryStorageUnavailableException();
         }
     }

@@ -133,7 +133,7 @@ public class ObjectStoreConfigServiceImpl extends
             }
             return;
         }
-        log.warn("object store config is null, please check the configuration file.");
+        log.warn("Object storage is not configured; monitor definitions use the database store by default.");
     }
 
     /**

@@ -37,7 +37,7 @@ public class EntityDefinitionMetadataNormalizationService {
 
     public EntityDefinition.Metadata extractDefinitionMetadata(Map<String, Object> root, Map<String, Object> specMap) {
         Map<String, Object> rootMap = root == null ? Collections.emptyMap() : root;
-        Map<String, Object> metadataMap = toObjectMap(rootMap.get("metadata"));
+        Map<String, Object> metadataMap = EntityDefinitionMaps.toObjectMap(rootMap.get("metadata"));
         Map<String, Object> normalizedSpecMap = specMap == null ? Collections.emptyMap() : specMap;
         boolean useRootMetadataFallback = !metadataMap.containsKey("labels") && !metadataMap.containsKey("tags")
                 && (rootMap.containsKey("labels") || rootMap.containsKey("tags"));
@@ -87,7 +87,7 @@ public class EntityDefinitionMetadataNormalizationService {
     public String extractDefinitionRunbook(Map<String, Object> root, Map<String, Object> specMap) {
         Map<String, Object> rootMap = root == null ? Collections.emptyMap() : root;
         Map<String, Object> normalizedSpecMap = specMap == null ? Collections.emptyMap() : specMap;
-        Map<String, Object> metadataMap = toObjectMap(rootMap.get("metadata"));
+        Map<String, Object> metadataMap = EntityDefinitionMaps.toObjectMap(rootMap.get("metadata"));
         return defaultText(
                 asText(normalizedSpecMap.get("runbook")),
                 extractRunbook(normalizedSpecMap.get("links")),
@@ -158,7 +158,7 @@ public class EntityDefinitionMetadataNormalizationService {
             return null;
         }
         for (Object item : items) {
-            Map<String, Object> link = toObjectMap(item);
+            Map<String, Object> link = EntityDefinitionMaps.toObjectMap(item);
             String name = asText(link.get("name"));
             String type = asText(link.get("type"));
             if ("runbook".equals(name) || "runbook".equals(type)) {
@@ -197,7 +197,7 @@ public class EntityDefinitionMetadataNormalizationService {
             }
         } else if (links instanceof List<?> items) {
             for (Object itemValue : items) {
-                Map<String, Object> linkMap = toObjectMap(itemValue);
+                Map<String, Object> linkMap = EntityDefinitionMaps.toObjectMap(itemValue);
                 String url = defaultText(asText(linkMap.get("url")), asText(linkMap.get("href")));
                 if (!StringUtils.hasText(url)) {
                     continue;
@@ -257,7 +257,7 @@ public class EntityDefinitionMetadataNormalizationService {
         }
         List<EntityDefinition.Contact> result = new ArrayList<>();
         for (Object itemValue : items) {
-            Map<String, Object> contactMap = toObjectMap(itemValue);
+            Map<String, Object> contactMap = EntityDefinitionMaps.toObjectMap(itemValue);
             String value = defaultText(
                     asText(contactMap.get("value")),
                     asText(contactMap.get("contact")),
@@ -295,7 +295,7 @@ public class EntityDefinitionMetadataNormalizationService {
                 }
                 continue;
             }
-            Map<String, Object> ownerMap = toObjectMap(item);
+            Map<String, Object> ownerMap = EntityDefinitionMaps.toObjectMap(item);
             String name = defaultText(asText(ownerMap.get("name")), asText(ownerMap.get("team")), asText(ownerMap.get("value")));
             if (name != null) {
                 String type = defaultText(asText(ownerMap.get("type")), "team");
@@ -310,18 +310,6 @@ public class EntityDefinitionMetadataNormalizationService {
         return result;
     }
 
-    private Map<String, Object> toObjectMap(Object value) {
-        if (!(value instanceof Map<?, ?> rawMap)) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            if (entry.getKey() != null) {
-                result.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
-        return result;
-    }
 
     private Map<String, String> toStringMap(Object value) {
         if (!(value instanceof Map<?, ?> rawMap)) {

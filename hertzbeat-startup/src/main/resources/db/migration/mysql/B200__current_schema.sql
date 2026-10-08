@@ -806,6 +806,7 @@ CREATE TABLE hzb_auth_token (
 
 CREATE TABLE hzb_signal_saved_view (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    revision BIGINT NOT NULL DEFAULT 0,
     creator VARCHAR(255) NOT NULL COMMENT 'Saved view creator',
     `signal` VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
     view_key VARCHAR(128) NOT NULL COMMENT 'Stable saved view key',
@@ -850,6 +851,8 @@ CREATE TABLE hzb_signal_dashboard (
     widgets TEXT NOT NULL COMMENT 'Dashboard widgets JSON',
     variables TEXT COMMENT 'Dashboard variables JSON',
     panel_map TEXT COMMENT 'Dashboard panel grouping JSON',
+    document TEXT,
+    revision BIGINT NOT NULL DEFAULT 0,
     version VARCHAR(32) COMMENT 'Dashboard schema version',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
@@ -992,3 +995,12 @@ CREATE TABLE IF NOT EXISTS hzb_installation (
     installation_fingerprint VARCHAR(64) NOT NULL UNIQUE,
     complete BOOLEAN NOT NULL
 );
+
+CREATE TABLE hzb_alert_integration_verification (
+    workspace_id VARCHAR(128) NOT NULL,
+    source VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    started_at BIGINT NOT NULL,
+    verified_at BIGINT,
+    PRIMARY KEY (workspace_id, source)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

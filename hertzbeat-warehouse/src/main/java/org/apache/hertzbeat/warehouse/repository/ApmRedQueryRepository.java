@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.warehouse.repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -30,6 +31,20 @@ public interface ApmRedQueryRepository {
     int MAX_POINTS = 1440;
 
     ApmRedQueryResult query(ApmRedQuery query);
+
+    default ApmRedBatchResult querySummaries(List<ApmRedQuery> queries) {
+        return new ApmRedBatchResult(false, Map.of());
+    }
+
+    /** Whole-candidate summary result; an absent entity key is an empty observed window. */
+    record ApmRedBatchResult(boolean available, Map<String, ApmRedSummary> summaries) {
+        public ApmRedBatchResult {
+            summaries = Map.copyOf(summaries);
+            if (!available && !summaries.isEmpty()) {
+                throw new IllegalArgumentException("Unavailable RED batch cannot contain summaries");
+            }
+        }
+    }
 
     /** Exact trusted scope for one bounded Flow query. */
     record ApmRedQuery(long start,

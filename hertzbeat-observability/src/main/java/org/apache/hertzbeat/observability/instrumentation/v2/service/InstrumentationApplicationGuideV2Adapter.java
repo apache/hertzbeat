@@ -35,6 +35,8 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException.ErrorCode;
 import org.springframework.stereotype.Component;
 
 /** Maps the existing official language adapters onto closed v2 renderer blocks. */
@@ -150,8 +152,13 @@ public class InstrumentationApplicationGuideV2Adapter {
             String collectorId,
             Authentication authentication) {
         boolean windows = platform == Platform.WINDOWS_AMD64;
+        String instanceId = service.serviceInstanceId();
+        if (instanceId != null && (instanceId.indexOf(',') >= 0 || instanceId.indexOf('=') >= 0)) {
+            throw new InstrumentationV2RequestException(ErrorCode.CONTEXT_INVALID);
+        }
         String resourceAttributes = "service.namespace=" + service.namespace()
                 + ",deployment.environment.name=" + service.environment()
+                + (instanceId == null ? "" : ",service.instance.id=" + instanceId)
                 + (collectorId == null ? "" : ",hertzbeat.collector.id=" + collectorId);
         String header = authentication == Authentication.BEARER_TOKEN
                 ? windows

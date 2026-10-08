@@ -33,6 +33,8 @@ public class SpaForwardController {
 
     @GetMapping(
             value = {
+                    "/ai",
+                    "/ai/schedules",
                     "/alerts", "/alerts/**",
                     "/bulletin", "/bulletin/**",
                     "/dashboard", "/dashboard/**",

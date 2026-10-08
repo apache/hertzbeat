@@ -19,11 +19,26 @@ package org.apache.hertzbeat.observability.metrics.inventory;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto.Metadata;
 
 /** Typed storage boundary for exact-scope metric-name discovery. */
 public interface MetricInventoryRepository {
 
     Result findMetricNames(Query query);
+
+    /** Enrich only names already discovered under an authorized row scope. */
+    default Map<String, Metadata> findMetadata(List<String> authorizedNames) {
+        return Map.of();
+    }
+
+    default Labels findLabels(String metric, List<String> matchers, long start, long end, String label, int limit) {
+        return new Labels("unavailable", false, List.of());
+    }
+
+    /** Bounded label discovery storage outcome. */
+    record Labels(String state, boolean truncated, List<String> items) {
+    }
 
     /** Exact metric inventory scope. */
     record Query(
@@ -36,6 +51,7 @@ public interface MetricInventoryRepository {
             String endpoint,
             long start,
             long end,
+            String search,
             int limit
     ) {
     }

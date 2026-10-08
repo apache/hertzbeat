@@ -84,20 +84,10 @@ public class AlibabaSmsClientImpl implements SmsClient {
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         // Extract alert info
-        String instance = alert.getGroupKey();
-        String priority = "unknown";
-        String content = null;
-        if (alert.getCommonLabels() != null) {
-            instance = alert.getCommonLabels().getOrDefault("instance", alert.getGroupKey());
-            priority = alert.getCommonLabels().getOrDefault("priority", "unknown");
-        }
-        if (alert.getCommonAnnotations() != null) {
-            content = alert.getCommonAnnotations().get("summary");
-            content = content == null ? alert.getCommonAnnotations().get("description") : content;
-            if (content == null) {
-                content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
-            }
-        }
+        SmsAlertFields fields = SmsAlertFields.from(alert);
+        String instance = fields.instance();
+        String priority = fields.priority();
+        String content = fields.content();
 
         // Build template parameters
         Map<String, String> templateParam = new HashMap<>();

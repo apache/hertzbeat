@@ -20,10 +20,15 @@
 package org.apache.hertzbeat.warehouse.repository;
 
 import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,9 +73,12 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             "hertzbeat.entity_type",
             "service.namespace",
             "service.instance.id",
-            "deployment.environment.name",
-            "hertzbeat.collector.id");
+            "deployment.environment.name");
     private static final Set<String> STABLE_RESOURCE_ATTRIBUTE_KEYS = Set.copyOf(TRACE_LIST_RESOURCE_ATTRIBUTE_KEYS);
+    private static final List<String> TRACE_LIST_EVIDENCE_COLUMNS = List.of(
+            "observed_start_nanos", "observed_end_nanos", "evidence_span_count", "evidence_distinct_span_count",
+            "invalid_span_count", "representative_span_id", "representative_span_name", "representative_service_name",
+            "representative_service_namespace", "representative_start_nanos", "representative_duration_nano");
     private static final int MAX_DISCOVERED_DYNAMIC_ATTRIBUTE_COLUMNS = 4_096;
     private static final long DYNAMIC_ATTRIBUTE_SCHEMA_REFRESH_NANOS = Duration.ofSeconds(30).toNanos();
     private final ObjectProvider<GreptimeSqlQueryExecutor> greptimeSqlQueryExecutorProvider;
@@ -174,7 +182,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (!filters.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", filters));
         }
-        sql.append(" ORDER BY timestamp DESC LIMIT ").append(Math.max(limit, 1));
+        sql.append(" ORDER BY timestamp DESC, trace_id ASC, span_id ASC LIMIT ").append(Math.max(limit, 1));
         return queryRows(sql.toString());
     }
 
@@ -184,7 +192,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     @Override
-    public List<Map<String, Object>> queryTraceListRows(Long start,
+    public TraceListPage queryTraceListRows(Long start,
                                                         Long end,
                                                         Boolean errorOnly,
                                                         String serviceName,
@@ -204,7 +212,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     @Override
-    public List<Map<String, Object>> queryTraceListRows(Long start,
+    public TraceListPage queryTraceListRows(Long start,
                                                         Long end,
                                                         Boolean errorOnly,
                                                         String serviceName,
@@ -219,6 +227,27 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                         String spanScope,
                                                         int offset,
                                                         int limit) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
+                hideInternal, spanScope, offset, limit, TraceSort.NEWEST);
+    }
+
+    @Override
+    public TraceListPage queryTraceListRows(Long start, Long end, Boolean errorOnly,
+                                           String serviceName, String serviceNamespace, String environment,
+                                           String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                           String workspaceId, Map<String, Set<String>> resourceIdentityFilters,
+                                           Boolean hideInternal, String spanScope, int offset, int limit, TraceSort sort) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment, operationName,
+                minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, spanScope, offset, limit, sort, false);
+    }
+
+    @Override
+    public TraceListPage queryTraceListRows(Long start, Long end, Boolean errorOnly,
+                                           String serviceName, String serviceNamespace, String environment,
+                                           String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                           String workspaceId, Map<String, Set<String>> resourceIdentityFilters,
+                                           Boolean hideInternal, String spanScope, int offset, int limit, TraceSort sort, boolean endExclusive) {
         if (!StringUtils.hasText(workspaceId)) {
             throw new TelemetryStorageUnavailableException();
         }
@@ -226,39 +255,8 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                 + "THEN 1 ELSE 0 END)";
         StringBuilder candidateSql = new StringBuilder("SELECT trace_id, MIN(timestamp) AS match_timestamp FROM ")
                 .append(TRACE_TABLE);
-        List<String> filters = new LinkedList<>();
-        if (start != null) {
-            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
-        }
-        if (end != null) {
-            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
-        }
-        if (StringUtils.hasText(serviceName)) {
-            filters.add("service_name = '" + escapeSql(serviceName) + "'");
-        }
-        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, spanScope);
-        if (StringUtils.hasText(serviceNamespace)) {
-            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
-        }
-        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
-            String filter = environmentFilter(null, environment);
-            if (StringUtils.hasText(filter)) {
-                filters.add(filter);
-            }
-        }
-        if (StringUtils.hasText(workspaceId)) {
-            String filter = workspaceFilter(null, workspaceId);
-            if (StringUtils.hasText(filter)) {
-                filters.add(filter);
-            }
-        }
-        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
-            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
-        }
-        if (Boolean.TRUE.equals(hideInternal)) {
-            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
-        }
-        filters.add("trace_id IS NOT NULL AND trace_id != ''");
+        List<String> filters = traceCandidateFilters(start, end, endExclusive, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, spanScope);
         if (!filters.isEmpty()) {
             candidateSql.append(" WHERE ").append(String.join(" AND ", filters));
         }
@@ -266,46 +264,146 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (Boolean.TRUE.equals(errorOnly)) {
             candidateSql.append(" HAVING ").append(candidateErrorExpression).append(" > 0");
         }
+        String pageSource = "candidate_traces";
+        String candidateCte = "WITH candidate_traces AS (" + candidateSql + ")";
+        String orderBy = "match_timestamp DESC, trace_id ASC";
+        if (sort == TraceSort.DURATION_DESC) {
+            String root = "(parent_span_id IS NULL OR parent_span_id = '')";
+            String match = "(" + String.join(" AND ", filters) + ")";
+            String qualification = match + (Boolean.TRUE.equals(errorOnly)
+                    ? " AND span_status_code IN ('STATUS_CODE_ERROR', 'ERROR')" : "");
+            // Greptime can lose rows when grouped candidates self-join their source table. A single
+            // aggregate retains every matching span and every workspace root, including roots outside the query window.
+            candidateCte = "WITH trace_durations AS (SELECT trace_id, MIN(CASE WHEN " + match
+                    + " THEN timestamp ELSE NULL END) AS match_timestamp, "
+                    + "CASE WHEN SUM(CASE WHEN " + root + " THEN 1 ELSE 0 END) = 1 "
+                    + "THEN MAX(CASE WHEN " + root + " AND duration_nano >= 0 "
+                    + "THEN duration_nano ELSE NULL END) ELSE NULL END AS sort_duration "
+                    + "FROM " + TRACE_TABLE + " WHERE " + workspaceFilter(null, workspaceId)
+                    + " AND (" + root + " OR " + match + ") GROUP BY trace_id "
+                    + "HAVING SUM(CASE WHEN " + qualification + " THEN 1 ELSE 0 END) > 0)";
+            pageSource = "trace_durations";
+            orderBy = "sort_duration DESC NULLS LAST, " + orderBy;
+        }
+        String candidatePageSql = candidateCte
+                + " SELECT trace_id, match_timestamp, COUNT(*) OVER () AS total_count FROM " + pageSource
+                + " ORDER BY " + orderBy + " LIMIT "
+                + Math.max(limit, 1)
+                + " OFFSET "
+                + Math.max(offset, 0);
+        TraceListCandidatePage candidatePage = traceListCandidatePage(
+                queryRows(candidatePageSql), Math.max(offset, 0));
+        if (candidatePage.traceIds().isEmpty()) {
+            List<Map<String, Object>> countRows = queryRows("WITH candidate_traces AS (" + candidateSql
+                    + ") SELECT COUNT(*) AS total_count FROM candidate_traces");
+            if (countRows.size() != 1) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            long total = traceListNonNegativeLong(countRows.getFirst(), "total_count");
+            if (total > Math.max(offset, 0)) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            return new TraceListPage(List.of(), total);
+        }
+
         String rootPredicate = "(stats.parent_span_id IS NULL OR stats.parent_span_id = '')";
         String errorFlag = "CASE WHEN stats.span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
                 + "THEN 1 ELSE 0 END";
-        String fullErrorCount = "SUM(SUM(" + errorFlag + ")) OVER (PARTITION BY page.trace_id)";
         String rootServiceNamespace = resourceAttributeExpression("stats", "service.namespace");
         String statsWorkspaceFilter = workspaceFilter("stats", workspaceId);
         if (!StringUtils.hasText(statsWorkspaceFilter)) {
             throw new TelemetryStorageUnavailableException();
         }
-        String sql = "WITH candidate_traces AS ("
-                + candidateSql
-                + "), paged_traces AS (SELECT trace_id, match_timestamp, "
-                + "COUNT(*) OVER () AS total_count FROM candidate_traces ORDER BY match_timestamp DESC LIMIT "
-                + Math.max(limit, 1)
-                + " OFFSET "
-                + Math.max(offset, 0)
-                + ") SELECT page.trace_id, "
+        String traceIdFilter = candidatePage.traceIds().stream()
+                .map(traceId -> "'" + escapeSql(traceId) + "'")
+                .collect(java.util.stream.Collectors.joining(", "));
+        String evidenceSql = traceListEvidenceCte(workspaceFilter("evidence", workspaceId), traceIdFilter)
+                + " SELECT * FROM trace_evidence LIMIT " + (candidatePage.traceIds().size() + 1);
+        String sql = "SELECT stats.trace_id, "
                 + "MAX(CASE WHEN " + rootPredicate + " THEN stats.span_id ELSE NULL END) AS root_span_id, "
                 + "MAX(CASE WHEN " + rootPredicate + " THEN stats.service_name ELSE NULL END) AS service_name, "
                 + "MAX(CASE WHEN " + rootPredicate + " THEN " + rootServiceNamespace
                 + " ELSE NULL END) AS service_namespace, "
                 + "MAX(CASE WHEN " + rootPredicate + " THEN stats.span_name ELSE NULL END) AS root_span_name, "
                 + "MAX(CASE WHEN " + rootPredicate + " THEN stats.duration_nano ELSE NULL END) AS duration_nano, "
-                + "CASE WHEN " + fullErrorCount
-                + " > 0 THEN 'ERROR' ELSE 'OK' END AS span_status_code, "
                 + "MAX(CASE WHEN " + rootPredicate + " THEN stats.timestamp ELSE NULL END) AS timestamp, "
-                + fullErrorCount + " AS error_span_count, "
-                + "SUM(COUNT(*)) OVER (PARTITION BY page.trace_id) AS span_count, "
-                + "SUM(SUM(CASE WHEN " + rootPredicate + " THEN 1 ELSE 0 END)) "
-                + "OVER (PARTITION BY page.trace_id) AS root_span_count, "
                 + "stats.service_name AS stats_service_name, "
                 + "COUNT(*) AS service_span_count, "
                 + "SUM(" + errorFlag + ") AS service_error_span_count, "
-                + traceRootResourceAttributeProjections(rootPredicate) + ", "
-                + "page.total_count, COUNT(*) OVER () AS service_row_count FROM paged_traces page JOIN " + TRACE_TABLE
-                + " stats ON stats.trace_id = page.trace_id AND " + statsWorkspaceFilter
-                + " GROUP BY page.trace_id, page.match_timestamp, page.total_count, stats.service_name"
-                + " ORDER BY page.match_timestamp DESC, page.trace_id, stats.service_name LIMIT "
+                + "SUM(CASE WHEN stats.span_status_code IN ('STATUS_CODE_OK', 'OK') THEN 1 ELSE 0 END) AS service_ok_span_count, "
+                + "SUM(CASE WHEN " + rootPredicate + " THEN 1 ELSE 0 END) AS service_root_span_count, "
+                + traceRootResourceAttributeProjections(rootPredicate)
+                + " FROM " + TRACE_TABLE + " stats"
+                + " WHERE " + statsWorkspaceFilter
+                + " AND stats.trace_id IN (" + traceIdFilter + ")"
+                + " GROUP BY stats.trace_id, stats.service_name"
+                + " ORDER BY stats.trace_id, stats.service_name LIMIT "
                 + (TraceQueryRepository.MAX_TRACE_LIST_SERVICE_ROWS + 1);
-        return queryRows(sql);
+        // Keep the bounded aggregates separate: joining windowed evidence can lose rows in Greptime.
+        // A live trace may gain spans between reads, so retry the complete pair once on count disagreement.
+        for (int attempt = 0; attempt < 2; attempt++) {
+            Map<String, Map<String, Object>> evidence = traceListEvidenceRows(candidatePage, queryRows(evidenceSql));
+            List<Map<String, Object>> completed = completeTraceListRows(candidatePage, queryRows(sql));
+            boolean countsMatch = completed.stream().allMatch(row ->
+                    traceListNonNegativeLong(row, "span_count") == traceListNonNegativeLong(
+                            evidence.get(traceListText(row, "trace_id")), "evidence_span_count"));
+            if (countsMatch) {
+                for (Map<String, Object> row : completed) {
+                    Map<String, Object> traceEvidence = evidence.get(traceListText(row, "trace_id"));
+                    for (String column : TRACE_LIST_EVIDENCE_COLUMNS) {
+                        row.put(column, traceEvidence.get(column));
+                    }
+                }
+                return new TraceListPage(completed, candidatePage.totalCount());
+            }
+        }
+        throw new TelemetryStorageUnavailableException();
+    }
+
+    private Map<String, Map<String, Object>> traceListEvidenceRows(TraceListCandidatePage candidates,
+                                                                List<Map<String, Object>> rows) {
+        if (rows == null || rows.size() != candidates.traceIds().size()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        Map<String, Map<String, Object>> evidence = new HashMap<>();
+        for (Map<String, Object> row : rows) {
+            String traceId = traceListText(row, "trace_id");
+            if (!StringUtils.hasText(traceId) || !candidates.traceIds().contains(traceId)
+                    || evidence.putIfAbsent(traceId, row) != null
+                    || traceListNonNegativeLong(row, "evidence_span_count") <= 0
+                    || traceListNonNegativeLong(row, "evidence_span_count")
+                    != traceListNonNegativeLong(row, "evidence_distinct_span_count")
+                    || traceListNonNegativeLong(row, "invalid_span_count") != 0) {
+                throw new TelemetryStorageUnavailableException();
+            }
+        }
+        return evidence;
+    }
+
+    private String traceListEvidenceCte(String workspace, String traceIds) {
+        String namespace = resourceAttributeExpression("evidence", "service.namespace");
+        return "WITH ranked_spans AS (SELECT evidence.trace_id, evidence.span_id, evidence.span_name, "
+                + "evidence.service_name, " + namespace + " AS service_namespace, evidence.duration_nano, "
+                + "CAST(evidence.timestamp AS BIGINT) AS start_nanos, "
+                + "COALESCE(CAST(evidence.timestamp_end AS BIGINT), "
+                + "CAST(evidence.timestamp AS BIGINT) + CAST(evidence.duration_nano AS BIGINT)) AS end_nanos, "
+                + "ROW_NUMBER() OVER (PARTITION BY evidence.trace_id ORDER BY evidence.timestamp, evidence.span_id) AS span_rank"
+                + " FROM " + TRACE_TABLE + " evidence WHERE " + workspace
+                + " AND evidence.trace_id IN (" + traceIds + ")), trace_evidence AS (SELECT trace_id, "
+                + "MIN(start_nanos) AS observed_start_nanos, MAX(end_nanos) AS observed_end_nanos, "
+                + "COUNT(*) AS evidence_span_count, COUNT(DISTINCT span_id) AS evidence_distinct_span_count, "
+                + "SUM(CASE WHEN duration_nano IS NULL OR duration_nano < 0 OR duration_nano > 9007199254740991 "
+                + "OR start_nanos IS NULL OR start_nanos < 0 OR end_nanos IS NULL OR end_nanos < start_nanos "
+                + "OR end_nanos - start_nanos != duration_nano OR span_id IS NULL "
+                + "OR NOT regexp_like(span_id, '^[0-9a-f]{16}$') OR span_id = '0000000000000000' "
+                + "THEN 1 ELSE 0 END) AS invalid_span_count, "
+                + "MAX(CASE WHEN span_rank = 1 THEN span_id ELSE NULL END) AS representative_span_id, "
+                + "MAX(CASE WHEN span_rank = 1 THEN span_name ELSE NULL END) AS representative_span_name, "
+                + "MAX(CASE WHEN span_rank = 1 THEN service_name ELSE NULL END) AS representative_service_name, "
+                + "MAX(CASE WHEN span_rank = 1 THEN service_namespace ELSE NULL END) AS representative_service_namespace, "
+                + "MAX(CASE WHEN span_rank = 1 THEN start_nanos ELSE NULL END) AS representative_start_nanos, "
+                + "MAX(CASE WHEN span_rank = 1 THEN duration_nano ELSE NULL END) AS representative_duration_nano "
+                + "FROM ranked_spans GROUP BY trace_id)";
     }
 
     @Override
@@ -510,7 +608,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         StringBuilder innerSql = new StringBuilder("SELECT trace_id, ")
                 .append(groupValueProjection)
                 .append(" AS group_value, ")
-                .append("MAX(duration_nano) AS duration_nano, ")
+                .append("CASE WHEN SUM(CASE WHEN parent_span_id IS NULL OR parent_span_id = '' THEN 1 ELSE 0 END) = 1 ")
+                .append("THEN MAX(CASE WHEN parent_span_id IS NULL OR parent_span_id = '' THEN duration_nano ELSE NULL END) ")
+                .append("ELSE NULL END AS duration_nano, ")
                 .append(errorExpression)
                 .append(" AS error_span_count FROM ")
                 .append(TRACE_TABLE);
@@ -834,7 +934,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         }
         sql.append(" ORDER BY timestamp ")
                 .append(exactTrace ? "ASC" : "DESC")
-                .append(" LIMIT ")
+                .append(", trace_id ASC, span_id ASC LIMIT ")
                 .append(Math.max(limit, 1));
         return queryRows(sql.toString());
     }
@@ -894,7 +994,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             filters.add(SELF_TELEMETRY_SERVICE_FILTER);
         }
         sql.append(" WHERE ").append(String.join(" AND ", filters));
-        sql.append(" ORDER BY timestamp ASC LIMIT ").append(Math.max(limit, 1));
+        sql.append(" ORDER BY timestamp ASC, trace_id ASC, span_id ASC LIMIT ").append(Math.max(limit, 1));
         return queryRows(sql.toString());
     }
 
@@ -999,7 +1099,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                         StandardCharsets.UTF_8);
             }
             HttpEntity<String> httpEntity = new HttpEntity<>(
-                    "sql=" + UriUtils.encodeQueryParam(sql, StandardCharsets.UTF_8),
+                    "sql=" + URLEncoder.encode(sql, StandardCharsets.UTF_8),
                     headers
             );
             ResponseEntity<GreptimeSqlQueryContent> responseEntity = restTemplate.exchange(
@@ -1157,6 +1257,63 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         }
     }
 
+    private List<String> traceCandidateFilters(Long start, Long end, boolean endExclusive, String serviceName,
+                                                String serviceNamespace, String environment, String operationName,
+                                                Long minDurationNanos, Long maxDurationNanos, String workspaceId,
+                                                Map<String, Set<String>> resourceIdentityFilters, Boolean hideInternal,
+                                                String spanScope) {
+        List<String> filters = new LinkedList<>();
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp " + (endExclusive ? "<" : "<=") + " to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, spanScope);
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+        filters.add("trace_id IS NOT NULL AND trace_id != ''");
+        return filters;
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Evidence<?> queryAnalytics(
+            org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Scope scope,
+            org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Options options) {
+        if (!scope.attributes().isEmpty()) {
+            throw new UnsupportedOperationException("Span-attribute analytics uses bounded evidence");
+        }
+        var filters = traceCandidateFilters(scope.window().start(), scope.window().end(), scope.window().endExclusive(),
+                scope.serviceName(), scope.serviceNamespace(), scope.environment(), scope.operationName(),
+                scope.minDurationNanos(), scope.maxDurationNanos(), scope.workspaceId(), scope.resources(), scope.hideInternal(), scope.spanScope());
+        if (StringUtils.hasText(scope.traceId())) {
+            filters.add("trace_id = '" + escapeSql(scope.traceId()) + "'");
+        }
+        return GreptimeTraceAnalytics.query(this::queryRows, scope, options, String.join(" AND ", filters));
+    }
+
     private String traceGroupValueProjection(String groupBy, String errorExpression) {
         String expression = traceGroupExpression(groupBy, errorExpression);
         if (!StringUtils.hasText(expression)) {
@@ -1174,7 +1331,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             return "error_trace_count DESC";
         }
         if ("latency-p95-desc".equalsIgnoreCase(normalized)) {
-            return "latency_p95_ms DESC";
+            return "latency_p95_ms DESC NULLS LAST, group_value ASC";
         }
         return "trace_count DESC";
     }
@@ -1191,7 +1348,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             return "span_name";
         }
         if ("status".equals(normalizedGroupBy)) {
-            return "CASE WHEN " + errorExpression + " > 0 THEN 'ERROR' ELSE 'OK' END";
+            return "CASE WHEN " + errorExpression + " > 0 THEN 'ERROR' "
+                    + "WHEN SUM(CASE WHEN span_status_code IN ('STATUS_CODE_OK', 'OK') THEN 1 ELSE 0 END) = COUNT(*) "
+                    + "THEN 'OK' ELSE 'UNSET' END";
         }
         if (normalizedGroupBy.startsWith("resource:")) {
             String key = normalizedGroupBy.substring("resource:".length());
@@ -1272,6 +1431,120 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                             + quoteIdentifier("resource_attributes." + key);
                 })
                 .collect(java.util.stream.Collectors.joining(", "));
+    }
+
+    private TraceListCandidatePage traceListCandidatePage(List<Map<String, Object>> rows, int offset) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return new TraceListCandidatePage(List.of(), 0L);
+        }
+        List<String> traceIds = new ArrayList<>(rows.size());
+        Set<String> uniqueTraceIds = new LinkedHashSet<>();
+        Long totalCount = null;
+        for (Map<String, Object> row : rows) {
+            String traceId = traceListText(row, "trace_id");
+            long rowTotalCount = traceListNonNegativeLong(row, "total_count");
+            if (!StringUtils.hasText(traceId) || !uniqueTraceIds.add(traceId)
+                    || totalCount != null && totalCount != rowTotalCount) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            traceIds.add(traceId);
+            totalCount = rowTotalCount;
+        }
+        long minimumTotal;
+        try {
+            minimumTotal = Math.addExact(offset, traceIds.size());
+        } catch (ArithmeticException ignored) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        if (totalCount == null || totalCount < minimumTotal) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return new TraceListCandidatePage(List.copyOf(traceIds), totalCount);
+    }
+
+    private List<Map<String, Object>> completeTraceListRows(TraceListCandidatePage candidatePage,
+                                                             List<Map<String, Object>> serviceRows) {
+        if (CollectionUtils.isEmpty(serviceRows)
+                || serviceRows.size() > TraceQueryRepository.MAX_TRACE_LIST_SERVICE_ROWS) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        Map<String, Integer> traceOrder = new LinkedHashMap<>();
+        Map<String, long[]> traceTotals = new LinkedHashMap<>();
+        for (int index = 0; index < candidatePage.traceIds().size(); index++) {
+            String traceId = candidatePage.traceIds().get(index);
+            traceOrder.put(traceId, index);
+            traceTotals.put(traceId, new long[4]);
+        }
+
+        List<Map<String, Object>> completedRows = new ArrayList<>(serviceRows.size());
+        Set<String> observedTraceIds = new LinkedHashSet<>();
+        try {
+            for (Map<String, Object> serviceRow : serviceRows) {
+                String traceId = traceListText(serviceRow, "trace_id");
+                long[] totals = traceTotals.get(traceId);
+                long spanCount = traceListNonNegativeLong(serviceRow, "service_span_count");
+                long errorCount = traceListNonNegativeLong(serviceRow, "service_error_span_count");
+                long rootCount = traceListNonNegativeLong(serviceRow, "service_root_span_count");
+                long okCount = traceListNonNegativeLong(serviceRow, "service_ok_span_count");
+                if (totals == null || spanCount == 0 || errorCount > spanCount || rootCount > spanCount
+                        || okCount > spanCount - errorCount) {
+                    throw new TelemetryStorageUnavailableException();
+                }
+                totals[0] = Math.addExact(totals[0], spanCount);
+                totals[1] = Math.addExact(totals[1], errorCount);
+                totals[2] = Math.addExact(totals[2], rootCount);
+                totals[3] = Math.addExact(totals[3], okCount);
+                observedTraceIds.add(traceId);
+                completedRows.add(new HashMap<>(serviceRow));
+            }
+        } catch (ArithmeticException ignored) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        if (observedTraceIds.size() != candidatePage.traceIds().size()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+
+        completedRows.sort(Comparator
+                .comparingInt((Map<String, Object> row) -> traceOrder.get(traceListText(row, "trace_id")))
+                .thenComparing(row -> traceListText(row, "stats_service_name"),
+                        Comparator.nullsFirst(String::compareTo)));
+        long serviceRowCount = completedRows.size();
+        for (Map<String, Object> row : completedRows) {
+            long[] totals = traceTotals.get(traceListText(row, "trace_id"));
+            row.put("span_status_code", totals[1] > 0 ? "ERROR" : totals[3] == totals[0] ? "OK" : "UNSET");
+            row.put("error_span_count", totals[1]);
+            row.put("span_count", totals[0]);
+            row.put("root_span_count", totals[2]);
+            row.put("total_count", candidatePage.totalCount());
+            row.put("service_row_count", serviceRowCount);
+        }
+        return completedRows;
+    }
+
+    private String traceListText(Map<String, Object> row, String key) {
+        Object value = row == null ? null : row.get(key);
+        return value == null ? null : StringUtils.trimWhitespace(String.valueOf(value));
+    }
+
+    private long traceListNonNegativeLong(Map<String, Object> row, String key) {
+        Object value = row == null ? null : row.get(key);
+        long result;
+        if (value != null) {
+            try {
+                result = new BigDecimal(value.toString()).longValueExact();
+            } catch (NumberFormatException | ArithmeticException ignored) {
+                throw new TelemetryStorageUnavailableException();
+            }
+        } else {
+            throw new TelemetryStorageUnavailableException();
+        }
+        if (result < 0) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return result;
+    }
+
+    private record TraceListCandidatePage(List<String> traceIds, long totalCount) {
     }
 
     /**

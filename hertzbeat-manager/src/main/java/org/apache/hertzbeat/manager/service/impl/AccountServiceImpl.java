@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.subject.SubjectSum;
@@ -52,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of Account service
@@ -84,15 +81,6 @@ public class AccountServiceImpl implements AccountService {
      * Reduces write pressure under high-frequency requests.
      */
     private static final long LAST_USED_UPDATE_INTERVAL_MINUTES = 5;
-
-    /**
-     * Local cache: tokenHash -> isActive.
-     * TTL 60s to reduce DB queries; invalidated on token revocation.
-     */
-    private final Cache<String, Boolean> tokenStatusCache = Caffeine.newBuilder()
-        .maximumSize(1000)
-        .expireAfterWrite(60, TimeUnit.SECONDS)
-        .build();
 
     /**
      * Tracks when each token's lastUsedTime was last written to DB.
@@ -313,7 +301,6 @@ public class AccountServiceImpl implements AccountService {
         }
         String tokenHash = token.getTokenHash();
         if (StringUtils.isNotBlank(tokenHash)) {
-            invalidateTokenStatusCache(tokenHash);
             lastUsedWriteTimestamps.remove(tokenHash);
         }
         token.setStatus(TOKEN_STATUS_REVOKED);
@@ -331,9 +318,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public String checkTokenStatus(String tokenValue) {
         String tokenHash = CryptoUtils.sha256Hex(tokenValue);
-        Boolean active = tokenStatusCache.get(tokenHash,
-            hash -> authTokenDao.existsByTokenHashAndStatus(hash, TOKEN_STATUS_ACTIVE));
-        if (!Boolean.TRUE.equals(active)) {
+        // Revocable authorization state must be read from storage on every check, including after an in-flight read.
+        if (!authTokenDao.existsByTokenHashAndStatus(tokenHash, TOKEN_STATUS_ACTIVE)) {
             return "Token has been revoked";
         }
         return null;
@@ -344,10 +330,7 @@ public class AccountServiceImpl implements AccountService {
         String tokenHash = CryptoUtils.sha256Hex(tokenValue);
         String normalizedRequiredScope = AuthTokenScopes.normalizeRequiredScope(requiredScope);
         Set<String> allowedScopes = AuthTokenScopes.allowedTokenScopesFor(normalizedRequiredScope);
-        Boolean active = tokenStatusCache.get(statusCacheKey(tokenHash, normalizedRequiredScope),
-            cacheKey -> authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(
-                tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes));
-        if (Boolean.TRUE.equals(active)) {
+        if (authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes)) {
             return null;
         }
         if (authTokenDao.existsByTokenHashAndStatus(tokenHash, TOKEN_STATUS_ACTIVE)) {
@@ -365,11 +348,8 @@ public class AccountServiceImpl implements AccountService {
         String normalizedRequiredScope = AuthTokenScopes.normalizeRequiredScope(requiredScope);
         String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         Set<String> allowedScopes = AuthTokenScopes.allowedTokenScopesFor(normalizedRequiredScope);
-        Boolean active = tokenStatusCache.get(
-            statusCacheKey(tokenHash, normalizedRequiredScope, normalizedWorkspaceId),
-            cacheKey -> authTokenDao.existsByTokenHashAndStatusAndTokenScopeInAndWorkspaceId(
-                tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes, normalizedWorkspaceId));
-        if (Boolean.TRUE.equals(active)) {
+        if (authTokenDao.existsByTokenHashAndStatusAndTokenScopeInAndWorkspaceId(
+                tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes, normalizedWorkspaceId)) {
             return null;
         }
         if (authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(
@@ -500,16 +480,4 @@ public class AccountServiceImpl implements AccountService {
         return principal == null ? null : String.valueOf(principal);
     }
 
-    private void invalidateTokenStatusCache(String tokenHash) {
-        tokenStatusCache.invalidate(tokenHash);
-        tokenStatusCache.asMap().keySet().removeIf(key -> key.startsWith(tokenHash + ":"));
-    }
-
-    private String statusCacheKey(String tokenHash, String requiredScope) {
-        return tokenHash + ":" + requiredScope;
-    }
-
-    private String statusCacheKey(String tokenHash, String requiredScope, String workspaceId) {
-        return tokenHash + ":" + requiredScope + ":" + workspaceId;
-    }
 }

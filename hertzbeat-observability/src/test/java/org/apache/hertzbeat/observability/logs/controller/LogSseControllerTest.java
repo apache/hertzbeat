@@ -27,10 +27,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.observability.logs.service.impl.LogSseServiceImpl;
 import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
-import org.apache.hertzbeat.observability.logs.service.impl.LogSseServiceImpl;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +50,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class LogSseControllerTest {
 
     private MockMvc mockMvc;
+    private LogSseServiceImpl service;
 
     @Mock
     private LogSseManager emitterManager;
@@ -60,7 +60,9 @@ class LogSseControllerTest {
 
     @BeforeEach
     void setUp() {
-        LogSseController logSseController = new LogSseController(new LogSseServiceImpl(emitterManager));
+        service = org.mockito.Mockito.spy(new LogSseServiceImpl(emitterManager, java.util.List.of(),
+                new org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, java.time.Duration.ofMillis(100))));
+        LogSseController logSseController = new LogSseController(service);
         this.mockMvc = MockMvcBuilders.standaloneSetup(logSseController).build();
         AuthTokenRequestContext.bindAuthenticatedWorkspaceId("default");
     }
@@ -71,6 +73,18 @@ class LogSseControllerTest {
     }
 
     @Test
+    void explicitHistoricalSortRejectsBeforeLivePreparation() throws Exception {
+        for (String endpoint : new String[] {"validate", "subscribe"}) {
+            mockMvc.perform(get("/api/logs/sse/" + endpoint).param("logSort", "")
+                            .accept(endpoint.equals("subscribe") ? MediaType.TEXT_EVENT_STREAM_VALUE : MediaType.APPLICATION_JSON_VALUE))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.msg")
+                            .value("observability_log_filter_invalid"));
+        }
+        org.mockito.Mockito.verifyNoInteractions(emitterManager);
+    }
+
+    @Test
     void testSubscribeWithoutFilters() throws Exception {
         // When: A request is made to the subscribe endpoint without any parameters
         mockMvc.perform(get("/api/logs/sse/subscribe")
@@ -78,7 +92,7 @@ class LogSseControllerTest {
                 .andExpect(status().isOk());
 
         // Then: The emitter manager is called with an empty filter criteria
-        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        verify(service).subscribe(filterCriteriaCaptor.capture());
         LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
 
         Assertions.assertNull(capturedCriteria.getSeverityText());
@@ -136,7 +150,7 @@ class LogSseControllerTest {
                 .andExpect(status().isOk());
 
         // Then: The emitter manager is called with a criteria object containing all filter values
-        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        verify(service).subscribe(filterCriteriaCaptor.capture());
         LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
 
         Assertions.assertEquals(capturedCriteria.getSeverityText(), severityText);
@@ -165,7 +179,7 @@ class LogSseControllerTest {
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isOk());
 
-        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        verify(service).subscribe(filterCriteriaCaptor.capture());
         LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
 
         Assertions.assertTrue(capturedCriteria.isHideInternal());
@@ -180,7 +194,7 @@ class LogSseControllerTest {
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isOk());
 
-        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        verify(service).subscribe(filterCriteriaCaptor.capture());
         LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
 
         Assertions.assertEquals("team-a", capturedCriteria.getWorkspaceId());
@@ -199,7 +213,7 @@ class LogSseControllerTest {
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isOk());
 
-        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        verify(service).subscribe(filterCriteriaCaptor.capture());
         Assertions.assertEquals("default", filterCriteriaCaptor.getValue().getWorkspaceId());
     }
 
@@ -212,7 +226,7 @@ class LogSseControllerTest {
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isForbidden());
 
-        verify(emitterManager, never()).createEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
+        verify(emitterManager, never()).createPreparedEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -222,7 +236,7 @@ class LogSseControllerTest {
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isBadRequest());
 
-        verify(emitterManager, never()).createEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
+        verify(emitterManager, never()).createPreparedEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

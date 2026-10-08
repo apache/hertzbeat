@@ -68,6 +68,27 @@ class GreptimeLogPipelineInitializerTest {
         initializer = new GreptimeLogPipelineInitializer(restTemplate, greptimePropertiesProvider);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {" ", " analytics-a "})
+    void queryAndUploadUseSameDatabaseAsForwarding(String configuredDatabase) {
+        configureGreptimeProperties(true);
+        when(greptimeProperties.database()).thenReturn(configuredDatabase);
+        when(restTemplate.exchange(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(HttpMethod.class),
+                org.mockito.ArgumentMatchers.any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("", HttpStatus.NOT_FOUND))
+                .thenReturn(new ResponseEntity<>("", HttpStatus.OK));
+        initializer.initialize();
+        @SuppressWarnings("rawtypes")
+        var requests = org.mockito.ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate, times(2)).exchange(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(HttpMethod.class),
+                requests.capture(), eq(String.class));
+        String expected = configuredDatabase == null || configuredDatabase.isBlank() ? "public" : configuredDatabase.trim();
+        for (var request : requests.getAllValues()) {
+            assertEquals(expected, request.getHeaders().getFirst("X-Greptime-DB-Name"));
+        }
+    }
+
     @Test
     void uploadsBundledLogPipelineToGreptimeWhenEnabled() {
         configureGreptimeProperties(true);

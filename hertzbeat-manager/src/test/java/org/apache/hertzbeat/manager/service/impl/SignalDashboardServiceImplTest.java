@@ -19,6 +19,9 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,11 +32,12 @@ import java.util.Optional;
 import org.apache.hertzbeat.common.entity.dto.SignalDashboard;
 import org.apache.hertzbeat.common.entity.manager.SignalDashboardEntity;
 import org.apache.hertzbeat.manager.dao.SignalDashboardDao;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -44,6 +48,9 @@ class SignalDashboardServiceImplTest {
 
     @Mock
     private SignalDashboardDao signalDashboardDao;
+
+    @Spy
+    private PersesDashboardDocumentValidator validator = new PersesDashboardDocumentValidator();
 
     @InjectMocks
     private SignalDashboardServiceImpl signalDashboardService;
@@ -76,41 +83,20 @@ class SignalDashboardServiceImplTest {
     }
 
     @Test
-    void upsertSignalDashboardCreatesBoundedComposition() {
-        SignalDashboard request = SignalDashboard.builder()
-                .dashboardKey("signals-overview")
-                .title("Signals overview")
-                .description("Dashboard from signal panel drafts")
-                .tags("logs,traces,metrics")
-                .layout("[{\"i\":\"logs-panel\",\"x\":0,\"y\":0,\"w\":6,\"h\":4}]")
-                .widgets("[{\"id\":\"logs-panel\",\"draftKey\":\"logs-panel\"}]")
-                .variables("[]")
-                .panelMap("{\"logs-panel\":\"logs-panel\"}")
-                .version("v1")
-                .build();
-        when(signalDashboardDao.findByDashboardKey("signals-overview"))
-                .thenReturn(Optional.empty());
-        when(signalDashboardDao.save(any(SignalDashboardEntity.class))).thenAnswer(invocation -> {
-            SignalDashboardEntity saved = invocation.getArgument(0);
-            saved.setId(7L);
-            return saved;
-        });
-
-        SignalDashboard saved = signalDashboardService.upsertSignalDashboard("operator", request);
-
-        assertEquals(7L, saved.getId());
-        assertEquals("signals-overview", saved.getDashboardKey());
-        assertEquals("logs,traces,metrics", saved.getTags());
-        ArgumentCaptor<SignalDashboardEntity> captor = ArgumentCaptor.forClass(SignalDashboardEntity.class);
-        verify(signalDashboardDao).save(captor.capture());
-        assertEquals("operator", captor.getValue().getCreator());
-        assertEquals("v1", captor.getValue().getVersion());
+    void newKeyRequiresStandardDocument() {
+        SignalDashboard request = SignalDashboard.builder().dashboardKey("new-legacy").title("Legacy")
+                .layout("[]").widgets("[]").version("v1").build();
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        assertEquals("signal_dashboard_document_required", exception.getMessage());
+        verify(signalDashboardDao, never()).saveAndFlush(any());
     }
 
     @Test
     void upsertSignalDashboardUpdatesExistingSharedCompositionWithoutChangingOwner() {
         SignalDashboardEntity existing = SignalDashboardEntity.builder()
                 .id(3L)
+                .revision(0L)
                 .creator("teammate")
                 .dashboardKey("signals-overview")
                 .title("Old")
@@ -121,9 +107,9 @@ class SignalDashboardServiceImplTest {
                 .build();
         when(signalDashboardDao.findByDashboardKey("signals-overview"))
                 .thenReturn(Optional.of(existing));
-        when(signalDashboardDao.save(any(SignalDashboardEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(signalDashboardDao.saveAndFlush(any(SignalDashboardEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        SignalDashboard saved = signalDashboardService.upsertSignalDashboard("operator", SignalDashboard.builder()
+        SignalDashboard saved = signalDashboardService.upsertSignalDashboard("operator", SignalDashboard.builder().revision(0L)
                 .dashboardKey("signals-overview")
                 .title("Signals overview")
                 .layout("[{\"i\":\"metrics-panel\"}]")
@@ -179,8 +165,163 @@ class SignalDashboardServiceImplTest {
 
     @Test
     void deleteSignalDashboardUsesSharedKey() {
-        signalDashboardService.deleteSignalDashboard("operator", "signals-overview");
+        SignalDashboardEntity entity = SignalDashboardEntity.builder().dashboardKey("signals-overview").revision(0L).build();
+        when(signalDashboardDao.findByDashboardKey("signals-overview")).thenReturn(Optional.of(entity));
+        signalDashboardService.deleteSignalDashboard("operator", "signals-overview", 0);
+        verify(signalDashboardDao).delete(entity);
+        verify(signalDashboardDao).flush();
+    }
 
-        verify(signalDashboardDao).deleteByDashboardKey("signals-overview");
+    @Test
+    void documentIsTheOnlyContentSourceAndDerivesMetadata() {
+        SignalDashboard request = documentRequest();
+        when(signalDashboardDao.saveAndFlush(any())).thenAnswer(invocation -> {
+            SignalDashboardEntity entity = invocation.getArgument(0);
+            assertNull(entity.getRevision());
+            entity.setRevision(0L);
+            return entity;
+        });
+        SignalDashboard saved = signalDashboardService.upsertSignalDashboard("operator", request);
+        assertEquals(request.getDocument(), saved.getDocument());
+        assertEquals("Empty dashboard", saved.getTitle());
+        assertEquals("a,b", saved.getTags());
+        assertEquals(0L, saved.getRevision());
+        assertEquals("[]", saved.getWidgets());
+    }
+
+    @Test
+    void documentRejectsSecondContentSourceBeforeRepositoryAccess() {
+        SignalDashboard request = documentRequest();
+        request.setWidgets("[]");
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        verifyNoMoreInteractions(signalDashboardDao);
+    }
+
+    @Test
+    void invalidDocumentAndConflictingMetadataDoNotReachRepository() {
+        SignalDashboard request = documentRequest();
+        request.setTitle("Different");
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        request.setTitle(null);
+        request.setVersion("v2");
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        verifyNoMoreInteractions(signalDashboardDao);
+    }
+
+    @Test
+    void staleOrMissingRevisionDoesNotMutateStoredDocument() {
+        SignalDashboardEntity existing = emptyLegacy();
+        existing.setRevision(4L);
+        when(signalDashboardDao.findByDashboardKey("empty")).thenReturn(Optional.of(existing));
+        for (Long revision : new Long[]{null, 0L, -1L}) {
+            SignalDashboard request = documentRequest();
+            request.setRevision(revision);
+            assertThrows(SignalDashboardConflictException.class,
+                    () -> signalDashboardService.upsertSignalDashboard("operator", request));
+            assertNull(existing.getDocument());
+        }
+        verify(signalDashboardDao, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void creationWithRevisionCannotRecreateDeletedAsset() {
+        SignalDashboard request = documentRequest();
+        request.setRevision(0L);
+        assertThrows(SignalDashboardConflictException.class,
+                () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        verify(signalDashboardDao, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void explicitEmptyLegacyUpgradePreservesOriginalFragments() {
+        SignalDashboardEntity existing = emptyLegacy();
+        existing.setLayout("[ ]");
+        existing.setVariables("[  ]");
+        existing.setPanelMap("{ }");
+        when(signalDashboardDao.findByDashboardKey("empty")).thenReturn(Optional.of(existing));
+        when(signalDashboardDao.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        SignalDashboard request = documentRequest();
+        request.setRevision(0L);
+        SignalDashboard saved = signalDashboardService.upsertSignalDashboard("operator", request);
+        assertEquals(request.getDocument(), saved.getDocument());
+        assertEquals("[ ]", saved.getLayout());
+        assertEquals("[  ]", saved.getVariables());
+        assertEquals("{ }", saved.getPanelMap());
+        assertEquals("original", existing.getCreator());
+    }
+
+    @Test
+    void firstLegacyUpgradeMustMatchTheExactEmptyConversion() {
+        SignalDashboardEntity existing = emptyLegacy();
+        when(signalDashboardDao.findByDashboardKey("empty")).thenReturn(Optional.of(existing));
+        SignalDashboard request = documentRequest();
+        request.setRevision(0L);
+        ((tools.jackson.databind.node.ObjectNode) request.getDocument().path("spec")).put("duration", "1h");
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        assertNull(existing.getDocument());
+    }
+
+    @Test
+    void nonemptyLegacyAndLossyTagsCannotBeUpgraded() {
+        SignalDashboardEntity existing = emptyLegacy();
+        when(signalDashboardDao.findByDashboardKey("empty")).thenReturn(Optional.of(existing));
+        SignalDashboard request = documentRequest();
+        request.setRevision(0L);
+        existing.setWidgets("[{\"id\":\"draft\"}]");
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        existing.setWidgets("[]");
+        request.setDocument(JsonUtil.fromJsonQuietly(request.getDocument().toString().replace("[\"a\",\"b\"]", "[\"a,b\"]")));
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        assertNull(existing.getDocument());
+        verify(signalDashboardDao, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void readDoesNotValidateOrRewriteUnknownLegacyFragments() {
+        SignalDashboardEntity existing = emptyLegacy();
+        existing.setLayout("unknown historical bytes");
+        existing.setVariables(null);
+        when(signalDashboardDao.findAllByOrderByUpdateTimeDesc()).thenReturn(List.of(existing));
+        SignalDashboard read = signalDashboardService.listSignalDashboards("operator").getFirst();
+        assertEquals("unknown historical bytes", read.getLayout());
+        assertNull(read.getVariables());
+        assertNull(read.getDocument());
+        verify(signalDashboardDao).findAllByOrderByUpdateTimeDesc();
+        verifyNoMoreInteractions(signalDashboardDao);
+    }
+
+    @Test
+    void legacyWriterCannotOverwriteUpgradedDocument() {
+        SignalDashboardEntity existing = emptyLegacy();
+        existing.setDocument(documentRequest().getDocument().toString());
+        when(signalDashboardDao.findByDashboardKey("empty")).thenReturn(Optional.of(existing));
+        SignalDashboard request = SignalDashboard.builder().dashboardKey("empty").title("Old writer")
+                .layout("[]").widgets("[]").revision(0L).build();
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.upsertSignalDashboard("operator", request));
+        assertEquals("Empty dashboard", existing.getTitle());
+        verify(signalDashboardDao, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void staleDeleteCannotRemoveNewerOrMissingRecord() {
+        when(signalDashboardDao.findByDashboardKey("empty")).thenReturn(Optional.of(emptyLegacy()), Optional.empty());
+        assertThrows(SignalDashboardConflictException.class, () -> signalDashboardService.deleteSignalDashboard("operator", "empty", 1));
+        assertThrows(SignalDashboardConflictException.class, () -> signalDashboardService.deleteSignalDashboard("operator", "empty", 0));
+        assertThrows(IllegalArgumentException.class, () -> signalDashboardService.deleteSignalDashboard("operator", "empty", -1));
+        verify(signalDashboardDao, never()).delete(any());
+    }
+
+    private SignalDashboardEntity emptyLegacy() {
+        return SignalDashboardEntity.builder().dashboardKey("empty").creator("original").title("Empty dashboard")
+                .description("").tags("a,b").layout("[]").widgets("[]").version("v1").revision(0L).build();
+    }
+
+    private SignalDashboard documentRequest() {
+        return SignalDashboard.builder().dashboardKey("empty").version(PersesDashboardDocumentValidator.VERSION)
+                .document(JsonUtil.fromJsonQuietly("""
+                        {"kind":"Dashboard","metadata":{"name":"empty","project":"hertzbeat","tags":["a","b"]},
+                        "spec":{"display":{"name":"Empty dashboard","description":""},"duration":"30m","variables":[],
+                        "panels":{},"layouts":[{"kind":"Grid","spec":{"items":[]}}]}}
+                        """)).build();
     }
 }

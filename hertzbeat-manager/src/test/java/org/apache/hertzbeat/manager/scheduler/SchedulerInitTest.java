@@ -19,9 +19,13 @@ package org.apache.hertzbeat.manager.scheduler;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -30,14 +34,29 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.config.PrometheusProxyConfig;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionMutationCoordinator;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStoreFactory;
 import org.apache.hertzbeat.manager.service.AppService;
+import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
+import org.apache.hertzbeat.manager.service.impl.ManagerBusinessRuntimeInitializer;
+import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
+import org.apache.hertzbeat.manager.service.impl.PluginParameterServiceImpl;
+import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
+import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class SchedulerInitTest {
@@ -68,6 +87,47 @@ class SchedulerInitTest {
 
     @Mock
     private PrometheusProxyConfig prometheusProxyConfig;
+
+    @Mock
+    private ObjectProvider<MonitorService> monitorServiceProvider;
+
+    @Test
+    void startupLoadsDefinitionsBeforeRestoringPersistedMonitor() throws Exception {
+        AppServiceImpl runtimeAppService = new AppServiceImpl(monitorDao, paramDao, mock(WarehouseService.class),
+                monitorServiceProvider, new MonitorDefinitionStoreFactory(mock(DefineDao.class)),
+                new MonitorDefinitionMutationCoordinator());
+        ReflectionTestUtils.setField(schedulerInit, "appService", runtimeAppService);
+        assertThrows(IllegalArgumentException.class, () -> runtimeAppService.getAppDefine("mysql"));
+
+        Monitor monitor = Monitor.builder()
+                .id(1L)
+                .jobId(2L)
+                .intervals(10)
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .name("retained-mysql")
+                .app("mysql")
+                .instance("127.0.0.1:3306")
+                .build();
+        when(monitorDao.findMonitorsByStatusNotInAndJobIdNotNull(
+                List.of(CommonConstants.MONITOR_PAUSED_CODE))).thenReturn(List.of(monitor));
+        ManagerBusinessRuntimeInitializer initializer = new ManagerBusinessRuntimeInitializer(
+                mock(ObjectStoreConfigServiceImpl.class), runtimeAppService,
+                mock(PluginParameterServiceImpl.class), mock(PluginServiceImpl.class));
+        List<CommandLineRunner> runners = new ArrayList<>(List.of(schedulerInit, initializer));
+        AnnotationAwareOrderComparator.sort(runners);
+
+        for (CommandLineRunner runner : runners) {
+            runner.run();
+        }
+
+        ArgumentCaptor<Job> recoveredJob = ArgumentCaptor.forClass(Job.class);
+        verify(collectJobScheduling).addAsyncCollectJob(recoveredJob.capture(), isNull());
+        assertEquals("mysql", recoveredJob.getValue().getApp());
+        assertEquals(1L, recoveredJob.getValue().getMonitorId());
+        assertEquals(2L, recoveredJob.getValue().getId());
+        assertEquals(10, recoveredJob.getValue().getDefaultInterval());
+        verify(monitorDao).save(monitor);
+    }
 
     @Test
     void restartMapsCronScheduleToRecoveredCollectJob() throws Exception {

@@ -25,5 +25,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  */
 public interface LogSseService {
 
+    void validate(LogSseFilterCriteria filterCriteria);
+
     SseEmitter subscribe(LogSseFilterCriteria filterCriteria);
 }

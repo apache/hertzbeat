@@ -81,9 +81,7 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
                 .apiKey(config.getApiKey())
                 .model(config.getModel())
                 .build();
-        OpenAiChatModel chatModel = OpenAiChatModel.builder()
-                .options(defaultOptions)
-                .build();
+        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions);
         return new HertzBeatModel(chatModel,
                 (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks));
     }

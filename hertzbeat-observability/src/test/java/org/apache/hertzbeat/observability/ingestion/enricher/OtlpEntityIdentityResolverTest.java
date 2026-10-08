@@ -28,9 +28,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
+import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
+import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import io.opentelemetry.proto.logs.v1.ResourceLogs;
+import io.opentelemetry.proto.trace.v1.ResourceSpans;
 import io.opentelemetry.proto.resource.v1.Resource;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -103,7 +107,7 @@ class OtlpEntityIdentityResolverTest {
     }
 
     @Test
-    void doesNotLetThreeWeakIdentityMatchesSilentlyOverrideOneStrongIdentityMatch() {
+    void rejectsContradictoryInstanceCandidateBeforeComparingCanonicalScores() {
         when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
                 .thenReturn(List.of(
                         identity(41L, "service.instance.id", "checkout-1", "checkout-1", 140, true),
@@ -121,14 +125,7 @@ class OtlpEntityIdentityResolverTest {
                 "service.namespace", "commerce",
                 "deployment.environment.name", "prod"), "prod-west");
 
-        assertTrue(resolved.isEmpty());
-        verify(workspaceQueryGateway).recordEntityDiscoveryGovernanceActivity(
-                eq("prod-west"),
-                eq("identity_conflict"),
-                eq("needs_governance"),
-                eq("OTLP resource identity matched multiple entities"),
-                org.mockito.ArgumentMatchers.contains("service.instance.id=checkout-1"),
-                eq(Map.of(41L, "Checkout Instance", 42L, "Checkout Service")));
+        assertEquals(Optional.of("42"), resolved);
     }
 
     @Test
@@ -157,6 +154,80 @@ class OtlpEntityIdentityResolverTest {
                 org.mockito.ArgumentMatchers.contains("service.name=checkout"),
                 entityRefsCaptor.capture());
         assertEquals(Map.of(41L, "Checkout API", 42L, "Checkout API"), entityRefsCaptor.getValue());
+    }
+
+    @Test
+    void doesNotAttributeServiceFromNamespaceAndEnvironmentWithoutServiceAnchor() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(42L, "service.namespace", "commerce", "commerce", 30, false),
+                        identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertTrue(resolver.resolveEntityId(Map.of(
+                "service.namespace", "commerce", "deployment.environment.name", "prod"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void doesNotAttributeDifferentServiceNameThroughSharedNamespaceAndEnvironment() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(42L, "service.namespace", "commerce", "commerce", 30, false),
+                        identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertTrue(resolver.resolveEntityId(Map.of("service.name", "unregistered-partial-service",
+                "service.namespace", "commerce", "deployment.environment.name", "prod"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void doesNotAttributeDifferentServiceAndNamespaceThroughEnvironmentAlone() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertTrue(resolver.resolveEntityId(Map.of("service.name", "another-service",
+                "service.namespace", "another-namespace", "deployment.environment.name", "prod"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void doesNotAttributeContradictoryServiceNameThroughMatchingInstance() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "service.instance.id", "shared-instance", "shared-instance", 140, false)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertTrue(resolver.resolveEntityId(Map.of("service.name", "another-service",
+                "service.instance.id", "shared-instance"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void doesNotAttributeMatchingServiceNameAcrossKnownNamespace() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "service.name", "checkout", "checkout", 90, true)));
+        ObserveEntity scoped = entity(42L, "prod-west");
+        scoped.setNamespace("commerce");
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, scoped));
+
+        assertTrue(resolver.resolveEntityId(Map.of("service.name", "checkout",
+                "service.namespace", "another-namespace"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void doesNotAttributeMatchingServiceNameAcrossKnownEnvironment() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "service.name", "checkout", "checkout", 90, true)));
+        ObserveEntity scoped = entity(42L, "prod-west");
+        scoped.setEnvironment("production");
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, scoped));
+
+        assertTrue(resolver.resolveEntityId(Map.of("service.name", "checkout",
+                "deployment.environment.name", "staging"), "prod-west").isEmpty());
     }
 
     @Test
@@ -326,6 +397,152 @@ class OtlpEntityIdentityResolverTest {
         assertTrue(!attributes.containsKey("hertzbeat.entity_id"));
         assertTrue(!attributes.containsKey("hertzbeat.entity_type"));
         assertTrue(!attributes.containsKey("hertzbeat.entity_name"));
+    }
+
+    @Test
+    void honorsRegisteredServiceNameAndScopeAliases() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(42L, "service.name", "checkout-alias", "checkout-alias", 90, false),
+                        identity(42L, "service.namespace", "commerce-alias", "commerce-alias", 30, false),
+                        identity(42L, "deployment.environment.name", "prod-alias", "prod-alias", 20, false)));
+        ObserveEntity scoped = entity(42L, "prod-west");
+        scoped.setNamespace("commerce");
+        scoped.setEnvironment("production");
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, scoped));
+
+        assertEquals(Optional.of("42"), resolver.resolveEntityId(Map.of("service.name", " CHECKOUT-ALIAS ",
+                "service.namespace", "Commerce-Alias", "deployment.environment.name", "prod-alias"), "prod-west"));
+    }
+
+    @Test
+    void matchesKnownScopeFieldsWithoutInventingAnAdditionalIdentityLookup() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "service.name", "checkout", "checkout", 90, true)));
+        ObserveEntity scoped = entity(42L, "prod-west");
+        scoped.setNamespace(" Commerce ");
+        scoped.setEnvironment("PROD");
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, scoped));
+
+        assertEquals(Optional.of("42"), resolver.resolveEntityId(Map.of("service.name", "checkout",
+                "service.namespace", "commerce", "deployment.environment.name", "prod",
+                "service.instance.id", "new-instance-without-alias"), "prod-west"));
+    }
+
+    @Test
+    void doesNotInventConflictWhenEntityScopeFieldsAreUnknown() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "service.name", "checkout", "checkout", 90, true)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertEquals(Optional.of("42"), resolver.resolveEntityId(Map.of("service.name", "checkout",
+                "service.namespace", "uncatalogued", "deployment.environment.name", "uncatalogued"), "prod-west"));
+    }
+
+    @Test
+    void matchesInstanceIdentityWhenServiceNameIsNotSupplied() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "service.instance.id", "checkout-1", "checkout-1", 140, true)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertEquals(Optional.of("42"), resolver.resolveEntityId(Map.of("service.instance.id", "checkout-1"), "prod-west"));
+    }
+
+    @Test
+    void keepsEqualEligibleInstanceCandidatesAmbiguous() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(42L, "service.instance.id", "shared-instance", "shared-instance", 140, true),
+                        identity(43L, "service.instance.id", "shared-instance", "shared-instance", 140, true)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L, 43L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west"),
+                        43L, entity(43L, "prod-west", "service", "payments", "Payments API")));
+
+        assertTrue(resolver.resolveEntityId(Map.of("service.instance.id", "shared-instance"), "prod-west").isEmpty());
+        verify(workspaceQueryGateway).recordEntityDiscoveryGovernanceActivity(
+                eq("prod-west"), eq("identity_conflict"), eq("needs_governance"),
+                eq("OTLP resource identity matched multiple entities"),
+                org.mockito.ArgumentMatchers.contains("service.instance.id=shared-instance"),
+                eq(Map.of(42L, "Checkout API", 43L, "Payments API")));
+    }
+
+    @Test
+    void doesNotUseSharedHostIdentityToResolveService() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "host.id", "host-1", "host-1", 140, true)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertTrue(resolver.resolveEntityId(Map.of("host.id", "host-1"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void preservesNonServiceHostResolutionDespiteServiceScopeDifferences() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "host.id", "host-1", "host-1", 140, true)));
+        ObserveEntity host = entity(42L, "prod-west", "host", "host-1", "Host one");
+        host.setNamespace("host-namespace");
+        host.setEnvironment("host-environment");
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, host));
+
+        assertEquals(Optional.of("42"), resolver.resolveEntityId(Map.of("host.id", "host-1",
+                "service.name", "checkout", "service.namespace", "commerce",
+                "deployment.environment.name", "prod"), "prod-west"));
+    }
+
+    @Test
+    void preservesWorkspaceValidatedExplicitHintWhenAutomaticServiceEvidenceConflicts() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+
+        assertEquals(Optional.of("42"), resolver.resolveEntityId(Map.of("hertzbeat.entity_id", "42",
+                "service.name", "explicit-manual-association", "deployment.environment.name", "prod"), "prod-west"));
+    }
+
+    @Test
+    void rejectsExplicitHintOutsideAuthenticatedWorkspace() {
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "other-workspace")));
+
+        assertTrue(resolver.resolveEntityId(Map.of("hertzbeat.entity_id", "42"), "prod-west").isEmpty());
+    }
+
+    @Test
+    void doesNotLookUpMissingAuthenticatedWorkspaceOrRetainUntrustedEntityFields() {
+        ExportMetricsServiceRequest enriched = resolver.enrichMetrics(metricsRequest(
+                stringAttribute("service.name", "checkout"), stringAttribute("hertzbeat.entity_id", "42"),
+                stringAttribute("hertzbeat.entity_type", "service"), stringAttribute("hertzbeat.entity_name", "Untrusted")), " ");
+
+        assertEquals(Map.of("service.name", "checkout"), metricResourceAttributes(enriched));
+        verifyNoInteractions(workspaceQueryGateway);
+    }
+
+    @Test
+    void preservesUnresolvedResourceAcrossAllThreeSignals() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(eq("prod-west"), anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(42L, "service.namespace", "commerce", "commerce", 30, false),
+                        identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
+        when(workspaceQueryGateway.findEntitiesByIds("prod-west", Set.of(42L)))
+                .thenReturn(Map.of(42L, entity(42L, "prod-west")));
+        Resource original = resource(stringAttribute("service.name", "unregistered-partial-service"),
+                stringAttribute("service.namespace", "commerce"), stringAttribute("deployment.environment.name", "prod"));
+        ExportMetricsServiceRequest metrics = metricsRequest(List.of(original));
+        ExportLogsServiceRequest logs = ExportLogsServiceRequest.newBuilder()
+                .addResourceLogs(ResourceLogs.newBuilder().setResource(original)).build();
+        ExportTraceServiceRequest traces = ExportTraceServiceRequest.newBuilder()
+                .addResourceSpans(ResourceSpans.newBuilder().setResource(original)).build();
+
+        assertEquals(metrics, resolver.enrichMetrics(metrics, "prod-west"));
+        assertEquals(logs, resolver.enrichLogs(logs, "prod-west"));
+        assertEquals(traces, resolver.enrichTraces(traces, "prod-west"));
     }
 
     private ExportMetricsServiceRequest metricsRequest(KeyValue... resourceAttributes) {

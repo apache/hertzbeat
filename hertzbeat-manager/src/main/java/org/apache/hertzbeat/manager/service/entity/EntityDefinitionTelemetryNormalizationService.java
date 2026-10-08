@@ -56,7 +56,7 @@ public class EntityDefinitionTelemetryNormalizationService {
         }
         List<EntityDefinition.Identity> result = new ArrayList<>();
         for (Object item : items) {
-            Map<String, Object> identityMap = toObjectMap(item);
+            Map<String, Object> identityMap = EntityDefinitionMaps.toObjectMap(item);
             String key = asText(identityMap.get("key"));
             String value = asText(identityMap.get("value"));
             if (!StringUtils.hasText(key) || !StringUtils.hasText(value)) {
@@ -80,7 +80,7 @@ public class EntityDefinitionTelemetryNormalizationService {
         }
         List<EntityDefinition.MonitorBind> result = new ArrayList<>();
         for (Object item : items) {
-            Map<String, Object> bindMap = toObjectMap(item);
+            Map<String, Object> bindMap = EntityDefinitionMaps.toObjectMap(item);
             Long monitorId = asLong(defaultText(bindMap.containsKey("monitorId") ? "monitorId" : null,
                     bindMap.containsKey("id") ? "id" : null), bindMap);
             if (monitorId == null) {
@@ -98,18 +98,6 @@ public class EntityDefinitionTelemetryNormalizationService {
         return result;
     }
 
-    private Map<String, Object> toObjectMap(Object value) {
-        if (!(value instanceof Map<?, ?> rawMap)) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            if (entry.getKey() != null) {
-                result.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
-        return result;
-    }
 
     private Map<String, List<String>> toStringListMap(Object value) {
         if (!(value instanceof Map<?, ?> rawMap)) {

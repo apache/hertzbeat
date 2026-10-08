@@ -33,6 +33,8 @@ import org.apache.hertzbeat.manager.setup.runtime.FileFactoryResetStateStore;
 public final class LocalInstallationStartupProbe implements StartupDecisionProbe {
     private static final String DATASOURCE_PROPERTY = "spring.datasource.url";
     private static final String DATASOURCE_ENVIRONMENT = "SPRING_DATASOURCE_URL";
+    private static final String ACTIVE_PROFILES_PROPERTY = "spring.profiles.active";
+    private static final String ACTIVE_PROFILES_ENVIRONMENT = "SPRING_PROFILES_ACTIVE";
     private static final String ROOT_ENVIRONMENT = "HERTZBEAT_INTERNAL_INSTALLATION_ROOT";
     private final Path fixedRoot;
     private final Boolean fixedExternalDatabaseConfigured;
@@ -81,7 +83,8 @@ public final class LocalInstallationStartupProbe implements StartupDecisionProbe
         if (managed == State.LOADABLE || legacyDatabase || externalDatabaseConfigured) {
             return new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         }
-        return new StartupDecision(RuntimeMode.SETUP_ONLY);
+        return new StartupDecision(localProfileActive(args)
+                ? RuntimeMode.FULL_SETUP_GATED : RuntimeMode.SETUP_ONLY);
     }
 
     private static FingerprintState fingerprintState(Path root) {
@@ -112,6 +115,20 @@ public final class LocalInstallationStartupProbe implements StartupDecisionProbe
     private static boolean externalDatabaseConfigured(String[] args) {
         return hasText(StartupArgumentProperties.resolve(args, DATASOURCE_PROPERTY,
                 System.getProperty(DATASOURCE_PROPERTY), System.getenv(DATASOURCE_ENVIRONMENT)));
+    }
+
+    private static boolean localProfileActive(String[] args) {
+        String activeProfiles = StartupArgumentProperties.resolve(args, ACTIVE_PROFILES_PROPERTY,
+                System.getProperty(ACTIVE_PROFILES_PROPERTY), System.getenv(ACTIVE_PROFILES_ENVIRONMENT));
+        if (!hasText(activeProfiles)) {
+            return false;
+        }
+        for (String profile : activeProfiles.split(",")) {
+            if ("local".equals(profile.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean hasText(String value) {

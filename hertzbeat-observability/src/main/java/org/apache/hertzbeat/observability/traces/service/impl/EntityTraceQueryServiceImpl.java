@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.observability.traces.service.impl;
 
+import org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics;
+import org.apache.hertzbeat.observability.shared.util.SignalFilterScanner;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -29,6 +32,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,6 +57,7 @@ import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceQueryHintD
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
+import org.apache.hertzbeat.common.observability.dto.trace.TraceRepresentativeSpanDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanEventDto;
@@ -63,6 +68,10 @@ import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanti
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
+import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceSort;
+import org.apache.hertzbeat.observability.traces.dto.TraceListPageDto;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureQuery;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureAnalysis;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceRowQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -137,10 +146,10 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             throw new TelemetryStorageUnavailableException();
         }
         int pageSize = normalizeTraceListPageSize(limit);
-        List<Map<String, Object>> rows = traceQueryRepository.queryTraceListRows(
+        TraceQueryRepository.TraceListPage page = traceQueryRepository.queryTraceListRows(
                 start, end, false, null, null, null, trustedWorkspaceId, Map.of(), false, 0, pageSize);
-        List<TraceListItemDto> items = toTraceListItems(rows);
-        long total = validatedTraceListTotal(rows, 0L, items.size());
+        List<TraceListItemDto> items = toTraceListItems(requireTracePageRows(page));
+        long total = validatedTraceListTotal(page, 0L, items.size());
         return new PageImpl<>(items, PageRequest.of(0, pageSize), total);
     }
 
@@ -181,17 +190,17 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         List<TraceAggregate> traces = aggregateTraceRows(queryRecentRows(identityValues, now))
                 .stream()
                 .filter(trace -> matchesEntity(trace, identityValues))
-                .filter(trace -> trace.getStartTime() == null || trace.getStartTime() >= now - DEFAULT_LOOKBACK_MILLIS)
+                .filter(trace -> trace.getObservedEndTime() >= now - DEFAULT_LOOKBACK_MILLIS)
                 .toList();
         Long latestObservedAt = traces.stream()
-                .map(TraceAggregate::getStartTime)
+                .map(TraceAggregate::getObservedEndTime)
                 .filter(Objects::nonNull)
                 .max(Long::compareTo)
                 .orElse(null);
         int errorCount = (int) traces.stream().filter(trace -> isErrorStatus(trace.getStatus())).count();
         boolean active = latestObservedAt != null && latestObservedAt >= now - ACTIVE_TRACE_WINDOW_MILLIS;
         String latestTraceId = traces.stream()
-                .sorted(Comparator.comparing(TraceAggregate::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .sorted(Comparator.comparing(TraceAggregate::getObservedEndTime, Comparator.reverseOrder()))
                 .map(TraceAggregate::getTraceId)
                 .filter(StringUtils::hasText)
                 .findFirst()
@@ -295,13 +304,39 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                  String operationName, Long minDurationMs, Long maxDurationMs,
                                                  int pageIndex, int pageSize, Boolean hideInternal, String spanScope,
                                                  String attributeFilter) {
+        return queryTraceList(workspaceId, entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
+                environment, resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize,
+                hideInternal, spanScope, attributeFilter, TraceSort.NEWEST);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(String workspaceId, Long entityId, Long start, Long end,
+                                               String traceId, Boolean errorOnly, String serviceName,
+                                               String serviceNamespace, String environment, String resourceFilter,
+                                               String operationName, Long minDurationMs, Long maxDurationMs,
+                                               int pageIndex, int pageSize, Boolean hideInternal, String spanScope,
+                                               String attributeFilter, TraceSort requestedSort) {
+        return queryTraceList(workspaceId, entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
+                environment, resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize,
+                hideInternal, spanScope, attributeFilter, requestedSort, false);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(String workspaceId, Long entityId, Long start, Long end,
+                                               String traceId, Boolean errorOnly, String serviceName,
+                                               String serviceNamespace, String environment, String resourceFilter,
+                                               String operationName, Long minDurationMs, Long maxDurationMs,
+                                               int pageIndex, int pageSize, Boolean hideInternal, String spanScope,
+                                               String attributeFilter, TraceSort requestedSort, boolean endExclusive) {
         String trustedWorkspaceId = requireTrustedWorkspaceId(workspaceId);
+        TraceSort sort = requestedSort == null ? TraceSort.NEWEST : requestedSort;
+        var windowQuery = new TraceListPageDto.Query(sort.value(), "window", null, false);
         PageRequest pageRequest = PageRequest.of(
                 normalizeTraceListPageIndex(pageIndex), normalizeTraceListPageSize(pageSize));
         ObservedEntityContext entityContext = entityId == null
                 ? null : loadEntityContext(trustedWorkspaceId, entityId);
         if (missingRequestedEntity(entityId, entityContext)) {
-            return new PageImpl<>(List.of(), pageRequest, 0);
+            return new TraceListPageDto(List.of(), pageRequest, 0, windowQuery);
         }
         Map<String, Set<String>> identityValues = traceQueryIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
@@ -316,8 +351,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         if (!StringUtils.hasText(traceId) && !resourceFilters.requiresRowFallback()
                 && attributeFilters.isEmpty()
                 && traceQueryRepository.supportsTraceListRows()) {
-            List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
-                    ? traceQueryRepository.queryTraceListRows(
+            TraceQueryRepository.TraceListPage page = traceQueryRepository.queryTraceListRows(
                             start,
                             end,
                             errorOnly,
@@ -332,44 +366,85 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                             hideInternal,
                             normalizedSpanScope,
                             repositoryOffset,
-                            pageRequest.getPageSize()
-                    )
-                    : traceQueryRepository.queryTraceListRows(
-                            start,
-                            end,
-                            errorOnly,
-                            queryScope.serviceName(),
-                            queryScope.serviceNamespace(),
-                            queryScope.environment(),
-                            operationName,
-                            minDurationNanos,
-                            maxDurationNanos,
-                            trustedWorkspaceId,
-                            pushedResourceFilters,
-                            hideInternal,
-                            repositoryOffset,
-                            pageRequest.getPageSize()
+                            pageRequest.getPageSize(),
+                            sort, endExclusive
                     );
-            List<TraceListItemDto> items = toTraceListItems(rows);
-            long total = validatedTraceListTotal(rows, pageRequest.getOffset(), items.size());
-            return new PageImpl<>(items, pageRequest, total);
+            List<TraceListItemDto> items = toTraceListItems(requireTracePageRows(page));
+            long total = validatedTraceListTotal(page, pageRequest.getOffset(), items.size());
+            return new TraceListPageDto(items, pageRequest, total, windowQuery);
         }
-        List<TraceAggregate> filtered = aggregateTraceRows(trustedWorkspaceId, queryRowsForList(
+        int rowLimit = StringUtils.hasText(traceId) ? TRACE_DETAIL_LIMIT : TRACE_LIST_SAMPLE_LIMIT;
+        List<Map<String, Object>> rows = queryRowsForList(
                 trustedWorkspaceId, traceId, start, end, queryScope.serviceName(), queryScope.serviceNamespace(),
                 queryScope.environment(), operationName, minDurationNanos, maxDurationNanos, pushedResourceFilters,
-                pushableSpanAttributeFilters(attributeFilters), hideInternal)).stream()
-                .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
-                .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
+                pushableSpanAttributeFilters(attributeFilters), hideInternal, rowLimit + 1);
+        if (rows == null) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        boolean truncated = rows.size() > rowLimit;
+        List<TraceAggregate> filtered = aggregateTraceRows(trustedWorkspaceId,
+                rows.subList(0, Math.min(rowLimit, rows.size()))).stream()
+                .filter(trace -> matchingTraceSpans(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
                         queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
-                        minDurationNanos, maxDurationNanos, hideInternal, attributeFilters))
-                .sorted(Comparator.comparing(TraceAggregate::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                        minDurationNanos, maxDurationNanos, hideInternal, normalizedSpanScope, attributeFilters, endExclusive).findAny().isPresent())
+                .sorted(traceListComparator(sort, trace -> matchingTraceSpans(trace, identityValues, resourceFilters, start, end,
+                        traceId, false, queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
+                        minDurationNanos, maxDurationNanos, hideInternal, normalizedSpanScope, attributeFilters, endExclusive)
+                        .mapToLong(span -> trace.timings.get(span.getSpanId()).startNanos()).min().orElseThrow()))
                 .toList();
         int safeStart = Math.min(repositoryOffset, filtered.size());
         int safeEnd = Math.min(safeStart + pageRequest.getPageSize(), filtered.size());
         List<TraceListItemDto> items = filtered.subList(safeStart, safeEnd).stream()
                 .map(this::toTraceListItem)
                 .toList();
-        return new PageImpl<>(items, pageRequest, filtered.size());
+        return new TraceListPageDto(items, pageRequest, filtered.size(),
+                new TraceListPageDto.Query(sort.value(), "bounded", rowLimit, truncated));
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceStructure(String workspaceId, TraceStructureQuery query) {
+        StructureSample sample = structureSample(workspaceId, query);
+        List<TraceAggregate> matched = sample.matched();
+        PageRequest page = PageRequest.of(query.pageIndex(), query.pageSize());
+        int from = Math.min(Math.toIntExact(Math.min(page.getOffset(), Integer.MAX_VALUE)), matched.size());
+        int to = Math.min(from + page.getPageSize(), matched.size());
+        return new TraceListPageDto(matched.subList(from, to).stream().map(this::toTraceListItem).toList(), page,
+                matched.size(), new TraceListPageDto.Query("newest", "bounded", TRACE_LIST_SAMPLE_LIMIT, sample.truncated()));
+    }
+
+    @Override
+    public TraceStructureAnalysis queryTraceStructureAnalysis(String workspaceId, TraceStructureQuery query) {
+        StructureSample sample = structureSample(workspaceId, query);
+        List<TraceStructureAnalyzer.TraceGraph> graphs = sample.matched().stream()
+                .map(trace -> new TraceStructureAnalyzer.TraceGraph(trace.traceId, trace.spans)).toList();
+        return TraceStructureAnalyzer.analyze(graphs, TRACE_LIST_SAMPLE_LIMIT, sample.scannedRows(), sample.truncated());
+    }
+
+    private StructureSample structureSample(String workspaceId, TraceStructureQuery query) {
+        String workspace = requireTrustedWorkspaceId(workspaceId);
+        List<Map<String, Object>> rows = queryRowsForList(workspace, null, query.start(), query.end(), null, null,
+                null, null, null, null, Map.of(), Map.of(), false, TRACE_LIST_SAMPLE_LIMIT + 1);
+        if (rows == null) throw new TelemetryStorageUnavailableException();
+        boolean truncated = rows.size() > TRACE_LIST_SAMPLE_LIMIT;
+        List<TraceAggregate> matched = aggregateTraceRows(workspace,
+                rows.subList(0, Math.min(TRACE_LIST_SAMPLE_LIMIT, rows.size()))).stream()
+                .filter(trace -> TraceStructureMatcher.matches(trace.spans, query.left(), query.right(), query.relation()))
+                .sorted(traceListComparator(TraceSort.NEWEST,
+                        trace -> trace.spans.stream().mapToLong(span -> trace.timings.get(span.getSpanId()).startNanos())
+                                .min().orElseThrow()))
+                .toList();
+        return new StructureSample(matched, Math.min(TRACE_LIST_SAMPLE_LIMIT, rows.size()), truncated);
+    }
+
+    private record StructureSample(List<TraceAggregate> matched, int scannedRows, boolean truncated) { }
+
+    private Comparator<TraceAggregate> traceListComparator(TraceSort sort, java.util.function.ToLongFunction<TraceAggregate> timestamp) {
+        Comparator<TraceAggregate> newest = Comparator.comparingLong(timestamp)
+                .reversed().thenComparing(TraceAggregate::getTraceId);
+        return sort == TraceSort.DURATION_DESC
+                ? Comparator.comparing(TraceAggregate::getDurationNanos, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(newest)
+                : newest;
     }
 
     private int normalizeTraceListPageIndex(int pageIndex) {
@@ -590,7 +665,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 resourceFilter, operationName, minDurationMs, maxDurationMs, 0, TRACE_LIST_SAMPLE_LIMIT, hideInternal,
                 normalizedSpanScope, attributeFilter);
         Long latestObservedAt = result.getContent().stream()
-                .map(TraceListItemDto::getStartTime)
+                .map(TraceListItemDto::getObservedEndTime)
                 .filter(Objects::nonNull)
                 .max(Long::compareTo)
                 .orElse(null);
@@ -715,10 +790,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 trustedWorkspaceId, traceId, start, end, queryScope.serviceName(), queryScope.serviceNamespace(),
                 queryScope.environment(), operationName, minDurationNanos, maxDurationNanos, pushedResourceFilters,
                 pushableSpanAttributeFilters(attributeFilters), hideInternal)).stream()
-                .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
                 .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
                         queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
-                        minDurationNanos, maxDurationNanos, hideInternal, attributeFilters))
+                        minDurationNanos, maxDurationNanos, hideInternal, normalizedSpanScope, attributeFilters))
                 .toList();
         result.put("groups", buildTraceAggregateGroupResults(traces, normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount));
         return result;
@@ -729,27 +803,11 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         group.put("value", defaultText(readTextValue(row, "group_value"), "unknown"));
         group.put("traceCount", Optional.ofNullable(readLongValue(row, "trace_count", "traceCount")).orElse(0L));
         group.put("errorTraceCount", Optional.ofNullable(readLongValue(row, "error_trace_count", "errorTraceCount")).orElse(0L));
-        group.put("latencyAvgMs", Optional.ofNullable(readDoubleValue(row, "latency_avg_ms", "latencyAvgMs")).orElse(0.0d));
-        group.put("latencyP95Ms", Optional.ofNullable(readDoubleValue(row, "latency_p95_ms", "latencyP95Ms")).orElse(0.0d));
+        group.put("latencyAvgMs", readDoubleValue(row, "latency_avg_ms", "latencyAvgMs"));
+        group.put("latencyP95Ms", readDoubleValue(row, "latency_p95_ms", "latencyP95Ms"));
         return group;
     }
 
-    private List<Map<String, Object>> buildTraceGroupResults(List<TraceListItemDto> traces, String groupBy, int limit, String orderBy, long minCount) {
-        if (CollectionUtils.isEmpty(traces)) {
-            return List.of();
-        }
-        Map<String, List<TraceListItemDto>> grouped = new LinkedHashMap<>();
-        for (TraceListItemDto trace : traces) {
-            String value = defaultText(resolveTraceListGroupValue(trace, groupBy), "unknown");
-            grouped.computeIfAbsent(value, ignored -> new ArrayList<>()).add(trace);
-        }
-        return grouped.entrySet().stream()
-                .map(entry -> toTraceGroupResult(entry.getKey(), entry.getValue()))
-                .filter(group -> ((Long) group.get("traceCount")) >= minCount)
-                .sorted(resolveTraceGroupComparator(orderBy))
-                .limit(limit)
-                .toList();
-    }
 
     private List<Map<String, Object>> buildTraceAggregateGroupResults(List<TraceAggregate> traces, String groupBy,
                                                                       int limit, String orderBy, long minCount) {
@@ -775,7 +833,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return (left, right) -> Long.compare((Long) right.get("errorTraceCount"), (Long) left.get("errorTraceCount"));
         }
         if ("latency-p95-desc".equalsIgnoreCase(normalized)) {
-            return (left, right) -> Double.compare((Double) right.get("latencyP95Ms"), (Double) left.get("latencyP95Ms"));
+            return Comparator.comparing((Map<String, Object> group) -> (Double) group.get("latencyP95Ms"),
+                    Comparator.nullsLast(Comparator.reverseOrder()))
+                    .thenComparing(group -> (String) group.get("value"));
         }
         return (left, right) -> Long.compare((Long) right.get("traceCount"), (Long) left.get("traceCount"));
     }
@@ -805,9 +865,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         group.put("value", value);
         group.put("traceCount", (long) traces.size());
         group.put("errorTraceCount", traces.stream().filter(trace -> isErrorStatus(trace.getStatus())).count());
-        group.put("latencyAvgMs", durations.isEmpty() ? 0.0d
+        group.put("latencyAvgMs", durations.isEmpty() ? null
                 : durations.stream().mapToDouble(Long::doubleValue).average().orElse(0.0d) / 1_000_000.0d);
-        group.put("latencyP95Ms", durations.isEmpty() ? 0.0d
+        group.put("latencyP95Ms", durations.isEmpty() ? null
                 : durations.get(Math.min(durations.size() - 1, (int) Math.ceil(durations.size() * 0.95d) - 1)) / 1_000_000.0d);
         return group;
     }
@@ -823,34 +883,13 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         group.put("value", value);
         group.put("traceCount", (long) traces.size());
         group.put("errorTraceCount", traces.stream().filter(trace -> isErrorStatus(trace.getStatus())).count());
-        group.put("latencyAvgMs", durations.isEmpty() ? 0.0d
+        group.put("latencyAvgMs", durations.isEmpty() ? null
                 : durations.stream().mapToDouble(Long::doubleValue).average().orElse(0.0d) / 1_000_000.0d);
-        group.put("latencyP95Ms", durations.isEmpty() ? 0.0d
+        group.put("latencyP95Ms", durations.isEmpty() ? null
                 : durations.get(Math.min(durations.size() - 1, (int) Math.ceil(durations.size() * 0.95d) - 1)) / 1_000_000.0d);
         return group;
     }
 
-    private String resolveTraceListGroupValue(TraceListItemDto trace, String groupBy) {
-        if (trace == null || !StringUtils.hasText(groupBy)) {
-            return null;
-        }
-        Map<String, String> resourceAttributes = trace.getResourceAttributes() == null
-                ? Collections.emptyMap()
-                : trace.getResourceAttributes();
-        if ("service.name".equals(groupBy)) {
-            return defaultText(trace.getServiceName(), resourceAttributes.get("service.name"));
-        }
-        if ("operation.name".equals(groupBy)) {
-            return trace.getRootSpanName();
-        }
-        if ("status".equals(groupBy)) {
-            return isErrorStatus(trace.getStatus()) ? "ERROR" : "OK";
-        }
-        if (groupBy.startsWith("resource:")) {
-            return resourceAttributes.get(groupBy.substring("resource:".length()));
-        }
-        return resourceAttributes.get(groupBy);
-    }
 
     private String resolveTraceAggregateGroupValue(TraceAggregate trace, String groupBy) {
         if (trace == null || !StringUtils.hasText(groupBy)) {
@@ -866,7 +905,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return trace.getRootSpanName();
         }
         if ("status".equals(groupBy)) {
-            return isErrorStatus(trace.getStatus()) ? "ERROR" : "OK";
+            return trace.getStatus() == null ? "UNKNOWN" : trace.getStatus().toUpperCase(Locale.ROOT);
         }
         if (groupBy.startsWith("resource:")) {
             return resourceAttributes.get(groupBy.substring("resource:".length()));
@@ -1024,13 +1063,23 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                        Map<String, Set<String>> identityValues,
                                                        Map<String, Set<String>> attributeFilters,
                                                        Boolean hideInternal) {
+        return queryRowsForList(workspaceId, traceId, start, end, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, identityValues, attributeFilters,
+                hideInternal, StringUtils.hasText(traceId) ? TRACE_DETAIL_LIMIT : TRACE_LIST_SAMPLE_LIMIT);
+    }
+
+    private List<Map<String, Object>> queryRowsForList(String workspaceId, String traceId, Long start, Long end,
+                                                    String serviceName, String serviceNamespace, String environment,
+                                                    String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                                    Map<String, Set<String>> identityValues,
+                                                    Map<String, Set<String>> attributeFilters, Boolean hideInternal, int limit) {
         if (CollectionUtils.isEmpty(attributeFilters)) {
             if (StringUtils.hasText(traceId)) {
                 return queryTraceRows(workspaceId, traceId, start, end, serviceName, serviceNamespace, environment,
-                        operationName, minDurationNanos, maxDurationNanos, identityValues, hideInternal);
+                        operationName, minDurationNanos, maxDurationNanos, identityValues, hideInternal, limit);
             }
             return traceQueryRepository.queryRecentTraceRows(
-                    TRACE_LIST_SAMPLE_LIMIT,
+                    limit,
                     start,
                     end,
                     serviceName,
@@ -1059,8 +1108,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 attributeFilters,
                 hideInternal);
         return StringUtils.hasText(traceId)
-                ? traceQueryRepository.queryTraceRows(rowQuery, TRACE_DETAIL_LIMIT)
-                : traceQueryRepository.queryRecentTraceRows(rowQuery, TRACE_LIST_SAMPLE_LIMIT);
+                ? traceQueryRepository.queryTraceRows(rowQuery, limit)
+                : traceQueryRepository.queryRecentTraceRows(rowQuery, limit);
     }
 
     private List<Map<String, Object>> queryTraceRows(String workspaceId,
@@ -1074,10 +1123,10 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                      Long minDurationNanos,
                                                      Long maxDurationNanos,
                                                      Map<String, Set<String>> identityValues,
-                                                     Boolean hideInternal) {
+                                                     Boolean hideInternal, int limit) {
         return traceQueryRepository.queryTraceRows(
                 traceId,
-                TRACE_DETAIL_LIMIT,
+                limit,
                 start,
                 end,
                 serviceName,
@@ -1110,7 +1159,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 continue;
             }
             TraceAggregate aggregate = traceMap.computeIfAbsent(span.getTraceId(), TraceAggregate::new);
-            aggregate.accept(span);
+            aggregate.accept(span, spanTiming(row, span.getDurationNanos()));
         }
         return traceMap.values().stream().map(TraceAggregate::normalize).toList();
     }
@@ -1140,70 +1189,131 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return null;
     }
 
+    @Override
+    public TraceAnalytics.Evidence<?> queryAnalytics(AnalyticsQuery query, TraceAnalytics.Options options) {
+        String workspace = requireTrustedWorkspaceId(query.workspaceId());
+        TraceAnalytics.population(query.population());
+        ObservedEntityContext entity = query.entityId() == null ? null : loadEntityContext(workspace, query.entityId());
+        var identities = traceQueryIdentityValues(entity);
+        var scope = resolveTraceQueryScope(entity, identities, query.serviceName(), query.serviceNamespace(), query.environment());
+        var resources = removeEntityScopeResourceFilters(identities, parseResourceFilters(query.resourceFilter()));
+        var attributes = parseResourceFilters(query.attributeFilter());
+        var pushed = mergeResourceFilters(identities, resources.pushableInclude());
+        Long minimum = durationMillisToNanos(query.minDurationMs());
+        Long maximum = durationMillisToNanos(query.maxDurationMs());
+        String spanScope = normalizeSpanScope(query.spanScope());
+        if (missingRequestedEntity(query.entityId(), entity)) {
+            return analyticsResult(query, options, List.of(), new TraceAnalytics.Coverage("window", null, null, false));
+        }
+        try {
+            if (!StringUtils.hasText(query.traceId()) && !resources.requiresRowFallback() && attributes.isEmpty()) {
+                try {
+                    var result = traceQueryRepository.queryAnalytics(new TraceAnalytics.Scope(query.window(), workspace,
+                            query.traceId(), Boolean.TRUE.equals(query.errorOnly()), query.population(), scope.serviceName(),
+                            scope.serviceNamespace(), scope.environment(), query.operationName(), minimum, maximum, spanScope,
+                            Boolean.TRUE.equals(query.hideInternal()), pushed, Map.of()), options);
+                    return result == null ? TraceAnalytics.Evidence.unavailable(query.window(), query.population()) : result;
+                } catch (UnsupportedOperationException unsupported) {
+                    // Older readers retain explicit bounded evidence rather than invented full-window counts.
+                }
+            }
+            int limit = StringUtils.hasText(query.traceId()) ? TRACE_DETAIL_LIMIT : TRACE_LIST_SAMPLE_LIMIT;
+            var rows = queryRowsForList(workspace, query.traceId(), query.window().start(), query.window().end(),
+                    scope.serviceName(), scope.serviceNamespace(), scope.environment(), query.operationName(), minimum, maximum,
+                    pushed, pushableSpanAttributeFilters(attributes), query.hideInternal(), limit + 1);
+            if (rows == null) {
+                return TraceAnalytics.Evidence.unavailable(query.window(), query.population());
+            }
+            var matched = aggregateTraceRows(workspace, rows.subList(0, Math.min(limit, rows.size()))).stream()
+                    .flatMap(trace -> matchingTraceSpans(trace, identities, resources, query.window().start(), query.window().end(),
+                            query.traceId(), false, scope.serviceName(), scope.serviceNamespace(), scope.environment(),
+                            query.operationName(), minimum, maximum, query.hideInternal(), spanScope, attributes,
+                            query.window().endExclusive()).map(span -> analyticsSpan(trace, span))).toList();
+            return analyticsResult(query, options, matched,
+                    new TraceAnalytics.Coverage("bounded", limit, Math.min(limit, rows.size()), rows.size() > limit));
+        } catch (RuntimeException unavailable) {
+            return TraceAnalytics.Evidence.unavailable(query.window(), query.population());
+        }
+    }
+
+    private TraceAnalytics.SpanRow analyticsSpan(TraceAggregate trace, TraceSpanNodeDto span) {
+        var resources = span.getResourceAttributes();
+        String status = isErrorStatus(span.getStatus()) ? "ERROR"
+                : "OK".equals(span.getStatus()) || "STATUS_CODE_OK".equals(span.getStatus()) ? "OK" : "UNSET";
+        return new TraceAnalytics.SpanRow(trace.getTraceId(), span.getSpanId(), span.getParentSpanId(), span.getServiceName(),
+                resources.get("service.namespace"), resources.get("deployment.environment.name"), span.getSpanName(),
+                span.getSpanKind(), status, Long.toString(trace.timings.get(span.getSpanId()).startNanos()),
+                span.getDurationNanos() == null ? null : Long.toString(span.getDurationNanos()));
+    }
+
+    private TraceAnalytics.Evidence<?> analyticsResult(AnalyticsQuery query, TraceAnalytics.Options options,
+                                                       List<TraceAnalytics.SpanRow> rows, TraceAnalytics.Coverage coverage) {
+        boolean errors = Boolean.TRUE.equals(query.errorOnly());
+        Object data = switch (options.shape()) {
+            case "spans" -> TraceAnalyticsAggregator.spans(rows, errors, options.pageIndex(), options.pageSize(), options.sort());
+            case "histogram" -> TraceAnalyticsAggregator.histogram(rows, query.window(), query.population(), errors, options.bucketCount());
+            case "facets" -> TraceAnalyticsAggregator.facets(rows, query.population(), errors, options.field(), options.limit());
+            case "groups" -> TraceAnalyticsAggregator.groups(rows, query.population(), errors, options.field(), options.limit(), options.sort());
+            default -> throw new IllegalArgumentException("Invalid trace analytics shape");
+        };
+        return new TraceAnalytics.Evidence<>("ready", query.window(), query.population(), coverage, data);
+    }
+
     private boolean matchesTraceFilters(TraceAggregate trace, Map<String, Set<String>> identityValues,
                                         ResourceFilterSet resourceFilters, Long start, Long end,
                                         String traceId, Boolean errorOnly, String serviceName, String serviceNamespace,
                                         String environment, String operationName, Long minDurationNanos,
-                                        Long maxDurationNanos, Boolean hideInternal,
+                                        Long maxDurationNanos, Boolean hideInternal, String spanScope,
                                         ResourceFilterSet attributeFilters) {
-        if (trace == null) {
-            return false;
-        }
-        if (Boolean.TRUE.equals(hideInternal) && isSelfTelemetryTrace(trace)) {
-            return false;
-        }
-        if (StringUtils.hasText(traceId) && !traceId.equalsIgnoreCase(trace.getTraceId())) {
-            return false;
-        }
-        Long startTime = trace.getStartTime();
-        if (start != null && startTime != null && startTime < start) {
-            return false;
-        }
-        if (end != null && startTime != null && startTime > end) {
-            return false;
-        }
-        if (Boolean.TRUE.equals(errorOnly) && !isErrorStatus(trace.getStatus())) {
-            return false;
-        }
-        if (StringUtils.hasText(serviceName) && !serviceName.equalsIgnoreCase(defaultText(trace.getServiceName(),
-                trace.getResourceAttributes().get("service.name")))) {
-            return false;
-        }
-        if (StringUtils.hasText(serviceNamespace) && !serviceNamespace.equalsIgnoreCase(trace.getServiceNamespace())) {
-            return false;
-        }
-        if (StringUtils.hasText(environment)
-                && !environment.equalsIgnoreCase(trace.getResourceAttributes().get("deployment.environment.name"))) {
-            return false;
-        }
-        if (!matchesTraceOperation(trace, operationName)) {
-            return false;
-        }
-        if (minDurationNanos != null && (trace.getDurationNanos() == null || trace.getDurationNanos() < minDurationNanos)) {
-            return false;
-        }
-        if (maxDurationNanos != null && (trace.getDurationNanos() == null || trace.getDurationNanos() > maxDurationNanos)) {
-            return false;
-        }
-        if (!identityValues.isEmpty() && !matchesEntity(trace, identityValues)) {
-            return false;
-        }
-        return (resourceFilters.isEmpty() || matchesResourceFilters(trace, resourceFilters))
-                && matchesSpanAttributeFilters(trace, attributeFilters);
+        return matchingTraceSpans(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
+                serviceName, serviceNamespace, environment, operationName, minDurationNanos, maxDurationNanos,
+                hideInternal, spanScope, attributeFilters, false).findAny().isPresent();
     }
 
-    private boolean matchesTraceOperation(TraceAggregate trace, String operationName) {
-        String normalizedOperationName = StringUtils.trimWhitespace(operationName);
-        if (!StringUtils.hasText(normalizedOperationName)) {
-            return true;
+    private java.util.stream.Stream<TraceSpanNodeDto> matchingTraceSpans(TraceAggregate trace, Map<String, Set<String>> identityValues,
+                                        ResourceFilterSet resourceFilters, Long start, Long end,
+                                        String traceId, Boolean errorOnly, String serviceName, String serviceNamespace,
+                                        String environment, String operationName, Long minDurationNanos,
+                                        Long maxDurationNanos, Boolean hideInternal, String spanScope,
+                                        ResourceFilterSet attributeFilters, boolean endExclusive) {
+        if (trace == null || StringUtils.hasText(traceId) && !traceId.equalsIgnoreCase(trace.getTraceId())) {
+            return java.util.stream.Stream.empty();
         }
-        if (normalizedOperationName.equalsIgnoreCase(trace.getRootSpanName())) {
-            return true;
-        }
-        return trace.spans.stream()
-                .map(TraceSpanNodeDto::getSpanName)
-                .filter(StringUtils::hasText)
-                .anyMatch(normalizedOperationName::equalsIgnoreCase);
+        String operation = StringUtils.trimWhitespace(operationName);
+        // Root fields describe evidence, not query membership: bounded rows may have no unique root.
+        // Every candidate predicate must match one observed span, as it does in the storage query.
+        return trace.spans.stream().filter(span -> {
+            if (!matchesSpanScope(span, spanScope)
+                    || Boolean.TRUE.equals(errorOnly) && !isErrorStatus(span.getStatus())
+                    || Boolean.TRUE.equals(hideInternal) && isSelfTelemetrySpan(span)) {
+                return false;
+            }
+            long startNanos = trace.timings.get(span.getSpanId()).startNanos();
+            long startMillis = Math.floorDiv(startNanos, 1_000_000L);
+            if (start != null && startMillis < start
+                    || end != null && (startMillis > end || startMillis == end && (endExclusive || startNanos % 1_000_000L != 0))) {
+                return false;
+            }
+            Map<String, String> resources = new LinkedHashMap<>(span.getResourceAttributes());
+            if (StringUtils.hasText(span.getServiceName())) {
+                resources.put("service.name", span.getServiceName());
+            }
+            if (StringUtils.hasText(serviceName) && !serviceName.equals(resources.get("service.name"))
+                    || StringUtils.hasText(serviceNamespace) && !serviceNamespace.equals(resources.get("service.namespace"))
+                    || StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())
+                    && !environment.equals(resources.get("deployment.environment.name"))
+                    || StringUtils.hasText(operation) && !operation.equals(span.getSpanName())) {
+                return false;
+            }
+            Long duration = span.getDurationNanos();
+            if (minDurationNanos != null && (duration == null || duration < minDurationNanos)
+                    || maxDurationNanos != null && (duration == null || duration > maxDurationNanos)) {
+                return false;
+            }
+            return matchesIncludedFilterMap(resources, identityValues)
+                    && matchesFilterMap(resources, resourceFilters)
+                    && matchesFilterMap(spanAttributeFilterValues(span), attributeFilters);
+        });
     }
 
     private String normalizeSpanScope(String spanScope) {
@@ -1221,16 +1331,15 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return null;
     }
 
-    private boolean matchesSpanScope(TraceAggregate trace, String spanScope) {
-        if (!StringUtils.hasText(spanScope) || trace == null) {
+    private boolean matchesSpanScope(TraceSpanNodeDto span, String spanScope) {
+        if (!StringUtils.hasText(spanScope)) {
             return true;
         }
         if ("root".equals(spanScope)) {
-            return trace.spans.stream().anyMatch(span -> !StringUtils.hasText(span.getParentSpanId()));
+            return !StringUtils.hasText(span.getParentSpanId());
         }
         if ("entrypoint".equals(spanScope)) {
-            return trace.spans.stream().anyMatch(span -> !StringUtils.hasText(span.getParentSpanId())
-                    || isEntrypointSpanKind(span.getSpanKind()));
+            return !StringUtils.hasText(span.getParentSpanId()) || isEntrypointSpanKind(span.getSpanKind());
         }
         return true;
     }
@@ -1257,12 +1366,12 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return durationMillis * 1_000_000L;
     }
 
-    private boolean isSelfTelemetryTrace(TraceAggregate trace) {
-        if (trace == null) {
+    private boolean isSelfTelemetrySpan(TraceSpanNodeDto span) {
+        if (span == null) {
             return false;
         }
-        String serviceName = normalizeValue(defaultText(trace.getServiceName(), trace.getResourceAttributes().get("service.name")));
-        String serviceNamespace = normalizeValue(trace.getResourceAttributes().get("service.namespace"));
+        String serviceName = normalizeValue(defaultText(span.getServiceName(), span.getResourceAttributes().get("service.name")));
+        String serviceNamespace = normalizeValue(span.getResourceAttributes().get("service.namespace"));
         return "hertzbeat".equals(serviceName)
                 || "apache-hertzbeat".equals(serviceName)
                 || "hertzbeat".equals(serviceNamespace)
@@ -1448,7 +1557,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         }
         Map<String, Set<String>> includeFilters = new LinkedHashMap<>();
         Map<String, Set<String>> excludeFilters = new LinkedHashMap<>();
-        for (String clause : splitResourceFilterClauses(resourceFilter)) {
+        for (String clause : SignalFilterScanner.splitClauses(resourceFilter)) {
             String trimmedClause = trimText(clause);
             if (!StringUtils.hasText(trimmedClause)) {
                 continue;
@@ -1531,7 +1640,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         Map<String, Set<String>> target = operator.replaceAll("\\s+", " ").equalsIgnoreCase("not in")
                 ? excludeFilters
                 : includeFilters;
-        for (String value : splitResourceFilterListValues(valueList.substring(1, valueList.length() - 1))) {
+        for (String value : SignalFilterScanner.splitListValues(valueList.substring(1, valueList.length() - 1))) {
             String normalizedValue = stripResourceFilterQuotes(trimText(value));
             if (StringUtils.hasText(normalizedValue)) {
                 target.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(normalizedValue);
@@ -1554,89 +1663,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return true;
     }
 
-    private List<String> splitResourceFilterClauses(String resourceFilter) {
-        List<String> clauses = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int depth = 0;
-        char quote = 0;
-        for (int index = 0; index < resourceFilter.length(); index++) {
-            char character = resourceFilter.charAt(index);
-            if (quote != 0) {
-                current.append(character);
-                if (character == quote) {
-                    quote = 0;
-                }
-                continue;
-            }
-            if (character == '\'' || character == '"') {
-                quote = character;
-                current.append(character);
-                continue;
-            }
-            if (character == '(') {
-                depth++;
-                current.append(character);
-                continue;
-            }
-            if (character == ')') {
-                depth = Math.max(0, depth - 1);
-                current.append(character);
-                continue;
-            }
-            if (depth == 0 && character == ',') {
-                addResourceFilterClause(clauses, current);
-                continue;
-            }
-            if (depth == 0 && isResourceFilterAndDelimiter(resourceFilter, index)) {
-                addResourceFilterClause(clauses, current);
-                index += 4;
-                continue;
-            }
-            current.append(character);
-        }
-        addResourceFilterClause(clauses, current);
-        return clauses;
-    }
 
-    private List<String> splitResourceFilterListValues(String values) {
-        List<String> result = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        char quote = 0;
-        for (int index = 0; index < values.length(); index++) {
-            char character = values.charAt(index);
-            if (quote != 0) {
-                current.append(character);
-                if (character == quote) {
-                    quote = 0;
-                }
-                continue;
-            }
-            if (character == '\'' || character == '"') {
-                quote = character;
-                current.append(character);
-                continue;
-            }
-            if (character == ',') {
-                addResourceFilterClause(result, current);
-                continue;
-            }
-            current.append(character);
-        }
-        addResourceFilterClause(result, current);
-        return result;
-    }
 
-    private void addResourceFilterClause(List<String> clauses, StringBuilder current) {
-        String clause = trimText(current.toString());
-        if (StringUtils.hasText(clause)) {
-            clauses.add(clause);
-        }
-        current.setLength(0);
-    }
 
-    private boolean isResourceFilterAndDelimiter(String value, int index) {
-        return index + 5 <= value.length() && value.regionMatches(true, index, " and ", 0, 5);
-    }
 
     private int resourceFilterSeparatorIndex(String clause) {
         int equalsIndex = clause.indexOf('=');
@@ -1825,6 +1854,32 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     }
 
     private TraceListItemDto toTraceListItem(TraceAggregate aggregate) {
+        Map<String, TraceServiceStatsDto> namedStats = new LinkedHashMap<>();
+        TraceServiceStatsDto unattributed = null;
+        TraceSpanNodeDto representative = aggregate.spans.getFirst();
+        long observedStart = Long.MAX_VALUE;
+        long observedEnd = 0L;
+        for (TraceSpanNodeDto span : aggregate.spans) {
+            if (span.getStartTime() == null || span.getStartTime() < 0 || span.getDurationNanos() == null
+                    || span.getDurationNanos() < 0) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            SpanTiming timing = aggregate.timings.get(span.getSpanId());
+            observedStart = Math.min(observedStart, timing.startNanos() / 1_000_000L);
+            observedEnd = Math.max(observedEnd, Math.ceilDiv(timing.endNanos(), 1_000_000L));
+            String service = trimText(span.getServiceName());
+            TraceServiceStatsDto stats;
+            if (service == null) {
+                if (unattributed == null) {
+                    unattributed = new TraceServiceStatsDto(0, 0);
+                }
+                stats = unattributed;
+            } else {
+                stats = namedStats.computeIfAbsent(service, ignored -> new TraceServiceStatsDto(0, 0));
+            }
+            stats.setSpanCount(stats.getSpanCount() + 1);
+            stats.setErrorCount(stats.getErrorCount() + (isErrorStatus(span.getStatus()) ? 1 : 0));
+        }
         return new TraceListItemDto(
                 aggregate.getTraceId(),
                 aggregate.getRootSpanId(),
@@ -1835,9 +1890,14 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 aggregate.getStatus(),
                 aggregate.getStartTime(),
                 aggregate.getErrorSpanCount(),
-                null,
-                null,
-                aggregate.getResourceAttributes()
+                (long) aggregate.spans.size(),
+                namedStats,
+                aggregate.rootSpanCount == 1 ? aggregate.getResourceAttributes() : null,
+                rootState(aggregate.rootSpanCount), aggregate.rootSpanCount,
+                new TraceRepresentativeSpanDto(representative.getSpanId(), representative.getSpanName(),
+                        representative.getServiceName(), representative.getResourceAttributes().get("service.namespace"),
+                        representative.getStartTime(), representative.getDurationNanos()),
+                observedStart, observedEnd, unattributed
         );
     }
 
@@ -1864,7 +1924,15 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return rowsByTrace.values().stream().map(this::toTraceListItem).toList();
     }
 
-    private long validatedTraceListTotal(List<Map<String, Object>> rows, long offset, int itemCount) {
+    private List<Map<String, Object>> requireTracePageRows(TraceQueryRepository.TraceListPage page) {
+        if (page == null || page.rows() == null || page.totalCount() < 0 || page.totalCount() > 9_007_199_254_740_991L) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return page.rows();
+    }
+
+    private long validatedTraceListTotal(TraceQueryRepository.TraceListPage page, long offset, int itemCount) {
+        List<Map<String, Object>> rows = page.rows();
         long minimumTotal;
         try {
             minimumTotal = Math.addExact(offset, itemCount);
@@ -1872,17 +1940,17 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             throw new TelemetryStorageUnavailableException();
         }
         if (CollectionUtils.isEmpty(rows)) {
-            return minimumTotal;
+            return page.totalCount();
         }
         Long total = null;
         for (Map<String, Object> row : rows) {
-            Long rowTotal = readLongValue(row, "total_count", "totalCount");
+            Long rowTotal = readOptionalNonNegativeLong(row, "total_count", "totalCount");
             if (rowTotal == null || rowTotal < 0 || total != null && !total.equals(rowTotal)) {
                 throw new TelemetryStorageUnavailableException();
             }
             total = rowTotal;
         }
-        if (total == null || total < minimumTotal) {
+        if (total == null || total < minimumTotal || total != page.totalCount()) {
             throw new TelemetryStorageUnavailableException();
         }
         return total;
@@ -1895,6 +1963,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 .filter(row -> StringUtils.hasText(readText(row, "root_span_id")))
                 .toList();
         boolean hasUniqueRoot = Long.valueOf(1L).equals(rootSpanCount) && rootRows.size() == 1;
+        if (rootSpanCount == null || rootSpanCount == 1L && !hasUniqueRoot) {
+            throw new TelemetryStorageUnavailableException();
+        }
         Map<String, Object> rootRow = hasUniqueRoot ? rootRows.getFirst() : firstRow;
         Map<String, String> resourceAttributes = hasUniqueRoot
                 ? parseAttributes("resource_attributes.", rootRow) : Collections.emptyMap();
@@ -1909,22 +1980,59 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         if (errorCount == null || errorCount > Integer.MAX_VALUE) {
             throw new TelemetryStorageUnavailableException();
         }
-        Map<String, TraceServiceStatsDto> serviceStats = validatedServiceStats(
+        ServiceStatsEvidence serviceStats = validatedServiceStats(
                 traceRows, spanCount, errorCount);
+        Long observedStartNanos = readConsistentNonNegativeLong(traceRows, "observed_start_nanos");
+        Long observedEndNanos = readConsistentNonNegativeLong(traceRows, "observed_end_nanos");
+        Long representativeStart = readConsistentNonNegativeLong(traceRows, "representative_start_nanos");
+        Long representativeDuration = readConsistentNonNegativeLong(traceRows, "representative_duration_nano");
+        Long evidenceCount = readConsistentNonNegativeLong(traceRows, "evidence_span_count");
+        Long distinctCount = readConsistentNonNegativeLong(traceRows, "evidence_distinct_span_count");
+        Long invalidCount = readConsistentNonNegativeLong(traceRows, "invalid_span_count");
+        if (serviceStats == null || rootSpanCount > spanCount || observedStartNanos == null || observedEndNanos == null
+                || observedEndNanos < observedStartNanos || representativeStart == null
+                || !representativeStart.equals(observedStartNanos) || representativeDuration == null
+                || !Objects.equals(spanCount, evidenceCount) || !Objects.equals(spanCount, distinctCount)
+                || !Long.valueOf(0).equals(invalidCount)) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        TraceRepresentativeSpanDto representative = new TraceRepresentativeSpanDto(
+                readConsistentText(traceRows, "representative_span_id"),
+                readConsistentText(traceRows, "representative_span_name"),
+                readConsistentText(traceRows, "representative_service_name"),
+                readConsistentText(traceRows, "representative_service_namespace"),
+                representativeStart / 1_000_000L, representativeDuration);
+        if (!StringUtils.hasText(representative.spanId())) {
+            throw new TelemetryStorageUnavailableException();
+        }
         return new TraceListItemDto(
                 readText(firstRow, "trace_id"),
                 hasUniqueRoot ? readText(rootRow, "root_span_id") : null,
                 serviceName,
                 serviceNamespace,
                 hasUniqueRoot ? readText(rootRow, "root_span_name") : null,
-                hasUniqueRoot ? readNonNegativeLong(rootRow, "duration_nano") : null,
+                hasUniqueRoot ? readOptionalNonNegativeLong(rootRow, "duration_nano") : null,
                 status,
                 hasUniqueRoot ? readTimestamp(rootRow, "timestamp") : null,
                 errorCount.intValue(),
                 spanCount,
-                serviceStats,
-                resourceAttributes
+                serviceStats.named(),
+                hasUniqueRoot ? resourceAttributes : null,
+                rootState(rootSpanCount), rootSpanCount, representative,
+                observedStartNanos / 1_000_000L, Math.ceilDiv(observedEndNanos, 1_000_000L), serviceStats.unattributed()
         );
+    }
+
+    private static String rootState(long count) {
+        return count == 0 ? "missing" : count == 1 ? "unique" : "ambiguous";
+    }
+
+    private String readConsistentText(List<Map<String, Object>> rows, String key) {
+        String expected = readText(rows.getFirst(), key);
+        if (rows.stream().anyMatch(row -> !Objects.equals(expected, readText(row, key)))) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return expected;
     }
 
     private Long readConsistentNonNegativeLong(List<Map<String, Object>> rows, String... keys) {
@@ -1939,13 +2047,14 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return expected;
     }
 
-    private Map<String, TraceServiceStatsDto> validatedServiceStats(List<Map<String, Object>> rows,
+    private ServiceStatsEvidence validatedServiceStats(List<Map<String, Object>> rows,
                                                                      Long spanCount,
                                                                      Long errorCount) {
         if (spanCount == null || spanCount <= 0 || errorCount == null || errorCount > spanCount) {
             return null;
         }
         Map<String, TraceServiceStatsDto> stats = new LinkedHashMap<>();
+        TraceServiceStatsDto unattributed = null;
         long totalSpans = 0L;
         long totalErrors = 0L;
         try {
@@ -1955,10 +2064,19 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                         row, "service_span_count", "serviceSpanCount");
                 Long serviceErrorCount = readOptionalNonNegativeLong(
                         row, "service_error_span_count", "serviceErrorSpanCount");
-                if (!StringUtils.hasText(service) || serviceSpanCount == null || serviceSpanCount <= 0
-                        || serviceErrorCount == null || serviceErrorCount > serviceSpanCount
-                        || stats.putIfAbsent(service, new TraceServiceStatsDto(
-                                serviceSpanCount, serviceErrorCount)) != null) {
+                if (serviceSpanCount == null || serviceSpanCount <= 0
+                        || serviceErrorCount == null || serviceErrorCount > serviceSpanCount) {
+                    return null;
+                }
+                TraceServiceStatsDto serviceStats = new TraceServiceStatsDto(serviceSpanCount, serviceErrorCount);
+                if (!StringUtils.hasText(service)) {
+                    if (unattributed != null) {
+                        unattributed.setSpanCount(Math.addExact(unattributed.getSpanCount(), serviceSpanCount));
+                        unattributed.setErrorCount(Math.addExact(unattributed.getErrorCount(), serviceErrorCount));
+                    } else {
+                        unattributed = serviceStats;
+                    }
+                } else if (stats.putIfAbsent(service, serviceStats) != null) {
                     return null;
                 }
                 totalSpans = Math.addExact(totalSpans, serviceSpanCount);
@@ -1970,12 +2088,87 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         if (totalSpans != spanCount || totalErrors != errorCount) {
             return null;
         }
-        return Collections.unmodifiableMap(stats);
+        return new ServiceStatsEvidence(Collections.unmodifiableMap(stats), unattributed);
+    }
+
+    private record ServiceStatsEvidence(Map<String, TraceServiceStatsDto> named, TraceServiceStatsDto unattributed) {
     }
 
     private Long readOptionalNonNegativeLong(Map<String, Object> row, String... keys) {
-        Long value = readLongValue(row, keys);
-        return value == null || value < 0 ? null : value;
+        for (String key : keys) {
+            Object value = row.get(key);
+            if (value != null) {
+                if ((value instanceof Double || value instanceof Float)
+                        && Math.abs(((Number) value).doubleValue()) > 9_007_199_254_740_991L) {
+                    return null;
+                }
+                try {
+                    long exact = new BigDecimal(value.toString()).longValueExact();
+                    return exact < 0 ? null : exact;
+                } catch (NumberFormatException | ArithmeticException ignored) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private record SpanTiming(long startNanos, long endNanos) {
+    }
+
+    private SpanTiming spanTiming(Map<String, Object> row, Long duration) {
+        if (duration == null || duration < 0 || duration > 9_007_199_254_740_991L) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        try {
+            long start = timestampNanos(row.get("timestamp"));
+            long expectedEnd = Math.addExact(start, duration);
+            long end = row.get("timestamp_end") == null ? expectedEnd : timestampNanos(row.get("timestamp_end"));
+            if (start < 0 || end != expectedEnd) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            return new SpanTiming(start, end);
+        } catch (ArithmeticException ignored) {
+            throw new TelemetryStorageUnavailableException();
+        }
+    }
+
+    private long timestampNanos(Object value) {
+        Instant instant;
+        if (value instanceof java.sql.Timestamp timestamp) {
+            instant = timestamp.toInstant();
+        } else if (value instanceof Instant timestamp) {
+            instant = timestamp;
+        } else if (value instanceof java.util.Date timestamp) {
+            instant = Instant.ofEpochMilli(timestamp.getTime());
+        } else if (value instanceof OffsetDateTime timestamp) {
+            instant = timestamp.toInstant();
+        } else if (value instanceof ZonedDateTime timestamp) {
+            instant = timestamp.toInstant();
+        } else if (value instanceof LocalDateTime timestamp) {
+            instant = timestamp.atZone(ZoneId.systemDefault()).toInstant();
+        } else if (value != null && value.toString().matches("[0-9]+")) {
+            long numeric = new BigDecimal(value.toString()).longValueExact();
+            if (numeric < 100_000_000_000L) {
+                return Math.multiplyExact(numeric, 1_000_000_000L);
+            }
+            if (numeric < 100_000_000_000_000L) {
+                return Math.multiplyExact(numeric, 1_000_000L);
+            }
+            return numeric < 100_000_000_000_000_000L ? Math.multiplyExact(numeric, 1_000L) : numeric;
+        } else {
+            try {
+                String text = Objects.toString(value, "").replace(' ', 'T');
+                try {
+                    instant = OffsetDateTime.parse(text).toInstant();
+                } catch (java.time.format.DateTimeParseException ignored) {
+                    instant = LocalDateTime.parse(text).atZone(ZoneId.systemDefault()).toInstant();
+                }
+            } catch (java.time.format.DateTimeParseException ignored) {
+                throw new TelemetryStorageUnavailableException();
+            }
+        }
+        return Math.addExact(Math.multiplyExact(instant.getEpochSecond(), 1_000_000_000L), instant.getNano());
     }
 
     private TraceDetailDto toTraceDetail(TraceAggregate aggregate) {
@@ -2010,7 +2203,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         span.setTraceState(readText(row, "trace_state"));
         span.setScopeName(readText(row, "scope_name"));
         span.setScopeVersion(readText(row, "scope_version"));
-        span.setDurationNanos(readNonNegativeLong(row, "duration_nano"));
+        span.setDurationNanos(readOptionalNonNegativeLong(row, "duration_nano"));
         span.setStartTime(readTimestamp(row, "timestamp"));
         span.setHighlighted(isErrorStatus(status));
         span.setResourceAttributes(resourceAttributes);
@@ -2276,10 +2469,6 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return coerceLong(row.get(key));
     }
 
-    private Long readNonNegativeLong(Map<String, Object> row, String key) {
-        Long value = readLong(row, key);
-        return value == null ? null : Math.max(0L, value);
-    }
 
     private Long coerceLong(Object value) {
         if (value == null) {
@@ -2398,7 +2587,10 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         if (lower.contains("error") || "2".equals(lower)) {
             return "error";
         }
-        if (lower.contains("ok") || "1".equals(lower) || lower.contains("unset") || "0".equals(lower)) {
+        if (lower.contains("unset") || "0".equals(lower)) {
+            return "unset";
+        }
+        if (lower.contains("ok") || "1".equals(lower)) {
             return "ok";
         }
         return lower;
@@ -2430,15 +2622,23 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         private Long startTime;
         private int errorSpanCount;
         private int rootSpanCount;
+        private int okSpanCount;
         private Map<String, String> resourceAttributes = Collections.emptyMap();
         private final List<TraceSpanNodeDto> spans = new ArrayList<>();
+        private final Map<String, SpanTiming> timings = new HashMap<>();
 
         private TraceAggregate(String traceId) {
             this.traceId = traceId;
         }
 
-        private void accept(TraceSpanNodeDto span) {
+        private void accept(TraceSpanNodeDto span, SpanTiming timing) {
+            if (!StringUtils.hasText(span.getSpanId()) || timings.putIfAbsent(span.getSpanId(), timing) != null) {
+                throw new TelemetryStorageUnavailableException();
+            }
             this.spans.add(span);
+            if ("ok".equals(span.getStatus())) {
+                this.okSpanCount++;
+            }
             if (span.isHighlighted()) {
                 this.errorSpanCount++;
                 this.status = "error";
@@ -2465,14 +2665,13 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         }
 
         private TraceAggregate normalize() {
-            this.spans.sort(Comparator.comparing(TraceSpanNodeDto::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())));
+            this.spans.sort(Comparator.comparingLong((TraceSpanNodeDto span) -> timings.get(span.getSpanId()).startNanos())
+                    .thenComparing(TraceSpanNodeDto::getSpanId, Comparator.nullsLast(Comparator.naturalOrder())));
             TraceSpanNodeDto rootSpan = this.rootSpanCount == 1 ? findRootSpan() : null;
             if (rootSpan != null) {
                 this.serviceName = preferText(rootSpan.getServiceName(),
-                        rootSpan.getResourceAttributes().get("service.name"),
-                        this.serviceName);
-                this.serviceNamespace = preferText(rootSpan.getResourceAttributes().get("service.namespace"),
-                        this.serviceNamespace);
+                        rootSpan.getResourceAttributes().get("service.name"));
+                this.serviceNamespace = preferText(rootSpan.getResourceAttributes().get("service.namespace"));
                 this.startTime = rootSpan.getStartTime();
                 if (!CollectionUtils.isEmpty(rootSpan.getResourceAttributes())) {
                     this.resourceAttributes = rootSpan.getResourceAttributes();
@@ -2486,9 +2685,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 this.startTime = null;
                 this.resourceAttributes = Collections.emptyMap();
             }
-            if (!StringUtils.hasText(this.status)) {
-                this.status = "unknown";
-            }
+            this.status = this.errorSpanCount > 0 ? "error" : this.okSpanCount == this.spans.size() ? "ok" : "unset";
             return this;
         }
 
@@ -2500,6 +2697,15 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                     .filter(span -> this.rootSpanId.equals(span.getSpanId()))
                     .findFirst()
                     .orElse(null);
+        }
+
+        private Long getObservedEndTime() {
+            return timings.values().stream().map(timing -> Math.ceilDiv(timing.endNanos(), 1_000_000L))
+                    .max(Long::compareTo).orElse(null);
+        }
+
+        private long getObservedStartNanos() {
+            return timings.values().stream().mapToLong(SpanTiming::startNanos).min().orElseThrow();
         }
 
         private String preferText(String... values) {

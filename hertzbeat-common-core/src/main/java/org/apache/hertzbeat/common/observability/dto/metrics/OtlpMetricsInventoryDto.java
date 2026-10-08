@@ -18,13 +18,12 @@
 package org.apache.hertzbeat.common.observability.dto.metrics;
 
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Source-backed OTLP metrics inventory for a service/entity context.
+ * Source-backed OTLP metrics inventory for a workspace and optional resource context.
  */
 @Data
 @AllArgsConstructor
@@ -35,12 +34,14 @@ public class OtlpMetricsInventoryDto {
 
     private String source;
 
-    private int total;
+    private int limit;
+
+    private boolean truncated;
 
     private List<Item> items;
 
     /**
-     * Metric inventory item discovered from PromQL frames or recent intake fallback.
+     * Metric name discovered from persisted samples in the requested scope.
      */
     @Data
     @AllArgsConstructor
@@ -51,10 +52,19 @@ public class OtlpMetricsInventoryDto {
 
         private String family;
 
-        private int timeSeriesCount;
+        private Metadata metadata;
 
-        private Long latestObservedAt;
+        public Item(String metricName, String family) {
+            this(metricName, family, Metadata.unavailable());
+        }
+    }
 
-        private Map<String, String> labels;
+    /** Declared table metadata; its unit is not an inferred unit of derived sample values. */
+    public record Metadata(String state, String source, String quality, String originalName,
+                           String declaredType, String declaredUnit, String temporality,
+                           String description, String sampleRole, String sampleUnit) {
+        public static Metadata unavailable() {
+            return new Metadata("unavailable", null, null, null, null, null, null, null, "unknown", null);
+        }
     }
 }

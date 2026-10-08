@@ -212,6 +212,46 @@ class InstrumentationV2ServicesTest {
     }
 
     @Test
+    void rendersInstanceIdentityRequiredByScopedApplicationDetection() {
+        InstrumentationCatalogV2Service catalog = catalog();
+        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                catalog,
+                new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile())),
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog, InstrumentationGuideAdapterRegistry.official()));
+        for (Platform platform : List.of(Platform.LINUX_AMD64, Platform.WINDOWS_AMD64)) {
+            var response = renderer.render(new RenderRequest(
+                    2, SourceKind.APPLICATION, "java_java_jar_zero_code", null, null, null,
+                    Environment.VM, platform, serverProfile().id(),
+                    new ServiceIdentity("checkout", "commerce", "prod", "checkout-01", "/orders/{id}")));
+
+            assertTrue(renderedContent(response).contains("service.instance.id=checkout-01"));
+            assertFalse(renderedContent(response).contains("http.route="));
+        }
+    }
+
+    @Test
+    void rejectsInstanceIdentityThatCannotRoundTripThroughResourceAttributes() {
+        InstrumentationCatalogV2Service catalog = catalog();
+        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                catalog,
+                new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile())),
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog, InstrumentationGuideAdapterRegistry.official()));
+        for (String instance : List.of("checkout,service.name=other", "checkout=other")) {
+            var exception = assertThrows(InstrumentationV2RequestException.class, () -> renderer.render(
+                    new RenderRequest(
+                            2, SourceKind.APPLICATION, "java_java_jar_zero_code", null, null, null,
+                            Environment.VM, Platform.LINUX_AMD64, serverProfile().id(),
+                            new ServiceIdentity("checkout", "commerce", "prod", instance, null))));
+            assertEquals(
+                    org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException
+                            .ErrorCode.CONTEXT_INVALID,
+                    exception.errorCode());
+        }
+    }
+
+    @Test
     void doesNotInventCollectorIdentityForServerOrExternalProfiles() {
         IntakeProfile external = new IntakeProfile(
                 "external-west",

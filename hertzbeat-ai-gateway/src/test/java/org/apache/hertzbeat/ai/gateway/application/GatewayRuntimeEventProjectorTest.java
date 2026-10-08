@@ -100,6 +100,7 @@ class GatewayRuntimeEventProjectorTest {
         ToolCompletedPayload completedPayload = assertPayload(completed, GatewayEventType.TOOL_COMPLETED,
                 ToolCompletedPayload.class);
         assertEquals(12L, completedPayload.elapsedMs());
+        assertNull(completedPayload.errorMessage());
     }
 
     @Test
@@ -174,6 +175,34 @@ class GatewayRuntimeEventProjectorTest {
     void projectorShouldReturnNullForNullRuntimeEvent() {
         assertThrows(NullPointerException.class,
                 () -> projector.project(null, "conv-1", "ags-1", "run-1"));
+    }
+
+    @Test
+    void projectorShouldRedactRunToolAndInputFailureTextBeforeTransport() {
+        String raw = "Request failed password=synthetic-sentinel";
+        String safe = "Request failed password=[REDACTED]";
+        GatewayEvent runError = project(AgentRuntimeEvent.runError("trace-1", raw, null));
+        GatewayEvent recoveryError = project(AgentRuntimeEvent.runRecoveryRequired("trace-1", raw, null));
+        GatewayEvent toolError = project(AgentRuntimeEvent.toolCompleted("model-call-1", "trace-1",
+                AgentToolExecutionResult.builder().toolCallId("call-1").toolName("logs.query")
+                        .status(AgentToolStatus.FAILED).decision(AgentPolicyDecision.ALLOW)
+                        .risk(AgentToolRisk.READ).approvalStatus(AgentApprovalStatus.NOT_REQUIRED)
+                        .errorMessage(raw).build(), null));
+        GatewayEvent inputError = project(AgentRuntimeEvent.userInputFailed("input-1", raw)
+                .withToolContext("trace-1", "model-call-1", toolCall("call-1", "interaction.request_input"), null));
+
+        ErrorPayload runPayload = assertPayload(runError, GatewayEventType.ERROR, ErrorPayload.class);
+        assertEquals(safe, runPayload.errorMessage());
+        assertEquals("failed", runPayload.status());
+        ErrorPayload recoveryPayload = assertPayload(recoveryError, GatewayEventType.ERROR, ErrorPayload.class);
+        assertEquals(safe, recoveryPayload.errorMessage());
+        assertEquals("recovery_required", recoveryPayload.status());
+        ToolCompletedPayload toolPayload = assertPayload(toolError, GatewayEventType.TOOL_COMPLETED, ToolCompletedPayload.class);
+        assertEquals(safe, toolPayload.errorMessage());
+        assertEquals("call-1", toolPayload.toolCallId());
+        InputCompletedPayload inputPayload = assertPayload(inputError, GatewayEventType.INPUT_COMPLETED, InputCompletedPayload.class);
+        assertEquals(safe, inputPayload.errorMessage());
+        assertEquals("input-1", inputPayload.interactionId());
     }
 
     private GatewayEvent project(AgentRuntimeEvent event) {

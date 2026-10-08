@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
@@ -164,6 +166,38 @@ class AgentTranscriptRecorderTest {
         assertEquals("original-fingerprint", persisted.getRequestFingerprint());
         assertNull(persisted.getRequestSnapshot());
         assertTrue(entry.getPayloadJson().getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 65535);
+    }
+
+    @Test
+    void shouldOmitRecoverySnapshotAboveExactSerializedBudget() {
+        when(sessionService.recordTranscriptEntry(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(sessionService);
+        AgentSession session = AgentSession.builder().id(1L).build();
+        AgentRun run = AgentRun.builder().id(2L).sessionId(1L).build();
+        String text = "x".repeat(7000);
+        List<String> attachments = new ArrayList<>(java.util.Collections.nCopies(6, "x".repeat(8192)));
+        attachments.add("");
+        AgentRunRequestSnapshot request = AgentRunRequestSnapshot.builder()
+                .version(AgentRunRequestSnapshot.VERSION).conversationId("conversation-1").messageId("message-1")
+                .entryType("USER_INPUT").message(text).attachments(attachments).build();
+        // Recorder normalizes a missing tool error to the empty string before checking the payload budget.
+        String base = JsonUtil.toJson(TranscriptMessage.userText(text, "1", "fingerprint", request)
+                .toBuilder().errorMessage("").build());
+        attachments.set(6, "x".repeat(65536 - base.getBytes(StandardCharsets.UTF_8).length));
+        request = request.toBuilder().attachments(attachments).build();
+        String expectedPayload = JsonUtil.toJson(TranscriptMessage.userText(text, "1", "fingerprint", request)
+                .toBuilder().errorMessage("").build());
+        assertEquals(65536, expectedPayload.getBytes(StandardCharsets.UTF_8).length);
+        UserInput input = UserInput.builder().messageId("message-1").conversationId("conversation-1")
+                .message(Message.builder().text(text).attachments(attachments).build()).build();
+
+        AgentTranscriptEntry entry = recorder.recordUserTranscriptEntry(
+                session, run, input, "1", "fingerprint", request);
+
+        assertNull(message(entry).getRequestSnapshot());
+        assertEquals(text, message(entry).text());
+        assertTrue(AgentSessionService.redactTranscriptPayload(entry.getPayloadJson())
+                .getBytes(StandardCharsets.UTF_8).length <= 65535);
     }
 
     private TranscriptMessage message(AgentTranscriptEntry entry) {

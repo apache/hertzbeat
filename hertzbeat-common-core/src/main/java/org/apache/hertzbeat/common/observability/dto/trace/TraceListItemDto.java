@@ -53,4 +53,16 @@ public class TraceListItemDto {
     private Map<String, TraceServiceStatsDto> serviceStats;
 
     private Map<String, String> resourceAttributes;
+
+    private String rootState;
+
+    private long rootSpanCount;
+
+    private TraceRepresentativeSpanDto representativeSpan;
+
+    private Long observedStartTime;
+
+    private Long observedEndTime;
+
+    private TraceServiceStatsDto unattributedServiceStats;
 }

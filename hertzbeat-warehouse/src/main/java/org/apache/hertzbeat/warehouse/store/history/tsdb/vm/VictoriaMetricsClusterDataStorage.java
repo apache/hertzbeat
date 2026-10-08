@@ -425,32 +425,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from victoria-metrics success. {}", uri);
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            for (Object[] valueArr : content.getValues()) {
-                                long timestamp = Long.parseLong(String.valueOf(valueArr[0]));
-                                String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                    RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                // read timestamp here is s unit
-                                valueList.add(new Value(value, timestamp * 1000));
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendValues(responseEntity.getBody(), instanceValuesMap);
             } else {
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
@@ -465,34 +440,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String maxValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                        RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMax(maxValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMax);
             }
             // min
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
@@ -505,34 +453,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String minValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                        RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMin(minValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMin);
             }
             // avg
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
@@ -545,34 +466,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                        RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMean(avgValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMean);
             }
         } catch (Exception e) {
             log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);

@@ -20,7 +20,6 @@ package org.apache.hertzbeat.manager.setup.workflow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import jakarta.persistence.Entity;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -38,14 +37,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
@@ -88,7 +82,18 @@ class JdbcMetadataMigrationDatabaseTest {
                 new MetadataDatabaseConfiguration(targetKind, targetUrl, USERNAME, PASSWORD));
         try (Connection source = DriverManager.getConnection(sourceUrl, "sa", "");
                 Connection target = DriverManager.getConnection(targetUrl, USERNAME, PASSWORD)) {
-            insertSourceFixtures(source);
+            var expectedTables = TargetSchemaBaseline.load(targetKind).expectedTables();
+            var sourceSchema = MetadataSchemaInventory.capture(source, expectedTables, MetadataDatabaseKind.H2,
+                    new MigrationDeadline(Duration.ofMinutes(1)));
+            var targetSchema = MetadataSchemaInventory.capture(target, expectedTables, targetKind,
+                    new MigrationDeadline(Duration.ofMinutes(1)));
+            for (String table : expectedTables) {
+                assertThat(sourceSchema.table(table).hasSamePortableShape(
+                        targetSchema.table(table), MetadataDatabaseKind.H2, targetKind))
+                        .as("Portable schema %s: source=%s target=%s", table, sourceSchema.table(table), targetSchema.table(table))
+                        .isTrue();
+            }
+            OffsetDateTime storedPeriodStart = insertSourceFixtures(source);
             assertTargetTriggerRejected(source, target, targetKind);
             if (targetKind == MetadataDatabaseKind.POSTGRESQL) {
                 assertOidRollbackLeavesNoOrphan(source, target, targetKind);
@@ -100,7 +105,7 @@ class JdbcMetadataMigrationDatabaseTest {
             assertThat(target.isClosed()).isFalse();
             assertThat(progress).isNotEmpty();
             assertThat(progress.getLast()).isEqualTo(new Progress(MetadataMigrationStage.COMPLETE, 100));
-            assertCopiedValues(target, targetKind);
+            assertCopiedValues(target, targetKind, storedPeriodStart);
             assertNextIdentifier(target, targetKind);
         }
     }
@@ -241,7 +246,7 @@ class JdbcMetadataMigrationDatabaseTest {
         }
     }
 
-    private static void insertSourceFixtures(Connection source) throws Exception {
+    private static OffsetDateTime insertSourceFixtures(Connection source) throws Exception {
         try (Statement statement = source.createStatement()) {
             statement.executeUpdate("INSERT INTO hzb_ai_conversation (id, title, gmt_create) "
                     + "VALUES (41, 'source', TIMESTAMP '2026-08-09 01:02:03.456789')");
@@ -254,6 +259,10 @@ class JdbcMetadataMigrationDatabaseTest {
             statement.executeUpdate("INSERT INTO hzb_define (app, content) VALUES ('\u4E2D', 'cjk-content')");
             statement.executeUpdate("INSERT INTO hzb_notice_template "
                     + "(id, name, type, preset, content) VALUES (43, 'template', 1, true, 'notice-content')");
+            statement.executeUpdate("INSERT INTO hzb_alert_integration_verification "
+                    + "(workspace_id, source, status, started_at, verified_at) VALUES "
+                    + "('migration-proof', 'waiting-source', 'WAITING', 1786230000000, NULL), "
+                    + "('migration-proof', 'verified-source', 'VERIFIED', 1786230000001, 1786230000002)");
         }
         OffsetDateTime start = OffsetDateTime.of(
                 LocalDateTime.of(2026, 8, 9, 11, 12, 13, 456789000), ZoneOffset.ofHoursMinutes(5, 30));
@@ -268,9 +277,33 @@ class JdbcMetadataMigrationDatabaseTest {
             statement.setObject(7, start.plusHours(1));
             statement.executeUpdate();
         }
+        try (Statement statement = source.createStatement();
+                ResultSet rows = statement.executeQuery("SELECT period_start FROM hzb_alert_silence WHERE id = 44")) {
+            assertThat(rows.next()).isTrue();
+            assertThat(rows.getTimestamp(1).toInstant()).isEqualTo(start.toInstant());
+            OffsetDateTime stored = rows.getObject(1, OffsetDateTime.class);
+            assertThat(stored.toLocalDateTime()).isEqualTo(rows.getObject(1, LocalDateTime.class));
+            assertThat(stored.toInstant()).isEqualTo(start.toInstant());
+            return stored;
+        }
     }
 
-    private static void assertCopiedValues(Connection target, MetadataDatabaseKind kind) throws Exception {
+    private static void assertCopiedValues(Connection target, MetadataDatabaseKind kind, OffsetDateTime storedPeriodStart) throws Exception {
+        try (Statement statement = target.createStatement();
+                ResultSet rows = statement.executeQuery("SELECT source,status,started_at,verified_at "
+                        + "FROM hzb_alert_integration_verification WHERE workspace_id='migration-proof' ORDER BY source")) {
+            assertThat(rows.next()).isTrue();
+            assertThat(rows.getString(1)).isEqualTo("verified-source");
+            assertThat(rows.getString(2)).isEqualTo("VERIFIED");
+            assertThat(rows.getLong(3)).isEqualTo(1786230000001L);
+            assertThat(rows.getLong(4)).isEqualTo(1786230000002L);
+            assertThat(rows.next()).isTrue();
+            assertThat(rows.getString(1)).isEqualTo("waiting-source");
+            assertThat(rows.getString(2)).isEqualTo("WAITING");
+            assertThat(rows.getLong(3)).isEqualTo(1786230000000L);
+            assertThat(rows.getObject(4)).isNull();
+            assertThat(rows.next()).isFalse();
+        }
         String contentSql = kind == MetadataDatabaseKind.POSTGRESQL
                 ? "SELECT convert_from(lo_get(content), 'UTF8') FROM hzb_ai_message WHERE id = 42"
                 : "SELECT content FROM hzb_ai_message WHERE id = 42";
@@ -284,10 +317,10 @@ class JdbcMetadataMigrationDatabaseTest {
             assertThat(rows.next()).isTrue();
             if (kind == MetadataDatabaseKind.POSTGRESQL) {
                 assertThat(rows.getObject(1, OffsetDateTime.class).toInstant())
-                        .isEqualTo(OffsetDateTime.parse("2026-08-09T11:12:13.456789+05:30").toInstant());
+                        .isEqualTo(storedPeriodStart.toInstant());
             } else {
                 assertThat(rows.getObject(1, LocalDateTime.class))
-                        .isEqualTo(LocalDateTime.parse("2026-08-09T05:42:13.456789"));
+                        .isEqualTo(storedPeriodStart.toLocalDateTime());
             }
         }
     }
@@ -315,37 +348,8 @@ class JdbcMetadataMigrationDatabaseTest {
     }
 
     private static void createSourceSchema(String jdbcUrl) {
-        StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
-                .applySetting("jakarta.persistence.jdbc.url", jdbcUrl)
-                .applySetting("jakarta.persistence.jdbc.user", "sa")
-                .applySetting("jakarta.persistence.jdbc.password", "")
-                .applySetting("hibernate.dialect", "org.hibernate.dialect.H2Dialect")
-                .applySetting("hibernate.physical_naming_strategy",
-                        "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy")
-                .applySetting("hibernate.hbm2ddl.auto", "create");
-        StandardServiceRegistry registry = builder.build();
-        try {
-            MetadataSources sources = new MetadataSources(registry);
-            ClassPathScanningCandidateComponentProvider scanner =
-                    new ClassPathScanningCandidateComponentProvider(false);
-            scanner.addIncludeFilter(new AnnotationTypeFilter(Entity.class));
-            scanner.findCandidateComponents("org.apache.hertzbeat").stream()
-                    .map(definition -> loadClass(definition.getBeanClassName()))
-                    .forEach(sources::addAnnotatedClass);
-            try (SessionFactory factory = sources.buildMetadata().buildSessionFactory()) {
-                assertThat(factory.getMetamodel().getEntities()).hasSize(55);
-            }
-        } finally {
-            StandardServiceRegistryBuilder.destroy(registry);
-        }
-    }
-
-    private static Class<?> loadClass(String className) {
-        try {
-            return Class.forName(className);
-        } catch (ClassNotFoundException exception) {
-            throw new IllegalStateException("Mapped entity class is unavailable", exception);
-        }
+        Flyway.configure().dataSource(jdbcUrl, "sa", "")
+                .locations("classpath:db/migration/h2").load().migrate();
     }
 
     private record Progress(MetadataMigrationStage stage, int percent) {

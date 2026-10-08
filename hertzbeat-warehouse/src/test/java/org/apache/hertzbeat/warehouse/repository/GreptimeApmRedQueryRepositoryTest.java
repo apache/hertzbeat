@@ -61,6 +61,46 @@ class GreptimeApmRedQueryRepositoryTest {
     }
 
     @Test
+    void readsAllCandidateSummariesInOneScopedQuery() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenReturn(List.of(Map.of(
+                "entity_id", "8", "entity_type", "service", "request_count", 12L, "error_count", 3L,
+                "duration_sum_nano", 12000000L, "duration_count", 12L, "latency_p95_ms", 4D)));
+        var scopes = List.of(
+                new ApmRedQuery(START, END, "team-a", "7", "service", "checkout", "shop", "prod"),
+                new ApmRedQuery(START, END, "team-a", "8", "service", "checkout", "other", "stage"));
+        var result = repository.querySummaries(scopes);
+        assertTrue(result.available());
+        assertEquals(3, result.summaries().get("8").errorCount());
+        assertFalse(result.summaries().containsKey("7"));
+        var sql = ArgumentCaptor.forClass(String.class);
+        verify(executor, times(1)).executeStrict(sql.capture());
+        assertTrue(sql.getValue().contains("GROUP BY entity_id, entity_type"));
+        assertTrue(sql.getValue().contains("uddsketch_merge"));
+        assertTrue(sql.getValue().contains("workspace_id = 'team-a'"));
+        assertTrue(sql.getValue().contains("service_namespace = 'other'"));
+        assertTrue(sql.getValue().contains("span_kind = 'SERVER'"));
+    }
+
+    @Test
+    void batchRejectsMalformedAndUnexpectedRowsInsteadOfPartialRanking() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        var scope = query("checkout", null, null);
+        for (Map<String, Object> invalid : List.of(
+                Map.<String, Object>of("entity_id", "901", "entity_type", "service", "request_count", 0L, "error_count", 0L,
+                        "duration_sum_nano", 0L, "duration_count", 0L),
+                Map.<String, Object>of("entity_id", "901", "entity_type", "service", "request_count", 1L, "error_count", 2L,
+                        "duration_sum_nano", 0L, "duration_count", 0L),
+                Map.<String, Object>of("entity_id", "foreign", "entity_type", "service", "request_count", 1L, "error_count", 0L,
+                        "duration_sum_nano", 0L, "duration_count", 0L))) {
+            when(executor.executeStrict(anyString())).thenReturn(List.of(invalid));
+            var result = repository.querySummaries(List.of(scope));
+            assertFalse(result.available());
+            assertTrue(result.summaries().isEmpty());
+        }
+    }
+
+    @Test
     void readsBoundedMinuteSeriesAndSummaryFromFlowOnly() {
         when(executorProvider.getIfAvailable()).thenReturn(executor);
         when(executor.executeStrict(anyString()))

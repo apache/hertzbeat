@@ -65,20 +65,10 @@ public class EntityApmRedReadModelService {
         }
         String workspaceId = workspaceId(entity);
         List<EntityIdentity> identities = entityIdentityQueryService.findIdentities(workspaceId, entityId);
-        String canonicalServiceName = identityValue(identities, "service.name");
-        if (!StringUtils.hasText(canonicalServiceName) && SERVICE_ENTITY_TYPES.contains(entity.getType())) {
-            canonicalServiceName = trimToNull(entity.getName());
-        }
-        String serviceNamespace = firstText(identityValue(identities, "service.namespace"), entity.getNamespace());
-        String deploymentEnvironment = firstText(
-                identityValue(identities, "deployment.environment.name"), entity.getEnvironment());
-        EntityApmRedView.Identity identity = new EntityApmRedView.Identity(
-                workspaceId,
-                Long.toString(entityId),
-                entity.getType(),
-                firstText(canonicalServiceName, entity.getName()),
-                serviceNamespace,
-                deploymentEnvironment);
+        EntityApmRedView.Identity identity = resolveIdentity(entity, identities);
+        String canonicalServiceName = canonicalServiceName(entity, identities);
+        String serviceNamespace = identity.serviceNamespace();
+        String deploymentEnvironment = identity.deploymentEnvironment();
         if (!StringUtils.hasText(canonicalServiceName)) {
             return EntityApmRedView.unavailable(start, end, identity);
         }
@@ -115,19 +105,32 @@ public class EntityApmRedReadModelService {
                 result.points().stream().map(EntityApmRedReadModelService::toPoint).toList());
     }
 
+    static EntityApmRedView.Identity resolveIdentity(ObserveEntity entity, List<EntityIdentity> identities) {
+        return new EntityApmRedView.Identity(workspaceId(entity), Long.toString(entity.getId()), entity.getType(),
+                firstText(canonicalServiceName(entity, identities), entity.getName()),
+                firstText(identityValue(identities, "service.namespace"), entity.getNamespace()),
+                firstText(identityValue(identities, "deployment.environment.name"), entity.getEnvironment()));
+    }
+
+    private static String canonicalServiceName(ObserveEntity entity, List<EntityIdentity> identities) {
+        String name = identityValue(identities, "service.name");
+        return !StringUtils.hasText(name) && SERVICE_ENTITY_TYPES.contains(entity.getType())
+                ? trimToNull(entity.getName()) : name;
+    }
+
     private void validateWindow(long start, long end) {
         if (start < 0L || end <= start || end - start > ApmRedQueryRepository.MAX_WINDOW_MILLIS) {
             throw new IllegalArgumentException("entity_apm_red_window_invalid");
         }
     }
 
-    private String workspaceId(ObserveEntity entity) {
+    private static String workspaceId(ObserveEntity entity) {
         return StringUtils.hasText(entity.getWorkspaceId())
                 ? AuthTokenScopes.normalizeWorkspaceId(entity.getWorkspaceId())
                 : AuthTokenScopes.DEFAULT_WORKSPACE_ID;
     }
 
-    private String identityValue(List<EntityIdentity> identities, String key) {
+    private static String identityValue(List<EntityIdentity> identities, String key) {
         if (identities == null) {
             return null;
         }
@@ -143,16 +146,16 @@ public class EntityApmRedReadModelService {
                 .orElse(null);
     }
 
-    private String firstText(String preferred, String fallback) {
+    private static String firstText(String preferred, String fallback) {
         String normalized = trimToNull(preferred);
         return normalized == null ? trimToNull(fallback) : normalized;
     }
 
-    private String trimToNull(String value) {
+    private static String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
-    private static EntityApmRedView.RedSummary toSummary(
+    static EntityApmRedView.RedSummary toSummary(
             ApmRedQueryRepository.ApmRedSummary summary) {
         return new EntityApmRedView.RedSummary(
                 summary.requestCount(),

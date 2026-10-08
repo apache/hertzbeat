@@ -54,6 +54,7 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentPolicyDecision;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
+import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 import reactor.util.concurrent.Queues;
 
 /**
@@ -157,12 +159,11 @@ class AgentCommandStreamLifecycleTest {
         when(runtimeService.streamInvoke(any(AgentRuntimeRequest.class))).thenReturn(Flux.defer(() -> {
             runtimeSubscriptions.incrementAndGet();
             return Flux.concat(
-                    Flux.just(AgentRuntimeEvent.runStarted("trace-1", timestamp),
-                            AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp)),
+                    Flux.just(AgentRuntimeEvent.runStarted("trace-1", timestamp)),
                     Flux.range(0, Queues.SMALL_BUFFER_SIZE + 32).map(index ->
-                            AgentRuntimeEvent.assistantMessageDelta(
-                                    "assistant-1", "trace-1", index, "token", timestamp)),
-                    Flux.just(AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp),
+                            AgentRuntimeEvent.toolStarted("tool-" + index, "trace-1", toolCall(), timestamp)),
+                    Flux.just(AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp),
+                            AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp),
                             AgentRuntimeEvent.runCompleted("trace-1", timestamp, "final result")))
                     .doFinally(ignored -> sourceFinished.countDown());
         }));
@@ -212,12 +213,11 @@ class AgentCommandStreamLifecycleTest {
         Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
         String finalResult = "authoritative complete response";
         when(runtimeService.streamInvoke(any(AgentRuntimeRequest.class))).thenReturn(Flux.concat(
-                Flux.just(AgentRuntimeEvent.runStarted("trace-1", timestamp),
-                        AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp)),
+                Flux.just(AgentRuntimeEvent.runStarted("trace-1", timestamp)),
                 Flux.range(0, Queues.SMALL_BUFFER_SIZE + 32).map(index ->
-                        AgentRuntimeEvent.assistantMessageDelta(
-                                "assistant-1", "trace-1", index, "token", timestamp)),
-                Flux.just(AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp),
+                        AgentRuntimeEvent.toolStarted("tool-" + index, "trace-1", toolCall(), timestamp)),
+                Flux.just(AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp),
+                        AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp),
                         AgentRuntimeEvent.runCompleted("trace-1", timestamp, finalResult))));
         when(runService.markSucceeded(run, finalResult)).thenAnswer(invocation -> {
             run.setStatus(AgentRunStatus.SUCCEEDED.name());
@@ -382,6 +382,139 @@ class AgentCommandStreamLifecycleTest {
 
         assertEquals(Map.of("message", safeResult, "status", AgentRunStatus.SUCCEEDED.name()), first.body());
         assertEquals(first.body(), replay.body());
+    }
+
+    @Test
+    void splitSecretsMustBeRedactedBeforeAnyOutboundMessageDelta() {
+        Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
+        String rawResult = "Observed password=output-sentinel; token=output-token";
+        when(runtimeService.streamInvoke(any(AgentRuntimeRequest.class))).thenReturn(Flux.just(
+                AgentRuntimeEvent.runStarted("trace-1", timestamp),
+                AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp),
+                AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 0, "Observed pass", timestamp),
+                AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 1,
+                        "word=output-sentinel; token=output-token", timestamp),
+                AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp),
+                AgentRuntimeEvent.runCompleted("trace-1", timestamp, rawResult)));
+        when(runService.markSucceeded(run, rawResult)).thenAnswer(invocation -> {
+            run.setResultSummary(GatewayText.redactSecrets(invocation.getArgument(1)));
+            return run;
+        });
+
+        List<GatewayEvent> events = service().invokeStream(command(), userInput()).events().collectList().block();
+        List<String> deltas = events.stream().filter(event -> event.payload() instanceof GatewayEvent.MessageDeltaPayload)
+                .map(event -> ((GatewayEvent.MessageDeltaPayload) event.payload()).delta()).toList();
+
+        assertEquals(List.of(GatewayText.redactSecrets(rawResult)), deltas);
+        assertEquals(List.of(GatewayEvent.GatewayEventType.RUN_STARTED,
+                GatewayEvent.GatewayEventType.MESSAGE_STARTED, GatewayEvent.GatewayEventType.MESSAGE_DELTA,
+                GatewayEvent.GatewayEventType.MESSAGE_COMPLETED, GatewayEvent.GatewayEventType.RUN_COMPLETED),
+                events.stream().map(GatewayEvent::type).toList());
+        assertEquals(events.size(), events.stream().map(GatewayEvent::eventId).distinct().count());
+    }
+
+    @Test
+    void incompleteTextIsNeverEmittedWhenRuntimeStopsTimesOutOrEndsWithoutCompletion() {
+        Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
+        failRunCauseFree();
+        for (Flux<AgentRuntimeEvent> ending : List.of(
+                Flux.just(AgentRuntimeEvent.runError("trace-1", "Runtime cancelled", timestamp)),
+                Flux.just(AgentRuntimeEvent.runError("trace-1", "Model request timed out", timestamp)),
+                Flux.<AgentRuntimeEvent>error(new IllegalStateException("password=synthetic-sentinel")),
+                Flux.<AgentRuntimeEvent>empty())) {
+            when(runtimeService.streamInvoke(any())).thenReturn(Flux.concat(
+                    Flux.just(AgentRuntimeEvent.runStarted("trace-1", timestamp),
+                            AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp),
+                            AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 0,
+                                    "password=synthetic-sentinel", timestamp)), ending));
+            List<GatewayEvent> events = service().invokeStream(command(), userInput()).events().collectList().block();
+            assertTrue(events.stream().noneMatch(event -> event.type() == GatewayEvent.GatewayEventType.MESSAGE_DELTA));
+            assertEquals(GatewayEvent.GatewayEventType.ERROR, events.getLast().type());
+        }
+        verify(runService, never()).markSucceeded(any(), any());
+    }
+
+    @Test
+    void oversizedRawMessageFailsClosedEvenWhenRedactionWouldShortenIt() {
+        Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
+        failRunCauseFree();
+        when(runtimeService.streamInvoke(any())).thenReturn(Flux.just(
+                AgentRuntimeEvent.runStarted("trace-1", timestamp),
+                AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp),
+                AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 0,
+                        "-----BEGIN PRIVATE KEY-----" + "x".repeat(65_535) + "-----END PRIVATE KEY-----", timestamp),
+                AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp),
+                AgentRuntimeEvent.runCompleted("trace-1", timestamp, "ignored")));
+
+        List<GatewayEvent> events = service().invokeStream(command(), userInput()).events().collectList().block();
+
+        assertTrue(events.stream().noneMatch(event -> event.type() == GatewayEvent.GatewayEventType.MESSAGE_DELTA));
+        assertEquals(GatewayEvent.GatewayEventType.ERROR, events.getLast().type());
+        verify(runService).markFailed(run, "Agent Gateway runtime failed.");
+        verify(runService, never()).markSucceeded(any(), any());
+    }
+
+    @Test
+    void concurrentInvocationsKeepMessageBuffersSeparateWhileToolProgressContinues() {
+        Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
+        Sinks.Many<AgentRuntimeEvent> first = Sinks.many().unicast().onBackpressureBuffer();
+        Sinks.Many<AgentRuntimeEvent> second = Sinks.many().unicast().onBackpressureBuffer();
+        when(runtimeService.streamInvoke(any())).thenReturn(first.asFlux(), second.asFlux());
+        failRunCauseFree();
+        AgentCommandService service = service();
+        List<GatewayEvent> firstEvents = new CopyOnWriteArrayList<>();
+        List<GatewayEvent> secondEvents = new CopyOnWriteArrayList<>();
+        service.invokeStream(command(), userInput()).events().subscribe(firstEvents::add);
+        service.invokeStream(command(), userInput()).events().subscribe(secondEvents::add);
+        for (Sinks.Many<AgentRuntimeEvent> source : List.of(first, second)) {
+            source.tryEmitNext(AgentRuntimeEvent.runStarted("trace-1", timestamp));
+            source.tryEmitNext(AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp));
+        }
+        first.tryEmitNext(AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 0, "pass", timestamp));
+        second.tryEmitNext(AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 0, "safe second", timestamp));
+        first.tryEmitNext(AgentRuntimeEvent.toolStarted("tool-item", "trace-1", toolCall(), timestamp));
+        assertEquals(GatewayEvent.GatewayEventType.TOOL_STARTED, firstEvents.getLast().type());
+        assertTrue(firstEvents.stream().noneMatch(event -> event.type() == GatewayEvent.GatewayEventType.MESSAGE_DELTA));
+        first.tryEmitNext(AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 1,
+                "word=synthetic-sentinel", timestamp));
+        second.tryEmitNext(AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp));
+        first.tryEmitNext(AgentRuntimeEvent.assistantMessageCompleted("assistant-1", "trace-1", timestamp));
+        assertEquals(List.of("password=[REDACTED]"), messageTexts(firstEvents));
+        assertEquals(List.of("safe second"), messageTexts(secondEvents));
+        for (Sinks.Many<AgentRuntimeEvent> source : List.of(first, second)) {
+            source.tryEmitNext(AgentRuntimeEvent.runError("trace-1", "Runtime cancelled", timestamp));
+            source.tryEmitComplete();
+        }
+    }
+
+    @Test
+    void runtimeErrorEventMustRedactBeforeOutboundWhileDiscardingPartialMessage() {
+        Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
+        String rawError = "Provider failed password=synthetic-sentinel";
+        when(runtimeService.streamInvoke(any())).thenReturn(Flux.just(
+                AgentRuntimeEvent.runStarted("trace-1", timestamp),
+                AgentRuntimeEvent.assistantMessageStarted("assistant-1", "trace-1", timestamp),
+                AgentRuntimeEvent.assistantMessageDelta("assistant-1", "trace-1", 0,
+                        "password=partial-sentinel", timestamp),
+                AgentRuntimeEvent.runError("trace-1", rawError, timestamp)));
+        when(runService.markFailed(run, rawError)).thenAnswer(invocation -> {
+            run.setStatus(AgentRunStatus.FAILED.name());
+            run.setErrorMessage(GatewayText.redactSecrets(invocation.getArgument(1)));
+            return run;
+        });
+
+        List<GatewayEvent> events = service().invokeStream(command(), userInput()).events().collectList().block();
+
+        assertEquals(List.of(), messageTexts(events));
+        GatewayEvent.ErrorPayload error = (GatewayEvent.ErrorPayload) events.getLast().payload();
+        assertEquals(GatewayText.redactSecrets(rawError), run.getErrorMessage());
+        assertEquals(run.getErrorMessage(), error.errorMessage());
+        assertEquals("failed", error.status());
+    }
+
+    private List<String> messageTexts(List<GatewayEvent> events) {
+        return events.stream().filter(event -> event.payload() instanceof GatewayEvent.MessageDeltaPayload)
+                .map(event -> ((GatewayEvent.MessageDeltaPayload) event.payload()).delta()).toList();
     }
 
     private void failRunCauseFree() {

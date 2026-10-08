@@ -815,7 +815,9 @@ class AgentRuntimeLoopTest {
         AgentRuntimeContext context = runtime.context();
         List<AgentRuntimeEvent> events = new ArrayList<>();
         try (AgentRuntimeControl control = AgentRuntimeControl.forContext(context, CLOCK)) {
-            control.stop("cancelled by test");
+            AgentRuntimeControlRegistry registry = new AgentRuntimeControlRegistry();
+            registry.register(control);
+            assertTrue(registry.cancel(context.getRunUid(), "cancelled by test"));
             loop(modelClient, catalog, runtime.config())
                     .run(context, control, events::add, AgentRuntimeTranscriptSink.noop());
         }
@@ -823,6 +825,7 @@ class AgentRuntimeLoopTest {
 
         assertRuntimeFailed(result);
         assertEquals("cancelled by test", result.getError().getMessage());
+        assertEquals("cancelled", events.getLast().getStatus().externalName());
         assertEquals(0, modelClient.requests.size());
         assertEquals(0, catalog.executeCount);
     }

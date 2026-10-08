@@ -27,9 +27,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityManager;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeHistoryWindow;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptContent;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
+import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentSessionStatus;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
@@ -233,6 +236,103 @@ class AgentSessionServiceTest {
         assertFalse(entry.getPayloadJson().contains("raw-secret"));
         assertTrue(entry.getPayloadJson().contains("[REDACTED]"));
         assertTrue(entry.getPayloadJson().contains("keep this"));
+    }
+
+    @Test
+    void recorderShouldPreserveNestedLogJsonForDurableGrounding() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(service);
+        AgentSession session = AgentSession.builder().id(1L).transcriptSequence(0L).build();
+        AgentRun run = AgentRun.builder().id(2L).sessionId(1L).build();
+        when(sessionDao.findFirstById(1L)).thenReturn(Optional.of(session));
+        when(transcriptEntryDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        String toolJson = JsonUtil.toJson(Map.of("content", List.of(Map.of(
+                "body", "Local protocol record password=[REDACTED] token=[REDACTED]",
+                "resource", JsonUtil.toJson(Map.of("password", "[REDACTED]", "service.name", "proof")),
+                "attributes", JsonUtil.toJson(Map.of("api.key", "[REDACTED]")))), "totalElements", 1));
+
+        AgentTranscriptEntry entry = recorder.recordRunMessage(session, run,
+                TranscriptMessage.toolResult("call-logs", "logs.query", toolJson, null));
+        when(transcriptEntryDao.findByRunIdAndMessageRoleOrderBySessionSequenceAsc(
+                2L, TranscriptMessage.TranscriptRole.TOOL_RESULT.wireValue())).thenReturn(List.of(entry));
+
+        List<TranscriptMessage> messages = recorder.findRunGroundingMessages(2L);
+        assertEquals(1, messages.size(), "A successful tool result must remain readable after persistence");
+        assertEquals(toolJson, messages.get(0).text());
+        assertEquals(1, JsonUtil.fromJson(messages.get(0).text(), Map.class).get("totalElements"));
+    }
+
+    @Test
+    void recordTranscriptEntryShouldPreserveTypedValuesAndRedactPlainText() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        when(sessionDao.findFirstById(1L)).thenReturn(Optional.of(AgentSession.builder()
+                .id(1L).transcriptSequence(0L).build()));
+        when(transcriptEntryDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        String raw = JsonUtil.toJson(Map.of("message", "plain text password=synthetic-secret",
+                "nested", List.of(Map.of("token", "synthetic-token", "count", 7, "ready", true)),
+                "jsonText", "{not valid JSON; token=synthetic-text}"));
+
+        AgentTranscriptEntry entry = service.recordTranscriptEntry(AgentTranscriptEntry.builder()
+                .sessionId(1L).messageRole("assistant").payloadJson(raw).build());
+        Map<?, ?> payload = JsonUtil.fromJson(entry.getPayloadJson(), Map.class);
+
+        assertEquals("plain text password=[REDACTED]", payload.get("message"));
+        assertTrue(payload.get("jsonText") instanceof String);
+        assertEquals(List.of(Map.of("token", "[REDACTED]", "count", 7, "ready", true)), payload.get("nested"));
+        assertFalse(entry.getPayloadJson().contains("synthetic-"));
+    }
+
+    @Test
+    void recordTranscriptEntryShouldRejectMalformedAndNonObjectPayloadsBeforeSequenceAllocation() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        for (String raw : List.of("not-json", "{", "[]", "null", "42", "\"ordinary text\"")) {
+            AgentTranscriptEntry entry = AgentTranscriptEntry.builder()
+                    .sessionId(1L).messageRole("assistant").payloadJson(raw).build();
+            assertThrows(IllegalArgumentException.class, () -> service.recordTranscriptEntry(entry));
+            assertEquals(raw, entry.getPayloadJson());
+        }
+        verifyNoInteractions(sessionDao, transcriptEntryDao);
+    }
+
+    @Test
+    void recordTranscriptEntryShouldRejectRawAndRedactedOversizeBeforeSequenceAllocation() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        String shrinkableRaw = JsonUtil.toJson(Map.of("password", "x".repeat(65535)));
+        String expansionBase = JsonUtil.toJson(Map.of("password", "x", "message", ""));
+        String expandableRaw = JsonUtil.toJson(Map.of("password", "x", "message",
+                "x".repeat(65535 - expansionBase.getBytes(StandardCharsets.UTF_8).length)));
+        assertEquals(65535, expandableRaw.getBytes(StandardCharsets.UTF_8).length);
+        for (String raw : List.of(shrinkableRaw, expandableRaw)) {
+            AgentTranscriptEntry entry = AgentTranscriptEntry.builder()
+                    .sessionId(1L).messageRole("assistant").payloadJson(raw).build();
+            assertThrows(IllegalArgumentException.class, () -> service.recordTranscriptEntry(entry));
+            assertEquals(raw, entry.getPayloadJson());
+        }
+        verifyNoInteractions(sessionDao, transcriptEntryDao);
+    }
+
+    @Test
+    void recordTranscriptEntryShouldAcceptExactUtf8BudgetIncludingEscapesAndMultibyteText() {
+        AgentSessionService service = new AgentSessionService(
+                sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        when(sessionDao.findFirstById(1L)).thenReturn(Optional.of(AgentSession.builder()
+                .id(1L).transcriptSequence(0L).build()));
+        when(transcriptEntryDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        String prefix = "\"\n\\\uD83D\uDD2D";
+        int overhead = JsonUtil.toJson(Map.of("message", prefix)).getBytes(StandardCharsets.UTF_8).length;
+        String text = prefix + "x".repeat(65535 - overhead);
+        String raw = JsonUtil.toJson(Map.of("message", text));
+
+        AgentTranscriptEntry entry = service.recordTranscriptEntry(AgentTranscriptEntry.builder()
+                .sessionId(1L).messageRole("assistant").payloadJson(raw).build());
+
+        assertEquals(65535, entry.getPayloadJson().getBytes(StandardCharsets.UTF_8).length);
+        assertEquals(text, JsonUtil.fromJson(entry.getPayloadJson(), Map.class).get("message"));
+        assertEquals(1L, entry.getSessionSequence());
     }
 
     @Test

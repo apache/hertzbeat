@@ -620,7 +620,7 @@ class TargetSchemaProvisionerDatabaseTest {
                     .map(TargetSchemaProvisionerDatabaseTest::loadClass)
                     .forEach(sources::addAnnotatedClass);
             try (SessionFactory ignored = sources.buildMetadata().buildSessionFactory()) {
-                assertThat(ignored.getMetamodel().getEntities()).hasSize(55);
+                assertThat(ignored.getMetamodel().getEntities()).hasSize(TargetSchemaBaselineResourceTest.mappedTables().size());
             }
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);

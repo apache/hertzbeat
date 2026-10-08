@@ -29,5 +29,5 @@ public interface SignalDashboardService {
 
     SignalDashboard upsertSignalDashboard(String creator, SignalDashboard dashboard);
 
-    void deleteSignalDashboard(String creator, String dashboardKey);
+    void deleteSignalDashboard(String creator, String dashboardKey, long revision);
 }

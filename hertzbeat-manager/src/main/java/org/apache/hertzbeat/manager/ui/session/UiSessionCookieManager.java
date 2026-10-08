@@ -60,6 +60,10 @@ public class UiSessionCookieManager {
                 maxAge(tokens.refreshExpiresAt()), secure));
     }
 
+    void clearAccess(HttpServletRequest request, HttpServletResponse response) {
+        add(response, cookie(ACCESS_COOKIE, "", ACCESS_PATH, Duration.ZERO, isSecure(request)));
+    }
+
     void clear(HttpServletRequest request, HttpServletResponse response) {
         boolean secure = isSecure(request);
         add(response, cookie(ACCESS_COOKIE, "", ACCESS_PATH, Duration.ZERO, secure));

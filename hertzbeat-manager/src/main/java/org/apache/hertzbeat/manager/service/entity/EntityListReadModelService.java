@@ -84,6 +84,10 @@ public class EntityListReadModelService {
         return Math.min(pageSize, MAX_ENTITY_LIST_PAGE_SIZE);
     }
 
+    public List<EntitySummaryInfo> summarizeEntities(List<ObserveEntity> entities, String workspaceId) {
+        return buildEntitySummaryPage(new PageImpl<>(entities), workspaceId, true).getContent();
+    }
+
     private Page<EntitySummaryInfo> buildEntitySummaryPage(Page<ObserveEntity> entityPage,
                                                            String requestWorkspaceId,
                                                            boolean explicitWorkspace) {

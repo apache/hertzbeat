@@ -44,7 +44,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -98,7 +97,6 @@ public class ServiceAccountService {
         String endpoint = String.format(prefix + CREATE_SERVICE_ACCOUNT_API, url);
         HttpHeaders headers = createHeaders();
         String body = String.format("{\"name\":\"%s\",\"role\":\"%s\",\"isDisabled\":false}", ACCOUNT_NAME, ACCOUNT_ROLE);
-        restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(username, password));
         HttpEntity<String> request = new HttpEntity<>(body, headers);
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(endpoint, request, String.class);
@@ -128,7 +126,6 @@ public class ServiceAccountService {
         String endpoint = String.format(prefix + CREATE_SERVICE_TOKEN_API, url, accountId);
         HttpHeaders headers = createHeaders();
         String body = String.format("{\"name\":\"%s\"}", CommonUtil.generateRandomWord(6));
-        restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(username, password));
         HttpEntity<String> request = new HttpEntity<>(body, headers);
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(endpoint, request, String.class);
@@ -178,7 +175,6 @@ public class ServiceAccountService {
     public ResponseEntity<String> getAccounts() {
         String endpoint = String.format(prefix + GET_SERVICE_ACCOUNTS_API, url);
         HttpHeaders headers = createHeaders();
-        restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(username, password));
         HttpEntity<String> request = new HttpEntity<>(headers);
         try {
             ResponseEntity<String> response = restTemplate.exchange(endpoint, HttpMethod.GET, request, String.class);

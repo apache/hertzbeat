@@ -27,6 +27,8 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
 import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureQuery;
+import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceSort;
 import org.springframework.data.domain.Page;
 
 /**
@@ -36,6 +38,18 @@ public interface EntityTraceQueryService {
 
     /** Query recent traces using an explicit trusted workspace without request-thread context. */
     Page<TraceListItemDto> queryRecentTraces(String workspaceId, Long start, Long end, int limit);
+
+    static TraceSort parseTraceSort(String value) {
+        if (value == null) {
+            return TraceSort.NEWEST;
+        }
+        for (TraceSort sort : TraceSort.values()) {
+            if (sort.value().equals(value)) {
+                return sort;
+            }
+        }
+        throw new ObservabilityQueryRequestException();
+    }
 
     /** Complete storage-neutral context for an exact trace detail query. */
     record TraceDetailQuery(
@@ -73,6 +87,13 @@ public interface EntityTraceQueryService {
     EntityTraceSummaryDto buildEntityTraceSummary(ObservedEntityContext entityContext);
 
     List<EntityTraceQueryHintDto> buildEntityTraceQueryHints(ObservedEntityContext entityContext);
+
+    /** Query two named span clauses across actual observed members of each trace. */
+    Page<TraceListItemDto> queryTraceStructure(String workspaceId, TraceStructureQuery query);
+
+    /** Analyze the same bounded observed structural population before paging. */
+    org.apache.hertzbeat.observability.traces.dto.TraceStructureAnalysis queryTraceStructureAnalysis(
+            String workspaceId, TraceStructureQuery query);
 
     default Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
                                                   String serviceName, String serviceNamespace, String environment,
@@ -133,6 +154,18 @@ public interface EntityTraceQueryService {
             Boolean hideInternal,
             String spanScope,
             String attributeFilter);
+
+    Page<TraceListItemDto> queryTraceList(
+            String workspaceId, Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+            String serviceName, String serviceNamespace, String environment, String resourceFilter,
+            String operationName, Long minDurationMs, Long maxDurationMs, int pageIndex, int pageSize,
+            Boolean hideInternal, String spanScope, String attributeFilter, TraceSort sort);
+
+    Page<TraceListItemDto> queryTraceList(
+            String workspaceId, Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+            String serviceName, String serviceNamespace, String environment, String resourceFilter,
+            String operationName, Long minDurationMs, Long maxDurationMs, int pageIndex, int pageSize,
+            Boolean hideInternal, String spanScope, String attributeFilter, TraceSort sort, boolean endExclusive);
 
     default TraceDetailDto getTraceDetail(Long entityId, String traceId) {
         return getTraceDetail(new TraceDetailQuery(
@@ -244,4 +277,15 @@ public interface EntityTraceQueryService {
             Boolean hideInternal,
             String spanScope,
             String attributeFilter);
+
+    /** Raw query input resolved through the same entity identity boundary as trace lists. */
+    record AnalyticsQuery(String workspaceId, Long entityId,
+                          org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Window window,
+                          String population, String traceId, Boolean errorOnly, String serviceName,
+                          String serviceNamespace, String environment, String resourceFilter, String attributeFilter,
+                          String operationName, Long minDurationMs, Long maxDurationMs, String spanScope, Boolean hideInternal) { }
+
+    org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Evidence<?> queryAnalytics(
+            AnalyticsQuery query, org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Options options);
+
 }

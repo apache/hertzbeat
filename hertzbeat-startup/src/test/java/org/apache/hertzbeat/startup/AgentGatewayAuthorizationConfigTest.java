@@ -19,6 +19,7 @@ package org.apache.hertzbeat.startup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,6 +69,17 @@ class AgentGatewayAuthorizationConfigTest {
                     .toList();
             assertEquals(RULES, agentRules, config);
             assertFalse(lines.stream().anyMatch(line -> line.startsWith("  - /api/agent/**===")), config);
+        }
+    }
+
+    @Test
+    void shippedConfigsAllowAiDocumentWithoutExcludingAgentApis() throws IOException {
+        for (String config : SURENESS_CONFIGS) {
+            String content = Files.readString(repoRoot().resolve(config));
+            String exclusions = content.substring(content.indexOf("excludedResource:"));
+            assertTrue(exclusions.lines().anyMatch(line -> line.equals("  - /ai===get")), config);
+            assertTrue(exclusions.lines().anyMatch(line -> line.equals("  - /ai/schedules===get")), config);
+            assertFalse(exclusions.lines().anyMatch(line -> line.startsWith("  - /api/agent/")), config);
         }
     }
 

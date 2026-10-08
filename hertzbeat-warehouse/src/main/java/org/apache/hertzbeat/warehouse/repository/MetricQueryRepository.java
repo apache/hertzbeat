@@ -28,6 +28,7 @@ public interface MetricQueryRepository {
 
     String PROMQL_EXECUTOR_UNAVAILABLE = "promql_executor_unavailable";
     String PROMQL_QUERY_FAILED = "promql_query_failed";
+    String PROMQL_QUERY_INVALID = org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL_QUERY_INVALID;
 
     /**
      * Whether a promql-capable metric query executor exists.
@@ -80,7 +81,8 @@ public interface MetricQueryRepository {
         public PromqlRangeQueryResult {
             if (errorMessage != null
                     && !PROMQL_EXECUTOR_UNAVAILABLE.equals(errorMessage)
-                    && !PROMQL_QUERY_FAILED.equals(errorMessage)) {
+                    && !PROMQL_QUERY_FAILED.equals(errorMessage)
+                    && !PROMQL_QUERY_INVALID.equals(errorMessage)) {
                 errorMessage = PROMQL_QUERY_FAILED;
             }
         }

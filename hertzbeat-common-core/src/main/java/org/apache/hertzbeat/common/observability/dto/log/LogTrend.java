@@ -34,11 +34,15 @@ public record LogTrend(long start, long end, long intervalMs, List<LogTrendBucke
             21_600_000L,
             86_400_000L);
 
+    public static final List<Long> EXPLICIT_INTERVALS_MS = List.of(
+            1_000L, 5_000L, 10_000L, 30_000L, 60_000L, 300_000L, 900_000L,
+            1_800_000L, 3_600_000L, 21_600_000L, 86_400_000L);
+
     public LogTrend {
         if (start > end) {
             throw new IllegalArgumentException("log trend start must not be after end");
         }
-        if (!SUPPORTED_INTERVALS_MS.contains(intervalMs)) {
+        if (!EXPLICIT_INTERVALS_MS.contains(intervalMs)) {
             throw new IllegalArgumentException("unsupported log trend interval: " + intervalMs);
         }
         buckets = buckets == null ? List.of() : List.copyOf(buckets);
@@ -47,6 +51,9 @@ public record LogTrend(long start, long end, long intervalMs, List<LogTrendBucke
         }
         long firstBucketIndex = Math.floorDiv(start, intervalMs);
         long lastBucketIndex = Math.floorDiv(end, intervalMs);
+        if (lastBucketIndex - firstBucketIndex >= MAX_BUCKETS) {
+            throw new IllegalArgumentException("log trend grid must not contain more than sixty buckets");
+        }
         Long previousStart = null;
         for (LogTrendBucket bucket : buckets) {
             long bucketIndex = Math.floorDiv(bucket.start(), intervalMs);

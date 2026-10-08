@@ -22,8 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.List;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,18 +79,18 @@ class GreptimeTraceTableInitializerTest {
                 eq(HttpMethod.POST),
                 org.mockito.ArgumentMatchers.<HttpEntity<String>>any(),
                 eq(String.class)))
-                .thenReturn(ResponseEntity.ok("{}"));
+                .thenReturn(ResponseEntity.ok("{}"), ResponseEntity.ok("{}"), ResponseEntity.ok(identitySchema()));
 
         initializer.initialize();
 
         ArgumentCaptor<HttpEntity<String>> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).exchange(
+        verify(restTemplate, times(3)).exchange(
                 eq("http://greptime:4000/v1/sql?db=public"),
                 eq(HttpMethod.POST),
                 entityCaptor.capture(),
                 eq(String.class));
 
-        String sql = decodeSql(entityCaptor.getValue());
+        String sql = decodeSql(entityCaptor.getAllValues().getFirst());
         assertTrue(sql.contains("CREATE TABLE IF NOT EXISTS hzb_traces"));
         assertTrue(sql.contains("\"timestamp\" TIMESTAMP(9) NOT NULL TIME INDEX"));
         assertTrue(sql.contains("\"trace_id\" STRING NULL SKIPPING INDEX"));
@@ -95,6 +98,28 @@ class GreptimeTraceTableInitializerTest {
         assertEquals(MediaType.APPLICATION_FORM_URLENCODED, entityCaptor.getValue().getHeaders().getContentType());
         assertEquals("Basic " + Base64.getEncoder().encodeToString("demo:secret".getBytes(StandardCharsets.UTF_8)),
                 entityCaptor.getValue().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+    }
+
+    @Test
+    void completesIdentityColumnsWhenNativeIngestionCreatedTheTableFirst() {
+        configureGreptimeProperties(true);
+        when(restTemplate.exchange(
+                eq("http://greptime:4000/v1/sql?db=public"), eq(HttpMethod.POST),
+                org.mockito.ArgumentMatchers.<HttpEntity<String>>any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok("{}"), ResponseEntity.ok("{}"), ResponseEntity.ok(identitySchema()));
+
+        initializer.initialize();
+
+        ArgumentCaptor<HttpEntity<String>> requests = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate, times(3)).exchange(
+                eq("http://greptime:4000/v1/sql?db=public"), eq(HttpMethod.POST), requests.capture(), eq(String.class));
+        var statements = requests.getAllValues().stream().map(this::decodeSql).toList();
+        assertTrue(statements.get(0).startsWith("CREATE TABLE IF NOT EXISTS"));
+        assertTrue(statements.get(1).contains("ADD COLUMN IF NOT EXISTS \"resource_attributes.hertzbeat.workspace_id\" STRING NULL"));
+        assertTrue(statements.get(1).contains("ADD COLUMN IF NOT EXISTS \"resource_attributes.service.instance.id\" STRING NULL"));
+        assertTrue(statements.get(2).startsWith("SELECT "));
+        assertTrue(statements.get(2).endsWith(" FROM hzb_traces LIMIT 0"));
+        assertFalse(String.join(" ", statements).contains("DROP "));
     }
 
     @Test
@@ -170,11 +195,11 @@ class GreptimeTraceTableInitializerTest {
                 eq(HttpMethod.POST),
                 org.mockito.ArgumentMatchers.<HttpEntity<String>>any(),
                 eq(String.class)))
-                .thenReturn(ResponseEntity.ok("{}"));
+                .thenReturn(ResponseEntity.ok("{}"), ResponseEntity.ok("{}"), ResponseEntity.ok(identitySchema()));
 
         initializer.initialize();
 
-        verify(restTemplate).exchange(
+        verify(restTemplate, times(3)).exchange(
                 eq("http://greptime:4000/v1/sql?db=public"),
                 eq(HttpMethod.POST),
                 org.mockito.ArgumentMatchers.<HttpEntity<String>>any(),
@@ -196,11 +221,11 @@ class GreptimeTraceTableInitializerTest {
                     return true;
                 }),
                 eq(String.class)))
-                .thenReturn(ResponseEntity.ok("{}"));
+                .thenReturn(ResponseEntity.ok("{}"), ResponseEntity.ok("{}"), ResponseEntity.ok(identitySchema()));
 
         initializer.initialize();
 
-        verify(restTemplate).exchange(
+        verify(restTemplate, times(3)).exchange(
                 eq("http://greptime:4000/v1/sql?db=public"),
                 eq(HttpMethod.POST),
                 org.mockito.ArgumentMatchers.<HttpEntity<String>>any(),
@@ -235,11 +260,11 @@ class GreptimeTraceTableInitializerTest {
                 org.mockito.ArgumentMatchers.<HttpEntity<String>>any(),
                 eq(String.class)))
                 .thenReturn(new ResponseEntity<>("{}", HttpStatus.SERVICE_UNAVAILABLE))
-                .thenReturn(ResponseEntity.ok("{}"));
+                .thenReturn(ResponseEntity.ok("{}"), ResponseEntity.ok("{}"), ResponseEntity.ok(identitySchema()));
 
         initializer.initialize();
 
-        verify(restTemplate, org.mockito.Mockito.times(2)).exchange(
+        verify(restTemplate, org.mockito.Mockito.times(4)).exchange(
                 eq("http://greptime:4000/v1/sql?db=public"),
                 eq(HttpMethod.POST),
                 org.mockito.ArgumentMatchers.<HttpEntity<String>>any(),
@@ -305,6 +330,22 @@ class GreptimeTraceTableInitializerTest {
             when(greptimeProperties.username()).thenReturn("demo");
             when(greptimeProperties.password()).thenReturn("secret");
         }
+    }
+
+    @Test
+    void rejectsIncompatibleOrMissingIdentityColumnsInsteadOfClaimingInitialization() {
+        assertDoesNotThrow(() -> GreptimeTraceTableInitializer.requireIdentitySchema(identitySchema()));
+        assertThrows(IllegalStateException.class, () -> GreptimeTraceTableInitializer.requireIdentitySchema(
+                identitySchema().replace("String", "Int64")));
+        assertThrows(IllegalStateException.class, () -> GreptimeTraceTableInitializer.requireIdentitySchema("{}"));
+    }
+
+    private static String identitySchema() {
+        String columns = List.of("hertzbeat.workspace_id", "hertzbeat.entity_id", "hertzbeat.entity_type",
+                        "service.namespace", "service.instance.id", "deployment.environment.name", "hertzbeat.collector.id")
+                .stream().map(column -> "{\"name\":\"resource_attributes." + column + "\",\"data_type\":\"String\"}")
+                .collect(java.util.stream.Collectors.joining(","));
+        return "{\"output\":[{\"records\":{\"schema\":{\"column_schemas\":[" + columns + "]},\"rows\":[]}}]}";
     }
 
     private String decodeSql(HttpEntity<String> entity) {

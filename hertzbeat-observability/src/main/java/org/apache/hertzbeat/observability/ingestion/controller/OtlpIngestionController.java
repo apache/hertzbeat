@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.ingestion.controller;
 
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -126,13 +127,47 @@ public class OtlpIngestionController {
             @RequestParam(value = "collectorId", required = false) String collectorId,
             @RequestParam(value = "instance", required = false) String instance,
             @RequestParam(value = "endpoint", required = false) String endpoint,
+            @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "limit", required = false) String limit) {
         String workspaceId = currentWorkspaceId();
         return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
                 () -> collectorScopedMetricsQueryService.inventory(
                         new CollectorScopedMetricsQueryService.InventoryRequest(
                                 workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
-                                environment, collectorId, instance, endpoint, limit)))));
+                                environment, collectorId, instance, endpoint, search, limit)))));
+    }
+
+    @GetMapping("/metrics/labels")
+    @Operation(summary = "Bounded metric label suggestions in the submitted scope")
+    public ResponseEntity<Message<OtlpMetricLabelsDto>> metricLabels(
+            @RequestParam(value = "entityId", required = false) String entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
+            @RequestParam(value = "start", required = false) String start,
+            @RequestParam(value = "end", required = false) String end,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "label", required = false) String label,
+            @RequestParam(value = "limit", required = false) String limit,
+            @RequestParam(value = "operationName", required = false) String operationName) {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> collectorScopedMetricsQueryService.labels(new CollectorScopedMetricsQueryService.LabelsRequest(
+                        workspaceId, labelEpoch(entityId), entityType, labelEpoch(start), labelEpoch(end), serviceName, serviceNamespace, environment,
+                        collectorId, instance, endpoint, query, filter, label, limit, operationName)))));
+    }
+
+    private Long labelEpoch(String value) {
+        try {
+            return value == null ? null : Long.valueOf(value);
+        } catch (NumberFormatException exception) {
+            throw new org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException();
+        }
     }
 
     @GetMapping("/metrics/related")

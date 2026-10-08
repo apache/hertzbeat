@@ -18,9 +18,11 @@
 package org.apache.hertzbeat.ai.gateway.conversation;
 
 import jakarta.persistence.EntityManager;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
@@ -33,6 +35,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeHistoryWindow;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
+import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentSessionStatus;
@@ -46,12 +49,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Default session and transcript service for Agent Gateway.
  */
 @Service
 public class AgentSessionService {
+
+    static final int TRANSCRIPT_MAX_UTF8_BYTES = 65535;
 
     private static final int TRANSCRIPT_QUERY_PAGE_SIZE = 100;
     private static final int TRANSCRIPT_ROLE_LIMIT = 32;
@@ -120,11 +126,34 @@ public class AgentSessionService {
         if (!StringUtils.hasText(entry.getMessageRole())) {
             throw new IllegalArgumentException("Transcript message role must not be blank");
         }
+        requireTranscriptPayloadBudget(rawPayload);
+        String safePayload = redactTranscriptPayload(rawPayload);
+        requireTranscriptPayloadBudget(safePayload);
+        String role = GatewayText.requireBounded(
+                entry.getMessageRole(), TRANSCRIPT_ROLE_LIMIT, "Transcript message role");
         entry.setSessionSequence(nextSessionSequence(entry.getSessionId()));
-        entry.setPayloadJson(GatewayText.redactSecrets(rawPayload));
-        entry.setMessageRole(GatewayText.requireBounded(
-                entry.getMessageRole(), TRANSCRIPT_ROLE_LIMIT, "Transcript message role"));
+        entry.setPayloadJson(safePayload);
+        entry.setMessageRole(role);
         return transcriptEntryDao.save(entry);
+    }
+
+    static String redactTranscriptPayload(String rawPayload) {
+        Map<String, Object> payload = JsonUtil.fromJsonQuietly(rawPayload, new TypeReference<>() { });
+        if (payload == null) {
+            throw new IllegalArgumentException("Transcript payload JSON must be an object");
+        }
+        // Redact typed values before serialization; rewriting escaped JSON can corrupt tool-result text.
+        String safePayload = JsonUtil.toJson(GatewaySecretRedactor.redactMap(payload));
+        if (safePayload == null) {
+            throw new IllegalArgumentException("Transcript payload JSON could not be serialized");
+        }
+        return safePayload;
+    }
+
+    private static void requireTranscriptPayloadBudget(String payload) {
+        if (payload.getBytes(StandardCharsets.UTF_8).length > TRANSCRIPT_MAX_UTF8_BYTES) {
+            throw new IllegalArgumentException("Transcript payload JSON exceeds the UTF-8 storage limit");
+        }
     }
 
     public Optional<AgentSession> findSession(String sessionId) {

@@ -200,7 +200,7 @@ class LogQueryWorkspaceIsolationContractTest {
                         null, null, null, COMPLEX_RESOURCE_FILTER, COMPLEX_ATTRIBUTE_FILTER, false, false),
                 service -> service.traceCoverageStats(null, null, null, null, null, null, null,
                         null, null, null, COMPLEX_RESOURCE_FILTER, COMPLEX_ATTRIBUTE_FILTER, false, false),
-                service -> service.trendStats(null, null, null, null, null, null, null,
+                service -> service.trendStats(1_734_005_460_000L, 1_734_005_520_000L, null, null, null, null, null,
                         null, null, null, COMPLEX_RESOURCE_FILTER, COMPLEX_ATTRIBUTE_FILTER, false, false),
                 service -> service.groupByStats(null, null, null, null, null, null, null,
                         null, null, null, COMPLEX_RESOURCE_FILTER, COMPLEX_ATTRIBUTE_FILTER,

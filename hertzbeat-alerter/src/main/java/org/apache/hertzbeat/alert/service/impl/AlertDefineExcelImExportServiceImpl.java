@@ -132,17 +132,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     }
 
 
-    private Byte getCellValueAsByte(Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-        if (Objects.requireNonNull(cell.getCellType()) == CellType.NUMERIC) {
-            return (byte) cell.getNumericCellValue();
-        }
-        return null;
-    }
-
-
     private AlertDefineDTO extractAlertDefineDataFromRow(Row row) {
         TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();

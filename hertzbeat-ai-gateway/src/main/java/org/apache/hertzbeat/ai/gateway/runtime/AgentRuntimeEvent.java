@@ -100,6 +100,11 @@ public class AgentRuntimeEvent {
                 .errorMessage(errorMessage).timestamp(timestamp).build();
     }
 
+    public static AgentRuntimeEvent runCancelled(String traceId, String message, Instant timestamp) {
+        return builder().type(AgentRuntimeEventType.ERROR).traceId(traceId).status(EventStatus.CANCELLED)
+                .errorMessage(message).timestamp(timestamp).build();
+    }
+
     public static AgentRuntimeEvent assistantMessageStarted(String itemId, String traceId, Instant timestamp) {
         return builder().type(AgentRuntimeEventType.ITEM_STARTED).itemKind(AgentRuntimeItemKind.ASSISTANT_MESSAGE)
                 .itemId(itemId).traceId(traceId).timestamp(timestamp).build();
@@ -211,6 +216,7 @@ public class AgentRuntimeEvent {
         IN_PROGRESS("in_progress"),
         COMPLETED("completed"),
         FAILED("failed"),
+        CANCELLED("cancelled"),
         DECLINED("declined"),
         WAITING_APPROVAL("waiting_approval"),
         APPROVED("approved"),

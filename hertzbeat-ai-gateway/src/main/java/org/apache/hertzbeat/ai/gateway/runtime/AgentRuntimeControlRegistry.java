@@ -52,7 +52,7 @@ public class AgentRuntimeControlRegistry {
             return false;
         }
         // Cancellation reasons are optional user input; the control signal still requires a visible message.
-        control.stop(StringUtils.hasText(reason) ? reason : "Runtime was cancelled.");
+        control.cancel(StringUtils.hasText(reason) ? reason : "Runtime was cancelled.");
         return true;
     }
 

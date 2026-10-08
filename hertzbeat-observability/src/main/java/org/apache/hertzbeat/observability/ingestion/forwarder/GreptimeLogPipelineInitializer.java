@@ -166,9 +166,8 @@ public class GreptimeLogPipelineInitializer {
 
     private HttpEntity<MultiValueMap<String, Object>> pipelineUploadRequest(GreptimeProperties greptimeProperties,
                                                                             String pipeline) {
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = headers(greptimeProperties);
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        addAuthenticationHeader(headers, greptimeProperties);
 
         HttpHeaders partHeaders = new HttpHeaders();
         partHeaders.setContentType(MediaType.parseMediaType("application/x-yaml"));
@@ -184,6 +183,7 @@ public class GreptimeLogPipelineInitializer {
 
     private HttpHeaders headers(GreptimeProperties greptimeProperties) {
         HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Greptime-DB-Name", StringUtils.defaultIfBlank(StringUtils.trim(greptimeProperties.database()), "public"));
         addAuthenticationHeader(headers, greptimeProperties);
         return headers;
     }

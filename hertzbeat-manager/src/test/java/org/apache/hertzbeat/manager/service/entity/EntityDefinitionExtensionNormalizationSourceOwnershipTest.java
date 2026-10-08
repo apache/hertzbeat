@@ -62,7 +62,8 @@ class EntityDefinitionExtensionNormalizationSourceOwnershipTest {
         assertTrue(extensionSource.contains("firstNonNull("));
         assertTrue(extensionSource.contains("integrations"));
         assertTrue(extensionSource.contains("extensions"));
-        assertTrue(extensionSource.contains("private Map<String, Object> toObjectMap("));
+        assertTrue(extensionSource.contains("EntityDefinitionMaps.toObjectMap("));
+        assertFalse(extensionSource.contains("private Map<String, Object> toObjectMap("));
         assertTrue(extensionSource.contains("objectMap.isEmpty() ? Collections.emptyMap() : objectMap"));
     }
 }

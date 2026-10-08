@@ -28,6 +28,12 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(prefix = "spring.flyway", name = "enabled", havingValue = "true")
 public class FlywayConfiguration {
 
+    /** Spring Boot registers callback beans on the same Flyway instance used before JPA. */
+    @Bean
+    public H2LegacyHistoryIndexCallback h2LegacyHistoryIndexCallback() {
+        return new H2LegacyHistoryIndexCallback();
+    }
+
     /** Retains an explicit initializer while preserving Spring Boot's migrate-before-JPA contract. */
     @Bean
     public FlywayMigrationInitializer flywayInitializer(Flyway flyway) {

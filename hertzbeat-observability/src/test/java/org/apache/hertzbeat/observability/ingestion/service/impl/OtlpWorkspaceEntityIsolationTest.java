@@ -83,7 +83,7 @@ class OtlpWorkspaceEntityIsolationTest {
         assertThrows(TelemetryStorageUnavailableException.class,
                 () -> service.getMetricsInventory(
                         "team-a", 42L, null, 1_000L, 2_000L,
-                        null, null, null, null));
+                        null, null, null, null, null, null, null, null));
         assertThrows(TelemetryStorageUnavailableException.class,
                 () -> service.getRelatedMetrics(
                         "team-a", 42L, null, 1_000L, 2_000L,

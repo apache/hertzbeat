@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.observability.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -88,6 +90,38 @@ class OpenTelemetryConfigTest {
                 greptimeHeaders("buildGreptimeOtlpTraceHeaders", properties).get("Authorization"));
     }
 
+    @Test
+    void traceIngressUsesOnlyBearerAuthenticationWhenExplicitlyEnabled() throws Exception {
+        OpenTelemetryConfig config = new OpenTelemetryConfig();
+        OtelTraceIngressProperties ingress = new OtelTraceIngressProperties();
+        ingress.setEnabled(true);
+        ingress.setEndpoint(URI.create("http://127.0.0.1:1161/api/otlp/v1/traces"));
+        ingress.setToken("intake-token");
+        GreptimeProperties greptime = new GreptimeProperties(true, "127.0.0.1:4001",
+                "http://127.0.0.1:4000", "public", "greptime", "greptime", "1d");
+
+        assertEquals("http://127.0.0.1:1161/api/otlp/v1/traces",
+                traceEndpoint(config, greptime, ingress));
+        Map<String, String> headers = traceHeaders(config, greptime, ingress);
+        assertEquals(Map.of("Authorization", "Bearer intake-token"), headers);
+        assertFalse(headers.keySet().stream().anyMatch(header -> header.startsWith("X-Greptime-")));
+    }
+
+    @Test
+    void traceIngressDisabledKeepsTheExistingGreptimeDestinationAndHeaders() throws Exception {
+        OpenTelemetryConfig config = new OpenTelemetryConfig();
+        OtelTraceIngressProperties ingress = new OtelTraceIngressProperties();
+        GreptimeProperties greptime = new GreptimeProperties(true, "127.0.0.1:4001",
+                "http://127.0.0.1:4000", "observability", "greptime", "greptime", "1d");
+
+        assertEquals("http://127.0.0.1:4000/v1/otlp/v1/traces",
+                traceEndpoint(config, greptime, ingress));
+        Map<String, String> headers = traceHeaders(config, greptime, ingress);
+        assertEquals("observability", headers.get("X-Greptime-DB-Name"));
+        assertEquals("hzb_traces", headers.get("X-Greptime-Trace-Table-Name"));
+        assertEquals("greptime_trace_v1", headers.get("X-Greptime-Pipeline-Name"));
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, String> greptimeHeaders(String methodName, GreptimeProperties properties) throws Exception {
         Method method = OpenTelemetryConfig.class.getDeclaredMethod(methodName, GreptimeProperties.class);
@@ -103,5 +137,22 @@ class OpenTelemetryConfigTest {
         );
         method.setAccessible(true);
         return (String) method.invoke(new OpenTelemetryConfig(), properties, path);
+    }
+
+    private String traceEndpoint(OpenTelemetryConfig config, GreptimeProperties greptime,
+                                 OtelTraceIngressProperties ingress) throws Exception {
+        Method method = OpenTelemetryConfig.class.getDeclaredMethod(
+                "traceEndpoint", GreptimeProperties.class, OtelTraceIngressProperties.class);
+        method.setAccessible(true);
+        return (String) method.invoke(config, greptime, ingress);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, String> traceHeaders(OpenTelemetryConfig config, GreptimeProperties greptime,
+                                             OtelTraceIngressProperties ingress) throws Exception {
+        Method method = OpenTelemetryConfig.class.getDeclaredMethod(
+                "traceHeaders", GreptimeProperties.class, OtelTraceIngressProperties.class);
+        method.setAccessible(true);
+        return (Map<String, String>) method.invoke(config, greptime, ingress);
     }
 }

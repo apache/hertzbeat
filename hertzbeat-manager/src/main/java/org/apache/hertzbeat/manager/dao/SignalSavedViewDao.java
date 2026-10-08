@@ -21,9 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.SignalSavedViewEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  * Signal saved view dao.
@@ -34,7 +31,4 @@ public interface SignalSavedViewDao extends JpaRepository<SignalSavedViewEntity,
 
     Optional<SignalSavedViewEntity> findBySignalAndViewKey(String signal, String viewKey);
 
-    @Modifying
-    @Query("DELETE FROM SignalSavedViewEntity view WHERE view.signal = :signal AND view.viewKey = :viewKey")
-    void deleteBySignalAndViewKey(@Param("signal") String signal, @Param("viewKey") String viewKey);
 }

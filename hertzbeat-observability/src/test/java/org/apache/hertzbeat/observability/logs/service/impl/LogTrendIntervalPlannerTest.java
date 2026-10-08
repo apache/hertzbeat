@@ -26,6 +26,18 @@ import org.junit.jupiter.api.Test;
 class LogTrendIntervalPlannerTest {
 
     @Test
+    void explicitIntervalsUseInclusiveGridWithoutChangingAuto() {
+        assertEquals(60_000L, LogTrendIntervalPlanner.resolve(1000, 3000, null));
+        for (long interval : org.apache.hertzbeat.common.observability.dto.log.LogTrend.EXPLICIT_INTERVALS_MS) {
+            assertEquals(interval, LogTrendIntervalPlanner.resolve(1000, 3000, interval));
+        }
+        assertEquals(1000L, LogTrendIntervalPlanner.resolve(1000, 60999, 1000L));
+        assertThrows(org.apache.hertzbeat.observability.logs.service.LogAnalysisIntervalTooSmallException.class,
+                () -> LogTrendIntervalPlanner.resolve(1000, 61000, 1000L));
+        assertThrows(IllegalArgumentException.class, () -> LogTrendIntervalPlanner.resolve(1000, 2000, 2000L));
+    }
+
+    @Test
     void selectsTheSmallestCandidateThatKeepsAnInclusiveWindowWithinSixtyBuckets() {
         long alignedStart = 1_734_005_460_000L;
 
