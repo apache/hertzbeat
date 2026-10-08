@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""验证默认 HertzBeat 镜像的认证契约。"""
+"""Verify the authentication contract of the default HertzBeat image."""
 
 import base64
 import json
@@ -55,15 +55,17 @@ def decode_json(body, context):
     try:
         return json.loads(body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise AssertionError(f"{context} 未返回有效 JSON") from error
+        raise AssertionError(f"{context} did not return valid JSON") from error
 
 
 def assert_success_response(status, body, context):
     if status != 200:
-        raise AssertionError(f"{context} HTTP 状态码应为 200，实际为 {status}")
+        raise AssertionError(f"{context} returned HTTP {status}; expected 200")
     data = decode_json(body, context)
     if data.get("code") != 0:
-        raise AssertionError(f"{context} 业务状态码应为 0，实际为 {data.get('code')}")
+        raise AssertionError(
+            f"{context} returned business code {data.get('code')}; expected 0"
+        )
     return data.get("data")
 
 
@@ -71,7 +73,9 @@ def assert_no_authentication_challenge(headers, context):
     challenges = headers.get_all("WWW-Authenticate", [])
     if challenges:
         schemes = [challenge.split(maxsplit=1)[0] for challenge in challenges]
-        raise AssertionError(f"{context} 不应返回 WWW-Authenticate，实际协议为 {schemes}")
+        raise AssertionError(
+            f"{context} returned unexpected WWW-Authenticate schemes: {schemes}"
+        )
 
 
 def run_case(name, case):
@@ -87,14 +91,14 @@ def run_case(name, case):
 def anonymous_access_is_rejected_without_challenge():
     status, headers, _ = request(PROTECTED_RESOURCE)
     if status != 401:
-        raise AssertionError(f"匿名访问应返回 401，实际为 {status}")
-    assert_no_authentication_challenge(headers, "匿名访问")
+        raise AssertionError(f"Anonymous access returned HTTP {status}; expected 401")
+    assert_no_authentication_challenge(headers, "Anonymous access")
 
 
 def invalid_bearer_is_rejected_without_challenge(token):
     parts = token.split(".")
     if len(parts) != 3 or not parts[2]:
-        raise AssertionError("登录接口返回的 token 不是 JWT")
+        raise AssertionError("The login token is not a JWT")
     replacement = "A" if parts[2][0] != "A" else "B"
     parts[2] = replacement + parts[2][1:]
     invalid_token = ".".join(parts)
@@ -102,8 +106,8 @@ def invalid_bearer_is_rejected_without_challenge(token):
         PROTECTED_RESOURCE, authorization=f"Bearer {invalid_token}"
     )
     if status != 401:
-        raise AssertionError(f"无效 JWT 应返回 401，实际为 {status}")
-    assert_no_authentication_challenge(headers, "无效 JWT")
+        raise AssertionError(f"Invalid JWT returned HTTP {status}; expected 401")
+    assert_no_authentication_challenge(headers, "Invalid JWT")
 
 
 def login():
@@ -112,15 +116,15 @@ def login():
         method="POST",
         payload={"type": 0, "identifier": USERNAME, "credential": PASSWORD},
     )
-    data = assert_success_response(status, body, "表单登录")
+    data = assert_success_response(status, body, "Form login")
     if not isinstance(data, dict):
-        raise AssertionError("表单登录响应缺少 data 对象")
+        raise AssertionError("Form login response is missing the data object")
     token = data.get("token")
     refresh_token = data.get("refreshToken")
     if not isinstance(token, str) or not token:
-        raise AssertionError("表单登录响应缺少 token")
+        raise AssertionError("Form login response is missing token")
     if not isinstance(refresh_token, str) or not refresh_token:
-        raise AssertionError("表单登录响应缺少 refreshToken")
+        raise AssertionError("Form login response is missing refreshToken")
     return token, refresh_token
 
 
@@ -128,7 +132,7 @@ def bearer_access_succeeds(token):
     status, _, body = request(
         PROTECTED_RESOURCE, authorization=f"Bearer {token}"
     )
-    assert_success_response(status, body, "JWT 访问")
+    assert_success_response(status, body, "JWT access")
 
 
 def basic_access_succeeds():
@@ -137,7 +141,7 @@ def basic_access_succeeds():
         PROTECTED_RESOURCE,
         authorization=f"Basic {credentials.decode('ascii')}",
     )
-    assert_success_response(status, body, "Basic 访问")
+    assert_success_response(status, body, "Basic access")
 
 
 def refresh_token_succeeds(refresh_token):
@@ -146,28 +150,45 @@ def refresh_token_succeeds(refresh_token):
         method="POST",
         payload={"token": refresh_token},
     )
-    data = assert_success_response(status, body, "刷新令牌")
-    if not isinstance(data, dict) or not data.get("token") or not data.get("refreshToken"):
-        raise AssertionError("刷新令牌响应缺少 token 或 refreshToken")
+    data = assert_success_response(status, body, "Token refresh")
+    if (
+        not isinstance(data, dict)
+        or not data.get("token")
+        or not data.get("refreshToken")
+    ):
+        raise AssertionError("Token refresh response is missing token or refreshToken")
 
     status, _, body = request(
         PROTECTED_RESOURCE, authorization=f"Bearer {data['token']}"
     )
-    assert_success_response(status, body, "刷新后的 JWT 访问")
+    assert_success_response(status, body, "Refreshed JWT access")
 
 
 def main():
-    print(f"HertzBeat 认证契约测试: {SERVER}")
-    run_case("匿名访问返回 401 且不触发浏览器认证", anonymous_access_is_rejected_without_challenge)
-    token, refresh_token = run_case("表单登录返回访问令牌和刷新令牌", login)
+    print(f"HertzBeat authentication contract tests: {SERVER}")
     run_case(
-        "无效 JWT 返回 401 且不触发浏览器认证",
+        "anonymous access returns 401 without a browser authentication challenge",
+        anonymous_access_is_rejected_without_challenge,
+    )
+    token, refresh_token = run_case(
+        "form login returns access and refresh tokens", login
+    )
+    run_case(
+        "invalid JWT returns 401 without a browser authentication challenge",
         lambda: invalid_bearer_is_rejected_without_challenge(token),
     )
-    run_case("有效 JWT 可访问受保护接口", lambda: bearer_access_succeeds(token))
-    run_case("默认 Basic 认证可访问受保护接口", basic_access_succeeds)
-    run_case("刷新令牌可签发并使用新 JWT", lambda: refresh_token_succeeds(refresh_token))
-    print("认证契约测试全部通过。")
+    run_case(
+        "valid JWT can access a protected API", lambda: bearer_access_succeeds(token)
+    )
+    run_case(
+        "default Basic authentication can access a protected API",
+        basic_access_succeeds,
+    )
+    run_case(
+        "refresh token issues a usable JWT",
+        lambda: refresh_token_succeeds(refresh_token),
+    )
+    print("All authentication contract tests passed.")
 
 
 if __name__ == "__main__":
