@@ -1,0 +1,66 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.popup {
+  max-width: min(720px, 85vw);
+}
+.options {
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.option {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.option[aria-selected='true'] {
+  background: var(--ant-color-primary-bg);
+}
+.label {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.kind {
+  flex: none;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.match {
+  background: var(--hb-bg-selected);
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--hb-brand-accent);
+  text-underline-offset: 2px;
+}
+.recentStatus {
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.help {
+  border-top: 1px solid var(--hb-border-subtle);
+  padding-top: 8px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.recentTitle {
+  border-top: 1px solid var(--hb-border-subtle);
+  margin: 8px 0 4px;
+  padding-top: 8px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.help p {
+  margin: 4px 0;
+}

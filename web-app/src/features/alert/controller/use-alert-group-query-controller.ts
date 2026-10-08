@@ -18,8 +18,9 @@ export function useAlertGroupQueryController() {
   const query = readAlertGroupQuery(params);
   const source = writeAlertGroupQuery(query).toString();
   useCanonicalQuerySearch(locationSearch, source, setParams);
-  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
+  const { value: search, setValue: setSearch } = useStringQueryDraft(query.search, query.search);
   const updateQuery = (patch: Partial<AlertGroupQuery>) => {
+    if (patch.search !== undefined) setSearch(patch.search.trim());
     setParams(writeAlertGroupQuery({ ...query, ...patch }));
   };
   const replacePageIndex = useCallback(

@@ -6,17 +6,9 @@
  */
 
 import type { PluginLoader } from '@perses-dev/plugin-system';
-import { dynamicImportPluginLoader, getPluginModuleCompoundKey } from '@perses-dev/plugin-system';
-// The 0.13.0 CommonJS entry resolves a non-existent lib/package.json. Pin the
-// published ESM entry until the upstream package corrects that export.
-import * as timeSeriesChartPlugin from '@perses-dev/timeseries-chart-plugin/lib/index.js';
+import { getPluginModuleCompoundKey } from '@perses-dev/plugin-system';
 
-import {
-  HertzBeatSnapshotLogQuery,
-  HertzBeatSnapshotTimeSeriesQuery,
-  HertzBeatSnapshotTraceQuery,
-  hertzBeatSnapshotPluginModule
-} from './hertzbeat-snapshot-query';
+import { HertzBeatSnapshotLogQuery, HertzBeatSnapshotTimeSeriesQuery } from './hertzbeat-snapshot-query';
 
 export function withCompoundPluginKeys(loader: PluginLoader): PluginLoader {
   return {
@@ -45,19 +37,5 @@ export function withCompoundPluginKeys(loader: PluginLoader): PluginLoader {
 
 export const hertzBeatSnapshotPlugin = {
   HertzBeatSnapshotLogQuery,
-  HertzBeatSnapshotTimeSeriesQuery,
-  HertzBeatSnapshotTraceQuery
+  HertzBeatSnapshotTimeSeriesQuery
 };
-
-export const hertzBeatPersesPluginLoader = withCompoundPluginKeys(
-  dynamicImportPluginLoader([
-    {
-      resource: hertzBeatSnapshotPluginModule,
-      importPlugin: () => Promise.resolve(hertzBeatSnapshotPlugin)
-    },
-    {
-      resource: timeSeriesChartPlugin.getPluginModule(),
-      importPlugin: () => Promise.resolve(timeSeriesChartPlugin)
-    }
-  ])
-);

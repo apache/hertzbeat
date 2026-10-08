@@ -204,6 +204,8 @@ export type AgentTranscriptMessage = {
   sequence: number;
   role: 'user' | 'assistant' | 'toolResult' | 'compactionSummary';
   text: string;
+  toolCalls?: { toolCallId: string; toolName: string }[];
+  toolCallId?: string;
   toolName?: string;
   errorMessage?: string;
   createdAt: string | null;

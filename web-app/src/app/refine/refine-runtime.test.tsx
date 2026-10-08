@@ -61,7 +61,8 @@ const setupApi = vi.hoisted(() => ({ loadSetupStatus: vi.fn() }));
 
 vi.mock('@/core/auth/session-api', async () => {
   const actual = await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api');
-  return { ...actual, getSession: vi.fn().mockResolvedValue(authenticatedSession) };
+  const getSession = vi.fn().mockResolvedValue(authenticatedSession);
+  return { ...actual, getSession, getSessionWithRecovery: getSession };
 });
 vi.mock('@/features/monitor/navigation', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor/navigation')>()),

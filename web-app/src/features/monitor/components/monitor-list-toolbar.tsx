@@ -67,6 +67,7 @@ function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<Mon
         value={draft.search}
         allowClear
         disabled={disabled}
+        aria-label={t('monitor.search')}
         placeholder={t('monitor.search')}
         onChange={event => actions.setSearch(event.target.value)}
         onPressEnter={actions.submitSearch}
@@ -89,6 +90,7 @@ function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<Mon
         value={draft.labels}
         allowClear
         disabled={disabled}
+        aria-label={t('labels.filter')}
         placeholder={t('labels.filter')}
         onChange={event => actions.setLabels(event.target.value)}
         onPressEnter={actions.submitFilters}

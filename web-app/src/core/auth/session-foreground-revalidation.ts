@@ -16,7 +16,7 @@
  */
 
 import { hasSessionIdentityBoundaryChanged } from './session-cache-boundary';
-import { anonymousSession, getSession, SessionRequestError, type UiSession } from './session-api';
+import { anonymousSession, getSessionWithRecovery, SessionRequestError, type UiSession } from './session-api';
 import type { ReplaceSessionIdentity } from './session-identity-context';
 
 type SessionIdentitySnapshot = {
@@ -32,6 +32,7 @@ type SessionRevalidationOwner = {
 type ForegroundSessionRevalidationOptions = {
   getSnapshot: () => SessionIdentitySnapshot;
   replaceIdentity: ReplaceSessionIdentity;
+  updateSession: (generation: number, session: UiSession) => void;
 };
 
 type PendingSessionRead = {
@@ -42,7 +43,8 @@ type PendingSessionRead = {
 
 export function startForegroundSessionRevalidation({
   getSnapshot,
-  replaceIdentity
+  replaceIdentity,
+  updateSession
 }: ForegroundSessionRevalidationOptions) {
   let active = true;
   let pending: PendingSessionRead | undefined;
@@ -63,19 +65,25 @@ export function startForegroundSessionRevalidation({
 
   async function readAuthoritativeSession(owner: SessionRevalidationOwner, signal: AbortSignal) {
     try {
-      const nextSession = await getSession({ signal });
-      if (!ownsCurrentGeneration(owner.generation)) return;
+      const nextSession = await getSessionWithRecovery({
+        signal,
+        recover: () => ownsCurrentOwner(owner) && owner.session.authenticated
+      });
+      if (!ownsCurrentOwner(owner)) return;
       if (hasSessionIdentityBoundaryChanged(owner.session, nextSession)) {
         replaceIdentity(nextSession);
+      } else {
+        updateSession(owner.generation, nextSession);
       }
     } catch (reason) {
-      if (!ownsCurrentGeneration(owner.generation) || signal.aborted) return;
+      if (!ownsCurrentOwner(owner) || signal.aborted) return;
       if (isAuthoritativeSessionRejection(reason)) replaceIdentity(anonymousSession);
     }
   }
 
-  function ownsCurrentGeneration(generation: number) {
-    return active && getSnapshot().generation === generation;
+  function ownsCurrentOwner(owner: SessionRevalidationOwner) {
+    const snapshot = getSnapshot();
+    return active && snapshot.generation === owner.generation && snapshot.session === owner.session;
   }
 
   function onVisibilityChange() {

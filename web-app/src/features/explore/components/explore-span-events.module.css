@@ -1,0 +1,44 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.events {
+  font-size: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.events > li {
+  border-bottom: 1px solid var(--hb-border-subtle);
+  padding-block: var(--hb-space-2);
+}
+.events summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.events time {
+  margin-inline-start: var(--hb-space-3);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.events dl {
+  margin: var(--hb-space-2) 0;
+}
+.events dl > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.4fr) minmax(0, 1fr);
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-1);
+}
+.events dt {
+  color: var(--hb-text-secondary);
+  overflow-wrap: anywhere;
+}
+.events dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .events dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

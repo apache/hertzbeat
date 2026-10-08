@@ -1,0 +1,61 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.numbers {
+  min-width: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: var(--hb-space-3);
+  padding-block: var(--hb-space-3);
+}
+.number {
+  min-width: 0;
+  min-height: 130px;
+  padding: var(--hb-space-3);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 4px;
+}
+.number h4 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.labels {
+  margin-top: var(--hb-space-1);
+  font-size: 11px;
+  color: var(--hb-text-secondary);
+  overflow-wrap: anywhere;
+}
+.value {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  min-height: 44px;
+  margin-top: var(--hb-space-2);
+  overflow-wrap: anywhere;
+}
+.value strong {
+  font-size: 25px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.value span,
+.number small,
+.help {
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+.help summary {
+  cursor: pointer;
+  min-height: 28px;
+  align-content: center;
+}
+.help summary:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+}
+.help p {
+  margin: 0;
+  padding-block: var(--hb-space-2);
+}

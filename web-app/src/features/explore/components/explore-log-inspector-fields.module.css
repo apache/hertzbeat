@@ -1,0 +1,162 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.valuePreview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.viewFull {
+  display: block;
+  padding-inline: 0;
+}
+.fullValue {
+  max-height: 60dvh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.fieldActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--hb-space-1);
+}
+
+.fieldMenu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+}
+.fieldMenu:hover {
+  background: var(--hb-bg-hover);
+}
+.fieldMenu:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+}
+.copyAnnouncement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.fieldSearch,
+.pendingFilter {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.fieldSearch {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--hb-bg-raised);
+}
+.pendingFilter {
+  justify-content: space-between;
+  font-size: 12px;
+}
+.emptyFields {
+  padding: var(--hb-space-3);
+  color: var(--hb-text-secondary);
+}
+.menuReason {
+  display: block;
+  max-width: 280px;
+  white-space: normal;
+  font-size: 11px;
+  color: var(--hb-text-secondary);
+}
+
+.tree {
+  padding: var(--hb-space-2);
+  font-family: var(--ant-font-family-code);
+  font-size: 12px;
+}
+.treeRow {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  grid-template-columns: minmax(0, 45%) 62px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.treeKey {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ant-color-link);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.treeType {
+  min-width: 0;
+  color: var(--hb-text-muted);
+  font-size: 11px;
+}
+.treeValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.scalarValue {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.treeValue .valuePreview {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.treeValue .viewFull {
+  display: inline-flex;
+  flex: none;
+}
+.treeRow .fieldActions {
+  grid-column: 4;
+  justify-self: end;
+}
+.matchCount {
+  flex: none;
+  min-width: 30px;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+.treeRow mark {
+  background: var(--ant-color-warning-bg);
+  color: inherit;
+}
+.fieldSearch input {
+  min-width: 0;
+}
+.fieldSearch button {
+  flex: none;
+}
+
+.tree :global(.ant-tree-treenode) {
+  scroll-margin-top: 64px;
+}
+
+@media (width <= 420px) {
+  .treeRow {
+    grid-template-columns: minmax(0, 35%) 50px minmax(0, 1fr) 28px;
+    gap: var(--hb-space-1);
+  }
+}

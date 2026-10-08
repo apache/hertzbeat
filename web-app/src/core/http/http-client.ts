@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { withCookieHeaderAdmission } from './cookie-header-admission';
+
 const CSRF_COOKIE = 'hb_ui_csrf';
 const CSRF_HEADER = 'X-HertzBeat-CSRF';
 const SESSION_PATH = '/api/ui/session';
@@ -39,7 +41,7 @@ type BrowserSessionRefreshCoordinator = (
 let sessionRefreshCoordinator: BrowserSessionRefreshCoordinator | undefined;
 
 export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  const request = withBrowserSession(init);
+  const request = inputDefaults(input, init);
   const response = await fetchWithTimeout(input, request);
   const method = (request.method ?? 'GET').toUpperCase();
 
@@ -60,23 +62,24 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
  * deadline used for finite requests. Mutating streams are never replayed.
  */
 export function apiStreamFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, withBrowserSession(init));
+  return fetchHeaders(input, inputDefaults(input, init));
 }
 
 function isSessionManagementRequest(input: RequestInfo | URL) {
-  const value = requestUrl(input);
-  return (
-    value === SESSION_PATH ||
-    value.endsWith(SESSION_PATH) ||
-    value === SESSION_REFRESH_PATH ||
-    value.endsWith(SESSION_REFRESH_PATH)
-  );
+  const pathname = new URL(requestUrl(input), 'http://localhost').pathname;
+  return pathname === SESSION_PATH || pathname === SESSION_REFRESH_PATH;
 }
 
 function requestUrl(input: RequestInfo | URL) {
   if (typeof input === 'string') return input;
   if (input instanceof URL) return input.href;
   return input.url;
+}
+
+function inputDefaults(input: RequestInfo | URL, init: RequestInit): RequestInit {
+  return input instanceof Request
+    ? { method: input.method, headers: input.headers, credentials: input.credentials, signal: input.signal, ...init }
+    : init;
 }
 
 function withBrowserSession(init: RequestInit): RequestInit {
@@ -87,6 +90,10 @@ function withBrowserSession(init: RequestInit): RequestInit {
     if (csrf) headers.set(CSRF_HEADER, csrf);
   }
   return { ...init, method, headers, credentials: init.credentials ?? 'same-origin' };
+}
+
+export function hasBrowserSessionRefreshCoordinator() {
+  return sessionRefreshCoordinator !== undefined;
 }
 
 export function refreshBrowserSession(options?: BrowserSessionRefreshOptions) {
@@ -115,10 +122,18 @@ export function registerBrowserSessionRefreshCoordinator(coordinator: BrowserSes
   };
 }
 
+function fetchHeaders(input: RequestInfo | URL, init: RequestInit) {
+  return withCookieHeaderAdmission(
+    isSessionManagementRequest(input) ? 'exclusive' : 'shared',
+    signal => fetch(input, withBrowserSession({ ...init, signal })),
+    init.signal
+  );
+}
+
 function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit) {
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
-  return fetch(input, { ...init, signal });
+  return fetchHeaders(input, { ...init, signal });
 }
 
 function readCookie(name: string) {

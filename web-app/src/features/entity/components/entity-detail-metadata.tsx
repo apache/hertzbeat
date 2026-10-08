@@ -9,27 +9,32 @@ import type { EntityDetail, EntityRecord } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
 import { EntityEvidenceSources } from './entity-evidence-sources';
 import styles from './entity-view.module.css';
+import { EntityDetailSection } from './entity-detail-navigation';
 
 export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
   const { t } = useTranslation();
   return (
     <>
-      <OperationalSection title={t('entity.sections.details')}>
-        <Descriptions className={styles.metadataGrid!} size="small" column={2} items={baseItems(t, detail)} />
-      </OperationalSection>
-      <OperationalSection title={t('entity.sections.evidence')}>
-        {detail.evidence ? (
-          <Descriptions
-            className={styles.evidenceGrid!}
-            size="small"
-            column={5}
-            items={evidenceItems(t, detail.evidence)}
-          />
-        ) : (
-          <OperationalStatePanel kind="empty" title={t('entity.missing.evidence')} />
-        )}
-        <EntityEvidenceSources summary={detail.unifiedEvidence} />
-      </OperationalSection>
+      <EntityDetailSection id="entity-details" label={t('entity.sections.details')}>
+        <OperationalSection title={t('entity.sections.details')}>
+          <Descriptions className={styles.metadataGrid!} size="small" column={2} items={baseItems(t, detail)} />
+        </OperationalSection>
+      </EntityDetailSection>
+      <EntityDetailSection id="entity-evidence" label={t('entity.sections.evidence')}>
+        <OperationalSection title={t('entity.sections.evidence')}>
+          {detail.evidence ? (
+            <Descriptions
+              className={styles.evidenceGrid!}
+              size="small"
+              column={5}
+              items={evidenceItems(t, detail.evidence)}
+            />
+          ) : (
+            <OperationalStatePanel kind="empty" title={t('entity.missing.evidence')} />
+          )}
+          <EntityEvidenceSources summary={detail.unifiedEvidence} />
+        </OperationalSection>
+      </EntityDetailSection>
     </>
   );
 }
@@ -37,9 +42,11 @@ export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
 export function EntityIdentityMetadata({ entity }: { entity: EntityRecord }) {
   const { t } = useTranslation();
   return (
-    <OperationalSection title={t('entity.sections.details')}>
-      <Descriptions className={styles.metadataGrid!} size="small" column={2} items={entityItems(t, entity)} />
-    </OperationalSection>
+    <EntityDetailSection id="entity-details" label={t('entity.sections.details')}>
+      <OperationalSection title={t('entity.sections.details')}>
+        <Descriptions className={styles.metadataGrid!} size="small" column={2} items={entityItems(t, entity)} />
+      </OperationalSection>
+    </EntityDetailSection>
   );
 }
 
@@ -51,7 +58,15 @@ function baseItems(t: (key: string) => string, detail: EntityDetail) {
       label: t('entity.fields.status'),
       children: <Tag>{localizeEntityCode(t, 'status', detail.status?.status)}</Tag>
     },
-    { key: 'reason', label: t('entity.fields.reason'), children: detail.status?.reason || '—' },
+    {
+      key: 'reason',
+      label: t('entity.fields.reason'),
+      children: (
+        <span id="entity-status-evidence" tabIndex={-1}>
+          {detail.status?.reason || '—'}
+        </span>
+      )
+    },
     ...entityItems(t, entity)
   ];
 }

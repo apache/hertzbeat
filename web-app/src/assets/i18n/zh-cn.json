@@ -70,8 +70,8 @@
     },
     "legend": {
       "healthy": "健康",
-      "warning": "警告",
-      "critical": "严重",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
       "unknown": "未知",
       "selected": "已选路径"
     },
@@ -165,6 +165,9 @@
     }
   },
   "entity": {
+    "results": {
+      "total": "资源总数：{{count}}"
+    },
     "title": "资源目录",
     "description": "服务、主机、数据库等资源会在此自动统一，无需理解或手工建模抽象实体。",
     "empty": "没有符合当前筛选条件的资源。",
@@ -260,7 +263,10 @@
       "global": "全局",
       "manageSilences": "管理静默策略",
       "manageInhibits": "管理抑制策略",
-      "types": { "silence": "静默", "inhibit": "抑制" }
+      "types": {
+        "silence": "静默",
+        "inhibit": "抑制"
+      }
     },
     "operations": {
       "title": "建议操作",
@@ -316,7 +322,13 @@
         "endpoint": "端点",
         "k8s_workload": "Kubernetes 工作负载"
       },
-      "status": { "unknown": "未知", "healthy": "正常", "degraded": "降级", "critical": "严重", "paused": "已暂停" },
+      "status": {
+        "unknown": "未知",
+        "healthy": "正常",
+        "degraded": "降级",
+        "critical": "严重",
+        "paused": "已暂停"
+      },
       "source": {
         "manual": "手动维护",
         "definition": "定义文件",
@@ -326,7 +338,11 @@
         "otel": "OpenTelemetry",
         "telemetry": "遥测数据"
       },
-      "direction": { "incoming": "入站", "outgoing": "出站", "related": "关联" },
+      "direction": {
+        "incoming": "入站",
+        "outgoing": "出站",
+        "related": "关联"
+      },
       "identityType": {
         "derived": "自动识别",
         "manual": "手动配置",
@@ -335,7 +351,13 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "查询指标", "logs": "查询日志", "traces": "查询链路" },
+    "explore": {
+      "metrics": "查询指标",
+      "logs": "查询日志",
+      "traces": "查询链路",
+      "searchSyntax": "查询语法",
+      "structuredSearch": "结构化搜索"
+    },
     "signals": {
       "title": "实体信号调查",
       "availability": "信号可用性",
@@ -344,7 +366,10 @@
       "items": "{{count}} 项",
       "traceDetail": "链路详情",
       "boundMonitors": "绑定监控",
-      "boundMonitorsState": { "unknown": "监控绑定证据不可用。", "empty": "没有绑定监控。" },
+      "boundMonitorsState": {
+        "unknown": "监控绑定证据不可用。",
+        "empty": "没有绑定监控。"
+      },
       "sections": {
         "metrics": "指标",
         "logs": "日志",
@@ -353,7 +378,12 @@
         "collection": "采集",
         "alerts": "告警"
       },
-      "states": { "available": "可用", "empty": "无数据", "unavailable": "不可用", "unknown": "未知" },
+      "states": {
+        "available": "可用",
+        "empty": "无数据",
+        "unavailable": "不可用",
+        "unknown": "未知"
+      },
       "compact": {
         "metrics": {
           "empty": "该时间窗口没有 RED 指标",
@@ -364,9 +394,21 @@
           "empty": "该时间窗口没有 RED 指标，其他指标源状态未知",
           "unavailable": "RED 指标不可用，其他指标源状态未知"
         },
-        "logs": { "empty": "该时间窗口没有日志", "unavailable": "日志不可用", "unknown": "日志可用性未知" },
-        "traces": { "empty": "该时间窗口没有链路", "unavailable": "链路不可用", "unknown": "链路可用性未知" },
-        "topology": { "empty": "没有关联实体", "unavailable": "拓扑不可用", "unknown": "拓扑可用性未知" },
+        "logs": {
+          "empty": "该时间窗口没有日志",
+          "unavailable": "日志不可用",
+          "unknown": "日志可用性未知"
+        },
+        "traces": {
+          "empty": "该时间窗口没有链路",
+          "unavailable": "链路不可用",
+          "unknown": "链路可用性未知"
+        },
+        "topology": {
+          "empty": "没有关联实体",
+          "unavailable": "拓扑不可用",
+          "unknown": "拓扑可用性未知"
+        },
         "collection": {
           "empty": "该时间窗口没有采集执行记录",
           "unavailable": "采集执行证据不可用",
@@ -378,7 +420,12 @@
           "unknown": "时间窗口内的告警证据未知"
         }
       },
-      "red": { "requestRate": "请求速率", "errorRate": "错误率", "latencyP95": "P95 延迟", "requests": "请求数" },
+      "red": {
+        "requestRate": "请求速率",
+        "errorRate": "错误率",
+        "latencyP95": "P95 延迟",
+        "requests": "请求数"
+      },
       "aria": {
         "requestRate": "请求速率可视化",
         "errorRate": "错误率可视化",
@@ -400,7 +447,12 @@
           "topology-related": "拓扑关系",
           "time-proximity": "时间邻近"
         },
-        "confidence": { "exact": "精确匹配", "high": "高置信度", "medium": "中等置信度", "low": "低置信度" }
+        "confidence": {
+          "exact": "精确匹配",
+          "high": "高置信度",
+          "medium": "中等置信度",
+          "low": "低置信度"
+        }
       },
       "alertsCurrentOnly": "当前活跃告警数不作为所选时间窗口的证据展示。",
       "query": {
@@ -409,7 +461,6 @@
         "truncated": "当前展示匹配证据的有界子集。",
         "truncationUnknown": "结果完整性未知。",
         "runtimeError": "可视化运行时无法渲染该证据。",
-        "investigationActions": "调查操作（{{count}} 条）",
         "invalid": "信号请求无效。",
         "permission": "没有权限查看该信号。",
         "overloaded": "信号存储繁忙，请重试。",
@@ -417,7 +468,9 @@
         "contract": "信号存储返回了无效响应。"
       }
     },
-    "topology": { "view": "查看拓扑" },
+    "topology": {
+      "view": "查看拓扑"
+    },
     "discovery": {
       "action": "发现资源",
       "title": "发现资源",
@@ -451,14 +504,23 @@
       "title": "导入资源定义",
       "description": "粘贴 YAML、JSON 或 curl 内联数据。预览不会产生更改，确认后才会导入。",
       "format": "定义格式",
-      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl 内联数据" },
+      "formats": {
+        "yaml": "YAML",
+        "json": "JSON",
+        "curl": "curl 内联数据"
+      },
       "content": "资源定义内容",
       "previewAction": "预览资源",
       "confirmAction": "确认导入",
       "previewTitle": "资源预览",
       "zeroWrite": "仅预览——尚未创建任何资源。",
       "details": "技术详情",
-      "fields": { "owner": "负责人", "environment": "环境", "namespace": "命名空间", "source": "来源" },
+      "fields": {
+        "owner": "负责人",
+        "environment": "环境",
+        "namespace": "命名空间",
+        "source": "来源"
+      },
       "associationSummary": "{{identities}} 个身份键，{{monitors}} 个监控关联，{{relations}} 个关系",
       "failure": {
         "validation": "定义需要修改后才能导入。",
@@ -484,7 +546,12 @@
       "zeroWrite": "仅预览——资源尚未更改。",
       "details": "技术详情",
       "associationSummary": "{{identities}} 个身份键，{{monitors}} 个监控关联，{{relations}} 个关系",
-      "fields": { "owner": "负责人", "environment": "环境", "namespace": "命名空间", "source": "来源" },
+      "fields": {
+        "owner": "负责人",
+        "environment": "环境",
+        "namespace": "命名空间",
+        "source": "来源"
+      },
       "missing": "未找到资源定义。",
       "loadFailure": {
         "permission": "您没有查看此资源定义的权限。",
@@ -556,12 +623,26 @@
         "endpoint": "端点",
         "k8s_workload": "Kubernetes 工作负载"
       },
-      "criticalities": { "low": "低", "medium": "中", "high": "高", "critical": "关键" },
+      "criticalities": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "关键"
+      },
       "validation": {
-        "type": { "required": "请选择资源类型。", "unsupported": "请选择支持的资源类型。" },
-        "name": { "required": "请填写名称。" },
-        "criticality": { "unsupported": "请选择支持的重要性。" },
-        "labels": { "invalid": "请按每行 key=value 的格式填写标签。" }
+        "type": {
+          "required": "请选择资源类型。",
+          "unsupported": "请选择支持的资源类型。"
+        },
+        "name": {
+          "required": "请填写名称。"
+        },
+        "criticality": {
+          "unsupported": "请选择支持的重要性。"
+        },
+        "labels": {
+          "invalid": "请按每行 key=value 的格式填写标签。"
+        }
       },
       "saveFailure": {
         "permission": "你没有保存此资源的权限。",
@@ -576,11 +657,8 @@
   "exploreMetric": {
     "series": "序列",
     "value": "数值",
-    "datasource": "数据源",
-    "queryMode": "查询模式",
     "trend": "指标趋势",
-    "chartUnavailable": "指标图表暂时不可用，采样数据仍可在下方查看。",
-    "filter": "标签条件 key=value",
+    "filter": "标签条件（key:value 或 key=value）",
     "groupBy": "按标签分组",
     "aggregation": "聚合方式",
     "temporalAggregation": "时间聚合",
@@ -591,18 +669,66 @@
       "increase": "增量",
       "delta": "差值"
     },
-    "step": "步长（秒），例如 60"
+    "step": "步长（秒）",
+    "copyQuery": "复制查询",
+    "queryCopied": "查询已复制",
+    "queryCopyFailed": "无法复制查询",
+    "catalogLoading": "正在加载指标名称…",
+    "catalog": "指标目录",
+    "searchMetrics": "搜索指标名称",
+    "searchExample": "例如 process_cpu",
+    "catalogUnavailable": "指标目录暂不可用。请重试或输入指标名称。",
+    "catalogEmpty": "当前范围和时间窗口没有匹配的指标名称。",
+    "catalogCount": "{{count}} 个匹配指标",
+    "catalogTruncated": "显示前 {{count}} 个匹配指标，请缩小搜索范围。",
+    "selectMetric": "从目录选择或输入指标名称，然后点击查询。",
+    "pendingDraft": "查询草稿已修改，结果仍来自上一次执行的查询。",
+    "chart": "图表",
+    "table": "表格",
+    "resultDisplay": "结果展示",
+    "receivedSamples": "已接收 {{count}} 个样本",
+    "sampleLimit": "显示已接收 {{received}} 个样本中最新的 {{shown}} 个",
+    "exportCsv": "下载 CSV",
+    "exportCsvHelp": "导出当前可见序列中所有实际返回的有效点，包括表格预览之外的点，并附对齐后的 UTC 显示时间和来源信息。空白单位表示未知。",
+    "exportCsvTooLarge": "CSV 文件过大。请缩短时间窗口或隐藏部分序列后重试。",
+    "exportCsvFailed": "无法导出这些指标结果，请重试。",
+    "seriesLabels": "序列标签",
+    "seriesReference": "序列",
+    "responseQuery": "已执行的查询",
+    "timeShiftSeconds": "与更早时段比较（秒）",
+    "rollup": "时间汇总",
+    "rollupOff": "关闭",
+    "rollupWindow": "汇总间隔",
+    "rollupHint": "服务端按回看时间窗汇总样本；此间隔同时设置查询步长。",
+    "nestedRollup": "第二层时间聚合",
+    "nestedRollupWindow": "第二层间隔",
+    "nestedRollupHint": "第二层聚合已限定范围的第一层结果，并设置输出步长。",
+    "stepExample": "例如 60",
+    "summary": {
+      "title": "采样摘要",
+      "scope": "仅统计返回的采样点；不合并分位数，单位以接口提供的值为准。",
+      "min": "最小值",
+      "max": "最大值",
+      "latest": "最新值",
+      "count": "采样数"
+    },
+    "defaultSum": "求和（默认）",
+    "defaultRaw": "原始样本（默认）",
+    "identityGroupingHint": "聚合保留服务和实体身份；分组可追加标签。",
+    "temporalWindowHint": "速率、增量和差值使用固定 5 分钟回看窗口；步长控制取点间隔。",
+    "countSeriesHint": "计数统计参与聚合的序列数，不是请求数或观测次数。",
+    "bucketHint": "保留桶边界 le。桶序列不等于延迟值或分位数。",
+    "bucketHelp": "直方图桶边界"
   },
   "exploreLog": {
     "mode": "日志模式",
     "history": "历史",
-    "query": "查询",
     "live": "实时",
     "detail": "日志详情",
     "openTrace": "查看链路",
     "resourceFilter": "资源属性 key=value",
     "attributeFilter": "日志属性 key:value",
-    "hideInternal": "隐藏内部日志",
+    "hideInternal": "隐藏基础设施日志",
     "hideNoise": "隐藏噪声日志",
     "resourceAttributes": "资源属性",
     "logAttributes": "日志属性",
@@ -626,28 +752,39 @@
     "trendEmpty": "此查询未返回趋势时间桶。",
     "trendInsufficient": "当前窗口只有一个时间桶（{{count}} 条日志）。",
     "statisticsUnavailable": "此统计区域无法加载。",
+    "overviewPermission": "你没有读取日志概览的权限。",
+    "trendPermission": "你没有读取日志趋势的权限。",
     "statistics": {
       "total": "总计",
-      "trace": "Trace",
-      "debug": "调试",
-      "info": "信息",
-      "warn": "警告",
-      "error": "错误",
-      "fatal": "致命"
-    }
+      "trace": "TRACE",
+      "debug": "DEBUG",
+      "info": "INFO",
+      "warn": "WARN",
+      "error": "ERROR",
+      "fatal": "FATAL"
+    },
+    "statisticsScope": "计数基于当前筛选。",
+    "scopeSuggestions": {
+      "hint": "候选可能不全，也可直接输入。",
+      "unavailable": "候选不可用，可直接输入。",
+      "empty": "暂无候选，可直接输入。"
+    },
+    "visibilityHint": "按已知基础设施和演示服务名排除；查看应用请筛选服务。"
   },
   "exploreTrace": {
+    "layout": {
+      "basicFilters": "基础筛选",
+      "filterHelp": "筛选语义",
+      "countHelp": "计数语义",
+      "trendHelp": "趋势归属",
+      "groupAction": "点击值按所选包含或排除模式切换草稿筛选；点击查询后应用。"
+    },
     "detail": "链路详情",
-    "loadFailed": "链路详情不可用。",
     "status": "状态",
     "kind": "类型",
     "scope": "埋点范围",
-    "spans": "个 Span",
-    "errors": "个错误",
-    "events": "事件",
     "spanAttributes": "Span 属性",
     "resourceAttributes": "资源属性",
-    "relatedMetrics": "相关指标",
     "minDuration": "最短耗时（毫秒）",
     "maxDuration": "最长耗时（毫秒）",
     "errorOnly": "仅错误链路",
@@ -660,14 +797,11 @@
     "hideInternal": "隐藏内部 Span"
   },
   "explore": {
-    "title": "可观测性",
     "description": "在同一时间范围内查询并关联指标、日志和链路。",
     "signalsNavigation": "信号导航",
-    "advancedFilters": "高级筛选",
+    "advancedFilters": "更多筛选",
     "activeFilters": "当前筛选",
-    "context": "排障上下文",
     "timeRange": "时间范围",
-    "exactWindow": "Onboarding exact window",
     "traceId": "Trace ID",
     "spanId": "Span ID",
     "traceIdContext": "Trace ID: {{value}}",
@@ -681,7 +815,6 @@
     "environmentContext": "环境：{{value}}",
     "metric": "指标",
     "samples": "样本数",
-    "labels": "标签",
     "time": "时间",
     "severity": "级别",
     "service": "服务",
@@ -689,9 +822,7 @@
     "trace": "链路",
     "operation": "操作",
     "operationContext": "操作：{{value}}",
-    "duration": "耗时",
     "relatedLogs": "相关日志",
-    "open": "打开",
     "signals": {
       "metrics": "指标",
       "logs": "日志",
@@ -720,6 +851,23 @@
       "metrics": "当前上下文没有指标序列。",
       "logs": "当前上下文没有日志。",
       "traces": "当前上下文没有链路。"
+    },
+    "autoRefresh": "自动刷新",
+    "logSort": {
+      "menu": "排序 {{field}}",
+      "numberAsc": "数值：从小到大",
+      "numberDesc": "数值：从大到小",
+      "textAsc": "文本：A 到 Z",
+      "textDesc": "文本：Z 到 A",
+      "applied": "当前排序：{{value}}",
+      "pending": "待应用排序：{{value}}。点击查询后生效。",
+      "reset": "撤销排序修改",
+      "hint": "排序覆盖全部匹配日志。数值排序不转换字符串；文本排序区分大小写。缺失值及其他类型排在最后。",
+      "historyOnly": "字段排序用于历史日志。实时模式显示新收到的日志。",
+      "invalid": "日志排序无效，请选择支持的字段和顺序。",
+      "restore": "最新优先",
+      "unavailable": "此列不支持排序。",
+      "pendingShort": "排序待应用"
     }
   },
   "instrumentation": {
@@ -816,8 +964,14 @@
         "available": "可用",
         "unavailable": "不可用"
       },
-      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
-      "security": { "tls": "TLS", "plaintext": "未加密" },
+      "transport": {
+        "http_protobuf": "OTLP HTTP/protobuf",
+        "grpc": "OTLP gRPC"
+      },
+      "security": {
+        "tls": "TLS",
+        "plaintext": "未加密"
+      },
       "profileReason": {
         "unavailable": "此目标位置尚不可选择。",
         "notAdvertised": "管理员尚未发布安全的接入地址。",
@@ -860,7 +1014,9 @@
         "plaintext_transport_warning": "未加密传输",
         "no_persistence": "不会在 HertzBeat 端创建安装程序"
       },
-      "warning": { "plaintext_authorization": "Authorization 请求头将通过未加密连接传输。" },
+      "warning": {
+        "plaintext_authorization": "Authorization 请求头将通过未加密连接传输。"
+      },
       "note": {
         "telemetrygen_no_persistence": "仅在本次验证中运行官方工具，并在完成后将其移除。",
         "merge_exporter_into_each_pipeline": "在每条需要发送数据的信号管道中引用该 exporter。",
@@ -874,7 +1030,7 @@
       "directory": {
         "search": "搜索来源",
         "categories": "来源分类",
-        "all": "全部来源",
+        "all": "可用指引",
         "group": {
           "quick_start": "快速开始",
           "applications": "应用",
@@ -968,6 +1124,20 @@
           "gcp_compute_engine_description": "查看信号支持情况并接入 Google Compute Engine 遥测数据。",
           "gcp_gke": "Google Kubernetes Engine",
           "gcp_gke_description": "查看信号支持情况并接入 Google Kubernetes Engine 遥测数据。"
+        },
+        "commonPaths": "常用接入路径",
+        "unsupportedGuides": "OTLP 指引能力详情（{{count}} 项暂无指引）",
+        "otlpBoundary": "这些来源暂未提供 OTLP 接入指引；这不代表 Agentless 主动监控不支持这些目标。",
+        "guideUnavailable": "暂无 OTLP 指引",
+        "agentlessBoundary": "无需应用探针监控数据库、主机或网络设备？请使用主动监控。",
+        "noAvailableMatches": "没有匹配此选择的可用接入指引。"
+      },
+      "guide": {
+        "java_spring_boot_zero_code": {
+          "disable_disable_command": "从 JAVA_TOOL_OPTIONS 或应用的 JVM 启动参数中移除 OpenTelemetry 的 -javaagent 选项，保留其他 JVM 参数。更新提供该选项的服务或容器配置，然后重启目标应用。"
+        },
+        "java_java_jar_zero_code": {
+          "disable_disable_command": "从 JAVA_TOOL_OPTIONS 或应用的 JVM 启动参数中移除 OpenTelemetry 的 -javaagent 选项，保留其他 JVM 参数。更新提供该选项的服务或容器配置，然后重启目标应用。"
         }
       }
     },
@@ -1009,7 +1179,7 @@
       "expires": "有效期",
       "scope": "范围",
       "fixedScope": "OTLP 接收",
-      "ready": "访问令牌已在内存中生成",
+      "ready": "访问令牌仅保存在当前会话内存中",
       "notGenerated": "尚未生成访问令牌",
       "generateError": "无法生成访问令牌。",
       "acknowledgementRequired": "请在退出或重新开始前保存此一次性令牌。它仅存在于当前页面的内存中。",
@@ -1067,7 +1237,8 @@
       "startDetection": "开始检查信号",
       "retryDetection": "重试检测",
       "openExplore": "在 Explore 中打开",
-      "copy": "复制"
+      "copy": "复制",
+      "newDetection": "开始新的信号检查"
     },
     "environment": {
       "vm": "主机 / 虚拟机",
@@ -1143,7 +1314,7 @@
       "waiting": "正在配置时间窗口内等待遥测数据。",
       "status": {
         "waiting": "等待中",
-        "received": "已接收",
+        "received": "窗口内已接收",
         "unsupported": "不受支持",
         "unavailable": "存储不可用",
         "error": "检测错误"
@@ -1154,9 +1325,15 @@
         "storage_unavailable": "遥测存储不可用。",
         "storage_query_failed": "无法查询遥测存储。",
         "collector_unavailable": "所选 Collector 不可用。",
-        "authentication_failed": "遥测认证失败。",
+        "authentication_failed": "所选 Collector 报告鉴权失败，请检查其接入凭据。",
         "invalid_context": "检测上下文无效。"
-      }
+      },
+      "fixedWindow": "观测窗口：{{start}} — {{end}}",
+      "observationOnly": "已接收表示在此固定窗口内观测到数据，不代表当前仍在运行。请开始新检查以观测后续遥测。",
+      "lastReceived": "窗口内最近接收时间：{{time}}",
+      "windowComplete": "此观测窗口已结束。请开始新检查以观测后续遥测。",
+      "notObserved": "窗口内未观测到",
+      "noneInWindow": "此窗口内未观测到匹配的遥测数据。"
     }
   },
   "auth": {
@@ -1207,7 +1384,12 @@
         "title": "主动监控",
         "summary": "HertzBeat 按计划连接目标并采集指标。",
         "flowLabel": "HertzBeat 主动连接一组目标类型",
-        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "targets": {
+          "mysql": "MySQL",
+          "linux": "Linux",
+          "redis": "Redis",
+          "http": "HTTP"
+        },
         "outcomeTitle": "采集数据",
         "outcomeAvailability": "可用性与连接检测",
         "outcomeMetrics": "CPU、内存、磁盘、连接数和响应时间",
@@ -1219,7 +1401,12 @@
         "title": "遥测上报",
         "summary": "应用或 OpenTelemetry Collector 向 HertzBeat 上报遥测数据。",
         "flowLabel": "一组应用和 OpenTelemetry Collector 向 HertzBeat 上报",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
+        "sources": {
+          "java": "Java",
+          "dotnet": ".NET",
+          "node": "Node.js",
+          "collector": "OTel Collector"
+        },
         "outcomeTitle": "遥测信号",
         "outcomeSignals": "Metrics、Logs 和 Traces",
         "outcomeDiagnosis": "请求路径、慢点和错误链路",
@@ -1250,7 +1437,12 @@
       "server": "服务端",
       "storage": "GreptimeDB",
       "collectors": "采集器",
-      "status": { "available": "可用", "degraded": "降级", "unavailable": "不可用", "unknown": "未知" }
+      "status": {
+        "available": "可用",
+        "degraded": "降级",
+        "unavailable": "不可用",
+        "unknown": "未知"
+      }
     },
     "runtimeStates": {
       "permission": "当前账号无权读取运行状态。",
@@ -1293,6 +1485,41 @@
         "unavailable": "监控标签当前不可用。",
         "contract": "监控标签不符合预期的数据契约。",
         "error": "无法加载监控标签。"
+      }
+    },
+    "daily": {
+      "title": "开始",
+      "description": "继续监控，并基于已观测证据开展排查。",
+      "scope": "各入口独立显示最近查询结果。数量不代表遥测新鲜度或服务健康状态。",
+      "signalsDescription": "通过一致的调查上下文查看指标、日志和链路。",
+      "openSignals": "打开信号查询",
+      "addData": "添加数据来源",
+      "states": {
+        "loading": "正在加载当前证据…",
+        "permission": "你没有读取此来源的权限。",
+        "unavailable": "此来源不可用，请刷新重试。",
+        "error": "无法读取此来源，请刷新重试。"
+      },
+      "monitors": {
+        "title": "监控",
+        "description": "已配置的主动监控与推送监控。",
+        "empty": "尚未配置监控。",
+        "count": "已配置监控：{{count}}",
+        "open": "打开监控"
+      },
+      "alerts": {
+        "title": "未恢复告警",
+        "description": "历史告警记录中尚未恢复的告警。",
+        "empty": "当前没有未恢复告警。",
+        "count": "未恢复告警：{{count}}",
+        "open": "打开告警"
+      },
+      "services": {
+        "title": "服务",
+        "description": "已注册的服务实体；可用性和 RED 需要信号证据。",
+        "empty": "尚未注册服务实体。",
+        "count": "已注册服务实体：{{count}}",
+        "open": "打开服务"
       }
     }
   },
@@ -1448,7 +1675,13 @@
     "unit": "单位",
     "series": "序列",
     "time": "时间",
-    "value": "值",
+    "value": {
+      "open": "查看 {{field}} 的完整值",
+      "title": "指标值 · {{field}}",
+      "copy": "复制完整值",
+      "copied": "已复制",
+      "error": "复制失败"
+    },
     "search": "搜索指标",
     "searchPlaceholder": "搜索分组或字段",
     "groupFilter": "指标分组",
@@ -1467,13 +1700,6 @@
     "favoriteCount": "{{count}} 个收藏",
     "itemCount": "{{count}} 项",
     "currentValues": "当前指标值",
-    "value": {
-      "open": "查看 {{field}} 的完整值",
-      "title": "指标值 · {{field}}",
-      "copy": "复制完整值",
-      "copied": "已复制",
-      "error": "复制失败"
-    },
     "noMatches": "当前筛选条件下没有匹配的指标值。",
     "historyTrend": "历史趋势",
     "currentValue": "当前",
@@ -1534,7 +1760,12 @@
       "boundEntity": "绑定实体",
       "otlpEvidence": "OTLP 证据"
     },
-    "states": { "ready": "可用", "empty": "无数据", "unavailable": "不可用", "unknown": "未知" },
+    "states": {
+      "ready": "可用",
+      "empty": "无数据",
+      "unavailable": "不可用",
+      "unknown": "未知"
+    },
     "sections": {
       "currentAlerts": "当前告警",
       "collectionHealth": "采集状态",
@@ -1561,7 +1792,10 @@
       "empty": "该调查窗口内没有观测到采集执行。",
       "unavailable": "采集执行证据不可用。",
       "unknown": "尚未确定采集执行证据。",
-      "outcomes": { "success": "成功", "failure": "失败" },
+      "outcomes": {
+        "success": "成功",
+        "failure": "失败"
+      },
       "phases": {
         "UNKNOWN": "未知阶段",
         "RESOLVE": "解析",
@@ -1601,7 +1835,11 @@
       "unavailable": "相关 OTLP 证据不可用。",
       "unknown": "尚未确定相关 OTLP 证据。"
     },
-    "signals": { "metrics": "OTLP 指标", "logs": "日志", "traces": "链路" },
+    "signals": {
+      "metrics": "OTLP 指标",
+      "logs": "日志",
+      "traces": "链路"
+    },
     "sources": {
       "currentAlerts": "当前告警",
       "collection": "Greptime 采集事件",
@@ -1649,7 +1887,10 @@
     "saveApplyConfirm": "保存并应用对 {{app}} 的更改？",
     "visibilityAction": "{{app}} 当前为{{state}}",
     "visibilityConfirm": "{{app}} 当前为{{state}}。更改为{{nextState}}？",
-    "visibilityState": { "visible": "显示", "hidden": "隐藏" },
+    "visibilityState": {
+      "visible": "显示",
+      "hidden": "隐藏"
+    },
     "validated": "定义 {{app}} 校验通过。",
     "viewApp": "查看 {{app}}",
     "editApp": "编辑 {{app}}",
@@ -1658,7 +1899,11 @@
     "refreshConflict": "刷新最新定义",
     "deleteTitle": "删除监控定义",
     "deleteConfirm": "删除 {{app}}？服务器可能恢复其内置定义。",
-    "originValue": { "builtin": "内置", "custom": "自定义", "override": "覆盖" },
+    "originValue": {
+      "builtin": "内置",
+      "custom": "自定义",
+      "override": "覆盖"
+    },
     "disposition": {
       "removed": "自定义定义已删除。",
       "builtin_restored": "覆盖定义已删除，并已恢复内置定义。"
@@ -1778,7 +2023,11 @@
       "type": "类型",
       "number": "数字",
       "string": "字符串",
-      "password": { "keep": "保留已配置值", "replace": "替换", "clear": "清除" }
+      "password": {
+        "keep": "保留已配置值",
+        "replace": "替换",
+        "clear": "清除"
+      }
     },
     "jarFile": "Jar 文件",
     "chooseJar": "选择内存中的 .jar 文件",
@@ -1786,8 +2035,14 @@
     "deleteTitle": "删除插件",
     "deleteConfirm": "确定删除 {{target}} 吗？",
     "deleteBatchConfirm": "确定删除所选的 {{target}} 个插件吗？",
-    "validation": { "name": "请输入插件名称。", "jarFile": "请选择非空的 .jar 文件。" },
-    "notice": { "updated": "插件状态已更新。", "deleted": "所选插件已删除。" },
+    "validation": {
+      "name": "请输入插件名称。",
+      "jarFile": "请选择非空的 .jar 文件。"
+    },
+    "notice": {
+      "updated": "插件状态已更新。",
+      "deleted": "所选插件已删除。"
+    },
     "failure": {
       "missing": "所选插件已不存在。",
       "invalid": "插件请求或响应无效。",
@@ -2053,9 +2308,18 @@
     },
     "confirm": {
       "description": "服务器将对 {{count}} 个所选采集器执行此操作。",
-      "online": { "single": "将此采集器设为在线？", "batch": "将所选采集器设为在线？" },
-      "offline": { "single": "将此采集器设为离线？", "batch": "将所选采集器设为离线？" },
-      "delete": { "single": "删除此采集器？", "batch": "删除所选采集器？" }
+      "online": {
+        "single": "将此采集器设为在线？",
+        "batch": "将所选采集器设为在线？"
+      },
+      "offline": {
+        "single": "将此采集器设为离线？",
+        "batch": "将所选采集器设为离线？"
+      },
+      "delete": {
+        "single": "删除此采集器？",
+        "batch": "删除所选采集器？"
+      }
     }
   },
   "labels": {
@@ -2595,10 +2859,22 @@
     "title": "通知配置",
     "description": "按顺序配置投递依赖，并分别维护各个配置区域。",
     "steps": {
-      "channels": { "label": "渠道服务", "dependency": "提供邮件和短信投递服务。" },
-      "receivers": { "label": "接收人", "dependency": "添加使用已配置通道的投递目标。" },
-      "templates": { "label": "模板", "dependency": "可选地为通道定制消息内容。" },
-      "rules": { "label": "规则", "dependency": "将告警路由到一个或多个接收人。" }
+      "channels": {
+        "label": "渠道服务",
+        "dependency": "提供邮件和短信投递服务。"
+      },
+      "receivers": {
+        "label": "接收人",
+        "dependency": "添加使用已配置通道的投递目标。"
+      },
+      "templates": {
+        "label": "模板",
+        "dependency": "可选地为通道定制消息内容。"
+      },
+      "rules": {
+        "label": "规则",
+        "dependency": "将告警路由到一个或多个接收人。"
+      }
     },
     "status": {
       "configured": "已配置",
@@ -2652,7 +2928,9 @@
       "invalid": "接收人或模板返回了无效数据。",
       "unavailable": "接收人或模板暂时不可用。",
       "error": "接收人或模板加载失败。",
-      "action": { "receivers": "配置接收人" }
+      "action": {
+        "receivers": "配置接收人"
+      }
     },
     "read": {
       "missing": "发送规则已不存在。",
@@ -2771,7 +3049,10 @@
   "alertRules": {
     "title": "告警规则",
     "description": "管理告警计算规则及其启用状态。",
-    "guide": { "alertCenter": "查看告警中心", "deliveryRules": "配置发送规则" },
+    "guide": {
+      "alertCenter": "查看告警中心",
+      "deliveryRules": "配置发送规则"
+    },
     "manage": "管理规则",
     "new": "新建规则",
     "edit": "编辑规则",
@@ -2830,8 +3111,16 @@
         "parentheses": "括号不匹配"
       }
     },
-    "severity": { "label": "告警级别", "placeholder": "选择级别" },
-    "mode": { "label": "告警模式", "placeholder": "请选择告警模式", "group": "分组告警", "individual": "逐条告警" },
+    "severity": {
+      "label": "告警级别",
+      "placeholder": "选择级别"
+    },
+    "mode": {
+      "label": "告警模式",
+      "placeholder": "请选择告警模式",
+      "group": "分组告警",
+      "individual": "逐条告警"
+    },
     "window": "计算窗口",
     "seconds": "秒",
     "finalExpression": "最终总表达式",
@@ -2872,7 +3161,11 @@
     "deleteSelectedConfirm": "确认删除选中的 {{count}} 条告警规则？",
     "export": {
       "selected": "导出选中项",
-      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel",
+        "yaml": "YAML"
+      },
       "success": "告警规则配置已下载。",
       "failure": {
         "forbidden": "当前账户无权导出告警规则。",
@@ -3026,6 +3319,7 @@
     "windowPlaceholder": "请输入计算窗口时间",
     "times": "触发次数",
     "preview": "预览",
+    "previewLoading": "正在计算表达式…",
     "previewSuccess": "预览返回 {{count}} 行；每页最多显示 {{pageSize}} 行。",
     "previewEmpty": "预览未返回任何行。",
     "previewTruncated": "部分预览内容已截断以便显示。",
@@ -3116,7 +3410,10 @@
     "export": {
       "all": "导出全部",
       "selected": "导出所选",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel"
+      },
       "success": "监控配置已下载。",
       "failure": {
         "forbidden": "需要管理员权限才能导出监控。",
@@ -3206,7 +3503,10 @@
         "zookeeper_sd": "ZooKeeper 服务发现"
       },
       "schedule": "调度方式",
-      "scheduleTypes": { "interval": "固定间隔", "cron": "Cron 表达式" },
+      "scheduleTypes": {
+        "interval": "固定间隔",
+        "cron": "Cron 表达式"
+      },
       "cronExpression": "Cron 表达式（6 段）",
       "advanced": "高级参数",
       "labels": "标签",
@@ -3224,7 +3524,12 @@
         "empty": "每个条目都必须填写键。",
         "duplicate": "键不能重复。"
       },
-      "metrics": { "unit": "单位", "type": "类型", "number": "数值", "string": "文本" },
+      "metrics": {
+        "unit": "单位",
+        "type": "类型",
+        "number": "数值",
+        "string": "文本"
+      },
       "descriptionLabel": "描述",
       "connection": "连接参数",
       "metadata": "归属与元数据",
@@ -3460,9 +3765,9 @@
       "acknowledged": "已确认",
       "handled": "已处理",
       "workspaceScope": "当前工作区",
-      "warning": "警告",
-      "critical": "严重",
-      "emergency": "紧急"
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     },
     "status": {
       "label": "状态",
@@ -3476,10 +3781,10 @@
     "severity": {
       "label": "级别",
       "all": "全部级别",
-      "info": "信息",
-      "warning": "警告",
-      "critical": "严重",
-      "emergency": "紧急"
+      "info": "INFO",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     }
   },
   "statusManagement": {
@@ -3636,8 +3941,14 @@
       "system_property": "系统属性",
       "command_line": "命令行"
     },
-    "applyMode": { "managed_write": "托管配置", "external_apply": "外部 / GitOps 配置" },
-    "applyModeInline": { "managed_write": "由 HertzBeat 管理", "external_apply": "由外部管理" },
+    "applyMode": {
+      "managed_write": "托管配置",
+      "external_apply": "外部 / GitOps 配置"
+    },
+    "applyModeInline": {
+      "managed_write": "由 HertzBeat 管理",
+      "external_apply": "由外部管理"
+    },
     "maintenance": {
       "active": "维护模式已启用",
       "inactive": "维护模式未启用",
@@ -3645,8 +3956,16 @@
       "acknowledgement": "我了解在迁移和激活完成前，监控写入必须保持暂停。",
       "acknowledgementAutoEnter": "我了解开始迁移时服务器会自动进入维护模式并暂停监控写入。"
     },
-    "topology": { "single_node": "单节点", "multi_node": "多节点", "unknown": "未知" },
-    "topologyInline": { "single_node": "单节点", "multi_node": "多节点", "unknown": "未知" },
+    "topology": {
+      "single_node": "单节点",
+      "multi_node": "多节点",
+      "unknown": "未知"
+    },
+    "topologyInline": {
+      "single_node": "单节点",
+      "multi_node": "多节点",
+      "unknown": "未知"
+    },
     "migration": {
       "title": "HertzBeat 数据库迁移向导",
       "description": "将 HertzBeat 管理数据从 H2 迁移到空的 MySQL 或 PostgreSQL 数据库。复制数据前会先验证目标库。",
@@ -3682,7 +4001,11 @@
     "export": {
       "format": "导出格式",
       "password": "导出密码",
-      "formats": { "yaml": "YAML", "env": "环境变量", "kubernetes_secret": "Kubernetes Secret" }
+      "formats": {
+        "yaml": "YAML",
+        "env": "环境变量",
+        "kubernetes_secret": "Kubernetes Secret"
+      }
     },
     "actions": {
       "validate": "验证目标库",
@@ -3695,7 +4018,10 @@
       "returnToConfiguration": "返回当前配置",
       "continueCurrent": "继续当前迁移"
     },
-    "validation": { "valid": "目标库验证成功", "invalid": "目标库验证失败" },
+    "validation": {
+      "valid": "目标库验证成功",
+      "invalid": "目标库验证失败"
+    },
     "state": {
       "pending": "迁移已排队",
       "running": "正在迁移",
@@ -3724,7 +4050,12 @@
       "verification": "验证状态",
       "restart": "请按照部署的常规运维流程重启 HertzBeat。本页会继续轮询收敛状态。"
     },
-    "verification": { "pending": "等待中", "running": "进行中", "succeeded": "成功", "failed": "失败" },
+    "verification": {
+      "pending": "等待中",
+      "running": "进行中",
+      "succeeded": "成功",
+      "failed": "失败"
+    },
     "errors": {
       "migration_unavailable": "当前服务器构建未提供迁移引擎。",
       "migration_source_unsupported": "只能迁移 H2 管理数据库。",
@@ -3781,8 +4112,14 @@
       "createFailed": "无法确认管理员是否已创建。请先刷新设置状态，再重试。"
     },
     "steps": {
-      "administrator": { "title": "管理员设置", "pending": "数据服务已就绪。下一步是配置管理员账户。" },
-      "optional": { "title": "可选配置", "pending": "管理员设置已完成。下一步是可选服务器设置。" }
+      "administrator": {
+        "title": "管理员设置",
+        "pending": "数据服务已就绪。下一步是配置管理员账户。"
+      },
+      "optional": {
+        "title": "可选配置",
+        "pending": "管理员设置已完成。下一步是可选服务器设置。"
+      }
     },
     "optional": {
       "description": "现在确认对外地址、数据保留和邮件，或稍后在系统设置中修改。",
@@ -3794,14 +4131,22 @@
         "proxyPublicBaseUrl": "外部访问地址",
         "proxyPublicBaseUrlHelp": "请填写用户和外部系统实际访问的完整地址，包括协议以及自定义端口或路径前缀。"
       },
-      "retention": { "title": "数据保留", "description": "设置数据保留天数，或留空并稍后配置。", "days": "保留天数" },
+      "retention": {
+        "title": "数据保留",
+        "description": "设置数据保留天数，或留空并稍后配置。",
+        "days": "保留天数"
+      },
       "mail": {
         "title": "邮件服务器",
         "description": "配置 SMTP 发送或跳过。连接测试失败不会阻止完成设置。",
         "host": "SMTP 主机",
         "port": "SMTP 端口",
         "security": "传输安全",
-        "securityMode": { "none": "无", "starttls": "STARTTLS", "tls": "TLS" },
+        "securityMode": {
+          "none": "无",
+          "starttls": "STARTTLS",
+          "tls": "TLS"
+        },
         "username": "用户名",
         "password": "密码",
         "fromAddress": "发件地址"
@@ -3916,13 +4261,21 @@
         "noRun": "暂无运行"
       }
     },
-    "investigation": { "label": "问题调查" },
-    "roles": { "you": "你", "assistant": "HertzBeat AI" },
+    "investigation": {
+      "label": "问题调查"
+    },
+    "roles": {
+      "you": "你",
+      "assistant": "HertzBeat AI"
+    },
     "empty": {
       "title": "你想排查什么？",
       "description": "可以询问监控、实体、告警、指标、日志、链路或拓扑范围内的问题。"
     },
-    "composer": { "label": "调查问题", "placeholder": "让 HertzBeat 帮你排查一个运行问题…" },
+    "composer": {
+      "label": "调查问题",
+      "placeholder": "让 HertzBeat 帮你排查一个运行问题…"
+    },
     "actions": {
       "send": "发送",
       "stop": "停止",
@@ -3958,9 +4311,12 @@
       "approvals": "待审批操作",
       "noApprovals": "没有待审批操作",
       "inputs": "需要补充的信息",
-      "noInputs": "无需补充信息"
+      "noInputs": "无需补充信息",
+      "statusUnknown": "未记录执行状态"
     },
-    "approval": { "adminRequired": "需要管理员审批" },
+    "approval": {
+      "adminRequired": "需要管理员审批"
+    },
     "providers": {
       "action": "模型提供方",
       "title": "模型提供方",
@@ -3998,7 +4354,11 @@
       "topology": "拓扑",
       "collection": "采集健康"
     },
-    "states": { "available": "可用", "empty": "此范围内无证据", "unavailable": "证据不可用" },
+    "states": {
+      "available": "可用",
+      "empty": "此范围内无证据",
+      "unavailable": "证据不可用"
+    },
     "actions": {
       "back": "返回告警",
       "retry": "重试",
@@ -4019,8 +4379,14 @@
       "truncated": "仅显示有界结果集。",
       "truncationUnknown": "完整结果数量未知。"
     },
-    "metrics": { "before": "之前", "anchor": "告警", "after": "之后" },
-    "logs": { "focusActions": "可聚焦调查的日志" },
+    "metrics": {
+      "before": "之前",
+      "anchor": "告警",
+      "after": "之后"
+    },
+    "logs": {
+      "focusActions": "可聚焦调查的日志"
+    },
     "traces": {
       "traceId": "Trace ID",
       "service": "服务",
@@ -4029,7 +4395,12 @@
       "status": "状态",
       "spans": "Span 数"
     },
-    "traceStatus": { "error": "错误", "ok": "正常", "unset": "未设置", "unknown": "未知" },
+    "traceStatus": {
+      "error": "错误",
+      "ok": "正常",
+      "unset": "未设置",
+      "unknown": "未知"
+    },
     "topology": {
       "source": "来源",
       "target": "目标",
@@ -4101,5 +4472,313 @@
       "loadEarlier": "加载更早记录",
       "noText": "没有文本内容"
     }
+  },
+  "services": {
+    "title": "服务",
+    "description": "检查已登记服务、请求 RED 和已观测链路操作。",
+    "search": "查找服务",
+    "environmentFilter": "筛选目录环境",
+    "query": "查询",
+    "directory": "服务目录",
+    "overview": "服务概览",
+    "service": "服务",
+    "environment": "环境",
+    "namespace": "命名空间",
+    "source": "目录来源",
+    "unknown": "不可用",
+    "empty": "没有匹配的已登记服务",
+    "unresolved": "未登记服务也可能已有遥测数据，可直接进入 Explore 查询信号。",
+    "select": "选择服务以检查证据",
+    "openTraces": "打开链路",
+    "openLogs": "打开服务日志",
+    "openMetrics": "打开指标",
+    "logsScope": "日志入口按服务查询；如需操作关联日志，请先下钻该操作的链路。",
+    "invalidWindow": "请选择有效且不超过 24 小时的调查时间窗。",
+    "latestTrace": "窗口内最近观测链路",
+    "freshnessLimit": "观测时间是历史证据，不能证明服务健康或仍在运行。",
+    "entity": "打开实体证据",
+    "red": "请求 RED · Greptime Flow",
+    "redLimit": "服务整体范围。按 60 秒桶聚合已观测 SERVER 请求。未对齐窗口会选择完整分钟桶。采样完整性未确定；P95 为近似值，也可能不可用。",
+    "requests": "已观测请求",
+    "requestRate": "请求 / 秒",
+    "errorRate": "错误率",
+    "latencyP95": "P95 延迟",
+    "operations": "已观测根链路操作",
+    "operationLimit": "最多 20 组，按错误链路数量排序。这是根链路观测证据，并非完整请求清单；下游服务可能有 RED 而没有根操作。",
+    "operation": "操作",
+    "observedTraces": "已观测链路",
+    "errorTraces": "错误链路",
+    "investigate": "调查",
+    "errorAction": "错误链路",
+    "unnamedOperation": "未命名操作",
+    "noOperations": "此窗口没有根操作证据",
+    "associations": "现有关联",
+    "associationLimit": "当前监控关联告警和最多 50 条已登记关系预览；不受调查窗口过滤，也不代表完整的自动推断依赖。",
+    "linkedAlerts": "当前监控关联告警",
+    "noRelations": "此预览没有已登记关系证据",
+    "back": "返回服务",
+    "timeRange": "调查时间范围",
+    "exactWindow": "保留绝对时间窗",
+    "state": {
+      "loading": "正在加载证据…",
+      "empty": "此窗口没有观测证据",
+      "unavailable": "证据来源不可用",
+      "error": "无法读取证据",
+      "permission": "读取此证据需要权限",
+      "idle": "请先选择服务",
+      "missing": "服务已不可用",
+      "invalid": "调查范围无效"
+    },
+    "backDirectory": "返回服务目录",
+    "information": "服务信息",
+    "lastEntityEvidence": "最新实体证据",
+    "performance": "性能",
+    "registered": "已登记服务",
+    "scopeTooLarge": "范围超过 500 个服务",
+    "narrowScope": "请缩小搜索或环境范围，以比较全部匹配服务。当前不显示部分排名。",
+    "performanceUnavailable": "服务观测暂不可用",
+    "noRanking": "当前不显示排名。请重试或打开已登记服务。",
+    "performanceScope": "按 60 秒整桶统计已观测的 SERVER 请求。采样完整性未知，P95 为近似值。无观测不代表健康。",
+    "resultCount": "{{count}} 个匹配服务",
+    "sort": "全部结果排序",
+    "order": "排序方向",
+    "desc": "降序",
+    "asc": "升序",
+    "pageEmpty": "此页没有服务",
+    "firstPage": "返回第一页",
+    "clearFilters": "清除筛选",
+    "errorRequests": "错误请求",
+    "dataState": "数据状态",
+    "observation": {
+      "ready": "有观测",
+      "empty": "无请求观测",
+      "unresolved": "身份未解析"
+    },
+    "sortKeys": {
+      "errorCount": "错误请求",
+      "errorRate": "错误率",
+      "requestCount": "已观测请求",
+      "latencyP95Ms": "P95 延迟",
+      "name": "服务"
+    }
+  },
+  "exploreSaved": {
+    "views": "视图",
+    "myView": "我的视图",
+    "defaultView": "默认日志视图",
+    "filterViews": "筛选视图",
+    "sort": "排序已保存视图",
+    "sortOptions": {
+      "default": "默认",
+      "recent": "最近查看",
+      "newest": "最新优先",
+      "oldest": "最早优先",
+      "az": "A–Z",
+      "za": "Z–A"
+    },
+    "onlyMine": "仅显示我保存的视图",
+    "addFavorite": "收藏 {{view}}",
+    "removeFavorite": "取消收藏 {{view}}",
+    "saveNewView": "保存为新视图",
+    "saveChanges": "保存更改",
+    "copyUrl": "复制链接",
+    "editView": "编辑",
+    "moreActions": "更多视图操作",
+    "queryActions": "查询操作",
+    "directory": "已保存查询",
+    "save": "保存查询",
+    "update": "更新已保存查询",
+    "saveAs": "另存为",
+    "active": "已打开：{{name}}",
+    "applyFirst": "请先执行“查询”应用修改，再保存。",
+    "activeUnavailable": "所选已保存查询不可用。请重新打开有效记录后再更新。",
+    "invalidQuery": "当前条件或时间模式不支持保存。",
+    "shared": "在当前 HertzBeat 实例内共享。有写入权限的用户可以更新或删除这些查询。",
+    "relative": "相对时间 · {{range}} · 打开时重新计算",
+    "absolute": "绝对时间 · {{window}} · {{zone}}",
+    "name": "名称",
+    "description": "说明",
+    "firstPage": "重新打开时从结果第一页开始，不共享导航历史。",
+    "writeFailed": "无法确认本次更改。输入已保留，请刷新已保存查询后再重试。",
+    "savePermission": "你没有保存此共享视图的权限。",
+    "deletePermission": "你没有删除此共享视图的权限。",
+    "signal": "信号",
+    "allSignals": "全部信号",
+    "empty": "此信号尚无已保存查询。",
+    "original": "原始保存记录",
+    "export": "导出原始 JSON",
+    "updated": "更新时间：{{time}}",
+    "unknownTime": "不可用",
+    "open": "打开查询",
+    "inspect": "查看原始记录",
+    "discardDraft": "放弃尚未应用的查询修改并打开此保存记录？",
+    "deleteConfirm": "删除此共享查询？",
+    "editor": {
+      "create": "保存查询",
+      "update": "更新共享查询",
+      "copy": "查询另存为"
+    },
+    "states": {
+      "loading": "正在加载已保存查询…",
+      "error": "无法加载已保存查询。",
+      "permission": "你没有读取已保存查询的权限。",
+      "contract_error": "无法解析已保存查询响应。",
+      "transport_error": "已保存查询服务不可用。"
+    },
+    "reasons": {
+      "invalidPayload": "原始内容无效或格式未知。",
+      "unsupportedVersion": "不支持此已保存查询版本。",
+      "invalidQuery": "无法安全恢复保存的条件或时间模式。",
+      "legacyUnsupported": "部分旧条件无法在保持查询含义的情况下转换，原始记录已保留。",
+      "retiredReferenceJoin": "此保存查询使用了不再支持的参考表关联，未打开或运行。"
+    },
+    "revisionConflict": "此查询已在其他位置修改或删除。草稿已保留，请重新加载最新版本或另存副本。"
+  },
+  "signalDashboard": {
+    "clearSearch": "清除",
+    "search": "按名称搜索仪表盘",
+    "searchCount": "{{count}} / {{total}} 个仪表盘",
+    "noMatches": "没有名称匹配的仪表盘",
+    "timeZoneUnspecified": "时区未指定",
+    "analysisDetails": "分析说明",
+    "analysisReadOnly": "此面板保留完整的日志分析条件。请在 Explore 中打开以修改查询；标题、布局和共享服务上下文仍可编辑。",
+    "settings": "仪表盘设置",
+    "variableKind": "变量类型：{{name}}",
+    "title": "仪表盘",
+    "shared": "共享仪表盘使用 HertzBeat 受控查询。",
+    "new": "新建仪表盘",
+    "untitled": "未命名仪表盘",
+    "edit": "编辑仪表盘",
+    "copy": "复制仪表盘",
+    "copyName": "{{name}} 副本",
+    "name": "仪表盘名称",
+    "description": "说明",
+    "key": "仪表盘 ID",
+    "directory": "全部仪表盘",
+    "open": "打开",
+    "loading": "正在加载仪表盘…",
+    "error": "无法加载仪表盘，请刷新重试。",
+    "empty": "尚未保存共享仪表盘。",
+    "document": "受支持文档",
+    "legacy": "旧版仪表盘：原始内容已保留。",
+    "unavailable": "此仪表盘不存在或文档暂不受支持。",
+    "state": "文档状态",
+    "updated": "元数据更新时间",
+    "upgrade": "升级空仪表盘",
+    "upgradeExact": "请先保存此无损空文档转换，再编辑仪表盘。原始片段仍会保留。",
+    "import": "导入仪表盘",
+    "export": "导出文档",
+    "exportOriginal": "导出原始记录",
+    "importFile": "仪表盘 JSON 文件",
+    "documentJson": "仪表盘文档 JSON",
+    "importHelp": "导入受支持的 Perses 子集。保存前请检查本地草稿；现有记录不会自动覆盖。",
+    "importCopy": "使用新 ID 导入副本",
+    "invalidDocument": "部分文档字段无效或暂不受支持，请修正后再查询或保存。",
+    "invalidHandoff": "无法在完整保留查询上下文的情况下添加此面板，原查询未改变。",
+    "conflict": "此仪表盘在打开后已被修改。草稿已保留，请重新加载检查当前版本。",
+    "writeFailed": "保存失败，输入内容已保留，请在连接恢复后重试。",
+    "reload": "重新加载当前版本",
+    "discardReload": "丢弃此本地草稿并重新加载已保存的仪表盘？",
+    "deleteConfirm": "删除此共享仪表盘？",
+    "unsaved": "尚未保存的本地草稿。查询可预览已应用的定义；取消会丢弃更改，刷新会恢复已保存内容。",
+    "query": "查询",
+    "applyFirst": "请运行查询以预览此面板定义。",
+    "panels": "仪表盘面板",
+    "noPanels": "暂无面板。可添加面板或从 Explore 发送受支持的查询。",
+    "addPanel": "添加面板",
+    "newPanel": "新面板",
+    "removePanel": "移除面板",
+    "definition": "仪表盘定义",
+    "panelDefinition": "选中面板定义",
+    "panelTitle": "面板标题",
+    "panelType": "面板类型",
+    "queryContext": "查询上下文",
+    "queryContextField": "查询上下文：{{field}}",
+    "variables": "变量定义",
+    "TextVariable": "文本值",
+    "ListVariable": "静态选项",
+    "defaultValue": "默认值",
+    "staticValues": "选项，每行一项",
+    "removeVariable": "移除变量",
+    "addVariable": "添加 {{name}} 变量",
+    "serviceName": "服务",
+    "serviceNamespace": "命名空间",
+    "environment": "环境",
+    "defaultDuration": "默认时间范围",
+    "autoRefresh": "默认自动刷新",
+    "timeZone": "时区",
+    "timeRange": "时间范围",
+    "fixedWindow": "固定调查时间窗",
+    "range": "最近 {{range}}",
+    "invalidTime": "指定时间窗无效。请选择预设范围并运行查询。",
+    "layout": "布局位置与大小",
+    "x": "列位置",
+    "y": "行位置",
+    "width": "宽度",
+    "height": "高度",
+    "invalidLayout": "此布局与其他面板重叠或超出支持范围。",
+    "chooseTarget": "为此面板选择仪表盘",
+    "appendPanel": "添加至此仪表盘",
+    "newFromPanel": "以此面板新建仪表盘",
+    "returnSource": "返回来源查询",
+    "openExplore": "打开 Explore",
+    "loadingPanel": "正在加载面板…",
+    "emptyPanel": "没有数据匹配此面板查询。",
+    "cancelled": "面板查询已取消，重试可再次查询。",
+    "retryPanel": "重试面板",
+    "bounded": "结果仅覆盖最多 {{limit}} 行的受限集合，未覆盖整个时间窗。",
+    "unknownCoverage": "查询覆盖范围未知。",
+    "truncated": "结果已在查询上限处截断。",
+    "runtimeError": "无法渲染面板，请重试或刷新此查询。",
+    "addFromExplore": "添加到仪表盘",
+    "back": "返回仪表盘",
+    "addApplyFirst": "添加面板前，请运行查询以应用更改。",
+    "addUnsupported": "仪表盘暂不支持这些查询条件。",
+    "addFixedTrace": "此面板固定显示指定链路，服务变量不会改变它。",
+    "addSourceWindow": "面板将使用此调查时间窗打开。",
+    "fields": {
+      "name": "指标名称",
+      "operationName": "操作名称",
+      "aggregation": "聚合方式",
+      "temporalAggregation": "时间聚合",
+      "stepSeconds": "步长（秒）",
+      "limit": "结果上限",
+      "search": "日志搜索",
+      "severity": "严重级别",
+      "spanScope": "Span 范围",
+      "minDurationMs": "最短耗时（毫秒）",
+      "maxDurationMs": "最长耗时（毫秒）",
+      "hideInternal": "隐藏内部记录",
+      "hideNoise": "隐藏噪声",
+      "errorOnly": "仅错误",
+      "traceId": "Trace ID",
+      "spanId": "Span ID",
+      "entityId": "实体 ID",
+      "entityType": "实体类型",
+      "collectorId": "采集器 ID",
+      "instance": "实例",
+      "endpoint": "端点",
+      "serviceName": "服务",
+      "serviceNamespace": "命名空间",
+      "environment": "环境"
+    },
+    "kinds": {
+      "TimeSeriesChart": "指标时序",
+      "StatChart": "指标数值",
+      "GaugeChart": "指标仪表",
+      "Table": "指标表格",
+      "LogsTable": "日志表",
+      "TraceTable": "链路表",
+      "TracingGanttChart": "链路瀑布图"
+    },
+    "gaugeMaximum": "仪表最大值",
+    "queryFailures": {
+      "invalid": "可视化请求无效。",
+      "permission": "无权检查此信号。",
+      "overloaded": "信号存储繁忙，请重试。",
+      "unavailable": "信号存储不可用。",
+      "contract": "证据不完整，无法渲染。"
+    },
+    "addTransactionsUnsupported": "暂不支持将事务添加到仪表盘。可保存查询，以便重新打开调查。"
   }
 }

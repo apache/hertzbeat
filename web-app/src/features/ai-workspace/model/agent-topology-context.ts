@@ -1,5 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { readInteger, readBoolean, setInteger, setText, hasControlCharacter } from './agent-context-fields';
 import type { AgentTopologyRef, AgentTopologySourceTarget } from './agent-workspace-contract';
 
 export const topologyTargetQueryKeys = new Set([
@@ -36,18 +37,18 @@ const maximumWindowMs = 7 * 24 * 60 * 60_000;
 export function appendTopologyTargetParams(params: URLSearchParams, target: AgentTopologySourceTarget) {
   const topology = target.topology;
   params.set('source', 'topology');
-  setAgentInteger(params, 'focusEntityId', topology.rootEntityId);
-  setAgentText(params, 'nodeId', topology.nodeId);
-  setAgentText(params, 'edgeId', topology.edgeId);
-  setAgentInteger(params, 'depth', topology.depth);
-  setAgentText(params, 'environment', topology.environment);
-  setAgentText(params, 'sourceKind', topology.sourceKind);
-  setAgentInteger(params, 'start', topology.start);
-  setAgentInteger(params, 'end', topology.end);
-  setAgentText(params, 'relationType', topology.relationType);
+  setInteger(params, 'focusEntityId', topology.rootEntityId);
+  setText(params, 'nodeId', topology.nodeId);
+  setText(params, 'edgeId', topology.edgeId);
+  setInteger(params, 'depth', topology.depth);
+  setText(params, 'environment', topology.environment);
+  setText(params, 'sourceKind', topology.sourceKind);
+  setInteger(params, 'start', topology.start);
+  setInteger(params, 'end', topology.end);
+  setText(params, 'relationType', topology.relationType);
   params.set('hideInternal', String(topology.hideInternal));
-  setAgentInteger(params, 'pageIndex', topology.pageIndex);
-  setAgentInteger(params, 'pageSize', topology.pageSize);
+  setInteger(params, 'pageIndex', topology.pageIndex);
+  setInteger(params, 'pageSize', topology.pageSize);
 }
 
 export function explicitTopologyTarget(params: URLSearchParams): AgentTopologySourceTarget | undefined {
@@ -67,12 +68,12 @@ export function explicitTopologyTarget(params: URLSearchParams): AgentTopologySo
 }
 
 function readRequiredTopology(params: URLSearchParams): AgentTopologyRef | undefined {
-  const rootEntityId = readAgentInteger(params, 'focusEntityId', 1, Number.MAX_SAFE_INTEGER);
-  const depth = readAgentInteger(params, 'depth', 1, 2);
+  const rootEntityId = readInteger(params, 'focusEntityId', 1, Number.MAX_SAFE_INTEGER);
+  const depth = readInteger(params, 'depth', 1, 2);
   const sourceKind = readAgentText(params, 'sourceKind', 64)?.toLowerCase();
-  const hideInternal = readAgentBoolean(params, 'hideInternal');
-  const pageIndex = readAgentInteger(params, 'pageIndex', 0, 10_000);
-  const pageSize = readAgentInteger(params, 'pageSize', 1, 100);
+  const hideInternal = readBoolean(params, 'hideInternal');
+  const pageIndex = readInteger(params, 'pageIndex', 0, 10_000);
+  const pageSize = readInteger(params, 'pageSize', 1, 100);
   if (rootEntityId === undefined || depth === undefined || sourceKind === undefined) return undefined;
   if (hideInternal === undefined || pageIndex === undefined || pageSize === undefined) return undefined;
   if (!sourceKinds.has(sourceKind)) return undefined;
@@ -85,8 +86,8 @@ function readOptionalTopology(params: URLSearchParams) {
     edgeId: readAgentText(params, 'edgeId', 512),
     environment: readAgentText(params, 'environment', 128),
     relationType: readAgentText(params, 'relationType', 128),
-    start: readAgentInteger(params, 'start', 1, Number.MAX_SAFE_INTEGER),
-    end: readAgentInteger(params, 'end', 1, Number.MAX_SAFE_INTEGER)
+    start: readInteger(params, 'start', 1, Number.MAX_SAFE_INTEGER),
+    end: readInteger(params, 'end', 1, Number.MAX_SAFE_INTEGER)
   };
 }
 
@@ -112,20 +113,6 @@ function hasOnlyTopologyKeys(params: URLSearchParams) {
   return [...params.keys()].every(key => topologyTargetQueryKeys.has(key) && params.getAll(key).length === 1);
 }
 
-function readAgentInteger(params: URLSearchParams, key: string, minimum: number, maximum: number) {
-  const value = params.get(key);
-  if (value === null || !/^\d+$/u.test(value)) return undefined;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : undefined;
-}
-
-function readAgentBoolean(params: URLSearchParams, key: string) {
-  const value = params.get(key);
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  return undefined;
-}
-
 function readAgentText(params: URLSearchParams, key: string, maximum: number) {
   const value = params.get(key);
   const normalized = value?.trim();
@@ -133,19 +120,4 @@ function readAgentText(params: URLSearchParams, key: string, maximum: number) {
     return undefined;
   }
   return normalized;
-}
-
-function setAgentInteger(params: URLSearchParams, key: string, value: number | undefined) {
-  if (value !== undefined && Number.isSafeInteger(value)) params.set(key, String(value));
-}
-
-function setAgentText(params: URLSearchParams, key: string, value: string | undefined) {
-  if (value !== undefined) params.set(key, value);
-}
-
-function hasControlCharacter(value: string) {
-  return [...value].some(character => {
-    const code = character.codePointAt(0) ?? 0;
-    return code < 32 || code === 127;
-  });
 }

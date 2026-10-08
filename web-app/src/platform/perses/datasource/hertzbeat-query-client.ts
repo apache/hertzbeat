@@ -5,16 +5,26 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import { queryLogAnalysis, type LogAnalysisEvidence } from '../logs/log-analysis-query';
+
+import { loadHertzBeatTraceAnalytics } from './hertzbeat-trace-analytics-client';
+import type { TraceSpanPage, TraceGroups } from './hertzbeat-trace-analytics-schema';
+import { queryMetricComposition } from './hertzbeat-metric-composition';
+import type { MetricComposition } from '../metrics/metric-composition';
 import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
 
 import {
   hertzBeatQuerySchema,
   type HertzBeatLogTableQuery,
+  type HertzBeatLogAnalysisQuery,
   type HertzBeatMetricQuery,
+  type HertzBeatMetricCompositionQuery,
   type HertzBeatQuery,
   type HertzBeatQueryFailure,
   type HertzBeatQueryOutcome,
   type HertzBeatTraceGanttQuery,
+  type HertzBeatTraceSpansQuery,
+  type HertzBeatTraceGroupsQuery,
   type HertzBeatTraceTableQuery
 } from './hertzbeat-query-contract';
 import {
@@ -38,6 +48,14 @@ const DEFAULT_TABLE_LIMIT = 100;
 type QueryOptions = { signal?: AbortSignal | undefined };
 
 export function queryHertzBeatData(
+  query: HertzBeatLogAnalysisQuery,
+  options?: QueryOptions
+): Promise<HertzBeatQueryOutcome<LogAnalysisEvidence>>;
+export function queryHertzBeatData(
+  query: HertzBeatMetricCompositionQuery,
+  options?: QueryOptions
+): Promise<HertzBeatQueryOutcome<MetricComposition>>;
+export function queryHertzBeatData(
   query: HertzBeatMetricQuery,
   options?: QueryOptions
 ): Promise<HertzBeatQueryOutcome<HertzBeatMetricData>>;
@@ -45,6 +63,14 @@ export function queryHertzBeatData(
   query: HertzBeatLogTableQuery,
   options?: QueryOptions
 ): Promise<HertzBeatQueryOutcome<HertzBeatTableData<HertzBeatLogRow>>>;
+export function queryHertzBeatData(
+  query: HertzBeatTraceSpansQuery,
+  options?: QueryOptions
+): Promise<HertzBeatQueryOutcome<TraceSpanPage>>;
+export function queryHertzBeatData(
+  query: HertzBeatTraceGroupsQuery,
+  options?: QueryOptions
+): Promise<HertzBeatQueryOutcome<TraceGroups>>;
 export function queryHertzBeatData(
   query: HertzBeatTraceTableQuery,
   options?: QueryOptions
@@ -68,24 +94,15 @@ export async function queryHertzBeatData(
 }
 
 async function executeQuery(query: HertzBeatQuery, signal?: AbortSignal): Promise<HertzBeatQueryOutcome<unknown>> {
+  if (query.signal === 'metrics' && query.queryKind === 'composition')
+    return queryMetricComposition(query, scalar => queryHertzBeatData(scalar, { signal }), signal);
   if (query.signal === 'metrics') {
     const data = parseMetricResponse(await request(buildMetricPath(query), signal), query.timeWindow);
     return data ? { state: 'ready', data, truncated: 'unknown' } : { state: 'empty', truncated: false };
   }
-  if (query.signal === 'logs') {
-    const limit = query.limit ?? DEFAULT_TABLE_LIMIT;
-    const data = parseLogTable(await request(buildLogTablePath(query, limit), signal), limit);
-    return data
-      ? { state: 'ready', data, truncated: data.total > data.rows.length }
-      : { state: 'empty', truncated: false };
-  }
-  if (query.queryKind === 'table') {
-    const limit = query.limit ?? DEFAULT_TABLE_LIMIT;
-    const data = parseTraceTable(await request(buildTraceTablePath(query, limit), signal), limit);
-    return data
-      ? { state: 'ready', data, truncated: data.total > data.rows.length }
-      : { state: 'empty', truncated: false };
-  }
+  if (query.signal === 'logs') return executeLogs(query, signal);
+  if (query.queryKind === 'spans' || query.queryKind === 'groups') return executeTraceAnalytics(query, signal);
+  if (query.queryKind === 'table') return executeTraceTable(query, signal);
   const data = parseTraceGantt(
     await request(buildTraceGanttPath(query), signal),
     query.traceId,
@@ -93,6 +110,64 @@ async function executeQuery(query: HertzBeatQuery, signal?: AbortSignal): Promis
     query.timeWindow
   );
   return data ? { state: 'ready', data, truncated: false } : { state: 'empty', truncated: false };
+}
+
+async function executeLogs(
+  query: HertzBeatLogTableQuery | HertzBeatLogAnalysisQuery,
+  signal?: AbortSignal
+): Promise<HertzBeatQueryOutcome<unknown>> {
+  if (query.logCalculatedV2) return failure('invalid_request');
+  if (query.queryKind === 'analysis') {
+    const params = new URLSearchParams(buildLogTablePath(query, query.limit ?? DEFAULT_TABLE_LIMIT).split('?')[1]);
+    if (query.logGroupSelection) params.set('logGroupSelection', JSON.stringify(query.logGroupSelection));
+    return queryLogAnalysis(query, params, signal);
+  }
+  const limit = query.limit ?? DEFAULT_TABLE_LIMIT;
+  const data = parseLogTable(await request(buildLogTablePath(query, limit), signal), limit);
+  return data
+    ? { state: 'ready', data, truncated: data.total > data.rows.length }
+    : { state: 'empty', truncated: false };
+}
+
+async function executeTraceAnalytics(
+  query: HertzBeatTraceSpansQuery | HertzBeatTraceGroupsQuery,
+  signal?: AbortSignal
+) {
+  const params = new URLSearchParams(buildTraceTablePath(query, query.limit ?? 20).split('?')[1]);
+  if (query.queryKind === 'spans') {
+    params.set('population', 'matched_spans');
+    const data = await loadHertzBeatTraceAnalytics(
+      `/api/traces/spans?${params}`,
+      { kind: 'spans', population: 'matched_spans' },
+      signal
+    );
+    return analyticsOutcome(data);
+  }
+  for (const key of ['sort', 'pageIndex', 'pageSize']) params.delete(key);
+  params.set('population', query.population);
+  params.set('groupBy', query.groupBy);
+  params.set('orderBy', query.orderBy ?? 'count-desc');
+  params.set('limit', String(query.limit ?? 20));
+  const data = await loadHertzBeatTraceAnalytics(
+    `/api/traces/stats/groups?${params}`,
+    { kind: 'groups', population: query.population, field: query.groupBy, orderBy: query.orderBy ?? 'count-desc' },
+    signal
+  );
+  return analyticsOutcome(data);
+}
+
+async function executeTraceTable(
+  query: HertzBeatTraceTableQuery,
+  signal?: AbortSignal
+): Promise<HertzBeatQueryOutcome<HertzBeatTableData<HertzBeatTraceRow>>> {
+  const limit = query.limit ?? DEFAULT_TABLE_LIMIT;
+  const data = parseTraceTable(await request(buildTraceTablePath(query, limit), signal), limit);
+  const truncated = data.total > data.rows.length ? true : (data.query?.truncated ?? 'unknown');
+  const { query: metadata, ...table } = data;
+  const coverage = metadata ? { query: metadata } : {};
+  return data.rows.length > 0
+    ? { state: 'ready', data: table, truncated, ...coverage }
+    : { state: 'empty', truncated, ...coverage };
 }
 
 function request(path: string, signal?: AbortSignal) {
@@ -107,15 +182,24 @@ function buildMetricPath(query: HertzBeatMetricQuery) {
   setNumber(params, 'step', query.metric.stepSeconds);
   setNumber(params, 'limit', query.limit);
   set(params, 'operationName', query.metric.operationName);
+  set(params, 'filter', query.metric.metricFilter);
+  set(params, 'groupBy', query.metric.groupBy);
   return `/api/ingestion/otlp/metrics/console?${params.toString()}`;
 }
 
-function buildLogTablePath(query: HertzBeatLogTableQuery, limit: number) {
+function buildLogTablePath(query: HertzBeatLogTableQuery | HertzBeatLogAnalysisQuery, limit: number) {
   const params = baseParams(query, true);
   params.set('pageIndex', '0');
   params.set('pageSize', String(limit));
   set(params, 'search', query.search);
+  set(params, 'searchSyntax', query.searchSyntax);
+  set(params, 'sort', query.sort);
+  set(params, 'logSort', query.logSort ? JSON.stringify(query.logSort) : undefined);
+  set(params, 'logNumericRange', query.logNumericRange ? JSON.stringify(query.logNumericRange) : undefined);
   set(params, 'severityText', query.severity);
+  set(params, 'severityCategory', query.severityCategory);
+  set(params, 'resourceFilter', query.resourceFilter);
+  set(params, 'attributeFilter', query.attributeFilter);
   set(params, 'traceId', query.traceId);
   set(params, 'spanId', query.spanId);
   setBoolean(params, 'hideInternal', query.hideInternal);
@@ -123,11 +207,18 @@ function buildLogTablePath(query: HertzBeatLogTableQuery, limit: number) {
   return `/api/logs/list?${params.toString()}`;
 }
 
-function buildTraceTablePath(query: HertzBeatTraceTableQuery, limit: number) {
+function buildTraceTablePath(
+  query: HertzBeatTraceTableQuery | HertzBeatTraceSpansQuery | HertzBeatTraceGroupsQuery,
+  limit: number
+) {
   const params = baseParams(query, true);
+  setBoolean(params, 'endExclusive', query.endExclusive);
   params.set('pageIndex', '0');
   params.set('pageSize', String(limit));
   set(params, 'operationName', query.operationName);
+  set(params, 'sort', 'sort' in query ? (query.sort ?? 'newest') : 'newest');
+  set(params, 'resourceFilter', query.resourceFilter);
+  set(params, 'attributeFilter', query.attributeFilter);
   setBoolean(params, 'errorOnly', query.errorOnly);
   setNumber(params, 'minDurationMs', query.minDurationMs);
   setNumber(params, 'maxDurationMs', query.maxDurationMs);
@@ -212,4 +303,10 @@ function failure(kind: HertzBeatQueryFailure['kind']): HertzBeatQueryOutcome<nev
     }
   };
   return { state: 'error', error: errors[kind] };
+}
+
+function analyticsOutcome<T extends { state: string; coverage: { truncated: boolean | null } | null }>(data: T) {
+  return data.state === 'ready'
+    ? { state: 'ready' as const, data, truncated: data.coverage?.truncated ?? ('unknown' as const) }
+    : failure('unavailable');
 }

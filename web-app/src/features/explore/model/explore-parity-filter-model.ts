@@ -15,15 +15,24 @@
  * limitations under the License.
  */
 
-import type { MetricTemporalAggregation, TraceSpanScope } from './explore-query';
+import type {
+  ExploreQueryPatch,
+  MetricRollupControl,
+  MetricTemporalAggregation,
+  TraceSort,
+  TraceSpanScope
+} from './explore-query';
 
 export const METRIC_TEMPORAL_AGGREGATIONS: MetricTemporalAggregation[] = ['raw', 'rate', 'increase', 'delta'];
 export const TRACE_SPAN_SCOPES: TraceSpanScope[] = ['root', 'entrypoint'];
 
-export function temporalAggregationValue(value: unknown): MetricTemporalAggregation | undefined {
-  return METRIC_TEMPORAL_AGGREGATIONS.includes(value as MetricTemporalAggregation)
-    ? (value as MetricTemporalAggregation)
-    : undefined;
+export function temporalAggregationValue(value: unknown): MetricTemporalAggregation | MetricRollupControl | undefined {
+  if (METRIC_TEMPORAL_AGGREGATIONS.includes(value as MetricTemporalAggregation))
+    return value as MetricTemporalAggregation;
+  // Keep unsupported standalone controls visible to the plan guard instead of silently querying raw samples.
+  if (typeof value === 'string' && value.length <= 128 && (value.startsWith('rollup_') || value.startsWith('nested_')))
+    return value as MetricRollupControl;
+  return undefined;
 }
 
 export function traceSpanScopeValue(value: unknown): TraceSpanScope | undefined {
@@ -32,4 +41,21 @@ export function traceSpanScopeValue(value: unknown): TraceSpanScope | undefined 
 
 export function enabledFilterValue(value: unknown) {
   return value === true || value === 'true' ? true : undefined;
+}
+
+export function traceSortValue(value: unknown): TraceSort {
+  return value === 'duration_desc' ? 'duration_desc' : 'newest';
+}
+
+export function metricQueryFields(query: ExploreQueryPatch) {
+  return {
+    operationName: query.operationName,
+    metricPlan: query.metricPlan,
+    metricView: query.metricView,
+    metricFilter: query.metricFilter,
+    groupBy: query.groupBy,
+    aggregation: query.aggregation,
+    temporalAggregation: temporalAggregationValue(query.temporalAggregation),
+    step: query.step
+  };
 }

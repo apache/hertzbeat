@@ -167,6 +167,7 @@ describe('Explore Query Key factory', () => {
       ['attributeFilter', 'http.status_code=503'],
       ['hideInternal', false],
       ['hideNoise', false],
+      ['logCalculatedV2', '{"version":2}'],
       ['pageIndex', 3]
     ] as const) {
       expect(exploreQueryKeys.history({ ...logs, [field]: value }, window, 3)).not.toEqual(logKey);

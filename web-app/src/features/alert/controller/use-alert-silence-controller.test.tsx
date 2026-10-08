@@ -121,6 +121,32 @@ describe('useAlertSilenceController', () => {
     vi.clearAllMocks();
   });
 
+  it('keeps unsent search through paging and converges submissions on history', async () => {
+    const v = renderController(['/alerts/silences?search=old'], 0);
+    await waitFor(() => expect(v.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => v.result.current.controller.actions.setSearch('pending'));
+    act(() => v.result.current.controller.actions.changePage(2, 8));
+    expect(v.result.current.controller.state.search).toBe('pending');
+    expect(v.result.current.controller.state.query.search).toBe('old');
+    await act(() => v.result.current.navigate(-1));
+    expect(v.result.current.controller.state.search).toBe('pending');
+    await act(() => v.result.current.navigate(1));
+    expect(v.result.current.controller.state.search).toBe('pending');
+    act(() => v.result.current.controller.actions.setSearch('  next  '));
+    act(() => v.result.current.controller.actions.submitSearch());
+    expect(v.result.current.controller.state.search).toBe('next');
+    await act(() => v.result.current.navigate(-1));
+    expect(v.result.current.controller.state.search).toBe('old');
+    await act(() => v.result.current.navigate(1));
+    expect(v.result.current.controller.state.search).toBe('next');
+    act(() => v.result.current.controller.actions.setSearch('  next  '));
+    act(() => v.result.current.controller.actions.submitSearch());
+    expect(v.result.current.controller.state.search).toBe('next');
+    v.unmount();
+    const remount = renderController(['/alerts/silences?search=next'], 0);
+    expect(remount.result.current.controller.state.search).toBe('next');
+  });
+
   it('fails closed before GUEST editor and mutation transport admission', async () => {
     access.roles = ['GUEST'];
     const view = renderController(['/alerts/silences'], 0);

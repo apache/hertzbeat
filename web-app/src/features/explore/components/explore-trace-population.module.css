@@ -1,0 +1,76 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.region {
+  min-width: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.header,
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  min-height: 40px;
+}
+.header h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.header span,
+.hint {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.chart {
+  --hb-perses-compact-height: 132px;
+
+  height: auto;
+  min-height: 132px;
+}
+.toolbar {
+  border-bottom: 1px solid var(--hb-border-subtle);
+  padding-block: var(--hb-space-1);
+}
+.toolbar > :global(.ant-select) {
+  min-width: 130px;
+}
+.result {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.scroll {
+  composes: scroll from '../../../platform/perses/runtime/trace-analytics-table.module.css';
+}
+.table {
+  composes: table from '../../../platform/perses/runtime/trace-analytics-table.module.css';
+}
+.footer {
+  flex-wrap: wrap;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-height: 40px;
+}
+.flowMapScroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.flowMap {
+  color: var(--hb-text-secondary);
+  display: block;
+}
+
+.trend > summary {
+  cursor: pointer;
+}
+.trend > summary::before {
+  content: '▸';
+  color: var(--hb-text-secondary);
+}
+.trend[open] > summary::before {
+  content: '▾';
+}

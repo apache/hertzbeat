@@ -24,6 +24,7 @@ export type MonitorEditorCommandInput = {
   mode: MonitorEditorMode;
   id: number | undefined;
   source: string;
+  saved?: () => void;
   draft: MonitorEditorDraft | undefined;
   defines: MonitorParamDefine[];
   returnTo: string;

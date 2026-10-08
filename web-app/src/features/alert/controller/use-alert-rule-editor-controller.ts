@@ -1,5 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import isEqual from 'lodash/isEqual';
 import { useCallback, useEffect } from 'react';
 
 import {
@@ -25,6 +26,20 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const datasource = useAlertRuleDatasourceController();
   const labelSuggestions = useAlertLabelSuggestionController();
   const draft = route.draft;
+  let baselineDraft = route.baselineDraft;
+  if (
+    mode === 'new' &&
+    baselineDraft?.kind === 'periodic' &&
+    datasource.state.kind === 'ready' &&
+    !isAlertRuleStrategySupported(datasource.state.status, 'periodic', baselineDraft.dataType)
+  ) {
+    const supportedDataType = firstSupportedPeriodicDataType(datasource.state.status);
+    if (supportedDataType)
+      baselineDraft = {
+        ...baselineDraft,
+        ...buildAlertRuleStrategyPatch(baselineDraft, 'periodic', supportedDataType)
+      };
+  }
   const metricTarget = useAlertRuleMetricTargetController(draft);
   const command = useAlertRuleCommandController(mode, draft, route.identity, route.updateRoute);
   const preview = useAlertRulePreviewController(command.canSave, draft, route.identity, route.updateRoute);
@@ -64,6 +79,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       datasource: datasource.state,
       detail: route.detail,
       draft,
+      dirty: draft !== null && !isEqual(draft, baselineDraft),
       labelSuggestions,
       metricBindings: metricBindings.state,
       metricTarget: metricTarget.state,

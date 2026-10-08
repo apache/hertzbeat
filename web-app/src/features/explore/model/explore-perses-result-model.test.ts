@@ -33,6 +33,55 @@ describe('Explore Perses result adapters', () => {
     expect(first.outcome.data.series[0]?.points).toEqual([{ timestamp: window.from, value: 5 }]);
   });
 
+  it('names chart series by differing labels while keeping every original identity and sample', () => {
+    const points = [[window.from, 5]];
+    const series = ['0.005', '0.01', '+Inf'].map((le, index) => ({
+      key: `bucket-${index}`,
+      name: 'duration_seconds_bucket',
+      labels: {
+        __name__: 'duration_seconds_bucket',
+        service_name: 'checkout',
+        deployment_environment_name: 'prod',
+        le
+      },
+      points
+    }));
+    const result = createExploreMetricPersesResult(
+      { signal: 'metrics', timeRange: 'last-30m' },
+      metricConsole,
+      window,
+      1,
+      series
+    );
+    expect(result.outcome.data.series.map(item => item.displayName)).toEqual(['le="0.005"', 'le="0.01"', 'le="+Inf"']);
+    result.outcome.data.series.forEach((item, index) => {
+      expect(item.labels).toEqual(series[index]!.labels);
+      expect(item.key).toBe(series[index]!.key);
+      expect(item.name).toBe(series[index]!.name);
+      expect(item.points).toEqual([{ timestamp: window.from, value: 5 }]);
+    });
+    expect(series[0]).not.toHaveProperty('displayName');
+  });
+
+  it('retains metric identity when names differ and distinguishes absent labels from empty labels', () => {
+    const make = (names: string[], labels: Record<string, string>[]) =>
+      createExploreMetricPersesResult(
+        { signal: 'metrics', timeRange: 'last-30m' },
+        metricConsole,
+        window,
+        1,
+        names.map((name, index) => ({
+          key: `${name}-${index}`,
+          name,
+          labels: labels[index]!,
+          points: [[window.from, index]]
+        }))
+      ).outcome.data.series.map(item => item.displayName);
+    expect(make(['cpu', 'memory'], [{ service: 'api' }, { service: 'api' }])).toEqual(['cpu', 'memory']);
+    expect(make(['cpu', 'cpu'], [{}, { region: '' }])).toEqual(['cpu', 'region=""']);
+    expect(make(['cpu', 'cpu'], [{ service: 'api' }, { service: 'api' }])).toEqual(['cpu-0', 'cpu-1']);
+  });
+
   it('rejects a malformed ready metric sample instead of dropping it into empty evidence', () => {
     const malformed = structuredClone(metricConsole);
     malformed.results!.frames![0]!.data = [[window.from, 'not-a-number']];
@@ -68,12 +117,34 @@ describe('Explore Perses result adapters', () => {
     expect(traces.runtimeIdentity).toContain('errorOnly=true');
   });
 
+  it('keeps server query truncation distinct from ordinary pagination and legacy unknown coverage', () => {
+    const page = { content: [traceRow], totalElements: 22, totalPages: 2, number: 0, size: 20 };
+    const query = { signal: 'traces', timeRange: 'last-30m' } as const;
+    expect(createExploreTracePersesResult(query, page, window, 0).outcome.truncated).toBe('unknown');
+    expect(
+      createExploreTracePersesResult(
+        query,
+        { ...page, query: { sort: 'newest', coverage: 'window', rowLimit: null, truncated: false } },
+        window,
+        0
+      ).outcome.truncated
+    ).toBe(false);
+    expect(
+      createExploreTracePersesResult(
+        query,
+        { ...page, query: { sort: 'newest', coverage: 'bounded', rowLimit: 1500, truncated: true } },
+        window,
+        0
+      ).outcome.truncated
+    ).toBe(true);
+  });
+
   it('rejects incomplete trace rows and maps log trend independently', () => {
     expect(() =>
       createExploreTracePersesResult(
         { signal: 'traces', timeRange: 'last-30m' },
         {
-          content: [{ ...traceRow, serviceStats: null }],
+          content: [{ ...traceRow, serviceStats: null } as unknown as TraceRow],
           totalElements: 1,
           totalPages: 1,
           number: 0,
@@ -165,6 +236,19 @@ const logRow: LogRow = {
 };
 
 const traceRow: TraceRow = {
+  rootState: 'unique',
+  rootSpanCount: 1,
+  representativeSpan: {
+    spanId: '0123456789abcdef',
+    spanName: 'POST /checkout',
+    serviceName: 'checkout',
+    serviceNamespace: 'commerce',
+    startTime: window.from,
+    durationNanos: 5_000_000
+  },
+  observedStartTime: window.from,
+  observedEndTime: window.from + Math.ceil(5_000_000 / 1_000_000),
+  unattributedServiceStats: null,
   traceId: '0123456789abcdef0123456789abcdef',
   rootSpanId: '0123456789abcdef',
   serviceName: 'checkout',
@@ -178,3 +262,25 @@ const traceRow: TraceRow = {
   spanCount: 2,
   serviceStats: { checkout: { spanCount: 2, errorCount: 1 } }
 };
+it('preserves computed gaps into Perses while rejecting null source samples', () => {
+  const series = {
+    key: 'f1',
+    name: 'f1',
+    labels: {},
+    points: [
+      [window.from, 5],
+      [window.to, null]
+    ]
+  };
+  const query = { signal: 'metrics' as const, timeRange: 'last-30m' as const };
+  expect(() => createExploreMetricPersesResult(query, metricConsole, window, 1, [series])).toThrow(
+    ExploreSignalContractError
+  );
+  expect(
+    createExploreMetricPersesResult(query, metricConsole, window, 1, [{ ...series, allowsGaps: true }]).outcome.data
+      .series[0]?.points
+  ).toEqual([
+    { timestamp: window.from, value: 5 },
+    { timestamp: window.to, value: null }
+  ]);
+});

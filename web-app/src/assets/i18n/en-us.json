@@ -70,8 +70,8 @@
     },
     "legend": {
       "healthy": "Healthy",
-      "warning": "Warning",
-      "critical": "Critical",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
       "unknown": "Unknown",
       "selected": "Selected path"
     },
@@ -165,6 +165,9 @@
     }
   },
   "entity": {
+    "results": {
+      "total": "Resources: {{count}}"
+    },
     "title": "Resource catalog",
     "description": "Services, hosts, databases, and other resources are automatically unified here—no abstract data modeling required.",
     "empty": "No resources match the current filters.",
@@ -260,7 +263,10 @@
       "global": "Global",
       "manageSilences": "Manage silences",
       "manageInhibits": "Manage inhibitions",
-      "types": { "silence": "Silence", "inhibit": "Inhibition" }
+      "types": {
+        "silence": "Silence",
+        "inhibit": "Inhibition"
+      }
     },
     "operations": {
       "title": "Recommended operations",
@@ -332,7 +338,11 @@
         "otel": "OpenTelemetry",
         "telemetry": "Telemetry"
       },
-      "direction": { "incoming": "Incoming", "outgoing": "Outgoing", "related": "Related" },
+      "direction": {
+        "incoming": "Incoming",
+        "outgoing": "Outgoing",
+        "related": "Related"
+      },
       "identityType": {
         "derived": "Automatically recognized",
         "manual": "Manually defined",
@@ -341,7 +351,13 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "Explore metrics", "logs": "Explore logs", "traces": "Explore traces" },
+    "explore": {
+      "metrics": "Explore metrics",
+      "logs": "Explore logs",
+      "traces": "Explore traces",
+      "searchSyntax": "Query syntax",
+      "structuredSearch": "Structured search"
+    },
     "signals": {
       "title": "Entity signal investigation",
       "availability": "Signal availability",
@@ -350,7 +366,10 @@
       "items": "{{count}} items",
       "traceDetail": "Trace detail",
       "boundMonitors": "Bound monitors",
-      "boundMonitorsState": { "unknown": "Monitor binding evidence is unavailable.", "empty": "No bound monitors." },
+      "boundMonitorsState": {
+        "unknown": "Monitor binding evidence is unavailable.",
+        "empty": "No bound monitors."
+      },
       "sections": {
         "metrics": "Metrics",
         "logs": "Logs",
@@ -359,7 +378,12 @@
         "collection": "Collection",
         "alerts": "Alerts"
       },
-      "states": { "available": "Available", "empty": "Empty", "unavailable": "Unavailable", "unknown": "Unknown" },
+      "states": {
+        "available": "Available",
+        "empty": "Empty",
+        "unavailable": "Unavailable",
+        "unknown": "Unknown"
+      },
       "compact": {
         "metrics": {
           "empty": "No RED metrics in this window",
@@ -437,7 +461,6 @@
         "truncated": "Showing a bounded subset of matching evidence.",
         "truncationUnknown": "Result completeness is unknown.",
         "runtimeError": "The visualization runtime could not render this evidence.",
-        "investigationActions": "Investigation actions ({{count}})",
         "invalid": "The signal request is invalid.",
         "permission": "You do not have permission to inspect this signal.",
         "overloaded": "Signal storage is busy. Try again.",
@@ -445,7 +468,9 @@
         "contract": "Signal storage returned an invalid response."
       }
     },
-    "topology": { "view": "View topology" },
+    "topology": {
+      "view": "View topology"
+    },
     "discovery": {
       "action": "Discover resources",
       "title": "Discover resources",
@@ -479,14 +504,23 @@
       "title": "Import resource definitions",
       "description": "Paste YAML, JSON, or curl inline data. Preview makes no changes; import happens only after confirmation.",
       "format": "Definition format",
-      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl inline data" },
+      "formats": {
+        "yaml": "YAML",
+        "json": "JSON",
+        "curl": "curl inline data"
+      },
       "content": "Resource definition content",
       "previewAction": "Preview resources",
       "confirmAction": "Confirm import",
       "previewTitle": "Resource preview",
       "zeroWrite": "Preview only — no resources have been created.",
       "details": "Technical details",
-      "fields": { "owner": "Owner", "environment": "Environment", "namespace": "Namespace", "source": "Source" },
+      "fields": {
+        "owner": "Owner",
+        "environment": "Environment",
+        "namespace": "Namespace",
+        "source": "Source"
+      },
       "associationSummary": "{{identities}} identity keys, {{monitors}} monitor associations, {{relations}} relationships",
       "failure": {
         "validation": "The definitions need changes before they can be imported.",
@@ -512,7 +546,12 @@
       "zeroWrite": "Preview only — the resource has not been changed.",
       "details": "Technical details",
       "associationSummary": "{{identities}} identity keys, {{monitors}} monitor associations, {{relations}} relationships",
-      "fields": { "owner": "Owner", "environment": "Environment", "namespace": "Namespace", "source": "Source" },
+      "fields": {
+        "owner": "Owner",
+        "environment": "Environment",
+        "namespace": "Namespace",
+        "source": "Source"
+      },
       "missing": "Resource definition not found.",
       "loadFailure": {
         "permission": "You do not have permission to view this resource definition.",
@@ -584,12 +623,26 @@
         "endpoint": "Endpoint",
         "k8s_workload": "Kubernetes workload"
       },
-      "criticalities": { "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical" },
+      "criticalities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
       "validation": {
-        "type": { "required": "Resource type is required.", "unsupported": "Choose a supported resource type." },
-        "name": { "required": "Name is required." },
-        "criticality": { "unsupported": "Choose a supported criticality." },
-        "labels": { "invalid": "Enter each label as key=value on its own line." }
+        "type": {
+          "required": "Resource type is required.",
+          "unsupported": "Choose a supported resource type."
+        },
+        "name": {
+          "required": "Name is required."
+        },
+        "criticality": {
+          "unsupported": "Choose a supported criticality."
+        },
+        "labels": {
+          "invalid": "Enter each label as key=value on its own line."
+        }
       },
       "saveFailure": {
         "permission": "You do not have permission to save this resource.",
@@ -604,11 +657,8 @@
   "exploreMetric": {
     "series": "Series",
     "value": "Value",
-    "datasource": "Data source",
-    "queryMode": "Query mode",
     "trend": "Metric trend",
-    "chartUnavailable": "The metric chart is unavailable. Samples remain available below.",
-    "filter": "Label filter, key=value",
+    "filter": "Label filter (key:value or key=value)",
     "groupBy": "Group by label",
     "aggregation": "Aggregation",
     "temporalAggregation": "Temporal aggregation",
@@ -619,18 +669,66 @@
       "increase": "Increase",
       "delta": "Delta"
     },
-    "step": "Step in seconds, for example 60"
+    "step": "Step (seconds)",
+    "copyQuery": "Copy query",
+    "queryCopied": "Query copied",
+    "queryCopyFailed": "Query could not be copied",
+    "catalogLoading": "Loading metric names…",
+    "catalog": "Metric catalog",
+    "searchMetrics": "Search metric names",
+    "searchExample": "e.g. process_cpu",
+    "catalogUnavailable": "Metric catalog is unavailable. Retry or enter a metric name.",
+    "catalogEmpty": "No metric names match this scope and time window.",
+    "catalogCount": "{{count}} matching metrics",
+    "catalogTruncated": "Showing first {{count}} matching metrics; refine search.",
+    "selectMetric": "Choose a metric from the catalog or enter its name, then select Query.",
+    "pendingDraft": "Query draft changed. Results still show the last executed query.",
+    "chart": "Chart",
+    "table": "Table",
+    "resultDisplay": "Result display",
+    "receivedSamples": "{{count}} received samples",
+    "sampleLimit": "Showing latest {{shown}} of {{received}} received samples",
+    "exportCsv": "Download CSV",
+    "exportCsvHelp": "Exports all valid returned points from visible series, including points beyond the table preview, with aligned display time in UTC and source context. Blank units are unknown.",
+    "exportCsvTooLarge": "The CSV is too large. Narrow the time window or hide some series and try again.",
+    "exportCsvFailed": "Could not export these metric results. Try again.",
+    "seriesLabels": "Series labels",
+    "seriesReference": "Series",
+    "responseQuery": "Executed query",
+    "timeShiftSeconds": "Compare with earlier (seconds)",
+    "rollup": "Rollup",
+    "rollupOff": "Off",
+    "rollupWindow": "Rollup interval",
+    "rollupHint": "The server aggregates each lookback interval; the interval also sets the query step.",
+    "nestedRollup": "Second time aggregation",
+    "nestedRollupWindow": "Second interval",
+    "nestedRollupHint": "The second stage aggregates the scoped first-stage result and sets the output step.",
+    "stepExample": "e.g. 60",
+    "summary": {
+      "title": "Sample summary",
+      "scope": "Returned samples only. Percentiles are not combined into a window percentile. Units appear only when provided.",
+      "min": "Minimum",
+      "max": "Maximum",
+      "latest": "Latest",
+      "count": "Samples"
+    },
+    "defaultSum": "sum (default)",
+    "defaultRaw": "Raw samples (default)",
+    "identityGroupingHint": "Aggregation keeps service and entity identities separate; Group by adds labels.",
+    "temporalWindowHint": "Rate, increase and delta use a fixed 5-minute lookback; Step changes evaluation spacing.",
+    "countSeriesHint": "Count counts contributing series, not requests or observations.",
+    "bucketHint": "Bucket boundaries (le) are retained. Bucket series are not latency values or percentiles.",
+    "bucketHelp": "Histogram bucket boundaries"
   },
   "exploreLog": {
     "mode": "Log mode",
     "history": "History",
-    "query": "Query",
     "live": "Live",
     "detail": "Log detail",
     "openTrace": "Open trace",
     "resourceFilter": "Resource attributes, key=value",
     "attributeFilter": "Log attributes, key:value",
-    "hideInternal": "Hide internal logs",
+    "hideInternal": "Hide infrastructure logs",
     "hideNoise": "Hide noise logs",
     "resourceAttributes": "Resource attributes",
     "logAttributes": "Log attributes",
@@ -654,28 +752,39 @@
     "trendEmpty": "No trend buckets were returned for this query.",
     "trendInsufficient": "The current window contains one bucket ({{count}} logs).",
     "statisticsUnavailable": "This statistics region could not be loaded.",
+    "overviewPermission": "You do not have permission to read the log overview.",
+    "trendPermission": "You do not have permission to read the log trend.",
     "statistics": {
       "total": "Total",
-      "trace": "Trace",
-      "debug": "Debug",
-      "info": "Info",
-      "warn": "Warn",
-      "error": "Error",
-      "fatal": "Fatal"
-    }
+      "trace": "TRACE",
+      "debug": "DEBUG",
+      "info": "INFO",
+      "warn": "WARN",
+      "error": "ERROR",
+      "fatal": "FATAL"
+    },
+    "statisticsScope": "Counts match current filters.",
+    "scopeSuggestions": {
+      "hint": "Partial suggestions; you can also type.",
+      "unavailable": "Suggestions unavailable; type a value.",
+      "empty": "No suggestions; type a value."
+    },
+    "visibilityHint": "Excludes known infrastructure and demo services. Select a service to isolate your app."
   },
   "exploreTrace": {
+    "layout": {
+      "basicFilters": "Basic filters",
+      "filterHelp": "Filter semantics",
+      "countHelp": "Count semantics",
+      "trendHelp": "Trend attribution",
+      "groupAction": "Values toggle draft filters using the selected include/exclude mode; run Query to apply."
+    },
     "detail": "Trace detail",
-    "loadFailed": "The trace detail is unavailable.",
     "status": "Status",
     "kind": "Kind",
     "scope": "Instrumentation scope",
-    "spans": "spans",
-    "errors": "errors",
-    "events": "Events",
     "spanAttributes": "Span attributes",
     "resourceAttributes": "Resource attributes",
-    "relatedMetrics": "Related metrics",
     "minDuration": "Minimum duration (ms)",
     "maxDuration": "Maximum duration (ms)",
     "errorOnly": "Errors only",
@@ -688,14 +797,11 @@
     "hideInternal": "Hide internal spans"
   },
   "explore": {
-    "title": "Observability",
     "description": "Query and correlate metrics, logs, and traces in one time scope.",
     "signalsNavigation": "Signal navigation",
-    "advancedFilters": "Advanced filters",
+    "advancedFilters": "More filters",
     "activeFilters": "Active filters",
-    "context": "Investigation context",
     "timeRange": "Time range",
-    "exactWindow": "Onboarding exact window",
     "traceId": "Trace ID",
     "spanId": "Span ID",
     "traceIdContext": "Trace ID: {{value}}",
@@ -709,7 +815,6 @@
     "environmentContext": "Environment: {{value}}",
     "metric": "Metric",
     "samples": "Samples",
-    "labels": "Labels",
     "time": "Time",
     "severity": "Severity",
     "service": "Service",
@@ -717,9 +822,7 @@
     "trace": "Trace",
     "operation": "Operation",
     "operationContext": "Operation: {{value}}",
-    "duration": "Duration",
     "relatedLogs": "Related logs",
-    "open": "Open",
     "signals": {
       "metrics": "Metrics",
       "logs": "Logs",
@@ -748,6 +851,23 @@
       "metrics": "No metric series for this context.",
       "logs": "No logs for this context.",
       "traces": "No traces for this context."
+    },
+    "autoRefresh": "Auto refresh",
+    "logSort": {
+      "menu": "Sort {{field}}",
+      "numberAsc": "Number: lowest first",
+      "numberDesc": "Number: highest first",
+      "textAsc": "Text: A to Z",
+      "textDesc": "Text: Z to A",
+      "applied": "Sorted by {{value}}",
+      "pending": "Pending sort: {{value}}. Select Query to apply.",
+      "reset": "Reset sorting changes",
+      "hint": "Sorts all matching logs. Number uses numeric values without converting strings; Text uses case-sensitive strings. Missing values and other types appear last.",
+      "historyOnly": "Field sorting is available in History. Live shows newly received logs.",
+      "invalid": "Invalid log sorting. Choose a supported field and ordering.",
+      "restore": "Newest first",
+      "unavailable": "This column cannot be sorted.",
+      "pendingShort": "Sort pending"
     }
   },
   "instrumentation": {
@@ -844,8 +964,14 @@
         "available": "Available",
         "unavailable": "Unavailable"
       },
-      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
-      "security": { "tls": "TLS", "plaintext": "Unencrypted" },
+      "transport": {
+        "http_protobuf": "OTLP HTTP/protobuf",
+        "grpc": "OTLP gRPC"
+      },
+      "security": {
+        "tls": "TLS",
+        "plaintext": "Unencrypted"
+      },
       "profileReason": {
         "unavailable": "This destination is not ready for selection.",
         "notAdvertised": "An administrator has not published a secure intake address.",
@@ -888,7 +1014,9 @@
         "plaintext_transport_warning": "Unencrypted transport",
         "no_persistence": "No HertzBeat-side installer is created"
       },
-      "warning": { "plaintext_authorization": "The Authorization header will travel over an unencrypted connection." },
+      "warning": {
+        "plaintext_authorization": "The Authorization header will travel over an unencrypted connection."
+      },
       "note": {
         "telemetrygen_no_persistence": "Run the official tool only for this verification and remove it afterward.",
         "merge_exporter_into_each_pipeline": "Reference the exporter from every signal pipeline you want to send.",
@@ -902,7 +1030,7 @@
       "directory": {
         "search": "Search sources",
         "categories": "Source categories",
-        "all": "All sources",
+        "all": "Available guides",
         "group": {
           "quick_start": "Quick start",
           "applications": "Applications",
@@ -996,6 +1124,20 @@
           "gcp_compute_engine_description": "Review signal support and connect Google Compute Engine telemetry.",
           "gcp_gke": "Google Kubernetes Engine",
           "gcp_gke_description": "Review signal support and connect Google Kubernetes Engine telemetry."
+        },
+        "commonPaths": "Common setup paths",
+        "unsupportedGuides": "OTLP guide capability details ({{count}} unavailable)",
+        "otlpBoundary": "These sources do not have an OTLP setup guide here. This does not describe support for Agentless monitors.",
+        "guideUnavailable": "OTLP guide unavailable",
+        "agentlessBoundary": "Monitoring a database, host or network device without an application agent? Use active monitoring.",
+        "noAvailableMatches": "No available setup guides match this selection."
+      },
+      "guide": {
+        "java_spring_boot_zero_code": {
+          "disable_disable_command": "Remove the OpenTelemetry -javaagent option from JAVA_TOOL_OPTIONS or the application's JVM startup arguments, preserving other JVM options. Update the service or container configuration that supplies it, then restart the target application."
+        },
+        "java_java_jar_zero_code": {
+          "disable_disable_command": "Remove the OpenTelemetry -javaagent option from JAVA_TOOL_OPTIONS or the application's JVM startup arguments, preserving other JVM options. Update the service or container configuration that supplies it, then restart the target application."
         }
       }
     },
@@ -1037,7 +1179,7 @@
       "expires": "Expiry",
       "scope": "Scope",
       "fixedScope": "OTLP ingest",
-      "ready": "Access token generated in memory",
+      "ready": "Access token held only in this session's memory",
       "notGenerated": "No access token generated",
       "generateError": "The access token could not be generated.",
       "acknowledgementRequired": "Save this one-time token before leaving or starting over. It exists only in this page's memory.",
@@ -1095,7 +1237,8 @@
       "startDetection": "Start signal check",
       "retryDetection": "Retry detection",
       "openExplore": "Open in Explore",
-      "copy": "Copy"
+      "copy": "Copy",
+      "newDetection": "New signal check"
     },
     "environment": {
       "vm": "Host / VM",
@@ -1171,7 +1314,7 @@
       "waiting": "Waiting for telemetry within the onboarding window.",
       "status": {
         "waiting": "Waiting",
-        "received": "Received",
+        "received": "Received in window",
         "unsupported": "Unsupported",
         "unavailable": "Storage unavailable",
         "error": "Detection error"
@@ -1182,9 +1325,15 @@
         "storage_unavailable": "Telemetry storage is unavailable.",
         "storage_query_failed": "Telemetry storage could not be queried.",
         "collector_unavailable": "The selected Collector is unavailable.",
-        "authentication_failed": "Telemetry authentication failed.",
+        "authentication_failed": "The selected Collector reports an authentication failure. Check its intake credentials.",
         "invalid_context": "The detection context is invalid."
-      }
+      },
+      "fixedWindow": "Observation window: {{start}} — {{end}}",
+      "observationOnly": "Received means observed in this fixed window, not currently running. Start a new check to observe later telemetry.",
+      "lastReceived": "Last received in this window: {{time}}",
+      "windowComplete": "This observation window has ended. Start a new check to observe later telemetry.",
+      "notObserved": "Not observed in window",
+      "noneInWindow": "No matching telemetry was observed in this window."
     }
   },
   "auth": {
@@ -1235,7 +1384,12 @@
         "title": "Active monitoring",
         "summary": "HertzBeat connects to targets on a schedule and collects metrics.",
         "flowLabel": "HertzBeat actively connects to a group of target types",
-        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "targets": {
+          "mysql": "MySQL",
+          "linux": "Linux",
+          "redis": "Redis",
+          "http": "HTTP"
+        },
         "outcomeTitle": "Collected data",
         "outcomeAvailability": "Availability and connection checks",
         "outcomeMetrics": "CPU, memory, disk, connections, and response time",
@@ -1247,7 +1401,12 @@
         "title": "Telemetry ingestion",
         "summary": "Applications and OpenTelemetry Collectors send telemetry to HertzBeat.",
         "flowLabel": "A group of applications and an OpenTelemetry Collector report to HertzBeat",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
+        "sources": {
+          "java": "Java",
+          "dotnet": ".NET",
+          "node": "Node.js",
+          "collector": "OTel Collector"
+        },
         "outcomeTitle": "Telemetry signals",
         "outcomeSignals": "Metrics, Logs, and Traces",
         "outcomeDiagnosis": "Request paths, slow points, and error traces",
@@ -1278,7 +1437,12 @@
       "server": "Server",
       "storage": "GreptimeDB",
       "collectors": "Collectors",
-      "status": { "available": "Available", "degraded": "Degraded", "unavailable": "Unavailable", "unknown": "Unknown" }
+      "status": {
+        "available": "Available",
+        "degraded": "Degraded",
+        "unavailable": "Unavailable",
+        "unknown": "Unknown"
+      }
     },
     "runtimeStates": {
       "permission": "You do not have permission to read runtime status.",
@@ -1321,6 +1485,41 @@
         "unavailable": "Monitor labels are unavailable.",
         "contract": "Monitor labels did not match the expected contract.",
         "error": "Monitor labels could not be loaded."
+      }
+    },
+    "daily": {
+      "title": "Start",
+      "description": "Continue monitoring and investigate observed evidence.",
+      "scope": "Each entry reports its own latest read. Counts do not establish telemetry freshness or service health.",
+      "signalsDescription": "Inspect metrics, logs and traces with a shared investigation context.",
+      "openSignals": "Open signal queries",
+      "addData": "Add a data source",
+      "states": {
+        "loading": "Loading current evidence…",
+        "permission": "You do not have permission to read this source.",
+        "unavailable": "This source is unavailable. Refresh to retry.",
+        "error": "This source could not be read. Refresh to retry."
+      },
+      "monitors": {
+        "title": "Monitors",
+        "description": "Configured active and push monitors.",
+        "empty": "No monitors are configured.",
+        "count": "Configured monitors: {{count}}",
+        "open": "Open monitors"
+      },
+      "alerts": {
+        "title": "Unresolved alerts",
+        "description": "Historical alert records that have not been resolved.",
+        "empty": "No unresolved alerts are reported.",
+        "count": "Unresolved alerts: {{count}}",
+        "open": "Open alerts"
+      },
+      "services": {
+        "title": "Services",
+        "description": "Registered service entities; availability and RED require signal evidence.",
+        "empty": "No service entities are registered.",
+        "count": "Registered service entities: {{count}}",
+        "open": "Open services"
       }
     }
   },
@@ -1476,7 +1675,13 @@
     "unit": "Unit",
     "series": "Series",
     "time": "Time",
-    "value": "Value",
+    "value": {
+      "open": "View the full value for {{field}}",
+      "title": "Metric value · {{field}}",
+      "copy": "Copy value",
+      "copied": "Copied",
+      "error": "Copy failed"
+    },
     "search": "Search metrics",
     "searchPlaceholder": "Search groups or fields",
     "groupFilter": "Metric group",
@@ -1495,13 +1700,6 @@
     "favoriteCount": "{{count}} favorites",
     "itemCount": "{{count}} items",
     "currentValues": "Current metric values",
-    "value": {
-      "open": "View the full value for {{field}}",
-      "title": "Metric value · {{field}}",
-      "copy": "Copy value",
-      "copied": "Copied",
-      "error": "Copy failed"
-    },
     "noMatches": "No metric values match the current filters.",
     "historyTrend": "History trend",
     "currentValue": "Current",
@@ -1594,7 +1792,10 @@
       "empty": "No collection execution was observed in this investigation window.",
       "unavailable": "Collection execution evidence is unavailable.",
       "unknown": "Collection execution evidence has not been resolved.",
-      "outcomes": { "success": "Succeeded", "failure": "Failed" },
+      "outcomes": {
+        "success": "Succeeded",
+        "failure": "Failed"
+      },
       "phases": {
         "UNKNOWN": "Unknown phase",
         "RESOLVE": "Resolve",
@@ -1634,7 +1835,11 @@
       "unavailable": "Related OTLP evidence is unavailable.",
       "unknown": "Related OTLP evidence has not been resolved."
     },
-    "signals": { "metrics": "OTLP Metrics", "logs": "Logs", "traces": "Traces" },
+    "signals": {
+      "metrics": "OTLP Metrics",
+      "logs": "Logs",
+      "traces": "Traces"
+    },
     "sources": {
       "currentAlerts": "current alerts",
       "collection": "Greptime collection events",
@@ -1682,7 +1887,10 @@
     "saveApplyConfirm": "Save and apply changes to {{app}}?",
     "visibilityAction": "{{app}} is currently {{state}}",
     "visibilityConfirm": "{{app}} is currently {{state}}. Change it to {{nextState}}?",
-    "visibilityState": { "visible": "visible", "hidden": "hidden" },
+    "visibilityState": {
+      "visible": "visible",
+      "hidden": "hidden"
+    },
     "validated": "Definition {{app}} is valid.",
     "viewApp": "View {{app}}",
     "editApp": "Edit {{app}}",
@@ -1815,7 +2023,11 @@
       "type": "Type",
       "number": "Number",
       "string": "String",
-      "password": { "keep": "Keep configured value", "replace": "Replace", "clear": "Clear" }
+      "password": {
+        "keep": "Keep configured value",
+        "replace": "Replace",
+        "clear": "Clear"
+      }
     },
     "jarFile": "Jar file",
     "chooseJar": "Choose an in-memory .jar file",
@@ -1823,8 +2035,14 @@
     "deleteTitle": "Delete plugins",
     "deleteConfirm": "Delete {{target}}?",
     "deleteBatchConfirm": "Delete {{target}} selected plugins?",
-    "validation": { "name": "Enter a plugin name.", "jarFile": "Choose a non-empty .jar file." },
-    "notice": { "updated": "Plugin status was updated.", "deleted": "The selected plugins were deleted." },
+    "validation": {
+      "name": "Enter a plugin name.",
+      "jarFile": "Choose a non-empty .jar file."
+    },
+    "notice": {
+      "updated": "Plugin status was updated.",
+      "deleted": "The selected plugins were deleted."
+    },
     "failure": {
       "missing": "The selected plugin no longer exists.",
       "invalid": "The plugin request or response was invalid.",
@@ -2090,9 +2308,18 @@
     },
     "confirm": {
       "description": "The server will apply this action to {{count}} selected Collector(s).",
-      "online": { "single": "Take this Collector online?", "batch": "Take selected Collectors online?" },
-      "offline": { "single": "Take this Collector offline?", "batch": "Take selected Collectors offline?" },
-      "delete": { "single": "Delete this Collector?", "batch": "Delete selected Collectors?" }
+      "online": {
+        "single": "Take this Collector online?",
+        "batch": "Take selected Collectors online?"
+      },
+      "offline": {
+        "single": "Take this Collector offline?",
+        "batch": "Take selected Collectors offline?"
+      },
+      "delete": {
+        "single": "Delete this Collector?",
+        "batch": "Delete selected Collectors?"
+      }
     }
   },
   "labels": {
@@ -2632,10 +2859,22 @@
     "title": "Notification setup",
     "description": "Configure delivery dependencies in order, then maintain each area independently.",
     "steps": {
-      "channels": { "label": "Channel services", "dependency": "Provide email and SMS delivery services." },
-      "receivers": { "label": "Receivers", "dependency": "Add destinations that use configured channels." },
-      "templates": { "label": "Templates", "dependency": "Optionally customize messages for a channel." },
-      "rules": { "label": "Rules", "dependency": "Route alerts to one or more receivers." }
+      "channels": {
+        "label": "Channel services",
+        "dependency": "Provide email and SMS delivery services."
+      },
+      "receivers": {
+        "label": "Receivers",
+        "dependency": "Add destinations that use configured channels."
+      },
+      "templates": {
+        "label": "Templates",
+        "dependency": "Optionally customize messages for a channel."
+      },
+      "rules": {
+        "label": "Rules",
+        "dependency": "Route alerts to one or more receivers."
+      }
     },
     "status": {
       "configured": "Configured",
@@ -2689,7 +2928,9 @@
       "invalid": "Receiver or template options returned an invalid response.",
       "unavailable": "Receiver or template options are temporarily unavailable.",
       "error": "Receiver or template options could not be loaded.",
-      "action": { "receivers": "Configure receivers" }
+      "action": {
+        "receivers": "Configure receivers"
+      }
     },
     "read": {
       "missing": "The delivery rule no longer exists.",
@@ -2808,7 +3049,10 @@
   "alertRules": {
     "title": "Alert rules",
     "description": "Manage alert evaluation rules and their current state.",
-    "guide": { "alertCenter": "View alert center", "deliveryRules": "Configure delivery rules" },
+    "guide": {
+      "alertCenter": "View alert center",
+      "deliveryRules": "Configure delivery rules"
+    },
     "manage": "Manage rules",
     "new": "New rule",
     "edit": "Edit rule",
@@ -2867,7 +3111,10 @@
         "parentheses": "Mismatched parentheses"
       }
     },
-    "severity": { "label": "Severity", "placeholder": "Select Priorities" },
+    "severity": {
+      "label": "Severity",
+      "placeholder": "Select Priorities"
+    },
     "mode": {
       "label": "Alert mode",
       "placeholder": "Please select alert mode",
@@ -2914,7 +3161,11 @@
     "deleteSelectedConfirm": "Delete {{count}} selected alert rules?",
     "export": {
       "selected": "Export selected",
-      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel",
+        "yaml": "YAML"
+      },
       "success": "Alert rule configuration downloaded.",
       "failure": {
         "forbidden": "Your account is not permitted to export alert rules.",
@@ -3068,6 +3319,7 @@
     "windowPlaceholder": "Please enter calculation window time",
     "times": "Trigger count",
     "preview": "Preview",
+    "previewLoading": "Evaluating the expression…",
     "previewSuccess": "Preview returned {{count}} rows; up to {{pageSize}} rows are shown per page.",
     "previewEmpty": "The preview returned no rows.",
     "previewTruncated": "Some preview content was truncated for display.",
@@ -3158,7 +3410,10 @@
     "export": {
       "all": "Export all",
       "selected": "Export selected",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel"
+      },
       "success": "Monitor configuration downloaded.",
       "failure": {
         "forbidden": "Administrator access is required to export monitors.",
@@ -3248,7 +3503,10 @@
         "zookeeper_sd": "ZooKeeper service discovery"
       },
       "schedule": "Schedule",
-      "scheduleTypes": { "interval": "Interval", "cron": "Cron expression" },
+      "scheduleTypes": {
+        "interval": "Interval",
+        "cron": "Cron expression"
+      },
       "cronExpression": "Cron expression (6 fields)",
       "advanced": "Advanced parameters",
       "labels": "Labels",
@@ -3507,9 +3765,9 @@
       "acknowledged": "Acknowledged",
       "handled": "Handled",
       "workspaceScope": "Current workspace",
-      "warning": "Warning",
-      "critical": "Critical",
-      "emergency": "Emergency"
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     },
     "status": {
       "label": "Status",
@@ -3523,10 +3781,10 @@
     "severity": {
       "label": "Severity",
       "all": "All severities",
-      "info": "Information",
-      "warning": "Warning",
-      "critical": "Critical",
-      "emergency": "Emergency"
+      "info": "INFO",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     }
   },
   "statusManagement": {
@@ -3683,8 +3941,14 @@
       "system_property": "System property",
       "command_line": "Command line"
     },
-    "applyMode": { "managed_write": "Managed configuration", "external_apply": "External / GitOps configuration" },
-    "applyModeInline": { "managed_write": "managed by HertzBeat", "external_apply": "managed externally" },
+    "applyMode": {
+      "managed_write": "Managed configuration",
+      "external_apply": "External / GitOps configuration"
+    },
+    "applyModeInline": {
+      "managed_write": "managed by HertzBeat",
+      "external_apply": "managed externally"
+    },
     "maintenance": {
       "active": "Maintenance mode is active",
       "inactive": "Maintenance mode is inactive",
@@ -3692,8 +3956,16 @@
       "acknowledgement": "I understand monitoring writes must remain paused until migration and activation are complete.",
       "acknowledgementAutoEnter": "I understand starting migration will automatically enter maintenance mode and pause monitoring writes."
     },
-    "topology": { "single_node": "Single node", "multi_node": "Multiple nodes", "unknown": "Unknown" },
-    "topologyInline": { "single_node": "single-node", "multi_node": "multi-node", "unknown": "unknown" },
+    "topology": {
+      "single_node": "Single node",
+      "multi_node": "Multiple nodes",
+      "unknown": "Unknown"
+    },
+    "topologyInline": {
+      "single_node": "single-node",
+      "multi_node": "multi-node",
+      "unknown": "unknown"
+    },
     "migration": {
       "title": "HertzBeat database migration wizard",
       "description": "Move HertzBeat management metadata from H2 to an empty MySQL or PostgreSQL database. Validate the target before any data is copied.",
@@ -3729,7 +4001,11 @@
     "export": {
       "format": "Export format",
       "password": "Export password",
-      "formats": { "yaml": "YAML", "env": "Environment variables", "kubernetes_secret": "Kubernetes Secret" }
+      "formats": {
+        "yaml": "YAML",
+        "env": "Environment variables",
+        "kubernetes_secret": "Kubernetes Secret"
+      }
     },
     "actions": {
       "validate": "Validate target",
@@ -3742,7 +4018,10 @@
       "returnToConfiguration": "Return to current configuration",
       "continueCurrent": "Continue current migration"
     },
-    "validation": { "valid": "Target validation succeeded", "invalid": "Target validation failed" },
+    "validation": {
+      "valid": "Target validation succeeded",
+      "invalid": "Target validation failed"
+    },
     "state": {
       "pending": "Migration queued",
       "running": "Migration in progress",
@@ -3771,7 +4050,12 @@
       "verification": "Verification",
       "restart": "Restart HertzBeat using the deployment's normal operational procedure. This page will continue polling for convergence."
     },
-    "verification": { "pending": "Pending", "running": "Running", "succeeded": "Succeeded", "failed": "Failed" },
+    "verification": {
+      "pending": "Pending",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
     "errors": {
       "migration_unavailable": "The migration engine is not available in this server build.",
       "migration_source_unsupported": "Only an H2 management database can be migrated.",
@@ -3858,7 +4142,11 @@
         "host": "SMTP host",
         "port": "SMTP port",
         "security": "Transport security",
-        "securityMode": { "none": "None", "starttls": "STARTTLS", "tls": "TLS" },
+        "securityMode": {
+          "none": "None",
+          "starttls": "STARTTLS",
+          "tls": "TLS"
+        },
         "username": "Username",
         "password": "Password",
         "fromAddress": "From address"
@@ -3973,13 +4261,21 @@
         "noRun": "No runs"
       }
     },
-    "investigation": { "label": "Investigation" },
-    "roles": { "you": "You", "assistant": "HertzBeat AI" },
+    "investigation": {
+      "label": "Investigation"
+    },
+    "roles": {
+      "you": "You",
+      "assistant": "HertzBeat AI"
+    },
     "empty": {
       "title": "What do you want to investigate?",
       "description": "Ask about a monitor, entity, alert, metric, log stream, trace, or topology scope."
     },
-    "composer": { "label": "Investigation prompt", "placeholder": "Ask HertzBeat to inspect an operational problem…" },
+    "composer": {
+      "label": "Investigation prompt",
+      "placeholder": "Ask HertzBeat to inspect an operational problem…"
+    },
     "actions": {
       "send": "Send",
       "stop": "Stop",
@@ -4015,9 +4311,12 @@
       "approvals": "Approvals",
       "noApprovals": "No pending approvals",
       "inputs": "Requested input",
-      "noInputs": "No input requested"
+      "noInputs": "No input requested",
+      "statusUnknown": "Status not recorded"
     },
-    "approval": { "adminRequired": "Administrator approval required" },
+    "approval": {
+      "adminRequired": "Administrator approval required"
+    },
     "providers": {
       "action": "Model providers",
       "title": "Model providers",
@@ -4080,8 +4379,14 @@
       "truncated": "Only the bounded result set is shown.",
       "truncationUnknown": "The full result count is unknown."
     },
-    "metrics": { "before": "Before", "anchor": "Alert", "after": "After" },
-    "logs": { "focusActions": "Logs available for focused investigation" },
+    "metrics": {
+      "before": "Before",
+      "anchor": "Alert",
+      "after": "After"
+    },
+    "logs": {
+      "focusActions": "Logs available for focused investigation"
+    },
     "traces": {
       "traceId": "Trace ID",
       "service": "Service",
@@ -4090,7 +4395,12 @@
       "status": "Status",
       "spans": "Spans"
     },
-    "traceStatus": { "error": "Error", "ok": "OK", "unset": "Unset", "unknown": "Unknown" },
+    "traceStatus": {
+      "error": "Error",
+      "ok": "OK",
+      "unset": "Unset",
+      "unknown": "Unknown"
+    },
     "topology": {
       "source": "Source",
       "target": "Target",
@@ -4162,5 +4472,313 @@
       "loadEarlier": "Load earlier runs",
       "noText": "No text content"
     }
+  },
+  "services": {
+    "title": "Services",
+    "description": "Inspect registered services, request RED and observed trace operations.",
+    "search": "Find services",
+    "environmentFilter": "Filter catalog environment",
+    "query": "Query",
+    "directory": "Service directory",
+    "overview": "Service overview",
+    "service": "Service",
+    "environment": "Environment",
+    "namespace": "Namespace",
+    "source": "Catalog source",
+    "unknown": "Unavailable",
+    "empty": "No matching registered services",
+    "unresolved": "Telemetry can exist without a registered service. Open Explore to query signals directly.",
+    "select": "Select a service to inspect its evidence",
+    "openTraces": "Open traces",
+    "openLogs": "Open service logs",
+    "openMetrics": "Open metrics",
+    "logsScope": "The log entry uses service scope; investigate an operation through its traces to find related logs.",
+    "invalidWindow": "Choose a valid investigation window of at most 24 hours.",
+    "latestTrace": "Last observed trace in window",
+    "freshnessLimit": "Observation time is historical evidence, not a service health or liveness guarantee.",
+    "entity": "Open entity evidence",
+    "red": "Request RED · Greptime Flow",
+    "redLimit": "Service-wide. Observed SERVER requests in 60-second buckets. Unaligned windows select whole buckets. Sampling completeness is unknown; P95 is approximate and may be unavailable.",
+    "requests": "Observed requests",
+    "requestRate": "Requests / second",
+    "errorRate": "Error rate",
+    "latencyP95": "P95 latency",
+    "operations": "Observed root trace operations",
+    "operationLimit": "Up to 20 groups ordered by error traces. This is observed root trace evidence, not an exhaustive request inventory; downstream services may have RED without root operations.",
+    "operation": "Operation",
+    "observedTraces": "Observed traces",
+    "errorTraces": "Error traces",
+    "investigate": "Investigate",
+    "errorAction": "Error traces",
+    "unnamedOperation": "Unnamed operation",
+    "noOperations": "No root operation evidence in this window",
+    "associations": "Existing associations",
+    "associationLimit": "Current monitor-linked alerts and up to 50 registered relation previews; these are not filtered by the investigation window or complete inferred dependencies.",
+    "linkedAlerts": "Active monitor-linked alerts",
+    "noRelations": "No registered relation evidence in this preview",
+    "back": "Back to services",
+    "timeRange": "Investigation time range",
+    "exactWindow": "Keep absolute window",
+    "state": {
+      "loading": "Loading evidence…",
+      "empty": "No observed evidence in this window",
+      "unavailable": "Evidence source unavailable",
+      "error": "Evidence could not be read",
+      "permission": "Permission required to read this evidence",
+      "idle": "Select a service first",
+      "missing": "Service no longer available",
+      "invalid": "Invalid investigation scope"
+    },
+    "backDirectory": "Back to service directory",
+    "information": "Service information",
+    "lastEntityEvidence": "Latest entity evidence",
+    "performance": "Performance",
+    "registered": "Registered services",
+    "scopeTooLarge": "Scope exceeds 500 services",
+    "narrowScope": "Narrow the search or environment to rank all matching services. No partial ranking is displayed.",
+    "performanceUnavailable": "Service observations unavailable",
+    "noRanking": "No current ranking is shown. Retry or open registered services.",
+    "performanceScope": "Observed SERVER requests in 60-second buckets. Whole buckets are included; sampling completeness is unknown and P95 is approximate. Missing observations are not healthy status.",
+    "resultCount": "{{count}} matching services",
+    "sort": "Sort all results",
+    "order": "Sort direction",
+    "desc": "Descending",
+    "asc": "Ascending",
+    "pageEmpty": "This page has no services",
+    "firstPage": "First page",
+    "clearFilters": "Clear filters",
+    "errorRequests": "Error requests",
+    "dataState": "Data state",
+    "observation": {
+      "ready": "Observed",
+      "empty": "No observed requests",
+      "unresolved": "Identity unresolved"
+    },
+    "sortKeys": {
+      "errorCount": "Error requests",
+      "errorRate": "Error rate",
+      "requestCount": "Observed requests",
+      "latencyP95Ms": "P95 latency",
+      "name": "Service"
+    }
+  },
+  "exploreSaved": {
+    "queryActions": "Query actions",
+    "views": "Views",
+    "myView": "My View",
+    "defaultView": "Default log view",
+    "filterViews": "Filter views",
+    "sort": "Sort saved views",
+    "sortOptions": {
+      "default": "Default",
+      "recent": "Recently viewed",
+      "newest": "Newest first",
+      "oldest": "Oldest first",
+      "az": "A–Z",
+      "za": "Z–A"
+    },
+    "onlyMine": "Show only my saved views",
+    "addFavorite": "Add {{view}} to favorites",
+    "removeFavorite": "Remove {{view}} from favorites",
+    "saveNewView": "Save as new view",
+    "saveChanges": "Save Changes",
+    "copyUrl": "Copy URL",
+    "editView": "Edit",
+    "moreActions": "More view actions",
+    "directory": "Saved queries",
+    "save": "Save query",
+    "update": "Update saved query",
+    "saveAs": "Save as",
+    "active": "Opened: {{name}}",
+    "applyFirst": "Apply your changes with Query before saving.",
+    "activeUnavailable": "The selected saved query is unavailable. Reopen a valid record before updating it.",
+    "invalidQuery": "This query cannot be saved with its current conditions or time mode.",
+    "shared": "Shared across this HertzBeat installation. Users with write access can update or delete these queries.",
+    "relative": "Relative · {{range}} · recalculated when opened",
+    "absolute": "Absolute · {{window}} · {{zone}}",
+    "name": "Name",
+    "description": "Description",
+    "firstPage": "Reopens on the first result page. Navigation history is not shared.",
+    "writeFailed": "The change could not be confirmed. Your input is retained; refresh the saved queries before retrying.",
+    "savePermission": "You do not have permission to save this shared view.",
+    "deletePermission": "You do not have permission to delete this shared view.",
+    "signal": "Signal",
+    "allSignals": "All signals",
+    "empty": "No saved queries for this signal.",
+    "original": "Original saved record",
+    "export": "Export original JSON",
+    "updated": "Updated: {{time}}",
+    "unknownTime": "Unavailable",
+    "open": "Open query",
+    "inspect": "Inspect original",
+    "discardDraft": "Discard unapplied query changes and open this saved query?",
+    "deleteConfirm": "Delete this shared saved query?",
+    "editor": {
+      "create": "Save query",
+      "update": "Update shared query",
+      "copy": "Save query as"
+    },
+    "states": {
+      "loading": "Loading saved queries…",
+      "error": "Saved queries could not be loaded.",
+      "permission": "You do not have access to saved queries.",
+      "contract_error": "The saved-query response could not be read.",
+      "transport_error": "The saved-query service is unavailable."
+    },
+    "reasons": {
+      "invalidPayload": "The original payload is invalid or has an unknown format.",
+      "unsupportedVersion": "This saved-query version is not supported.",
+      "invalidQuery": "The saved conditions or time mode cannot be restored safely.",
+      "legacyUnsupported": "Some legacy conditions cannot be converted without changing the query. The original is retained.",
+      "retiredReferenceJoin": "This saved query uses a reference table join that is no longer supported. It was not opened or run."
+    },
+    "revisionConflict": "This query was changed or deleted elsewhere. Your draft is kept. Reload the latest version or save a copy."
+  },
+  "signalDashboard": {
+    "clearSearch": "Clear",
+    "search": "Search dashboards by name",
+    "searchCount": "{{count}} of {{total}} dashboards",
+    "noMatches": "No dashboards match this name",
+    "timeZoneUnspecified": "Timezone unspecified",
+    "analysisDetails": "Analysis details",
+    "analysisReadOnly": "This panel keeps the complete log analysis. Use Open in Explore to change its query; title, layout and shared service context remain editable.",
+    "settings": "Dashboard settings",
+    "variableKind": "Variable kind: {{name}}",
+    "title": "Dashboards",
+    "shared": "Shared dashboards use HertzBeat controlled queries.",
+    "new": "New dashboard",
+    "untitled": "Untitled dashboard",
+    "edit": "Edit dashboard",
+    "copy": "Copy dashboard",
+    "copyName": "{{name}} copy",
+    "name": "Dashboard name",
+    "description": "Description",
+    "key": "Dashboard ID",
+    "directory": "All dashboards",
+    "open": "Open",
+    "loading": "Loading dashboards…",
+    "error": "Dashboards could not be loaded. Refresh to retry.",
+    "empty": "No shared dashboards have been saved.",
+    "document": "Supported document",
+    "legacy": "Legacy dashboard: original content is preserved.",
+    "unavailable": "This dashboard is missing or its document is unsupported.",
+    "state": "Document state",
+    "updated": "Metadata updated",
+    "upgrade": "Upgrade empty dashboard",
+    "upgradeExact": "Save this exact empty conversion before editing the dashboard. Original fragments remain preserved.",
+    "import": "Import dashboard",
+    "export": "Export document",
+    "exportOriginal": "Export original",
+    "importFile": "Dashboard JSON file",
+    "documentJson": "Dashboard document JSON",
+    "importHelp": "Import the supported Perses subset. Review the local draft before saving; existing records are never overwritten automatically.",
+    "importCopy": "Import as a copy with a new ID",
+    "invalidDocument": "Some document fields are invalid or unsupported. Correct them before Query or Save.",
+    "invalidHandoff": "This panel cannot be added without losing its query context. The original query is unchanged.",
+    "conflict": "This dashboard changed after it was opened. Your draft is retained; reload to review the current revision.",
+    "writeFailed": "Save failed. Your inputs are retained; retry after the connection recovers.",
+    "reload": "Reload current revision",
+    "discardReload": "Discard this local draft and reload the saved dashboard?",
+    "deleteConfirm": "Delete this shared dashboard?",
+    "unsaved": "Unsaved local draft. Query previews applied definitions; Cancel discards changes. Refresh restores saved content.",
+    "query": "Query",
+    "applyFirst": "Run Query to preview this panel definition.",
+    "panels": "Dashboard panels",
+    "noPanels": "No panels yet. Add a panel or send a supported query from Explore.",
+    "addPanel": "Add panel",
+    "newPanel": "New panel",
+    "removePanel": "Remove panel",
+    "definition": "Dashboard definition",
+    "panelDefinition": "Selected panel definition",
+    "panelTitle": "Panel title",
+    "panelType": "Panel type",
+    "queryContext": "Query context",
+    "queryContextField": "Query context: {{field}}",
+    "variables": "Variable definitions",
+    "TextVariable": "Text value",
+    "ListVariable": "Static options",
+    "defaultValue": "Default value",
+    "staticValues": "Options, one per line",
+    "removeVariable": "Remove variable",
+    "addVariable": "Add {{name}} variable",
+    "serviceName": "Service",
+    "serviceNamespace": "Namespace",
+    "environment": "Environment",
+    "defaultDuration": "Default time range",
+    "autoRefresh": "Default auto refresh",
+    "timeZone": "Time zone",
+    "timeRange": "Time range",
+    "fixedWindow": "Fixed investigation window",
+    "range": "Last {{range}}",
+    "invalidTime": "The explicit time window is invalid. Select a preset and run Query.",
+    "layout": "Layout position and size",
+    "x": "Column",
+    "y": "Row",
+    "width": "Width",
+    "height": "Height",
+    "invalidLayout": "This layout overlaps another panel or exceeds the supported bounds.",
+    "chooseTarget": "Choose a dashboard for this panel",
+    "appendPanel": "Add to this dashboard",
+    "newFromPanel": "Create dashboard with this panel",
+    "returnSource": "Return to source query",
+    "openExplore": "Open Explore",
+    "loadingPanel": "Loading panel…",
+    "emptyPanel": "No data matched this panel query.",
+    "cancelled": "Panel query cancelled. Retry to query again.",
+    "retryPanel": "Retry panel",
+    "bounded": "Results cover a bounded set of up to {{limit}} rows, not the complete time window.",
+    "unknownCoverage": "Query coverage is unknown.",
+    "truncated": "The result was truncated at the query limit.",
+    "runtimeError": "The panel could not be rendered. Retry or refresh this query.",
+    "addFromExplore": "Add to dashboard",
+    "back": "Back to dashboard",
+    "addApplyFirst": "Run Query to apply changes before adding a panel.",
+    "addUnsupported": "These query conditions are not supported by dashboards yet.",
+    "addFixedTrace": "This panel keeps a fixed trace; service variables do not change it.",
+    "addSourceWindow": "The panel opens with this investigation time window.",
+    "fields": {
+      "name": "Metric name",
+      "operationName": "Operation name",
+      "aggregation": "Aggregation",
+      "temporalAggregation": "Temporal aggregation",
+      "stepSeconds": "Step (seconds)",
+      "limit": "Result limit",
+      "search": "Log search",
+      "severity": "Severity",
+      "spanScope": "Span scope",
+      "minDurationMs": "Minimum duration (ms)",
+      "maxDurationMs": "Maximum duration (ms)",
+      "hideInternal": "Hide internal records",
+      "hideNoise": "Hide noise",
+      "errorOnly": "Errors only",
+      "traceId": "Trace ID",
+      "spanId": "Span ID",
+      "entityId": "Entity ID",
+      "entityType": "Entity type",
+      "collectorId": "Collector ID",
+      "instance": "Instance",
+      "endpoint": "Endpoint",
+      "serviceName": "Service",
+      "serviceNamespace": "Namespace",
+      "environment": "Environment"
+    },
+    "kinds": {
+      "TimeSeriesChart": "Metric time series",
+      "StatChart": "Metric stat",
+      "GaugeChart": "Metric gauge",
+      "Table": "Metric table",
+      "LogsTable": "Log table",
+      "TraceTable": "Trace table",
+      "TracingGanttChart": "Trace waterfall"
+    },
+    "gaugeMaximum": "Gauge maximum",
+    "queryFailures": {
+      "invalid": "The visualization request is invalid.",
+      "permission": "You do not have permission to inspect this signal.",
+      "overloaded": "Signal storage is busy. Try again.",
+      "unavailable": "Signal storage is unavailable.",
+      "contract": "The evidence could not be rendered because it was incomplete."
+    },
+    "addTransactionsUnsupported": "Transactions cannot be added to a dashboard yet. Save this query to reopen the investigation."
   }
 }

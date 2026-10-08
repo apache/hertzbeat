@@ -82,6 +82,7 @@ export const transcriptPayloadSchema = z
         })
         .passthrough()
     ),
+    toolCallId: z.string().nullable().optional(),
     toolName: z.string().nullable().optional(),
     errorMessage: z.string().nullable().optional()
   })

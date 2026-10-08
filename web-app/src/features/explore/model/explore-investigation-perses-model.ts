@@ -110,9 +110,15 @@ function traceResult(
     },
     outcome: {
       state: 'ready',
-      truncated: false,
+      truncated: detail.partial ?? false,
       data: {
         traceId,
+        rootState: detail.rootState,
+        rootSpanCount: detail.rootSpanCount,
+        representativeSpan: detail.representativeSpan,
+        observedStartTime: detail.observedStartTime,
+        observedEndTime: detail.observedEndTime,
+        missingParentCount: detail.missingParentCount,
         rootSpanId: detail.rootSpanId,
         serviceName: detail.serviceName,
         serviceNamespace: detail.serviceNamespace,

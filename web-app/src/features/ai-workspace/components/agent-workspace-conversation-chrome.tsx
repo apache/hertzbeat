@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import styles from './agent-workspace-conversation-chrome.module.css';
-import { formatAgentTimestamp } from './agent-workspace-format';
+import { formatAgentTimestamp, sessionStatusLabel } from './agent-workspace-format';
 
 export function ConversationHeader({
   controller,
@@ -98,17 +98,6 @@ function sessionBadgeStatus(status: string): 'processing' | 'success' | 'error' 
   if (normalized === 'COMPLETED' || normalized === 'SUCCEEDED') return 'success';
   if (normalized === 'FAILED') return 'error';
   return 'default';
-}
-
-function sessionStatusLabel(status: string, t: ReturnType<typeof useTranslation>['t']) {
-  const normalized = status.toUpperCase();
-  if (normalized === 'ACTIVE' || normalized === 'RUNNING') return t('aiWorkspace.sessions.status.active');
-  if (normalized === 'COMPLETED' || normalized === 'SUCCEEDED') return t('aiWorkspace.sessions.status.completed');
-  if (normalized === 'FAILED') return t('aiWorkspace.sessions.status.failed');
-  if (normalized === 'CANCELLED') return t('aiWorkspace.sessions.status.cancelled');
-  if (normalized === 'RECOVERY_REQUIRED') return t('aiWorkspace.sessions.status.recoveryRequired');
-  if (normalized === 'NO_RUN') return t('aiWorkspace.sessions.status.noRun');
-  return status;
 }
 
 function submitOnEnter(event: React.KeyboardEvent<HTMLTextAreaElement>, send: () => Promise<void>) {

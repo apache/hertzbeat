@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useQueryDraft } from '@/shared/query-context';
@@ -31,10 +31,7 @@ export function useEntityDiscoveryController(): EntityDiscoveryViewModel {
   const canonicalParams = writeEntityDiscoveryQuery(query);
   if (rawReturnTo !== null) canonicalParams.set('returnTo', catalogReturnTo);
   const canonicalSource = canonicalParams.toString();
-  const draft = useQueryDraft(
-    source,
-    useMemo(() => query.search, [query.search])
-  );
+  const draft = useQueryDraft(query.search, query.search);
   const client = useQueryClient();
   const result = useQuery({
     queryKey: entityQueryKeys.discovery(source),
@@ -61,7 +58,11 @@ export function useEntityDiscoveryController(): EntityDiscoveryViewModel {
     },
     actions: {
       updateDraft: draft.setValue,
-      submit: () => setQuery({ search: draft.value, pageIndex: 0 }),
+      submit: () => {
+        const search = draft.value.trim();
+        draft.setValue(search);
+        setQuery({ search, pageIndex: 0 });
+      },
       changePage: (page, pageSize) => setQuery({ pageIndex: page - 1, pageSize }),
       refresh: () => void client.invalidateQueries({ queryKey: entityQueryKeys.discovery(source) }),
       back: () => void navigate(catalogReturnTo),

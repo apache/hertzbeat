@@ -17,7 +17,7 @@ const rate = z.number().finite().nonnegative();
 const ratio = z.number().finite().min(0).max(1);
 const latency = z.number().finite().nonnegative().nullable();
 
-const redValuesSchema = z
+export const redValuesSchema = z
   .object({
     requestCount: count,
     errorCount: count,
@@ -31,22 +31,24 @@ const redValuesSchema = z
 
 const redPointSchema = redValuesSchema.and(z.object({ timestamp: count }).strict());
 
+export const redIdentitySchema = z
+  .object({
+    workspaceId: boundedText,
+    entityId: positiveJavaLong,
+    entityType: boundedText,
+    serviceName: boundedText,
+    serviceNamespace: boundedText.nullable(),
+    deploymentEnvironment: boundedText.nullable()
+  })
+  .strict();
+
 const entityRedSignalSchema = z
   .object({
     state: z.enum(['ready', 'empty', 'unavailable']),
     source: z.literal('greptime_flow'),
     resolutionSeconds: z.literal(60),
     window: z.object({ start: count, end: count }).strict(),
-    identity: z
-      .object({
-        workspaceId: boundedText,
-        entityId: positiveJavaLong,
-        entityType: boundedText,
-        serviceName: boundedText,
-        serviceNamespace: boundedText.nullable(),
-        deploymentEnvironment: boundedText.nullable()
-      })
-      .strict(),
+    identity: redIdentitySchema,
     summary: redValuesSchema.nullable(),
     series: z.array(redPointSchema).max(1_440)
   })

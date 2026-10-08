@@ -5,21 +5,17 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { queryHertzBeatData } from '../datasource/hertzbeat-query-client';
 import type { HertzBeatQueryOutcome } from '../datasource/hertzbeat-query-contract';
+import { HertzBeatPrimitiveFrame } from './hertzbeat-perses-primitive-frame';
 import persesPrimitiveStyles from './hertzbeat-perses-primitives.module.css?raw';
 
 const runtimeControl = vi.hoisted<{ fail: boolean; rowSelection: unknown }>(() => ({
   fail: false,
   rowSelection: undefined
 }));
-vi.mock('../datasource/hertzbeat-query-client', async importOriginal => {
-  const actual = await importOriginal<typeof import('../datasource/hertzbeat-query-client')>();
-  return { ...actual, queryHertzBeatData: vi.fn() };
-});
 vi.mock('./perses-signal-runtime', () => ({
   PersesSignalRuntime: ({
     kind,
@@ -66,16 +62,13 @@ vi.mock('./perses-signal-runtime', () => ({
 }));
 
 import {
-  HertzBeatLogsTable,
   HertzBeatLogsTableResult,
-  HertzBeatMetricTimeSeries,
+  HertzBeatTracingGanttChartResult,
+  HertzBeatTraceTableResult,
   HertzBeatMetricTimeSeriesResult,
-  HertzBeatTraceTable,
-  HertzBeatTracingGanttChart,
   type HertzBeatPersesPrimitiveMessages
 } from './hertzbeat-perses-primitives';
 
-const request = vi.mocked(queryHertzBeatData);
 const timeWindow = { from: 1_750_000_000_000, to: 1_750_000_060_000 } as const;
 const messages: HertzBeatPersesPrimitiveMessages = {
   loading: 'Loading signal',
@@ -83,7 +76,6 @@ const messages: HertzBeatPersesPrimitiveMessages = {
   truncated: 'Results are truncated',
   truncationUnknown: 'Result completeness is unknown',
   runtimeError: 'Visualization unavailable',
-  investigationActions: count => `Investigation actions (${count})`,
   failures: {
     'perses.query.invalid': 'Invalid query',
     'perses.query.permission': 'Permission denied',
@@ -95,15 +87,82 @@ const messages: HertzBeatPersesPrimitiveMessages = {
 
 describe('HertzBeat Perses primitives', () => {
   beforeEach(() => {
-    request.mockReset();
     runtimeControl.fail = false;
     runtimeControl.rowSelection = undefined;
   });
   afterEach(cleanup);
 
-  it('forces the official log row onto stable time and message tracks', () => {
+  it.each([true, false, 'unknown'] as const)(
+    'shows bounded empty completeness %s without inventing data',
+    truncated => {
+      render(
+        <HertzBeatTraceTableResult
+          title="Traces"
+          ariaLabel="Trace results"
+          messages={{ ...messages, bounded: limit => `Bounded to ${limit} candidate rows` }}
+          query={{ signal: 'traces', queryKind: 'table', timeWindow }}
+          outcome={{
+            state: 'empty',
+            truncated,
+            query: {
+              sort: 'newest',
+              coverage: 'bounded',
+              rowLimit: 1500,
+              truncated: truncated === 'unknown' ? null : truncated
+            }
+          }}
+        />
+      );
+      expect(screen.getByText(messages.empty as string)).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Trace results completeness' })).toHaveTextContent(
+        truncated === true
+          ? 'Results are truncated'
+          : truncated === false
+            ? 'Bounded to 1500 candidate rows'
+            : 'Result completeness is unknown'
+      );
+      expect(screen.queryByTestId('official-trace-table')).not.toBeInTheDocument();
+    }
+  );
+
+  it('preserves loading, empty and permission states at the renderer boundary', () => {
+    const common = {
+      title: 'Logs',
+      ariaLabel: 'Logs table',
+      messages,
+      toRuntimeProps: () => {
+        throw new Error('No ready data should be rendered');
+      }
+    };
+    const view = render(<HertzBeatPrimitiveFrame {...common} state={{ kind: 'loading', queryKey: 'scope' }} />);
+    expect(screen.getByRole('status', { name: 'Logs table' })).toHaveTextContent('Loading signal');
+    view.rerender(
+      <HertzBeatPrimitiveFrame
+        {...common}
+        state={{ kind: 'resolved', queryKey: 'scope', outcome: { state: 'empty', truncated: false } }}
+      />
+    );
+    expect(screen.getByRole('status', { name: 'Logs table' })).toHaveTextContent('No signal data');
+    view.rerender(
+      <HertzBeatPrimitiveFrame
+        {...common}
+        state={{
+          kind: 'resolved',
+          queryKey: 'scope',
+          outcome: {
+            state: 'error',
+            error: { kind: 'permission', messageKey: 'perses.query.permission', retryable: false }
+          }
+        }}
+      />
+    );
+    expect(screen.getByRole('alert', { name: 'Logs table' })).toHaveTextContent('Permission denied');
+    expect(screen.queryByTestId('official-logs-table')).not.toBeInTheDocument();
+  });
+
+  it('forces the official log row onto stable time, severity and message tracks', () => {
     expect(persesPrimitiveStyles).toMatch(
-      /data-log-show-time='true'[\s\S]*grid-template-columns:\s*184px minmax\(0, 1fr\)\s*!important/s
+      /data-log-show-time='true'[\s\S]*grid-template-columns:\s*184px 72px minmax\(0, 1fr\)\s*!important/s
     );
     expect(persesPrimitiveStyles).toMatch(
       /data-log-density[\s\S]*data-log-index[\s\S]*div:last-of-type[\s\S]*margin-left:\s*0\s*!important/s
@@ -112,111 +171,22 @@ describe('HertzBeat Perses primitives', () => {
 
   it('keeps row-internal actions below the compact and comfortable content box heights', () => {
     expect(persesPrimitiveStyles).toMatch(
-      /data-log-density='compact'[\s\S]*data-log-index[^}]*min-height:\s*36px[^}]*padding-block:\s*4px/s
+      /data-log-density='compact'[\s\S]*data-log-index[^}]*min-height:\s*30px[^}]*padding-block:\s*2px/s
     );
     expect(persesPrimitiveStyles).toMatch(
-      /data-log-density='comfortable'[\s\S]*data-log-index[^}]*min-height:\s*44px[^}]*padding-block:\s*8px/s
+      /data-log-density='comfortable'[\s\S]*data-log-index[^}]*min-height:\s*36px[^}]*padding-block:\s*4px/s
     );
     expect(persesPrimitiveStyles).toMatch(
       /data-log-index[^}]*div:last-of-type\s+button\)\s*\{[^}]*width:\s*24px[^}]*height:\s*24px[^}]*min-height:\s*24px/s
     );
   });
 
-  it('renders loading, cancels on unmount, and never converts cancellation into an error state', () => {
-    let requestSignal: AbortSignal | undefined;
-    request.mockImplementation(
-      (_query, options) =>
-        new Promise((_resolve, reject) => {
-          requestSignal = options?.signal;
-          options?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {
-            once: true
-          });
-        }) as never
-    );
-
-    const view = render(
-      <HertzBeatLogsTable
-        title="Logs"
-        ariaLabel="Logs table"
-        query={{ signal: 'logs', queryKind: 'table', timeWindow }}
-        messages={messages}
-      />
-    );
-
-    const loading = screen.getByRole('status', { name: 'Logs table' });
-    expect(loading).toHaveTextContent('Loading signal');
-    expect(loading).toHaveStyle({ minHeight: '388px', gridTemplateRows: '360px auto auto' });
-    view.unmount();
-    expect(requestSignal?.aborted).toBe(true);
-  });
-
-  it('keeps empty and permission failure distinct and localized by the caller', async () => {
-    request.mockResolvedValueOnce({ state: 'empty', truncated: false }).mockResolvedValueOnce({
-      state: 'error',
-      error: { kind: 'permission', messageKey: 'perses.query.permission', retryable: false }
-    });
-
-    const view = render(
-      <HertzBeatLogsTable
-        title="Logs"
-        ariaLabel="Logs table"
-        query={{ signal: 'logs', queryKind: 'table', timeWindow }}
-        messages={messages}
-      />
-    );
-    expect(await screen.findByRole('status', { name: 'Logs table' })).toHaveTextContent('No signal data');
-
-    view.rerender(
-      <HertzBeatLogsTable
-        title="Logs"
-        ariaLabel="Logs table"
-        query={{ signal: 'logs', queryKind: 'table', timeWindow, search: 'failed' }}
-        messages={messages}
-      />
-    );
-    expect(await screen.findByRole('alert', { name: 'Logs table' })).toHaveTextContent('Permission denied');
-    expect(screen.queryByTestId('official-logs-table')).not.toBeInTheDocument();
-  });
-
-  it('clears resolved evidence synchronously when the query identity changes', async () => {
-    request.mockResolvedValueOnce(metricOutcome() as never).mockImplementationOnce(
-      (_query, options) =>
-        new Promise((_resolve, reject) => {
-          options?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {
-            once: true
-          });
-        }) as never
-    );
-
-    const view = render(
-      <HertzBeatMetricTimeSeries
-        title="Metrics"
-        ariaLabel="Metric time series"
-        query={{ signal: 'metrics', queryKind: 'time-series', timeWindow, metric: { name: 'up' } }}
-        messages={messages}
-      />
-    );
-    expect(await screen.findByTestId('official-metric-time-series')).toBeInTheDocument();
-
-    view.rerender(
-      <HertzBeatMetricTimeSeries
-        title="Metrics"
-        ariaLabel="Metric time series"
-        query={{ signal: 'metrics', queryKind: 'time-series', timeWindow, metric: { name: 'cpu_usage' } }}
-        messages={messages}
-      />
-    );
-
-    expect(screen.queryByTestId('official-metric-time-series')).not.toBeInTheDocument();
-    expect(screen.getByRole('status', { name: 'Metric time series' })).toHaveTextContent('Loading signal');
-  });
-
   it('resets a sanitized runtime failure when the query identity changes', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    request.mockResolvedValue(metricOutcome() as never);
     runtimeControl.fail = true;
     const view = render(
-      <HertzBeatMetricTimeSeries
+      <HertzBeatMetricTimeSeriesResult
+        outcome={metricOutcome() as never}
         title="Metrics"
         ariaLabel="Metric time series"
         query={{ signal: 'metrics', queryKind: 'time-series', timeWindow, metric: { name: 'up' } }}
@@ -230,7 +200,8 @@ describe('HertzBeat Perses primitives', () => {
 
     runtimeControl.fail = false;
     view.rerender(
-      <HertzBeatMetricTimeSeries
+      <HertzBeatMetricTimeSeriesResult
+        outcome={metricOutcome() as never}
         title="Metrics"
         ariaLabel="Metric time series"
         query={{ signal: 'metrics', queryKind: 'time-series', timeWindow, metric: { name: 'cpu_usage' } }}
@@ -243,14 +214,9 @@ describe('HertzBeat Perses primitives', () => {
   });
 
   it('renders every official primitive from M2 typed ready outcomes', async () => {
-    request
-      .mockResolvedValueOnce(metricOutcome() as never)
-      .mockResolvedValueOnce(logOutcome() as never)
-      .mockResolvedValueOnce(traceTableOutcome() as never)
-      .mockResolvedValueOnce(traceDetailOutcome() as never);
-
     const view = render(
-      <HertzBeatMetricTimeSeries
+      <HertzBeatMetricTimeSeriesResult
+        outcome={metricOutcome() as never}
         title="Metrics"
         ariaLabel="Metric time series"
         query={{ signal: 'metrics', queryKind: 'time-series', timeWindow, metric: { name: 'up' } }}
@@ -261,14 +227,15 @@ describe('HertzBeat Perses primitives', () => {
     expect(screen.getByRole('img', { name: 'Metric time series' })).toHaveStyle({ height: '360px' });
     expect(view.container.querySelector('[data-visualization-runtime="perses"]')).toHaveStyle({
       minHeight: '388px',
-      gridTemplateRows: '360px auto auto'
+      gridTemplateRows: '360px auto'
     });
     expect(screen.getByRole('status', { name: 'Metric time series completeness' })).toHaveTextContent(
       'Result completeness is unknown'
     );
 
     view.rerender(
-      <HertzBeatLogsTable
+      <HertzBeatLogsTableResult
+        outcome={logOutcome() as never}
         title="Logs"
         ariaLabel="Logs table"
         query={{ signal: 'logs', queryKind: 'table', timeWindow }}
@@ -297,7 +264,8 @@ describe('HertzBeat Perses primitives', () => {
     expect(completeness).toHaveStyle({ height: '28px', minHeight: '28px' });
 
     view.rerender(
-      <HertzBeatTraceTable
+      <HertzBeatTraceTableResult
+        outcome={traceTableOutcome() as never}
         title="Traces"
         ariaLabel="Trace table"
         query={{ signal: 'traces', queryKind: 'table', timeWindow }}
@@ -310,7 +278,8 @@ describe('HertzBeat Perses primitives', () => {
     );
 
     view.rerender(
-      <HertzBeatTracingGanttChart
+      <HertzBeatTracingGanttChartResult
+        outcome={traceDetailOutcome() as never}
         title="Trace"
         ariaLabel="Trace gantt"
         query={{ signal: 'traces', queryKind: 'gantt', timeWindow, traceId: '0123456789abcdef0123456789abcdef' }}
@@ -321,11 +290,9 @@ describe('HertzBeat Perses primitives', () => {
     expect(screen.getByRole('region', { name: 'Trace gantt' })).toContainElement(
       screen.getByRole('button', { name: 'Inspect span' })
     );
-    expect(request).toHaveBeenCalledTimes(4);
   });
 
-  it('binds loaded table evidence to a host-owned runtime identity and accessible row actions', () => {
-    const open = vi.fn();
+  it('keeps loaded evidence inside the native runtime without a duplicate host action sidecar', () => {
     const view = render(
       <HertzBeatLogsTableResult
         title="Logs"
@@ -333,30 +300,13 @@ describe('HertzBeat Perses primitives', () => {
         query={{ signal: 'logs', queryKind: 'table', timeWindow }}
         outcome={logOutcome() as never}
         runtimeIdentity="scope-a:revision-1"
-        interactions={[
-          {
-            key: 'log-1',
-            label: 'checkout ready',
-            actions: [
-              { label: 'Investigate log checkout ready', onAction: open },
-              { label: 'Open trace checkout ready', disabled: true, onAction: vi.fn() }
-            ]
-          }
-        ]}
         messages={messages}
       />
     );
 
-    const interactions = view.container.querySelector('[data-perses-host-interactions]');
-    expect(interactions).toBeInstanceOf(HTMLDetailsElement);
-    expect(interactions).not.toHaveAttribute('open');
-    expect(screen.queryByRole('button', { name: 'Investigate log checkout ready' })).not.toBeInTheDocument();
-    fireEvent.click(within(interactions as HTMLElement).getByText('Investigation actions (1)'));
-    fireEvent.click(screen.getByRole('button', { name: 'Investigate log checkout ready' }));
-    expect(open).toHaveBeenCalledOnce();
-    expect(screen.getByRole('button', { name: 'Open trace checkout ready' })).toBeDisabled();
+    expect(view.container.querySelector('[data-perses-host-interactions]')).toBeNull();
     expect(view.container.querySelector('[data-visualization-runtime="perses"]')).toHaveStyle({
-      gridTemplateRows: '360px auto auto'
+      gridTemplateRows: '360px auto'
     });
 
     view.rerender(
@@ -477,6 +427,19 @@ function traceTableOutcome(): HertzBeatQueryOutcome<unknown> {
       total: 1,
       rows: [
         {
+          rootState: 'unique',
+          rootSpanCount: 1,
+          representativeSpan: {
+            spanId: '0123456789abcdef',
+            spanName: 'POST /orders',
+            serviceName: 'checkout',
+            serviceNamespace: 'commerce',
+            startTime: timeWindow.from,
+            durationNanos: 10_000_000
+          },
+          observedStartTime: timeWindow.from,
+          observedEndTime: timeWindow.from + Math.ceil(10_000_000 / 1_000_000),
+          unattributedServiceStats: null,
           traceId: '0123456789abcdef0123456789abcdef',
           rootSpanId: '0123456789abcdef',
           serviceName: 'checkout',
@@ -500,6 +463,19 @@ function traceDetailOutcome(): HertzBeatQueryOutcome<unknown> {
   return {
     state: 'ready',
     data: {
+      rootState: 'unique',
+      rootSpanCount: 1,
+      missingParentCount: 0,
+      representativeSpan: {
+        spanId: '0123456789abcdef',
+        spanName: 'POST /orders',
+        serviceName: 'checkout',
+        serviceNamespace: 'commerce',
+        startTime: timeWindow.from,
+        durationNanos: Number(10_000_000)
+      },
+      observedStartTime: timeWindow.from,
+      observedEndTime: timeWindow.from + Math.ceil(Number(10_000_000) / 1_000_000),
       traceId: '0123456789abcdef0123456789abcdef',
       rootSpanId: '0123456789abcdef',
       serviceName: 'checkout',
@@ -512,6 +488,7 @@ function traceDetailOutcome(): HertzBeatQueryOutcome<unknown> {
       resourceAttributes: {},
       spans: [
         {
+          startTimeUnixNano: (BigInt(timeWindow.from) * 1_000_000n).toString(),
           traceId: '0123456789abcdef0123456789abcdef',
           spanId: '0123456789abcdef',
           parentSpanId: null,

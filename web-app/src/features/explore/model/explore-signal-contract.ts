@@ -15,28 +15,24 @@
  * limitations under the License.
  */
 
+import type { MetricComposition } from '@/platform/perses';
+import type { TraceEvidence as TraceRow } from '@/shared/trace-evidence';
 import type { PagedCollection } from '@/shared/pagination';
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export const LIVE_LOG_RETENTION_LIMIT = 500;
 export type ExplorePageResult<T> = PagedCollection<T>;
 
-type TraceSummary = {
-  traceId: string;
-  rootSpanId: string | null;
-  serviceName: string | null;
-  serviceNamespace: string | null;
-  rootSpanName: string | null;
-  durationNanos: number | null;
-  status: string | null;
-  startTime: number | null;
-  errorSpanCount: number;
-  resourceAttributes: Record<string, string> | null;
+type TraceQueryCoverage = {
+  sort: 'newest' | 'duration_desc';
+  coverage: 'window' | 'bounded';
+  rowLimit: number | null;
+  truncated: boolean | null;
 };
-export type TraceRow = TraceSummary & {
-  spanCount: number | null;
-  serviceStats: Record<string, { spanCount: number; errorCount: number }> | null;
-};
+
+export type TracePageResult = ExplorePageResult<TraceRow> & { query?: TraceQueryCoverage | undefined };
+
+export type { TraceEvidence as TraceRow } from '@/shared/trace-evidence';
 
 type SharedLogRow = {
   severityNumber: number | null;
@@ -86,11 +82,44 @@ export type LogTrend = {
   intervalMs: number;
   buckets: Array<{ start: number; count: number }>;
 };
-type LogStatisticEvidence<T> = { kind: 'ready'; data: T } | { kind: 'error' };
+export type LogStatisticEvidence<T> = { kind: 'ready'; data: T } | { kind: 'error'; reason?: 'permission' };
 export type LogHistoryEvidence = {
   page: ExplorePageResult<LogRow>;
-  overview: LogStatisticEvidence<LogOverview>;
+  overview: LogStatisticEvidence<LogOverview> | { kind: 'count_only'; data: { totalCount: number } };
   trend: LogStatisticEvidence<LogTrend>;
+  calculated?: CalculatedPageResponse | undefined;
+};
+
+type CalculatedOutput = { name: string; type: 'number' | 'string' | 'boolean' };
+type CalculatedExecutedField =
+  | { id: string; kind: 'formula'; name: string; expression: string; outputs: CalculatedOutput[] }
+  | {
+      id: string;
+      kind: 'extraction';
+      engine: 'regex' | 'grok';
+      source: string;
+      pattern: string;
+      captures: Array<{ name: string }>;
+      outputs: CalculatedOutput[];
+    };
+export type CalculatedPageResponse = {
+  version: 2;
+  window: { start: number; end: number };
+  executed: {
+    parameters: Record<string, string>;
+    calculatedFields: { version: 2; fields: CalculatedExecutedField[] };
+    operation: {
+      kind: 'page';
+      pageIndex: number;
+      pageSize: number;
+      sort: { field: string; direction: 'asc' | 'desc'; type?: 'number' | 'text' | undefined };
+    };
+  };
+  result: {
+    kind: 'page';
+    totalElements: number;
+    rows: Array<{ log: LogRow; derived: Record<string, string | number | boolean | null> }>;
+  };
 };
 
 type MetricField = {
@@ -107,6 +136,7 @@ type MetricFrame = {
   data: JsonValue[][] | null;
 };
 export type MetricConsole = {
+  composition?: MetricComposition;
   context: {
     entityId: number | null;
     entityType: string | null;
@@ -126,18 +156,13 @@ export type MetricConsole = {
   emptyStateReason: string | null;
   errorMessage: string | null;
 };
-export type MetricSignalEvidence = MetricConsole | { kind: 'inventory_empty' };
+export type MetricSignalEvidence = MetricConsole | { kind: 'selection_required' };
 
 export function isMetricConsole(evidence: MetricSignalEvidence): evidence is MetricConsole {
   return !('kind' in evidence);
 }
 
-export class ExploreSignalContractError extends Error {
-  constructor(message = 'Explore signal response does not match its contract') {
-    super(message);
-    this.name = 'ExploreSignalContractError';
-  }
-}
+export { ExploreSignalContractError } from '@/shared/signal-contract-error';
 export class ExploreSignalMissingError extends Error {
   constructor() {
     super('Explore signal detail is missing');

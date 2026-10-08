@@ -176,6 +176,10 @@ const detailSchema = z
 
 const entityIdentityResponseSchema = z.object({ entity: entitySchema });
 
+export function parseEntitySummary(value: unknown): EntitySummary {
+  return mapSummary(summarySchema.parse(value));
+}
+
 export function parseEntityPage(value: unknown): EntityPage {
   const parsed = entityPageResponseSchema.safeParse(value);
   if (!parsed.success) throw new EntityContractError();

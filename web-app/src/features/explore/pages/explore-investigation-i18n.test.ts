@@ -5,7 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { investigationPrimitiveMessages } from '../components/explore-investigation-messages';
 
 import en from '@/assets/i18n/explore/en-us.json';
 import ja from '@/assets/i18n/explore/ja-jp.json';
@@ -30,6 +33,26 @@ const queryKeys = [
 ] as const;
 
 describe('Explore focused investigation locale contract', () => {
+  beforeAll(() => initializeI18n());
+
+  it.each(['en-US', 'ja-JP', 'pt-BR', 'zh-CN', 'zh-TW'] as const)(
+    'resolves every primitive message in runtime locale %s',
+    async locale => {
+      await loadLocale(locale);
+      for (const key of queryKeys) {
+        expect(i18n.getResource(locale, 'translation', `exploreInvestigation.query.${key}`)).toEqual(
+          expect.any(String)
+        );
+      }
+      const { failures, ...messages } = investigationPrimitiveMessages(i18n.getFixedT(locale));
+      for (const value of [...Object.values(messages), ...Object.values(failures)]) {
+        if (typeof value !== 'string') throw new Error('Expected a translated message string');
+        expect(value).not.toMatch(/^exploreInvestigation\./u);
+        expect(value.trim()).not.toBe('');
+      }
+    }
+  );
+
   it('keeps the focused Trace and Log workspace copy aligned in every runtime locale', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw] as LocaleRoot[]) {
       expect(locale.exploreInvestigation.title).toEqual(expect.any(String));

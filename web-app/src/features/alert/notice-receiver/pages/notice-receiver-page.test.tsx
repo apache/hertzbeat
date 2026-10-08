@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { requireDomElement } from '@/test/dom-element';
@@ -248,9 +248,5 @@ function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'sav
 }
 
 function renderPage() {
-  return render(
-    <MemoryRouter>
-      <NoticeReceiverPage />
-    </MemoryRouter>
-  );
+  return render(<RouterProvider router={createMemoryRouter([{ path: '/', element: <NoticeReceiverPage /> }])} />);
 }

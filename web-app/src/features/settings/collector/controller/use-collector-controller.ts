@@ -161,7 +161,7 @@ function useCollectorQueryState(canRead: boolean) {
   const query = useMemo(() => readCollectorQuery(new URLSearchParams(searchSource)), [searchSource]);
   const queryRef = useRef(query);
   const canonicalSearch = writeCollectorQuery(query).toString();
-  const { value: nameDraft, setValue: setNameDraft } = useStringQueryDraft(searchSource, query.name);
+  const { value: nameDraft, setValue: setNameDraft } = useStringQueryDraft(query.name, query.name);
   const { value: selected, setValue: setSelected } = useSourceScopedValue<string[]>(searchSource, []);
   const collectorQuery = useQuery({
     queryKey: collectorQueryKeys.page(query),

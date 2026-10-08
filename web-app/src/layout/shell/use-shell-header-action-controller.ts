@@ -22,7 +22,7 @@ import { useSharedTime } from '@/shared/time';
 
 import { useShellFullscreenAction } from './use-shell-fullscreen-action';
 
-export function useShellHeaderActionController() {
+export function useShellHeaderActionController(location?: { pathname: string; search: string }) {
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
   const { theme, setTheme } = useRuntimeTheme();
@@ -60,6 +60,7 @@ export function useShellHeaderActionController() {
 
   return {
     sharedTime,
+    showTimeControl: !isLiveLogs(location),
     theme,
     fullscreen: fullscreen.state,
     loggingOut,
@@ -107,4 +108,10 @@ function useLogoutAction(onSuccess: () => void, onFailure: () => void) {
   }, [onFailure, onSuccess]);
 
   return { loggingOut, logout };
+}
+
+function isLiveLogs(location: { pathname: string; search: string } | undefined) {
+  if (!location || location.pathname !== applicationRoutePaths.explore) return false;
+  const params = new URLSearchParams(location.search);
+  return params.get('signal') === 'logs' && params.get('mode') === 'live';
 }

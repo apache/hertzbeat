@@ -41,6 +41,7 @@ const identityRules = new Set([
 ]);
 const baselinePath = join('scripts', 'feature-debt-baseline.json');
 const sourceExtensions = new Set(['.ts', '.tsx', '.css']);
+const publicFeatureSubpaths = new Set(['features/entity/queries', 'features/topology/navigation']);
 const primitiveParserNames = new Set([
   'array',
   'boolean',
@@ -314,7 +315,11 @@ function collectDependencyObservations(source, path, importerPath) {
     if (isModel && targetsApi) {
       observations.push(observation(featureDebtRules.modelApiDependency, importerPath, 1, 0, target));
     }
-    if (targetFeature !== importerFeature && target !== `features/${targetFeature}`) {
+    if (
+      targetFeature !== importerFeature &&
+      target !== `features/${targetFeature}` &&
+      !publicFeatureSubpaths.has(target)
+    ) {
       observations.push(observation(featureDebtRules.crossFeatureInternalDependency, importerPath, 1, 0, target));
     }
   }

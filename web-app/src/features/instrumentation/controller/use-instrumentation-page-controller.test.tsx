@@ -36,6 +36,21 @@ describe('useInstrumentationPageController', () => {
     auth.roles = ['ADMIN'];
   });
 
+  it.each([
+    ['ADMIN', true],
+    ['GUEST', false]
+  ] as const)('derives the Agentless entry from %s monitor capability', async (role, canCreate) => {
+    auth.roles = [role];
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({ schemaVersion: 2, status: 'unconfigured', profiles: [] });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    expect(result.current.canCreateMonitor).toBe(canCreate);
+    expect(result.current.agentlessTarget).toBe(
+      canCreate ? '/monitors/new?returnTo=%2Fobservability%2Fintegration' : '/monitors'
+    );
+  });
+
   it('starts and resets without implicitly selecting quick start', async () => {
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
     api.loadIntakeProfiles.mockResolvedValue({
@@ -117,6 +132,81 @@ describe('useInstrumentationPageController', () => {
     expect(result.current.draft).toMatchObject({ sourceId: 'nodejs', language: 'nodejs', recipeId: 'node_express' });
   });
 
+  it('recovers a failed guide request after correcting service context without generating a token', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: noneProfile.id,
+      profiles: [noneProfile]
+    });
+    const guide = { schemaVersion: 2 };
+    api.renderInstrumentationGuide
+      .mockRejectedValueOnce(new Error('isolated guide failure'))
+      .mockResolvedValueOnce(guide);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.profilesState).toBe('ready'));
+    act(() => {
+      result.current.chooseSource('quick_start');
+      result.current.setStage('configure');
+    });
+    act(() => result.current.patchService({ name: 'checkout' }));
+    await act(async () => result.current.renderGuide());
+    expect(result.current.renderError).toBe(true);
+    expect(result.current.rendering).toBe(false);
+    expect(result.current.guide).toBeUndefined();
+    act(() => result.current.patchService({ name: 'checkout-corrected' }));
+    await act(async () => result.current.renderGuide());
+    expect(result.current.renderError).toBe(false);
+    expect(result.current.rendering).toBe(false);
+    expect(result.current.guide).toEqual(guide);
+    expect(api.renderInstrumentationGuide).toHaveBeenCalledTimes(2);
+    expect(api.renderInstrumentationGuide).toHaveBeenLastCalledWith(
+      expect.objectContaining({ service: expect.objectContaining({ name: 'checkout-corrected' }) })
+    );
+    expect(tokenApi.generateAccessToken).not.toHaveBeenCalled();
+    expect(collectorTokenApi.generateCollectorIntakeAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('recovers a failed detection request on retry while retaining the guide and observation window', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: noneProfile.id,
+      profiles: [noneProfile]
+    });
+    const guide = { schemaVersion: 2 };
+    const detected = { schemaVersion: 2, polling: { decision: 'complete', deadlineAt: 0 } };
+    api.renderInstrumentationGuide.mockResolvedValue(guide);
+    api.detectInstrumentationSignals
+      .mockRejectedValueOnce(new Error('isolated detection failure'))
+      .mockResolvedValueOnce(detected);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.profilesState).toBe('ready'));
+    act(() => {
+      result.current.chooseSource('quick_start');
+      result.current.setStage('configure');
+    });
+    act(() => result.current.patchService({ name: 'checkout' }));
+    await act(async () => result.current.renderGuide());
+    await act(async () => result.current.detect());
+    expect(result.current.detectionError).toBe(true);
+    expect(result.current.detecting).toBe(false);
+    expect(result.current.detection).toBeUndefined();
+    expect(result.current.guide).toEqual(guide);
+    const firstRequest = api.detectInstrumentationSignals.mock.calls[0]?.[0];
+    await act(async () => result.current.detect());
+    expect(result.current.detectionError).toBe(false);
+    expect(result.current.detecting).toBe(false);
+    expect(result.current.detection).toEqual(detected);
+    expect(result.current.guide).toEqual(guide);
+    expect(api.detectInstrumentationSignals).toHaveBeenCalledTimes(2);
+    expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(firstRequest);
+    expect(tokenApi.generateAccessToken).not.toHaveBeenCalled();
+    expect(collectorTokenApi.generateCollectorIntakeAccessToken).not.toHaveBeenCalled();
+  });
+
   it('freezes the detection window when the guide is ready and reuses it for polling', async () => {
     const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
@@ -154,6 +244,41 @@ describe('useInstrumentationPageController', () => {
     now.mockReturnValue(8_000);
     await act(async () => result.current.detect());
     expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 7_000 }));
+    now.mockRestore();
+  });
+
+  it('starts a new observation window explicitly and retires the previous detection receipt', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
+    const old = deferred<{ polling: { decision: string; deadlineAt: number } }>();
+    const next = { polling: { decision: 'complete', deadlineAt: 126_000 } };
+    api.detectInstrumentationSignals.mockReturnValueOnce(old.promise).mockResolvedValueOnce(next);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    await act(async () => result.current.renderGuide());
+    let previous: Promise<void> | undefined;
+    act(() => {
+      previous = result.current.detect();
+    });
+    now.mockReturnValue(6_000);
+    await act(async () => result.current.startNewDetection());
+    expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 6_000 }));
+    expect(result.current.detection).toEqual(next);
+    await act(async () => {
+      old.resolve({ polling: { decision: 'complete', deadlineAt: 121_000 } });
+      await previous;
+    });
+    expect(result.current.detection).toEqual(next);
+    expect(result.current.detecting).toBe(false);
     now.mockRestore();
   });
 

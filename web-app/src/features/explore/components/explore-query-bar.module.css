@@ -17,39 +17,30 @@
 
 .form {
   min-width: 0;
-  padding-bottom: var(--hb-space-2);
+  padding-block: 0;
 }
 
 .form :global([data-hb-operational-command-bar]) {
-  min-height: var(--hb-workbench-header-height);
-  align-items: center;
-  padding-block: 2px;
+  align-items: end;
+  padding-block: 0;
 }
 
 .form :global([data-hb-operational-command-primary]),
 .form :global([data-hb-operational-command-secondary]) {
-  align-self: center;
+  align-self: end;
 }
 
 .form :global(.ant-btn),
 .form :global(.ant-input),
+.form :global(.ant-input-affix-wrapper),
 .form :global(.ant-select-selector) {
   height: var(--hb-workbench-control-height);
 }
 
-.commandFields {
+.commandFields,
+.logCommandFields {
   display: flex;
   min-width: 0;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.logCommandFields {
-  display: grid;
-  min-width: 0;
-  flex: 1 1 760px;
-  grid-template-columns: auto 176px minmax(240px, 1fr) auto;
   align-items: end;
   gap: 8px;
 }
@@ -59,88 +50,106 @@
   min-width: 0;
   gap: 4px;
   color: var(--hb-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
+}
+
+.queryInput {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.queryInput :global(input) {
+  font-family: var(--hb-font-family-mono);
+}
+
+.queryInput :global(.ant-input-affix-wrapper) {
+  padding-block: 0;
+}
+
+.queryInput :global(.ant-input-affix-wrapper input),
+.queryInput :global(.ant-input-affix-wrapper .ant-btn),
+.queryInput :global(.ant-input-suffix) {
+  height: 100%;
+  min-height: 0;
+}
+
+.timeRange {
+  width: 164px;
+  min-width: 164px;
 }
 
 .logMode {
   display: inline-flex;
   align-items: center;
-  flex: 0 0 auto;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .logMode :global(.ant-radio-button-wrapper) {
   height: var(--hb-workbench-control-height);
-  padding-inline: 12px;
+  padding-inline: 10px;
   border-color: var(--hb-border-subtle);
   color: var(--hb-text-secondary);
+  font-size: 13px;
   line-height: calc(var(--hb-workbench-control-height) - 2px);
 }
 
 .logMode :global(.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)) {
-  color: var(--hb-brand-accent);
-  background: var(--hb-bg-selected);
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-hover);
   border-color: var(--hb-border-subtle);
   box-shadow: none;
   font-weight: 600;
 }
 
-.queryInput {
-  min-width: 240px;
-  flex: 1 1 360px;
-}
-
-.timeRange {
-  width: 176px;
-  flex: 0 0 176px;
-}
-
 .commandActions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   white-space: nowrap;
-}
-
-.queryInput :global(input) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .run {
   font-weight: 600;
 }
 
-.guided,
-.advanced {
-  margin-top: 10px;
-}
-
-.guided summary,
-.advanced summary {
-  width: max-content;
-  color: var(--hb-text-muted);
-  font-size: 13px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.guided[open] summary,
-.advanced[open] summary {
-  margin-bottom: 10px;
-  color: var(--hb-text-secondary);
-}
-
 .guidedFields,
 .advancedFields {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(164px, 100%), 1fr));
+  align-items: end;
   gap: 8px;
+  margin-top: 8px;
+}
+
+.guidedFields > :global(.ant-checkbox-wrapper),
+.advancedFields > :global(.ant-checkbox-wrapper) {
+  align-self: end;
+  min-height: 32px;
   align-items: center;
+}
+
+.advanced {
+  margin-top: 8px;
+}
+
+.advanced summary {
+  width: max-content;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filterCount {
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
 }
 
 .field {
   min-width: 0;
 }
 
+.toolbarField > :global(.ant-select),
 .field > :global(.ant-select),
 .field > :global(.ant-input) {
   width: 100%;
@@ -154,71 +163,25 @@
   line-height: 1.35;
 }
 
-.activeFilters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.activeFilters :global(.ant-tag) {
-  margin: 0;
-  border-color: var(--hb-border-subtle);
-  background: var(--hb-bg-selected);
-}
-
-@media (max-width: 880px) {
+@media (max-width: 1000px) {
   .logCommandFields {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .guidedFields,
-  .advancedFields {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 }
 
 @media (max-width: 700px) {
   .form :global([data-hb-operational-command-bar]) {
-    grid-template-columns: minmax(0, 1fr) max-content;
-    align-items: end;
-  }
-
-  .logCommandFields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .commandFields {
-    display: flex;
-    align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .commandActions {
-    width: 100%;
-    align-items: center;
-    flex-direction: row;
     justify-content: flex-end;
-  }
-
-  .queryInput,
-  .timeRange {
-    width: 100%;
-    min-width: 0;
-    flex-basis: auto;
-  }
-
-  .logMode {
-    align-self: flex-start;
-  }
-
-  .guidedFields,
-  .advancedFields {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .form :global(.ant-btn),
   .form :global(.ant-input),
+  .form :global(.ant-input-affix-wrapper),
   .form :global(.ant-select-selector),
   .logMode :global(.ant-radio-button-wrapper) {
     height: 36px;
@@ -228,20 +191,61 @@
   .logMode :global(.ant-radio-button-wrapper) {
     line-height: 34px;
   }
+
+  .queryInput :global(.ant-input-affix-wrapper .ant-btn) {
+    height: 34px;
+    min-height: 34px;
+  }
 }
 
-@media (max-width: 520px) {
-  .form :global([data-hb-operational-command-bar]) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+@media (max-width: 360px) {
   .logCommandFields {
-    display: grid;
-    align-items: stretch;
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .commandActions {
-    justify-content: flex-end;
-  }
+.metricHelp {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--hb-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.metricDefault {
+  color: var(--hb-text-primary);
+}
+
+.logFilterDisclosure {
+  margin-top: 14px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.logFilterDisclosure > summary {
+  min-height: 38px;
+  padding: 10px 0;
+  color: var(--hb-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.commandFields {
+  flex-wrap: wrap;
+}
+.toolbarField[data-log-command-slot='time'] {
+  flex: 1 1 510px;
+  min-width: min(100%, 510px);
+}
+.commandFields > .queryInput {
+  flex: 1 1 180px;
+}
+.commandFields > .toolbarField[data-log-command-slot='mode'] {
+  flex: none;
+  max-width: 100%;
+}
+.toolbarField[data-log-command-slot='mode'] :global(.ant-radio-group) {
+  display: inline-flex;
+  white-space: nowrap;
 }

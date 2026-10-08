@@ -5,6 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import { logSeverityLabel } from '@/shared/log-severity';
+import { logSummary } from '@/shared/log-summary';
+import type { TraceTableData } from '@perses-dev/trace-table-plugin';
+import { traceEvidenceSchema } from '@/shared/trace-evidence';
+
 import type { LogData, TraceData } from '@perses-dev/spec';
 import type { AnyValue, KeyValue } from '@perses-dev/spec/dist/dashboard/query-type/otlp/common/v1/common';
 
@@ -24,14 +29,22 @@ export class PersesSignalDataError extends Error {
   }
 }
 
-export function toPersesLogData(data: HertzBeatTableData<HertzBeatLogRow>, window: ExactTimeWindow): LogData {
-  const entries = orderHertzBeatLogRowsForPerses(data.rows).map(row => {
+export function toPersesLogData(
+  data: HertzBeatTableData<HertzBeatLogRow>,
+  window: ExactTimeWindow,
+  sort?: 'newest' | 'oldest' | 'preserve'
+): LogData {
+  const entries = orderHertzBeatLogRowsForPerses(data.rows, sort).map(row => {
     const observedNanos = row.timeUnixNano ?? row.observedTimeUnixNano;
     if (observedNanos == null) throw new PersesSignalDataError();
-    if (typeof row.body !== 'string') assertSafeJsonNumbers(row.body);
+    if (typeof row.body !== 'string') assertFiniteJsonNumbers(row.body);
     return {
       timestamp: unixNanoSeconds(observedNanos),
-      line: typeof row.body === 'string' ? row.body : JSON.stringify(row.body),
+      line: logSummary(row.body) ?? '',
+      hertzbeatAttributes: row.attributes,
+      ...(typeof row.attributes?.['exception.stacktrace'] === 'string'
+        ? { hertzbeatStack: row.attributes['exception.stacktrace'] }
+        : {}),
       labels: logLabels(row)
     };
   });
@@ -40,15 +53,24 @@ export function toPersesLogData(data: HertzBeatTableData<HertzBeatLogRow>, windo
     entries,
     totalCount: data.total,
     hasMore: data.total > entries.length,
-    direction: 'backward'
+    direction: sort === 'oldest' ? 'forward' : 'backward',
+    ...(sort === 'preserve' ? { preserveOrder: true } : {})
   };
 }
 
-export function orderHertzBeatLogRowsForPerses<Row extends HertzBeatLogRow>(rows: readonly Row[]): Row[] {
+export function orderHertzBeatLogRowsForPerses<Row extends HertzBeatLogRow>(
+  rows: readonly Row[],
+  sort?: 'newest' | 'oldest' | 'preserve'
+): Row[] {
+  if (sort === 'preserve') return [...rows];
   const ordered = rows.map((row, index) => ({ row, index, timestamp: logTimestamp(row) }));
   if (ordered.some(item => item.timestamp == null)) return [...rows];
   return ordered
-    .sort((left, right) => right.timestamp! - left.timestamp! || left.index - right.index)
+    .sort(
+      (left, right) =>
+        (sort === 'oldest' ? left.timestamp! - right.timestamp! : right.timestamp! - left.timestamp!) ||
+        left.index - right.index
+    )
     .map(item => item.row);
 }
 
@@ -72,44 +94,38 @@ function unixNanoSeconds(value: string) {
   return Number(seconds) + Number(remainder) / 1_000_000_000;
 }
 
-function assertSafeJsonNumbers(value: unknown): void {
+function assertFiniteJsonNumbers(value: unknown): void {
   if (value == null || typeof value === 'string' || typeof value === 'boolean') return;
   if (typeof value === 'number') {
-    if (!Number.isFinite(value) || (Number.isInteger(value) && !Number.isSafeInteger(value))) {
+    if (!Number.isFinite(value)) {
       throw new PersesSignalDataError();
     }
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach(assertSafeJsonNumbers);
+    value.forEach(assertFiniteJsonNumbers);
     return;
   }
   if (typeof value === 'object') {
-    Object.values(value).forEach(assertSafeJsonNumbers);
+    Object.values(value).forEach(assertFiniteJsonNumbers);
     return;
   }
   throw new PersesSignalDataError();
 }
 
-export function toPersesTraceSearchData(data: HertzBeatTableData<HertzBeatTraceRow>, truncated: boolean): TraceData {
+export function toPersesTraceSearchData(
+  data: HertzBeatTableData<HertzBeatTraceRow>,
+  truncated: boolean
+): TraceTableData {
   return {
     searchResult: data.rows.map(row => {
-      if (
-        !Number.isSafeInteger(row.startTime) ||
-        !Number.isSafeInteger(row.durationNanos) ||
-        row.startTime == null ||
-        row.durationNanos == null ||
-        !row.serviceName?.trim() ||
-        !row.rootSpanName?.trim()
-      ) {
-        throw new PersesSignalDataError();
-      }
+      if (!traceEvidenceSchema.safeParse(row).success) throw new PersesSignalDataError();
       return {
         traceId: row.traceId,
         rootServiceName: row.serviceName,
         rootTraceName: row.rootSpanName,
         startTimeUnixMs: row.startTime,
-        durationMs: row.durationNanos / 1_000_000,
+        durationMs: row.durationNanos == null ? null : row.durationNanos / 1_000_000,
         serviceStats: row.serviceStats
       };
     }),
@@ -131,7 +147,7 @@ type HertzBeatTraceSpan = NonNullable<HertzBeatTraceDetail['spans']>[number];
 function toPersesResourceSpan(span: HertzBeatTraceSpan, detailTraceId: string) {
   const traceId = span.traceId ?? detailTraceId;
   if (!span.spanId || span.startTime == null || span.durationNanos == null) throw new PersesSignalDataError();
-  const startTimeUnixNano = millisecondsToNanos(span.startTime);
+  const startTimeUnixNano = toBigInt(span.startTimeUnixNano).toString();
   const endTimeUnixNano = (BigInt(startTimeUnixNano) + toBigInt(span.durationNanos)).toString();
   return {
     resource: { attributes: resourceAttributes(span.resourceAttributes, span.serviceName) },
@@ -179,7 +195,7 @@ function logLabels(row: HertzBeatLogRow) {
   return {
     ...primitiveLabels(row.resource, 'resource.'),
     ...primitiveLabels(row.attributes, 'attribute.'),
-    ...(row.severityText ? { severity: row.severityText } : {}),
+    ...(logSeverityLabel(row) ? { severity: logSeverityLabel(row)! } : {}),
     ...(row.traceId ? { trace_id: row.traceId } : {}),
     ...(row.spanId ? { span_id: row.spanId } : {})
   };
@@ -189,10 +205,7 @@ function primitiveLabels(values: Record<string, unknown> | null, prefix: string)
   if (!values) return {};
   return Object.fromEntries(
     Object.entries(values).flatMap(([key, value]) => {
-      if (
-        typeof value === 'number' &&
-        (!Number.isFinite(value) || (Number.isInteger(value) && !Number.isSafeInteger(value)))
-      ) {
+      if (typeof value === 'number' && !Number.isFinite(value)) {
         throw new PersesSignalDataError();
       }
       return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
@@ -238,13 +251,9 @@ function traceStatus(status: string | null, message: string | null) {
   return { code, ...(message ? { message } : {}) } as const;
 }
 
-function millisecondsToNanos(value: number) {
-  return (toBigInt(value) * 1_000_000n).toString();
-}
-
 function toBigInt(value: number | string) {
   if (typeof value === 'string') {
-    if (!/^(0|[1-9]\d{0,18})$/u.test(value) || value > '9223372036854775807') {
+    if (!/^(0|[1-9]\d{0,18})$/u.test(value) || BigInt(value) > 9223372036854775807n) {
       throw new PersesSignalDataError();
     }
     return BigInt(value);

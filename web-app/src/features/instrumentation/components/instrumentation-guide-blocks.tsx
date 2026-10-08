@@ -47,7 +47,12 @@ function GuideSummary({ guide }: { guide: RenderResponse }) {
   return (
     <>
       {guide.components.map(component => (
-        <Descriptions key={component.name} size="small" column={4} className={styles.component!}>
+        <Descriptions
+          key={component.name}
+          size="small"
+          column={{ xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }}
+          className={styles.component!}
+        >
           <Descriptions.Item label={t('instrumentation.v2.component')}>
             <a href={component.sourceUrl}>{component.name}</a>
           </Descriptions.Item>

@@ -33,6 +33,7 @@ export function InstrumentationGuideWorkspace(props: {
   onCopy: (block: GuideBlock) => Promise<void>;
   onEdit: () => void;
   onDetect: () => void;
+  onNewCheck: () => void;
   onOpen: (signal: Signal) => void;
   onAcknowledgeToken?: () => void;
 }) {
@@ -138,6 +139,7 @@ function DestinationRail(props: Parameters<typeof InstrumentationGuideWorkspace>
         detecting={props.detecting}
         error={props.detectionError}
         onRetry={props.onDetect}
+        onNewCheck={props.onNewCheck}
         onOpen={props.onOpen}
       />
     </aside>

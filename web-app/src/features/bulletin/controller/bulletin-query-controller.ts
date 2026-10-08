@@ -1,7 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+
+import { useStringQueryDraft } from '@/shared/query-context';
 
 import { readBulletinQuery, writeBulletinQuery } from '../model/bulletin-model';
 
@@ -10,8 +12,7 @@ export function useBulletinQueryController() {
   const locationSearch = params.toString();
   const query = useMemo(() => readBulletinQuery(new URLSearchParams(locationSearch)), [locationSearch]);
   const canonical = useMemo(() => writeBulletinQuery(query).toString(), [query]);
-  const [draft, setDraft] = useState({ key: locationSearch, value: query.search });
-  const search = draft.key === locationSearch ? draft.value : query.search;
+  const { value: search, setValue: setSearch } = useStringQueryDraft(query.search, query.search);
 
   useEffect(() => {
     if (canonical !== locationSearch) {
@@ -19,19 +20,12 @@ export function useBulletinQueryController() {
     }
   }, [canonical, locationSearch, setParams]);
 
-  const setSearch = useCallback(
-    (value: string) => {
-      setDraft({ key: locationSearch, value });
-    },
-    [locationSearch]
-  );
-
   const submitSearch = useCallback(() => {
     const value = search.trim();
     const next = writeBulletinQuery({ ...query, search: value, pageIndex: 0 });
-    setDraft({ key: next.toString(), value });
+    setSearch(value);
     setParams(next);
-  }, [query, search, setParams]);
+  }, [query, search, setSearch, setParams]);
 
   const changePage = useCallback(
     (page: number, pageSize: number) => {

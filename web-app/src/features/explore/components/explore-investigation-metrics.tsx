@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { HertzBeatMetricTimeSeriesResult, type HertzBeatPersesPrimitiveMessages } from '@/platform/perses';
 
 import type {
+  InvestigationBlock,
   InvestigationEvidenceState,
   InvestigationPersesResults,
   TraceInvestigationSnapshot
@@ -20,7 +21,7 @@ export function InvestigationMetrics({
   messages
 }: {
   red?: TraceInvestigationSnapshot['red'] | undefined;
-  metricBlock: { state: InvestigationEvidenceState };
+  metricBlock: Pick<InvestigationBlock, 'state' | 'reason'>;
   panels: InvestigationPersesResults['metrics'];
   messages: HertzBeatPersesPrimitiveMessages;
 }) {
@@ -33,7 +34,7 @@ export function InvestigationMetrics({
           {red.state === 'ready' && red.summary ? (
             <RedSummary summary={red.summary} />
           ) : (
-            <InvestigationBlockState state={red.state === 'empty' ? 'empty' : 'unavailable'} />
+            <InvestigationBlockState state={red.state === 'empty' ? 'empty' : 'unavailable'} reason={red.reason} />
           )}
         </section>
       ) : null}
@@ -50,7 +51,7 @@ export function InvestigationMetricPanels({
   panels,
   messages
 }: {
-  metricBlock: { state: InvestigationEvidenceState };
+  metricBlock: Pick<InvestigationBlock, 'state' | 'reason'>;
   panels: InvestigationPersesResults['metrics'];
   messages: HertzBeatPersesPrimitiveMessages;
 }) {
@@ -69,7 +70,7 @@ export function InvestigationMetricPanels({
       ))}
     </div>
   ) : (
-    <InvestigationBlockState state={metricEvidenceState(metricBlock, panels)} />
+    <InvestigationBlockState state={metricEvidenceState(metricBlock, panels)} reason={metricBlock.reason} />
   );
 }
 

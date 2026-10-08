@@ -1,5 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { LOG_RECORD_UID_PATTERN } from '../model/explore-field-contract';
+
 import { z } from 'zod';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
@@ -89,9 +91,12 @@ const traceInvestigationSchema = z
     }
     if (
       value.gantt.state !== 'ready' &&
-      [value.sameTraceLogs, value.red, value.metrics, value.dependencies].some(item => item.state === 'ready')
+      [value.red, value.metrics, value.dependencies].some(item => item.state === 'ready')
     ) {
       addIssue(context, 'Non-ready Trace cannot expose ready correlated evidence');
+    }
+    if (value.sameTraceLogs.logs.some(log => log.traceId !== value.traceId)) {
+      addIssue(context, 'Same-trace logs must match the requested trace');
     }
     validateTimedBlocks(value.window, value, context);
   });
@@ -111,7 +116,7 @@ const nearbyLogsBlock = block('greptime_logs', {
 
 const logInvestigationSchema = z
   .object({
-    logRecordUid: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u),
+    logRecordUid: z.string().regex(LOG_RECORD_UID_PATTERN),
     window: investigationWindowSchema,
     selectedLog: selectedLogBlock,
     trace: traceBlock,
@@ -149,7 +154,7 @@ export function parseTraceInvestigation(
   if (
     !parsed.success ||
     parsed.data.traceId !== traceId ||
-    parsed.data.selectedSpanId !== (selectedSpanId ?? null) ||
+    parsed.data.selectedSpanId !== (selectedSpanId ?? defaultSpanSelection(parsed.data.gantt.detail)) ||
     !validEvidenceReasons([
       parsed.data.gantt,
       parsed.data.sameTraceLogs,
@@ -162,6 +167,10 @@ export function parseTraceInvestigation(
     throw new ExploreInvestigationContractError();
   }
   return parsed.data;
+}
+
+function defaultSpanSelection(detail: TraceInvestigationSnapshot['gantt']['detail']) {
+  return detail ? (detail.rootSpanId ?? detail.representativeSpan.spanId) : null;
 }
 
 export function parseLogInvestigation(

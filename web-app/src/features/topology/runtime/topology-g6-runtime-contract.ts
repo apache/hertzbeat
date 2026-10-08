@@ -5,7 +5,10 @@ import type { MutableRefObject } from 'react';
 import type { TopologyInteraction, TopologyPresentation } from '../model/topology-view-model';
 import type { TopologyG6Palette } from './topology-g6-options';
 
-export type TopologyG6Module = typeof import('@antv/g6');
+export type TopologyG6Module = Pick<
+  typeof import('@antv/g6'),
+  'Graph' | 'NodeEvent' | 'EdgeEvent' | 'CanvasEvent' | 'GraphEvent'
+>;
 export type TopologyG6Graph = InstanceType<TopologyG6Module['Graph']>;
 export type TopologyG6GraphRef = MutableRefObject<TopologyG6Graph | undefined>;
 export type TopologyG6InputRef = MutableRefObject<TopologyG6RuntimeInput>;

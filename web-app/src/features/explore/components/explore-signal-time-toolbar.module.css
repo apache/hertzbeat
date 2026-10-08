@@ -1,0 +1,38 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+  flex: 1;
+  min-width: 0;
+  container-type: inline-size;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  flex: none;
+  width: 212px;
+  justify-content: flex-end;
+}
+.actions :global([data-log-command-slot='mode'] > span) {
+  display: none;
+}
+.autoRefresh {
+  width: 136px;
+}
+@media (width <= 1300px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+}
+@media (width <= 600px) {
+  .toolbar > :first-child {
+    width: 100%;
+  }
+  .actions {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+}

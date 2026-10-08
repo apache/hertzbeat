@@ -9,18 +9,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('Perses runtime registry', () => {
   afterEach(() => {
-    vi.doUnmock('./perses-time-series-runtime');
     vi.doUnmock('./perses-signal-runtime');
     vi.resetModules();
   });
 
-  it('lazily loads the production metric and multi-signal runtime entries', async () => {
-    let timeSeriesLoads = 0;
+  it('lazily loads one production runtime shared by every signal', async () => {
     let multiSignalLoads = 0;
-    vi.doMock('./perses-time-series-runtime', () => {
-      timeSeriesLoads += 1;
-      return { PersesTimeSeriesRuntime: () => null };
-    });
     vi.doMock('./perses-signal-runtime', () => {
       multiSignalLoads += 1;
       return { PersesSignalRuntime: () => null };
@@ -28,14 +22,11 @@ describe('Perses runtime registry', () => {
 
     const { loadPersesRuntime } = await import('./perses-runtime-registry');
 
-    expect(timeSeriesLoads).toBe(0);
     expect(multiSignalLoads).toBe(0);
 
-    await loadPersesRuntime('time-series');
-    expect(timeSeriesLoads).toBe(1);
-    expect(multiSignalLoads).toBe(0);
-
-    await loadPersesRuntime('multi-signal');
+    await loadPersesRuntime();
+    expect(multiSignalLoads).toBe(1);
+    await loadPersesRuntime();
     expect(multiSignalLoads).toBe(1);
   });
 });

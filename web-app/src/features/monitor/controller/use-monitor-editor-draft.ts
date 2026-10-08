@@ -18,6 +18,7 @@
 import { useState } from 'react';
 
 import type { MonitorParamDefine, MonitorScrape } from '../model/monitor-contract';
+import { monitorEditorDraftIsDirty } from '../model/monitor-editor-dirty';
 import { transitionMonitorEditorDraft } from '../model/monitor-editor-draft';
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 
@@ -34,6 +35,9 @@ export function useMonitorEditorDraft(
   scrape: MonitorScrape
 ) {
   const [drafts, setDrafts] = useState<Record<string, MonitorEditorDraft>>({});
+  const [baselines, setBaselines] = useState<
+    Record<string, { draft: MonitorEditorDraft; defines: MonitorParamDefine[] }>
+  >({});
   const [carry, setCarry] = useState<CarryDraft | null>(null);
   const transitioned =
     carry?.source === source && canonical
@@ -43,6 +47,8 @@ export function useMonitorEditorDraft(
 
   const update = (updater: (value: MonitorEditorDraft) => MonitorEditorDraft) => {
     if (!draft) return;
+    if (canonical)
+      setBaselines(current => (current[source] ? current : { ...current, [source]: { draft: canonical, defines } }));
     // Functional state is required: structured fields can report validity and
     // value changes in either order during the same React event.
     setDrafts(current => ({
@@ -55,7 +61,16 @@ export function useMonitorEditorDraft(
     if (draft) setCarry({ source: target, draft, defines });
   };
 
+  const baseline = baselines[source] ?? { draft: canonical, defines };
+  // A source switch retains drafts; leaving the workspace loses every retained source.
+  const dirty =
+    Boolean(draft && baseline.draft && monitorEditorDraftIsDirty(draft, baseline.draft, baseline.defines)) ||
+    Object.entries(drafts).some(([key, value]) => {
+      const original = baselines[key];
+      return original && monitorEditorDraftIsDirty(value, original.draft, original.defines);
+    });
   return {
+    dirty,
     carrySource: carry?.source,
     draft,
     prepareTransition,

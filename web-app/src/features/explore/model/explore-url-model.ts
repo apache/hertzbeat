@@ -15,55 +15,112 @@
  * limitations under the License.
  */
 
+import {
+  logQueryFields,
+  parseAliasedContext,
+  readSignal,
+  readPositiveInteger,
+  readValue,
+  readOpaqueRouteValue,
+  parseUrlTime,
+  readLiveMode,
+  aliasedValue,
+  setValue
+} from './explore-url-values';
+import { appendSignalParams } from './explore-url-append';
+import { migrateVisibleLegacyLogFilters } from './explore-log-search-migration';
+import { canonicalServicesReturnPath } from '@/shared/navigation/services-path';
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
-import { normalizeInvestigationTimeZone, parseQueryContext, writeQueryContext } from '@/shared/query-context';
+import { normalizeSavedQueryKey } from '@/shared/navigation/signal-route-paths';
+import { canonicalSignalDashboardPath } from '@/shared/navigation/signal-dashboard-paths';
+import { normalizeInvestigationTimeZone, writeQueryContext } from '@/shared/query-context';
 
-import { parseExploreFilterParams } from './explore-field-contract';
-import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
+import { parseExploreFilterParams, parseExploreAutoRefresh } from './explore-field-contract';
+import { canonicalExploreReturnPath, isAnalysisReturnPath } from './explore-return-path';
+import {
+  metricQueryFields,
+  enabledFilterValue,
+  temporalAggregationValue,
+  traceSortValue,
+  traceSpanScopeValue
+} from './explore-parity-filter-model';
 import type { ExploreQuery, ExploreQueryPatch, ExploreSignal, ExploreTimeRange } from './explore-query';
+import { encodeLogAnalysis, parseLogAnalysis } from '@/platform/perses';
 
-const DEFAULT_SIGNAL: ExploreSignal = 'metrics';
-const LEGACY_SIGNAL_FALLBACK: ExploreSignal = 'traces';
-const DEFAULT_TIME_RANGE: ExploreTimeRange = 'last-30m';
 export const EXPLORE_TIME_RANGES: ExploreTimeRange[] = ['last-15m', 'last-30m', 'last-1h', 'last-6h', 'last-24h'];
-const AUTO_REFRESH_VALUES = [30_000, 60_000] as const;
 
 export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
   const context = parseAliasedContext(params);
   const time = parseUrlTime(params);
   return normalizeExploreQuery({
+    savedView: normalizeSavedQueryKey(params.get('savedView')),
+    returnTo: normalizeExploreReturnTo(params.get('returnTo')),
+    servicesReturnTo: canonicalServicesReturnPath(params.get('servicesReturnTo')),
+    dashboardReturnTo: canonicalSignalDashboardPath(params.get('dashboardReturnTo')),
     signal: readSignal(params.get('signal')),
     timeRange: readTimeRange(aliasedValue(params, 'timeRange', 'range')),
     ...context,
     query: readValue(params.get('query')),
     windowMode: params.get('windowMode') === 'preset' ? 'preset' : undefined,
     traceId: readValue(params.get('traceId')),
+    sort: params.has('sort')
+      ? readSignal(params.get('signal')) === 'logs'
+        ? params.get('sort')!
+        : traceSortValue(params.get('sort'))
+      : undefined,
     errorOnly: params.get('errorOnly') === 'true' ? true : undefined,
     hideInternal: enabledFilterValue(params.get('hideInternal')),
     hideNoise: enabledFilterValue(params.get('hideNoise')),
-    autoRefreshMs: readAutoRefresh(params.get('autoRefresh')),
+    autoRefreshMs: parseExploreAutoRefresh(params.get('autoRefresh')),
     start: time.start,
     end: time.end,
     timeZone: readValue(params.get('timeZone')),
     live: readLiveMode(params),
     logRecordUid: readOpaqueRouteValue(params, 'logRecordUid'),
+    logSort: params.get('logSort') ?? undefined,
+    logView: readValue(params.get('logView')),
+    logAnalysis: readOpaqueRouteValue(params, 'logAnalysis'),
+    logAggregation: readOpaqueRouteValue(params, 'logAggregation'),
+    logTransactions: readOpaqueRouteValue(params, 'logTransactions'),
+    logCalculated: readOpaqueRouteValue(params, 'logCalculated'),
+    logCalculatedV2: readOpaqueRouteValue(params, 'logCalculatedV2'),
+    ...readLogJoinParams(params),
+    logGroupSelection: params.get('logGroupSelection') ?? undefined,
+    logNumericRange: params.get('logNumericRange') ?? undefined,
+    traceReturnTo: readValue(params.get('traceReturnTo')),
+    traceView: readValue(params.get('traceView')),
+    traceStructure: readOpaqueRouteValue(params, 'traceStructure'),
+    traceStructureView: (params.get('traceStructureView') ?? undefined) as 'patterns' | 'flow' | undefined,
+    endExclusive: params.get('endExclusive') === 'true' ? true : undefined,
+    searchSyntax: readValue(params.get('searchSyntax')),
     severityText: readValue(params.get('severityText')),
+    severityCategory: readValue(params.get('severityCategory')),
     spanId: readValue(params.get('spanId')),
     resourceFilter: readValue(params.get('resourceFilter')),
     attributeFilter: readValue(params.get('attributeFilter')),
     operationName: readValue(params.get('operationName')),
+    metricPlan: readValue(params.get('metricPlan')),
+    metricView: readValue(params.get('metricView')),
     metricFilter: readValue(params.get('metricFilter')),
     groupBy: readValue(params.get('groupBy')),
     temporalAggregation: temporalAggregationValue(params.get('temporalAggregation')),
     spanScope: traceSpanScopeValue(params.get('spanScope')),
     ...parseExploreFilterParams(params),
-    pageIndex: readPageIndex(params.get('page'))
+    pageIndex: readPositiveInteger(params.get('page'))
   });
+}
+
+function readLogJoinParams(params: URLSearchParams) {
+  return {
+    logSubquery: readOpaqueRouteValue(params, 'logSubquery'),
+    logReferenceJoin: readOpaqueRouteValue(params, 'logReferenceJoin')
+  };
 }
 
 export function buildExplorePath(query: ExploreQuery) {
   const normalized = normalizeExploreQuery(query);
   const params = new URLSearchParams({ signal: normalized.signal, timeRange: normalized.timeRange });
+  setValue(params, 'savedView', normalized.savedView);
   setValue(params, 'query', normalized.query);
   appendSignalParams(params, normalized);
   if (normalized.windowMode === 'preset') params.set('windowMode', 'preset');
@@ -71,6 +128,9 @@ export function buildExplorePath(query: ExploreQuery) {
   if (normalized.start) params.set('start', String(normalized.start));
   if (normalized.end) params.set('end', String(normalized.end));
   if (normalized.timeZone) params.set('timeZone', normalized.timeZone);
+  setValue(params, 'returnTo', normalized.returnTo);
+  setValue(params, 'servicesReturnTo', normalized.servicesReturnTo);
+  setValue(params, 'dashboardReturnTo', normalized.dashboardReturnTo);
   return `${applicationRoutePaths.explore}?${writeQueryContext(params, normalized).toString()}`;
 }
 
@@ -96,16 +156,14 @@ export function normalizeExploreQuery(
     return {
       ...shared,
       signal: 'metrics',
-      operationName: query.operationName,
-      metricFilter: query.metricFilter,
-      groupBy: query.groupBy,
-      aggregation: query.aggregation,
-      temporalAggregation: temporalAggregationValue(query.temporalAggregation),
-      step: query.step
+      ...metricQueryFields(query)
     };
   const traceContext = {
     ...shared,
+    returnTo: focusedReturnTo(query),
     traceId: query.traceId,
+    spanId: query.spanId,
+    hideInternal: enabledFilterValue(query.hideInternal),
     resourceFilter: query.resourceFilter,
     attributeFilter: query.attributeFilter,
     pageIndex: query.pageIndex
@@ -114,23 +172,69 @@ export function normalizeExploreQuery(
     return {
       ...traceContext,
       signal: 'logs',
-      logRecordUid: query.logRecordUid,
-      live: query.live,
-      severityText: query.severityText,
-      spanId: query.spanId,
-      hideInternal: enabledFilterValue(query.hideInternal),
-      hideNoise: enabledFilterValue(query.hideNoise)
+      ...logQueryFields({
+        ...query,
+        logAnalysis: normalizeLegacyLogRepresentation(query.logAnalysis),
+        live: historyOnlyLogQuery(query) ? undefined : query.live
+      }),
+      ...migrateVisibleLegacyLogFilters(query)
     };
   return {
     ...traceContext,
     signal: 'traces',
-    spanId: query.spanId,
+    traceView: query.traceView,
+    traceStructure: query.traceStructure,
+    traceStructureView: query.traceStructureView,
+    endExclusive: query.endExclusive,
     errorOnly: query.errorOnly,
+    sort: query.sort == null ? undefined : traceSortValue(query.sort),
     spanScope: traceSpanScopeValue(query.spanScope),
-    hideInternal: enabledFilterValue(query.hideInternal),
     minDurationMs: query.minDurationMs,
     maxDurationMs: query.maxDurationMs
   };
+}
+
+function historyOnlyLogAnalysis(raw: string | undefined) {
+  if (!raw) return false;
+  try {
+    const analysis = parseLogAnalysis(raw);
+    return Boolean(analysis.comparison || analysis.querySet);
+  } catch {
+    return false;
+  }
+}
+
+function historyOnlyLogQuery(query: ExploreQueryPatch) {
+  return (
+    historyOnlyLogAnalysis(query.logAnalysis) ||
+    query.logCalculatedV2 !== undefined ||
+    query.logSubquery !== undefined ||
+    query.logReferenceJoin !== undefined
+  );
+}
+
+function normalizeLegacyLogRepresentation(raw: string | undefined) {
+  if (!raw) return raw;
+  try {
+    const state = parseLogAnalysis(raw);
+    if (state.representation !== 'table' && state.representation !== 'toplist') return raw;
+    // Extra table measures cannot be represented by either remaining view.
+    if (state.additionalMeasures?.length) return raw;
+    const compatible = { ...state, representation: state.comparison ? ('timeseries' as const) : ('logs' as const) };
+    return encodeLogAnalysis(compatible);
+  } catch {
+    return raw;
+  }
+}
+
+export function normalizeExploreReturnTo(value: string | null | undefined): string | undefined {
+  return canonicalExploreReturnPath(value, params => buildExplorePath(parseExploreQuery(params)));
+}
+
+function focusedReturnTo(query: ExploreQueryPatch) {
+  const identity = query.signal === 'traces' ? query.traceId : query.logRecordUid;
+  const path = normalizeExploreReturnTo(query.returnTo);
+  return identity || (query.signal === 'logs' && isAnalysisReturnPath(path)) ? path : undefined;
 }
 
 function normalizeExploreTimeEvidence(query: ExploreQueryPatch) {
@@ -138,6 +242,9 @@ function normalizeExploreTimeEvidence(query: ExploreQueryPatch) {
   const focusedEvidence = query.traceId != null || query.logRecordUid != null;
   const retainWindow = shouldRetainTimeEvidence(query, exactWindow, focusedEvidence);
   return {
+    savedView: normalizeSavedQueryKey(query.savedView),
+    servicesReturnTo: canonicalServicesReturnPath(query.servicesReturnTo),
+    dashboardReturnTo: canonicalSignalDashboardPath(query.dashboardReturnTo),
     autoRefreshMs: exactWindow ? undefined : query.autoRefreshMs,
     start: retainWindow ? query.start : undefined,
     end: retainWindow ? query.end : undefined,
@@ -167,109 +274,6 @@ function normalizedRouteTimeZone(query: ExploreQueryPatch, exactWindow: boolean,
   return exactWindow ? normalizeInvestigationTimeZone(query.timeZone) : undefined;
 }
 
-function parseAliasedContext(params: URLSearchParams) {
-  return {
-    ...parseQueryContext(params),
-    serviceNamespace: readValue(aliasedValue(params, 'serviceNamespace', 'namespace')),
-    instance: readValue(aliasedValue(params, 'instance', 'serviceInstanceId')),
-    endpoint: readValue(aliasedValue(params, 'endpoint', 'http.route'))
-  };
-}
-
-function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
-  if (query.signal === 'metrics') {
-    for (const [key, value] of [
-      ['operationName', query.operationName],
-      ['metricFilter', query.metricFilter],
-      ['groupBy', query.groupBy],
-      ['aggregation', query.aggregation],
-      ['temporalAggregation', query.temporalAggregation],
-      ['step', query.step]
-    ] as const)
-      setValue(params, key, value);
-    return;
-  }
-  setValue(params, 'traceId', query.traceId);
-  setValue(params, 'resourceFilter', query.resourceFilter);
-  setValue(params, 'attributeFilter', query.attributeFilter);
-  setValue(params, 'spanId', query.spanId);
-  if (query.pageIndex) params.set('page', String(query.pageIndex));
-  if (query.signal === 'logs') {
-    if (query.live) params.set('mode', 'live');
-    setValue(params, 'severityText', query.severityText);
-    setOpaqueRouteValue(params, 'logRecordUid', query.logRecordUid);
-    setEnabled(params, 'hideInternal', query.hideInternal);
-    setEnabled(params, 'hideNoise', query.hideNoise);
-    return;
-  }
-  if (query.errorOnly) params.set('errorOnly', 'true');
-  setValue(params, 'spanScope', query.spanScope);
-  setEnabled(params, 'hideInternal', query.hideInternal);
-  if (query.minDurationMs != null) params.set('minDurationMs', String(query.minDurationMs));
-  if (query.maxDurationMs != null) params.set('maxDurationMs', String(query.maxDurationMs));
-}
-
-function readSignal(value: string | null): ExploreSignal {
-  if (value === null) return DEFAULT_SIGNAL;
-  // Explicit unsupported values come from legacy links, whose established fallback was traces.
-  return value === 'metrics' || value === 'logs' || value === 'traces' ? value : LEGACY_SIGNAL_FALLBACK;
-}
-
 function readTimeRange(value: string | null): ExploreTimeRange {
-  return EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange) ? (value as ExploreTimeRange) : DEFAULT_TIME_RANGE;
-}
-
-function readValue(value: string | null) {
-  return value?.trim() || undefined;
-}
-
-function readOpaqueRouteValue(params: URLSearchParams, key: string) {
-  return params.has(key) ? (params.get(key)?.trim() ?? '') : undefined;
-}
-
-function readAutoRefresh(value: string | null) {
-  const parsed = readPositiveInteger(value);
-  return AUTO_REFRESH_VALUES.includes(parsed as (typeof AUTO_REFRESH_VALUES)[number]) ? parsed : undefined;
-}
-
-function readTimestamp(value: string | null) {
-  return readPositiveInteger(value);
-}
-
-function parseUrlTime(params: URLSearchParams) {
-  const start = readTimestamp(params.get('start'));
-  const end = readTimestamp(params.get('end'));
-  return { start, end };
-}
-
-function readPageIndex(value: string | null) {
-  const parsed = readPositiveInteger(value);
-  return parsed && parsed > 0 ? parsed : undefined;
-}
-
-function readPositiveInteger(value: string | null) {
-  if (!value || !/^\d+$/u.test(value)) return undefined;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
-}
-
-function readLiveMode(params: URLSearchParams) {
-  const mode = params.get('mode');
-  return mode !== null ? (mode === 'live' ? true : undefined) : params.get('live') === 'true' ? true : undefined;
-}
-
-function aliasedValue(params: URLSearchParams, canonical: string, alias: string) {
-  return params.has(canonical) ? params.get(canonical) : params.get(alias);
-}
-
-function setValue(params: URLSearchParams, key: string, value: string | undefined) {
-  if (value) params.set(key, value);
-}
-
-function setOpaqueRouteValue(params: URLSearchParams, key: string, value: string | undefined) {
-  if (value !== undefined) params.set(key, value);
-}
-
-function setEnabled(params: URLSearchParams, key: string, value: boolean | undefined) {
-  if (value) params.set(key, 'true');
+  return EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange) ? (value as ExploreTimeRange) : 'last-30m';
 }

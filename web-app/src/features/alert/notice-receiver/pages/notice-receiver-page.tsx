@@ -2,6 +2,7 @@
 
 import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
 import { NotificationWorkspaceNavigation, notificationListStatus } from '@/shared/notification-workspace';
+import { useNoticeReceiverUnsavedHistory } from '../controller/use-notice-receiver-unsaved-history';
 
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
 import {
@@ -16,6 +17,8 @@ import { canSubmitNoticeReceiver } from '../controller/notice-receiver-action-ad
 export function NoticeReceiverPage() {
   const controller = useNoticeReceiverController();
   const { state, actions } = controller;
+  // Only POP history is guarded; explicit modal close keeps its existing discard action.
+  useNoticeReceiverUnsavedHistory(state.dirty);
   const recovering = state.command === 'recovering';
   const interactionBusy = state.busy || state.refreshing;
   return (

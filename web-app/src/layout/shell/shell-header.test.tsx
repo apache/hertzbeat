@@ -27,12 +27,14 @@ import { AuthGate } from '@/core/auth/auth-gate';
 import { anonymousSession, sessionQueryKey } from '@/core/auth/session-api';
 import { SessionIdentityContext } from '@/core/auth/session-identity-context';
 import { SessionProvider } from '@/core/auth/session-provider';
+import { SessionContext } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { ShellInvestigationProvider, usePublishShellInvestigation } from '@/shared/investigation';
 
 import { ShellHeader } from './shell-header';
 
 const sessionApi = vi.hoisted(() => ({ logoutSession: vi.fn() }));
+const exactTime = vi.hoisted(() => ({ headerMode: 'hidden', window: { from: 1_000, to: 2_000 } }));
 const monitorImportTasks = vi.hoisted(() => ({ useShellMonitorImportTaskNotifications: vi.fn() }));
 const convergence = vi.hoisted(() => ({ broadcast: vi.fn(), close: vi.fn() }));
 vi.mock('@/core/auth/session-api', async () => ({
@@ -48,7 +50,7 @@ vi.mock('@/core/runtime-theme-context', () => ({
 }));
 vi.mock('@/shared/time', async () => ({
   ...(await vi.importActual<typeof import('@/shared/time')>('@/shared/time')),
-  useSharedTime: () => ({ headerMode: 'hidden', window: { from: 1_000, to: 2_000 }, requestRefresh: vi.fn() })
+  useSharedTime: () => ({ ...exactTime, requestRefresh: vi.fn() })
 }));
 vi.mock('@/features/alert/shell', () => ({
   useShellAlertNotificationController: () => ({
@@ -69,7 +71,95 @@ describe('ShellHeader logout', () => {
     await loadLocale('en-US');
   });
 
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    monitorImportTasks.useShellMonitorImportTaskNotifications.mockClear();
+    exactTime.headerMode = 'hidden';
+    exactTime.window = { from: 1_000, to: 2_000 };
+  });
+
+  it('labels the browser timezone without changing the exact route window or preferences', async () => {
+    exactTime.headerMode = 'exact_window';
+    exactTime.window = { from: Date.parse('2026-10-03T09:03:00Z'), to: Date.parse('2026-10-03T09:33:00Z') };
+    const search =
+      '?dashboard=audit&start=' +
+      exactTime.window.from +
+      '&end=' +
+      exactTime.window.to +
+      '&timeZone=Asia%2FShanghai&varServiceName=checkout';
+    render(
+      <I18nextProvider i18n={i18n}>
+        <App>
+          <MemoryRouter initialEntries={['/observability/dashboards' + search]}>
+            <QueryClientProvider client={new QueryClient()}>
+              <SessionIdentityContext.Provider value={vi.fn()}>
+                <SessionContext.Provider
+                  value={{
+                    session: {
+                      authenticated: true,
+                      username: 'operator',
+                      roles: ['ADMIN'],
+                      workspaceId: 'a',
+                      expiresAt: null
+                    },
+                    loading: false,
+                    retry: vi.fn()
+                  }}
+                >
+                  <ShellHeader />
+                  <LocationProbe />
+                </SessionContext.Provider>
+              </SessionIdentityContext.Provider>
+            </QueryClientProvider>
+          </MemoryRouter>
+        </App>
+      </I18nextProvider>
+    );
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const zoneLabel = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+      .formatToParts(exactTime.window.to)
+      .find(part => part.type === 'timeZoneName')!.value;
+    expect(await screen.findByTestId('shell-time-policy')).toHaveTextContent(zone);
+    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent(zoneLabel);
+    expect(screen.getByTestId('location')).toHaveTextContent('/observability/dashboards' + search);
+  });
+
+  it.each([
+    { overflow: true, left: 338, width: 38, expected: 113 },
+    { overflow: true, left: 256, width: 36, expected: 87 },
+    { overflow: true, left: 280, width: 36, expected: 100 },
+    { overflow: false, left: 338, width: 38, expected: 100 }
+  ])('reveals only the horizontal header spine: $left/$overflow', ({ overflow, left, width, expected }) => {
+    renderFocusedHeader();
+    const strip = screen.getByRole('button', { name: i18n.t('shell.actions.user') }).closest('[class*=headerSpine]')!;
+    Object.defineProperties(strip, { clientWidth: { value: 100 }, scrollWidth: { value: overflow ? 200 : 100 } });
+    strip.getBoundingClientRect = () => new DOMRect(261, 0, 110, 44);
+    strip.scrollLeft = 100;
+    document.documentElement.scrollTop = 478;
+    const action = screen.getByRole('button', { name: i18n.t('shell.actions.user') });
+    action.getBoundingClientRect = () => new DOMRect(left, 0, width, 36);
+    const reveal = vi.fn();
+    action.scrollIntoView = reveal;
+    fireEvent.focus(action);
+    expect(strip.scrollLeft).toBe(expected);
+    expect(document.documentElement.scrollTop).toBe(478);
+    expect(reveal).not.toHaveBeenCalled();
+    document.documentElement.scrollTop = 0;
+  });
+
+  it('does not scroll the header spine when focus bubbles from a portaled language menu', async () => {
+    renderFocusedHeader();
+    const strip = screen.getByRole('button', { name: i18n.t('shell.actions.user') }).closest('[class*=headerSpine]')!;
+    Object.defineProperties(strip, { clientWidth: { value: 100 }, scrollWidth: { value: 200 } });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('shell.actions.language') }));
+    const item = await screen.findByRole('menuitem', { name: i18n.t('systemConfig.locale.ja_JP') });
+    expect(strip.contains(item)).toBe(false);
+    const reveal = vi.fn();
+    item.scrollIntoView = reveal;
+    fireEvent.focus(item);
+    expect(strip.scrollLeft).toBe(0);
+    expect(reveal).not.toHaveBeenCalled();
+  });
 
   it('rotates to an anonymous QueryClient after the server logout succeeds', async () => {
     sessionApi.logoutSession.mockResolvedValue(undefined);
@@ -524,3 +614,33 @@ const readyTraceInvestigation = {
     maxDurationMs: 20
   }
 };
+
+function renderFocusedHeader() {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <App>
+        <MemoryRouter initialEntries={['/explore?signal=logs']}>
+          <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+            <SessionIdentityContext.Provider value={vi.fn()}>
+              <SessionContext.Provider
+                value={{
+                  loading: false,
+                  retry: vi.fn(),
+                  session: {
+                    authenticated: true,
+                    username: 'operator',
+                    roles: ['ADMIN'],
+                    workspaceId: 'a',
+                    expiresAt: null
+                  }
+                }}
+              >
+                <ShellHeader />
+              </SessionContext.Provider>
+            </SessionIdentityContext.Provider>
+          </QueryClientProvider>
+        </MemoryRouter>
+      </App>
+    </I18nextProvider>
+  );
+}

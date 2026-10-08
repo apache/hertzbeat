@@ -6,19 +6,25 @@
  */
 
 import { createTheme, type Theme, type ThemeOptions } from '@mui/material/styles';
+import type {} from '@mui/x-data-grid/themeAugmentation';
 import { getTheme } from '@perses-dev/components';
 
 import type { RuntimeTheme } from '@/core/runtime-preferences';
 import { getHertzBeatVisualTokens, type HertzBeatVisualTokens } from '@/shared/theme/hertzbeat-theme';
 
-export function createHertzBeatPersesTheme(runtimeTheme: RuntimeTheme): Theme {
+export function createHertzBeatPersesTheme(runtimeTheme: RuntimeTheme, contentSurface = false): Theme {
   const visual = getHertzBeatVisualTokens(runtimeTheme);
   const baseTheme = getTheme(visual.mode, {}, true);
+  const shadows = [...baseTheme.shadows] as Theme['shadows'];
+  if (contentSurface) shadows[1] = 'none';
+  const palette = persesPalette(baseTheme, visual);
+  if (contentSurface) palette.background = { default: visual.color.raised, paper: visual.color.raised };
   return createTheme({
     ...baseTheme,
     spacing: visual.spacing,
     shape: { borderRadius: visual.radius.control },
-    palette: persesPalette(baseTheme, visual),
+    palette,
+    shadows,
     typography: persesTypography(baseTheme, visual),
     components: persesComponents(baseTheme, visual)
   });
@@ -74,6 +80,7 @@ function persesComponents(baseTheme: Theme, visual: HertzBeatVisualTokens): NonN
   return {
     ...baseTheme.components,
     ...persesControlComponents(visual),
+    ...persesInputComponents(visual),
     ...persesDataSurfaceComponents(visual),
     ...persesOverlayComponents(visual)
   };
@@ -109,10 +116,17 @@ function persesControlComponents(visual: HertzBeatVisualTokens): NonNullable<The
           width: visual.size.controlHeight,
           height: visual.size.controlHeight,
           padding: 6,
-          borderRadius: visual.radius.control
+          borderRadius: visual.radius.control,
+          '@media (max-width: 700px)': { width: 36, height: 36 }
         }
       }
-    },
+    }
+  };
+}
+
+function persesInputComponents(visual: HertzBeatVisualTokens): NonNullable<ThemeOptions['components']> {
+  const color = visual.color;
+  return {
     MuiFormControl: { defaultProps: { margin: 'none', size: 'small' } },
     MuiTextField: { defaultProps: { margin: 'none', size: 'small' } },
     MuiInputBase: {
@@ -130,7 +144,15 @@ function persesControlComponents(visual: HertzBeatVisualTokens): NonNullable<The
           '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: color.hoverBorder },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: color.activeBorder, borderWidth: 1 }
         },
-        notchedOutline: { borderColor: color.border }
+        notchedOutline: { borderColor: color.border },
+        input: {
+          '&:not(.MuiInputBase-inputMultiline)': {
+            boxSizing: 'border-box',
+            height: visual.size.controlHeight,
+            paddingBlock: 6,
+            '@media (max-width: 700px)': { height: 36, paddingBlock: 8 }
+          }
+        }
       }
     },
     MuiFormLabel: {
@@ -142,6 +164,7 @@ function persesControlComponents(visual: HertzBeatVisualTokens): NonNullable<The
 function persesDataSurfaceComponents(visual: HertzBeatVisualTokens): NonNullable<ThemeOptions['components']> {
   const color = visual.color;
   return {
+    MuiDataGrid: { defaultProps: { columnHeaderHeight: visual.size.regionHeaderHeight } },
     MuiTableContainer: {
       styleOverrides: { root: { maxWidth: '100%', overflowX: 'auto', borderRadius: 0, boxShadow: 'none' } }
     },

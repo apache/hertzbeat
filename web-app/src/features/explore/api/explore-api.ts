@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
+import { logStatisticEvidence } from './log-statistic-evidence';
+import { loadMetricComposition } from './explore-metric-composition-api';
 import { apiMessageGet } from '@/core/http/api-message';
-import { openBrowserEventStream } from '@/core/http/event-stream';
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
 import {
   exploreHandoffState,
   exploreUsesExactWindow,
   timeRangeMilliseconds,
+  validTraceStructureQuery,
   type ExploreQuery,
   type LogExploreQuery,
   type MetricExploreQuery,
@@ -36,60 +38,86 @@ import {
   parseTraceDuration
 } from '../model/explore-field-contract';
 import { ExploreSignalContractError } from '../model/explore-signal-contract';
-import {
-  parseLiveLogRow,
-  parseLogOverview,
-  parseLogPage,
-  parseLogStreamGap,
-  parseLogTrend
-} from './explore-log-schema';
+import { METRIC_INVENTORY_LIMIT } from '../model/explore-metric-inventory';
+import { parseLogOverview, parseLogPage, parseLogTrend } from './explore-log-schema';
 import { parseMetricConsole, parseMetricInventory } from './explore-metric-schema';
 import { parseTracePage } from './explore-trace-schema';
+import { parseTraceStructure } from '../model/explore-trace-structure';
 
 export { classifyExploreSignalError } from './explore-signal-api-model';
 
 export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
-  const observedAt = Date.now();
-  const resolvedQuery = query.query?.trim() ? query : await resolveInventoryMetricQuery(query, observedAt, signal);
-  if (!resolvedQuery) return { kind: 'inventory_empty' } as const;
-  return parseMetricConsole(await apiMessageGet(buildSignalApiPath(resolvedQuery, observedAt), requestSignal(signal)));
+  if (query.metricPlan) {
+    const window = resolveSignalWindow(query, Date.now());
+    return loadMetricComposition(query, { from: window.start, to: window.end }, loadScalarMetric, signal);
+  }
+  if (!query.query?.trim()) return { kind: 'selection_required' } as const;
+  return loadScalarMetric(query, signal);
 }
 
 export async function loadLogSignal(query: LogExploreQuery, signal?: AbortSignal) {
   const pageIndex = query.pageIndex ?? 0;
-  return parseLogPage(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
+  return parseLogPage(
+    await apiMessageGet(buildSignalApiPath(query), { ...requestSignal(signal), preserveErrorEnvelope: true }),
+    pageIndex,
+    20
+  );
 }
 
 export async function loadLogHistoryEvidence(query: LogExploreQuery, signal?: AbortSignal) {
   const observedAt = Date.now();
-  const requestWindow = resolveSignalWindow(query, observedAt);
   const page = parseLogPage(
-    await apiMessageGet(buildSignalApiPath(query, observedAt), requestSignal(signal)),
+    await apiMessageGet(buildSignalApiPath(query, observedAt), {
+      ...requestSignal(signal),
+      preserveErrorEnvelope: true
+    }),
     query.pageIndex ?? 0,
     20
   );
+  const statistics = await loadLogStatistics(query, signal, observedAt);
+  return { page, ...statistics };
+}
+
+export async function loadLogStatistics(query: LogExploreQuery, signal?: AbortSignal, observedAt = Date.now()) {
+  const requestWindow = resolveSignalWindow(query, observedAt);
   const [overview, trend] = await Promise.allSettled([
-    apiMessageGet(buildLogStatsApiPath(query, 'overview', observedAt), requestSignal(signal)).then(parseLogOverview),
-    apiMessageGet(buildLogStatsApiPath(query, 'trend', observedAt), requestSignal(signal))
+    apiMessageGet(buildLogStatsApiPath(query, 'overview', observedAt), {
+      ...requestSignal(signal),
+      preserveErrorEnvelope: true
+    }).then(parseLogOverview),
+    apiMessageGet(buildLogStatsApiPath(query, 'trend', observedAt), {
+      ...requestSignal(signal),
+      preserveErrorEnvelope: true
+    })
       .then(parseLogTrend)
       .then(trend => requireTrendWindow(trend, requestWindow))
   ]);
   if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
   return {
-    page,
-    overview:
-      overview.status === 'fulfilled' ? { kind: 'ready' as const, data: overview.value } : { kind: 'error' as const },
-    trend: trend.status === 'fulfilled' ? { kind: 'ready' as const, data: trend.value } : { kind: 'error' as const }
+    overview: logStatisticEvidence(overview),
+    trend: logStatisticEvidence(trend)
   };
 }
 
 export async function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSignal) {
   const pageIndex = query.pageIndex ?? 0;
-  return parseTracePage(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
+  return parseTracePage(
+    await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)),
+    pageIndex,
+    20,
+    query.sort ?? 'newest'
+  );
 }
 
 export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   requireQueryableScope(query);
+  if (query.signal === 'traces' && query.traceStructure !== undefined) {
+    return `/api/traces/structure?${traceStructureParams(query, now).toString()}`;
+  }
+  return buildOrdinarySignalApiPath(query, now);
+}
+
+function buildOrdinarySignalApiPath(query: ExploreQuery, now: number) {
   const params = sharedSignalParams(query, now);
 
   if (query.signal === 'metrics') {
@@ -106,17 +134,14 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   params.set('pageIndex', String(query.pageIndex ?? 0));
   params.set('pageSize', '20');
   if (query.signal === 'logs') {
-    setValue(params, 'search', query.query);
-    setValue(params, 'traceId', query.traceId);
-    setValue(params, 'spanId', query.spanId);
-    setValue(params, 'severityText', query.severityText);
-    setValue(params, 'resourceFilter', query.resourceFilter);
-    setValue(params, 'attributeFilter', query.attributeFilter);
-    setEnabled(params, 'hideInternal', query.hideInternal);
-    setEnabled(params, 'hideNoise', query.hideNoise);
+    setValue(params, 'sort', query.sort);
+    setValue(params, 'logSort', query.logSort);
+    appendLogFilters(params, query);
     return `/api/logs/list?${params.toString()}`;
   }
 
+  params.set('sort', query.sort ?? 'newest');
+  setEnabled(params, 'endExclusive', query.endExclusive);
   setValue(params, 'operationName', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'resourceFilter', query.resourceFilter);
@@ -131,6 +156,34 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   setValue(params, 'spanScope', query.spanScope);
   setEnabled(params, 'hideInternal', query.hideInternal);
   return `/api/traces/list?${params.toString()}`;
+}
+
+export function buildTraceStructureAnalysisPath(query: TraceExploreQuery, now = Date.now()) {
+  requireQueryableScope(query);
+  return `/api/traces/structure/analysis?${traceStructureParams(query, now).toString()}`;
+}
+
+function traceStructureParams(query: TraceExploreQuery, now: number) {
+  if (!validTraceStructureQuery(query) || query.traceStructure === undefined)
+    throw new ExploreSignalContractError('Invalid structural trace query');
+  const structure = parseTraceStructure(query.traceStructure)!;
+  const window = resolveSignalWindow(query, now);
+  const params = new URLSearchParams({
+    start: String(window.start),
+    end: String(window.end),
+    relation: structure.relation,
+    pageIndex: String(query.pageIndex ?? 0),
+    pageSize: '20'
+  });
+  for (const [label, clause] of [
+    ['a', structure.a],
+    ['b', structure.b]
+  ] as const) {
+    setValue(params, `${label}ServiceName`, clause.serviceName ?? undefined);
+    setValue(params, `${label}OperationName`, clause.operationName ?? undefined);
+    setValue(params, `${label}Status`, clause.status ?? undefined);
+  }
+  return params;
 }
 
 function buildLogStatsApiPath(query: LogExploreQuery, kind: 'overview' | 'trend', now = Date.now()) {
@@ -152,7 +205,11 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   setValue(params, 'logContent', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'spanId', query.spanId);
+  setValue(params, 'searchSyntax', query.searchSyntax);
+  if (query.logGroupSelection !== undefined) params.set('logGroupSelection', query.logGroupSelection);
+  if (query.logNumericRange !== undefined) params.set('logNumericRange', query.logNumericRange);
   setValue(params, 'severityText', query.severityText);
+  setValue(params, 'severityCategory', query.severityCategory);
   setValue(params, 'resourceFilter', query.resourceFilter);
   setValue(params, 'attributeFilter', query.attributeFilter);
   setEnabled(params, 'hideInternal', query.hideInternal);
@@ -161,37 +218,7 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
 }
 
-export function openLogStream(
-  path: string,
-  handlers: {
-    onOpen: () => void;
-    onLog: (row: ReturnType<typeof parseLiveLogRow>) => void;
-    onGap: (gap: ReturnType<typeof parseLogStreamGap>) => void;
-    onRetrying: () => void;
-    onUnavailable: () => void;
-    onContractError: () => void;
-  }
-) {
-  return openBrowserEventStream(path, {
-    eventNames: ['LOG_EVENT', 'LOG_STREAM_GAP'],
-    onOpen: handlers.onOpen,
-    onRetrying: handlers.onRetrying,
-    onUnavailable: handlers.onUnavailable,
-    onEvent: (name, data) => {
-      try {
-        const value = JSON.parse(data) as unknown;
-        if (name === 'LOG_STREAM_GAP') handlers.onGap(parseLogStreamGap(value));
-        else handlers.onLog(parseLiveLogRow(value));
-      } catch (error) {
-        if (error instanceof ExploreSignalContractError || error instanceof SyntaxError) {
-          handlers.onContractError();
-          return;
-        }
-        throw error;
-      }
-    }
-  });
-}
+export { openLogStream } from './explore-log-stream';
 
 function sharedSignalParams(query: ExploreQuery, now: number) {
   const params = new URLSearchParams();
@@ -226,29 +253,25 @@ function requireTrendWindow<T extends { start: number; end: number }>(
   return trend;
 }
 
-async function resolveInventoryMetricQuery(
-  query: MetricExploreQuery,
-  observedAt: number,
-  signal?: AbortSignal
-): Promise<MetricExploreQuery | undefined> {
-  const inventory = parseMetricInventory(
-    await apiMessageGet(buildMetricInventoryApiPath(query, observedAt), requestSignal(signal))
+export async function loadMetricInventory(query: MetricExploreQuery, search: string, signal?: AbortSignal) {
+  requireQueryableScope(query);
+  const params = sharedSignalParams(query, Date.now());
+  params.set('limit', String(METRIC_INVENTORY_LIMIT));
+  setValue(params, 'search', search.trim());
+  return parseMetricInventory(
+    await apiMessageGet(`/api/ingestion/otlp/metrics/inventory?${params.toString()}`, requestSignal(signal))
   );
-  const metricName = inventory.items[0]?.metricName;
-  return metricName ? { ...query, query: metricName } : undefined;
-}
-
-function buildMetricInventoryApiPath(query: MetricExploreQuery, now = Date.now()) {
-  const params = sharedSignalParams(query, now);
-  params.set('limit', '20');
-  return `/api/ingestion/otlp/metrics/inventory?${params.toString()}`;
 }
 
 function appendLogFilters(params: URLSearchParams, query: LogExploreQuery) {
   setValue(params, 'search', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'spanId', query.spanId);
+  setValue(params, 'searchSyntax', query.searchSyntax);
+  if (query.logGroupSelection !== undefined) params.set('logGroupSelection', query.logGroupSelection);
+  if (query.logNumericRange !== undefined) params.set('logNumericRange', query.logNumericRange);
   setValue(params, 'severityText', query.severityText);
+  setValue(params, 'severityCategory', query.severityCategory);
   setValue(params, 'resourceFilter', query.resourceFilter);
   setValue(params, 'attributeFilter', query.attributeFilter);
   setEnabled(params, 'hideInternal', query.hideInternal);
@@ -276,4 +299,10 @@ function requireQueryableScope(query: ExploreQuery) {
 
 function requestSignal(signal?: AbortSignal) {
   return { signal: signal ?? null };
+}
+
+async function loadScalarMetric(query: MetricExploreQuery, signal?: AbortSignal) {
+  return parseMetricConsole(
+    await apiMessageGet(buildSignalApiPath(query), { ...requestSignal(signal), preserveErrorEnvelope: true })
+  );
 }

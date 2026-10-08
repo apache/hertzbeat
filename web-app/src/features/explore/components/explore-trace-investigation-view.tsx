@@ -1,3 +1,4 @@
+import type { SpanFilterControls } from '../model/explore-span-filter';
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useTranslation } from 'react-i18next';
@@ -7,26 +8,25 @@ import type {
   InvestigationEvidenceState,
   TraceInvestigationViewState
 } from '../model/explore-investigation-contract';
-import { InvestigationMetrics } from './explore-investigation-metrics';
+import { TraceSupportingEvidence } from './explore-trace-supporting-evidence';
 import { investigationPrimitiveMessages } from './explore-investigation-messages';
 import { InvestigationTraceEvidence } from './explore-investigation-trace-evidence';
-import {
-  InvestigationAvailability,
-  InvestigationBlockState,
-  InvestigationContextBand,
-  InvestigationSection
-} from './explore-investigation-view-primitives';
-import traceStyles from './explore-investigation-trace.module.css';
+import { InvestigationContextBand } from './explore-investigation-view-primitives';
 import styles from './explore-investigation-view.module.css';
+import workspaceStyles from './explore-trace-workspace.module.css';
+import { ExploreTraceDetailContext } from './explore-trace-detail-context';
 
 type ReadyState = Extract<TraceInvestigationViewState, { kind: 'ready' }>;
-type Props = {
+type Props = SpanFilterControls & {
+  drawerPresentation?: boolean;
   state: ReadyState;
   evidenceCurrent: boolean;
+  evidenceIdentity?: string | undefined;
   onBack: () => void;
   onRefresh: () => void;
   onSelectSpan: (spanId: string) => void;
   onOpenLogs: () => void;
+  onOpenSpanLogs?: (() => void) | undefined;
   onOpenMetrics?: (() => void) | undefined;
   onOpenTopology?: (() => void) | undefined;
 };
@@ -41,35 +41,74 @@ export function ExploreTraceInvestigationView(props: Props) {
   const metricsState = combinedMetricsState(state);
   return (
     <section
-      className={styles.workspace}
+      className={`${styles.workspace} ${workspaceStyles.workspace}`}
       data-explore-investigation="true"
+      data-trace-presentation={props.drawerPresentation ? 'drawer' : undefined}
       aria-label={t('exploreInvestigation.title')}
     >
-      <InvestigationContextBand window={state.route.window} onBack={props.onBack} onRefresh={props.onRefresh} />
-      <TraceAvailability
+      <TraceInvestigationContext
+        state={state}
+        drawerPresentation={props.drawerPresentation === true}
+        onBack={props.onBack}
+        onRefresh={props.onRefresh}
         gantt={ganttState}
         logs={logsState}
         metrics={metricsState}
-        topology={snapshot.dependencies.state}
       />
+      <span role="status" className={workspaceStyles.selectionStatus}>
+        {!evidenceCurrent ? t('exploreInvestigation.trace.updatingSelection') : ''}
+      </span>
       <InvestigationTraceEvidence
+        showSummary={!props.drawerPresentation}
+        onAddSpanFilter={props.onAddSpanFilter}
+        onApplySpanFilters={props.onApplySpanFilters}
+        spanFilterDisabledReason={props.spanFilterDisabledReason}
+        spanFilterPending={props.spanFilterPending}
         perses={perses}
+        logRecords={snapshot.sameTraceLogs.logs}
+        ganttReason={snapshot.gantt.reason}
+        logsReason={snapshot.sameTraceLogs.reason}
         ganttState={ganttState}
         logsState={logsState}
-        selectedSpanId={snapshot.selectedSpanId ?? undefined}
+        selectedSpanId={state.route.spanId ?? snapshot.selectedSpanId ?? undefined}
+        inspectorInitiallyOpen={state.route.spanId != null}
+        evidenceIdentity={props.evidenceIdentity}
         evidenceCurrent={evidenceCurrent}
         messages={messages}
         onSelectSpan={props.onSelectSpan}
         onOpenLogs={props.onOpenLogs}
+        onOpenSpanLogs={props.onOpenSpanLogs}
       />
-      <MetricsSection
+      <TraceSupportingEvidence
         state={state}
         evidenceCurrent={evidenceCurrent}
-        messages={messages}
-        onOpen={props.onOpenMetrics}
+        onOpenMetrics={props.onOpenMetrics}
+        onOpenTopology={props.onOpenTopology}
       />
-      <TopologySection state={state} evidenceCurrent={evidenceCurrent} onOpen={props.onOpenTopology} />
     </section>
+  );
+}
+
+function TraceInvestigationContext({
+  state,
+  drawerPresentation,
+  onBack,
+  onRefresh,
+  gantt,
+  logs,
+  metrics
+}: Pick<Props, 'state' | 'drawerPresentation' | 'onBack' | 'onRefresh'> &
+  Record<'gantt' | 'logs' | 'metrics', InvestigationEvidenceState>) {
+  return (
+    <>
+      {drawerPresentation && <ExploreTraceDetailContext state={state} onBack={onBack} onRefresh={onRefresh} />}
+      <div className={workspaceStyles.contextStrip} data-trace-context-strip>
+        {!drawerPresentation && (
+          <InvestigationContextBand window={state.route.window} onBack={onBack} onRefresh={onRefresh} />
+        )}
+        <TraceAvailability gantt={gantt} logs={logs} metrics={metrics} topology={state.snapshot.dependencies.state} />
+      </div>
+    </>
   );
 }
 
@@ -80,85 +119,24 @@ function TraceAvailability({
   topology
 }: Record<'gantt' | 'logs' | 'metrics' | 'topology', InvestigationEvidenceState>) {
   const { t } = useTranslation();
+  const states = { traces: gantt, logs, metrics, topology };
   return (
-    <InvestigationAvailability
-      items={[
-        { key: 'traces', label: t('exploreInvestigation.sections.traces'), state: gantt },
-        { key: 'logs', label: t('exploreInvestigation.sections.logs'), state: logs },
-        { key: 'metrics', label: t('exploreInvestigation.sections.metrics'), state: metrics },
-        { key: 'topology', label: t('exploreInvestigation.sections.topology'), state: topology }
-      ]}
-    />
-  );
-}
-
-function MetricsSection({
-  state,
-  evidenceCurrent,
-  messages,
-  onOpen
-}: {
-  state: ReadyState;
-  evidenceCurrent: boolean;
-  messages: ReturnType<typeof investigationPrimitiveMessages>;
-  onOpen?: (() => void) | undefined;
-}) {
-  const { t } = useTranslation();
-  const serviceMetricsReady =
-    state.snapshot.metrics.state === 'ready' && state.perses.metrics.some(panel => panel.outcome.state === 'ready');
-  return (
-    <InvestigationSection
-      title={t('exploreInvestigation.sections.metrics')}
-      action={serviceMetricsReady && onOpen ? onOpen : undefined}
-      actionLabel={t('exploreInvestigation.actions.openMetrics')}
-      evidenceCurrent={evidenceCurrent}
+    <section
+      className={workspaceStyles.availability}
+      data-trace-availability
+      aria-label={t('exploreInvestigation.availability')}
     >
-      <InvestigationMetrics
-        red={state.snapshot.red}
-        metricBlock={state.snapshot.metrics}
-        panels={state.perses.metrics}
-        messages={messages}
-      />
-    </InvestigationSection>
-  );
-}
-
-function TopologySection({
-  state,
-  evidenceCurrent,
-  onOpen
-}: {
-  state: ReadyState;
-  evidenceCurrent: boolean;
-  onOpen?: (() => void) | undefined;
-}) {
-  const { t } = useTranslation();
-  const block = state.snapshot.dependencies;
-  return (
-    <InvestigationSection
-      title={t('exploreInvestigation.sections.topology')}
-      action={onOpen}
-      actionLabel={t('exploreInvestigation.actions.openTopology')}
-      evidenceCurrent={evidenceCurrent}
-    >
-      {block.state === 'ready' ? (
-        <div className={traceStyles.dependencies}>
-          <p>{t('exploreInvestigation.topology.scope')}</p>
-          <ul>
-            {block.edges.map(edge => (
-              <li key={`${edge.spanId}-${edge.sourceServiceName}-${edge.targetServiceName}`}>
-                <strong>{`${edge.sourceServiceName} → ${edge.targetServiceName}`}</strong>
-                <span>
-                  {t('exploreInvestigation.topology.downstream')} · {edge.status} · {edge.durationMillis} ms
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <InvestigationBlockState state={block.state} />
-      )}
-    </InvestigationSection>
+      {Object.entries(states).map(([signal, state]) => {
+        const label = t(`exploreInvestigation.sections.${signal}`);
+        const explanation = t(`exploreInvestigation.states.${state === 'ready' ? 'available' : state}`);
+        return (
+          <span key={signal} data-state={state} title={explanation} aria-label={`${label}: ${explanation}`}>
+            {label}: {t(`exploreInvestigation.trace.availabilityStates.${state}`)}
+          </span>
+        );
+      })}
+      {(gantt !== 'ready' || logs !== 'ready') && <p role="note">{t('exploreInvestigation.trace.correlationGap')}</p>}
+    </section>
   );
 }
 

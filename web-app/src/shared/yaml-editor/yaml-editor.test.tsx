@@ -47,6 +47,35 @@ describe('YAML editors', () => {
     expect(document.querySelector('[data-hb-yaml-editor="codemirror"]')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Draft YAML' })).toHaveAttribute('contenteditable', 'false');
   });
+  it.each(['single', 'merge'] as const)(
+    'retains the latest %s draft while validation locks and unlocks an unchanged value',
+    kind => {
+      const onChange = vi.fn();
+      const editor = (value: string, readOnly: boolean) => (
+        <RuntimeThemeContext.Provider value={{ theme: 'default', setTheme: vi.fn() }}>
+          {kind === 'single' ? (
+            <YamlEditor ariaLabel="Draft YAML" value={value} readOnly={readOnly} onChange={onChange} />
+          ) : (
+            <YamlDiffEditor
+              originalAriaLabel="Current version"
+              modifiedAriaLabel="Draft YAML"
+              originalValue="app: mysql"
+              modifiedValue={value}
+              readOnly={readOnly}
+              onChange={onChange}
+            />
+          )}
+        </RuntimeThemeContext.Provider>
+      );
+      const view = render(editor('', false));
+      view.rerender(editor('app: [', false));
+      view.rerender(editor('app: [', true));
+      expect(screen.getByRole('textbox', { name: 'Draft YAML' })).toHaveTextContent('app: [');
+      view.rerender(editor('app: [', false));
+      expect(screen.getByRole('textbox', { name: 'Draft YAML' })).toHaveTextContent('app: [');
+      expect(onChange).not.toHaveBeenCalled();
+    }
+  );
 });
 
 function renderWithTheme(theme: RuntimeTheme, editor: React.ReactNode) {

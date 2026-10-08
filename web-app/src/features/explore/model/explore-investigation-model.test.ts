@@ -15,8 +15,71 @@ import {
   exploreInvestigationRoute,
   investigationDurationNanoToMillis
 } from './explore-investigation-model';
+import { normalizeExploreReturnTo } from './explore-url-model';
+
+it('retains a span-only exact list return path without treating it as a focused trace', () => {
+  const list = '/explore?signal=traces&timeRange=last-30m&spanId=0123456789abcdef&start=1000&end=2000';
+  expect(normalizeExploreReturnTo(list)).toBe(list);
+});
 
 const sourceWindow = { from: 1_720_000_000_000, to: 1_720_003_600_000 };
+
+describe('focused trace return route', () => {
+  it('restores a relative trace-ID filter without silently dropping its filter or inventing frozen evidence', () => {
+    const list = '/explore?signal=traces&timeRange=last-30m&traceId=0123456789abcdef0123456789abcdef&page=2';
+    const source = parseExploreQuery(new URL(list, 'https://example.test').searchParams);
+    const path = buildTraceInvestigationPath(
+      source,
+      {
+        traceId: '0123456789abcdef0123456789abcdef',
+        startTime: null,
+        durationNanos: null,
+        observedStartTime: sourceWindow.from,
+        observedEndTime: sourceWindow.to
+      },
+      sourceWindow,
+      'UTC'
+    );
+    expect(new URL(path, 'https://example.test').searchParams.get('returnTo')).toBe(list);
+    expect(normalizeExploreReturnTo(list)).toBe(list);
+  });
+  it('keeps a bounded canonical list return route and rejects external, recursive and focused routes', () => {
+    const list =
+      '/explore?signal=traces&timeRange=last-30m&page=2&start=1720000000000&end=1720003600000&serviceName=checkout';
+    expect(normalizeExploreReturnTo(list)).toBe(list);
+    for (const invalid of [
+      'https://evil.test/explore',
+      '//evil.test/explore',
+      list + '&returnTo=' + encodeURIComponent(list),
+      list + '&traceId=0123456789abcdef0123456789abcdef',
+      list + '&unknown=1',
+      list + '#fragment'
+    ]) {
+      expect(normalizeExploreReturnTo(invalid)).toBeUndefined();
+    }
+  });
+
+  it('preserves the original frozen list context while investigating a span outside the original list window', () => {
+    const query = parseExploreQuery(new URLSearchParams('signal=traces&page=2&serviceName=checkout'));
+    const path = buildTraceInvestigationPath(
+      query,
+      {
+        traceId: '0123456789abcdef0123456789abcdef',
+        startTime: null,
+        durationNanos: null,
+        observedStartTime: sourceWindow.from - 60_000,
+        observedEndTime: sourceWindow.to + 60_000
+      },
+      sourceWindow,
+      'UTC'
+    );
+    const params = new URL(path, 'https://example.test').searchParams;
+    expect(params.get('start')).toBe(String(sourceWindow.from - 90_000));
+    expect(params.get('end')).toBe(String(sourceWindow.to + 90_000));
+    expect(normalizeExploreReturnTo(params.get('returnTo'))).toContain('page=2');
+    expect(params.get('returnTo')).toContain('start=' + sourceWindow.from);
+  });
+});
 
 describe('Explore investigation route ownership', () => {
   it('accepts only a complete bounded exact Trace anchor', () => {
@@ -141,7 +204,7 @@ describe('Explore investigation selection windows', () => {
     ).toThrow(/identity/i);
   });
 
-  it('freezes a Trace around its own bounds and clamps it to the source window', () => {
+  it('preserves a committed absolute source window when opening a Trace', () => {
     const path = buildTraceInvestigationPath(
       parseExploreQuery(
         new URLSearchParams(
@@ -158,10 +221,58 @@ describe('Explore investigation selection windows', () => {
       'Asia/Shanghai'
     );
 
-    expect(path).toBe(
+    const comparison = new URL(path, 'https://example.test');
+    comparison.searchParams.delete('returnTo');
+    expect(comparison.pathname + comparison.search).toBe(
       '/explore?signal=traces&timeRange=last-30m&traceId=0123456789abcdef0123456789abcdef&spanId=0123456789abcdef' +
-        '&start=1720000000000&end=1720000130000&timeZone=UTC&entityId=7&serviceName=checkout'
+        '&start=1720000000000&end=1720003600000&timeZone=UTC&entityId=7&serviceName=checkout'
     );
+  });
+
+  it('preserves the log list filters, page and absolute window for the return path', () => {
+    const source = parseExploreQuery(
+      new URLSearchParams(
+        'signal=logs&query=timeout&severityText=ERROR&page=3&start=1720000000000&end=1720003600000&timeZone=UTC'
+      )
+    );
+    const path = buildLogInvestigationPath(
+      source,
+      { logRecordUid: 'event-7', timeUnixNano: '1720000060000000000' },
+      sourceWindow,
+      'UTC'
+    );
+    const params = new URL(path, 'https://example.test').searchParams;
+    const back = new URL(params.get('returnTo')!, 'https://example.test');
+    expect(parseExploreQuery(back.searchParams)).toMatchObject({
+      signal: 'logs',
+      pageIndex: 3,
+      query: '"timeout"',
+      searchSyntax: 'structured-v1',
+      severityText: 'ERROR',
+      start: 1720000000000,
+      end: 1720003600000
+    });
+  });
+
+  it('uses observed bounds for a rootless trace without promoting representative duration to root duration', () => {
+    const path = buildTraceInvestigationPath(
+      parseExploreQuery(new URLSearchParams('signal=traces&serviceName=checkout&environment=test')),
+      {
+        traceId: '0123456789abcdef0123456789abcdef',
+        selectedSpanId: '0123456789abcdef',
+        startTime: null,
+        durationNanos: null,
+        observedStartTime: 1_720_000_060_000,
+        observedEndTime: 1_720_000_090_000
+      },
+      sourceWindow,
+      'UTC'
+    );
+    const query = new URL(path, 'https://example.test').searchParams;
+    expect(query.get('start')).toBe('1720000030000');
+    expect(query.get('end')).toBe('1720000120000');
+    expect(query.get('serviceName')).toBe('checkout');
+    expect(query.get('environment')).toBe('test');
   });
 
   it('falls back to the trustworthy effective window when Trace timing is missing', () => {
@@ -188,8 +299,10 @@ describe('Explore investigation selection windows', () => {
       'Asia/Shanghai'
     );
 
-    expect(path).toBe(
-      '/explore?signal=logs&timeRange=last-30m&traceId=0123456789abcdef0123456789abcdef&spanId=0123456789abcdef&logRecordUid=record-1' +
+    const comparison = new URL(path, 'https://example.test');
+    comparison.searchParams.delete('returnTo');
+    expect(comparison.pathname + comparison.search).toBe(
+      '/explore?signal=logs&timeRange=last-30m&traceId=0123456789abcdef0123456789abcdef&spanId=0123456789abcdef&searchSyntax=structured-v1&logRecordUid=record-1' +
         '&start=1720001500123&end=1720002100124&timeZone=Asia%2FShanghai&entityId=7&serviceName=checkout'
     );
     expect(path).not.toContain('1720001800123456789');

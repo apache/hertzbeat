@@ -15,29 +15,25 @@ export function InstrumentationDetectionPanel(props: {
   detecting: boolean;
   error: boolean;
   onRetry: () => void;
+  onNewCheck: () => void;
   onOpen: (signal: Signal) => void;
 }) {
   const { t } = useTranslation();
-  if (props.error) {
+  if (props.error || !props.response) {
+    const message = props.error
+      ? 'instrumentation.detection.unavailable'
+      : props.detecting
+        ? 'instrumentation.detection.checking'
+        : 'instrumentation.detection.notStarted';
     return (
       <Alert
-        type="error"
+        type={props.error ? 'error' : 'info'}
         showIcon
-        message={t('instrumentation.detection.unavailable')}
-        action={<Button onClick={props.onRetry}>{t('instrumentation.action.retryDetection')}</Button>}
-      />
-    );
-  }
-  if (!props.response) {
-    return (
-      <Alert
-        type="info"
-        showIcon
-        message={t(props.detecting ? 'instrumentation.detection.checking' : 'instrumentation.detection.notStarted')}
+        message={t(message)}
         action={
-          !props.detecting ? (
-            <Button type="primary" onClick={props.onRetry}>
-              {t('instrumentation.action.startDetection')}
+          props.error || !props.detecting ? (
+            <Button type={props.error ? 'default' : 'primary'} onClick={props.onRetry}>
+              {t(props.error ? 'instrumentation.action.retryDetection' : 'instrumentation.action.startDetection')}
             </Button>
           ) : undefined
         }
@@ -49,12 +45,25 @@ export function InstrumentationDetectionPanel(props: {
       <Typography.Title id="instrumentation-detection-title" level={4}>
         {t('instrumentation.stage.detect')}
       </Typography.Title>
+      <Typography.Text type="secondary">
+        {t('instrumentation.detection.fixedWindow', {
+          start: new Date(props.response.context.startedAt).toISOString(),
+          end: new Date(props.response.context.windowEndAt).toISOString()
+        })}
+      </Typography.Text>
+      <Typography.Text type="secondary">{t('instrumentation.detection.observationOnly')}</Typography.Text>
+      {props.response.detectedAt >= props.response.context.windowEndAt && (
+        <Typography.Text type="secondary">{t('instrumentation.detection.windowComplete')}</Typography.Text>
+      )}
       {SIGNALS.map(signal => (
         <SignalRow key={signal} signal={signal} response={props.response!} onOpen={props.onOpen} />
       ))}
       {props.response.polling.decision === 'manual_retry' && (
         <Button onClick={props.onRetry}>{t('instrumentation.action.retryDetection')}</Button>
       )}
+      <Button disabled={props.detecting} onClick={props.onNewCheck}>
+        {t('instrumentation.action.newDetection')}
+      </Button>
     </section>
   );
 }
@@ -63,18 +72,30 @@ function SignalRow(props: { signal: Signal; response: DetectionResponse; onOpen:
   const { t } = useTranslation();
   const result = props.response.signals[props.signal];
   const jump = props.response.queryJumps.find(item => item.signal === props.signal);
+  const missedWindow = result.status === 'waiting' && props.response.detectedAt >= props.response.context.windowEndAt;
   return (
     <div className={styles.signalRow}>
       <Space>
         <strong>{t(`instrumentation.signal.${props.signal}`)}</strong>
-        <Tag color={statusColor(result.status)}>{t(`instrumentation.detection.status.${result.status}`)}</Tag>
+        <Tag color={missedWindow ? 'default' : statusColor(result.status)}>
+          {t(
+            missedWindow ? 'instrumentation.detection.notObserved' : `instrumentation.detection.status.${result.status}`
+          )}
+        </Tag>
       </Space>
       {result.lastReceivedAt && (
-        <Typography.Text type="secondary">{new Date(result.lastReceivedAt).toLocaleString()}</Typography.Text>
+        <Typography.Text type="secondary">
+          {t('instrumentation.detection.lastReceived', { time: new Date(result.lastReceivedAt).toISOString() })}
+        </Typography.Text>
       )}
       {result.errorCode && (
         <Typography.Text type="secondary">
-          {t(`instrumentation.detection.error.${result.errorCode}`, { defaultValue: t('common.unavailable') })}
+          {t(
+            missedWindow
+              ? 'instrumentation.detection.noneInWindow'
+              : `instrumentation.detection.error.${result.errorCode}`,
+            { defaultValue: t('common.unavailable') }
+          )}
         </Typography.Text>
       )}
       <Button size="small" disabled={!jump?.enabled} onClick={() => props.onOpen(props.signal)}>

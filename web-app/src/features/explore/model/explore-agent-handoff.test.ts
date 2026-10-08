@@ -6,6 +6,15 @@ import { materializeLogInvestigation, materializeTraceInvestigation } from './ex
 import { parseExploreQuery } from './explore-url-model';
 
 describe('Trace Explore Agent handoff', () => {
+  it('does not broaden a log category into an unfiltered AI investigation', () => {
+    expect(
+      materializeLogInvestigation(
+        { signal: 'logs', timeRange: 'last-30m', severityCategory: 'ERROR' },
+        { totalElements: 1, number: 0, size: 20, contentCount: 1 },
+        { from: 1_000, to: 2_000 }
+      )
+    ).toBeUndefined();
+  });
   it('materializes one exact visible trace detail scope with the effective window', () => {
     expect(
       materializeTraceInvestigation(
@@ -165,3 +174,23 @@ function logQuery(search: string) {
   if (parsed.signal !== 'logs') throw new Error('Expected Log query');
   return parsed;
 }
+
+it('does not downgrade structured search into literal AI log investigation', () => {
+  expect(
+    materializeLogInvestigation(
+      { signal: 'logs', timeRange: 'last-30m', searchSyntax: 'structured-v1', query: 'status:error OR status:warn' },
+      { totalElements: 1, number: 0, size: 20, contentCount: 1 },
+      { from: 1000, to: 2000 }
+    )
+  ).toBeUndefined();
+});
+
+it('allows the empty unified search without downgrading a structured predicate', () => {
+  expect(
+    materializeLogInvestigation(
+      { signal: 'logs', timeRange: 'last-30m', searchSyntax: 'structured-v1' },
+      { totalElements: 1, number: 0, size: 20, contentCount: 1 },
+      { from: 1000, to: 2000 }
+    )
+  ).toMatchObject({ log: { start: 1000, end: 2000 } });
+});

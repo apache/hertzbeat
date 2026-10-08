@@ -1,0 +1,16 @@
+.settings {
+  display: grid;
+  gap: var(--hb-space-2);
+  width: min(280px, calc(100vw - 48px));
+}
+.settings > label:not(:global(.ant-checkbox-wrapper)) {
+  display: grid;
+  gap: var(--hb-space-1);
+}
+.settings :global(.ant-select) {
+  width: 100%;
+}
+.settings p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

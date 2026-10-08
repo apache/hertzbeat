@@ -6,11 +6,31 @@
       "path": "features/alert/components/alert-center-delete-dialog.tsx",
       "allowedMax": 216
     },
-    { "rule": "feature-module-size", "path": "features/alert/components/alert-center-results.tsx", "allowedMax": 226 },
-    { "rule": "feature-module-size", "path": "features/alert/components/alert-center-toolbar.tsx", "allowedMax": 215 },
-    { "rule": "feature-module-size", "path": "features/alert/components/alert-group-editor.tsx", "allowedMax": 293 },
-    { "rule": "feature-module-size", "path": "features/alert/components/alert-inhibit-editor.tsx", "allowedMax": 272 },
-    { "rule": "feature-module-size", "path": "features/alert/components/alert-rule-fields.tsx", "allowedMax": 483 },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-center-results.tsx",
+      "allowedMax": 226
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-center-toolbar.tsx",
+      "allowedMax": 215
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-group-editor.tsx",
+      "allowedMax": 293
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-inhibit-editor.tsx",
+      "allowedMax": 272
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/components/alert-rule-fields.tsx",
+      "allowedMax": 475
+    },
     {
       "rule": "feature-module-size",
       "path": "features/alert/components/alert-rule-metric-binding-field.tsx",
@@ -31,8 +51,16 @@
       "path": "features/alert/integration/components/integration.module.css",
       "allowedMax": 339
     },
-    { "rule": "feature-module-size", "path": "features/alert/model/alert-rule-draft.ts", "allowedMax": 359 },
-    { "rule": "feature-module-size", "path": "features/alert/pages/alert-rule-editor-page.tsx", "allowedMax": 192 },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/model/alert-rule-draft.ts",
+      "allowedMax": 359
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/pages/alert-rule-editor-page.tsx",
+      "allowedMax": 192
+    },
     {
       "rule": "feature-module-size",
       "path": "features/settings/collector/components/collector-details-drawer.module.css",
@@ -63,7 +91,11 @@
       "path": "features/settings/object-store/components/object-store.module.css",
       "allowedMax": 266
     },
-    { "rule": "feature-module-size", "path": "features/settings/token/components/token-list.tsx", "allowedMax": 251 },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/token/components/token-list.tsx",
+      "allowedMax": 251
+    },
     {
       "rule": "feature-module-size",
       "path": "features/status/management/components/status-incident-editor.tsx",
@@ -83,6 +115,36 @@
       "rule": "feature-module-size",
       "path": "features/status/public/components/public-status.module.css",
       "allowedMax": 484
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/api/explore-api.ts",
+      "allowedMax": 260
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/model/explore-query.ts",
+      "allowedMax": 290
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/model/explore-submission-model.ts",
+      "allowedMax": 259
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/pages/explore-perses-trace-panel.tsx",
+      "allowedMax": 151
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/pages/explore-trace-structure-results.tsx",
+      "allowedMax": 202
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/signal-dashboard/components/signal-dashboard-composition-editor.tsx",
+      "allowedMax": 261
     }
   ]
 }

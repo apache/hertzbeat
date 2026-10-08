@@ -71,6 +71,11 @@ export async function listAgentTranscript(sessionUid: string, signal?: AbortSign
       throw new AgentGatewayRequestError('contract');
     }
     const message = parse(transcriptPayloadSchema, payload);
+    const toolCalls = message.content.flatMap((block, index) =>
+      block.type === 'toolCall' && block.name
+        ? [{ toolCallId: block.id || `transcript:${entry.id}:call:${index}`, toolName: block.name }]
+        : []
+    );
     return {
       id: entry.id,
       sequence: entry.sessionSequence,
@@ -79,6 +84,8 @@ export async function listAgentTranscript(sessionUid: string, signal?: AbortSign
         .filter(block => block.type === 'text' && block.text)
         .map(block => block.text)
         .join('\n'),
+      ...(toolCalls.length ? { toolCalls } : {}),
+      ...(message.toolCallId ? { toolCallId: message.toolCallId } : {}),
       ...(message.toolName ? { toolName: message.toolName } : {}),
       ...(message.errorMessage ? { errorMessage: message.errorMessage } : {}),
       createdAt: entry.gmtCreate

@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ApiMessageError } from '@/core/http/api-message';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,6 +24,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryContextProvider } from '@/shared/query-context';
 import { GlobalTimeProvider, RouteTimeProvider, useSharedTime, type SharedTimeValue } from '@/shared/time';
 
+import { buildTraceInvestigationPath } from '../model/explore-investigation-model';
 import { buildSignalApiPath } from '../api/explore-api';
 import { parseExploreQuery, type ExploreQuery, type ExploreQueryPatch } from '../model/explore-model';
 import type { MetricConsole } from '../model/explore-signal-contract';
@@ -43,6 +45,40 @@ describe('Explore page controller', () => {
     api.loadMetricSignal.mockResolvedValue(metricConsole([]));
     api.loadLogSignal.mockResolvedValue(logEvidence(page([])));
     api.loadTraceSignal.mockResolvedValue(page([]));
+  });
+
+  it('binds syntax diagnostics to the failed historical query and drops them after a new request', async () => {
+    api.loadLogSignal.mockRejectedValueOnce(
+      new ApiMessageError('observability_log_filter_invalid', {
+        status: 400,
+        data: { syntaxIssue: 'missing_value', start: 8, end: 8 }
+      })
+    );
+    const routed = renderController([
+      '/explore?signal=logs&searchSyntax=structured-v1&query=service%3A&start=1000&end=2000'
+    ]);
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'invalid_filter',
+        syntaxDiagnostic: { issue: 'missing_value', start: 8, end: 8, expression: 'service:' }
+      })
+    );
+    act(() => routed.current().updateQuery({ query: 'service:checkout' }));
+    await waitFor(() => expect(routed.current().result.kind).toBe('empty'));
+    expect(routed.current().result).not.toHaveProperty('syntaxDiagnostic');
+  });
+
+  it('keeps explicit-query history stable when the browser regains focus', async () => {
+    const routed = renderController(['/explore?signal=logs&start=1000&end=2000']);
+    await waitFor(() => expect(routed.current().result.kind).toBe('empty'));
+    const calls = api.loadLogSignal.mock.calls.length;
+    act(() => focusManager.setFocused(false));
+    await act(async () => {
+      focusManager.setFocused(true);
+      await Promise.resolve();
+    });
+    expect(api.loadLogSignal).toHaveBeenCalledTimes(calls);
+    focusManager.setFocused(undefined);
   });
 
   it('owns URL pushes and converges on Back history without browser globals', async () => {
@@ -81,7 +117,27 @@ describe('Explore page controller', () => {
       )
     );
     await act(async () => routed.router.navigate(-1));
-    expect(routed.router.state.location.search).toBe('?signal=logs&timeRange=last-30m&query=previous');
+    expect(routed.router.state.location.search).toBe(
+      '?signal=logs&timeRange=last-30m&query=%22previous%22&searchSyntax=structured-v1'
+    );
+  });
+
+  it('freezes the observed window when switching signals and retains common filters', async () => {
+    const routed = renderController([
+      '/explore?signal=traces&resourceFilter=service.version%3D2&attributeFilter=http.route%3D%2Fcheckout&serviceName=checkout'
+    ]);
+    await waitFor(() => expect(routed.current().result).toMatchObject({ kind: 'empty' }));
+    const request = api.loadTraceSignal.mock.lastCall?.[0] as ExploreQuery;
+    act(() => routed.current().updateQuery({ signal: 'logs' }));
+    await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledOnce());
+    expect(api.loadLogSignal.mock.lastCall?.[0]).toMatchObject({
+      start: request.start,
+      end: request.end,
+      serviceName: 'checkout',
+      resourceFilter: 'service.version=2',
+      attributeFilter: 'http.route=/checkout'
+    });
+    expect(routed.router.state.location.search).toContain('start=' + request.start);
   });
 
   it('writes canonical live mode for log controls and clears it for other signals', async () => {
@@ -145,15 +201,96 @@ describe('Explore page controller', () => {
     expect(api.loadLogSignal).not.toHaveBeenCalled();
   });
 
-  it.each([
-    '/explore?signal=traces&traceId=0123456789abcdef0123456789abcdef&start=1000&end=2000&timeZone=UTC',
-    '/explore?signal=logs&logRecordUid=record-1&start=1000&end=2000&timeZone=UTC'
-  ])('bypasses ordinary history loaders for a valid focused route: %s', async path => {
-    const routed = renderController([path]);
-    await waitFor(() => expect(routed.current().investigationRoute.kind).not.toBe('inactive'));
-    expect(api.loadMetricSignal).not.toHaveBeenCalled();
-    expect(api.loadLogSignal).not.toHaveBeenCalled();
-    expect(api.loadTraceSignal).not.toHaveBeenCalled();
+  it.each(['/explore?signal=logs&logRecordUid=record-1&start=1000&end=2000&timeZone=UTC'])(
+    'bypasses ordinary history loaders for a valid focused route: %s',
+    async path => {
+      const routed = renderController([path]);
+      await waitFor(() => expect(routed.current().investigationRoute.kind).not.toBe('inactive'));
+      expect(api.loadMetricSignal).not.toHaveBeenCalled();
+      expect(api.loadLogSignal).not.toHaveBeenCalled();
+      expect(api.loadTraceSignal).not.toHaveBeenCalled();
+    }
+  );
+
+  it('retains the result query while changing and closing a focused trace', async () => {
+    const source = '/explore?signal=traces&serviceName=checkout&errorOnly=true&start=1000&end=2000&sort=duration_desc';
+    const routed = renderController([source]);
+    await waitFor(() => expect(routed.current().result.kind).toBe('empty'));
+    const focus =
+      source + '&traceId=0123456789abcdef0123456789abcdef&timeZone=UTC&returnTo=' + encodeURIComponent(source);
+    await act(async () => routed.router.navigate(focus));
+    expect(routed.current().query).toMatchObject({ traceId: undefined });
+    expect(routed.current().investigationRoute.kind).toBe('trace');
+    expect(routed.current().query).toMatchObject({ serviceName: 'checkout', errorOnly: true, sort: 'duration_desc' });
+    expect(api.loadTraceSignal).toHaveBeenCalledOnce();
+    await act(async () => routed.router.navigate(focus + '&spanId=0123456789abcdef'));
+    expect(api.loadTraceSignal).toHaveBeenCalledOnce();
+    await act(async () => routed.router.navigate(source));
+    expect(routed.current().result.kind).toBe('empty');
+    expect(api.loadTraceSignal).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a relative-window result when opening its frozen detail and closing to the frozen list', async () => {
+    const routed = renderController(['/explore?signal=traces']);
+    await waitFor(() => expect(routed.current().result.kind).toBe('empty'));
+    const source = routed.current();
+    if (source.result.kind !== 'empty') throw new Error('Expected result');
+    const path = buildTraceInvestigationPath(
+      source.query,
+      {
+        traceId: '0123456789abcdef0123456789abcdef',
+        startTime: null,
+        durationNanos: null
+      },
+      source.result.window,
+      'UTC'
+    );
+    await act(async () => routed.router.navigate(path));
+    expect(routed.current().result.kind).toBe('empty');
+    expect(api.loadTraceSignal).toHaveBeenCalledOnce();
+    const returnTo = new URLSearchParams(path.split('?')[1]).get('returnTo');
+    if (!returnTo) throw new Error('Missing frozen return');
+    await act(async () => routed.router.navigate(returnTo));
+    expect(routed.current().result.kind).toBe('empty');
+    expect(api.loadTraceSignal).toHaveBeenCalledOnce();
+  });
+
+  it.each(['filter', 'revision', 'fetching', 'failed', 'window'])(
+    'does not promote a non-equivalent %s history candidate into a focused background',
+    async mismatch => {
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const query = canonicalQuery('signal=traces&query=' + (mismatch === 'filter' ? 'other' : 'current'));
+      const key = exploreQueryKeys.history(query, undefined, mismatch === 'revision' ? 1 : 0);
+      client.setQueryData(key, {
+        signal: 'traces',
+        data: page([]),
+        revision: 0,
+        window: mismatch === 'window' ? { from: 1000, to: 3000 } : { from: 1000, to: 2000 }
+      });
+      const candidate = client.getQueryCache().find({ queryKey: key });
+      if (mismatch === 'fetching') candidate?.setState({ fetchStatus: 'fetching' });
+      if (mismatch === 'failed') candidate?.setState({ status: 'error', error: new Error('Failed refresh') });
+      api.loadTraceSignal.mockReturnValue(new Promise(() => undefined));
+      const routed = renderController(
+        [
+          '/explore?signal=traces&query=current&traceId=0123456789abcdef0123456789abcdef&start=1000&end=2000&timeZone=UTC'
+        ],
+        0,
+        client
+      );
+      await waitFor(() => expect(api.loadTraceSignal).toHaveBeenCalledOnce());
+      expect(routed.current().result.kind).toBe('loading');
+      routed.unmount();
+    }
+  );
+
+  it('loads a bounded background list on a direct trace link without querying history by focused ID', async () => {
+    const routed = renderController([
+      '/explore?signal=traces&traceId=0123456789abcdef0123456789abcdef&start=1000&end=2000&timeZone=UTC'
+    ]);
+    await waitFor(() => expect(api.loadTraceSignal).toHaveBeenCalledOnce());
+    expect(api.loadTraceSignal.mock.lastCall?.[0]).toMatchObject({ start: 1000, end: 2000, traceId: undefined });
+    expect(routed.current().investigationRoute.kind).toBe('trace');
   });
 
   it('preserves a complete handoff on query submission and requests the resulting scoped exact query', async () => {
@@ -289,6 +426,39 @@ describe('Explore page controller', () => {
     await act(async () => exact.current().refresh());
     await waitFor(() => expect(api.loadMetricSignal.mock.calls.length).toBeGreaterThan(exactRequestCount));
     expect(api.loadMetricSignal.mock.lastCall?.[0]).toMatchObject({ start: 1000, end: 2000 });
+  });
+
+  it('resumes a fixed log window into route-owned sliding refresh', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(2_000_000);
+      const paths: string[] = [];
+      api.loadLogSignal.mockImplementation((query: ExploreQuery) => {
+        paths.push(buildSignalApiPath(query, Date.now()));
+        return Promise.resolve(logEvidence(page([])));
+      });
+      const routed = renderController(['/explore?signal=logs&timeRange=last-15m&start=1100000&end=2000000']);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(api.loadLogSignal).toHaveBeenCalledTimes(1);
+
+      act(() => routed.current().updateQuery({ start: undefined, end: undefined, autoRefreshMs: 30_000 }));
+      expect(routed.router.state.location.search).toContain('autoRefresh=30000');
+      expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(api.loadLogSignal).toHaveBeenCalledTimes(2);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+      expect(api.loadLogSignal).toHaveBeenCalledTimes(3);
+      expect(paths[2]).toContain('start=1130000&end=2030000');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it.each(['metrics', 'logs', 'traces'] as const)(
@@ -444,6 +614,42 @@ describe('Explore page controller', () => {
     }
   });
 
+  it('stages sorting until Query, resets the page, and ignores the aborted previous ordering response', async () => {
+    const previous = deferred<ReturnType<typeof page>>();
+    let previousSignal: AbortSignal | undefined;
+    api.loadTraceSignal
+      .mockImplementationOnce((_query: ExploreQuery, signal: AbortSignal) => {
+        previousSignal = signal;
+        return previous.promise;
+      })
+      .mockResolvedValue(page([{ traceId: 'current-duration-order' }]));
+    const routed = renderController(['/explore?signal=traces&page=2&errorOnly=true&start=1000&end=2000']);
+    await waitFor(() => expect(api.loadTraceSignal).toHaveBeenCalledOnce());
+    act(() => routed.current().submission.updateField({ field: 'sort', value: 'duration_desc' }));
+    expect(api.loadTraceSignal).toHaveBeenCalledOnce();
+    act(() => routed.current().submission.submit());
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'ready',
+        data: { content: [{ traceId: 'current-duration-order' }] }
+      })
+    );
+    expect(api.loadTraceSignal.mock.lastCall?.[0]).toMatchObject({
+      sort: 'duration_desc',
+      pageIndex: undefined,
+      errorOnly: true,
+      start: 1000,
+      end: 2000
+    });
+    expect(previousSignal?.aborted).toBe(true);
+    act(() => previous.resolve(page([{ traceId: 'late-newest-order' }])));
+    await act(async () => previous.promise);
+    expect(routed.current().result).toMatchObject({
+      kind: 'ready',
+      data: { content: [{ traceId: 'current-duration-order' }] }
+    });
+  });
+
   it('does not let a stale previous-signal promise replace the current result', async () => {
     const metric = deferred<MetricConsole>();
     let metricSignal: AbortSignal | undefined;
@@ -464,6 +670,7 @@ describe('Explore page controller', () => {
 
   it.each<[string, ExploreQueryPatch]>([
     ['time', { timeRange: 'last-1h' }],
+    ['exact time', { start: 1000, end: 2000, timeZone: 'UTC', windowMode: undefined, pageIndex: undefined }],
     ['context', { serviceName: 'payments' }]
   ])('aborts an old request when the active %s scope changes', async (_scope, patch) => {
     const first = deferred<MetricConsole>();
@@ -556,6 +763,32 @@ describe('Explore page controller', () => {
       })
     );
     expect(routed.current().result).not.toMatchObject({ window: cachedWindow });
+  });
+
+  it('retains the prior log page as refreshing evidence while an adjacent page loads', async () => {
+    const nextPage = deferred<ReturnType<typeof logEvidence>>();
+    api.loadLogSignal.mockReturnValue(nextPage.promise);
+    const query = canonicalQuery('signal=logs&start=1000&end=2000&query=cached');
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(exploreQueryKeys.history(query, cachedWindow, 0), {
+      signal: 'logs',
+      data: logEvidence(page([logRow({ body: 'previous page' })], 46, 0, 3)),
+      window: cachedWindow,
+      revision: 0
+    });
+
+    const routed = renderController(['/explore?signal=logs&start=1000&end=2000&query=cached'], 0, client);
+    await waitFor(() => expect(routed.current().result.kind).toBe('refreshing'));
+    act(() => routed.current().updateQuery({ pageIndex: 1 }));
+
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'refreshing',
+        evidence: { kind: 'ready', data: { content: [{ body: 'previous page' }], number: 0 } }
+      })
+    );
+    expect(api.loadLogSignal).toHaveBeenCalledTimes(2);
+    routed.unmount();
   });
 
   it('retains cached history after refresh failure only as stale error evidence', async () => {

@@ -17,12 +17,17 @@
 
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
+import { createRequire } from 'node:module';
+import { realpathSync } from 'node:fs';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import bundleLimits from './scripts/bundle-limits.json' with { type: 'json' };
 import vitestResourcePolicy from './scripts/vitest-resource-policy.json' with { type: 'json' };
 
 const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
+const requireGanttDependency = createRequire(
+  realpathSync(new URL('./node_modules/@perses-dev/tracing-gantt-chart-plugin/package.json', import.meta.url))
+);
 const backendProxy = {
   target: backendOrigin,
   changeOrigin: true,
@@ -82,6 +87,26 @@ export default defineConfig({
     // test loader otherwise selects their CJS graph and creates a second React
     // Query context. Production Vite already selects these ESM entries.
     alias: [
+      {
+        find: /^use-resize-observer$/,
+        replacement: requireGanttDependency.resolve('use-resize-observer')
+      },
+      {
+        find: /^react-virtuoso$/,
+        replacement: requireGanttDependency.resolve('react-virtuoso')
+      },
+      {
+        find: /^@perses-dev\/tracing-gantt-chart-plugin$/,
+        replacement: fileURLToPath(
+          new URL('./node_modules/@perses-dev/tracing-gantt-chart-plugin/lib/index.js', import.meta.url)
+        )
+      },
+      {
+        find: /^@perses-dev\/trace-table-plugin$/,
+        replacement: fileURLToPath(
+          new URL('./node_modules/@perses-dev/trace-table-plugin/lib/index.js', import.meta.url)
+        )
+      },
       {
         find: /^@perses-dev\/components$/,
         replacement: fileURLToPath(new URL('./node_modules/@perses-dev/components/dist/index.js', import.meta.url))

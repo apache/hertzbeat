@@ -22,10 +22,51 @@
   padding-top: 8px;
 }
 
+.validation {
+  margin: 0;
+  color: var(--ant-color-error);
+  font-size: 12px;
+}
+
 .scopeGrid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(132px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+}
+
+.scopeFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: end;
+}
+
+.moreFilters {
+  min-width: 0;
+}
+
+.moreFilters[open] {
+  grid-column: 1 / -1;
+}
+
+.moreFilters > summary {
+  min-height: 32px;
+  align-content: center;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.filterCount {
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rareGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 4px;
 }
 
 .field {
@@ -122,7 +163,7 @@
 .codeGrid p {
   grid-column: 1 / -1;
   margin: 0;
-  color: var(--ant-color-error);
+  color: var(--hb-text-secondary);
   font-size: 12px;
   line-height: 16px;
 }
@@ -142,10 +183,6 @@
 }
 
 @media (max-width: 1100px) {
-  .scopeGrid {
-    grid-template-columns: repeat(3, minmax(160px, 1fr));
-  }
-
   .conditionHeader {
     display: none;
   }
@@ -176,13 +213,38 @@
 }
 
 @media (max-width: 520px) {
-  .scopeGrid,
+  .scopeFields,
+  .rareGrid,
   .codeGrid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scopeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .compactVisibility {
     width: 100%;
     margin-left: 0;
   }
+}
+
+:global([data-explore-query-layout='split']) .scopeFields,
+:global([data-explore-query-layout='split']) .scopeGrid,
+:global([data-explore-query-layout='split']) .rareGrid,
+:global([data-explore-query-layout='split']) .codeGrid,
+:global([data-explore-query-layout='split']) .conditionRow {
+  grid-template-columns: minmax(0, 1fr);
+}
+:global([data-explore-query-layout='split']) .conditionHeader {
+  display: none;
+}
+:global([data-explore-query-layout='split']) .conditionField > span {
+  display: block;
+}
+:global([data-explore-query-layout='split']) .compactVisibility {
+  margin-left: 0;
+}
+:global([data-explore-query-layout='split']) .conditionRow {
+  border-bottom: 1px solid var(--hb-border-subtle);
 }

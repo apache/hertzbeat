@@ -38,6 +38,8 @@ function SourceStage(props: { page: PageController; onContinue: (phase: Instrume
       <InstrumentationSourceStep
         key={page.sourceDirectoryRevision}
         catalog={page.catalog}
+        agentlessTarget={page.agentlessTarget}
+        canCreateMonitor={page.canCreateMonitor}
         {...sourceSelections(page)}
         onSource={page.chooseSource}
         onApplicationAnswer={page.answerApplication}
@@ -83,6 +85,7 @@ function GuideStage({ page, onConfigurePhase }: StageProps) {
       {...(page.detection ? { detection: page.detection } : {})}
       onEdit={() => onConfigurePhase('service')}
       onDetect={() => void page.detect()}
+      onNewCheck={() => void page.startNewDetection()}
       onOpen={page.openQuery}
       onAcknowledgeToken={page.acknowledgeGeneratedToken}
     />

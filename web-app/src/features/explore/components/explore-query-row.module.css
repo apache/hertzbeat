@@ -1,0 +1,11 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.row {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  padding-block: var(--hb-space-2);
+  gap: var(--hb-space-2);
+}
+.row :global(.ant-btn[type='submit']) {
+  height: var(--hb-workbench-control-height);
+}

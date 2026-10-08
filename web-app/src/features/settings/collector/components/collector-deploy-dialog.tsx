@@ -16,6 +16,7 @@
  */
 
 import { Alert, Button, Descriptions, Form, Input, Modal, Typography } from 'antd';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -30,29 +31,61 @@ type Props = {
   onSubmit: (collector: string) => void;
   onCancel: () => void;
   onClose: () => void;
+  returnFocusRef?: RefObject<HTMLButtonElement | null>;
+  fallbackFocusRef?: RefObject<HTMLButtonElement | null>;
 };
 
 export function CollectorDeployDialog(props: Props) {
   const { t } = useTranslation();
-  if (props.state.kind === 'closed') return null;
   const state = props.state;
+  const open = state.kind !== 'closed';
+  const openingLocation = useRef<string | null>(null);
+  const modalRoot = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (open) openingLocation.current = window.location.href;
+  }, [open]);
+  const restoreFocus = () => {
+    if (openingLocation.current !== window.location.href) return;
+    const active = document.activeElement;
+    if (active !== document.body && active !== document.documentElement && !modalRoot.current?.contains(active)) return;
+    const target = availableFocusTarget(props.returnFocusRef?.current)
+      ? props.returnFocusRef?.current
+      : props.fallbackFocusRef?.current;
+    if (availableFocusTarget(target)) target.focus({ preventScroll: true });
+  };
   return (
     <Modal
-      open
+      open={open}
+      focusTriggerAfterClose={false}
+      afterClose={restoreFocus}
+      modalRender={node => <div ref={modalRoot}>{node}</div>}
       destroyOnHidden
       maskClosable={false}
       title={t('collectors.deploy.title')}
       okText={t(state.kind === 'failed' ? 'collectors.deploy.retry' : 'collectors.deploy.generate')}
       cancelText={t('common.cancel')}
-      footer={<CollectorDeployFooter {...props} />}
+      footer={open ? <CollectorDeployFooter {...props} /> : null}
       onCancel={state.kind === 'ready' ? props.onClose : props.onCancel}
     >
-      {state.kind === 'ready' ? (
-        <CollectorDeployResult deployment={state.deployment} />
-      ) : (
-        <CollectorDeployForm {...props} state={state} />
-      )}
+      <CollectorDeployContent {...props} />
     </Modal>
+  );
+}
+
+function CollectorDeployContent(props: Props) {
+  const state = props.state;
+  if (state.kind === 'closed') return null;
+  if (state.kind === 'ready') return <CollectorDeployResult deployment={state.deployment} />;
+  return <CollectorDeployForm {...props} state={state} />;
+}
+
+function availableFocusTarget(target: HTMLButtonElement | null | undefined): target is HTMLButtonElement {
+  return Boolean(
+    target?.isConnected &&
+    !target.disabled &&
+    !target.closest('[hidden], [inert]') &&
+    getComputedStyle(target).visibility !== 'hidden' &&
+    (target.checkVisibility?.() ?? true)
   );
 }
 

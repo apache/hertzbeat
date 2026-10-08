@@ -7,6 +7,7 @@
 
 import { cleanup, render } from '@testing-library/react';
 import type { PanelDefinition, QueryDefinition } from '@perses-dev/spec';
+import { getTimeSeries } from '@perses-dev/timeseries-chart-plugin/lib/utils/data-transform.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const runtimeContract = vi.hoisted(() => ({
@@ -14,8 +15,12 @@ const runtimeContract = vi.hoisted(() => ({
   queries: [] as QueryDefinition[][],
   pluginLoaders: [] as unknown[],
   timeWindowCallbacks: [] as Array<unknown>,
-  timeWindowChangeFlags: [] as Array<boolean | undefined>
+  timeWindowChangeFlags: [] as Array<boolean | undefined>,
+  contentSurfaces: [] as Array<boolean | undefined>
 }));
+
+vi.mock('./hertzbeat-trace-table-adapter', () => ({ HertzBeatTraceTableAdapter: () => <div>Native trace table</div> }));
+vi.mock('./hertzbeat-tracing-gantt-adapter', () => ({ HertzBeatTracingGanttAdapter: () => <div>Native Gantt</div> }));
 
 vi.mock('@perses-dev/dashboards', () => ({
   Panel: ({ definition }: { definition: PanelDefinition }) => {
@@ -24,6 +29,18 @@ vi.mock('@perses-dev/dashboards', () => ({
   }
 }));
 vi.mock('@perses-dev/plugin-system', () => ({
+  DataQueriesContext: {
+    Provider: ({
+      value,
+      children
+    }: {
+      value: { queryDefinitions: QueryDefinition[] };
+      children: import('react').ReactNode;
+    }) => {
+      runtimeContract.queries.push(value.queryDefinitions);
+      return children;
+    }
+  },
   DataQueriesProvider: ({
     children,
     definitions
@@ -40,16 +57,19 @@ vi.mock('./perses-runtime-providers', () => ({
     children,
     pluginLoader,
     onTimeWindowChange,
-    timeWindowChangeEnabled
+    timeWindowChangeEnabled,
+    contentSurface
   }: {
     children: import('react').ReactNode;
     pluginLoader: unknown;
     onTimeWindowChange?: unknown;
     timeWindowChangeEnabled?: boolean | undefined;
+    contentSurface?: boolean | undefined;
   }) => {
     runtimeContract.pluginLoaders.push(pluginLoader);
     runtimeContract.timeWindowCallbacks.push(onTimeWindowChange);
     runtimeContract.timeWindowChangeFlags.push(timeWindowChangeEnabled);
+    runtimeContract.contentSurfaces.push(contentSurface);
     return children;
   }
 }));
@@ -70,6 +90,7 @@ describe('PersesSignalRuntime', () => {
     runtimeContract.pluginLoaders = [];
     runtimeContract.timeWindowCallbacks = [];
     runtimeContract.timeWindowChangeFlags = [];
+    runtimeContract.contentSurfaces = [];
   });
 
   it('routes each typed snapshot to the matching official Perses panel and query kind', () => {
@@ -99,24 +120,6 @@ describe('PersesSignalRuntime', () => {
         panelKind: 'LogsTable',
         queryKind: 'LogQuery',
         snapshotKind: 'HertzBeatSnapshotLogQuery'
-      },
-      {
-        props: { kind: 'trace-table', title: 'Traces', timeWindow, data: { searchResult: [] } },
-        panelKind: 'TraceTable',
-        queryKind: 'TraceQuery',
-        snapshotKind: 'HertzBeatSnapshotTraceQuery'
-      },
-      {
-        props: {
-          kind: 'tracing-gantt-chart',
-          title: 'Trace detail',
-          timeWindow,
-          selectedSpanId: '0123456789abcdef',
-          data: { trace: { resourceSpans: [] } }
-        },
-        panelKind: 'TracingGanttChart',
-        queryKind: 'TraceQuery',
-        snapshotKind: 'HertzBeatSnapshotTraceQuery'
       }
     ];
 
@@ -130,17 +133,35 @@ describe('PersesSignalRuntime', () => {
       expect(runtimeContract.pluginLoaders.at(-1)).toBe(hertzBeatPersesMultiSignalPluginLoader);
       if (item.props.kind === 'logs-table') {
         expect(panel?.spec.plugin.spec).toMatchObject({
-          allowWrap: true,
+          allowWrap: false,
           enableDetails: true,
           showTime: true,
           showSelectionHints: false
         });
       }
-      if (item.props.kind === 'tracing-gantt-chart') {
-        expect(panel?.spec.plugin.spec).toMatchObject({ selectedSpanId: '0123456789abcdef' });
-      }
       view.unmount();
     }
+  });
+
+  it('keeps the log table subtree mounted when the received buffer window advances', () => {
+    const props = { kind: 'logs-table' as const, title: 'Live logs', timeWindow, data: { entries: [] } };
+    const view = render(<PersesSignalRuntime {...props} />);
+    const table = view.getByTestId('perses-panel');
+    view.rerender(<PersesSignalRuntime {...props} timeWindow={{ from: timeWindow.from, to: timeWindow.to + 1000 }} />);
+    expect(view.getByTestId('perses-panel')).toBe(table);
+  });
+
+  it('does not expand legacy comfortable rows when wrapping is disabled', () => {
+    render(
+      <PersesSignalRuntime
+        kind="logs-table"
+        title="Logs"
+        timeWindow={timeWindow}
+        data={{ entries: [] }}
+        display={{ density: 'comfortable', wrap: false, showTime: true }}
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ allowWrap: false, rowHeight: 'small' });
   });
 
   it('forwards host log display preferences to the official LogsTable spec', () => {
@@ -150,11 +171,36 @@ describe('PersesSignalRuntime', () => {
         title="Logs"
         timeWindow={timeWindow}
         data={{ entries: [] }}
-        display={{ density: 'compact', wrap: false, showTime: false }}
+        display={{
+          density: 'compact',
+          wrap: false,
+          showTime: false,
+          rowHeight: 'large',
+          contentDisplay: 'attributes',
+          showContent: false,
+          copyLabels: {
+            copyOptions: 'Copy options',
+            copied: 'Copied!',
+            menu: 'Copy format options',
+            copyTimestamp: 'Copy log',
+            copyTimestampDescription: 'Timestamp + labels + message',
+            copyMessage: 'Copy message',
+            copyMessageDescription: 'Message text only',
+            copyJson: 'Copy as JSON',
+            copyJsonDescription: 'Full log entry'
+          }
+        }}
       />
     );
 
-    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ allowWrap: false, showTime: false });
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+      allowWrap: true,
+      showTime: false,
+      rowHeight: 'large',
+      contentDisplay: 'attributes',
+      showContent: false,
+      copyLabels: { copyTimestamp: 'Copy log', copyMessage: 'Copy message', copyJson: 'Copy as JSON' }
+    });
     view.unmount();
   });
 
@@ -179,7 +225,144 @@ describe('PersesSignalRuntime', () => {
         display="bar"
       />
     );
-    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ visual: { display: 'bar' } });
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+      visual: { display: 'bar' },
+      yAxis: { show: true, min: 0 }
+    });
+    const visual = runtimeContract.panels.at(-1)?.spec.plugin.spec.visual as Parameters<typeof getTimeSeries>[3];
+    const nativeBar = getTimeSeries(
+      'count',
+      0,
+      'count',
+      visual,
+      { rangeMs: 60_000 } as Parameters<typeof getTimeSeries>[4],
+      '#333'
+    );
+    expect(nativeBar).toMatchObject({ type: 'bar' });
+    expect(nativeBar).not.toHaveProperty('barWidth');
+    expect(nativeBar).not.toHaveProperty('barMaxWidth');
+  });
+
+  it('shows sparse numeric points through twenty valid samples and hides dense symbols without joining gaps', () => {
+    const values = Array.from(
+      { length: 25 },
+      (_, index) => [timeWindow.from + index * 1000, index < 20 ? index : null] as [number, number | null]
+    );
+    const data = {
+      timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) },
+      series: [{ name: 'rate', values }]
+    };
+    const sparse = render(
+      <PersesSignalRuntime kind="metric-time-series" title="Rate" timeWindow={timeWindow} data={data} />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+      visual: { display: 'line', showPoints: 'always', pointRadius: 4, connectNulls: false }
+    });
+    const sparseVisual = runtimeContract.panels.at(-1)?.spec.plugin.spec.visual as Parameters<typeof getTimeSeries>[3];
+    expect(
+      getTimeSeries('rate', 0, 'rate', sparseVisual, { rangeMs: 60_000 } as Parameters<typeof getTimeSeries>[4], '#333')
+    ).toMatchObject({ type: 'line', showSymbol: true, symbolSize: 4, connectNulls: false });
+    sparse.unmount();
+    render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Rate"
+        timeWindow={timeWindow}
+        data={{ ...data, series: [{ name: 'rate', values: [...values, [timeWindow.to, 21]] }] }}
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+      visual: { display: 'line', showPoints: 'auto', pointRadius: 0, connectNulls: false }
+    });
+    const denseVisual = runtimeContract.panels.at(-1)?.spec.plugin.spec.visual as Parameters<typeof getTimeSeries>[3];
+    expect(
+      getTimeSeries('rate', 0, 'rate', denseVisual, { rangeMs: 60_000 } as Parameters<typeof getTimeSeries>[4], '#333')
+    ).toMatchObject({ type: 'line', symbolSize: 0, connectNulls: false });
+  });
+
+  it('uses an integer axis only for an identified compact log count, preserving fractional metrics', () => {
+    const data = { timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) }, series: [] };
+    const count = render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Log count"
+        timeWindow={timeWindow}
+        data={data}
+        display="bar"
+        compact
+        countAxisMax={0}
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ yAxis: { show: true, min: 0, max: 1 } });
+    count.unmount();
+    render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Average"
+        timeWindow={timeWindow}
+        data={data}
+        yDomain={{ min: 0, max: 1.5 }}
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ yAxis: { show: true, min: 0, max: 1.5 } });
+  });
+
+  it.each([false, true])('does not clip negative bar samples to a zero minimum (compact: %s)', compact => {
+    render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Delta"
+        compact={compact}
+        timeWindow={timeWindow}
+        display="bar"
+        data={{
+          timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) },
+          series: [
+            {
+              name: 'delta',
+              values: [
+                [timeWindow.from, -5],
+                [timeWindow.to, 3]
+              ]
+            }
+          ]
+        }}
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).not.toHaveProperty('yAxis.min', 0);
+  });
+
+  it('uses the official small legend within the flat host content surface for metrics', () => {
+    render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Metric"
+        timeWindow={timeWindow}
+        data={{ timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) }, series: [] }}
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+      legend: { position: 'bottom', size: 'small' }
+    });
+    expect(runtimeContract.contentSurfaces.at(-1)).toBe(true);
+  });
+
+  it('keeps the native axis layout gutters without a redundant legend for compact log trends', () => {
+    render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Log trend"
+        timeWindow={timeWindow}
+        data={{ timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) }, series: [] }}
+        display="bar"
+        compact
+      />
+    );
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ yAxis: { show: true, min: 0 } });
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+      visual: { palette: { mode: 'categorical' } }
+    });
+    expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).not.toHaveProperty('legend');
   });
 
   it('disables official inline details only when the host provides an Inspector row selection', () => {
@@ -236,4 +419,53 @@ describe('PersesSignalRuntime', () => {
 
     expect(runtimeContract.timeWindowChangeFlags.at(-1)).toBe(false);
   });
+});
+it('passes the shared split scale to the native panel axis', () => {
+  render(
+    <PersesSignalRuntime
+      kind="metric-time-series"
+      title="Split"
+      timeWindow={timeWindow}
+      data={{ series: [] }}
+      yDomain={{ min: -10, max: 20 }}
+    />
+  );
+  expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({ yAxis: { show: true, min: -10, max: 20 } });
+  cleanup();
+});
+it('renders bars, hides the legend and applies a zero lower bound without forcing an upper bound', () => {
+  render(
+    <PersesSignalRuntime
+      kind="metric-time-series"
+      title="Metric"
+      timeWindow={timeWindow}
+      data={{ timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) }, series: [] }}
+      display="bar"
+      legend={false}
+      yDomain={{ min: 0 }}
+    />
+  );
+  expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).toMatchObject({
+    visual: { display: 'bar' },
+    yAxis: { show: true, min: 0 }
+  });
+  expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).not.toHaveProperty('legend');
+  expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).not.toHaveProperty('yAxis.max');
+  cleanup();
+});
+it('rejects invalid axis domains before creating a plugin panel', () => {
+  const before = runtimeContract.panels.length;
+  expect(() =>
+    render(
+      <PersesSignalRuntime
+        kind="metric-time-series"
+        title="Metric"
+        timeWindow={timeWindow}
+        data={{ timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) }, series: [] }}
+        yDomain={{ min: Infinity, max: 0 }}
+      />
+    )
+  ).toThrow();
+  expect(runtimeContract.panels).toHaveLength(before);
+  cleanup();
 });

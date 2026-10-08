@@ -14,6 +14,7 @@ import { InvestigationLogTopology } from './explore-investigation-log-topology';
 import { investigationPrimitiveMessages } from './explore-investigation-messages';
 import { InvestigationMetrics } from './explore-investigation-metrics';
 import { InvestigationSelectedLog } from './explore-investigation-selected-log';
+import { InvestigationLogPreviewNotice } from './investigation-log-preview-notice';
 import {
   InvestigationAvailability,
   InvestigationBlockState,
@@ -115,6 +116,14 @@ function LogEvidenceSection({
   const { t } = useTranslation();
   return (
     <InvestigationSection title={t('explore.signals.logs')} evidenceCurrent={evidenceCurrent}>
+      <InvestigationLogPreviewNotice
+        rows={[
+          ...(selectedLog ? [selectedLog] : []),
+          ...(state.snapshot.nearbyLogs.state === 'ready'
+            ? [...state.snapshot.nearbyLogs.before, ...state.snapshot.nearbyLogs.after]
+            : [])
+        ]}
+      />
       {selectedLog ? (
         <div className={logStyles.logWorkspace}>
           <InvestigationSelectedLog row={selectedLog} timeZone={state.route.window.timeZone} />
@@ -132,12 +141,18 @@ function LogEvidenceSection({
                 outcome={nearbyPanel.outcome}
               />
             ) : (
-              <InvestigationBlockState state={nonReady(state.snapshot.nearbyLogs.state)} />
+              <InvestigationBlockState
+                state={nonReady(state.snapshot.nearbyLogs.state)}
+                reason={state.snapshot.nearbyLogs.reason}
+              />
             )}
           </section>
         </div>
       ) : (
-        <InvestigationBlockState state={nonReady(state.snapshot.selectedLog.state)} />
+        <InvestigationBlockState
+          state={nonReady(state.snapshot.selectedLog.state)}
+          reason={state.snapshot.selectedLog.reason}
+        />
       )}
     </InvestigationSection>
   );
@@ -160,14 +175,14 @@ function LogMetricsSection({
   return (
     <InvestigationSection
       title={t('exploreInvestigation.sections.metrics')}
-      action={evidenceState === 'ready' && onOpen ? onOpen : undefined}
+      action={onOpen}
       actionLabel={t('exploreInvestigation.actions.openMetrics')}
       evidenceCurrent={evidenceCurrent}
     >
       {evidenceState === 'ready' ? (
         <InvestigationMetrics metricBlock={state.snapshot.metrics} panels={state.perses.metrics} messages={messages} />
       ) : (
-        <InvestigationBlockState state={nonReady(evidenceState)} />
+        <InvestigationBlockState state={nonReady(evidenceState)} reason={state.snapshot.metrics.reason} />
       )}
     </InvestigationSection>
   );

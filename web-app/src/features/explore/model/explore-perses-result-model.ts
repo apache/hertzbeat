@@ -1,4 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+import { createNativeLogTrendResult } from '@/platform/perses';
+import { readLogNumericRange, validLogNumericRange } from '@/shared/log-numeric-range';
+import { readLogSort } from './explore-log-order';
 
 import type {
   HertzBeatLogQueryOutcome,
@@ -8,18 +11,19 @@ import type {
   HertzBeatTraceTableQuery,
   HertzBeatTraceTableQueryOutcome
 } from '@/platform/perses';
+import { traceEvidenceSchema } from '@/shared/trace-evidence';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
 import { exploreEvidenceScopeKey } from './explore-model';
 import type { ExploreQuery, LogExploreQuery, MetricExploreQuery, TraceExploreQuery } from './explore-query';
 import {
+  TracePageResult,
   ExploreSignalContractError,
   type ExplorePageResult,
   type LogOverview,
   type LogRow,
   type LogTrend,
-  type MetricConsole,
-  type TraceRow
+  type MetricConsole
 } from './explore-signal-contract';
 import { metricSeries } from './explore-signal-model';
 
@@ -35,7 +39,12 @@ export function createExploreMetricPersesResult(
   revision: number,
   readySeries = metricSeries(console)
 ): Result<HertzBeatMetricQuery, ReadyMetric> {
-  const series = readySeries.map(item => ({ ...item, points: strictMetricPoints(item.points) }));
+  const names = metricLegendNames(readySeries);
+  const series = readySeries.map((item, index) => ({
+    ...item,
+    displayName: names[index]!,
+    points: strictMetricPoints(item.points, item.allowsGaps)
+  }));
   if (series.length === 0) throw new ExploreSignalContractError();
   requireMetricWindow(console, timeWindow);
   return {
@@ -55,6 +64,20 @@ export function createExploreMetricPersesResult(
   };
 }
 
+function metricLegendNames(series: ReturnType<typeof metricSeries>) {
+  const keys = [...new Set(series.flatMap(item => Object.keys(item.labels)))].filter(key => key !== '__name__');
+  const differing = keys.filter(key => new Set(series.map(item => item.labels[key])).size > 1).sort();
+  const sharedName = new Set(series.map(item => item.name)).size === 1;
+  return series.map(item => {
+    const labels = differing
+      .filter(key => Object.hasOwn(item.labels, key))
+      .map(key => `${key}=${JSON.stringify(item.labels[key])}`)
+      .join(', ');
+    if (labels) return sharedName ? labels : `${item.name}{${labels}}`;
+    return series.length > 1 && sharedName && !differing.length ? item.key : item.name;
+  });
+}
+
 function requireMetricWindow(console: MetricConsole, window: ExactTimeWindow) {
   if (console.context && (console.context.start !== window.from || console.context.end !== window.to)) {
     throw new ExploreSignalContractError();
@@ -67,8 +90,19 @@ export function createExploreLogPersesResult(
   timeWindow: ExactTimeWindow,
   revision: number
 ): Result<HertzBeatLogTableQuery, ReadyLogs> {
+  if (!validLogNumericRange(query.logNumericRange)) throw new ExploreSignalContractError();
+  const logSort = readLogSort(query.logSort);
+  if (query.logSort !== undefined && (!logSort || query.sort === 'oldest')) throw new ExploreSignalContractError();
   return {
-    query: { signal: 'logs', queryKind: 'table', timeWindow, limit: page.size },
+    query: {
+      signal: 'logs',
+      queryKind: 'table',
+      timeWindow,
+      limit: page.size,
+      ...(query.sort === 'oldest' ? { sort: 'oldest' as const } : {}),
+      ...(logSort ? { logSort } : {}),
+      ...(query.logNumericRange ? { logNumericRange: readLogNumericRange(query.logNumericRange) } : {})
+    },
     outcome: {
       state: 'ready',
       truncated: page.totalElements > page.content.length,
@@ -80,16 +114,16 @@ export function createExploreLogPersesResult(
 
 export function createExploreTracePersesResult(
   query: TraceExploreQuery,
-  page: ExplorePageResult<TraceRow>,
+  page: TracePageResult,
   timeWindow: ExactTimeWindow,
   revision: number
 ): Result<HertzBeatTraceTableQuery, ReadyTraces> {
-  requireCompleteTraceRows(page.content);
+  if (page.content.some(row => !traceEvidenceSchema.safeParse(row).success)) throw new ExploreSignalContractError();
   return {
     query: { signal: 'traces', queryKind: 'table', timeWindow, limit: page.size },
     outcome: {
       state: 'ready',
-      truncated: page.totalElements > page.content.length,
+      truncated: page.query?.truncated ?? 'unknown',
       data: { rows: page.content, total: page.totalElements }
     },
     runtimeIdentity: evidenceIdentity(query, timeWindow, revision)
@@ -101,26 +135,7 @@ export function createLogTrendPersesResult(
   timeWindow: ExactTimeWindow,
   runtimeIdentity: string
 ): Result<HertzBeatMetricQuery, ReadyMetric> {
-  const points = trend.buckets.map(bucket => ({ timestamp: bucket.start, value: bucket.count }));
-  return {
-    query: {
-      signal: 'metrics',
-      queryKind: 'time-series',
-      timeWindow,
-      metric: { name: 'hertzbeat_log_count' },
-      limit: 1
-    },
-    outcome: {
-      state: 'ready',
-      truncated: false,
-      data: {
-        timeWindow,
-        source: 'greptime_logs',
-        series: [{ key: 'log-count', name: 'hertzbeat_log_count', labels: {}, points }]
-      }
-    },
-    runtimeIdentity: `${runtimeIdentity}:trend`
-  };
+  return createNativeLogTrendResult(trend, timeWindow, runtimeIdentity);
 }
 
 export function exploreOverviewRows(overview: LogOverview) {
@@ -139,11 +154,11 @@ function evidenceIdentity(query: ExploreQuery, window: ExactTimeWindow, revision
   return JSON.stringify({ scope: exploreEvidenceScopeKey(query), window, revision });
 }
 
-function strictMetricPoints(points: unknown[][]) {
+function strictMetricPoints(points: unknown[][], allowsGaps = false) {
   return points.map(point => {
     if (!Array.isArray(point) || point.length < 2) throw new ExploreSignalContractError();
     const timestamp = strictFiniteNumber(point[0]);
-    const value = strictFiniteNumber(point[1]);
+    const value = allowsGaps && point[1] === null ? null : strictFiniteNumber(point[1]);
     if (!Number.isSafeInteger(timestamp) || timestamp <= 0) throw new ExploreSignalContractError();
     return { timestamp, value };
   });
@@ -153,55 +168,4 @@ function strictFiniteNumber(value: unknown) {
   const parsed = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
   if (!Number.isFinite(parsed)) throw new ExploreSignalContractError();
   return parsed;
-}
-
-type CompleteTraceRow = TraceRow & {
-  durationNanos: number;
-  startTime: number;
-  serviceName: string;
-  rootSpanName: string;
-  spanCount: number;
-  serviceStats: Record<string, { spanCount: number; errorCount: number }>;
-};
-
-function requireCompleteTraceRows(rows: TraceRow[]): asserts rows is CompleteTraceRow[] {
-  for (const row of rows) {
-    if (!isCompleteTraceRow(row) || !hasConsistentTraceStats(row)) throw new ExploreSignalContractError();
-  }
-}
-
-function isCompleteTraceRow(row: TraceRow): row is CompleteTraceRow {
-  return (
-    /^[0-9a-f]{32}$/u.test(row.traceId) &&
-    hasText(row.serviceName) &&
-    hasText(row.rootSpanName) &&
-    isPositiveSafeInteger(row.startTime) &&
-    isNonNegativeSafeInteger(row.durationNanos) &&
-    isPositiveSafeInteger(row.spanCount) &&
-    row.serviceStats != null
-  );
-}
-
-function hasConsistentTraceStats(row: CompleteTraceRow) {
-  const stats = Object.values(row.serviceStats);
-  const spanCount = stats.reduce((total, item) => total + item.spanCount, 0);
-  const errorCount = stats.reduce((total, item) => total + item.errorCount, 0);
-  return (
-    isNonNegativeSafeInteger(spanCount) &&
-    isNonNegativeSafeInteger(errorCount) &&
-    spanCount === row.spanCount &&
-    errorCount === row.errorSpanCount
-  );
-}
-
-function hasText(value: string | null): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function isPositiveSafeInteger(value: number | null): value is number {
-  return isNonNegativeSafeInteger(value) && value > 0;
-}
-
-function isNonNegativeSafeInteger(value: number | null): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }

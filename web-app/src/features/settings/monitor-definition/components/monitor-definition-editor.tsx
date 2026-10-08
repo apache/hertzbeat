@@ -159,7 +159,10 @@ function EditorActions(props: EditorProps) {
   const { t } = useTranslation();
   const locked = props.workspace.pending !== null || props.workspace.writeRecovery !== null;
   const saveDisabled =
-    !props.workspace.draft.definition.trim() || !monitorDefinitionWorkspaceIsDirty(props.workspace) || locked;
+    !props.workspace.draft.definition.trim() ||
+    props.workspace.failure === 'invalid' ||
+    !monitorDefinitionWorkspaceIsDirty(props.workspace) ||
+    locked;
   const saveButton = (
     <Button
       type="primary"

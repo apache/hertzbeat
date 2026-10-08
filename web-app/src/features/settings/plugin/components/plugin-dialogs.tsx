@@ -5,7 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Form, Input, Modal, Switch, Upload, Typography } from 'antd';
+import { Alert, Button, Form, Input, Modal, Switch, Upload, Typography } from 'antd';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PluginDeleteTarget, PluginFailureKind, PluginUploadDraft } from '../model/plugin-model';
@@ -22,6 +23,8 @@ export function PluginUploadDialog(props: {
   onEnabled: (value: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const nameId = useId();
+  const statusId = useId();
   return (
     <Modal
       open={props.upload !== null}
@@ -38,9 +41,11 @@ export function PluginUploadDialog(props: {
       <Form layout="vertical">
         <Form.Item
           label={t('plugins.name')}
+          htmlFor={nameId}
           {...(props.invalid.name ? { validateStatus: 'error' as const, help: t('plugins.validation.name') } : {})}
         >
           <Input
+            id={nameId}
             value={props.upload?.name ?? ''}
             disabled={props.busy}
             onChange={event => props.onName(event.target.value)}
@@ -52,8 +57,13 @@ export function PluginUploadDialog(props: {
           disabled={props.busy}
           onFile={props.onFile}
         />
-        <Form.Item label={t('plugins.initialStatus')}>
-          <Switch checked={props.upload?.enableStatus ?? true} disabled={props.busy} onChange={props.onEnabled} />
+        <Form.Item label={t('plugins.initialStatus')} htmlFor={statusId}>
+          <Switch
+            id={statusId}
+            checked={props.upload?.enableStatus ?? true}
+            disabled={props.busy}
+            onChange={props.onEnabled}
+          />
         </Form.Item>
       </Form>
     </Modal>
@@ -82,7 +92,16 @@ function PluginJarField(props: {
           return false;
         }}
       >
-        <Typography.Link>{t('plugins.chooseJar')}</Typography.Link>
+        <Button
+          htmlType="button"
+          disabled={props.disabled}
+          onKeyDown={event => {
+            // Native button activation supplies the click; avoid Upload's extra Enter handler.
+            if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+          }}
+        >
+          {t('plugins.chooseJar')}
+        </Button>
       </Upload>
       {props.file && <Typography.Text>{props.file.name}</Typography.Text>}
     </Form.Item>

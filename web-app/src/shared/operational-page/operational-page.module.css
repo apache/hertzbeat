@@ -36,13 +36,14 @@
 }
 
 .withActions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
+  display: flex;
+  flex-wrap: wrap;
   align-items: start;
   gap: 16px;
 }
 
 .copy {
+  flex: 1 1 240px;
   display: grid;
   min-width: 0;
   gap: var(--hb-space-1);
@@ -60,6 +61,9 @@
 
 .actions {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
+  margin-inline-start: auto;
   min-height: 32px;
   align-items: center;
   justify-content: flex-end;
@@ -193,6 +197,14 @@
 }
 
 @media (max-width: 700px) {
+  .withActions {
+    display: grid;
+  }
+
+  .actions {
+    margin-inline-start: 0;
+  }
+
   .withActions,
   .commandBar,
   .statePanel {

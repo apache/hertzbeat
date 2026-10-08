@@ -1,0 +1,81 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+.compactActions {
+  flex: none;
+}
+.secondaryActions {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+.queryActionsMenu {
+  display: grid;
+  max-width: 340px;
+  gap: var(--hb-space-2);
+}
+.menuControls {
+  width: 100%;
+}
+.menuControls :global(.ant-btn),
+.secondaryActions :global(.ant-btn) {
+  width: 100%;
+  justify-content: flex-start;
+  border: 0;
+  box-shadow: none;
+}
+.toolbar {
+  width: 100%;
+  padding-block: var(--hb-space-2);
+}
+.group {
+  border-top: 1px solid var(--hb-border-subtle);
+  padding-block: var(--hb-space-3);
+}
+.group h3 {
+  margin: 0 0 var(--hb-space-2);
+  font-size: 14px;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.rowCopy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 280px;
+  overflow-wrap: anywhere;
+}
+.editor {
+  display: grid;
+  gap: var(--hb-space-3);
+}
+.editor label {
+  display: grid;
+  gap: var(--hb-space-1);
+}
+.original {
+  white-space: pre;
+  overflow: auto;
+  max-height: 60vh;
+}
+@media (max-width: 480px) {
+  .rowCopy {
+    flex-basis: 100%;
+  }
+}

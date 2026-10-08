@@ -1,0 +1,22 @@
+.matcherList {
+  display: grid;
+  gap: var(--hb-space-2);
+  width: 100%;
+}
+.matcherRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.matcherRow > strong {
+  overflow-wrap: anywhere;
+  min-width: 120px;
+}
+.matcherRow > :global(.ant-select) {
+  width: 80px;
+}
+.matcherRow > :global(.ant-input) {
+  min-width: 120px;
+  flex: 1;
+}

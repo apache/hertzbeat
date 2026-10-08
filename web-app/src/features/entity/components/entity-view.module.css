@@ -66,6 +66,7 @@
 .filterStack {
   display: grid;
   gap: 8px;
+  container-type: inline-size;
 }
 .discoverySearch {
   width: min(480px, 100%);
@@ -73,12 +74,28 @@
 .filters {
   display: grid;
   gap: 8px;
+  align-items: end;
   grid-template-columns: minmax(240px, 2fr) repeat(3, minmax(130px, 1fr)) minmax(220px, auto);
 }
 .advancedFilters {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
+}
+.filterField {
+  display: grid;
+  gap: var(--hb-space-1);
+  min-width: 0;
+}
+.filterField > label {
+  color: var(--hb-text-secondary);
+  line-height: var(--hb-space-5);
+}
+.filterField :global(.ant-select) {
+  width: 100%;
+}
+.advancedToggle {
+  margin-top: var(--hb-space-6);
 }
 .rowLink {
   height: auto;
@@ -121,7 +138,24 @@
   }
 }
 
+@container (max-width: 900px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 480px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 700px) {
+  .advancedToggle {
+    margin-top: 0;
+  }
   .editorFields,
   .disclosureRow {
     max-width: none;

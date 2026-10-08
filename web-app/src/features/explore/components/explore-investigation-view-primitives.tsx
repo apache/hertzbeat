@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { InvestigationTimeWindow } from '@/shared/query-context';
 
-import type { InvestigationEvidenceState } from '../model/explore-investigation-contract';
+import type { InvestigationBlock, InvestigationEvidenceState } from '../model/explore-investigation-contract';
 import styles from './explore-investigation-view.module.css';
 
 export type AvailabilityItem = {
@@ -30,7 +30,7 @@ export function InvestigationContextBand({
     timeZone: window.timeZone
   });
   return (
-    <header className={styles.contextBand}>
+    <header className={styles.contextBand} data-investigation-context>
       <div>
         <strong>{t('exploreInvestigation.title')}</strong>
         <span>{t('exploreInvestigation.exactWindow')}</span>
@@ -55,7 +55,11 @@ export function InvestigationAvailability({
 }) {
   const { t } = useInvestigationTranslation();
   return (
-    <section className={styles.availability} aria-label={ariaLabel ?? t('exploreInvestigation.availability')}>
+    <section
+      className={styles.availability}
+      data-investigation-availability
+      aria-label={ariaLabel ?? t('exploreInvestigation.availability')}
+    >
       <div className={styles.capabilityGrid} data-count={items.length}>
         {items.map(item => (
           <div className={styles.capability} key={item.key}>
@@ -85,7 +89,7 @@ export function InvestigationSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className={styles.signalSection} aria-label={title}>
+    <section className={styles.signalSection} data-investigation-section aria-label={title}>
       <header className={styles.sectionHeader}>
         <h2>{title}</h2>
         {action && actionLabel ? (
@@ -102,9 +106,11 @@ export function InvestigationSection({
 export function InvestigationBlockState({
   state,
   noTraceContext,
+  reason,
   message
 }: {
   state: 'empty' | 'unavailable';
+  reason?: InvestigationBlock['reason'] | undefined;
   noTraceContext?: boolean;
   message?: string | undefined;
 }) {
@@ -112,7 +118,13 @@ export function InvestigationBlockState({
   return (
     <div className={styles.compactState} data-state={state}>
       {message ??
-        t(noTraceContext ? 'exploreInvestigation.states.noTraceContext' : `exploreInvestigation.states.${state}`)}
+        t(
+          noTraceContext
+            ? 'exploreInvestigation.states.noTraceContext'
+            : reason && reason !== 'observed'
+              ? `exploreInvestigation.reasons.${reason}`
+              : `exploreInvestigation.states.${state}`
+        )}
     </div>
   );
 }

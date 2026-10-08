@@ -9,8 +9,11 @@ import { useCan, useGo } from '@refinedev/core';
 import { Tooltip } from 'antd';
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import { buildExploreSignalNavigationPath } from '@/features/explore/model/explore-model';
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 import styles from './hertzbeat-shell.module.css';
 import type { ShellNavigationItem } from './shell-navigation-model';
@@ -28,7 +31,9 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
   const { t } = useTranslation();
   const { session } = useSession();
   const go = useGo();
+  const location = useLocation();
   const { active, collapsed, item, label } = props;
+  const route = exploreSignalDestination(item, location.pathname, location.search);
   const access = useCan({
     resource: item.name,
     action: 'list',
@@ -47,17 +52,22 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
   const linkClassName = active ? `${styles.navigationLink} ${styles.navigationLinkActive}` : styles.navigationLink;
 
   const navigate = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (disabled || !route) {
+      event.preventDefault();
+      return;
+    }
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (disabled || !item.route) return;
+    if (route === `${location.pathname}${location.search}`) return;
     props.onNavigate?.();
-    go({ to: item.route, type: 'push' });
+    go({ to: route, type: 'push' });
   };
 
   return (
     <Tooltip title={tooltip} placement="right">
       <a
         className={linkClassName}
-        href={item.route}
+        href={route}
         aria-current={active ? 'page' : undefined}
         aria-disabled={disabled || undefined}
         onClick={navigate}
@@ -69,6 +79,13 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
       </a>
     </Tooltip>
   );
+}
+
+function exploreSignalDestination(item: ShellNavigationItem, pathname: string, search: string) {
+  if (pathname !== applicationRoutePaths.explore) return item.route;
+  const signal = item.name === 'explore-logs' ? 'logs' : item.name === 'explore-traces' ? 'traces' : null;
+  if (signal) return buildExploreSignalNavigationPath(search, signal);
+  return item.name === 'explore' ? buildExploreSignalNavigationPath(search, 'metrics') : item.route;
 }
 
 function resolveTooltip(options: {

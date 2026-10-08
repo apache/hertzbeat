@@ -25,8 +25,9 @@ import {
   type LogExploreQuery
 } from './explore-query';
 
-import type { ExactTimeWindow, QueryContext } from '@/shared/query-context';
-import { buildExplorePath, normalizeExploreQuery } from './explore-url-model';
+import { normalizeInvestigationTimeZone, type ExactTimeWindow, type QueryContext } from '@/shared/query-context';
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
+import { buildExplorePath, normalizeExploreQuery, parseExploreQuery } from './explore-url-model';
 import { mergeExploreContextChanges } from './explore-context-model';
 
 export { exploreQueryContext, mergeExploreContextChanges } from './explore-context-model';
@@ -42,7 +43,7 @@ export {
   type TraceExploreQuery
 } from './explore-query';
 
-export { buildExplorePath, parseExploreQuery } from './explore-url-model';
+export { buildExplorePath, parseExploreQuery, normalizeExploreReturnTo } from './explore-url-model';
 export { EXPLORE_TIME_RANGES } from './explore-url-model';
 
 /**
@@ -50,7 +51,19 @@ export { EXPLORE_TIME_RANGES } from './explore-url-model';
  * changes, otherwise a drawer can display data from the previous scope.
  */
 export function exploreEvidenceScopeKey(query: ExploreQuery) {
-  return buildExplorePath(query);
+  if (query.signal === 'metrics') return buildExplorePath({ ...query, metricView: undefined });
+  return buildExplorePath(
+    query.signal === 'logs'
+      ? {
+          ...query,
+          logView: undefined,
+          logAnalysis: undefined,
+          ...(query.live ? { sort: undefined, logSort: undefined } : {})
+        }
+      : query.signal === 'traces'
+        ? { ...query, traceView: undefined, traceStructureView: undefined }
+        : query
+  );
 }
 
 export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatch): ExploreQuery {
@@ -100,6 +113,13 @@ export function buildCrossSignalPath(
   );
 }
 
+/** Build a sidebar destination from the applied URL, keeping exact time and investigation context. */
+export function buildExploreSignalNavigationPath(search: string, signal: ExploreSignal) {
+  const query = parseExploreQuery(new URLSearchParams(search));
+  if (query.signal === signal) return `${applicationRoutePaths.explore}${search}`;
+  return buildExplorePath(mergeExploreQuery(query, signalSelectionPatch(signal)));
+}
+
 /**
  * Keep investigation scope when changing signals, but drop the free-text
  * expression because it means a metric name, log search, or operation name
@@ -107,6 +127,9 @@ export function buildCrossSignalPath(
  */
 export function signalSelectionPatch(signal: ExploreSignal): ExploreQueryPatch {
   return {
+    savedView: undefined,
+    returnTo: undefined,
+    traceReturnTo: undefined,
     signal,
     query: undefined,
     operationName: undefined,
@@ -115,10 +138,13 @@ export function signalSelectionPatch(signal: ExploreSignal): ExploreQueryPatch {
     traceId: undefined,
     spanId: undefined,
     logRecordUid: undefined,
+    searchSyntax: undefined,
     severityText: undefined,
-    resourceFilter: undefined,
-    attributeFilter: undefined,
+    severityCategory: undefined,
     errorOnly: undefined,
+    traceStructure: undefined,
+    traceStructureView: undefined,
+    sort: undefined,
     spanScope: undefined,
     hideInternal: undefined,
     hideNoise: undefined,
@@ -142,9 +168,29 @@ export function querySubmissionTimePatch(query: ExploreQuery, routeWindow?: Exac
 export function presetTimeRangePatch(query: ExploreQuery, timeRange: ExploreTimeRange): ExploreQueryPatch {
   return {
     timeRange,
+    pageIndex: undefined,
     windowMode: exploreHandoffState(query) === 'scoped' ? 'preset' : undefined,
     start: undefined,
     end: undefined
+  };
+}
+
+export function exactTimeRangePatch(window: ExactTimeWindow, timeZone: string): ExploreQueryPatch | undefined {
+  const zone = normalizeInvestigationTimeZone(timeZone);
+  if (
+    !zone ||
+    ![window.from, window.to].every(isPositiveSafeInteger) ||
+    window.from >= window.to ||
+    window.to - window.from > 24 * 60 * 60_000
+  )
+    return undefined;
+  return {
+    start: window.from,
+    end: window.to,
+    timeZone: zone,
+    windowMode: undefined,
+    autoRefreshMs: undefined,
+    pageIndex: undefined
   };
 }
 
@@ -166,6 +212,20 @@ export function logTrendZoomPatch(
   };
 }
 
+export function metricTrendZoomPatch(
+  evidenceWindow: ExactTimeWindow,
+  requestedWindow: ExactTimeWindow
+): ExploreQueryPatch | undefined {
+  if (!validTrendZoomWindow(evidenceWindow, requestedWindow)) return undefined;
+  return {
+    start: requestedWindow.from,
+    end: requestedWindow.to,
+    windowMode: undefined,
+    autoRefreshMs: undefined,
+    pageIndex: undefined
+  };
+}
+
 function validTrendZoomWindow(evidence: ExactTimeWindow, requested: ExactTimeWindow) {
   if (![evidence.from, evidence.to, requested.from, requested.to].every(isPositiveSafeInteger)) return false;
   if (evidence.from >= evidence.to || requested.from >= requested.to) return false;
@@ -181,6 +241,9 @@ function isPositiveSafeInteger(value: number) {
 function dependentFilterCleanup(query: ExploreQuery, changes: ExploreQueryPatch) {
   const currentTraceId = 'traceId' in query ? query.traceId : undefined;
   const currentLogRecordUid = query.signal === 'logs' ? query.logRecordUid : undefined;
+  if (query.signal === 'traces' && Object.hasOwn(changes, 'sort') && changes.sort !== query.sort) {
+    changes = { ...changes, pageIndex: undefined };
+  }
   const traceChanged = Object.hasOwn(changes, 'traceId') && changes.traceId !== currentTraceId;
   const selectedLogChanged = Object.hasOwn(changes, 'logRecordUid') && changes.logRecordUid !== currentLogRecordUid;
   const timeChanged = (['timeRange', 'start', 'end'] as const).some(

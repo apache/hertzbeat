@@ -12,13 +12,15 @@ export function useNoticeRuleQueryController() {
   const locationSearch = searchParams.toString();
   const query = useMemo(() => readNoticeRuleQuery(new URLSearchParams(locationSearch)), [locationSearch]);
   const canonicalSearch = useMemo(() => writeNoticeRuleQuery(query).toString(), [query]);
-  const { value: name, setValue: setName } = useStringQueryDraft(canonicalSearch, query.name);
+  const { value: name, setValue: setName } = useStringQueryDraft(query.name, query.name);
 
   useCanonicalQuerySearch(locationSearch, canonicalSearch, setSearchParams);
 
   const search = useCallback(() => {
-    setSearchParams(writeNoticeRuleQuery({ ...query, name: name.trim(), pageIndex: 0 }));
-  }, [name, query, setSearchParams]);
+    const submittedName = name.trim();
+    setName(submittedName);
+    setSearchParams(writeNoticeRuleQuery({ ...query, name: submittedName, pageIndex: 0 }));
+  }, [name, query, setName, setSearchParams]);
   const changePage = useCallback(
     (page: number, pageSize: number) => {
       setSearchParams(writeNoticeRuleQuery({ ...query, ...zeroBasedPageChange(page, pageSize, query.pageSize) }));

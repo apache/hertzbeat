@@ -16,6 +16,36 @@ describe('AgentWorkspaceView', () => {
   });
   afterEach(cleanup);
 
+  it('keeps assistant text and errors when a message also records a tool call', () => {
+    const controller = fixture();
+    controller.transcript.items.push(
+      {
+        id: 3,
+        sequence: 3,
+        role: 'assistant',
+        text: 'Checking the log page.',
+        toolCalls: [{ toolCallId: 'call-1', toolName: 'logs.query' }],
+        createdAt: null
+      },
+      {
+        id: 4,
+        sequence: 4,
+        role: 'assistant',
+        text: '',
+        errorMessage: 'The request was interrupted.',
+        toolCalls: [{ toolCallId: 'call-2', toolName: 'logs.query' }],
+        createdAt: null
+      }
+    );
+    render(
+      <I18nextProvider i18n={i18n}>
+        <AgentWorkspaceView controller={controller} isAdmin onOpenProviders={vi.fn()} onOpenSchedules={vi.fn()} />
+      </I18nextProvider>
+    );
+    expect(screen.getByText('Checking the log page.')).toBeInTheDocument();
+    expect(screen.getByText('The request was interrupted.')).toBeInTheDocument();
+  });
+
   it('keeps the conversation primary and opens run details only when requested', () => {
     const controller = fixture();
     const openSchedules = vi.fn();

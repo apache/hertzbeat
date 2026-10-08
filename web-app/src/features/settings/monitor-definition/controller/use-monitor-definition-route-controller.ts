@@ -98,6 +98,7 @@ function useDirtyMonitorDefinitionRouteGuard(
 
 function useMonitorDefinitionRouteState(queryApp: string | null): RouteState {
   const latestQueryApp = useRef(queryApp);
+  const observedWorkspaceApp = useRef<string | null>(null);
   const observedApp = useRef<string | null | typeof unobserved>(unobserved);
   const pendingRoute = useRef({ active: false, app: null as string | null });
   const interactionApp = useRef<string | null | typeof unobserved>(unobserved);
@@ -114,6 +115,8 @@ function useMonitorDefinitionRouteState(queryApp: string | null): RouteState {
     },
     reconcile: (app: string | null, workspace: MonitorDefinitionWorkspace | null, actions: RouteWorkspaceActions) => {
       if (latestQueryApp.current !== app) return;
+      const retiredWorkspace = workspace === null && observedWorkspaceApp.current === app;
+      observedWorkspaceApp.current = monitorDefinitionWorkspaceApp(workspace);
       if (interactionApp.current !== unobserved && interactionApp.current !== app) return;
       if (interactionApp.current === app) {
         if (monitorDefinitionWorkspaceApp(workspace) !== app) return;
@@ -124,7 +127,7 @@ function useMonitorDefinitionRouteState(queryApp: string | null): RouteState {
       if (observedApp.current !== app) {
         observedApp.current = app;
         pendingRoute.current = { active: true, app };
-      } else if (app && workspace === null && !pendingRoute.current.active) {
+      } else if (app && retiredWorkspace) {
         // Permission changes retire the prior workspace; the route is then reloaded
         // using the user's current read or write capability.
         pendingRoute.current = { active: true, app };

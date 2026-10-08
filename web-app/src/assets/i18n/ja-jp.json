@@ -70,8 +70,8 @@
     },
     "legend": {
       "healthy": "正常",
-      "warning": "警告",
-      "critical": "重大",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
       "unknown": "不明",
       "selected": "選択中のパス"
     },
@@ -165,6 +165,9 @@
     }
   },
   "entity": {
+    "results": {
+      "total": "リソース数: {{count}}"
+    },
     "title": "リソースカタログ",
     "description": "サービス、ホスト、データベースなどのリソースは自動的に統合され、抽象エンティティの理解や手動モデリングは不要です。",
     "empty": "現在の条件に一致するリソースはありません。",
@@ -260,7 +263,10 @@
       "global": "グローバル",
       "manageSilences": "サイレンスを管理",
       "manageInhibits": "抑制を管理",
-      "types": { "silence": "サイレンス", "inhibit": "抑制" }
+      "types": {
+        "silence": "サイレンス",
+        "inhibit": "抑制"
+      }
     },
     "operations": {
       "title": "推奨操作",
@@ -316,7 +322,13 @@
         "endpoint": "エンドポイント",
         "k8s_workload": "Kubernetes ワークロード"
       },
-      "status": { "unknown": "不明", "healthy": "正常", "degraded": "低下", "critical": "重大", "paused": "一時停止" },
+      "status": {
+        "unknown": "不明",
+        "healthy": "正常",
+        "degraded": "低下",
+        "critical": "重大",
+        "paused": "一時停止"
+      },
       "source": {
         "manual": "手動",
         "definition": "定義",
@@ -326,7 +338,11 @@
         "otel": "OpenTelemetry",
         "telemetry": "テレメトリ"
       },
-      "direction": { "incoming": "受信", "outgoing": "送信", "related": "関連" },
+      "direction": {
+        "incoming": "受信",
+        "outgoing": "送信",
+        "related": "関連"
+      },
       "identityType": {
         "derived": "自動認識",
         "manual": "手動定義",
@@ -335,7 +351,13 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索", "traces": "トレースを検索" },
+    "explore": {
+      "metrics": "メトリクスを検索",
+      "logs": "ログを検索",
+      "traces": "トレースを検索",
+      "searchSyntax": "クエリ構文",
+      "structuredSearch": "構造化検索"
+    },
     "signals": {
       "title": "エンティティシグナル調査",
       "availability": "シグナルの可用性",
@@ -356,7 +378,12 @@
         "collection": "収集",
         "alerts": "アラート"
       },
-      "states": { "available": "利用可能", "empty": "データなし", "unavailable": "利用不可", "unknown": "不明" },
+      "states": {
+        "available": "利用可能",
+        "empty": "データなし",
+        "unavailable": "利用不可",
+        "unknown": "不明"
+      },
       "compact": {
         "metrics": {
           "empty": "この時間範囲に RED メトリクスはありません",
@@ -420,7 +447,12 @@
           "topology-related": "トポロジー関係",
           "time-proximity": "時間的近接"
         },
-        "confidence": { "exact": "完全一致", "high": "高い信頼度", "medium": "中程度の信頼度", "low": "低い信頼度" }
+        "confidence": {
+          "exact": "完全一致",
+          "high": "高い信頼度",
+          "medium": "中程度の信頼度",
+          "low": "低い信頼度"
+        }
       },
       "alertsCurrentOnly": "現在のアクティブアラート数は、選択した時間範囲の証拠として表示されません。",
       "query": {
@@ -429,7 +461,6 @@
         "truncated": "一致する証拠の制限された一部を表示しています。",
         "truncationUnknown": "結果の完全性は不明です。",
         "runtimeError": "可視化ランタイムはこの証拠を描画できませんでした。",
-        "investigationActions": "調査アクション（{{count}} 件）",
         "invalid": "シグナル要求が無効です。",
         "permission": "このシグナルを確認する権限がありません。",
         "overloaded": "シグナルストレージが混雑しています。再試行してください。",
@@ -437,7 +468,9 @@
         "contract": "シグナルストレージが無効な応答を返しました。"
       }
     },
-    "topology": { "view": "トポロジーを表示" },
+    "topology": {
+      "view": "トポロジーを表示"
+    },
     "discovery": {
       "action": "リソースを検出",
       "title": "リソースを検出",
@@ -471,14 +504,23 @@
       "title": "リソース定義をインポート",
       "description": "YAML、JSON、または curl のインラインデータを貼り付けます。プレビューでは変更されず、確認後にのみインポートされます。",
       "format": "定義形式",
-      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl インラインデータ" },
+      "formats": {
+        "yaml": "YAML",
+        "json": "JSON",
+        "curl": "curl インラインデータ"
+      },
       "content": "リソース定義の内容",
       "previewAction": "リソースをプレビュー",
       "confirmAction": "インポートを確認",
       "previewTitle": "リソースプレビュー",
       "zeroWrite": "プレビューのみです。リソースはまだ作成されていません。",
       "details": "技術的な詳細",
-      "fields": { "owner": "所有者", "environment": "環境", "namespace": "名前空間", "source": "ソース" },
+      "fields": {
+        "owner": "所有者",
+        "environment": "環境",
+        "namespace": "名前空間",
+        "source": "ソース"
+      },
       "associationSummary": "ID キー {{identities}} 件、モニター関連付け {{monitors}} 件、関係 {{relations}} 件",
       "failure": {
         "validation": "インポートする前に定義を修正してください。",
@@ -504,7 +546,12 @@
       "zeroWrite": "プレビューのみです。リソースは変更されていません。",
       "details": "技術的な詳細",
       "associationSummary": "ID キー {{identities}} 件、モニター関連付け {{monitors}} 件、関係 {{relations}} 件",
-      "fields": { "owner": "所有者", "environment": "環境", "namespace": "名前空間", "source": "ソース" },
+      "fields": {
+        "owner": "所有者",
+        "environment": "環境",
+        "namespace": "名前空間",
+        "source": "ソース"
+      },
       "missing": "リソース定義が見つかりません。",
       "loadFailure": {
         "permission": "このリソース定義を表示する権限がありません。",
@@ -576,15 +623,26 @@
         "endpoint": "エンドポイント",
         "k8s_workload": "Kubernetes ワークロード"
       },
-      "criticalities": { "low": "低", "medium": "中", "high": "高", "critical": "最重要" },
+      "criticalities": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "最重要"
+      },
       "validation": {
         "type": {
           "required": "リソース種別を選択してください。",
           "unsupported": "対応するリソース種別を選択してください。"
         },
-        "name": { "required": "名前を入力してください。" },
-        "criticality": { "unsupported": "対応する重要度を選択してください。" },
-        "labels": { "invalid": "各ラベルを key=value 形式で 1 行ずつ入力してください。" }
+        "name": {
+          "required": "名前を入力してください。"
+        },
+        "criticality": {
+          "unsupported": "対応する重要度を選択してください。"
+        },
+        "labels": {
+          "invalid": "各ラベルを key=value 形式で 1 行ずつ入力してください。"
+        }
       },
       "saveFailure": {
         "permission": "このリソースを保存する権限がありません。",
@@ -599,11 +657,8 @@
   "exploreMetric": {
     "series": "系列",
     "value": "値",
-    "datasource": "データソース",
-    "queryMode": "クエリモード",
     "trend": "メトリクストレンド",
-    "chartUnavailable": "メトリクスチャートを表示できません。サンプルは下の表で確認できます。",
-    "filter": "ラベル条件 key=value",
+    "filter": "ラベル条件（key:value または key=value）",
     "groupBy": "ラベルでグループ化",
     "aggregation": "集計",
     "temporalAggregation": "時間集約",
@@ -614,18 +669,66 @@
       "increase": "増加量",
       "delta": "差分"
     },
-    "step": "ステップ（秒）、例: 60"
+    "step": "ステップ（秒）",
+    "copyQuery": "クエリをコピー",
+    "queryCopied": "クエリをコピーしました",
+    "queryCopyFailed": "クエリをコピーできませんでした",
+    "catalogLoading": "メトリクス名を読み込み中…",
+    "catalog": "メトリクス一覧",
+    "searchMetrics": "メトリクス名を検索",
+    "searchExample": "例: process_cpu",
+    "catalogUnavailable": "メトリクス一覧を取得できません。再試行するか名前を入力してください。",
+    "catalogEmpty": "この範囲と時間帯に一致するメトリクス名はありません。",
+    "catalogCount": "一致するメトリクス {{count}} 件",
+    "catalogTruncated": "一致する最初の {{count}} 件を表示しています。検索を絞り込んでください。",
+    "selectMetric": "一覧から選択するかメトリクス名を入力し、クエリを実行してください。",
+    "pendingDraft": "クエリの下書きが変更されました。結果は前回実行したクエリのものです。",
+    "chart": "チャート",
+    "table": "テーブル",
+    "resultDisplay": "結果表示",
+    "receivedSamples": "受信したサンプル {{count}} 件",
+    "sampleLimit": "受信した {{received}} 件のうち最新の {{shown}} 件を表示",
+    "exportCsv": "CSV をダウンロード",
+    "exportCsvHelp": "現在表示中の系列から返された有効な全データ点を、表のプレビュー外も含めて整列後の UTC 表示時刻と出所情報付きで出力します。単位の空欄は不明を意味します。",
+    "exportCsvTooLarge": "CSV が大きすぎます。時間範囲を狭めるか系列を非表示にして再試行してください。",
+    "exportCsvFailed": "メトリクス結果を出力できませんでした。再試行してください。",
+    "seriesLabels": "系列ラベル",
+    "seriesReference": "系列",
+    "responseQuery": "実行済みクエリ",
+    "timeShiftSeconds": "過去との比較（秒）",
+    "rollup": "ロールアップ",
+    "rollupOff": "オフ",
+    "rollupWindow": "集約間隔",
+    "rollupHint": "サーバーが指定した期間の値を集約します。この間隔はクエリのステップにも適用されます。",
+    "nestedRollup": "第2段階の時間集約",
+    "nestedRollupWindow": "第2段階の間隔",
+    "nestedRollupHint": "第2段階はスコープ内の第1段階の結果を集約し、出力ステップを設定します。",
+    "stepExample": "例: 60",
+    "summary": {
+      "title": "サンプル概要",
+      "scope": "返されたサンプルのみを集計します。パーセンタイルは統合せず、単位は提供された場合のみ表示します。",
+      "min": "最小値",
+      "max": "最大値",
+      "latest": "最新値",
+      "count": "サンプル数"
+    },
+    "defaultSum": "合計（既定）",
+    "defaultRaw": "元のサンプル（既定）",
+    "identityGroupingHint": "集約でもサービスとエンティティを区別します。グループ化でラベルを追加できます。",
+    "temporalWindowHint": "レート・増分・差分の参照期間は5分固定です。ステップは評価間隔です。",
+    "countSeriesHint": "Countは集約対象の系列数です。リクエスト数や観測数ではありません。",
+    "bucketHint": "バケット境界 le を保持します。バケット系列は遅延値や分位値ではありません。",
+    "bucketHelp": "ヒストグラムのバケット境界"
   },
   "exploreLog": {
     "mode": "ログモード",
     "history": "履歴",
-    "query": "検索",
     "live": "ライブ",
     "detail": "ログ詳細",
     "openTrace": "トレースを開く",
     "resourceFilter": "リソース属性 key=value",
     "attributeFilter": "ログ属性 key:value",
-    "hideInternal": "内部ログを非表示",
+    "hideInternal": "インフラのログを非表示",
     "hideNoise": "ノイズログを非表示",
     "resourceAttributes": "リソース属性",
     "logAttributes": "ログ属性",
@@ -649,28 +752,39 @@
     "trendEmpty": "このクエリでは傾向の時間区分が返されませんでした。",
     "trendInsufficient": "現在の時間範囲には 1 つの時間区分（{{count}} ログ）があります。",
     "statisticsUnavailable": "この統計領域を読み込めませんでした。",
+    "overviewPermission": "ログ概要を読み取る権限がありません。",
+    "trendPermission": "ログのトレンドを読み取る権限がありません。",
     "statistics": {
       "total": "合計",
-      "trace": "Trace",
-      "debug": "デバッグ",
-      "info": "情報",
-      "warn": "警告",
-      "error": "エラー",
-      "fatal": "致命的"
-    }
+      "trace": "TRACE",
+      "debug": "DEBUG",
+      "info": "INFO",
+      "warn": "WARN",
+      "error": "ERROR",
+      "fatal": "FATAL"
+    },
+    "statisticsScope": "現在の絞り込み条件に一致する件数。",
+    "scopeSuggestions": {
+      "hint": "候補は一部のみです。直接入力も可能です。",
+      "unavailable": "候補を取得できません。直接入力できます。",
+      "empty": "候補なし。直接入力できます。"
+    },
+    "visibilityHint": "既知のインフラ・デモサービスを除外します。アプリを絞るにはサービスを選択してください。"
   },
   "exploreTrace": {
+    "layout": {
+      "basicFilters": "基本フィルター",
+      "filterHelp": "フィルターの意味",
+      "countHelp": "集計の意味",
+      "trendHelp": "トレンドの帰属",
+      "groupAction": "値を選ぶと、指定した包含・除外モードで下書きフィルターが切り替わります。Query を実行して適用します。"
+    },
     "detail": "トレース詳細",
-    "loadFailed": "トレース詳細を利用できません。",
     "status": "状態",
     "kind": "種類",
     "scope": "計装スコープ",
-    "spans": "スパン",
-    "errors": "エラー",
-    "events": "イベント",
     "spanAttributes": "スパン属性",
     "resourceAttributes": "リソース属性",
-    "relatedMetrics": "関連メトリクス",
     "minDuration": "最小時間（ms）",
     "maxDuration": "最大時間（ms）",
     "errorOnly": "エラーのみ",
@@ -683,14 +797,11 @@
     "hideInternal": "内部スパンを非表示"
   },
   "explore": {
-    "title": "オブザーバビリティ",
     "description": "同じ期間でメトリクス、ログ、トレースを検索し関連付けます。",
     "signalsNavigation": "シグナルナビゲーション",
-    "advancedFilters": "詳細フィルター",
+    "advancedFilters": "その他のフィルター",
     "activeFilters": "適用中のフィルター",
-    "context": "調査コンテキスト",
     "timeRange": "期間",
-    "exactWindow": "Onboarding exact window",
     "traceId": "Trace ID",
     "spanId": "Span ID",
     "traceIdContext": "Trace ID: {{value}}",
@@ -704,7 +815,6 @@
     "environmentContext": "環境: {{value}}",
     "metric": "メトリクス",
     "samples": "サンプル",
-    "labels": "ラベル",
     "time": "時刻",
     "severity": "重要度",
     "service": "サービス",
@@ -712,9 +822,7 @@
     "trace": "トレース",
     "operation": "操作",
     "operationContext": "操作: {{value}}",
-    "duration": "所要時間",
     "relatedLogs": "関連ログ",
-    "open": "開く",
     "signals": {
       "metrics": "メトリクス",
       "logs": "ログ",
@@ -743,6 +851,23 @@
       "metrics": "このコンテキストにメトリクスはありません。",
       "logs": "このコンテキストにログはありません。",
       "traces": "このコンテキストにトレースはありません。"
+    },
+    "autoRefresh": "自動更新",
+    "logSort": {
+      "menu": "{{field}} を並べ替え",
+      "numberAsc": "数値：昇順",
+      "numberDesc": "数値：降順",
+      "textAsc": "文字列：A → Z",
+      "textDesc": "文字列：Z → A",
+      "applied": "現在の並び順：{{value}}",
+      "pending": "未適用の並び順：{{value}}。クエリを実行して適用します。",
+      "reset": "並び順の変更を取り消す",
+      "hint": "一致する全ログを並べ替えます。数値は文字列を変換せず、文字列は大文字と小文字を区別します。欠損値や他の型は最後に表示します。",
+      "historyOnly": "フィールドによる並べ替えは履歴のみです。ライブには新しく受信したログを表示します。",
+      "invalid": "並び順が無効です。対応するフィールドと順序を選択してください。",
+      "restore": "新しい順",
+      "unavailable": "この列は並べ替えできません。",
+      "pendingShort": "並び順は未適用"
     }
   },
   "instrumentation": {
@@ -839,8 +964,14 @@
         "available": "利用可能",
         "unavailable": "利用不可"
       },
-      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
-      "security": { "tls": "TLS", "plaintext": "暗号化なし" },
+      "transport": {
+        "http_protobuf": "OTLP HTTP/protobuf",
+        "grpc": "OTLP gRPC"
+      },
+      "security": {
+        "tls": "TLS",
+        "plaintext": "暗号化なし"
+      },
       "profileReason": {
         "unavailable": "この送信先はまだ選択できません。",
         "notAdvertised": "管理者が安全な取り込み先をまだ公開していません。",
@@ -883,7 +1014,9 @@
         "plaintext_transport_warning": "暗号化されていない転送",
         "no_persistence": "HertzBeat 側にインストーラーは作成されません"
       },
-      "warning": { "plaintext_authorization": "Authorization ヘッダーは暗号化されていない接続を通過します。" },
+      "warning": {
+        "plaintext_authorization": "Authorization ヘッダーは暗号化されていない接続を通過します。"
+      },
       "note": {
         "telemetrygen_no_persistence": "この確認でのみ公式ツールを実行し、完了後に削除してください。",
         "merge_exporter_into_each_pipeline": "送信する各シグナルパイプラインから exporter を参照してください。",
@@ -897,7 +1030,7 @@
       "directory": {
         "search": "ソースを検索",
         "categories": "ソースカテゴリ",
-        "all": "すべてのソース",
+        "all": "利用可能なガイド",
         "group": {
           "quick_start": "クイックスタート",
           "applications": "アプリケーション",
@@ -991,6 +1124,20 @@
           "gcp_compute_engine_description": "シグナル対応状況を確認し、Google Compute Engine テレメトリを接続します。",
           "gcp_gke": "Google Kubernetes Engine",
           "gcp_gke_description": "シグナル対応状況を確認し、Google Kubernetes Engine テレメトリを接続します。"
+        },
+        "commonPaths": "よく使う接続方法",
+        "unsupportedGuides": "OTLP ガイドの対応状況（{{count}} 件は未提供）",
+        "otlpBoundary": "これらのソースには OTLP セットアップガイドがありません。Agentless 監視の対応状況を示すものではありません。",
+        "guideUnavailable": "OTLP ガイド未提供",
+        "agentlessBoundary": "アプリケーションエージェントを使わずにデータベース、ホスト、ネットワーク機器を監視する場合は、アクティブ監視を使用してください。",
+        "noAvailableMatches": "この選択に一致する利用可能なセットアップガイドはありません。"
+      },
+      "guide": {
+        "java_spring_boot_zero_code": {
+          "disable_disable_command": "JAVA_TOOL_OPTIONS またはアプリケーションの JVM 起動引数から OpenTelemetry の -javaagent オプションを削除し、他の JVM オプションは保持してください。このオプションを設定しているサービスまたはコンテナーの構成を更新し、対象アプリケーションを再起動してください。"
+        },
+        "java_java_jar_zero_code": {
+          "disable_disable_command": "JAVA_TOOL_OPTIONS またはアプリケーションの JVM 起動引数から OpenTelemetry の -javaagent オプションを削除し、他の JVM オプションは保持してください。このオプションを設定しているサービスまたはコンテナーの構成を更新し、対象アプリケーションを再起動してください。"
         }
       }
     },
@@ -1032,7 +1179,7 @@
       "expires": "有効期限",
       "scope": "スコープ",
       "fixedScope": "OTLP 取り込み",
-      "ready": "アクセストークンをメモリ内に生成しました",
+      "ready": "アクセストークンは現在のセッションのメモリにのみ保持されています",
       "notGenerated": "アクセストークンは未生成です",
       "generateError": "アクセストークンを生成できませんでした。",
       "acknowledgementRequired": "終了または最初からやり直す前に、この一度だけ表示されるトークンを保存してください。このページのメモリにのみ保持されています。",
@@ -1090,7 +1237,8 @@
       "startDetection": "シグナル確認を開始",
       "retryDetection": "検出を再試行",
       "openExplore": "Explore で開く",
-      "copy": "コピー"
+      "copy": "コピー",
+      "newDetection": "新しいシグナルチェック"
     },
     "environment": {
       "vm": "ホスト / VM",
@@ -1166,7 +1314,7 @@
       "waiting": "設定時間枠内でテレメトリを待機しています。",
       "status": {
         "waiting": "待機中",
-        "received": "受信済み",
+        "received": "期間内に受信",
         "unsupported": "非対応",
         "unavailable": "ストレージ利用不可",
         "error": "検出エラー"
@@ -1177,9 +1325,15 @@
         "storage_unavailable": "テレメトリストレージを利用できません。",
         "storage_query_failed": "テレメトリストレージを照会できませんでした。",
         "collector_unavailable": "選択した Collector を利用できません。",
-        "authentication_failed": "テレメトリ認証に失敗しました。",
+        "authentication_failed": "選択した Collector が認証の失敗を報告しています。取り込み認証情報を確認してください。",
         "invalid_context": "検出コンテキストが無効です。"
-      }
+      },
+      "fixedWindow": "観測期間：{{start}} — {{end}}",
+      "observationOnly": "受信済みはこの固定期間内の観測を示し、現在の稼働状態を示しません。後続のテレメトリーを確認するには新しいチェックを開始してください。",
+      "lastReceived": "期間内の最終受信：{{time}}",
+      "windowComplete": "この観測期間は終了しました。後続のテレメトリーを確認するには新しいチェックを開始してください。",
+      "notObserved": "期間内に観測なし",
+      "noneInWindow": "この期間内に一致するテレメトリーは観測されませんでした。"
     }
   },
   "auth": {
@@ -1230,7 +1384,12 @@
         "title": "アクティブ監視",
         "summary": "HertzBeat がスケジュールに従って対象へ接続し、メトリクスを収集します。",
         "flowLabel": "HertzBeat が対象タイプのグループへ能動的に接続",
-        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "targets": {
+          "mysql": "MySQL",
+          "linux": "Linux",
+          "redis": "Redis",
+          "http": "HTTP"
+        },
         "outcomeTitle": "収集データ",
         "outcomeAvailability": "可用性と接続の確認",
         "outcomeMetrics": "CPU、メモリ、ディスク、接続数、応答時間",
@@ -1242,7 +1401,12 @@
         "title": "テレメトリー取り込み",
         "summary": "アプリケーションまたは OpenTelemetry Collector が HertzBeat にテレメトリーを送信します。",
         "flowLabel": "アプリケーション群と OpenTelemetry Collector が HertzBeat に送信",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
+        "sources": {
+          "java": "Java",
+          "dotnet": ".NET",
+          "node": "Node.js",
+          "collector": "OTel Collector"
+        },
         "outcomeTitle": "テレメトリー信号",
         "outcomeSignals": "Metrics、Logs、Traces",
         "outcomeDiagnosis": "リクエスト経路、遅い箇所、エラートレース",
@@ -1273,7 +1437,12 @@
       "server": "サーバー",
       "storage": "GreptimeDB",
       "collectors": "Collector",
-      "status": { "available": "利用可能", "degraded": "低下", "unavailable": "利用不可", "unknown": "不明" }
+      "status": {
+        "available": "利用可能",
+        "degraded": "低下",
+        "unavailable": "利用不可",
+        "unknown": "不明"
+      }
     },
     "runtimeStates": {
       "permission": "ランタイム状態を表示する権限がありません。",
@@ -1316,6 +1485,41 @@
         "unavailable": "監視ラベルを利用できません。",
         "contract": "監視ラベルが想定された契約と一致しませんでした。",
         "error": "監視ラベルを読み込めませんでした。"
+      }
+    },
+    "daily": {
+      "title": "開始",
+      "description": "監視を続け、観測済みの証拠を調査します。",
+      "scope": "各項目は個別の最新取得結果を表示します。件数はテレメトリーの鮮度やサービスの正常性を示しません。",
+      "signalsDescription": "共通の調査コンテキストでメトリクス、ログ、トレースを確認します。",
+      "openSignals": "シグナルクエリを開く",
+      "addData": "データソースを追加",
+      "states": {
+        "loading": "現在の証拠を読み込み中…",
+        "permission": "このソースを読み取る権限がありません。",
+        "unavailable": "このソースは利用できません。更新して再試行してください。",
+        "error": "このソースを読み取れませんでした。更新して再試行してください。"
+      },
+      "monitors": {
+        "title": "監視",
+        "description": "設定済みのアクティブ監視とプッシュ監視。",
+        "empty": "監視はまだ設定されていません。",
+        "count": "設定済みの監視：{{count}}",
+        "open": "監視を開く"
+      },
+      "alerts": {
+        "title": "未解決アラート",
+        "description": "履歴内でまだ解決されていないアラート。",
+        "empty": "未解決アラートはありません。",
+        "count": "未解決アラート：{{count}}",
+        "open": "アラートを開く"
+      },
+      "services": {
+        "title": "サービス",
+        "description": "登録済みサービスエンティティ。可用性と RED の確認にはシグナルの証拠が必要です。",
+        "empty": "サービスエンティティはまだ登録されていません。",
+        "count": "登録済みサービスエンティティ：{{count}}",
+        "open": "サービスを開く"
       }
     }
   },
@@ -1471,7 +1675,13 @@
     "unit": "単位",
     "series": "系列",
     "time": "時刻",
-    "value": "値",
+    "value": {
+      "open": "{{field}} の完全な値を表示",
+      "title": "メトリクス値 · {{field}}",
+      "copy": "値をコピー",
+      "copied": "コピー済み",
+      "error": "コピーに失敗しました"
+    },
     "search": "メトリクスを検索",
     "searchPlaceholder": "グループまたはフィールドを検索",
     "groupFilter": "メトリクスグループ",
@@ -1490,13 +1700,6 @@
     "favoriteCount": "お気に入り {{count}}",
     "itemCount": "{{count}} 項目",
     "currentValues": "現在のメトリクス値",
-    "value": {
-      "open": "{{field}} の完全な値を表示",
-      "title": "メトリクス値 · {{field}}",
-      "copy": "値をコピー",
-      "copied": "コピー済み",
-      "error": "コピーに失敗しました"
-    },
     "noMatches": "現在のフィルターに一致するメトリクスはありません。",
     "historyTrend": "履歴トレンド",
     "currentValue": "現在値",
@@ -1557,7 +1760,12 @@
       "boundEntity": "関連エンティティ",
       "otlpEvidence": "OTLP 証拠"
     },
-    "states": { "ready": "利用可能", "empty": "データなし", "unavailable": "利用不可", "unknown": "不明" },
+    "states": {
+      "ready": "利用可能",
+      "empty": "データなし",
+      "unavailable": "利用不可",
+      "unknown": "不明"
+    },
     "sections": {
       "currentAlerts": "現在のアラート",
       "collectionHealth": "収集状態",
@@ -1584,7 +1792,10 @@
       "empty": "この調査ウィンドウでは収集実行が観測されませんでした。",
       "unavailable": "収集実行の証拠を利用できません。",
       "unknown": "収集実行の証拠は未確定です。",
-      "outcomes": { "success": "成功", "failure": "失敗" },
+      "outcomes": {
+        "success": "成功",
+        "failure": "失敗"
+      },
       "phases": {
         "UNKNOWN": "不明なフェーズ",
         "RESOLVE": "名前解決",
@@ -1624,7 +1835,11 @@
       "unavailable": "関連 OTLP 証拠を利用できません。",
       "unknown": "関連 OTLP 証拠は未確定です。"
     },
-    "signals": { "metrics": "OTLP メトリクス", "logs": "ログ", "traces": "トレース" },
+    "signals": {
+      "metrics": "OTLP メトリクス",
+      "logs": "ログ",
+      "traces": "トレース"
+    },
     "sources": {
       "currentAlerts": "現在のアラート",
       "collection": "Greptime 収集イベント",
@@ -1672,7 +1887,10 @@
     "saveApplyConfirm": "{{app}} への変更を保存して適用しますか？",
     "visibilityAction": "{{app}} は現在{{state}}です",
     "visibilityConfirm": "{{app}} は現在{{state}}です。{{nextState}}に変更しますか？",
-    "visibilityState": { "visible": "表示", "hidden": "非表示" },
+    "visibilityState": {
+      "visible": "表示",
+      "hidden": "非表示"
+    },
     "validated": "定義 {{app}} は有効です。",
     "viewApp": "{{app}} を表示",
     "editApp": "{{app}} を編集",
@@ -1681,7 +1899,11 @@
     "refreshConflict": "最新の定義を再読み込み",
     "deleteTitle": "監視定義を削除",
     "deleteConfirm": "{{app}} を削除しますか？組み込み定義が復元される場合があります。",
-    "originValue": { "builtin": "組み込み", "custom": "カスタム", "override": "上書き" },
+    "originValue": {
+      "builtin": "組み込み",
+      "custom": "カスタム",
+      "override": "上書き"
+    },
     "disposition": {
       "removed": "カスタム定義を削除しました。",
       "builtin_restored": "上書きを削除し、組み込み定義を復元しました。"
@@ -1764,7 +1986,10 @@
       "startFailed": "検証を開始できませんでした。再試行してください。",
       "verifiedRail": "実際の送信元イベントで検証済み"
     },
-    "zabbix": { "parameters": "メディアタイプパラメーター", "script": "Webhook スクリプト" }
+    "zabbix": {
+      "parameters": "メディアタイプパラメーター",
+      "script": "Webhook スクリプト"
+    }
   },
   "plugins": {
     "title": "プラグイン管理",
@@ -1798,7 +2023,11 @@
       "type": "タイプ",
       "number": "数値",
       "string": "文字列",
-      "password": { "keep": "設定済みの値を維持", "replace": "置換", "clear": "クリア" }
+      "password": {
+        "keep": "設定済みの値を維持",
+        "replace": "置換",
+        "clear": "クリア"
+      }
     },
     "jarFile": "Jar ファイル",
     "chooseJar": "メモリ内の .jar ファイルを選択",
@@ -1810,7 +2039,10 @@
       "name": "プラグイン名を入力してください。",
       "jarFile": "空でない .jar ファイルを選択してください。"
     },
-    "notice": { "updated": "プラグインの状態を更新しました。", "deleted": "選択したプラグインを削除しました。" },
+    "notice": {
+      "updated": "プラグインの状態を更新しました。",
+      "deleted": "選択したプラグインを削除しました。"
+    },
     "failure": {
       "missing": "選択したプラグインは存在しません。",
       "invalid": "プラグインのリクエストまたはレスポンスが無効です。",
@@ -2084,7 +2316,10 @@
         "single": "このコレクターをオフラインにしますか？",
         "batch": "選択したコレクターをオフラインにしますか？"
       },
-      "delete": { "single": "このコレクターを削除しますか？", "batch": "選択したコレクターを削除しますか？" }
+      "delete": {
+        "single": "このコレクターを削除しますか？",
+        "batch": "選択したコレクターを削除しますか？"
+      }
     }
   },
   "labels": {
@@ -2624,10 +2859,22 @@
     "title": "通知設定",
     "description": "配信の依存関係を順番に設定し、各領域を個別に管理します。",
     "steps": {
-      "channels": { "label": "チャネルサービス", "dependency": "メールと SMS の配信サービスを設定します。" },
-      "receivers": { "label": "受信先", "dependency": "設定済みチャネルを使用する送信先を追加します。" },
-      "templates": { "label": "テンプレート", "dependency": "必要に応じてチャネルのメッセージを調整します。" },
-      "rules": { "label": "ルール", "dependency": "アラートを 1 つ以上の受信先へ配信します。" }
+      "channels": {
+        "label": "チャネルサービス",
+        "dependency": "メールと SMS の配信サービスを設定します。"
+      },
+      "receivers": {
+        "label": "受信先",
+        "dependency": "設定済みチャネルを使用する送信先を追加します。"
+      },
+      "templates": {
+        "label": "テンプレート",
+        "dependency": "必要に応じてチャネルのメッセージを調整します。"
+      },
+      "rules": {
+        "label": "ルール",
+        "dependency": "アラートを 1 つ以上の受信先へ配信します。"
+      }
     },
     "status": {
       "configured": "設定済み",
@@ -2681,7 +2928,9 @@
       "invalid": "通知先またはテンプレートの応答が不正です。",
       "unavailable": "通知先またはテンプレートを一時的に利用できません。",
       "error": "通知先またはテンプレートを読み込めませんでした。",
-      "action": { "receivers": "通知先を設定" }
+      "action": {
+        "receivers": "通知先を設定"
+      }
     },
     "read": {
       "missing": "配信ルールは存在しません。",
@@ -2800,7 +3049,10 @@
   "alertRules": {
     "title": "アラートルール",
     "description": "アラート評価ルールと有効状態を管理します。",
-    "guide": { "alertCenter": "アラートセンターを表示", "deliveryRules": "配信ルールを設定" },
+    "guide": {
+      "alertCenter": "アラートセンターを表示",
+      "deliveryRules": "配信ルールを設定"
+    },
     "manage": "ルール管理",
     "new": "ルールを追加",
     "edit": "ルールを編集",
@@ -2859,7 +3111,10 @@
         "parentheses": "括弧が一致していません"
       }
     },
-    "severity": { "label": "重大度", "placeholder": "優先度を選択してください" },
+    "severity": {
+      "label": "重大度",
+      "placeholder": "優先度を選択してください"
+    },
     "mode": {
       "label": "アラートモード",
       "placeholder": "アラートモードを選択してください",
@@ -2906,7 +3161,11 @@
     "deleteSelectedConfirm": "選択した {{count}} 件のアラートルールを削除しますか？",
     "export": {
       "selected": "選択項目をエクスポート",
-      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel",
+        "yaml": "YAML"
+      },
       "success": "アラートルール設定をダウンロードしました。",
       "failure": {
         "forbidden": "アラートルールをエクスポートする権限がありません。",
@@ -3060,6 +3319,7 @@
     "windowPlaceholder": "計算ウィンドウ時間を入力してください",
     "times": "発火回数",
     "preview": "プレビュー",
+    "previewLoading": "式を評価しています…",
     "previewSuccess": "プレビューで {{count}} 行が返されました。1 ページあたり最大 {{pageSize}} 行を表示します。",
     "previewEmpty": "プレビューで行は返されませんでした。",
     "previewTruncated": "一部のプレビュー内容は表示のために省略されています。",
@@ -3294,9 +3554,9 @@
       "acknowledged": "確認済み",
       "handled": "対応済み",
       "workspaceScope": "現在のワークスペース",
-      "warning": "警告",
-      "critical": "重大",
-      "emergency": "緊急"
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     },
     "status": {
       "label": "状態",
@@ -3310,10 +3570,10 @@
     "severity": {
       "label": "重要度",
       "all": "すべての重要度",
-      "info": "情報",
-      "warning": "警告",
-      "critical": "重大",
-      "emergency": "緊急"
+      "info": "INFO",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     }
   },
   "monitor": {
@@ -3382,7 +3642,10 @@
     "export": {
       "all": "すべてエクスポート",
       "selected": "選択項目をエクスポート",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel"
+      },
       "success": "監視設定をダウンロードしました。",
       "failure": {
         "forbidden": "監視のエクスポートには管理者権限が必要です。",
@@ -3472,7 +3735,10 @@
         "zookeeper_sd": "ZooKeeper サービス検出"
       },
       "schedule": "スケジュール",
-      "scheduleTypes": { "interval": "固定間隔", "cron": "Cron 式" },
+      "scheduleTypes": {
+        "interval": "固定間隔",
+        "cron": "Cron 式"
+      },
       "cronExpression": "Cron 式（6 フィールド）",
       "advanced": "詳細パラメータ",
       "labels": "ラベル",
@@ -3490,7 +3756,12 @@
         "empty": "各項目にキーが必要です。",
         "duplicate": "キーは一意である必要があります。"
       },
-      "metrics": { "unit": "単位", "type": "種類", "number": "数値", "string": "文字列" },
+      "metrics": {
+        "unit": "単位",
+        "type": "種類",
+        "number": "数値",
+        "string": "文字列"
+      },
       "descriptionLabel": "説明",
       "connection": "接続",
       "metadata": "所有情報とメタデータ",
@@ -3670,8 +3941,14 @@
       "system_property": "システムプロパティ",
       "command_line": "コマンドライン"
     },
-    "applyMode": { "managed_write": "管理対象設定", "external_apply": "外部 / GitOps 設定" },
-    "applyModeInline": { "managed_write": "HertzBeat が管理", "external_apply": "外部で管理" },
+    "applyMode": {
+      "managed_write": "管理対象設定",
+      "external_apply": "外部 / GitOps 設定"
+    },
+    "applyModeInline": {
+      "managed_write": "HertzBeat が管理",
+      "external_apply": "外部で管理"
+    },
     "maintenance": {
       "active": "メンテナンスモードは有効です",
       "inactive": "メンテナンスモードは無効です",
@@ -3679,8 +3956,16 @@
       "acknowledgement": "移行と有効化が完了するまで監視書き込みを停止する必要があることを理解しました。",
       "acknowledgementAutoEnter": "移行を開始するとサーバーが自動でメンテナンスモードに入り、監視書き込みを停止することを理解しました。"
     },
-    "topology": { "single_node": "単一ノード", "multi_node": "複数ノード", "unknown": "不明" },
-    "topologyInline": { "single_node": "単一ノード", "multi_node": "複数ノード", "unknown": "不明" },
+    "topology": {
+      "single_node": "単一ノード",
+      "multi_node": "複数ノード",
+      "unknown": "不明"
+    },
+    "topologyInline": {
+      "single_node": "単一ノード",
+      "multi_node": "複数ノード",
+      "unknown": "不明"
+    },
     "migration": {
       "title": "HertzBeat データベース移行ウィザード",
       "description": "HertzBeat の管理データを H2 から空の MySQL または PostgreSQL データベースへ移行します。データをコピーする前に移行先を検証します。",
@@ -3716,7 +4001,11 @@
     "export": {
       "format": "エクスポート形式",
       "password": "エクスポート用パスワード",
-      "formats": { "yaml": "YAML", "env": "環境変数", "kubernetes_secret": "Kubernetes Secret" }
+      "formats": {
+        "yaml": "YAML",
+        "env": "環境変数",
+        "kubernetes_secret": "Kubernetes Secret"
+      }
     },
     "actions": {
       "validate": "移行先を検証",
@@ -3729,7 +4018,10 @@
       "returnToConfiguration": "現在の設定に戻る",
       "continueCurrent": "現在の移行を続行"
     },
-    "validation": { "valid": "移行先の検証に成功しました", "invalid": "移行先の検証に失敗しました" },
+    "validation": {
+      "valid": "移行先の検証に成功しました",
+      "invalid": "移行先の検証に失敗しました"
+    },
     "state": {
       "pending": "移行はキューに入りました",
       "running": "移行中",
@@ -3758,7 +4050,12 @@
       "verification": "検証",
       "restart": "通常の運用手順で HertzBeat を再起動してください。このページは収束状態のポーリングを続けます。"
     },
-    "verification": { "pending": "保留中", "running": "実行中", "succeeded": "成功", "failed": "失敗" },
+    "verification": {
+      "pending": "保留中",
+      "running": "実行中",
+      "succeeded": "成功",
+      "failed": "失敗"
+    },
     "errors": {
       "migration_unavailable": "このサーバービルドでは移行エンジンを利用できません。",
       "migration_source_unsupported": "移行できる管理データベースは H2 のみです。",
@@ -3819,7 +4116,10 @@
         "title": "管理者設定",
         "pending": "データサービスの準備ができました。次の手順は管理者アカウントの設定です。"
       },
-      "optional": { "title": "任意設定", "pending": "管理者設定が完了しました。次の手順は任意のサーバー設定です。" }
+      "optional": {
+        "title": "任意設定",
+        "pending": "管理者設定が完了しました。次の手順は任意のサーバー設定です。"
+      }
     },
     "optional": {
       "description": "外部アクセス先、保持期間、メールを今確認するか、後でシステム設定から変更できます。",
@@ -3842,7 +4142,11 @@
         "host": "SMTP ホスト",
         "port": "SMTP ポート",
         "security": "通信の暗号化",
-        "securityMode": { "none": "なし", "starttls": "STARTTLS", "tls": "TLS" },
+        "securityMode": {
+          "none": "なし",
+          "starttls": "STARTTLS",
+          "tls": "TLS"
+        },
         "username": "ユーザー名",
         "password": "パスワード",
         "fromAddress": "送信元アドレス"
@@ -3957,13 +4261,21 @@
         "noRun": "実行なし"
       }
     },
-    "investigation": { "label": "調査" },
-    "roles": { "you": "あなた", "assistant": "HertzBeat AI" },
+    "investigation": {
+      "label": "調査"
+    },
+    "roles": {
+      "you": "あなた",
+      "assistant": "HertzBeat AI"
+    },
     "empty": {
       "title": "何を調査しますか？",
       "description": "監視、エンティティ、アラート、メトリクス、ログ、トレース、トポロジーについて質問できます。"
     },
-    "composer": { "label": "調査プロンプト", "placeholder": "運用上の問題を HertzBeat に調査させる…" },
+    "composer": {
+      "label": "調査プロンプト",
+      "placeholder": "運用上の問題を HertzBeat に調査させる…"
+    },
     "actions": {
       "send": "送信",
       "stop": "停止",
@@ -3999,9 +4311,12 @@
       "approvals": "承認",
       "noApprovals": "保留中の承認はありません",
       "inputs": "要求された入力",
-      "noInputs": "入力要求はありません"
+      "noInputs": "入力要求はありません",
+      "statusUnknown": "実行状態は記録されていません"
     },
-    "approval": { "adminRequired": "管理者の承認が必要です" },
+    "approval": {
+      "adminRequired": "管理者の承認が必要です"
+    },
     "providers": {
       "action": "モデルプロバイダー",
       "title": "モデルプロバイダー",
@@ -4064,8 +4379,14 @@
       "truncated": "制限された結果セットのみ表示しています。",
       "truncationUnknown": "完全な結果数は不明です。"
     },
-    "metrics": { "before": "前", "anchor": "アラート", "after": "後" },
-    "logs": { "focusActions": "フォーカスするログ" },
+    "metrics": {
+      "before": "前",
+      "anchor": "アラート",
+      "after": "後"
+    },
+    "logs": {
+      "focusActions": "フォーカスするログ"
+    },
     "traces": {
       "traceId": "Trace ID",
       "service": "サービス",
@@ -4074,7 +4395,12 @@
       "status": "状態",
       "spans": "Span 数"
     },
-    "traceStatus": { "error": "エラー", "ok": "正常", "unset": "未設定", "unknown": "不明" },
+    "traceStatus": {
+      "error": "エラー",
+      "ok": "正常",
+      "unset": "未設定",
+      "unknown": "不明"
+    },
     "topology": {
       "source": "ソース",
       "target": "ターゲット",
@@ -4146,5 +4472,313 @@
       "loadEarlier": "以前の履歴を読み込む",
       "noText": "テキスト内容なし"
     }
+  },
+  "services": {
+    "title": "サービス",
+    "description": "登録済みサービス、リクエスト RED、観測されたトレース操作を調査します。",
+    "search": "サービスを検索",
+    "environmentFilter": "カタログ環境で絞り込み",
+    "query": "クエリ",
+    "directory": "サービス一覧",
+    "overview": "サービス概要",
+    "service": "サービス",
+    "environment": "環境",
+    "namespace": "名前空間",
+    "source": "カタログのソース",
+    "unknown": "取得不可",
+    "empty": "一致する登録済みサービスがありません",
+    "unresolved": "未登録サービスのテレメトリも存在する場合があります。Explore でシグナルを直接検索できます。",
+    "select": "サービスを選択して証拠を確認",
+    "openTraces": "トレースを開く",
+    "openLogs": "サービスログを開く",
+    "openMetrics": "メトリクスを開く",
+    "logsScope": "ログはサービス範囲で検索します。操作に関連するログは、その操作のトレースから調査してください。",
+    "invalidWindow": "24 時間以内の有効な調査期間を選択してください。",
+    "latestTrace": "期間内の最終観測トレース",
+    "freshnessLimit": "観測時刻は過去の証拠であり、サービスの正常性や稼働を保証しません。",
+    "entity": "エンティティの証拠を開く",
+    "red": "リクエスト RED · Greptime Flow",
+    "redLimit": "サービス全体が対象です。観測済み SERVER リクエストを 60 秒バケットで集計します。境界が揃わない期間でも分単位のバケット全体を選択します。サンプリングの完全性は不明です。P95 は近似値で、取得できない場合があります。",
+    "requests": "観測リクエスト",
+    "requestRate": "リクエスト / 秒",
+    "errorRate": "エラー率",
+    "latencyP95": "P95 レイテンシ",
+    "operations": "観測されたルートトレース操作",
+    "operationLimit": "エラートレース数順に最大 20 グループ。ルートトレースの観測証拠であり、リクエストの完全な一覧ではありません。下流サービスでは RED があってもルート操作がない場合があります。",
+    "operation": "操作",
+    "observedTraces": "観測トレース",
+    "errorTraces": "エラートレース",
+    "investigate": "調査",
+    "errorAction": "エラートレース",
+    "unnamedOperation": "名前のない操作",
+    "noOperations": "この期間にルート操作の証拠がありません",
+    "associations": "既存の関連付け",
+    "associationLimit": "現在の監視関連アラートと最大 50 件の登録済み関係のプレビューです。調査期間では絞り込まれず、推定依存関係の全体を表しません。",
+    "linkedAlerts": "現在の監視関連アラート",
+    "noRelations": "このプレビューに登録済み関係の証拠がありません",
+    "back": "サービスに戻る",
+    "timeRange": "調査期間",
+    "exactWindow": "絶対期間を維持",
+    "state": {
+      "loading": "証拠を読み込み中…",
+      "empty": "この期間に観測証拠がありません",
+      "unavailable": "証拠ソースを利用できません",
+      "error": "証拠を読み取れませんでした",
+      "permission": "証拠の読み取り権限が必要です",
+      "idle": "最初にサービスを選択してください",
+      "missing": "サービスは利用できなくなりました",
+      "invalid": "調査範囲が無効です"
+    },
+    "backDirectory": "サービス一覧に戻る",
+    "information": "サービス情報",
+    "lastEntityEvidence": "最新のエンティティ証拠",
+    "performance": "パフォーマンス",
+    "registered": "登録済みサービス",
+    "scopeTooLarge": "対象が 500 サービスを超えています",
+    "narrowScope": "検索または環境を絞り込んでください。一部のみのランキングは表示しません。",
+    "performanceUnavailable": "サービスの観測を取得できません",
+    "noRanking": "現在のランキングは表示されません。再試行するか登録済みサービスを開いてください。",
+    "performanceScope": "観測された SERVER リクエストを 60 秒のバケット単位で集計します。サンプリングの完全性は不明で、P95 は近似値です。観測なしは正常を意味しません。",
+    "resultCount": "一致するサービス: {{count}}",
+    "sort": "全結果の並び順",
+    "order": "並べ替え方向",
+    "desc": "降順",
+    "asc": "昇順",
+    "pageEmpty": "このページにサービスはありません",
+    "firstPage": "最初のページ",
+    "clearFilters": "フィルターを解除",
+    "errorRequests": "エラーリクエスト",
+    "dataState": "データ状態",
+    "observation": {
+      "ready": "観測あり",
+      "empty": "リクエスト観測なし",
+      "unresolved": "識別情報未解決"
+    },
+    "sortKeys": {
+      "errorCount": "エラーリクエスト",
+      "errorRate": "エラー率",
+      "requestCount": "観測リクエスト",
+      "latencyP95Ms": "P95 レイテンシ",
+      "name": "サービス"
+    }
+  },
+  "exploreSaved": {
+    "views": "ビュー",
+    "myView": "マイビュー",
+    "defaultView": "デフォルトのログビュー",
+    "filterViews": "ビューを絞り込む",
+    "sort": "保存済みビューの並べ替え",
+    "sortOptions": {
+      "default": "デフォルト",
+      "recent": "最近表示",
+      "newest": "新しい順",
+      "oldest": "古い順",
+      "az": "A–Z",
+      "za": "Z–A"
+    },
+    "onlyMine": "自分の保存済みビューのみ表示",
+    "addFavorite": "{{view}} をお気に入りに追加",
+    "removeFavorite": "{{view}} をお気に入りから削除",
+    "saveNewView": "新しいビューとして保存",
+    "saveChanges": "変更を保存",
+    "copyUrl": "URLをコピー",
+    "editView": "編集",
+    "moreActions": "その他のビュー操作",
+    "queryActions": "クエリ操作",
+    "directory": "保存済みクエリ",
+    "save": "クエリを保存",
+    "update": "保存済みクエリを更新",
+    "saveAs": "名前を付けて保存",
+    "active": "開いたクエリ：{{name}}",
+    "applyFirst": "保存する前に「クエリ」で変更を適用してください。",
+    "activeUnavailable": "選択した保存済みクエリは利用できません。有効なレコードを開き直してから更新してください。",
+    "invalidQuery": "現在の条件または時間モードでは保存できません。",
+    "shared": "この HertzBeat インスタンス内で共有されます。書き込み権限のあるユーザーは更新や削除ができます。",
+    "relative": "相対時間 · {{range}} · 開くときに再計算",
+    "absolute": "絶対時間 · {{window}} · {{zone}}",
+    "name": "名前",
+    "description": "説明",
+    "firstPage": "結果の最初のページから開きます。移動履歴は共有されません。",
+    "writeFailed": "変更を確認できませんでした。入力は保持されています。保存済みクエリを再読み込みしてから再試行してください。",
+    "savePermission": "この共有ビューを保存する権限がありません。",
+    "deletePermission": "この共有ビューを削除する権限がありません。",
+    "signal": "シグナル",
+    "allSignals": "すべてのシグナル",
+    "empty": "このシグナルの保存済みクエリはありません。",
+    "original": "保存された元のレコード",
+    "export": "元の JSON をエクスポート",
+    "updated": "更新日時：{{time}}",
+    "unknownTime": "取得できません",
+    "open": "クエリを開く",
+    "inspect": "元のレコードを確認",
+    "discardDraft": "未適用の変更を破棄して、この保存済みクエリを開きますか？",
+    "deleteConfirm": "この共有クエリを削除しますか？",
+    "editor": {
+      "create": "クエリを保存",
+      "update": "共有クエリを更新",
+      "copy": "クエリに名前を付けて保存"
+    },
+    "states": {
+      "loading": "保存済みクエリを読み込み中…",
+      "error": "保存済みクエリを読み込めませんでした。",
+      "permission": "保存済みクエリへのアクセス権限がありません。",
+      "contract_error": "保存済みクエリの応答を解析できませんでした。",
+      "transport_error": "保存済みクエリのサービスは利用できません。"
+    },
+    "reasons": {
+      "invalidPayload": "元の内容が無効、または形式が不明です。",
+      "unsupportedVersion": "この保存済みクエリのバージョンには対応していません。",
+      "invalidQuery": "保存された条件または時間モードを安全に復元できません。",
+      "legacyUnsupported": "一部の旧条件はクエリの意味を変えずに変換できません。元のレコードは保持されています。",
+      "retiredReferenceJoin": "この保存済みクエリにはサポートされなくなった参照テーブル結合が含まれるため、開いたり実行したりしていません。"
+    },
+    "revisionConflict": "このクエリは別の場所で変更または削除されました。下書きは保持されています。最新版を再読み込みするか、コピーを保存してください。"
+  },
+  "signalDashboard": {
+    "clearSearch": "クリア",
+    "search": "名前でダッシュボードを検索",
+    "searchCount": "{{total}} 件中 {{count}} 件のダッシュボード",
+    "noMatches": "名前が一致するダッシュボードはありません",
+    "timeZoneUnspecified": "タイムゾーン未指定",
+    "analysisDetails": "分析の詳細",
+    "analysisReadOnly": "このパネルはログ分析の条件をすべて保持します。クエリの変更は Explore で開いて行ってください。タイトル、レイアウト、共有サービスコンテキストは編集できます。",
+    "settings": "ダッシュボード設定",
+    "variableKind": "変数の種類：{{name}}",
+    "title": "ダッシュボード",
+    "shared": "共有ダッシュボードは HertzBeat の管理対象クエリを使用します。",
+    "new": "新規ダッシュボード",
+    "untitled": "無題のダッシュボード",
+    "edit": "ダッシュボードを編集",
+    "copy": "ダッシュボードを複製",
+    "copyName": "{{name}} のコピー",
+    "name": "ダッシュボード名",
+    "description": "説明",
+    "key": "ダッシュボード ID",
+    "directory": "すべてのダッシュボード",
+    "open": "開く",
+    "loading": "ダッシュボードを読み込み中…",
+    "error": "ダッシュボードを読み込めません。更新して再試行してください。",
+    "empty": "共有ダッシュボードはまだ保存されていません。",
+    "document": "対応ドキュメント",
+    "legacy": "旧形式ダッシュボード：元の内容を保持しています。",
+    "unavailable": "ダッシュボードが見つからないか、未対応のドキュメントです。",
+    "state": "ドキュメントの状態",
+    "updated": "メタデータ更新日時",
+    "upgrade": "空のダッシュボードを変換",
+    "upgradeExact": "編集前に、この空の変換結果を保存してください。元の断片は保持されます。",
+    "import": "ダッシュボードをインポート",
+    "export": "ドキュメントをエクスポート",
+    "exportOriginal": "元のデータをエクスポート",
+    "importFile": "ダッシュボード JSON ファイル",
+    "documentJson": "ダッシュボードの JSON",
+    "importHelp": "対応する Perses サブセットをインポートします。保存前にローカルの下書きを確認してください。既存の記録は自動上書きされません。",
+    "importCopy": "新しい ID のコピーとしてインポート",
+    "invalidDocument": "無効または未対応の項目があります。クエリの実行や保存の前に修正してください。",
+    "invalidHandoff": "クエリのコンテキストを保持して追加できません。元のクエリは変更されていません。",
+    "conflict": "表示後にダッシュボードが変更されました。下書きは保持されています。再読み込みして最新版を確認してください。",
+    "writeFailed": "保存できませんでした。入力は保持されています。接続回復後に再試行してください。",
+    "reload": "最新版を再読み込み",
+    "discardReload": "ローカルの下書きを破棄して保存済みのダッシュボードを読み込みますか？",
+    "deleteConfirm": "この共有ダッシュボードを削除しますか？",
+    "unsaved": "未保存の下書きです。クエリで定義を確認できます。キャンセルで変更を破棄し、再読み込みで保存済み内容を復元します。",
+    "query": "クエリ",
+    "applyFirst": "クエリを実行してパネル定義を確認してください。",
+    "panels": "ダッシュボードのパネル",
+    "noPanels": "パネルはありません。追加するか、Explore から対応クエリを送信してください。",
+    "addPanel": "パネルを追加",
+    "newPanel": "新しいパネル",
+    "removePanel": "パネルを削除",
+    "definition": "ダッシュボード定義",
+    "panelDefinition": "選択したパネル定義",
+    "panelTitle": "パネルのタイトル",
+    "panelType": "パネルの種類",
+    "queryContext": "クエリのコンテキスト",
+    "queryContextField": "クエリのコンテキスト: {{field}}",
+    "variables": "変数の定義",
+    "TextVariable": "テキスト値",
+    "ListVariable": "固定の選択肢",
+    "defaultValue": "既定値",
+    "staticValues": "選択肢を1行ずつ入力",
+    "removeVariable": "変数を削除",
+    "addVariable": "{{name}} 変数を追加",
+    "serviceName": "サービス",
+    "serviceNamespace": "名前空間",
+    "environment": "環境",
+    "defaultDuration": "既定の時間範囲",
+    "autoRefresh": "既定の自動更新",
+    "timeZone": "タイムゾーン",
+    "timeRange": "時間範囲",
+    "fixedWindow": "固定の調査時間範囲",
+    "range": "過去 {{range}}",
+    "invalidTime": "指定された時間範囲が無効です。プリセットを選択してクエリを実行してください。",
+    "layout": "配置位置とサイズ",
+    "x": "列位置",
+    "y": "行位置",
+    "width": "幅",
+    "height": "高さ",
+    "invalidLayout": "他のパネルと重なるか、対応範囲を超えています。",
+    "chooseTarget": "パネルの追加先を選択",
+    "appendPanel": "このダッシュボードに追加",
+    "newFromPanel": "このパネルから作成",
+    "returnSource": "元のクエリに戻る",
+    "openExplore": "Explore を開く",
+    "loadingPanel": "パネルを読み込み中…",
+    "emptyPanel": "このクエリに一致するデータはありません。",
+    "cancelled": "パネルのクエリをキャンセルしました。再試行できます。",
+    "retryPanel": "パネルを再試行",
+    "bounded": "結果は最大 {{limit}} 行の範囲に制限されており、時間範囲全体ではありません。",
+    "unknownCoverage": "クエリの網羅範囲は不明です。",
+    "truncated": "クエリ上限により結果が切り詰められました。",
+    "runtimeError": "パネルを表示できません。再試行または更新してください。",
+    "addFromExplore": "ダッシュボードに追加",
+    "back": "ダッシュボードに戻る",
+    "addApplyFirst": "変更を適用するため、追加前にクエリを実行してください。",
+    "addUnsupported": "これらのクエリ条件にはまだ対応していません。",
+    "addFixedTrace": "このパネルは特定のトレースを保持し、サービス変数の影響を受けません。",
+    "addSourceWindow": "この調査時間範囲でパネルを開きます。",
+    "fields": {
+      "name": "メトリクス名",
+      "operationName": "操作名",
+      "aggregation": "集計方法",
+      "temporalAggregation": "時間集計",
+      "stepSeconds": "間隔（秒）",
+      "limit": "結果の上限",
+      "search": "ログ検索",
+      "severity": "重大度",
+      "spanScope": "Span 範囲",
+      "minDurationMs": "最小時間（ms）",
+      "maxDurationMs": "最大時間（ms）",
+      "hideInternal": "内部レコードを非表示",
+      "hideNoise": "ノイズを非表示",
+      "errorOnly": "エラーのみ",
+      "traceId": "Trace ID",
+      "spanId": "Span ID",
+      "entityId": "エンティティ ID",
+      "entityType": "エンティティ種別",
+      "collectorId": "コレクター ID",
+      "instance": "インスタンス",
+      "endpoint": "エンドポイント",
+      "serviceName": "サービス",
+      "serviceNamespace": "名前空間",
+      "environment": "環境"
+    },
+    "kinds": {
+      "TimeSeriesChart": "メトリクス時系列",
+      "StatChart": "メトリクス統計",
+      "GaugeChart": "メトリクスゲージ",
+      "Table": "メトリクステーブル",
+      "LogsTable": "ログテーブル",
+      "TraceTable": "トレーステーブル",
+      "TracingGanttChart": "トレースウォーターフォール"
+    },
+    "gaugeMaximum": "ゲージの最大値",
+    "queryFailures": {
+      "invalid": "可視化リクエストが無効です。",
+      "permission": "このシグナルを調査する権限がありません。",
+      "overloaded": "シグナルストレージが混雑しています。再試行してください。",
+      "unavailable": "シグナルストレージを利用できません。",
+      "contract": "証拠が不完全なため表示できません。"
+    },
+    "addTransactionsUnsupported": "トランザクションはまだダッシュボードに追加できません。調査を再開するにはクエリを保存してください。"
   }
 }

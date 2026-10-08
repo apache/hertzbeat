@@ -13,6 +13,7 @@ import type {
   HertzBeatTraceGanttQuery,
   HertzBeatTraceGanttQueryOutcome
 } from '@/platform/perses';
+import type { RepresentativeSpan } from '@/shared/trace-evidence';
 
 import type { ExploreInvestigationRoute } from './explore-investigation-model';
 
@@ -57,13 +58,14 @@ export type InvestigationLogRecord = {
   identity: InvestigationServiceIdentity | null;
   attributes: Record<string, string>;
   resourceAttributes: Record<string, string>;
+  truncatedFields?: { attributes?: string[]; resourceAttributes?: string[] } | undefined;
 };
 
 type InvestigationTraceSpan = {
   spanId: string;
   parentSpanId: string | null;
-  spanName: string;
-  serviceName: string;
+  spanName: string | null;
+  serviceName: string | null;
   serviceNamespace: string | null;
   deploymentEnvironment: string | null;
   entityId: string | null;
@@ -76,6 +78,7 @@ type InvestigationTraceSpan = {
   scopeVersion: string | null;
   durationNanos: string;
   startTime: number;
+  startTimeUnixNano: string;
   highlighted: boolean;
   resourceAttributes: Record<string, string>;
   spanAttributes: Record<string, string>;
@@ -102,19 +105,26 @@ type InvestigationTraceSpan = {
 };
 
 export type InvestigationTraceDetail = {
-  rootSpanId: string;
-  serviceName: string;
+  partial?: boolean | undefined;
+  rootSpanId: string | null;
+  serviceName: string | null;
   serviceNamespace: string | null;
   deploymentEnvironment: string | null;
   entityId: string | null;
   entityType: string | null;
-  rootSpanName: string;
-  durationNanos: string;
-  status: string;
-  startTime: number;
+  rootSpanName: string | null;
+  durationNanos: string | null;
+  status: string | null;
+  startTime: number | null;
   errorSpanCount: number;
-  resourceAttributes: Record<string, string>;
+  resourceAttributes: Record<string, string> | null;
   spans: InvestigationTraceSpan[];
+  rootState: 'unique' | 'missing' | 'ambiguous';
+  rootSpanCount: number;
+  representativeSpan: RepresentativeSpan;
+  observedStartTime: number;
+  observedEndTime: number;
+  missingParentCount: number;
 };
 
 type RedValues = {

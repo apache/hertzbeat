@@ -26,7 +26,7 @@ echarts.use([
   CanvasRenderer
 ]);
 
-export type TimeSeriesChartSeries = { name: string; points: [number, number][] };
+type TimeSeriesChartSeries = { name: string; points: [number, number][] };
 export type TimeSeriesChartRenderInput = {
   title: string;
   unit?: string | undefined;

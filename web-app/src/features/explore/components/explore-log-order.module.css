@@ -1,0 +1,49 @@
+.header {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  gap: 4px;
+  max-width: 100%;
+  padding: 0;
+  text-align: start;
+}
+.header:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+.header:disabled {
+  cursor: default;
+}
+.controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.controls > span {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.controls :global(.ant-select) {
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pending {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+.pending :global(.ant-btn) {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}

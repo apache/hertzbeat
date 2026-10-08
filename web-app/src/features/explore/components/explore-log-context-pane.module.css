@@ -1,0 +1,46 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.context {
+  min-height: 0;
+  overflow: auto;
+  padding: var(--hb-space-3);
+  font-size: 12px;
+}
+.scope,
+.bound {
+  color: var(--hb-text-secondary);
+  line-height: 1.5;
+}
+.scope {
+  margin: 0 0 var(--hb-space-3);
+}
+.rows {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.rows li {
+  padding: var(--hb-space-2);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.rows li[data-context-anchor='true'] {
+  background: var(--hb-bg-selected);
+  border-left: 3px solid var(--ant-color-primary);
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  flex-wrap: wrap;
+  color: var(--hb-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.meta strong {
+  color: var(--hb-text-primary);
+}
+.rows p {
+  margin: var(--hb-space-1) 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, monospace;
+  line-height: 1.5;
+}

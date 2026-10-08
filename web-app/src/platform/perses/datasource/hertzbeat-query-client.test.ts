@@ -135,6 +135,16 @@ describe('HertzBeat Perses query client', () => {
     });
   });
 
+  it.each([true, null])('preserves bounded trace coverage %s even with an empty result', async truncated => {
+    const query = { sort: 'newest', coverage: 'bounded', rowLimit: 1500, truncated };
+    request.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 2, query });
+    await expect(queryHertzBeatData({ signal: 'traces', queryKind: 'table', timeWindow, limit: 2 })).resolves.toEqual({
+      state: 'empty',
+      truncated: truncated ?? 'unknown',
+      query
+    });
+  });
+
   it('queries bounded log and trace tables through their typed endpoints', async () => {
     request
       .mockResolvedValueOnce({ content: [logRow()], totalElements: 3, pageIndex: 0, pageSize: 2 })
@@ -164,13 +174,70 @@ describe('HertzBeat Perses query client', () => {
 
     expect(request.mock.calls.map(([path]) => path)).toEqual([
       '/api/logs/list?entityId=42&entityType=service&start=1000&end=2000&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=collector-a&instance=checkout-01&endpoint=%2Forders&pageIndex=0&pageSize=2&search=checkout+failed&severityText=ERROR&traceId=0123456789abcdef0123456789abcdef&hideInternal=true',
-      '/api/traces/list?entityId=42&entityType=service&start=1000&end=2000&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=collector-a&instance=checkout-01&endpoint=%2Forders&pageIndex=0&pageSize=2&operationName=POST+%2Forders&errorOnly=true&spanScope=entrypoint'
+      '/api/traces/list?entityId=42&entityType=service&start=1000&end=2000&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=collector-a&instance=checkout-01&endpoint=%2Forders&pageIndex=0&pageSize=2&operationName=POST+%2Forders&sort=newest&errorOnly=true&spanScope=entrypoint'
     ]);
     expect(logs).toMatchObject({ state: 'ready', truncated: true, data: { rows: [{ severityText: 'ERROR' }] } });
     expect(traces).toMatchObject({
       state: 'ready',
-      truncated: false,
+      truncated: 'unknown',
       data: { rows: [{ traceId: '0123456789abcdef0123456789abcdef' }] }
+    });
+  });
+
+  it.each([
+    { coverage: 'window', rowLimit: null, truncated: false },
+    { coverage: 'bounded', rowLimit: 1500, truncated: false },
+    { coverage: 'bounded', rowLimit: 5000, truncated: true },
+    { coverage: 'bounded', rowLimit: 5000, truncated: null }
+  ])('preserves ready and empty trace coverage %j', async metadata => {
+    const query = { sort: 'newest', ...metadata };
+    for (const content of [[], [traceRow()]]) {
+      request.mockResolvedValue({
+        content,
+        totalElements: content.length,
+        totalPages: content.length,
+        number: 0,
+        size: 2,
+        query
+      });
+      const result = await queryHertzBeatData({ signal: 'traces', queryKind: 'table', timeWindow, limit: 2 });
+      expect(result).toMatchObject({
+        state: content.length ? 'ready' : 'empty',
+        truncated: metadata.truncated ?? 'unknown',
+        query
+      });
+      if (result.state === 'ready') expect(result.data).not.toHaveProperty('query');
+    }
+  });
+
+  it.each([undefined, null])('keeps legacy empty trace coverage unknown (%s)', async query => {
+    request.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 2, query });
+    expect(await queryHertzBeatData({ signal: 'traces', queryKind: 'table', timeWindow, limit: 2 })).toEqual({
+      state: 'empty',
+      truncated: 'unknown'
+    });
+  });
+
+  it('marks omitted pages separately from complete server query coverage', async () => {
+    const query = { sort: 'newest', coverage: 'window', rowLimit: null, truncated: false };
+    request.mockResolvedValue({ content: [traceRow()], totalElements: 2, totalPages: 2, number: 0, size: 1, query });
+    expect(await queryHertzBeatData({ signal: 'traces', queryKind: 'table', timeWindow, limit: 1 })).toMatchObject({
+      state: 'ready',
+      truncated: true,
+      query
+    });
+  });
+
+  it.each([
+    { sort: 'newest', coverage: 'window', rowLimit: 1500, truncated: false },
+    { sort: 'newest', coverage: 'window', rowLimit: null, truncated: true },
+    { sort: 'newest', coverage: 'bounded', rowLimit: 1, truncated: null },
+    { sort: 'duration_desc', coverage: 'window', rowLimit: null, truncated: false }
+  ])('rejects contradictory trace coverage %j', async query => {
+    request.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 2, query });
+    expect(await queryHertzBeatData({ signal: 'traces', queryKind: 'table', timeWindow, limit: 2 })).toMatchObject({
+      state: 'error',
+      error: { kind: 'contract_error' }
     });
   });
 
@@ -273,6 +340,18 @@ describe('HertzBeat Perses query client', () => {
         traceId: '0123456789abcdef0123456789abcdef'
       })
     ).resolves.toMatchObject({ state: 'error', error: { kind: 'contract_error' } });
+    await expect(
+      queryHertzBeatData({
+        signal: 'traces',
+        queryKind: 'gantt',
+        timeWindow,
+        traceId: '0123456789abcdef0123456789abcdef'
+      })
+    ).resolves.toMatchObject({ state: 'error', error: { kind: 'contract_error' } });
+  });
+
+  it('rejects a non-default selected child when no span was requested', async () => {
+    request.mockResolvedValue(traceComposite('ready', 'fedcba9876543210'));
     await expect(
       queryHertzBeatData({
         signal: 'traces',
@@ -608,6 +687,19 @@ function logRow() {
 
 function traceRow() {
   return {
+    rootState: 'unique',
+    rootSpanCount: 1,
+    representativeSpan: {
+      spanId: '0123456789abcdef',
+      spanName: 'POST /orders',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      startTime: 1_000,
+      durationNanos: 10_000_000
+    },
+    observedStartTime: 1_000,
+    observedEndTime: 1_000 + Math.ceil(10_000_000 / 1_000_000),
+    unattributedServiceStats: null,
     traceId: '0123456789abcdef0123456789abcdef',
     rootSpanId: '0123456789abcdef',
     serviceName: 'checkout',
@@ -629,7 +721,7 @@ function traceRow() {
 function traceComposite(state: 'ready' | 'empty' | 'unavailable', selectedSpanId: string | null = null) {
   return {
     traceId: '0123456789abcdef0123456789abcdef',
-    selectedSpanId,
+    selectedSpanId: selectedSpanId ?? (state === 'ready' ? '0123456789abcdef' : null),
     window: { start: 1_000, end: 2_000 },
     gantt: {
       state,
@@ -646,6 +738,19 @@ function traceComposite(state: 'ready' | 'empty' | 'unavailable', selectedSpanId
 
 function compositeTraceDetail() {
   return {
+    rootState: 'unique',
+    rootSpanCount: 1,
+    missingParentCount: 0,
+    representativeSpan: {
+      spanId: '0123456789abcdef',
+      spanName: 'POST /orders',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      startTime: 1_000,
+      durationNanos: Number('10000000')
+    },
+    observedStartTime: 1_000,
+    observedEndTime: 1_000 + Math.ceil(Number('10000000') / 1_000_000),
     rootSpanId: '0123456789abcdef',
     serviceName: 'checkout',
     serviceNamespace: 'commerce',
@@ -664,6 +769,7 @@ function compositeTraceDetail() {
 
 function compositeSpan(spanId: string, parentSpanId: string | null, failed: boolean) {
   return {
+    startTimeUnixNano: (BigInt(1_000) * 1_000_000n).toString(),
     spanId,
     parentSpanId,
     spanName: spanId === '0123456789abcdef' ? 'POST /orders' : 'SELECT cart',
@@ -678,7 +784,7 @@ function compositeSpan(spanId: string, parentSpanId: string | null, failed: bool
     traceState: null,
     scopeName: 'checkout',
     scopeVersion: '1.0.0',
-    durationNanos: '5000000',
+    durationNanos: parentSpanId === null ? '10000000' : '5000000',
     startTime: 1_000,
     highlighted: failed,
     resourceAttributes: {},
@@ -698,3 +804,29 @@ function withEventTime(timeUnixNano: string | number) {
   }
   return value;
 }
+it('sends log category and raw text as independent AND predicates with exact field filter strings', async () => {
+  request.mockReset();
+  request.mockResolvedValueOnce({ content: [], totalElements: 0, pageIndex: 0, pageSize: 2 });
+  const filters = {
+    severity: 'SEVERE',
+    severityCategory: 'ERROR' as const,
+    resourceFilter: ' service.version = "v1,blue" ',
+    attributeFilter: 'http.route != "/failure"'
+  };
+  expect(
+    await queryHertzBeatData({ signal: 'logs', queryKind: 'table', timeWindow, ...filters, limit: 2 })
+  ).toMatchObject({ state: 'empty' });
+  const params = new URLSearchParams(String(request.mock.calls[0]?.[0]).split('?')[1]);
+  expect(params.get('severityText')).toBe('SEVERE');
+  expect(params.get('severityCategory')).toBe('ERROR');
+  expect(params.get('resourceFilter')).toBe(filters.resourceFilter);
+  expect(params.get('attributeFilter')).toBe(filters.attributeFilter);
+});
+it('forwards a strict numeric range to the raw dashboard log reader', async () => {
+  const logNumericRange = { version: 1 as const, field: 'attribute:duration', min: 2.5, max: 6.75 };
+  request.mockResolvedValueOnce({ content: [], pageIndex: 0, pageSize: 20, totalElements: 0 });
+  await queryHertzBeatData({ signal: 'logs', queryKind: 'table', timeWindow, limit: 20, logNumericRange });
+  expect(new URL(String(request.mock.lastCall![0]), 'http://local').searchParams.get('logNumericRange')).toBe(
+    JSON.stringify(logNumericRange)
+  );
+});

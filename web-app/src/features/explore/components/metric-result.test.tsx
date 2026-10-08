@@ -27,7 +27,8 @@ import { MetricResult } from './metric-result';
 
 const persesRuntime = vi.hoisted(() => ({ failed: false }));
 
-vi.mock('@/platform/perses', () => ({
+vi.mock('@/platform/perses', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/platform/perses')>()),
   HertzBeatMetricTimeSeriesResult: ({
     ariaLabel,
     className,
@@ -56,6 +57,7 @@ describe('MetricResult', () => {
   afterEach(() => {
     cleanup();
     persesRuntime.failed = false;
+    localStorage.clear();
   });
 
   beforeAll(async () => {
@@ -71,12 +73,38 @@ describe('MetricResult', () => {
       </I18nextProvider>
     );
     expect(screen.getByRole('heading', { name: 'Metrics' })).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('explore.samples'))).toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: i18n.t('explore.samples') })).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Metric trend' })).toHaveAttribute('data-visualization-runtime', 'perses');
     expect(screen.getByRole('img', { name: 'Metric trend' })).toHaveAttribute('data-series-count', '1');
-    expect(screen.getByText('125 ms')).toBeInTheDocument();
-    expect(screen.getAllByText('method=POST')).toHaveLength(2);
+    expect(
+      screen
+        .getByRole('img', { name: 'Metric trend' })
+        .compareDocumentPosition(screen.getByRole('table', { name: i18n.t('exploreMetric.summary.title') })) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreMetric.table') }));
+    expect(screen.getByText('125').closest('td')).toHaveTextContent('125 ms');
+    expect(screen.getAllByText(/method=POST/u)).toHaveLength(1);
     expect(screen.queryByText('__name__=http.server.duration')).not.toBeInTheDocument();
+  });
+
+  it('explains bucket boundaries without inventing latency units', () => {
+    const data = structuredClone(metricData);
+    const frame = data.results!.frames![0]!;
+    frame.schema!.labels = { __name__: 'request_seconds_bucket', le: '0.1', service_name: 'checkout' };
+    frame.schema!.fields![0]!.unit = null;
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject
+          data={data}
+          metricName="request_seconds_bucket"
+          state={{ kind: 'ready', series: metricSeries(data) }}
+        />
+      </I18nextProvider>
+    );
+    expect(screen.getByText(i18n.t('exploreMetric.bucketHint'))).toBeInTheDocument();
+    expect(screen.queryByText('125 ms')).not.toBeInTheDocument();
+    expect(screen.getByRole('table', { name: i18n.t('exploreMetric.summary.title') })).toHaveTextContent('le=0.1');
   });
 
   it('keeps a true empty response distinct from a zero-valued series', () => {
@@ -99,6 +127,7 @@ describe('MetricResult', () => {
         />
       </I18nextProvider>
     );
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreMetric.table') }));
     expect(screen.getByText('0')).toBeInTheDocument();
     expect(screen.queryByText('125 ms')).not.toBeInTheDocument();
     expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
@@ -119,7 +148,8 @@ describe('MetricResult', () => {
 
     const trend = screen.getByRole('img', { name: 'Metric trend' });
     expect(trend).toHaveAttribute('data-series-count', '7');
-    expect(screen.getByText('series-6')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreMetric.table') }));
+    expect(screen.getByText('#7 series-6')).toBeInTheDocument();
   });
 
   it('keeps sample evidence visible when the Perses runtime fails', () => {
@@ -131,8 +161,9 @@ describe('MetricResult', () => {
     );
 
     expect(screen.getByRole('status')).toHaveTextContent(i18n.t('explore.perses.runtimeError'));
-    expect(screen.getByText('125 ms')).toBeInTheDocument();
-    expect(screen.getAllByText('method=POST')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreMetric.table') }));
+    expect(screen.getByText('125').closest('td')).toHaveTextContent('125 ms');
+    expect(screen.getAllByText(/method=POST/u)).toHaveLength(1);
   });
 
   it('shows only the latest one hundred samples in reverse order', () => {
@@ -146,6 +177,7 @@ describe('MetricResult', () => {
       </I18nextProvider>
     );
 
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreMetric.table') }));
     const rows = screen.getAllByRole('row');
     expect(rows).toHaveLength(101);
     expect(within(rows[1]!).getByText('101')).toBeInTheDocument();
@@ -192,11 +224,13 @@ describe('MetricResult', () => {
 function Subject({
   data,
   state,
-  retry = vi.fn()
+  retry = vi.fn(),
+  metricName = 'http.server.duration'
 }: {
   data: MetricConsole;
   state: MetricResultState;
   retry?: () => Promise<void>;
+  metricName?: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -205,7 +239,7 @@ function Subject({
       state={state}
       retry={retry}
       t={t}
-      query={{ signal: 'metrics', timeRange: 'last-30m', query: 'http.server.duration' }}
+      query={{ signal: 'metrics', timeRange: 'last-30m', query: metricName }}
       timeWindow={{ from: 1_750_000_000_000, to: 1_750_000_060_000 }}
       revision={0}
     />

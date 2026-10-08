@@ -15,93 +15,62 @@
  * limitations under the License.
  */
 
+import { Button } from 'antd';
 import type { TFunction } from 'i18next';
-import type { KeyboardEvent } from 'react';
+import type { ReactNode } from 'react';
 
-import { OperationalPageHeader, OperationalStatePanel } from '@/shared/operational-page';
+import { OperationalStatePanel } from '@/shared/operational-page';
 
-import {
-  exploreHandoffState,
-  signalSelectionPatch,
-  type ExploreQuery,
-  type ExploreQueryPatch,
-  type ExploreSignal
-} from '../model/explore-model';
+import { exploreHandoffState, type ExploreQuery, type ExploreQueryPatch } from '../model/explore-model';
+import { invalidExploreContextMessageKey } from '../model/explore-retired-log-reference-message';
+import { validatedTraceReturn } from '../model/explore-trace-log-return';
 import styles from './explore-workbench.module.css';
-
-const signalKeys: ExploreSignal[] = ['metrics', 'logs', 'traces'];
+import { ExploreWorkflowGuide } from './explore-workflow-guide';
 
 type Props = {
   query: ExploreQuery;
+  actions?: ReactNode;
+  timeToolbar?: ReactNode;
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
+  openPath?: ((path: string) => void) | undefined;
 };
 
-export function ExploreWorkbench({ query, t, updateQuery }: Props) {
-  const handoffState = exploreHandoffState(query);
-  const selectSignal = (signal: ExploreSignal) => {
-    if (query.signal === signal) return;
-    updateQuery(signalSelectionPatch(signal));
-  };
+export function ExploreWorkbench({ query, t, openPath, actions, timeToolbar }: Props) {
+  const traceReturn = validatedTraceReturn(query);
   return (
     <>
-      <div className={styles.pageHeader} data-explore-page-header="true">
-        <OperationalPageHeader title={t('explore.title')} />
-      </div>
-      {handoffState === 'invalid' && <OperationalStatePanel kind="error" title={t('explore.handoffInvalid')} />}
-      <ExploreSignalNavigation query={query} selectSignal={selectSignal} t={t} />
+      <header
+        className={styles.pageHeader}
+        data-explore-page-header="true"
+        data-explore-header-signal={query.signal}
+        data-signal-workbench-header
+      >
+        <div className={styles.headingRow} data-signal-header-level="title">
+          <h2 id={`explore-heading-${query.signal}`}>{t(`explore.signals.${query.signal}`)}</h2>
+          <div className={styles.scopeNavigation}>
+            {traceReturn && openPath && (
+              <Button onClick={() => openPath(traceReturn)}>{t('exploreTrace.backToTrace')}</Button>
+            )}
+            {query.servicesReturnTo && openPath && (
+              <Button onClick={() => openPath(query.servicesReturnTo!)}>{t('services.back')}</Button>
+            )}
+            {query.dashboardReturnTo && openPath && (
+              <Button onClick={() => openPath(query.dashboardReturnTo!)}>{t('signalDashboard.back')}</Button>
+            )}
+          </div>
+          <ExploreWorkflowGuide query={query} t={t} />
+        </div>
+        <div className={styles.toolbarRow} data-signal-header-level="tools">
+          <div className={styles.viewSlot} data-signal-view-slot>
+            {actions}
+          </div>
+          {timeToolbar}
+        </div>
+      </header>
+      {exploreHandoffState(query) === 'invalid' && (
+        <OperationalStatePanel kind="error" title={t(invalidExploreContextMessageKey(query))} />
+      )}
     </>
   );
-}
-
-function ExploreSignalNavigation({
-  query,
-  selectSignal,
-  t
-}: Pick<Props, 'query' | 't'> & { selectSignal: (signal: ExploreSignal) => void }) {
-  return (
-    <div className={styles.navigationRow}>
-      <nav className={styles.signalNavigation} aria-label={t('explore.signalsNavigation')} role="tablist">
-        {signalKeys.map(signal => (
-          <button
-            key={signal}
-            type="button"
-            role="tab"
-            id={`explore-tab-${signal}`}
-            aria-controls={`explore-panel-${signal}`}
-            aria-selected={query.signal === signal}
-            tabIndex={query.signal === signal ? 0 : -1}
-            className={(query.signal === signal ? styles.activeSignal : styles.signal) ?? ''}
-            onClick={() => selectSignal(signal)}
-            onKeyDown={event => moveSignalFocus(event, signal, selectSignal)}
-          >
-            {t(`explore.signals.${signal}`)}
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
-}
-
-function moveSignalFocus(
-  event: KeyboardEvent<HTMLButtonElement>,
-  signal: ExploreSignal,
-  selectSignal: (signal: ExploreSignal) => void
-) {
-  const currentIndex = signalKeys.indexOf(signal);
-  const nextIndex = signalNavigationIndex(event.key, currentIndex);
-  if (nextIndex == null) return;
-  const nextSignal = signalKeys[nextIndex];
-  if (!nextSignal) return;
-  event.preventDefault();
-  event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`#explore-tab-${nextSignal}`)?.focus();
-  selectSignal(nextSignal);
-}
-
-function signalNavigationIndex(key: string, currentIndex: number) {
-  if (key === 'Home') return 0;
-  if (key === 'End') return signalKeys.length - 1;
-  if (key === 'ArrowRight') return (currentIndex + 1) % signalKeys.length;
-  if (key === 'ArrowLeft') return (currentIndex - 1 + signalKeys.length) % signalKeys.length;
-  return undefined;
 }

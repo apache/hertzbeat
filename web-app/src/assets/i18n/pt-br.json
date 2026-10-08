@@ -70,8 +70,8 @@
     },
     "legend": {
       "healthy": "Saudável",
-      "warning": "Alerta",
-      "critical": "Crítico",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
       "unknown": "Desconhecido",
       "selected": "Caminho selecionado"
     },
@@ -165,6 +165,9 @@
     }
   },
   "entity": {
+    "results": {
+      "total": "Recursos: {{count}}"
+    },
     "title": "Catálogo de recursos",
     "description": "Serviços, hosts, bancos de dados e outros recursos são unificados automaticamente, sem exigir modelagem abstrata manual.",
     "empty": "Nenhum recurso corresponde aos filtros atuais.",
@@ -260,7 +263,10 @@
       "global": "Global",
       "manageSilences": "Gerenciar silêncios",
       "manageInhibits": "Gerenciar inibições",
-      "types": { "silence": "Silêncio", "inhibit": "Inibição" }
+      "types": {
+        "silence": "Silêncio",
+        "inhibit": "Inibição"
+      }
     },
     "operations": {
       "title": "Operações recomendadas",
@@ -332,7 +338,11 @@
         "otel": "OpenTelemetry",
         "telemetry": "Telemetria"
       },
-      "direction": { "incoming": "Entrada", "outgoing": "Saída", "related": "Relacionado" },
+      "direction": {
+        "incoming": "Entrada",
+        "outgoing": "Saída",
+        "related": "Relacionado"
+      },
       "identityType": {
         "derived": "Reconhecido automaticamente",
         "manual": "Definido manualmente",
@@ -341,7 +351,13 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs", "traces": "Explorar traces" },
+    "explore": {
+      "metrics": "Explorar métricas",
+      "logs": "Explorar logs",
+      "traces": "Explorar traces",
+      "searchSyntax": "Sintaxe da consulta",
+      "structuredSearch": "Pesquisa estruturada"
+    },
     "signals": {
       "title": "Investigação de sinais da entidade",
       "availability": "Disponibilidade dos sinais",
@@ -445,7 +461,6 @@
         "truncated": "Exibindo um subconjunto limitado da evidência correspondente.",
         "truncationUnknown": "A completude do resultado é desconhecida.",
         "runtimeError": "O runtime de visualização não conseguiu renderizar esta evidência.",
-        "investigationActions": "Ações de investigação ({{count}})",
         "invalid": "A solicitação do sinal é inválida.",
         "permission": "Você não tem permissão para inspecionar este sinal.",
         "overloaded": "O armazenamento de sinais está ocupado. Tente novamente.",
@@ -453,7 +468,9 @@
         "contract": "O armazenamento de sinais retornou uma resposta inválida."
       }
     },
-    "topology": { "view": "Ver topologia" },
+    "topology": {
+      "view": "Ver topologia"
+    },
     "discovery": {
       "action": "Descobrir recursos",
       "title": "Descobrir recursos",
@@ -487,14 +504,23 @@
       "title": "Importar definições de recursos",
       "description": "Cole YAML, JSON ou dados inline de curl. A prévia não altera nada; a importação ocorre somente após a confirmação.",
       "format": "Formato da definição",
-      "formats": { "yaml": "YAML", "json": "JSON", "curl": "Dados inline de curl" },
+      "formats": {
+        "yaml": "YAML",
+        "json": "JSON",
+        "curl": "Dados inline de curl"
+      },
       "content": "Conteúdo da definição do recurso",
       "previewAction": "Visualizar recursos",
       "confirmAction": "Confirmar importação",
       "previewTitle": "Prévia dos recursos",
       "zeroWrite": "Somente prévia — nenhum recurso foi criado.",
       "details": "Detalhes técnicos",
-      "fields": { "owner": "Responsável", "environment": "Ambiente", "namespace": "Namespace", "source": "Origem" },
+      "fields": {
+        "owner": "Responsável",
+        "environment": "Ambiente",
+        "namespace": "Namespace",
+        "source": "Origem"
+      },
       "associationSummary": "{{identities}} chaves de identidade, {{monitors}} associações de monitor, {{relations}} relações",
       "failure": {
         "validation": "As definições precisam de ajustes antes da importação.",
@@ -520,7 +546,12 @@
       "zeroWrite": "Somente prévia — o recurso não foi alterado.",
       "details": "Detalhes técnicos",
       "associationSummary": "{{identities}} chaves de identidade, {{monitors}} associações de monitor, {{relations}} relações",
-      "fields": { "owner": "Responsável", "environment": "Ambiente", "namespace": "Namespace", "source": "Origem" },
+      "fields": {
+        "owner": "Responsável",
+        "environment": "Ambiente",
+        "namespace": "Namespace",
+        "source": "Origem"
+      },
       "missing": "Definição do recurso não encontrada.",
       "loadFailure": {
         "permission": "Você não tem permissão para ver esta definição de recurso.",
@@ -592,15 +623,26 @@
         "endpoint": "Endpoint",
         "k8s_workload": "Workload do Kubernetes"
       },
-      "criticalities": { "low": "Baixa", "medium": "Média", "high": "Alta", "critical": "Crítica" },
+      "criticalities": {
+        "low": "Baixa",
+        "medium": "Média",
+        "high": "Alta",
+        "critical": "Crítica"
+      },
       "validation": {
         "type": {
           "required": "Selecione o tipo de recurso.",
           "unsupported": "Selecione um tipo de recurso compatível."
         },
-        "name": { "required": "Informe o nome." },
-        "criticality": { "unsupported": "Selecione uma criticidade compatível." },
-        "labels": { "invalid": "Informe cada rótulo como key=value em uma linha separada." }
+        "name": {
+          "required": "Informe o nome."
+        },
+        "criticality": {
+          "unsupported": "Selecione uma criticidade compatível."
+        },
+        "labels": {
+          "invalid": "Informe cada rótulo como key=value em uma linha separada."
+        }
       },
       "saveFailure": {
         "permission": "Você não tem permissão para salvar este recurso.",
@@ -615,11 +657,8 @@
   "exploreMetric": {
     "series": "Séries",
     "value": "Valor",
-    "datasource": "Fonte de dados",
-    "queryMode": "Modo de consulta",
     "trend": "Tendência da métrica",
-    "chartUnavailable": "O gráfico de métricas está indisponível. As amostras continuam disponíveis abaixo.",
-    "filter": "Filtro de rótulo key=value",
+    "filter": "Filtro de rótulo (key:value ou key=value)",
     "groupBy": "Agrupar por rótulo",
     "aggregation": "Agregação",
     "temporalAggregation": "Agregação temporal",
@@ -630,18 +669,66 @@
       "increase": "Aumento",
       "delta": "Delta"
     },
-    "step": "Passo em segundos, por exemplo 60"
+    "step": "Passo (segundos)",
+    "copyQuery": "Copiar consulta",
+    "queryCopied": "Consulta copiada",
+    "queryCopyFailed": "Não foi possível copiar a consulta",
+    "catalogLoading": "Carregando nomes de métricas…",
+    "catalog": "Catálogo de métricas",
+    "searchMetrics": "Buscar nomes de métricas",
+    "searchExample": "Ex.: process_cpu",
+    "catalogUnavailable": "Catálogo indisponível. Tente novamente ou digite o nome da métrica.",
+    "catalogEmpty": "Nenhum nome de métrica corresponde ao escopo e período.",
+    "catalogCount": "{{count}} métricas correspondentes",
+    "catalogTruncated": "Exibindo as primeiras {{count}} métricas; refine a busca.",
+    "selectMetric": "Escolha uma métrica no catálogo ou digite seu nome e execute a consulta.",
+    "pendingDraft": "Rascunho alterado. Os resultados ainda mostram a última consulta executada.",
+    "chart": "Gráfico",
+    "table": "Tabela",
+    "resultDisplay": "Exibição do resultado",
+    "receivedSamples": "{{count}} amostras recebidas",
+    "sampleLimit": "Exibindo as {{shown}} mais recentes de {{received}} amostras recebidas",
+    "exportCsv": "Baixar CSV",
+    "exportCsvHelp": "Exporta todos os pontos válidos retornados das séries visíveis, inclusive além da prévia da tabela, com horário de exibição alinhado em UTC e contexto da origem. Unidade em branco significa desconhecida.",
+    "exportCsvTooLarge": "O CSV é muito grande. Reduza o período ou oculte algumas séries e tente novamente.",
+    "exportCsvFailed": "Não foi possível exportar os resultados das métricas. Tente novamente.",
+    "seriesLabels": "Rótulos das séries",
+    "seriesReference": "Série",
+    "responseQuery": "Consulta executada",
+    "timeShiftSeconds": "Comparar com período anterior (segundos)",
+    "rollup": "Agregação temporal",
+    "rollupOff": "Desativada",
+    "rollupWindow": "Intervalo da agregação",
+    "rollupHint": "O servidor agrega cada intervalo retrospectivo; o intervalo também define o passo da consulta.",
+    "nestedRollup": "Segunda agregação temporal",
+    "nestedRollupWindow": "Segundo intervalo",
+    "nestedRollupHint": "A segunda etapa agrega o resultado da primeira dentro do escopo e define o passo de saída.",
+    "stepExample": "Ex.: 60",
+    "summary": {
+      "title": "Resumo de amostras",
+      "scope": "Somente amostras retornadas. Percentis não são combinados; unidades são exibidas apenas quando fornecidas.",
+      "min": "Mínimo",
+      "max": "Máximo",
+      "latest": "Mais recente",
+      "count": "Amostras"
+    },
+    "defaultSum": "Soma (padrão)",
+    "defaultRaw": "Amostras brutas (padrão)",
+    "identityGroupingHint": "A agregação mantém serviços e entidades separados; agrupar adiciona rótulos.",
+    "temporalWindowHint": "Taxa, aumento e diferença usam uma janela fixa de 5 minutos; o passo define o intervalo de avaliação.",
+    "countSeriesHint": "Count conta séries contribuintes, não solicitações ou observações.",
+    "bucketHint": "Os limites dos buckets (le) são mantidos. Séries de buckets não são latências nem percentis.",
+    "bucketHelp": "Limites dos buckets do histograma"
   },
   "exploreLog": {
     "mode": "Modo de logs",
     "history": "Histórico",
-    "query": "Consulta",
     "live": "Ao vivo",
     "detail": "Detalhes do log",
     "openTrace": "Abrir trace",
     "resourceFilter": "Atributos do recurso key=value",
     "attributeFilter": "Atributos do log key:value",
-    "hideInternal": "Ocultar logs internos",
+    "hideInternal": "Ocultar logs de infraestrutura",
     "hideNoise": "Ocultar logs ruidosos",
     "resourceAttributes": "Atributos do recurso",
     "logAttributes": "Atributos do log",
@@ -665,28 +752,39 @@
     "trendEmpty": "Nenhum intervalo de tendência foi retornado para esta consulta.",
     "trendInsufficient": "A janela atual contém um intervalo ({{count}} logs).",
     "statisticsUnavailable": "Não foi possível carregar esta região de estatísticas.",
+    "overviewPermission": "Você não tem permissão para ler a visão geral dos logs.",
+    "trendPermission": "Você não tem permissão para ler a tendência dos logs.",
     "statistics": {
       "total": "Total",
-      "trace": "Trace",
-      "debug": "Debug",
-      "info": "Info",
-      "warn": "Aviso",
-      "error": "Erro",
-      "fatal": "Fatal"
-    }
+      "trace": "TRACE",
+      "debug": "DEBUG",
+      "info": "INFO",
+      "warn": "WARN",
+      "error": "ERROR",
+      "fatal": "FATAL"
+    },
+    "statisticsScope": "Contagens dos filtros atuais.",
+    "scopeSuggestions": {
+      "hint": "Sugestões parciais; ou digite um valor.",
+      "unavailable": "Sugestões indisponíveis; digite um valor.",
+      "empty": "Sem sugestões; digite um valor."
+    },
+    "visibilityHint": "Exclui serviços conhecidos de infraestrutura e demonstração. Selecione um serviço para isolar sua aplicação."
   },
   "exploreTrace": {
+    "layout": {
+      "basicFilters": "Filtros básicos",
+      "filterHelp": "Semântica dos filtros",
+      "countHelp": "Semântica das contagens",
+      "trendHelp": "Atribuição da tendência",
+      "groupAction": "Os valores alternam os filtros do rascunho no modo de inclusão/exclusão selecionado; execute Consultar para aplicar."
+    },
     "detail": "Detalhes do trace",
-    "loadFailed": "Os detalhes do trace não estão disponíveis.",
     "status": "Status",
     "kind": "Tipo",
     "scope": "Escopo de instrumentação",
-    "spans": "spans",
-    "errors": "erros",
-    "events": "Eventos",
     "spanAttributes": "Atributos do span",
     "resourceAttributes": "Atributos do recurso",
-    "relatedMetrics": "Métricas relacionadas",
     "minDuration": "Duração mínima (ms)",
     "maxDuration": "Duração máxima (ms)",
     "errorOnly": "Somente erros",
@@ -699,14 +797,11 @@
     "hideInternal": "Ocultar spans internos"
   },
   "explore": {
-    "title": "Observabilidade",
     "description": "Consulte e correlacione métricas, logs e traces no mesmo período.",
     "signalsNavigation": "Navegação de sinais",
-    "advancedFilters": "Filtros avançados",
+    "advancedFilters": "Mais filtros",
     "activeFilters": "Filtros ativos",
-    "context": "Contexto da investigação",
     "timeRange": "Período",
-    "exactWindow": "Onboarding exact window",
     "traceId": "Trace ID",
     "spanId": "Span ID",
     "traceIdContext": "Trace ID: {{value}}",
@@ -720,7 +815,6 @@
     "environmentContext": "Ambiente: {{value}}",
     "metric": "Métrica",
     "samples": "Amostras",
-    "labels": "Rótulos",
     "time": "Hora",
     "severity": "Severidade",
     "service": "Serviço",
@@ -728,9 +822,7 @@
     "trace": "Trace",
     "operation": "Operação",
     "operationContext": "Operação: {{value}}",
-    "duration": "Duração",
     "relatedLogs": "Logs relacionados",
-    "open": "Abrir",
     "signals": {
       "metrics": "Métricas",
       "logs": "Logs",
@@ -759,6 +851,23 @@
       "metrics": "Nenhuma série de métricas para este contexto.",
       "logs": "Nenhum log para este contexto.",
       "traces": "Nenhum trace para este contexto."
+    },
+    "autoRefresh": "Atualização automática",
+    "logSort": {
+      "menu": "Ordenar {{field}}",
+      "numberAsc": "Número: menor primeiro",
+      "numberDesc": "Número: maior primeiro",
+      "textAsc": "Texto: A a Z",
+      "textDesc": "Texto: Z a A",
+      "applied": "Ordenado por {{value}}",
+      "pending": "Ordem pendente: {{value}}. Execute a consulta para aplicar.",
+      "reset": "Desfazer alteração da ordem",
+      "hint": "Ordena todos os logs correspondentes. Números não convertem texto; texto diferencia maiúsculas e minúsculas. Valores ausentes e de outros tipos aparecem por último.",
+      "historyOnly": "A ordenação por campo está disponível no histórico. O modo ao vivo mostra logs recém-recebidos.",
+      "invalid": "Ordenação inválida. Escolha um campo e uma ordem compatíveis.",
+      "restore": "Mais recentes primeiro",
+      "unavailable": "Esta coluna não pode ser ordenada.",
+      "pendingShort": "Ordem pendente"
     }
   },
   "instrumentation": {
@@ -855,8 +964,14 @@
         "available": "Disponível",
         "unavailable": "Indisponível"
       },
-      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
-      "security": { "tls": "TLS", "plaintext": "Não criptografado" },
+      "transport": {
+        "http_protobuf": "OTLP HTTP/protobuf",
+        "grpc": "OTLP gRPC"
+      },
+      "security": {
+        "tls": "TLS",
+        "plaintext": "Não criptografado"
+      },
       "profileReason": {
         "unavailable": "Este destino ainda não está pronto para seleção.",
         "notAdvertised": "Um administrador ainda não publicou um endereço seguro de ingestão.",
@@ -915,7 +1030,7 @@
       "directory": {
         "search": "Pesquisar origens",
         "categories": "Categorias de origem",
-        "all": "Todas as origens",
+        "all": "Guias disponíveis",
         "group": {
           "quick_start": "Início rápido",
           "applications": "Aplicações",
@@ -1009,6 +1124,20 @@
           "gcp_compute_engine_description": "Revise a compatibilidade dos sinais e conecte a telemetria de Google Compute Engine.",
           "gcp_gke": "Google Kubernetes Engine",
           "gcp_gke_description": "Revise a compatibilidade dos sinais e conecte a telemetria de Google Kubernetes Engine."
+        },
+        "commonPaths": "Caminhos comuns de configuração",
+        "unsupportedGuides": "Detalhes dos guias OTLP ({{count}} indisponíveis)",
+        "otlpBoundary": "Estas fontes não têm um guia de configuração OTLP aqui. Isso não indica o suporte a monitores Agentless.",
+        "guideUnavailable": "Guia OTLP indisponível",
+        "agentlessBoundary": "Para monitorar bancos de dados, hosts ou dispositivos de rede sem agente de aplicação, use o monitoramento ativo.",
+        "noAvailableMatches": "Nenhum guia disponível corresponde a esta seleção."
+      },
+      "guide": {
+        "java_spring_boot_zero_code": {
+          "disable_disable_command": "Remova a opção -javaagent do OpenTelemetry de JAVA_TOOL_OPTIONS ou dos argumentos de inicialização da JVM da aplicação, preservando as demais opções da JVM. Atualize a configuração do serviço ou contêiner que fornece essa opção e reinicie a aplicação de destino."
+        },
+        "java_java_jar_zero_code": {
+          "disable_disable_command": "Remova a opção -javaagent do OpenTelemetry de JAVA_TOOL_OPTIONS ou dos argumentos de inicialização da JVM da aplicação, preservando as demais opções da JVM. Atualize a configuração do serviço ou contêiner que fornece essa opção e reinicie a aplicação de destino."
         }
       }
     },
@@ -1050,7 +1179,7 @@
       "expires": "Expiração",
       "scope": "Escopo",
       "fixedScope": "Ingestão OTLP",
-      "ready": "Token de acesso gerado na memória",
+      "ready": "Token de acesso mantido apenas na memória desta sessão",
       "notGenerated": "Nenhum token de acesso gerado",
       "generateError": "Não foi possível gerar o token de acesso.",
       "acknowledgementRequired": "Salve este token de exibição única antes de sair ou recomeçar. Ele existe apenas na memória desta página.",
@@ -1108,7 +1237,8 @@
       "startDetection": "Iniciar verificação de sinais",
       "retryDetection": "Tentar detecção novamente",
       "openExplore": "Abrir no Explore",
-      "copy": "Copiar"
+      "copy": "Copiar",
+      "newDetection": "Nova verificação de sinais"
     },
     "environment": {
       "vm": "Host / VM",
@@ -1184,7 +1314,7 @@
       "waiting": "Aguardando telemetria dentro da janela de configuração.",
       "status": {
         "waiting": "Aguardando",
-        "received": "Recebido",
+        "received": "Recebido na janela",
         "unsupported": "Não compatível",
         "unavailable": "Armazenamento indisponível",
         "error": "Erro de detecção"
@@ -1195,9 +1325,15 @@
         "storage_unavailable": "O armazenamento de telemetria está indisponível.",
         "storage_query_failed": "Não foi possível consultar o armazenamento de telemetria.",
         "collector_unavailable": "O Collector selecionado está indisponível.",
-        "authentication_failed": "A autenticação da telemetria falhou.",
+        "authentication_failed": "O Collector selecionado informou uma falha de autenticação. Verifique suas credenciais de ingestão.",
         "invalid_context": "O contexto de detecção é inválido."
-      }
+      },
+      "fixedWindow": "Janela de observação: {{start}} — {{end}}",
+      "observationOnly": "Recebido indica uma observação nesta janela fixa, não que o serviço esteja em execução agora. Inicie uma nova verificação para observar a telemetria posterior.",
+      "lastReceived": "Última recepção nesta janela: {{time}}",
+      "windowComplete": "Esta janela de observação terminou. Inicie uma nova verificação para observar a telemetria posterior.",
+      "notObserved": "Não observado na janela",
+      "noneInWindow": "Nenhuma telemetria correspondente foi observada nesta janela."
     }
   },
   "auth": {
@@ -1248,7 +1384,12 @@
         "title": "Monitoramento ativo",
         "summary": "O HertzBeat se conecta aos alvos conforme uma programação e coleta métricas.",
         "flowLabel": "O HertzBeat se conecta ativamente a um grupo de tipos de alvo",
-        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "targets": {
+          "mysql": "MySQL",
+          "linux": "Linux",
+          "redis": "Redis",
+          "http": "HTTP"
+        },
         "outcomeTitle": "Dados coletados",
         "outcomeAvailability": "Verificações de disponibilidade e conexão",
         "outcomeMetrics": "CPU, memória, disco, conexões e tempo de resposta",
@@ -1260,7 +1401,12 @@
         "title": "Ingestão de telemetria",
         "summary": "Aplicações ou OpenTelemetry Collectors enviam telemetria ao HertzBeat.",
         "flowLabel": "Um grupo de aplicações e um OpenTelemetry Collector enviam dados ao HertzBeat",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
+        "sources": {
+          "java": "Java",
+          "dotnet": ".NET",
+          "node": "Node.js",
+          "collector": "OTel Collector"
+        },
         "outcomeTitle": "Sinais de telemetria",
         "outcomeSignals": "Metrics, Logs e Traces",
         "outcomeDiagnosis": "Caminhos de requisição, pontos lentos e traces de erro",
@@ -1339,6 +1485,41 @@
         "unavailable": "Os rótulos de monitores estão indisponíveis.",
         "contract": "Os rótulos de monitores não correspondem ao contrato esperado.",
         "error": "Não foi possível carregar os rótulos de monitores."
+      }
+    },
+    "daily": {
+      "title": "Início",
+      "description": "Continue o monitoramento e investigue as evidências observadas.",
+      "scope": "Cada entrada mostra sua última leitura independente. As contagens não indicam a atualidade da telemetria nem a integridade do serviço.",
+      "signalsDescription": "Consulte métricas, logs e traces com o mesmo contexto de investigação.",
+      "openSignals": "Abrir consultas de sinais",
+      "addData": "Adicionar fonte de dados",
+      "states": {
+        "loading": "Carregando evidências atuais…",
+        "permission": "Você não tem permissão para ler esta fonte.",
+        "unavailable": "Esta fonte está indisponível. Atualize para tentar novamente.",
+        "error": "Não foi possível ler esta fonte. Atualize para tentar novamente."
+      },
+      "monitors": {
+        "title": "Monitores",
+        "description": "Monitores ativos e de envio configurados.",
+        "empty": "Nenhum monitor configurado.",
+        "count": "Monitores configurados: {{count}}",
+        "open": "Abrir monitores"
+      },
+      "alerts": {
+        "title": "Alertas não resolvidos",
+        "description": "Registros históricos de alertas ainda não resolvidos.",
+        "empty": "Nenhum alerta não resolvido foi informado.",
+        "count": "Alertas não resolvidos: {{count}}",
+        "open": "Abrir alertas"
+      },
+      "services": {
+        "title": "Serviços",
+        "description": "Entidades de serviço registradas; disponibilidade e RED exigem evidências de sinais.",
+        "empty": "Nenhuma entidade de serviço registrada.",
+        "count": "Entidades de serviço registradas: {{count}}",
+        "open": "Abrir serviços"
       }
     }
   },
@@ -1494,7 +1675,13 @@
     "unit": "Unidade",
     "series": "Série",
     "time": "Hora",
-    "value": "Valor",
+    "value": {
+      "open": "Ver o valor completo de {{field}}",
+      "title": "Valor da métrica · {{field}}",
+      "copy": "Copiar valor",
+      "copied": "Copiado",
+      "error": "Falha ao copiar"
+    },
     "search": "Pesquisar métricas",
     "searchPlaceholder": "Pesquisar grupos ou campos",
     "groupFilter": "Grupo de métricas",
@@ -1513,13 +1700,6 @@
     "favoriteCount": "{{count}} favoritos",
     "itemCount": "{{count}} itens",
     "currentValues": "Valores atuais das métricas",
-    "value": {
-      "open": "Ver o valor completo de {{field}}",
-      "title": "Valor da métrica · {{field}}",
-      "copy": "Copiar valor",
-      "copied": "Copiado",
-      "error": "Falha ao copiar"
-    },
     "noMatches": "Nenhuma métrica corresponde aos filtros atuais.",
     "historyTrend": "Tendência histórica",
     "currentValue": "Atual",
@@ -1580,7 +1760,12 @@
       "boundEntity": "Entidade vinculada",
       "otlpEvidence": "Evidências OTLP"
     },
-    "states": { "ready": "Disponível", "empty": "Sem dados", "unavailable": "Indisponível", "unknown": "Desconhecido" },
+    "states": {
+      "ready": "Disponível",
+      "empty": "Sem dados",
+      "unavailable": "Indisponível",
+      "unknown": "Desconhecido"
+    },
     "sections": {
       "currentAlerts": "Alertas atuais",
       "collectionHealth": "Saúde da coleta",
@@ -1607,7 +1792,10 @@
       "empty": "Nenhuma execução de coleta foi observada nesta janela.",
       "unavailable": "As evidências de execução da coleta estão indisponíveis.",
       "unknown": "As evidências de execução da coleta ainda não foram determinadas.",
-      "outcomes": { "success": "Concluída", "failure": "Falhou" },
+      "outcomes": {
+        "success": "Concluída",
+        "failure": "Falhou"
+      },
       "phases": {
         "UNKNOWN": "Fase desconhecida",
         "RESOLVE": "Resolução",
@@ -1647,7 +1835,11 @@
       "unavailable": "As evidências OTLP relacionadas estão indisponíveis.",
       "unknown": "As evidências OTLP relacionadas ainda não foram determinadas."
     },
-    "signals": { "metrics": "Métricas OTLP", "logs": "Logs", "traces": "Traces" },
+    "signals": {
+      "metrics": "Métricas OTLP",
+      "logs": "Logs",
+      "traces": "Traces"
+    },
     "sources": {
       "currentAlerts": "alertas atuais",
       "collection": "eventos de coleta do Greptime",
@@ -1695,7 +1887,10 @@
     "saveApplyConfirm": "Salvar e aplicar as alterações em {{app}}?",
     "visibilityAction": "{{app}} está atualmente {{state}}",
     "visibilityConfirm": "{{app}} está atualmente {{state}}. Alterar para {{nextState}}?",
-    "visibilityState": { "visible": "visível", "hidden": "oculto" },
+    "visibilityState": {
+      "visible": "visível",
+      "hidden": "oculto"
+    },
     "validated": "A definição {{app}} é válida.",
     "viewApp": "Ver {{app}}",
     "editApp": "Editar {{app}}",
@@ -1704,7 +1899,11 @@
     "refreshConflict": "Atualizar definição mais recente",
     "deleteTitle": "Excluir definição de monitor",
     "deleteConfirm": "Excluir {{app}}? O servidor poderá restaurar a definição integrada.",
-    "originValue": { "builtin": "Integrada", "custom": "Personalizada", "override": "Substituição" },
+    "originValue": {
+      "builtin": "Integrada",
+      "custom": "Personalizada",
+      "override": "Substituição"
+    },
     "disposition": {
       "removed": "A definição personalizada foi removida.",
       "builtin_restored": "A substituição foi removida e a definição integrada foi restaurada."
@@ -1787,7 +1986,10 @@
       "startFailed": "Não foi possível iniciar a verificação. Tente novamente.",
       "verifiedRail": "Verificado por um evento real do emissor"
     },
-    "zabbix": { "parameters": "Parâmetros do tipo de mídia", "script": "Script do webhook" }
+    "zabbix": {
+      "parameters": "Parâmetros do tipo de mídia",
+      "script": "Script do webhook"
+    }
   },
   "plugins": {
     "title": "Gerenciamento de plugins",
@@ -1821,7 +2023,11 @@
       "type": "Tipo",
       "number": "Número",
       "string": "Texto",
-      "password": { "keep": "Manter valor configurado", "replace": "Substituir", "clear": "Limpar" }
+      "password": {
+        "keep": "Manter valor configurado",
+        "replace": "Substituir",
+        "clear": "Limpar"
+      }
     },
     "jarFile": "Arquivo jar",
     "chooseJar": "Escolher um arquivo .jar em memória",
@@ -1829,7 +2035,10 @@
     "deleteTitle": "Excluir plugins",
     "deleteConfirm": "Excluir {{target}}?",
     "deleteBatchConfirm": "Excluir os {{target}} plugins selecionados?",
-    "validation": { "name": "Informe o nome do plugin.", "jarFile": "Escolha um arquivo .jar não vazio." },
+    "validation": {
+      "name": "Informe o nome do plugin.",
+      "jarFile": "Escolha um arquivo .jar não vazio."
+    },
     "notice": {
       "updated": "O status do plugin foi atualizado.",
       "deleted": "Os plugins selecionados foram excluídos."
@@ -2099,9 +2308,18 @@
     },
     "confirm": {
       "description": "O servidor aplicará esta ação a {{count}} coletor(es) selecionado(s).",
-      "online": { "single": "Colocar este coletor online?", "batch": "Colocar os coletores selecionados online?" },
-      "offline": { "single": "Colocar este coletor offline?", "batch": "Colocar os coletores selecionados offline?" },
-      "delete": { "single": "Excluir este coletor?", "batch": "Excluir os coletores selecionados?" }
+      "online": {
+        "single": "Colocar este coletor online?",
+        "batch": "Colocar os coletores selecionados online?"
+      },
+      "offline": {
+        "single": "Colocar este coletor offline?",
+        "batch": "Colocar os coletores selecionados offline?"
+      },
+      "delete": {
+        "single": "Excluir este coletor?",
+        "batch": "Excluir os coletores selecionados?"
+      }
     }
   },
   "labels": {
@@ -2641,10 +2859,22 @@
     "title": "Configuração de notificações",
     "description": "Configure as dependências de entrega em ordem e gerencie cada área separadamente.",
     "steps": {
-      "channels": { "label": "Serviços de canal", "dependency": "Configure os serviços de entrega por e-mail e SMS." },
-      "receivers": { "label": "Destinatários", "dependency": "Adicione destinos que usam os canais configurados." },
-      "templates": { "label": "Modelos", "dependency": "Personalize opcionalmente as mensagens de um canal." },
-      "rules": { "label": "Regras", "dependency": "Direcione alertas para um ou mais destinatários." }
+      "channels": {
+        "label": "Serviços de canal",
+        "dependency": "Configure os serviços de entrega por e-mail e SMS."
+      },
+      "receivers": {
+        "label": "Destinatários",
+        "dependency": "Adicione destinos que usam os canais configurados."
+      },
+      "templates": {
+        "label": "Modelos",
+        "dependency": "Personalize opcionalmente as mensagens de um canal."
+      },
+      "rules": {
+        "label": "Regras",
+        "dependency": "Direcione alertas para um ou mais destinatários."
+      }
     },
     "status": {
       "configured": "Configurado",
@@ -2698,7 +2928,9 @@
       "invalid": "A resposta de destinatários ou modelos é inválida.",
       "unavailable": "Destinatários ou modelos estão temporariamente indisponíveis.",
       "error": "Não foi possível carregar destinatários ou modelos.",
-      "action": { "receivers": "Configurar destinatários" }
+      "action": {
+        "receivers": "Configurar destinatários"
+      }
     },
     "read": {
       "missing": "A regra de envio não existe mais.",
@@ -2817,7 +3049,10 @@
   "alertRules": {
     "title": "Regras de alerta",
     "description": "Gerencie regras de avaliação e o estado de ativação.",
-    "guide": { "alertCenter": "Ver central de alertas", "deliveryRules": "Configurar regras de envio" },
+    "guide": {
+      "alertCenter": "Ver central de alertas",
+      "deliveryRules": "Configurar regras de envio"
+    },
     "manage": "Gerenciar regras",
     "new": "Nova regra",
     "edit": "Editar regra",
@@ -2876,7 +3111,10 @@
         "parentheses": "Parênteses incompatíveis"
       }
     },
-    "severity": { "label": "Severidade", "placeholder": "Selecione Prioridades" },
+    "severity": {
+      "label": "Severidade",
+      "placeholder": "Selecione Prioridades"
+    },
     "mode": {
       "label": "Modo de alerta",
       "placeholder": "Por favor selecione o modo de alerta",
@@ -2923,7 +3161,11 @@
     "deleteSelectedConfirm": "Excluir {{count}} regras de alerta selecionadas?",
     "export": {
       "selected": "Exportar selecionadas",
-      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel",
+        "yaml": "YAML"
+      },
       "success": "Configuração de regras de alerta baixada.",
       "failure": {
         "forbidden": "Sua conta não pode exportar regras de alerta.",
@@ -3077,6 +3319,7 @@
     "windowPlaceholder": "Insira o tempo da janela de cálculo",
     "times": "Contagem de disparo",
     "preview": "Visualizar",
+    "previewLoading": "Avaliando a expressão…",
     "previewSuccess": "A prévia retornou {{count}} linhas; até {{pageSize}} linhas são exibidas por página.",
     "previewEmpty": "A prévia não retornou linhas.",
     "previewTruncated": "Parte do conteúdo da prévia foi truncada para exibição.",
@@ -3311,9 +3554,9 @@
       "acknowledged": "Reconhecidos",
       "handled": "Tratados",
       "workspaceScope": "Workspace atual",
-      "warning": "Aviso",
-      "critical": "Crítico",
-      "emergency": "Emergência"
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     },
     "status": {
       "label": "Status",
@@ -3327,10 +3570,10 @@
     "severity": {
       "label": "Severidade",
       "all": "Todas as severidades",
-      "info": "Informativo",
-      "warning": "Aviso",
-      "critical": "Crítico",
-      "emergency": "Emergência"
+      "info": "INFO",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     }
   },
   "monitor": {
@@ -3399,7 +3642,10 @@
     "export": {
       "all": "Exportar todos",
       "selected": "Exportar selecionados",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel"
+      },
       "success": "Configuração de monitor baixada.",
       "failure": {
         "forbidden": "É necessário acesso de administrador para exportar monitores.",
@@ -3489,7 +3735,10 @@
         "zookeeper_sd": "Descoberta ZooKeeper"
       },
       "schedule": "Agendamento",
-      "scheduleTypes": { "interval": "Intervalo", "cron": "Expressão Cron" },
+      "scheduleTypes": {
+        "interval": "Intervalo",
+        "cron": "Expressão Cron"
+      },
       "cronExpression": "Expressão Cron (6 campos)",
       "advanced": "Parâmetros avançados",
       "labels": "Rótulos",
@@ -3507,7 +3756,12 @@
         "empty": "Cada item precisa de uma chave.",
         "duplicate": "As chaves devem ser únicas."
       },
-      "metrics": { "unit": "Unidade", "type": "Tipo", "number": "Número", "string": "Texto" },
+      "metrics": {
+        "unit": "Unidade",
+        "type": "Tipo",
+        "number": "Número",
+        "string": "Texto"
+      },
       "descriptionLabel": "Descrição",
       "connection": "Conexão",
       "metadata": "Responsabilidade e metadados",
@@ -3687,8 +3941,14 @@
       "system_property": "Propriedade do sistema",
       "command_line": "Linha de comando"
     },
-    "applyMode": { "managed_write": "Configuração gerenciada", "external_apply": "Configuração externa / GitOps" },
-    "applyModeInline": { "managed_write": "gerenciada pelo HertzBeat", "external_apply": "gerenciada externamente" },
+    "applyMode": {
+      "managed_write": "Configuração gerenciada",
+      "external_apply": "Configuração externa / GitOps"
+    },
+    "applyModeInline": {
+      "managed_write": "gerenciada pelo HertzBeat",
+      "external_apply": "gerenciada externamente"
+    },
     "maintenance": {
       "active": "O modo de manutenção está ativo",
       "inactive": "O modo de manutenção está inativo",
@@ -3696,8 +3956,16 @@
       "acknowledgement": "Entendo que as gravações de monitoramento devem permanecer pausadas até a conclusão da migração e da ativação.",
       "acknowledgementAutoEnter": "Entendo que iniciar a migração entrará automaticamente no modo de manutenção e pausará as gravações de monitoramento."
     },
-    "topology": { "single_node": "Nó único", "multi_node": "Vários nós", "unknown": "Desconhecida" },
-    "topologyInline": { "single_node": "nó único", "multi_node": "vários nós", "unknown": "desconhecido" },
+    "topology": {
+      "single_node": "Nó único",
+      "multi_node": "Vários nós",
+      "unknown": "Desconhecida"
+    },
+    "topologyInline": {
+      "single_node": "nó único",
+      "multi_node": "vários nós",
+      "unknown": "desconhecido"
+    },
     "migration": {
       "title": "Assistente de migração de banco do HertzBeat",
       "description": "Mova os dados de gerenciamento do HertzBeat do H2 para um banco MySQL ou PostgreSQL vazio. O destino será validado antes da cópia.",
@@ -3733,7 +4001,11 @@
     "export": {
       "format": "Formato de exportação",
       "password": "Senha de exportação",
-      "formats": { "yaml": "YAML", "env": "Variáveis de ambiente", "kubernetes_secret": "Secret do Kubernetes" }
+      "formats": {
+        "yaml": "YAML",
+        "env": "Variáveis de ambiente",
+        "kubernetes_secret": "Secret do Kubernetes"
+      }
     },
     "actions": {
       "validate": "Validar destino",
@@ -3746,7 +4018,10 @@
       "returnToConfiguration": "Voltar à configuração atual",
       "continueCurrent": "Continuar migração atual"
     },
-    "validation": { "valid": "Validação do destino concluída", "invalid": "Falha na validação do destino" },
+    "validation": {
+      "valid": "Validação do destino concluída",
+      "invalid": "Falha na validação do destino"
+    },
     "state": {
       "pending": "Migração na fila",
       "running": "Migração em andamento",
@@ -3775,7 +4050,12 @@
       "verification": "Verificação",
       "restart": "Reinicie o HertzBeat pelo procedimento operacional normal da implantação. Esta página continuará consultando a convergência."
     },
-    "verification": { "pending": "Pendente", "running": "Em andamento", "succeeded": "Concluída", "failed": "Falhou" },
+    "verification": {
+      "pending": "Pendente",
+      "running": "Em andamento",
+      "succeeded": "Concluída",
+      "failed": "Falhou"
+    },
     "errors": {
       "migration_unavailable": "O mecanismo de migração não está disponível nesta versão do servidor.",
       "migration_source_unsupported": "Somente um banco de gerenciamento H2 pode ser migrado.",
@@ -3862,7 +4142,11 @@
         "host": "Host SMTP",
         "port": "Porta SMTP",
         "security": "Segurança do transporte",
-        "securityMode": { "none": "Nenhuma", "starttls": "STARTTLS", "tls": "TLS" },
+        "securityMode": {
+          "none": "Nenhuma",
+          "starttls": "STARTTLS",
+          "tls": "TLS"
+        },
         "username": "Nome de usuário",
         "password": "Senha",
         "fromAddress": "Endereço do remetente"
@@ -3977,8 +4261,13 @@
         "noRun": "Sem execuções"
       }
     },
-    "investigation": { "label": "Investigação" },
-    "roles": { "you": "Você", "assistant": "HertzBeat AI" },
+    "investigation": {
+      "label": "Investigação"
+    },
+    "roles": {
+      "you": "Você",
+      "assistant": "HertzBeat AI"
+    },
     "empty": {
       "title": "O que você quer investigar?",
       "description": "Pergunte sobre um monitor, entidade, alerta, métrica, log, trace ou escopo de topologia."
@@ -4022,9 +4311,12 @@
       "approvals": "Aprovações",
       "noApprovals": "Nenhuma aprovação pendente",
       "inputs": "Entrada solicitada",
-      "noInputs": "Nenhuma entrada solicitada"
+      "noInputs": "Nenhuma entrada solicitada",
+      "statusUnknown": "Estado não registrado"
     },
-    "approval": { "adminRequired": "Aprovação do administrador necessária" },
+    "approval": {
+      "adminRequired": "Aprovação do administrador necessária"
+    },
     "providers": {
       "action": "Provedores de modelo",
       "title": "Provedores de modelo",
@@ -4087,8 +4379,14 @@
       "truncated": "Somente o conjunto limitado de resultados é exibido.",
       "truncationUnknown": "A quantidade total de resultados é desconhecida."
     },
-    "metrics": { "before": "Antes", "anchor": "Alerta", "after": "Depois" },
-    "logs": { "focusActions": "Logs disponíveis para foco" },
+    "metrics": {
+      "before": "Antes",
+      "anchor": "Alerta",
+      "after": "Depois"
+    },
+    "logs": {
+      "focusActions": "Logs disponíveis para foco"
+    },
     "traces": {
       "traceId": "Trace ID",
       "service": "Serviço",
@@ -4097,7 +4395,12 @@
       "status": "Status",
       "spans": "Spans"
     },
-    "traceStatus": { "error": "Erro", "ok": "OK", "unset": "Não definido", "unknown": "Desconhecido" },
+    "traceStatus": {
+      "error": "Erro",
+      "ok": "OK",
+      "unset": "Não definido",
+      "unknown": "Desconhecido"
+    },
     "topology": {
       "source": "Origem",
       "target": "Destino",
@@ -4169,5 +4472,313 @@
       "loadEarlier": "Carregar histórico anterior",
       "noText": "Sem conteúdo de texto"
     }
+  },
+  "services": {
+    "title": "Serviços",
+    "description": "Inspecione serviços registrados, RED de solicitações e operações de traces observadas.",
+    "search": "Buscar serviços",
+    "environmentFilter": "Filtrar ambiente do catálogo",
+    "query": "Consultar",
+    "directory": "Catálogo de serviços",
+    "overview": "Visão geral do serviço",
+    "service": "Serviço",
+    "environment": "Ambiente",
+    "namespace": "Namespace",
+    "source": "Origem do catálogo",
+    "unknown": "Indisponível",
+    "empty": "Nenhum serviço registrado corresponde",
+    "unresolved": "Pode haver telemetria sem um serviço registrado. Abra o Explore para consultar sinais diretamente.",
+    "select": "Selecione um serviço para inspecionar evidências",
+    "openTraces": "Abrir traces",
+    "openLogs": "Abrir logs do serviço",
+    "openMetrics": "Abrir métricas",
+    "logsScope": "A entrada de logs usa o escopo do serviço; investigue os traces da operação para encontrar logs relacionados.",
+    "invalidWindow": "Escolha uma janela válida de investigação de até 24 horas.",
+    "latestTrace": "Último trace observado na janela",
+    "freshnessLimit": "O horário observado é evidência histórica, não uma garantia de saúde ou atividade do serviço.",
+    "entity": "Abrir evidências da entidade",
+    "red": "RED de solicitações · Greptime Flow",
+    "redLimit": "Escopo de todo o serviço. Solicitações SERVER observadas em intervalos de 60 segundos. Janelas não alinhadas selecionam intervalos inteiros. A completude da amostragem é desconhecida; P95 é aproximado e pode estar indisponível.",
+    "requests": "Solicitações observadas",
+    "requestRate": "Solicitações / segundo",
+    "errorRate": "Taxa de erros",
+    "latencyP95": "Latência P95",
+    "operations": "Operações de traces raiz observadas",
+    "operationLimit": "Até 20 grupos ordenados por traces com erro. São evidências de traces raiz observados, não um inventário completo de solicitações; serviços dependentes podem ter RED sem operações raiz.",
+    "operation": "Operação",
+    "observedTraces": "Traces observados",
+    "errorTraces": "Traces com erro",
+    "investigate": "Investigar",
+    "errorAction": "Traces com erro",
+    "unnamedOperation": "Operação sem nome",
+    "noOperations": "Sem evidências de operações raiz nesta janela",
+    "associations": "Associações existentes",
+    "associationLimit": "Alertas atuais vinculados a monitores e até 50 relações registradas. Não são filtrados pela janela de investigação nem representam todas as dependências inferidas.",
+    "linkedAlerts": "Alertas ativos vinculados a monitores",
+    "noRelations": "Sem evidências de relações registradas nesta prévia",
+    "back": "Voltar aos serviços",
+    "timeRange": "Período de investigação",
+    "exactWindow": "Manter janela absoluta",
+    "state": {
+      "loading": "Carregando evidências…",
+      "empty": "Nenhuma evidência observada nesta janela",
+      "unavailable": "Fonte de evidências indisponível",
+      "error": "Não foi possível ler as evidências",
+      "permission": "Permissão necessária para ler estas evidências",
+      "idle": "Selecione um serviço primeiro",
+      "missing": "Serviço não está mais disponível",
+      "invalid": "Escopo de investigação inválido"
+    },
+    "backDirectory": "Voltar ao diretório de serviços",
+    "information": "Informações do serviço",
+    "lastEntityEvidence": "Evidência de entidade mais recente",
+    "performance": "Desempenho",
+    "registered": "Serviços registrados",
+    "scopeTooLarge": "O escopo excede 500 serviços",
+    "narrowScope": "Restrinja a busca ou o ambiente para comparar todos os serviços correspondentes. Não é exibida uma classificação parcial.",
+    "performanceUnavailable": "Observações de serviços indisponíveis",
+    "noRanking": "Nenhuma classificação atual é exibida. Tente novamente ou abra os serviços registrados.",
+    "performanceScope": "Solicitações SERVER observadas em intervalos completos de 60 segundos. A completude da amostragem é desconhecida e P95 é aproximado. Ausência de observações não indica integridade.",
+    "resultCount": "{{count}} serviços correspondentes",
+    "sort": "Ordenar todos os resultados",
+    "order": "Direção da ordenação",
+    "desc": "Decrescente",
+    "asc": "Crescente",
+    "pageEmpty": "Esta página não contém serviços",
+    "firstPage": "Primeira página",
+    "clearFilters": "Limpar filtros",
+    "errorRequests": "Solicitações com erro",
+    "dataState": "Estado dos dados",
+    "observation": {
+      "ready": "Observado",
+      "empty": "Nenhuma solicitação observada",
+      "unresolved": "Identidade não resolvida"
+    },
+    "sortKeys": {
+      "errorCount": "Solicitações com erro",
+      "errorRate": "Taxa de erros",
+      "requestCount": "Solicitações observadas",
+      "latencyP95Ms": "Latência P95",
+      "name": "Serviço"
+    }
+  },
+  "exploreSaved": {
+    "views": "Visualizações",
+    "myView": "Minha visualização",
+    "defaultView": "Visualização padrão de logs",
+    "filterViews": "Filtrar visualizações",
+    "sort": "Ordenar visualizações salvas",
+    "sortOptions": {
+      "default": "Padrão",
+      "recent": "Visualizadas recentemente",
+      "newest": "Mais recentes",
+      "oldest": "Mais antigas",
+      "az": "A–Z",
+      "za": "Z–A"
+    },
+    "onlyMine": "Mostrar apenas minhas visualizações salvas",
+    "addFavorite": "Adicionar {{view}} aos favoritos",
+    "removeFavorite": "Remover {{view}} dos favoritos",
+    "saveNewView": "Salvar como nova visualização",
+    "saveChanges": "Salvar alterações",
+    "copyUrl": "Copiar URL",
+    "editView": "Editar",
+    "moreActions": "Mais ações da visualização",
+    "queryActions": "Ações da consulta",
+    "directory": "Consultas salvas",
+    "save": "Salvar consulta",
+    "update": "Atualizar consulta salva",
+    "saveAs": "Salvar como",
+    "active": "Aberta: {{name}}",
+    "applyFirst": "Aplique as alterações com Consultar antes de salvar.",
+    "activeUnavailable": "A consulta salva selecionada está indisponível. Reabra um registro válido antes de atualizar.",
+    "invalidQuery": "Esta consulta não pode ser salva com as condições ou o modo de tempo atuais.",
+    "shared": "Compartilhadas nesta instalação do HertzBeat. Usuários com permissão de escrita podem atualizar ou excluir estas consultas.",
+    "relative": "Relativo · {{range}} · recalculado ao abrir",
+    "absolute": "Absoluto · {{window}} · {{zone}}",
+    "name": "Nome",
+    "description": "Descrição",
+    "firstPage": "Reabre na primeira página de resultados. O histórico de navegação não é compartilhado.",
+    "writeFailed": "Não foi possível confirmar a alteração. A entrada foi mantida; atualize as consultas salvas antes de tentar novamente.",
+    "savePermission": "Você não tem permissão para salvar esta visualização compartilhada.",
+    "deletePermission": "Você não tem permissão para excluir esta visualização compartilhada.",
+    "signal": "Sinal",
+    "allSignals": "Todos os sinais",
+    "empty": "Nenhuma consulta salva para este sinal.",
+    "original": "Registro salvo original",
+    "export": "Exportar JSON original",
+    "updated": "Atualizado: {{time}}",
+    "unknownTime": "Indisponível",
+    "open": "Abrir consulta",
+    "inspect": "Inspecionar original",
+    "discardDraft": "Descartar alterações não aplicadas e abrir esta consulta salva?",
+    "deleteConfirm": "Excluir esta consulta compartilhada?",
+    "editor": {
+      "create": "Salvar consulta",
+      "update": "Atualizar consulta compartilhada",
+      "copy": "Salvar consulta como"
+    },
+    "states": {
+      "loading": "Carregando consultas salvas…",
+      "error": "Não foi possível carregar as consultas salvas.",
+      "permission": "Você não tem acesso às consultas salvas.",
+      "contract_error": "Não foi possível ler a resposta das consultas salvas.",
+      "transport_error": "O serviço de consultas salvas está indisponível."
+    },
+    "reasons": {
+      "invalidPayload": "O conteúdo original é inválido ou tem formato desconhecido.",
+      "unsupportedVersion": "Esta versão de consulta salva não é compatível.",
+      "invalidQuery": "As condições ou o modo de tempo salvos não podem ser restaurados com segurança.",
+      "legacyUnsupported": "Algumas condições antigas não podem ser convertidas sem alterar a consulta. O original foi mantido.",
+      "retiredReferenceJoin": "Esta consulta salva usa uma associação com tabela de referência que não é mais compatível. Ela não foi aberta nem executada."
+    },
+    "revisionConflict": "Esta consulta foi alterada ou excluída em outro lugar. O rascunho foi mantido. Recarregue a versão atual ou salve uma cópia."
+  },
+  "signalDashboard": {
+    "clearSearch": "Limpar",
+    "search": "Buscar painéis por nome",
+    "searchCount": "{{count}} de {{total}} painéis",
+    "noMatches": "Nenhum painel corresponde a este nome",
+    "timeZoneUnspecified": "Fuso horário não especificado",
+    "analysisDetails": "Detalhes da análise",
+    "analysisReadOnly": "Este painel preserva a análise completa de logs. Abra no Explore para alterar a consulta; título, layout e contexto de serviço compartilhado continuam editáveis.",
+    "settings": "Configurações do painel",
+    "variableKind": "Tipo de variável: {{name}}",
+    "title": "Painéis",
+    "shared": "Os painéis compartilhados usam consultas controladas pelo HertzBeat.",
+    "new": "Novo painel",
+    "untitled": "Painel sem título",
+    "edit": "Editar painel",
+    "copy": "Copiar painel",
+    "copyName": "Cópia de {{name}}",
+    "name": "Nome do painel",
+    "description": "Descrição",
+    "key": "ID do painel",
+    "directory": "Todos os painéis",
+    "open": "Abrir",
+    "loading": "Carregando painéis…",
+    "error": "Não foi possível carregar os painéis. Atualize para tentar novamente.",
+    "empty": "Nenhum painel compartilhado foi salvo.",
+    "document": "Documento compatível",
+    "legacy": "Painel antigo: o conteúdo original foi preservado.",
+    "unavailable": "O painel não foi encontrado ou seu documento não é compatível.",
+    "state": "Estado do documento",
+    "updated": "Metadados atualizados",
+    "upgrade": "Atualizar painel vazio",
+    "upgradeExact": "Salve esta conversão vazia exata antes de editar. Os fragmentos originais serão preservados.",
+    "import": "Importar painel",
+    "export": "Exportar documento",
+    "exportOriginal": "Exportar original",
+    "importFile": "Arquivo JSON do painel",
+    "documentJson": "JSON do documento do painel",
+    "importHelp": "Importe o subconjunto Perses compatível. Revise o rascunho antes de salvar; registros existentes nunca são sobrescritos automaticamente.",
+    "importCopy": "Importar uma cópia com novo ID",
+    "invalidDocument": "Há campos inválidos ou incompatíveis. Corrija-os antes de consultar ou salvar.",
+    "invalidHandoff": "Não é possível adicionar este painel sem perder o contexto. A consulta original não foi alterada.",
+    "conflict": "Este painel foi alterado após ser aberto. O rascunho foi mantido; recarregue para revisar a versão atual.",
+    "writeFailed": "Falha ao salvar. As entradas foram mantidas; tente novamente após a conexão se recuperar.",
+    "reload": "Recarregar versão atual",
+    "discardReload": "Descartar o rascunho local e recarregar o painel salvo?",
+    "deleteConfirm": "Excluir este painel compartilhado?",
+    "unsaved": "Rascunho local não salvo. Consulte para visualizar definições; cancele para descartar. Atualizar restaura o conteúdo salvo.",
+    "query": "Consultar",
+    "applyFirst": "Execute a consulta para visualizar esta definição.",
+    "panels": "Componentes do painel",
+    "noPanels": "Ainda não há componentes. Adicione um ou envie uma consulta compatível do Explore.",
+    "addPanel": "Adicionar componente",
+    "newPanel": "Novo componente",
+    "removePanel": "Remover componente",
+    "definition": "Definição do painel",
+    "panelDefinition": "Definição do componente selecionado",
+    "panelTitle": "Título do componente",
+    "panelType": "Tipo de componente",
+    "queryContext": "Contexto da consulta",
+    "queryContextField": "Contexto da consulta: {{field}}",
+    "variables": "Definições de variáveis",
+    "TextVariable": "Valor de texto",
+    "ListVariable": "Opções estáticas",
+    "defaultValue": "Valor padrão",
+    "staticValues": "Opções, uma por linha",
+    "removeVariable": "Remover variável",
+    "addVariable": "Adicionar variável {{name}}",
+    "serviceName": "Serviço",
+    "serviceNamespace": "Namespace",
+    "environment": "Ambiente",
+    "defaultDuration": "Intervalo de tempo padrão",
+    "autoRefresh": "Atualização automática padrão",
+    "timeZone": "Fuso horário",
+    "timeRange": "Intervalo de tempo",
+    "fixedWindow": "Janela fixa de investigação",
+    "range": "Últimos {{range}}",
+    "invalidTime": "A janela explícita é inválida. Selecione um intervalo e consulte.",
+    "layout": "Posição e tamanho",
+    "x": "Coluna",
+    "y": "Linha",
+    "width": "Largura",
+    "height": "Altura",
+    "invalidLayout": "Esta posição sobrepõe outro componente ou excede os limites.",
+    "chooseTarget": "Escolha um painel de destino",
+    "appendPanel": "Adicionar a este painel",
+    "newFromPanel": "Criar painel com este componente",
+    "returnSource": "Voltar à consulta de origem",
+    "openExplore": "Abrir Explore",
+    "loadingPanel": "Carregando componente…",
+    "emptyPanel": "Nenhum dado corresponde à consulta deste componente.",
+    "cancelled": "Consulta cancelada. Tente novamente para consultar.",
+    "retryPanel": "Tentar novamente",
+    "bounded": "Os resultados cobrem um conjunto limitado de até {{limit}} linhas, não toda a janela.",
+    "unknownCoverage": "A cobertura da consulta é desconhecida.",
+    "truncated": "O resultado foi truncado no limite da consulta.",
+    "runtimeError": "Não foi possível exibir o componente. Tente novamente ou atualize.",
+    "addFromExplore": "Adicionar ao painel",
+    "back": "Voltar ao painel",
+    "addApplyFirst": "Execute a consulta para aplicar as alterações antes de adicionar.",
+    "addUnsupported": "Estas condições de consulta ainda não são compatíveis com painéis.",
+    "addFixedTrace": "Este componente mantém um trace fixo; variáveis de serviço não o alteram.",
+    "addSourceWindow": "O componente abre com esta janela de investigação.",
+    "fields": {
+      "name": "Nome da métrica",
+      "operationName": "Nome da operação",
+      "aggregation": "Agregação",
+      "temporalAggregation": "Agregação temporal",
+      "stepSeconds": "Passo (segundos)",
+      "limit": "Limite de resultados",
+      "search": "Busca de logs",
+      "severity": "Severidade",
+      "spanScope": "Escopo do span",
+      "minDurationMs": "Duração mínima (ms)",
+      "maxDurationMs": "Duração máxima (ms)",
+      "hideInternal": "Ocultar registros internos",
+      "hideNoise": "Ocultar ruído",
+      "errorOnly": "Somente erros",
+      "traceId": "ID do trace",
+      "spanId": "ID do span",
+      "entityId": "ID da entidade",
+      "entityType": "Tipo de entidade",
+      "collectorId": "ID do coletor",
+      "instance": "Instância",
+      "endpoint": "Endpoint",
+      "serviceName": "Serviço",
+      "serviceNamespace": "Namespace",
+      "environment": "Ambiente"
+    },
+    "kinds": {
+      "TimeSeriesChart": "Série temporal de métricas",
+      "StatChart": "Estatística de métricas",
+      "GaugeChart": "Medidor de métricas",
+      "Table": "Tabela de métricas",
+      "LogsTable": "Tabela de logs",
+      "TraceTable": "Tabela de traces",
+      "TracingGanttChart": "Cascata de traces"
+    },
+    "gaugeMaximum": "Máximo do medidor",
+    "queryFailures": {
+      "invalid": "A solicitação da visualização é inválida.",
+      "permission": "Você não tem permissão para inspecionar este sinal.",
+      "overloaded": "O armazenamento de sinais está ocupado. Tente novamente.",
+      "unavailable": "O armazenamento de sinais está indisponível.",
+      "contract": "As evidências estão incompletas e não puderam ser renderizadas."
+    },
+    "addTransactionsUnsupported": "As transações ainda não podem ser adicionadas a um dashboard. Salve a consulta para reabrir a investigação."
   }
 }

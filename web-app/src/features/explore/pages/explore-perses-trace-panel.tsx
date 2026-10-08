@@ -1,24 +1,25 @@
+import { DEFAULT_TRACE_VIEW, readTraceView } from '../model/explore-trace-view';
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { HertzBeatTraceTableResult, type HertzBeatPersesTableInteraction } from '@/platform/perses';
+import { HertzBeatTraceTableResult } from '@/platform/perses';
 import { usePublishShellInvestigation } from '@/shared/investigation';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
-import { ExploreHistoryPagination } from '../components/explore-history-pagination';
+import { ExploreTraceResultActions } from '../components/explore-trace-result-actions';
 import { explorePersesMessages } from '../components/explore-perses-messages';
 import { ExploreMessageResult, ExploreResultFrame } from '../components/explore-state-panel';
 import { SignalEmptyState, SignalResultFrame } from '../components/signal-result-frame';
 import { materializeTraceInvestigation } from '../model/explore-agent-handoff';
-import { buildTraceInvestigationPath } from '../model/explore-investigation-model';
+import { createTraceNavigation } from '../model/explore-trace-navigation';
 import { createExploreTracePersesResult } from '../model/explore-perses-result-model';
-import type { TraceExploreQuery } from '../model/explore-model';
-import { ExploreSignalContractError, type ExplorePageResult, type TraceRow } from '../model/explore-signal-contract';
+import { buildExplorePath, type TraceExploreQuery } from '../model/explore-model';
+import { ExploreSignalContractError, type TracePageResult } from '../model/explore-signal-contract';
 
 type Props = {
-  data: ExplorePageResult<TraceRow>;
+  data: TracePageResult;
   query: TraceExploreQuery;
   openPath: (path: string) => void;
   timeWindow: ExactTimeWindow | undefined;
@@ -27,7 +28,7 @@ type Props = {
 };
 
 export function ExplorePersesTracePanel(props: Props) {
-  const { data, query, openPath, timeWindow, revision, evidenceCurrent } = props;
+  const { data, query, timeWindow, revision, evidenceCurrent } = props;
   const { t } = useTranslation();
   usePublishShellInvestigation(
     useMemo(
@@ -43,66 +44,119 @@ export function ExplorePersesTracePanel(props: Props) {
     if (!(error instanceof ExploreSignalContractError)) throw error;
     return <ExploreMessageResult kind="error" message={t('explore.states.contractError')} />;
   }
+  const navigation = evidenceCurrent
+    ? createTraceNavigation(
+        data.content,
+        query,
+        timeWindow,
+        browserTimeZone(),
+        t('explore.perses.traceTable.windowTooWide')
+      )
+    : undefined;
+  const structureCoverage = structureResultCoverage(props, t);
   return (
-    <ExploreResultFrame>
-      <SignalResultFrame title={t('explore.signals.traces')} count={data.totalElements}>
-        {data.totalElements === 0 ? (
-          <SignalEmptyState title={t('explore.empty.traces')} hint={t('explore.description')} />
-        ) : (
-          <HertzBeatTraceTableResult
-            title={t('explore.signals.traces')}
-            ariaLabel={t('explore.perses.tracesTable')}
-            query={result.query}
-            outcome={result.outcome}
-            runtimeIdentity={result.runtimeIdentity}
-            interactions={traceInteractions(data.content, query, timeWindow, evidenceCurrent, openPath, t)}
-            messages={explorePersesMessages(t)}
-          />
-        )}
-        <ExploreHistoryPagination page={data} query={query} enabled={evidenceCurrent} openPath={openPath} t={t} />
+    <ExploreResultFrame layout="fill" data-trace-results tabIndex={-1}>
+      <SignalResultFrame
+        title={t('explore.signals.traces')}
+        count={data.totalElements}
+        meta={structureCoverage.meta}
+        actions={<ExploreTraceResultActions data={data} evidenceCurrent={evidenceCurrent} />}
+      >
+        {structureCoverage.incomplete && <p role="status">{t('exploreTrace.structure.truncated')}</p>}
+        <TraceResultContent
+          {...props}
+          result={result}
+          navigation={navigation}
+          incomplete={structureCoverage.incomplete}
+        />
       </SignalResultFrame>
     </ExploreResultFrame>
   );
 }
 
-function traceInteractions(
-  rows: TraceRow[],
-  query: TraceExploreQuery,
-  window: ExactTimeWindow,
-  enabled: boolean,
-  openPath: (path: string) => void,
-  t: ReturnType<typeof useTranslation>['t']
-): HertzBeatPersesTableInteraction[] {
-  return rows.map(row => ({
-    key: row.traceId,
-    label: `${row.serviceName} · ${row.rootSpanName} · ${shortId(row.traceId)}`,
-    actions: [
-      {
-        label: t('explore.perses.investigateTrace', { value: shortId(row.traceId) }),
-        disabled: !enabled,
-        onAction: () =>
-          openPath(
-            buildTraceInvestigationPath(
-              query,
-              {
-                traceId: row.traceId,
-                selectedSpanId: row.rootSpanId,
-                startTime: row.startTime,
-                durationNanos: row.durationNanos
-              },
-              window,
-              browserTimeZone()
-            )
-          )
-      }
-    ]
-  }));
+function structureResultCoverage({ query, data }: Props, t: ReturnType<typeof useTranslation>['t']) {
+  const bounded = query.traceStructure !== undefined && data.query?.coverage === 'bounded';
+  return {
+    incomplete: bounded && data.query?.truncated !== false,
+    meta:
+      bounded && data.query?.rowLimit
+        ? [
+            {
+              label: t('exploreTrace.structure.mode'),
+              value: t('exploreTrace.structure.bounded', { limit: data.query.rowLimit })
+            }
+          ]
+        : []
+  };
 }
 
-function shortId(value: string) {
-  return `${value.slice(0, 8)}…${value.slice(-8)}`;
+function TraceResultContent({
+  data,
+  query,
+  openPath,
+  incomplete,
+  result,
+  navigation,
+  ...props
+}: Props & {
+  incomplete: boolean;
+  result: ReturnType<typeof createExploreTracePersesResult>;
+  navigation: ReturnType<typeof createTraceNavigation> | undefined;
+}) {
+  const { t } = useTranslation();
+  if (data.totalElements === 0 && incomplete)
+    return <ExploreMessageResult kind="unavailable" message={t('exploreTrace.structure.truncated')} />;
+  if (data.totalElements === 0)
+    return (
+      <SignalEmptyState
+        title={t('explore.empty.traces')}
+        hint={t('explore.recovery.traces')}
+        reviewQueryLabel={t('explore.recovery.reviewQuery')}
+      />
+    );
+  return (
+    <HertzBeatTraceTableResult
+      title={t('explore.signals.traces')}
+      ariaLabel={t('explore.perses.tracesTable')}
+      query={result.query}
+      outcome={result.outcome}
+      runtimeIdentity={result.runtimeIdentity}
+      traceLinks={navigation?.links}
+      traceUnavailableLinks={navigation?.unavailableLinks}
+      tracePagination={tracePagination({ data, query, openPath, ...props })}
+      traceDisplay={traceDisplay(query.traceView)}
+      onTraceNavigate={openPath}
+      variant="fill"
+      messages={explorePersesMessages(t)}
+    />
+  );
 }
 
 function browserTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+function tracePagination({ data, query, evidenceCurrent, openPath, timeWindow }: Props) {
+  return {
+    page: data.number,
+    pageSize: data.size,
+    total: data.totalElements,
+    disabled: !evidenceCurrent,
+    onPageChange: (page: number) => {
+      if (evidenceCurrent && timeWindow && Number.isSafeInteger(page) && page >= 0 && page < data.totalPages)
+        openPath(
+          buildExplorePath({
+            ...query,
+            start: timeWindow.from,
+            end: timeWindow.to,
+            windowMode: undefined,
+            pageIndex: page || undefined
+          })
+        );
+    }
+  };
+}
+
+function traceDisplay(value: string | undefined) {
+  return readTraceView(value) ?? DEFAULT_TRACE_VIEW;
 }

@@ -1,0 +1,24 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.identity {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail header,
+.detail footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  flex-wrap: wrap;
+}
+.detail > p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--hb-text-secondary);
+}
+.detail h2 {
+  font-size: var(--hb-section-title-size);
+  margin: 0;
+}

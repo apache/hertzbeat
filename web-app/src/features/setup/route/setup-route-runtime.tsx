@@ -49,7 +49,7 @@ function SetupRouteRuntimeContent({ paths, product }: { paths: SetupPaths; produ
           headingLevel={1}
           kind="unavailable"
           title={t('setup.statusUnavailable')}
-          action={<Button onClick={retry}>{t('common.retry')}</Button>}
+          action={<Button onClick={() => void retry()}>{t('common.retry')}</Button>}
         />
       )}
     />

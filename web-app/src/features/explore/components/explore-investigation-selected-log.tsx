@@ -1,5 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { logSeverityLabel } from '@/shared/log-severity';
 import { Descriptions, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 
@@ -22,7 +23,7 @@ export function InvestigationSelectedLog({ row, timeZone }: { row: Investigation
         column={1}
         items={[
           { key: 'time', label: t('explore.time'), children: formatInvestigationLogTime(row.timeUnixNano, timeZone) },
-          { key: 'severity', label: t('explore.severity'), children: row.severityText ?? '—' },
+          { key: 'severity', label: t('explore.severity'), children: logSeverityLabel(row) ?? '—' },
           { key: 'trace', label: t('explore.traceId'), children: row.traceId ?? '—' },
           { key: 'span', label: t('explore.spanId'), children: row.spanId ?? '—' }
         ]}

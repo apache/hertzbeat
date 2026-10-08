@@ -1,0 +1,84 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.relationships {
+  min-width: 0;
+}
+.relationships > section {
+  padding-block: var(--hb-space-3);
+}
+.relationships > section + section {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.relationships h4 {
+  margin: 0 0 var(--hb-space-2);
+  font-size: 12px;
+}
+.hint {
+  margin: var(--hb-space-1) 0;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.list > li + li {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.list > li {
+  padding-block: var(--hb-space-2);
+}
+.target {
+  display: flex;
+  width: 100%;
+  height: auto;
+  min-height: 32px;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-1) 0;
+  text-align: start;
+  white-space: normal;
+}
+.operation {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.service {
+  max-width: 30%;
+  overflow-wrap: anywhere;
+  color: var(--hb-text-secondary);
+}
+.duration {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.metadata {
+  margin: var(--hb-space-1) 0;
+  font-size: 12px;
+}
+.metadata > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.3fr) minmax(0, 1fr);
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-1);
+}
+.metadata dt {
+  color: var(--hb-text-secondary);
+  overflow-wrap: anywhere;
+}
+.metadata dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.relationships code {
+  overflow-wrap: anywhere;
+}
+.details {
+  margin-block: var(--hb-space-2);
+}
+.details summary {
+  cursor: pointer;
+  font-size: 12px;
+}

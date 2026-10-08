@@ -15,10 +15,11 @@ export type OperationalPageMode = 'data' | 'workspace' | 'form';
 
 export function OperationalPage({
   children,
-  mode = 'data'
-}: PropsWithChildren<{ mode?: OperationalPageMode | undefined }>) {
+  mode = 'data',
+  inset
+}: PropsWithChildren<{ mode?: OperationalPageMode | undefined; inset?: 'compact' | undefined }>) {
   return (
-    <div className={styles.page} data-hb-operational-page="" data-mode={mode}>
+    <div className={styles.page} data-hb-operational-page="" data-mode={mode} data-inset={inset}>
       {children}
     </div>
   );

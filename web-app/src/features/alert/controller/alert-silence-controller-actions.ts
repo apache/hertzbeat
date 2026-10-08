@@ -28,7 +28,11 @@ export function createAlertSilenceControllerActions(options: {
   const { capabilities, detail, draft, mutations } = options;
   return {
     setSearch: options.setSearch,
-    submitSearch: () => options.updateQuery({ search: options.search.trim(), pageIndex: 0 }),
+    submitSearch: () => {
+      const search = options.search.trim();
+      options.setSearch(search);
+      options.updateQuery({ search, pageIndex: 0 });
+    },
     changePage: (page: number, pageSize: number) =>
       options.updateQuery(zeroBasedPageChange(page, pageSize, options.query.pageSize)),
     refresh: options.refresh,

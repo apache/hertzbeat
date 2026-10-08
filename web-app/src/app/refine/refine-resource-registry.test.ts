@@ -10,18 +10,29 @@ import { isValidElement } from 'react';
 
 import { routeRegistry } from '@/app/route-registry';
 import { uiSessionSchema } from '@/core/auth/session-contract';
-import { buildShellNavigation, readShellResourceMeta } from '@/layout/shell/shell-navigation-model';
+import {
+  activeNavigationTrail,
+  buildShellNavigation,
+  readShellResourceMeta
+} from '@/layout/shell/shell-navigation-model';
 import { buildRefineResources, refineResources, shellAccessControlProvider } from './refine-resource-registry';
 
 describe('Refine shell resource registry', () => {
   it('matches canonical resource paths and labels exactly', () => {
     const canonicalResources = routeRegistry
       .flatMap(route =>
-        route.resource ? [{ labelKey: route.resource.labelKey, list: route.resource.listPath ?? route.path }] : []
+        route.resource
+          ? [
+              {
+                labelKey: route.id === 'explore' ? 'explore.signals.metrics' : route.resource.labelKey,
+                list: route.resource.listPath ?? route.path
+              }
+            ]
+          : []
       )
       .sort(compareResourceRoute);
     const actualResources = refineResources
-      .filter(resource => resource.list)
+      .filter(resource => resource.list && !['explore-logs', 'explore-traces'].includes(String(resource.name)))
       .map(resource => ({ labelKey: resource.meta?.shell?.labelKey, list: resource.list as string }))
       .sort(compareResourceRoute);
 
@@ -85,7 +96,14 @@ describe('Refine shell resource registry', () => {
       'shell-administration'
     ]);
     expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual(['monitors', 'bulletin', 'monitor-definitions']);
-    expect(navigationChildren(tree, 'shell-application-observability')).toEqual(['instrumentation', 'explore']);
+    expect(navigationChildren(tree, 'shell-application-observability')).toEqual([
+      'instrumentation',
+      'services',
+      'explore',
+      'explore-logs',
+      'explore-traces',
+      'signal-dashboards'
+    ]);
     expect(navigationChildren(tree, 'shell-resources')).toEqual(['entities', 'topology']);
     expect(navigationChildren(tree, 'shell-alerting')).toEqual([
       'alerts',
@@ -108,6 +126,15 @@ describe('Refine shell resource registry', () => {
       'labels',
       'object-store'
     ]);
+  });
+
+  it('keeps exactly one signal active in application observability', () => {
+    const tree = buildShellNavigation(refineResources, ['ADMIN']);
+    expect(activeNavigationTrail(tree, '/explore').at(-1)).toBe('explore');
+    expect(activeNavigationTrail(tree, '/explore?signal=metrics').at(-1)).toBe('explore');
+    expect(activeNavigationTrail(tree, '/explore?signal=logs').at(-1)).toBe('explore-logs');
+    expect(activeNavigationTrail(tree, '/explore?signal=traces').at(-1)).toBe('explore-traces');
+    expect(activeNavigationTrail(tree, '/explore?signal=unknown').at(-1)).toBe('explore');
   });
 
   it('assigns every visible navigation item a globally unique Ant Design icon component', () => {

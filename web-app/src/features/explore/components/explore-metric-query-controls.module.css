@@ -1,0 +1,54 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.commonControls {
+  display: grid;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+.scopeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+.executionActions {
+  margin-left: auto;
+}
+.scopeRow > :global([data-explore-essential-filters]) {
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 180px));
+}
+.scopeRow > details {
+  margin: 0;
+  padding-bottom: 4px;
+}
+.scopeRow > details[open] {
+  flex-basis: 100%;
+  padding-block: var(--hb-space-2);
+}
+.scopeRow > :global([data-explore-essential-filters]) > div {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.scopeRow > :global([data-explore-essential-filters]) > div > span {
+  white-space: nowrap;
+}
+.scopeRow > :global([data-explore-essential-filters]) :global(.ant-input) {
+  min-width: 0;
+}
+@media (width <= 575px) {
+  .scopeRow > :global([data-explore-essential-filters]) {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scopeRow > :global([data-explore-essential-filters]) > div {
+    display: grid;
+  }
+}
+
+.globalScope {
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+  white-space: nowrap;
+}

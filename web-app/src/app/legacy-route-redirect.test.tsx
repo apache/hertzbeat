@@ -30,6 +30,10 @@ describe('LegacyRouteRedirect', () => {
     ['/trace/manage?signal=logs&service=checkout#span', '/explore?signal=traces&service=checkout#span'],
     ['/log?tab=setup#agent', '/observability/integration?tab=setup#agent'],
     ['/ingestion/otlp?tab=java', '/observability/integration?tab=java'],
+    [
+      '/ingestion/otlp/metrics?query=jvm.memory.used&aggregation=sum&step=60',
+      '/explore?signal=metrics&query=jvm.memory.used&aggregation=sum&step=60'
+    ],
     ['/ingestion/otlp/grpc/java?tab=setup#sdk', '/observability/integration?tab=setup#sdk'],
     ['/alert?status=firing#active', '/alerts?status=firing#active'],
     ['/alert/center?status=pending', '/alerts?status=pending'],

@@ -15,8 +15,13 @@
  * limitations under the License.
  */
 
+import { logSyntaxDiagnostic } from '../api/explore-log-syntax-diagnostic';
+import { logFilterFailureReason } from '../api/explore-signal-api-model';
+
 import { useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useExploreSignalSources } from './use-explore-transaction-source';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { isSavedViewReference } from '../model/explore-saved-query-model';
 
 import { useQueryContextOptional } from '@/shared/query-context';
 import { useSharedTimeOptional } from '@/shared/time';
@@ -30,7 +35,6 @@ import {
   mergeManualExploreQuery,
   exploreQueryContext,
   mergeExploreQuery,
-  parseExploreQuery,
   querySubmissionTimePatch,
   timeRangeMilliseconds,
   type ExploreQuery,
@@ -45,77 +49,73 @@ import type {
 import { metricResultState } from '../model/explore-signal-model';
 import { isMetricConsole } from '../model/explore-signal-contract';
 import { exploreInvestigationRoute } from '../model/explore-investigation-model';
-import { useExploreHistory } from './use-explore-history';
-import { useCanonicalExploreLocation } from './use-canonical-explore-location';
+import { useExploreLocationQuery } from './use-canonical-explore-location';
 import { useExploreRouteTime } from './use-explore-route-time';
+import { useExploreRefresh } from './use-explore-refresh';
+import { traceBackgroundQuery } from '../model/explore-detail-workspace-model';
+import { useTracePageCorrection } from './use-trace-page-correction';
+import { useTraceReturnFocus } from './use-trace-return-focus';
+import { updateExploreSearch } from './update-explore-search';
 
 export function useExplorePageController() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const locationSearch = searchParams.toString();
-  const parsedQuery = useMemo(() => parseExploreQuery(new URLSearchParams(locationSearch)), [locationSearch]);
-  const canonicalSearch = useMemo(() => searchFromPath(buildExplorePath(parsedQuery)).toString(), [parsedQuery]);
-  useCanonicalExploreLocation(locationSearch, canonicalSearch);
+  const location = useLocation();
+  const openPath = useTraceReturnFocus(location.pathname + location.search, path => void navigate(path));
+  const { query: parsedQuery, setSearchParams } = useExploreLocationQuery();
   const sharedContext = useQueryContextOptional();
   const sharedTime = useSharedTimeOptional();
-  const fixedWindow = exactWindow(parsedQuery);
-  const query = parsedQuery;
+  const query = useMemo(() => traceBackgroundQuery(parsedQuery), [parsedQuery]);
+  const fixedWindow = exactWindow(query);
   const handoff = exploreHandoffState(query);
-  const investigationRoute = exploreInvestigationRoute(query);
+  const investigationRoute = exploreInvestigationRoute(parsedQuery);
   const context = sharedContext?.context ?? exploreQueryContext(query);
-  const historical =
-    handoff !== 'invalid' && investigationRoute.kind === 'inactive' && !(query.signal === 'logs' && query.live);
-  const { queryResult, evidence } = useExploreHistory(
+  const savedViewPending = isSavedViewReference(location.search);
+  const historical = !savedViewPending && canLoadHistory(query, handoff);
+  const { queryResult, evidence, transactions } = useExploreSignalSources(
     query,
     fixedWindow ?? relativeHistoryWindow(query, sharedTime?.window),
+    sharedTime?.refreshRevision ?? 0,
     historical,
-    sharedTime?.refreshRevision ?? 0
+    investigationRoute.kind === 'trace'
   );
+  const updateSearch = (path: string) => updateExploreSearch(path, query.signal, location, navigate, setSearchParams);
   const updateQuery = (changes: ExploreQueryPatch) => {
-    const next = mergeExploreQuery(query, mergeExploreContextChanges(context, changes));
-    setSearchParams(searchFromPath(buildExplorePath(next)));
+    const timePatch =
+      changes.signal && changes.signal !== query.signal ? querySubmissionTimePatch(query, evidence?.window) : {};
+    const next = mergeExploreQuery(query, mergeExploreContextChanges(context, { ...changes, ...timePatch }));
+    updateSearch(buildExplorePath(next));
   };
   const updateManualQuery = (changes: ExploreQueryPatch) => {
     const next = mergeManualExploreQuery(query, context, changes);
-    setSearchParams(searchFromPath(buildExplorePath(next)));
+    updateSearch(buildExplorePath(next));
   };
   const time = useExploreRouteTime(query, sharedTime, updateQuery);
-  const submission = useExploreSubmission(query, patch =>
-    updateManualQuery({
-      ...patch,
-      ...querySubmissionTimePatch(query, fixedWindow),
-      pageIndex: undefined
-    })
+  const submission = useWindowedSubmission(query, fixedWindow, updateManualQuery);
+  const refresh = useExploreRefresh(
+    query,
+    historical,
+    sharedTime,
+    transactions.active ? transactions.refresh : queryResult.refetch
   );
-  const refresh = () => refreshHistory(historical, sharedTime, queryResult.refetch);
+  const canCorrectPage = historical && investigationRoute.kind === 'inactive';
+  const correctingPage = useTracePageCorrection(query, queryResult, canCorrectPage);
   return {
     query,
+    transactions,
     handoff,
     investigationRoute,
+    focusedQuery: parsedQuery,
     submission,
-    result: resolveResult(query, handoff, queryResult.isPending, queryResult.isFetching, queryResult.error, evidence),
+    result:
+      savedViewPending || correctingPage
+        ? { kind: 'loading' as const }
+        : resolveResult(query, handoff, queryResult.isPending, queryResult.isFetching, queryResult.error, evidence),
     time,
     updateQuery,
     updateManualQuery,
     refresh,
-    openPath: (path: string) => {
-      void navigate(path);
-    }
+    openPath
   };
-}
-
-function refreshHistory(
-  historical: boolean,
-  sharedTime: ReturnType<typeof useSharedTimeOptional>,
-  refetch: () => Promise<unknown>
-) {
-  if (!historical) return Promise.resolve();
-  if (sharedTime?.manualRefreshOwner === 'time_revision') {
-    // Time-owned queries refresh by changing their scoped key. Refetching here too would duplicate one operator action.
-    sharedTime.requestRefresh();
-    return Promise.resolve();
-  }
-  return refetch().then(() => undefined);
 }
 
 function exactWindow(query: ExploreQuery) {
@@ -137,7 +137,12 @@ function resolveResult(
   const current = evidence ? resolveDataResult(query, evidence) : undefined;
   if (error) {
     const errorKind = pageFailureKind(error);
-    return current ? { kind: 'stale_error', errorKind, evidence: current } : { kind: errorKind };
+    const invalidFilterReason = logFilterFailureReason(error);
+    const syntaxDiagnostic =
+      query.signal === 'logs' ? logSyntaxDiagnostic(error, query.query, query.searchSyntax) : undefined;
+    return current
+      ? { kind: 'stale_error', errorKind, invalidFilterReason, syntaxDiagnostic, evidence: current }
+      : { kind: errorKind, invalidFilterReason, syntaxDiagnostic };
   }
   if (fetching && current) return { kind: 'refreshing', evidence: current };
   if (!evidence) return { kind: 'error' };
@@ -157,14 +162,19 @@ function immediateResult(
 
 function pageFailureKind(error: Error): ExploreFailureKind {
   const kind = classifyExploreSignalError(error);
-  return kind === 'permission' || kind === 'transport_error' || kind === 'contract_error' ? kind : 'error';
+  return kind === 'missing' ? 'error' : kind;
 }
 
 function resolveDataResult(query: ExploreQuery, evidence: HistoricalEvidence): ExploreCurrentResultState | undefined {
   if (query.signal !== evidence.signal) return undefined;
   if (evidence.signal === 'metrics') {
     if (!isMetricConsole(evidence.data)) {
-      return { kind: 'metric', state: { kind: 'empty' }, window: evidence.window, revision: evidence.revision };
+      return {
+        kind: 'metric',
+        state: { kind: 'selection_required' },
+        window: evidence.window,
+        revision: evidence.revision
+      };
     }
     return {
       kind: 'metric',
@@ -180,6 +190,7 @@ function resolveDataResult(query: ExploreQuery, evidence: HistoricalEvidence): E
       signal: 'logs',
       data: evidence.data.page,
       statistics: { overview: evidence.data.overview, trend: evidence.data.trend },
+      calculated: evidence.data.calculated,
       window: evidence.window,
       revision: evidence.revision
     };
@@ -194,12 +205,25 @@ function resolveDataResult(query: ExploreQuery, evidence: HistoricalEvidence): E
   };
 }
 
-function searchFromPath(path: string) {
-  const marker = path.indexOf('?');
-  return marker < 0 ? new URLSearchParams() : new URLSearchParams(path.slice(marker + 1));
-}
-
 function relativeHistoryWindow(query: ExploreQuery, sharedWindow: { from: number; to: number } | undefined) {
   if (!sharedWindow) return undefined;
   return { from: sharedWindow.to - timeRangeMilliseconds(query.timeRange), to: sharedWindow.to };
+}
+
+function useWindowedSubmission(
+  query: ExploreQuery,
+  window: ReturnType<typeof exactWindow>,
+  update: (patch: ExploreQueryPatch) => void
+) {
+  return useExploreSubmission(query, patch =>
+    update({ ...patch, ...querySubmissionTimePatch(query, window), pageIndex: undefined })
+  );
+}
+
+function canLoadHistory(query: ExploreQuery, handoff: ReturnType<typeof exploreHandoffState>) {
+  return (
+    handoff !== 'invalid' &&
+    exploreInvestigationRoute(query).kind === 'inactive' &&
+    !(query.signal === 'logs' && query.live)
+  );
 }

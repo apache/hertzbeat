@@ -55,6 +55,7 @@ export function useAlertRuleEditorRoute(mode: 'new' | 'edit') {
     active,
     detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
     draft,
+    baselineDraft: canonicalDraft,
     requestedKind,
     identity,
     updateRoute,

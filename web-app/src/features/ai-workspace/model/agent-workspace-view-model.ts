@@ -8,10 +8,28 @@ import type {
   AgentTargetRef,
   AgentTranscriptMessage
 } from './agent-workspace-contract';
-import type { AgentWorkspaceRunState } from './agent-workspace-reducer';
+import type { AgentToolActivity, AgentWorkspaceRunState } from './agent-workspace-reducer';
 
 type AgentLoadable<T> = { status: 'loading' | 'ready' | 'error'; items: T[] };
 export type AgentDraftMessage = { id: string; role: 'user'; text: string };
+
+export function withTranscriptTools(run: AgentWorkspaceRunState, transcript: AgentWorkspaceViewModel['transcript']) {
+  const tools = new Map<string, AgentToolActivity>();
+  for (const message of transcript.status === 'loading' ? [] : transcript.items) {
+    for (const call of message.toolCalls ?? []) tools.set(call.toolCallId, { ...call, status: 'UNKNOWN' });
+    if (message.role === 'toolResult' && message.toolName) {
+      const toolCallId = message.toolCallId ?? `transcript:${message.id}:result`;
+      tools.set(toolCallId, {
+        toolCallId,
+        toolName: message.toolName,
+        status: 'UNKNOWN',
+        ...(message.errorMessage ? { errorMessage: message.errorMessage } : {})
+      });
+    }
+  }
+  for (const tool of run.tools) tools.set(tool.toolCallId, tool);
+  return { ...run, tools: [...tools.values()] };
+}
 
 export type AgentWorkspaceViewModel = {
   sessions: AgentLoadable<AgentSession>;

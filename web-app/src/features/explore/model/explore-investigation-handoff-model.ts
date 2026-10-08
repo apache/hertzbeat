@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { buildTopologyInvestigationPath } from '@/features/topology';
+import { buildTopologyInvestigationPath } from '@/features/topology/navigation';
 
 import type {
   InvestigationServiceIdentity,
@@ -10,7 +10,8 @@ import type {
 } from './explore-investigation-contract';
 import { buildExplorePath } from './explore-url-model';
 import { mergeExploreQuery, signalSelectionPatch } from './explore-model';
-import type { ExploreQueryPatch, LogExploreQuery, TraceExploreQuery } from './explore-query';
+import { exploreQueryContext, mergeExploreContextChanges } from './explore-context-model';
+import type { LogExploreQuery, TraceExploreQuery } from './explore-query';
 
 type HandoffIdentity = Pick<
   InvestigationServiceIdentity,
@@ -65,21 +66,40 @@ function metricsPath(
   return buildExplorePath(
     mergeExploreQuery(source, {
       ...signalSelectionPatch('metrics'),
-      ...clearedContext(),
       signal: 'metrics',
       start: window.start,
       end: window.end,
-      entityId: identity.entityId,
-      serviceName: identity.serviceName,
-      serviceNamespace: identity.serviceNamespace ?? undefined,
-      environment: identity.deploymentEnvironment ?? undefined
+      ...metricsContext(source, identity)
     })
+  );
+}
+
+function metricsContext(source: TraceExploreQuery | LogExploreQuery, identity: HandoffIdentity) {
+  const sameIdentity = sameServiceIdentity(source, identity);
+  const context = mergeExploreContextChanges(exploreQueryContext(source), {
+    entityId: sameIdentity ? source.entityId : identity.entityId || undefined,
+    serviceName: identity.serviceName,
+    serviceNamespace: identity.serviceNamespace ?? undefined,
+    environment: identity.deploymentEnvironment ?? undefined
+  });
+  return { ...context, entityId: identity.entityId || (sameIdentity ? source.entityId : undefined) };
+}
+
+function sameServiceIdentity(source: TraceExploreQuery | LogExploreQuery, identity: HandoffIdentity) {
+  return (
+    source.serviceName === identity.serviceName &&
+    source.serviceNamespace === (identity.serviceNamespace ?? undefined) &&
+    source.environment === (identity.deploymentEnvironment ?? undefined) &&
+    (!source.entityId || !identity.entityId || source.entityId === identity.entityId)
   );
 }
 
 function traceIdentity(snapshot: TraceInvestigationSnapshot): HandoffIdentity | undefined {
   if (snapshot.red.state === 'ready' && snapshot.red.identity) return snapshot.red.identity;
-  if (snapshot.gantt.state === 'ready' && snapshot.gantt.detail) return detailIdentity(snapshot.gantt.detail);
+  if (snapshot.gantt.state === 'ready' && snapshot.gantt.detail) {
+    const selected = snapshot.gantt.detail.spans.find(span => span.spanId === snapshot.selectedSpanId);
+    return selected ? detailIdentity(selected) : undefined;
+  }
   return undefined;
 }
 
@@ -96,7 +116,10 @@ function selectedLogIdentity(snapshot: LogInvestigationSnapshot): HandoffIdentit
     : undefined;
 }
 
-function detailIdentity(detail: InvestigationTraceDetail): HandoffIdentity {
+function detailIdentity(
+  detail: Pick<InvestigationTraceDetail, 'entityId' | 'serviceName' | 'serviceNamespace' | 'deploymentEnvironment'>
+): HandoffIdentity | undefined {
+  if (!detail.serviceName) return undefined;
   return {
     entityId: detail.entityId ?? '',
     serviceName: detail.serviceName,
@@ -109,18 +132,4 @@ function safeEntityId(value: string | undefined) {
   if (!value || !/^[1-9]\d*$/u.test(value)) return undefined;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) ? parsed : undefined;
-}
-
-function clearedContext(): ExploreQueryPatch {
-  return {
-    entityId: undefined,
-    monitorId: undefined,
-    intakeProfileId: undefined,
-    collectorId: undefined,
-    serviceName: undefined,
-    serviceNamespace: undefined,
-    environment: undefined,
-    instance: undefined,
-    endpoint: undefined
-  };
 }

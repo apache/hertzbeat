@@ -1,18 +1,22 @@
 .guide,
 .detection {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
 .workspace {
   display: grid;
-  grid-template-columns: 1fr;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 20px;
 }
 
 .workspaceBody {
   display: grid;
+  min-width: 0;
   grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
   gap: 24px;
@@ -20,11 +24,11 @@
 
 .statusRail {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-  border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-surface);
+  border-left: 1px solid var(--hb-border);
   padding: 12px;
-  background: var(--hb-bg-raised);
 }
 
 .summary {
@@ -53,8 +57,11 @@
 
 .summaryRow {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   min-width: 120px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .statusRail code {
@@ -93,16 +100,20 @@
 }
 
 .component {
+  min-width: 0;
   border-block: 1px solid var(--hb-border);
   padding-block: 12px;
 }
 
 .blocks {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
 .block {
+  min-width: 0;
   border: 1px solid var(--hb-border);
   border-radius: var(--hb-radius-control);
   overflow: hidden;
@@ -110,16 +121,21 @@
 
 .blockHeader {
   width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   justify-content: space-between;
   padding: 12px;
 }
 
 .blockHeader > div {
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .block pre {
   margin: 0;
+  max-width: 100%;
   overflow-x: auto;
   padding: 12px;
   background: var(--hb-bg-canvas);
@@ -136,10 +152,26 @@
 
 @media (max-width: 1100px) {
   .workspaceBody {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .statusRail {
     position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .statusRail .signalRow {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'header' 'evidence' 'action';
+    overflow-wrap: anywhere;
+  }
+
+  .statusRail .signalRow > :last-child {
+    justify-self: start;
+  }
+
+  .signalRow :global(.ant-space) {
+    flex-wrap: wrap;
   }
 }

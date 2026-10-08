@@ -1,0 +1,106 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.editor {
+  display: grid;
+  gap: var(--hb-space-2);
+  margin-top: var(--hb-space-2);
+  min-width: 0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+.row > div {
+  flex: 1;
+  min-width: 0;
+}
+.letter {
+  flex: 0 0 24px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--hb-brand-accent);
+}
+.add {
+  background: transparent;
+  border: 0;
+  color: var(--hb-brand-accent);
+  padding: var(--hb-space-1) 0;
+  min-height: var(--hb-workbench-control-height, 32px);
+  text-align: left;
+}
+.row > button {
+  flex: 0 0 32px;
+  height: 32px;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  border: 0;
+}
+.formula {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+.formula input {
+  flex: 1;
+  min-width: 0;
+  height: var(--hb-workbench-control-height, 32px);
+  padding: 3px 8px;
+  background: var(--hb-surface-container);
+  color: var(--hb-text-primary);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 4px;
+}
+.editor small {
+  color: var(--hb-text-secondary);
+}
+.editor :is(input, button):focus-visible,
+.add:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  margin: var(--hb-space-2) 0;
+  font-size: 12px;
+}
+.target :global(.ant-select) {
+  min-width: 64px;
+}
+
+.offset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hb-space-1);
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+.offset :global(.ant-select) {
+  min-width: 152px;
+}
+@media (max-width: 800px) {
+  .row:has(.offset) {
+    flex-wrap: wrap;
+  }
+  .row:has(.offset) > div {
+    flex-basis: calc(100% - 40px);
+  }
+  .offset {
+    margin-left: 32px;
+  }
+}
+
+@media (max-width: 700px) {
+  .add,
+  .row > button,
+  .formula input,
+  .offset :global(.ant-select) {
+    min-height: 36px;
+  }
+}

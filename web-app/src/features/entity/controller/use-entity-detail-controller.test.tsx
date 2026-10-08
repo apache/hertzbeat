@@ -162,6 +162,47 @@ describe('useEntityDetailController deletion', () => {
     expect(api.deleteEntity).not.toHaveBeenCalled();
   });
 
+  it('keeps the new route when an admitted deletion completes after leaving the detail', async () => {
+    const completion = deferred<void>();
+    api.deleteEntity.mockReturnValue(completion.promise);
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.remove());
+    const confirmation = modal.confirm.mock.calls[0]?.[0] as { onOk: () => Promise<unknown> };
+    let pending!: Promise<unknown>;
+    act(() => {
+      pending = confirmation.onOk();
+    });
+    await waitFor(() => expect(api.deleteEntity).toHaveBeenCalledWith(7));
+    await act(() => routed.router.navigate('/alerts'));
+    await act(async () => {
+      completion.resolve();
+      await pending;
+    });
+    expect(routed.router.state.location.pathname).toBe('/alerts');
+  });
+
+  it('retires old confirmation callbacks across route exit and return to the same entity', async () => {
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.remove());
+    const confirmation = modal.confirm.mock.calls[0]?.[0] as { onOk: () => Promise<unknown> };
+    await act(() => routed.router.navigate('/entities/8'));
+    await act(() => routed.router.navigate('/entities/7'));
+    await act(() => confirmation.onOk());
+    expect(api.deleteEntity).not.toHaveBeenCalled();
+  });
+
+  it('retires an outstanding confirmation when the detail route unmounts', async () => {
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.remove());
+    const confirmation = modal.confirm.mock.calls[0]?.[0] as { onOk: () => Promise<unknown> };
+    await act(() => routed.router.navigate('/alerts'));
+    await act(() => confirmation.onOk());
+    expect(api.deleteEntity).not.toHaveBeenCalled();
+  });
+
   it('refreshes detail through its owned query key without clearing ready evidence', async () => {
     const routed = renderController('/entities/7');
     await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));

@@ -6,6 +6,7 @@
  */
 
 import { Button, Input, Space } from 'antd';
+import type { Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalCommandBar } from '@/shared/operational-page';
@@ -21,13 +22,15 @@ type Props = {
   mutating: boolean;
   refreshing: boolean;
   onDeploy: () => void;
+  deployTriggerRef?: Ref<HTMLButtonElement>;
+  searchButtonRef?: Ref<HTMLButtonElement>;
   onName: (name: string) => void;
   onSearch: () => void;
   onRefresh: () => void;
   onAction: (action: CollectorMutationAction, collectors: string[]) => void;
 };
 
-export function CollectorToolbar(props: Props) {
+export function CollectorToolbar({ deployTriggerRef, searchButtonRef, ...props }: Props) {
   const { t } = useTranslation();
   const disabled = props.mutating || props.selected.length === 0;
   return (
@@ -44,7 +47,7 @@ export function CollectorToolbar(props: Props) {
             onChange={event => props.onName(event.target.value)}
             onPressEnter={props.onSearch}
           />
-          <Button type="primary" disabled={props.mutating} onClick={props.onSearch}>
+          <Button ref={searchButtonRef} type="primary" disabled={props.mutating} onClick={props.onSearch}>
             {t('collectors.searchAction')}
           </Button>
         </Space.Compact>
@@ -56,7 +59,7 @@ export function CollectorToolbar(props: Props) {
           </Button>
           {props.canWrite && (
             <>
-              <Button disabled={props.mutating} onClick={props.onDeploy}>
+              <Button ref={deployTriggerRef} disabled={props.mutating} onClick={props.onDeploy}>
                 {t('collectors.deploy.action')}
               </Button>
               <Button disabled={disabled} onClick={() => props.onAction('online', props.selected)}>

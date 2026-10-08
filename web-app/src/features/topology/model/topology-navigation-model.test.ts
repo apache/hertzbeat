@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildTopologyFocusPath, buildTopologyInvestigationPath } from '@/features/topology';
+import { buildTopologyFocusPath, buildTopologyInvestigationPath } from '@/features/topology/navigation';
 import type { TopologyNode } from './topology-contract';
 import { buildTopologyEntityPath, buildTopologySignalPath, safeTopologyReturnTo } from './topology-navigation-model';
 

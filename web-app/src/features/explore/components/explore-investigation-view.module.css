@@ -128,10 +128,6 @@
 }
 
 @media (max-width: 768px) {
-  :global(body:has([data-explore-investigation='true'])) {
-    min-width: 0;
-  }
-
   :global(body:has([data-explore-investigation='true']) [data-testid='shell-time-policy']),
   :global(body:has([data-explore-investigation='true']) [data-testid='shell-status-greptime']),
   :global(body:has([data-explore-investigation='true']) [data-testid='shell-status-collector']) {

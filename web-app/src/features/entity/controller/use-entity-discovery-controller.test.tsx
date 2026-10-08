@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionContext } from '@/core/auth/session-context';
@@ -31,6 +31,32 @@ describe('useEntityDiscoveryController', () => {
     api.loadEntityDiscovery.mockResolvedValue(page);
   });
   afterEach(cleanup);
+
+  it('preserves unsent search on paging and converges changed committed searches on history', async () => {
+    const v = renderController('/entities/discovery?search=old');
+    await waitFor(() => expect(v.current().state.evidence.kind).toBe('ready'));
+    act(() => v.current().actions.updateDraft('pending'));
+    act(() => v.current().actions.changePage(2, 8));
+    expect(v.current().state.draft).toBe('pending');
+    expect(v.current().state.query.search).toBe('old');
+    await act(() => v.navigate(-1));
+    expect(v.current().state.draft).toBe('pending');
+    await act(() => v.navigate(1));
+    expect(v.current().state.draft).toBe('pending');
+    act(() => v.current().actions.updateDraft('  next  '));
+    act(() => v.current().actions.submit());
+    expect(v.current().state.draft).toBe('next');
+    await act(() => v.navigate(-1));
+    expect(v.current().state.draft).toBe('old');
+    await act(() => v.navigate(1));
+    expect(v.current().state.draft).toBe('next');
+    act(() => v.current().actions.updateDraft('  next  '));
+    act(() => v.current().actions.submit());
+    expect(v.current().state.draft).toBe('next');
+    v.unmount();
+    const remount = renderController('/entities/discovery?search=next');
+    expect(remount.current().state.draft).toBe('next');
+  });
 
   it('reads only safe URL state and submits a trimmed search at page zero', async () => {
     const routed = renderController('/entities/discovery?search=%20mysql%20&pageIndex=0&pageSize=8&token=private');
@@ -120,9 +146,11 @@ describe('useEntityDiscoveryController', () => {
 function renderController(entry: string, role = 'ADMIN') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   let location = '';
+  let navigate!: ReturnType<typeof useNavigate>;
   let controller: ReturnType<typeof useEntityDiscoveryController> | undefined;
   function ControllerProbe() {
     controller = useEntityDiscoveryController();
+    navigate = useNavigate();
     return null;
   }
   function LocationProbe() {
@@ -130,7 +158,7 @@ function renderController(entry: string, role = 'ADMIN') {
     location = `${current.pathname}${current.search}`;
     return null;
   }
-  render(
+  const view = render(
     <SessionContext.Provider value={sessionState(role)}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[entry]}>
@@ -145,7 +173,9 @@ function renderController(entry: string, role = 'ADMIN') {
       if (!controller) throw new Error('controller not mounted');
       return controller;
     },
-    location: () => location
+    location: () => location,
+    navigate: (...args: Parameters<typeof navigate>) => navigate(...args),
+    unmount: view.unmount
   };
 }
 

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { LOG_RECORD_UID_PATTERN } from '../model/explore-field-contract';
+
 import { z } from 'zod';
 
 import {
@@ -62,11 +64,8 @@ const nullablePositiveLongDecimal = z
   .regex(/^[1-9]\d{0,18}$/u)
   .refine(value => value.length < 19 || value <= '9223372036854775807')
   .nullable();
-const nullableLogRecordUid = z
-  .string()
-  .regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u)
-  .nullable();
-const logRowSchema: z.ZodType<LogRow> = z
+const nullableLogRecordUid = z.string().regex(LOG_RECORD_UID_PATTERN).nullable();
+export const logRowSchema: z.ZodType<LogRow> = z
   .object({
     logRecordUid: nullableLogRecordUid,
     timeUnixNano: nullablePositiveLongDecimal,

@@ -18,6 +18,7 @@
 import { z } from 'zod';
 
 import { ExploreSignalContractError, type MetricConsole } from '../model/explore-signal-contract';
+import type { MetricInventory } from '../model/explore-metric-inventory';
 import {
   jsonValueSchema,
   nullableIntegerSchema,
@@ -27,7 +28,7 @@ import {
   nonNegativeIntegerSchema
 } from './explore-wire-schema';
 
-const metricContextSchema = z.object({
+export const metricContextSchema = z.object({
   entityId: nullableNonNegativeIntegerSchema,
   entityType: nullableStringSchema,
   entityName: nullableStringSchema,
@@ -88,22 +89,49 @@ export function parseMetricConsole(value: unknown): MetricConsole {
   return result.data;
 }
 
-const metricInventorySchema = z
+const unavailableMetadata = {
+  state: 'unavailable' as const,
+  source: null,
+  quality: null,
+  originalName: null,
+  declaredType: null,
+  declaredUnit: null,
+  temporality: null,
+  description: null,
+  sampleRole: 'unknown' as const,
+  sampleUnit: null
+};
+const metricMetadataSchema = z
+  .object({
+    state: z.enum(['available', 'unavailable']),
+    source: nullableStringSchema,
+    quality: nullableStringSchema,
+    originalName: nullableStringSchema,
+    declaredType: nullableStringSchema,
+    declaredUnit: nullableStringSchema,
+    temporality: nullableStringSchema,
+    description: nullableStringSchema,
+    sampleRole: z.literal('unknown'),
+    sampleUnit: z.null()
+  })
+  .nullish()
+  .transform(value => value ?? unavailableMetadata);
+
+const metricInventorySchema: z.ZodType<MetricInventory> = z
   .object({
     context: metricContextSchema.nullable(),
-    source: z.string().min(1),
-    total: nonNegativeIntegerSchema,
+    source: z.literal('greptime-inventory'),
+    limit: z.number().int().min(1).max(200),
+    truncated: z.boolean(),
     items: z.array(
       z.object({
         metricName: z.string().min(1),
         family: nullableStringSchema,
-        timeSeriesCount: nonNegativeIntegerSchema,
-        latestObservedAt: nullableNonNegativeIntegerSchema,
-        labels: nullableStringMapSchema
+        metadata: metricMetadataSchema
       })
     )
   })
-  .refine(inventory => inventory.items.length <= inventory.total);
+  .refine(inventory => inventory.items.length <= inventory.limit);
 
 export function parseMetricInventory(value: unknown) {
   const result = metricInventorySchema.safeParse(value);

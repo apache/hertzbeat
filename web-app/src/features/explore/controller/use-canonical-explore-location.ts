@@ -15,18 +15,29 @@
  * limitations under the License.
  */
 
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-export function useCanonicalExploreLocation(currentSearch: string, canonicalSearch: string) {
+import { buildExplorePath, parseExploreQuery } from '../model/explore-model';
+
+export function useExploreLocationQuery() {
+  const [params, setSearchParams] = useSearchParams();
+  const search = params.toString();
+  const query = useMemo(() => parseExploreQuery(new URLSearchParams(search)), [search]);
+  const canonical = useMemo(() => buildExplorePath(query).split('?')[1] ?? '', [query]);
+  useCanonicalExploreLocation(search, canonical);
+  return { query, setSearchParams };
+}
+
+function useCanonicalExploreLocation(currentSearch: string, canonicalSearch: string) {
   const location = useLocation();
   const navigate = useNavigate();
   const historyState: unknown = location.state;
   useEffect(() => {
     if (currentSearch === canonicalSearch) return;
     void navigate(
-      { pathname: location.pathname, search: canonicalSearch ? `?${canonicalSearch}` : '' },
+      { pathname: location.pathname, search: canonicalSearch ? `?${canonicalSearch}` : '', hash: location.hash },
       { replace: true, state: historyState }
     );
-  }, [canonicalSearch, currentSearch, historyState, location.pathname, navigate]);
+  }, [canonicalSearch, currentSearch, historyState, location.pathname, location.hash, navigate]);
 }

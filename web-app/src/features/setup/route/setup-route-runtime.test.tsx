@@ -85,6 +85,17 @@ describe('SetupRouteBoundary', () => {
     expect(await screen.findByRole('heading', { name: 'Setup status unavailable' })).toBeInTheDocument();
   });
 
+  it('retries an unavailable setup status without passing the click event as an abort signal', async () => {
+    api.loadSetupStatus
+      .mockRejectedValueOnce(new SetupRequestError('unavailable'))
+      .mockResolvedValueOnce(setupStatus('complete', 'local'));
+    renderRuntime();
+    await screen.findByRole('heading', { name: 'Setup status unavailable' });
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByTestId('login-navigation')).toHaveTextContent('/passport/login');
+    expect(api.loadSetupStatus).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps trusted convergence context through a temporary refresh failure and reaches the next phase', async () => {
     api.loadSetupStatus
       .mockResolvedValueOnce(setupStatus('application_starting', 'local'))

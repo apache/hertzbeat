@@ -39,7 +39,6 @@ export function hasSessionIdentityBoundaryChanged(current: UiSession | undefined
     current.authenticated !== next.authenticated ||
     current.username !== next.username ||
     current.workspaceId !== next.workspaceId ||
-    current.expiresAt !== next.expiresAt ||
     !haveSameRoles(current.roles, next.roles)
   );
 }

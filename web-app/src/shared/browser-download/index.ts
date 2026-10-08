@@ -6,3 +6,5 @@
  */
 
 export { safeDownloadFilename, saveBrowserDownload, type BrowserDownloadArtifact } from './browser-download';
+
+export { serializeCsv } from './csv';

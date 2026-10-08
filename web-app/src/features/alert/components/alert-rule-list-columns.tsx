@@ -8,6 +8,7 @@
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 
+import { AlertRuleExpressionCell } from './alert-rule-expression-cell';
 import type { AlertRule } from '../model/alert-rule-model';
 import {
   AlertRuleActionCell,
@@ -21,13 +22,20 @@ import {
 
 export function buildAlertRuleListColumns(t: TFunction, actions: AlertRuleColumnActions): ColumnsType<AlertRule> {
   return [
-    { title: t('alertRules.name'), width: 220, render: (_value, rule) => <AlertRuleIdentityCell rule={rule} /> },
+    {
+      title: t('alertRules.name'),
+      width: 220,
+      fixed: 'left',
+      render: (_value, rule) => <AlertRuleIdentityCell rule={rule} />
+    },
     { title: t('alertRules.type'), width: 180, render: (_value, rule) => <AlertRuleTypeCell rule={rule} t={t} /> },
     {
       title: t('alertRules.expression'),
       dataIndex: 'expr',
       width: 280,
-      render: (value: string | null) => <AlertRuleTextCell value={value} />
+      render: (value: string | null, rule) => (
+        <AlertRuleExpressionCell value={value} name={rule.name || `#${rule.id}`} />
+      )
     },
     {
       title: t('alertRules.template'),
@@ -45,11 +53,13 @@ export function buildAlertRuleListColumns(t: TFunction, actions: AlertRuleColumn
       title: t('alertRules.enabled'),
       dataIndex: 'enable',
       width: 100,
+      fixed: 'right',
       render: (enabled: boolean, rule) => <AlertRuleEnabledCell actions={actions} enabled={enabled} rule={rule} />
     },
     {
       title: t('common.actions'),
       width: 150,
+      fixed: 'right',
       render: (_value, rule) => <AlertRuleActionCell actions={actions} rule={rule} t={t} />
     }
   ];

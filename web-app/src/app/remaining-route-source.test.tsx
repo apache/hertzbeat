@@ -131,7 +131,7 @@ describe('remaining route ownership', () => {
 
   it('builds Explore navigation from the application path contract', () => {
     expect(buildExplorePath({ signal: 'logs', timeRange: 'last-30m', serviceName: 'checkout' })).toBe(
-      '/canonical-explore?signal=logs&timeRange=last-30m&serviceName=checkout'
+      '/canonical-explore?signal=logs&timeRange=last-30m&searchSyntax=structured-v1&serviceName=checkout'
     );
     expect(buildSignalHandoffPath('traces', { serviceName: 'checkout' }, { from: 1000, to: 2000 })).toBe(
       '/canonical-explore?signal=traces&serviceName=checkout&start=1000&end=2000'

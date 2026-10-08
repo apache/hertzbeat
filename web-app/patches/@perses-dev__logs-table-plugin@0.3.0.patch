@@ -1,18 +1,156 @@
-diff --git a/lib/components/VirtualizedLogsList.js b/lib/components/VirtualizedLogsList.js
---- a/lib/components/VirtualizedLogsList.js
-+++ b/lib/components/VirtualizedLogsList.js
-@@ -267,6 +267,6 @@ export const VirtualizedLogsList = ({ logs, spec, expandedRows, onToggleExpand
-                 onCopy: handleCopy,
-                 children: [
--                    !isHintsDismissed && /*#__PURE__*/ _jsxs(Box, {
-+                    spec.showSelectionHints !== false && !isHintsDismissed && /*#__PURE__*/ _jsxs(Box, {
-                         sx: {
-                             px: 2,
-                             py: 0.75,
+diff --git a/lib/LogsTableComponent.js b/lib/LogsTableComponent.js
+index 7bb7cd7b71ecef1831b7db7228675de5d445bac4..f462145b34ab376445a7bc7a2c8efcd3983fd363 100644
+--- a/lib/LogsTableComponent.js
++++ b/lib/LogsTableComponent.js
+@@ -16,7 +16,10 @@ import { LogsList } from './components/LogsList';
+ export function LogsTableComponent(props) {
+     const { queryResults, spec } = props;
+     // all queries results must be included
+-    const logs = queryResults.flatMap((result)=>result?.data.logs?.entries ?? []).sort((a, b)=>b.timestamp - a.timestamp);
++    const forward = queryResults.length > 0 && queryResults.every((result)=>result?.data.logs?.direction === 'forward');
++    const preserveOrder = queryResults.length === 1 && queryResults[0]?.data.logs?.preserveOrder === true;
++    const logs = queryResults.flatMap((result)=>result?.data.logs?.entries ?? []);
++    if (!preserveOrder) logs.sort((a, b)=>forward ? a.timestamp - b.timestamp : b.timestamp - a.timestamp);
+     if (!logs.length) {
+         return /*#__PURE__*/ _jsx(Box, {
+             sx: {
+diff --git a/lib/cjs/LogsTableComponent.js b/lib/cjs/LogsTableComponent.js
+index 22ecf5639f155be894eb874e02a8aacd4bc79959..e84ecd5f52c86fb6a9302ca95c2e3c810cb8cf9b 100644
+--- a/lib/cjs/LogsTableComponent.js
++++ b/lib/cjs/LogsTableComponent.js
+@@ -26,7 +26,10 @@ const _LogsList = require("./components/LogsList");
+ function LogsTableComponent(props) {
+     const { queryResults, spec } = props;
+     // all queries results must be included
+-    const logs = queryResults.flatMap((result)=>result?.data.logs?.entries ?? []).sort((a, b)=>b.timestamp - a.timestamp);
++    const forward = queryResults.length > 0 && queryResults.every((result)=>result?.data.logs?.direction === 'forward');
++    const preserveOrder = queryResults.length === 1 && queryResults[0]?.data.logs?.preserveOrder === true;
++    const logs = queryResults.flatMap((result)=>result?.data.logs?.entries ?? []);
++    if (!preserveOrder) logs.sort((a, b)=>forward ? a.timestamp - b.timestamp : b.timestamp - a.timestamp);
+     if (!logs.length) {
+         return /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Box, {
+             sx: {
+diff --git a/lib/cjs/components/LogRow/LogRow.js b/lib/cjs/components/LogRow/LogRow.js
+index 414c8ba9c5e2ad8596dd0e84d6258c6c79d3e164..720fdd913a8d2427bae78c8eaec8f9fcccb741dd 100644
+--- a/lib/cjs/components/LogRow/LogRow.js
++++ b/lib/cjs/components/LogRow/LogRow.js
+@@ -83,11 +83,29 @@ function _interop_require_wildcard(obj, nodeInterop) {
+     return newObj;
+ }
+ const COPY_SUCCESS_DURATION_MS = 1500;
+-const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true, showTime = false, allowWrap = false, isSelected = false, onSelect, itemActionButtons })=>{
++const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true, showTime = false, allowWrap = false, rowHeight = 'small', contentDisplay = 'message', copyLabels, isSelected = false, onSelect, itemActionButtons })=>{
+     const theme = (0, _material.useTheme)();
+     const severityColor = (0, _useSeverity.useSeverityColor)(log);
+-    const ansiHtml = (0, _react.useMemo)(()=>log ? (0, _ansi.ansiToSanitizedHtml)(log.line) : null, [
+-        log
++    const extra = log;
++    const visibleLine = contentDisplay === 'attributes' ? extra?.hertzbeatAttributes == null ? '' : JSON.stringify(extra.hertzbeatAttributes) : contentDisplay === 'stack' ? extra?.hertzbeatStack ?? '' : log?.line ?? '';
++    const rowLines = rowHeight === 'large' ? 9 : rowHeight === 'medium' ? 4 : 1;
++    const rowTextSx = {
++        minHeight: `${rowLines * 16.8}px`,
++        maxHeight: `${rowLines * 16.8}px`,
++        display: '-webkit-box',
++        WebkitLineClamp: rowLines,
++        WebkitBoxOrient: 'vertical',
++        overflow: 'hidden'
++    };
++    const labels = copyLabels ?? {
++        copyOptions: 'Copy options', copied: 'Copied!', menu: 'Copy format options',
++        copyTimestamp: 'Copy log', copyTimestampDescription: 'Timestamp + labels + message',
++        copyMessage: 'Copy message', copyMessageDescription: 'Message text only',
++        copyJson: 'Copy as JSON', copyJsonDescription: 'Full log entry'
++    };
++    const ansiHtml = (0, _react.useMemo)(()=>log && contentDisplay === 'message' ? (0, _ansi.ansiToSanitizedHtml)(log.line) : null, [
++        log,
++        contentDisplay
+     ]);
+     const [isHovered, setIsHovered] = (0, _react.useState)(false);
+     const [anchorEl, setAnchorEl] = (0, _react.useState)(null);
+@@ -211,20 +229,22 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                             ansiHtml ? /*#__PURE__*/ (0, _jsxruntime.jsx)(_LogsStyles.LogText, {
+                                 variant: "body2",
+                                 allowWrap: allowWrap,
++                                sx: rowTextSx,
+                                 dangerouslySetInnerHTML: {
+                                     __html: ansiHtml
+                                 }
+                             }) : /*#__PURE__*/ (0, _jsxruntime.jsx)(_LogsStyles.LogText, {
+                                 variant: "body2",
+                                 allowWrap: allowWrap,
+-                                children: log.line
++                                sx: rowTextSx,
++                                children: visibleLine
+                             }),
+                             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Tooltip, {
+-                                title: copySuccess ? 'Copied!' : 'Copy options',
++                                title: copySuccess ? labels.copied : labels.copyOptions,
+                                 children: /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.IconButton, {
+                                     size: "small",
+                                     onClick: handleOpenMenu,
+-                                    "aria-label": "Copy log options",
++                                    "aria-label": labels.copyOptions,
+                                     sx: {
+                                         padding: '4px',
+                                         marginLeft: 'auto',
+@@ -276,7 +296,7 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                 open: Boolean(anchorEl),
+                                 onClose: handleCloseMenu,
+                                 onClick: (e)=>e.stopPropagation(),
+-                                "aria-label": "Copy format options",
++                                "aria-label": labels.menu,
+                                 anchorOrigin: {
+                                     vertical: 'bottom',
+                                     horizontal: 'right'
+@@ -310,8 +330,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                                 })
+                                             }),
+                                             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.ListItemText, {
+-                                                primary: "Copy log",
+-                                                secondary: "Timestamp + labels + message",
++                                                primary: labels.copyTimestamp,
++                                                secondary: labels.copyTimestampDescription,
+                                                 slotProps: {
+                                                     primary: {
+                                                         fontSize: '14px'
+@@ -338,8 +358,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                                 })
+                                             }),
+                                             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.ListItemText, {
+-                                                primary: "Copy message",
+-                                                secondary: "Message text only",
++                                                primary: labels.copyMessage,
++                                                secondary: labels.copyMessageDescription,
+                                                 slotProps: {
+                                                     primary: {
+                                                         fontSize: '14px'
+@@ -366,8 +386,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                                 })
+                                             }),
+                                             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.ListItemText, {
+-                                                primary: "Copy as JSON",
+-                                                secondary: "Full log entry",
++                                                primary: labels.copyJson,
++                                                secondary: labels.copyJsonDescription,
+                                                 slotProps: {
+                                                     primary: {
+                                                         fontSize: '14px'
 diff --git a/lib/cjs/components/VirtualizedLogsList.js b/lib/cjs/components/VirtualizedLogsList.js
+index d2481399b01f88c890fe3c91f7c7f4479f22c21d..f68fb3704b5537338638136225f6679fc0527b58 100644
 --- a/lib/cjs/components/VirtualizedLogsList.js
 +++ b/lib/cjs/components/VirtualizedLogsList.js
-@@ -323,6 +323,6 @@ const VirtualizedLogsList = ({ logs, spec, expandedRows, onToggleExpand })=>{
+@@ -239,6 +239,9 @@ const VirtualizedLogsList = ({ logs, spec, expandedRows, onToggleExpand })=>{
+             isExpanded: expandedRows.has(index),
+             onToggle: onToggleExpand,
+             allowWrap: spec.allowWrap,
++            rowHeight: spec.rowHeight,
++            contentDisplay: spec.contentDisplay,
++            copyLabels: spec.copyLabels,
+             showTime: spec.showTime,
+             isSelected: selectedRows.has(index),
+             onSelect: handleRowSelect,
+@@ -323,7 +326,7 @@ const VirtualizedLogsList = ({ logs, spec, expandedRows, onToggleExpand })=>{
+                 },
                  onCopy: handleCopy,
                  children: [
 -                    !isHintsDismissed && /*#__PURE__*/ (0, _jsxruntime.jsxs)(_material.Box, {
@@ -20,22 +158,58 @@ diff --git a/lib/cjs/components/VirtualizedLogsList.js b/lib/cjs/components/Virt
                          sx: {
                              px: 2,
                              py: 0.75,
-diff --git a/lib/model.d.ts b/lib/model.d.ts
---- a/lib/model.d.ts
-+++ b/lib/model.d.ts
-@@ -12,6 +12,7 @@ export interface LogsTableOptions {
-     enableDetails?: boolean;
+diff --git a/lib/components/LogRow/LogRow.d.ts b/lib/components/LogRow/LogRow.d.ts
+index db1bdb056ec49529546820eb8ca59c9e08b41d5b..a17712824db1ae9d953b7823dff64d90d048ad1c 100644
+--- a/lib/components/LogRow/LogRow.d.ts
++++ b/lib/components/LogRow/LogRow.d.ts
+@@ -9,6 +9,9 @@ interface LogRowProps {
+     isExpandable?: boolean;
      showTime?: boolean;
-     showAll?: boolean;
-+    showSelectionHints?: boolean;
-     selection?: SelectionOptions;
-     actions?: ActionOptions;
- }
+     allowWrap?: boolean;
++    rowHeight?: 'small' | 'medium' | 'large';
++    contentDisplay?: 'message' | 'attributes' | 'stack';
++    copyLabels?: import('../../model').LogsTableOptions['copyLabels'];
+     isSelected?: boolean;
+     onSelect?: (index: number, event: React.MouseEvent) => void;
+     itemActionButtons?: ReactNode[];
 diff --git a/lib/components/LogRow/LogRow.js b/lib/components/LogRow/LogRow.js
-index 51761917b3bee7c5f768542adba6609a8225db48..f49e8d701ca874dbb2a171db36a93ba0a6de09c0 100644
+index 51761917b3bee7c5f768542adba6609a8225db48..84d077c2a74feff5e66277bfb16c3b5c65133a3c 100644
 --- a/lib/components/LogRow/LogRow.js
 +++ b/lib/components/LogRow/LogRow.js
-@@ -134,6 +134,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+@@ -27,11 +27,29 @@ import { LogTimestamp } from './LogTimestamp';
+ import { ExpandButton, LogRowContainer, LogRowContent, LogText } from './LogsStyles';
+ import './ansiColors.css';
+ const COPY_SUCCESS_DURATION_MS = 1500;
+-const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true, showTime = false, allowWrap = false, isSelected = false, onSelect, itemActionButtons })=>{
++const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true, showTime = false, allowWrap = false, rowHeight = 'small', contentDisplay = 'message', copyLabels, isSelected = false, onSelect, itemActionButtons })=>{
+     const theme = useTheme();
+     const severityColor = useSeverityColor(log);
+-    const ansiHtml = useMemo(()=>log ? ansiToSanitizedHtml(log.line) : null, [
+-        log
++    const extra = log;
++    const visibleLine = contentDisplay === 'attributes' ? extra?.hertzbeatAttributes == null ? '' : JSON.stringify(extra.hertzbeatAttributes) : contentDisplay === 'stack' ? extra?.hertzbeatStack ?? '' : log?.line ?? '';
++    const rowLines = rowHeight === 'large' ? 9 : rowHeight === 'medium' ? 4 : 1;
++    const rowTextSx = {
++        minHeight: `${rowLines * 16.8}px`,
++        maxHeight: `${rowLines * 16.8}px`,
++        display: '-webkit-box',
++        WebkitLineClamp: rowLines,
++        WebkitBoxOrient: 'vertical',
++        overflow: 'hidden'
++    };
++    const labels = copyLabels ?? {
++        copyOptions: 'Copy options', copied: 'Copied!', menu: 'Copy format options',
++        copyTimestamp: 'Copy log', copyTimestampDescription: 'Timestamp + labels + message',
++        copyMessage: 'Copy message', copyMessageDescription: 'Message text only',
++        copyJson: 'Copy as JSON', copyJsonDescription: 'Full log entry'
++    };
++    const ansiHtml = useMemo(()=>log && contentDisplay === 'message' ? ansiToSanitizedHtml(log.line) : null, [
++        log,
++        contentDisplay
+     ]);
+     const [isHovered, setIsHovered] = useState(false);
+     const [anchorEl, setAnchorEl] = useState(null);
+@@ -134,6 +152,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
                          children: /*#__PURE__*/ _jsx(ExpandButton, {
                              size: "small",
                              isExpanded: isExpanded,
@@ -44,6 +218,74 @@ index 51761917b3bee7c5f768542adba6609a8225db48..f49e8d701ca874dbb2a171db36a93ba0
                              children: /*#__PURE__*/ _jsx(ChevronRight, {
                                  sx: {
                                      fontSize: '12px'
+@@ -155,20 +175,22 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                             ansiHtml ? /*#__PURE__*/ _jsx(LogText, {
+                                 variant: "body2",
+                                 allowWrap: allowWrap,
++                                sx: rowTextSx,
+                                 dangerouslySetInnerHTML: {
+                                     __html: ansiHtml
+                                 }
+                             }) : /*#__PURE__*/ _jsx(LogText, {
+                                 variant: "body2",
+                                 allowWrap: allowWrap,
+-                                children: log.line
++                                sx: rowTextSx,
++                                children: visibleLine
+                             }),
+                             /*#__PURE__*/ _jsx(Tooltip, {
+-                                title: copySuccess ? 'Copied!' : 'Copy options',
++                                title: copySuccess ? labels.copied : labels.copyOptions,
+                                 children: /*#__PURE__*/ _jsx(IconButton, {
+                                     size: "small",
+                                     onClick: handleOpenMenu,
+-                                    "aria-label": "Copy log options",
++                                    "aria-label": labels.copyOptions,
+                                     sx: {
+                                         padding: '4px',
+                                         marginLeft: 'auto',
+@@ -220,7 +242,7 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                 open: Boolean(anchorEl),
+                                 onClose: handleCloseMenu,
+                                 onClick: (e)=>e.stopPropagation(),
+-                                "aria-label": "Copy format options",
++                                "aria-label": labels.menu,
+                                 anchorOrigin: {
+                                     vertical: 'bottom',
+                                     horizontal: 'right'
+@@ -254,8 +276,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                                 })
+                                             }),
+                                             /*#__PURE__*/ _jsx(ListItemText, {
+-                                                primary: "Copy log",
+-                                                secondary: "Timestamp + labels + message",
++                                                primary: labels.copyTimestamp,
++                                                secondary: labels.copyTimestampDescription,
+                                                 slotProps: {
+                                                     primary: {
+                                                         fontSize: '14px'
+@@ -282,8 +304,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                                 })
+                                             }),
+                                             /*#__PURE__*/ _jsx(ListItemText, {
+-                                                primary: "Copy message",
+-                                                secondary: "Message text only",
++                                                primary: labels.copyMessage,
++                                                secondary: labels.copyMessageDescription,
+                                                 slotProps: {
+                                                     primary: {
+                                                         fontSize: '14px'
+@@ -310,8 +332,8 @@ const DefaultLogRow = ({ log, isExpanded, index, onToggle, isExpandable = true,
+                                                 })
+                                             }),
+                                             /*#__PURE__*/ _jsx(ListItemText, {
+-                                                primary: "Copy as JSON",
+-                                                secondary: "Full log entry",
++                                                primary: labels.copyJson,
++                                                secondary: labels.copyJsonDescription,
+                                                 slotProps: {
+                                                     primary: {
+                                                         fontSize: '14px'
 diff --git a/lib/components/LogRow/ansiColors.css b/lib/components/LogRow/ansiColors.css
 new file mode 100644
 index 0000000000000000000000000000000000000000..435b8c96a06a901510714a1506b7271e60eba81f
@@ -51,3 +293,57 @@ index 0000000000000000000000000000000000000000..435b8c96a06a901510714a1506b7271e
 +++ b/lib/components/LogRow/ansiColors.css
 @@ -0,0 +1 @@
 +:root{--ansi-black:#000;--ansi-red:#c00;--ansi-green:#0a0;--ansi-yellow:#a50;--ansi-blue:#00a;--ansi-magenta:#a0a;--ansi-cyan:#0aa;--ansi-white:#aaa;--ansi-bright-black:#555;--ansi-bright-red:#f55;--ansi-bright-green:#5f5;--ansi-bright-yellow:#ff5;--ansi-bright-blue:#55f;--ansi-bright-magenta:#f5f;--ansi-bright-cyan:#5ff;--ansi-bright-white:#fff}[data-mui-color-scheme=dark],.dark-mode{--ansi-black:#555;--ansi-red:#ff6b6b;--ansi-green:#69db7c;--ansi-yellow:#ffd43b;--ansi-blue:#74c0fc;--ansi-magenta:#da77f2;--ansi-cyan:#66d9e8;--ansi-white:#fff;--ansi-bright-black:#888;--ansi-bright-red:#ff8787;--ansi-bright-green:#8ce99a;--ansi-bright-yellow:#ffe066;--ansi-bright-blue:#a5d8ff;--ansi-bright-magenta:#e599f7;--ansi-bright-cyan:#99e9f2;--ansi-bright-white:#fff}@media (prefers-color-scheme:dark){:root:not([data-mui-color-scheme=light]){--ansi-black:#555;--ansi-red:#ff6b6b;--ansi-green:#69db7c;--ansi-yellow:#ffd43b;--ansi-blue:#74c0fc;--ansi-magenta:#da77f2;--ansi-cyan:#66d9e8;--ansi-white:#fff;--ansi-bright-black:#888;--ansi-bright-red:#ff8787;--ansi-bright-green:#8ce99a;--ansi-bright-yellow:#ffe066;--ansi-bright-blue:#a5d8ff;--ansi-bright-magenta:#e599f7;--ansi-bright-cyan:#99e9f2;--ansi-bright-white:#fff}}.ansi-black-fg{color:var(--ansi-black)}.ansi-red-fg{color:var(--ansi-red)}.ansi-green-fg{color:var(--ansi-green)}.ansi-yellow-fg{color:var(--ansi-yellow)}.ansi-blue-fg{color:var(--ansi-blue)}.ansi-magenta-fg{color:var(--ansi-magenta)}.ansi-cyan-fg{color:var(--ansi-cyan)}.ansi-white-fg{color:var(--ansi-white)}.ansi-bright-black-fg{color:var(--ansi-bright-black)}.ansi-bright-red-fg{color:var(--ansi-bright-red)}.ansi-bright-green-fg{color:var(--ansi-bright-green)}.ansi-bright-yellow-fg{color:var(--ansi-bright-yellow)}.ansi-bright-blue-fg{color:var(--ansi-bright-blue)}.ansi-bright-magenta-fg{color:var(--ansi-bright-magenta)}.ansi-bright-cyan-fg{color:var(--ansi-bright-cyan)}.ansi-bright-white-fg{color:var(--ansi-bright-white)}.ansi-black-bg{background-color:var(--ansi-black)}.ansi-red-bg{background-color:var(--ansi-red)}.ansi-green-bg{background-color:var(--ansi-green)}.ansi-yellow-bg{background-color:var(--ansi-yellow)}.ansi-blue-bg{background-color:var(--ansi-blue)}.ansi-magenta-bg{background-color:var(--ansi-magenta)}.ansi-cyan-bg{background-color:var(--ansi-cyan)}.ansi-white-bg{background-color:var(--ansi-white)}.ansi-bold{font-weight:700}
+diff --git a/lib/components/VirtualizedLogsList.js b/lib/components/VirtualizedLogsList.js
+index a5dac693ff1795a1720962988f1d1d1f3e6b2f06..3573f287dd769079a151130aa72e85bd574fc19f 100644
+--- a/lib/components/VirtualizedLogsList.js
++++ b/lib/components/VirtualizedLogsList.js
+@@ -183,6 +183,9 @@ export const VirtualizedLogsList = ({ logs, spec, expandedRows, onToggleExpand }
+             isExpanded: expandedRows.has(index),
+             onToggle: onToggleExpand,
+             allowWrap: spec.allowWrap,
++            rowHeight: spec.rowHeight,
++            contentDisplay: spec.contentDisplay,
++            copyLabels: spec.copyLabels,
+             showTime: spec.showTime,
+             isSelected: selectedRows.has(index),
+             onSelect: handleRowSelect,
+@@ -267,7 +270,7 @@ export const VirtualizedLogsList = ({ logs, spec, expandedRows, onToggleExpand }
+                 },
+                 onCopy: handleCopy,
+                 children: [
+-                    !isHintsDismissed && /*#__PURE__*/ _jsxs(Box, {
++                    spec.showSelectionHints !== false && !isHintsDismissed && /*#__PURE__*/ _jsxs(Box, {
+                         sx: {
+                             px: 2,
+                             py: 0.75,
+diff --git a/lib/model.d.ts b/lib/model.d.ts
+index 31dfb297e86459edad02e47e5fa0bc58710c0134..ee51c98c6b91ff0d8025133c6d18accfe728d7eb 100644
+--- a/lib/model.d.ts
++++ b/lib/model.d.ts
+@@ -9,9 +9,26 @@ export interface LogsTableOptions {
+     legend?: LegendSpecOptions;
+     thresholds?: ThresholdOptions;
+     allowWrap?: boolean;
++    rowHeight?: 'small' | 'medium' | 'large';
++    contentDisplay?: 'message' | 'attributes' | 'stack';
++    showContent?: boolean;
++    standardizeHeaders?: boolean;
++    showTimeline?: boolean;
++    copyLabels?: {
++        copyOptions: string;
++        copied: string;
++        menu: string;
++        copyTimestamp: string;
++        copyTimestampDescription: string;
++        copyMessage: string;
++        copyMessageDescription: string;
++        copyJson: string;
++        copyJsonDescription: string;
++    };
+     enableDetails?: boolean;
+     showTime?: boolean;
+     showAll?: boolean;
++    showSelectionHints?: boolean;
+     selection?: SelectionOptions;
+     actions?: ActionOptions;
+ }

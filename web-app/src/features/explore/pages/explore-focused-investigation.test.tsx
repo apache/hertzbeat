@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import type { LogInvestigationViewState, TraceInvestigationViewState } from '../model/explore-investigation-contract';
+import { buildExplorePath, parseExploreQuery } from '../model/explore-model';
 import { ExploreFocusedLogPage, ExploreFocusedTracePage } from './explore-focused-investigation';
 
 const controllers = vi.hoisted(() => ({ trace: vi.fn(), log: vi.fn() }));
@@ -38,6 +39,8 @@ vi.mock('../components/explore-trace-investigation-view', () => ({
 }));
 vi.mock('../components/explore-log-investigation-view', () => ({
   ExploreLogInvestigationView: (props: {
+    evidenceCurrent: boolean;
+    onOpenMetrics?: (() => void) | undefined;
     onBack: () => void;
     onRefresh: () => void;
     onFocusTrace: () => void;
@@ -46,8 +49,19 @@ vi.mock('../components/explore-log-investigation-view', () => ({
     <div>
       <button onClick={props.onBack}>log-back</button>
       <button onClick={props.onRefresh}>log-refresh</button>
-      <button onClick={props.onFocusTrace}>log-trace</button>
-      {props.onOpenTopology ? <button onClick={props.onOpenTopology}>log-topology</button> : null}
+      <button disabled={!props.evidenceCurrent} onClick={props.onFocusTrace}>
+        log-trace
+      </button>
+      {props.onOpenMetrics ? (
+        <button disabled={!props.evidenceCurrent} onClick={props.onOpenMetrics}>
+          log-metrics
+        </button>
+      ) : null}
+      {props.onOpenTopology ? (
+        <button disabled={!props.evidenceCurrent} onClick={props.onOpenTopology}>
+          log-topology
+        </button>
+      ) : null}
     </div>
   )
 }));
@@ -61,6 +75,23 @@ describe('Explore focused investigation page wiring', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+  });
+
+  it.each(['trace', 'log'])('keeps the Dashboard return action in focused %s investigation', signal => {
+    controllers.trace.mockReturnValue({ state: traceReady(), refetch: vi.fn() });
+    controllers.log.mockReturnValue({ state: logReady(), evidenceCurrent: true, refetch: vi.fn() });
+    const openPath = vi.fn();
+    const dashboardReturnTo = '/observability/dashboards?dashboard=ops&start=1000&end=2000&timeZone=UTC';
+    const common = { t: i18n.t, updateQuery: vi.fn(), time: undefined, openPath };
+    renderSubject(
+      signal === 'trace' ? (
+        <ExploreFocusedTracePage {...common} query={{ ...traceQuery(), dashboardReturnTo }} />
+      ) : (
+        <ExploreFocusedLogPage {...common} query={{ ...logQuery(), dashboardReturnTo }} />
+      )
+    );
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signalDashboard.back') }));
+    expect(openPath).toHaveBeenCalledWith(dashboardReturnTo);
   });
 
   it('uses route builders for Trace actions and returns without focused identities', () => {
@@ -105,9 +136,25 @@ describe('Explore focused investigation page wiring', () => {
     expect(refetch).toHaveBeenCalledOnce();
   });
 
+  it('passes stale Log evidence to disable handoffs while Back remains available', () => {
+    controllers.log.mockReturnValue({ state: logReady(), evidenceCurrent: false, refetch: vi.fn() });
+    const openPath = vi.fn();
+    renderSubject(
+      <ExploreFocusedLogPage query={logQuery()} t={i18n.t} updateQuery={vi.fn()} time={undefined} openPath={openPath} />
+    );
+    for (const name of ['log-trace', 'log-metrics', 'log-topology']) {
+      const action = screen.getByRole('button', { name });
+      expect(action).toBeDisabled();
+      fireEvent.click(action);
+    }
+    expect(openPath).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'log-back' }));
+    expect(openPath).toHaveBeenCalledOnce();
+  });
+
   it('hands a selected Log to its exact Trace and clears the Log anchor on return', () => {
     const refetch = vi.fn().mockResolvedValue(undefined);
-    controllers.log.mockReturnValue({ state: logReady(), refetch });
+    controllers.log.mockReturnValue({ state: logReady(), evidenceCurrent: true, refetch });
     const openPath = vi.fn();
     renderSubject(
       <ExploreFocusedLogPage query={logQuery()} t={i18n.t} updateQuery={vi.fn()} time={undefined} openPath={openPath} />
@@ -132,6 +179,79 @@ describe('Explore focused investigation page wiring', () => {
     expect(pathParams(lastPath(openPath))).not.toHaveProperty('logRecordUid');
     fireEvent.click(screen.getByText('log-refresh'));
     expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it.each(['source', 'direct', 'external', 'nested'])(
+    'returns from a Log-linked Trace to the original list: %s',
+    entry => {
+      controllers.log.mockReturnValue({ state: logReady(), evidenceCurrent: true, refetch: vi.fn() });
+      controllers.trace.mockReturnValue({ state: traceReady(), refetch: vi.fn() });
+      const source = parseExploreQuery(
+        new URLSearchParams({
+          signal: 'logs',
+          start: '1750000000000',
+          end: '1750000060000',
+          timeZone: 'UTC',
+          page: '3',
+          pageSize: '50',
+          query: 'timeout',
+          serviceName: 'checkout',
+          environment: 'production',
+          resourceFilter: 'region=west',
+          attributeFilter: 'http.method=POST',
+          severityCategory: 'ERROR',
+          severityText: 'SEVERE',
+          hideInternal: 'true',
+          hideNoise: 'true'
+        })
+      );
+      if (source.signal !== 'logs') throw new Error('Expected logs route');
+      const returnTo = buildExplorePath(source);
+      const candidates: Record<string, string | undefined> = {
+        source: returnTo,
+        direct: undefined,
+        external: 'https://example.com',
+        nested: `${returnTo}&returnTo=${encodeURIComponent(returnTo)}`
+      };
+      const candidate = candidates[entry];
+      const expectedReturn = entry === 'source' ? returnTo : buildExplorePath({ ...source, pageIndex: undefined });
+      const query = { ...source, ...logQuery(), returnTo: candidate };
+      const openPath = vi.fn();
+      const common = { t: i18n.t, updateQuery: vi.fn(), time: undefined, openPath };
+      const view = renderSubject(<ExploreFocusedLogPage {...common} query={query} />);
+      fireEvent.click(screen.getByText('log-trace'));
+      const target = parseExploreQuery(new URL(lastPath(openPath), 'http://localhost').searchParams);
+      expect(target.returnTo).toBe(expectedReturn);
+      expect(target).not.toHaveProperty('logRecordUid');
+      expect(target.signal).toBe('traces');
+      if (target.signal !== 'traces') throw new Error('Expected trace route');
+      view.unmount();
+      renderSubject(<ExploreFocusedTracePage {...common} query={target} />);
+      fireEvent.click(screen.getByText('trace-back'));
+      expect(lastPath(openPath)).toBe(expectedReturn);
+      expect(new URL(lastPath(openPath), 'http://localhost').searchParams.has('returnTo')).toBe(false);
+    }
+  );
+
+  it('returns to the frozen source list rather than the focused trace envelope', () => {
+    controllers.trace.mockReturnValue({ state: traceReady(), evidenceCurrent: true, refetch: vi.fn() });
+    const openPath = vi.fn();
+    const returnTo = buildExplorePath(
+      parseExploreQuery(
+        new URLSearchParams('signal=traces&start=1000&end=2000&timeZone=UTC&page=2&serviceName=checkout')
+      )
+    );
+    renderSubject(
+      <ExploreFocusedTracePage
+        query={{ ...traceQuery(), returnTo }}
+        t={i18n.t}
+        updateQuery={vi.fn()}
+        time={undefined}
+        openPath={openPath}
+      />
+    );
+    fireEvent.click(screen.getByText('trace-back'));
+    expect(openPath).toHaveBeenCalledWith(returnTo);
   });
 
   it('does not offer Log Topology navigation from a trace fallback identity', () => {
@@ -280,6 +400,19 @@ function window() {
 
 function traceDetail(serviceIdentity: ReturnType<typeof identity>) {
   return {
+    rootState: 'unique' as const,
+    rootSpanCount: 1,
+    missingParentCount: 0,
+    observedStartTime: window().from,
+    observedEndTime: window().from + 1,
+    representativeSpan: {
+      spanId: '0123456789abcdef',
+      spanName: 'POST /checkout',
+      serviceName: serviceIdentity.serviceName,
+      serviceNamespace: serviceIdentity.serviceNamespace,
+      startTime: window().from,
+      durationNanos: 1_000_000
+    },
     rootSpanId: '0123456789abcdef',
     serviceName: serviceIdentity.serviceName,
     serviceNamespace: serviceIdentity.serviceNamespace,

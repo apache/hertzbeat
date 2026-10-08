@@ -95,6 +95,8 @@ const backendKeys = [
   'instrumentation.v2.note.merge_exporter_into_each_pipeline',
   'instrumentation.v2.note.restart_collector_for_deployment',
   'instrumentation.v2.check.detect_scoped_signals',
+  'instrumentation.v2.guide.java_spring_boot_zero_code.disable_disable_command',
+  'instrumentation.v2.guide.java_java_jar_zero_code.disable_disable_command',
   'instrumentation.location.application_host',
   'instrumentation.location.application_environment',
   'instrumentation.location.application_process',
@@ -108,6 +110,10 @@ describe('instrumentation v2 locale contract', () => {
   it('keeps the v2 structure identical across all supported locales', () => {
     const expected = flatten(en.instrumentation.v2);
     Object.values(locales).forEach(locale => expect(flatten(locale.instrumentation.v2)).toEqual(expected));
+    Object.values(locales).forEach(locale => {
+      expect(flatten(locale.instrumentation.detection)).toEqual(flatten(en.instrumentation.detection));
+      expect(locale.instrumentation.action.newDetection).not.toBe(locale.instrumentation.action.retryDetection);
+    });
   });
 
   it('localizes every backend-owned source and guidance key', () => {
@@ -137,6 +143,11 @@ describe('instrumentation v2 locale contract', () => {
       destination: 'Intake path',
       guide: 'Setup guide'
     });
+  });
+
+  it('describes token availability without claiming an existing token was generated', () => {
+    expect(en.instrumentation.token.ready).not.toMatch(/generat/i);
+    Object.values(locales).forEach(locale => expect(locale.instrumentation.token.ready.trim()).not.toBe(''));
   });
 });
 

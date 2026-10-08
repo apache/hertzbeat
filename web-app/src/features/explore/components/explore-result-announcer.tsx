@@ -6,7 +6,7 @@
  */
 
 import type { TFunction } from 'i18next';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 import type { ExplorePageResultState } from '../model/explore-result-model';
 import type { ExploreSignal } from '../model/explore-model';
@@ -77,10 +77,13 @@ export function ExploreResultAnnouncer({
     },
     []
   );
+  return <ResultLiveRegion regionRef={liveRegion} t={t} />;
+}
 
+function ResultLiveRegion({ regionRef, t }: { regionRef: RefObject<HTMLSpanElement>; t: TFunction }) {
   return (
     <span
-      ref={liveRegion}
+      ref={regionRef}
       className={styles.liveStatus}
       role="status"
       aria-label={t('explore.accessibility.queryUpdates')}

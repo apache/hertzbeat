@@ -35,7 +35,7 @@ export function AlertInvestigationHeader({
         </h1>
         <div className={styles.headerMeta}>
           <Tag>{snapshot.alert.status ?? t('alertInvestigation.notRecorded')}</Tag>
-          <Tag>{snapshot.alert.severity ?? t('alertInvestigation.notRecorded')}</Tag>
+          <Tag>{snapshot.alert.severity?.toUpperCase() ?? t('alertInvestigation.notRecorded')}</Tag>
           <span>{t('alertInvestigation.exactWindow')}</span>
           <time>{`${formatter.format(route.window.from)} – ${formatter.format(route.window.to)}`}</time>
           <span>{t('alertInvestigation.anchor')}</span>

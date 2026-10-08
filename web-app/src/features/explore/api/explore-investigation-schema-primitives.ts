@@ -1,20 +1,23 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { LOG_RECORD_UID_PATTERN } from '../model/explore-field-contract';
+
 import { z } from 'zod';
+import {
+  traceStructureShape,
+  validateTraceStructure,
+  traceIdSchema,
+  traceSpanIdSchema,
+  positiveUint64DecimalSchema as positiveUint64Decimal,
+  nonNegativeLongDecimalSchema as nonNegativeLongDecimal
+} from '@/shared/trace-evidence';
+import { validInvestigationForest } from '../model/explore-investigation-forest';
 
 const JAVA_LONG_MAX = '9223372036854775807';
 const positiveDecimal = z
   .string()
   .regex(/^[1-9]\d{0,18}$/u)
   .refine(value => value.length < JAVA_LONG_MAX.length || value <= JAVA_LONG_MAX);
-const nonNegativeLongDecimal = z
-  .string()
-  .regex(/^(0|[1-9]\d{0,18})$/u)
-  .refine(value => value.length < JAVA_LONG_MAX.length || value <= JAVA_LONG_MAX);
-const positiveUint64Decimal = z
-  .string()
-  .regex(/^[1-9]\d{0,19}$/u)
-  .refine(value => value.length < 20 || value <= '18446744073709551615');
 const positiveEntityId = positiveDecimal;
 const requiredText = (maximum: number) => z.string().trim().min(1).max(maximum).refine(hasPrintableText);
 const nullableText = (maximum: number) => requiredText(maximum).nullable();
@@ -28,8 +31,8 @@ function hasPrintableText(value: string) {
 const safeInteger = z.number().int().safe();
 const nonNegativeInteger = safeInteger.nonnegative();
 const positiveTimestamp = safeInteger.positive();
-export const investigationTraceIdSchema = z.string().regex(/^[0-9a-f]{32}$/u);
-export const investigationSpanIdSchema = z.string().regex(/^[0-9a-f]{16}$/u);
+export const investigationTraceIdSchema = traceIdSchema;
+export const investigationSpanIdSchema = traceSpanIdSchema;
 const boundedMap = z.record(requiredText(192), z.string().max(4_096)).refine(value => Object.keys(value).length <= 128);
 const nullableAttributeCount = nonNegativeInteger.nullable();
 const spanEventSchema = z
@@ -44,7 +47,7 @@ const spanLinkSchema = z
   .object({
     traceId: investigationTraceIdSchema,
     spanId: investigationSpanIdSchema,
-    traceState: nullableText(512),
+    traceState: z.string().max(512).refine(hasPrintableText).nullable(),
     attributes: boundedMap,
     droppedAttributesCount: nullableAttributeCount
   })
@@ -75,9 +78,48 @@ export const investigationIdentitySchema = z
   })
   .strict();
 
+const truncatedFieldsSchema = z
+  .object({
+    attributes: z
+      .array(requiredText(192))
+      .max(128)
+      .refine(keys => new Set(keys).size === keys.length)
+      .optional(),
+    resourceAttributes: z
+      .array(requiredText(192))
+      .max(128)
+      .refine(keys => new Set(keys).size === keys.length)
+      .optional()
+  })
+  .strict()
+  .optional()
+  .transform(value => ({ attributes: value?.attributes ?? [], resourceAttributes: value?.resourceAttributes ?? [] }));
+
+function validateTruncatedFields(
+  record: {
+    attributes: Record<string, string>;
+    resourceAttributes: Record<string, string>;
+    truncatedFields?: { attributes?: string[]; resourceAttributes?: string[] } | undefined;
+  },
+  context: z.RefinementCtx
+) {
+  for (const scope of ['attributes', 'resourceAttributes'] as const) {
+    const values = record[scope];
+    const keys = record.truncatedFields?.[scope];
+    if (!values || !Array.isArray(keys)) continue;
+    for (const key of keys) {
+      if (typeof key !== 'string') continue;
+      const value = values[key];
+      if (value === undefined || value.length < 4_095 || value.length > 4_096) {
+        context.addIssue({ code: 'custom', message: 'Truncated field metadata does not match its bounded value' });
+      }
+    }
+  }
+}
+
 export const investigationLogRecordSchema = z
   .object({
-    logRecordUid: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u),
+    logRecordUid: z.string().regex(LOG_RECORD_UID_PATTERN),
     timeUnixNano: positiveDecimal,
     observedTimeUnixNano: positiveDecimal.nullable(),
     severityNumber: nonNegativeInteger.max(24).nullable(),
@@ -87,16 +129,18 @@ export const investigationLogRecordSchema = z
     spanId: investigationSpanIdSchema.nullable(),
     identity: investigationIdentitySchema.nullable(),
     attributes: boundedMap,
-    resourceAttributes: boundedMap
+    resourceAttributes: boundedMap,
+    truncatedFields: truncatedFieldsSchema
   })
-  .strict();
+  .strict()
+  .superRefine(validateTruncatedFields);
 
 const traceSpanSchema = z
   .object({
     spanId: investigationSpanIdSchema,
     parentSpanId: investigationSpanIdSchema.nullable(),
-    spanName: requiredText(512),
-    serviceName: requiredText(256),
+    spanName: nullableText(512),
+    serviceName: nullableText(256),
     serviceNamespace: nullableText(256),
     deploymentEnvironment: nullableText(128),
     entityId: positiveEntityId.nullable(),
@@ -108,7 +152,8 @@ const traceSpanSchema = z
     scopeName: nullableText(256),
     scopeVersion: nullableText(128),
     durationNanos: nonNegativeLongDecimal,
-    startTime: positiveTimestamp,
+    startTime: nonNegativeInteger,
+    startTimeUnixNano: nonNegativeLongDecimal,
     highlighted: z.boolean(),
     resourceAttributes: boundedMap,
     spanAttributes: boundedMap,
@@ -120,28 +165,28 @@ const traceSpanSchema = z
 
 export const investigationTraceDetailSchema = z
   .object({
-    rootSpanId: investigationSpanIdSchema,
-    serviceName: requiredText(256),
+    partial: z.boolean().optional().default(false),
+    rootSpanId: investigationSpanIdSchema.nullable(),
+    serviceName: nullableText(256),
     serviceNamespace: nullableText(256),
     deploymentEnvironment: nullableText(128),
     entityId: positiveEntityId.nullable(),
     entityType: nullableText(64),
-    rootSpanName: requiredText(512),
-    durationNanos: nonNegativeLongDecimal,
-    status: requiredText(64),
-    startTime: positiveTimestamp,
+    rootSpanName: nullableText(512),
+    durationNanos: nonNegativeLongDecimal.nullable(),
+    status: nullableText(64),
+    startTime: nonNegativeInteger.nullable(),
     errorSpanCount: nonNegativeInteger,
-    resourceAttributes: boundedMap,
+    resourceAttributes: boundedMap.nullable(),
+    ...traceStructureShape,
+    missingParentCount: nonNegativeInteger,
     spans: z.array(traceSpanSchema).min(1).max(10_000)
   })
   .strict()
   .superRefine((detail, context) => {
-    const spanIds = detail.spans.map(span => span.spanId);
-    if (new Set(spanIds).size !== spanIds.length || !spanIds.includes(detail.rootSpanId)) {
-      context.addIssue({ code: 'custom', message: 'Trace span identity is inconsistent' });
-    }
-    if (detail.errorSpanCount > detail.spans.length) {
-      context.addIssue({ code: 'custom', message: 'Trace error count exceeds spans' });
+    validateTraceStructure(detail, context);
+    if (!validInvestigationForest(detail)) {
+      context.addIssue({ code: 'custom', message: 'Trace span identity or observed structure is inconsistent' });
     }
   });
 

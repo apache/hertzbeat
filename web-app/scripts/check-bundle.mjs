@@ -32,7 +32,19 @@ const totalRawLimit =
   bundleLimits.persesRuntimeJavaScriptAllowanceBytes +
   bundleLimits.persesMultiSignalJavaScriptAllowanceBytes +
   bundleLimits.observabilityWorkbenchJavaScriptAllowanceBytes +
-  bundleLimits.alertInvestigationJavaScriptAllowanceBytes;
+  bundleLimits.alertInvestigationJavaScriptAllowanceBytes +
+  bundleLimits.intakeDailyJavaScriptAllowanceBytes +
+  bundleLimits.queryInvestigationJavaScriptAllowanceBytes +
+  bundleLimits.servicesJavaScriptAllowanceBytes +
+  bundleLimits.savedQueriesJavaScriptAllowanceBytes +
+  bundleLimits.dashboardsJavaScriptAllowanceBytes +
+  bundleLimits.dashboardPersesStatGaugeTableAllowanceBytes +
+  bundleLimits.logPatternsJavaScriptAllowanceBytes +
+  bundleLimits.logCalculatedJavaScriptAllowanceBytes +
+  bundleLimits.logExplorerWorkspaceJavaScriptAllowanceBytes +
+  bundleLimits.logAddJavaScriptAllowanceBytes +
+  bundleLimits.retiredReferenceSentinelAllowanceBytes +
+  bundleLimits.signalInvestigationEvidenceJavaScriptAllowanceBytes;
 
 if (!existsSync(manifestPath)) {
   console.error('Bundle budget failed: dist manifest is missing. Run pnpm build first.');
@@ -69,7 +81,19 @@ if (totalRaw > totalRawLimit) {
       `${bundleLimits.persesRuntimeJavaScriptAllowanceBytes} Perses time-series allowance + ` +
       `${bundleLimits.persesMultiSignalJavaScriptAllowanceBytes} Perses multi-signal allowance + ` +
       `${bundleLimits.observabilityWorkbenchJavaScriptAllowanceBytes} Observability Workbench allowance + ` +
-      `${bundleLimits.alertInvestigationJavaScriptAllowanceBytes} Alert Investigation allowance)`
+      `${bundleLimits.alertInvestigationJavaScriptAllowanceBytes} Alert Investigation allowance + ` +
+      `${bundleLimits.intakeDailyJavaScriptAllowanceBytes} Intake and Daily Entry allowance + ` +
+      `${bundleLimits.queryInvestigationJavaScriptAllowanceBytes} Query and Investigation allowance + ` +
+      `${bundleLimits.servicesJavaScriptAllowanceBytes} Services allowance + ` +
+      `${bundleLimits.savedQueriesJavaScriptAllowanceBytes} Saved Queries allowance + ` +
+      `${bundleLimits.dashboardsJavaScriptAllowanceBytes} Dashboards allowance + ` +
+      `${bundleLimits.dashboardPersesStatGaugeTableAllowanceBytes} Dashboard Perses Stat/Gauge/Table allowance + ` +
+      `${bundleLimits.logPatternsJavaScriptAllowanceBytes} Logs Patterns allowance + ` +
+      `${bundleLimits.logCalculatedJavaScriptAllowanceBytes} Logs Calculated allowance + ` +
+      `${bundleLimits.logExplorerWorkspaceJavaScriptAllowanceBytes} Logs Explorer Workspace allowance + ` +
+      `${bundleLimits.logAddJavaScriptAllowanceBytes} Logs Add allowance + ` +
+      `${bundleLimits.retiredReferenceSentinelAllowanceBytes} Retired Reference Sentinel allowance + ` +
+      `${bundleLimits.signalInvestigationEvidenceJavaScriptAllowanceBytes} Signal Investigation Evidence allowance)`
   );
 }
 const shellStaticClosure = staticImportClosure(manifest, 'index.html');
@@ -93,7 +117,19 @@ console.log(
     `${bundleLimits.persesRuntimeJavaScriptAllowanceBytes}-byte time-series and ` +
     `${bundleLimits.persesMultiSignalJavaScriptAllowanceBytes}-byte multi-signal Perses allowances, plus a bounded ` +
     `${bundleLimits.observabilityWorkbenchJavaScriptAllowanceBytes}-byte Observability Workbench allowance and ` +
-    `${bundleLimits.alertInvestigationJavaScriptAllowanceBytes}-byte Alert Investigation allowance.`
+    `${bundleLimits.alertInvestigationJavaScriptAllowanceBytes}-byte Alert Investigation allowance and a bounded ` +
+    `${bundleLimits.intakeDailyJavaScriptAllowanceBytes}-byte Intake and Daily Entry allowance + ` +
+    `${bundleLimits.queryInvestigationJavaScriptAllowanceBytes}-byte Query and Investigation allowance + ` +
+    `${bundleLimits.servicesJavaScriptAllowanceBytes}-byte Services allowance + ` +
+    `${bundleLimits.savedQueriesJavaScriptAllowanceBytes}-byte Saved Queries allowance + ` +
+    `${bundleLimits.dashboardsJavaScriptAllowanceBytes}-byte Dashboards allowance + ` +
+    `${bundleLimits.dashboardPersesStatGaugeTableAllowanceBytes}-byte Dashboard Perses Stat/Gauge/Table allowance + ` +
+    `${bundleLimits.logPatternsJavaScriptAllowanceBytes}-byte Logs Patterns allowance + ` +
+    `${bundleLimits.logCalculatedJavaScriptAllowanceBytes}-byte Logs Calculated allowance + ` +
+    `${bundleLimits.logExplorerWorkspaceJavaScriptAllowanceBytes}-byte Logs Explorer Workspace allowance + ` +
+    `${bundleLimits.logAddJavaScriptAllowanceBytes}-byte Logs Add allowance + ` +
+    `${bundleLimits.retiredReferenceSentinelAllowanceBytes}-byte Retired Reference Sentinel allowance + ` +
+    `${bundleLimits.signalInvestigationEvidenceJavaScriptAllowanceBytes}-byte Signal Investigation Evidence allowance.`
 );
 
 function staticImportClosure(buildManifest, root) {

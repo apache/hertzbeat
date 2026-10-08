@@ -24,28 +24,28 @@ import { resolveLocale, type SupportedLocale } from './locale';
 export type { SupportedLocale } from './locale';
 export { resolveLocale } from './locale';
 
-const localeLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
-  'en-US': () => import('@/assets/i18n/en-us.json'),
-  'zh-CN': () => import('@/assets/i18n/zh-cn.json'),
-  'zh-TW': () => import('@/assets/i18n/zh-tw.json'),
-  'ja-JP': () => import('@/assets/i18n/ja-jp.json'),
-  'pt-BR': () => import('@/assets/i18n/pt-br.json')
+const localeLoaders: Record<SupportedLocale, () => Promise<Record<string, unknown>>> = {
+  'en-US': () => import('@/assets/i18n/en-us.json').then(module => module.default),
+  'zh-CN': () => import('@/assets/i18n/zh-cn.json').then(module => module.default),
+  'zh-TW': () => import('@/assets/i18n/zh-tw.json').then(module => module.default),
+  'ja-JP': () => import('@/assets/i18n/ja-jp.json').then(module => module.default),
+  'pt-BR': () => import('@/assets/i18n/pt-br.json').then(module => module.default)
 };
 
-const shellLocaleLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
-  'en-US': () => import('@/assets/i18n/shell/en-us.json'),
-  'zh-CN': () => import('@/assets/i18n/shell/zh-cn.json'),
-  'zh-TW': () => import('@/assets/i18n/shell/zh-tw.json'),
-  'ja-JP': () => import('@/assets/i18n/shell/ja-jp.json'),
-  'pt-BR': () => import('@/assets/i18n/shell/pt-br.json')
+const shellLocaleLoaders: Record<SupportedLocale, () => Promise<Record<string, unknown>>> = {
+  'en-US': () => import('@/assets/i18n/shell/en-us.json').then(module => module.default),
+  'zh-CN': () => import('@/assets/i18n/shell/zh-cn.json').then(module => module.default),
+  'zh-TW': () => import('@/assets/i18n/shell/zh-tw.json').then(module => module.default),
+  'ja-JP': () => import('@/assets/i18n/shell/ja-jp.json').then(module => module.default),
+  'pt-BR': () => import('@/assets/i18n/shell/pt-br.json').then(module => module.default)
 };
 
-const exploreLocaleLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
-  'en-US': () => import('@/assets/i18n/explore/en-us.json'),
-  'zh-CN': () => import('@/assets/i18n/explore/zh-cn.json'),
-  'zh-TW': () => import('@/assets/i18n/explore/zh-tw.json'),
-  'ja-JP': () => import('@/assets/i18n/explore/ja-jp.json'),
-  'pt-BR': () => import('@/assets/i18n/explore/pt-br.json')
+const exploreLocaleLoaders: Record<SupportedLocale, () => Promise<Record<string, unknown>>> = {
+  'en-US': () => import('@/assets/i18n/explore/en-us.json').then(module => module.default),
+  'zh-CN': () => import('@/assets/i18n/explore/zh-cn.json').then(module => module.default),
+  'zh-TW': () => import('@/assets/i18n/explore/zh-tw.json').then(module => module.default),
+  'ja-JP': () => import('@/assets/i18n/explore/ja-jp.json').then(module => module.default),
+  'pt-BR': () => import('@/assets/i18n/explore/pt-br.json').then(module => module.default)
 };
 
 export const i18n = i18next.createInstance();
@@ -64,19 +64,19 @@ export async function loadLocale(locale: SupportedLocale, options: { signal?: Ab
       locale,
       'translation',
       {
-        ...messages.default,
-        ...shellMessages.default,
+        ...messages,
+        ...shellMessages,
         exploreTrace: {
-          ...messageGroup(messages.default.exploreTrace),
-          ...messageGroup(exploreMessages.default.exploreTrace)
+          ...messageGroup(messages.exploreTrace),
+          ...messageGroup(exploreMessages.exploreTrace)
         },
         exploreInvestigation: {
-          ...messageGroup(messages.default.exploreInvestigation),
-          ...messageGroup(exploreMessages.default.exploreInvestigation)
+          ...messageGroup(messages.exploreInvestigation),
+          ...messageGroup(exploreMessages.exploreInvestigation)
         },
         explore: {
-          ...messageGroup(messages.default.explore),
-          ...messageGroup(exploreMessages.default.explore)
+          ...messageGroup(messages.explore),
+          ...messageGroup(exploreMessages.explore)
         }
       },
       true,

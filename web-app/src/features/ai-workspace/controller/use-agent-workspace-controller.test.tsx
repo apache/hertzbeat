@@ -148,6 +148,7 @@ describe('useAgentWorkspaceController', () => {
         role: 'toolResult',
         text: 'Metrics warehouse unavailable',
         toolName: 'metrics.history',
+        toolCallId: 'tool-1',
         errorMessage: 'Metrics warehouse unavailable',
         createdAt: null
       }

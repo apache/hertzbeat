@@ -1,2 +1,7 @@
 patchedDependencies:
   '@perses-dev/logs-table-plugin@0.3.0': patches/@perses-dev__logs-table-plugin@0.3.0.patch
+  '@perses-dev/trace-table-plugin@0.11.0': patches/@perses-dev__trace-table-plugin@0.11.0.patch
+  '@perses-dev/tracing-gantt-chart-plugin@0.13.0': patches/@perses-dev__tracing-gantt-chart-plugin@0.13.0.patch
+  '@perses-dev/components@0.54.0': patches/@perses-dev__components@0.54.0.patch
+  '@perses-dev/timeseries-chart-plugin@0.13.0': patches/@perses-dev__timeseries-chart-plugin@0.13.0.patch
+  '@perses-dev/plugin-system@0.54.0': patches/@perses-dev__plugin-system@0.54.0.patch

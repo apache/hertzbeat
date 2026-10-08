@@ -75,6 +75,19 @@ describe('api message errors', () => {
     });
   });
 
+  it('preserves typed GET diagnostics only when requested', async () => {
+    apiFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ code: 400, msg: 'observability_query_context_invalid', data: null }), {
+        status: 400
+      })
+    );
+    await expect(apiMessageGet('/api/metrics', { preserveErrorEnvelope: true })).rejects.toMatchObject({
+      status: 400,
+      message: 'observability_query_context_invalid'
+    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/metrics', {});
+  });
+
   it('preserves an intentional backend diagnostic from a non-success response only when requested', async () => {
     apiFetch.mockResolvedValueOnce(
       new Response(JSON.stringify({ code: 15, msg: 'SNMP request timed out', data: null }), { status: 400 })

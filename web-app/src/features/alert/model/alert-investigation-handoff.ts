@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { buildExplorePath } from '@/features/explore';
-import { buildTopologyInvestigationPath } from '@/features/topology';
+import { buildTopologyInvestigationPath } from '@/features/topology/navigation';
 
 import type {
   AlertInvestigationIdentity,

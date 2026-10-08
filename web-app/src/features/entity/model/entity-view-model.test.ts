@@ -141,7 +141,7 @@ describe('entity operational next-action handoff', () => {
       '/alerts?pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical&serviceName=checkout&environment=prod'
     );
     expect(buildEntityNextActionPath(detail, 'inspect_logs')).toBe(
-      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&start=100&end=200&serviceName=checkout&environment=prod'
+      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&searchSyntax=structured-v1&start=100&end=200&serviceName=checkout&environment=prod'
     );
     expect(buildEntityNextActionPath(detail, 'complete_runbook')).toContain('focus=ownership');
     expect(buildEntityNextActionPath(detail, 'review_relations')).toContain('focus=relations');

@@ -70,8 +70,8 @@
     },
     "legend": {
       "healthy": "健康",
-      "warning": "警告",
-      "critical": "嚴重",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
       "unknown": "未知",
       "selected": "已選路徑"
     },
@@ -165,6 +165,9 @@
     }
   },
   "entity": {
+    "results": {
+      "total": "資源總數：{{count}}"
+    },
     "title": "資源目錄",
     "description": "服務、主機、資料庫等資源會在此自動統一，無需理解或手動建立抽象實體模型。",
     "empty": "沒有符合目前篩選條件的資源。",
@@ -260,7 +263,10 @@
       "global": "全域",
       "manageSilences": "管理靜默策略",
       "manageInhibits": "管理抑制策略",
-      "types": { "silence": "靜默", "inhibit": "抑制" }
+      "types": {
+        "silence": "靜默",
+        "inhibit": "抑制"
+      }
     },
     "operations": {
       "title": "建議操作",
@@ -316,7 +322,13 @@
         "endpoint": "端點",
         "k8s_workload": "Kubernetes 工作負載"
       },
-      "status": { "unknown": "未知", "healthy": "正常", "degraded": "降級", "critical": "嚴重", "paused": "已暫停" },
+      "status": {
+        "unknown": "未知",
+        "healthy": "正常",
+        "degraded": "降級",
+        "critical": "嚴重",
+        "paused": "已暫停"
+      },
       "source": {
         "manual": "手動維護",
         "definition": "定義檔",
@@ -326,7 +338,11 @@
         "otel": "OpenTelemetry",
         "telemetry": "遙測資料"
       },
-      "direction": { "incoming": "入站", "outgoing": "出站", "related": "關聯" },
+      "direction": {
+        "incoming": "入站",
+        "outgoing": "出站",
+        "related": "關聯"
+      },
       "identityType": {
         "derived": "自動識別",
         "manual": "手動設定",
@@ -335,7 +351,13 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "查詢指標", "logs": "查詢日誌", "traces": "查詢鏈路" },
+    "explore": {
+      "metrics": "查詢指標",
+      "logs": "查詢日誌",
+      "traces": "查詢鏈路",
+      "searchSyntax": "查詢語法",
+      "structuredSearch": "結構化搜尋"
+    },
     "signals": {
       "title": "實體信號調查",
       "availability": "信號可用性",
@@ -344,7 +366,10 @@
       "items": "{{count}} 項",
       "traceDetail": "鏈路詳情",
       "boundMonitors": "綁定監控",
-      "boundMonitorsState": { "unknown": "監控綁定證據不可用。", "empty": "沒有綁定監控。" },
+      "boundMonitorsState": {
+        "unknown": "監控綁定證據不可用。",
+        "empty": "沒有綁定監控。"
+      },
       "sections": {
         "metrics": "指標",
         "logs": "日誌",
@@ -353,7 +378,12 @@
         "collection": "採集",
         "alerts": "告警"
       },
-      "states": { "available": "可用", "empty": "無資料", "unavailable": "不可用", "unknown": "未知" },
+      "states": {
+        "available": "可用",
+        "empty": "無資料",
+        "unavailable": "不可用",
+        "unknown": "未知"
+      },
       "compact": {
         "metrics": {
           "empty": "此時間視窗沒有 RED 指標",
@@ -364,9 +394,21 @@
           "empty": "此時間視窗沒有 RED 指標，其他指標來源狀態未知",
           "unavailable": "RED 指標不可用，其他指標來源狀態未知"
         },
-        "logs": { "empty": "此時間視窗沒有日誌", "unavailable": "日誌不可用", "unknown": "日誌可用性未知" },
-        "traces": { "empty": "此時間視窗沒有鏈路", "unavailable": "鏈路不可用", "unknown": "鏈路可用性未知" },
-        "topology": { "empty": "沒有關聯實體", "unavailable": "拓撲不可用", "unknown": "拓撲可用性未知" },
+        "logs": {
+          "empty": "此時間視窗沒有日誌",
+          "unavailable": "日誌不可用",
+          "unknown": "日誌可用性未知"
+        },
+        "traces": {
+          "empty": "此時間視窗沒有鏈路",
+          "unavailable": "鏈路不可用",
+          "unknown": "鏈路可用性未知"
+        },
+        "topology": {
+          "empty": "沒有關聯實體",
+          "unavailable": "拓撲不可用",
+          "unknown": "拓撲可用性未知"
+        },
         "collection": {
           "empty": "此時間視窗沒有採集執行記錄",
           "unavailable": "採集執行證據不可用",
@@ -378,7 +420,12 @@
           "unknown": "時間視窗內的告警證據未知"
         }
       },
-      "red": { "requestRate": "請求速率", "errorRate": "錯誤率", "latencyP95": "P95 延遲", "requests": "請求數" },
+      "red": {
+        "requestRate": "請求速率",
+        "errorRate": "錯誤率",
+        "latencyP95": "P95 延遲",
+        "requests": "請求數"
+      },
       "aria": {
         "requestRate": "請求速率視覺化",
         "errorRate": "錯誤率視覺化",
@@ -400,7 +447,12 @@
           "topology-related": "拓撲關係",
           "time-proximity": "時間鄰近"
         },
-        "confidence": { "exact": "精確匹配", "high": "高可信度", "medium": "中等可信度", "low": "低可信度" }
+        "confidence": {
+          "exact": "精確匹配",
+          "high": "高可信度",
+          "medium": "中等可信度",
+          "low": "低可信度"
+        }
       },
       "alertsCurrentOnly": "目前活躍告警數不作為所選時間視窗的證據顯示。",
       "query": {
@@ -409,7 +461,6 @@
         "truncated": "目前顯示匹配證據的有界子集。",
         "truncationUnknown": "結果完整性未知。",
         "runtimeError": "視覺化執行環境無法呈現該證據。",
-        "investigationActions": "調查操作（{{count}} 筆）",
         "invalid": "信號請求無效。",
         "permission": "沒有權限查看該信號。",
         "overloaded": "信號儲存忙碌，請重試。",
@@ -417,7 +468,9 @@
         "contract": "信號儲存傳回了無效回應。"
       }
     },
-    "topology": { "view": "查看拓撲" },
+    "topology": {
+      "view": "查看拓撲"
+    },
     "discovery": {
       "action": "探索資源",
       "title": "探索資源",
@@ -451,14 +504,23 @@
       "title": "匯入資源定義",
       "description": "貼上 YAML、JSON 或 curl 行內資料。預覽不會產生變更，確認後才會匯入。",
       "format": "定義格式",
-      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl 行內資料" },
+      "formats": {
+        "yaml": "YAML",
+        "json": "JSON",
+        "curl": "curl 行內資料"
+      },
       "content": "資源定義內容",
       "previewAction": "預覽資源",
       "confirmAction": "確認匯入",
       "previewTitle": "資源預覽",
       "zeroWrite": "僅預覽——尚未建立任何資源。",
       "details": "技術詳情",
-      "fields": { "owner": "負責人", "environment": "環境", "namespace": "命名空間", "source": "來源" },
+      "fields": {
+        "owner": "負責人",
+        "environment": "環境",
+        "namespace": "命名空間",
+        "source": "來源"
+      },
       "associationSummary": "{{identities}} 個身分鍵，{{monitors}} 個監控關聯，{{relations}} 個關係",
       "failure": {
         "validation": "定義需要修改後才能匯入。",
@@ -484,7 +546,12 @@
       "zeroWrite": "僅預覽——資源尚未變更。",
       "details": "技術詳情",
       "associationSummary": "{{identities}} 個身分鍵，{{monitors}} 個監控關聯，{{relations}} 個關係",
-      "fields": { "owner": "負責人", "environment": "環境", "namespace": "命名空間", "source": "來源" },
+      "fields": {
+        "owner": "負責人",
+        "environment": "環境",
+        "namespace": "命名空間",
+        "source": "來源"
+      },
       "missing": "找不到資源定義。",
       "loadFailure": {
         "permission": "您沒有檢視此資源定義的權限。",
@@ -556,12 +623,26 @@
         "endpoint": "端點",
         "k8s_workload": "Kubernetes 工作負載"
       },
-      "criticalities": { "low": "低", "medium": "中", "high": "高", "critical": "關鍵" },
+      "criticalities": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "關鍵"
+      },
       "validation": {
-        "type": { "required": "請選擇資源類型。", "unsupported": "請選擇支援的資源類型。" },
-        "name": { "required": "請填寫名稱。" },
-        "criticality": { "unsupported": "請選擇支援的重要性。" },
-        "labels": { "invalid": "請依每行 key=value 的格式填寫標籤。" }
+        "type": {
+          "required": "請選擇資源類型。",
+          "unsupported": "請選擇支援的資源類型。"
+        },
+        "name": {
+          "required": "請填寫名稱。"
+        },
+        "criticality": {
+          "unsupported": "請選擇支援的重要性。"
+        },
+        "labels": {
+          "invalid": "請依每行 key=value 的格式填寫標籤。"
+        }
       },
       "saveFailure": {
         "permission": "你沒有儲存此資源的權限。",
@@ -576,11 +657,8 @@
   "exploreMetric": {
     "series": "序列",
     "value": "數值",
-    "datasource": "資料來源",
-    "queryMode": "查詢模式",
     "trend": "指標趨勢",
-    "chartUnavailable": "指標圖表暫時無法使用，取樣資料仍可在下方查看。",
-    "filter": "標籤條件 key=value",
+    "filter": "標籤條件（key:value 或 key=value）",
     "groupBy": "按標籤分組",
     "aggregation": "聚合方式",
     "temporalAggregation": "時間彙總",
@@ -591,18 +669,66 @@
       "increase": "增量",
       "delta": "差值"
     },
-    "step": "步長（秒），例如 60"
+    "step": "步長（秒）",
+    "copyQuery": "複製查詢",
+    "queryCopied": "查詢已複製",
+    "queryCopyFailed": "無法複製查詢",
+    "catalogLoading": "正在載入指標名稱…",
+    "catalog": "指標目錄",
+    "searchMetrics": "搜尋指標名稱",
+    "searchExample": "例如 process_cpu",
+    "catalogUnavailable": "指標目錄暫不可用。請重試或輸入指標名稱。",
+    "catalogEmpty": "目前範圍和時間視窗沒有匹配的指標名稱。",
+    "catalogCount": "{{count}} 個匹配指標",
+    "catalogTruncated": "顯示前 {{count}} 個匹配指標，請縮小搜尋範圍。",
+    "selectMetric": "從目錄選擇或輸入指標名稱，然後點擊查詢。",
+    "pendingDraft": "查詢草稿已修改，結果仍來自上一次執行的查詢。",
+    "chart": "圖表",
+    "table": "表格",
+    "resultDisplay": "結果顯示",
+    "receivedSamples": "已接收 {{count}} 個樣本",
+    "sampleLimit": "顯示已接收 {{received}} 個樣本中最新的 {{shown}} 個",
+    "exportCsv": "下載 CSV",
+    "exportCsvHelp": "匯出目前可見序列中所有實際回傳的有效點，包含表格預覽以外的點，並附對齊後的 UTC 顯示時間與來源資訊。空白單位代表未知。",
+    "exportCsvTooLarge": "CSV 檔案過大。請縮短時間視窗或隱藏部分序列後重試。",
+    "exportCsvFailed": "無法匯出這些指標結果，請重試。",
+    "seriesLabels": "序列標籤",
+    "seriesReference": "序列",
+    "responseQuery": "已執行的查詢",
+    "timeShiftSeconds": "與較早時段比較（秒）",
+    "rollup": "時間彙總",
+    "rollupOff": "關閉",
+    "rollupWindow": "彙總間隔",
+    "rollupHint": "伺服器按回看時間窗彙總樣本；此間隔也會設定查詢步長。",
+    "nestedRollup": "第二層時間彙總",
+    "nestedRollupWindow": "第二層間隔",
+    "nestedRollupHint": "第二層彙總已限定範圍的第一層結果，並設定輸出步長。",
+    "stepExample": "例如 60",
+    "summary": {
+      "title": "採樣摘要",
+      "scope": "僅統計返回的採樣點；不合併分位數，單位以介面提供的值為準。",
+      "min": "最小值",
+      "max": "最大值",
+      "latest": "最新值",
+      "count": "採樣數"
+    },
+    "defaultSum": "加總（預設）",
+    "defaultRaw": "原始樣本（預設）",
+    "identityGroupingHint": "聚合保留服務與實體身分；分組可追加標籤。",
+    "temporalWindowHint": "速率、增量和差值使用固定 5 分鐘回看視窗；步長控制取點間隔。",
+    "countSeriesHint": "計數統計參與聚合的序列數，不是請求數或觀測次數。",
+    "bucketHint": "保留桶邊界 le。桶序列不等於延遲值或分位數。",
+    "bucketHelp": "直方圖桶邊界"
   },
   "exploreLog": {
     "mode": "日誌模式",
     "history": "歷史",
-    "query": "查詢",
     "live": "即時",
     "detail": "日誌詳情",
     "openTrace": "查看鏈路",
     "resourceFilter": "資源屬性 key=value",
     "attributeFilter": "日誌屬性 key:value",
-    "hideInternal": "隱藏內部日誌",
+    "hideInternal": "隱藏基礎設施日誌",
     "hideNoise": "隱藏雜訊日誌",
     "resourceAttributes": "資源屬性",
     "logAttributes": "日誌屬性",
@@ -626,28 +752,39 @@
     "trendEmpty": "此查詢未傳回趨勢時間區段。",
     "trendInsufficient": "目前視窗只有一個時間區段（{{count}} 筆日誌）。",
     "statisticsUnavailable": "此統計區域無法載入。",
+    "overviewPermission": "你沒有讀取日誌總覽的權限。",
+    "trendPermission": "你沒有讀取日誌趨勢的權限。",
     "statistics": {
       "total": "總計",
-      "trace": "Trace",
-      "debug": "除錯",
-      "info": "資訊",
-      "warn": "警告",
-      "error": "錯誤",
-      "fatal": "嚴重"
-    }
+      "trace": "TRACE",
+      "debug": "DEBUG",
+      "info": "INFO",
+      "warn": "WARN",
+      "error": "ERROR",
+      "fatal": "FATAL"
+    },
+    "statisticsScope": "計數基於目前篩選。",
+    "scopeSuggestions": {
+      "hint": "候選可能不全，也可直接輸入。",
+      "unavailable": "候選不可用，可直接輸入。",
+      "empty": "暫無候選，可直接輸入。"
+    },
+    "visibilityHint": "依已知基礎設施和示範服務名排除；查看應用請篩選服務。"
   },
   "exploreTrace": {
+    "layout": {
+      "basicFilters": "基本篩選",
+      "filterHelp": "篩選語義",
+      "countHelp": "計數語義",
+      "trendHelp": "趨勢歸屬",
+      "groupAction": "點選值會按所選包含或排除模式切換草稿篩選；點選查詢後套用。"
+    },
     "detail": "鏈路詳情",
-    "loadFailed": "鏈路詳情無法使用。",
     "status": "狀態",
     "kind": "類型",
     "scope": "埋點範圍",
-    "spans": "個 Span",
-    "errors": "個錯誤",
-    "events": "事件",
     "spanAttributes": "Span 屬性",
     "resourceAttributes": "資源屬性",
-    "relatedMetrics": "相關指標",
     "minDuration": "最短耗時（毫秒）",
     "maxDuration": "最長耗時（毫秒）",
     "errorOnly": "僅錯誤鏈路",
@@ -660,14 +797,11 @@
     "hideInternal": "隱藏內部 Span"
   },
   "explore": {
-    "title": "可觀測性",
     "description": "在同一時間範圍內查詢並關聯指標、日誌與鏈路。",
     "signalsNavigation": "訊號導覽",
-    "advancedFilters": "進階篩選",
+    "advancedFilters": "更多篩選",
     "activeFilters": "目前篩選",
-    "context": "排障上下文",
     "timeRange": "時間範圍",
-    "exactWindow": "Onboarding exact window",
     "traceId": "Trace ID",
     "spanId": "Span ID",
     "traceIdContext": "Trace ID: {{value}}",
@@ -681,7 +815,6 @@
     "environmentContext": "環境：{{value}}",
     "metric": "指標",
     "samples": "樣本數",
-    "labels": "標籤",
     "time": "時間",
     "severity": "級別",
     "service": "服務",
@@ -689,9 +822,7 @@
     "trace": "鏈路",
     "operation": "操作",
     "operationContext": "操作：{{value}}",
-    "duration": "耗時",
     "relatedLogs": "相關日誌",
-    "open": "開啟",
     "signals": {
       "metrics": "指標",
       "logs": "日誌",
@@ -720,6 +851,23 @@
       "metrics": "目前上下文沒有指標序列。",
       "logs": "目前上下文沒有日誌。",
       "traces": "目前上下文沒有鏈路。"
+    },
+    "autoRefresh": "自動重新整理",
+    "logSort": {
+      "menu": "排序 {{field}}",
+      "numberAsc": "數值：由小到大",
+      "numberDesc": "數值：由大到小",
+      "textAsc": "文字：A 到 Z",
+      "textDesc": "文字：Z 到 A",
+      "applied": "目前排序：{{value}}",
+      "pending": "待套用排序：{{value}}。點選查詢後生效。",
+      "reset": "復原排序修改",
+      "hint": "排序涵蓋全部符合的日誌。數值排序不轉換字串；文字排序區分大小寫。缺失值及其他類型排在最後。",
+      "historyOnly": "欄位排序用於歷史日誌。即時模式顯示新收到的日誌。",
+      "invalid": "日誌排序無效，請選擇支援的欄位和順序。",
+      "restore": "最新優先",
+      "unavailable": "此欄不支援排序。",
+      "pendingShort": "排序待套用"
     }
   },
   "instrumentation": {
@@ -816,8 +964,14 @@
         "available": "可用",
         "unavailable": "無法使用"
       },
-      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
-      "security": { "tls": "TLS", "plaintext": "未加密" },
+      "transport": {
+        "http_protobuf": "OTLP HTTP/protobuf",
+        "grpc": "OTLP gRPC"
+      },
+      "security": {
+        "tls": "TLS",
+        "plaintext": "未加密"
+      },
       "profileReason": {
         "unavailable": "此目的地尚不可選取。",
         "notAdvertised": "管理員尚未發佈安全的接入位址。",
@@ -860,7 +1014,9 @@
         "plaintext_transport_warning": "未加密傳輸",
         "no_persistence": "不會在 HertzBeat 端建立安裝程式"
       },
-      "warning": { "plaintext_authorization": "Authorization 標頭將透過未加密連線傳輸。" },
+      "warning": {
+        "plaintext_authorization": "Authorization 標頭將透過未加密連線傳輸。"
+      },
       "note": {
         "telemetrygen_no_persistence": "僅在本次驗證中執行官方工具，並在完成後將其移除。",
         "merge_exporter_into_each_pipeline": "在每條需要傳送資料的訊號管線中參照該 exporter。",
@@ -874,7 +1030,7 @@
       "directory": {
         "search": "搜尋來源",
         "categories": "來源分類",
-        "all": "全部來源",
+        "all": "可用指引",
         "group": {
           "quick_start": "快速開始",
           "applications": "應用程式",
@@ -968,6 +1124,20 @@
           "gcp_compute_engine_description": "檢視訊號支援情況並接入 Google Compute Engine 遙測資料。",
           "gcp_gke": "Google Kubernetes Engine",
           "gcp_gke_description": "檢視訊號支援情況並接入 Google Kubernetes Engine 遙測資料。"
+        },
+        "commonPaths": "常用接入路徑",
+        "unsupportedGuides": "OTLP 指引能力詳情（{{count}} 項暫無指引）",
+        "otlpBoundary": "這些來源尚未提供 OTLP 接入指引；這不代表 Agentless 主動監控不支援這些目標。",
+        "guideUnavailable": "暫無 OTLP 指引",
+        "agentlessBoundary": "無需應用程式探針監控資料庫、主機或網路裝置？請使用主動監控。",
+        "noAvailableMatches": "沒有符合此選擇的可用接入指引。"
+      },
+      "guide": {
+        "java_spring_boot_zero_code": {
+          "disable_disable_command": "從 JAVA_TOOL_OPTIONS 或應用程式的 JVM 啟動參數中移除 OpenTelemetry 的 -javaagent 選項，保留其他 JVM 參數。更新提供該選項的服務或容器設定，然後重新啟動目標應用程式。"
+        },
+        "java_java_jar_zero_code": {
+          "disable_disable_command": "從 JAVA_TOOL_OPTIONS 或應用程式的 JVM 啟動參數中移除 OpenTelemetry 的 -javaagent 選項，保留其他 JVM 參數。更新提供該選項的服務或容器設定，然後重新啟動目標應用程式。"
         }
       }
     },
@@ -1009,7 +1179,7 @@
       "expires": "有效期限",
       "scope": "範圍",
       "fixedScope": "OTLP 接收",
-      "ready": "存取權杖已在記憶體中產生",
+      "ready": "存取權杖僅儲存在目前工作階段的記憶體中",
       "notGenerated": "尚未產生存取權杖",
       "generateError": "無法產生存取權杖。",
       "acknowledgementRequired": "請在離開或重新開始前儲存此一次性權杖。它只存在於目前頁面的記憶體中。",
@@ -1067,7 +1237,8 @@
       "startDetection": "開始檢查訊號",
       "retryDetection": "重試偵測",
       "openExplore": "在 Explore 中開啟",
-      "copy": "複製"
+      "copy": "複製",
+      "newDetection": "開始新的訊號檢查"
     },
     "environment": {
       "vm": "主機 / 虛擬機器",
@@ -1143,7 +1314,7 @@
       "waiting": "正在設定時間範圍內等待遙測資料。",
       "status": {
         "waiting": "等待中",
-        "received": "已接收",
+        "received": "視窗內已接收",
         "unsupported": "不支援",
         "unavailable": "儲存空間無法使用",
         "error": "偵測錯誤"
@@ -1154,9 +1325,15 @@
         "storage_unavailable": "遙測儲存空間無法使用。",
         "storage_query_failed": "無法查詢遙測儲存空間。",
         "collector_unavailable": "所選 Collector 無法使用。",
-        "authentication_failed": "遙測驗證失敗。",
+        "authentication_failed": "所選 Collector 回報驗證失敗，請檢查其接入憑證。",
         "invalid_context": "偵測情境無效。"
-      }
+      },
+      "fixedWindow": "觀測視窗：{{start}} — {{end}}",
+      "observationOnly": "已接收表示在此固定視窗內觀測到資料，不代表目前仍在執行。請開始新檢查以觀測後續遙測。",
+      "lastReceived": "視窗內最近接收時間：{{time}}",
+      "windowComplete": "此觀測視窗已結束。請開始新檢查以觀測後續遙測。",
+      "notObserved": "視窗內未觀測到",
+      "noneInWindow": "此視窗內未觀測到符合的遙測資料。"
     }
   },
   "auth": {
@@ -1207,7 +1384,12 @@
         "title": "主動監控",
         "summary": "HertzBeat 依排程連線目標並採集指標。",
         "flowLabel": "HertzBeat 主動連線一組目標類型",
-        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "targets": {
+          "mysql": "MySQL",
+          "linux": "Linux",
+          "redis": "Redis",
+          "http": "HTTP"
+        },
         "outcomeTitle": "採集資料",
         "outcomeAvailability": "可用性與連線檢測",
         "outcomeMetrics": "CPU、記憶體、磁碟、連線數和回應時間",
@@ -1219,7 +1401,12 @@
         "title": "遙測上報",
         "summary": "應用程式或 OpenTelemetry Collector 向 HertzBeat 上報遙測資料。",
         "flowLabel": "一組應用程式和 OpenTelemetry Collector 向 HertzBeat 上報",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
+        "sources": {
+          "java": "Java",
+          "dotnet": ".NET",
+          "node": "Node.js",
+          "collector": "OTel Collector"
+        },
         "outcomeTitle": "遙測信號",
         "outcomeSignals": "Metrics、Logs 和 Traces",
         "outcomeDiagnosis": "請求路徑、慢點和錯誤鏈路",
@@ -1250,7 +1437,12 @@
       "server": "伺服器",
       "storage": "GreptimeDB",
       "collectors": "採集器",
-      "status": { "available": "可用", "degraded": "降級", "unavailable": "不可用", "unknown": "未知" }
+      "status": {
+        "available": "可用",
+        "degraded": "降級",
+        "unavailable": "不可用",
+        "unknown": "未知"
+      }
     },
     "runtimeStates": {
       "permission": "目前帳號無權讀取執行狀態。",
@@ -1293,6 +1485,41 @@
         "unavailable": "監控標籤目前無法使用。",
         "contract": "監控標籤不符合預期的資料契約。",
         "error": "無法載入監控標籤。"
+      }
+    },
+    "daily": {
+      "title": "開始",
+      "description": "繼續監控，並依據已觀測證據進行排查。",
+      "scope": "各入口獨立顯示最近查詢結果。數量不代表遙測新鮮度或服務健康狀態。",
+      "signalsDescription": "透過一致的調查上下文查看指標、日誌與追蹤。",
+      "openSignals": "開啟訊號查詢",
+      "addData": "新增資料來源",
+      "states": {
+        "loading": "正在載入目前證據…",
+        "permission": "你沒有讀取此來源的權限。",
+        "unavailable": "此來源無法使用，請重新整理後重試。",
+        "error": "無法讀取此來源，請重新整理後重試。"
+      },
+      "monitors": {
+        "title": "監控",
+        "description": "已設定的主動監控與推送監控。",
+        "empty": "尚未設定監控。",
+        "count": "已設定監控：{{count}}",
+        "open": "開啟監控"
+      },
+      "alerts": {
+        "title": "未恢復告警",
+        "description": "歷史告警記錄中尚未恢復的告警。",
+        "empty": "目前沒有未恢復告警。",
+        "count": "未恢復告警：{{count}}",
+        "open": "開啟告警"
+      },
+      "services": {
+        "title": "服務",
+        "description": "已註冊的服務實體；可用性與 RED 需要訊號證據。",
+        "empty": "尚未註冊服務實體。",
+        "count": "已註冊服務實體：{{count}}",
+        "open": "開啟服務"
       }
     }
   },
@@ -1448,7 +1675,13 @@
     "unit": "單位",
     "series": "序列",
     "time": "時間",
-    "value": "值",
+    "value": {
+      "open": "查看 {{field}} 的完整值",
+      "title": "指標值 · {{field}}",
+      "copy": "複製完整值",
+      "copied": "已複製",
+      "error": "複製失敗"
+    },
     "search": "搜尋指標",
     "searchPlaceholder": "搜尋分組或欄位",
     "groupFilter": "指標分組",
@@ -1467,13 +1700,6 @@
     "favoriteCount": "{{count}} 個收藏",
     "itemCount": "{{count}} 項",
     "currentValues": "目前指標值",
-    "value": {
-      "open": "查看 {{field}} 的完整值",
-      "title": "指標值 · {{field}}",
-      "copy": "複製完整值",
-      "copied": "已複製",
-      "error": "複製失敗"
-    },
     "noMatches": "目前篩選條件下沒有符合的指標值。",
     "historyTrend": "歷史趨勢",
     "currentValue": "目前",
@@ -1534,7 +1760,12 @@
       "boundEntity": "綁定實體",
       "otlpEvidence": "OTLP 證據"
     },
-    "states": { "ready": "可用", "empty": "無資料", "unavailable": "不可用", "unknown": "未知" },
+    "states": {
+      "ready": "可用",
+      "empty": "無資料",
+      "unavailable": "不可用",
+      "unknown": "未知"
+    },
     "sections": {
       "currentAlerts": "目前告警",
       "collectionHealth": "採集狀態",
@@ -1561,7 +1792,10 @@
       "empty": "此調查視窗內沒有觀測到採集執行。",
       "unavailable": "採集執行證據不可用。",
       "unknown": "尚未確定採集執行證據。",
-      "outcomes": { "success": "成功", "failure": "失敗" },
+      "outcomes": {
+        "success": "成功",
+        "failure": "失敗"
+      },
       "phases": {
         "UNKNOWN": "未知階段",
         "RESOLVE": "解析",
@@ -1601,7 +1835,11 @@
       "unavailable": "相關 OTLP 證據不可用。",
       "unknown": "尚未確定相關 OTLP 證據。"
     },
-    "signals": { "metrics": "OTLP 指標", "logs": "日誌", "traces": "鏈路" },
+    "signals": {
+      "metrics": "OTLP 指標",
+      "logs": "日誌",
+      "traces": "鏈路"
+    },
     "sources": {
       "currentAlerts": "目前告警",
       "collection": "Greptime 採集事件",
@@ -1649,7 +1887,10 @@
     "saveApplyConfirm": "儲存並套用對 {{app}} 的變更？",
     "visibilityAction": "{{app}} 目前為{{state}}",
     "visibilityConfirm": "{{app}} 目前為{{state}}。變更為{{nextState}}？",
-    "visibilityState": { "visible": "顯示", "hidden": "隱藏" },
+    "visibilityState": {
+      "visible": "顯示",
+      "hidden": "隱藏"
+    },
     "validated": "定義 {{app}} 驗證成功。",
     "viewApp": "檢視 {{app}}",
     "editApp": "編輯 {{app}}",
@@ -1658,7 +1899,11 @@
     "refreshConflict": "重新整理最新定義",
     "deleteTitle": "刪除監控定義",
     "deleteConfirm": "刪除 {{app}}？伺服器可能還原其內建定義。",
-    "originValue": { "builtin": "內建", "custom": "自訂", "override": "覆寫" },
+    "originValue": {
+      "builtin": "內建",
+      "custom": "自訂",
+      "override": "覆寫"
+    },
     "disposition": {
       "removed": "自訂定義已刪除。",
       "builtin_restored": "覆寫定義已刪除，並已還原內建定義。"
@@ -1741,7 +1986,10 @@
       "startFailed": "無法開始驗證，請重試。",
       "verifiedRail": "已透過真實告警來源事件驗證"
     },
-    "zabbix": { "parameters": "媒介類型參數", "script": "Webhook 指令碼" }
+    "zabbix": {
+      "parameters": "媒介類型參數",
+      "script": "Webhook 指令碼"
+    }
   },
   "plugins": {
     "title": "外掛程式管理",
@@ -1775,7 +2023,11 @@
       "type": "類型",
       "number": "數字",
       "string": "字串",
-      "password": { "keep": "保留已設定值", "replace": "取代", "clear": "清除" }
+      "password": {
+        "keep": "保留已設定值",
+        "replace": "取代",
+        "clear": "清除"
+      }
     },
     "jarFile": "Jar 檔案",
     "chooseJar": "選擇記憶體中的 .jar 檔案",
@@ -1783,8 +2035,14 @@
     "deleteTitle": "刪除外掛程式",
     "deleteConfirm": "確定刪除 {{target}} 嗎？",
     "deleteBatchConfirm": "確定刪除所選的 {{target}} 個外掛程式嗎？",
-    "validation": { "name": "請輸入外掛程式名稱。", "jarFile": "請選擇非空的 .jar 檔案。" },
-    "notice": { "updated": "外掛程式狀態已更新。", "deleted": "所選外掛程式已刪除。" },
+    "validation": {
+      "name": "請輸入外掛程式名稱。",
+      "jarFile": "請選擇非空的 .jar 檔案。"
+    },
+    "notice": {
+      "updated": "外掛程式狀態已更新。",
+      "deleted": "所選外掛程式已刪除。"
+    },
     "failure": {
       "missing": "所選外掛程式已不存在。",
       "invalid": "外掛程式請求或回應無效。",
@@ -2050,9 +2308,18 @@
     },
     "confirm": {
       "description": "伺服器將對 {{count}} 個所選採集器執行此操作。",
-      "online": { "single": "將此採集器設為在線？", "batch": "將所選採集器設為在線？" },
-      "offline": { "single": "將此採集器設為離線？", "batch": "將所選採集器設為離線？" },
-      "delete": { "single": "刪除此採集器？", "batch": "刪除所選採集器？" }
+      "online": {
+        "single": "將此採集器設為在線？",
+        "batch": "將所選採集器設為在線？"
+      },
+      "offline": {
+        "single": "將此採集器設為離線？",
+        "batch": "將所選採集器設為離線？"
+      },
+      "delete": {
+        "single": "刪除此採集器？",
+        "batch": "刪除所選採集器？"
+      }
     }
   },
   "labels": {
@@ -2592,10 +2859,22 @@
     "title": "通知設定",
     "description": "依序設定投遞相依項目，並分別維護各個設定區域。",
     "steps": {
-      "channels": { "label": "渠道服務", "dependency": "提供郵件與簡訊投遞服務。" },
-      "receivers": { "label": "接收者", "dependency": "新增使用已設定通道的投遞目標。" },
-      "templates": { "label": "範本", "dependency": "可選擇為通道自訂訊息內容。" },
-      "rules": { "label": "規則", "dependency": "將警報路由至一個或多個接收者。" }
+      "channels": {
+        "label": "渠道服務",
+        "dependency": "提供郵件與簡訊投遞服務。"
+      },
+      "receivers": {
+        "label": "接收者",
+        "dependency": "新增使用已設定通道的投遞目標。"
+      },
+      "templates": {
+        "label": "範本",
+        "dependency": "可選擇為通道自訂訊息內容。"
+      },
+      "rules": {
+        "label": "規則",
+        "dependency": "將警報路由至一個或多個接收者。"
+      }
     },
     "status": {
       "configured": "已設定",
@@ -2649,7 +2928,9 @@
       "invalid": "接收人或範本傳回了無效資料。",
       "unavailable": "接收人或範本暫時無法使用。",
       "error": "接收人或範本載入失敗。",
-      "action": { "receivers": "設定接收人" }
+      "action": {
+        "receivers": "設定接收人"
+      }
     },
     "read": {
       "missing": "傳送規則已不存在。",
@@ -2768,7 +3049,10 @@
   "alertRules": {
     "title": "警報規則",
     "description": "管理警報計算規則及其啟用狀態。",
-    "guide": { "alertCenter": "查看警報中心", "deliveryRules": "設定傳送規則" },
+    "guide": {
+      "alertCenter": "查看警報中心",
+      "deliveryRules": "設定傳送規則"
+    },
     "manage": "管理規則",
     "new": "新增規則",
     "edit": "編輯規則",
@@ -2827,8 +3111,16 @@
         "parentheses": "括號不匹配"
       }
     },
-    "severity": { "label": "告警等級", "placeholder": "選擇級別" },
-    "mode": { "label": "告警模式", "placeholder": "請選擇告警模式", "group": "分組告警", "individual": "逐筆告警" },
+    "severity": {
+      "label": "告警等級",
+      "placeholder": "選擇級別"
+    },
+    "mode": {
+      "label": "告警模式",
+      "placeholder": "請選擇告警模式",
+      "group": "分組告警",
+      "individual": "逐筆告警"
+    },
     "window": "計算視窗",
     "seconds": "秒",
     "finalExpression": "最終總運算式",
@@ -2869,7 +3161,11 @@
     "deleteSelectedConfirm": "確認刪除選取的 {{count}} 條警報規則？",
     "export": {
       "selected": "匯出選取項目",
-      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel",
+        "yaml": "YAML"
+      },
       "success": "警報規則設定已下載。",
       "failure": {
         "forbidden": "目前帳戶無權匯出警報規則。",
@@ -3023,6 +3319,7 @@
     "windowPlaceholder": "請輸入計算窗口時間",
     "times": "觸發次數",
     "preview": "預覽",
+    "previewLoading": "正在計算運算式…",
     "previewSuccess": "預覽傳回 {{count}} 行；每頁最多顯示 {{pageSize}} 行。",
     "previewEmpty": "預覽未傳回任何行。",
     "previewTruncated": "部分預覽內容已截斷以便顯示。",
@@ -3257,9 +3554,9 @@
       "acknowledged": "已確認",
       "handled": "已處理",
       "workspaceScope": "目前工作區",
-      "warning": "警告",
-      "critical": "嚴重",
-      "emergency": "緊急"
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     },
     "status": {
       "label": "狀態",
@@ -3273,10 +3570,10 @@
     "severity": {
       "label": "級別",
       "all": "全部級別",
-      "info": "資訊",
-      "warning": "警告",
-      "critical": "嚴重",
-      "emergency": "緊急"
+      "info": "INFO",
+      "warning": "WARNING",
+      "critical": "CRITICAL",
+      "emergency": "EMERGENCY"
     }
   },
   "monitor": {
@@ -3345,7 +3642,10 @@
     "export": {
       "all": "匯出全部",
       "selected": "匯出所選",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": {
+        "json": "JSON",
+        "excel": "Excel"
+      },
       "success": "監控設定已下載。",
       "failure": {
         "forbidden": "需要管理員權限才能匯出監控。",
@@ -3435,7 +3735,10 @@
         "zookeeper_sd": "ZooKeeper 服務發現"
       },
       "schedule": "排程方式",
-      "scheduleTypes": { "interval": "固定間隔", "cron": "Cron 表達式" },
+      "scheduleTypes": {
+        "interval": "固定間隔",
+        "cron": "Cron 表達式"
+      },
       "cronExpression": "Cron 表達式（6 段）",
       "advanced": "進階參數",
       "labels": "標籤",
@@ -3453,7 +3756,12 @@
         "empty": "每個項目都必須填寫鍵。",
         "duplicate": "鍵不得重複。"
       },
-      "metrics": { "unit": "單位", "type": "類型", "number": "數值", "string": "文字" },
+      "metrics": {
+        "unit": "單位",
+        "type": "類型",
+        "number": "數值",
+        "string": "文字"
+      },
       "descriptionLabel": "描述",
       "connection": "連線參數",
       "metadata": "歸屬與中繼資料",
@@ -3633,8 +3941,14 @@
       "system_property": "系統屬性",
       "command_line": "命令列"
     },
-    "applyMode": { "managed_write": "受管理設定", "external_apply": "外部 / GitOps 設定" },
-    "applyModeInline": { "managed_write": "由 HertzBeat 管理", "external_apply": "由外部管理" },
+    "applyMode": {
+      "managed_write": "受管理設定",
+      "external_apply": "外部 / GitOps 設定"
+    },
+    "applyModeInline": {
+      "managed_write": "由 HertzBeat 管理",
+      "external_apply": "由外部管理"
+    },
     "maintenance": {
       "active": "維護模式已啟用",
       "inactive": "維護模式未啟用",
@@ -3642,8 +3956,16 @@
       "acknowledgement": "我瞭解在移轉與啟用完成前，監控寫入必須保持暫停。",
       "acknowledgementAutoEnter": "我瞭解開始移轉時伺服器會自動進入維護模式並暫停監控寫入。"
     },
-    "topology": { "single_node": "單一節點", "multi_node": "多個節點", "unknown": "未知" },
-    "topologyInline": { "single_node": "單一節點", "multi_node": "多節點", "unknown": "未知" },
+    "topology": {
+      "single_node": "單一節點",
+      "multi_node": "多個節點",
+      "unknown": "未知"
+    },
+    "topologyInline": {
+      "single_node": "單一節點",
+      "multi_node": "多節點",
+      "unknown": "未知"
+    },
     "migration": {
       "title": "HertzBeat 資料庫移轉精靈",
       "description": "將 HertzBeat 管理資料從 H2 移轉到空白的 MySQL 或 PostgreSQL 資料庫。複製資料前會先驗證目標資料庫。",
@@ -3679,7 +4001,11 @@
     "export": {
       "format": "匯出格式",
       "password": "匯出密碼",
-      "formats": { "yaml": "YAML", "env": "環境變數", "kubernetes_secret": "Kubernetes Secret" }
+      "formats": {
+        "yaml": "YAML",
+        "env": "環境變數",
+        "kubernetes_secret": "Kubernetes Secret"
+      }
     },
     "actions": {
       "validate": "驗證目標",
@@ -3692,7 +4018,10 @@
       "returnToConfiguration": "返回目前設定",
       "continueCurrent": "繼續目前移轉"
     },
-    "validation": { "valid": "目標驗證成功", "invalid": "目標驗證失敗" },
+    "validation": {
+      "valid": "目標驗證成功",
+      "invalid": "目標驗證失敗"
+    },
     "state": {
       "pending": "移轉已排入佇列",
       "running": "正在移轉",
@@ -3721,7 +4050,12 @@
       "verification": "驗證",
       "restart": "請依照部署的正常維運流程重新啟動 HertzBeat。本頁會繼續輪詢收斂狀態。"
     },
-    "verification": { "pending": "等待中", "running": "進行中", "succeeded": "成功", "failed": "失敗" },
+    "verification": {
+      "pending": "等待中",
+      "running": "進行中",
+      "succeeded": "成功",
+      "failed": "失敗"
+    },
     "errors": {
       "migration_unavailable": "目前伺服器版本未提供移轉引擎。",
       "migration_source_unsupported": "只能移轉 H2 管理資料庫。",
@@ -3778,8 +4112,14 @@
       "createFailed": "無法確認管理員是否已建立。請先重新整理設定狀態，再重試。"
     },
     "steps": {
-      "administrator": { "title": "管理員設定", "pending": "資料服務已就緒。下一步是設定管理員帳戶。" },
-      "optional": { "title": "選填設定", "pending": "管理員設定已完成。下一步是選填伺服器設定。" }
+      "administrator": {
+        "title": "管理員設定",
+        "pending": "資料服務已就緒。下一步是設定管理員帳戶。"
+      },
+      "optional": {
+        "title": "選填設定",
+        "pending": "管理員設定已完成。下一步是選填伺服器設定。"
+      }
     },
     "optional": {
       "description": "立即確認對外位址、資料保留與郵件，或稍後在系統設定中修改。",
@@ -3791,14 +4131,22 @@
         "proxyPublicBaseUrl": "外部存取位址",
         "proxyPublicBaseUrlHelp": "請填寫使用者和外部系統實際存取的完整位址，包括通訊協定以及自訂連接埠或路徑前綴。"
       },
-      "retention": { "title": "資料保留", "description": "設定資料保留天數，或留空並稍後設定。", "days": "保留天數" },
+      "retention": {
+        "title": "資料保留",
+        "description": "設定資料保留天數，或留空並稍後設定。",
+        "days": "保留天數"
+      },
       "mail": {
         "title": "郵件伺服器",
         "description": "設定 SMTP 傳送或略過。連線測試失敗不會阻止完成設定。",
         "host": "SMTP 主機",
         "port": "SMTP 連接埠",
         "security": "傳輸安全",
-        "securityMode": { "none": "無", "starttls": "STARTTLS", "tls": "TLS" },
+        "securityMode": {
+          "none": "無",
+          "starttls": "STARTTLS",
+          "tls": "TLS"
+        },
         "username": "使用者名稱",
         "password": "密碼",
         "fromAddress": "寄件位址"
@@ -3913,13 +4261,21 @@
         "noRun": "暫無執行"
       }
     },
-    "investigation": { "label": "問題調查" },
-    "roles": { "you": "你", "assistant": "HertzBeat AI" },
+    "investigation": {
+      "label": "問題調查"
+    },
+    "roles": {
+      "you": "你",
+      "assistant": "HertzBeat AI"
+    },
     "empty": {
       "title": "你想排查什麼？",
       "description": "可以詢問監控、實體、告警、指標、日誌、鏈路或拓撲範圍內的問題。"
     },
-    "composer": { "label": "調查問題", "placeholder": "讓 HertzBeat 協助排查一個運行問題…" },
+    "composer": {
+      "label": "調查問題",
+      "placeholder": "讓 HertzBeat 協助排查一個運行問題…"
+    },
     "actions": {
       "send": "傳送",
       "stop": "停止",
@@ -3955,9 +4311,12 @@
       "approvals": "待審批操作",
       "noApprovals": "沒有待審批操作",
       "inputs": "需要補充的資訊",
-      "noInputs": "無需補充資訊"
+      "noInputs": "無需補充資訊",
+      "statusUnknown": "未記錄執行狀態"
     },
-    "approval": { "adminRequired": "需要管理員審批" },
+    "approval": {
+      "adminRequired": "需要管理員審批"
+    },
     "providers": {
       "action": "模型提供方",
       "title": "模型提供方",
@@ -3995,7 +4354,11 @@
       "topology": "拓撲",
       "collection": "採集健康"
     },
-    "states": { "available": "可用", "empty": "此範圍內無證據", "unavailable": "證據不可用" },
+    "states": {
+      "available": "可用",
+      "empty": "此範圍內無證據",
+      "unavailable": "證據不可用"
+    },
     "actions": {
       "back": "返回告警",
       "retry": "重試",
@@ -4016,8 +4379,14 @@
       "truncated": "僅顯示有界結果集。",
       "truncationUnknown": "完整結果數量未知。"
     },
-    "metrics": { "before": "之前", "anchor": "告警", "after": "之後" },
-    "logs": { "focusActions": "可聚焦調查的日誌" },
+    "metrics": {
+      "before": "之前",
+      "anchor": "告警",
+      "after": "之後"
+    },
+    "logs": {
+      "focusActions": "可聚焦調查的日誌"
+    },
     "traces": {
       "traceId": "Trace ID",
       "service": "服務",
@@ -4026,7 +4395,12 @@
       "status": "狀態",
       "spans": "Span 數"
     },
-    "traceStatus": { "error": "錯誤", "ok": "正常", "unset": "未設定", "unknown": "未知" },
+    "traceStatus": {
+      "error": "錯誤",
+      "ok": "正常",
+      "unset": "未設定",
+      "unknown": "未知"
+    },
     "topology": {
       "source": "來源",
       "target": "目標",
@@ -4098,5 +4472,313 @@
       "loadEarlier": "載入更早記錄",
       "noText": "沒有文字內容"
     }
+  },
+  "services": {
+    "title": "服務",
+    "description": "檢查已登記服務、請求 RED 和已觀測鏈路操作。",
+    "search": "尋找服務",
+    "environmentFilter": "篩選目錄環境",
+    "query": "查詢",
+    "directory": "服務目錄",
+    "overview": "服務概覽",
+    "service": "服務",
+    "environment": "環境",
+    "namespace": "命名空間",
+    "source": "目錄來源",
+    "unknown": "無法取得",
+    "empty": "沒有符合的已登記服務",
+    "unresolved": "未登記服務也可能已有遙測資料，可直接進入 Explore 查詢訊號。",
+    "select": "選擇服務以檢查證據",
+    "openTraces": "開啟鏈路",
+    "openLogs": "開啟服務日誌",
+    "openMetrics": "開啟指標",
+    "logsScope": "日誌入口依服務查詢；若需操作關聯日誌，請先下鑽該操作的鏈路。",
+    "invalidWindow": "請選擇有效且不超過 24 小時的調查時間窗。",
+    "latestTrace": "窗口內最近觀測鏈路",
+    "freshnessLimit": "觀測時間是歷史證據，無法證明服務健康或仍在執行。",
+    "entity": "開啟實體證據",
+    "red": "請求 RED · Greptime Flow",
+    "redLimit": "服務整體範圍。以 60 秒桶聚合已觀測 SERVER 請求。未對齊窗口會選取完整分鐘桶。採樣完整性未確定；P95 為近似值，也可能無法取得。",
+    "requests": "已觀測請求",
+    "requestRate": "請求 / 秒",
+    "errorRate": "錯誤率",
+    "latencyP95": "P95 延遲",
+    "operations": "已觀測根鏈路操作",
+    "operationLimit": "最多 20 組，依錯誤鏈路數量排序。這是根鏈路觀測證據，並非完整請求清單；下游服務可能有 RED 而沒有根操作。",
+    "operation": "操作",
+    "observedTraces": "已觀測鏈路",
+    "errorTraces": "錯誤鏈路",
+    "investigate": "調查",
+    "errorAction": "錯誤鏈路",
+    "unnamedOperation": "未命名操作",
+    "noOperations": "此窗口沒有根操作證據",
+    "associations": "現有關聯",
+    "associationLimit": "目前監控關聯告警和最多 50 條已登記關係預覽；不受調查窗口篩選，也不代表完整的自動推斷依賴。",
+    "linkedAlerts": "目前監控關聯告警",
+    "noRelations": "此預覽沒有已登記關係證據",
+    "back": "返回服務",
+    "timeRange": "調查時間範圍",
+    "exactWindow": "保留絕對時間窗",
+    "state": {
+      "loading": "正在載入證據…",
+      "empty": "此窗口沒有觀測證據",
+      "unavailable": "證據來源無法使用",
+      "error": "無法讀取證據",
+      "permission": "讀取此證據需要權限",
+      "idle": "請先選擇服務",
+      "missing": "服務已無法使用",
+      "invalid": "調查範圍無效"
+    },
+    "backDirectory": "返回服務目錄",
+    "information": "服務資訊",
+    "lastEntityEvidence": "最新實體證據",
+    "performance": "效能",
+    "registered": "已登記服務",
+    "scopeTooLarge": "範圍超過 500 個服務",
+    "narrowScope": "請縮小搜尋或環境範圍，以比較全部匹配服務。目前不顯示部分排名。",
+    "performanceUnavailable": "服務觀測暫不可用",
+    "noRanking": "目前不顯示排名。請重試或開啟已登記服務。",
+    "performanceScope": "按 60 秒整桶統計已觀測的 SERVER 請求。採樣完整性未知，P95 為近似值。無觀測不代表健康。",
+    "resultCount": "{{count}} 個匹配服務",
+    "sort": "全部結果排序",
+    "order": "排序方向",
+    "desc": "降冪",
+    "asc": "升冪",
+    "pageEmpty": "此頁沒有服務",
+    "firstPage": "返回第一頁",
+    "clearFilters": "清除篩選",
+    "errorRequests": "錯誤請求",
+    "dataState": "資料狀態",
+    "observation": {
+      "ready": "有觀測",
+      "empty": "無請求觀測",
+      "unresolved": "身分未解析"
+    },
+    "sortKeys": {
+      "errorCount": "錯誤請求",
+      "errorRate": "錯誤率",
+      "requestCount": "已觀測請求",
+      "latencyP95Ms": "P95 延遲",
+      "name": "服務"
+    }
+  },
+  "exploreSaved": {
+    "views": "檢視",
+    "myView": "我的檢視",
+    "defaultView": "預設日誌檢視",
+    "filterViews": "篩選檢視",
+    "sort": "排序已儲存檢視",
+    "sortOptions": {
+      "default": "預設",
+      "recent": "最近檢視",
+      "newest": "最新優先",
+      "oldest": "最早優先",
+      "az": "A–Z",
+      "za": "Z–A"
+    },
+    "onlyMine": "只顯示我儲存的檢視",
+    "addFavorite": "將 {{view}} 加入最愛",
+    "removeFavorite": "從最愛移除 {{view}}",
+    "saveNewView": "儲存為新檢視",
+    "saveChanges": "儲存變更",
+    "copyUrl": "複製連結",
+    "editView": "編輯",
+    "moreActions": "更多檢視操作",
+    "queryActions": "查詢操作",
+    "directory": "已儲存查詢",
+    "save": "儲存查詢",
+    "update": "更新已儲存查詢",
+    "saveAs": "另存新檔",
+    "active": "已開啟：{{name}}",
+    "applyFirst": "請先執行「查詢」套用修改，再儲存。",
+    "activeUnavailable": "所選已儲存查詢無法使用。請重新開啟有效記錄後再更新。",
+    "invalidQuery": "目前條件或時間模式不支援儲存。",
+    "shared": "在目前 HertzBeat 執行個體內共用。有寫入權限的使用者可以更新或刪除這些查詢。",
+    "relative": "相對時間 · {{range}} · 開啟時重新計算",
+    "absolute": "絕對時間 · {{window}} · {{zone}}",
+    "name": "名稱",
+    "description": "說明",
+    "firstPage": "重新開啟時從結果第一頁開始，不共用導覽歷程。",
+    "writeFailed": "無法確認此次變更。輸入已保留，請重新整理已儲存查詢後再重試。",
+    "savePermission": "你沒有儲存此共用檢視的權限。",
+    "deletePermission": "你沒有刪除此共用檢視的權限。",
+    "signal": "訊號",
+    "allSignals": "全部訊號",
+    "empty": "此訊號尚無已儲存查詢。",
+    "original": "原始儲存記錄",
+    "export": "匯出原始 JSON",
+    "updated": "更新時間：{{time}}",
+    "unknownTime": "無法取得",
+    "open": "開啟查詢",
+    "inspect": "檢視原始記錄",
+    "discardDraft": "放棄尚未套用的查詢修改並開啟此儲存記錄？",
+    "deleteConfirm": "刪除此共用查詢？",
+    "editor": {
+      "create": "儲存查詢",
+      "update": "更新共用查詢",
+      "copy": "查詢另存新檔"
+    },
+    "states": {
+      "loading": "正在載入已儲存查詢…",
+      "error": "無法載入已儲存查詢。",
+      "permission": "你沒有讀取已儲存查詢的權限。",
+      "contract_error": "無法解析已儲存查詢回應。",
+      "transport_error": "已儲存查詢服務無法使用。"
+    },
+    "reasons": {
+      "invalidPayload": "原始內容無效或格式未知。",
+      "unsupportedVersion": "不支援此已儲存查詢版本。",
+      "invalidQuery": "無法安全還原儲存的條件或時間模式。",
+      "legacyUnsupported": "部分舊條件無法在保持查詢含義的情況下轉換，原始記錄已保留。",
+      "retiredReferenceJoin": "此已儲存查詢使用已不再支援的參考表關聯，未開啟或執行。"
+    },
+    "revisionConflict": "此查詢已在其他位置修改或刪除。草稿已保留，請重新載入最新版本或另存副本。"
+  },
+  "signalDashboard": {
+    "clearSearch": "清除",
+    "search": "依名稱搜尋儀表板",
+    "searchCount": "{{count}} / {{total}} 個儀表板",
+    "noMatches": "沒有名稱相符的儀表板",
+    "timeZoneUnspecified": "時區未指定",
+    "analysisDetails": "分析說明",
+    "analysisReadOnly": "此面板保留完整的日誌分析條件。請在 Explore 中開啟以修改查詢；標題、版面配置和共用服務上下文仍可編輯。",
+    "settings": "儀表板設定",
+    "variableKind": "變數類型：{{name}}",
+    "title": "儀表板",
+    "shared": "共用儀表板使用 HertzBeat 受控查詢。",
+    "new": "新增儀表板",
+    "untitled": "未命名儀表板",
+    "edit": "編輯儀表板",
+    "copy": "複製儀表板",
+    "copyName": "{{name}} 副本",
+    "name": "儀表板名稱",
+    "description": "說明",
+    "key": "儀表板 ID",
+    "directory": "所有儀表板",
+    "open": "開啟",
+    "loading": "正在載入儀表板…",
+    "error": "無法載入儀表板，請重新整理後再試。",
+    "empty": "尚未儲存共用儀表板。",
+    "document": "支援的文件",
+    "legacy": "舊版儀表板：已保留原始內容。",
+    "unavailable": "此儀表板不存在或文件尚未支援。",
+    "state": "文件狀態",
+    "updated": "中繼資料更新時間",
+    "upgrade": "升級空白儀表板",
+    "upgradeExact": "請先儲存此無損空白文件轉換，再編輯儀表板。原始片段仍會保留。",
+    "import": "匯入儀表板",
+    "export": "匯出文件",
+    "exportOriginal": "匯出原始記錄",
+    "importFile": "儀表板 JSON 檔案",
+    "documentJson": "儀表板文件 JSON",
+    "importHelp": "匯入支援的 Perses 子集。儲存前請檢查本機草稿；不會自動覆寫現有記錄。",
+    "importCopy": "使用新 ID 匯入副本",
+    "invalidDocument": "部分文件欄位無效或尚未支援，請修正後再查詢或儲存。",
+    "invalidHandoff": "無法完整保留查詢內容來新增此面板，原查詢未變更。",
+    "conflict": "此儀表板在開啟後已被修改。已保留草稿，請重新載入檢查目前版本。",
+    "writeFailed": "儲存失敗，已保留輸入內容，請在連線恢復後重試。",
+    "reload": "重新載入目前版本",
+    "discardReload": "捨棄此本機草稿並重新載入已儲存的儀表板？",
+    "deleteConfirm": "刪除此共用儀表板？",
+    "unsaved": "尚未儲存的本機草稿。查詢可預覽已套用的定義；取消會捨棄變更，重新整理會還原已儲存內容。",
+    "query": "查詢",
+    "applyFirst": "請執行查詢以預覽此面板定義。",
+    "panels": "儀表板面板",
+    "noPanels": "尚無面板。可新增面板或從 Explore 傳送支援的查詢。",
+    "addPanel": "新增面板",
+    "newPanel": "新面板",
+    "removePanel": "移除面板",
+    "definition": "儀表板定義",
+    "panelDefinition": "所選面板定義",
+    "panelTitle": "面板標題",
+    "panelType": "面板類型",
+    "queryContext": "查詢內容",
+    "queryContextField": "查詢內容：{{field}}",
+    "variables": "變數定義",
+    "TextVariable": "文字值",
+    "ListVariable": "靜態選項",
+    "defaultValue": "預設值",
+    "staticValues": "選項，每行一項",
+    "removeVariable": "移除變數",
+    "addVariable": "新增 {{name}} 變數",
+    "serviceName": "服務",
+    "serviceNamespace": "命名空間",
+    "environment": "環境",
+    "defaultDuration": "預設時間範圍",
+    "autoRefresh": "預設自動重新整理",
+    "timeZone": "時區",
+    "timeRange": "時間範圍",
+    "fixedWindow": "固定調查時間窗",
+    "range": "最近 {{range}}",
+    "invalidTime": "指定時間窗無效。請選擇預設範圍並執行查詢。",
+    "layout": "配置位置與大小",
+    "x": "欄位置",
+    "y": "列位置",
+    "width": "寬度",
+    "height": "高度",
+    "invalidLayout": "此配置與其他面板重疊或超出支援範圍。",
+    "chooseTarget": "為此面板選擇儀表板",
+    "appendPanel": "新增至此儀表板",
+    "newFromPanel": "以此面板建立儀表板",
+    "returnSource": "返回來源查詢",
+    "openExplore": "開啟 Explore",
+    "loadingPanel": "正在載入面板…",
+    "emptyPanel": "沒有資料符合此面板查詢。",
+    "cancelled": "面板查詢已取消，重試可再次查詢。",
+    "retryPanel": "重試面板",
+    "bounded": "結果僅涵蓋最多 {{limit}} 筆的受限集合，未涵蓋整個時間窗。",
+    "unknownCoverage": "查詢涵蓋範圍未知。",
+    "truncated": "結果已在查詢上限處截斷。",
+    "runtimeError": "無法顯示面板，請重試或重新整理此查詢。",
+    "addFromExplore": "新增至儀表板",
+    "back": "返回儀表板",
+    "addApplyFirst": "新增面板前，請執行查詢以套用變更。",
+    "addUnsupported": "儀表板尚未支援這些查詢條件。",
+    "addFixedTrace": "此面板固定顯示指定追蹤，服務變數不會改變它。",
+    "addSourceWindow": "面板將使用此調查時間窗開啟。",
+    "fields": {
+      "name": "指標名稱",
+      "operationName": "操作名稱",
+      "aggregation": "彙總方式",
+      "temporalAggregation": "時間彙總",
+      "stepSeconds": "步長（秒）",
+      "limit": "結果上限",
+      "search": "日誌搜尋",
+      "severity": "嚴重程度",
+      "spanScope": "Span 範圍",
+      "minDurationMs": "最短耗時（毫秒）",
+      "maxDurationMs": "最長耗時（毫秒）",
+      "hideInternal": "隱藏內部記錄",
+      "hideNoise": "隱藏雜訊",
+      "errorOnly": "僅錯誤",
+      "traceId": "Trace ID",
+      "spanId": "Span ID",
+      "entityId": "實體 ID",
+      "entityType": "實體類型",
+      "collectorId": "收集器 ID",
+      "instance": "執行個體",
+      "endpoint": "端點",
+      "serviceName": "服務",
+      "serviceNamespace": "命名空間",
+      "environment": "環境"
+    },
+    "kinds": {
+      "TimeSeriesChart": "指標時間序列",
+      "StatChart": "指標數值",
+      "GaugeChart": "指標儀表",
+      "Table": "指標表格",
+      "LogsTable": "日誌表",
+      "TraceTable": "追蹤表",
+      "TracingGanttChart": "追蹤瀑布圖"
+    },
+    "gaugeMaximum": "儀表最大值",
+    "queryFailures": {
+      "invalid": "視覺化請求無效。",
+      "permission": "無權檢查此訊號。",
+      "overloaded": "訊號儲存忙碌，請重試。",
+      "unavailable": "訊號儲存不可用。",
+      "contract": "證據不完整，無法呈現。"
+    },
+    "addTransactionsUnsupported": "目前不支援將交易新增至儀表板。可儲存查詢，以便重新開啟調查。"
   }
 }

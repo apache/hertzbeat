@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { BrowserDownloadArtifact } from '@/shared/browser-download';
+import { serializeCsv, type BrowserDownloadArtifact } from '@/shared/browser-download';
 
 import { alertGroupName, type AlertGroup, type AlertRecord } from './alert-model';
 
@@ -32,7 +32,6 @@ const csvHeaders = [
 ] as const;
 
 type CsvValue = string | number | null | undefined;
-const spreadsheetFormulaPrefixes = new Set(['=', '+', '-', '@']);
 
 export function buildAlertCenterCsvArtifact(
   groups: readonly AlertGroup[],
@@ -50,7 +49,7 @@ export function serializeAlertGroupsCsv(groups: readonly AlertGroup[]) {
     const alerts: Array<AlertRecord | null> = group.alerts.length > 0 ? group.alerts : [null];
     return alerts.map(alert => alertCsvRow(group, alert));
   });
-  return [csvHeaders, ...rows].map(row => row.map(escapeCsvCell).join(',')).join('\r\n');
+  return serializeCsv([csvHeaders, ...rows]);
 }
 
 function alertCsvRow(group: AlertGroup, alert: AlertRecord | null): CsvValue[] {
@@ -85,11 +84,4 @@ function alertCsvFields(alert: AlertRecord | null): CsvValue[] {
 function stableJson(value: Record<string, string> | null | undefined) {
   if (!value) return '';
   return JSON.stringify(Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right))));
-}
-
-function escapeCsvCell(value: CsvValue) {
-  const raw = value == null ? '' : String(value);
-  const firstMeaningfulCharacter = [...raw].find(character => character.charCodeAt(0) > 32);
-  const safe = spreadsheetFormulaPrefixes.has(firstMeaningfulCharacter ?? '') ? `'${raw}` : raw;
-  return `"${safe.replace(/"/g, '""')}"`;
 }

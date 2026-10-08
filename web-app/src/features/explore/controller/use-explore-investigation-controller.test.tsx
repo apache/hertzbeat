@@ -18,6 +18,17 @@ vi.mock('../api/explore-investigation-api', () => ({
 vi.mock('@/shared/time', () => ({ useSharedTimeOptional: () => ({ refreshRevision: 3 }) }));
 
 const loadTrace = vi.mocked(loadTraceInvestigation);
+const sessionState = vi.hoisted(() => ({ workspaceId: 'default' }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({
+    session: {
+      username: 'operator',
+      workspaceId: sessionState.workspaceId,
+      roles: ['ADMIN'],
+      authenticated: true
+    }
+  })
+}));
 const loadLog = vi.mocked(loadLogInvestigation);
 const traceId = '0123456789abcdef0123456789abcdef';
 const spanId = '0123456789abcdef';
@@ -26,6 +37,7 @@ describe('Explore focused investigation controllers', () => {
   beforeEach(() => {
     loadTrace.mockReset();
     loadLog.mockReset();
+    sessionState.workspaceId = 'default';
   });
 
   it('queries an exact Trace composite and exposes only parsed ready evidence', async () => {
@@ -83,6 +95,34 @@ describe('Explore focused investigation controllers', () => {
     await waitFor(() => expect(result.current.state.kind).toBe('contract_error'));
   });
 
+  it('marks retained Log evidence stale until refetch succeeds and after failure', async () => {
+    let finish: (value: ReturnType<typeof logSnapshot>) => void = () => undefined;
+    loadLog.mockResolvedValueOnce(logSnapshot()).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        })
+    );
+    const { result } = renderHook(
+      () =>
+        useLogInvestigationController(logQuery('signal=logs&logRecordUid=event-7&start=1000&end=2000&timeZone=UTC')),
+      { wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.kind).toBe('ready'));
+    expect(result.current.evidenceCurrent).toBe(true);
+    act(() => {
+      void result.current.refetch();
+    });
+    await waitFor(() => expect(result.current.evidenceCurrent).toBe(false));
+    expect(result.current.state.kind).toBe('ready');
+    act(() => finish(logSnapshot()));
+    await waitFor(() => expect(result.current.evidenceCurrent).toBe(true));
+    loadLog.mockRejectedValueOnce(new Error('offline'));
+    await act(() => result.current.refetch());
+    await waitFor(() => expect(result.current.state.kind).toBe('unavailable'));
+    expect(result.current.evidenceCurrent).toBe(false);
+  });
+
   it('aborts the previous owner when the exact Trace scope changes', async () => {
     const observedSignals: AbortSignal[] = [];
     loadTrace.mockImplementation((_traceId, _spanId, _window, signal) => {
@@ -101,6 +141,160 @@ describe('Explore focused investigation controllers', () => {
     rerender({ trace: 'fedcba9876543210fedcba9876543210' });
     await waitFor(() => expect(observedSignals).toHaveLength(2));
     expect(observedSignals[0]?.aborted).toBe(true);
+  });
+
+  it('retains only the same trace and window while URL selection loads, marking dependent evidence stale', async () => {
+    loadTrace.mockResolvedValueOnce(traceSnapshot()).mockImplementation(() => new Promise(() => undefined));
+    const { result, rerender } = renderHook(
+      ({ selected, trace }) =>
+        useTraceInvestigationController(
+          traceQuery(`signal=traces&traceId=${trace}&spanId=${selected}&start=1000&end=2000&timeZone=UTC`)
+        ),
+      { initialProps: { selected: spanId, trace: traceId }, wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.kind).toBe('ready'));
+    const original = result.current.state;
+    rerender({ selected: '1111111111111111', trace: traceId });
+    expect(result.current.state.kind).toBe('ready');
+    expect(result.current.evidenceCurrent).toBe(false);
+    if (result.current.state.kind === 'ready' && original.kind === 'ready') {
+      expect(result.current.state.snapshot).toBe(original.snapshot);
+    }
+    rerender({ selected: spanId, trace: 'fedcba9876543210fedcba9876543210' });
+    expect(result.current.state.kind).toBe('loading');
+  });
+
+  it('immediately discards retained evidence when the authenticated workspace changes', async () => {
+    loadTrace.mockResolvedValueOnce(traceSnapshot()).mockImplementation(() => new Promise(() => undefined));
+    const { result, rerender } = renderHook(
+      () =>
+        useTraceInvestigationController(
+          traceQuery(`signal=traces&traceId=${traceId}&spanId=${spanId}&start=1000&end=2000&timeZone=UTC`)
+        ),
+      { wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.kind).toBe('ready'));
+    sessionState.workspaceId = 'another';
+    rerender();
+    expect(result.current.state.kind).toBe('loading');
+  });
+
+  it('clears retained geometry when the selected-span request fails rather than claiming current evidence', async () => {
+    loadTrace.mockResolvedValueOnce(traceSnapshot()).mockRejectedValueOnce(new Error('offline'));
+    const { result, rerender } = renderHook(
+      ({ selected }) =>
+        useTraceInvestigationController(
+          traceQuery(`signal=traces&traceId=${traceId}&spanId=${selected}&start=1000&end=2000&timeZone=UTC`)
+        ),
+      { initialProps: { selected: spanId }, wrapper: wrapper() }
+    );
+    await waitFor(() => expect(result.current.state.kind).toBe('ready'));
+    rerender({ selected: '1111111111111111' });
+    await waitFor(() => expect(result.current.state.kind).toBe('unavailable'));
+    expect(result.current.evidenceCurrent).toBe(false);
+  });
+  it.each(['success', 'failure'] as const)('keeps the latest selected span after an obsolete %s', async outcome => {
+    const old = deferredDetail<ReturnType<typeof traceSnapshot>>();
+    const current = deferredDetail<ReturnType<typeof traceSnapshot>>();
+    loadTrace
+      .mockResolvedValueOnce(traceSnapshot())
+      .mockReturnValueOnce(old.promise)
+      .mockReturnValueOnce(current.promise);
+    const scope = (selected: string) =>
+      traceQuery(
+        `signal=traces&traceId=${traceId}&spanId=${selected}&start=1000&end=2000&timeZone=UTC&serviceName=checkout`
+      );
+    const hook = renderHook(({ selected }) => useTraceInvestigationController(scope(selected)), {
+      initialProps: { selected: spanId },
+      wrapper: wrapper()
+    });
+    await waitFor(() => expect(hook.result.current.evidenceCurrent).toBe(true));
+    hook.rerender({ selected: '1111111111111111' });
+    await waitFor(() => expect(loadTrace).toHaveBeenCalledTimes(2));
+    const oldSignal = loadTrace.mock.calls[1]![3]!;
+    hook.rerender({ selected: '2222222222222222' });
+    await waitFor(() => expect(loadTrace).toHaveBeenCalledTimes(3));
+    expect(oldSignal.aborted).toBe(true);
+    expect(hook.result.current.evidenceCurrent).toBe(false);
+    const accepted = { ...traceSnapshot(), selectedSpanId: '2222222222222222' };
+    await act(async () => {
+      current.resolve(accepted);
+      await current.promise;
+    });
+    await waitFor(() => expect(hook.result.current.evidenceCurrent).toBe(true));
+    await act(async () => {
+      if (outcome === 'success') old.resolve({ ...traceSnapshot(), selectedSpanId: '1111111111111111' });
+      else old.reject(new Error('obsolete span failed'));
+      await old.promise.catch(() => undefined);
+    });
+    expect(hook.result.current.state).toMatchObject({
+      kind: 'ready',
+      snapshot: { selectedSpanId: '2222222222222222' }
+    });
+    expect(hook.result.current.evidenceCurrent).toBe(true);
+  });
+  it('recovers selected-span failure with one delayed retry and current evidence', async () => {
+    const retry = deferredDetail<ReturnType<typeof traceSnapshot>>();
+    loadTrace
+      .mockResolvedValueOnce(traceSnapshot())
+      .mockRejectedValueOnce(new Error('selection offline'))
+      .mockReturnValueOnce(retry.promise);
+    const hook = renderHook(
+      ({ selected }) =>
+        useTraceInvestigationController(
+          traceQuery(`signal=traces&traceId=${traceId}&spanId=${selected}&start=1000&end=2000&timeZone=UTC`)
+        ),
+      { initialProps: { selected: spanId }, wrapper: wrapper() }
+    );
+    await waitFor(() => expect(hook.result.current.evidenceCurrent).toBe(true));
+    hook.rerender({ selected: '2222222222222222' });
+    await waitFor(() => expect(hook.result.current.state.kind).toBe('unavailable'));
+    expect(hook.result.current.evidenceCurrent).toBe(false);
+    act(() => {
+      void hook.result.current.refetch();
+      void hook.result.current.refetch();
+    });
+    await waitFor(() => expect(loadTrace).toHaveBeenCalledTimes(3));
+    expect(hook.result.current.evidenceCurrent).toBe(false);
+    expect(hook.result.current.state).toMatchObject({ kind: 'ready', snapshot: { selectedSpanId: spanId } });
+    await act(async () => {
+      retry.resolve({ ...traceSnapshot(), selectedSpanId: '2222222222222222' });
+      await retry.promise;
+    });
+    await waitFor(() => expect(hook.result.current.evidenceCurrent).toBe(true));
+    expect(hook.result.current.state).toMatchObject({
+      kind: 'ready',
+      snapshot: { selectedSpanId: '2222222222222222' }
+    });
+  });
+
+  it('retires selected detail on drawer unmount and keeps its late failure out of cache', async () => {
+    const old = deferredDetail<ReturnType<typeof traceSnapshot>>();
+    loadTrace.mockReturnValueOnce(old.promise);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    const Wrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const hook = renderHook(
+      () =>
+        useTraceInvestigationController(
+          traceQuery(`signal=traces&traceId=${traceId}&spanId=${spanId}&start=1000&end=2000&timeZone=UTC`)
+        ),
+      { wrapper: Wrapper }
+    );
+    await waitFor(() => expect(loadTrace).toHaveBeenCalledOnce());
+    const signal = loadTrace.mock.calls[0]![3]!;
+    hook.unmount();
+    expect(signal.aborted).toBe(true);
+    await act(async () => {
+      old.reject(new Error('unmounted detail failed'));
+      await old.promise.catch(() => undefined);
+    });
+    for (const entry of client.getQueryCache().getAll()) {
+      expect(entry.state.data).toBeUndefined();
+      expect(entry.state.error).toBeNull();
+    }
+    client.clear();
   });
 });
 
@@ -190,4 +384,14 @@ function logSnapshot() {
       after: []
     }
   };
+}
+
+function deferredDetail<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
 }

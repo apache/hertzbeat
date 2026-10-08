@@ -9,7 +9,8 @@ import { AlertInvestigationView } from './alert-investigation-view';
 
 const runtime = vi.hoisted(() => ({ logs: vi.fn(), metrics: vi.fn() }));
 
-vi.mock('@/platform/perses', () => ({
+vi.mock('@/platform/perses', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/platform/perses')>()),
   HertzBeatLogsTableResult: (props: { ariaLabel: string }) => {
     runtime.logs(props);
     return <div data-testid="perses-logs">{props.ariaLabel}</div>;

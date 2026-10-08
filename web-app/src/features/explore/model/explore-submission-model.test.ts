@@ -24,6 +24,7 @@ describe('explore submission model', () => {
     expect(
       draftFromQuery({
         signal: 'metrics',
+        metricPlan: '',
         timeRange: 'last-30m',
         serviceName: 'checkout',
         serviceNamespace: 'commerce',
@@ -39,6 +40,7 @@ describe('explore submission model', () => {
       })
     ).toEqual({
       signal: 'metrics',
+      metricPlan: '',
       serviceName: 'checkout',
       serviceNamespace: 'commerce',
       environment: 'prod',
@@ -55,6 +57,7 @@ describe('explore submission model', () => {
     expect(
       draftFromQuery({
         signal: 'traces',
+        sort: 'newest',
         timeRange: 'last-30m',
         traceId: 'trace-1',
         attributeFilter: 'http.route=/checkout',
@@ -66,6 +69,7 @@ describe('explore submission model', () => {
       })
     ).toEqual({
       signal: 'traces',
+      sort: 'newest',
       serviceName: '',
       serviceNamespace: '',
       environment: '',
@@ -87,6 +91,7 @@ describe('explore submission model', () => {
     expect(
       buildSubmissionPatch({
         signal: 'metrics',
+        metricPlan: '',
         serviceName: ' checkout ',
         serviceNamespace: ' commerce ',
         environment: ' prod ',
@@ -121,6 +126,7 @@ describe('explore submission model', () => {
       expect(
         buildSubmissionPatch({
           signal: 'metrics',
+          metricPlan: '',
           serviceName: '',
           serviceNamespace: '',
           environment: '',
@@ -188,6 +194,7 @@ describe('explore submission model', () => {
     expect(
       buildSubmissionPatch({
         signal: 'traces',
+        sort: 'newest',
         serviceName: '',
         serviceNamespace: '',
         environment: '',
@@ -218,6 +225,7 @@ describe('explore submission model', () => {
         minDurationMs: 0,
         maxDurationMs: Number.MAX_SAFE_INTEGER,
         errorOnly: undefined,
+        sort: 'newest',
         spanScope: 'entrypoint',
         hideInternal: true,
         pageIndex: undefined
@@ -232,6 +240,7 @@ describe('explore submission model', () => {
     ] as const) {
       const result = buildSubmissionPatch({
         signal: 'traces',
+        sort: 'newest',
         serviceName: '',
         serviceNamespace: '',
         environment: '',

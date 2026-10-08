@@ -51,6 +51,32 @@ describe('Explore investigation Perses adapters', () => {
     expect(result.metrics).toEqual([]);
   });
 
+  it('propagates partial Trace detail to the Perses truncation contract', () => {
+    const snapshot = traceSnapshot();
+    if (snapshot.gantt.state === 'ready' && snapshot.gantt.detail) snapshot.gantt.detail.partial = true;
+
+    const result = createTraceInvestigationPersesResults(traceQuery, snapshot);
+
+    expect(result.gantt?.outcome).toMatchObject({ state: 'ready', truncated: true });
+  });
+
+  it.each([
+    { state: 'empty', reason: 'no_data' },
+    { state: 'unavailable', reason: 'limit_exceeded' }
+  ] as const)('retains same-trace logs with $state Gantt without inventing a Gantt or RED', gantt => {
+    const snapshot = traceSnapshot();
+    snapshot.gantt = { ...gantt, source: 'greptime_traces', detail: null };
+    const result = createTraceInvestigationPersesResults(traceQuery, snapshot);
+    expect(result.gantt).toBeUndefined();
+    expect(result.logs?.query).toMatchObject({ traceId, timeWindow: { from: 1000, to: 2000 } });
+    expect(result.logs?.outcome).toMatchObject({
+      state: 'ready',
+      data: { rows: [{ body: 'checkout failed', traceId }] }
+    });
+    expect(result.metrics).toEqual([]);
+    expect(snapshot.red).toMatchObject({ state: 'unavailable', summary: null, series: [] });
+  });
+
   it('uses nearby rows for Log-first evidence and does not invent a trace query when uncorrelated', () => {
     const query: LogExploreQuery = {
       signal: 'logs',
@@ -132,6 +158,20 @@ function logSnapshot(): LogInvestigationSnapshot {
 
 function traceDetail() {
   return {
+    partial: false,
+    rootState: 'unique' as const,
+    rootSpanCount: 1,
+    missingParentCount: 0,
+    observedStartTime: 1_100,
+    observedEndTime: 1_100 + 1,
+    representativeSpan: {
+      spanId: spanId,
+      spanName: 'POST /checkout',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      startTime: 1_100,
+      durationNanos: 1_000_000
+    },
     rootSpanId: spanId,
     serviceName: 'checkout',
     serviceNamespace: 'commerce',
@@ -162,6 +202,7 @@ function traceDetail() {
         scopeVersion: '1.0.0',
         durationNanos: '1000000',
         startTime: 1_100,
+        startTimeUnixNano: String(BigInt(1_100) * 1000000n),
         highlighted: true,
         resourceAttributes: {},
         spanAttributes: {},

@@ -1,0 +1,38 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.emptyCanvas {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: var(--hb-space-3);
+  min-height: 160px;
+  flex: none;
+  padding: var(--hb-space-4);
+}
+.emptyCanvas > div {
+  justify-content: center;
+}
+.emptyCanvas p {
+  margin: 0;
+  max-width: 600px;
+  color: var(--hb-text-secondary);
+}
+.outputStatus {
+  padding-block: var(--hb-space-1);
+}
+.resultHelp {
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+  padding-block: var(--hb-space-1);
+}
+.resultHelp > summary {
+  cursor: pointer;
+}
+
+.unitNotice {
+  margin: 0;
+  padding-block: var(--hb-space-1);
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}

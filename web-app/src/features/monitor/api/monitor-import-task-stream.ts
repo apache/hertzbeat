@@ -10,15 +10,32 @@ const importTaskEventNames = ['manager-ready', 'IMPORT_TASK_EVENT'] as const;
 export function openMonitorImportTaskStream(handlers: {
   onCanonicalReread: (eventName: (typeof importTaskEventNames)[number]) => void;
 }) {
-  return openBrowserEventStream(managerSseEndpoint, {
-    eventNames: importTaskEventNames,
-    onOpen: () => undefined,
-    onRetrying: () => undefined,
-    onUnavailable: () => undefined,
-    onEvent: (eventName, payload) => {
-      if (parseMonitorImportTaskReread(payload)) {
-        handlers.onCanonicalReread(eventName as (typeof importTaskEventNames)[number]);
-      }
+  let stream: ReturnType<typeof openBrowserEventStream> | undefined;
+  const close = () => {
+    stream?.close();
+    stream = undefined;
+  };
+  const update = () => {
+    if (document.visibilityState === 'hidden') close();
+    else
+      stream ??= openBrowserEventStream(managerSseEndpoint, {
+        eventNames: importTaskEventNames,
+        onOpen: () => undefined,
+        onRetrying: () => undefined,
+        onUnavailable: () => undefined,
+        onEvent: (eventName, payload) => {
+          if (parseMonitorImportTaskReread(payload)) {
+            handlers.onCanonicalReread(eventName as (typeof importTaskEventNames)[number]);
+          }
+        }
+      });
+  };
+  document.addEventListener('visibilitychange', update);
+  update();
+  return {
+    close: () => {
+      document.removeEventListener('visibilitychange', update);
+      close();
     }
-  });
+  };
 }

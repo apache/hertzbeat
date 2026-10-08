@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useQueryDraft } from '@/shared/query-context';
+import { useStringQueryDraft } from '@/shared/query-context';
 
 import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
 import {
@@ -103,20 +103,30 @@ function useMonitorListQueryState() {
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
   const source = writeMonitorQuery(query).toString();
-  const canonicalDraft = useMemo(() => ({ search: query.search, labels: query.labels }), [query.labels, query.search]);
-  const draft = useQueryDraft(source, canonicalDraft);
+  // Immediate filters change the result scope without committing text drafts.
+  const searchDraft = useStringQueryDraft(query.search, query.search);
+  const labelsDraft = useStringQueryDraft(query.labels, query.labels);
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   return {
     query,
     source,
-    draft: draft.value,
+    draft: { search: searchDraft.value, labels: labelsDraft.value },
     setParams,
     actions: {
-      setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
-      setLabels: (labels: string) => draft.setValue({ ...draft.value, labels }),
-      submitSearch: () => updateQuery({ search: draft.value.search.trim(), pageIndex: 0 }),
-      submitFilters: () =>
-        updateQuery({ search: draft.value.search.trim(), labels: draft.value.labels.trim(), pageIndex: 0 }),
+      setSearch: searchDraft.setValue,
+      setLabels: labelsDraft.setValue,
+      submitSearch: () => {
+        const search = searchDraft.value.trim();
+        searchDraft.setValue(search);
+        updateQuery({ search, pageIndex: 0 });
+      },
+      submitFilters: () => {
+        const search = searchDraft.value.trim();
+        const labels = labelsDraft.value.trim();
+        searchDraft.setValue(search);
+        labelsDraft.setValue(labels);
+        updateQuery({ search, labels, pageIndex: 0 });
+      },
       changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
       changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
       changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) =>

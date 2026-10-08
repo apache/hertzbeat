@@ -7,7 +7,7 @@ import {
   entityRoutePaths,
   normalizeAlertCenterReturnTo
 } from '@/shared/navigation/app-paths';
-import { safeTopologyReturnTo } from '@/features/topology';
+import { safeTopologyReturnTo } from '@/features/topology/navigation';
 import { compactTablePageSizes } from '@/shared/pagination';
 import type {
   EntityDetail,
@@ -73,6 +73,7 @@ export type EntityNoiseControlType = 'silence' | 'inhibit';
 
 export type EntityListViewState = {
   query: EntityQuery;
+  navigation?: { key: string; type: 'POP' | 'PUSH' | 'REPLACE' };
   draft: string;
   evidence: EntityListEvidence;
   refreshing: boolean;

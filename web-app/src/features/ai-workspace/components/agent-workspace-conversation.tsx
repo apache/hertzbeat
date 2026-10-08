@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import { ConversationComposer, ConversationHeader } from './agent-workspace-conversation-chrome';
 import styles from './agent-workspace-conversation.module.css';
-import { formatAgentTimestamp } from './agent-workspace-format';
+import { formatAgentTimestamp, formatElapsed, toolStatusColor } from './agent-workspace-format';
 
 export function AgentWorkspaceConversation({
   controller,
@@ -19,7 +19,10 @@ export function AgentWorkspaceConversation({
   onToggleContext: () => void;
 }) {
   const { t } = useTranslation();
-  const messages = [...controller.transcript.items, ...controller.draftMessages, ...controller.run.messages];
+  const recorded = controller.transcript.items.filter(
+    item => item.role !== 'assistant' || item.text || item.errorMessage || !item.toolCalls?.length
+  );
+  const messages = [...recorded, ...controller.draftMessages, ...controller.run.messages];
   const sessionLoadIncomplete = controller.transcript.status === 'error';
   const empty = messages.length === 0 && !controller.failure && !controller.invalidTarget && !sessionLoadIncomplete;
   return (
@@ -147,7 +150,7 @@ function ConversationActivity({
             <Typography.Text type="secondary">{formatElapsed(tool.elapsedMs)}</Typography.Text>
           )}
           <Tag bordered={false} color={toolStatusColor(tool.status)}>
-            {tool.status}
+            {tool.status === 'UNKNOWN' ? t('aiWorkspace.context.statusUnknown') : tool.status}
           </Tag>
           <RightOutlined className={styles.inlineToolChevron} />
         </button>
@@ -198,16 +201,4 @@ function ConversationPaused({
       ) : null}
     </div>
   );
-}
-
-function toolStatusColor(status: string) {
-  const normalized = status.toUpperCase();
-  if (normalized === 'SUCCEEDED' || normalized === 'COMPLETED') return 'success';
-  if (normalized === 'FAILED' || normalized === 'DENIED') return 'error';
-  if (normalized.includes('WAITING')) return 'warning';
-  return 'processing';
-}
-
-function formatElapsed(elapsedMs: number) {
-  return elapsedMs < 1000 ? `${elapsedMs} ms` : `${(elapsedMs / 1000).toFixed(1)} s`;
 }

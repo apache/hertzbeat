@@ -1,0 +1,44 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.chart {
+  --hb-perses-compact-height: 280px;
+
+  width: 100%;
+  min-width: 0;
+  height: 280px;
+  min-height: 280px;
+}
+.rawBuckets {
+  max-height: min(240px, 30dvh);
+  max-width: min(480px, calc(100dvw - 64px));
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+.rawBuckets dl,
+.rawBuckets dd {
+  margin: 0;
+}
+.rawBuckets dl > div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+.rawBuckets dt {
+  min-width: 0;
+}
+.rawBuckets dd {
+  flex: none;
+}
+.rawBuckets:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: -2px;
+}
+
+@media (max-width: 600px) {
+  .rawBuckets dl > div {
+    display: block;
+  }
+  .rawBuckets dd {
+    overflow-wrap: anywhere;
+  }
+}

@@ -46,6 +46,7 @@ export function ExploreFilterField({
 
 function submissionErrorKey(error: NonNullable<ExploreSubmissionErrors[keyof ExploreSubmissionErrors]>) {
   if (error === 'unsupported_aggregation') return 'explore.submissionErrors.unsupportedAggregation';
+  if (error === 'invalid_metric_plan') return 'explore.metricComposition.invalidPlan';
   if (error === 'invalid_step') return 'explore.submissionErrors.invalidStep';
   if (error === 'min_exceeds_max') return 'explore.submissionErrors.minExceedsMax';
   return 'explore.submissionErrors.invalidDuration';

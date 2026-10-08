@@ -1,0 +1,21 @@
+.groupedChart {
+  --hb-perses-compact-height: 220px;
+}
+
+.groupTotals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2) var(--hb-space-4);
+  max-height: 144px;
+  overflow: auto;
+  margin: var(--hb-space-2) 0;
+  padding: 0;
+  list-style: none;
+}
+.groupTotals li {
+  display: inline-flex;
+  gap: var(--hb-space-2);
+  align-items: baseline;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}

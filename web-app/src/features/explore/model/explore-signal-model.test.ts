@@ -164,6 +164,15 @@ describe('explore API contracts', () => {
     expect(logBody(row)).toBe('{"event":"paid"}');
     expect(logTimestampMs(logRow({ timeUnixNano: '1750000000000000000' }))).toBe(1_750_000_000_000);
   });
+
+  it('keeps the message column faithful to the log body', () => {
+    const attributes = { 'event.name': 'codex.tool_decision', arguments: 'secret', duration: 42 };
+    expect(logBody(logRow({ body: null, attributes }))).toBeUndefined();
+    expect(logBody(logRow({ body: '  ', attributes }))).toBe('  ');
+    expect(logBody(logRow({ body: 'null', attributes }))).toBe('null');
+    expect(logBody(logRow({ body: 'operator said null', attributes }))).toBe('operator said null');
+    expect(logBody(logRow({ body: 'null' }))).toBe('null');
+  });
 });
 
 function metricConsole(

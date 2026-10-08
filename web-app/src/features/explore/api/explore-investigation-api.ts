@@ -1,5 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { isLogRecordUid } from '../model/explore-field-contract';
+
 import { apiMessageGet } from '@/core/http/api-message';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
@@ -32,7 +34,7 @@ export function buildTraceInvestigationApiPath(traceId: string, spanId: string |
 }
 
 export function buildLogInvestigationApiPath(logRecordUid: string, window: ExactTimeWindow) {
-  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(logRecordUid)) {
+  if (!isLogRecordUid(logRecordUid)) {
     throw new Error('Log record identity is invalid');
   }
   const params = new URLSearchParams({ logRecordUid, ...Object.fromEntries(windowParams(window)) });

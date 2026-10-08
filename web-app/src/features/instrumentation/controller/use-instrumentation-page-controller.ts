@@ -9,13 +9,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useBeforeUnload, useNavigate } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import { monitorCapabilities } from '@/features/monitor';
+import { applicationRoutePaths, buildMonitorCreatePath, monitorRoutePaths } from '@/shared/navigation/app-paths';
 
-import {
-  detectInstrumentationSignals,
-  loadInstrumentationCatalog,
-  loadIntakeProfiles
-} from '../api/instrumentation-api';
-import { buildDetectionRequest, buildQueryJump, type InstrumentationDraft } from '../model/instrumentation-flow';
+import { loadInstrumentationCatalog, loadIntakeProfiles } from '../api/instrumentation-api';
+import { buildQueryJump, type InstrumentationDraft } from '../model/instrumentation-flow';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { instrumentationTokenCapability } from '../model/instrumentation-token-capability';
 import { buildFlowReadiness } from './instrumentation-flow-readiness';
@@ -23,6 +21,7 @@ import { useDraftActions, useGuideActions } from './instrumentation-controller-a
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
 import { useInstrumentationInitialization } from './use-instrumentation-initialization';
 import { useInstrumentationProfile } from './use-instrumentation-profile';
+import { useInstrumentationDetection } from './use-instrumentation-detection';
 
 const keys = {
   catalog: ['instrumentation', 'catalog'] as const,
@@ -33,10 +32,12 @@ export function useInstrumentationPageController() {
   const navigate = useNavigate();
   const session = useSession().session;
   const tokenCapability = instrumentationTokenCapability(session?.roles ?? []);
+  const canCreateMonitor = monitorCapabilities(session?.roles ?? []).canWrite;
   const { catalogQuery, profilesQuery } = useInstrumentationQueries();
   const initialization = useInstrumentationInitialization(catalogQuery, profilesQuery);
   const state = useInstrumentationControllerState();
-  const { generationRef, startedAtRef, timerRef } = useInstrumentationFlowLifetime();
+  const lifetime = useInstrumentationFlowLifetime();
+  const { generationRef, startedAtRef, timerRef } = lifetime;
 
   useDefaultProfile(profilesQuery.data?.defaultProfileId, state.setDraft);
 
@@ -56,21 +57,17 @@ export function useInstrumentationPageController() {
     session?.workspaceId ?? undefined,
     tokenCapability.canGenerateToken
   );
-  const detect = useDetection(
-    state.draft,
-    state.setDetection,
-    state.setDetecting,
-    state.setDetectionError,
-    startedAtRef,
-    timerRef,
-    generationRef
-  );
+  const detection = useInstrumentationDetection(state, lifetime);
   const openQuery = useOpenQuery(state.detection, navigate, state.tokenAcknowledgementRequiredRef);
   const readiness = buildFlowReadiness(state, catalogQuery.data, initialization.profilesState, profile.selected);
   useProtectUnacknowledgedToken(state.tokenAcknowledgementRequired);
 
   return {
     ...state,
+    canCreateMonitor,
+    agentlessTarget: canCreateMonitor
+      ? buildMonitorCreatePath({ returnTo: applicationRoutePaths.instrumentation })
+      : monitorRoutePaths.list,
     catalog: catalogQuery.data,
     catalogState: initialization.catalogState,
     profiles: profilesQuery.data,
@@ -86,7 +83,7 @@ export function useInstrumentationPageController() {
     acknowledgeGeneratedToken: () => state.setTokenAcknowledgementRequired(false),
     canGenerateToken: profile.canGenerateToken,
     requiresToken: profile.requiresToken,
-    detect,
+    ...detection,
     openQuery,
     ...readiness
   };
@@ -162,49 +159,4 @@ function useDefaultProfile(
     if (!defaultId) return;
     setDraft(current => (current.intakeProfileId ? current : { ...current, intakeProfileId: defaultId }));
   }, [defaultId, setDraft]);
-}
-
-function useDetection(
-  draft: InstrumentationDraft,
-  setDetection: (value: DetectionResponse | undefined) => void,
-  setDetecting: (value: boolean) => void,
-  setDetectionError: (value: boolean) => void,
-  startedAtRef: React.MutableRefObject<number | undefined>,
-  timerRef: React.MutableRefObject<number | undefined>,
-  generationRef: React.MutableRefObject<number>
-) {
-  return useCallback(
-    async function runDetection() {
-      const currentGeneration = generationRef.current;
-      const start = startedAtRef.current;
-      if (start === undefined) {
-        setDetecting(false);
-        setDetectionError(true);
-        setDetection(undefined);
-        return;
-      }
-      setDetecting(true);
-      setDetectionError(false);
-      try {
-        const response = await detectInstrumentationSignals(buildDetectionRequest(draft, start));
-        if (generationRef.current !== currentGeneration) return;
-        setDetection(response);
-        if (response.polling.decision === 'continue_polling' && Date.now() < response.polling.deadlineAt) {
-          const remaining = response.polling.deadlineAt - Date.now();
-          const delay = response.polling.pollAfterMs;
-          if (delay && delay <= remaining) {
-            timerRef.current = window.setTimeout(() => void runDetection(), delay);
-          } else setDetecting(false);
-        } else {
-          setDetecting(false);
-        }
-      } catch {
-        if (generationRef.current !== currentGeneration) return;
-        setDetecting(false);
-        setDetectionError(true);
-        setDetection(undefined);
-      }
-    },
-    [draft, generationRef, setDetection, setDetecting, setDetectionError, startedAtRef, timerRef]
-  );
 }

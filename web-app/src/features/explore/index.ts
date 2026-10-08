@@ -17,6 +17,10 @@
 
 export { ExplorePage } from './pages/explore-page';
 export { buildExplorePath } from './model/explore-url-model';
+export { loadCalculatedPage } from './api/explore-log-calculated-v2-api';
+export { classifyExploreSignalError } from './api/explore-signal-api-model';
+export type { LogExploreQuery } from './model/explore-query';
+export type { CalculatedPageResponse } from './model/explore-signal-contract';
 export {
   InvestigationAvailability,
   InvestigationBlockState,

@@ -1,5 +1,14 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import {
+  readOptionalText,
+  readOptionalInteger,
+  readInteger,
+  optionalPresent,
+  setInteger,
+  setText,
+  assign
+} from './agent-context-fields';
 import type { AgentTraceRef, AgentTraceSourceTarget } from './agent-workspace-contract';
 
 export const traceTargetQueryKeys = new Set([
@@ -92,50 +101,10 @@ function readOptionalId(params: URLSearchParams, key: string) {
   return params.has(key) ? readId(params, key) : undefined;
 }
 
-function readOptionalText(params: URLSearchParams, key: string, maximum: number) {
-  if (!params.has(key)) return undefined;
-  const value = params.get(key);
-  return value && value === value.trim() && value.length <= maximum && !hasControlCharacter(value) ? value : undefined;
-}
-
-function readOptionalInteger(params: URLSearchParams, key: string, minimum: number, maximum: number) {
-  return params.has(key) ? readInteger(params, key, minimum, maximum) : undefined;
-}
-
-function readInteger(params: URLSearchParams, key: string, minimum: number, maximum: number) {
-  const value = params.get(key);
-  if (value === null || !/^\d+$/u.test(value)) return undefined;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : undefined;
-}
-
-function optionalPresent(params: URLSearchParams, key: string, value: unknown) {
-  return params.has(key) === (value !== undefined);
-}
-
 function validWindow(start: number, end: number) {
   return start < end && end - start <= maximumWindowMs;
 }
 
 function hasOnlyTraceKeys(params: URLSearchParams) {
   return [...params.keys()].every(key => traceTargetQueryKeys.has(key) && params.getAll(key).length === 1);
-}
-
-function setInteger(params: URLSearchParams, key: string, value: number | undefined) {
-  if (value !== undefined && Number.isSafeInteger(value)) params.set(key, String(value));
-}
-
-function setText(params: URLSearchParams, key: string, value: string | undefined) {
-  if (value !== undefined) params.set(key, value);
-}
-
-function assign<T extends object, K extends keyof T>(target: T, key: K, value: T[K] | undefined) {
-  if (value !== undefined) target[key] = value;
-}
-
-function hasControlCharacter(value: string) {
-  return [...value].some(character => {
-    const code = character.codePointAt(0) ?? 0;
-    return code < 32 || code === 127;
-  });
 }

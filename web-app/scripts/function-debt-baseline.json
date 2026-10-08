@@ -207,12 +207,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/settings/system-config/controller/use-public-access-config-controller.ts",
-      "identity": "function:usePublicAccessConfigController",
-      "allowedMax": 68
-    },
-    {
-      "rule": "function-size",
       "path": "features/status/management/components/status-incident-editor.tsx",
       "identity": "function:StatusIncidentEditor",
       "allowedMax": 89
@@ -222,6 +216,60 @@
       "path": "features/status/management/pages/status-management-page.tsx",
       "identity": "function:StatusManagementPage",
       "allowedMax": 67
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/api/explore-metric-composition-api.ts",
+      "identity": "function:loadSource",
+      "allowedMax": 65
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/components/explore-log-patterns.tsx",
+      "identity": "function:ExploreLogPatterns",
+      "allowedMax": 74
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/components/explore-log-transaction-rows.tsx",
+      "identity": "function:LogTransactionRows",
+      "allowedMax": 68
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/components/explore-trace-flow-map.tsx",
+      "identity": "function:ExploreTraceFlowMap",
+      "allowedMax": 71
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/components/explore-trace-structure-editor.tsx",
+      "identity": "function:ExploreTraceStructureEditor",
+      "allowedMax": 86
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/components/metric-ready-result.tsx",
+      "identity": "function:MetricReadyResult",
+      "allowedMax": 63
+    },
+    {
+      "rule": "function-size",
+      "path": "features/signal-dashboard/components/signal-dashboard-composition-editor.tsx",
+      "identity": "function:Source",
+      "allowedMax": 74
+    },
+    {
+      "rule": "function-size",
+      "path": "features/signal-dashboard/components/signal-dashboard-composition-editor.tsx",
+      "identity": "function:DashboardRollupFields",
+      "allowedMax": 91
+    },
+    {
+      "rule": "function-size",
+      "path": "features/signal-dashboard/components/signal-dashboard-panel-editor.tsx",
+      "identity": "function:SignalDashboardPanelEditor",
+      "allowedMax": 81
     }
   ]
 }

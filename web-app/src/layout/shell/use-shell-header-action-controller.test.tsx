@@ -53,7 +53,7 @@ vi.mock('@/shared/time', () => ({
 }));
 vi.mock('@/shared/navigation/app-paths', () => ({
   alertRoutePaths: { center: '/canonical-alerts' },
-  applicationRoutePaths: { lock: '/passport/lock' }
+  applicationRoutePaths: { lock: '/passport/lock', explore: '/explore' }
 }));
 vi.mock('@/shared/settings/settings-routes', () => ({
   settingsPaths: { system: '/canonical-settings' }
@@ -75,6 +75,18 @@ describe('useShellHeaderActionController', () => {
     runtime.changeLocale.mockResolvedValue(true);
     runtime.fullscreenToggle.mockResolvedValue('changed');
     runtime.logout.mockResolvedValue(undefined);
+  });
+
+  it('hides historical time controls only for live logs without changing the shared window', () => {
+    const { result, rerender } = renderHook(
+      ({ search }) => useShellHeaderActionController({ pathname: '/explore', search }),
+      { initialProps: { search: '?signal=logs&mode=live' } }
+    );
+    const sharedTime = result.current.sharedTime;
+    expect(result.current.showTimeControl).toBe(false);
+    rerender({ search: '?signal=logs' });
+    expect(result.current.showTimeControl).toBe(true);
+    expect(result.current.sharedTime).toEqual(sharedTime);
   });
 
   it('coordinates theme, explicit language selection, and route actions', async () => {

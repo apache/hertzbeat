@@ -18,6 +18,68 @@ const spanId = '0123456789abcdef';
 const window = { from: 1_000, to: 2_000 } as const;
 
 describe('Explore investigation composite schema', () => {
+  it('accepts observed missing-parent forests without promoting a span into root fields', () => {
+    const snapshot = traceSnapshot();
+    const span = snapshot.gantt.detail.spans[0]!;
+    const detail = {
+      ...snapshot.gantt.detail,
+      rootSpanId: null,
+      rootSpanName: null,
+      serviceName: null,
+      serviceNamespace: null,
+      deploymentEnvironment: null,
+      entityId: null,
+      entityType: null,
+      startTime: null,
+      durationNanos: null,
+      status: null,
+      resourceAttributes: null,
+      rootState: 'missing',
+      rootSpanCount: 0,
+      missingParentCount: 1,
+      observedStartTime: span.startTime,
+      observedEndTime: span.startTime + 1,
+      representativeSpan: {
+        spanId,
+        spanName: span.spanName,
+        serviceName: span.serviceName,
+        serviceNamespace: span.serviceNamespace,
+        startTime: span.startTime,
+        durationNanos: Number(span.durationNanos)
+      },
+      spans: [{ ...span, parentSpanId: '1111111111111111' }]
+    };
+    expect(
+      parseTraceInvestigation({ ...snapshot, gantt: { ...snapshot.gantt, detail } }, traceId, undefined, window).gantt
+        .detail?.spans[0]?.parentSpanId
+    ).toBe('1111111111111111');
+  });
+
+  it('preserves empty native link trace state while rejecting oversized or control text', () => {
+    const snapshot = traceSnapshot();
+    const candidate = (traceState: string) => ({
+      ...snapshot,
+      gantt: {
+        ...snapshot.gantt,
+        detail: {
+          ...snapshot.gantt.detail,
+          spans: snapshot.gantt.detail.spans.map(span => ({
+            ...span,
+            links: [{ traceId, spanId, traceState, attributes: {}, droppedAttributesCount: null }]
+          }))
+        }
+      }
+    });
+    expect(
+      parseTraceInvestigation(candidate(''), traceId, spanId, window).gantt.detail?.spans[0]?.links[0]?.traceState
+    ).toBe('');
+    for (const invalid of ['a'.repeat(513), 'vendor=bad\u0000value']) {
+      expect(() => parseTraceInvestigation(candidate(invalid), traceId, spanId, window)).toThrow(
+        ExploreInvestigationContractError
+      );
+    }
+  });
+
   it('parses the exact Trace contract and preserves honest block provenance', () => {
     const parsed = parseTraceInvestigation(traceSnapshot(), traceId, spanId, window);
 
@@ -31,6 +93,71 @@ describe('Explore investigation composite schema', () => {
       metrics: { state: 'unavailable', reason: 'query_strategy_unavailable', source: 'otlp_metrics' },
       dependencies: { state: 'empty', reason: 'no_data', source: 'greptime_traces' }
     });
+  });
+
+  it('defaults old Trace details to complete and preserves partial detail metadata', () => {
+    const snapshot = traceSnapshot();
+    const legacyDetail = { ...snapshot.gantt.detail };
+    Reflect.deleteProperty(legacyDetail, 'partial');
+    const legacy = parseTraceInvestigation(
+      { ...snapshot, gantt: { ...snapshot.gantt, detail: legacyDetail } },
+      traceId,
+      spanId,
+      window
+    );
+    expect(legacy.gantt.detail?.partial).toBe(false);
+
+    const partial = parseTraceInvestigation(
+      { ...snapshot, gantt: { ...snapshot.gantt, detail: { ...snapshot.gantt.detail, partial: true } } },
+      traceId,
+      spanId,
+      window
+    );
+    expect(partial.gantt.detail?.partial).toBe(true);
+  });
+
+  it('defaults legacy log truncation metadata and validates marked attribute previews', () => {
+    const base = traceSnapshot();
+    const snapshot = {
+      ...base,
+      sameTraceLogs: {
+        ...base.sameTraceLogs,
+        state: 'ready',
+        reason: 'observed',
+        truncated: false,
+        logs: [{ ...logRecord('event-8', '1500000000'), attributes: { arguments: 'x'.repeat(4_095) } }]
+      }
+    };
+    const parsed = parseTraceInvestigation(snapshot, traceId, spanId, window);
+    expect(parsed.sameTraceLogs.logs[0]?.truncatedFields).toEqual({ attributes: [], resourceAttributes: [] });
+
+    const marked = {
+      ...snapshot,
+      sameTraceLogs: {
+        ...snapshot.sameTraceLogs,
+        logs: [{ ...snapshot.sameTraceLogs.logs[0], truncatedFields: { attributes: ['arguments'] } }]
+      }
+    };
+    expect(
+      parseTraceInvestigation(marked, traceId, spanId, window).sameTraceLogs.logs[0]?.truncatedFields
+    ).toMatchObject({ attributes: ['arguments'] });
+    for (const invalidFields of [
+      { attributes: ['missing'] },
+      { attributes: ['arguments', 'arguments'] },
+      { attributes: 'arguments' },
+      { resourceAttributes: ['arguments'] }
+    ]) {
+      const invalid = {
+        ...snapshot,
+        sameTraceLogs: {
+          ...snapshot.sameTraceLogs,
+          logs: [{ ...snapshot.sameTraceLogs.logs[0], truncatedFields: invalidFields }]
+        }
+      };
+      expect(() => parseTraceInvestigation(invalid, traceId, spanId, window)).toThrow(
+        ExploreInvestigationContractError
+      );
+    }
   });
 
   it('rejects Trace identity, window, span-selection, and state contradictions', () => {
@@ -65,6 +192,41 @@ describe('Explore investigation composite schema', () => {
     }
   });
 
+  it('accepts independently queried same-trace logs without retained spans and rejects unrelated rows', () => {
+    for (const gantt of [
+      { state: 'empty', reason: 'no_data', source: 'greptime_traces', detail: null },
+      { state: 'unavailable', reason: 'limit_exceeded', source: 'greptime_traces', detail: null }
+    ]) {
+      const snapshot = {
+        ...traceSnapshot(),
+        selectedSpanId: gantt.state === 'unavailable' ? spanId : null,
+        gantt,
+        sameTraceLogs: {
+          state: 'ready',
+          reason: 'observed',
+          source: 'greptime_logs',
+          truncated: false,
+          logs: [logRecord('event-8', '1500000000')]
+        }
+      };
+      expect(
+        parseTraceInvestigation(snapshot, traceId, snapshot.selectedSpanId ?? undefined, window).sameTraceLogs.logs
+      ).toHaveLength(1);
+      for (const rowTraceId of [null, 'fedcba9876543210fedcba9876543210']) {
+        const unrelated = {
+          ...snapshot,
+          sameTraceLogs: {
+            ...snapshot.sameTraceLogs,
+            logs: [{ ...snapshot.sameTraceLogs.logs[0], traceId: rowTraceId }]
+          }
+        };
+        expect(() => parseTraceInvestigation(unrelated, traceId, snapshot.selectedSpanId ?? undefined, window)).toThrow(
+          ExploreInvestigationContractError
+        );
+      }
+    }
+  });
+
   it('rejects ready correlated evidence when the Trace Gantt is non-ready', () => {
     const valid = traceSnapshot();
     const nonReadyGantt = { state: 'empty', reason: 'no_data', source: 'greptime_traces', detail: null };
@@ -77,17 +239,6 @@ describe('Explore investigation composite schema', () => {
       deploymentEnvironment: null
     };
     const candidates = [
-      {
-        ...valid,
-        gantt: nonReadyGantt,
-        sameTraceLogs: {
-          state: 'ready',
-          reason: 'observed',
-          source: 'greptime_logs',
-          truncated: false,
-          logs: [logRecord('event-8', '1787934874782123456')]
-        }
-      },
       {
         ...valid,
         gantt: nonReadyGantt,
@@ -335,6 +486,20 @@ function logSnapshot() {
 
 function traceDetail() {
   return {
+    partial: false,
+    rootState: 'unique' as const,
+    rootSpanCount: 1,
+    missingParentCount: 0,
+    observedStartTime: 1_100,
+    observedEndTime: 1_100 + 1,
+    representativeSpan: {
+      spanId: spanId,
+      spanName: 'POST /checkout',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      startTime: 1_100,
+      durationNanos: 1_000_000
+    },
     rootSpanId: spanId,
     serviceName: 'checkout',
     serviceNamespace: 'commerce',
@@ -365,6 +530,7 @@ function traceDetail() {
         scopeVersion: '1.0.0',
         durationNanos: '1000000',
         startTime: 1_100,
+        startTimeUnixNano: String(BigInt(1_100) * 1000000n),
         highlighted: true,
         resourceAttributes: { 'service.name': 'checkout' },
         spanAttributes: { 'http.route': '/checkout' },

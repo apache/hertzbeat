@@ -62,6 +62,10 @@
 }
 
 .logResultBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   position: relative;
   min-width: 0;
   overflow: hidden;
@@ -85,13 +89,66 @@
 }
 
 .logRegion[data-explore-log-region='result'] {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   flex: 1 1 auto;
-  overflow: auto;
+  overflow: hidden;
+}
+
+.logRegion[data-explore-log-region='result'] > section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.logRegion[data-explore-log-region='result'] > section > header {
+  flex: none;
+}
+
+.logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'],
+.logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+  height: 32px;
+}
+
+.logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+  width: 32px;
 }
 
 @media (width <= 700px) {
   .logRegion[data-explore-log-region='result'] {
     overflow: visible;
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'],
+  .logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+    height: 36px;
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+    width: 36px;
+  }
+}
+
+@media (width <= 520px) {
+  .logRegion[data-explore-log-region='result'] > section > header {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-rows: minmax(28px, auto) minmax(36px, auto) 36px;
+    align-items: center;
+    column-gap: var(--hb-space-1);
+    row-gap: 0;
+    padding-block: var(--hb-space-1);
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    gap: var(--hb-space-1);
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header > div:last-child {
+    display: contents;
   }
 }

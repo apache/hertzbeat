@@ -2,9 +2,9 @@
 
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import {
   classifyEntityDeleteError,
@@ -95,20 +95,26 @@ function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | 
   const { modal } = App.useApp();
   const client = useQueryClient();
   const navigate = useNavigate();
-  const started = useRef(false);
-  const deleteAdmitted = useRef(canDelete);
-  useEffect(() => {
-    deleteAdmitted.current = canDelete;
-  }, [canDelete]);
+  const location = useLocation();
+  const authority = useRef({ pending: false });
   const deletion = useMutation({
-    mutationFn: deleteExistingEntity,
-    onSuccess: async (_result, deletedId) => {
-      await invalidateDeletedEntity(client, deletedId);
-      void navigate(safeEntityReturnTo(returnTo), { replace: true });
+    mutationFn: ({ id }: { id: number; owner: { pending: boolean } }) => deleteExistingEntity(id),
+    onSuccess: async (_result, { id, owner }) => {
+      await invalidateDeletedEntity(client, id);
+      if (authority.current === owner) void navigate(safeEntityReturnTo(returnTo), { replace: true });
     }
   });
+  const resetDeletion = deletion.reset;
+  useLayoutEffect(() => {
+    authority.current = { pending: false };
+    resetDeletion();
+    return () => {
+      authority.current = { pending: false };
+    };
+  }, [canDelete, location.key, resetDeletion]);
   const remove = () => {
-    if (!canDelete || !entity || deletion.isPending || started.current) return;
+    const owner = authority.current;
+    if (!canDelete || !entity || deletion.isPending || owner.pending) return;
     deletion.reset();
     modal.confirm({
       title: t('entity.delete.title', { name: entity.displayName || entity.name }),
@@ -117,14 +123,14 @@ function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | 
       okButtonProps: { danger: true },
       cancelText: t('common.cancel'),
       onOk: async () => {
-        if (!deleteAdmitted.current || started.current) return;
-        started.current = true;
+        if (authority.current !== owner || owner.pending) return;
+        owner.pending = true;
         try {
-          await deletion.mutateAsync(entity.id);
+          await deletion.mutateAsync({ id: entity.id, owner });
         } catch {
           // The mutation exposes only a localized failure class after the confirmation closes.
         } finally {
-          started.current = false;
+          owner.pending = false;
         }
       }
     });

@@ -12,6 +12,37 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--hb-space-2);
+  font-size: 13px;
+}
+
+.toolbar :global(.ant-btn) {
+  height: 32px;
+  font-size: 13px;
+}
+
+.facetToggle {
+  display: inline-flex;
+  min-height: 32px;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 0 7px 0 11px;
+  border: 1px solid transparent;
+  border-radius: var(--hb-radius-control);
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.facetToggle:hover {
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-primary);
+}
+.facetToggle:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 1px;
 }
 
 .status {
@@ -20,7 +51,6 @@
   align-items: center;
   gap: var(--hb-space-3);
   margin: 0;
-  overflow-x: auto;
 }
 
 .status div {
@@ -33,7 +63,7 @@
 .status dt,
 .status dd {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .status dt {
@@ -46,65 +76,71 @@
   font-weight: 550;
 }
 
-.preferences {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 2px;
+.details {
+  display: grid;
+  max-width: min(320px, calc(100vw - 64px));
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
 }
 
-.preferences button {
-  min-height: 28px;
-  padding: 0 var(--hb-space-2);
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--hb-text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  white-space: nowrap;
+.details div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
 }
-
-.preferences button:hover {
-  background: var(--hb-bg-hover);
+.details dt {
+  color: var(--hb-text-muted);
+}
+.details dd {
+  overflow-wrap: anywhere;
+  margin: 0;
   color: var(--hb-text-primary);
 }
 
-.preferences button[aria-pressed='true'] {
-  border-color: color-mix(in srgb, var(--ant-color-primary) 30%, transparent);
-  background: color-mix(in srgb, var(--ant-color-primary) 9%, transparent);
-  color: var(--ant-color-primary);
+.detailsButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
 }
 
-.preferences button:focus-visible {
+.detailsButton:hover {
+  background: var(--hb-bg-hover);
+}
+.detailsButton:focus-visible {
   outline: 2px solid var(--ant-color-primary);
-  outline-offset: 1px;
 }
 
-@media (width <= 1100px) {
+@media (width <= 700px) {
   .toolbar {
-    width: 100%;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     justify-content: stretch;
   }
 
+  .detailsButton {
+    grid-column: 2;
+    grid-row: 1;
+    width: 36px;
+    height: 36px;
+    justify-self: end;
+  }
+
   .status {
-    width: 100%;
-    grid-column: 1 / -1;
-  }
-}
-
-@media (width <= 700px) {
-  .preferences {
-    min-width: 0;
-    max-width: 100%;
-    overflow-x: auto;
+    grid-column: 1;
+    grid-row: 2;
   }
 
-  .preferences button {
-    min-height: 32px;
-    padding-inline: var(--hb-space-1);
+  .toolbar > nav {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
   }
 }

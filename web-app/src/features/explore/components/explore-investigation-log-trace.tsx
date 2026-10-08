@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useTranslation } from 'react-i18next';
+import { Typography } from 'antd';
 
 import { HertzBeatTracingGanttChartResult, type HertzBeatPersesPrimitiveMessages } from '@/platform/perses';
 
@@ -33,18 +34,25 @@ export function InvestigationLogTrace(props: Props) {
       evidenceCurrent={props.evidenceCurrent}
     >
       {panel ? (
-        <HertzBeatTracingGanttChartResult
-          className={traceStyles.ganttRuntime}
-          title={t('exploreInvestigation.logs.exactTrace')}
-          ariaLabel={t('exploreInvestigation.logs.exactTrace')}
-          messages={props.messages}
-          query={panel.query}
-          outcome={panel.outcome}
-        />
+        <>
+          {panel.outcome.truncated === true ? (
+            <Typography.Text type="warning" role="note">
+              {t('exploreInvestigation.trace.loadedSpanLimitNotice')}
+            </Typography.Text>
+          ) : null}
+          <HertzBeatTracingGanttChartResult
+            className={traceStyles.ganttRuntime}
+            title={t('exploreInvestigation.logs.exactTrace')}
+            ariaLabel={t('exploreInvestigation.logs.exactTrace')}
+            messages={props.messages}
+            query={panel.query}
+            outcome={panel.outcome}
+          />
+        </>
       ) : noTraceContext ? (
         <InvestigationBlockState state="empty" noTraceContext />
       ) : (
-        <InvestigationBlockState state={nonReady(trace.state)} />
+        <InvestigationBlockState state={nonReady(trace.state)} reason={trace.reason} />
       )}
     </InvestigationSection>
   );

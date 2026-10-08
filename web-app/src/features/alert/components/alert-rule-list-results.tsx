@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Table } from 'antd';
+import { Button, Grid, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +29,7 @@ type AlertRuleListResultsProps = {
 
 export function AlertRuleListResults(props: AlertRuleListResultsProps) {
   const { t } = useTranslation();
+  const screens = Grid.useBreakpoint();
   if (props.state.kind === 'unavailable') {
     return (
       <ListFailure
@@ -55,13 +56,16 @@ export function AlertRuleListResults(props: AlertRuleListResultsProps) {
     <Table<AlertRule>
       rowKey="id"
       size="small"
+      tableLayout="fixed"
       loading={props.state.kind === 'loading'}
       dataSource={records}
-      columns={props.columns}
+      columns={responsiveColumns(props.columns, Boolean(screens.lg))}
       locale={{
         emptyText: <OperationalTableEmptyState title={t('alertRules.empty')} />
       }}
       rowSelection={{
+        fixed: Boolean(screens.lg),
+        columnWidth: 32,
         selectedRowKeys: props.selectedIds,
         getTitleCheckboxProps: () =>
           pageSelectionTitleCheckboxProps(
@@ -74,16 +78,8 @@ export function AlertRuleListResults(props: AlertRuleListResultsProps) {
           if (!props.busy) props.selectIds(keys.filter((key): key is number => typeof key === 'number'));
         }
       }}
-      scroll={{ x: 1200 }}
-      pagination={{
-        current: props.pageIndex + 1,
-        pageSize: props.pageSize,
-        pageSizeOptions: [...alertRulePageSizes],
-        showSizeChanger: true,
-        total,
-        disabled: props.busy,
-        onChange: props.changePage
-      }}
+      scroll={{ x: 1462 }}
+      pagination={listPagination(props, total)}
     />
   );
 }
@@ -111,4 +107,20 @@ function ListFailure({
       }
     />
   );
+}
+
+function responsiveColumns(columns: ColumnsType<AlertRule>, pinned: boolean): ColumnsType<AlertRule> {
+  return columns.map(column => ({ ...column, fixed: pinned ? (column.fixed ?? false) : false }));
+}
+
+function listPagination(props: AlertRuleListResultsProps, total: number) {
+  return {
+    current: props.pageIndex + 1,
+    pageSize: props.pageSize,
+    pageSizeOptions: [...alertRulePageSizes],
+    showSizeChanger: true,
+    total,
+    disabled: props.busy,
+    onChange: props.changePage
+  };
 }

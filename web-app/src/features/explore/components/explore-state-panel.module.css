@@ -18,3 +18,30 @@
 .results {
   min-width: 0;
 }
+
+.results[data-result-layout='fill'],
+.results[data-result-layout='fill'] > section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.results[data-result-layout='fill'] > section > header {
+  flex: none;
+}
+
+.results[data-result-layout='fill'] [data-variant='fill'] {
+  height: auto;
+  min-height: 0;
+  flex: 1 1 0;
+}
+
+@media (width <= 700px) {
+  .results[data-result-layout='fill'] {
+    height: 480px;
+    min-height: 480px;
+    flex: none;
+  }
+}

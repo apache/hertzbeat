@@ -1,9 +1,113 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 .adapter {
+  --hb-log-arrival-background: color-mix(in srgb, var(--ant-color-info) 16%, var(--hb-bg-raised));
+  display: flex;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
   height: 100%;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 184px 72px minmax(0, 1fr);
+  flex: none;
+  min-height: 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.columns > [role='columnheader'] {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.columns > [role='columnheader'] > button {
+  flex: none;
+  border: 0;
+  padding: 0 3px;
+  color: var(--hb-text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.columns > [role='columnheader'] > button:hover,
+.columns > [role='columnheader'] > button:focus-visible {
+  color: var(--hb-text-primary);
+  background: var(--ant-color-fill-tertiary);
+}
+
+.columnMenu {
+  position: absolute;
+  z-index: 3;
+  top: 100%;
+  left: 0;
+  display: grid;
+  min-width: max-content;
+  padding: 4px;
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--ant-color-bg-elevated);
+  box-shadow: var(--ant-box-shadow-secondary);
+}
+
+.columnMenu button {
+  border: 0;
+  padding: 6px 10px;
+  color: var(--hb-text-primary);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.columnMenu button:hover,
+.columnMenu button:focus-visible {
+  background: var(--ant-color-fill-tertiary);
+}
+
+.columnSubmenu :global(.ant-dropdown-menu-sub) {
+  max-height: min(320px, calc(100dvh - 80px));
+  overflow-y: auto;
+}
+
+.columns[data-show-time='false'] {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.table {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.adapter :global([data-hertzbeat-log-severity-text]) {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hb-text-secondary);
+}
+
+@media (width <= 420px) {
+  .columns,
+  .columns[data-show-time='false'] {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .columns > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
 }
 
 .adapter :global([data-hertzbeat-log-trigger='true']) {
@@ -16,12 +120,113 @@
 }
 
 .adapter :global([data-hertzbeat-selected='true']) {
-  border-left-color: var(--ant-color-primary) !important;
-  background: color-mix(in srgb, var(--ant-color-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--ant-color-primary) 8%, var(--hb-bg-raised)) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .adapter :global([data-hertzbeat-log-trigger='true']) {
     transition: none;
   }
+}
+
+.columns[data-show-service='true'] {
+  grid-template-columns: 150px 70px 120px minmax(0, 1fr);
+}
+.columns[data-show-service='true'][data-show-time='false'] {
+  grid-template-columns: 70px 120px minmax(0, 1fr);
+}
+.adapter :global([data-hertzbeat-log-service]) {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hb-text-secondary);
+  font-family: var(--ant-font-family);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adapter ::highlight(hertzbeat-log-search) {
+  color: var(--hb-text-primary);
+  background-color: var(--ant-color-warning-bg);
+}
+@media (width <= 420px) {
+  .columns[data-show-service='true'],
+  .columns[data-show-service='true'][data-show-time='false'] {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+}
+
+.adapter[data-custom-columns='true'] {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hb-border-subtle) transparent;
+}
+.adapter[data-custom-columns='true'] .columns {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+}
+.adapter[data-custom-columns='true'] :global([data-testid='virtuoso-scroller']) {
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hb-border-subtle) transparent;
+  scrollbar-gutter: stable;
+}
+.adapter[data-custom-columns='true'] :global([data-log-index]) {
+  border-left: 0 !important;
+}
+.adapter[data-custom-columns='true'] :global([data-log-index] > div:first-child) {
+  padding-inline: 12px !important;
+}
+.adapter[data-custom-columns='true'] .columns,
+.adapter[data-custom-columns='true'] .table {
+  min-width: var(--hb-log-columns-min-width);
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-custom-columns]) {
+  display: grid !important;
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-custom-columns] > [hidden]) {
+  display: none !important;
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-field]) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-severity]) {
+  position: relative;
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-severity='ERROR']),
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-severity='FATAL']) {
+  --hb-log-severity-tick: var(--ant-color-error);
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-severity='WARN']) {
+  --hb-log-severity-tick: var(--ant-color-warning);
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-severity='INFO']) {
+  --hb-log-severity-tick: var(--ant-color-info);
+}
+.adapter[data-custom-columns='true'] :global([data-hertzbeat-log-severity])::before {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--hb-log-severity-tick, var(--hb-border-subtle));
+  content: '';
+  transform: translateY(-50%);
+}
+.adapter[data-custom-columns='true'] .columns > span {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+
+:global(:root[data-theme='default']) .adapter {
+  --hb-log-arrival-background: #eaf6fc;
+}
+.adapter :global([data-hertzbeat-log-trigger='true']:hover:not([data-hertzbeat-selected='true'])) {
+  background-color: var(--hb-bg-hover) !important;
 }

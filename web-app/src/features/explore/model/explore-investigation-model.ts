@@ -5,7 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { HERTZBEAT_QUERY_LIMITS } from '@/platform/perses';
+import { isLogRecordUid } from './explore-field-contract';
+
 import {
   normalizeInvestigationTimeZone,
   type ExactTimeWindow,
@@ -14,6 +15,9 @@ import {
 
 import { buildExplorePath } from './explore-url-model';
 import { mergeExploreQuery, signalSelectionPatch } from './explore-model';
+import { traceReturnTo } from './explore-trace-return-context';
+import { observedTraceWindow, validObservedSelection, validInvestigationWindow } from './explore-observed-window';
+export { TraceInvestigationWindowError } from './explore-observed-window';
 import type { ExploreQuery } from './explore-query';
 
 const TRACE_WINDOW_PADDING_MS = 30_000;
@@ -40,6 +44,8 @@ export type TraceInvestigationSelection = {
   selectedSpanId?: string | null | undefined;
   startTime: number | null;
   durationNanos: number | null;
+  observedStartTime?: number | undefined;
+  observedEndTime?: number | undefined;
 };
 
 export type LogInvestigationSelection = {
@@ -60,8 +66,8 @@ export function exploreInvestigationRoute(query: ExploreQuery): ExploreInvestiga
 function logInvestigationRoute(
   query: Extract<ExploreQuery, { signal: 'logs' }> & { logRecordUid: string }
 ): ExploreInvestigationRoute {
-  if (query.live || !validLogRecordUid(query.logRecordUid)) return { kind: 'invalid', signal: 'logs' };
-  if (!validOptionalTraceId(query.traceId) || !validOptionalSpanId(query.spanId)) {
+  if (query.live || !isLogRecordUid(query.logRecordUid)) return { kind: 'invalid', signal: 'logs' };
+  if ((query.traceId != null && !validTraceId(query.traceId)) || (query.spanId != null && !validSpanId(query.spanId))) {
     return { kind: 'invalid', signal: 'logs' };
   }
   const window = focusedWindow(query);
@@ -82,7 +88,7 @@ function traceInvestigationRoute(
   const hasTimeEvidence = query.start != null || query.end != null || query.timeZone != null;
   if (!hasTimeEvidence) return { kind: 'inactive' };
   const window = focusedWindow(query);
-  return validTraceId(query.traceId) && validOptionalSpanId(query.spanId) && window
+  return validTraceId(query.traceId) && (query.spanId == null || validSpanId(query.spanId)) && window
     ? {
         kind: 'trace',
         traceId: query.traceId,
@@ -100,11 +106,19 @@ export function buildTraceInvestigationPath(
 ) {
   const traceId = requireTraceId(selection.traceId);
   const spanId = optionalSpanId(selection.selectedSpanId);
-  const window = traceSelectionWindow(selection, requireSourceWindow(effectiveWindow));
-  return buildFocusedPath(source, 'traces', window, resolveSelectionTimeZone(source, browserTimeZone), {
-    traceId,
-    spanId
-  });
+  const sourceWindow = requireSourceWindow(effectiveWindow);
+  const window = committedWindow(source) ?? traceSelectionWindow(selection, sourceWindow);
+  return buildFocusedPath(
+    source,
+    'traces',
+    window,
+    resolveSelectionTimeZone(source, browserTimeZone),
+    {
+      traceId,
+      spanId
+    },
+    traceReturnTo(source, effectiveWindow)
+  );
 }
 
 export function buildLogInvestigationPath(
@@ -115,12 +129,19 @@ export function buildLogInvestigationPath(
 ) {
   const logRecordUid = requireLogRecordUid(selection.logRecordUid);
   const sourceWindow = requireSourceWindow(effectiveWindow);
-  const window = logSelectionWindow(selection.timeUnixNano, sourceWindow);
-  return buildFocusedPath(source, 'logs', window, resolveSelectionTimeZone(source, browserTimeZone), {
-    logRecordUid,
-    traceId: optionalTraceId(selection.traceId),
-    spanId: optionalSpanId(selection.spanId)
-  });
+  const window = committedWindow(source) ?? logSelectionWindow(selection.timeUnixNano, sourceWindow);
+  return buildFocusedPath(
+    source,
+    'logs',
+    window,
+    resolveSelectionTimeZone(source, browserTimeZone),
+    {
+      logRecordUid,
+      traceId: optionalTraceId(selection.traceId),
+      spanId: optionalSpanId(selection.spanId)
+    },
+    traceReturnTo(source, effectiveWindow)
+  );
 }
 
 function buildFocusedPath(
@@ -128,13 +149,17 @@ function buildFocusedPath(
   signal: 'logs' | 'traces',
   window: ExactTimeWindow,
   timeZone: string,
-  identity: { traceId?: string | undefined; spanId?: string | undefined; logRecordUid?: string | undefined }
+  identity: { traceId?: string | undefined; spanId?: string | undefined; logRecordUid?: string | undefined },
+  returnTo?: string
 ) {
   return buildExplorePath(
     mergeExploreQuery(source, {
-      ...signalSelectionPatch(signal),
+      ...(source.signal === signal ? {} : signalSelectionPatch(signal)),
+      pageIndex: undefined,
       signal,
+      ...(signal === 'traces' ? { traceStructure: undefined, traceStructureView: undefined } : {}),
       ...identity,
+      returnTo,
       start: window.from,
       end: window.to,
       timeZone
@@ -142,25 +167,22 @@ function buildFocusedPath(
   );
 }
 
+function committedWindow(query: ExploreQuery): ExactTimeWindow | undefined {
+  return query.windowMode !== 'preset' && validInvestigationWindow(query.start, query.end)
+    ? { from: query.start!, to: query.end! }
+    : undefined;
+}
+
 function focusedWindow(query: ExploreQuery): InvestigationTimeWindow | undefined {
   const timeZone = normalizeInvestigationTimeZone(query.timeZone);
-  if (!timeZone || !validExactWindow(query.start, query.end)) return undefined;
+  if (!timeZone || !validInvestigationWindow(query.start, query.end)) return undefined;
   return { from: query.start!, to: query.end!, timeZone };
 }
 
 function requireSourceWindow(window: ExactTimeWindow) {
-  if (!validExactWindow(window.from, window.to)) throw new Error('Investigation requires a bounded effective window');
+  if (!validInvestigationWindow(window.from, window.to))
+    throw new Error('Investigation requires a bounded effective window');
   return window;
-}
-
-function validExactWindow(from: number | undefined, to: number | undefined) {
-  return (
-    Number.isSafeInteger(from) &&
-    Number.isSafeInteger(to) &&
-    from! > 0 &&
-    from! < to! &&
-    to! - from! <= HERTZBEAT_QUERY_LIMITS.maximumWindowMs
-  );
 }
 
 function resolveSelectionTimeZone(source: ExploreQuery, browserTimeZone: string) {
@@ -172,6 +194,13 @@ function resolveSelectionTimeZone(source: ExploreQuery, browserTimeZone: string)
 }
 
 function traceSelectionWindow(selection: TraceInvestigationSelection, source: ExactTimeWindow) {
+  const observedStart = selection.observedStartTime;
+  const observedEnd = selection.observedEndTime;
+  if (observedStart != null || observedEnd != null) {
+    return validObservedSelection(observedStart, observedEnd)
+      ? observedTraceWindow(observedStart!, observedEnd!)
+      : source;
+  }
   const start = selection.startTime;
   const duration = selection.durationNanos;
   if (!Number.isSafeInteger(start) || start == null || start <= 0 || !validDuration(duration)) return source;
@@ -217,15 +246,7 @@ function parseNanoseconds(value: string | null) {
 
 function clampWindow(from: number, to: number, source: ExactTimeWindow): ExactTimeWindow {
   const clamped = { from: Math.max(source.from, from), to: Math.min(source.to, to) };
-  return validExactWindow(clamped.from, clamped.to) ? clamped : source;
-}
-
-function validOptionalTraceId(value: string | undefined) {
-  return value == null || validTraceId(value);
-}
-
-function validOptionalSpanId(value: string | undefined) {
-  return value == null || validSpanId(value);
+  return validInvestigationWindow(clamped.from, clamped.to) ? clamped : source;
 }
 
 function optionalTraceId(value: string | null | undefined) {
@@ -246,12 +267,8 @@ function requireTraceId(value: string) {
 }
 
 function requireLogRecordUid(value: string) {
-  if (!validLogRecordUid(value)) throw new Error('Log investigation requires a record identity');
+  if (!isLogRecordUid(value)) throw new Error('Log investigation requires a record identity');
   return value;
-}
-
-function validLogRecordUid(value: string) {
-  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value);
 }
 
 function validTraceId(value: string) {

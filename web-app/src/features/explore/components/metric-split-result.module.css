@@ -1,0 +1,27 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  margin-block: var(--hb-space-3);
+}
+.controls > div {
+  min-width: 120px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--hb-space-4);
+}
+.group {
+  min-width: 0;
+  border-top: 1px solid var(--hb-border-subtle);
+  padding-top: var(--hb-space-2);
+}
+.group h4 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.chart {
+  height: 260px;
+}
