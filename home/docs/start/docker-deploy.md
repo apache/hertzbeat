@@ -56,6 +56,23 @@ It is necessary to have Docker environment in your environment. If not installed
 2. Start to explore HertzBeat  
    Access [http://ip:1157/](http://ip:1157/) using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
 
+### Authentication modes
+
+The default image enables Basic and JWT authentication. The Web UI signs in through the form endpoint and then uses JWT, while Basic remains available for API clients. Use TLS whenever credentials or tokens cross an untrusted network.
+
+Digest authentication is disabled by default. To change the enabled methods, download the complete [`application.yml`](https://github.com/apache/hertzbeat/raw/master/script/application.yml), edit its `sureness.auths` list, and mount the complete file as shown above. For example, enable Digest explicitly with:
+
+```yaml
+sureness:
+  container: jakarta_servlet
+  auths:
+    - digest
+    - basic
+    - jwt
+```
+
+When Digest is enabled, an unauthenticated request to a protected API returns a `WWW-Authenticate: Digest` challenge. Opening such an API in a browser may therefore display the browser's native username/password dialog; this is an HTTP authentication prompt, not a TLS or certificate error. To use JWT only, set `auths` to a single `jwt` entry. Restart the container after changing the file.
+
 ### Deploy HertzBeat Collector Cluster(Optional)
 
 :::note

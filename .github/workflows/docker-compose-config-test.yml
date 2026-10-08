@@ -23,12 +23,16 @@ on:
     paths:
       - '.github/workflows/docker-compose-config-test.yml'
       - 'script/ci/check-quickstart-compose.sh'
+      - 'hertzbeat-startup/src/main/resources/application.yml'
+      - 'script/application.yml'
       - 'script/docker-compose/**'
   pull_request:
     branches: [ master, dev ]
     paths:
       - '.github/workflows/docker-compose-config-test.yml'
       - 'script/ci/check-quickstart-compose.sh'
+      - 'hertzbeat-startup/src/main/resources/application.yml'
+      - 'script/application.yml'
       - 'script/docker-compose/**'
 
 concurrency:
@@ -44,5 +48,5 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Validate quick-start listener bindings
+      - name: Validate quick-start configuration
         run: sh script/ci/check-quickstart-compose.sh
