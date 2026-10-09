@@ -3356,6 +3356,7 @@
         "zabbix": "Zabbix",
         "tencent": "騰訊雲",
         "alibabacloud-sls": "阿里雲 SLS",
+        "alibabacloud-cms": "阿里雲雲監控",
         "huaweicloud-ces": "華為雲 CES",
         "volcengine": "火山引擎"
       },
@@ -3374,6 +3375,9 @@
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
           "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+        },
+        "alibabacloud-cms": {
+          "cms_workspace_only": "僅支援雲監控 2.0 工作空間的通知對象；Prometheus 監控與 ARMS 告警管理的 webhook 格式不同，暫不支援。"
         }
       },
       "step": {
@@ -3426,6 +3430,13 @@
           "create_token": "建立具有告警接入寫入權限的 API Token。",
           "configure_action": "建立 WebHook-自訂行動，使用 POST、JSON、Authorization 標頭，並在範本中包含 alert_instance_id。",
           "verify_lifecycle": "觸發並恢復同一告警執行個體，確認該執行個體變為已恢復且接入端回傳 HTTP 200。"
+        }
+      },
+      "alibabacloud-cms": {
+        "step": {
+          "create_token": "建立具有告警寫入權限的 API token。",
+          "configure_webhook": "在雲監控 2.0 的告警中心 > 通知管理 > 通知對象中建立自訂 Webhook，以 POST JSON 方式傳送並設定 Authorization Bearer 標頭。",
+          "verify_lifecycle": "觸發並恢復一條告警，確認同一告警實例在 HertzBeat 中轉為已恢復。"
         }
       },
       "huaweicloud-ces": {

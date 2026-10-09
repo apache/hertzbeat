@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 
 /** Greptime metric inventory adapter based on logical-table metadata and exact physical-row scope. */
 @Repository
@@ -74,9 +75,27 @@ public class GreptimeMetricInventoryRepository implements MetricInventoryReposit
             }
             return Result.success(new ArrayList<>(names));
         } catch (RuntimeException exception) {
+            if (nativeMetricsTableNotCreated(exception)) {
+                return Result.success(List.of());
+            }
             logFailure(exception);
             return Result.failure();
         }
+    }
+
+    private boolean nativeMetricsTableNotCreated(RuntimeException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof HttpClientErrorException http && http.getStatusCode().value() == 400) {
+                var body = JsonUtil.fromJsonQuietly(http.getResponseBodyAsString());
+                if (body == null || !body.path("code").isIntegralNumber() || body.path("code").asInt() != 4001) {
+                    return false;
+                }
+                String error = body.path("error").asText("");
+                return error.startsWith("Failed to plan SQL: Table not found: ")
+                        && error.endsWith(".greptime_physical_table");
+            }
+        }
+        return false;
     }
 
     @Override

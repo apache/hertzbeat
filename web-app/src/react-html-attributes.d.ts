@@ -4,6 +4,6 @@ import 'react';
 
 declare module 'react' {
   interface HTMLAttributes<T> extends DOMAttributes<T> {
-    inert?: boolean | undefined;
+    inert?: boolean | '' | undefined;
   }
 }

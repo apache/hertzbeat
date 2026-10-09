@@ -70,7 +70,7 @@ export function AlertCenterToolbar({
             className={styles.advancedFilters}
             data-open={advancedOpen}
             data-testid="alert-advanced-filters"
-            inert={!advancedOpen}
+            inert={advancedOpen ? undefined : ''}
           >
             <AlertScopeFilterFields
               disabled={disabled}

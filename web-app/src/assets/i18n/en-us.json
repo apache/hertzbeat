@@ -3567,6 +3567,7 @@
         "zabbix": "Zabbix",
         "tencent": "Tencent Cloud",
         "alibabacloud-sls": "Alibaba Cloud SLS",
+        "alibabacloud-cms": "Alibaba Cloud Monitor",
         "huaweicloud-ces": "Huawei Cloud CES",
         "volcengine": "Volcengine"
       },
@@ -3585,6 +3586,9 @@
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
           "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+        },
+        "alibabacloud-cms": {
+          "cms_workspace_only": "Only Cloud Monitor 2.0 workspace notification objects are supported; Prometheus Monitoring and ARMS Alert Management webhooks use a different format."
         }
       },
       "step": {
@@ -3637,6 +3641,13 @@
           "create_token": "Create an API token with alert-ingress write access.",
           "configure_action": "Create a WebHook-Custom action using POST, JSON, the Authorization header, and a template that includes alert_instance_id.",
           "verify_lifecycle": "Fire and recover one alert instance; confirm the same instance moves to resolved and the endpoint returns HTTP 200."
+        }
+      },
+      "alibabacloud-cms": {
+        "step": {
+          "create_token": "Create an API token with alert-ingress write access.",
+          "configure_webhook": "In Cloud Monitor 2.0, open Alert Center > Notification Management > Notification Objects and create a Custom Webhook that posts JSON with the Authorization bearer header.",
+          "verify_lifecycle": "Trigger and resolve one alert; confirm the same alert instance moves to resolved in HertzBeat."
         }
       },
       "huaweicloud-ces": {

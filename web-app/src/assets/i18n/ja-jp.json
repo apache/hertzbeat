@@ -3356,6 +3356,7 @@
         "zabbix": "Zabbix",
         "tencent": "Tencent Cloud",
         "alibabacloud-sls": "Alibaba Cloud SLS",
+        "alibabacloud-cms": "Alibaba Cloud Monitor",
         "huaweicloud-ces": "Huawei Cloud CES",
         "volcengine": "Volcengine"
       },
@@ -3374,6 +3375,9 @@
           "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
           "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
           "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+        },
+        "alibabacloud-cms": {
+          "cms_workspace_only": "Cloud Monitor 2.0 ワークスペースの通知オブジェクトのみ対応しています。Prometheus 監視や ARMS アラート管理の Webhook は形式が異なるため対象外です。"
         }
       },
       "step": {
@@ -3426,6 +3430,13 @@
           "create_token": "アラート受信の書き込み権限を持つ API トークンを作成します。",
           "configure_action": "POST、JSON、Authorization ヘッダーを使用し、alert_instance_id を含むテンプレートで WebHook-Custom アクションを作成します。",
           "verify_lifecycle": "同じアラートインスタンスを発火・復旧し、そのインスタンスが解決済みになり、受信側が HTTP 200 を返すことを確認します。"
+        }
+      },
+      "alibabacloud-cms": {
+        "step": {
+          "create_token": "アラート書き込み権限を持つ API トークンを作成します。",
+          "configure_webhook": "Cloud Monitor 2.0 のアラートセンター > 通知管理 > 通知オブジェクトでカスタム Webhook を作成し、Authorization ベアラーヘッダー付きの JSON を POST します。",
+          "verify_lifecycle": "アラートを 1 件発火・解決し、同じアラートインスタンスが HertzBeat で解決済みになることを確認します。"
         }
       },
       "huaweicloud-ces": {

@@ -223,6 +223,25 @@ public class AlertIntegrationDescriptorRegistry {
                         List.of(DirectAlertIntegrationGuideContent.ALIBABA_SLS_WEBHOOK_PAYLOAD),
                         READY,
                         List.of())),
+                descriptor("alibabacloud-cms", guide(
+                        "alibabacloud-cms",
+                        "alibabacloud",
+                        "/api/alerts/report/alibabacloud-cms",
+                        "alibaba_cloud_cms_webhook",
+                        List.of(
+                                "status",
+                                "subject",
+                                "severity",
+                                "time",
+                                "timestamp",
+                                "alertMessage"),
+                        List.of(
+                                "alert.integration.alibabacloud-cms.step.create_token",
+                                "alert.integration.alibabacloud-cms.step.configure_webhook",
+                                "alert.integration.alibabacloud-cms.step.verify_lifecycle"),
+                        List.of(DirectAlertIntegrationGuideContent.ALIBABA_CMS_WEBHOOK_PAYLOAD),
+                        READY,
+                        List.of("alert.integration.limit.alibabacloud-cms.cms_workspace_only"))),
                 descriptor("huaweicloud-ces", guide(
                         "huaweicloud-ces",
                         "huaweicloud",

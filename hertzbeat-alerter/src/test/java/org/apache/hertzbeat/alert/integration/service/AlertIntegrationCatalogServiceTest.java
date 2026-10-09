@@ -37,6 +37,7 @@ import org.apache.hertzbeat.alert.integration.guide.AlertIntegrationDescriptorRe
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.AlertManagerExternAlertService;
+import org.apache.hertzbeat.alert.service.impl.AlibabaCloudCmsExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.AlibabaCloudSlsExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.DefaultExternAlertService;
 import org.apache.hertzbeat.alert.service.impl.HuaweiCloudExternAlertService;
@@ -54,7 +55,7 @@ class AlertIntegrationCatalogServiceTest {
 
     private static final List<String> PUBLIC_SOURCE_ORDER = List.of(
             "webhook", "prometheus", "alertmanager", "skywalking", "uptime-kuma", "zabbix", "tencent",
-            "alibabacloud-sls", "huaweicloud-ces", "volcengine");
+            "alibabacloud-sls", "alibabacloud-cms", "huaweicloud-ces", "volcengine");
     private static final String PRIVATE_SOURCE = "private-test-source";
     private static final String PRIVATE_TOKEN = "private-test-token";
 
@@ -267,6 +268,7 @@ class AlertIntegrationCatalogServiceTest {
                 new ZabbixExternAlertServiceImpl(),
                 new TencentExternAlertService(),
                 new AlibabaCloudSlsExternAlertService(reducer),
+                new AlibabaCloudCmsExternAlertService(reducer),
                 new HuaweiCloudExternAlertService(reducer),
                 new VolcEngineExternAlertService(reducer));
     }

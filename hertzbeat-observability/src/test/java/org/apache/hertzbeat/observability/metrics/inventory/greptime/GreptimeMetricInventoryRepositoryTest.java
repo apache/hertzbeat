@@ -46,6 +46,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 @ExtendWith(MockitoExtension.class)
 class GreptimeMetricInventoryRepositoryTest {
@@ -210,6 +213,35 @@ class GreptimeMetricInventoryRepositoryTest {
         when(executorProvider.getIfAvailable()).thenReturn(null);
         assertEquals(UNSUPPORTED, repository.findMetricNames(query(
                 "checkout", "commerce", "prod", "collector-a", "instance-a", "/checkout", 20)).status());
+    }
+
+    @Test
+    void treatsMissingNativeMetricsTableAsEmptyInventory() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        String body = "{\"code\":4001,\"error\":\"Failed to plan SQL: Table not found: greptime.public.greptime_physical_table\"}";
+        when(executor.executeStrict(anyString())).thenThrow(HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY,
+                body.getBytes(java.nio.charset.StandardCharsets.UTF_8), java.nio.charset.StandardCharsets.UTF_8));
+
+        MetricInventoryRepository.Result result = repository.findMetricNames(query(
+                "checkout", "commerce", "prod", "collector-a", "instance-a", "/checkout", 20));
+
+        assertEquals(SUCCESS, result.status());
+        assertEquals(List.of(), result.names());
+    }
+
+    @Test
+    void keepsOtherStorageFailuresDistinctFromMissingNativeTable() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        String body = "{\"code\":4001,\"error\":\"Failed to plan SQL: syntax error\"}";
+        when(executor.executeStrict(anyString())).thenThrow(HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY,
+                body.getBytes(java.nio.charset.StandardCharsets.UTF_8), java.nio.charset.StandardCharsets.UTF_8));
+
+        MetricInventoryRepository.Result result = repository.findMetricNames(query(
+                "checkout", "commerce", "prod", "collector-a", "instance-a", "/checkout", 20));
+
+        assertEquals(FAILURE, result.status());
     }
 
     @Test

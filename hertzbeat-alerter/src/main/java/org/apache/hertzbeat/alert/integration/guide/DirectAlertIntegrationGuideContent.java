@@ -78,6 +78,25 @@ final class DirectAlertIntegrationGuideContent {
             }
             """;
 
+    static final String ALIBABA_CMS_WEBHOOK_PAYLOAD = """
+            {
+              "specversion": "1.0",
+              "type": "aliyun:cloudmonitor",
+              "source": "cms.aliyun.com",
+              "id": "event-example",
+              "time": "2026-01-01T00:00:00Z",
+              "timestamp": 1767225600000,
+              "subject": "HighCPUUsage",
+              "severity": "CRITICAL",
+              "status": "OCCURRED",
+              "ruleId": "rule-example",
+              "workspace": "default",
+              "alertMessage": "CPU usage exceeded 90%",
+              "labels": {"instance": "i-example"},
+              "data": {"value": 95.2, "threshold": 90, "comparisonOperator": ">="}
+            }
+            """;
+
     static final String VOLCENGINE_METRIC_PAYLOAD = """
             {
               "Type": "MetricRecovered",
