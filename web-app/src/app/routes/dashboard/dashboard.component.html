@@ -21,19 +21,10 @@
   <div nz-row nzGutter="16">
     <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 24 }" style="height: 100%">
       <swiper-container
+        #categoryCarousel
         *ngIf="categoryCards.length > 0"
         class="dashboard-carousel"
-        [slidesPerView]="categoryCarouselOptions.slidesPerView"
-        [slidesPerGroup]="categoryCarouselOptions.slidesPerGroup"
-        [spaceBetween]="categoryCarouselOptions.spaceBetween"
-        [speed]="categoryCarouselOptions.speed"
-        [navigation]="categoryCarouselOptions.navigation"
-        [watchOverflow]="categoryCarouselOptions.watchOverflow"
-        [observer]="categoryCarouselOptions.observer"
-        [observeParents]="categoryCarouselOptions.observeParents"
-        [rewind]="categoryCarouselOptions.rewind"
-        [autoplay]="categoryCarouselOptions.autoplay"
-        [breakpoints]="categoryCarouselOptions.breakpoints"
+        init="false"
       >
         <swiper-slide class="dashboard-slide" *ngFor="let card of categoryCards">
           <div class="hoverCard">

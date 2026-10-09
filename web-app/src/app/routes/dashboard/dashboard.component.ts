@@ -17,7 +17,16 @@
  * under the License.
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -26,6 +35,7 @@ import { EChartsOption } from 'echarts';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { SwiperContainer } from 'swiper/element/bundle';
 import { SwiperOptions } from 'swiper/types';
 
 import { AppCount } from '../../pojo/AppCount';
@@ -154,6 +164,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
   totalMonitors: number = 0;
 
   categoryCarouselOptions: SwiperOptions = createCategoryCarouselOptions(0);
+
+  @ViewChild('categoryCarousel') private categoryCarousel?: ElementRef<SwiperContainer>;
+  private configuredCarousel?: SwiperContainer;
+  private appliedCarouselConfig?: string;
+
+  private updateCategoryCarousel(): void {
+    const element = this.categoryCarousel?.nativeElement;
+    if (!element) {
+      this.configuredCarousel = undefined;
+      this.appliedCarouselConfig = undefined;
+      return;
+    }
+    // The factory returns JSON-compatible options, but each summary response creates new object references.
+    // Reapplying equal base props would overwrite the resolved breakpoint (e.g. 4 cards -> 0.75 cards).
+    const config = JSON.stringify(this.categoryCarouselOptions);
+    if (element === this.configuredCarousel && config === this.appliedCarouselConfig && element.swiper?.initialized) {
+      element.swiper.update();
+      return;
+    }
+
+    // Configure only after Angular renders the cards; recreate only for actual configuration changes.
+    if (element.swiper?.initialized) {
+      element.swiper.destroy(true, true);
+    }
+    Object.assign(element, this.categoryCarouselOptions);
+    element.initialize();
+    this.configuredCarousel = element;
+    this.appliedCarouselConfig = config;
+  }
 
   // start -- quantity overall overview
   interval$!: any;
@@ -376,6 +415,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    const swiper = this.categoryCarousel?.nativeElement.swiper;
+    if (swiper && !swiper.destroyed) swiper.destroy(true, true);
     clearInterval(this.interval$);
     if (this.pageResize$) {
       this.pageResize$.unsubscribe();
@@ -509,6 +550,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.appsCountTheme.series[1].data = this.appsCountTableData;
           this.appsCountEChartOption = this.appsCountTheme;
           this.cdr.detectChanges();
+          this.updateCategoryCarousel();
         } else {
           this.appsCountEChartOption = this.appsCountTheme;
           this.cdr.detectChanges();
