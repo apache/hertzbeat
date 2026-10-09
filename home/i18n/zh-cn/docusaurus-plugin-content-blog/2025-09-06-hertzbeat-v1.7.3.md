@@ -3,8 +3,10 @@ title: Apache HertzBeat™ 1.7.3 发布公告
 author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
-tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+tags: [releases]
+description: Apache HertzBeat 1.7.3 扩展平台监控，新增嵌套 JSON 解析和 VictoriaMetrics 自定义标签，并提升采集与页面性能。
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
+cover_headline: Apache HertzBeat 1.7.3
 ---
 
 亲爱的社区小伙伴们，
@@ -227,7 +229,7 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 - @tuzuy made their first contribution in [https://github.com/apache/hertzbeat/pull/3668](https://github.com/apache/hertzbeat/pull/3668)
 - @carlpinto25 made their first contribution in [https://github.com/apache/hertzbeat/pull/3726](https://github.com/apache/hertzbeat/pull/3726)
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **仓库地址：**
 

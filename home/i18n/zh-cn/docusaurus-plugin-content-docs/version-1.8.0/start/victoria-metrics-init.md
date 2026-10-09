@@ -1,6 +1,6 @@
 ---
-id: victoria-metrics-init  
-title: 依赖时序数据库服务VictoriaMetrics安装初始化        
+id: victoria-metrics-init
+title: 依赖时序数据库服务VictoriaMetrics安装初始化
 sidebar_label: 指标数据存储VictoriaMetrics(推荐)
 ---
 
@@ -15,7 +15,7 @@ VictoriaMetrics，是一个快速高效、经济并且可扩展的监控解决�
 
 > 如果您已有VictoriaMetrics环境，可直接跳到YML配置那一步。
 
-### 通过Docker方式安装VictoriaMetrics  
+## 通过Docker方式安装VictoriaMetrics
 
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
@@ -35,22 +35,22 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
        victoriametrics/victoria-metrics:v1.95.1
    ```
 
-   `-v $(pwd)/victoria-metrics-data:/victoria-metrics-data` 为VictoriaMetrics数据目录本地持久化挂载  
+   `-v $(pwd)/victoria-metrics-data:/victoria-metrics-data` 为VictoriaMetrics数据目录本地持久化挂载
     使用```$ docker ps```查看数据库是否启动成功
 
 3. 在hertzbeat的`application.yml`配置文件配置VictoriaMetrics数据库连接
 
-   配置HertzBeat的配置文件  
-   修改位于 `hertzbeat/config/application.yml` 的配置文件  
+   配置HertzBeat的配置文件
+   修改位于 `hertzbeat/config/application.yml` 的配置文件
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地，安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
 
-   **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置`warehouse.store.victoria-metrics`数据源参数，HOST账户密码等，并启用`enabled`为`true`**
+   **修改里面的`warehouse.store.duckdb.enabled`参数为`false`， 配置`warehouse.store.victoria-metrics`数据源参数，HOST账户密码等，并启用`enabled`为`true`**
 
    ```yaml
    warehouse:
      store:
-       # 关闭默认JPA
-       jpa:
+       # 关闭默认DuckDB
+       duckdb:
          enabled: false
        # 启用 victoria-metrics
        victoria-metrics:
@@ -126,7 +126,7 @@ docker ps
 ```yaml
 warehouse:
   store:
-    jpa:
+    duckdb:
       enabled: false
     victoria-metrics:
       cluster:

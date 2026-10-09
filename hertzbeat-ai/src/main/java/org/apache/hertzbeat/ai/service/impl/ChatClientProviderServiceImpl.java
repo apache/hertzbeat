@@ -18,7 +18,14 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.ai.config.McpContextHolder;
+import org.apache.hertzbeat.ai.config.SecurityContextToolCallback;
 import org.apache.hertzbeat.ai.sop.model.SopDefinition;
 import org.apache.hertzbeat.ai.sop.model.SopParameter;
 import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
@@ -27,32 +34,34 @@ import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementation of the {@link ChatClientProviderService}.
- * Provides functionality to interact with the ChatClient for handling chat
- * messages.
+ * Implementation of the {@link ChatClientProviderService}. Provides functionality to interact with the ChatClient for
+ * handling chat messages.
  */
 @Slf4j
 @Service
@@ -65,19 +74,30 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     private final GeneralConfigDao generalConfigDao;
 
+    private volatile ModelProviderConfig modelProviderConfig;
+
+
     private final SkillRegistry skillRegistry;
-    
+
     @Autowired
     @Qualifier("hertzbeatTools")
     private ToolCallbackProvider toolCallbackProvider;
-    
+
+    private volatile boolean configured;
+
+    private volatile boolean configurationLoaded;
+
     @Value("classpath:/prompt/system-message.st")
     private Resource systemResource;
 
+    @Value("classpath:/prompt/extra-message-protected.st")
+    private Resource extraResourceProtected;
+
+
     @Autowired
-    public ChatClientProviderServiceImpl(ApplicationContext applicationContext, 
-                                         GeneralConfigDao generalConfigDao,
-                                         @Lazy SkillRegistry skillRegistry) {
+    public ChatClientProviderServiceImpl(ApplicationContext applicationContext,
+        GeneralConfigDao generalConfigDao,
+        @Lazy SkillRegistry skillRegistry) {
         this.applicationContext = applicationContext;
         this.generalConfigDao = generalConfigDao;
         this.skillRegistry = skillRegistry;
@@ -88,7 +108,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         try {
             // Get the current (potentially refreshed) ChatClient instance
             ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
-            
+
             List<Message> messages = new ArrayList<>();
 
             // Add conversation history if available
@@ -109,15 +129,19 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             // Build system prompt with dynamic skills list and conversation ID
             // The conversationId is injected into the prompt so AI can pass it to schedule tools
             String systemPrompt = buildSystemPrompt(context.getConversationId());
+            ToolCallback[] toolCallbacks = Arrays.stream(toolCallbackProvider.getToolCallbacks())
+                .map(SecurityContextToolCallback::new)
+                .toArray(ToolCallback[]::new);
 
             return chatClient.prompt()
-                    .messages(messages)
-                    .system(systemPrompt)
-                    .toolCallbacks(toolCallbackProvider)
-                    .stream()
-                    .content()
-                    .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
-                    .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
+                .messages(messages)
+                .system(systemPrompt)
+                .tools((Object[]) toolCallbacks)
+                .toolContext(McpContextHolder.createToolContext(context.getSubject()))
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
+                .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
 
         } catch (Exception e) {
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
@@ -132,30 +156,44 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         try {
             String template = systemResource.getContentAsString(StandardCharsets.UTF_8);
             String skillsList = generateSkillsList();
-            return template
-                    .replace(SKILLS_PLACEHOLDER, skillsList)
-                    .replace(CONVERSATION_ID_PLACEHOLDER, String.valueOf(conversationId));
+            template = template
+                .replace(SKILLS_PLACEHOLDER, skillsList)
+                .replace(CONVERSATION_ID_PLACEHOLDER, String.valueOf(conversationId));
+
+            // add extra prompt for protected model to guide it to use protected tools
+            ModelProviderConfig currentConfig = modelProviderConfig;
+            if (currentConfig != null && Objects.equals(currentConfig.getParticipationModel(), "PROTECTED")) {
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("conversationId", conversationId);
+                return template + SystemPromptTemplate.builder().resource(extraResourceProtected).build()
+                    .create(metadata)
+                    .getContents();
+            } else {
+                return template;
+            }
+
         } catch (IOException e) {
             log.error("Failed to read system prompt template: {}", e.getMessage());
             return "";
         }
     }
 
+
     /**
      * Generate a formatted list of available skills for the system prompt.
      */
     private String generateSkillsList() {
         List<SopDefinition> skills = skillRegistry.getAllSkills();
-        
+
         if (skills.isEmpty()) {
             return "No skills currently available. Use listSkills tool to refresh.";
         }
-        
+
         StringBuilder sb = new StringBuilder();
         for (SopDefinition skill : skills) {
             sb.append("- **").append(skill.getName()).append("**: ");
             sb.append(skill.getDescription());
-            
+
             // Add parameter hints
             if (skill.getParameters() != null && !skill.getParameters().isEmpty()) {
                 sb.append(" (requires: ");
@@ -170,22 +208,38 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             }
             sb.append("\n");
         }
-        
+
         return sb.toString();
+    }
+
+    @EventListener(AiProviderConfigChangeEvent.class)
+    public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
+        refreshProviderConfiguration();
     }
 
     @Override
     public boolean isConfigured() {
-        try {
-            GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-            if (providerConfig == null || !StringUtils.hasText(providerConfig.getContent())) {
-                return false;
+        if (!configurationLoaded) {
+            synchronized (this) {
+                if (!configurationLoaded) {
+                    refreshProviderConfiguration();
+                }
             }
-            ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-            return modelProviderConfig != null && StringUtils.hasText(modelProviderConfig.getApiKey());
-        } catch (RuntimeException e) {
-            log.warn("LLM Provider configuration cannot be read", e);
-            return false;
         }
+        return configured;
+    }
+
+    /**
+     * Atomically refreshes the configuration snapshot after enabling, disabling, or switching providers.
+     */
+    private synchronized void refreshProviderConfiguration() {
+        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+        ModelProviderConfig refreshedConfig = null;
+        if (providerConfig != null && StringUtils.hasText(providerConfig.getContent())) {
+            refreshedConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+        }
+        modelProviderConfig = refreshedConfig;
+        configured = refreshedConfig != null && StringUtils.hasText(refreshedConfig.getApiKey());
+        configurationLoaded = true;
     }
 }

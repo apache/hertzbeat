@@ -15,7 +15,7 @@ Determine whether the server is available through the hello command in SMTP
 
 **Protocol Use：SMTP**
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

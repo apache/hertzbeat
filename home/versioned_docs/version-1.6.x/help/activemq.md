@@ -9,8 +9,8 @@ keywords: [open source monitoring tool, monitoring Apache ActiveMQ metrics]
 
 **Use Protocol: JMX**
 
-### Pre-monitoring Operations
-
+## Pre-monitoring Operations
+>
 > You need to enable the `JMX` service on ActiveMQ, HertzBeat uses the JMX protocol to collect metrics from ActiveMQ.
 
 1. Modify the `conf/activemq.xml` file in the installation directory to enable JMX

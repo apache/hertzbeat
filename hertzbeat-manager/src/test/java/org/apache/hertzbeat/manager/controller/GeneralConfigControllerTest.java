@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -225,7 +226,7 @@ class GeneralConfigControllerTest {
     @Test
     void emailConfigReadMustNotExposePassword() throws Exception {
         EmailServerConfigResponse response = new EmailServerConfigResponse(
-                0, "smtp.example.test", "ops@example.test", 465, true, false, true,
+                0, "smtp.example.test", "ops@example.test", 465, true, false, true, true,
                 Set.of("emailPassword"));
         when(messageServerConfigService.getEmailConfig()).thenReturn(
                 MessageServerConfigResult.configured("b7439dae-175f-4cf7-8182-cfd90ce48927", response));
@@ -309,6 +310,18 @@ class GeneralConfigControllerTest {
                 .andExpect(status().isPreconditionRequired())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andExpect(jsonPath("$.msg").value("message_server_config_revision_required"));
+    }
+
+    @Test
+    public void testGetSecretConfigIsRefused() throws Exception {
+
+        mockMvc.perform(get("/api/config/secret")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE));
+
+        // the jwt signing key and the aes key must not even be loaded for a rest read
+        verify(configService, never()).getConfig(anyString());
     }
 
     @Test

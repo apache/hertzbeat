@@ -23,7 +23,7 @@ keywords: [ 开源监控系统, 告警收敛, 告警抑制 ]
 
 ## 示例
 
-场景: 使用 Hertzbeat 监控 两个 Centos 服务器 192.168.1.1 和 192.168.1.2，和部署在两个服务器上的 Redis 服务 Redis-1 和 Redis-2。
+场景: 使用 HertzBeat 监控 两个 Centos 服务器 192.168.1.1 和 192.168.1.2，和部署在两个服务器上的 Redis 服务 Redis-1 和 Redis-2。
 并配置如下阈值规则：
 
 - 监控 Centos Linux /监控可用性。绑定标签 `server-status:down`

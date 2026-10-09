@@ -30,6 +30,7 @@ import org.apache.hertzbeat.ai.sop.model.SopDefinition;
 import org.apache.hertzbeat.ai.sop.model.SopResult;
 import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -143,7 +144,7 @@ public class SopController {
                     .status("FAILED")
                     .error("SOP skill not found: " + skillName)
                     .build();
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
         }
         
         Map<String, Object> inputParams = params != null ? params : new HashMap<>();

@@ -92,6 +92,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             if (!verifySsl){
                 SSLContext ignoreSslContext = createIgnoreVerifySslContext();
                 urlConnection.setSSLSocketFactory(ignoreSslContext.getSocketFactory());
+                urlConnection.setHostnameVerifier((hostname, session) -> true);
             }
 
             urlConnection.connect();

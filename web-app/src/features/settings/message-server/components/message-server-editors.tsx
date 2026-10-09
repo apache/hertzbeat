@@ -46,10 +46,9 @@ function SmsProviderFields({
   replace: (draft: SmsServerDraft) => void;
 }) {
   const definition = smsProviderDefinition(draft.type);
-  return definition.fields.map(field => {
-    if (draft.type === 'unisms' && field.key === 'accessKeySecret' && draft.unisms.authMode !== 'hmac') return null;
-    return <SmsProviderFieldEditor key={field.key} draft={draft} disabled={disabled} field={field} replace={replace} />;
-  });
+  return definition.fields.map(field => (
+    <SmsProviderFieldEditor key={field.key} draft={draft} disabled={disabled} field={field} replace={replace} />
+  ));
 }
 
 function SmsProviderFieldEditor({
@@ -108,21 +107,6 @@ function SmsProviderInput({
   placeholder: string;
   change: (value: string) => void;
 }) {
-  const { t } = useTranslation();
-  if (field.kind === 'authMode') {
-    return (
-      <Select<string>
-        aria-label={t(field.labelKey)}
-        disabled={disabled}
-        value={value ?? 'simple'}
-        options={[
-          { value: 'simple', label: t('messageServer.sms.authModes.simple') },
-          { value: 'hmac', label: t('messageServer.sms.authModes.hmac') }
-        ]}
-        onChange={change}
-      />
-    );
-  }
   if (field.secret) {
     return (
       <Input.Password

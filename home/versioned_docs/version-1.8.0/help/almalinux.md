@@ -7,7 +7,7 @@ keywords: [open-source monitoring system, open-source operating system monitorin
 
 > Collect and monitor common performance metrics of the AlmaLinux operating system.
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name        | Parameter Help Description                                                                                                                                                            |
 |-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

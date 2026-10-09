@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 
 本页面介绍如何连接到 HertzBeat MCP 服务器。当您启动 HertzBeat 服务器时，MCP 服务器会自动在默认端口 1157 上启动。
 
-### 概述
+## 概述
 
 - 提供 StreamabelHttp 协议的 MCP服务器。
 - 专为 MCP 集成和消费流式事件的客户端而设计。

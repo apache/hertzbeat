@@ -3,15 +3,18 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
-tags: [opensource, practice]
+tags: [community]
+description: 刘天佑分享从采用无代理监控，到贡献项目文档、NGQL 指标查询和 NebulaGraph 集群监控的开源历程。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome LiuTianyou
+cover_kicker: New Committer
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)
 
 大家好，非常荣幸可以收到社区邀请被提名为 Apache HertzBeat™ 的 Committer。我先做一个简单的自我介绍，从2019年工作开始，一直从事后端开发工作，主要使用Java语言，目前在一家网络安全公司从事网络安全相关产品后端开发工作。
 
-### 遇见
+## 遇见
 
 我工作的项目里部署着数台物理服务器，其中运行着各种数据库，中间件，尽管部署了 Prometheus + grafana 的监控组合，但由于大多数的服务和服务器都需要额外安装 exporter，这套监控系统并没有覆盖到项目的全部，有时候服务宕机了，被用到了才发现。四月份的某一天我刷到了一篇公众号文章介绍了 HertzBeat，我马上被不需要 agent，全程可视化配置的特新吸引加上支持docker一键部署，我迅速的部署起来了 HertzBeat 并投入了使用。
 

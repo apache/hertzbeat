@@ -135,25 +135,31 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         monitor.setStatus(getCellValueAsByte(row.getCell(4)));
         monitor.setDescription(getCellValueAsString(row.getCell(5)));
 
-        String labelsString = getCellValueAsString(row.getCell(6));
-        if (StringUtils.isNotBlank(labelsString)) {
-            try {
-                TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
-                Map<String, String> labels = JsonUtil.fromJson(labelsString, typeReference);
-                monitor.setLabels(labels);
-            } catch (Exception ignored) {}
-        }
-        monitor.setCollector(getCellValueAsString(row.getCell(7)));
+        monitor.setLabels(parseJsonMap(getCellValueAsString(row.getCell(6))));
+        monitor.setAnnotations(parseJsonMap(getCellValueAsString(row.getCell(7))));
+        monitor.setScheduleType(getCellValueAsString(row.getCell(8)));
+        monitor.setCronExpression(getCellValueAsString(row.getCell(9)));
+        monitor.setCollector(getCellValueAsString(row.getCell(10)));
         return monitor;
     }
 
+    private Map<String, String> parseJsonMap(String value) {
+        if (StringUtils.isNotBlank(value)) {
+            try {
+                TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+                return JsonUtil.fromJson(value, typeReference);
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
     private ParamDTO extractParamDataFromRow(Row row) {
-        String fieldName = getCellValueAsString(row.getCell(8));
+        String fieldName = getCellValueAsString(row.getCell(11));
         if (StringUtils.isNotBlank(fieldName)) {
             ParamDTO param = new ParamDTO();
             param.setField(fieldName);
-            param.setType(getCellValueAsByte(row.getCell(9)));
-            param.setValue(getCellValueAsString(row.getCell(10)));
+            param.setType(getCellValueAsByte(row.getCell(12)));
+            param.setValue(getCellValueAsString(row.getCell(13)));
             return param;
         }
         return null;
@@ -214,7 +220,8 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             Sheet sheet = workbook.createSheet(sheetName);
             sheet.setDefaultColumnWidth(20);
             sheet.setColumnWidth(6, 40 * 256);
-            sheet.setColumnWidth(10, 40 * 256);
+            sheet.setColumnWidth(7, 40 * 256);
+            sheet.setColumnWidth(13, 40 * 256);
             // set header style
             CellStyle headerCellStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
@@ -225,7 +232,8 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
             // set header
-            String[] headers = { "Name", "App", "Host", "Intervals", "Status", "Description", "Labels", "Collector", "Param-Field", "Param-Type", "Param-Value" };
+            String[] headers = { "Name", "App", "Host", "Intervals", "Status", "Description", "Labels", "Annotations",
+                "ScheduleType", "CronExpression", "Collector", "Param-Field", "Param-Type", "Param-Value" };
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -266,29 +274,38 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         Cell labelsCell = row.createCell(6);
                         labelsCell.setCellValue(JsonUtil.toJson(monitorDTO.getLabels()));
                         labelsCell.setCellStyle(cellStyle);
-                        Cell collectorCell = row.createCell(7);
+                        Cell annotationsCell = row.createCell(7);
+                        annotationsCell.setCellValue(JsonUtil.toJson(monitorDTO.getAnnotations()));
+                        annotationsCell.setCellStyle(cellStyle);
+                        Cell scheduleTypeCell = row.createCell(8);
+                        scheduleTypeCell.setCellValue(monitorDTO.getScheduleType());
+                        scheduleTypeCell.setCellStyle(cellStyle);
+                        Cell cronExpressionCell = row.createCell(9);
+                        cronExpressionCell.setCellValue(monitorDTO.getCronExpression());
+                        cronExpressionCell.setCellStyle(cellStyle);
+                        Cell collectorCell = row.createCell(10);
                         collectorCell.setCellValue(monitorDTO.getCollector());
                         collectorCell.setCellStyle(cellStyle);
                     }
                     // Fill in parameter information
                     if (i < paramList.size()) {
                         ParamDTO paramDTO = paramList.get(i);
-                        Cell fieldCell = row.createCell(8);
+                        Cell fieldCell = row.createCell(11);
                         fieldCell.setCellValue(paramDTO.getField());
                         fieldCell.setCellStyle(cellStyle);
-                        Cell typeCell = row.createCell(9);
+                        Cell typeCell = row.createCell(12);
                         typeCell.setCellValue(paramDTO.getType());
                         typeCell.setCellStyle(cellStyle);
-                        Cell valueCell = row.createCell(10);
+                        Cell valueCell = row.createCell(13);
                         valueCell.setCellValue(paramDTO.getValue());
                         valueCell.setCellStyle(cellStyle);
                     }
                 }
                 if (CollectionUtils.isNotEmpty(paramList)) {
-                    RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
-                    RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
-                    RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
-                    RegionUtil.setBorderRight(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
+                    RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 13), sheet);
+                    RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 13), sheet);
+                    RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 13), sheet);
+                    RegionUtil.setBorderRight(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 13), sheet);
                 }
             }
             workbook.write(os);

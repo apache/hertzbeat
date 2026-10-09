@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.ai.dao;
 
+import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -26,4 +28,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ChatConversationDao extends JpaRepository<ChatConversation, Long> {
+
+    Optional<ChatConversation> findByIdAndCreator(Long id, String creator);
+
+    List<ChatConversation> findAllByCreatorOrderByIdDesc(String creator);
 }

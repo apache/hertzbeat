@@ -3,8 +3,10 @@ title:  Apache HertzBeat™ 1.6.1 发布公告
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [releases]
+description: Apache HertzBeat 1.6.1 扩展基础设施监控，新增 Prometheus 解析与推送、NGQL 查询、短信告警和 Docker Compose 部署。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Apache HertzBeat 1.6.1
 ---
 
 亲爱的社区小伙伴们，
@@ -26,7 +28,7 @@ keywords: [open source monitoring system, alerting system]
 - **自定义监控菜单**：监控模板现在支持自定义主菜单。
 - **NebulaGraph支持**：新增对`ngql`查询NebulaGraph监控数据的支持。
 - **短信功能**：支持通过阿里云发送短信。
-- **Docker支持**：提供通过Docker Compose运行Hertzbeat的支持。
+- **Docker支持**：提供通过Docker Compose运行HertzBeat的支持。
 
 ### Bug 修复
 
@@ -64,7 +66,7 @@ keywords: [open source monitoring system, alerting system]
 > LinuxSuRen, transactional, JavaProgrammerLB, westboy, xuziyang, makechoicenow, crossoverJie, xfl12345, boatrainlsz, lw-yang, tomsun28, Alanxtl, Aias00, Clownsw, zhangshenghang, zqr10159, LiuTianyou, handy-git, hudongdong129, dukbong, 15613060203, yqxxgh, miki-hmt, PeixyJ, allcontributors, Ceilzcx, lwjxy, starmilkxin, leo-934, zuobiao-zhou, tomorrowshipyltm, LLP2333, lwqzz, wang1027-wqh, gjjjj0101, ZY945, yuluo-yx, HeartLinked, alpha951, Hi-Mr-Wind, TJxiaobao, YxYL6125, MananPoojara, a-little-fool, Pzz-2021, Yanshuming1, Thespica, Calvin979, WinterKi1ler
 >
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **仓库地址：**
 

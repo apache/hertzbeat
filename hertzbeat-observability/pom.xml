@@ -90,6 +90,19 @@
             <artifactId>protobuf-java-util</artifactId>
         </dependency>
         <!-- awaitility for async testing -->
+        <!-- OTLP gRPC server, version managed by grpc-bom in the root pom -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>

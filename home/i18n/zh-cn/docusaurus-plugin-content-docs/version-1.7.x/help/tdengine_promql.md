@@ -8,11 +8,11 @@ keywords: [ 开源监控系统,开源中间件监控, TDengine监控,TDengine-Pr
 > 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 TDengine 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控
 > TDengine，需要从 Prometheus 服务器抓取 TDengine 的监控数据。
 
-### 前置条件
+## 前置条件
 
 1. 部署 TDengine；
 2. 部署 taosKeeper；注意⚠️安装 TDengine 官方安装包的同时会自动安装 taosKeeper
-   详情请参考：[taosKeeper](https://docs.taosdata.com/reference/components/taoskeeper/)；
+   详情请参考：[taosKeeper](https://docs.taosdata.com/3.4.1/reference/components/taoskeeper/)；
 3. 通过 prometheus 采集 TDengine taosKeeper 暴露的监控指标；
 
 ### 配置参数

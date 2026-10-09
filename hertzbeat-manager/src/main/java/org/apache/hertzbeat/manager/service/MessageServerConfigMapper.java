@@ -27,7 +27,6 @@ import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.common.entity.dto.sms.SmslocalSmsProperties;
 import org.apache.hertzbeat.common.entity.dto.sms.TencentSmsProperties;
 import org.apache.hertzbeat.common.entity.dto.sms.TwilioSmsProperties;
-import org.apache.hertzbeat.common.entity.dto.sms.UniSmsProperties;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigOptions;
@@ -40,7 +39,7 @@ import org.springframework.stereotype.Component;
 public class MessageServerConfigMapper {
 
     private static final Set<String> EMAIL_SECRETS = Set.of("emailPassword");
-    private static final Set<String> SMS_TYPES = Set.of("tencent", "alibaba", "unisms", "smslocal", "aws", "twilio");
+    private static final Set<String> SMS_TYPES = Set.of("tencent", "alibaba", "smslocal", "aws", "twilio");
 
     public MailServerConfig toEmailConfig(EmailServerConfigRequest request, MailServerConfig existing) {
         require(request.getType(), "type");
@@ -65,15 +64,18 @@ public class MessageServerConfigMapper {
         if (request.getEnable()) {
             requireText(password, "emailPassword");
         }
+        boolean sslCertVerify = request.getEmailSslCertVerify() != null ? request.getEmailSslCertVerify()
+                : existing == null || existing.isEmailSslCertVerify();
         return new MailServerConfig(request.getType(), host, username, password, request.getEmailPort(),
-                request.getEmailSsl(), request.getEmailStarttls(), request.getEnable());
+                request.getEmailSsl(), request.getEmailStarttls(), sslCertVerify, request.getEnable());
     }
 
     public EmailServerConfigResponse toEmailResponse(MailServerConfig config) {
         Set<String> configured = StringUtils.isBlank(config.getEmailPassword())
                 ? Set.of() : Set.of("emailPassword");
         return new EmailServerConfigResponse(config.getType(), config.getEmailHost(), config.getEmailUsername(),
-                config.getEmailPort(), config.isEmailSsl(), config.isEmailStarttls(), config.isEnable(), configured);
+                config.getEmailPort(), config.isEmailSsl(), config.isEmailStarttls(), config.isEmailSslCertVerify(),
+                config.isEnable(), configured);
     }
 
     public SmsConfig toSmsConfig(SmsServerConfigRequest request, SmsConfig existing) {
@@ -107,7 +109,6 @@ public class MessageServerConfigMapper {
         switch (config.getType()) {
             case "tencent" -> readTencent(config.getTencent(), options, configured);
             case "alibaba" -> readAlibaba(config.getAlibaba(), options, configured);
-            case "unisms" -> readUnisms(config.getUnisms(), options, configured);
             case "smslocal" -> readSmslocal(config.getSmslocal(), configured);
             case "aws" -> readAws(config.getAws(), options, configured);
             case "twilio" -> readTwilio(config.getTwilio(), options, configured);
@@ -128,7 +129,6 @@ public class MessageServerConfigMapper {
                     requireText(options.getAccessKeyId(), "accessKeyId"),
                     secret("accessKeySecret", options.getAccessKeySecret(), value(existing, type, "accessKeySecret"), clears),
                     requireText(options.getSignName(), "signName"), requireText(options.getTemplateCode(), "templateCode")));
-            case "unisms" -> applyUnisms(target, options, clears, existing);
             case "smslocal" -> target.setSmslocal(new SmslocalSmsProperties(
                     secret("apiKey", options.getApiKey(), value(existing, type, "apiKey"), clears)));
             case "aws" -> {
@@ -150,26 +150,12 @@ public class MessageServerConfigMapper {
         }
     }
 
-    private void applyUnisms(SmsConfig target, SmsServerConfigOptions options, Set<String> clears, SmsConfig existing) {
-        String authMode = StringUtils.defaultIfBlank(options.getAuthMode(), "simple").trim().toLowerCase();
-        if (!Set.of("simple", "hmac").contains(authMode)) {
-            throw new IllegalArgumentException("Unsupported UniSMS auth mode");
-        }
-        String secret = secret("accessKeySecret", options.getAccessKeySecret(),
-                value(existing, "unisms", "accessKeySecret"), clears);
-        if (target.isEnable() && "hmac".equals(authMode)) {
-            requireText(secret, "accessKeySecret");
-        }
-        target.setUnisms(new UniSmsProperties(requireText(options.getAccessKeyId(), "accessKeyId"), secret,
-                requireText(options.getSignature(), "signature"), requireText(options.getTemplateId(), "templateId"), authMode));
-    }
-
     private SmsConfig copySms(SmsConfig existing) {
         SmsConfig target = new SmsConfig();
         if (existing != null) {
             target.setTencent(existing.getTencent());
             target.setAlibaba(existing.getAlibaba());
-            target.setUnisms(existing.getUnisms());
+
             target.setAws(existing.getAws());
             target.setTwilio(existing.getTwilio());
             target.setSmslocal(existing.getSmslocal());
@@ -181,7 +167,6 @@ public class MessageServerConfigMapper {
         return switch (type) {
             case "tencent" -> Set.of("secretId", "secretKey", "appId", "signName", "templateId");
             case "alibaba" -> Set.of("accessKeyId", "accessKeySecret", "signName", "templateCode");
-            case "unisms" -> Set.of("accessKeyId", "accessKeySecret", "signature", "templateId", "authMode");
             case "smslocal" -> Set.of("apiKey");
             case "aws" -> Set.of("accessKeyId", "accessKeySecret", "region");
             case "twilio" -> Set.of("accountSid", "authToken", "twilioPhoneNumber");
@@ -192,7 +177,7 @@ public class MessageServerConfigMapper {
     private Set<String> secretFields(String type) {
         return switch (type) {
             case "tencent" -> Set.of("secretId", "secretKey");
-            case "alibaba", "unisms", "aws" -> Set.of("accessKeySecret");
+            case "alibaba", "aws" -> Set.of("accessKeySecret");
             case "smslocal" -> Set.of("apiKey");
             case "twilio" -> Set.of("authToken");
             default -> Set.of();
@@ -227,7 +212,6 @@ public class MessageServerConfigMapper {
             case "tencent:secretId" -> config.getTencent() == null ? null : config.getTencent().getSecretId();
             case "tencent:secretKey" -> config.getTencent() == null ? null : config.getTencent().getSecretKey();
             case "alibaba:accessKeySecret" -> config.getAlibaba() == null ? null : config.getAlibaba().getAccessKeySecret();
-            case "unisms:accessKeySecret" -> config.getUnisms() == null ? null : config.getUnisms().getAccessKeySecret();
             case "smslocal:apiKey" -> config.getSmslocal() == null ? null : config.getSmslocal().getApiKey();
             case "aws:accessKeySecret" -> config.getAws() == null ? null : config.getAws().getAccessKeySecret();
             case "twilio:authToken" -> config.getTwilio() == null ? null : config.getTwilio().getAuthToken();
@@ -253,17 +237,6 @@ public class MessageServerConfigMapper {
         options.setAccessKeyId(value.getAccessKeyId());
         options.setSignName(value.getSignName());
         options.setTemplateCode(value.getTemplateCode());
-        add(configured, "accessKeySecret", value.getAccessKeySecret());
-    }
-
-    private void readUnisms(UniSmsProperties value, SmsServerConfigOptions options, Set<String> configured) {
-        if (value == null) {
-            return;
-        }
-        options.setAccessKeyId(value.getAccessKeyId());
-        options.setSignature(value.getSignature());
-        options.setTemplateId(value.getTemplateId());
-        options.setAuthMode(value.getAuthMode());
         add(configured, "accessKeySecret", value.getAccessKeySecret());
     }
 

@@ -34,6 +34,7 @@ public class EmailServerConfigRequest {
     private Integer emailPort;
     private Boolean emailSsl;
     private Boolean emailStarttls;
+    private Boolean emailSslCertVerify;
     private Boolean enable;
     private Set<String> clearSecrets = new LinkedHashSet<>();
 

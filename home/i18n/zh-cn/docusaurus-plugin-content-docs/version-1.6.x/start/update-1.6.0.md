@@ -14,11 +14,11 @@ sidebar_label: 1.6.0升级指南
 
 1. 升级Java环境
 
-    由于1.6.0版本使用Java17，且安装包不再提供内置jdk的版本，参考以下情况使用新版Hertzbeat。
+    由于1.6.0版本使用Java17，且安装包不再提供内置jdk的版本，参考以下情况使用新版HertzBeat。
 
    - 当你的服务器中默认环境变量为Java17时，这一步你无需任何操作。
    - 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**没有**其他应用需要低版本Java，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并在搜索引擎搜索如何设置新的环境变量指向新的Java17。
-   - 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**有**其他应用需要低版本Java，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为java，复制到Hertzbeat的解压目录下。
+   - 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**有**其他应用需要低版本Java，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为java，复制到HertzBeat的解压目录下。
 
 2. 升级数据库
 

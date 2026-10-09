@@ -7,7 +7,7 @@ keywords: [ open-source, monitoring system, CI/CD, DevOps, Jenkins monitoring ]
 
 > Monitoring of Jenkins' general metrics is performed by invoking the Jenkins Prometheus Plugin.
 
-### Prerequisites
+## Prerequisites
 
 1. Set up Jenkins-related services according to
    the [deployment documentation](https://www.jenkins.io/doc/book/installing/).

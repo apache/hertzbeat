@@ -9,11 +9,11 @@ keywords: [开源监控系统, 开源中间件监控, Jetty应用服务器监控
 
 **使用协议：JMX**
 
-### 监控前操作
-
+## 监控前操作
+>
 > 您需要在 JVM 应用开启 `JMX` 服务，HertzBeat 使用 JMX 协议对 JVM 进行指标采集。
 
-#### Jetty应用服务器开启JMX协议步骤
+### Jetty应用服务器开启JMX协议步骤
 
 [参考官方文档](https://www.eclipse.org/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote)
 

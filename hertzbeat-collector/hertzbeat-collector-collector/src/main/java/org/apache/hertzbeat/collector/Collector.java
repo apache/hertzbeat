@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.hertzbeat.collector.nativex.CollectorRuntimeHintsRegistrar;
+import org.apache.hertzbeat.collector.nativex.NativeCollectorDefaults;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -36,7 +37,9 @@ import org.springframework.context.annotation.ImportRuntimeHints;
 @ImportRuntimeHints(CollectorRuntimeHintsRegistrar.class)
 public class Collector {
     public static void main(String[] args) {
-        SpringApplication.run(Collector.class, args);
+        SpringApplication application = new SpringApplication(Collector.class);
+        NativeCollectorDefaults.applyTo(application);
+        application.run(args);
     }
 
     @PostConstruct

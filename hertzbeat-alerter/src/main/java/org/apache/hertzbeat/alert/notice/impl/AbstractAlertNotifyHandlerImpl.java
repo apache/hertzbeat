@@ -17,14 +17,8 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import freemarker.cache.StringTemplateLoader;
-import freemarker.core.TemplateClassResolver;
-import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -33,9 +27,9 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.alert.notice.AlertNotifyHandler;
+import org.apache.hertzbeat.alert.notice.NoticeTemplateRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -53,28 +47,8 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, GroupAlert alert) throws TemplateException, IOException {
-        StringTemplateLoader stringLoader = new StringTemplateLoader();
-        freemarker.template.Template templateRes;
-        Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
-        cfg.setNumberFormat(NUMBER_FORMAT);
-        cfg.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
-        Map<String, Object> model = new HashMap<>(16);
-        model.put("title", bundle.getString("alerter.notify.title"));
-        model.put("status", alert.getStatus());
-        model.put("groupLabels", alert.getGroupLabels());
-        model.put("commonLabels", alert.getCommonLabels());
-        model.put("commonAnnotations", alert.getCommonAnnotations());
-        model.put("alerts", alert.getAlerts());
-        if (alerterProperties != null) {
-            model.put("consoleUrl", alerterProperties.getConsoleUrl());   
-        }
-        // TODO Single instance reuse cache considers multiple-threading issues
-        String templateName = "freeMakerTemplate";
-        stringLoader.putTemplate(templateName, noticeTemplate.getContent());
-        cfg.setTemplateLoader(stringLoader);
-        templateRes = cfg.getTemplate(templateName, Locale.CHINESE);
-        String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateRes, model);
-        return template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
+        String consoleUrl = alerterProperties != null ? alerterProperties.getConsoleUrl() : null;
+        return NoticeTemplateRenderer.renderContent(noticeTemplate, alert, consoleUrl, bundle);
     }
 
     protected String escapeJsonStr(String jsonStr){

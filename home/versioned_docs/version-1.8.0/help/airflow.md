@@ -7,7 +7,7 @@ keywords: [open source monitoring system, open source database monitoring, Apach
 
 > Collect and monitor general performance metrics for the Apache Airflow.
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name      | Parameter Description                                                                                                           |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------|

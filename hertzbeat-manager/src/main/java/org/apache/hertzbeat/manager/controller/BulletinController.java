@@ -62,7 +62,7 @@ public class BulletinController {
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody Bulletin bulletin) {
         try {
-            bulletinService.validate(bulletin);
+            bulletinService.validate(bulletin, false);
             bulletinService.addBulletin(bulletin);
         } catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
@@ -74,7 +74,7 @@ public class BulletinController {
     @PutMapping
     public ResponseEntity<Message<Void>> editBulletin(@Valid @RequestBody Bulletin bulletin) {
         try {
-            bulletinService.validate(bulletin);
+            bulletinService.validate(bulletin, true);
             bulletinService.editBulletin(bulletin);
         } catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Edit failed! " + e.getMessage()));

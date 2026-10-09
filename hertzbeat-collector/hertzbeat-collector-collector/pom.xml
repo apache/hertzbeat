@@ -48,6 +48,12 @@
             <version>${hertzbeat.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-collector-mysql-r2dbc</artifactId>
+            <version>${hertzbeat.version}</version>
+        </dependency>
+
         <!-- collector-kafka -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
@@ -127,10 +133,57 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <finalName>apache-hertzbeat-collector-${hzb.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <classesDirectory>target/classes/</classesDirectory>
+                    <archive>
+                        <!--Generated JAR does not include Maven descriptor-related files-->
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <manifest>
+                            <!--Project startup class-->
+                            <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
+                            <addClasspath>true</addClasspath>
+                            <!--Location of external dependency JARs-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>. config</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>

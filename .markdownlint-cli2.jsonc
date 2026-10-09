@@ -15,7 +15,13 @@
 // limitations under the License.
 //
 {
-  "globs": ["home/**/*.md"],
+  "globs": [
+    "home/README.md",
+    "home/blog/**/*.md",
+    "home/docs/**/*.md",
+    "home/i18n/zh-cn/docusaurus-plugin-content-blog/**/*.md",
+    "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/**/*.md"
+  ],
   "config": {
     "default": true,
     "MD001": true,
@@ -38,7 +44,8 @@
     "MD045": true,
     "MD046": true,
     "MD047": true,
-    "MD052": true
+    "MD052": true,
+    "MD060": false
   },
   "ignores": [
     "**/node_modules/**",

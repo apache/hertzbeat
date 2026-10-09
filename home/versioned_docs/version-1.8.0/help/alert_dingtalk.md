@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source alerter, open source DingDin
 
 > After the threshold is triggered send alarm information and notify the recipient by DingDing robot.
 
-### Operation steps
+## Operation steps
 
 1. **【DingDing desktop client】-> 【Group settings】-> 【Intelligent group assistant】-> 【Add new robot-select custom】-> 【Set robot name and avatar】-> 【Note⚠️Set custom keywords: HertzBeat】 ->【Copy its webhook address after adding successfully】**
 

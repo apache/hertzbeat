@@ -65,11 +65,15 @@ POST /api/ai/sop/execute/{skillName}/ai
 
 ```
 YAML 定义 → SkillRegistry → SopEngine → Executors → SopResult
-                                ↓
-                         ToolExecutor / LlmExecutor
+               ↓                ↓
+       SopToolCallback   ToolExecutor / LlmExecutor
                                 ↓
                          ToolRegistry（自动发现 @Tool 方法）
 ```
+
+所有执行入口都由 `SopEngine` 统一补齐默认参数并校验必填参数。技能注册为 Spring AI
+工具时，`SopToolCallback` 会根据参数定义生成 JSON Schema、解析模型传入的 JSON 对象，
+同步执行 SOP 并返回 `SopResult`；调用方不应在控制器或工具外层重复实现参数校验。
 
 ## 添加新工具
 

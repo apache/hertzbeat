@@ -77,7 +77,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
-        this.threadPool.execute(() -> {
+        this.threadPool.executeLongRunning(() -> {
             int port = this.nettyServerConfig.getPort();
             ThreadFactory bossThreadFactory = new ThreadFactoryBuilder()
                     .setUncaughtExceptionHandler((thread, throwable) -> {

@@ -7,7 +7,7 @@ keywords: [ Open Source Monitoring System, Open Source Operating System Monitori
 
 > Collect and monitor general performance metrics (system information, CPU, memory, disk, network cards, file systems, top resource processes, etc.) of the FreeBSD operating system.
 
-### Configuration Parameters
+## Configuration Parameters
 
 |   Parameter Name    |                                                  Parameter help description                                                  |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------|

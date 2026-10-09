@@ -115,11 +115,10 @@ describe('message server model', () => {
     expect(retained.clearSecrets).toEqual([]);
   });
 
-  it('defines the six master SMS providers with only provider-owned fields', () => {
+  it('defines the five master SMS providers with only provider-owned fields', () => {
     expect(smsProviderDefinitions.map(definition => definition.type)).toEqual([
       'tencent',
       'alibaba',
-      'unisms',
       'smslocal',
       'aws',
       'twilio'
@@ -169,19 +168,19 @@ describe('message server model', () => {
       revision: 'sms-r1',
       config: {
         enable: true,
-        type: 'unisms',
-        options: { accessKeyId: 'id', signature: 'sig', templateId: 'tpl', authMode: 'hmac' },
+        type: 'alibaba',
+        options: { accessKeyId: 'id', signName: 'sig', templateCode: 'tpl' },
         configuredSecrets: ['accessKeySecret']
       }
     });
     expect(validateSmsServerDraft(draft)).toEqual([]);
     expect(buildSmsServerPayload(draft)).toEqual({
       enable: true,
-      type: 'unisms',
-      options: { accessKeyId: 'id', authMode: 'hmac', signature: 'sig', templateId: 'tpl' }
+      type: 'alibaba',
+      options: { accessKeyId: 'id', signName: 'sig', templateCode: 'tpl' }
     });
     expect(
-      buildSmsServerPayload({ ...draft, unisms: { ...draft.unisms, accessKeySecret: ' new-secret ' } })
+      buildSmsServerPayload({ ...draft, alibaba: { ...draft.alibaba, accessKeySecret: 'new-secret' } })
     ).toMatchObject({ options: { accessKeySecret: 'new-secret' } });
     expect(validateSmsServerDraft({ ...draft, clearSecrets: ['accessKeySecret'] })).toContain('accessKeySecret');
     expect(buildSmsServerPayload({ ...draft, enable: false, clearSecrets: ['accessKeySecret'] })).toMatchObject({
@@ -206,22 +205,7 @@ describe('message server model', () => {
     expect(validateSmsServerDraft(switched)).toEqual(['accountSid', 'authToken', 'twilioPhoneNumber']);
   });
 
-  it('requires the UniSMS secret only for HMAC and reports honest disabled/unconfigured states', () => {
-    const draft = {
-      ...createSmsServerDraft(),
-      type: 'unisms' as const,
-      unisms: {
-        accessKeyId: 'id',
-        accessKeySecret: '',
-        signature: 'sig',
-        templateId: 'tpl',
-        authMode: 'simple' as const
-      }
-    };
-    expect(validateSmsServerDraft(draft)).toEqual([]);
-    expect(validateSmsServerDraft({ ...draft, unisms: { ...draft.unisms, authMode: 'hmac' } })).toEqual([
-      'accessKeySecret'
-    ]);
+  it('reports honest disabled/unconfigured states', () => {
     expect(messageServerStatus(false, [])).toBe('disabled');
     expect(messageServerStatus(true, ['emailHost'])).toBe('unconfigured');
   });

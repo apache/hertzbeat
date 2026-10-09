@@ -43,7 +43,7 @@ class MessageServerConfigMapperTest {
     @Test
     void emailSecretOmissionPreservesAndExplicitClearRemoves() {
         MailServerConfig existing = new MailServerConfig(
-                0, "old.example.test", "old@example.test", "stored-password", 465, true, false, true);
+                0, "old.example.test", "old@example.test", "stored-password", 465, true, false, true, true);
         EmailServerConfigRequest update = emailRequest();
 
         MailServerConfig preserved = mapper.toEmailConfig(update, existing);
@@ -62,7 +62,7 @@ class MessageServerConfigMapperTest {
         EmailServerConfigRequest request = emailRequest();
         request.setClearSecrets(Set.of("emailPassword"));
         assertThrows(IllegalArgumentException.class, () -> mapper.toEmailConfig(request,
-                new MailServerConfig(0, "old", "old@example.test", "stored", 465, true, false, true)));
+                new MailServerConfig(0, "old", "old@example.test", "stored", 465, true, false, true, true)));
     }
 
     @Test

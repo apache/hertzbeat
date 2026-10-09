@@ -220,6 +220,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return serverAvailabilityProbe.current();
     }
 
+    @Override
+    public boolean supportsLogQuery() {
+        return true;
+    }
+
     private boolean initGreptimeDbClient(GreptimeProperties greptimeProperties) {
         String endpoints = greptimeProperties.grpcEndpoints();
         try {

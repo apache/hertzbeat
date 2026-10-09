@@ -24,7 +24,6 @@ import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
@@ -36,13 +35,14 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 @Slf4j
 public class GoOnlineProcessor implements NettyRemotingProcessor {
 
-    private TimerDispatch timerDispatch;
+    private final TimerDispatch timerDispatch;
+
+    public GoOnlineProcessor(TimerDispatch timerDispatch) {
+        this.timerDispatch = timerDispatch;
+    }
 
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        if (this.timerDispatch == null) {
-            this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
-        }
         if (message.getMsg().isEmpty()) {
             log.warn("The message that server response to collector is empty, please upgrade server");
         } else {

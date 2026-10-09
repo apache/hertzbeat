@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.7.3 Release
+description: Apache HertzBeat 1.7.3 expands platform monitoring, adds nested JSON parsing and custom VictoriaMetrics labels, and improves collection performance.
 author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
-tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+tags: [releases]
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
+cover_headline: Apache HertzBeat 1.7.3
 ---
 
 Dear Community Members,
@@ -227,7 +229,7 @@ Special thanks to the following community members for their collaborative effort
 - @tuzuy made their first contribution in [https://github.com/apache/hertzbeat/pull/3668](https://github.com/apache/hertzbeat/pull/3668)
 - @carlpinto25 made their first contribution in [https://github.com/apache/hertzbeat/pull/3726](https://github.com/apache/hertzbeat/pull/3726)
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **Repository URL:**
 

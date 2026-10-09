@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 **Protocol Use：DNS**
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|

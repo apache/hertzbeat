@@ -7,12 +7,12 @@ sidebar_label: NGQL自定义监控
 > 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用NGQL自定义指标监控。
 > NGQL自定义监控可以让我们很方便的使用NGQL或者OpenCypher从NebulaGraph图数据库中查询指标数据,支持NebulaGraph 3.X版本。
 
-### 数据解析方式
+## 数据解析方式
 
 NGQL查询回来的数据字段和我们需要的指标映射，就能获取对应的指标数据，目前映射解析方式有四种： filterCount, oneRow, multiRow, columns
 
-#### **filterCount**
-
+### **filterCount**
+>
 > 对查询返回的结果按照指定字段进行过滤后，统计数量，通常用于 `SHOW ...` 语句中，如果可以使用NGQL语句直接返回数量的，建议使用NGQL语句统计数量。  
 > commands字段语法格式: aliasField#NGQL#filterName#filterValue  
 > `aliasField`: 对应监控模板中的`aliasFields`中的值  

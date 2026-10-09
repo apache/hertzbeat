@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hertzbeat.common.concurrent.AdmissionMode;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,33 +35,57 @@ class WorkerPoolTest {
 
     private WorkerPool workerPool;
 
-    private Runnable mockTask;
+    @AfterEach
+    void tearDown() throws Exception {
+        if (workerPool != null) {
+            workerPool.destroy();
+        }
+    }
 
-    @BeforeEach
-    void setUp() {
-
+    @Test
+    void testExecuteJobRunsOnVirtualThread() throws Exception {
         workerPool = new WorkerPool();
-        mockTask = mock(Runnable.class);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
+
+        workerPool.executeJob(() -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
     }
 
     @Test
-    void testExecuteJob() {
+    void testExecuteJobRejectsWhenConcurrencyLimitReached() throws Exception {
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 1),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                VirtualThreadProperties.AlerterProperties.defaults(),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
+        workerPool = new WorkerPool(properties);
 
-        assertDoesNotThrow(() -> workerPool.executeJob(mockTask));
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        workerPool.executeJob(() -> {
+            started.countDown();
+            try {
+                release.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        try {
+            assertThrows(RejectedExecutionException.class, () -> workerPool.executeJob(() -> {
+            }));
+        } finally {
+            release.countDown();
+        }
     }
-
-    @Test
-    void testExecuteJobThrowsException() {
-
-        workerPool = mock(WorkerPool.class);
-        doThrow(new RejectedExecutionException()).when(workerPool).executeJob(mockTask);
-
-        assertThrows(RejectedExecutionException.class, () -> workerPool.executeJob(mockTask));
-    }
-
-    @Test
-    void testDestroy() {
-        assertDoesNotThrow(() -> workerPool.destroy());
-    }
-
 }

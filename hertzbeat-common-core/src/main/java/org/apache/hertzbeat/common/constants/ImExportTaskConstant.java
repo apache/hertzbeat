@@ -24,7 +24,8 @@ package org.apache.hertzbeat.common.constants;
 public interface ImExportTaskConstant {
 
     /**
-     * If the number of tasks exceeds 100, progress information will broadcast
+     * If the number of tasks reaches this threshold, progress information will broadcast.
+     * Kept low so medium-sized imports (e.g. dozens of monitors) still report incremental progress.
      */
-    Integer IMPORT_TASK_PROCESS_THRESHOLD = 100;
+    Integer IMPORT_TASK_PROCESS_THRESHOLD = 10;
 }

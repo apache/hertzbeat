@@ -1,0 +1,50 @@
+{
+  "link.title.intro": {
+    "message": "소개",
+    "description": "The title of the footer links column with title=intro in the footer"
+  },
+  "link.title.contact": {
+    "message": "커뮤니티",
+    "description": "The title of the footer links column with title=contact in the footer"
+  },
+  "link.item.label.use": {
+    "message": "소개",
+    "description": "The label of footer link with label=use linking to /docs/"
+  },
+  "link.item.label.quickstart": {
+    "message": "빠른 시작",
+    "description": "The label of footer link with label=quickstart linking to /docs/start/quickstart"
+  },
+  "link.item.label.custom": {
+    "message": "커스텀 모니터링",
+    "description": "The label of footer link with label=custom linking to /docs/advanced/extend-point"
+  },
+  "link.item.label.help": {
+    "message": "도움말 문서",
+    "description": "The label of footer link with label=help linking to /docs/help/guide"
+  },
+  "link.item.label.discuss": {
+    "message": "문의",
+    "description": "The label of footer link with label=discuss linking to /docs/others/contact"
+  },
+  "link.item.label.github": {
+    "message": "Github",
+    "description": "The label of footer link with label=github linking to https://github.com/apache/hertzbeat"
+  },
+  "link.title.resource": {
+    "message": "자료",
+    "description": "The title of the footer links column with title=resource in the footer"
+  },
+  "link.item.label.relate": {
+    "message": "기타",
+    "description": "The label of footer link with label=relate linking to /docs/others/resource"
+  },
+  "link.item.label.discussion": {
+    "message": "토론",
+    "description": "The label of footer link with label=discussion linking to https://github.com/apache/hertzbeat/discussions/"
+  },
+  "link.item.label.contact": {
+    "message": "문의",
+    "description": "The label of footer link with label=contact linking to /docs/community/contact"
+  }
+}

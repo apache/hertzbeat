@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -49,6 +51,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -56,6 +59,7 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.component.validator.ParamValidatorManager;
@@ -89,6 +93,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -264,6 +269,242 @@ class MonitorServiceTest {
     }
 
     @Test
+    void validateModifyRestoresTheStoredCredentialBehindTheResponseMask() {
+        long monitorId = 101L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .name("ollama-local")
+                .app("ollama")
+                .scrape("static")
+                .instance("127.0.0.1")
+                .intervals(60)
+                .build();
+        Param submitted = Param.builder()
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(MonitorParam.SECRET_MASK)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        String storedCiphertext = AesUtil.aesEncode("stored-ollama-key");
+        Param stored = Param.builder()
+                .id(11L)
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(storedCiphertext)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submitted));
+        when(appService.getAppParamDefines("ollama"))
+                .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+        when(appService.getAppDefineOption("ollama-local")).thenReturn(Optional.empty());
+        when(monitorDao.findMonitorByNameEquals("ollama-local")).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
+        Job job = new Job();
+        job.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("ollama")).thenReturn(job);
+
+        monitorService.validate(dto, true);
+
+        ArgumentCaptor<MonitorParam> paramCaptor = ArgumentCaptor.forClass(MonitorParam.class);
+        verify(paramValidatorManager).validate(any(ParamDefineInfo.class), paramCaptor.capture());
+        assertEquals(storedCiphertext, paramCaptor.getValue().getParamValue());
+        assertEquals(storedCiphertext, dto.getParams().get(0).getParamValue());
+    }
+
+    @Test
+    void validateDetectRestoresStoredCredentialForAnExistingMonitor() {
+        long monitorId = 103L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .name("ollama-detect")
+                .app("ollama")
+                .scrape("static")
+                .instance("127.0.0.1")
+                .intervals(60)
+                .build();
+        Param submitted = Param.builder()
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(MonitorParam.SECRET_MASK)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        String storedCiphertext = AesUtil.aesEncode("stored-detect-key");
+        Param stored = Param.builder()
+                .id(31L)
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(storedCiphertext)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submitted));
+        when(appService.getAppParamDefines("ollama"))
+                .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
+        Job job = new Job();
+        job.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("ollama")).thenReturn(job);
+
+        monitorService.validate(dto, null);
+
+        assertEquals(storedCiphertext, dto.getParams().get(0).getParamValue());
+        verify(paramValidatorManager).validate(any(ParamDefineInfo.class), any(MonitorParam.class));
+    }
+
+    @Test
+    void validateModifyRejectsMaskedCredentialWhenDestinationChanges() {
+        long monitorId = 102L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .name("ollama-remote")
+                .app("ollama")
+                .scrape("static")
+                .instance("attacker.example")
+                .intervals(60)
+                .build();
+        Param submittedHost = Param.builder()
+                .monitorId(monitorId)
+                .field("host")
+                .paramValue("attacker.example")
+                .type(CommonConstants.PARAM_TYPE_STRING)
+                .build();
+        Param submittedSecret = Param.builder()
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(MonitorParam.SECRET_MASK)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        Param storedHost = Param.builder()
+                .id(21L)
+                .monitorId(monitorId)
+                .field("host")
+                .paramValue("trusted.example")
+                .type(CommonConstants.PARAM_TYPE_STRING)
+                .build();
+        Param storedSecret = Param.builder()
+                .id(22L)
+                .monitorId(monitorId)
+                .field("apiKey")
+                .paramValue(AesUtil.aesEncode("stored-ollama-key"))
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submittedHost, submittedSecret));
+        when(appService.getAppParamDefines("ollama")).thenReturn(List.of(
+                newParamDefine("host", "host", true),
+                newParamDefine("apiKey", "password", false)));
+        when(appService.getAppDefineOption("ollama-remote")).thenReturn(Optional.empty());
+        when(monitorDao.findMonitorByNameEquals("ollama-remote")).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(storedHost, storedSecret));
+
+        assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, true));
+    }
+
+    @Test
+    void validateModifyRestoresHttpServiceDiscoveryCredentialFromScrapeDefinition() {
+        long monitorId = 103L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .name("discovered-prometheus")
+                .app("prometheus")
+                .scrape("http_sd")
+                .instance("https://discovery.example")
+                .intervals(60)
+                .build();
+        Param submittedUrl = Param.builder()
+                .monitorId(monitorId)
+                .field("__sd_url__")
+                .paramValue("https://discovery.example")
+                .type(CommonConstants.PARAM_TYPE_STRING)
+                .build();
+        Param submittedToken = Param.builder()
+                .monitorId(monitorId)
+                .field("__sd_token__")
+                .paramValue(MonitorParam.SECRET_MASK)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        String storedCiphertext = AesUtil.aesEncode("stored-discovery-token");
+        Param storedUrl = submittedUrl.clone();
+        Param storedToken = Param.builder()
+                .id(32L)
+                .monitorId(monitorId)
+                .field("__sd_token__")
+                .paramValue(storedCiphertext)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submittedUrl, submittedToken));
+        when(appService.getAppParamDefines("prometheus")).thenReturn(Collections.emptyList());
+        when(appService.getAppParamDefines("http_sd")).thenReturn(List.of(
+                newParamDefine("__sd_url__", "text", true),
+                newParamDefine("__sd_token__", "password", false)));
+        when(appService.getAppDefineOption("discovered-prometheus")).thenReturn(Optional.empty());
+        when(monitorDao.findMonitorByNameEquals("discovered-prometheus")).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(storedUrl, storedToken));
+        Job applicationJob = new Job();
+        applicationJob.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("prometheus")).thenReturn(applicationJob);
+        Job job = new Job();
+        job.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("http_sd")).thenReturn(job);
+
+        monitorService.validate(dto, true);
+
+        assertEquals(storedCiphertext, dto.getParams().stream()
+                .filter(param -> "__sd_token__".equals(param.getField()))
+                .findFirst()
+                .orElseThrow()
+                .getParamValue());
+    }
+
+    @Test
+    void validateServiceDiscoveryMonitorChecksApplicationAndScrapeCredentials() {
+        Monitor monitor = Monitor.builder()
+                .id(104L)
+                .name("discovered-mysql")
+                .app("mysql")
+                .scrape("http_sd")
+                .instance("https://discovery.example")
+                .intervals(60)
+                .build();
+        Param submittedPassword = Param.builder()
+                .monitorId(monitor.getId())
+                .field("password")
+                .paramValue("database-secret")
+                .build();
+        Param submittedDiscoveryToken = Param.builder()
+                .monitorId(monitor.getId())
+                .field("__sd_token__")
+                .paramValue("discovery-secret")
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(submittedPassword, submittedDiscoveryToken));
+        ParamDefineInfo applicationPassword = newParamDefine("password", "password", true);
+        ParamDefineInfo discoveryToken = newParamDefine("__sd_token__", "password", true);
+        when(appService.getAppParamDefines("mysql")).thenReturn(List.of(applicationPassword));
+        when(appService.getAppParamDefines("http_sd")).thenReturn(List.of(discoveryToken));
+        Job applicationJob = new Job();
+        applicationJob.setMetrics(Collections.emptyList());
+        Job scrapeJob = new Job();
+        scrapeJob.setMetrics(Collections.emptyList());
+        when(appService.getAppDefine("mysql")).thenReturn(applicationJob);
+        when(appService.getAppDefine("http_sd")).thenReturn(scrapeJob);
+
+        monitorService.validate(dto, null);
+
+        verify(paramValidatorManager).validate(
+                eq(applicationPassword), argThat(param -> "password".equals(param.getField())));
+        verify(paramValidatorManager).validate(
+                eq(discoveryToken), argThat(param -> "__sd_token__".equals(param.getField())));
+    }
+
+    @Test
     void detectMonitorEmpty() {
         Monitor monitor = Monitor.builder()
                 .id(1L)
@@ -395,6 +636,61 @@ class MonitorServiceTest {
 
         assertEquals("unknow", monitor.getInstance());
         assertEquals("unknow", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
+    }
+
+    @Test
+    void addMonitorWithoutInstanceFallsBackToHostParam() {
+        Monitor monitor = Monitor.builder()
+                .intervals(60)
+                .name("memory")
+                .app("demoApp")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("www.example.com").build(),
+                Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void addMonitorInstanceStaysStableAcrossRepeatedResolution() {
+        Monitor monitor = Monitor.builder()
+                .intervals(60)
+                .name("memory")
+                .app("demoApp")
+                .instance("www.example.com:443")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(monitorDao.save(monitor)).thenReturn(monitor);
+        List<Param> params = List.of(Param.builder().field("host").paramValue("www.example.com").build(),
+                Param.builder().field("port").paramValue("443").build());
+        when(paramDao.saveAll(params)).thenReturn(params);
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals("www.example.com:443", monitor.getInstance());
+    }
+
+    @Test
+    void modifyMonitorKeepsInstanceStableAcrossEdits() {
+        long monitorId = 7L;
+        Monitor stored = Monitor.builder().jobId(1L).intervals(60).app("demoApp").name("ssl")
+                .instance("www.example.com:443").id(monitorId).build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(stored));
+        List<Param> params = List.of(Param.builder().field("host").paramValue("www.example.com").build(),
+                Param.builder().field("port").paramValue("443").build());
+
+        for (int edit = 0; edit < 2; edit++) {
+            Monitor dto = Monitor.builder().jobId(1L).intervals(60).app("demoApp").name("ssl")
+                    .instance("www.example.com:443").id(monitorId).build();
+            assertDoesNotThrow(() -> monitorService.modifyMonitor(dto, params, null, null));
+            assertEquals("www.example.com:443", dto.getInstance());
+        }
     }
 
     @Test
@@ -1145,6 +1441,38 @@ class MonitorServiceTest {
         when(collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId())).thenReturn(Optional.empty());
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
         assertNotNull(monitorDto);
+    }
+
+    @Test
+    void getMonitorDtoMasksCredentialsButExportKeepsCiphertext() {
+        long id = 2L;
+        Monitor monitor = Monitor.builder()
+                .jobId(id)
+                .intervals(60)
+                .app("ollama")
+                .name("ollama-export")
+                .instance("localhost")
+                .id(id)
+                .build();
+        String ciphertext = AesUtil.aesEncode("portable-secret");
+        Param secret = Param.builder()
+                .monitorId(id)
+                .field("apiKey")
+                .paramValue(ciphertext)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build();
+        when(monitorDao.findById(id)).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(id)).thenReturn(List.of(secret));
+        Job job = new Job();
+        job.setMetrics(new ArrayList<>());
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(id)).thenReturn(Optional.empty());
+
+        MonitorDto response = monitorService.getMonitorDto(id);
+        MonitorDto export = monitorService.getMonitorDtoForExport(id);
+
+        assertEquals(MonitorParam.SECRET_MASK, response.getParamInfos().getFirst().getParamValue());
+        assertEquals(ciphertext, export.getParamInfos().getFirst().getParamValue());
     }
 
     @Test

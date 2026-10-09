@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Please move external libs to this folder like:
+Please move external libs to this folder only when you need external JDBC jars, for example:
 
 ojdbc8-21.5.0.0.jar
 orai18n-21.5.0.0.jar
 mysql-connector-java-8.0.30.jar
 
+Notes:
+
+- MySQL, MariaDB, OceanBase, and TiDB SQL query metrics can use the built-in MySQL-compatible query engine without `mysql-connector-j`.
+- If `mysql-connector-j` is present here, HertzBeat prefers JDBC after restart.
+- Oracle and DB2 still require external JDBC jars in `ext-lib`.

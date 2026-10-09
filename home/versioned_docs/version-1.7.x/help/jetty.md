@@ -9,11 +9,11 @@ keywords: [open source monitoring tool, open source jetty web server monitoring 
 
 **Usage protocol: JMX**
 
-### Pre-monitoring Operations
-
+## Pre-monitoring Operations
+>
 > You need to enable the `JMX` service in the JVM application. HertzBeat uses the JMX protocol to collect metrics for the JVM.
 
-#### Jetty application server opens JMX protocol steps
+### Jetty application server opens JMX protocol steps
 
 [Refer to official documentation](https://www.eclipse.org/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote)
 

@@ -72,4 +72,24 @@ class PasswordParamValidatorTest {
         assertEquals(ciphertext, param.getParamValue());
         assertEquals(CommonConstants.PARAM_TYPE_PASSWORD, param.getType());
     }
+
+    @Test
+    void validate_IgnoresLegacyCiphertextUntilMigrationReencryptsIt() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("nextSecretKey123");
+            String legacyCiphertext = AesUtil.aesEncode("password123", AesUtil.DEFAULT_ENCODE_RULES);
+            ParamDefineInfo paramDefine = new ParamDefineInfo();
+            paramDefine.setType("password");
+            MonitorParam param = new MonitorParam();
+            param.setParamValue(legacyCiphertext);
+
+            validator.validate(paramDefine, param);
+
+            assertEquals(legacyCiphertext, param.getParamValue());
+            assertEquals(CommonConstants.PARAM_TYPE_PASSWORD, param.getType());
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
 }

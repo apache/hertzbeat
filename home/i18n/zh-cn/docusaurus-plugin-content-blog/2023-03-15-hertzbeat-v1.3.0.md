@@ -3,14 +3,16 @@ title: 重磅更新 开源实时监控工具 HertzBeat v1.3.0 发布 在线自�
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.3.0 新增自定义监控分页、网络交换机与 Redis 集群监控，并支持 IoTDB 1.0 作为时序存储。
 keywords: [开源监控系统, 告警系统, Linux监控]
+cover_headline: HertzBeat 1.3.0
 ---
 
 官网: hertzbeat.com | tancloud.cn
 
-### What is HertzBeat?
-
+## What is HertzBeat?
+>
 > HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
 > 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等指标监控，阈值告警通知一步到位。
 > 支持更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。

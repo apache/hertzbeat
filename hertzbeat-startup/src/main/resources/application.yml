@@ -77,6 +77,16 @@ management:
       export:
         enabled: true
 
+# The generated OpenAPI document is a map of every route, HTTP method, parameter
+# and model, so it is not served by default. A deployment that wants the Swagger
+# UI opts in by turning both switches on; the document endpoints stay scoped to
+# the admin role in sureness.yml either way.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 otel:
   instrumentation:
     logback-appender:
@@ -320,14 +330,6 @@ alerter:
       access-key-secret:
       sign-name:
       template-code:
-    unisms:
-      # auth-mode: simple or hmac
-      auth-mode: simple
-      access-key-id: YOUR_ACCESS_KEY_ID
-      # hmac mode need to fill in access-key-secret
-      access-key-secret: YOUR_ACCESS_KEY_SECRET
-      signature: YOUR_SMS_SIGNATURE
-      template-id: YOUR_TEMPLATE_ID
     smslocal:
       api-key: YOUR_API_KEY_HERE
     aws:
@@ -351,6 +353,22 @@ grafana:
   password: admin
 
 hertzbeat:
+  otlp:
+    grpc:
+      # OTLP/gRPC ingestion listener, started when greptime storage is enabled. Point exporters at
+      # this port on every deployment - docker publishes it unchanged.
+      # 14317 rather than the OpenTelemetry standard 4317, which an OTel Collector on the same host
+      # normally holds already. Set 4317 here if you want the standard port and know it is free.
+      # A port that cannot be bound only disables gRPC ingestion - OTLP/HTTP on /api/otlp/v1 keeps
+      # working either way.
+      enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
+      host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
+      port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
+    ingestion:
+      admission:
+        max-concurrent-requests: ${HERTZBEAT_OTLP_MAX_CONCURRENT_REQUESTS:32}
+        queue-capacity: ${HERTZBEAT_OTLP_QUEUE_CAPACITY:32}
+        max-queue-wait: ${HERTZBEAT_OTLP_MAX_QUEUE_WAIT:100ms}
   collector:
     mysql:
       # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.
@@ -358,16 +376,6 @@ hertzbeat:
       # jdbc  : always use JDBC
       # r2dbc : always use the built-in query engine
       query-engine: ${HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE:auto}
-  otlp:
-    grpc:
-      enabled: true
-      host: 0.0.0.0
-      port: 4317
-    ingestion:
-      admission:
-        max-concurrent-requests: ${HERTZBEAT_OTLP_MAX_CONCURRENT_REQUESTS:32}
-        queue-capacity: ${HERTZBEAT_OTLP_QUEUE_CAPACITY:32}
-        max-queue-wait: ${HERTZBEAT_OTLP_MAX_QUEUE_WAIT:100ms}
   observability:
     query:
       admission:
@@ -411,3 +419,8 @@ hertzbeat:
       concurrency-limit: 256
       reject-when-limit-reached: true
       task-termination-timeout: 5000
+  # Bounds on what a single request to the push gateway may consume.
+  push:
+    max-auto-created-monitors: ${HERTZBEAT_PUSH_MAX_AUTO_CREATED_MONITORS:10000}
+    max-body-bytes: ${HERTZBEAT_PUSH_MAX_BODY_BYTES:5242880}
+    max-samples: ${HERTZBEAT_PUSH_MAX_SAMPLES:10000}

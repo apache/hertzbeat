@@ -67,7 +67,7 @@ class PushGatewayServiceImplTest {
         when(pushMonitorDao.findMonitorsByType(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE))
                 .thenReturn(List.of(deletedMonitor));
         when(pushMonitorDao.save(any(Monitor.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        PushGatewayServiceImpl service = new PushGatewayServiceImpl(commonDataQueue, pushMonitorDao);
+        PushGatewayServiceImpl service = new PushGatewayServiceImpl(commonDataQueue, pushMonitorDao, 10000, 5242880, 10000);
         service.onMonitorDeleted(new MonitorDeletedEvent(this, deletedMonitorId));
 
         boolean pushed = service.pushPrometheusMetrics(new ByteArrayInputStream(
@@ -87,7 +87,7 @@ class PushGatewayServiceImplTest {
     void jobAndInstanceIdentityDoesNotCollideAtUnderscoreBoundaries() {
         when(pushMonitorDao.findMonitorsByType(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE)).thenReturn(List.of());
         when(pushMonitorDao.save(any(Monitor.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        PushGatewayServiceImpl service = new PushGatewayServiceImpl(commonDataQueue, pushMonitorDao);
+        PushGatewayServiceImpl service = new PushGatewayServiceImpl(commonDataQueue, pushMonitorDao, 10000, 5242880, 10000);
         byte[] payload = "proof_metric_total 42\n".getBytes(StandardCharsets.UTF_8);
 
         assertTrue(service.pushPrometheusMetrics(new ByteArrayInputStream(payload), "a_b", "c"));

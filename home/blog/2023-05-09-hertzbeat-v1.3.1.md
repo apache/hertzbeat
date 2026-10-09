@@ -1,19 +1,21 @@
 ---
 title: Open source real-time monitoring tool HertzBeat v1.3.1 released
+description: HertzBeat 1.3.1 adds new time-series storage options, monitoring import and export, alert silencing, and more monitoring templates.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+cover_headline: HertzBeat 1.3.1
 ---
 
 Website: hertzbeat.com | tancloud.cn
 
 ![HertzBeat](/img/home/0.png)
 
-### What is HertzBeat?
-
-> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
+## What is HertzBeat?
+>
+> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentless.
 > **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.
 > Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.
 > More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.

@@ -1,17 +1,20 @@
 ---
 title: Warmly Welcome HertzBeat's New Community Committer!
+description: Yuxuan Zhang recounts joining through OSPP and contributing OpenAI account monitoring, IMAP support, script-based system monitoring, and UI improvements.
 author: zuobiao-zhou
 author_title: Yuxuan Zhang
 author_url: https://github.com/zuobiao-zhou
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
     alerting system,
     Apache,
     Apache Committer,
-    Hertzbeat,
+    HertzBeat,
   ]
+cover_headline: Welcome zuobiao-zhou
+cover_kicker: New Committer
 ---
 
 ## Self-Introduction

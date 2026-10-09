@@ -1,0 +1,283 @@
+@import '~src/styles/theme';
+
+/* stylelint-disable function-no-unknown */
+
+app-signal-workspace {
+  display: block;
+  min-height: 100%;
+}
+
+.signal-workspace {
+  min-height: 100%;
+}
+
+.signal-workspace-heading {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.signal-workspace-heading-copy {
+  min-width: 0;
+}
+
+.signal-workspace-heading h1 {
+  margin: 0 0 4px;
+  color: @heading-color;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.signal-workspace-heading p {
+  margin: 0;
+  color: @text-color-secondary;
+  font-size: 13px;
+}
+
+.signal-workspace-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.signal-query-panel {
+  margin: 16px 0;
+  overflow: hidden;
+  background: @component-background;
+  border: 1px solid @border-color-split;
+  border-radius: 6px;
+}
+
+.signal-query-panel-scope {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: fade(@primary-color, 2%);
+  border-bottom: 1px solid @border-color-split;
+}
+
+.signal-query-panel-label,
+.query-field-label {
+  color: @text-color-secondary;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.signal-query-panel-time,
+.signal-query-panel-time [workspace-time] {
+  min-width: 0;
+}
+
+.signal-workspace .query-fields {
+  display: grid;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+}
+
+.signal-workspace .query-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.signal-workspace .query-field > input,
+.signal-workspace .query-field > nz-select {
+  width: 100%;
+}
+
+.signal-workspace .query-submit {
+  min-width: 108px;
+}
+
+.signal-workspace .advanced-filters {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid @border-color-split;
+}
+
+.signal-workspace .advanced-filters summary {
+  width: fit-content;
+  color: @primary-color;
+  font-weight: 500;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.signal-workspace .advanced-filters[open] summary {
+  margin-bottom: 12px;
+}
+
+.signal-workspace .advanced-filter-grid {
+  display: grid;
+  gap: 12px;
+  align-items: end;
+}
+
+.signal-workspace-feedback:not(:empty) {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.signal-workspace .overview-strip {
+  display: grid;
+  margin: 0 0 16px;
+  overflow: hidden;
+  background: @component-background;
+  border: 1px solid @border-color-split;
+  border-radius: 6px;
+}
+
+.signal-workspace .overview-strip > div {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 11px 14px;
+  border-right: 1px solid @border-color-split;
+}
+
+.signal-workspace .overview-strip > div:last-child {
+  border-right: 0;
+}
+
+.signal-workspace .overview-strip span {
+  overflow: hidden;
+  color: @text-color-secondary;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.signal-workspace .overview-strip strong {
+  color: @heading-color;
+  font-weight: 600;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+
+.signal-workspace .overview-strip .overview-alert strong {
+  color: @error-color;
+}
+
+.signal-workspace .evidence-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.signal-workspace .evidence-section {
+  overflow: hidden;
+  background: @component-background;
+  border: 1px solid @border-color-split;
+  border-radius: 6px;
+}
+
+.signal-workspace .evidence-heading {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 9px 14px;
+  background: fade(@primary-color, 2%);
+  border-bottom: 1px solid @border-color-split;
+}
+
+.signal-workspace .evidence-heading-title {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.signal-workspace .evidence-heading h2 {
+  margin: 0;
+  color: @heading-color;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.signal-workspace .evidence-heading span {
+  color: @text-color-secondary;
+  font-size: 12px;
+}
+
+.signal-workspace .chart-region {
+  min-height: 196px;
+  background: @component-background;
+}
+
+.signal-workspace .chart-region nz-empty {
+  display: block;
+  padding-top: 38px;
+}
+
+.signal-workspace .ant-table-thead > tr > th {
+  color: @text-color;
+  font-weight: 500;
+  background: fade(@primary-color, 3%);
+}
+
+.signal-workspace .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+.signal-workspace .ant-table-tbody > tr:hover > td {
+  background: fade(@primary-color, 3%);
+}
+
+.signal-workspace .ant-empty-description {
+  color: @text-color-secondary;
+}
+
+@media (max-width: 1100px) {
+  .signal-workspace-heading {
+    flex-direction: column;
+  }
+
+  .signal-workspace-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .signal-query-panel-scope {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 820px) {
+  .signal-workspace-actions {
+    overflow-x: auto;
+  }
+
+  .signal-workspace .query-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  .signal-workspace .advanced-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .signal-workspace .overview-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .signal-workspace .overview-strip > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .signal-workspace .overview-strip > div:nth-child(n + 3) {
+    border-top: 1px solid @border-color-split;
+  }
+}

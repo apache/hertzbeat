@@ -27,6 +27,7 @@ public record EmailServerConfigResponse(
         Integer emailPort,
         boolean emailSsl,
         boolean emailStarttls,
+        boolean emailSslCertVerify,
         boolean enable,
         Set<String> configuredSecrets) {
 }

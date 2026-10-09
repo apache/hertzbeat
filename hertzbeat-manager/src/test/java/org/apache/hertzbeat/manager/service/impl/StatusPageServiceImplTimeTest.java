@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
@@ -99,8 +100,16 @@ class StatusPageServiceImplTimeTest {
         when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
             .thenReturn(List.of(before, after));
 
-        List<ComponentStatus> result = service.queryComponentsStatus();
-        assertEquals(30, result.get(0).getHistory().size());
+        assertEquals(30, service.queryComponentsStatus(30).get(0).getHistory().size());
+        assertEquals(1, service.queryComponentsStatus(1).get(0).getHistory().size());
+        assertEquals(90, service.queryComponentsStatus(90).get(0).getHistory().size());
+        assertEquals(365, service.queryComponentsStatus(365).get(0).getHistory().size());
+    }
+
+    @Test
+    void testDaysRangeValidation() {
+        assertThrows(IllegalArgumentException.class, () -> service.queryComponentsStatus(0));
+        assertThrows(IllegalArgumentException.class, () -> service.queryComponentsStatus(366));
     }
 
     @Test
@@ -114,7 +123,7 @@ class StatusPageServiceImplTimeTest {
         when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
             .thenReturn(List.of(history));
 
-        List<ComponentStatus> result = service.queryComponentsStatus();
+        List<ComponentStatus> result = service.queryComponentsStatus(30);
         assertEquals(30, result.get(0).getHistory().size());
     }
 
@@ -128,7 +137,7 @@ class StatusPageServiceImplTimeTest {
         when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
             .thenReturn(List.of(history));
 
-        List<ComponentStatus> result = service.queryComponentsStatus();
+        List<ComponentStatus> result = service.queryComponentsStatus(30);
         assertEquals(30, result.get(0).getHistory().size());
     }
 

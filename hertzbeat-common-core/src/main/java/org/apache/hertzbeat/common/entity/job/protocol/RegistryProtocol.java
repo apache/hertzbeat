@@ -40,10 +40,16 @@ public class RegistryProtocol implements CommonRequestProtocol, Protocol {
     private String port;
     private String discoveryClientTypeName;
 
+    private String username;
+    private String password;
+    private String namespace;
+    private String serviceName;
+    private String groupName;
+
     @Override
     public boolean isInvalid() {
 
-        return validateIpDomain(host) && validPort(port)
-            && StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
+        return !validateIpDomain(host) || !validPort(port)
+            || StringUtils.isBlank(discoveryClientTypeName);
     }
 }

@@ -3,13 +3,15 @@ title: 重磅更新，HertzBeat 集群版发布，易用友好的开源实时监
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.4.0 引入独立部署的采集器集群，支持水平扩展、故障迁移、多隔离网络监控和云边协同。
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+cover_headline: HertzBeat 1.4.0 Cluster Edition
 ---
 
 ![hertzBeat](/img/home/0.png)
 
-### 什么是 HertzBeat?
+## 什么是 HertzBeat?
 
 [HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
 

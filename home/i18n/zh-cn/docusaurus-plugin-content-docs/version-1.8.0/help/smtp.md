@@ -15,7 +15,7 @@ keywords: [ open source monitoring tool, open source SMTP monitoring tool, monit
 
 **协议使用：SMTP**
 
-### 配置参数
+## 配置参数
 
 |  参数名称   |                      参数帮助描述                       |
 |---------|---------------------------------------------------|

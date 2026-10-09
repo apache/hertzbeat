@@ -17,15 +17,13 @@
 
 package org.apache.hertzbeat.ai.controller;
 
-import com.usthe.sureness.subject.SubjectSum;
-import com.usthe.sureness.util.SurenessContextHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.config.McpContextHolder;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
+import org.apache.hertzbeat.ai.pojo.dto.SecurityData;
 import org.apache.hertzbeat.ai.service.ConversationService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -74,16 +72,14 @@ public class ChatController {
     public Flux<ServerSentEvent<ChatResponseChunk>> streamChat(@Valid @RequestBody ChatRequestContext context) {
         try {
             // Validate message is not empty
-            SubjectSum subject = SurenessContextHolder.getBindSubject();
-            McpContextHolder.setSubject(subject);
             if (context.getMessage() == null || context.getMessage().trim().isEmpty()) {
                 ChatResponseChunk errorResponse = ChatResponseChunk.builder()
-                        .conversationId(context.getConversationId())
-                        .response("Error: Message cannot be empty")
-                        .build();
+                    .conversationId(context.getConversationId())
+                    .response("Error: Message cannot be empty")
+                    .build();
                 return Flux.just(ServerSentEvent.builder(errorResponse)
-                        .event("error")
-                        .build());
+                    .event("error")
+                    .build());
             }
 
             log.info("Received streaming chat request for conversation: {}", context.getConversationId());
@@ -92,12 +88,12 @@ public class ChatController {
         } catch (Exception e) {
             log.error("Error in stream chat endpoint: ", e);
             ChatResponseChunk errorResponse = ChatResponseChunk.builder()
-                    .conversationId(context.getConversationId())
-                    .response("An error occurred: " + e.getMessage())
-                    .build();
+                .conversationId(context.getConversationId())
+                .response("An error occurred: " + e.getMessage())
+                .build();
             return Flux.just(ServerSentEvent.builder(errorResponse)
-                    .event("error")
-                    .build());
+                .event("error")
+                .build());
         }
     }
 
@@ -134,7 +130,7 @@ public class ChatController {
     @GetMapping(path = "/conversations/{conversationId}")
     @Operation(summary = "Get conversation history", description = "Get detailed information and message history for a specific conversation")
     public ResponseEntity<Message<ChatConversation>> getConversation(
-            @Parameter(description = "Conversation ID", example = "12345678") @PathVariable(value = "conversationId") Long conversationId) {
+        @Parameter(description = "Conversation ID", example = "12345678") @PathVariable(value = "conversationId") Long conversationId) {
         ChatConversation conversation = conversationService.getConversation(conversationId);
         return ResponseEntity.ok(Message.success(conversation));
     }
@@ -148,8 +144,21 @@ public class ChatController {
     @DeleteMapping(path = "/conversations/{conversationId}")
     @Operation(summary = "Delete conversation", description = "Delete a specific conversation and all its messages")
     public ResponseEntity<Message<Void>> deleteConversation(
-            @Parameter(description = "Conversation ID", example = "2345678") @PathVariable("conversationId") Long conversationId) {
+        @Parameter(description = "Conversation ID", example = "2345678") @PathVariable("conversationId") Long conversationId) {
         conversationService.deleteConversation(conversationId);
         return ResponseEntity.ok(Message.success());
     }
+
+    /**
+     * Save data submitted by secure form
+     * @param securityData security data
+     * @return save result
+     */
+    @PostMapping(path = "/security")
+    @Operation(summary = "save security data", description = "Save security data")
+    public ResponseEntity<Message<Boolean>> commitSecurityData(@Valid @RequestBody SecurityData securityData) {
+        return ResponseEntity.ok(Message.success(conversationService.saveSecurityData(securityData)));
+    }
+
+
 }

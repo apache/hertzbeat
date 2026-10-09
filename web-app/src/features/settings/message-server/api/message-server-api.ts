@@ -115,12 +115,6 @@ function mapSmsOptions(
 }
 
 function mapSmsOption(field: SmsProviderFieldContract, value: unknown): string {
-  if (field.kind === 'authMode') {
-    if (value !== 'simple' && value !== 'hmac') {
-      throw new MessageServerContractError('Invalid UniSMS authentication mode');
-    }
-    return value;
-  }
   if (typeof value !== 'string' || !value.trim()) {
     throw new MessageServerContractError(`SMS option ${field.key} must be nonempty text`);
   }

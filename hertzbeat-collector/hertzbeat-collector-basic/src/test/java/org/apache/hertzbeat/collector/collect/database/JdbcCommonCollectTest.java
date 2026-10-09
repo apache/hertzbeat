@@ -17,20 +17,41 @@
 
 package org.apache.hertzbeat.collector.collect.database;
 
+import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link JdbcCommonCollect}
@@ -93,37 +114,6 @@ class JdbcCommonCollectTest {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             jdbcCommonCollect.collect(builder, metrics);
         });
-
-        String[] platforms = new String[]{
-            "mysql", "mariadb",
-            "postgresql",
-            "clickhouse",
-            "sqlserver",
-            "oracle",
-            "dm"
-        };
-        for (String platform : platforms) {
-            JdbcProtocol jdbc = new JdbcProtocol();
-            jdbc.setPlatform(platform);
-
-            Metrics metrics = new Metrics();
-            metrics.setJdbc(jdbc);
-
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jdbcCommonCollect.collect(builder, metrics);
-            assertNotEquals(builder.getMsg(), "Query Error: Not support database platform: " + platform);
-        }
-        // invalid platform
-        JdbcProtocol jdbc = new JdbcProtocol();
-        jdbc.setPlatform("invalid");
-
-        Metrics metrics = new Metrics();
-        metrics.setJdbc(jdbc);
-
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        jdbcCommonCollect.collect(builder, metrics);
-        assertEquals(builder.getCode(), CollectRep.Code.FAIL);
-        assertEquals(builder.getMsg(), "Query Error: Not support database platform: invalid");
     }
 
     @Test
@@ -151,17 +141,129 @@ class JdbcCommonCollectTest {
                         .database("test")
                         .url(originalUrl)
                         .build();
-                
-                // Use reflection to call constructDatabaseUrl method
-                Method constructMethod = JdbcCommonCollect.class.getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
-                constructMethod.setAccessible(true);
-                String processedUrl = (String) constructMethod.invoke(jdbcCollect, jdbcProtocol, "localhost", "3306");
+
+                String processedUrl = constructDatabaseUrl(jdbcCollect, jdbcProtocol, "localhost", "3306");
                 // Verify that the processed URL is the same as the original URL
-                assertEquals(originalUrl, processedUrl, 
+                assertEquals(originalUrl, processedUrl,
                     "URL should be passed through without modification: " + originalUrl);
             } catch (Exception e) {
                 System.out.println("URL rejected by security validation: " + originalUrl + ", reason: " + e.getMessage());
             }
+        }
+    }
+
+    @Test
+    void testConstructDatabaseUrlByPlatform() throws Exception {
+        Map<String, String> expectedUrls = new LinkedHashMap<>();
+        expectedUrls.put("mysql", "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false");
+        expectedUrls.put("mariadb", "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false");
+        expectedUrls.put("postgresql", "jdbc:postgresql://localhost:3306/test");
+        expectedUrls.put("clickhouse", "jdbc:clickhouse://localhost:3306/test");
+        expectedUrls.put("sqlserver", "jdbc:sqlserver://localhost:3306;DatabaseName=test;trustServerCertificate=true;");
+        expectedUrls.put("oracle", "jdbc:oracle:thin:@localhost:3306/test");
+        expectedUrls.put("dm", "jdbc:dm://localhost:3306");
+
+        for (Map.Entry<String, String> entry : expectedUrls.entrySet()) {
+            JdbcProtocol jdbcProtocol = JdbcProtocol.builder()
+                    .platform(entry.getKey())
+                    .database("test")
+                    .build();
+
+            assertEquals(entry.getValue(), constructDatabaseUrl(jdbcCommonCollect, jdbcProtocol, "localhost", "3306"));
+        }
+    }
+
+    @Test
+    void testConstructDatabaseUrlRejectsUnsupportedPlatform() {
+        JdbcProtocol jdbcProtocol = JdbcProtocol.builder()
+                .platform("invalid")
+                .database("test")
+                .build();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> constructDatabaseUrl(jdbcCommonCollect, jdbcProtocol, "localhost", "3306"));
+        assertEquals("Not support database platform: invalid", exception.getMessage());
+    }
+
+    /**
+     * The url blacklist only guards a user supplied url. Driver properties smuggled through the
+     * database name reach the very same connection, so they have to be rejected too.
+     */
+    @Test
+    void testConstructDatabaseUrlRejectsDriverPropertiesInDatabaseName() {
+        String[] payloads = {
+            "test?allowLoadLocalInfile=true&z=",
+            "test?autoDeserialize=true&queryInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&z=",
+            "test&useSSL=false",
+        };
+        for (String payload : payloads) {
+            JdbcProtocol jdbcProtocol = JdbcProtocol.builder()
+                    .platform("mysql")
+                    .database(payload)
+                    .build();
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> constructDatabaseUrl(jdbcCommonCollect, jdbcProtocol, "localhost", "3306"),
+                    "database name should be rejected: " + payload);
+        }
+    }
+
+    @Test
+    void testCloseConnectionWhenCreateStatementFails() throws Exception {
+        String url = "jdbc:postgresql://localhost:5432/hertzbeat";
+        String username = "root";
+        String password = "root";
+        Connection connection = mock(Connection.class);
+        when(connection.createStatement()).thenThrow(new SQLException("create statement failed"));
+
+        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
+            driverManager.when(() -> DriverManager.getConnection(url, username, password)).thenReturn(connection);
+
+            SQLException exception = assertThrows(SQLException.class,
+                    () -> getConnection(jdbcCommonCollect, username, password, url, 1000, false));
+
+            assertEquals("create statement failed", exception.getMessage());
+            verify(connection).close();
+        }
+    }
+
+    @Test
+    void testReuseConnectionSerializesCreationForSameIdentifier() throws Exception {
+        String url = "jdbc:hertzbeat-test:concurrent";
+        String username = "root";
+        String password = "root";
+        Connection firstConnection = mock(Connection.class);
+        Connection secondConnection = mock(Connection.class);
+        Statement firstStatement = mock(Statement.class);
+        Statement reusedStatement = mock(Statement.class);
+        when(firstConnection.createStatement()).thenReturn(firstStatement, reusedStatement);
+        when(secondConnection.createStatement()).thenReturn(mock(Statement.class));
+
+        BlockingJdbcCommonCollect collect = new BlockingJdbcCommonCollect(firstConnection, secondConnection);
+        CacheIdentifier identifier = CacheIdentifier.builder()
+                .ip(url).username(username).password(password).build();
+        GlobalConnectionCache.getInstance().removeCache(identifier);
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<Statement> first = executor.submit(() -> getConnection(collect, username, password, url, 1000, true));
+            assertTrue(collect.firstOpenStarted.await(5, TimeUnit.SECONDS));
+
+            CountDownLatch secondTaskStarted = new CountDownLatch(1);
+            Future<Statement> second = executor.submit(() -> {
+                secondTaskStarted.countDown();
+                return getConnection(collect, username, password, url, 1000, true);
+            });
+            assertTrue(secondTaskStarted.await(5, TimeUnit.SECONDS));
+            boolean secondPhysicalConnectionOpened = collect.secondOpenStarted.await(1, TimeUnit.SECONDS);
+            collect.allowFirstOpen.countDown();
+
+            assertSame(firstStatement, first.get(5, TimeUnit.SECONDS));
+            assertSame(reusedStatement, second.get(5, TimeUnit.SECONDS));
+            assertFalse(secondPhysicalConnectionOpened);
+            assertEquals(1, collect.openCount.get());
+        } finally {
+            collect.allowFirstOpen.countDown();
+            GlobalConnectionCache.getInstance().removeCache(identifier);
         }
     }
 
@@ -197,14 +299,81 @@ class JdbcCommonCollectTest {
                     .build();
 
             assertThrows(Exception.class, () -> {
-                try {
-                    Method constructMethod = JdbcCommonCollect.class.getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
-                    constructMethod.setAccessible(true);
-                    constructMethod.invoke(jdbcCollect, jdbcProtocol, "localhost", "3306");
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
+                constructDatabaseUrl(jdbcCollect, jdbcProtocol, "localhost", "3306");
             }, "Malicious URL should be blocked: " + maliciousUrl);
+        }
+    }
+
+    private String constructDatabaseUrl(JdbcCommonCollect jdbcCollect, JdbcProtocol jdbcProtocol,
+                                        String host, String port) throws Exception {
+        try {
+            Method constructMethod = JdbcCommonCollect.class
+                    .getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
+            constructMethod.setAccessible(true);
+            return (String) constructMethod.invoke(jdbcCollect, jdbcProtocol, host, port);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new RuntimeException(cause);
+        }
+    }
+
+    private Statement getConnection(JdbcCommonCollect jdbcCollect, String username, String password, String url,
+                                    Integer timeout, boolean reuseConnection) throws Exception {
+        try {
+            Method getConnectionMethod = JdbcCommonCollect.class
+                    .getDeclaredMethod("getConnection", String.class, String.class, String.class,
+                            Integer.class, boolean.class);
+            getConnectionMethod.setAccessible(true);
+            return (Statement) getConnectionMethod.invoke(jdbcCollect, username, password, url, timeout,
+                    reuseConnection);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new RuntimeException(cause);
+        }
+    }
+
+    private static final class BlockingJdbcCommonCollect extends JdbcCommonCollect {
+
+        private final Connection firstConnection;
+        private final Connection secondConnection;
+        private final CountDownLatch firstOpenStarted = new CountDownLatch(1);
+        private final CountDownLatch secondOpenStarted = new CountDownLatch(1);
+        private final CountDownLatch allowFirstOpen = new CountDownLatch(1);
+        private final AtomicInteger openCount = new AtomicInteger();
+
+        private BlockingJdbcCommonCollect(Connection firstConnection, Connection secondConnection) {
+            this.firstConnection = firstConnection;
+            this.secondConnection = secondConnection;
+        }
+
+        @Override
+        Connection openConnection(String url, String username, String password) throws SQLException {
+            if (openCount.incrementAndGet() == 1) {
+                firstOpenStarted.countDown();
+                try {
+                    if (!allowFirstOpen.await(5, TimeUnit.SECONDS)) {
+                        throw new SQLException("Timed out waiting to open the first connection");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new SQLException("Interrupted while opening the first connection", e);
+                }
+                return firstConnection;
+            }
+            secondOpenStarted.countDown();
+            return secondConnection;
         }
     }
 

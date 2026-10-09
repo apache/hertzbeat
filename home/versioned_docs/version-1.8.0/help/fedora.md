@@ -7,7 +7,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Fedora OS 
 
 > Collect and monitor general performance metrics for Fedora operating systems (system information, CPU, memory, disk, network interface, file system, top resource processes, etc.).
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name        | Parameter Help Description                                                                                                                                                            |
 |-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

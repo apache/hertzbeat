@@ -22,6 +22,7 @@ import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentExcep
  */
 @Slf4j
 @Service
-public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
+public class YamlImExportServiceImpl extends AbstractImExportServiceImpl {
 
     /**
      * Export file type
@@ -82,7 +83,9 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     @Override
     public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
 
-        YamlExportUtils.exportWriteOs(monitorList, os);
+        // Export plain mappings so the file does not depend on Java class names.
+        YamlExportUtils.exportWriteOs(monitorList.stream()
+                .map(monitor -> JsonUtil.convertValue(monitor, Map.class)).toList(), os);
     }
 
 }

@@ -1,0 +1,68 @@
+@import '~src/styles/theme';
+
+.metrics-query-fields {
+  grid-template-columns: minmax(320px, 1fr) 150px 112px;
+}
+
+.metrics-overview {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.promql-input {
+  width: 100%;
+}
+
+.metric-chart {
+  height: 196px;
+}
+
+.loading-region {
+  opacity: 0.55;
+}
+
+.series-strip {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-top: 1px solid @border-color-split;
+}
+
+.series-strip button {
+  flex: 0 0 auto;
+  max-width: 360px;
+  overflow: hidden;
+  font-family: SFMono-Regular, Consolas, monospace;
+  text-overflow: ellipsis;
+}
+
+.mono {
+  max-width: 640px;
+  overflow: hidden;
+  font-family: SFMono-Regular, Consolas, monospace;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.detail-list {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr;
+  margin: 0;
+}
+
+.detail-list dt,
+.detail-list dd {
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.detail-list dt {
+  color: @text-color-secondary;
+}
+
+@media (max-width: 1000px) {
+  .metrics-query-fields {
+    grid-template-columns: minmax(260px, 1fr) 130px 104px;
+  }
+}

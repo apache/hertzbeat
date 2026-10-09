@@ -125,12 +125,16 @@ public class SkillToolsImpl implements SkillTools {
 
         // Parse parameters
         Map<String, Object> params = parseParams(paramsJson);
+        if (params == null) {
+            return "Error: Skill parameters must be a valid JSON object.";
+        }
 
         // Validate required parameters
         if (skill.getParameters() != null) {
             for (SopParameter paramDef : skill.getParameters()) {
                 if (paramDef.isRequired()) {
-                    if (!params.containsKey(paramDef.getName()) || params.get(paramDef.getName()) == null) {
+                    Object value = params.get(paramDef.getName());
+                    if (value == null || value instanceof String text && text.isBlank()) {
                         return "Error: Required parameter '" + paramDef.getName() + "' is missing. "
                                 + "Description: " + paramDef.getDescription();
                     }
@@ -143,7 +147,9 @@ public class SkillToolsImpl implements SkillTools {
             SopResult result = sopEngine.executeSync(skill, params);
 
             // Check output type
-            if (result.getOutputType() == OutputType.REPORT) {
+            if ("SUCCESS".equals(result.getStatus())
+                    && result.getOutputType() == OutputType.REPORT
+                    && result.getContent() != null) {
                 // Report type: return with marker for direct display to user
                 log.info("Skill {} returned report-type output, marking for direct display", skillName);
                 return SKILL_REPORT_MARKER + "\n" + result.getContent();
@@ -167,8 +173,8 @@ public class SkillToolsImpl implements SkillTools {
         try {
             return JsonUtil.fromJson(paramsJson, Map.class);
         } catch (Exception e) {
-            log.warn("Failed to parse params JSON: {}, returning empty map", paramsJson);
-            return new HashMap<>();
+            log.warn("Failed to parse params JSON: {}", paramsJson);
+            return null;
         }
     }
 }

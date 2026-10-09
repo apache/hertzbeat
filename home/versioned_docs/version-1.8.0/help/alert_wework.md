@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source alerter, open source WeWork 
 
 > After the threshold is triggered send alarm information and notify the recipient by enterprise Wechat robot.
 
-### Operation steps
+## Operation steps
 
 1. **【Enterprise Wechat】-> 【Group settings】-> 【Group robot】-> 【Add new robot】-> 【Set robot name and avatar】-> 【Copy its webhook address after adding successfully】**
 

@@ -17,10 +17,13 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import java.nio.charset.Charset;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * script protocol
@@ -30,6 +33,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ScriptProtocol implements CommonRequestProtocol, Protocol {
+    private static final Set<String> VALID_PARSE_TYPES = Set.of("oneRow", "multiRow", "netcat", "log");
+    private static final Set<String> VALID_SCRIPT_TOOLS = Set.of("bash", "cmd", "powershell");
+
     /**
      * OS charset
      */
@@ -72,8 +78,23 @@ public class ScriptProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
+        if (StringUtils.isBlank(charset) || !isSupportedCharset(charset)) {
+            return true;
+        }
+        if (StringUtils.isBlank(parseType) || !VALID_PARSE_TYPES.contains(parseType)) {
+            return true;
+        }
+        if (StringUtils.isBlank(scriptTool) || !VALID_SCRIPT_TOOLS.contains(scriptTool)) {
+            return true;
+        }
+        return StringUtils.isAllBlank(scriptCommand, scriptPath);
+    }
 
-        // todo: add
-        return true;
+    private boolean isSupportedCharset(String charsetName) {
+        try {
+            return Charset.isSupported(charsetName);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

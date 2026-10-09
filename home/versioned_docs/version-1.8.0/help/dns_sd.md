@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source service discovery monitoring
 
 > HertzBeat integrates with DNS service to automatically discover service instances through DNS records and create monitoring tasks for them.
 
-### Overview
+## Overview
 
 DNS Service Discovery allows HertzBeat to discover service instances by querying DNS records. This is a simple and reliable service discovery method that utilizes standard DNS infrastructure to find service instances. It is particularly suitable for environments using DNS SRV records or environments that need to discover services through DNS.
 

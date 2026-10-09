@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class OnlineParserTest {
@@ -106,11 +108,8 @@ class OnlineParserTest {
             MetricFamily metricFamily1 = metricFamilyMap1.get(metricFamilyName);
             Set<Double> metricValueSet = metricFamily2.getMetricList().stream().map(MetricFamily.Metric::getValue).collect(Collectors.toSet());
             metricFamily1.getMetricList().forEach(metric -> {
-                // this is for something different between two algorithms above, and both of them is current on this parsing behavior.
-                if (!(metric.getValue() == Double.POSITIVE_INFINITY || metric.getValue() == Double.NEGATIVE_INFINITY)) {
-                    if (!metricValueSet.contains(metric.getValue())) {
-                        fail();
-                    }
+                if (!metricValueSet.contains(metric.getValue())) {
+                    fail();
                 }
             });
         });
@@ -458,5 +457,28 @@ class OnlineParserTest {
 
         assertEquals("run_as", metricFamily.getMetricList().get(0).getLabels().get(3).getName());
         assertEquals("NT AUTHORITY\nLocalService", metricFamily.getMetricList().get(0).getLabels().get(3).getValue());
+    }
+
+    @Test
+    void testParseMetricsStopsBeforeSampleBeyondLimit() {
+        final String metrics = "metric_a 1\nmetric_b 2\nmetric_c 3\nmetric_d 4\n";
+        final ByteArrayInputStream inputStream =
+                new ByteArrayInputStream(metrics.getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(OnlineParser.SampleLimitExceededException.class,
+                () -> OnlineParser.parseMetrics(inputStream, 2));
+
+        assertTrue(inputStream.available() > 0, "samples after the limit should remain unread");
+    }
+
+    @Test
+    void testParseMetricsAllowsExactlyTheSampleLimit() throws Exception {
+        final String metrics = "metric_a 1\nmetric_b 2\n";
+        final InputStream inputStream = new ByteArrayInputStream(metrics.getBytes(StandardCharsets.UTF_8));
+
+        final Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream, 2);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.size());
     }
 }

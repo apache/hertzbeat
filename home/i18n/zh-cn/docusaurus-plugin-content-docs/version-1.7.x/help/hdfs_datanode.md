@@ -5,7 +5,7 @@ sidebar_label: Apache HDFS DataNode
 keywords: [大数据监控系统, 分布式文件系统监控, Apache HDFS DataNode监控]
 ---
 
-> Hertzbeat 对 Apache HDFS DataNode 节点监控指标进行监控。
+> HertzBeat 对 Apache HDFS DataNode 节点监控指标进行监控。
 
 **使用协议：HTTP**
 

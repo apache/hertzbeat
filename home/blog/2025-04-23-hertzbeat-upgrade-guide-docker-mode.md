@@ -1,3 +1,9 @@
+---
+tags: [tutorials]
+description: Upgrade a Docker-based HertzBeat deployment safely by backing up configuration and data, replacing the image, and validating the migrated service.
+cover_headline: Upgrade Guide Docker Mode
+---
+
 # HertzBeat Upgrade Guide (Docker Mode)
 
 ## Docker-based Upgrade

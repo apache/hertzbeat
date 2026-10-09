@@ -25,13 +25,6 @@ import {
 
 type TencentDraft = { secretId: string; secretKey: string; appId: string; signName: string; templateId: string };
 type AlibabaDraft = { accessKeyId: string; accessKeySecret: string; signName: string; templateCode: string };
-type UnismsDraft = {
-  accessKeyId: string;
-  accessKeySecret: string;
-  signature: string;
-  templateId: string;
-  authMode: 'simple' | 'hmac';
-};
 type SmslocalDraft = { apiKey: string };
 type AwsDraft = { accessKeyId: string; accessKeySecret: string; region: string };
 type TwilioDraft = { accountSid: string; authToken: string; twilioPhoneNumber: string };
@@ -43,7 +36,6 @@ export type SmsServerDraft = {
   clearSecrets: SmsSecret[];
   tencent: TencentDraft;
   alibaba: AlibabaDraft;
-  unisms: UnismsDraft;
   smslocal: SmslocalDraft;
   aws: AwsDraft;
   twilio: TwilioDraft;
@@ -51,7 +43,7 @@ export type SmsServerDraft = {
 
 type SmsProviderFieldDefinition =
   | { key: SmsSecret; labelKey: string; secret: true; kind: 'text' }
-  | { key: string; labelKey: string; secret: false; kind: 'text' | 'authMode' };
+  | { key: string; labelKey: string; secret: false; kind: 'text' };
 export type SmsProviderDefinition = {
   type: SmsProviderType;
   labelKey: string;
@@ -72,7 +64,7 @@ export function smsProviderDefinition(type: SmsProviderType): SmsProviderDefinit
 function providerFieldDefinition(field: SmsProviderFieldContract): SmsProviderFieldDefinition {
   const labelKey = `messageServer.sms.fields.${field.key}`;
   if (field.secret) return { key: field.key, labelKey, secret: true, kind: 'text' };
-  return { key: field.key, labelKey, secret: false, kind: field.kind ?? 'text' };
+  return { key: field.key, labelKey, secret: false, kind: 'text' };
 }
 
 /**
@@ -86,8 +78,6 @@ export function activeSmsProviderValues(draft: SmsServerDraft): Record<string, s
       return { ...draft.tencent };
     case 'alibaba':
       return { ...draft.alibaba };
-    case 'unisms':
-      return { ...draft.unisms };
     case 'smslocal':
       return { ...draft.smslocal };
     case 'aws':
@@ -106,9 +96,6 @@ export function updateSmsProviderField(draft: SmsServerDraft, key: string, value
       return { ...draft, tencent: { ...draft.tencent, [key]: value }, clearSecrets };
     case 'alibaba':
       return { ...draft, alibaba: { ...draft.alibaba, [key]: value }, clearSecrets };
-    case 'unisms':
-      if (key === 'authMode' && value !== 'simple' && value !== 'hmac') return draft;
-      return { ...draft, unisms: { ...draft.unisms, [key]: value }, clearSecrets };
     case 'smslocal':
       return { ...draft, smslocal: { ...draft.smslocal, [key]: value }, clearSecrets };
     case 'aws':

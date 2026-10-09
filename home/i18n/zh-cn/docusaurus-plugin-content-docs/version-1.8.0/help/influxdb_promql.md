@@ -7,7 +7,7 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 
 > 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 InfluxDB 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 InfluxDB，需要从 Prometheus 服务器抓取 InfluxDB 的监控数据。
 
-### 配置参数
+## 配置参数
 
 |     参数名称     |                        参数帮助描述                        |
 |--------------|------------------------------------------------------|

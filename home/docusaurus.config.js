@@ -24,7 +24,7 @@ module.exports = {
   },
   i18n: {
     defaultLocale: 'en',
-    locales: ['zh-cn', 'en'],
+    locales: ['zh-cn', 'en', 'ko'],
   },
   themeConfig: {
     matomo: {
@@ -86,7 +86,7 @@ module.exports = {
     navbar: {
       title: 'HertzBeat',
       logo: {
-        alt: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
+        alt: 'An open source, real-time monitoring tool with custom-monitor and agentless.',
         src: '/img/hertzbeat-brand.svg',
       },
       items: [
@@ -327,7 +327,7 @@ module.exports = {
           remarkPlugins: [
             [require('@docusaurus/remark-plugin-npm2yarn'), { sync: true }],
           ],
-          lastVersion: '1.8.0',
+          lastVersion: '1.9.0',
           versions: {
             current: {
               label: 'current',
@@ -336,7 +336,7 @@ module.exports = {
         },
         blog: {
           showReadingTime: true,
-          postsPerPage: 1,
+          postsPerPage: 9,
           feedOptions: {
             type: 'all',
             copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat™.`,
@@ -344,9 +344,12 @@ module.exports = {
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
           editLocalizedFiles: true,
-          blogSidebarCount: 'ALL',
+          blogSidebarCount: 0,
           onUntruncatedBlogPosts: 'ignore',
-          onInlineAuthors: 'ignore'
+          onInlineAuthors: 'ignore',
+          // Categories are predefined in blog/tags.yml. Existing topic tags
+          // remain inline because they are intentionally more granular.
+          onInlineTags: 'ignore'
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -361,6 +364,7 @@ module.exports = {
     ],
   ],
   plugins: [
+    require.resolve('./plugins/blogFeaturedPosts'),
     [
       '@docusaurus/plugin-client-redirects',
       {

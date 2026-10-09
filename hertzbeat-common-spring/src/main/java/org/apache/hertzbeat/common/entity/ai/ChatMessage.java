@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.entity.ai;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,12 +62,13 @@ public class ChatMessage {
     private Long id;
     
     @Schema(title = "conversation id")
-    @Column(name = "conversation_id", insertable = false, updatable = false)
+    @Column(name = "conversation_id")
     private Long conversationId;
 
+    @JsonIgnore
     @Schema(title = "conversation", hidden = true)
     @ManyToOne
-    @JoinColumn(name = "conversation_id")
+    @JoinColumn(name = "conversation_id", insertable = false, updatable = false)
     private ChatConversation conversation;
 
     @Schema(title = "message content")

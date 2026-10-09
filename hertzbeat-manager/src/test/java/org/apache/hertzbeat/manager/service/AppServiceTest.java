@@ -52,13 +52,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -113,6 +114,25 @@ class AppServiceTest {
     @Test
     void getAppParamDefines() {
         assertDoesNotThrow(() -> appService.getAppParamDefines("jvm"));
+    }
+
+    @Test
+    void credentialParametersUsePasswordType() {
+        assertEquals("password", findParam("ollama", "apiKey").getType());
+        assertEquals("password", findParam("http_sd", "__sd_token__").getType());
+    }
+
+    @Test
+    void getAppParamDefinesShouldNotContainDuplicateFields() {
+        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines("nvidia");
+        Map<String, Long> fieldCounts = paramDefines.stream()
+                .collect(Collectors.groupingBy(ParamDefineInfo::getField, Collectors.counting()));
+
+        assertTrue(fieldCounts.values().stream().allMatch(count -> count == 1),
+                () -> "Duplicate param fields found: " + fieldCounts.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 1)
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.joining(", ")));
     }
 
     @Test
@@ -425,5 +445,12 @@ class AppServiceTest {
 
         assertEquals(validationError.getMessage(), mutationError.getMessage());
         verifyNoInteractions(defineDao, monitorDao);
+    }
+
+    private ParamDefineInfo findParam(String app, String field) {
+        return appService.getAppParamDefines(app).stream()
+            .filter(param -> field.equals(param.getField()))
+            .findFirst()
+            .orElseThrow();
     }
 }

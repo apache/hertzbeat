@@ -16,7 +16,7 @@ Note⚠️ Need TDengine 3.x Version.
 
 > If you have TDengine environment, can directly skip to create a database instance.
 
-### Install TDengine via Docker
+## Install TDengine via Docker
 
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).

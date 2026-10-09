@@ -3,15 +3,17 @@ title: HertzBeat v1.4.2 版本发布，自定义消息通知模板
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.4.2 新增自定义通知模板、推送式指标采集、华为云 OBS 模板存储，以及 EMQX 和 UDP 监控。
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+cover_headline: HertzBeat 1.4.2
 ---
 
 哈喽大家好，开源实时监控 HertzBeat 新版本 v1.4.2 发布，欢迎了解使用。
 
 ![hertzBeat](/img/home/0.png)
 
-### 总结起来如下
+## 总结起来如下
 
 - **消息通知模板特性，开源之夏课题**
 - **支持华为云OBS存储监控模板文件**

@@ -15,7 +15,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 
    > We currently support for `Consul` and `Nacos`.
 
-2. Add http_sd monitor and enter necessary info about **Register center** on Hertzbeat, such as host, port and so on.
+2. Add http_sd monitor and enter necessary info about **Register center** on HertzBeat, such as host, port and so on.
 3. Click **OK**
 
 ## Configuration parameter

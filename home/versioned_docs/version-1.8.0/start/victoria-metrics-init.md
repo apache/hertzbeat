@@ -13,9 +13,9 @@ VictoriaMetrics is a fast, cost-effective and scalable monitoring solution and t
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
-> If you already have an VictoriaMetrics environment, you can skip directly to the YML configuration step.
+> If you already have a VictoriaMetrics environment, you can skip directly to the YML configuration step.
 
-### Install VictoriaMetrics via Docker
+## Install VictoriaMetrics via Docker
 
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
@@ -42,13 +42,13 @@ After the installation you can check if the Docker version normally output at th
 
    Modify `hertzbeat/config/application.yml` configuration file
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
-   Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.victoria-metrics` data source parameters, HOST account and password.
+   Config the `warehouse.store.duckdb.enabled` `false`. Replace `warehouse.store.victoria-metrics` data source parameters, HOST account and password.
 
    ```yaml
    warehouse:
      store:
-        # disable JPA
-       jpa:
+        # disable DuckDB
+       duckdb:
          enabled: false
        # enable victoria-metrics
        victoria-metrics:
@@ -124,7 +124,7 @@ Edit the `hertzbeat/config/application.yml` configuration file as follows:
 ```yaml
 warehouse:
   store:
-    jpa:
+    duckdb:
       enabled: false
     victoria-metrics:
       cluster:

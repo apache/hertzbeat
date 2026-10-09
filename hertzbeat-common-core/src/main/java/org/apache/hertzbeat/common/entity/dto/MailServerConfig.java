@@ -56,5 +56,7 @@ public class MailServerConfig {
 
     private boolean emailStarttls = false;
 
+    private boolean emailSslCertVerify = true;
+
     private boolean enable = true;
 }

@@ -58,6 +58,24 @@ public class RestTemplateConfig {
         return createRestTemplate(factory);
     }
 
+    @Bean(WarehouseConstants.GREPTIME_WRITE_REST_TEMPLATE)
+    public RestTemplate greptimeWriteRestTemplate(
+            @Qualifier("greptimeWriteClientHttpRequestFactory") ClientHttpRequestFactory factory) {
+        return createRestTemplate(factory);
+    }
+
+    @Bean(WarehouseConstants.GREPTIME_INIT_REST_TEMPLATE)
+    public RestTemplate greptimeInitRestTemplate(
+            @Qualifier("greptimeInitClientHttpRequestFactory") ClientHttpRequestFactory factory) {
+        return createRestTemplate(factory);
+    }
+
+    private RestTemplate createRestTemplate(ClientHttpRequestFactory factory) {
+        RestTemplate restTemplate = new RestTemplate(factory);
+        restTemplate.setInterceptors(Collections.singletonList(new HeaderRequestInterceptor()));
+        return restTemplate;
+    }
+
     @Bean
     @Primary
     public ClientHttpRequestFactory clientHttpRequestFactory() {
@@ -71,10 +89,16 @@ public class RestTemplateConfig {
                 NetworkConstants.HttpClientConstants.GREPTIME_QUERY_READ_TIMEOUT);
     }
 
-    private RestTemplate createRestTemplate(ClientHttpRequestFactory factory) {
-        RestTemplate restTemplate = new RestTemplate(factory);
-        restTemplate.setInterceptors(Collections.singletonList(new HeaderRequestInterceptor()));
-        return restTemplate;
+    @Bean("greptimeWriteClientHttpRequestFactory")
+    public ClientHttpRequestFactory greptimeWriteClientHttpRequestFactory() {
+        return createRequestFactory(NetworkConstants.HttpClientConstants.GREPTIME_WRITE_CONNECT_TIMEOUT,
+                NetworkConstants.HttpClientConstants.GREPTIME_WRITE_READ_TIMEOUT);
+    }
+
+    @Bean("greptimeInitClientHttpRequestFactory")
+    public ClientHttpRequestFactory greptimeInitClientHttpRequestFactory() {
+        return createRequestFactory(NetworkConstants.HttpClientConstants.GREPTIME_INIT_CONNECT_TIMEOUT,
+                NetworkConstants.HttpClientConstants.GREPTIME_INIT_READ_TIMEOUT);
     }
 
     private ClientHttpRequestFactory createRequestFactory(Duration connectTimeout, Duration readTimeout) {

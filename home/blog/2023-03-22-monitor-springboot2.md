@@ -3,15 +3,16 @@ title: Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
 keywords: [opensource monitoring, SpringBoot monitoring, alert]
+cover_headline: Monitoring SpringBoot 2
 ---
 
 ## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the SpringBoot2 application, and it will be done in 5 minutes
 
 ### HertzBeat Intro
 
-> HertzBeat is an open source, real-time monitoring tool with custom-monitor and agentLess. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.
+> HertzBeat is an open source, real-time monitoring tool with custom-monitor and agentless. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.
 >
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.

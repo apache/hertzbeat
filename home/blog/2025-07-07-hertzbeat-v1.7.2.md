@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.7.2 Release
+description: Apache HertzBeat 1.7.2 adds cloud alert integrations, more service discovery options, Ollama and OpenRouter support, and macOS monitoring.
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+tags: [releases]
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
+cover_headline: Apache HertzBeat 1.7.2
 ---
 
 Dear Community Members,
@@ -171,7 +173,7 @@ Special thanks to the following community members for their collaborative effort
 - @lx1229 made their first contribution in [https://github.com/apache/hertzbeat/pull/3431](https://github.com/apache/hertzbeat/pull/3431)
 - @RainBondsongyg made their first contribution in [https://github.com/apache/hertzbeat/pull/3440](https://github.com/apache/hertzbeat/pull/3440)
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **Repository URL:**
 

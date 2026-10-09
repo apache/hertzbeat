@@ -30,6 +30,7 @@ import java.io.InterruptedIOException;
 import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -82,6 +83,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
@@ -113,6 +115,10 @@ public class HttpCollectImpl extends AbstractCollect {
      * Compiled once at class load for performance.
      */
     private static final List<Pattern> DANGEROUS_XPATH_PATTERNS;
+
+    private static final Pattern XML_ENCODING_PATTERN = Pattern.compile(
+            "<\\?xml\\s+[^>]*encoding\\s*=\\s*[\"']([^\"']+)[\"']",
+            Pattern.CASE_INSENSITIVE);
 
     static {
         List<Pattern> patterns = new ArrayList<>();
@@ -182,7 +188,7 @@ public class HttpCollectImpl extends AbstractCollect {
                      Option 1: Parse using InputStream, but this requires significant code changes;
                      Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
                      */
-                    String resp = entity == null ? "" : EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                    String resp = entity == null ? "" : readEntityAsString(entity, isXmlParseType(parseType));
                     if (!StringUtils.hasText(resp)) {
                         log.info("http response entity is empty, status: {}.", statusCode);
                     }
@@ -238,6 +244,37 @@ public class HttpCollectImpl extends AbstractCollect {
                 request.abort();
             }
         }
+    }
+
+    private boolean isXmlParseType(String parseType) {
+        return DispatchConstants.PARSE_XML_PATH.equals(parseType) || DispatchConstants.PARSE_SITE_MAP.equals(parseType);
+    }
+
+    private String readEntityAsString(HttpEntity entity, boolean xmlAware) throws IOException {
+        if (!xmlAware) {
+            return EntityUtils.toString(entity, StandardCharsets.UTF_8);
+        }
+        byte[] content = EntityUtils.toByteArray(entity);
+        ContentType contentType = ContentType.get(entity);
+        Charset charset = contentType == null ? null : contentType.getCharset();
+        if (charset == null) {
+            charset = detectXmlCharset(content);
+        }
+        return new String(content, charset);
+    }
+
+    private Charset detectXmlCharset(byte[] content) {
+        int previewLength = Math.min(content.length, 256);
+        String preview = new String(content, 0, previewLength, StandardCharsets.US_ASCII);
+        Matcher matcher = XML_ENCODING_PATTERN.matcher(preview);
+        if (matcher.find()) {
+            try {
+                return Charset.forName(matcher.group(1));
+            } catch (IllegalArgumentException ignored) {
+                return StandardCharsets.UTF_8;
+            }
+        }
+        return StandardCharsets.UTF_8;
     }
 
     private void parseResponseByHeader(CollectRep.MetricsData.Builder builder, List<String> aliases, CloseableHttpResponse response) {
@@ -667,13 +704,11 @@ public class HttpCollectImpl extends AbstractCollect {
                         valueRowBuilder.addColumn(String.valueOf(value));
                     } else {
                         if (alias.startsWith("$.")) {
-                            List<Object> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
-                            if (subResults != null && subResults.size() > i) {
-                                Object resultValue = subResults.get(i);
-                                valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
-                            } else {
-                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                            }
+                            // per-row evaluation, a global "parseScript + alias" query would misalign rows missing the path
+                            List<Object> aliasValues = JsonPathParser.parseRowWithJsonPath(objectValue, alias);
+                            // a wildcard alias matching multiple values is kept whole and rendered as "[v1, v2]"
+                            Object resultValue = aliasValues.size() == 1 ? aliasValues.get(0) : (aliasValues.isEmpty() ? null : aliasValues);
+                            valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
                         } else {
                             addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                         }
@@ -866,7 +901,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 if (StringUtils.hasText(header.getValue())) {
-                    requestBuilder.addHeader(header.getKey(), header.getValue());
+                    requestBuilder.addHeader(header.getKey(), TimeExpressionUtil.calculate(header.getValue()));
                 }
             }
         }
@@ -901,18 +936,19 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // uri encode
+        String url = TimeExpressionUtil.calculate(httpProtocol.getUrl());
         String uri;
         if (enableUrlEncoding) {
             // if the url contains parameters directly
-            if (httpProtocol.getUrl().contains("?")) {
-                String path = httpProtocol.getUrl().substring(0, httpProtocol.getUrl().indexOf("?"));
-                String query = httpProtocol.getUrl().substring(httpProtocol.getUrl().indexOf("?") + 1);
+            if (url.contains("?")) {
+                String path = url.substring(0, url.indexOf("?"));
+                String query = url.substring(url.indexOf("?") + 1);
                 uri = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
             } else {
-                uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+                uri = UriUtils.encodePath(url, "UTF-8");
             }
         } else {
-            uri = httpProtocol.getUrl();
+            uri = url;
         }
 
         // append query params

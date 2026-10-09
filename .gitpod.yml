@@ -44,7 +44,7 @@ vscode:
 
 ports:
     - port: 4200
-      name: Hertzbeat
+      name: HertzBeat
       onOpen: open-browser
 
     - port: 1157

@@ -79,7 +79,7 @@ java -version
 
 ## 运行 HertzBeat
 
-> 在 [Hertzbeat官网](https://hertzbeat.apache.org/zh-cn/docs/download/) 下载安装包，并按照官网部署教程运行即可，以 1.7.2 版本为例。
+> 在 [HertzBeat官网](https://hertzbeat.apache.org/zh-cn/docs/download/) 下载安装包，并按照官网部署教程运行即可，以 1.7.2 版本为例。
 
 ```shell
 cd apache-hertzbeat-1.7.2-incubating-bin/bin/

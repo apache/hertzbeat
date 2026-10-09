@@ -7,8 +7,8 @@ keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间
 
 > 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标进行监测。
 
-### 监控前操作
-
+## 监控前操作
+>
 > HertzBeat 使用 RabbitMQ Management 的 Rest Api 对 RabbitMQ 进行指标数据采集。  
 > 故需要您的 RabbitMQ 环境开启 Management 插件
 

@@ -3,7 +3,8 @@ title: Best Practices for SSL Certificate Expiration Monitoring
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+cover_headline: SSL Certificate Expiry Monitoring
 ---
 
 First of all, I would like to wish all the students who see it a happy mid-autumn festival, good health, and try to get rich on the basis of good health.
@@ -12,7 +13,7 @@ Into the main topic, most of the sites now support HTTPS by default, we apply fo
 
 Today's article describes how to use hertzbeat monitoring system to detect the validity of our website's SSL certificate, when the certificate expires or a few days before the expiration of the certificate, send us an alert message.
 
-#### What is HertzBeat?
+## What is HertzBeat?
 
 HertzBeat is a real-time monitoring tool with powerful customizable monitoring capabilities without the need for an agent. Website monitoring, PING connectivity, port availability, database, OS, middleware, API monitoring, threshold alerts, alert notifications (email weChat pinning flybook).
 
@@ -21,7 +22,7 @@ HertzBeat is a real-time monitoring tool with powerful customizable monitoring c
 github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)
 
-#### Install HertzBeat
+### Install HertzBeat
 
 1. If you don't want to install it, you can directly use the cloud service [TanCloud console.tancloud.cn](https://console.tancloud.cn)
 

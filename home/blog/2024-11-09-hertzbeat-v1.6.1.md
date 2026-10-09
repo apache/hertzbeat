@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.6.1 Release
+description: Apache HertzBeat 1.6.1 expands infrastructure monitoring, adds Prometheus parsing and push support, NGQL queries, SMS alerts, and Docker Compose deployment.
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system]
+cover_headline: Apache HertzBeat 1.6.1
 ---
 
 Dear Community Members,
@@ -26,7 +28,7 @@ We are thrilled to announce the official release of Apache HertzBeat™ version 
 - **Custom Monitoring Menu**: Monitoring templates now support customizable main menus.
 - **NebulaGraph Support**: Added support for querying monitoring data from NebulaGraph using `ngql`.
 - **SMS Functionality**: Enabled SMS notifications through Alibaba Cloud.
-- **Docker Support**: Added support for running Hertzbeat using Docker Compose.
+- **Docker Support**: Added support for running HertzBeat using Docker Compose.
 
 ### Bug Fixes
 
@@ -64,7 +66,7 @@ Special thanks to **@zqr10159** for supporting this release and to the following
 > LinuxSuRen, transactional, JavaProgrammerLB, westboy, xuziyang, makechoicenow, crossoverJie, xfl12345, boatrainlsz, lw-yang, tomsun28, Alanxtl, Aias00, Clownsw, zhangshenghang, zqr10159, LiuTianyou, handy-git, hudongdong129, dukbong, 15613060203, yqxxgh, miki-hmt, PeixyJ, allcontributors, Ceilzcx, lwjxy, starmilkxin, leo-934, zuobiao-zhou, tomorrowshipyltm, LLP2333, lwqzz, wang1027-wqh, gjjjj0101, ZY945, yuluo-yx, HeartLinked, alpha951, Hi-Mr-Wind, TJxiaobao, YxYL6125, MananPoojara, a-little-fool, Pzz-2021, Yanshuming1, Thespica, Calvin979, WinterKi1ler
 >
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **Repository URL:**
 

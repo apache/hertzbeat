@@ -4,7 +4,7 @@ id: questdb-init
 
 title: Installation and Initialization of Time-Series Database Service QuestDB (Optional)
 
-sidebar_label: Metric Data Storage - QuestDB
+sidebar_label: Metrics Store QuestDB
 
 ---
 
@@ -22,8 +22,8 @@ QuestDB is an open-source time-series database that stands out in the field of t
 
 > If you already have an existing QuestDB environment, you can skip directly to the YML configuration step.
 
-### Install QuestDB
-<!-- markdownlint-disable MD029 -->
+## Install QuestDB<!-- markdownlint-disable MD029 -->
+
 1. Download the installation package
 
 ​ Download the latest version for your operating system from the official GitHub repository:
@@ -102,13 +102,13 @@ questdb.exe start
 
 ​ ⚠️ Note: For Docker container deployment, you need to mount the application.yml file to the host machine. For the installation package deployment, simply extract the package and modify the file at hertzbeat/config/application.yml.
 
-​ **Set the** **warehouse.store.jpa.enabled** **parameter to** **false****, configure the** **warehouse.store.questdb** **data source parameters (HOST, username, password, etc.), and set** **enabled** **to** **true** **to enable QuestDB.**
+​ **Set the** **warehouse.store.duckdb.enabled** **parameter to** **false****, configure the** **warehouse.store.questdb** **data source parameters (HOST, username, password, etc.), and set** **enabled** **to** **true** **to enable QuestDB.**
 
 ```yaml
 warehouse:
   store:
-    # Disable the default JPA
-    jpa:
+    # Disable the default DuckDB
+    duckdb:
       enabled: false
     # Enable QuestDB
     questdb:

@@ -7,7 +7,7 @@ sidebar_label: Push Style Custom Monitoring
 > Push style curstom monitor is a type of monitor which allow user to configure metrics format and push metrics to hertzbeat with their own service.
 > Here we will introduce how to use this feature.
 
-### Push style custom monitor collection process
+## Push style custom monitor collection process
 
 【Peer Server Start Pushing Metrics】 -> 【HertzBeat Push Module Stage Metrics】-> 【HertzBeat Collect Module collect Metrics Periodically】
 

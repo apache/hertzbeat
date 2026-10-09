@@ -22,11 +22,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl.ExportMonitorDTO;
+import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl.MonitorDTO;
+import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl.ParamDTO;
 import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.nodes.Tag;
 
 /**
  * Parses an uploaded monitor YAML export into bounded map records.
@@ -39,6 +44,10 @@ public final class MonitorYamlImportParser {
     private static final int MAX_MONITOR_RECORDS = 100;
     private static final int MAX_NESTING_DEPTH = 50;
     private static final int MAX_ALIASES_FOR_COLLECTIONS = 50;
+
+    // Older exports contain DTO tags; they are read as plain maps, never as Java objects.
+    private static final Set<Tag> LEGACY_TAGS = Set.of(
+            new Tag(ExportMonitorDTO.class), new Tag(MonitorDTO.class), new Tag(ParamDTO.class));
 
     private MonitorYamlImportParser() {
     }
@@ -74,7 +83,8 @@ public final class MonitorYamlImportParser {
         loaderOptions.setCodePointLimit(MAX_CONTENT_LENGTH);
         loaderOptions.setNestingDepthLimit(MAX_NESTING_DEPTH);
         loaderOptions.setMaxAliasesForCollections(MAX_ALIASES_FOR_COLLECTIONS);
-        return new Yaml(new SafeConstructor(loaderOptions));
+        loaderOptions.setTagInspector(LEGACY_TAGS::contains);
+        return new Yaml(new LegacyTagSafeConstructor(loaderOptions));
     }
 
     private static Map<String, Object> toStringKeyMap(Object value) {
@@ -89,6 +99,14 @@ public final class MonitorYamlImportParser {
             record.put(key, entry.getValue());
         }
         return record;
+    }
+
+    private static final class LegacyTagSafeConstructor extends SafeConstructor {
+
+        private LegacyTagSafeConstructor(LoaderOptions options) {
+            super(options);
+            LEGACY_TAGS.forEach(tag -> yamlConstructors.put(tag, new ConstructYamlMap()));
+        }
     }
 
     private static InvalidImportContentException invalidContent() {

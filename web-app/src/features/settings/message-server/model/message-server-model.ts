@@ -89,7 +89,6 @@ export function createSmsServerDraftFromConfig(config?: SmsServerConfig): SmsSer
     clearSecrets: [],
     tencent: { secretId: '', secretKey: '', appId: '', signName: '', templateId: '' },
     alibaba: { accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' },
-    unisms: { accessKeyId: '', accessKeySecret: '', signature: '', templateId: '', authMode: 'simple' },
     smslocal: { apiKey: '' },
     aws: { accessKeyId: '', accessKeySecret: '', region: '' },
     twilio: { accountSid: '', authToken: '', twilioPhoneNumber: '' }
@@ -119,7 +118,6 @@ export function buildSmsServerPayload(draft: SmsServerDraft): SmsServerPayload {
   const values = activeSmsProviderValues(draft);
   const options = Object.fromEntries(
     fields.flatMap(field => {
-      if (skipUniSmsSecret(draft, field.key)) return [];
       const value = String(values[field.key] ?? '').trim();
       return field.secret && !value ? [] : [[field.key, value]];
     })
@@ -159,7 +157,6 @@ export function validateSmsServerDraft(draft: SmsServerDraft) {
   const fields = smsProviderFieldContracts[draft.type];
   const values = activeSmsProviderValues(draft);
   return fields
-    .filter(field => !skipUniSmsSecret(draft, field.key))
     .filter(field => {
       const value = String(values[field.key] ?? '').trim();
       if (!field.secret) return !value;
@@ -206,6 +203,4 @@ function emailSecretSatisfied(draft: EmailServerDraft) {
   );
 }
 
-function skipUniSmsSecret(draft: SmsServerDraft, key: string) {
-  return draft.type === 'unisms' && key === 'accessKeySecret' && draft.unisms.authMode !== 'hmac';
-}
+

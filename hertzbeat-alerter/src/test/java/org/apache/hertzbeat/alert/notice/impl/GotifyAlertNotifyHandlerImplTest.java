@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -31,6 +33,7 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -70,7 +73,7 @@ class GotifyAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
+        receiver.setGotifyToken("test-token");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -86,13 +89,13 @@ class GotifyAlertNotifyHandlerImplTest {
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
     }
 
     @Test
     public void testNotifyAlertSuccess() {
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
+
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
         successResp.setErrCode(0);
         ResponseEntity<CommonRobotNotifyResp> responseEntity =
@@ -105,10 +108,17 @@ class GotifyAlertNotifyHandlerImplTest {
         )).thenReturn(responseEntity);
         
         gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(restTemplate).postForEntity(urlCaptor.capture(), any(), eq(CommonRobotNotifyResp.class));
+        assertEquals("http://localhost:8080/gotify/test-token", urlCaptor.getValue());
     }
 
     @Test
     public void testNotifyAlertFailure() {
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
+
         CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
         failResp.setCode(1);
         failResp.setErrMsg("Test Error");
@@ -123,5 +133,12 @@ class GotifyAlertNotifyHandlerImplTest {
         
         assertThrows(AlertNoticeException.class, 
                 () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testDefaultAlerterPropertiesUrl() {
+        AlerterProperties properties = new AlerterProperties();
+        String formattedUrl = String.format(properties.getGotifyWebhookUrl(), "test-token");
+        assertEquals("https://push.example.de/message?token=test-token", formattedUrl);
     }
 }

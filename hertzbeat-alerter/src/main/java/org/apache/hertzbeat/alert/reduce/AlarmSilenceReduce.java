@@ -19,9 +19,11 @@ package org.apache.hertzbeat.alert.reduce;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
@@ -44,6 +46,7 @@ public class AlarmSilenceReduce {
     /**
      * Process alert with silence rules
      * If alert matches any active silence rule, it will be silenced
+     *
      * @param groupAlert The alert to be processed
      */
     public boolean silenceAlarm(GroupAlert groupAlert) {
@@ -77,7 +80,7 @@ public class AlarmSilenceReduce {
                     // Cyclic silence rule
                     int currentDayOfWeek = now.getDayOfWeek().getValue();
                     if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek)
-                            && !checkAndSave(now, alertSilence)) {
+                        && !checkAndSave(now, alertSilence)) {
                         // Alert is silenced
                         return true;
                     }
@@ -91,7 +94,8 @@ public class AlarmSilenceReduce {
 
     /**
      * Check if alert time is within silence period and update silence rule counter
-     * @param now Current time
+     *
+     * @param now          Current time
      * @param alertSilence Silence rule to check
      * @return true if alert should not be silenced, false if alert should be silenced
      */
@@ -100,8 +104,11 @@ public class AlarmSilenceReduce {
         boolean endMatch;
         if (alertSilence.getType() == 1) {
             LocalTime nowTime = now.toLocalTime();
-            LocalTime startTime = alertSilence.getPeriodStart() == null ? null : alertSilence.getPeriodStart().toLocalTime();
-            LocalTime endTime = alertSilence.getPeriodEnd() == null ? null : alertSilence.getPeriodEnd().toLocalTime();
+            // compare wall-clock times in the server time zone, the stored offset may differ from it
+            LocalTime startTime = alertSilence.getPeriodStart() == null
+                ? null : alertSilence.getPeriodStart().withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
+            LocalTime endTime = alertSilence.getPeriodEnd() == null
+                ? null : alertSilence.getPeriodEnd().withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
             if (startTime == null && endTime == null) {
                 startMatch = true;
                 endMatch = true;
@@ -121,9 +128,9 @@ public class AlarmSilenceReduce {
             }
         } else {
             startMatch = alertSilence.getPeriodStart() == null
-                    || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+                || now.isAfter(alertSilence.getPeriodStart().withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime());
             endMatch = alertSilence.getPeriodEnd() == null
-                    || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+                || now.isBefore(alertSilence.getPeriodEnd().withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime());
         }
 
         if (startMatch && endMatch) {

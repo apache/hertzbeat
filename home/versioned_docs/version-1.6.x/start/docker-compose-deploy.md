@@ -62,6 +62,6 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
 ----
 
-### FAQ
+## FAQ
 
 **The most common problem is network problems, please check in advance**

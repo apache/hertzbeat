@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source website monitoring tool, mon
 > A website often has multiple pages provided by different services. We monitor the full site by collecting the SiteMap exposed by the website.
 > Note⚠️ This monitoring requires your website to support SiteMap. We support SiteMap in XML and TXT formats.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

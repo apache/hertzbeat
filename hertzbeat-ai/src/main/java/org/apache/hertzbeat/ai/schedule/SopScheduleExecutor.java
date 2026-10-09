@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.dao.ChatMessageDao;
 import org.apache.hertzbeat.ai.service.SopScheduleService;
@@ -37,6 +38,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Scheduled executor that checks for due SOP schedules and executes them.
@@ -84,7 +86,11 @@ public class SopScheduleExecutor {
             log.info("Found {} due schedules to execute", dueSchedules.size());
             
             for (SopSchedule schedule : dueSchedules) {
-                executeSchedule(schedule);
+                try {
+                    executeSchedule(schedule);
+                } catch (Exception e) {
+                    log.error("Unexpected error processing scheduled SOP {}", schedule.getId(), e);
+                }
             }
         } catch (Exception e) {
             log.error("Error checking due schedules", e);
@@ -95,6 +101,12 @@ public class SopScheduleExecutor {
      * Execute a single scheduled SOP and push result to conversation.
      */
     private void executeSchedule(SopSchedule schedule) {
+        schedule = sopScheduleService.getScheduleForExecution(schedule.getId());
+        if (schedule == null) {
+            return;
+        }
+        String executionCreator = schedule.getCreator();
+        Long executionConversationId = schedule.getConversationId();
         log.info("Executing scheduled SOP {} for conversation {}", 
                 schedule.getSopName(), schedule.getConversationId());
         
@@ -102,24 +114,30 @@ public class SopScheduleExecutor {
             // Check if skill exists
             var definition = skillRegistry.getSkill(schedule.getSopName());
             if (definition == null) {
-                log.warn("Skill {} not found, skipping schedule {}", 
-                        schedule.getSopName(), schedule.getId());
-                return;
+                // Do not silently skip an invalid schedule because its execution time will still be advanced.
+                throw new IllegalStateException("SOP skill not found: " + schedule.getSopName());
             }
             
             // Parse parameters
             Map<String, Object> params = new HashMap<>();
             if (schedule.getSopParams() != null && !schedule.getSopParams().isEmpty()) {
-                try {
-                    params = JsonUtil.fromJson(schedule.getSopParams(), Map.class);
-                } catch (Exception e) {
-                    log.warn("Failed to parse SOP params: {}", schedule.getSopParams());
+                Map<String, Object> parsedParams = JsonUtil.fromJson(
+                        schedule.getSopParams(), new TypeReference<>() {});
+                if (parsedParams == null) {
+                    throw new IllegalArgumentException("SOP schedule parameters must be a valid JSON object");
                 }
+                params = parsedParams;
             }
             
             // Execute SOP
             SopResult result = sopEngine.executeSync(definition, params);
-            
+
+            SopSchedule deliverySchedule = sopScheduleService.getScheduleForExecution(schedule.getId());
+            if (!hasSameExecutionTarget(deliverySchedule, executionCreator, executionConversationId)) {
+                log.warn("Schedule {} lost its execution owner before result delivery", schedule.getId());
+                return;
+            }
+
             // Create push message
             String messageContent = formatPushMessage(schedule, result);
             
@@ -128,6 +146,7 @@ public class SopScheduleExecutor {
                     .conversationId(schedule.getConversationId())
                     .role(ROLE_SYSTEM_PUSH)
                     .content(messageContent)
+                    .creator(schedule.getCreator())
                     .build();
             
             chatMessageDao.save(pushMessage);
@@ -138,7 +157,13 @@ public class SopScheduleExecutor {
         } catch (Exception e) {
             log.error("Failed to execute scheduled SOP {} for conversation {}", 
                     schedule.getSopName(), schedule.getConversationId(), e);
-            
+
+            SopSchedule deliverySchedule = sopScheduleService.getScheduleForExecution(schedule.getId());
+            if (!hasSameExecutionTarget(deliverySchedule, executionCreator, executionConversationId)) {
+                log.warn("Schedule {} lost its execution owner before error delivery", schedule.getId());
+                return;
+            }
+
             // Still save an error message
             String errorContent = SopMessageUtil.getMessage("schedule.push.error.prefix") + " " + schedule.getSopName() 
                     + "\n\n" + SopMessageUtil.getMessage("schedule.push.error.label") + " " + e.getMessage();
@@ -146,6 +171,7 @@ public class SopScheduleExecutor {
                     .conversationId(schedule.getConversationId())
                     .role(ROLE_SYSTEM_PUSH)
                     .content(errorContent)
+                    .creator(schedule.getCreator())
                     .build();
             chatMessageDao.save(errorMessage);
             
@@ -153,6 +179,12 @@ public class SopScheduleExecutor {
             // Update schedule times
             sopScheduleService.updateAfterExecution(schedule.getId());
         }
+    }
+
+    private boolean hasSameExecutionTarget(SopSchedule schedule, String creator, Long conversationId) {
+        return schedule != null
+                && Objects.equals(creator, schedule.getCreator())
+                && Objects.equals(conversationId, schedule.getConversationId());
     }
 
     /**

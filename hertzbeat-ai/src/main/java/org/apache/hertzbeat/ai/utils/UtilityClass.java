@@ -27,8 +27,12 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import tools.jackson.databind.ObjectMapper;
 
@@ -41,6 +45,14 @@ import tools.jackson.databind.ObjectMapper;
 @Slf4j
 @lombok.experimental.UtilityClass
 public class UtilityClass {
+
+    private static final Pattern SINGLE_EQUALS_PATTERN = Pattern.compile("(?<![<>=!])=(?!=)");
+    private static final Pattern UPPERCASE_LOGICAL_PATTERN = Pattern.compile("\\b(AND|OR)\\b");
+    private static final Pattern FUNCTION_FIELD_PATTERN = Pattern.compile(
+            "!?\\b(?:equals|contains|matches|exists)\\s*\\(\\s*([a-zA-Z_][a-zA-Z0-9_]*)");
+    private static final Pattern COMPARISON_FIELD_PATTERN = Pattern.compile(
+            "(?:^|[\\s(])([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?:>=|<=|==|!=|>|<)");
+    private static final Pattern QUOTED_VALUE_PATTERN = Pattern.compile("\"[^\"]*\"|'[^']*'");
 
     /**
      * Validates the syntax of field conditions expression
@@ -111,31 +123,26 @@ public class UtilityClass {
      * Validates that only supported operators are used
      */
     public String validateOperators(String fieldConditions) {
-        // Define supported operators for different field types
-        String[] numericOperators = {">", "<", ">=", "<=", "==", "!=", "exists()", "!exists()"};
-        String[] stringOperators = {"equals(", "contains(", "matches(", "exists()", "!equals(", "!contains(", "!matches(", "!exists()"};
-        String[] logicalOperators = {" and ", " or "};
-
         // Remove quotes and function calls temporarily for operator checking
         String tempExpression = fieldConditions
                 .replaceAll("\"[^\"]*\"", "VALUE") // Remove quoted strings
                 .replaceAll("'[^']*'", "VALUE")    // Remove single quoted strings
                 .replaceAll("\\w+\\([^)]*\\)", "FUNCTION"); // Remove function calls
 
-        // Check for invalid operators (common mistakes)
-        String[] invalidOperators = {"&&", "||", "AND", "OR", "=", "!="};
-        for (String invalidOp : invalidOperators) {
-            if (tempExpression.contains(invalidOp)) {
-                if (invalidOp.equals("&&") || invalidOp.equals("||")) {
-                    return String.format("Error: Use 'and'/'or' instead of '%s' for logical operations", invalidOp);
-                }
-                if (invalidOp.equals("AND") || invalidOp.equals("OR")) {
-                    return String.format("Error: Use lowercase '%s' for logical operations", invalidOp.toLowerCase());
-                }
-                if (invalidOp.equals("=")) {
-                    return "Error: Use '==' for equality comparison, not '='";
-                }
-            }
+        if (tempExpression.contains("&&") || tempExpression.contains("||")) {
+            String invalidOp = tempExpression.contains("&&") ? "&&" : "||";
+            return String.format("Error: Use 'and'/'or' instead of '%s' for logical operations", invalidOp);
+        }
+
+        Matcher uppercaseLogicalMatcher = UPPERCASE_LOGICAL_PATTERN.matcher(tempExpression);
+        if (uppercaseLogicalMatcher.find()) {
+            return String.format("Error: Use lowercase '%s' for logical operations",
+                    uppercaseLogicalMatcher.group(1).toLowerCase());
+        }
+
+        // Reject only a standalone equals sign without rejecting >=, <=, ==, or !=.
+        if (SINGLE_EQUALS_PATTERN.matcher(tempExpression).find()) {
+            return "Error: Use '==' for equality comparison, not '='";
         }
 
         // Check for unsupported special characters that might indicate syntax errors
@@ -150,11 +157,6 @@ public class UtilityClass {
      * Validates logical connectors syntax
      */
     public String validateLogicalConnectors(String fieldConditions) {
-        // Check for proper spacing around logical operators
-        if (fieldConditions.matches(".*(\\S(and|or)\\S).*")) {
-            return "Error: Logical operators 'and'/'or' must be surrounded by spaces";
-        }
-
         // Check for consecutive logical operators
         if (fieldConditions.matches(".*(and\\s+and|or\\s+or|and\\s+or\\s+and|or\\s+and\\s+or).*")) {
             return "Error: Consecutive logical operators found. Use parentheses to group conditions properly.";
@@ -237,7 +239,7 @@ public class UtilityClass {
 
         String[] pairs = input.split(",");
         for (String pair : pairs) {
-            String[] keyValue = pair.split(":");
+            String[] keyValue = pair.split(":", 2);
             if (keyValue.length == 2) {
                 result.put(keyValue[0].trim(), keyValue[1].trim());
             }
@@ -299,34 +301,22 @@ public class UtilityClass {
      * Handles simple cases like "field > 80", "equals(field, 'value')", complex expressions
      */
     public List<String> extractFieldNamesFromConditions(String fieldConditions) {
-        List<String> fieldNames = new ArrayList<>();
+        Set<String> fieldNames = new LinkedHashSet<>();
 
-        // Split by logical operators (and, or) and parentheses, but preserve the field names
-        // This is a simple implementation - could be enhanced with a proper parser
-        String[] parts = fieldConditions.split("\\s+(and|or|&&|\\|\\|)\\s+|[()]+");
-
-        for (String part : parts) {
-            part = part.trim();
-            if (part.isEmpty()) {
-                continue;
-            }
-
-            // Handle equals() function: equals(fieldName, "value")
-            if (part.contains("equals(")) {
-                String fieldName = extractFieldFromEquals(part);
-                if (fieldName != null && !fieldNames.contains(fieldName)) {
-                    fieldNames.add(fieldName);
-                }
-            } else {
-                // Handle simple comparisons: fieldName > value, fieldName <= value
-                String fieldName = extractFieldFromComparison(part);
-                if (fieldName != null && !fieldNames.contains(fieldName)) {
-                    fieldNames.add(fieldName);
-                }
-            }
+        // Extract the first function argument without splitting parentheses and bypassing field validation.
+        Matcher functionMatcher = FUNCTION_FIELD_PATTERN.matcher(fieldConditions);
+        while (functionMatcher.find()) {
+            fieldNames.add(functionMatcher.group(1));
         }
 
-        return fieldNames;
+        // Remove quoted values before scanning comparisons to avoid treating text such as "value > 1" as a field.
+        Matcher comparisonMatcher = COMPARISON_FIELD_PATTERN.matcher(
+                QUOTED_VALUE_PATTERN.matcher(fieldConditions).replaceAll(""));
+        while (comparisonMatcher.find()) {
+            fieldNames.add(comparisonMatcher.group(1));
+        }
+
+        return new ArrayList<>(fieldNames);
     }
 
     /**
@@ -391,7 +381,8 @@ public class UtilityClass {
         } else {
             // Category, app, or metric node
             // Determine node type based on children
-            boolean hasLeafChildren = hierarchy.getChildren().stream()
+            List<Hierarchy> children = hierarchy.getChildren();
+            boolean hasLeafChildren = children != null && children.stream()
                     .anyMatch(child -> child.getIsLeaf() != null && child.getIsLeaf());
 
             if (hasLeafChildren) {
@@ -402,9 +393,9 @@ public class UtilityClass {
                 node.put("description", "Application with available metrics");
             }
 
-            if (hierarchy.getChildren() != null && !hierarchy.getChildren().isEmpty()) {
+            if (children != null && !children.isEmpty()) {
                 ArrayNode childrenArray = mapper.createArrayNode();
-                for (Hierarchy child : hierarchy.getChildren()) {
+                for (Hierarchy child : children) {
                     childrenArray.add(formatHierarchyAsJson(mapper, child));
                 }
                 node.set("children", childrenArray);

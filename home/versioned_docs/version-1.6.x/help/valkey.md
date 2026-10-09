@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, open source valkey monitoring tool, mon
 
 > Collect and monitor the general performance Metrics of Valkey database. Support Valkey 7.0+.
 
-### Configuration parameter
+## Configuration parameter
 
 |  Parameter name  |                        Parameter help description                        |
 |--------|------------------------------------------------------|

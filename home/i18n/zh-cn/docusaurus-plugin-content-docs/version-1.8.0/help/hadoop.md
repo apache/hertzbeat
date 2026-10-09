@@ -9,11 +9,11 @@ keywords: [开源监控系统, 开源JAVA监控, Hadoop的JVM虚拟机监控]
 
 **使用协议：JMX**
 
-### 监控前操作
-
+## 监控前操作
+>
 > 您需要在 Hadoop 应用开启 `JMX` 服务，HertzBeat 使用 JMX 协议对Hadoop中的 JVM 进行指标采集。
 
-#### Hadoop应用开启JMX协议步骤
+### Hadoop应用开启JMX协议步骤
 
 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
 

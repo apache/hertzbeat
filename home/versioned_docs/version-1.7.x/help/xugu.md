@@ -7,7 +7,7 @@ keywords: [ Open Source Monitoring System, Open Source Database Monitoring, xugu
 
 > Collect and monitor common performance metrics of the xugu database. Supports xuguDB.v12.
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name | Description                                                                 |
 |----------------|------------------------------------------------------------------------------|

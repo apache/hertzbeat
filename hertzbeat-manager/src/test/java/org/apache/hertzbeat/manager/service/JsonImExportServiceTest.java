@@ -22,35 +22,53 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link JsonImExportServiceImpl}
  */
-
+@ExtendWith(MockitoExtension.class)
 class JsonImExportServiceTest {
 
     private JsonImExportServiceImpl jsonImExportService;
 
+    @Mock
+    private MonitorService monitorService;
+
+    @Mock
+    private ImportTaskService importTaskService;
+
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
         jsonImExportService = new JsonImExportServiceImpl();
+        Field monitorServiceField = jsonImExportService.getClass().getSuperclass().getDeclaredField("monitorService");
+        monitorServiceField.setAccessible(true);
+        monitorServiceField.set(jsonImExportService, monitorService);
+        Field taskField = jsonImExportService.getClass().getSuperclass().getDeclaredField("importTaskService");
+        taskField.setAccessible(true);
+        taskField.set(jsonImExportService, importTaskService);
     }
 
     @Test
@@ -161,7 +179,7 @@ class JsonImExportServiceTest {
         MonitorDto monitorDto = new MonitorDto();
         monitorDto.setMonitor(monitor);
         monitorDto.setParams(List.of(Param.builder().field("host").type((byte) 1).paramValue("127.0.0.1").build()));
-        when(monitorService.getMonitorDto(42L)).thenReturn(monitorDto);
+        when(monitorService.getMonitorDtoForExport(42L)).thenReturn(monitorDto);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         jsonImExportService.exportConfig(bos, List.of(42L));
@@ -171,4 +189,115 @@ class JsonImExportServiceTest {
         assertTrue(result.contains("\"name\":\"Codex export monitor\""));
     }
 
+    @Test
+    void testExportConfigPreservesEncryptedCredentialForImportRoundTrip() {
+        String ciphertext = "HBA2-export-ciphertext";
+        MonitorDto monitorDto = new MonitorDto();
+        monitorDto.setMonitor(Monitor.builder().id(1L).name("ollama").app("ollama").build());
+        MonitorParam secret = new MonitorParam();
+        secret.setField("apiKey");
+        secret.setType(org.apache.hertzbeat.common.constants.CommonConstants.PARAM_TYPE_PASSWORD);
+        secret.setParamValue(ciphertext);
+        monitorDto.setParamInfos(List.of(secret));
+        org.mockito.Mockito.when(monitorService.getMonitorDtoForExport(1L)).thenReturn(monitorDto);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        jsonImExportService.exportConfig(output, List.of(1L));
+
+        assertTrue(output.toString(StandardCharsets.UTF_8).contains(ciphertext));
+    }
+
+    @Test
+    void testImportConfigPreservesEncryptedCredentialForImportRoundTrip() {
+        String ciphertext = "HBA2-import-ciphertext";
+        String json = "[{\"monitor\":{\"name\":\"ollama-import\",\"app\":\"ollama\","
+                + "\"intervals\":6000,\"status\":1},\"params\":[{\"field\":\"apiKey\","
+                + "\"type\":2,\"value\":\"" + ciphertext + "\"}]}]";
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        doNothing().when(monitorService).addMonitor(
+                org.mockito.Mockito.any(), paramsCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        jsonImExportService.importConfig(
+                "ollama.json", new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+
+        assertEquals(ciphertext, paramsCaptor.getValue().get(0).getParamValue());
+    }
+
+    @Test
+    void testImportConfig_shouldSetInstanceFromHostAndPortParams() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"windows\",\"intervals\":6000,\"status\":1},"
+                + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"localhost\"},"
+                + "{\"field\":\"port\",\"type\":0,\"value\":\"161\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(), paramsCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals("localhost:161", captured.getInstance());
+        assertEquals("test", captured.getName());
+        assertEquals("windows", captured.getApp());
+
+        List<Param> capturedParams = paramsCaptor.getValue();
+        assertNotNull(capturedParams);
+        assertEquals(2, capturedParams.size());
+    }
+
+    @Test
+    void testImportConfig_shouldSetInstanceWithHostOnly() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"linux\",\"intervals\":6000,\"status\":1},"
+                + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"192.168.1.1\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals("192.168.1.1", captured.getInstance());
+    }
+
+    @Test
+    void testImportConfig_shouldHandleNoHostParam() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"website\",\"intervals\":6000,\"status\":1},"
+                + "\"params\":[{\"field\":\"url\",\"type\":1,\"value\":\"http://example.com\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals(null, captured.getInstance());
+    }
+
+    @Test
+    void testImportConfig_shouldPreserveAnnotationsAndSchedule() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"linux\",\"intervals\":6000,\"status\":1,"
+                + "\"labels\":{\"env\":\"prod\"},\"annotations\":{\"owner\":\"ops\"},"
+                + "\"scheduleType\":\"cron\",\"cronExpression\":\"0 0/5 * * * ?\"},"
+                + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"192.168.1.1\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals("prod", captured.getLabels().get("env"));
+        assertEquals("ops", captured.getAnnotations().get("owner"));
+        assertEquals("cron", captured.getScheduleType());
+        assertEquals("0 0/5 * * * ?", captured.getCronExpression());
+    }
 }

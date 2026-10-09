@@ -67,14 +67,20 @@ public class TelnetCollectImpl extends AbstractCollect {
                 long responseTime = System.currentTimeMillis() - startTime;
                 List<String> aliasFields = metrics.getAliasFields();
                 String app = builder.getApp();
-                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
-                resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
-                if (resultMap.size() < aliasFields.size()) {
-                    log.error("telnet response data not enough: {}", resultMap);
+                CmdResult cmdResult = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
+                Map<String, String> resultMap = cmdResult.values();
+                boolean expectsCmdMetrics = StringUtils.isNotBlank(telnet.getCmd())
+                        && aliasFields.stream().anyMatch(field -> !CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(field));
+                boolean hasExpectedMetric = aliasFields.stream().anyMatch(resultMap::containsKey);
+                if (expectsCmdMetrics && !hasExpectedMetric) {
+                    // e.g. zookeeper refusing a 4lw command not in its 4lw.commands.whitelist
+                    String reply = sanitizeReply(cmdResult.rawResponse());
+                    log.warn("telnet cmd [{}] returned no expected metrics: {}", telnet.getCmd(), reply);
                     builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("The cmd execution results do not match the expected number of metrics.");
+                    builder.setMsg("Cmd [" + telnet.getCmd() + "] returned no expected metrics. Response: " + reply);
                     return;
                 }
+                resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String field : aliasFields) {
                     String fieldValue = resultMap.get(field);
@@ -118,30 +124,36 @@ public class TelnetCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_TELNET;
     }
 
-    private static Map<String, String> execCmdAndParseResult(TelnetClient telnetClient, String cmd, String app) throws IOException {
+    record CmdResult(Map<String, String> values, String rawResponse) {
+    }
+
+    private static String sanitizeReply(String raw) {
+        return StringUtils.abbreviate(raw.trim().replaceAll("[\\p{Cntrl}]+", " "), 300);
+    }
+
+    private static CmdResult execCmdAndParseResult(TelnetClient telnetClient, String cmd, String app) throws IOException {
         if (cmd == null || StringUtils.isEmpty(cmd.trim())) {
-            return new HashMap<>(16);
+            return new CmdResult(new HashMap<>(16), "");
         }
         OutputStream outputStream = telnetClient.getOutputStream();
         outputStream.write(cmd.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
         String result = new String(telnetClient.getInputStream().readAllBytes());
         String[] lines = result.split("\n");
-        if (CollectorConstants.ZOOKEEPER_APP.equals(app) && CollectorConstants.ZOOKEEPER_ENVI_HEAD.equals(lines[0])) {
+        if (lines.length > 0 && CollectorConstants.ZOOKEEPER_APP.equals(app)
+                && CollectorConstants.ZOOKEEPER_ENVI_HEAD.equals(lines[0])) {
             lines = Arrays.stream(lines)
                     .skip(1)
                     .toArray(String[]::new);
         }
-        boolean contains = lines[0].contains("=");
-        return Arrays.stream(lines)
-                .map(item -> {
-                    if (contains) {
-                        return item.split("=");
-                    } else {
-                        return item.split("\t");
-                    }
-                })
+        if (lines.length == 0) {
+            return new CmdResult(new HashMap<>(16), result);
+        }
+        String separator = lines[0].contains("=") ? "=" : "\t";
+        Map<String, String> values = Arrays.stream(lines)
+                .map(item -> item.split(separator, 2))
                 .filter(item -> item.length == 2)
-                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
+                .collect(Collectors.toMap(x -> x[0], x -> x[1], (first, second) -> first, HashMap::new));
+        return new CmdResult(values, result);
     }
 }

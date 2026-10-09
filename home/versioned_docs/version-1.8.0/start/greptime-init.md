@@ -1,5 +1,5 @@
 ---
-id: greptime-init  
+id: greptime-init
 title: Use Time Series Database Greptime to Store Metrics Data (Recommended)
 sidebar_label: Metrics Store Greptime (Recommended)
 ---
@@ -14,7 +14,7 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
-### Install GreptimeDvia Docker
+## Install GreptimeDvia Docker
 
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
@@ -51,7 +51,7 @@ use```$ docker ps``` to check if the database started successfully
    ```yaml
    warehouse:
       store:
-         jpa:
+         duckdb:
             enabled: false
          greptime:
             enabled: true
@@ -62,7 +62,7 @@ use```$ docker ps``` to check if the database started successfully
             password: greptime
    ```
 
-   The default database is `public`, if you specify another database name, you need to create it in `greptimeDB` in advance.  
+   The default database is `public`, if you specify another database name, you need to create it in `greptimeDB` in advance.
    eg: Create a database named `hertzbeat` with a validity period of 90 days SQL: `CREATE DATABASE IF NOT EXISTS hertzbeat WITH(ttl='90d')`
 
 2. Restart HertzBeat

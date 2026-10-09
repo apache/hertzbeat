@@ -34,6 +34,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
@@ -102,6 +103,10 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
     public static final String PARAM_FIELD_HOST = "host";
+    private static final Map<String, Set<String>> CREDENTIAL_DESTINATION_FIELDS = Map.of(
+            "apiKey", Set.of("host", "port", "ssl"),
+            "__sd_token__", Set.of("__sd_url__", "__sd_authType__"),
+            "__sd_password__", Set.of("__sd_url__", "__sd_authType__"));
     public static final String PARAM_FIELD_PORT = "port";
     private static final String MONITOR_COPY_SUFFIX = "_copy";
     private static final String SCHEDULE_INTERVAL = "interval";
@@ -197,6 +202,8 @@ public class MonitorServiceImpl implements MonitorService {
         MonitorJobScheduleMapper.apply(monitor, appDefine);
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+        appDefine.setScheduleType(monitor.getScheduleType());
+        appDefine.setCronExpression(monitor.getCronExpression());
 
         Param hostParam = params.stream()
                 .filter(param -> PARAM_FIELD_HOST.equals(param.getField()))
@@ -314,16 +321,60 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setCollector(null);
         }
         // Parameter definition structure verification
-        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(monitor.getApp());
+        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+                || !StringUtils.hasText(monitor.getScrape());
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> applicationParamDefines = appService.getAppParamDefines(monitor.getApp());
+        if (!CollectionUtils.isEmpty(applicationParamDefines)) {
+            paramDefines.addAll(applicationParamDefines);
+        }
+        if (!isStatic && !Objects.equals(monitor.getApp(), monitor.getScrape())) {
+            List<ParamDefineInfo> scrapeParamDefines = appService.getAppParamDefines(monitor.getScrape());
+            if (!CollectionUtils.isEmpty(scrapeParamDefines)) {
+                paramDefines.addAll(scrapeParamDefines);
+            }
+        }
+        boolean restoresMaskedCredential = (Boolean.TRUE.equals(isModify)
+                || (isModify == null && monitor.getId() != null))
+                && !CollectionUtils.isEmpty(paramDefines)
+                && paramDefines.stream()
+                        .filter(paramDefine -> "password".equals(paramDefine.getType()))
+                        .map(ParamDefineInfo::getField)
+                        .map(paramMap::get)
+                        .filter(Objects::nonNull)
+                        .anyMatch(param -> MonitorParam.isSecretMask(param.getParamValue()));
+        Map<String, Param> storedParams = restoresMaskedCredential
+                ? oldMonitorParamQueryService.findParamsByMonitorId(monitor.getId()).stream()
+                    .collect(Collectors.toMap(Param::getField, param -> param))
+                : Map.of();
         if (!CollectionUtils.isEmpty(paramDefines)) {
-            boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                    || !StringUtils.hasText(monitor.getScrape());
             for (ParamDefineInfo paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 MonitorParam param = paramMap.get(field);
                 // Get the host from service discovery
                 if (!isStatic && "host".equals(field)) {
                     continue;
+                }
+                if ("password".equals(paramDefine.getType())
+                        && param != null
+                        && MonitorParam.isSecretMask(param.getParamValue())) {
+                    if (!restoresMaskedCredential) {
+                        throw new IllegalArgumentException("The credential mask cannot be used as a new value.");
+                    }
+                    Param storedParam = storedParams.get(field);
+                    if (storedParam == null || !StringUtils.hasText(storedParam.getParamValue())) {
+                        throw new IllegalArgumentException("The masked credential has no stored value.");
+                    }
+                    String storedValue = storedParam.getParamValue();
+                    boolean currentCiphertext = AesUtil.isCiphertext(storedValue);
+                    boolean legacyCiphertext = !AesUtil.DEFAULT_ENCODE_RULES.equals(AesUtil.getDefaultSecretKey())
+                            && AesUtil.isCiphertext(storedValue, AesUtil.DEFAULT_ENCODE_RULES);
+                    if (!currentCiphertext && !legacyCiphertext) {
+                        throw new IllegalStateException("The stored credential migration is incomplete.");
+                    }
+                    validateCredentialDestination(field, paramMap, storedParams);
+                    param.setParamValue(storedValue);
+                    param.setType(CommonConstants.PARAM_TYPE_PASSWORD);
                 }
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
@@ -333,7 +384,27 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        checkJobFields(monitorDto.getMonitor().getApp());
+        checkJobFields(monitor.getApp());
+        if (!isStatic && !Objects.equals(monitor.getApp(), monitor.getScrape())) {
+            checkJobFields(monitor.getScrape());
+        }
+    }
+
+    private void validateCredentialDestination(
+            String credentialField,
+            Map<String, MonitorParam> submittedParams,
+            Map<String, Param> storedParams) {
+        for (String destinationField : CREDENTIAL_DESTINATION_FIELDS.getOrDefault(
+                credentialField, Set.of())) {
+            MonitorParam submitted = submittedParams.get(destinationField);
+            Param stored = storedParams.get(destinationField);
+            String submittedValue = submitted == null ? null : submitted.getParamValue();
+            String storedValue = stored == null ? null : stored.getParamValue();
+            if (!Objects.equals(submittedValue, storedValue)) {
+                throw new IllegalArgumentException(
+                        "A credential must be re-entered when its destination changes.");
+            }
+        }
     }
 
     private static void applyScheduleContract(Monitor monitor) {
@@ -480,6 +551,8 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change.
             // we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
+            // preserve the live status owned by the real-time collection path; the modify request must not overwrite it
+            monitor.setStatus(preMonitor.getStatus());
             // update or open grafana dashboard
             if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null) {
                 if (grafanaDashboard.isEnabled()) {
@@ -536,6 +609,16 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(readOnly = true)
     public MonitorDto getMonitorDto(long id) throws RuntimeException {
+        return getMonitorDto(id, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MonitorDto getMonitorDtoForExport(long id) throws RuntimeException {
+        return getMonitorDto(id, false);
+    }
+
+    private MonitorDto getMonitorDto(long id, boolean maskCredentials) throws RuntimeException {
         Optional<Monitor> monitorOptional = oldMonitorCatalogQueryService.findMonitorById(id);
         if (monitorOptional.isPresent()) {
             // Get current user ID for favorite status
@@ -551,7 +634,7 @@ public class MonitorServiceImpl implements MonitorService {
             Monitor monitor = monitorOptional.get();
             MonitorDto monitorDto = new MonitorDto();
             List<Param> params = oldMonitorParamQueryService.findParamsByMonitorId(id);
-            monitorDto.setParams(params);
+            monitorDto.setParams(params, maskCredentials);
             List<MetricsInfo> metricsInfos;
             if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())
                     || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
@@ -741,6 +824,8 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                appDefine.setScheduleType(monitor.getScheduleType());
+                appDefine.setCronExpression(monitor.getCronExpression());
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
                         CommonConstants.LABEL_INSTANCE, monitor.getInstance());
                 appDefine.setMetadata(metadata);

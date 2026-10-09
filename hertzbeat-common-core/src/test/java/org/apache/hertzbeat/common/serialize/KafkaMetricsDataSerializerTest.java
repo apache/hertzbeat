@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
@@ -100,6 +102,29 @@ class KafkaMetricsDataSerializerTest {
         } catch (IOException ignored) {}
         byte[] bytes = serializer.serialize("topic", headers, metricsData);
         assertArrayEquals(expectedBytes, bytes);
+    }
+
+    @Test
+    void preservesLargeMetricValueThroughArrowIpc() {
+        String value = "a".repeat(100_000);
+        CollectRep.Field field = CollectRep.Field.newBuilder()
+                .setName("payload")
+                .setType(1)
+                .build();
+        CollectRep.MetricsData source = CollectRep.MetricsData.newBuilder()
+                .addField(field)
+                .addValueRow(new CollectRep.ValueRow(List.of(value)))
+                .build();
+
+        byte[] bytes = serializer.serialize("topic", source);
+
+        KafkaMetricsDataDeserializer deserializer = new KafkaMetricsDataDeserializer();
+        try (CollectRep.MetricsData restored = deserializer.deserialize("topic", bytes)) {
+            assertArrayEquals(
+                    value.getBytes(StandardCharsets.UTF_8),
+                    restored.getValues().getFirst().getColumns(0)
+                            .getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     @Test

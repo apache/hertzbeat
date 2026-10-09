@@ -10,9 +10,9 @@ keywords:
 
 > Monitor MySQL database account password expiration information.
 
-### Collection Metric
+## Collection Metric
 
-#### Metric set：account_expiry
+### Metric set：account_expiry
 
 | Metric name           | Metric unit | Metric help description                              |
 |-----------------------|-------------|------------------------------------------------------|

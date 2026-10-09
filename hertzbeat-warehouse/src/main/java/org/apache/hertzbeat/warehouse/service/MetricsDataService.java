@@ -32,6 +32,13 @@ public interface MetricsDataService {
     Boolean getWarehouseStorageServerStatus();
 
     /**
+     * Query storage availability and write-path loss/backlog counters.
+     *
+     * @return warehouse storage status
+     */
+    WarehouseStorageStatus getWarehouseStorageStatus();
+
+    /**
      * Query Real Time Metrics Data
      * @param monitorId Monitor Id
      * @param metrics   Metrics Name

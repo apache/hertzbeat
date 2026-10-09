@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of GreenPlum database. Support GreenPlum 6.23.0+.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    | Parameter help description                                                                                                                                                |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

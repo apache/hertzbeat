@@ -61,7 +61,7 @@
         {
           "type": "category",
           "label": "upgrade",
-          "items": ["start/1.7.0-update", "start/1.6.0-update", "start/upgrade"]
+          "items": ["start/1.9.0-update", "start/1.7.0-update", "start/1.6.0-update", "start/upgrade"]
         },
         {
           "type": "category",
@@ -76,6 +76,7 @@
             "start/victoria-metrics-init",
             "start/iotdb-init",
             "start/influxdb-init",
+            "start/questdb-init",
             "start/postgresql-change",
             "start/mysql-change"
           ]
@@ -188,7 +189,10 @@
             "help/websocket",
             "help/mqtt",
             "help/modbus",
-            "help/jenkins"
+            "help/s7",
+            "help/jenkins",
+            "help/push",
+            "help/registry"
           ]
         },
         {
@@ -274,6 +278,7 @@
             "help/kafka_client",
             "help/pulsar",
             "help/nacos",
+            "help/etcd",
             "help/rabbitmq",
             "help/rocketmq",
             "help/shenyu",
@@ -341,7 +346,7 @@
           "type": "category",
           "label": "Custom",
           "key": "help-custom",
-          "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
+          "items": ["help/hertzbeat", "help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/status",
         "help/bulletin",

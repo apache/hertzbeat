@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source dynamicTp monitoring tool, m
 
 > Collect and monitor the thread pool performance Metrics exposed by DynamicTp actuator.
 
-### PreRequisites
+## PreRequisites
 
 1. Integration Using `DynamicTp`
 

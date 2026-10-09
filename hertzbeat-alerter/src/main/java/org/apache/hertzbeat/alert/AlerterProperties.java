@@ -72,7 +72,17 @@ public class AlerterProperties {
     /**
      * Gotify Notify url
      */
-    private String gotifyWebhookUrl = "https://push.example.de/message?token=";
+    private String gotifyWebhookUrl = "https://push.example.de/message?token=%s";
+
+    /**
+     * Ntfy default server url
+     */
+    private String ntfyDefaultServerUrl = "https://ntfy.sh";
+
+    /**
+     * WPUSH Notify url
+     */
+    private String wpushWebhookUrl = "https://api.wpush.cn/api/v1/send";
 
     /**
      * Data entry configuration properties

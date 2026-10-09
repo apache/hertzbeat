@@ -42,9 +42,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * class AbstractImExportServiceImpl
@@ -67,10 +69,10 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var formList = parseImport(is).stream().map(this::convert).toList();
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
+            validateImportBatch(formList);
             int progressInterval = Math.max(1, totalElements / 10);
             for (int i = 0; i < totalElements; i++) {
                 MonitorDto monitorDto = formList.get(i);
-                monitorService.validate(monitorDto, false);
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
                 if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
                     importTaskService.updateProgress(taskId, (int) ((i + 1) * 100.0 / totalElements));
@@ -80,9 +82,33 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         importTaskService.complete(taskId);
     }
 
+    /**
+     * Validate every entry of an import batch before any monitor is persisted.
+     * Beyond the per-entry checks (params/collector/name uniqueness against the DB), this also detects
+     * duplicate monitor names within the import file itself, which the single-entry validation cannot
+     * catch because nothing has been persisted yet when the conflicting rows are validated.
+     *
+     * @param formList parsed monitors to import
+     * @throws IllegalArgumentException if any entry is invalid or names collide within the file
+     */
+    private void validateImportBatch(List<MonitorDto> formList) {
+        Set<String> names = new HashSet<>(formList.size());
+        for (MonitorDto monitorDto : formList) {
+            monitorService.validate(monitorDto, false);
+            String name = monitorDto.getMonitorInfo().getName();
+            if (!names.add(name)) {
+                throw new IllegalArgumentException("Duplicate monitor name in import file: " + name);
+            }
+        }
+    }
+
     @Override
     public void exportConfig(OutputStream os, List<Long> configList) {
-        var monitorList = configList.stream().map(it -> monitorService.getMonitorDto(it)).filter(Objects::nonNull).map(this::convert).toList();
+        var monitorList = configList.stream()
+                .map(monitorService::getMonitorDtoForExport)
+                .filter(Objects::nonNull)
+                .map(this::convert)
+                .toList();
         writeOs(monitorList, os);
     }
 
@@ -130,6 +156,17 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         if (exportMonitor.monitor != null) {
             // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
+            if (exportMonitor.params != null) {
+                String host = exportMonitor.params.stream()
+                        .filter(p -> "host".equals(p.field)).findFirst()
+                        .map(p -> p.value).orElse(null);
+                String port = exportMonitor.params.stream()
+                        .filter(p -> "port".equals(p.field)).findFirst()
+                        .map(p -> p.value).orElse(null);
+                if (host != null) {
+                    monitor.setInstance(port != null ? host + ":" + port : host);
+                }
+            }
         }
         if (!StringUtils.hasText(monitor.getInstance())) {
             monitor.setInstance(resolveImportedInstance(exportMonitor));
@@ -145,7 +182,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 param.setType(it.type);
                 param.setParamValue(it.value);
                 return param;
-            }).toList());
+            }).toList(), false);
         } else {
             monitorDto.setParams(Collections.emptyList());
         }
@@ -216,6 +253,12 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private String description;
         @Excel(name = "Labels")
         private Map<String, String> labels;
+        @Excel(name = "Annotations")
+        private Map<String, String> annotations;
+        @Excel(name = "ScheduleType")
+        private String scheduleType;
+        @Excel(name = "CronExpression")
+        private String cronExpression;
         @Excel(name = "Collector")
         private String collector;
     }

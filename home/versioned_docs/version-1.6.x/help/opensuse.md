@@ -7,7 +7,7 @@ keywords: [open source monitoring system, open source operating system monitorin
 
 > Collect and monitor general performance metrics of the OpenSUSE operating system.
 
-### Configuration Parameters
+## Configuration Parameters
 
 |  Parameter Name   |                                                      Parameter Help Description                                                       |
 |-------------------|---------------------------------------------------------------------------------------------------------------------------------------|

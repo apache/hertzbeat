@@ -17,10 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.common.ssh;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.Scheduler;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,7 +31,6 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.security.GeneralSecurityException;
-import java.time.Duration;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -53,34 +48,7 @@ public class SshTunnelHelper {
 
     private static final long DEFAULT_CACHE_TIMEOUT = 500 * 1000;
 
-    private static final Cache<SshClientSessionWrapper, LocalPortForwardingWrapper> TRACKER_CACHE =
-            Caffeine.newBuilder()
-                    .initialCapacity(1)
-                    .maximumSize(1000)
-                    .expireAfterAccess(Duration.ofMillis(DEFAULT_CACHE_TIMEOUT))
-                    .scheduler(Scheduler.systemScheduler())
-                    .removalListener((key, value, cause) -> {
-                        if (cause == RemovalCause.REPLACED) {
-                            return;
-                        }
-                        if (key != null && value != null) {
-                            // 1. try close tunnel
-                            SshClientSessionWrapper clientSessionWrapper = (SshClientSessionWrapper) key;
-                            LocalPortForwardingWrapper wrapper = (LocalPortForwardingWrapper) value;
-                            wrapper.remove(clientSessionWrapper.getClientSession());
-
-                            // 2. try close session
-                            if (!clientSessionWrapper.isShareConnection()) {
-                                try {
-                                    clientSessionWrapper.close();
-                                    log.info("[SSH Tunnel] close unshared ssh connection, {}", clientSessionWrapper);
-                                } catch (IOException e) {
-                                    log.error("[SSH Tunnel] close unshared ssh connection error", e);
-                                }
-                            }
-                        }
-                    })
-                    .build();
+    private static final Map<SshClientSessionWrapper, LocalPortForwardingWrapper> TRACKER_CACHE = new ConcurrentHashMap<>();
 
 
     /**
@@ -122,15 +90,13 @@ public class SshTunnelHelper {
 
         // 2. get tunnel
         LocalPortForwardingWrapper forwardingWrapper = selectWrapper(
-                TRACKER_CACHE.getIfPresent(sessionWrapper), sessionWrapper, remoteHost, remotePort);
+                TRACKER_CACHE.get(sessionWrapper), sessionWrapper, remoteHost, remotePort);
         int localPort;
         if (forwardingWrapper == null) {
             localPort = getRandomPort();
             LocalPortForwardingWrapper newForwardingWrapper = sessionWrapper
                     .createLocalPortForwardingTracker(localPort, remoteHost, Integer.parseInt(remotePort));
-            if (TRACKER_CACHE.getIfPresent(sessionWrapper) == null) {
-                TRACKER_CACHE.put(sessionWrapper, newForwardingWrapper);
-            }
+            TRACKER_CACHE.putIfAbsent(sessionWrapper, newForwardingWrapper);
             log.info("[SSH Tunnel] created ssh forwarding tracker ssh:{}, remote:{}, localPort:{}",
                     sshTunnel.getHost() + ":" + sshTunnel.getPort(), remoteHost + ":" + remotePort, localPort);
         } else {
@@ -182,6 +148,23 @@ public class SshTunnelHelper {
         try (ServerSocket serverSocket = new ServerSocket(0)) {
             return serverSocket.getLocalPort();
         }
+    }
+
+    private static void removeSessionCacheEntry(ClientSession session) {
+        TRACKER_CACHE.entrySet().removeIf(entry -> {
+            if (!Objects.equals(entry.getKey().getClientSession(), session)) {
+                return false;
+            }
+            if (!entry.getKey().isShareConnection()) {
+                try {
+                    entry.getKey().close();
+                    log.info("[SSH Tunnel] close unshared ssh connection, {}", entry.getKey());
+                } catch (IOException e) {
+                    log.error("[SSH Tunnel] close unshared ssh connection error", e);
+                }
+            }
+            return true;
+        });
     }
 
     @Getter
@@ -267,6 +250,10 @@ public class SshTunnelHelper {
                     list.add(wrapper);
                 }
             }
+            if (trackerList.isEmpty()) {
+                map.remove(session);
+                removeSessionCacheEntry(session);
+            }
             return list;
         }
 
@@ -290,6 +277,8 @@ public class SshTunnelHelper {
                     log.error("[SSH Tunnel] Remove ssh session local port forwarding  error", e);
                 }
             }
+            map.remove(session);
+            removeSessionCacheEntry(session);
         }
 
         public void close() throws IOException {

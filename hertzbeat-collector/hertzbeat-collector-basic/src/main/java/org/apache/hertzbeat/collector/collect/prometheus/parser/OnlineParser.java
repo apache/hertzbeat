@@ -60,16 +60,37 @@ public class OnlineParser {
     }
 
     public static Map<String, MetricFamily> parseMetrics(InputStream inputStream) throws IOException {
-        Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
+        return parseMetrics(inputStream, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Parses at most {@code maxSamples} samples from the supplied stream.
+     *
+     * @param inputStream The Prometheus text stream
+     * @param maxSamples The maximum number of samples to materialize
+     * @return The parsed metric families, or {@code null} when the text format is invalid
+     * @throws IOException When the stream cannot be read
+     * @throws SampleLimitExceededException When another sample follows the configured limit
+     */
+    public static Map<String, MetricFamily> parseMetrics(InputStream inputStream, int maxSamples) throws IOException {
+        if (maxSamples < 0) {
+            throw new IllegalArgumentException("maxSamples must not be negative");
+        }
+        final Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
+        int sampleCount = 0;
         try {
             int i = getChar(inputStream);
             while (i != -1) {
                 if (i == '#' || i == '\n') {
                     skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
                 } else {
-                    StringBuilder stringBuilder = new StringBuilder();
+                    if (sampleCount >= maxSamples) {
+                        throw new SampleLimitExceededException(maxSamples);
+                    }
+                    final StringBuilder stringBuilder = new StringBuilder();
                     stringBuilder.append((char) i);
                     parseMetric(inputStream, metricFamilyMap, stringBuilder);
+                    sampleCount++;
                 }
                 i = getChar(inputStream);
                 // To address the `\n\r` scenario, it is necessary to skip
@@ -82,6 +103,16 @@ public class OnlineParser {
             return null;
         }
         return metricFamilyMap;
+    }
+
+    /**
+     * Signals that parsing stopped before materializing a sample beyond the configured limit.
+     */
+    public static final class SampleLimitExceededException extends IOException {
+
+        public SampleLimitExceededException(int limit) {
+            super("prometheus payload exceeds the " + limit + " sample limit");
+        }
     }
 
     /**

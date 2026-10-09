@@ -7,12 +7,12 @@ sidebar_label: NGQL Custom Monitoring
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JDBC(support mysql,mariadb,postgresql,sqlserver at present) to customize Metric monitoring.
 > NGQL custom monitoring allows us to easily query metric data from the NebulaGraph graph database using NGQL or OpenCypher, supporting NebulaGraph 3.X versions.
 
-### Data Parsing Methods
+## Data Parsing Methods
 
 Mapping the fields returned by NGQL queries to the metrics we need allows us to obtain corresponding metric data. Currently, there are four mapping and parsing methods: filterCount, oneRow, multiRow, columns.
 
-#### **filterCount**
-
+### **filterCount**
+>
 > Counts the number of results returned by a query based on specified fields, usually used in `SHOW ...` statements. If NGQL statements can directly return the count, it is recommended to use NGQL statements for counting.  
 > Syntax for the `commands` field: aliasField#NGQL#filterName#filterValue  
 > `aliasField`: corresponds to the value in the `aliasFields` in the monitoring template  

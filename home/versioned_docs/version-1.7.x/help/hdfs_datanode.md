@@ -5,7 +5,7 @@ sidebar_label: Apache HDFS DataNode
 keywords: [big data monitoring system, distributed file system monitoring, Apache HDFS DataNode monitoring]
 ---
 
-> Hertzbeat monitors metrics for Apache HDFS DataNode nodes.
+> HertzBeat monitors metrics for Apache HDFS DataNode nodes.
 
 **Protocol Used: HTTP**
 

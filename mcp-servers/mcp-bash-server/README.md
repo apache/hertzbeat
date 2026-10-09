@@ -18,11 +18,41 @@ Version `1.88.0` can absolutely work, and we recommend using the latest version 
 
 If you want to run this MCP server locally using the default settings provided by the project, simply run the following command in the project root directory:
 
-```Rust
+```shell
+export MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>"
+export MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com"
 cargo run
 ```
 
 This MCP server will be deployed at `http://127.0.0.1:4000/mcp`, and you can use the `modelcontextprotocol/inspector` tool to connect to and use this MCP server.
+
+Production mode requires `MCP_OAUTH_APPROVAL_SECRET`. The operator enters this
+secret on the OAuth approval page; it is separate from dynamically registered
+client credentials. Production also requires an explicit HTTPS
+`MCP_OAUTH_PUBLIC_BASE_URL`; OAuth metadata never derives public endpoints from
+the request `Host` header. Development mode generates a temporary approval
+secret and may derive a loopback HTTP URL from the local bind address.
+
+Dynamic registration supports public clients (`token_endpoint_auth_method:
+none`) and confidential clients (`client_secret_post`). Authorization requests
+must use PKCE S256. Authorization transactions and codes are one-time and
+short-lived; access tokens expire after one hour, and refresh tokens expire
+after one day and rotate on every use. A client that holds a refresh token
+remains registered for at least that token's full lifetime. Open client
+registration is limited to 16 successful registrations per minute for each
+TCP peer, so one source cannot consume every caller's admission window. The
+rate-limit source table is bounded. Deployments behind a reverse proxy can set
+`MCP_OAUTH_TRUSTED_PROXY_CIDRS` to a comma-separated list of the exact proxy
+networks. Only connections from those networks may supply `X-Forwarded-For`;
+untrusted peers cannot spoof the limiter identity, and `/0` networks are
+rejected. The proxy must overwrite or safely append that header. An unused
+registered client expires after one hour; expired clients are removed before
+the 1,024-client capacity check.
+When anonymous registrations fill the remaining capacity, the oldest client
+that has never received a refresh token is reclaimed; clients with live
+refresh credentials are not evicted. A client that receives `invalid_client`
+after an unused registration expires must dynamically register again. OAuth
+form and JSON bodies are limited to 16 KiB.
 
 For information on how to use the modelcontextprotocol/inspector tool, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 
@@ -47,23 +77,38 @@ docker build --build-arg HTTPS_PROXY=<your https_proxy> --build-arg HTTP_PROXY=<
 After building, use the following command to run it:
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
+  -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -e MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com" \
+  --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
-The MCP Server inside the container runs on 0.0.0.0:4000. On the host machine, use the inspector with URL `http://localhost:4000/mcp` to connect to the MCP Server inside the container.
+The MCP Server inside the container runs on 0.0.0.0:4000, while the example
+publishes it only on the host loopback interface. On the host machine, use the
+inspector with URL `http://localhost:4000/mcp` to connect to the MCP Server
+inside the container. Remote deployments must terminate TLS before forwarding
+OAuth endpoints to the container.
 
 #### Use custom config in container
 
 Container's workdir is `/app` and it will run the `/app/mcp-bash-server` when it start, this program will read the `config.toml` at the same directory, so you can put the `config.toml` in the `/app` directory to cover the default config in image. Use the command below to do it.
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 -v `pwd`/config.toml:/app/config.toml --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
+  -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -e MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com" \
+  -v `pwd`/config.toml:/app/config.toml \
+  --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
 If you are using SELinux, you may need to run the command instead to let the container access the file in host.
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 -v `pwd`/config.toml:/app/config.toml:Z --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
+  -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -e MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com" \
+  -v `pwd`/config.toml:/app/config.toml:Z \
+  --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
 To check if the config.toml is used, do this
@@ -98,14 +143,9 @@ Start the MCP Server in daemon mode, then add the settings to your Vscode Copilo
 }
 ```
 
-**Currently Vscode MCP OAuth can not automatically authorize this bash-server**
-The vscode mcp OAuth flow is:
-
-1. GET /.well-known/oauth-authorization-server
-2. GET /authorize with query-params
-3. ...
-
-But we requires the client registration before accessing endpoint `/authorize` with query-params that contains invalid client-id. So we can only set the token manually now.
+OAuth-capable MCP clients can discover the authorization metadata, dynamically
+register a public client, and complete the PKCE flow. A manually configured
+bearer token remains available for clients that do not implement MCP OAuth.
 
 ## Configuration
 
@@ -231,7 +271,8 @@ The method for using OAuth verification and connection is as follows:
 
 1. Click `Open Auth Settings`
 2. Click `Quick OAuth Flow`
-3. Click `Approve` on the pop-up webpage
+3. Enter the server operator's `MCP_OAUTH_APPROVAL_SECRET`, then click `Approve`
+   on the pop-up webpage
 4. Return to the MCP inspector, click on the Access Tokens under `Authentication Complete` in `OAuth Flow Progress`. Copy the `access_token` from there
 5. Click `Authentication`, paste the previously copied token into the `Bearer Token` field, then click Connect
 

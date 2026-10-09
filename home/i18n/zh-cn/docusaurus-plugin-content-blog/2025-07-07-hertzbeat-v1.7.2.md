@@ -3,8 +3,10 @@ title: Apache HertzBeat™ 1.7.2 发布公告
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+tags: [releases]
+description: Apache HertzBeat 1.7.2 新增多家云平台告警源、更多服务发现方式、Ollama 与 OpenRouter 支持，以及 macOS 监控。
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
+cover_headline: Apache HertzBeat 1.7.2
 ---
 
 亲爱的社区小伙伴们，
@@ -166,7 +168,7 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 * [release] release new version 1.7.2 by @tomsun28 in https://github.com/apache/hertzbeat/pull/3510
 ```
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **仓库地址：**
 

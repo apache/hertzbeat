@@ -63,6 +63,13 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     private static final String PREVIEW_QUERY_EXECUTION_FAILED = "Preview query execution failed";
 
+    /**
+     * The policy for an alert expression is read only within the configured database. Metric
+     * tables are created per metric on demand, so an exact table whitelist would reject every
+     * legitimate metric query.
+     */
+    private static final SqlSecurityValidator EXPRESSION_SQL_VALIDATOR = SqlSecurityValidator.selectOnly();
+
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Setter
@@ -99,6 +106,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
+        AlertQueryBudgetExecutor.validateInput(expr);
         if (executors == null || executors.isEmpty()) {
             throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
         }
@@ -110,7 +118,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
         try {
-            return evaluate(expr, executor, strict);
+            return evaluate(expr, guardSql(new AlertQueryBudgetExecutor(executor), EXPRESSION_SQL_VALIDATOR), strict);
         } catch (AlertExpressionException ae) {
             if (strict) {
                 log.warn("Alert preview calculation rejected for datasource {}", datasource);
@@ -147,6 +155,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
+        AlertQueryBudgetExecutor.validateInput(expr);
         if (executors == null || executors.isEmpty()) {
             throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
         }
@@ -164,8 +173,12 @@ public class DataSourceServiceImpl implements DataSourceService {
         }
 
         try {
+            QueryExecutor guardedExecutor = guardSql(new AlertQueryBudgetExecutor(executor), sqlSecurityValidator(alertType));
             String executableExpression = strict && isSqlDatasource(datasource) ? limitPreviewSql(expr) : expr;
-            return strict ? executor.executePreview(executableExpression) : executor.execute(executableExpression);
+            return strict ? guardedExecutor.executePreview(executableExpression) : guardedExecutor.execute(executableExpression);
+        } catch (AlertExpressionException ae) {
+            // A statement the policy rejected, whose message names the part it broke.
+            throw ae;
         } catch (Exception e) {
             if (strict) {
                 log.warn("Alert preview query execution failed for datasource {}", datasource);
@@ -186,7 +199,16 @@ public class DataSourceServiceImpl implements DataSourceService {
     }
 
     /**
-     * Check if the datasource is SQL-based
+     * Wraps an executor that speaks sql so that nothing runs on it unvalidated.
+     *
+     * <p>The decision is made from the executor rather than from the datasource string the
+     * caller passed, because the executor is what actually holds the database credentials.
+     * A datasource that does not speak sql is handed back untouched: a promql endpoint takes
+     * a query string, not a statement, and running it through a sql parser would only reject
+     * valid promql.
+     * @param executor Executor chosen for this datasource
+     * @param validator Policy to enforce, read only for expressions and whitelisting for raw log queries
+     * @return The executor, guarded when it speaks sql
      */
     private boolean isSqlDatasource(String datasource) {
         return datasource != null && datasource.equalsIgnoreCase(WarehouseConstants.SQL);
@@ -202,6 +224,13 @@ public class DataSourceServiceImpl implements DataSourceService {
             log.warn("SQL security validation failed: {}", e.getMessage());
             throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
         }
+    }
+
+    private QueryExecutor guardSql(QueryExecutor executor, SqlSecurityValidator validator) {
+        if (!executor.support(WarehouseConstants.SQL)) {
+            return executor;
+        }
+        return new SqlValidatingQueryExecutor(executor, validator);
     }
 
     private SqlSecurityValidator sqlSecurityValidator(String alertType) {

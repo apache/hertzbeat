@@ -23,8 +23,8 @@ limitations under the License.
 
 > We are committed to maintaining a happy community that helps each other, welcome every contributor to join us!
 
-### Kinds of Contributions
-
+## Kinds of Contributions
+>
 > In the HertzBeat community, there are many ways to contribute:
 
 - 💻**Code**: Can help the community complete some tasks, write new features or fix some bugs;

@@ -54,7 +54,7 @@ const smsOptionsSchema = z
 const smsConfigSchema = z
   .object({
     enable: z.boolean(),
-    type: z.enum(['tencent', 'alibaba', 'unisms', 'smslocal', 'aws', 'twilio']),
+    type: z.enum(['tencent', 'alibaba', 'smslocal', 'aws', 'twilio']),
     options: smsOptionsSchema,
     configuredSecrets: z
       .array(z.enum(smsSecrets))

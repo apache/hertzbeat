@@ -17,8 +17,18 @@
 
 package org.apache.hertzbeat.collector.timer;
 
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
+import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
+import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.timer.Timeout;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -26,6 +36,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**
@@ -127,7 +140,7 @@ public class TimerDispatcherTest {
         long interval = 600L; // 10 minutes in seconds
         long spendTime = 300000L; // 5 minutes in milliseconds
         long dispatchTime = System.currentTimeMillis() - spendTime;
-        
+
         when(job.getScheduleType()).thenReturn(ScheduleTypeEnum.INTERVAL.getType());
         when(job.getDispatchTime()).thenReturn(dispatchTime);
         when(job.getInterval()).thenReturn(interval);
@@ -150,7 +163,7 @@ public class TimerDispatcherTest {
         long interval = 600L; // 10 minutes in seconds
         long spendTime = 1200000L; // 20 minutes in milliseconds (more than interval)
         long dispatchTime = System.currentTimeMillis() - spendTime;
-        
+
         when(job.getScheduleType()).thenReturn(ScheduleTypeEnum.INTERVAL.getType());
         when(job.getDispatchTime()).thenReturn(dispatchTime);
         when(job.getInterval()).thenReturn(interval);
@@ -178,5 +191,151 @@ public class TimerDispatcherTest {
 
         // Verify - Should fall back to interval value
         assertEquals(180L, result);
+    }
+
+    @Test
+    void testAddCyclicJobCancelsPreviousTimeoutForSameJob() {
+        Job firstJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(firstJob, null);
+
+        Timeout firstTimeout = currentCyclicTaskMap().get(1L);
+
+        Job updatedJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(updatedJob, null);
+
+        Timeout updatedTimeout = currentCyclicTaskMap().get(1L);
+        assertNotSame(firstTimeout, updatedTimeout);
+        assertTrue(firstTimeout.isCancelled());
+        assertFalse(updatedTimeout.isCancelled());
+    }
+
+    @Test
+    void testAddTemporaryJobCancelsPreviousTimeoutForSameJob() {
+        Job firstJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(false)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(firstJob, new CollectResponseEventListener() {
+        });
+
+        Timeout firstTimeout = currentTempTaskMap().get(1L);
+
+        Job updatedJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(false)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(updatedJob, new CollectResponseEventListener() {
+        });
+
+        Timeout updatedTimeout = currentTempTaskMap().get(1L);
+        assertNotSame(firstTimeout, updatedTimeout);
+        assertTrue(firstTimeout.isCancelled());
+        assertFalse(updatedTimeout.isCancelled());
+    }
+
+    @Test
+    void testCyclicJobCancelsPreviousTimeoutForSameJob() {
+        Job job = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(job, null);
+        Timeout t0 = currentCyclicTaskMap().get(1L);
+
+        WheelTimerTask timerTask = new WheelTimerTask(job, (MetricsTaskDispatch) timeout -> {
+        });
+
+        timerDispatcher.cyclicJob(timerTask, 60L, TimeUnit.SECONDS);
+        Timeout t1 = currentCyclicTaskMap().get(1L);
+
+        timerDispatcher.cyclicJob(timerTask, 60L, TimeUnit.SECONDS);
+        Timeout t2 = currentCyclicTaskMap().get(1L);
+
+        assertNotSame(t0, t1);
+        assertNotSame(t1, t2);
+        assertFalse(t2.isCancelled());
+
+        assertTrue(t0.isCancelled(), "T0 orphaned: overwritten by cyclicJob but never cancelled");
+        assertTrue(t1.isCancelled(), "T1 orphaned: overwritten by cyclicJob but never cancelled");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, Timeout> currentCyclicTaskMap() {
+        try {
+            Field field = TimerDispatcher.class.getDeclaredField("currentCyclicTaskMap");
+            field.setAccessible(true);
+            return (Map<Long, Timeout>) field.get(timerDispatcher);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, Timeout> currentTempTaskMap() {
+        try {
+            Field field = TimerDispatcher.class.getDeclaredField("currentTempTaskMap");
+            field.setAccessible(true);
+            return (Map<Long, Timeout>) field.get(timerDispatcher);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Test
+    void testFirstCyclicDelayJittersWithinInterval() {
+        when(job.isCyclic()).thenReturn(true);
+        when(job.getScheduleType()).thenReturn(null);
+        when(job.getDispatchTime()).thenReturn(0L);
+        when(job.getInterval()).thenReturn(600L);
+        when(job.getId()).thenReturn(4242L);
+
+        Set<Long> delays = new HashSet<>();
+        for (int i = 0; i < 50; i++) {
+            long delay = timerDispatcher.initialCyclicDelay(job);
+            assertTrue(delay >= 1 && delay <= 600, "delay out of interval: " + delay);
+            delays.add(delay);
+        }
+        assertTrue(delays.size() > 1, "no jitter observed across 50 samples");
+    }
+
+    @Test
+    void testExecutedJobKeepsRemainingIntervalOnReAdd() {
+        when(job.getScheduleType()).thenReturn(null);
+        when(job.getDispatchTime()).thenReturn(System.currentTimeMillis() - 10_000L);
+        when(job.getInterval()).thenReturn(600L);
+
+        long expected = timerDispatcher.getNextExecutionInterval(job);
+        long actual = timerDispatcher.initialCyclicDelay(job);
+        assertTrue(Math.abs(actual - expected) <= 1, "remaining interval must not be jittered");
+    }
+
+    @Test
+    void testCronScheduleKeepsFixedPhase() {
+        when(job.getScheduleType()).thenReturn(ScheduleTypeEnum.CRON.getType());
+        when(job.getCronExpression()).thenReturn("0 0 3 * * ?");
+        long expected = timerDispatcher.getNextExecutionInterval(job);
+        long actual = timerDispatcher.initialCyclicDelay(job);
+        assertTrue(Math.abs(actual - expected) <= 1, "cron phase must not be jittered");
     }
 }

@@ -7,7 +7,7 @@ keywords: [开源监控系统, 开源中间件监控, DynamicTp线程池监控]
 
 > 对DynamicTp actuator 暴露的线程池性能指标进行采集监控。
 
-### 前提
+## 前提
 
 1. 集成使用 `DynamicTp`
 

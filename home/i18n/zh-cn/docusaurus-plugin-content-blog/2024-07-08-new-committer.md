@@ -3,13 +3,16 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [community]
+description: zhangshenghang 回顾从补充 HBase 和大数据监控，到参与代码审查、技术讨论并帮助社区贡献者成长的经历。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome zhangshenghang
+cover_kicker: New Committer
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)
 
-### 初识 Apache Hertzbeat
+## 初识 Apache HertzBeat
 
 我第一次接触 Apache HertzBeat™ 项目是因为一个偶然的机会。当时，我正在寻找一个开源项目来监控我们公司相关服务。Apache HertzBeat™ 作为一个通用监控的项目，自然进入了我的视野。我开始通过阅读官方文档和浏览项目的代码库，来了解它的架构和功能。
 

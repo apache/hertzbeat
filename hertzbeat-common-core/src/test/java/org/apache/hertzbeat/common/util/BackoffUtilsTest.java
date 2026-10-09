@@ -40,6 +40,7 @@ class BackoffUtilsTest {
         ExponentialBackoff backoff = new ExponentialBackoff(10L, 100L);
         boolean shouldContinue = BackoffUtils.shouldContinueAfterBackoff(backoff);
         assertFalse(shouldContinue);
+        assertTrue(Thread.interrupted());
     }
 
     @Test
@@ -60,9 +61,14 @@ class BackoffUtilsTest {
 
         boolean shouldContinue = BackoffUtils.shouldContinueAfterBackoff(backoff);
 
+        // read and clear the restored interrupt status before join(),
+        // otherwise join() throws InterruptedException when the
+        // interrupting thread is still alive at this point
+        boolean interrupted = Thread.interrupted();
+
         interruptingThread.join();
 
         assertFalse(shouldContinue);
-        assertTrue(Thread.currentThread().isInterrupted());
+        assertTrue(interrupted);
     }
 }

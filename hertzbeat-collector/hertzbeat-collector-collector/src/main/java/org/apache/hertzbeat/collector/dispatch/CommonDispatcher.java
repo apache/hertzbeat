@@ -114,7 +114,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void start() {
         try {
             // Pull the collection task from the task queue and put it into the thread pool for execution
-            workerPool.executeJob(() -> {
+            workerPool.executeLongRunning(() -> {
                 Thread.currentThread().setName("metrics-task-dispatcher");
                 while (!Thread.currentThread().isInterrupted()) {
                     MetricsCollect metricsCollect = null;
@@ -175,6 +175,9 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
                             .setApp(job.getApp())
+                            .setLabels(job.getLabels())
+                            .setAnnotations(job.getAnnotations())
+                            .addMetadataAll(job.getMetadata())
                             .setMetrics(metricsTime.getMetrics().getName())
                             .setPriority(metricsTime.getMetrics().getPriority())
                             .setTime(System.currentTimeMillis())
@@ -185,7 +188,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     CollectRep.MetricsData metricsData = metricsDataBuilder.build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
                     if (metricsData.getPriority() == 0) {
+                        // dispatchCollectData removes the map entry as a once-wins gate;
+                        // cancel afterwards so cyclicJob() inside it still fires normally.
                         dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                        metricsTime.getTimeout().cancel();
+                    } else {
+                        // the entry is already removed above; cancel the in-flight collect so a
+                        // late result does not produce a duplicate dispatch.
+                        metricsTime.getTimeout().cancel();
                     }
                 }
             }
@@ -223,16 +233,28 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         String monitorKey;
         if (metrics.isHasSubTask()) {
             monitorKey = job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId();
+        } else if (metrics.getPrometheus() != null) {
+            monitorKey = String.valueOf(job.getId());
         } else {
             monitorKey = job.getId() + "-" + metrics.getName();
         }
         MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
 
-        // job completed metrics
         if (metricsTime != null && metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
-            String status = metricsData.getCode() == CollectRep.Code.SUCCESS ? "success" : "fail";
+            String status;
+            if (metricsData.getCode() == CollectRep.Code.SUCCESS) {
+                status = "success";
+            } else if (metricsData.getCode() == CollectRep.Code.TIMEOUT) {
+                status = "timeout";
+            } else {
+                status = "fail";
+            }
             metricsCollector.recordCollectMetrics(job, duration, status);
+        }
+        // if the entry was already removed by the timeout monitor, skip the duplicate result.
+        if (metricsTime == null && !metrics.isHasSubTask() && metrics.getPrometheus() == null) {
+            return;
         }
         if (metrics.isHasSubTask()) {
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);

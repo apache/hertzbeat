@@ -864,6 +864,51 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(0, result.get(0).get("__value__"));
     }
 
+    @Test
+    void testSqlCallRunsPlainRead() {
+        when(mockExecutor.execute("select value from cpu where host = 'server1'"))
+                .thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+
+        final List<Map<String, Object>> result =
+                evaluate("sql(\"select value from cpu where host = 'server1'\") > 70");
+
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+    }
+
+    /**
+     * Subqueries and nested aggregation are supported in alert expressions, and with every
+     * metric table already readable, rejecting them would cost features without denying an
+     * attacker anything. The policy stops at read only on purpose.
+     */
+    @Test
+    void testSqlCallKeepsSubqueriesWorking() {
+        final String sql = "select value from cpu where host = (select host from hosts limit 1)";
+        when(mockExecutor.execute(sql)).thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+
+        final List<Map<String, Object>> result = evaluate("sql(\"" + sql + "\") > 70");
+
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+    }
+
+    /**
+     * The visitor hands both spellings to the executor as written. Whether a statement is
+     * allowed to run is decided by the executor it lands on, see
+     * {@code DataSourceServiceTest}, so promql keeps working for text that is not valid sql
+     * at all.
+     */
+    @Test
+    void testBothCallSpellingsReachTheExecutorAsWritten() {
+        when(mockExecutor.execute("rate(http_requests_total[5m])"))
+                .thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+
+        final List<Map<String, Object>> result = evaluate("promql(\"rate(http_requests_total[5m])\") > 70");
+
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+    }
+
     private List<Map<String, Object>> evaluate(String expression) {
         AlertExpressionLexer lexer = new AlertExpressionLexer(CharStreams.fromString(expression));
         CommonTokenStream tokens = new CommonTokenStream(lexer);

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,18 @@ public interface AlertService {
      */
     Page<SingleAlert> getSingleAlerts(String workspaceId, String status, String search, String sort, String order,
                                       int pageIndex, int pageSize);
+
+    /**
+     * export single alerts matching the filters to an Excel sheet
+     * @param workspaceId workspace
+     * @param status   status
+     * @param search   search
+     * @param sort     sort
+     * @param order    order
+     * @param response servlet response the Excel sheet is written to
+     */
+    void exportSingleAlerts(String workspaceId, String status, String search, String sort, String order,
+                            HttpServletResponse response);
 
     /**
      * Dynamic conditional query

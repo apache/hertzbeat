@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source java spark monitoring tool, 
 
 **Protocol Use：JMX**
 
-### Spark App Enable JMX Protocol
+## Spark App Enable JMX Protocol
 
 1. Add Spark `VM options` When Start Server ⚠️ customIP
 

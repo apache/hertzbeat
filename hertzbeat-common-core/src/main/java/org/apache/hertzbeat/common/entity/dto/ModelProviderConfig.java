@@ -50,4 +50,7 @@ public class ModelProviderConfig {
     @Schema(title = "API Key", description = "API key", example = "sk-...")
     @ToString.Exclude
     private String apiKey;
+
+    @Schema(title = "Participation Model", description = "model for participation", example = "PROTECTED")
+    private String participationModel;
 }

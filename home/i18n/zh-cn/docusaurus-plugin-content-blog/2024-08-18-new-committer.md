@@ -3,8 +3,11 @@ title: 成为 Apache Committer, 对我参与开源的肯定
 author: yuluo-yx
 author_title: Shown Ji
 author_url: https://github.com/yuluo-yx
-tags: [opensource, practice]
-keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
+tags: [community]
+description: Shown Ji 回顾通过单元测试和代码修复成为 HertzBeat Committer 的历程，并分享帮助更多开发者参与开源的思考。
+keywords: [open source monitoring system, alerting system, Apache, Apache Committer, HertzBeat]
+cover_headline: Welcome yuluo-yx
+cover_kicker: New Committer
 ---
 
 ## 我的开源历程
@@ -29,11 +32,11 @@ Apache 软件基金会起初是由开发 [Apache HTTPd](https://httpd.apache.org
 
 ### 第一次贡献
 
-在 Apache 社区中的第一次贡献应该是给 Dubbo 项目删除了一个 `{@link}` 代码链接。说来惭愧，[Dubbo](https://github.com/apache/dubbo) 是我参与 Apache 的第一个开源项目，到现在为止仅有 6 个提交。5 月份的时候通过 [Rick](https://github.com/LinuxSuRen) 接触到了 [Apache Hertzbeat](https://github.com/apache/hertzbeat) 项目，从单元测试开始了我的 Apache 贡献之路。
+在 Apache 社区中的第一次贡献应该是给 Dubbo 项目删除了一个 `{@link}` 代码链接。说来惭愧，[Dubbo](https://github.com/apache/dubbo) 是我参与 Apache 的第一个开源项目，到现在为止仅有 6 个提交。5 月份的时候通过 [Rick](https://github.com/LinuxSuRen) 接触到了 [Apache HertzBeat](https://github.com/apache/hertzbeat) 项目，从单元测试开始了我的 Apache 贡献之路。
 
 ### 获得提名，成为 Committer
 
-此次提名是 Apache Hertzbeat 的 PPMC Member [Logic](https://github.com/zqr10159) 举荐的，感谢 Apache HertzBeat™ Team。顺利提名成为了 Hertzbeat Committer，有了自己的 Apache 邮箱。
+此次提名是 Apache HertzBeat 的 PPMC Member [Logic](https://github.com/zqr10159) 举荐的，感谢 Apache HertzBeat™ Team。顺利提名成为了 HertzBeat Committer，有了自己的 Apache 邮箱。
 
 ![Apache ID Email](/img/blog/committer/yuluo-yx/3.jpg)
 
@@ -92,4 +95,4 @@ Apache Community 奉行的 [The Apache Way](https://www.apache.org/theapacheway/
 ## 随想
 
 写下此文，是为了纪念成为 Apache HertzBeat™ Committer 这个特殊的事情, 同时也是对我之后参与开源的激励。
-保持热情，保持 Coding。感谢在参与开源的时候给与我帮助的各位。也祝 Hertzbeat 顺利孵化毕业，成为 Apache 顶级项目！🎉
+保持热情，保持 Coding。感谢在参与开源的时候给与我帮助的各位。也祝 HertzBeat 顺利孵化毕业，成为 Apache 顶级项目！🎉

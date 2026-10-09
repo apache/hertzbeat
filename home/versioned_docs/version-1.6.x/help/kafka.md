@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source apache kafka monitoring tool
 
 **Protocol Use：JMX**
 
-### Kafka Enable JMX Protocol
+## Kafka Enable JMX Protocol
 
 1. Install Kafka
 

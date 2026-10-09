@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source alerter, open source webhook
 
 > After the threshold is triggered send alarm information and call the Webhook interface through post request to notify the recipient.
 
-### Operation steps
+## Operation steps
 
 1. **【Alarm notification】->【Add new recipient】 ->【Select WebHook notification method】-> 【Set WebHook callback address】 -> 【Confirm】**
 

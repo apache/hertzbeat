@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source network monitoring tool, mon
 
 > Ping the opposite end HOST address and judge its connectivity.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
