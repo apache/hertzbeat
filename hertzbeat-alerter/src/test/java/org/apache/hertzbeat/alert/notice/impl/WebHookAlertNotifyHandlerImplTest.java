@@ -24,6 +24,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -45,6 +47,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.net.URI;
@@ -58,10 +61,16 @@ class WebHookAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
+
+    @Mock
+    private RestTemplate notificationRestTemplate;
+
+    @Mock
+    private AlerterProperties alerterProperties;
+
     @Mock
     private ResourceBundle bundle;
-    
+
     @InjectMocks
     private WebHookAlertNotifyHandlerImpl webHookAlertNotifyHandler;
 
@@ -75,32 +84,42 @@ class WebHookAlertNotifyHandlerImplTest {
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setHookUrl("http://test.webhook.url");
-        
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
+
         lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        // Allowlist the hosts used by the success tests so they stay deterministic
+        // (no real DNS resolution, no dependence on the CI network)
+        lenient().when(alerterProperties.getInternalUrlAllowlist())
+                .thenReturn(Arrays.asList(
+                        "test.webhook.url",
+                        "prod-12.chinaeast2.logic.azure.cn",
+                        "example.environment.api.powerplatform.com",
+                        "hooks.slack.com",
+                        "discord.com",
+                        "example.com"));
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<String> responseEntity = 
+        ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
-        
+
+        when(notificationRestTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
+
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
@@ -109,7 +128,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
                 new ResponseEntity<>("null", HttpStatus.INTERNAL_SERVER_ERROR);
 
-        when(restTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
+        when(notificationRestTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
 
 
         assertThrows(AlertNoticeException.class,
@@ -123,7 +142,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
 
-        when(restTemplate.postForEntity(eq(URI.create(receiver.getHookUrl())), any(), eq(String.class))).thenReturn(responseEntity);
+        when(notificationRestTemplate.postForEntity(eq(URI.create(receiver.getHookUrl())), any(), eq(String.class))).thenReturn(responseEntity);
 
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
@@ -137,7 +156,7 @@ class WebHookAlertNotifyHandlerImplTest {
         RestTemplate realRestTemplate = new RestTemplate();
         MockRestServiceServer mockServer = MockRestServiceServer.createServer(realRestTemplate);
         mockServer.expect(requestTo(hookUrl)).andRespond(withSuccess());
-        ReflectionTestUtils.setField(webHookAlertNotifyHandler, "restTemplate", realRestTemplate);
+        ReflectionTestUtils.setField(webHookAlertNotifyHandler, "notificationRestTemplate", realRestTemplate);
 
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
 
@@ -167,7 +186,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
 
-        when(restTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
+        when(notificationRestTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
 
         // Test various valid URLs that should work
         receiver.setHookUrl("https://hooks.slack.com/services/T123/B456/complete-token");
@@ -192,12 +211,36 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
 
-        when(restTemplate.postForEntity(eq(URI.create(receiver.getHookUrl())), any(), eq(String.class))).thenReturn(responseEntity);
+        when(notificationRestTemplate.postForEntity(eq(URI.create(receiver.getHookUrl())), any(), eq(String.class))).thenReturn(responseEntity);
 
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
 
         // Verify the URL is longer than the old 300 char limit
-        assertTrue(receiver.getHookUrl().length() > 300, 
+        assertTrue(receiver.getHookUrl().length() > 300,
             "URL should be longer than old 300 char limit to test the field length increase");
+    }
+
+    @Test
+    public void testNotifyAlertRejectsInternalAddressWithoutAllowlist() {
+        // localhost is not in the allowlist here -> rejected before any HTTP call
+        when(alerterProperties.getInternalUrlAllowlist()).thenReturn(Collections.emptyList());
+        receiver.setHookUrl("http://localhost:8080/webhook");
+
+        assertThrows(AlertNoticeException.class,
+                () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertAllowsInternalAddressViaAllowlist() {
+        // Administrator explicitly allows the internal notification endpoint
+        when(alerterProperties.getInternalUrlAllowlist())
+                .thenReturn(Collections.singletonList("localhost"));
+        receiver.setHookUrl("http://localhost:8080/webhook");
+
+        ResponseEntity<String> responseEntity =
+            new ResponseEntity<>("null", HttpStatus.OK);
+        when(notificationRestTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
+
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 }

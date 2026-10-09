@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Resource;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +26,14 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Gotify alert notify handler
@@ -39,6 +42,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl{
+
+    /**
+     * RestTemplate that never follows redirects: URL validation only covers the
+     * initial request, so following redirects could bypass the SSRF guard.
+     */
+    @Resource(name = "notificationRestTemplate")
+    private RestTemplate notificationRestTemplate;
 
     /**
      * Send alarm notification
@@ -63,7 +73,16 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<GotifyWebHookDto> httpEntity = new HttpEntity<>(gotifyWebHookDto, headers);
             String webHookUrl = String.format(alerterProperties.getGotifyWebhookUrl(), receiver.getGotifyToken());
-            ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
+
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses,
+            // unless the host is explicitly allowlisted by the administrator
+            try {
+                InternalUrlValidator.validate(webHookUrl, alerterProperties.getInternalUrlAllowlist());
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Gotify webhook URL rejected: " + e.getMessage());
+            }
+
+            ResponseEntity<CommonRobotNotifyResp> responseEntity = notificationRestTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
                 log.debug("Send Gotify webHook: {} Success", webHookUrl);
