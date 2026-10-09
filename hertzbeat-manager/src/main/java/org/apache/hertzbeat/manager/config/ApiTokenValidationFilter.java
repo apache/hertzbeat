@@ -19,15 +19,20 @@ package org.apache.hertzbeat.manager.config;
 
 import com.usthe.sureness.subject.PrincipalMap;
 import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.SurenessContextHolder;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +43,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.AccountService;
+import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -67,6 +73,8 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     private static final String ROLES_CLAIM = "roles";
     private static final String TOKEN_VALIDATION_UNAVAILABLE = "Token validation unavailable";
     private static final String WORKSPACE_ACCESS_DENIED = "Workspace access denied";
+    private static final String TOKEN_NOT_RESOLVED = "Token could not be resolved";
+    private static final String TOKEN_PARAM = "token";
 
     private final AccountService accountService;
 
@@ -85,43 +93,69 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
             return bindAuthorizedWorkspace(request, authenticatedWorkspaceId)
                     || writeWorkspaceError(response);
         }
-        String authorization = request.getHeader(NetworkConstants.AUTHORIZATION);
-
-        if (authorization != null && authorization.startsWith(DispatchConstants.BEARER)) {
-            String token = authorization.substring(DispatchConstants.BEARER.length()).trim();
-            if (!token.isEmpty()) {
-                try {
-                    String rejectReason = checkManagedToken(
-                            subject,
-                            token,
-                            resolveRequiredScope(request),
-                            authenticatedWorkspaceId);
-                    if (rejectReason != null) {
-                        return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
-                    }
-                    if (!bindAuthorizedWorkspace(request, authenticatedWorkspaceId)) {
-                        return writeWorkspaceError(response);
-                    }
-                    rejectReason = bindManagedCollectorBoundary(request, subject);
-                    if (rejectReason != null) {
-                        return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
-                    }
-                    touchTokenLastUsedTime(token);
-                } catch (RuntimeException e) {
-                    log.warn("Managed token validation failed ({})", e.getClass().getSimpleName());
-                    return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
+        // Sureness reads a jwt from the Authorization header and from the token query parameter,
+        // so every managed token the request carries is validated, and a managed subject whose
+        // token cannot be found is rejected rather than let through unchecked
+        List<String> managedTokens = resolveManagedTokens(request);
+        if (managedTokens.isEmpty()) {
+            return writeError(response, HttpStatus.UNAUTHORIZED, TOKEN_NOT_RESOLVED);
+        }
+        try {
+            for (String token : managedTokens) {
+                String rejectReason = checkManagedToken(
+                        subject, token, resolveRequiredScope(request), authenticatedWorkspaceId);
+                if (rejectReason != null) {
+                    return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
                 }
             }
+        } catch (RuntimeException e) {
+            log.warn("Managed token validation failed", e);
+            return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
         }
-
-        return bindAuthorizedWorkspace(request, authenticatedWorkspaceId)
-                || writeWorkspaceError(response);
+        if (!bindAuthorizedWorkspace(request, authenticatedWorkspaceId)) {
+            return writeWorkspaceError(response);
+        }
+        String rejectReason = bindManagedCollectorBoundary(request, subject);
+        if (rejectReason != null) {
+            return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
+        }
+        managedTokens.forEach(this::touchTokenLastUsedTime);
+        return true;
     }
 
     @Override
     public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
                                 @NonNull Object handler, Exception ex) {
         AuthTokenRequestContext.clear();
+    }
+
+    private List<String> resolveManagedTokens(HttpServletRequest request) {
+        Set<String> candidates = new LinkedHashSet<>(2);
+        String authorization = request.getHeader(NetworkConstants.AUTHORIZATION);
+        if (authorization != null && authorization.startsWith(DispatchConstants.BEARER)) {
+            // mirror Sureness JwtSubjectJakartaServletCreator exactly, so the validated token is the one it authenticated
+            candidates.add(authorization.replace(DispatchConstants.BEARER, "").trim());
+        }
+        String queryToken = request.getParameter(TOKEN_PARAM);
+        if (queryToken != null) {
+            candidates.add(queryToken.trim());
+        }
+        List<String> managedTokens = new ArrayList<>(candidates.size());
+        for (String candidate : candidates) {
+            if (!candidate.isEmpty() && isManagedJwt(candidate)) {
+                managedTokens.add(candidate);
+            }
+        }
+        return managedTokens;
+    }
+
+    private boolean isManagedJwt(String token) {
+        try {
+            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            return Boolean.TRUE.equals(claims.get(AccountServiceImpl.CLAIM_MANAGED, Boolean.class));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
