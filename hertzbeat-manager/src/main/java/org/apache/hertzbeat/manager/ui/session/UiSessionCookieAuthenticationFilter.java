@@ -71,7 +71,11 @@ public class UiSessionCookieAuthenticationFilter extends OncePerRequestFilter {
         }
         UiSessionView session = service.inspect(accessToken);
         if (!session.authenticated()) {
-            cookies.clear(request, response);
+            if (service.canRecoverExpiredAccess(accessToken)) {
+                cookies.clearAccess(request, response);
+            } else {
+                cookies.clear(request, response);
+            }
             chain.doFilter(request, response);
             return;
         }

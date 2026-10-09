@@ -31,7 +31,7 @@
 .identity {
   display: flex;
   flex: none;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   white-space: nowrap;
 }

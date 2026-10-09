@@ -300,7 +300,8 @@ public class OtlpEntityIdentityResolver {
         int topScore = 0;
         List<Long> topEntityIds = new ArrayList<>();
         for (Map.Entry<Long, EntityIdentityMatch> entry : scores.entrySet()) {
-            if (!entities.containsKey(entry.getKey())) {
+            ObserveEntity entity = entities.get(entry.getKey());
+            if (entity == null || !matchesServiceIdentity(entity, entry.getValue(), normalizedIdentities)) {
                 continue;
             }
             int score = entry.getValue().canonicalIdentityScore();
@@ -322,6 +323,27 @@ public class OtlpEntityIdentityResolver {
             return EntityResolution.ambiguous();
         }
         return EntityResolution.resolved(entities.get(topEntityIds.getFirst()));
+    }
+
+    private boolean matchesServiceIdentity(ObserveEntity entity, EntityIdentityMatch match,
+                                           Map<String, String> normalizedIdentities) {
+        if (!"service".equals(entity.getType())) {
+            return true;
+        }
+        Set<String> matchedKeys = match.matchedIdentityKeys;
+        if (!matchedKeys.contains("service.name") && (!matchedKeys.contains("service.instance.id")
+                || normalizedIdentities.containsKey("service.name"))) {
+            return false;
+        }
+        return !contradictsServiceScope("service.namespace", entity.getNamespace(), matchedKeys, normalizedIdentities)
+                && !contradictsServiceScope("deployment.environment.name", entity.getEnvironment(), matchedKeys, normalizedIdentities);
+    }
+
+    private boolean contradictsServiceScope(String key, String registeredValue, Set<String> matchedKeys,
+                                             Map<String, String> normalizedIdentities) {
+        String suppliedValue = normalizedIdentities.get(key);
+        return suppliedValue != null && StringUtils.isNotBlank(registeredValue) && !matchedKeys.contains(key)
+                && !suppliedValue.equals(normalizeIdentityValue(registeredValue));
     }
 
     private EntityResolution mergeSubmittedEntityHint(ResourceCandidate candidate,

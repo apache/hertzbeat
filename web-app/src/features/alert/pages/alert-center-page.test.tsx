@@ -51,7 +51,10 @@ const download = vi.hoisted(() => ({ save: vi.fn() }));
 const alertApi = vi.hoisted(() => ({ loadGroups: vi.fn() }));
 
 vi.mock('../controller/use-alert-center-controller', () => ({ useAlertCenterController: () => controller }));
-vi.mock('@/shared/browser-download', () => ({ saveBrowserDownload: download.save }));
+vi.mock('@/shared/browser-download', async () => ({
+  ...(await vi.importActual<typeof import('@/shared/browser-download')>('@/shared/browser-download')),
+  saveBrowserDownload: download.save
+}));
 vi.mock('../api/alert-api', () => ({ loadAlertGroups: alertApi.loadGroups }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -279,7 +282,7 @@ describe('AlertCenterPage', () => {
       const link = screen.getByRole('link', { name: `explore.signals.${signal}` });
       expect(link).toHaveAttribute(
         'href',
-        `/explore?signal=${signal}&timeRange=last-30m&start=1784249160000&end=1784250960000` +
+        `/explore?signal=${signal}&timeRange=last-30m${signal === 'logs' ? '&searchSyntax=structured-v1' : ''}&start=1784249160000&end=1784250960000` +
           '&serviceName=checkout-api&serviceNamespace=commerce&environment=prod'
       );
     }

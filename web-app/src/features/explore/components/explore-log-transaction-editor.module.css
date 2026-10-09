@@ -1,0 +1,76 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.calculatedEditor {
+  display: grid;
+  gap: var(--hb-space-4);
+}
+.calculatedEditor label {
+  display: grid;
+  gap: var(--hb-space-1);
+}
+.extractionPatternRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  align-items: end;
+  gap: var(--hb-space-2);
+}
+.logContext pre {
+  max-height: 160px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.calculatedActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+}
+.expressionEditor {
+  min-height: 72px;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  padding: var(--hb-space-2);
+}
+.expressionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--hb-space-1);
+}
+.functionPicker {
+  width: min(540px, 80vw);
+  display: grid;
+  gap: var(--hb-space-2);
+}
+.functionBody {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 1fr);
+  gap: var(--hb-space-3);
+}
+.functionMenu {
+  max-height: 260px;
+  overflow: auto;
+}
+.functionDetail {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.functionDetail p {
+  margin: var(--hb-space-2) 0;
+}
+.extractionPreview {
+  margin: var(--hb-space-2) 0 0;
+}
+.extractionPreview > div {
+  display: flex;
+  gap: var(--hb-space-3);
+}
+.extractionPreview dt {
+  min-width: 8rem;
+}
+.extractionPreview dd {
+  margin: 0;
+}
+.extractionPreview dd small {
+  margin-inline-start: var(--hb-space-2);
+  color: var(--hb-text-muted);
+}

@@ -6,7 +6,10 @@
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { applicationRoutePaths, buildMonitorCreatePath, monitorRoutePaths } from '@/shared/navigation/app-paths';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -36,6 +39,27 @@ afterEach(() => {
 });
 
 describe('instrumentation v2 interaction', () => {
+  it.each([true, false])('keeps the Agentless alternative within the monitor capability (%s)', canCreateMonitor => {
+    const target = canCreateMonitor
+      ? buildMonitorCreatePath({ returnTo: applicationRoutePaths.instrumentation })
+      : monitorRoutePaths.list;
+    render(
+      <MemoryRouter>
+        <InstrumentationSourceStep
+          catalog={catalog}
+          agentlessTarget={target}
+          canCreateMonitor={canCreateMonitor}
+          onSource={vi.fn()}
+          onApplicationAnswer={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('instrumentation.v2.directory.agentlessBoundary')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: canCreateMonitor ? 'dashboard.start.active.action' : 'dashboard.openMonitors' })
+    ).toHaveAttribute('href', target);
+  });
+
   it('searches grouped backend sources, shows category counts, and blocks unsupported entries', () => {
     const onSource = vi.fn();
     const onApplicationAnswer = vi.fn();
@@ -43,13 +67,18 @@ describe('instrumentation v2 interaction', () => {
       <InstrumentationSourceStep catalog={catalog} onSource={onSource} onApplicationAnswer={onApplicationAnswer} />
     );
     expect(screen.getByRole('searchbox')).toBeVisible();
-    const allSources = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*4/ });
+    const allSources = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*3/ });
     expect(allSources).toBeVisible();
     expect(allSources).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
     const javaSource = screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ });
     expect(javaSource).toBeVisible();
     expect(javaSource).toHaveAttribute('title', 'instrumentation.v2.directory.source.java');
+    expect(
+      within(screen.getByRole('region', { name: 'instrumentation.v2.directory.commonPaths' })).getByTitle(
+        'instrumentation.v2.directory.source.java'
+      )
+    ).toBe(javaSource);
     expect(within(javaSource).getByText('instrumentation.v2.directory.source.java').tagName).toBe('SPAN');
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
     expect(shellCss).toMatch(/\.sourceGrid\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
@@ -85,11 +114,16 @@ describe('instrumentation v2 interaction', () => {
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.applications.*2/ })
     ).toBeVisible();
-    const logsCategory = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*2/ });
+    const logsCategory = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*1/ });
     fireEvent.click(logsCategory);
     expect(logsCategory).toHaveAttribute('aria-current', 'true');
     expect(allSources).not.toHaveAttribute('aria-current');
-    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.fluent_bit/ })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.fluent_bit/ })).toBeNull();
+    const capabilityDetails = screen.getByText('instrumentation.v2.directory.unsupportedGuides').closest('details')!;
+    expect(capabilityDetails).not.toHaveAttribute('open');
+    fireEvent.click(within(capabilityDetails).getByText('instrumentation.v2.directory.unsupportedGuides'));
+    expect(within(capabilityDetails).getByText('instrumentation.v2.directory.source.fluent_bit')).toBeVisible();
+    expect(within(capabilityDetails).getByText('instrumentation.v2.directory.otlpBoundary')).toBeVisible();
     expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeNull();
     view.rerender(
@@ -102,7 +136,7 @@ describe('instrumentation v2 interaction', () => {
     );
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*2/ }));
+    fireEvent.click(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*1/ }));
     expect(screen.queryAllByRole('combobox')).toHaveLength(0);
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'logstash' } });
     expect(screen.getAllByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toHaveLength(
@@ -146,6 +180,27 @@ describe('instrumentation v2 interaction', () => {
     fireEvent.click(screen.getByRole('button', { name: 'docker' }));
     expect(screen.getByRole('button', { name: 'docker' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/java · spring_boot · zero_code/)).toBeVisible();
+  });
+
+  it('does not promote a common source when backend support changes to preview', () => {
+    render(
+      <InstrumentationSourceStep
+        catalog={{
+          ...catalog,
+          sources: catalog.sources.map(source =>
+            source.id === 'java' ? { ...source, support: 'preview' as const } : source
+          )
+        }}
+        onSource={vi.fn()}
+        onApplicationAnswer={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole('region', { name: 'instrumentation.v2.directory.commonPaths' })).toBeNull();
+    expect(
+      within(screen.getByTitle('instrumentation.v2.directory.source.java')).getByText(
+        'instrumentation.capability.preview'
+      )
+    ).toBeVisible();
   });
 
   it('explains all three telemetry routes and keeps missing destinations visible without inventing endpoints', () => {
@@ -487,6 +542,7 @@ describe('instrumentation v2 interaction', () => {
         onCopy={vi.fn().mockResolvedValue(undefined)}
         onEdit={vi.fn()}
         onDetect={vi.fn()}
+        onNewCheck={vi.fn()}
         onOpen={vi.fn()}
         onAcknowledgeToken={onAcknowledgeToken}
       />
@@ -504,7 +560,7 @@ describe('instrumentation v2 interaction', () => {
     expect(openButtons.map(button => button.hasAttribute('disabled'))).toEqual([false, true, true]);
     expect(screen.getByText('instrumentation.detection.status.waiting')).toBeInTheDocument();
     expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
-    expect(guideCss).toMatch(/\.workspace\s*\{[^}]*grid-template-columns:\s*1fr/);
+    expect(guideCss).toMatch(/\.workspace\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
     expect(guideCss).toMatch(/\.workspaceBody\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) 320px/);
   });
 
@@ -527,6 +583,7 @@ describe('instrumentation v2 interaction', () => {
         onCopy={onCopy}
         onEdit={vi.fn()}
         onDetect={vi.fn()}
+        onNewCheck={vi.fn()}
         onOpen={vi.fn()}
       />
     );
@@ -539,33 +596,50 @@ describe('instrumentation v2 interaction', () => {
     await waitFor(() => expect(onCopy).toHaveBeenCalledWith(noneGuide.blocks[0]));
   });
 
-  it('describes a component without a version as not applicable rather than unavailable', () => {
-    render(
-      <InstrumentationGuideBlocks
-        guide={{
-          ...guide,
-          components: [
-            {
-              name: 'OpenTelemetry Collector',
-              sourceUrl: 'https://github.com/open-telemetry/opentelemetry-collector',
-              version: null,
-              versionPolicy: 'language_specific',
-              license: 'Apache-2.0',
-              installationLocationKey: 'instrumentation.location.otel_collector',
-              official: true,
-              bundledWithHertzBeat: false,
-              dependencies: [],
-              artifacts: []
-            }
-          ]
-        }}
-        token=""
-        onCopy={vi.fn().mockResolvedValue(undefined)}
-      />
-    );
-    expect(screen.getByText('instrumentation.v2.versionNotApplicable')).toBeInTheDocument();
-    expect(screen.queryByText('common.unavailable')).not.toBeInTheDocument();
-  });
+  it.each([
+    { viewport: 390, rows: 4 },
+    { viewport: 1280, rows: 2 }
+  ])(
+    'keeps component details readable at $viewport px and marks an absent version accurately',
+    ({ viewport, rows }) => {
+      const matchMedia = window.matchMedia;
+      vi.spyOn(window, 'matchMedia').mockImplementation(query => {
+        const width = query.match(/\((min|max)-width:\s*(\d+(?:\.\d+)?)px\)/);
+        const matches = width
+          ? width[1] === 'min'
+            ? viewport >= Number(width[2])
+            : viewport <= Number(width[2])
+          : false;
+        return { ...matchMedia(query), matches };
+      });
+      render(
+        <InstrumentationGuideBlocks
+          guide={{
+            ...guide,
+            components: [
+              {
+                name: 'OpenTelemetry Collector',
+                sourceUrl: 'https://github.com/open-telemetry/opentelemetry-collector',
+                version: null,
+                versionPolicy: 'language_specific',
+                license: 'Apache-2.0',
+                installationLocationKey: 'instrumentation.location.otel_collector',
+                official: true,
+                bundledWithHertzBeat: false,
+                dependencies: [],
+                artifacts: []
+              }
+            ]
+          }}
+          token=""
+          onCopy={vi.fn().mockResolvedValue(undefined)}
+        />
+      );
+      expect(within(screen.getByRole('table')).getAllByRole('row')).toHaveLength(rows);
+      expect(screen.getByText('instrumentation.v2.versionNotApplicable')).toBeInTheDocument();
+      expect(screen.queryByText('common.unavailable')).not.toBeInTheDocument();
+    }
+  );
 
   it('handles token validation and clipboard rejection without an unhandled promise', async () => {
     const onCopy = vi.fn().mockRejectedValue(new Error('private token must not surface'));

@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinition;
@@ -105,7 +104,7 @@ public class EntityDefinitionSpecNormalizationService {
     }
 
     private EntityDefinition.ApiInterface extractDefinitionApiInterface(Object value) {
-        Map<String, Object> interfaceMap = toObjectMap(value);
+        Map<String, Object> interfaceMap = EntityDefinitionMaps.toObjectMap(value);
         if (interfaceMap.isEmpty()) {
             return null;
         }
@@ -152,18 +151,6 @@ public class EntityDefinitionSpecNormalizationService {
         return CollectionUtils.isEmpty(fallback) ? Collections.emptyList() : fallback;
     }
 
-    private Map<String, Object> toObjectMap(Object value) {
-        if (!(value instanceof Map<?, ?> rawMap)) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            if (entry.getKey() != null) {
-                result.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
-        return result;
-    }
 
     private String asText(Object value) {
         if (value == null) {

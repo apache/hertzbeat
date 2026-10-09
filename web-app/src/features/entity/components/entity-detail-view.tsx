@@ -14,7 +14,9 @@ import type { EntityDetailEvidence, EntityMonitorViewState, EntityNoiseControlTy
 import type { EntitySignalViewState } from '../model/entity-signal-view-model';
 import { entityExploreSignals, type EntityExploreSignal } from '../model/entity-operational-navigation';
 import type { EntityMonitorQuery, EntityNextActionType } from '../model/entity-contract';
-import { localizeEntityCode } from '../model/entity-display';
+import { entityNextActionRequiresWrite } from '../model/entity-operational-navigation';
+import { EntityDetailContext } from './entity-detail-context';
+import { EntityDetailNavigation, EntityDetailSection } from './entity-detail-navigation';
 import { EntityDetailMetadata } from './entity-detail-metadata';
 import { DegradedEntityDetail } from './entity-detail-degraded';
 import { EntityEvidenceLists } from './entity-evidence-lists';
@@ -93,19 +95,29 @@ function ReadyEntityDetail({
   actions: EntityDetailViewActions;
 }) {
   const { t } = useTranslation();
+  const chapters = readyChapters(detail, state.canWrite, Boolean(state.signals));
   return (
-    <OperationalPage>
+    <OperationalPage mode="workspace">
       <EntityDetailHeader detail={detail} state={state} actions={actions} />
+      <EntityDetailNavigation chapters={chapters} />
       {state.deleteFailure ? (
         <Alert showIcon type="error" message={t(`entity.delete.failure.${state.deleteFailure}`)} />
       ) : null}
       {state.signals ? (
-        <EntitySignalView state={state.signals} openSignal={actions.explore} openTopology={actions.topology} />
+        <EntityDetailSection id="entity-signals" label={t('entity.signals.title')}>
+          <EntitySignalView state={state.signals} openSignal={actions.explore} openTopology={actions.topology} />
+        </EntityDetailSection>
       ) : null}
       <EntityDetailMetadata detail={detail} />
-      <EntityOperationalGuidance detail={detail} canWrite={state.canWrite} act={actions.nextAction} />
+      {chapters.some(chapter => chapter.id === 'entity-operations') ? (
+        <EntityDetailSection id="entity-operations" label={t('entity.operations.title')}>
+          <EntityOperationalGuidance detail={detail} canWrite={state.canWrite} act={actions.nextAction} />
+        </EntityDetailSection>
+      ) : null}
       {detail.noiseControls ? (
-        <EntityNoiseControlEvidence summary={detail.noiseControls} manage={actions.manageNoiseControls} />
+        <EntityDetailSection id="entity-noise" label={t('entity.noiseControls.title')}>
+          <EntityNoiseControlEvidence summary={detail.noiseControls} manage={actions.manageNoiseControls} />
+        </EntityDetailSection>
       ) : null}
       <EntityEvidenceLists detail={detail} monitors={state.monitors} actions={actions} />
     </OperationalPage>
@@ -130,7 +142,7 @@ function EntityDetailHeader({ detail, state, actions }: EntityDetailHeaderProps)
     <>
       <OperationalPageHeader
         title={detail.entity.displayName || detail.entity.name}
-        description={localizeEntityCode(t, 'type', detail.entity.type)}
+        description={<EntityDetailContext entity={detail.entity} status={detail.status} />}
         actions={
           <Space wrap>
             <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refresh}>
@@ -145,9 +157,7 @@ function EntityDetailHeader({ detail, state, actions }: EntityDetailHeaderProps)
           <Space wrap>
             {state.canWrite ? (
               <>
-                <Button type="primary" onClick={actions.edit}>
-                  {t('common.edit')}
-                </Button>
+                <Button onClick={actions.edit}>{t('common.edit')}</Button>
                 <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
               </>
             ) : null}
@@ -169,4 +179,23 @@ function EntityDetailHeader({ detail, state, actions }: EntityDetailHeaderProps)
       />
     </>
   );
+}
+
+function readyChapters(
+  detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'],
+  canWrite: boolean,
+  signals: boolean
+) {
+  return [
+    ...(signals ? [{ id: 'entity-signals', label: 'entity.signals.title' }] : []),
+    { id: 'entity-details', label: 'entity.sections.details' },
+    { id: 'entity-evidence', label: 'entity.sections.evidence' },
+    ...((detail.nextActions ?? []).some(action => canWrite || !entityNextActionRequiresWrite(action.actionType))
+      ? [{ id: 'entity-operations', label: 'entity.operations.title' }]
+      : []),
+    ...(detail.noiseControls ? [{ id: 'entity-noise', label: 'entity.noiseControls.title' }] : []),
+    { id: 'entity-identities', label: 'entity.sections.identities' },
+    { id: 'entity-monitors', label: 'entity.sections.monitors' },
+    { id: 'entity-relations', label: 'entity.sections.relations' }
+  ];
 }

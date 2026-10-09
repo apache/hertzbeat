@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
+import { sessionStatusLabel } from './agent-workspace-format';
 import styles from './agent-workspace-session-pane.module.css';
 
 export function AgentWorkspaceSessionPane({
@@ -142,17 +143,6 @@ function SessionState({
     return <Typography.Text type="secondary">{t('aiWorkspace.sessions.noMatches')}</Typography.Text>;
   }
   return null;
-}
-
-function sessionStatusLabel(status: string, t: ReturnType<typeof useTranslation>['t']) {
-  const normalized = status.toUpperCase();
-  if (normalized === 'ACTIVE' || normalized === 'RUNNING') return t('aiWorkspace.sessions.status.active');
-  if (normalized === 'COMPLETED' || normalized === 'SUCCEEDED') return t('aiWorkspace.sessions.status.completed');
-  if (normalized === 'FAILED') return t('aiWorkspace.sessions.status.failed');
-  if (normalized === 'CANCELLED') return t('aiWorkspace.sessions.status.cancelled');
-  if (normalized === 'RECOVERY_REQUIRED') return t('aiWorkspace.sessions.status.recoveryRequired');
-  if (normalized === 'NO_RUN') return t('aiWorkspace.sessions.status.noRun');
-  return status;
 }
 
 function formatSessionTime(value: string, locale: string) {

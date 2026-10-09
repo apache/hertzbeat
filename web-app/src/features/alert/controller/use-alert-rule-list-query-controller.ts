@@ -20,8 +20,9 @@ export function useAlertRuleListQueryController() {
   const query = readAlertRuleQuery(params);
   const source = writeAlertRuleQuery(query).toString();
   useCanonicalQuerySearch(locationSearch, source, setParams, location.pathname === alertRoutePaths.rules);
-  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
+  const { value: search, setValue: setSearch } = useStringQueryDraft(query.search, query.search);
   const updateQuery = (patch: Partial<AlertRuleQuery>) => {
+    if (patch.search !== undefined) setSearch(patch.search.trim());
     setParams(writeAlertRuleQuery({ ...query, ...patch }));
   };
   return { query, search, setSearch, updateQuery };

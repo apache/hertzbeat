@@ -1,5 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import isEqual from 'lodash/isEqual';
 import { useEffect, useRef, useState } from 'react';
 
 import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
@@ -37,13 +38,19 @@ type NoticeReceiverDetailEditorOptions = Required<NoticeReceiverEditorOptions> &
 
 function useNoticeReceiverDraftStore() {
   const [draft, setDraft] = useState<NoticeReceiverDraft | null>(null);
+  const [original, setOriginal] = useState<NoticeReceiverDraft | null>(null);
   // State renders the draft; the ref retires its identity before same-tick submit or test can read stale data.
   const draftRef = useRef<NoticeReceiverDraft | null>(null);
   const publish = (next: NoticeReceiverDraft | null) => {
+    if (next === null) setOriginal(null);
     draftRef.current = next;
     setDraft(next);
   };
-  return { draft, get: () => draftRef.current, publish };
+  const open = (next: NoticeReceiverDraft | null) => {
+    setOriginal(next);
+    publish(next);
+  };
+  return { draft, dirty: draft !== null && !isEqual(draft, original), get: () => draftRef.current, publish, open };
 }
 
 function useNoticeReceiverDetailEditor({
@@ -108,7 +115,7 @@ export function useNoticeReceiverEditorController({
     capabilities,
     gate,
     loadExact,
-    publishDraft: draftStore.publish,
+    publishDraft: draftStore.open,
     onReadFailure
   });
   const mutateDraft = (mutate: (draft: NoticeReceiverDraft) => NoticeReceiverDraft) => {
@@ -121,7 +128,7 @@ export function useNoticeReceiverEditorController({
   const create = () => {
     if (!capabilities.canCreate || gate.isLocked()) return false;
     detailEditor.invalidate();
-    draftStore.publish(createNoticeReceiverDraft());
+    draftStore.open(createNoticeReceiverDraft());
     return true;
   };
   const close = () => {
@@ -131,7 +138,7 @@ export function useNoticeReceiverEditorController({
     return true;
   };
   return {
-    state: { draft: draftStore.draft },
+    state: { draft: draftStore.draft, dirty: draftStore.dirty },
     controls: { getDraft: draftStore.get, invalidateDetail: detailEditor.invalidate, setDraft: draftStore.publish },
     actions: {
       close,

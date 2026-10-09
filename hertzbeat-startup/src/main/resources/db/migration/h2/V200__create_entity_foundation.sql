@@ -196,6 +196,7 @@ CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_revoked_by ON hzb_auth_token(revok
 
 CREATE TABLE IF NOT EXISTS hzb_signal_saved_view (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    revision BIGINT NOT NULL DEFAULT 0,
     creator VARCHAR(255) NOT NULL,
     signal VARCHAR(32) NOT NULL,
     view_key VARCHAR(128) NOT NULL,
@@ -252,6 +253,8 @@ CREATE TABLE IF NOT EXISTS hzb_signal_dashboard (
     widgets TEXT NOT NULL,
     variables TEXT,
     panel_map TEXT,
+    document TEXT,
+    revision BIGINT NOT NULL DEFAULT 0,
     version VARCHAR(32),
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -470,4 +473,13 @@ CREATE TABLE IF NOT EXISTS hzb_installation (
     id SMALLINT PRIMARY KEY,
     installation_fingerprint VARCHAR(64) NOT NULL UNIQUE,
     complete BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS hzb_alert_integration_verification (
+    workspace_id VARCHAR(128) NOT NULL,
+    source VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    started_at BIGINT NOT NULL,
+    verified_at BIGINT,
+    PRIMARY KEY (workspace_id, source)
 );

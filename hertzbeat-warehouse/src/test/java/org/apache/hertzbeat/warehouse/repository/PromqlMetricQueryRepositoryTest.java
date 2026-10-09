@@ -45,6 +45,20 @@ class PromqlMetricQueryRepositoryTest {
     private QueryExecutor promqlQueryExecutor;
 
     @Test
+    void preservesOnlyTheStructuredInvalidQueryMarker() {
+        when(promqlQueryExecutor.support("promql")).thenReturn(true);
+        when(promqlQueryExecutor.getDatasource()).thenReturn("Greptime-promql");
+        when(promqlQueryExecutor.query(any(DatasourceQuery.class)))
+                .thenReturn(new DatasourceQueryData("ref", 400, "promql_query_invalid", null))
+                .thenReturn(new DatasourceQueryData("ref", 400, "private failure", null));
+        var repository = new PromqlMetricQueryRepository(List.of(promqlQueryExecutor));
+        assertEquals(MetricQueryRepository.PROMQL_QUERY_INVALID,
+                repository.queryPromqlRange("ref", "metric", 1000, 2000, "10s").errorMessage());
+        assertEquals(MetricQueryRepository.PROMQL_QUERY_FAILED,
+                repository.queryPromqlRange("ref", "metric", 1000, 2000, "10s").errorMessage());
+    }
+
+    @Test
     void hasPromqlExecutorReturnsFalseWhenNoSupportedExecutorPresent() {
         MetricQueryRepository repository = new PromqlMetricQueryRepository(List.of());
 

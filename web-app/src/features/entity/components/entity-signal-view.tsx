@@ -131,7 +131,6 @@ function primitiveMessages(t: ReturnType<typeof useTranslation>['t']): HertzBeat
     truncated: t('entity.signals.query.truncated'),
     truncationUnknown: t('entity.signals.query.truncationUnknown'),
     runtimeError: t('entity.signals.query.runtimeError'),
-    investigationActions: count => t('entity.signals.query.investigationActions', { count }),
     failures: {
       'perses.query.invalid': t('entity.signals.query.invalid'),
       'perses.query.permission': t('entity.signals.query.permission'),

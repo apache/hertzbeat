@@ -6,7 +6,8 @@
  */
 
 import { ThemeProvider } from '@mui/material/styles';
-import { ChartsProvider, generateChartsTheme, SnackbarProvider } from '@perses-dev/components';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { ChartsProvider, SnackbarProvider } from '@perses-dev/components';
 import type {
   DashboardResource,
   DatasourceApi,
@@ -17,14 +18,14 @@ import { DatasourceStoreProvider, VariableProvider } from '@perses-dev/dashboard
 import { PluginRegistry, RouterProvider, TimeRangeProvider, type PluginLoader } from '@perses-dev/plugin-system';
 import type { DurationString, TimeRangeValue } from '@perses-dev/spec';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
 import { HERTZBEAT_SNAPSHOT_QUERY_KIND } from '../plugins/hertzbeat-snapshot-query';
 import { createHertzBeatPersesTheme } from './hertzbeat-perses-theme';
-import { hertzBeatPersesPluginLoader } from '../plugins/perses-plugin-loader';
+import { createHertzBeatChartsTheme } from './hertzbeat-perses-charts-theme';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false, staleTime: Number.POSITIVE_INFINITY } }
@@ -43,40 +44,45 @@ const datasourceApi: DatasourceApi = {
   listGlobalDatasources: (): Promise<GlobalDatasourceResource[]> => Promise.resolve([])
 };
 
+type PersesRuntimeProviderProps = {
+  children: ReactNode;
+  timeWindow: ExactTimeWindow;
+  pluginLoader: PluginLoader;
+  contentSurface?: boolean | undefined;
+  compactChart?: boolean | undefined;
+  compactChartCountAxisMax?: number | undefined;
+  enableChartPinning?: boolean | undefined;
+  onTimeWindowChange?: ((window: ExactTimeWindow) => void) | undefined;
+  timeWindowChangeEnabled?: boolean | undefined;
+};
+
 export function PersesRuntimeProviders({
   children,
   timeWindow,
-  pluginLoader = hertzBeatPersesPluginLoader,
+  pluginLoader,
+  contentSurface = false,
+  compactChart = false,
+  compactChartCountAxisMax,
+  enableChartPinning = false,
   onTimeWindowChange,
   timeWindowChangeEnabled = true
-}: {
-  children: ReactNode;
-  timeWindow: ExactTimeWindow;
-  pluginLoader?: PluginLoader | undefined;
-  onTimeWindowChange?: ((window: ExactTimeWindow) => void) | undefined;
-  timeWindowChangeEnabled?: boolean | undefined;
-}) {
+}: PersesRuntimeProviderProps) {
   const { theme } = useRuntimeTheme();
-  const [persesTimeRange, setPersesTimeRange] = useState<TimeRangeValue>(() => toTimeRange(timeWindow));
-  const lastAbsoluteWindow = useRef<ExactTimeWindow>(timeWindow);
-  const [refreshInterval, setRefreshInterval] = useState<DurationString>('0s');
-  const muiTheme = useMemo(() => createHertzBeatPersesTheme(theme), [theme]);
-  const chartsTheme = useMemo(() => generateChartsTheme(muiTheme, {}), [muiTheme]);
-  const updateTimeRange = useCallback(
-    (value: TimeRangeValue) => {
-      if (!timeWindowChangeEnabled) return;
-      setPersesTimeRange(value);
-      const nextWindow = exactWindow(value);
-      if (!nextWindow || sameWindow(lastAbsoluteWindow.current, nextWindow)) return;
-      lastAbsoluteWindow.current = nextWindow;
-      onTimeWindowChange?.(nextWindow);
-    },
-    [onTimeWindowChange, timeWindowChangeEnabled]
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const { persesTimeRange, refreshInterval, setRefreshInterval, updateTimeRange } = usePersesTimeRange(
+    timeWindow,
+    timeWindowChangeEnabled,
+    onTimeWindowChange
+  );
+  const muiTheme = useMemo(() => createHertzBeatPersesTheme(theme, contentSurface), [theme, contentSurface]);
+  const chartsTheme = useMemo(
+    () => createHertzBeatChartsTheme(muiTheme, compactChart, reducedMotion, compactChartCountAxisMax),
+    [muiTheme, compactChart, reducedMotion, compactChartCountAxisMax]
   );
 
   return (
     <ThemeProvider theme={muiTheme}>
-      <ChartsProvider chartsTheme={chartsTheme}>
+      <ChartsProvider chartsTheme={chartsTheme} enablePinning={enableChartPinning}>
         <SnackbarProvider anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="default" content="">
           <PluginRegistry
             pluginLoader={pluginLoader}
@@ -118,4 +124,33 @@ function exactWindow(value: TimeRangeValue): ExactTimeWindow | undefined {
 
 function sameWindow(current: ExactTimeWindow, next: ExactTimeWindow) {
   return current.from === next.from && current.to === next.to;
+}
+
+function usePersesTimeRange(
+  timeWindow: ExactTimeWindow,
+  timeWindowChangeEnabled: boolean,
+  onTimeWindowChange: ((window: ExactTimeWindow) => void) | undefined
+) {
+  const [persesTimeRange, setPersesTimeRange] = useState<TimeRangeValue>(() => toTimeRange(timeWindow));
+  const [lastAbsoluteWindow, setLastAbsoluteWindow] = useState(timeWindow);
+  const [refreshInterval, setRefreshInterval] = useState<DurationString>('0s');
+  const [externalWindow, setExternalWindow] = useState(timeWindow);
+  if (!sameWindow(externalWindow, timeWindow)) {
+    setExternalWindow(timeWindow);
+    setPersesTimeRange(toTimeRange(timeWindow));
+    setLastAbsoluteWindow(timeWindow);
+  }
+  const updateTimeRange = useCallback(
+    (value: TimeRangeValue) => {
+      if (!timeWindowChangeEnabled) return;
+      setPersesTimeRange(value);
+      const nextWindow = exactWindow(value);
+      if (!nextWindow || sameWindow(lastAbsoluteWindow, nextWindow)) return;
+      setLastAbsoluteWindow(nextWindow);
+      onTimeWindowChange?.(nextWindow);
+    },
+    [lastAbsoluteWindow, onTimeWindowChange, timeWindowChangeEnabled]
+  );
+
+  return { persesTimeRange, refreshInterval, setRefreshInterval, updateTimeRange };
 }

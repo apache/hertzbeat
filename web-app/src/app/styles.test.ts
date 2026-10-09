@@ -10,6 +10,12 @@ import { describe, expect, it } from 'vitest';
 import appStyles from './styles.css?raw';
 
 describe('application interaction styles', () => {
+  it('allows every route to fit its viewport without clipping the page root', () => {
+    const body = appStyles.match(/body\s*\{(?<body>[^}]*)\}/)?.groups?.body;
+    expect(body).toMatch(/min-width:\s*0/);
+    expect(body).not.toMatch(/overflow(?:-x)?:\s*(hidden|clip)/);
+  });
+
   it('keeps keyboard focus visible without relying on hover state', () => {
     expect(appStyles).toMatch(/:where\(a,\s*button,\s*\[role='button'\],\s*\[tabindex\]\):focus-visible/);
     expect(appStyles).toMatch(/outline:\s*2px solid var\(--hb-focus-ring\)/);

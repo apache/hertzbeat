@@ -16,15 +16,26 @@
  */
 
 import { Button } from 'antd';
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
 
 import styles from './explore-state-panel.module.css';
 
-export function ExploreResultFrame({ children }: { children: ReactNode }) {
-  return <section className={styles.results}>{children}</section>;
+export function ExploreResultFrame({
+  children,
+  layout = 'default',
+  ...attributes
+}: {
+  children: ReactNode;
+  layout?: 'default' | 'fill';
+} & HTMLAttributes<HTMLElement>) {
+  return (
+    <section {...attributes} className={styles.results} data-result-layout={layout}>
+      {children}
+    </section>
+  );
 }
 
 export function ExploreLoadingResult() {

@@ -16,6 +16,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { Button } from 'antd';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
@@ -26,6 +27,7 @@ type MetaItem = { label: string; value: ReactNode; accessibleValue?: string | un
 export function SignalResultFrame({
   title,
   count,
+  leadingAction,
   unit,
   meta = [],
   metaPresentation = 'default',
@@ -34,6 +36,7 @@ export function SignalResultFrame({
 }: {
   title: string;
   count: number;
+  leadingAction?: ReactNode | undefined;
   unit?: string | undefined;
   meta?: MetaItem[] | undefined;
   metaPresentation?: 'default' | 'compact' | undefined;
@@ -44,6 +47,7 @@ export function SignalResultFrame({
     <section className={styles.frame} data-meta-presentation={metaPresentation}>
       <header className={styles.header}>
         <div className={styles.identity}>
+          {leadingAction}
           <h3>{title}</h3>
           <span>
             {count.toLocaleString()}
@@ -74,6 +78,32 @@ export function SignalResultFrame({
   );
 }
 
-export function SignalEmptyState({ title, hint }: { title: string; hint: string }) {
-  return <OperationalStatePanel kind="empty" title={title} description={hint} />;
+export function SignalEmptyState({
+  title,
+  hint,
+  reviewQueryLabel
+}: {
+  title: string;
+  hint: string;
+  reviewQueryLabel?: string | undefined;
+}) {
+  return (
+    <OperationalStatePanel
+      kind="empty"
+      presentation="quiet"
+      title={title}
+      description={hint}
+      action={
+        reviewQueryLabel ? (
+          <Button
+            onClick={event => {
+              event.currentTarget.closest('[data-explore-query-layout]')?.querySelector('form')?.focus();
+            }}
+          >
+            {reviewQueryLabel}
+          </Button>
+        ) : undefined
+      }
+    />
+  );
 }

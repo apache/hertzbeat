@@ -36,6 +36,68 @@ describe('EntityDetailView', () => {
     }
   );
 
+  it('places authoritative resource context beside the title and focuses the existing status explanation', () => {
+    renderView({
+      kind: 'ready',
+      detail: {
+        entity: { ...entity, status: 'healthy' },
+        status: { status: 'unknown', reason: 'No bound live evidence' },
+        identities: [],
+        monitorPreview: { items: [], total: 0, complete: true },
+        relations: []
+      }
+    });
+    const header = screen.getByRole('heading', { name: 'checkout' }).closest('header')!;
+    expect(within(header).getByText('prod')).toBeInTheDocument();
+    expect(
+      within(header).getByText(`${i18n.t('entity.fields.source')}: ${i18n.t('entity.values.source.manual')}`)
+    ).toBeInTheDocument();
+    const status = within(header).getByRole('button', {
+      name: `${i18n.t('entity.fields.status')}: ${i18n.t('entity.values.status.unknown')}`
+    });
+    expect(within(header).queryByText(i18n.t('entity.values.status.healthy'))).not.toBeInTheDocument();
+    fireEvent.click(status);
+    expect(screen.getByText('No bound live evidence')).toHaveFocus();
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).not.toHaveClass('ant-btn-primary');
+  });
+
+  it('keeps degraded telemetry from turning a persisted resource status into live health', () => {
+    renderView({ kind: 'degraded', entity: { ...entity, status: 'healthy' }, unavailable: 'telemetry' });
+    const header = screen.getByRole('heading', { name: 'checkout' }).closest('header')!;
+    expect(
+      within(header).getByText(`${i18n.t('entity.fields.status')}: ${i18n.t('entity.values.status.unknown')}`)
+    ).toBeInTheDocument();
+    expect(within(header).queryByText(i18n.t('entity.values.status.healthy'))).not.toBeInTheDocument();
+    expect(screen.getByText(i18n.t('entity.degraded.description'))).toBeInTheDocument();
+  });
+
+  it('navigates only existing chapters without remounting the monitor draft or changing the URL', async () => {
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scroll });
+    renderView({
+      kind: 'ready',
+      detail: { entity, identities: [], monitorPreview: { items: [], total: 0, complete: true }, relations: [] }
+    });
+    const nav = await screen.findByRole('navigation', { name: i18n.t('entity.sections.details') });
+    expect(within(nav).queryByRole('button', { name: i18n.t('entity.operations.title') })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('button', { name: i18n.t('entity.noiseControls.title') })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('button', { name: i18n.t('entity.signals.title') })).not.toBeInTheDocument();
+    const draft = screen.getByRole('searchbox', { name: i18n.t('entity.monitors.app') });
+    fireEvent.change(draft, { target: { value: 'unsent-monitor-type' } });
+    const before = location.href;
+    fireEvent.click(within(nav).getByRole('button', { name: i18n.t('entity.sections.monitors') }));
+    expect(within(nav).getByRole('button', { name: i18n.t('entity.sections.monitors') })).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
+    expect(document.getElementById('entity-monitors')).toHaveFocus();
+    fireEvent.click(within(nav).getByRole('button', { name: i18n.t('entity.sections.relations') }));
+    expect(document.getElementById('entity-relations')).toHaveFocus();
+    expect(draft).toHaveValue('unsent-monitor-type');
+    expect(location.href).toBe(before);
+    expect(scroll).toHaveBeenCalledTimes(2);
+  });
+
   it('shows real identity, health, monitor, and relation evidence', () => {
     renderView({
       kind: 'ready',

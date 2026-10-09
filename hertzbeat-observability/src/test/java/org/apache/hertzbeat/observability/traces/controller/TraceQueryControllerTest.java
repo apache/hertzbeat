@@ -31,13 +31,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
+import org.apache.hertzbeat.common.observability.dto.trace.TraceRepresentativeSpanDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.apache.hertzbeat.observability.traces.dto.TraceListPageDto;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureQuery;
+import org.apache.hertzbeat.observability.traces.dto.TraceStructureAnalysis;
 import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceSort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -77,6 +82,49 @@ class TraceQueryControllerTest {
     }
 
     @Test
+    void structuralQueryForwardsExactClausesAndRejectsUnknownScope() throws Exception {
+        var query = new TraceStructureQuery(1000L, 2000L,
+                new TraceStructureQuery.Clause("checkout", null, null),
+                new TraceStructureQuery.Clause("cart", null, "ERROR"), TraceStructureQuery.Relation.DIRECT, 0, 20);
+        when(entityTraceQueryService.queryTraceStructure("team-a", query))
+                .thenReturn(new TraceListPageDto(List.of(), PageRequest.of(0, 20), 0,
+                        new TraceListPageDto.Query("newest", "bounded", 1500, false)));
+
+        mockMvc.perform(get("/api/traces/structure").param("start", "1000").param("end", "2000")
+                        .param("aServiceName", "checkout").param("bServiceName", "cart")
+                        .param("bStatus", "ERROR").param("relation", "direct"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.query.coverage").value("bounded"))
+                .andExpect(jsonPath("$.data.query.rowLimit").value(1500));
+        verify(entityTraceQueryService).queryTraceStructure("team-a", query);
+
+        for (String invalid : List.of("/api/traces/structure?start=1000&end=2000&aServiceName=checkout&relation=direct",
+                "/api/traces/structure?start=1000&end=2000&aServiceName=checkout&bServiceName=cart&relation=not",
+                "/api/traces/structure?start=1000&end=2000&aServiceName=checkout&bServiceName=cart&relation=direct&workspaceId=other")) {
+            assertThrows(Exception.class, () -> mockMvc.perform(get(invalid)));
+        }
+    }
+
+    @Test
+    void structuralAnalysisUsesTheSameValidatedPopulationAndReportsCoverage() throws Exception {
+        var query = new TraceStructureQuery(1000L, 2000L,
+                new TraceStructureQuery.Clause("checkout", null, null),
+                new TraceStructureQuery.Clause("cart", null, "ERROR"), TraceStructureQuery.Relation.DIRECT, 0, 20);
+        when(entityTraceQueryService.queryTraceStructureAnalysis("team-a", query))
+                .thenReturn(new TraceStructureAnalysis(1500, 6, false, 2, List.of(), false, List.of(), false));
+        mockMvc.perform(get("/api/traces/structure/analysis").param("start", "1000").param("end", "2000")
+                        .param("aServiceName", "checkout").param("bServiceName", "cart")
+                        .param("bStatus", "ERROR").param("relation", "direct"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.scannedRows").value(6))
+                .andExpect(jsonPath("$.data.matchedTraces").value(2));
+        verify(entityTraceQueryService).queryTraceStructureAnalysis("team-a", query);
+        assertThrows(Exception.class, () -> mockMvc.perform(get("/api/traces/structure/analysis")
+                .param("start", "1000").param("end", "2000").param("aServiceName", "checkout")
+                .param("bServiceName", "cart").param("relation", "direct").param("serviceName", "outside")));
+    }
+
+    @Test
     void externalTraceReadsFailClosedWithoutTrustedWorkspace() {
         AuthTokenRequestContext.clear();
 
@@ -96,6 +144,38 @@ class TraceQueryControllerTest {
     }
 
     @Test
+    void forwardsDurationOrderingAndSerializesExplicitQueryCoverageAlongsidePageFields() throws Exception {
+        when(entityTraceQueryService.queryTraceList("team-a", null, null, null, null, null,
+                null, null, null, null, null, null, null, 0, 20, null, null, null, TraceSort.DURATION_DESC, false))
+                .thenReturn(new TraceListPageDto(
+                        List.of(), PageRequest.of(0, 20), 0,
+                        new TraceListPageDto.Query(
+                                "duration_desc", "window", null, false)));
+
+        mockMvc.perform(get("/api/traces/list").param("sort", "duration_desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isEmpty())
+                .andExpect(jsonPath("$.data.totalElements").value(0))
+                .andExpect(jsonPath("$.data.query.sort").value("duration_desc"))
+                .andExpect(jsonPath("$.data.query.coverage").value("window"))
+                .andExpect(jsonPath("$.data.query.truncated").value(false))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .string(org.hamcrest.Matchers.containsString("\"rowLimit\":null")));
+    }
+
+    @Test
+    void rejectsUnknownTraceSortBeforeQueryingStorage() {
+        Exception exception = assertThrows(Exception.class,
+                () -> mockMvc.perform(get("/api/traces/list").param("sort", "oldest")));
+        Throwable cause = exception;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        assertInstanceOf(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class, cause);
+        verifyNoInteractions(entityTraceQueryService);
+    }
+
+    @Test
     void rejectsNonLowerHexSelectionBeforeInvestigationQuery() {
         assertThrows(Exception.class, () -> mockMvc.perform(get(
                 "/api/traces/0123456789ABCDEF0123456789ABCDEF?start=1000&end=2000")));
@@ -107,7 +187,7 @@ class TraceQueryControllerTest {
     void shouldForwardHideInternalFilterToTraceListQuery() throws Exception {
         TraceListItemDto item = new TraceListItemDto(
                 VALID_TRACE_ID,
-                "span-root",
+                "0123456789abcdef",
                 "checkout",
                 "commerce",
                 "GET /checkout",
@@ -117,12 +197,13 @@ class TraceQueryControllerTest {
                 0,
                 4L,
                 Map.of("checkout", new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(4, 0)),
-                Map.of("service.name", "checkout")
+                Map.of("service.name", "checkout"), "unique", 1L,
+                representativeSpan(), 1_710_000_000_000L, 1_710_000_000_002L, null
         );
         when(entityTraceQueryService.queryTraceList(
                 "team-a", 1L, 100L, 200L, VALID_TRACE_ID, true, "checkout", "commerce", "prod",
                 "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
-                100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout"))
+                100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout", TraceSort.NEWEST, false))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
 
         mockMvc.perform(get("/api/traces/list")
@@ -153,14 +234,14 @@ class TraceQueryControllerTest {
         verify(entityTraceQueryService).queryTraceList(
                 "team-a", 1L, 100L, 200L, VALID_TRACE_ID, true, "checkout", "commerce", "prod",
                 "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
-                100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout");
+                100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout", TraceSort.NEWEST, false);
     }
 
     @Test
     void shouldForwardSpanScopeToTraceListQuery() throws Exception {
         TraceListItemDto item = new TraceListItemDto(
                 SECOND_VALID_TRACE_ID,
-                "span-entry",
+                "0123456789abcdef",
                 "checkout",
                 "commerce",
                 "POST /checkout",
@@ -170,11 +251,12 @@ class TraceQueryControllerTest {
                 0,
                 1L,
                 Map.of("checkout", new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(1, 0)),
-                Map.of("service.name", "checkout")
+                Map.of("service.name", "checkout"), "unique", 1L,
+                representativeSpan(), 1_710_000_000_000L, 1_710_000_000_002L, null
         );
         when(entityTraceQueryService.queryTraceList(
                 "team-a", null, 100L, 200L, null, false, "checkout", null, "prod",
-                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null))
+                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null, TraceSort.NEWEST, false))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/api/traces/list")
@@ -193,7 +275,7 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).queryTraceList(
                 "team-a", null, 100L, 200L, null, false, "checkout", null, "prod",
-                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null);
+                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null, TraceSort.NEWEST, false);
     }
 
     @Test
@@ -210,11 +292,12 @@ class TraceQueryControllerTest {
                 0,
                 null,
                 null,
-                Map.of("service.name", "checkout")
+                Map.of("service.name", "checkout"), "unique", 1L,
+                representativeSpan(), 1_710_000_000_000L, 1_710_000_000_002L, null
         );
         when(entityTraceQueryService.queryTraceList(
                 "team-a", null, 100L, 200L, null, null, null, null, null,
-                null, null, null, null, 0, 20, null, null, null))
+                null, null, null, null, 0, 20, null, null, null, TraceSort.NEWEST, false))
                 .thenReturn(new PageImpl<>(List.of(incomplete), PageRequest.of(0, 20), 1));
 
         Exception exception = assertThrows(Exception.class, () -> mockMvc.perform(get("/api/traces/list")
@@ -239,11 +322,12 @@ class TraceQueryControllerTest {
                 3L,
                 Map.of("checkout",
                         new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(2, 1)),
-                Map.of("service.name", "checkout")
+                Map.of("service.name", "checkout"), "unique", 1L,
+                representativeSpan(), 1_710_000_000_000L, 1_710_000_000_002L, null
         );
         when(entityTraceQueryService.queryTraceList(
                 "team-a", null, 100L, 200L, null, null, null, null, null,
-                null, null, null, null, 0, 20, null, null, null))
+                null, null, null, null, 0, 20, null, null, null, TraceSort.NEWEST, false))
                 .thenReturn(new PageImpl<>(List.of(inconsistent), PageRequest.of(0, 20), 1));
 
         Exception exception = assertThrows(Exception.class, () -> mockMvc.perform(get("/api/traces/list")
@@ -269,11 +353,12 @@ class TraceQueryControllerTest {
                 Map.of("checkout",
                         new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(
                                 Long.MAX_VALUE, 0)),
-                Map.of("service.name", "checkout")
+                Map.of("service.name", "checkout"), "unique", 1L,
+                representativeSpan(), 1_710_000_000_000L, 1_710_000_000_002L, null
         );
         when(entityTraceQueryService.queryTraceList(
                 "team-a", null, 100L, 200L, null, null, null, null, null,
-                null, null, null, null, 0, 20, null, null, null))
+                null, null, null, null, 0, 20, null, null, null, TraceSort.NEWEST, false))
                 .thenReturn(new PageImpl<>(List.of(oversized), PageRequest.of(0, 20), 1));
 
         Exception exception = assertThrows(Exception.class, () -> mockMvc.perform(get("/api/traces/list")
@@ -289,8 +374,6 @@ class TraceQueryControllerTest {
         uppercaseTraceId.setTraceId("0123456789ABCDEF0123456789ABCDEF");
         TraceListItemDto shortTraceId = completeTraceListItem();
         shortTraceId.setTraceId("0123456789abcdef");
-        TraceListItemDto missingRootService = completeTraceListItem();
-        missingRootService.setServiceName(null);
         TraceListItemDto blankRootName = completeTraceListItem();
         blankRootName.setRootSpanName(" ");
         TraceListItemDto missingStart = completeTraceListItem();
@@ -307,11 +390,11 @@ class TraceQueryControllerTest {
         oversizedDuration.setDurationNanos(9_007_199_254_740_992L);
 
         for (TraceListItemDto malformed : List.of(
-                uppercaseTraceId, shortTraceId, missingRootService, blankRootName, missingStart, nonPositiveStart,
+                uppercaseTraceId, shortTraceId, blankRootName, missingStart, nonPositiveStart,
                 oversizedStart, missingDuration, negativeDuration, oversizedDuration)) {
             when(entityTraceQueryService.queryTraceList(
                     "team-a", null, 100L, 200L, null, null, null, null, null,
-                    null, null, null, null, 0, 20, null, null, null))
+                    null, null, null, null, 0, 20, null, null, null, TraceSort.NEWEST, false))
                     .thenReturn(new PageImpl<>(List.of(malformed), PageRequest.of(0, 20), 1));
 
             Exception exception = assertThrows(Exception.class, () -> mockMvc.perform(get("/api/traces/list")
@@ -327,7 +410,7 @@ class TraceQueryControllerTest {
         when(entityTraceQueryService.queryTraceList(
                 "team-a", null, 100L, 200L, null, false, "checkout", "commerce", "prod",
                 "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
-                "http.route=\"/checkout\""))
+                "http.route=\"/checkout\"", TraceSort.NEWEST, false))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
         mockMvc.perform(get("/api/traces/list")
@@ -344,7 +427,7 @@ class TraceQueryControllerTest {
         verify(entityTraceQueryService).queryTraceList(
                 "team-a", null, 100L, 200L, null, false, "checkout", "commerce", "prod",
                 "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
-                "http.route=\"/checkout\"");
+                "http.route=\"/checkout\"", TraceSort.NEWEST, false);
     }
 
     private static Throwable rootCause(Throwable throwable) {
@@ -358,7 +441,7 @@ class TraceQueryControllerTest {
     private static TraceListItemDto completeTraceListItem() {
         return new TraceListItemDto(
                 VALID_TRACE_ID,
-                null,
+                "0123456789abcdef",
                 "checkout",
                 "commerce",
                 "GET /checkout",
@@ -369,8 +452,58 @@ class TraceQueryControllerTest {
                 1L,
                 Map.of("checkout",
                         new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(1, 0)),
-                Map.of("service.name", "checkout")
+                Map.of("service.name", "checkout"), "unique", 1L,
+                representativeSpan(), 1_710_000_000_000L, 1_710_000_000_002L, null
         );
+    }
+
+    private static TraceRepresentativeSpanDto representativeSpan() {
+        return new TraceRepresentativeSpanDto("0123456789abcdef", "GET /checkout", "checkout", "commerce",
+                1_710_000_000_000L, 2_000_000L);
+    }
+
+    @Test
+    void traceListAcceptsPartialEvidenceAndUnknownNamesWithoutInventingRoots() throws Exception {
+        TraceListItemDto unique = completeTraceListItem();
+        unique.setServiceName(null);
+        unique.setRootSpanName(null);
+        TraceListItemDto missing = completeTraceListItem();
+        missing.setTraceId(SECOND_VALID_TRACE_ID);
+        missing.setRootState("missing");
+        missing.setRootSpanCount(0);
+        clearRoot(missing);
+        missing.setServiceStats(Map.of());
+        missing.setUnattributedServiceStats(new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(1, 0));
+        TraceListItemDto ambiguous = completeTraceListItem();
+        ambiguous.setTraceId("abcdef0123456789abcdef0123456789");
+        ambiguous.setRootState("ambiguous");
+        ambiguous.setRootSpanCount(2);
+        ambiguous.setSpanCount(2L);
+        ambiguous.setServiceStats(Map.of("checkout",
+                new org.apache.hertzbeat.common.observability.dto.trace.TraceServiceStatsDto(2, 0)));
+        clearRoot(ambiguous);
+        when(entityTraceQueryService.queryTraceList(
+                "team-a", null, 100L, 200L, null, null, null, null, null,
+                null, null, null, null, 0, 20, null, null, null, TraceSort.NEWEST, false))
+                .thenReturn(new PageImpl<>(List.of(unique, missing, ambiguous), PageRequest.of(0, 20), 3));
+        mockMvc.perform(get("/api/traces/list").param("start", "100").param("end", "200"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(3))
+                .andExpect(jsonPath("$.data.content[1].rootState").value("missing"))
+                .andExpect(jsonPath("$.data.content[1].rootSpanId").isEmpty())
+                .andExpect(jsonPath("$.data.content[1].resourceAttributes").isEmpty())
+                .andExpect(jsonPath("$.data.content[1].representativeSpan.spanId").value("0123456789abcdef"))
+                .andExpect(jsonPath("$.data.content[2].rootState").value("ambiguous"));
+    }
+
+    private static void clearRoot(TraceListItemDto item) {
+        item.setRootSpanId(null);
+        item.setRootSpanName(null);
+        item.setServiceName(null);
+        item.setServiceNamespace(null);
+        item.setStartTime(null);
+        item.setDurationNanos(null);
+        item.setResourceAttributes(null);
     }
 
     @Test

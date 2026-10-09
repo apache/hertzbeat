@@ -39,7 +39,7 @@ export function YamlEditor({ ariaLabel, value, minHeight = '320px', readOnly = f
   const { theme } = useRuntimeTheme();
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const initialValueRef = useRef(value);
+  const valueRef = useLatestValue(value);
   const onChangeRef = useLatestValue(onChange);
   const externalUpdateRef = useRef(false);
 
@@ -48,7 +48,7 @@ export function YamlEditor({ ariaLabel, value, minHeight = '320px', readOnly = f
     const view = new EditorView({
       parent: hostRef.current,
       state: EditorState.create({
-        doc: initialValueRef.current,
+        doc: valueRef.current,
         extensions: editorExtensions({
           ariaLabel,
           readOnly,
@@ -64,7 +64,7 @@ export function YamlEditor({ ariaLabel, value, minHeight = '320px', readOnly = f
       viewRef.current = null;
       view.destroy();
     };
-  }, [ariaLabel, onChangeRef, readOnly, theme]);
+  }, [ariaLabel, valueRef, onChangeRef, readOnly, theme]);
 
   useEffect(() => updateEditorDocument(viewRef.current, value, externalUpdateRef), [value]);
 
@@ -87,8 +87,8 @@ export function YamlDiffEditor({
   const { theme } = useRuntimeTheme();
   const hostRef = useRef<HTMLDivElement>(null);
   const mergeRef = useRef<MergeView | null>(null);
-  const initialOriginalRef = useRef(originalValue);
-  const initialModifiedRef = useRef(modifiedValue);
+  const originalValueRef = useLatestValue(originalValue);
+  const modifiedValueRef = useLatestValue(modifiedValue);
   const onChangeRef = useLatestValue(onChange);
   const externalUpdateRef = useRef(false);
 
@@ -97,11 +97,11 @@ export function YamlDiffEditor({
     const merge = new MergeView({
       parent: hostRef.current,
       a: {
-        doc: initialOriginalRef.current,
+        doc: originalValueRef.current,
         extensions: editorExtensions({ ariaLabel: originalAriaLabel, readOnly: true, theme })
       },
       b: {
-        doc: initialModifiedRef.current,
+        doc: modifiedValueRef.current,
         extensions: editorExtensions({
           ariaLabel: modifiedAriaLabel,
           readOnly,
@@ -120,7 +120,7 @@ export function YamlDiffEditor({
       mergeRef.current = null;
       merge.destroy();
     };
-  }, [modifiedAriaLabel, onChangeRef, originalAriaLabel, readOnly, theme]);
+  }, [modifiedValueRef, originalValueRef, modifiedAriaLabel, onChangeRef, originalAriaLabel, readOnly, theme]);
 
   useEffect(() => {
     const merge = mergeRef.current;

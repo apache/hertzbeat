@@ -19,9 +19,7 @@ package org.apache.hertzbeat.alert.service.impl;
 
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
-import tools.jackson.core.type.TypeReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,10 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class AlibabaSmsClientImplTest {
 
-    private final AlibabaSmsClientImpl client = new AlibabaSmsClientImpl(null);
-
     private Map<String, String> params(GroupAlert alert) {
-        return JsonUtil.fromJson(client.buildTemplateParam(alert), new TypeReference<>() { });
+        SmsAlertFields fields = SmsAlertFields.from(alert);
+        return Map.of("instance", fields.instance(), "priority", fields.priority(), "content", fields.content());
     }
 
     @Test

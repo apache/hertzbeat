@@ -12,6 +12,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { applicationRoutePaths, buildMonitorCreatePath, monitorRoutePaths } from '@/shared/navigation/app-paths';
+import type { DashboardCountEvidence } from '../model/dashboard-activity';
 
 const start = vi.hoisted(() => ({ useDashboardStartController: vi.fn() }));
 vi.mock('../controller/use-dashboard-start-controller', () => start);
@@ -39,6 +40,16 @@ describe('DashboardPage', () => {
     expect(screen.queryByTestId('dashboard-operational-summary')).not.toBeInTheDocument();
   });
 
+  it.each([true, false])('keeps one saved-query entry in first-use=%s', firstUse => {
+    const controller = startController(true);
+    controller.activity.firstUse = firstUse;
+    start.useDashboardStartController.mockReturnValue(controller);
+    renderPage();
+    const links = screen.getAllByRole('link', { name: i18n.t('exploreSaved.directory') });
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute('href', controller.savedQueriesTarget);
+  });
+
   it('presents exactly the active-monitoring and telemetry entry paths without invented status', () => {
     start.useDashboardStartController.mockReturnValue(startController(true));
     renderPage();
@@ -64,6 +75,10 @@ describe('DashboardPage', () => {
       'reverse'
     );
     expect(screen.queryByText(/\d+(?:\.\d+)?%/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.daily.openSignals') })).toHaveAttribute(
+      'href',
+      applicationRoutePaths.explore
+    );
   });
 
   it('routes both primary actions through canonical shared paths', () => {
@@ -111,6 +126,37 @@ describe('DashboardPage', () => {
 
     expect(screen.getByTestId('dashboard-start').children).toHaveLength(2);
   });
+
+  it('opens daily monitor, alert and service entries without interpreting missing reads as zero', () => {
+    const controller = startController(true);
+    controller.activity.firstUse = false;
+    controller.activity.monitors = { kind: 'ready', count: 19 };
+    controller.activity.alerts = { kind: 'unavailable' };
+    controller.activity.services = { kind: 'permission' };
+    start.useDashboardStartController.mockReturnValue(controller);
+    renderPage();
+
+    expect(screen.getByTestId('dashboard-activity-monitors')).toHaveTextContent(
+      i18n.t('dashboard.daily.monitors.count', { count: 19 })
+    );
+    expect(screen.getByTestId('dashboard-activity-alerts')).toHaveTextContent(
+      i18n.t('dashboard.daily.states.unavailable')
+    );
+    expect(screen.getByTestId('dashboard-activity-services')).toHaveTextContent(
+      i18n.t('dashboard.daily.states.permission')
+    );
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.daily.services.open') })).toHaveAttribute(
+      'href',
+      '/observability/services'
+    );
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.daily.openSignals') })).toHaveAttribute(
+      'href',
+      applicationRoutePaths.explore
+    );
+    expect(screen.getByTestId('dashboard-start')).not.toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.refresh') }));
+    expect(controller.activity.refresh).toHaveBeenCalledOnce();
+  });
 });
 
 function renderPage() {
@@ -125,10 +171,25 @@ function renderPage() {
 
 function startController(canCreateMonitor: boolean) {
   return {
+    activity: {
+      firstUse: true,
+      refreshing: false,
+      monitors: { kind: 'ready', count: 0 } as DashboardCountEvidence,
+      alerts: { kind: 'ready', count: 0 } as DashboardCountEvidence,
+      services: { kind: 'ready', count: 0 } as DashboardCountEvidence,
+      targets: {
+        monitors: monitorRoutePaths.list,
+        alerts: '/alerts',
+        services: '/observability/services',
+        signals: applicationRoutePaths.explore
+      },
+      refresh: vi.fn()
+    },
     canCreateMonitor,
     createMonitorTarget: buildMonitorCreatePath({ returnTo: applicationRoutePaths.dashboard }),
     monitorListTarget: monitorRoutePaths.list,
     telemetryTarget: applicationRoutePaths.instrumentation,
+    savedQueriesTarget: `${applicationRoutePaths.explore}?signal=metrics&timeRange=last-30m#saved-queries`,
     openCreateMonitor: vi.fn(),
     openMonitors: vi.fn(),
     openTelemetry: vi.fn()

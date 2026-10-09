@@ -46,7 +46,8 @@ class PublicAccessGeneralConfigServiceImplTest {
     void usesSetupValuesUntilAnOperatorSavesRuntimeConfiguration() throws Exception {
         writeManagedSetup("https://setup.example.test/base");
         GeneralConfigDao dao = inMemoryDao();
-        PublicAccessGeneralConfigServiceImpl service = service(dao, new MockEnvironment());
+        PublicAccessGeneralConfigServiceImpl service = service(dao, new MockEnvironment()
+                .withProperty("hertzbeat.instrumentation.server.otlp-http-endpoint", "https://operator.example.test/v1"));
 
         assertThat(service.getConfig().publicBaseUrl()).isEqualTo("https://setup.example.test/base");
 
@@ -64,7 +65,8 @@ class PublicAccessGeneralConfigServiceImplTest {
     void persistsAnExplicitEmptyConfigurationInsteadOfFallingBackToSetup() throws Exception {
         writeManagedSetup("https://setup.example.test/base");
         GeneralConfigDao dao = inMemoryDao();
-        PublicAccessGeneralConfigServiceImpl service = service(dao, new MockEnvironment());
+        PublicAccessGeneralConfigServiceImpl service = service(dao, new MockEnvironment()
+                .withProperty("hertzbeat.instrumentation.server.otlp-http-endpoint", "https://operator.example.test/v1"));
 
         PublicAccessConfig saved = service.saveAndGetConfig(new PublicAccessConfigRequest());
 
@@ -82,6 +84,29 @@ class PublicAccessGeneralConfigServiceImplTest {
 
         assertThat(service.getConfig()).isEqualTo(new PublicAccessConfig(
                 "https://environment.example.test/hertzbeat", "https://otel.example.test/v1", null));
+    }
+
+    @Test
+    void prefersEffectiveEnvironmentPerKeyWhileKeepingUnloadedManagedFallback() throws Exception {
+        writeManagedSetup("https://setup.example.test/base");
+        PublicAccessGeneralConfigServiceImpl service = service(inMemoryDao(), new MockEnvironment()
+                .withProperty("hertzbeat.setup.public-base-url", "https://operator.example.test/base")
+                .withProperty("hertzbeat.instrumentation.server.otlp-http-endpoint", "https://operator.example.test/v1"));
+
+        assertThat(service.getConfig()).isEqualTo(new PublicAccessConfig(
+                "https://operator.example.test/base", "https://operator.example.test/v1", "https://setup.example.test:4317"));
+    }
+
+    @Test
+    void explicitEmptyOrInvalidEnvironmentAddressDoesNotReviveManagedEndpoint() throws Exception {
+        writeManagedSetup("https://setup.example.test/base");
+        for (String endpoint : new String[] {"", "not-an-endpoint"}) {
+            PublicAccessGeneralConfigServiceImpl service = service(inMemoryDao(), new MockEnvironment()
+                    .withProperty("hertzbeat.instrumentation.server.otlp-http-endpoint", endpoint)
+                    .withProperty("hertzbeat.instrumentation.server.otlp-grpc-endpoint", ""));
+
+            assertThat(service.getConfig()).isEqualTo(new PublicAccessConfig("https://setup.example.test/base", null, null));
+        }
     }
 
     @Test
@@ -133,7 +158,8 @@ class PublicAccessGeneralConfigServiceImplTest {
                         new GreptimeEndpoints("localhost:4001", "http://localhost:4000"), "public"),
                 new ManagedOptionalConfiguration(
                         Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
-                                Optional.of(publicBaseUrl), Optional.empty(), Optional.empty())),
+                                Optional.of(publicBaseUrl), Optional.of("https://setup.example.test/v1"),
+                                Optional.of("https://setup.example.test:4317"))),
                         Optional.empty(), Optional.empty()));
         ManagedConfigurationBundle bundle = new ManagedConfigurationBundle(
                 application, ManagedSecrets.withoutTelemetryPassword(SecretValue.of("database-secret")));

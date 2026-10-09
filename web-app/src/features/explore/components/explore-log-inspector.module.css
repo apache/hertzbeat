@@ -1,24 +1,24 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 .inspector {
-  position: absolute;
-  z-index: 4;
-  top: 0;
+  position: fixed;
+  z-index: 20;
+  top: var(--hb-shell-header-height, 52px);
   right: 0;
   bottom: 0;
-  display: grid;
-  width: min(800px, calc(100% - 184px));
+  display: flex;
+  flex-direction: column;
+  width: clamp(600px, 56vw, 800px);
   min-width: 0;
-  grid-template-rows: auto auto minmax(0, 1fr);
   border-left: 1px solid var(--hb-border-subtle);
   background: var(--hb-bg-raised);
-  box-shadow: -8px 0 20px rgb(0 0 0 / 8%);
   color: var(--hb-text-primary);
   animation: inspector-enter 140ms ease-out;
 }
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   min-width: 0;
   min-height: 44px;
   align-items: center;
@@ -40,6 +40,11 @@
   gap: var(--hb-space-1);
 }
 
+.header :global(.ant-btn) {
+  height: 32px;
+  min-width: 32px;
+}
+
 .navigation span {
   color: var(--hb-text-muted);
   font-size: 12px;
@@ -54,70 +59,29 @@
 
 .modeTabs {
   display: flex;
-  min-height: 36px;
-  align-items: end;
-  gap: var(--hb-space-3);
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.modeTabs :global(.ant-tabs-nav) {
+  flex: none;
+  margin: 0;
   padding-inline: var(--hb-space-3);
-  border-bottom: 1px solid var(--hb-border-subtle);
 }
-
-.modeTabs button {
-  height: 36px;
-  padding: 0;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--hb-text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
+.modeTabs :global(.ant-tabs-content-holder) {
+  min-height: 0;
+  flex: 1;
 }
-
-.modeTabs button[aria-selected='true'] {
-  border-bottom-color: var(--ant-color-primary);
-  color: var(--ant-color-primary);
-}
-
-.modeTabs button:focus-visible {
-  outline: 2px solid var(--ant-color-primary);
-  outline-offset: 1px;
+.modeTabs :global(.ant-tabs-content),
+.modeTabs :global(.ant-tabs-tabpane) {
+  height: 100%;
 }
 
 .content {
+  height: 100%;
   min-width: 0;
   min-height: 0;
   overflow: auto;
-}
-
-.fields {
-  margin: 0;
-}
-
-.fields > div {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(132px, 32%) minmax(0, 1fr);
-  gap: var(--hb-space-3);
-  padding: 7px var(--hb-space-3);
-  border-bottom: 1px solid var(--hb-border-subtle);
-}
-
-.fields dt,
-.fields dd {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-family: var(--ant-font-family-code);
-  font-size: 12px;
-}
-
-.fields dt {
-  color: var(--hb-text-muted);
-}
-
-.fields dd {
-  color: var(--hb-text-primary);
-  white-space: pre-wrap;
 }
 
 .json {
@@ -126,7 +90,7 @@
   margin: 0;
   padding: var(--hb-space-3);
   overflow: auto;
-  background: var(--hb-bg-base);
+  background: transparent;
   color: var(--hb-text-primary);
   font-family: var(--ant-font-family-code);
   font-size: 12px;
@@ -160,27 +124,19 @@
 
 @media (width <= 700px) {
   .inspector {
-    width: calc(100% - 48px);
-  }
-
-  .header {
-    flex-wrap: wrap;
+    width: 100%;
+    top: 0;
+    z-index: 1001;
   }
 
   .actions {
     flex: 1 1 100%;
     justify-content: flex-end;
   }
-}
 
-@media (width <= 420px) {
-  .inspector {
-    width: 100%;
-  }
-
-  .fields > div {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--hb-space-1);
+  .header :global(.ant-btn) {
+    height: 36px;
+    min-width: 36px;
   }
 }
 
@@ -188,4 +144,20 @@
   .inspector {
     animation: none;
   }
+}
+
+.scopeHint {
+  margin: 0;
+  padding: var(--hb-space-2) var(--hb-space-3);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.traceReason {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }

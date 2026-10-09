@@ -17,15 +17,31 @@
 
 package org.apache.hertzbeat.observability.logs.service.impl;
 
+import org.apache.hertzbeat.common.observability.dto.log.LogFacets;
+import org.apache.hertzbeat.observability.logs.service.LogAnalysisIntervalTooSmallException;
 import org.apache.hertzbeat.common.observability.dto.log.LogTrend;
 import org.apache.hertzbeat.observability.logs.service.LogTrendWindowTooLargeException;
 
-final class LogTrendIntervalPlanner {
+/** Shared epoch-aligned interval planning for log trends and analysis admission. */
+public final class LogTrendIntervalPlanner {
 
     static final int MAX_BUCKETS = LogTrend.MAX_BUCKETS;
     static final long DEFAULT_WINDOW_MS = 30 * 60_000L;
 
     private LogTrendIntervalPlanner() {
+    }
+
+    /** Resolve a validated absolute window before query admission or storage access. */
+    public static long resolve(long start, long end, Long requestedInterval) {
+        new LogFacets.Window(start, end);
+        if (requestedInterval == null) { return select(start, end); }
+        if (!LogTrend.EXPLICIT_INTERVALS_MS.contains(requestedInterval)) {
+            throw new IllegalArgumentException("Invalid analysis interval");
+        }
+        if (bucketCount(start, end, requestedInterval) > MAX_BUCKETS) {
+            throw new LogAnalysisIntervalTooSmallException();
+        }
+        return requestedInterval;
     }
 
     static long select(long start, long end) {

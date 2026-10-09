@@ -36,12 +36,14 @@ const apiEnvelopeSchema = z
   .strict();
 
 type ApiMessageErrorDetails = {
+  data?: unknown;
   code?: number;
   status?: number;
   cause?: unknown;
 };
 
 export class ApiMessageError extends Error {
+  readonly data: unknown;
   readonly code: number | undefined;
   readonly status: number | undefined;
   override readonly cause: unknown;
@@ -49,14 +51,20 @@ export class ApiMessageError extends Error {
   constructor(message: string, details: ApiMessageErrorDetails = {}) {
     super(message);
     this.name = 'ApiMessageError';
+    this.data = details.data;
     this.code = details.code;
     this.status = details.status;
     this.cause = details.cause;
   }
 }
 
-export async function apiMessageGet(path: string, options?: Pick<RequestInit, 'signal'>): Promise<unknown> {
-  return apiMessageRequest(path, options);
+export async function apiMessageGet(
+  path: string,
+  options?: Pick<RequestInit, 'signal'> & { preserveErrorEnvelope?: boolean }
+): Promise<unknown> {
+  if (!options?.preserveErrorEnvelope) return apiMessageRequest(path, options);
+  const { preserveErrorEnvelope, ...request } = options;
+  return apiMessageRequest(path, request, preserveErrorEnvelope);
 }
 
 export function apiMessagePost(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>): Promise<unknown> {
@@ -113,6 +121,7 @@ async function apiMessageRequest(path: string, init?: RequestInit, preserveError
       const message = await parseApiEnvelope(response);
       throw new ApiMessageError(message.msg ?? `Request failed with status ${response.status}`, {
         code: message.code,
+        data: message.data,
         status: response.status
       });
     }

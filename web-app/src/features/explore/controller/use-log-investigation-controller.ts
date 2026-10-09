@@ -29,10 +29,12 @@ export function useLogInvestigationController(query: LogExploreQuery) {
       ? ({ signal }) => loadLogInvestigation(logRoute.logRecordUid, logRoute.window, signal)
       : skipToken,
     retry: false,
+    refetchOnWindowFocus: false,
     staleTime: 30_000
   });
   return {
     state: logInvestigationState(query, route, request),
+    evidenceCurrent: !request.isPlaceholderData && !request.isFetching && !request.error,
     refetch: () => (logRoute ? request.refetch().then(() => undefined) : Promise.resolve())
   };
 }

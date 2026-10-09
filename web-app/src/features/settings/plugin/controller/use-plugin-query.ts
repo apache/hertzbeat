@@ -50,7 +50,7 @@ export function usePluginQuery(enabled = true) {
     },
     [setParams]
   );
-  const submitSearch = () => navigate({ ...queryRef.current, search: searchDraft.trim(), pageIndex: 0 });
+  const submitSearch = (value = searchDraft) => navigate({ ...queryRef.current, search: value.trim(), pageIndex: 0 });
   const setPage = (pageIndex: number, pageSize: PluginPageSize) =>
     navigate({ ...queryRef.current, pageIndex, pageSize });
   const setSearchDraft = (value: string) => setDraft({ query: query.search, value });

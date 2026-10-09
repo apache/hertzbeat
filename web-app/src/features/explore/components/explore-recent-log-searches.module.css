@@ -1,0 +1,27 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.popup {
+  width: min(480px, calc(100dvw - 88px));
+  max-height: min(360px, 38dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+}
+.list {
+  min-width: 0;
+}
+.entry {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.query {
+  height: auto;
+  white-space: normal;
+  text-align: left;
+  padding: 0;
+}
+
+.popup:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}

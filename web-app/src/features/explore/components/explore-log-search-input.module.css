@@ -1,0 +1,170 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.authoring {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  font-size: 14px;
+}
+.legacyMode {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.syntaxHelp {
+  max-width: min(640px, calc(100dvw - 64px));
+  max-height: min(420px, 45dvh);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.syntaxHelp:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+.syntaxHelp p {
+  margin: 8px 0;
+}
+.syntaxHelp code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.advancedHelp {
+  border-top: 1px solid var(--hb-border-subtle);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.advancedHelp summary {
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+}
+.input {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control, 5px);
+  background: var(--ant-color-bg-container);
+}
+.searchPrefix {
+  display: flex;
+  width: 32px;
+  flex: none;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--hb-border-subtle);
+  border-radius: 4px 0 0 4px;
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-secondary);
+  font-size: 16px;
+}
+.input:focus-within {
+  border-color: var(--ant-color-primary);
+}
+.editor {
+  font-family: var(--hb-font-family-mono);
+  flex: 1;
+  min-width: 0;
+}
+.editor :global(.cm-editor) {
+  background: transparent;
+  font: inherit;
+}
+.editor :global(.cm-scroller) {
+  overflow: auto;
+  font: inherit;
+}
+.editor :global(.cm-content) {
+  padding: 2px 6px;
+  line-height: 26px;
+  caret-color: var(--ant-color-text);
+}
+.editor :global(.cm-line) {
+  padding-inline: 0;
+}
+.editor :global(.cm-focused) {
+  outline: none;
+}
+.editor :global(.cm-placeholder) {
+  color: var(--hb-text-secondary);
+}
+.editor :global(.hb-log-query-token) {
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-info-text);
+  box-decoration-break: clone;
+}
+.editor :global(.hb-log-query-operator) {
+  color: var(--ant-purple-6, var(--ant-color-primary));
+  font-weight: 600;
+}
+.editor :global(.hb-log-query-status-trace),
+.editor :global(.hb-log-query-status-debug),
+.editor :global(.hb-log-query-status-info) {
+  border-color: var(--ant-color-info-border);
+  background: var(--ant-color-info-bg);
+  color: var(--ant-color-info-text);
+}
+.editor :global(.hb-log-query-status-warn) {
+  border-color: var(--ant-color-warning-border);
+  background: var(--ant-color-warning-bg);
+  color: var(--ant-color-warning-text);
+}
+.editor :global(.hb-log-query-status-error),
+.editor :global(.hb-log-query-status-fatal) {
+  border-color: var(--ant-color-error-border);
+  background: var(--ant-color-error-bg);
+  color: var(--ant-color-error-text);
+}
+.editor :global(.hb-log-query-token-removable) {
+  padding-right: 28px;
+}
+.editor :global(.hb-log-query-remove) {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  width: 24px;
+  margin: 0 5px 0 -25px;
+  padding: 2px 0;
+  border: 1px solid transparent;
+  border-radius: 0 3px 3px 0;
+  background: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-text);
+  font: inherit;
+  line-height: 17px;
+  cursor: pointer;
+  vertical-align: baseline;
+  opacity: 0;
+  pointer-events: none;
+}
+.editor :global(.hb-log-query-token-removable:hover + .hb-log-query-remove),
+.editor :global(.hb-log-query-remove:hover),
+.editor :global(.hb-log-query-remove:focus-visible) {
+  opacity: 1;
+  pointer-events: auto;
+}
+.editor :global(.hb-log-query-remove:hover),
+.editor :global(.hb-log-query-remove:focus-visible) {
+  background: var(--ant-color-fill);
+  color: var(--ant-color-text);
+}
+.editor :global(.hb-log-query-remove:focus-visible) {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 1px;
+}
+.editor :global(.hb-log-query-punctuation) {
+  color: var(--hb-syntax-atom);
+}
+.editor :global(.hb-log-query-field) {
+  color: var(--ant-color-text);
+  font-weight: 400;
+}
+.recent {
+  flex: none;
+}
+.input .recent :global(.ant-btn) {
+  height: 30px;
+}

@@ -181,6 +181,7 @@ resourceRole:
   - /api/otlp/**===post===[admin,user]
   - /api/logs/otlp/**===post===[admin,user]
   - /api/logs/**===get===[admin,user,guest]
+  - /api/logs/analysis/compare===post===[admin,user,guest]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
   - /api/manager/import-tasks/**===get===[admin,user]
@@ -256,6 +257,8 @@ resourceRole:
 excludedResource:
   # Setup has its own runtime gate, remote-unlock proof, and permanent completion closure.
   - /api/setup/**===*
+  - /setup===get
+  - /setup===head
   - /api/account/auth/**===*
   - /api/ui/session===get
   - /api/ui/session===post
@@ -267,6 +270,8 @@ excludedResource:
   - /api/status/page/public/**===*
   # web ui resource
   - /===get
+  - /ai===get
+  - /ai/schedules===get
   - /assets/**===get
   - /alerts/**===get
   - /bulletin/**===get

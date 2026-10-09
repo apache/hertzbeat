@@ -15,7 +15,7 @@
 }
 .transcript {
   overflow: auto;
-  padding: clamp(28px, 4vw, 48px) clamp(24px, 5vw, 64px);
+  padding: clamp(28px, 4vw, 48px) clamp(16px, 5%, 64px);
 }
 .emptyConversation {
   display: grid;
@@ -36,7 +36,7 @@
 }
 .message[data-role='user'] {
   justify-items: end;
-  padding-left: clamp(80px, 16vw, 220px);
+  padding-left: min(16%, 140px);
 }
 .messageMeta {
   min-height: 28px;

@@ -15,108 +15,127 @@
  * limitations under the License.
  */
 
+import { HertzBeatTimeZoneProvider } from '@/platform/perses';
+import { normalizeInvestigationTimeZone } from '@/shared/query-context';
 import type { TFunction } from 'i18next';
+import { useMetricPlanEditor } from '../controller/use-metric-plan-editor';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
+import { OperationalPage } from '@/shared/operational-page';
 
-import { ExploreQueryBar } from '../components/explore-query-bar';
-import { ExploreResultAnnouncer } from '../components/explore-result-announcer';
-import { ExploreWorkbench } from '../components/explore-workbench';
-import historyStyles from '../components/explore-history-result.module.css';
-import workbenchStyles from '../components/explore-workbench.module.css';
 import { useExplorePageController } from '../controller/use-explore-page-controller';
-import { buildExplorePath } from '../model/explore-model';
-import { ExploreFocusedLogPage, ExploreFocusedTracePage } from './explore-focused-investigation';
-import { ExploreResultPanel } from './explore-result-panel';
+import { useTraceAnalytics } from '../controller/use-trace-analytics';
+import { useLogScopeSuggestions } from '../controller/use-log-scope-suggestions';
+import { useLogQueryBuilder } from '../controller/use-log-query-builder';
+import { useLogInspectorAnalysis } from '../controller/use-log-inspector-analysis';
+import { traceViewPatch } from '../model/explore-trace-view';
+import { ExploreFocusedLogPage } from './explore-focused-investigation';
+import { ExploreTraceDrawer } from './explore-trace-drawer';
+import { ExploreWorkspaceResults } from './explore-workspace-results';
+import { ExploreLogsWorkspace } from './explore-logs-workspace';
+import { ExploreOtherSignalsWorkspace } from './explore-other-signals-workspace';
+import { useExploreSavedQueries } from '../controller/use-explore-saved-queries';
+import type { SavedQueriesViewModel } from '../model/explore-saved-query-view-model';
 
 export function ExplorePage() {
   const { t } = useTranslation();
   const controller = useExplorePageController();
-  if (controller.investigationRoute.kind === 'trace' && controller.query.signal === 'traces') {
-    return (
-      <OperationalPage mode="workspace">
-        <ExploreFocusedTracePage
-          query={controller.query}
-          t={t}
-          updateQuery={controller.updateQuery}
-          time={controller.time}
-          openPath={controller.openPath}
-        />
-      </OperationalPage>
-    );
-  }
+  const savedQueries = useExploreSavedQueries(
+    controller.query,
+    controller.submission.draft,
+    !controller.transactions.active || controller.transactions.state === 'ready'
+  );
   if (controller.investigationRoute.kind === 'log' && controller.query.signal === 'logs') {
     return (
-      <OperationalPage mode="workspace">
-        <ExploreFocusedLogPage
-          query={controller.query}
-          t={t}
-          updateQuery={controller.updateQuery}
-          time={controller.time}
-          openPath={controller.openPath}
-        />
-      </OperationalPage>
+      <HertzBeatTimeZoneProvider
+        timeZone={
+          normalizeInvestigationTimeZone(controller.query.timeZone) ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      >
+        <OperationalPage mode="workspace">
+          <ExploreFocusedLogPage
+            query={controller.query}
+            t={t}
+            updateQuery={controller.updateQuery}
+            time={controller.time}
+            openPath={controller.openPath}
+            savedQueries={savedQueries}
+          />
+        </OperationalPage>
+      </HertzBeatTimeZoneProvider>
     );
   }
-  return <ExploreHistoricalWorkspace controller={controller} t={t} />;
+  return (
+    <HertzBeatTimeZoneProvider
+      timeZone={
+        normalizeInvestigationTimeZone(controller.query.timeZone) ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    >
+      <ExploreHistoricalWorkspace controller={controller} t={t} savedQueries={savedQueries} />
+      {controller.investigationRoute.kind === 'trace' && controller.focusedQuery.signal === 'traces' && (
+        <ExploreTraceDrawer controller={controller} t={t} />
+      )}
+    </HertzBeatTimeZoneProvider>
+  );
 }
 
 function ExploreHistoricalWorkspace({
   controller,
-  t
+  t,
+  savedQueries
 }: {
   controller: ReturnType<typeof useExplorePageController>;
   t: TFunction;
+  savedQueries: SavedQueriesViewModel;
 }) {
-  const queryBar = (
-    <ExploreQueryBar
-      query={controller.query}
+  const editor = useLogQueryBuilder(controller.submission);
+  const inspectorAnalysis = useLogInspectorAnalysis(controller, editor.valid);
+  const metricEditor = useWorkspaceMetricEditor(controller);
+  const suggestions = useLogScopeSuggestions(controller.query, controller.result);
+  const traceAnalytics = useTraceAnalytics(
+    controller.query,
+    controller.result,
+    traceView => controller.updateQuery(traceViewPatch(controller.query, traceView)),
+    controller.submission.draft
+  );
+  const results = (
+    <ExploreWorkspaceResults
+      controller={controller}
       t={t}
-      updateQuery={controller.updateManualQuery}
-      updateScope={controller.updateQuery}
-      refresh={controller.refresh}
-      time={controller.time}
-      submission={controller.submission}
+      traceAnalytics={traceAnalytics}
+      logFilterEnabled={editor.valid}
+      metricEditor={metricEditor}
+      inspectorAnalysis={inspectorAnalysis}
     />
   );
-  const resultPanel = (
-    <ExploreResultPanel
-      query={controller.query}
-      result={controller.result}
-      retry={controller.refresh}
-      openPath={controller.openPath}
-    />
-  );
-  const flatLogs =
-    controller.query.signal === 'logs' && controller.result.kind === 'ready' && controller.result.signal === 'logs';
+  if (controller.query.signal === 'logs') {
+    return (
+      <ExploreLogsWorkspace {...{ controller, t, savedQueries, editor, suggestions, inspectorAnalysis, results }} />
+    );
+  }
   return (
-    <OperationalPage mode="workspace">
-      <div className={workbenchStyles.workspace} data-explore-workspace="true" data-layout="continuous">
-        <ExploreWorkbench query={controller.query} t={t} updateQuery={controller.updateQuery} />
-        <ExploreResultAnnouncer result={controller.result} queryIdentity={buildExplorePath(controller.query)} t={t} />
-        <section
-          className={workbenchStyles.signalPanel}
-          role="tabpanel"
-          id={`explore-panel-${controller.query.signal}`}
-          aria-labelledby={`explore-tab-${controller.query.signal}`}
-          data-layout="continuous"
-        >
-          {flatLogs ? (
-            <>
-              <section className={historyStyles.logRegion} data-explore-log-region="query">
-                {queryBar}
-              </section>
-              {resultPanel}
-            </>
-          ) : (
-            <>
-              {queryBar}
-              <OperationalResultRegion>{resultPanel}</OperationalResultRegion>
-            </>
-          )}
-        </section>
-      </div>
-    </OperationalPage>
+    <ExploreOtherSignalsWorkspace
+      {...{
+        controller,
+        t,
+        savedQueries,
+        editor,
+        metricEditor,
+        suggestions,
+        traceAnalytics,
+        inspectorAnalysis,
+        results
+      }}
+    />
+  );
+}
+
+function useWorkspaceMetricEditor(controller: ReturnType<typeof useExplorePageController>) {
+  return useMetricPlanEditor(
+    controller.submission,
+    controller.query,
+    controller.query.start && controller.query.end
+      ? { from: controller.query.start, to: controller.query.end }
+      : controller.time?.window
   );
 }

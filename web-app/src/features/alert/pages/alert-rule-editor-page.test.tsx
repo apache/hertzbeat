@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render as renderView, screen, waitFor } from '@testing-library/react';
+import { App, ConfigProvider } from 'antd';
+import type { ReactElement } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAlertRuleDraft } from '../model/alert-rule-model';
@@ -58,6 +61,26 @@ vi.mock('./alert-rule-list-page', () => ({
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
+const routers: ReturnType<typeof createMemoryRouter>[] = [];
+function render(ui: ReactElement, entries = ['/rules', '/rules/new?kind=realtime'], initialIndex = 1) {
+  const router = createMemoryRouter(
+    [
+      { path: '/rules/new', element: ui },
+      { path: '*', element: <div>History destination</div> }
+    ],
+    { initialEntries: entries, initialIndex }
+  );
+  routers.push(router);
+  const view = renderView(
+    <ConfigProvider theme={{ token: { motion: false } }}>
+      <App>
+        <RouterProvider router={router} />
+      </App>
+    </ConfigProvider>
+  );
+  return { ...view, router };
+}
+
 describe('AlertRuleEditorPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,7 +88,91 @@ describe('AlertRuleEditorPage', () => {
     actionCapabilities.canDelete = true;
     controller.state = buildState();
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    routers.splice(0).forEach(router => router.dispose());
+  });
+
+  it.each(['realtime', 'periodic'] as const)(
+    'protects dirty %s Back and retains fields and URL on Cancel',
+    async kind => {
+      controller.state = buildState({
+        dirty: true,
+        requestedKind: kind,
+        draft: { ...createAlertRuleDraft(), kind, name: 'History draft' }
+      });
+      const { router } = render(<AlertRuleEditorPage mode="new" />, ['/rules', `/rules/new?kind=${kind}&scope=keep`]);
+      const original = router.state.location;
+      await act(() => router.navigate(-1));
+      await screen.findByRole('button', { name: 'common.discardChanges' });
+      fireEvent.click(
+        screen
+          .getByRole('button', { name: 'common.discardChanges' })
+          .closest('.ant-modal-confirm')!
+          .querySelector('.ant-btn-default')!
+      );
+      await waitFor(() => expect([...router.state.blockers.values()][0]?.state).toBe('unblocked'));
+      expect(router.state.location).toEqual(original);
+      expect(screen.getByLabelText('alertRules.name')).toHaveValue('History draft');
+      expect(controller.cancel).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument()
+      );
+      await act(() => router.navigate(-1));
+      await screen.findByRole('button', { name: 'common.discardChanges' });
+      fireEvent.click(screen.getByRole('button', { name: 'common.discardChanges' }));
+      await waitFor(() => expect(router.state.location.pathname).toBe('/rules'));
+      expect(controller.cancel).not.toHaveBeenCalled();
+    }
+  );
+
+  it('protects dirty Forward and executes only the requested history step', async () => {
+    controller.state = buildState({ dirty: true });
+    const { router } = render(<AlertRuleEditorPage mode="new" />, [
+      '/before',
+      '/rules/new?kind=realtime',
+      '/after',
+      '/last'
+    ]);
+    await act(() => router.navigate(1));
+    await screen.findByRole('button', { name: 'common.discardChanges' });
+    fireEvent.click(screen.getByRole('button', { name: 'common.discardChanges' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/after'));
+    expect(controller.cancel).not.toHaveBeenCalled();
+  });
+
+  it('guards same-path history and shares an existing close confirmation', async () => {
+    controller.state = buildState({ dirty: true });
+    const { router } = render(<AlertRuleEditorPage mode="new" />, [
+      '/rules/new?kind=realtime&previous=1',
+      '/rules/new?kind=realtime'
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await screen.findByRole('button', { name: 'common.discardChanges' });
+    await act(() => router.navigate(-1));
+    expect(screen.getAllByRole('button', { name: 'common.discardChanges' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'common.discardChanges' }));
+    await waitFor(() => expect(router.state.location.search).toBe('?kind=realtime&previous=1'));
+    expect(controller.cancel).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument()
+    );
+  });
+
+  it('keeps successful save PUSH navigation outside the history guard', async () => {
+    controller.state = buildState({ dirty: true });
+    const { router } = render(<AlertRuleEditorPage mode="new" />);
+    await router.navigate('/rules');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/rules'));
+    expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument();
+  });
+
+  it('allows clean history without confirmation', async () => {
+    const { router } = render(<AlertRuleEditorPage mode="new" />);
+    await act(() => router.navigate(-1));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/rules'));
+    expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument();
+  });
 
   it('recreates the master authoring dialog over the rule list instead of a full-page card', () => {
     expect(editorStyles).toMatch(/\.editorDialogBody\s*\{[^}]*display:\s*grid/s);
@@ -79,6 +186,60 @@ describe('AlertRuleEditorPage', () => {
     expect(screen.queryByRole('region', { name: 'alertRules.typeChoice.title' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('alertRules.name')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'alertRules.confirm' }).closest('.ant-modal-footer')).not.toBeNull();
+  });
+
+  it.each([
+    ['alertRules.severity.label', true],
+    ['alertRules.mode.label', true],
+    ['alertRules.severity.label', false],
+    ['alertRules.mode.label', false]
+  ] as const)('closes only the open %s Select on Escape (dirty=%s)', async (label, dirty) => {
+    controller.state = buildState({ draft: { ...createAlertRuleDraft(), dataType: 'log' }, dirty });
+    render(<AlertRuleEditorPage mode="new" />);
+    const select = screen.getByRole('combobox', { name: label });
+    fireEvent.mouseDown(select);
+    await waitFor(() => expect(select).toHaveAttribute('aria-expanded', 'true'));
+    fireEvent.keyDown(select, { key: 'Escape', keyCode: 27 });
+    await waitFor(() => expect(select).toHaveAttribute('aria-expanded', 'false'));
+    expect(controller.cancel).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument();
+    fireEvent.keyDown(select, { key: 'Escape', keyCode: 27 });
+    if (dirty) {
+      expect(await screen.findByRole('button', { name: 'common.discardChanges' })).toBeInTheDocument();
+      expect(controller.cancel).not.toHaveBeenCalled();
+    } else {
+      expect(controller.cancel).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it.each(['Escape', 'Close', 'Cancel'])('protects a changed draft when closing via %s', async action => {
+    controller.state = buildState({ dirty: true });
+    render(<AlertRuleEditorPage mode="new" />);
+    const close = () =>
+      action === 'Escape'
+        ? fireEvent.keyDown(screen.getByLabelText('alertRules.name'), { key: 'Escape' })
+        : fireEvent.click(screen.getByRole('button', { name: action === 'Close' ? 'Close' : 'common.cancel' }));
+    close();
+    const confirmation = (await screen.findByRole('button', { name: 'common.discardChanges' })).closest(
+      '.ant-modal-confirm'
+    )!;
+    fireEvent.click(confirmation.querySelector('.ant-btn-default')!);
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument()
+    );
+    expect(controller.cancel).not.toHaveBeenCalled();
+    close();
+    fireEvent.click(await screen.findByRole('button', { name: 'common.discardChanges' }));
+    expect(controller.cancel).toHaveBeenCalledTimes(1);
+    expect(controller.save).not.toHaveBeenCalled();
+    expect(controller.preview).not.toHaveBeenCalled();
+  });
+
+  it.each(['Close', 'common.cancel'])('closes an untouched form via %s without prompting', name => {
+    render(<AlertRuleEditorPage mode="new" />);
+    fireEvent.click(screen.getByRole('button', { name }));
+    expect(controller.cancel).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'common.discardChanges' })).not.toBeInTheDocument();
   });
 
   it('lets the SQL editor consume Escape before the dialog closes', () => {
@@ -138,6 +299,34 @@ describe('AlertRuleEditorPage', () => {
     render(<AlertRuleEditorPage mode="edit" />);
     if (evidence === 'loading') expect(document.querySelector('.ant-spin-spinning')).not.toBeNull();
     else expect(screen.getByText(evidence)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['loading', 'alertRules.previewLoading'],
+    ['empty', 'alertRules.previewEmpty'],
+    ['input', 'alertRules.previewInputInvalid'],
+    ['invalid', 'alertRules.previewInvalid'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'alertRules.previewFailed'],
+    ['ready', 'alertRules.previewSuccess']
+  ])('keeps periodic preview %s next to its action and preserves expression', (kind, message) => {
+    const expr = 'codex_sqlite_logs_write_count_total >';
+    controller.state = buildState({
+      requestedKind: 'periodic',
+      draft: { ...createAlertRuleDraft(), kind: 'periodic', expr },
+      preview: kind === 'ready' ? { kind, rowCount: 1, rows: [{ value: 1 }] } : { kind }
+    });
+    render(<AlertRuleEditorPage mode="new" />);
+    const action = screen.getByRole('button', { name: /alertRules.preview$/ });
+    const feedback = screen.getByText(message);
+    expect(action.parentElement).toContainElement(feedback);
+    expect(screen.getByLabelText('alertRules.expression')).toHaveValue(expr);
+    expect(screen.getAllByText(message)).toHaveLength(1);
+    if (kind === 'error') {
+      expect(feedback.closest('[role="alert"]')).not.toBeNull();
+      expect(screen.queryByText('alertRules.previewEmpty')).not.toBeInTheDocument();
+    }
+    if (kind === 'loading') expect(feedback.closest('[role="status"]')).not.toBeNull();
   });
 
   it.each([
@@ -289,6 +478,7 @@ describe('AlertRuleEditorPage', () => {
 
 function buildState(override: Record<string, unknown> = {}) {
   return {
+    dirty: false,
     canSave: true,
     command: 'idle',
     datasource: {

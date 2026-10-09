@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
+import org.apache.hertzbeat.manager.service.PublicAccessConfigService;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
@@ -50,30 +51,36 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
     private final CollectorIntakeAdvertisementReader advertisementReader;
     private final ServerInstrumentationIntakeProperties serverProperties;
     private final ExternalOtelCollectorIntakeProperties externalProperties;
+    private final PublicAccessConfigService publicAccessConfigService;
 
     @Override
     public List<IntakeProfile> profiles() {
-        int configuredProfiles = (serverProperties.configured() ? 1 : 0)
+        var publicAccess = publicAccessConfigService.getConfig();
+        var server = new ServerInstrumentationIntakeProperties(
+                serverProperties.profileId(), publicAccess.serverOtlpHttpEndpoint(),
+                publicAccess.serverOtlpGrpcEndpoint(), serverProperties.authentication());
+        int configuredProfiles = (server.configured() ? 1 : 0)
                 + (externalProperties.configured() ? 1 : 0);
         int collectorProfileLimit = MAX_PROFILES - configuredProfiles;
         List<IntakeProfile> collectorProfiles = collectorDao
                 .findAll(PageRequest.of(0, collectorProfileLimit, Sort.by("name").ascending())).stream()
                 .map(advertisementReader::read)
                 // Legacy Server advertisements remain readable on the Collector row for migration,
-                // but Server discovery is owned exclusively by the global deployment properties.
+                // but Server discovery is owned exclusively by the global public-access configuration.
                 .filter(intake -> intake.gateway() != CollectorInstrumentationIntake.Gateway.SERVER)
                 .map(this::map)
                 .toList();
         List<IntakeProfile> profiles = new ArrayList<>();
-        if (serverProperties.configured()) {
-            IntakeProfile configuredServer = mapServer();
+        if (server.configured()) {
+            IntakeProfile configuredServer = ConfiguredInstrumentationIntakeProfileFactory.create(
+                    server, IntakeKind.SERVER, Gateway.SERVER, INVALID_SERVER_PROFILE_ID);
             boolean profileIdCollides = collectorProfiles.stream()
                     .anyMatch(profile -> profile.id().equals(configuredServer.id()));
-            IntakeProfile server = profileIdCollides
+            IntakeProfile serverProfile = profileIdCollides
                     ? ConfiguredInstrumentationIntakeProfileFactory.invalid(
                             INVALID_SERVER_PROFILE_ID, IntakeKind.SERVER)
                     : configuredServer;
-            profiles.add(server);
+            profiles.add(serverProfile);
         }
         profiles.addAll(collectorProfiles);
         if (externalProperties.configured()) {
@@ -121,11 +128,6 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
                 intake.authorizationHeader(),
                 intake.collectorId(),
                 null);
-    }
-
-    private IntakeProfile mapServer() {
-        return ConfiguredInstrumentationIntakeProfileFactory.create(
-                serverProperties, IntakeKind.SERVER, Gateway.SERVER, INVALID_SERVER_PROFILE_ID);
     }
 
     private IntakeProfile mapExternal() {

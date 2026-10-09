@@ -21,7 +21,7 @@ it('retires a pending operation owner when its controller unmounts', () => {
 it('accepts an owner after the Strict Mode effect replay', () => {
   const hook = renderHook(() => useExclusiveOperation('strict-operation'), { wrapper: StrictModeWrapper });
 
-  expect(hook.result.current.begin()).toBeTruthy();
+  expect(typeof hook.result.current.begin()).toBe('symbol');
 });
 
 it('explicitly retires only the selected owner and unlocks immediately', () => {
@@ -32,7 +32,7 @@ it('explicitly retires only the selected owner and unlocks immediately', () => {
   });
 
   act(() => {
-    expect(hook.result.current.retire({ token: Symbol('other') })).toBe(false);
+    expect(hook.result.current.retire(Symbol('other'))).toBe(false);
     expect(hook.result.current.retire(owner)).toBe(true);
   });
 

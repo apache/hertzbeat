@@ -1,0 +1,163 @@
+diff --git a/lib/TimeSeriesChartBase.d.ts b/lib/TimeSeriesChartBase.d.ts
+index e25a8b94158d0524efaabe5660715dfbf9969b98..5987e301a899406344e5d681f95056e522c4d0a0 100644
+--- a/lib/TimeSeriesChartBase.d.ts
++++ b/lib/TimeSeriesChartBase.d.ts
+@@ -17,6 +17,7 @@ export interface TimeChartProps {
+     seriesFormatMap?: Map<string, FormatOptions>;
+     grid?: GridComponentOption;
+     tooltipConfig?: TooltipConfig;
++    renderTimestamp?: (timestamp: number) => import("react").ReactNode;
+     noDataVariant?: 'chart' | 'message';
+     syncGroup?: string;
+     isStackedBar?: boolean;
+diff --git a/lib/TimeSeriesChartBase.js b/lib/TimeSeriesChartBase.js
+index cb435001f0313bf0731a1de9e0e5bcddd51c31f9..6412dbef8ac3de9f3504c4889c1a265feba7c409 100644
+--- a/lib/TimeSeriesChartBase.js
++++ b/lib/TimeSeriesChartBase.js
+@@ -36,7 +36,7 @@ use([
+     TooltipComponent,
+     CanvasRenderer
+ ]);
+-export const TimeSeriesChartBase = /*#__PURE__*/ forwardRef(function TimeChart({ height, data, seriesMapping, annotations, timeScale: timeScaleProp, yAxis, format, seriesFormatMap, grid, isStackedBar = false, tooltipConfig = DEFAULT_TOOLTIP_CONFIG, noDataVariant = 'message', syncGroup, onDataZoom, onDoubleClick, __experimentalEChartsOptionsOverride }, ref) {
++export const TimeSeriesChartBase = /*#__PURE__*/ forwardRef(function TimeChart({ height, data, seriesMapping, annotations, timeScale: timeScaleProp, yAxis, format, seriesFormatMap, grid, isStackedBar = false, tooltipConfig = DEFAULT_TOOLTIP_CONFIG, noDataVariant = 'message', syncGroup, onDataZoom, onDoubleClick, __experimentalEChartsOptionsOverride, renderTimestamp }, ref) {
+     const { chartsTheme, enablePinning, enableSyncGrouping, lastTooltipPinnedCoords, setLastTooltipPinnedCoords } = useChartsContext();
+     const isPinningEnabled = tooltipConfig.enablePinning && enablePinning;
+     const chartRef = useRef();
+@@ -48,6 +48,14 @@ export const TimeSeriesChartBase = /*#__PURE__*/ forwardRef(function TimeChart({
+     const [hoveredAnnotation, setHoveredAnnotation] = useState(null);
+     const [pinnedAnnotation, setPinnedAnnotation] = useState(null);
+     const [pinnedAnnotationPos, setPinnedAnnotationPos] = useState(null);
++    useEffect(()=>{
++        if (!isPinningEnabled) {
++            setTooltipPinnedCoords(null);
++            setPinnedCrosshair(null);
++            setPinnedAnnotation(null);
++            setPinnedAnnotationPos(null);
++        }
++    }, [isPinningEnabled]);
+     const { timeZone, formatWithUserTimeZone } = useTimeZone();
+     const getTimezoneAwareAxisFormatter = useCallback((rangeMs)=>createTimezoneAwareAxisFormatter(rangeMs, timeZone), [
+         timeZone
+@@ -216,6 +224,7 @@ export const TimeSeriesChartBase = /*#__PURE__*/ forwardRef(function TimeChart({
+                 // ECharts tooltip content hidden by default since we use custom tooltip instead.
+                 // Stacked bar uses ECharts tooltip so subgroup data shows correctly.
+                 showContent: isStackedBar,
++                triggerOn: isStackedBar ? 'mousemove|click' : 'none',
+                 trigger: isStackedBar ? 'item' : 'axis',
+                 appendToBody: isStackedBar
+             },
+@@ -435,6 +444,7 @@ export const TimeSeriesChartBase = /*#__PURE__*/ forwardRef(function TimeChart({
+                 data: data,
+                 seriesMapping: seriesMapping,
+                 wrapLabels: tooltipConfig.wrapLabels,
++                renderTimestamp: renderTimestamp,
+                 enablePinning: isPinningEnabled,
+                 pinnedPos: tooltipPinnedCoords,
+                 format: format,
+diff --git a/lib/TimeSeriesChartPanel.d.ts b/lib/TimeSeriesChartPanel.d.ts
+index 3c15f0d295f9f594111e5e88259f664f7a579c8a..d027487243c2a2935d85c7ba459df7a91a2bd089 100644
+--- a/lib/TimeSeriesChartPanel.d.ts
++++ b/lib/TimeSeriesChartPanel.d.ts
+@@ -2,6 +2,6 @@ import { ReactElement } from 'react';
+ import { PanelProps } from '@perses-dev/plugin-system';
+ import { TimeSeriesData } from '@perses-dev/spec';
+ import { TimeSeriesChartOptions } from './time-series-chart-model';
+-export type TimeSeriesChartProps = PanelProps<TimeSeriesChartOptions, TimeSeriesData>;
++export type TimeSeriesChartProps = PanelProps<TimeSeriesChartOptions, TimeSeriesData> & { renderTimestamp?: (timestamp: number) => import("react").ReactNode };
+ export declare function TimeSeriesChartPanel(props: TimeSeriesChartProps): ReactElement | null;
+ //# sourceMappingURL=TimeSeriesChartPanel.d.ts.map
+\ No newline at end of file
+diff --git a/lib/TimeSeriesChartPanel.js b/lib/TimeSeriesChartPanel.js
+index 13321f9a2ef0d8eaacb303cba8b6984e5ac040f2..72ddaca9acdb74beec4a5e894e9a009b78ef684e 100644
+--- a/lib/TimeSeriesChartPanel.js
++++ b/lib/TimeSeriesChartPanel.js
+@@ -435,6 +435,7 @@ export function TimeSeriesChartPanel(props) {
+                             grid: gridOverrides,
+                             isStackedBar: isStackedBar,
+                             tooltipConfig: tooltipConfig,
++                            renderTimestamp: props.renderTimestamp,
+                             syncGroup: "default-panel-group",
+                             onDataZoom: handleDataZoom,
+                             //  Show an empty chart when there is no data because the user unselected all items in
+diff --git a/lib/cjs/TimeSeriesChartBase.js b/lib/cjs/TimeSeriesChartBase.js
+index d18677fadb1988dbf03f7f6de05d014b20c6d20b..32756824220d64fcfdd734a660adc93926489ea7 100644
+--- a/lib/cjs/TimeSeriesChartBase.js
++++ b/lib/cjs/TimeSeriesChartBase.js
+@@ -51,7 +51,7 @@ function _interop_require_default(obj) {
+     _components.TooltipComponent,
+     _renderers.CanvasRenderer
+ ]);
+-const TimeSeriesChartBase = /*#__PURE__*/ (0, _react.forwardRef)(function TimeChart({ height, data, seriesMapping, annotations, timeScale: timeScaleProp, yAxis, format, seriesFormatMap, grid, isStackedBar = false, tooltipConfig = _components1.DEFAULT_TOOLTIP_CONFIG, noDataVariant = 'message', syncGroup, onDataZoom, onDoubleClick, __experimentalEChartsOptionsOverride }, ref) {
++const TimeSeriesChartBase = /*#__PURE__*/ (0, _react.forwardRef)(function TimeChart({ height, data, seriesMapping, annotations, timeScale: timeScaleProp, yAxis, format, seriesFormatMap, grid, isStackedBar = false, tooltipConfig = _components1.DEFAULT_TOOLTIP_CONFIG, noDataVariant = 'message', syncGroup, onDataZoom, onDoubleClick, __experimentalEChartsOptionsOverride, renderTimestamp }, ref) {
+     const { chartsTheme, enablePinning, enableSyncGrouping, lastTooltipPinnedCoords, setLastTooltipPinnedCoords } = (0, _components1.useChartsContext)();
+     const isPinningEnabled = tooltipConfig.enablePinning && enablePinning;
+     const chartRef = (0, _react.useRef)();
+@@ -63,6 +63,14 @@ const TimeSeriesChartBase = /*#__PURE__*/ (0, _react.forwardRef)(function TimeCh
+     const [hoveredAnnotation, setHoveredAnnotation] = (0, _react.useState)(null);
+     const [pinnedAnnotation, setPinnedAnnotation] = (0, _react.useState)(null);
+     const [pinnedAnnotationPos, setPinnedAnnotationPos] = (0, _react.useState)(null);
++    (0, _react.useEffect)(()=>{
++        if (!isPinningEnabled) {
++            setTooltipPinnedCoords(null);
++            setPinnedCrosshair(null);
++            setPinnedAnnotation(null);
++            setPinnedAnnotationPos(null);
++        }
++    }, [isPinningEnabled]);
+     const { timeZone, formatWithUserTimeZone } = (0, _components1.useTimeZone)();
+     const getTimezoneAwareAxisFormatter = (0, _react.useCallback)((rangeMs)=>(0, _timezoneformatter.createTimezoneAwareAxisFormatter)(rangeMs, timeZone), [
+         timeZone
+@@ -231,6 +239,7 @@ const TimeSeriesChartBase = /*#__PURE__*/ (0, _react.forwardRef)(function TimeCh
+                 // ECharts tooltip content hidden by default since we use custom tooltip instead.
+                 // Stacked bar uses ECharts tooltip so subgroup data shows correctly.
+                 showContent: isStackedBar,
++                triggerOn: isStackedBar ? 'mousemove|click' : 'none',
+                 trigger: isStackedBar ? 'item' : 'axis',
+                 appendToBody: isStackedBar
+             },
+@@ -450,6 +459,7 @@ const TimeSeriesChartBase = /*#__PURE__*/ (0, _react.forwardRef)(function TimeCh
+                 data: data,
+                 seriesMapping: seriesMapping,
+                 wrapLabels: tooltipConfig.wrapLabels,
++                renderTimestamp: renderTimestamp,
+                 enablePinning: isPinningEnabled,
+                 pinnedPos: tooltipPinnedCoords,
+                 format: format,
+diff --git a/lib/cjs/TimeSeriesChartPanel.js b/lib/cjs/TimeSeriesChartPanel.js
+index ddbe91d61b12b1281ccde415d8b9ca5920a6060f..bb52397e4924c960cb0b72c3662aa8c572ebf3c7 100644
+--- a/lib/cjs/TimeSeriesChartPanel.js
++++ b/lib/cjs/TimeSeriesChartPanel.js
+@@ -442,6 +442,7 @@ function TimeSeriesChartPanel(props) {
+                             grid: gridOverrides,
+                             isStackedBar: isStackedBar,
+                             tooltipConfig: tooltipConfig,
++                            renderTimestamp: props.renderTimestamp,
+                             syncGroup: "default-panel-group",
+                             onDataZoom: handleDataZoom,
+                             //  Show an empty chart when there is no data because the user unselected all items in
+diff --git a/lib/cjs/utils/timezone-formatter.js b/lib/cjs/utils/timezone-formatter.js
+index bb4d410b4e436bca137bde514b259e63837153b0..87789e16fdb1f0c1da62e582f13aaf50cf16f697 100644
+--- a/lib/cjs/utils/timezone-formatter.js
++++ b/lib/cjs/utils/timezone-formatter.js
+@@ -43,6 +43,8 @@ function createTimezoneAwareAxisFormatter(rangeMs, timeZone) {
+         if (rangeMs > DAY_MS * 2 && rangeMs <= DAY_MS * 10) {
+             return (0, _components.formatWithTimeZone)(timeStamp, 'dd.MM HH:mm', timeZone);
+         }
++        if (rangeMs <= 10000) return (0, _components.formatWithTimeZone)(timeStamp, 'HH:mm:ss.SSS', timeZone);
++        if (rangeMs <= 120000 || timeStamp.getUTCSeconds() !== 0) return (0, _components.formatWithTimeZone)(timeStamp, 'HH:mm:ss', timeZone);
+         return (0, _components.formatWithTimeZone)(timeStamp, 'HH:mm', timeZone);
+     };
+ }
+diff --git a/lib/utils/timezone-formatter.js b/lib/utils/timezone-formatter.js
+index c66978eec2da54c0830ee4623e7809a7da450fa8..1c4c56a86e256142046c5d13e78f7c049e8e8e02 100644
+--- a/lib/utils/timezone-formatter.js
++++ b/lib/utils/timezone-formatter.js
+@@ -35,6 +35,8 @@ const YEAR_MS = 31536000000;
+         if (rangeMs > DAY_MS * 2 && rangeMs <= DAY_MS * 10) {
+             return formatWithTimeZone(timeStamp, 'dd.MM HH:mm', timeZone);
+         }
++        if (rangeMs <= 10000) return formatWithTimeZone(timeStamp, 'HH:mm:ss.SSS', timeZone);
++        if (rangeMs <= 120000 || timeStamp.getUTCSeconds() !== 0) return formatWithTimeZone(timeStamp, 'HH:mm:ss', timeZone);
+         return formatWithTimeZone(timeStamp, 'HH:mm', timeZone);
+     };
+ }

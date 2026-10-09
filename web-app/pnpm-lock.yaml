@@ -5,9 +5,24 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
+  '@perses-dev/components@0.54.0':
+    hash: 49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39
+    path: patches/@perses-dev__components@0.54.0.patch
   '@perses-dev/logs-table-plugin@0.3.0':
-    hash: c7736c402f4511a31579ba1b764d0d9641c3f8db7585fb22bae98892a62056b9
+    hash: b222a3bf5d96097033cfa201d2e5468325c736f3880e66121ceb3c6e5c625e0b
     path: patches/@perses-dev__logs-table-plugin@0.3.0.patch
+  '@perses-dev/plugin-system@0.54.0':
+    hash: 41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a
+    path: patches/@perses-dev__plugin-system@0.54.0.patch
+  '@perses-dev/timeseries-chart-plugin@0.13.0':
+    hash: 896b46571252233f13e5fc32c06d13ff72b7a0237cb407b8e60d3013d08f18f2
+    path: patches/@perses-dev__timeseries-chart-plugin@0.13.0.patch
+  '@perses-dev/trace-table-plugin@0.11.0':
+    hash: c60af0f495adb168f8b200a2938717499a44eecc0aedfb4458a7ecff5761b4d0
+    path: patches/@perses-dev__trace-table-plugin@0.11.0.patch
+  '@perses-dev/tracing-gantt-chart-plugin@0.13.0':
+    hash: b4d2a4ade173daf05a061c99c0e53439f30e15fc1785f11ca1246e837afea173
+    path: patches/@perses-dev__tracing-gantt-chart-plugin@0.13.0.patch
 
 importers:
 
@@ -61,36 +76,48 @@ importers:
       '@mui/material':
         specifier: 6.5.0
         version: 6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mui/x-data-grid':
+        specifier: 7.29.13
+        version: 7.29.13(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@perses-dev/client':
         specifier: 0.54.0
         version: 0.54.0
       '@perses-dev/components':
         specifier: 0.54.0
-        version: 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
+        version: 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
       '@perses-dev/dashboards':
         specifier: 0.54.0
         version: 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/explore':
         specifier: 0.54.0
         version: 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/gauge-chart-plugin':
+        specifier: 0.13.0
+        version: 0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@perses-dev/logs-table-plugin':
         specifier: 0.3.0
-        version: 0.3.0(patch_hash=c7736c402f4511a31579ba1b764d0d9641c3f8db7585fb22bae98892a62056b9)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        version: 0.3.0(patch_hash=b222a3bf5d96097033cfa201d2e5468325c736f3880e66121ceb3c6e5c625e0b)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@perses-dev/plugin-system':
         specifier: 0.54.0
-        version: 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+        version: 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/spec':
         specifier: 0.2.0
         version: 0.2.0
+      '@perses-dev/stat-chart-plugin':
+        specifier: 0.14.0
+        version: 0.14.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+      '@perses-dev/table-plugin':
+        specifier: 0.13.0
+        version: 0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@perses-dev/timeseries-chart-plugin':
         specifier: 0.13.0
-        version: 0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        version: 0.13.0(patch_hash=896b46571252233f13e5fc32c06d13ff72b7a0237cb407b8e60d3013d08f18f2)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@perses-dev/trace-table-plugin':
         specifier: 0.11.0
-        version: 0.11.0(0f39bddc097b5eb61f10df67b084db02)
+        version: 0.11.0(patch_hash=c60af0f495adb168f8b200a2938717499a44eecc0aedfb4458a7ecff5761b4d0)(a865e314ab7591ceec013e5b91339ddb)
       '@perses-dev/tracing-gantt-chart-plugin':
         specifier: 0.13.0
-        version: 0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        version: 0.13.0(patch_hash=b4d2a4ade173daf05a061c99c0e53439f30e15fc1785f11ca1246e837afea173)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@phosphor-icons/core':
         specifier: 2.1.1
         version: 2.1.1
@@ -1293,6 +1320,24 @@ packages:
       react: ^17.0.2 || ^18.0.0
       react-dom: ^17.0.2 || ^18.0.0
 
+  '@perses-dev/gauge-chart-plugin@0.13.0':
+    resolution: {integrity: sha512-g5puofVigailofuiufaJ1Yh5GigEIvtNlOHOkeON3DA9POFIPxaEXOkw++oA8DZ+UX2uv7VXhFXn6pgnA+tonQ==}
+    peerDependencies:
+      '@emotion/react': ^11.7.1
+      '@emotion/styled': ^11.6.0
+      '@hookform/resolvers': ^3.2.0
+      '@perses-dev/components': ^0.54.0
+      '@perses-dev/plugin-system': ^0.54.0
+      '@perses-dev/spec': ^0.2.0
+      date-fns: ^4.1.0
+      date-fns-tz: ^3.2.0
+      echarts: 5.5.0
+      immer: ^10.1.1
+      lodash: ^4.17.21
+      react: ^17.0.2 || ^18.0.0
+      react-dom: ^17.0.2 || ^18.0.0
+      use-resize-observer: ^9.0.0
+
   '@perses-dev/logs-table-plugin@0.3.0':
     resolution: {integrity: sha512-0uLbZfAUvlecfh0oktJJhDObQrvr3JnohvlOjberJ+v6IMdaJPFNN78HBRzQsOeKyJpuAoJwjCmyndvP4skutw==}
     peerDependencies:
@@ -1324,6 +1369,43 @@ packages:
 
   '@perses-dev/spec@0.2.0':
     resolution: {integrity: sha512-0SukMq7kzYBni670E+uSSebr8LzQP4PdgUUli9HVU2FsDTrby5rJ3KjgoGRbCtGJNCB/fmeWGx57ZlfFohvwog==}
+
+  '@perses-dev/stat-chart-plugin@0.14.0':
+    resolution: {integrity: sha512-qoYW7hCH3iFRJEy1111Ef3BLztdKy6GFRcadiFhq4vR+OO7hBQpvcAx7LxOowp0vtB/bDNpt0Vmeo1lKazih/Q==}
+    peerDependencies:
+      '@emotion/react': ^11.7.1
+      '@emotion/styled': ^11.6.0
+      '@hookform/resolvers': ^3.2.0
+      '@perses-dev/components': ^0.54.0
+      '@perses-dev/plugin-system': ^0.54.0
+      '@perses-dev/spec': ^0.2.0
+      date-fns: ^4.1.0
+      date-fns-tz: ^3.2.0
+      echarts: 5.5.0
+      immer: ^10.1.1
+      lodash: ^4.17.21
+      react: ^17.0.2 || ^18.0.0
+      react-dom: ^17.0.2 || ^18.0.0
+      use-resize-observer: ^9.0.0
+
+  '@perses-dev/table-plugin@0.13.0':
+    resolution: {integrity: sha512-bxuKu9/IFBymc3Nc7tkL2zzRqp0ue1cws3EbDneE2v7nzkN6VrvbrNQUD8g7NPMIg2sm53gRfgDOxMLkBcmUNQ==}
+    peerDependencies:
+      '@emotion/react': ^11.7.1
+      '@emotion/styled': ^11.6.0
+      '@hookform/resolvers': ^3.2.0
+      '@perses-dev/components': ^0.54.0
+      '@perses-dev/dashboards': ^0.54.0
+      '@perses-dev/plugin-system': ^0.54.0
+      '@perses-dev/spec': ^0.2.0
+      '@tanstack/react-table': ^8.20.5
+      date-fns: ^4.1.0
+      date-fns-tz: ^3.2.0
+      echarts: 5.5.0
+      lodash: ^4.17.21
+      react: ^17.0.2 || ^18.0.0
+      react-dom: ^17.0.2 || ^18.0.0
+      use-resize-observer: ^9.0.0
 
   '@perses-dev/timeseries-chart-plugin@0.13.0':
     resolution: {integrity: sha512-LsKco0N0cdzbpjMU2xkpGluDm2uZcPSk3cn756y9hHB6oeWJgCebTQT0l7QlUegiUZ6ZDmmmgjKrqLwjD8Fjcw==}
@@ -2191,6 +2273,9 @@ packages:
 
   character-reference-invalid@1.1.4:
     resolution: {integrity: sha512-mKKUkUbhPpQlCOfIuZkvSEgktjPFIsZKRRbC6KWVEMvlzblj3i3asQv5ODsrwt0N3pHAEvjP8KTQPHkp0+6jOg==}
+
+  chroma-js@3.2.0:
+    resolution: {integrity: sha512-os/OippSlX1RlWWr+QDPcGUZs0uoqr32urfxESG9U93lhUfbnlyckte84Q8P1UQY/qth983AS1JONKmLS4T0nw==}
 
   classnames@2.5.1:
     resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
@@ -5592,7 +5677,7 @@ snapshots:
       '@perses-dev/spec': 0.2.0
       zod: 3.25.76
 
-  '@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a)':
+  '@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)':
     dependencies:
       '@atlaskit/pragmatic-drag-and-drop': 1.8.1
       '@atlaskit/pragmatic-drag-and-drop-hitbox': 1.2.0
@@ -5653,8 +5738,8 @@ snapshots:
     dependencies:
       '@mui/material': 6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@perses-dev/client': 0.54.0
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
-      '@perses-dev/plugin-system': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/spec': 0.2.0
       '@tanstack/hotkeys': 0.8.0
       '@tanstack/react-hotkeys': 0.9.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -5707,9 +5792,9 @@ snapshots:
     dependencies:
       '@mui/material': 6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@nexucis/fuzzy': 0.5.1
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
       '@perses-dev/dashboards': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
-      '@perses-dev/plugin-system': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@tanstack/react-query': 5.101.2(react@18.3.1)
       mdi-material-ui: 7.9.4(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       qs: 6.15.3
@@ -5750,14 +5835,31 @@ snapshots:
       - vue-tsc
       - webpack
 
-  '@perses-dev/logs-table-plugin@0.3.0(patch_hash=c7736c402f4511a31579ba1b764d0d9641c3f8db7585fb22bae98892a62056b9)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@perses-dev/gauge-chart-plugin@0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
       '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/spec': 0.2.0
+      date-fns: 4.1.0
+      date-fns-tz: 3.2.0(date-fns@4.1.0)
+      echarts: 5.5.0
+      immer: 10.2.0
+      lodash: 4.17.21
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+
+  '@perses-dev/logs-table-plugin@0.3.0(patch_hash=b222a3bf5d96097033cfa201d2e5468325c736f3880e66121ceb3c6e5c625e0b)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+    dependencies:
+      '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
+      '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
+      '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
       '@perses-dev/dashboards': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
-      '@perses-dev/plugin-system': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/spec': 0.2.0
       ansi_up: 6.0.6
       date-fns: 4.1.0
@@ -5769,7 +5871,7 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       use-resize-observer: 9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
-  '@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)':
+  '@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)':
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
@@ -5777,7 +5879,7 @@ snapshots:
       '@module-federation/enhanced': 2.9.0(@rspack/core@2.2.1(@module-federation/runtime-tools@2.9.0))(typescript@5.9.3)
       '@mui/material': 6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@perses-dev/client': 0.54.0
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
       '@perses-dev/core': 0.53.0
       '@perses-dev/spec': 0.2.0
       '@tanstack/react-query': 5.101.2(react@18.3.1)
@@ -5825,14 +5927,50 @@ snapshots:
       mathjs: 15.2.0
       zod: 3.25.76
 
-  '@perses-dev/timeseries-chart-plugin@0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@perses-dev/stat-chart-plugin@0.14.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
       '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/spec': 0.2.0
+      chroma-js: 3.2.0
+      date-fns: 4.1.0
+      date-fns-tz: 3.2.0(date-fns@4.1.0)
+      echarts: 5.5.0
+      immer: 10.2.0
+      lodash: 4.17.21
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+
+  '@perses-dev/table-plugin@0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+    dependencies:
+      '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
+      '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
+      '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
       '@perses-dev/dashboards': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
-      '@perses-dev/plugin-system': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/spec': 0.2.0
+      '@tanstack/react-table': 8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      date-fns: 4.1.0
+      date-fns-tz: 3.2.0(date-fns@4.1.0)
+      echarts: 5.5.0
+      lodash: 4.17.21
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+
+  '@perses-dev/timeseries-chart-plugin@0.13.0(patch_hash=896b46571252233f13e5fc32c06d13ff72b7a0237cb407b8e60d3013d08f18f2)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/dashboards@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(immer@10.2.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+    dependencies:
+      '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
+      '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
+      '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/dashboards': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/spec': 0.2.0
       color-hash: 2.0.2
       date-fns: 4.1.0
@@ -5844,14 +5982,14 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       use-resize-observer: 9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
-  '@perses-dev/trace-table-plugin@0.11.0(0f39bddc097b5eb61f10df67b084db02)':
+  '@perses-dev/trace-table-plugin@0.11.0(patch_hash=c60af0f495adb168f8b200a2938717499a44eecc0aedfb4458a7ecff5761b4d0)(a865e314ab7591ceec013e5b91339ddb)':
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
       '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
       '@mui/x-data-grid': 7.29.13(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@6.5.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
-      '@perses-dev/plugin-system': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/spec': 0.2.0
       date-fns: 4.1.0
       date-fns-tz: 3.2.0(date-fns@4.1.0)
@@ -5865,13 +6003,13 @@ snapshots:
       - '@mui/system'
       - '@types/react'
 
-  '@perses-dev/tracing-gantt-chart-plugin@0.13.0(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@perses-dev/tracing-gantt-chart-plugin@0.13.0(patch_hash=b4d2a4ade173daf05a061c99c0e53439f30e15fc1785f11ca1246e837afea173)(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1))(@hookform/resolvers@3.10.0(react-hook-form@7.62.0(react@18.3.1)))(@perses-dev/components@0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a))(@perses-dev/plugin-system@0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4))(@perses-dev/spec@0.2.0)(date-fns-tz@3.2.0(date-fns@4.1.0))(date-fns@4.1.0)(echarts@5.5.0)(lodash@4.17.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-resize-observer@9.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.28)(react@18.3.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@18.3.28)(react@18.3.1))(@types/react@18.3.28)(react@18.3.1)
       '@hookform/resolvers': 3.10.0(react-hook-form@7.62.0(react@18.3.1))
-      '@perses-dev/components': 0.54.0(c35d1af9abf44fbd7e846f18f415c68a)
-      '@perses-dev/plugin-system': 0.54.0(5da87865a4acb83dfcec0b3c898dc4f4)
+      '@perses-dev/components': 0.54.0(patch_hash=49862833546ab6b43f1025f48a0e0d06e28caa5e1b253224a85ee3df31bb6f39)(c35d1af9abf44fbd7e846f18f415c68a)
+      '@perses-dev/plugin-system': 0.54.0(patch_hash=41c6eec53bb1d0f7e7d9c9f3f652aa6a74823851835084d834c630ff6087f82a)(5da87865a4acb83dfcec0b3c898dc4f4)
       '@perses-dev/spec': 0.2.0
       color-hash: 2.0.2
       date-fns: 4.1.0
@@ -6710,6 +6848,8 @@ snapshots:
   character-entities@1.2.4: {}
 
   character-reference-invalid@1.1.4: {}
+
+  chroma-js@3.2.0: {}
 
   classnames@2.5.1: {}
 

@@ -1,0 +1,23 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.sample {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  align-items: baseline;
+  column-gap: var(--hb-space-1);
+  overflow-wrap: anywhere;
+}
+.sample small {
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+.sample:only-child small {
+  flex-basis: 100%;
+}
+
+.heading {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

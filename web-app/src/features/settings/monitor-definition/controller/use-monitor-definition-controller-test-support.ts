@@ -6,10 +6,10 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook } from '@testing-library/react';
+import { cleanup, renderHook } from '@testing-library/react';
 import { StrictMode, createElement, useLayoutEffect, type PropsWithChildren } from 'react';
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from 'react-router-dom';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 import type { MonitorDefinitionDetail } from '../model/monitor-definition-model';
 
@@ -45,6 +45,8 @@ vi.mock('@/core/auth/session-context', () => ({
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { resolvedLanguage: 'en-US' } }) }));
 
 import { useMonitorDefinitionController } from './use-monitor-definition-controller';
+
+afterEach(cleanup);
 
 export const revision = 'a'.repeat(64);
 export const newerRevision = 'b'.repeat(64);

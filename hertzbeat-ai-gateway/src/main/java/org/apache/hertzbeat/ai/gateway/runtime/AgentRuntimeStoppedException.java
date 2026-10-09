@@ -22,7 +22,18 @@ package org.apache.hertzbeat.ai.gateway.runtime;
  */
 public class AgentRuntimeStoppedException extends RuntimeException {
 
+    private final boolean cancelled;
+
     public AgentRuntimeStoppedException(String message) {
+        this(message, false);
+    }
+
+    AgentRuntimeStoppedException(String message, boolean cancelled) {
         super(message);
+        this.cancelled = cancelled;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
     }
 }

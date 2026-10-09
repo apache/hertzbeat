@@ -174,26 +174,23 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                 headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri;
+            UriComponentsBuilder uriComponentsBuilder;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
-                uri = queryUri(QUERY_RANGE_PATH)
+                uriComponentsBuilder = queryUri(QUERY_RANGE_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .queryParam(HTTP_START_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getStart()))
                         .queryParam(HTTP_END_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getEnd()))
-                        .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
-                        .build().toUri();
+                        .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep());
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
-                uri = queryUri(QUERY_PATH)
-                        .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
-                        .build().toUri();
+                uriComponentsBuilder = queryUri(QUERY_PATH)
+                        .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr());
             } else {
                 throw new IllegalArgumentException(String.format("no such time type for query id %s.", datasourceQuery.getRefId()));
             }
             if (datasourceQuery.getLimit() != null && datasourceQuery.getLimit() > 0) {
-                uri = UriComponentsBuilder.fromUri(uri)
-                        .queryParam(HTTP_LIMIT_PARAM, datasourceQuery.getLimit())
-                        .build().toUri();
+                uriComponentsBuilder.queryParam(HTTP_LIMIT_PARAM, datasourceQuery.getLimit());
             }
+            URI uri = uriComponentsBuilder.build().toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
                     PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -233,11 +230,25 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                 queryDataBuilder.status(responseEntity.getStatusCode().value());
             }
         } catch (Exception e) {
+            if (isInvalidQueryResponse(e)) {
+                return queryDataBuilder.status(400).msg(
+                        org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL_QUERY_INVALID).build();
+            }
             log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);
             queryDataBuilder.msg("query metrics data from victoria-metrics error: " + e.getMessage());
             queryDataBuilder.status(400);
         }
         return queryDataBuilder.build();
+    }
+
+    private boolean isInvalidQueryResponse(Exception error) {
+        if (!(error instanceof org.springframework.web.client.RestClientResponseException response)
+                || (response.getStatusCode().value() != 400 && response.getStatusCode().value() != 422)) {
+            return false;
+        }
+        var body = org.apache.hertzbeat.common.util.JsonUtil.fromJsonQuietly(response.getResponseBodyAsString());
+        return body != null && "error".equals(body.path("status").asText())
+                && List.of("InvalidArguments", "bad_data").contains(body.path("errorType").asText());
     }
 
     @Override

@@ -15,32 +15,48 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 
 import { refreshBrowserSessionResult } from '@/core/http/http-client';
 
 import { SessionContext, type SessionReadFailureKind } from './session-context';
-import { anonymousSession, getSession, sessionQueryKey, SessionRequestError, type UiSession } from './session-api';
+import {
+  anonymousSession,
+  getSessionWithRecovery,
+  sessionQueryKey,
+  SessionRequestError,
+  type UiSession
+} from './session-api';
 import { useSessionIdentityBoundary, type ReplaceSessionIdentity } from './session-identity-context';
 
 const MAXIMUM_EXPIRY_TIMER_MS = 2_147_483_647;
+const SESSION_RENEWAL_EARLY_MS = 30_000;
 
 export function SessionProvider({ children }: PropsWithChildren) {
   const replaceIdentity = useSessionIdentityBoundary();
+  const client = useQueryClient();
   const query = useQuery({
     queryKey: sessionQueryKey,
-    queryFn: ({ signal }) => getSession({ signal }),
+    queryFn: ({ signal }) =>
+      getSessionWithRecovery({
+        signal,
+        recover: () => {
+          const current = client.getQueryData<UiSession>(sessionQueryKey);
+          return current === undefined || current.authenticated;
+        }
+      }),
     retry: false
   });
   const expiry = useSessionExpiry(query.data, replaceIdentity);
-  const visibleSession = expiry.status === 'idle' ? failClosedExpiredSession(query.data) : undefined;
+  const currentSession = failClosedExpiredSession(query.data);
+  const visibleSession = expiry.status === 'failed' ? undefined : currentSession;
   const failure = resolveSessionFailure(expiry, query.isError, query.error);
   return (
     <SessionContext.Provider
       value={{
         session: visibleSession,
-        loading: query.isPending || expiry.status === 'renewing',
+        loading: query.isPending || (expiry.status === 'renewing' && !visibleSession?.authenticated),
         failure,
         retry: () => {
           if (expiry.status === 'failed') expiry.retry();
@@ -83,8 +99,15 @@ function useSessionExpiry(session: UiSession | undefined, replaceIdentity: Repla
     async function renewSession() {
       if (!active) return;
       setRenewal({ session, state: { status: 'renewing' } });
+      timer = setTimeout(
+        () => {
+          if (active) setRenewal({ session, state: { status: 'renewing' } });
+        },
+        Math.max(0, expiresAt - Date.now())
+      );
       const result = await refreshBrowserSessionResult({ convergence: 'local-only' });
       if (!active || result.status !== 'uncertain') return;
+      if (timer !== undefined) clearTimeout(timer);
       setRenewal({
         session,
         state: {
@@ -99,7 +122,7 @@ function useSessionExpiry(session: UiSession | undefined, replaceIdentity: Repla
 
     const expireWhenDue = () => {
       const remainingMs = expiresAt - Date.now();
-      if (remainingMs <= 0) {
+      if (remainingMs <= SESSION_RENEWAL_EARLY_MS) {
         // Expiry renewal rotates the shared refresh cookie. Keeping this local
         // prevents peer tabs from echoing the same expiry-driven refresh.
         void renewSession();
@@ -107,7 +130,7 @@ function useSessionExpiry(session: UiSession | undefined, replaceIdentity: Repla
       }
       // Browsers clamp larger delays. Re-arming avoids treating a far-future
       // valid session as expired immediately while retaining one timer owner.
-      timer = setTimeout(expireWhenDue, Math.min(remainingMs, MAXIMUM_EXPIRY_TIMER_MS));
+      timer = setTimeout(expireWhenDue, Math.min(remainingMs - SESSION_RENEWAL_EARLY_MS, MAXIMUM_EXPIRY_TIMER_MS));
     };
 
     expireWhenDue();

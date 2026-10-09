@@ -43,6 +43,7 @@ function buildCollectorListActions(options: ActionOptions) {
   return {
     submitName: () => {
       const name = options.nameDraft.trim();
+      options.setNameDraft(name);
       const current = options.queryRef.current;
       options.navigateQuery({ ...current, name, pageIndex: name === current.name ? current.pageIndex : 0 });
     },

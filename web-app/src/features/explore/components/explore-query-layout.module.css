@@ -1,0 +1,111 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.queryWorkspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 0;
+}
+.commandForm {
+  flex: none;
+  min-width: 0;
+}
+.queryBody {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--hb-space-3);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.queryBody:has(> .filterRail[data-mobile-collapsible='true']) {
+  grid-template-columns: clamp(220px, 17vw, 300px) minmax(0, 1fr);
+}
+.filterRail {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--hb-space-3) var(--hb-space-4) var(--hb-space-4) 0;
+  border-right: 1px solid var(--hb-border-subtle);
+}
+.mobileFiltersToggle {
+  display: none;
+}
+.filterRail h3 {
+  margin: 0 0 var(--hb-space-3);
+  font-size: 13px;
+  font-weight: 600;
+}
+.filterRail :global([data-explore-essential-filters]),
+.filterRail :global([data-explore-advanced-fields]) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hb-space-3);
+}
+.filterRail details {
+  margin-top: var(--hb-space-4);
+}
+.queryBody > :global([data-explore-region='results']) {
+  padding-left: var(--hb-space-4);
+}
+@media (max-width: 900px) {
+  .mobileFiltersToggle {
+    display: block;
+    width: 100%;
+    min-height: var(--hb-workbench-control-height);
+    padding: var(--hb-space-2) 0;
+    border: 0;
+    border-bottom: 1px solid var(--hb-border-subtle);
+    background: transparent;
+    color: var(--hb-text-primary);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+  }
+  .mobileFiltersToggle:focus-visible {
+    outline: 2px solid var(--ant-color-primary);
+    outline-offset: -2px;
+  }
+  .filterRail[data-mobile-collapsible='true'][data-mobile-open='false'] {
+    display: none;
+  }
+  .queryBody {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+  .queryBody:has(> .filterRail[data-mobile-collapsible='true']) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .filterRail {
+    border-right: 0;
+    border-bottom: 1px solid var(--hb-border-subtle);
+    overflow: visible;
+    padding-right: 0;
+  }
+  .filterRail :global([data-explore-essential-filters]),
+  .filterRail :global([data-explore-advanced-fields]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .queryBody > :global([data-explore-region='results']) {
+    min-height: 360px;
+    padding-left: 0;
+  }
+}
+
+.traceBasics {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.filterRail[data-trace-filter-rail='true'] :global([data-explore-essential-filters]) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.filterRail[data-trace-filter-rail='true'] :global([data-explore-essential-filters]) > :nth-child(1),
+.filterRail[data-trace-filter-rail='true'] :global([data-explore-essential-filters]) > :nth-child(2),
+.filterRail[data-trace-filter-rail='true'] :global([data-explore-essential-filters]) > :nth-child(n + 5) {
+  grid-column: 1 / -1;
+}
+.filterRail[data-trace-filter-rail='true'] details {
+  margin-top: 6px;
+}

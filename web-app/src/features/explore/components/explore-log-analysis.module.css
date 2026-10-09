@@ -1,0 +1,160 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--hb-space-3);
+  padding: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.authoring {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  row-gap: 4px;
+  min-width: 0;
+}
+.authoring > section:first-child {
+  min-height: 32px;
+  padding-block: 0;
+  border-bottom: 0;
+}
+.authoring > [role='group'] {
+  justify-self: start;
+}
+.authoring > .return,
+.authoring > section:not(:first-child) {
+  grid-column: 1 / -1;
+}
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hb-space-1);
+  font-size: 12px;
+}
+.controls input[type='number'] {
+  height: var(--hb-workbench-control-height, 32px);
+  max-width: 280px;
+  padding: 3px 8px;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 4px;
+  background: var(--hb-surface-container);
+  color: var(--hb-text-primary);
+}
+.controls label :global(.ant-select) {
+  min-width: 100px;
+  max-width: 280px;
+}
+.controls input[type='number'] {
+  width: 100px;
+}
+.controls p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.result {
+  min-width: 0;
+}
+.result header {
+  display: flex;
+  align-items: center;
+  min-height: var(--hb-workbench-header-height);
+  flex-wrap: wrap;
+  gap: var(--hb-space-3);
+  padding: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.state {
+  padding: var(--hb-space-6) var(--hb-space-2);
+}
+@media (max-width: 600px) {
+  .controls label {
+    flex: 1 1 120px;
+  }
+  .controls label :global(.ant-select) {
+    max-width: 100%;
+  }
+}
+
+.controls :is(input[type='number'], button):focus-visible,
+.state button:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+.return {
+  align-self: flex-start;
+  height: var(--hb-workbench-control-height, 32px);
+  padding-inline: 0;
+}
+@media (max-width: 1100px) {
+  .authoring {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--hb-space-2);
+  }
+  .authoring > [role='group'] {
+    justify-self: start;
+  }
+}
+
+.measureHint {
+  color: var(--hb-text-secondary);
+  margin: var(--hb-space-2) 0;
+}
+.dimension {
+  display: inline-flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  max-width: 100%;
+  align-items: end;
+  gap: var(--hb-space-2);
+}
+
+.controls button {
+  height: var(--hb-workbench-control-height, 32px);
+  min-width: var(--hb-workbench-control-height, 32px);
+  padding-inline: var(--hb-space-2);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-surface-container);
+  color: var(--hb-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.additionalControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--hb-space-3);
+  flex-basis: 100%;
+}
+
+@media (max-width: 700px) {
+  .representations button {
+    min-height: 36px;
+  }
+}
+
+.formulaTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.formulaTable th,
+.formulaTable td {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  text-align: left;
+}
+.formulaTable [data-log-stat] {
+  width: 110px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.formulaTable th {
+  background: var(--hb-surface-container);
+}

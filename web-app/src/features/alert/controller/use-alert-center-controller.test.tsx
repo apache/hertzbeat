@@ -85,6 +85,35 @@ describe('Alert Center controller', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  it('keeps filter drafts across pagination and converges submitted filters on history', async () => {
+    const v = renderRoutedController(['/alerts?search=old&pageIndex=0&pageSize=8']);
+    await waitFor(() => expect(v.current().state.list.kind).toBe('empty'));
+    act(() => v.current().setDraft('search', 'pending'));
+    act(() => v.current().setDraft('serviceName', 'pending-service'));
+    act(() => v.current().changePage(2, 8));
+    expect(v.current().state.draft.search).toBe('pending');
+    expect(v.current().state.draft.serviceName).toBe('pending-service');
+    expect(v.current().state.query.search).toBe('old');
+    await act(() => v.router.navigate(-1));
+    expect(v.current().state.draft.search).toBe('pending');
+    await act(() => v.router.navigate(1));
+    expect(v.current().state.draft.search).toBe('pending');
+    act(() => v.current().setDraft('search', '  next  '));
+    act(() => v.current().submitFilters());
+    expect(v.current().state.draft.search).toBe('next');
+    await act(() => v.router.navigate(-1));
+    expect(v.current().state.draft.search).toBe('old');
+    await act(() => v.router.navigate(1));
+    expect(v.current().state.draft.search).toBe('next');
+    act(() => v.current().setDraft('search', '  next  '));
+    act(() => v.current().submitFilters());
+    expect(v.current().state.draft.search).toBe('next');
+    act(() => v.current().setDraft('search', 'pending-remount'));
+    await act(() => v.router.navigate('/away'));
+    await act(() => v.router.navigate(-1));
+    expect(v.current().state.draft.search).toBe('next');
+  });
+
   it('owns URL query, scoped drafts, and discards drafts after Back or Forward changes the URL', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
@@ -421,7 +450,10 @@ function renderRoutedController(entries: string[], strict = false) {
     </QueryClientProvider>
   );
   const router = createMemoryRouter(
-    [{ path: '/alerts', element: strict ? <StrictMode>{element}</StrictMode> : element }],
+    [
+      { path: '/alerts', element: strict ? <StrictMode>{element}</StrictMode> : element },
+      { path: '/away', element: null }
+    ],
     {
       initialEntries: entries,
       initialIndex: 0

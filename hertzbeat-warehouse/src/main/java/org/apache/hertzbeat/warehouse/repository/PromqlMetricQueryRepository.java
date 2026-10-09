@@ -65,6 +65,9 @@ public class PromqlMetricQueryRepository implements MetricQueryRepository {
             if (results == null) {
                 return new PromqlRangeQueryResult(queryExecutor.getDatasource(), null, PROMQL_QUERY_FAILED);
             }
+            if (Integer.valueOf(400).equals(results.getStatus()) && PROMQL_QUERY_INVALID.equals(results.getMsg())) {
+                return new PromqlRangeQueryResult(queryExecutor.getDatasource(), null, PROMQL_QUERY_INVALID);
+            }
             Integer status = results.getStatus();
             if (status == null || status < 200 || status >= 300) {
                 return new PromqlRangeQueryResult(queryExecutor.getDatasource(), null, PROMQL_QUERY_FAILED);

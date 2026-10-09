@@ -15,14 +15,29 @@
  * limitations under the License.
  */
 
+import { validLogExploreModes } from './explore-log-calculated-v2';
+import { validLogNumericRange } from '@/shared/log-numeric-range';
+import { validLogSort } from './explore-log-order';
+import { isLogRecordUid, validExploreTimeZone } from './explore-field-contract';
+import { parseTraceStructure } from './explore-trace-structure';
+import type { LogSubqueryContext } from './explore-log-subquery';
+
 // Domain query contract shared by URL state and transport adapters.
 export type ExploreSignal = 'metrics' | 'logs' | 'traces';
 
-export type ExploreTimeRange = 'last-15m' | 'last-30m' | 'last-1h' | 'last-6h' | 'last-24h';
+export type { ExploreTimeRange } from './explore-time-range';
+import type { ExploreTimeRange } from './explore-time-range';
+export { timeRangeMilliseconds } from './explore-time-range';
 export type MetricTemporalAggregation = 'raw' | 'rate' | 'increase' | 'delta';
+export type MetricRollupControl = `rollup_${string}` | `nested_${string}`;
+export type TraceSort = 'newest' | 'duration_desc';
 export type TraceSpanScope = 'root' | 'entrypoint';
 
 type SharedExploreQuery = {
+  savedView?: string | undefined;
+  returnTo?: string | undefined;
+  servicesReturnTo?: string | undefined;
+  dashboardReturnTo?: string | undefined;
   timeRange: ExploreTimeRange;
   entityId?: string | undefined;
   monitorId?: string | undefined;
@@ -44,32 +59,57 @@ type SharedExploreQuery = {
 export type MetricExploreQuery = SharedExploreQuery & {
   signal: 'metrics';
   operationName?: string | undefined;
+  metricPlan?: string | undefined;
+  metricView?: string | undefined;
   metricFilter?: string | undefined;
   groupBy?: string | undefined;
   aggregation?: string | undefined;
-  temporalAggregation?: MetricTemporalAggregation | undefined;
+  temporalAggregation?: MetricTemporalAggregation | MetricRollupControl | undefined;
   step?: string | undefined;
 };
 
-export type LogExploreQuery = SharedExploreQuery & {
-  signal: 'logs';
-  logRecordUid?: string | undefined;
-  live?: boolean | undefined;
-  severityText?: string | undefined;
-  traceId?: string | undefined;
-  spanId?: string | undefined;
-  resourceFilter?: string | undefined;
-  attributeFilter?: string | undefined;
-  hideInternal?: boolean | undefined;
-  hideNoise?: boolean | undefined;
-  pageIndex?: number | undefined;
-};
+export type LogExploreQuery = SharedExploreQuery &
+  LogSubqueryContext & {
+    signal: 'logs';
+    /** Retired route field is kept only to reject old links without broadening the query. */
+    logReferenceJoin?: string | undefined;
+    // Keep invalid route sort text until validation rejects it.
+    sort?: string | undefined;
+    logSort?: string | undefined;
+    logRecordUid?: string | undefined;
+    logView?: string | undefined;
+    logAnalysis?: string | undefined;
+    logAggregation?: string | undefined;
+    logTransactions?: string | undefined;
+    logCalculated?: string | undefined;
+    logCalculatedV2?: string | undefined;
+    traceReturnTo?: string | undefined;
+    live?: boolean | undefined;
+    logGroupSelection?: string | undefined;
+    logNumericRange?: string | undefined;
+    searchSyntax?: string | undefined;
+    severityText?: string | undefined;
+    // Preserve untrusted route text so invalid categories fail validation instead of broadening the query.
+    severityCategory?: string | undefined;
+    traceId?: string | undefined;
+    spanId?: string | undefined;
+    resourceFilter?: string | undefined;
+    attributeFilter?: string | undefined;
+    hideInternal?: boolean | undefined;
+    hideNoise?: boolean | undefined;
+    pageIndex?: number | undefined;
+  };
 
 export type TraceExploreQuery = SharedExploreQuery & {
   signal: 'traces';
+  traceView?: string | undefined;
+  traceStructure?: string | undefined;
+  traceStructureView?: 'patterns' | 'flow' | undefined;
+  endExclusive?: boolean | undefined;
   traceId?: string | undefined;
   spanId?: string | undefined;
   errorOnly?: boolean | undefined;
+  sort?: TraceSort | undefined;
   resourceFilter?: string | undefined;
   attributeFilter?: string | undefined;
   spanScope?: TraceSpanScope | undefined;
@@ -81,10 +121,46 @@ export type TraceExploreQuery = SharedExploreQuery & {
 
 export type ExploreQuery = MetricExploreQuery | LogExploreQuery | TraceExploreQuery;
 
-const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/u;
-const SPAN_ID_PATTERN = /^[0-9a-f]{16}$/u;
+export function validTraceStructureQuery(query: TraceExploreQuery): boolean {
+  if (query.traceStructure === undefined) return query.traceStructureView === undefined;
+  if (query.traceStructureView !== undefined && !['patterns', 'flow'].includes(query.traceStructureView)) return false;
+  if (!parseTraceStructure(query.traceStructure)) return false;
+  return (
+    ![
+      query.entityId,
+      query.monitorId,
+      query.intakeProfileId,
+      query.collectorId,
+      query.instance,
+      query.endpoint,
+      query.serviceName,
+      query.serviceNamespace,
+      query.environment,
+      query.query,
+      query.traceId,
+      query.spanId,
+      query.resourceFilter,
+      query.attributeFilter,
+      query.spanScope,
+      query.minDurationMs,
+      query.maxDurationMs,
+      query.traceView,
+      query.errorOnly,
+      query.hideInternal,
+      query.endExclusive
+    ].some(value => value !== undefined && value !== false) &&
+    (query.sort === undefined || query.sort === 'newest')
+  );
+}
 
-export type ExploreQueryPatch = {
+const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/u;
+
+export type ExploreQueryPatch = LogSubqueryContext & {
+  logReferenceJoin?: string | undefined;
+  savedView?: string | undefined;
+  returnTo?: string | undefined;
+  servicesReturnTo?: string | undefined;
+  dashboardReturnTo?: string | undefined;
   signal?: ExploreSignal | undefined;
   timeRange?: ExploreTimeRange | undefined;
   entityId?: string | undefined;
@@ -103,18 +179,38 @@ export type ExploreQueryPatch = {
   end?: number | undefined;
   timeZone?: string | undefined;
   traceId?: string | undefined;
+  logSort?: string | undefined;
   logRecordUid?: string | undefined;
+  logView?: string | undefined;
+  logAnalysis?: string | undefined;
+  logAggregation?: string | undefined;
+  logTransactions?: string | undefined;
+  logCalculated?: string | undefined;
+  logCalculatedV2?: string | undefined;
+  traceReturnTo?: string | undefined;
+  traceView?: string | undefined;
+  traceStructure?: string | undefined;
+  traceStructureView?: 'patterns' | 'flow' | undefined;
+  endExclusive?: boolean | undefined;
   errorOnly?: boolean | undefined;
+  sort?: string | undefined;
   live?: boolean | undefined;
+  logGroupSelection?: string | undefined;
+  logNumericRange?: string | undefined;
+  searchSyntax?: string | undefined;
   severityText?: string | undefined;
+  // Preserve untrusted route text so invalid categories fail validation instead of broadening the query.
+  severityCategory?: string | undefined;
   spanId?: string | undefined;
   resourceFilter?: string | undefined;
   attributeFilter?: string | undefined;
   operationName?: string | undefined;
+  metricPlan?: string | undefined;
+  metricView?: string | undefined;
   metricFilter?: string | undefined;
   groupBy?: string | undefined;
   aggregation?: string | undefined;
-  temporalAggregation?: MetricTemporalAggregation | undefined;
+  temporalAggregation?: MetricTemporalAggregation | MetricRollupControl | undefined;
   step?: string | undefined;
   minDurationMs?: number | undefined;
   maxDurationMs?: number | undefined;
@@ -124,28 +220,26 @@ export type ExploreQueryPatch = {
   pageIndex?: number | undefined;
 };
 
-export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
-  const minutes: Record<ExploreTimeRange, number> = {
-    'last-15m': 15,
-    'last-30m': 30,
-    'last-1h': 60,
-    'last-6h': 360,
-    'last-24h': 1440
-  };
-  return minutes[timeRange] * 60_000;
-}
-
 export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
-  const focused = focusedInvestigationHandoffState(query);
+  if (query.signal === 'traces' && !validTraceStructureQuery(query)) return 'invalid';
+  if (query.signal === 'logs') {
+    if (!validLogExploreModes(query) || !validLogNumericRange(query.logNumericRange)) return 'invalid';
+    if (!validLogSort(query.logSort, query.sort) || (query.sort != null && !['newest', 'oldest'].includes(query.sort)))
+      return 'invalid';
+  }
+  const focused = focusedInvestigationHandoffState(query) ?? entityInvestigationHandoffState(query);
   if (focused) return focused;
-  const entityInvestigation = entityInvestigationHandoffState(query);
-  if (entityInvestigation) return entityInvestigation;
   const entityOrMonitor = entityOrMonitorHandoffState(query);
   return entityOrMonitor ?? onboardingHandoffState(query);
 }
 
 function entityOrMonitorHandoffState(query: ExploreQuery): 'scoped' | 'invalid' | undefined {
-  if ([query.entityId, query.monitorId, query.timeZone].some(isPresent)) {
+  if ([query.entityId, query.monitorId].some(isPresent)) {
+    if (query.windowMode === 'preset') {
+      return [query.entityId, query.monitorId, query.serviceName].every(isPresent) && validEntityPreset(query)
+        ? 'scoped'
+        : 'invalid';
+    }
     return [query.entityId, query.monitorId, query.serviceName, query.timeZone].every(isPresent) &&
       validExactWindow(query.start, query.end)
       ? 'scoped'
@@ -181,24 +275,15 @@ function focusedInvestigationHandoffState(query: ExploreQuery): 'scoped' | 'inva
 }
 
 function validFocusedIdentity(query: ExploreQuery) {
-  if (query.signal === 'logs') {
-    return (
-      validLogRecordUid(query.logRecordUid) && validOptionalTraceId(query.traceId) && validOptionalSpanId(query.spanId)
-    );
-  }
-  return query.signal === 'traces' && validTraceId(query.traceId) && validOptionalSpanId(query.spanId);
-}
-
-function validLogRecordUid(value: string | undefined) {
-  return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value);
-}
-
-function validOptionalTraceId(value: string | undefined) {
-  return value == null || validTraceId(value);
+  return query.signal === 'logs'
+    ? isLogRecordUid(query.logRecordUid) &&
+        (query.traceId == null || validTraceId(query.traceId)) &&
+        validOptionalSpanId(query.spanId)
+    : query.signal === 'traces' && validTraceId(query.traceId) && validOptionalSpanId(query.spanId);
 }
 
 function validOptionalSpanId(value: string | undefined) {
-  return value == null || (typeof value === 'string' && SPAN_ID_PATTERN.test(value));
+  return value == null || (typeof value === 'string' && /^[0-9a-f]{16}$/u.test(value));
 }
 
 function validTraceId(value: string | undefined) {
@@ -209,23 +294,21 @@ function validFocusedWindow(query: ExploreQuery) {
   return (
     validExactWindow(query.start, query.end) &&
     query.end! - query.start! <= 24 * 60 * 60_000 &&
-    validTimeZone(query.timeZone)
+    validExploreTimeZone(query.timeZone)
   );
 }
 
-function validTimeZone(value: string | undefined) {
-  if (!value) return false;
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: value }).format(0);
-    return true;
-  } catch {
-    return false;
-  }
+function entityInvestigationHandoffState(query: ExploreQuery): 'scoped' | 'invalid' | undefined {
+  if (!isPresent(query.entityId) || isPresent(query.monitorId)) return undefined;
+  if (query.windowMode === 'preset') return validEntityPreset(query) ? 'scoped' : 'invalid';
+  if (!isPresent(query.timeZone)) return undefined;
+  return validExactWindow(query.start, query.end) ? 'scoped' : 'invalid';
 }
 
-function entityInvestigationHandoffState(query: ExploreQuery): 'scoped' | 'invalid' | undefined {
-  if (!isPresent(query.entityId) || isPresent(query.monitorId) || !isPresent(query.timeZone)) return undefined;
-  return validExactWindow(query.start, query.end) ? 'scoped' : 'invalid';
+function validEntityPreset(query: ExploreQuery) {
+  if (isPresent(query.start) || isPresent(query.end)) return false;
+  const hasIntake = [query.intakeProfileId, query.collectorId].some(isPresent);
+  return !hasIntake || onboardingHandoffState(query) === 'scoped';
 }
 
 export function exploreUsesExactWindow(query: ExploreQuery) {
@@ -245,3 +328,5 @@ function validExactWindow(start: number | undefined, end: number | undefined) {
     start != null && end != null && Number.isSafeInteger(start) && Number.isSafeInteger(end) && start > 0 && start < end
   );
 }
+
+export const LOG_SEVERITY_CATEGORIES = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as const;

@@ -2,6 +2,7 @@
 
 .statusSpine {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -128,6 +129,7 @@ button.statusSlot:focus-visible {
 
 .timePolicy {
   display: flex;
+  flex: none;
   align-items: baseline;
   gap: 6px;
   height: 28px;

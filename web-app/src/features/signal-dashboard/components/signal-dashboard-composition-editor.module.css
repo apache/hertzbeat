@@ -1,0 +1,12 @@
+.source {
+  margin: 0;
+  padding: var(--hb-space-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+  min-width: 0;
+}
+.source legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}

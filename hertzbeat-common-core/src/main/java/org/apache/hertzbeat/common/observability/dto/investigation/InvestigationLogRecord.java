@@ -21,7 +21,9 @@ package org.apache.hertzbeat.common.observability.dto.investigation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /** Strictly typed and bounded persisted log record for investigation views. */
@@ -36,7 +38,8 @@ public record InvestigationLogRecord(String logRecordUid,
                                      String spanId,
                                      InvestigationServiceIdentity identity,
                                      Map<String, String> attributes,
-                                     Map<String, String> resourceAttributes) {
+                                     Map<String, String> resourceAttributes,
+                                     Map<String, List<String>> truncatedFields) {
 
     public static final int MAX_UID_LENGTH = 128;
     public static final int MAX_BODY_LENGTH = 65_536;
@@ -48,6 +51,7 @@ public record InvestigationLogRecord(String logRecordUid,
     private static final Pattern SPAN_ID = Pattern.compile("[0-9a-f]{16}");
     private static final Pattern DECIMAL = Pattern.compile("[1-9][0-9]*");
     private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
+    private static final Set<String> TRUNCATED_FIELD_SCOPES = Set.of("attributes", "resourceAttributes");
 
     public InvestigationLogRecord {
         if (logRecordUid == null || !UID.matcher(logRecordUid).matches()) {
@@ -66,6 +70,54 @@ public record InvestigationLogRecord(String logRecordUid,
         spanId = validatedIdentifier(spanId, SPAN_ID, "spanId");
         attributes = boundedMap(attributes, "attributes");
         resourceAttributes = boundedMap(resourceAttributes, "resourceAttributes");
+        truncatedFields = validateTruncatedFields(truncatedFields, attributes, resourceAttributes);
+    }
+
+    public InvestigationLogRecord(String logRecordUid,
+                                  String timeUnixNano,
+                                  String observedTimeUnixNano,
+                                  Integer severityNumber,
+                                  String severityText,
+                                  String body,
+                                  String traceId,
+                                  String spanId,
+                                  InvestigationServiceIdentity identity,
+                                  Map<String, String> attributes,
+                                  Map<String, String> resourceAttributes) {
+        this(logRecordUid, timeUnixNano, observedTimeUnixNano, severityNumber, severityText, body, traceId, spanId,
+                identity, attributes, resourceAttributes, Map.of());
+    }
+
+    private static Map<String, List<String>> validateTruncatedFields(
+            Map<String, List<String>> values,
+            Map<String, String> attributes,
+            Map<String, String> resourceAttributes) {
+        if (values == null || values.isEmpty()) {
+            return Map.of();
+        }
+        if (values.size() > TRUNCATED_FIELD_SCOPES.size()) {
+            throw new IllegalArgumentException("truncatedFields contains an invalid scope");
+        }
+        Map<String, List<String>> result = new java.util.LinkedHashMap<>();
+        values.forEach((scope, keys) -> {
+            if (scope == null || !TRUNCATED_FIELD_SCOPES.contains(scope) || keys == null || keys.isEmpty()
+                    || keys.size() > MAX_ATTRIBUTE_ENTRIES || new java.util.HashSet<>(keys).size() != keys.size()) {
+                throw new IllegalArgumentException("truncatedFields contains an invalid key list");
+            }
+            Map<String, String> source = "attributes".equals(scope) ? attributes : resourceAttributes;
+            for (String key : keys) {
+                if (key == null) {
+                    throw new IllegalArgumentException("truncatedFields contains an invalid key");
+                }
+                String value = source.get(key);
+                if (value == null || value.length() < MAX_ATTRIBUTE_VALUE_LENGTH - 1
+                        || value.length() > MAX_ATTRIBUTE_VALUE_LENGTH) {
+                    throw new IllegalArgumentException("truncatedFields does not match a bounded attribute");
+                }
+            }
+            result.put(scope, List.copyOf(keys));
+        });
+        return Map.copyOf(result);
     }
 
     private static void validateDecimal(String value, String label) {

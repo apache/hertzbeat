@@ -29,8 +29,8 @@ describe('EntitySignalView', () => {
   });
   afterEach(cleanup);
 
-  it.each([enUS, jaJP, ptBR, zhCN, zhTW])('owns localized host-interaction summary copy', locale => {
-    expect(locale.entity.signals.query.investigationActions).toContain('{{count}}');
+  it.each([enUS, jaJP, ptBR, zhCN, zhTW])('has no obsolete host-sidecar label in runtime locales', locale => {
+    expect(locale.entity.signals.query).not.toHaveProperty('investigationActions');
   });
 
   it('keeps each available signal in its own section and explains correlations in the evidence rail', () => {

@@ -25,6 +25,7 @@ import { createMonitorEditorActions } from './monitor-editor-actions';
 import type { MonitorEditorCommandText } from './monitor-editor-command-model';
 import { useMonitorEditorCommands } from './use-monitor-editor-commands';
 import { useMonitorEditorDraft } from './use-monitor-editor-draft';
+import { useMonitorEditorUnsavedNavigation } from './use-monitor-editor-unsaved-navigation';
 import { useMonitorEditorResources } from './use-monitor-editor-resources';
 import { useCanonicalMonitorEditorUrl, useMonitorEditorRoute } from './use-monitor-editor-route';
 
@@ -32,7 +33,9 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const { route, resources, draftState } = useMonitorEditorSession(mode);
+  const navigation = useMonitorEditorUnsavedNavigation(draftState.dirty, resources.source, draftState.draft);
   const commands = useMonitorEditorCommands({
+    saved: navigation.allow,
     mode,
     id: route.id,
     source: resources.source,
@@ -55,7 +58,10 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
     prepareTransition: draftState.prepareTransition,
     detect: commands.detect,
     save: commands.save,
-    cancel: commands.cancel,
+    cancel: () => {
+      navigation.allow();
+      commands.cancel();
+    },
     retry: resources.retry,
     isLocked: commands.isLocked,
     clearFeedback: commands.clearFeedback

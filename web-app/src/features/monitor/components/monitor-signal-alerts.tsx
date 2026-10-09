@@ -41,7 +41,7 @@ function ReadyAlerts({ previews, total }: { previews: MonitorAlertPreview[]; tot
           <li key={alert.id}>
             <div className={styles.alertIdentity}>
               <strong>{alert.summary ?? notRecorded}</strong>
-              <Tag>{alert.severity ?? notRecorded}</Tag>
+              <Tag>{alert.severity?.toUpperCase() ?? notRecorded}</Tag>
             </div>
             <span>{alert.status}</span>
             <small>{alertTime(alert.activeAt, notRecorded)}</small>

@@ -215,23 +215,27 @@ describe('Explore signal contracts', () => {
   });
 
   it('requires unique authoritative trace identities', () => {
-    const trace = traceRow('trace-1');
+    const trace = traceRow('0123456789abcdef0123456789abcdef');
     expect(() => parseTracePage(springPage([trace, trace]), 0, 20)).toThrow(/duplicate traceId/);
     expect(() => parseTracePage(springPage([{ ...trace, traceId: null }]), 0, 20)).toThrow(ExploreSignalContractError);
   });
 
-  it('accepts explicitly unavailable trace completeness evidence', () => {
-    expect(
-      parseTracePage(springPage([{ ...traceRow('trace-1'), spanCount: null, serviceStats: null }]), 0, 20).content[0]
-    ).toMatchObject({ traceId: 'trace-1', spanCount: null, serviceStats: null });
+  it('rejects unavailable trace statistics instead of accepting an incomplete success response', () => {
+    expect(() =>
+      parseTracePage(
+        springPage([{ ...traceRow('0123456789abcdef0123456789abcdef'), spanCount: null, serviceStats: null }]),
+        0,
+        20
+      )
+    ).toThrow(ExploreSignalContractError);
   });
 
   it.each([{ spanCount: -1 }, { spanCount: 1.5 }, { spanCount: undefined }])(
     'rejects an invalid or missing trace span count',
     override => {
-      expect(() => parseTracePage(springPage([{ ...traceRow('trace-1'), ...override }]), 0, 20)).toThrow(
-        ExploreSignalContractError
-      );
+      expect(() =>
+        parseTracePage(springPage([{ ...traceRow('0123456789abcdef0123456789abcdef'), ...override }]), 0, 20)
+      ).toThrow(ExploreSignalContractError);
     }
   );
 
@@ -244,9 +248,9 @@ describe('Explore signal contracts', () => {
     { serviceStats: { checkout: { spanCount: 1, errorCount: 0 } }, spanCount: 2 },
     { serviceStats: { checkout: { spanCount: 1, errorCount: 0 } }, errorSpanCount: 1 }
   ])('rejects missing, invalid, or incomplete trace service statistics', override => {
-    expect(() => parseTracePage(springPage([{ ...traceRow('trace-1'), ...override }]), 0, 20)).toThrow(
-      ExploreSignalContractError
-    );
+    expect(() =>
+      parseTracePage(springPage([{ ...traceRow('0123456789abcdef0123456789abcdef'), ...override }]), 0, 20)
+    ).toThrow(ExploreSignalContractError);
   });
 });
 
@@ -260,6 +264,19 @@ function stableLogPage(content: unknown[]) {
 
 function traceRow(traceId: unknown) {
   return {
+    rootState: 'missing',
+    rootSpanCount: 0,
+    representativeSpan: {
+      spanId: '0123456789abcdef',
+      spanName: null,
+      serviceName: null,
+      serviceNamespace: null,
+      startTime: 1_750_000_001_000,
+      durationNanos: 1_000_000
+    },
+    observedStartTime: 1_750_000_001_000,
+    observedEndTime: 1_750_000_001_000 + Math.ceil(1_000_000 / 1_000_000),
+    unattributedServiceStats: null,
     traceId,
     rootSpanId: null,
     serviceName: null,

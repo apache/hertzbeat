@@ -19,6 +19,9 @@
 
 package org.apache.hertzbeat.warehouse.db;
 
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -27,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -54,11 +58,12 @@ import org.springframework.web.util.UriUtils;
 @Slf4j
 @Component("greptimeSqlQueryExecutor")
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
-public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
+public class GreptimeSqlQueryExecutor implements QueryExecutor {
 
     private static final String QUERY_PATH = "/v1/sql";
     private static final String DATASOURCE = "Greptime-sql";
 
+    private final RestTemplate restTemplate;
     private final GreptimeProperties greptimeProperties;
     private final GreptimeQueryGuard queryGuard;
 
@@ -67,10 +72,19 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
                                     @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
                                     RestTemplate restTemplate,
                                     GreptimeQueryGuard queryGuard) {
-        super(restTemplate, new SqlQueryExecutor.HttpSqlProperties(sqlEndpoint(greptimeProperties.httpEndpoint()),
-                trimmed(greptimeProperties.username()), trimmed(greptimeProperties.password())));
-        this.greptimeProperties = greptimeProperties;
+        this.restTemplate = restTemplate;
+        this.greptimeProperties = Objects.requireNonNull(greptimeProperties);
         this.queryGuard = queryGuard;
+    }
+
+    @Override
+    public DatasourceQueryData query(DatasourceQuery datasourceQuery) {
+        return null;
+    }
+
+    @Override
+    public boolean support(String queryLanguage) {
+        return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(WarehouseConstants.SQL);
     }
 
     @Override
@@ -90,6 +104,14 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
      */
     public List<Map<String, Object>> executeStrict(String queryString) {
         return executeGuarded(queryString, true);
+    }
+
+    /** Prepares only the bounded managed-log projection; never exposes unguarded SQL to callers. */
+    public org.apache.hertzbeat.common.observability.dto.log.PreparedLogGroupSelection prepareLogGroupSelection(
+            org.apache.hertzbeat.common.observability.dto.log.LogGroupSelection selection) {
+        Objects.requireNonNull(selection);
+        return queryGuard.executeWithDeadline(deadline -> new GreptimeLogSelectionPreparation(
+                restTemplate, greptimeProperties, sql -> executeDirect(sql, true), deadline).prepare(selection));
     }
 
     private List<Map<String, Object>> executeGuarded(String queryString, boolean strict) {

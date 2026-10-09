@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 
 import type { AgentChatRequest, AgentSourceTarget } from '../model/agent-workspace-contract';
-import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
+import { withTranscriptTools, type AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import { useAgentWorkspaceActions } from './use-agent-workspace-actions';
 import { useAgentWorkspaceHistory } from './use-agent-workspace-history';
 import { useAgentWorkspaceRuntime, type AgentWorkspaceRefs } from './use-agent-workspace-runtime';
@@ -31,7 +31,7 @@ export function useAgentWorkspaceController({
     ...(history.selectedSessionUid ? { selectedSessionUid: history.selectedSessionUid } : {}),
     transcript: history.transcript,
     draftMessages: history.draftMessages,
-    run: runtime.run,
+    run: withTranscriptTools(runtime.run, history.transcript),
     ...(displayedTarget ? { target: displayedTarget } : {}),
     invalidTarget,
     composer: runtime.composer,

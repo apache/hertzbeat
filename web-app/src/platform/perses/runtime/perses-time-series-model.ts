@@ -10,10 +10,11 @@ import type { TimeSeriesData } from '@perses-dev/spec';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
 export type HertzBeatTimeSeries = {
+  displayName?: string;
   key: string;
   name: string;
   labels: Record<string, string>;
-  points: Array<{ timestamp: number; value: number }>;
+  points: Array<{ timestamp: number; value: number | null }>;
 };
 
 export function toPersesTimeSeriesData(
@@ -26,7 +27,7 @@ export function toPersesTimeSeriesData(
     stepMs: resolveStepMs(series),
     series: series.map(item => ({
       name: item.key,
-      formattedName: formatSeriesName(item),
+      formattedName: item.displayName ?? formatSeriesName(item),
       labels: item.labels,
       values: item.points.map(point => [point.timestamp, point.value])
     }))

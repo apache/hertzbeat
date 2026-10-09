@@ -131,18 +131,42 @@ public class AgentTraceToolService {
         put(row, "status", trace.getStatus());
         put(row, "startTime", trace.getStartTime());
         row.put("errorSpanCount", trace.getErrorSpanCount());
-        row.put("resourceAttributes", redact(trace.getResourceAttributes()));
+        row.put("resourceAttributes", trace.getResourceAttributes() == null ? null : redact(trace.getResourceAttributes()));
+        row.put("rootState", trace.getRootState());
+        row.put("rootSpanCount", trace.getRootSpanCount());
+        if (trace.getRepresentativeSpan() == null) {
+            row.put("representativeSpan", null);
+        } else {
+            var span = trace.getRepresentativeSpan();
+            Map<String, Object> representative = new LinkedHashMap<>();
+            representative.put("spanId", span.spanId());
+            representative.put("spanName", safe(span.spanName(), 512));
+            representative.put("serviceName", safe(span.serviceName(), 256));
+            representative.put("serviceNamespace", safe(span.serviceNamespace(), 256));
+            representative.put("startTime", span.startTime());
+            representative.put("durationNanos", span.durationNanos());
+            row.put("representativeSpan", representative);
+        }
+        row.put("observedStartTime", trace.getObservedStartTime());
+        row.put("observedEndTime", trace.getObservedEndTime());
+        row.put("spanCount", trace.getSpanCount());
+        row.put("unattributedServiceStats", trace.getUnattributedServiceStats());
         return row;
     }
 
     private Map<String, Object> traceRow(TraceDetailDto trace) {
-        TraceListItemDto summary = new TraceListItemDto(trace.getTraceId(), trace.getRootSpanId(),
-                trace.getServiceName(), trace.getServiceNamespace(), trace.getRootSpanName(),
-                trace.getDurationNanos(), trace.getStatus(), trace.getStartTime(), trace.getErrorSpanCount(),
-                trace.getSpans() == null ? null : (long) trace.getSpans().size(),
-                null,
-                trace.getResourceAttributes());
-        return traceRow(summary);
+        Map<String, Object> row = new LinkedHashMap<>();
+        put(row, "traceId", trace.getTraceId());
+        put(row, "rootSpanId", trace.getRootSpanId());
+        put(row, "serviceName", safe(trace.getServiceName(), 256));
+        put(row, "serviceNamespace", safe(trace.getServiceNamespace(), 256));
+        put(row, "rootSpanName", safe(trace.getRootSpanName(), 512));
+        put(row, "durationNanos", trace.getDurationNanos());
+        put(row, "status", trace.getStatus());
+        put(row, "startTime", trace.getStartTime());
+        row.put("errorSpanCount", trace.getErrorSpanCount());
+        row.put("resourceAttributes", trace.getResourceAttributes() == null ? null : redact(trace.getResourceAttributes()));
+        return row;
     }
 
     private Map<String, Object> spanRow(TraceSpanNodeDto span) {

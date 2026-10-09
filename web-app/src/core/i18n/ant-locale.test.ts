@@ -16,8 +16,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import dayjs from 'dayjs';
 
-import { resolveAntLocale } from './ant-locale';
+import { resolveAntLocale, syncDayjsLocale } from './ant-locale';
 
 describe('Ant Design locale bridge', () => {
   it('resolves supported locales and falls back to English', () => {
@@ -25,5 +26,11 @@ describe('Ant Design locale bridge', () => {
     expect(resolveAntLocale('ja-JP').locale).toBe('ja');
     expect(resolveAntLocale('unsupported').locale).toBe('en');
     expect(resolveAntLocale('toString').locale).toBe('en');
+  });
+  it('keeps Day.js calendars aligned with the Ant Design locale', () => {
+    syncDayjsLocale('ja-JP');
+    expect(dayjs.locale()).toBe('ja');
+    syncDayjsLocale('en-US');
+    expect(dayjs.locale()).toBe('en');
   });
 });

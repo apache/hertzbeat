@@ -19,6 +19,7 @@ import { MonitorDefinitionCatalog } from '../components/monitor-definition-catal
 import { MonitorDefinitionDeleteDialog } from '../components/monitor-definition-delete-dialog';
 import { MonitorDefinitionWorkspaceView } from '../components/monitor-definition-workspace';
 import { useMonitorDefinitionController } from '../controller/use-monitor-definition-controller';
+import { useMonitorDefinitionUnsavedNavigation } from '../controller/use-monitor-definition-unsaved-navigation';
 import {
   monitorDefinitionFailureMessageKey,
   type MonitorDefinitionFailureKind
@@ -28,6 +29,7 @@ import styles from './monitor-definition-page.module.css';
 export function MonitorDefinitionPage() {
   const { t } = useTranslation();
   const controller = useMonitorDefinitionController();
+  useMonitorDefinitionUnsavedNavigation(controller.workspace);
   return (
     <OperationalPage>
       <OperationalPageHeader

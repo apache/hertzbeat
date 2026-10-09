@@ -41,6 +41,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.RequestKind;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.EventStatus;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeItemKind;
+import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -121,7 +122,7 @@ public class GatewayRuntimeEventProjector {
                             .toolCallId(event.getToolCallId())
                             .approvalId(event.getApprovalId())
                             .policyDecision(externalName(event.getPolicyDecision()))
-                            .errorMessage(event.getErrorMessage())
+                            .errorMessage(GatewayText.redactSecrets(event.getErrorMessage()))
                             .elapsedMs(event.getElapsedMs())
                             .status(toolCompletedStatus(event))
                             .build());
@@ -175,7 +176,7 @@ public class GatewayRuntimeEventProjector {
                             .traceId(event.getTraceId())
                             .interactionId(event.getRequestId())
                             .status(event.getStatus().externalName())
-                            .errorMessage(event.getErrorMessage())
+                            .errorMessage(GatewayText.redactSecrets(event.getErrorMessage()))
                             .build());
         }
         if (event.getRequestKind() != RequestKind.APPROVAL) {
@@ -215,7 +216,7 @@ public class GatewayRuntimeEventProjector {
     private ErrorPayload errorPayload(AgentRuntimeEvent event, String errorMessage) {
         return ErrorPayload.builder()
                 .traceId(event.getTraceId())
-                .errorMessage(errorMessage)
+                .errorMessage(GatewayText.redactSecrets(errorMessage))
                 .status(event.getStatus() == null ? null : event.getStatus().externalName())
                 .build();
     }

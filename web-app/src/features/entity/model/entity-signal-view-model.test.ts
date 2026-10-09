@@ -181,6 +181,19 @@ describe('entity signal view model', () => {
         traces: {
           state: 'ready',
           data: {
+            rootState: 'unique',
+            rootSpanCount: 1,
+            missingParentCount: 0,
+            representativeSpan: {
+              spanId: '0123456789abcdef',
+              spanName: 'POST /checkout',
+              serviceName: 'checkout',
+              serviceNamespace: null,
+              startTime: 1,
+              durationNanos: Number('0')
+            },
+            observedStartTime: 1,
+            observedEndTime: 1 + Math.ceil(Number('0') / 1_000_000),
             traceId: '0123456789abcdef0123456789abcdef',
             rootSpanId: '0123456789abcdef',
             serviceName: 'checkout',
@@ -193,6 +206,7 @@ describe('entity signal view model', () => {
             resourceAttributes: {},
             spans: [
               {
+                startTimeUnixNano: (BigInt(1) * 1_000_000n).toString(),
                 traceId: '0123456789abcdef0123456789abcdef',
                 spanId: '0123456789abcdef',
                 parentSpanId: null,

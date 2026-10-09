@@ -64,6 +64,88 @@ class GreptimeMetricInventoryRepositoryTest {
     }
 
     @Test
+    void keepsNamesUsableWhenNativeMetadataIsUnavailable() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenThrow(new IllegalStateException("unsupported metadata"));
+        assertTrue(repository.findMetadata(List.of("duration_bucket")).isEmpty());
+    }
+
+    @Test
+    void rejectsUntrustedMetadataIdentifiersWithoutStorageRead() {
+        assertTrue(repository.findMetadata(List.of("metric'; SELECT secret")).isEmpty());
+        verifyNoStorageRead();
+    }
+
+    private void verifyNoStorageRead() {
+        verify(executor, never()).executeStrict(anyString());
+    }
+
+    @Test
+    void returnsUnavailableForMissingWorkspaceAndTooWideSchemaWithoutValueScan() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        assertEquals("unavailable", repository.findLabels("metric", List.of(), 1000, 2000, null, 100).state());
+        verifyNoStorageRead();
+        when(executor.executeStrict(anyString())).thenReturn(java.util.stream.IntStream.range(0, 129)
+                .mapToObj(index -> Map.<String, Object>of("column_name", "tag_" + index)).toList());
+        assertEquals("scope_too_large", repository.findLabels("metric",
+                List.of("hertzbeat_workspace_id=\"team-a\""), 1000, 2000, null, 100).state());
+        verify(executor).executeStrict(anyString());
+    }
+
+    @Test
+    void escapesValuesPreservesRegexAndBoundsDistinctSuggestions() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenReturn(List.of(Map.of("column_name", "http_route")),
+                List.of(Map.of("value", "/a"), Map.of("value", "/b")));
+        var result = repository.findLabels("metric", List.of("hertzbeat_workspace_id=\"team-a\"",
+                "service_name=\"checkout's\"", "http_route=~\"/orders.*\""), 1000, 2000, "http_route", 1);
+        assertTrue(result.truncated());
+        assertEquals(List.of("/a"), result.items());
+        var sql = ArgumentCaptor.forClass(String.class);
+        verify(executor, org.mockito.Mockito.times(2)).executeStrict(sql.capture());
+        assertTrue(sql.getAllValues().get(1).contains("checkout''s"));
+        assertTrue(sql.getAllValues().get(1).contains("regexp_like(COALESCE(\"http_route\", ''), '^(?:/orders.*)$')"));
+        assertTrue(sql.getAllValues().get(1).endsWith("LIMIT 2"));
+    }
+
+    @Test
+    void discoversLabelsWithBoundedSchemaAndExactCanonicalScope() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenReturn(
+                List.of(Map.of("column_name", "http_route"), Map.of("column_name", "service_name")),
+                List.of(Map.of("http_route", 1L, "service_name", 0L)));
+        var result = repository.findLabels("duration_bucket", List.of(
+                "hertzbeat_workspace_id=\"team-a\"", "service_name=\"checkout\""), 1000, 2000, null, 100);
+        assertEquals("ready", result.state());
+        assertEquals(List.of("http_route"), result.items());
+        var sql = ArgumentCaptor.forClass(String.class);
+        verify(executor, org.mockito.Mockito.times(2)).executeStrict(sql.capture());
+        assertTrue(sql.getAllValues().get(0).endsWith("LIMIT 129"));
+        assertTrue(sql.getAllValues().get(1).contains("hertzbeat_workspace_id"));
+        assertTrue(sql.getAllValues().get(1).contains("to_timestamp_millis(1000)"));
+    }
+
+    @Test
+    void enrichesOnlyVisibleNamesWithNativeMetadataInOneBatch() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenReturn(
+                List.of(Map.of("table_name", "duration_bucket")),
+                List.of(Map.of("table_name", "duration_bucket", "source", "opentelemetry",
+                        "metadata_quality", "declared", "semantic_options",
+                        "{\"metric.type\":\"histogram\",\"metric.unit\":\"s\"}")));
+        var result = repository.findMetricNames(query("checkout", "commerce", "prod", null, null, null, 20));
+        var metadata = repository.findMetadata(result.names()).get("duration_bucket");
+        assertEquals("available", metadata.state());
+        assertEquals("histogram", metadata.declaredType());
+        assertEquals("s", metadata.declaredUnit());
+        assertNull(metadata.sampleUnit());
+        assertNull(metadata.description());
+        var sql = ArgumentCaptor.forClass(String.class);
+        verify(executor, org.mockito.Mockito.times(2)).executeStrict(sql.capture());
+        assertTrue(sql.getAllValues().get(1).contains("'duration_bucket'"));
+    }
+
+    @Test
     void discoversArbitraryMetricNamesWithTheCompleteEscapedScopeAndBoundedLimit() {
         when(executorProvider.getIfAvailable()).thenReturn(executor);
         when(executor.executeStrict(anyString())).thenReturn(List.of(
@@ -131,18 +213,26 @@ class GreptimeMetricInventoryRepositoryTest {
     }
 
     @Test
-    void rejectsIncompleteScopeInsteadOfRunningBroaderQuery() {
+    void discoversWorkspaceWideMetricsWithoutInventingRequiredResourceFilters() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenReturn(List.of(Map.of("table_name", "process_cpu_usage")));
         MetricInventoryRepository.Result result = repository.findMetricNames(query(
-                "checkout", null, "prod", "collector-a", "instance-a", "/checkout", 20));
+                null, null, null, null, null, null, 20));
 
-        assertEquals(UNSUPPORTED, result.status());
-        verify(executor, never()).executeStrict(anyString());
+        assertEquals(SUCCESS, result.status());
+        assertEquals(List.of("process_cpu_usage"), result.names());
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(executor).executeStrict(sqlCaptor.capture());
+        assertTrue(sqlCaptor.getValue().contains("p.hertzbeat_workspace_id = 'team-a'"));
+        assertFalse(sqlCaptor.getValue().contains("p.service_name ="));
+        assertFalse(sqlCaptor.getValue().contains("p.service_namespace ="));
+        assertFalse(sqlCaptor.getValue().contains("p.deployment_environment_name ="));
     }
 
     @Test
     void rejectsMissingWorkspaceBeforeResolvingOrExecutingInventory() {
         MetricInventoryRepository.Query query = new MetricInventoryRepository.Query(
-                null, "checkout", "commerce", "prod", null, null, null, 1_000L, 2_000L, 20);
+                null, "checkout", "commerce", "prod", null, null, null, 1_000L, 2_000L, null, 20);
 
         assertEquals(UNSUPPORTED, repository.findMetricNames(query).status());
         verify(executorProvider, never()).getIfAvailable();
@@ -203,6 +293,23 @@ class GreptimeMetricInventoryRepositoryTest {
             String endpoint,
             int limit) {
         return new MetricInventoryRepository.Query(
-                "team-a", serviceName, namespace, environment, collectorId, instance, endpoint, 1000L, 2000L, limit);
+                "team-a", serviceName, namespace, environment, collectorId, instance, endpoint, 1000L, 2000L, null, limit);
+    }
+
+    @Test
+    void filtersLiteralSearchBeforeTheBoundedLookahead() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenReturn(List.of(Map.of("table_name", "process_cpu_usage")));
+
+        repository.findMetricNames(new MetricInventoryRepository.Query(
+                "team-a", null, null, null, null, null, null, 0L, 0L, "CPU_%'usage", 201));
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(executor).executeStrict(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.contains("strpos(lower(t.table_name), lower('CPU_%''usage')) > 0"));
+        assertTrue(sql.contains("p.greptime_timestamp >= to_timestamp_millis(0)"));
+        assertTrue(sql.contains("p.greptime_timestamp < to_timestamp_millis(1)"));
+        assertTrue(sql.endsWith("ORDER BY t.table_name LIMIT 201"));
     }
 }

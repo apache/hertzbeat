@@ -87,6 +87,74 @@ class OtlpLogProtocolAdapterTest {
     }
 
     @Test
+    void preservesExactKeysForStructuredLiveSearch() {
+        String[] kinds = {"server", "server", "timeout", "server", "server", "client", "timeout", "server"};
+        String[] names = {"alpha", "beta", "gamma", "skip-one", "delta", "alpha", "skip-two", "omega"};
+        long[] codes = {500, 503, 200, 501, 0, 200, 0, 599};
+        ScopeLogs.Builder scope = ScopeLogs.newBuilder();
+        for (int index = 0; index < kinds.length; index++) {
+            LogRecord.Builder row = LogRecord.newBuilder()
+                    .setBody(AnyValue.newBuilder().setStringValue("structured-" + (char) ('a' + index)))
+                    .addAttributes(stringAttribute("proof.kind", kinds[index]))
+                    .addAttributes(stringAttribute("proof.name", names[index]))
+                    .addAttributes(stringAttribute("proof_kind", "independent"));
+            if (index == 1 || index == 4) {
+                row.addAttributes(stringAttribute("proof.status", index == 1 ? "503" : "bad"));
+            } else if (index != 6) {
+                row.addAttributes(KeyValue.newBuilder().setKey("proof.status")
+                        .setValue(AnyValue.newBuilder().setIntValue(codes[index])));
+            }
+            scope.addLogRecords(row);
+        }
+        adapter.publishRealtimeSignals(ExportLogsServiceRequest.newBuilder().addResourceLogs(
+                ResourceLogs.newBuilder().setResource(Resource.newBuilder()
+                        .addAttributes(stringAttribute("service.name", "proof-service"))).addScopeLogs(scope)).build());
+        ArgumentCaptor<LogEntry> captured = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager, times(8)).broadcast(captured.capture());
+        var criteria = new org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria();
+        criteria.setWorkspaceId("default");
+        criteria.setServiceName("proof-service");
+        criteria.setSearchSyntax("structured-v1");
+        criteria.setLogContent("(@proof.status:[500 TO 599] OR @proof.kind:timeout) AND -@proof.name:skip*");
+        assertEquals(List.of("structured-a", "structured-b", "structured-c", "structured-h"),
+                captured.getAllValues().stream().filter(criteria::matches).map(LogEntry::getBody).toList());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<LogEntry>> alertCapture = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue).sendLogEntryToAlertBatch(alertCapture.capture());
+        assertEquals("proof-service", alertCapture.getValue().getFirst().getResource().get("service_name"));
+        assertEquals("independent", alertCapture.getValue().getFirst().getAttributes().get("proof_kind"));
+        assertEquals("default", alertCapture.getValue().getFirst().getResource().get("hertzbeat_workspace_id"));
+        assertEquals("default", captured.getAllValues().getFirst().getResource().get("hertzbeat_workspace_id"));
+        assertEquals("server", captured.getAllValues().getFirst().getAttributes().get("proof.kind"));
+        assertEquals("independent", captured.getAllValues().getFirst().getAttributes().get("proof_kind"));
+    }
+
+    @Test
+    void keepsNestedBodyAndScopeNormalizationOnlyInAlertProjection() {
+        AnyValue nested = AnyValue.newBuilder().setKvlistValue(
+                io.opentelemetry.proto.common.v1.KeyValueList.newBuilder()
+                        .addValues(stringAttribute("request.path", "/checkout"))).build();
+        adapter.publishRealtimeSignals(ExportLogsServiceRequest.newBuilder().addResourceLogs(
+                ResourceLogs.newBuilder().addScopeLogs(ScopeLogs.newBuilder()
+                        .setScope(InstrumentationScope.newBuilder().addAttributes(stringAttribute("scope.version", "v1")))
+                        .addLogRecords(LogRecord.newBuilder().setBody(nested)))).build());
+        ArgumentCaptor<LogEntry> live = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager).broadcast(live.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<LogEntry>> alerts = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue).sendLogEntryToAlertBatch(alerts.capture());
+        LogEntry alert = alerts.getValue().getFirst();
+        assertEquals(Map.of("request.path", "/checkout"), live.getValue().getBody());
+        assertEquals(Map.of("request_path", "/checkout"), alert.getBody());
+        assertEquals(Map.of("scope.version", "v1"), live.getValue().getInstrumentationScope().getAttributes());
+        assertEquals(Map.of("scope_version", "v1"), alert.getInstrumentationScope().getAttributes());
+    }
+
+    private static KeyValue stringAttribute(String key, String value) {
+        return KeyValue.newBuilder().setKey(key).setValue(AnyValue.newBuilder().setStringValue(value)).build();
+    }
+
+    @Test
     void testIngestWithNullContent() {
         adapter.ingest(null);
         verifyNoInteractions(commonDataQueue, logSseManager);

@@ -71,40 +71,54 @@ public class TraceInvestigationReadModelService {
         }
         InvestigationQueryRepository repository = repository();
         if (repository == null) {
-            return unavailable(traceId, selectedSpanId, window, InvestigationReason.STORAGE_UNAVAILABLE);
+            return unavailable(traceId, selectedSpanId, window, InvestigationReason.STORAGE_UNAVAILABLE,
+                    LogsBlock.unavailable(InvestigationReason.STORAGE_UNAVAILABLE));
         }
-        RowsResult<InvestigationQueryRepository.TraceSpanRow> traceResult = repository.trace(
-                new InvestigationQueryRepository.TraceQuery(workspaceId, traceId, start, end));
+        var traceQuery = new InvestigationQueryRepository.TraceQuery(workspaceId, traceId, start, end, selectedSpanId);
+        var logsQuery = new InvestigationQueryRepository.TraceLogsQuery(workspaceId, traceId, start, end);
+        LogsBlock logs = logs(repository, logsQuery);
+        RowsResult<InvestigationQueryRepository.TraceSpanRow> traceResult;
+        try {
+            traceResult = repository.trace(traceQuery);
+        } catch (RuntimeException exception) {
+            return unavailable(traceId, selectedSpanId, window, InvestigationReason.STORAGE_UNAVAILABLE, logs);
+        }
         if (traceResult.status() != Status.AVAILABLE) {
-            return unavailable(traceId, selectedSpanId, window, reason(traceResult.status()));
+            return unavailable(traceId, selectedSpanId, window, reason(traceResult.status()), logs);
         }
         if (traceResult.rows().isEmpty()) {
-            return empty(traceId, selectedSpanId, window);
+            return selectedSpanId == null ? empty(traceId, null, window, logs)
+                    : notFound(traceId, selectedSpanId, window, logs);
         }
         AssembledTrace trace;
         try {
-            trace = InvestigationTraceAssembler.assemble(traceId, selectedSpanId, traceResult.rows());
+            trace = InvestigationTraceAssembler.assemble(traceId, selectedSpanId, traceResult.rows(),
+                    traceResult.truncated());
+        } catch (ObservabilityQueryRequestException exception) {
+            return notFound(traceId, selectedSpanId, window, logs);
         } catch (MalformedTraceException exception) {
-            return unavailable(traceId, selectedSpanId, window, InvestigationReason.MALFORMED_DATA);
+            return unavailable(traceId, selectedSpanId, window, InvestigationReason.MALFORMED_DATA, logs);
         }
-        LogsBlock logs = logs(repository, workspaceId, traceId, start, end);
         RedBlock red = red(trace.selectedIdentity(), start, end);
         List<TraceInvestigationView.DependencyEdge> edges = trace.dependencies();
         boolean dependenciesTruncated = edges.size() > MAX_DEPENDENCIES;
-        DependenciesBlock dependencies = edges.isEmpty() ? DependenciesBlock.empty()
-                : DependenciesBlock.ready(edges.stream().limit(MAX_DEPENDENCIES).toList(), dependenciesTruncated);
-        return new TraceInvestigationView(traceId, selectedSpanId, window, GanttBlock.ready(trace.detail()), logs, red,
+        DependenciesBlock dependencies = edges.isEmpty()
+                ? traceResult.truncated() ? DependenciesBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE)
+                : DependenciesBlock.empty()
+                : DependenciesBlock.ready(edges.stream().limit(MAX_DEPENDENCIES).toList(),
+                dependenciesTruncated || traceResult.truncated());
+        return new TraceInvestigationView(traceId, trace.selectedSpanId(), window, GanttBlock.ready(trace.detail()), logs, red,
                 MetricsBlock.unavailable(InvestigationReason.QUERY_STRATEGY_UNAVAILABLE), dependencies);
     }
 
     private LogsBlock logs(InvestigationQueryRepository repository,
-                           String workspaceId,
-                           String traceId,
-                           long start,
-                           long end) {
-        RowsResult<org.apache.hertzbeat.common.observability.dto.investigation.InvestigationLogRecord> result =
-                repository.sameTraceLogs(new InvestigationQueryRepository.TraceLogsQuery(
-                        workspaceId, traceId, start, end));
+                           InvestigationQueryRepository.TraceLogsQuery query) {
+        RowsResult<org.apache.hertzbeat.common.observability.dto.investigation.InvestigationLogRecord> result;
+        try {
+            result = repository.sameTraceLogs(query);
+        } catch (RuntimeException exception) {
+            return LogsBlock.unavailable(InvestigationReason.STORAGE_UNAVAILABLE);
+        }
         if (result.status() != Status.AVAILABLE) {
             return LogsBlock.unavailable(reason(result.status()));
         }
@@ -149,8 +163,14 @@ public class TraceInvestigationReadModelService {
         }
     }
 
-    private TraceInvestigationView empty(String traceId, String spanId, InvestigationWindow window) {
-        return new TraceInvestigationView(traceId, spanId, window, GanttBlock.empty(), LogsBlock.empty(),
+    private TraceInvestigationView empty(String traceId, String spanId, InvestigationWindow window, LogsBlock logs) {
+        return new TraceInvestigationView(traceId, spanId, window, GanttBlock.empty(), logs,
+                RedBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE, null),
+                MetricsBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE), DependenciesBlock.empty());
+    }
+
+    private TraceInvestigationView notFound(String traceId, String spanId, InvestigationWindow window, LogsBlock logs) {
+        return new TraceInvestigationView(traceId, spanId, window, GanttBlock.empty(InvestigationReason.NOT_FOUND), logs,
                 RedBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE, null),
                 MetricsBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE), DependenciesBlock.empty());
     }
@@ -158,9 +178,10 @@ public class TraceInvestigationReadModelService {
     private TraceInvestigationView unavailable(String traceId,
                                                String spanId,
                                                InvestigationWindow window,
-                                               InvestigationReason reason) {
+                                               InvestigationReason reason,
+                                               LogsBlock logs) {
         return new TraceInvestigationView(traceId, spanId, window, GanttBlock.unavailable(reason),
-                LogsBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE),
+                logs,
                 RedBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE, null),
                 MetricsBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE),
                 DependenciesBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE));

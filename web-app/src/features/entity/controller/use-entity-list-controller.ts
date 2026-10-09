@@ -1,8 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom';
 
 import { useQueryDraft } from '@/shared/query-context';
 import { entityRoutePaths } from '@/shared/navigation/app-paths';
@@ -22,6 +22,7 @@ import { entityQueryKeys } from './entity-query-keys';
 export function useEntityListController() {
   const navigate = useNavigate();
   const location = useLocation();
+  const navigationType = useNavigationType();
   const [params, setParams] = useSearchParams();
   const capabilities = useEntityCapabilities();
   const query = readEntityQuery(params);
@@ -31,10 +32,7 @@ export function useEntityListController() {
       setParams(source, { replace: true });
     }
   }, [location.pathname, params, setParams, source]);
-  const draft = useQueryDraft(
-    source,
-    useMemo(() => query.search, [query.search])
-  );
+  const draft = useQueryDraft(query.search, query.search);
   const client = useQueryClient();
   const result = useQuery({
     queryKey: entityQueryKeys.list(source),
@@ -45,6 +43,7 @@ export function useEntityListController() {
   return {
     state: {
       query,
+      navigation: { key: location.key, type: navigationType },
       draft: draft.value,
       evidence: resolveEvidence(result.isPending, result.error, result.data),
       refreshing: result.isFetching,
@@ -52,7 +51,11 @@ export function useEntityListController() {
     },
     actions: {
       updateDraft: draft.setValue,
-      submit: () => setQuery({ search: draft.value.trim() }),
+      submit: () => {
+        const search = draft.value.trim();
+        draft.setValue(search);
+        setQuery({ search });
+      },
       changeFilter: (key: EntityFilterKey, value: string) => setQuery({ [key]: value }),
       changeSort: (sort: typeof query.sort, order: typeof query.order) => setQuery({ sort, order, pageIndex: 0 }),
       changePage: (page: number, pageSize: number) =>

@@ -35,7 +35,7 @@ public final class AgentRuntimeControl implements AutoCloseable {
     private final String runUid;
     private final Object monitor = new Object();
     private final CopyOnWriteArrayList<Runnable> abortHandlers = new CopyOnWriteArrayList<>();
-    private final AtomicReference<String> stopMessage = new AtomicReference<>();
+    private final AtomicReference<StopSignal> stopSignal = new AtomicReference<>();
 
     private volatile boolean closed;
 
@@ -64,21 +64,29 @@ public final class AgentRuntimeControl implements AutoCloseable {
     }
 
     public boolean isStopRequested() {
-        return stopMessage.get() != null;
+        return stopSignal.get() != null;
     }
 
     public void checkpoint() {
-        String message = stopMessage.get();
-        if (message != null) {
-            throw new AgentRuntimeStoppedException(message);
+        StopSignal signal = stopSignal.get();
+        if (signal != null) {
+            throw new AgentRuntimeStoppedException(signal.message(), signal.cancelled());
         }
     }
 
     public void stop(String message) {
+        stop(message, false);
+    }
+
+    void cancel(String message) {
+        stop(message, true);
+    }
+
+    private void stop(String message, boolean cancelled) {
         if (!StringUtils.hasText(message)) {
             throw new IllegalArgumentException("Runtime stop message is required");
         }
-        if (closed || !stopMessage.compareAndSet(null, message)) {
+        if (closed || !stopSignal.compareAndSet(null, new StopSignal(message, cancelled))) {
             return;
         }
         synchronized (monitor) {
@@ -91,12 +99,12 @@ public final class AgentRuntimeControl implements AutoCloseable {
 
     public AutoCloseable onAbort(Runnable action) {
         Objects.requireNonNull(action, "action must not be null");
-        if (stopMessage.get() != null) {
+        if (stopSignal.get() != null) {
             runAbortHandler(action);
             return () -> { };
         }
         abortHandlers.add(action);
-        if (stopMessage.get() != null && abortHandlers.remove(action)) {
+        if (stopSignal.get() != null && abortHandlers.remove(action)) {
             runAbortHandler(action);
         }
         return () -> abortHandlers.remove(action);
@@ -112,7 +120,7 @@ public final class AgentRuntimeControl implements AutoCloseable {
         long requestedMs = duration.toMillis();
         long sleepDeadlineNanos = safeAdd(System.nanoTime(), TimeUnit.MILLISECONDS.toNanos(requestedMs));
         synchronized (monitor) {
-            while (stopMessage.get() == null) {
+            while (stopSignal.get() == null) {
                 long remainingNanos = sleepDeadlineNanos - System.nanoTime();
                 if (remainingNanos <= 0L) {
                     break;
@@ -146,6 +154,9 @@ public final class AgentRuntimeControl implements AutoCloseable {
         } catch (RuntimeException ignored) {
             // Abort hooks are best effort; the stop signal is already recorded.
         }
+    }
+
+    private record StopSignal(String message, boolean cancelled) {
     }
 
     private static long safeAdd(long left, long right) {

@@ -6,5 +6,6 @@
  */
 
 export * from './time-model';
+export { formatShortLocalTime, formatShortLocalTimeRange } from './format-local-time';
 export * from './time-context';
 export * from './time-provider';

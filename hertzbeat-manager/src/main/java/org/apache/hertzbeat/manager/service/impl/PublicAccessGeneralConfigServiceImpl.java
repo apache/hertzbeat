@@ -49,13 +49,8 @@ public class PublicAccessGeneralConfigServiceImpl extends AbstractGeneralConfigS
             return stored;
         }
         var inspection = inspector.inspect();
-        if (inspection.state() == ManagedActiveConfigurationInspector.State.LOADABLE) {
-            return response(inspection.applicationProperties());
-        }
-        return response(Map.of(
-                PUBLIC_BASE_URL, environment.getProperty(PUBLIC_BASE_URL, ""),
-                SERVER_OTLP_HTTP, environment.getProperty(SERVER_OTLP_HTTP, ""),
-                SERVER_OTLP_GRPC, environment.getProperty(SERVER_OTLP_GRPC, "")));
+        return response(inspection.state() == ManagedActiveConfigurationInspector.State.LOADABLE
+                ? inspection.applicationProperties() : Map.of());
     }
 
     @Override
@@ -99,13 +94,16 @@ public class PublicAccessGeneralConfigServiceImpl extends AbstractGeneralConfigS
         };
     }
 
-    private static PublicAccessConfig response(Map<String, Object> properties) {
+    private PublicAccessConfig response(Map<String, Object> properties) {
         return new PublicAccessConfig(
-                SetupPublicAddress.tryPublicBaseUrl(text(properties.get(PUBLIC_BASE_URL)))
+                SetupPublicAddress.tryPublicBaseUrl(
+                        environment.getProperty(PUBLIC_BASE_URL, text(properties.get(PUBLIC_BASE_URL))))
                         .map(SetupPublicAddress::value).orElse(null),
-                SetupPublicAddress.tryServerOtlpEndpoint(text(properties.get(SERVER_OTLP_HTTP)))
+                SetupPublicAddress.tryServerOtlpEndpoint(
+                        environment.getProperty(SERVER_OTLP_HTTP, text(properties.get(SERVER_OTLP_HTTP))))
                         .map(SetupPublicAddress::value).orElse(null),
-                SetupPublicAddress.tryServerOtlpEndpoint(text(properties.get(SERVER_OTLP_GRPC)))
+                SetupPublicAddress.tryServerOtlpEndpoint(
+                        environment.getProperty(SERVER_OTLP_GRPC, text(properties.get(SERVER_OTLP_GRPC))))
                         .map(SetupPublicAddress::value).orElse(null));
     }
 

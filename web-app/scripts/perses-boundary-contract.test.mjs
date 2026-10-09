@@ -6,6 +6,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { test } from 'node:test';
@@ -60,3 +61,36 @@ function sourceFiles(directory) {
     return /[.]tsx?$/.test(entry) && !/[.](?:test|spec)[.]tsx?$/.test(entry) ? [path] : [];
   });
 }
+
+test('installed CJS decimal formatter preserves bounded extreme and ordinary labels', () => {
+  const { formatDecimal } = createRequire(import.meta.url)('@perses-dev/components/dist/cjs/model/decimal');
+  for (const [value, expected] of [
+    [Number.MAX_VALUE, '1.8E308'],
+    [-Number.MAX_VALUE, '-1.8E308'],
+    [1e-12, '1E-12'],
+    [1.25, '1.25'],
+    [1700, '1.7K'],
+    [0, '0']
+  ]) {
+    assert.equal(formatDecimal(value, { shortValues: true }), expected);
+  }
+});
+
+test('installed CJS tooltip bounds keep a narrow viewport inset', () => {
+  const { assembleTransform, getTooltipStyles } = createRequire(import.meta.url)(
+    '@perses-dev/components/dist/cjs/TimeSeriesTooltip/utils'
+  );
+  const previous = globalThis.window;
+  globalThis.window = { innerWidth: 390, innerHeight: 887, scrollX: 0, scrollY: 0 };
+  try {
+    assert.equal(
+      assembleTransform({ page: { x: 250, y: 300 }, plotCanvas: { x: 200, y: 200 } }, null, 300, 374),
+      'translate3d(8px, 316px, 0)'
+    );
+    assert.equal(getTooltipStyles({ palette: {}, zIndex: { tooltip: 1500 } }, null).boxSizing, 'border-box');
+    assert.equal(getTooltipStyles({ palette: {}, zIndex: { tooltip: 1500 } }, {}).zIndex, 3);
+  } finally {
+    if (previous === undefined) delete globalThis.window;
+    else globalThis.window = previous;
+  }
+});

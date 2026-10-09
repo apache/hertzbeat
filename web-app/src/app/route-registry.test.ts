@@ -56,6 +56,18 @@ describe('route registry', () => {
         targetRouteId: 'explore',
         fixedSearch: [['signal', 'traces']]
       },
+      {
+        id: 'legacy-log-manage',
+        path: '/log/manage',
+        targetRouteId: 'explore',
+        fixedSearch: [['signal', 'logs']]
+      },
+      {
+        id: 'legacy-ingestion-otlp-metrics',
+        path: '/ingestion/otlp/metrics',
+        targetRouteId: 'explore',
+        fixedSearch: [['signal', 'metrics']]
+      },
       { id: 'legacy-log', path: '/log', targetRouteId: 'instrumentation', fixedSearch: [] },
       {
         id: 'legacy-log-stream',
@@ -71,12 +83,6 @@ describe('route registry', () => {
         path: '/log/integration/:source',
         targetRouteId: 'instrumentation',
         fixedSearch: []
-      },
-      {
-        id: 'legacy-log-manage',
-        path: '/log/manage',
-        targetRouteId: 'explore',
-        fixedSearch: [['signal', 'logs']]
       },
       {
         id: 'legacy-ingestion-otlp',

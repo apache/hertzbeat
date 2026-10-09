@@ -55,6 +55,15 @@
   min-width: 0;
   flex: 1 1 auto;
   padding: 0 10px;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-padding-inline: 10px;
+  overscroll-behavior-x: contain;
+}
+
+.headerSpine > * {
+  flex: 0 0 auto;
 }
 
 .headerActions {
@@ -63,6 +72,7 @@
   gap: 2px;
   min-width: 0;
   margin-left: auto;
+  flex: none;
 }
 
 .headerAction {
@@ -501,6 +511,75 @@
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
   min-width: 0;
+}
+
+.content:has([data-hb-operational-page][data-inset='compact']),
+.content:has([data-explore-investigation='true']) {
+  padding: 0 16px 16px;
+}
+
+@media (max-width: 700px) {
+  .content:has([data-hb-operational-page][data-inset='compact']),
+  .content:has([data-explore-investigation='true']) {
+    padding-inline: 12px;
+  }
+
+  .headerSpine {
+    gap: 6px;
+    padding-inline: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 8px;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+  }
+
+  .headerSpine > * {
+    flex: 0 0 auto;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerSpine {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerSpine > :first-child {
+    flex: 0 0 auto;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) [data-testid='shell-status-server'] {
+    height: 36px;
+    margin-right: 0;
+    padding-inline: 0;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions {
+    flex: none;
+    min-width: 0;
+    height: 44px;
+    gap: 4px;
+    margin-left: 0;
+    padding: 1px 2px;
+    scroll-padding-inline: 8px;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions > * {
+    flex: 0 0 auto;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true'])
+    .headerActions
+    :is(button, a[href], [tabindex]) {
+    scroll-margin-inline: 8px;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions .headerAction,
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions .accountButton {
+    height: 36px;
+    min-width: 36px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

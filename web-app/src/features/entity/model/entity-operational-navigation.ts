@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { buildExplorePath } from '@/features/explore';
-import { buildTopologyFocusPath } from '@/features/topology';
+import { buildTopologyFocusPath } from '@/features/topology/navigation';
 import { alertRoutePaths, applicationRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
 import type { EntityDetail, EntityNextActionType, EntityResponseHandoff } from './entity-contract';
 import { buildEntityDiscoveryPath, defaultEntityDiscoveryQuery } from './entity-discovery-model';

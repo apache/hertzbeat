@@ -50,6 +50,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeRequest;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeService;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeToolCall;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.junit.jupiter.api.BeforeEach;
@@ -193,6 +194,29 @@ class AgentCommandServiceTest {
     }
 
     @Test
+    void explicitCancellationPersistsCancelledAndPreservesTerminalReplyStatus() {
+        Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
+        String message = "Stopped by the WebUI user.";
+        when(runtimeService.streamInvoke(any(AgentRuntimeRequest.class)))
+                .thenReturn(Flux.just(AgentRuntimeEvent.runCancelled("trace-1", message, timestamp)));
+        when(runService.markCancelled(any(), any())).thenAnswer(invocation -> {
+            AgentRun cancelledRun = invocation.getArgument(0);
+            cancelledRun.setStatus(AgentRunStatus.CANCELLED.name());
+            cancelledRun.setErrorMessage(invocation.getArgument(1));
+            return cancelledRun;
+        });
+
+        InvokeCommand command = command(ReplyMode.FINAL_ONLY);
+        GatewaySingleResponse response = service().invokeFinal(command, command.userInput());
+
+        assertEquals(AgentRunStatus.CANCELLED.name(), run.getStatus());
+        assertEquals(Map.of("message", message, "status", AgentRunStatus.CANCELLED.name()), response.body());
+        verify(runService).markCancelled(run, message);
+        verify(runService, never()).markFailed(any(), any());
+        verify(runService, never()).markSucceeded(any(), any());
+    }
+
+    @Test
     void genericRuntimeErrorShouldPersistCauseFreeFailedState() {
         Instant timestamp = Instant.parse("2026-07-16T00:00:00Z");
         when(runtimeService.streamInvoke(any(AgentRuntimeRequest.class)))
@@ -287,8 +311,9 @@ class AgentCommandServiceTest {
         Flux<AgentRuntimeEvent> runtimeEvents = Flux.defer(() -> {
             runtimeSubscriptions.incrementAndGet();
             Flux<AgentRuntimeEvent> bufferedEvents = Flux.range(0, Queues.SMALL_BUFFER_SIZE + 32)
-                    .map(index -> AgentRuntimeEvent.assistantMessageDelta(
-                            "assistant-1", "trace-1", index, "token", timestamp));
+                    .map(index -> AgentRuntimeEvent.toolStarted("tool-" + index, "trace-1",
+                            AgentRuntimeToolCall.builder().toolCallId("call-" + index)
+                                    .toolName("logs.query").arguments(Map.of()).build(), timestamp));
             return Flux.concat(
                     Flux.just(AgentRuntimeEvent.runStarted("trace-1", timestamp)),
                     bufferedEvents,

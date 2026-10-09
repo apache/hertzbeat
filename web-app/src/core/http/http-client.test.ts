@@ -112,6 +112,7 @@ describe('apiFetch', () => {
 
     const request = apiFetch('/api/notice/templates?preset=false');
 
+    await flush();
     expect(timeoutSpy).toHaveBeenCalledWith(30_000);
     expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeDefined();
     timeout.abort(new DOMException('Request timed out', 'TimeoutError'));
@@ -151,9 +152,38 @@ describe('apiFetch', () => {
 
     expect(timeoutSpy).not.toHaveBeenCalled();
     const init = fetchMock.mock.calls[0]?.[1];
-    expect(init?.signal).toBe(caller.signal);
+    expect(init?.signal?.aborted).toBe(false);
+    caller.abort();
+    expect(init?.signal?.aborted).toBe(true);
     expect(init?.credentials).toBe('same-origin');
     expect(new Headers(init?.headers).get('X-HertzBeat-CSRF')).toBe('stream-token');
+  });
+
+  it('preserves Request mutation semantics and never safely replays a POST', async () => {
+    const refresh = vi.fn().mockResolvedValue({ status: 'renewed' } as const);
+    unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await apiFetch(new Request('http://localhost/api/monitor', { method: 'POST', body: '{}' }));
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('POST');
+  });
+
+  it('retains Request caller cancellation through header admission', async () => {
+    const caller = new AbortController();
+    vi.stubGlobal('fetch', pendingFetchUntilAbort());
+    const response = apiFetch(new Request('http://localhost/api/monitor', { signal: caller.signal }));
+    await flush();
+    caller.abort();
+    await expect(response).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('recognizes a queried session endpoint without recursive refresh', async () => {
+    const refresh = vi.fn();
+    unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 })));
+    await apiFetch('/api/ui/session/refresh?synthetic=1', { method: 'POST' });
+    expect(refresh).not.toHaveBeenCalled();
   });
 });
 
@@ -179,4 +209,8 @@ function abortReason(reason: unknown) {
     error.name = reason.name;
   }
   return error;
+}
+
+async function flush() {
+  for (let i = 0; i < 24; i += 1) await Promise.resolve();
 }

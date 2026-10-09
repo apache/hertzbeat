@@ -17,16 +17,19 @@
 
 package org.apache.hertzbeat.common.entity.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tools.jackson.databind.JsonNode;
 
 /**
- * Server-backed dashboard composition for logs, traces, and metrics panels.
+ * Server-backed Perses document, native revision, and legacy fields retained for export.
  */
 @Data
 @Builder
@@ -40,7 +43,6 @@ public class SignalDashboard {
     @Size(max = 128)
     private String dashboardKey;
 
-    @NotBlank
     @Size(max = 255)
     private String title;
 
@@ -50,10 +52,8 @@ public class SignalDashboard {
     @Size(max = 512)
     private String tags;
 
-    @NotBlank
     private String layout;
 
-    @NotBlank
     private String widgets;
 
     private String variables;
@@ -62,6 +62,13 @@ public class SignalDashboard {
 
     @Size(max = 32)
     private String version;
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    private JsonNode document;
+
+    @PositiveOrZero
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    private Long revision;
 
     private LocalDateTime createTime;
 

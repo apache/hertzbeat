@@ -10,6 +10,41 @@ import { describe, expect, it } from 'vitest';
 import shellStyles from './hertzbeat-shell.module.css?raw';
 
 describe('shell content layout contract', () => {
+  it('contains narrow Explore header actions in the shared scroll spine without shrinking the status', () => {
+    const narrow = shellStyles.match(/@media \(max-width:\s*700px\)(?<body>[\s\S]*?)(?=@media|$)/)?.groups?.body;
+    expect(narrow).toContain(".shell:has([data-explore-workspace='true'], [data-explore-investigation='true'])");
+    expect(narrow).toMatch(/\.headerSpine\s*>\s*:first-child\s*\{[^}]*flex:\s*0 0 auto/s);
+    // Native keyboard proof verifies this shared spine, including reverse traversal.
+    expect(narrow).toMatch(/\.headerSpine\s*\{[^}]*overflow-x:\s*auto[^}]*overflow-y:\s*hidden/s);
+    expect(narrow).toMatch(/\.headerActions\s*\{[^}]*flex:\s*none[^}]*min-width:\s*0/s);
+    expect(narrow).toMatch(/\.headerActions\s*\{[^}]*scroll-padding-inline:\s*8px[^}]*touch-action:\s*pan-x/s);
+    expect(narrow).toMatch(
+      /\.headerActions\s*:is\(button, a\[href\], \[tabindex\]\)\s*\{[^}]*scroll-margin-inline:\s*8px/s
+    );
+    expect(narrow).toMatch(/\.headerActions\s*>\s*\*\s*\{[^}]*flex:\s*0 0 auto/s);
+    expect(narrow).toMatch(/\.headerAction,[\s\S]*\.accountButton\s*\{[^}]*height:\s*36px[^}]*min-width:\s*36px/s);
+    expect(narrow).not.toContain('display: none');
+    expect(narrow).not.toContain('.brandSlot');
+  });
+
+  it('keeps the complete narrow header spine reachable for ordinary operational routes', () => {
+    const narrow = shellStyles.match(/@media \(max-width:\s*700px\)(?<body>[\s\S]*?)(?=@media|$)/)?.groups?.body;
+    expect(narrow).toMatch(/\n {2}\.headerSpine\s*\{[^}]*overflow-x:\s*auto[^}]*scroll-padding-inline:\s*8px/s);
+    expect(narrow).toMatch(/\n {2}\.headerSpine\s*>\s*\*\s*\{[^}]*flex:\s*0 0 auto/s);
+    expect(narrow).toMatch(/\n {2}\.headerSpine\s*\{[^}]*touch-action:\s*pan-x[^}]*overscroll-behavior-x:\s*contain/s);
+    expect(narrow).not.toContain('display: none');
+  });
+
+  it('gives focused investigations the same desktop and narrow gutters as compact workbenches', () => {
+    expect(shellStyles).toMatch(
+      /\.content:has\(\[data-explore-investigation='true'\]\)\s*\{\s*padding:\s*0 16px 16px/s
+    );
+    expect(shellStyles).toMatch(
+      /@media \(max-width:\s*700px\)\s*\{[^}]*\.content:has\(\[data-explore-investigation='true'\]\)\s*\{\s*padding-inline:\s*12px/s
+    );
+    expect(shellStyles).toContain(".content:has([data-hb-operational-page][data-inset='compact'])");
+  });
+
   it('does not turn shell wrappers into scroll containers around sticky navigation', () => {
     const shellRule = shellStyles.match(/\.shell\s*\{(?<body>[^}]*)\}/)?.groups?.body;
     const shellBodyRule = shellStyles.match(/\.shellBody\s*\{(?<body>[^}]*)\}/)?.groups?.body;

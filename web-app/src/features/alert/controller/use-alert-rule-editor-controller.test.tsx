@@ -434,6 +434,35 @@ describe('Alert Rule editor controller', () => {
     expect(result.current.state.preview.kind).toBe(kind);
   });
 
+  it('tracks changed and reverted new and persisted drafts', async () => {
+    const fresh = renderController('new', '/alerts/rules/new?kind=periodic');
+    await waitFor(() => expect(fresh.result.current.state.datasource.kind).toBe('ready'));
+    expect(fresh.result.current.state.dirty).toBe(false);
+    act(() => fresh.result.current.updateDraft({ name: 'Audit unsaved draft' }));
+    expect(fresh.result.current.state.dirty).toBe(true);
+    act(() => fresh.result.current.updateDraft({ name: '' }));
+    expect(fresh.result.current.state.dirty).toBe(false);
+    fresh.unmount();
+    const edit = renderController('edit');
+    await waitFor(() => expect(edit.result.current.state.detail.kind).toBe('ready'));
+    const original = edit.result.current.state.draft!.name;
+    expect(edit.result.current.state.dirty).toBe(false);
+    act(() => edit.result.current.updateDraft({ name: 'Changed' }));
+    expect(edit.result.current.state.dirty).toBe(true);
+    act(() => edit.result.current.updateDraft({ name: original }));
+    expect(edit.result.current.state.dirty).toBe(false);
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
+  });
+
+  it('keeps automatic periodic executor fallback pristine', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({ hasPromqlExecutor: false, hasSqlExecutor: true });
+    const { result } = renderController('new', '/alerts/rules/new?kind=periodic');
+    await waitFor(() => expect(result.current.state.draft?.dataType).toBe('log'));
+    expect(result.current.state.dirty).toBe(false);
+    act(() => result.current.updateDraft({ name: 'Changed' }));
+    expect(result.current.state.dirty).toBe(true);
+  });
+
   it('matches Apache master by silently ignoring a blank preview expression', async () => {
     const { result } = renderController('new', '/alerts/rules/new?kind=periodic');
 

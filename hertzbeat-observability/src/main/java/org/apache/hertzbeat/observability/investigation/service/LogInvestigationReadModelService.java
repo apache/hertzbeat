@@ -87,16 +87,19 @@ public class LogInvestigationReadModelService {
             return TraceBlock.empty(InvestigationReason.NOT_CORRELATED);
         }
         RowsResult<InvestigationQueryRepository.TraceSpanRow> result = repository.trace(
-                new InvestigationQueryRepository.TraceQuery(workspaceId, selected.traceId(), start, end));
+                new InvestigationQueryRepository.TraceQuery(workspaceId, selected.traceId(), start, end,
+                        selected.spanId()));
         if (result.status() != Status.AVAILABLE) {
             return TraceBlock.unavailable(TraceInvestigationReadModelService.reason(result.status()));
         }
         if (result.rows().isEmpty()) {
-            return TraceBlock.empty(InvestigationReason.NO_DATA);
+            return TraceBlock.empty(selected.spanId() == null ? InvestigationReason.NO_DATA : InvestigationReason.NOT_FOUND);
         }
         try {
             return TraceBlock.ready(InvestigationTraceAssembler.assemble(
-                    selected.traceId(), selected.spanId(), result.rows()).detail());
+                    selected.traceId(), selected.spanId(), result.rows(), result.truncated()).detail());
+        } catch (ObservabilityQueryRequestException exception) {
+            return TraceBlock.empty(InvestigationReason.NOT_FOUND);
         } catch (MalformedTraceException exception) {
             return TraceBlock.unavailable(InvestigationReason.MALFORMED_DATA);
         }
@@ -107,19 +110,33 @@ public class LogInvestigationReadModelService {
                                    InvestigationLogRecord selected,
                                    long start,
                                    long end) {
-        if (selected.identity() == null) {
-            return NearbyLogsBlock.unavailable(InvestigationReason.IDENTITY_UNAVAILABLE);
-        }
         long selectedTime;
         try {
             selectedTime = Long.parseLong(selected.timeUnixNano());
         } catch (NumberFormatException exception) {
             return NearbyLogsBlock.unavailable(InvestigationReason.MALFORMED_DATA);
         }
-        var result = repository.nearbyLogs(new InvestigationQueryRepository.NearbyQuery(
-                workspaceId, selected.logRecordUid(), selectedTime, selected.identity().serviceName(),
-                selected.identity().entityId(), selected.identity().entityType(), selected.identity().serviceNamespace(),
-                selected.identity().deploymentEnvironment(), start, end));
+        var identity = selected.identity();
+        InvestigationQueryRepository.NearbyQuery query;
+        if (identity != null) {
+            query = new InvestigationQueryRepository.NearbyQuery(
+                    workspaceId, selected.logRecordUid(), selectedTime, identity.serviceName(), identity.entityId(),
+                    identity.entityType(), identity.serviceNamespace(), identity.deploymentEnvironment(), start, end);
+        } else {
+            String serviceName = selected.resourceAttributes().get("service.name");
+            String hostName = selected.resourceAttributes().get("host.name");
+            if (!StringUtils.hasText(serviceName) || !StringUtils.hasText(hostName)) {
+                return NearbyLogsBlock.unavailable(InvestigationReason.IDENTITY_UNAVAILABLE);
+            }
+            String serviceNamespace = selected.resourceAttributes().get("service.namespace");
+            String deploymentEnvironment = firstText(selected.resourceAttributes().get("deployment.environment.name"),
+                    selected.resourceAttributes().get("deployment.environment"),
+                    selected.resourceAttributes().get("env"));
+            query = new InvestigationQueryRepository.NearbyQuery(
+                    workspaceId, selected.logRecordUid(), selectedTime, serviceName, null, null,
+                    serviceNamespace, deploymentEnvironment, start, end, hostName);
+        }
+        var result = repository.nearbyLogs(query);
         if (result.status() != Status.AVAILABLE) {
             return NearbyLogsBlock.unavailable(TraceInvestigationReadModelService.reason(result.status()));
         }
@@ -127,6 +144,15 @@ public class LogInvestigationReadModelService {
             return NearbyLogsBlock.empty();
         }
         return NearbyLogsBlock.ready(result.before(), result.after(), result.hasMoreBefore(), result.hasMoreAfter());
+    }
+
+    private String firstText(String... values) {
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private InvestigationQueryRepository repository() {

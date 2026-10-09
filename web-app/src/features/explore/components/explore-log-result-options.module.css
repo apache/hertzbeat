@@ -1,0 +1,82 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.optionsSurface {
+  display: flex;
+  flex-direction: column;
+  width: min(280px, calc(100vw - 32px));
+  max-height: min(600px, calc(100dvh - 120px));
+  gap: 6px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+@media (max-width: 700px) {
+  .optionsSurface {
+    width: min(280px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
+  }
+}
+.columnSection {
+  display: flex;
+  min-height: 0;
+  flex: none;
+  padding-top: 8px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.optionSection {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  flex: none;
+}
+
+.toggleRow {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--hb-text-primary);
+  font-size: 13px;
+}
+
+.radioSection {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.radioSection legend {
+  padding: 0;
+  margin-bottom: 2px;
+  color: var(--hb-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.radioSection :global(.ant-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.radioSection :global(.ant-radio-button-wrapper) {
+  flex: 1;
+  text-align: center;
+}
+
+.displayModes :global(.ant-radio-wrapper) {
+  min-height: 28px;
+  margin-inline-end: 0;
+}
+
+.displayModes :global(.ant-radio-group) {
+  display: grid;
+  gap: 2px;
+}
+
+.optionsButton {
+  gap: 6px;
+  height: 32px;
+  font-size: 13px;
+}

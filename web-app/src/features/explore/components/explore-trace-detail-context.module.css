@@ -1,0 +1,31 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0. */
+
+.context {
+  position: sticky;
+  top: -20px;
+  z-index: 3;
+  margin-top: -20px;
+  padding-top: 12px;
+  padding-bottom: 8px;
+  background: var(--hb-bg-raised);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.selection {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+  font-size: 12px;
+}
+.selection strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selection code {
+  flex-shrink: 0;
+}

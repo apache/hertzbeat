@@ -1,0 +1,53 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.overview {
+  min-width: 0;
+  margin-left: auto;
+}
+.overviewStats {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--hb-space-3);
+  min-height: 32px;
+  align-items: center;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overviewStats li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+.overviewStats strong {
+  color: var(--hb-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.overviewStats li::before {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--hb-text-muted);
+  content: '';
+}
+.overviewStats li[data-severity]::before {
+  background: var(--ant-color-primary);
+}
+.overviewStats li[data-severity='ERROR']::before,
+.overviewStats li[data-severity='FATAL']::before {
+  background: var(--ant-color-error);
+}
+.overviewStats li[data-severity='WARN']::before {
+  background: var(--ant-color-warning);
+}
+@media (width <= 900px) {
+  .overview {
+    margin-left: 0;
+  }
+}

@@ -52,7 +52,7 @@ export function useAlertSilenceController() {
   const queryClient = useQueryClient();
   const { query, management, setParams } = useAlertSilenceRouteQuery();
   const latestProjection = useLatestAlertSilenceProjection(query, management);
-  const { value: search, setValue: setSearch } = useAlertSilenceSearchDraft(query, management);
+  const { value: search, setValue: setSearch } = useAlertSilenceSearchDraft(query);
   const projection = useAlertSilenceVisibleProjection({ query, management });
   const overflow = useAlertSilencePageCorrection(query, management, projection.page, setParams);
   const updateQuery = (patch: Partial<AlertSilenceQuery>) =>
@@ -117,8 +117,8 @@ function useAlertSilenceRouteQuery() {
   return { query, management, setParams };
 }
 
-function useAlertSilenceSearchDraft(query: AlertSilenceQuery, management: AlertSilenceVisibleProjection['management']) {
-  return useStringQueryDraft(writeAlertSilenceRoute(query, management).toString(), query.search);
+function useAlertSilenceSearchDraft(query: AlertSilenceQuery) {
+  return useStringQueryDraft(query.search, query.search);
 }
 
 function useLatestAlertSilenceProjection(

@@ -11,6 +11,7 @@ import toolbarStyles from '../components/explore-log-result-toolbar.module.css?r
 import inspectorStyles from '../components/explore-log-inspector.module.css?raw';
 
 type MockRowSelection = {
+  columns?: Array<{ id: string; getValue?: (index: number) => string | undefined }>;
   getAriaLabel: (index: number) => string;
   onSelect: (index: number, row: HTMLElement) => void;
 };
@@ -19,13 +20,16 @@ const persesContract = vi.hoisted<{
   logDisplay: unknown;
   rowSelection: MockRowSelection | undefined;
   rowCount: number;
+  preserveLogOrder: boolean;
 }>(() => ({
   logDisplay: undefined,
   rowSelection: undefined,
-  rowCount: 1
+  rowCount: 1,
+  preserveLogOrder: false
 }));
 
-vi.mock('@/platform/perses', () => ({
+vi.mock('@/platform/perses', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/platform/perses')>()),
   HERTZBEAT_QUERY_LIMITS: { maximumWindowMs: 86_400_000 },
   orderHertzBeatLogRowsForPerses: (rows: Array<{ timeUnixNano: string | null; observedTimeUnixNano: string | null }>) =>
     [...rows].sort((left, right) =>
@@ -35,13 +39,16 @@ vi.mock('@/platform/perses', () => ({
     ),
   HertzBeatLogsTableResult: ({
     logDisplay,
-    logRowSelection
+    logRowSelection,
+    preserveLogOrder
   }: {
     logDisplay?: unknown;
     logRowSelection?: MockRowSelection;
+    preserveLogOrder?: boolean;
   }) => {
     persesContract.logDisplay = logDisplay;
     persesContract.rowSelection = logRowSelection;
+    persesContract.preserveLogOrder = Boolean(preserveLogOrder);
     return (
       <div>
         {Array.from({ length: persesContract.rowCount }, (_, index) => (
@@ -74,6 +81,7 @@ vi.mock('@/platform/perses', () => ({
   )
 }));
 
+import { parseExploreQuery } from '../model/explore-model';
 import type { LogExploreQuery } from '../model/explore-query';
 import type { LogHistoryEvidence } from '../model/explore-signal-contract';
 import { ExplorePersesLogPanel } from './explore-perses-log-panel';
@@ -81,6 +89,65 @@ import { ExplorePersesLogPanel } from './explore-perses-log-panel';
 const evidenceWindow = { from: 1_750_000_000_000, to: 1_750_003_600_000 } as const;
 
 describe('ExplorePersesLogPanel trend ownership', () => {
+  it('hides the timeline from a saved display choice without hiding log rows', () => {
+    renderPanel(
+      {
+        ...query,
+        logView: JSON.stringify({
+          version: 1,
+          columns: [{ kind: 'time' }, { kind: 'message' }],
+          density: 'compact',
+          wrap: false,
+          showTimeline: false
+        })
+      },
+      true,
+      vi.fn()
+    );
+    expect(screen.queryByRole('button', { name: 'Zoom trend' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Options' })).toBeInTheDocument();
+  });
+  it('keeps calculated values in the existing Logs columns and row inspector', () => {
+    const calculated: NonNullable<LogHistoryEvidence['calculated']> = {
+      version: 2,
+      window: { start: evidenceWindow.from, end: evidenceWindow.to },
+      executed: {
+        parameters: {},
+        calculatedFields: {
+          version: 2,
+          fields: [
+            {
+              id: 'c1',
+              kind: 'formula',
+              name: 'durationSeconds',
+              expression: '@duration_ms / 1000',
+              outputs: [{ name: 'durationSeconds', type: 'number' }]
+            }
+          ]
+        },
+        operation: { kind: 'page', pageIndex: 0, pageSize: 20, sort: { field: 'timestamp', direction: 'desc' } }
+      },
+      result: { kind: 'page', totalElements: 1, rows: [{ log: page.content[0]!, derived: { durationSeconds: 1.307 } }] }
+    };
+    render(panelView({ ...query, logRecordUid: undefined }, true, vi.fn(), page, 1, evidenceWindow, calculated));
+    expect(persesContract.preserveLogOrder).toBe(true);
+    expect(
+      persesContract.rowSelection?.columns?.find(column => column.id === 'calculated:durationSeconds')?.getValue?.(0)
+    ).toBe('1.307');
+    fireEvent.click(screen.getByRole('button', { name: /timeout/u }));
+    expect(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).toHaveTextContent(
+      '#durationSeconds'
+    );
+    expect(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).toHaveTextContent('1.307');
+  });
+  it('collapses only the trend while leaving the result tools and native rows reachable', () => {
+    renderPanel(query, true, vi.fn());
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse trend' }));
+    expect(screen.queryByRole('button', { name: 'Zoom trend' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Options' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand trend' }));
+    expect(screen.getByRole('button', { name: 'Zoom trend' })).toBeInTheDocument();
+  });
   beforeAll(async () => {
     await initializeI18n();
     await loadLocale('en-US');
@@ -98,15 +165,16 @@ describe('ExplorePersesLogPanel trend ownership', () => {
   });
   afterEach(cleanup);
 
-  it('keeps result status, display controls, and pagination in one header and persists display changes', () => {
+  it('keeps result controls in one header and reopens URL-owned display preferences', async () => {
     localStorage.clear();
     const openPath = vi.fn();
-    const view = renderPanel(query, true, openPath);
+    let view = renderPanel(query, true, openPath);
 
     const result = view.container.querySelector('[data-explore-log-region="result"]');
     expect(result).not.toBeNull();
     expect(result?.querySelectorAll('header')).toHaveLength(1);
-    expect(screen.getByText('1 / 57')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Export page' })).not.toBeInTheDocument();
+    expect(screen.queryByText('1 / 57')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Page: 3 / 3')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: /^Historical result pages/u })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: /^Historical result pages/u })).toHaveAttribute(
@@ -115,41 +183,49 @@ describe('ExplorePersesLogPanel trend ownership', () => {
     );
     expect(result?.lastElementChild).not.toHaveAttribute('aria-label', 'Historical result pages');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Compact rows' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Wrap messages' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show time' }));
-
-    expect(persesContract.logDisplay).toEqual({ density: 'compact', wrap: false, showTime: false });
-    view.unmount();
-    renderPanel(query, true, openPath);
-    expect(persesContract.logDisplay).toEqual({ density: 'compact', wrap: false, showTime: false });
+    const reopen = () => {
+      const next = parseExploreQuery(new URL(String(openPath.mock.calls.at(-1)?.[0]), 'http://local').searchParams);
+      expect(next.signal).toBe('logs');
+      view.unmount();
+      view = renderPanel(next as LogExploreQuery, true, openPath);
+    };
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    fireEvent.click(await screen.findByRole('radio', { name: i18n.t('explore.perses.rowHeightMedium') }));
+    expect(openPath).toHaveBeenCalledTimes(1);
+    reopen();
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+    fireEvent.click(await screen.findByRole('radio', { name: i18n.t('explore.perses.rowHeightLarge') }));
+    expect(openPath).toHaveBeenCalledTimes(2);
+    reopen();
+    expect(persesContract.logDisplay).toMatchObject({
+      density: 'comfortable',
+      wrap: true,
+      showTime: true,
+      rowHeight: 'large'
+    });
+    expect(screen.queryByRole('button', { name: 'Show time' })).not.toBeInTheDocument();
   });
 
-  it('turns real severity totals into query filters while keeping trace count static', () => {
+  it('keeps severity summary separate from the applied query', () => {
     const openPath = vi.fn();
-    renderPanel(query, true, openPath);
-
-    expect(screen.getByText('Trace')).not.toHaveAttribute('role', 'button');
-    fireEvent.click(screen.getByRole('button', { name: 'Info 56' }));
-    let params = new URLSearchParams(String(openPath.mock.calls.at(-1)?.[0]).split('?')[1]);
-    expect(params.get('severityText')).toBe('INFO');
-    expect(params.has('page')).toBe(false);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Total 57' }));
-    params = new URLSearchParams(String(openPath.mock.calls.at(-1)?.[0]).split('?')[1]);
-    expect(params.has('severityText')).toBe(false);
-    expect(params.has('page')).toBe(false);
+    renderPanel({ ...query, severityText: 'SEVERE' }, true, openPath);
+    expect(screen.getByRole('list', { name: i18n.t('exploreLog.statisticsScope') })).toHaveTextContent('Total57');
+    expect(screen.queryByRole('button', { name: 'WARN 1' })).not.toBeInTheDocument();
+    expect(openPath).not.toHaveBeenCalled();
   });
 
   it('publishes a current trend zoom as a canonical exact query and shows offset-page provenance', () => {
     const openPath = vi.fn();
     renderPanel(query, true, openPath);
 
-    expect(screen.getByText('1 / 57')).toBeInTheDocument();
+    expect(screen.queryByText('1 / 57')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Page: 3 / 3')).toBeInTheDocument();
     const exactWindow = `${new Date(evidenceWindow.from).toISOString()} – ${new Date(evidenceWindow.to).toISOString()}`;
-    expect(screen.getByLabelText(exactWindow)).toBeInTheDocument();
     expect(screen.queryByText(exactWindow)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Query details' }));
+    expect(screen.getByText('1 / 57')).toBeInTheDocument();
+    expect(screen.getByText(exactWindow)).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('explore.perses.historicalEvidence'))).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Zoom trend' }));
 
@@ -159,7 +235,8 @@ describe('ExplorePersesLogPanel trend ownership', () => {
       serviceName: 'checkout',
       serviceNamespace: 'commerce',
       environment: 'prod',
-      query: 'timeout',
+      query: '"timeout"',
+      searchSyntax: 'structured-v1',
       severityText: 'WARN',
       resourceFilter: 'cloud.region=us-east',
       attributeFilter: 'http.status_code=500',
@@ -191,6 +268,7 @@ describe('ExplorePersesLogPanel trend ownership', () => {
       number: 0
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Query details' }));
     expect(screen.getByLabelText('Page: 0 / 0')).toBeInTheDocument();
     expect(screen.queryByText('5 / 0')).not.toBeInTheDocument();
   });
@@ -214,12 +292,14 @@ describe('ExplorePersesLogPanel trend ownership', () => {
     const view = renderPanel(query, true, openPath, { ...page, content: [older, newest] });
     const host = view.container.querySelector('[data-log-inspector-open]');
     expect(host).toHaveAttribute('data-log-inspector-open', 'false');
-    expect(inspectorStyles).toMatch(/\.inspector\s*\{[^}]*position:\s*absolute/s);
+    expect(inspectorStyles).toMatch(/\.inspector\s*\{[^}]*position:\s*fixed/s);
     expect(persesContract.rowSelection?.getAriaLabel(99)).toBe('Historical logs');
 
     const firstRenderedRow = screen.getByRole('button', { name: /newest rendered row/u });
     fireEvent.click(firstRenderedRow);
-    expect(screen.getByRole('dialog', { name: 'Log inspector' })).toHaveTextContent('newest rendered row');
+    expect(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).toHaveTextContent(
+      'newest rendered row'
+    );
     expect(host).toHaveAttribute('data-log-inspector-open', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Investigate' }));
     expect(openPath.mock.calls.at(-1)?.[0]).toContain('logRecordUid=newest');
@@ -229,38 +309,133 @@ describe('ExplorePersesLogPanel trend ownership', () => {
     expect(host).toHaveAttribute('data-log-inspector-open', 'false');
   });
 
-  it.each<
-    [
-      string,
-      {
-        revision?: number;
-        query?: LogExploreQuery;
-        timeWindow?: { from: number; to: number };
-        evidenceCurrent?: boolean;
-      }
-    ]
-  >([
-    ['refresh revision', { revision: 2 }],
-    ['filter or pagination scope', { query: { ...query, pageIndex: 1, severityText: 'ERROR' } }],
-    ['time window', { timeWindow: { from: evidenceWindow.from + 1_000, to: evidenceWindow.to } }],
-    ['stale evidence', { evidenceCurrent: false }]
+  it('keeps inspector selection while navigating to the previous history page', async () => {
+    const openPath = vi.fn();
+    const view = renderPanel(query, true, openPath);
+    fireEvent.click(screen.getByRole('button', { name: /timeout/u }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('explore.perses.previousLog') }));
+
+    expect(openPath).toHaveBeenCalledTimes(1);
+    expect(new URL(String(openPath.mock.calls[0]?.[0]), 'http://local').searchParams.get('page')).toBe('1');
+
+    const previousPage = {
+      ...page,
+      number: 1,
+      content: Array.from({ length: 20 }, (_, index) => ({
+        ...page.content[0]!,
+        logRecordUid: `previous-${index}`,
+        body: `previous page row ${index}`,
+        timeUnixNano: String(1_750_000_000_000_000_000n + BigInt(index) * 1_000_000_000n)
+      }))
+    };
+    view.rerender(panelView({ ...query, pageIndex: 1 }, true, openPath, previousPage, 1, evidenceWindow));
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).toHaveTextContent(
+        'previous page row 0'
+      )
+    );
+    expect(
+      screen.getByLabelText(i18n.t('explore.perses.selectedLogPosition', { current: 20, total: 20 }))
+    ).toHaveTextContent('20 / 20');
+  });
+
+  it('uses native Down navigation to load the next page and select its first row', async () => {
+    const openPath = vi.fn();
+    const middlePage = {
+      ...page,
+      number: 1,
+      content: Array.from({ length: 20 }, (_, index) => ({
+        ...page.content[0]!,
+        logRecordUid: `middle-${index}`,
+        body: `middle page row ${index}`,
+        timeUnixNano: String(1_750_000_000_000_000_000n + BigInt(index) * 1_000_000_000n)
+      }))
+    };
+    const view = renderPanel({ ...query, pageIndex: 1 }, true, openPath, middlePage);
+    fireEvent.click(screen.getByRole('button', { name: /middle page row 0/u }));
+    const inspector = screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') });
+    fireEvent.keyDown(inspector, { key: 'ArrowDown' });
+
+    expect(new URL(String(openPath.mock.calls[0]?.[0]), 'http://local').searchParams.get('page')).toBe('2');
+    view.rerender(panelView({ ...query, pageIndex: 2 }, false, openPath, middlePage, 1, evidenceWindow));
+    expect(inspector).toHaveAttribute('aria-busy', 'true');
+    expect(inspector).toHaveTextContent('middle page row 0');
+    expect(screen.getByRole('button', { name: i18n.t('explore.perses.copyLog') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('explore.perses.nextLog') })).toBeDisabled();
+    fireEvent.keyDown(inspector, { key: 'ArrowDown' });
+    expect(openPath).toHaveBeenCalledTimes(1);
+
+    const lastPage = {
+      ...page,
+      number: 2,
+      content: Array.from({ length: 17 }, (_, index) => ({
+        ...page.content[0]!,
+        logRecordUid: `last-${index}`,
+        body: `last page row ${index}`,
+        timeUnixNano: String(1_750_000_100_000_000_000n + BigInt(index) * 1_000_000_000n)
+      }))
+    };
+    view.rerender(panelView({ ...query, pageIndex: 2 }, true, openPath, lastPage, 1, evidenceWindow));
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).toHaveTextContent(
+        'last page row 16'
+      )
+    );
+  });
+
+  it('sends only one adjacent-page request for rapid boundary keys and ignores stale evidence', () => {
+    const openPath = vi.fn();
+    const view = renderPanel({ ...query, pageIndex: 1 }, true, openPath, {
+      ...page,
+      number: 1
+    });
+    fireEvent.click(screen.getByRole('button', { name: /timeout/u }));
+    const inspector = screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') });
+    fireEvent.keyDown(inspector, { key: 'ArrowDown' });
+    fireEvent.keyDown(inspector, { key: 'ArrowDown' });
+
+    expect(openPath).toHaveBeenCalledTimes(1);
+
+    view.rerender(panelView({ ...query, pageIndex: 1 }, false, openPath, { ...page, number: 1 }, 1, evidenceWindow));
+    fireEvent.keyDown(inspector, { key: 'ArrowDown' });
+    expect(openPath).toHaveBeenCalledTimes(1);
+  });
+
+  it.each<[string, { query?: LogExploreQuery; timeWindow?: { from: number; to: number } }]>([
+    ['filter or sort scope', { query: { ...query, severityText: 'ERROR', sort: 'oldest' as const } }],
+    ['time window', { timeWindow: { from: evidenceWindow.from + 1_000, to: evidenceWindow.to } }]
   ])('closes an outdated inspector after %s changes', (_label, update) => {
     const openPath = vi.fn();
     const view = renderPanel(query, true, openPath);
     fireEvent.click(screen.getByRole('button', { name: /timeout/u }));
-    expect(screen.getByRole('dialog', { name: 'Log inspector' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).toBeInTheDocument();
 
-    view.rerender(
-      panelView(
-        update.query ?? query,
-        update.evidenceCurrent ?? true,
-        openPath,
-        page,
-        update.revision ?? 1,
-        update.timeWindow ?? evidenceWindow
-      )
-    );
-    expect(screen.queryByRole('dialog', { name: 'Log inspector' })).not.toBeInTheDocument();
+    view.rerender(panelView(update.query ?? query, true, openPath, page, 1, update.timeWindow ?? evidenceWindow));
+    expect(screen.queryByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).not.toBeInTheDocument();
+  });
+
+  it('does not restore a pending page selection after the Inspector is closed', () => {
+    const openPath = vi.fn();
+    const middlePage = {
+      ...page,
+      number: 1,
+      content: Array.from({ length: 20 }, (_, index) => ({
+        ...page.content[0]!,
+        logRecordUid: `middle-${index}`,
+        body: `middle page row ${index}`,
+        timeUnixNano: String(1_750_000_000_000_000_000n + BigInt(index) * 1_000_000_000n)
+      }))
+    };
+    const view = renderPanel({ ...query, pageIndex: 1 }, true, openPath, middlePage);
+    fireEvent.click(screen.getByRole('button', { name: /middle page row 0/u }));
+    fireEvent.keyDown(screen.getByRole('dialog', { name: i18n.t('explore.perses.logInspector') }), {
+      key: 'ArrowDown'
+    });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('explore.perses.closeInspector') }));
+
+    const lastPage = { ...middlePage, number: 2, content: middlePage.content.slice(0, 17) };
+    view.rerender(panelView({ ...query, pageIndex: 2 }, true, openPath, lastPage, 1, evidenceWindow));
+    expect(screen.queryByRole('dialog', { name: i18n.t('explore.perses.logInspector') })).not.toBeInTheDocument();
   });
 });
 
@@ -323,13 +498,15 @@ function panelView(
   openPath: (path: string) => void,
   data: LogHistoryEvidence['page'],
   revision: number,
-  timeWindow: { from: number; to: number }
+  timeWindow: { from: number; to: number },
+  calculated?: LogHistoryEvidence['calculated']
 ) {
   persesContract.rowCount = data.content.length;
   return (
     <I18nextProvider i18n={i18n}>
       <ExplorePersesLogPanel
         data={data}
+        calculated={calculated}
         statistics={{
           overview: {
             kind: 'ready',

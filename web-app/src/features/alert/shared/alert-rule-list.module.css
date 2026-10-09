@@ -35,3 +35,16 @@
   max-height: 50px;
   overflow: hidden;
 }
+
+.expressionButton {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  padding-inline: 0;
+}
+.expressionButton > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

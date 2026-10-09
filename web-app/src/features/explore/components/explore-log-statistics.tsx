@@ -1,124 +1,95 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { TFunction } from 'i18next';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
 
 import { HertzBeatMetricTimeSeriesResult } from '@/platform/perses';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
-import { createLogTrendPersesResult, exploreOverviewRows } from '../model/explore-perses-result-model';
+import { createLogTrendPersesResult } from '../model/explore-perses-result-model';
 import type { LogHistoryEvidence } from '../model/explore-signal-contract';
 import { explorePersesMessages } from './explore-perses-messages';
 import styles from './log-result.module.css';
+import { ExploreLogSeverityLegend } from './explore-log-severity-legend';
 
 export function ExploreLogStatistics({
   statistics,
   timeWindow,
   runtimeIdentity,
+  defaultCollapsed = false,
+  headerAction,
   onTimeWindowChange,
-  selectedSeverity,
-  onSeverityChange,
+  retry,
   t
 }: {
   statistics: Pick<LogHistoryEvidence, 'overview' | 'trend'>;
   timeWindow: ExactTimeWindow;
   runtimeIdentity: string;
+  defaultCollapsed?: boolean;
+  headerAction?: ReactNode;
   onTimeWindowChange?: ((window: ExactTimeWindow) => void) | undefined;
-  selectedSeverity?: string | undefined;
-  onSeverityChange?: ((severity: string | undefined) => void) | undefined;
+  retry?: (() => Promise<void>) | undefined;
   t: TFunction;
 }) {
   return (
     <div className={styles.statistics}>
-      <Overview statistics={statistics} selectedSeverity={selectedSeverity} onSeverityChange={onSeverityChange} t={t} />
       <Trend
+        key={defaultCollapsed ? 'timeseries' : 'logs'}
+        defaultCollapsed={defaultCollapsed}
+        legend={<ExploreLogSeverityLegend statistics={statistics} t={t} />}
         statistics={statistics}
+        headerAction={headerAction}
         timeWindow={timeWindow}
         runtimeIdentity={runtimeIdentity}
         onTimeWindowChange={onTimeWindowChange}
+        retry={retry}
         t={t}
       />
     </div>
   );
 }
 
-function Overview({
-  statistics,
-  selectedSeverity,
-  onSeverityChange,
-  t
-}: {
-  statistics: Pick<LogHistoryEvidence, 'overview'>;
-  selectedSeverity?: string | undefined;
-  onSeverityChange?: ((severity: string | undefined) => void) | undefined;
-  t: TFunction;
-}) {
-  return (
-    <section className={styles.overview} aria-label={t('exploreLog.overview')} data-explore-evidence-summary="">
-      {statistics.overview.kind === 'error' ? (
-        <span className={styles.evidenceState} role="alert">
-          {t('exploreLog.statisticsUnavailable')}
-        </span>
-      ) : (
-        <dl className={styles.overviewStats}>
-          {exploreOverviewRows(statistics.overview.data).map(([key, value]) => {
-            const label = t(`exploreLog.statistics.${key}`);
-            if (key === 'trace') {
-              return (
-                <div key={key}>
-                  <dt>{label}</dt>
-                  <dd>{value.toLocaleString()}</dd>
-                </div>
-              );
-            }
-            const severity = key === 'total' ? undefined : key.toUpperCase();
-            const active = key === 'total' ? selectedSeverity == null : selectedSeverity?.toUpperCase() === severity;
-            return (
-              <div key={key}>
-                <button
-                  type="button"
-                  aria-label={`${label} ${value.toLocaleString()}`}
-                  aria-pressed={active}
-                  disabled={onSeverityChange == null}
-                  onClick={() => onSeverityChange?.(severity)}
-                >
-                  <span>{label}</span>
-                  <strong>{value.toLocaleString()}</strong>
-                </button>
-              </div>
-            );
-          })}
-        </dl>
-      )}
-    </section>
-  );
-}
-
 function Trend({
+  defaultCollapsed,
+  legend,
+  headerAction,
   statistics,
   timeWindow,
   runtimeIdentity,
   onTimeWindowChange,
+  retry,
   t
 }: {
+  defaultCollapsed: boolean;
   statistics: Pick<LogHistoryEvidence, 'trend'>;
+  legend: ReactNode;
+  headerAction?: ReactNode;
   timeWindow: ExactTimeWindow;
   runtimeIdentity: string;
   onTimeWindowChange?: ((window: ExactTimeWindow) => void) | undefined;
+  retry?: (() => Promise<void>) | undefined;
   t: TFunction;
 }) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const rows = statistics.trend.kind === 'ready' ? statistics.trend.data.buckets : [];
-  const singleBucketCount =
-    statistics.trend.kind === 'ready' && rows.length === 1 ? statistics.trend.data.buckets[0]?.count : undefined;
-  const density = rows.length > 0 && statistics.trend.kind === 'ready' ? 'visualization' : 'compact';
+  const singleBucketCount = rows.length === 1 ? rows[0]?.count : undefined;
+  const density = collapsed ? 'compact' : 'visualization';
   const evidenceState = trendEvidenceState(statistics.trend, rows.length, singleBucketCount, t);
   return (
     <section className={styles.trend} aria-label={t('exploreLog.trend')} data-trend-density={density}>
       <header className={styles.trendHeader}>
-        <h3>{t('exploreLog.trend')}</h3>
-        {evidenceState}
+        <div className={styles.trendHeading}>{evidenceState}</div>
+        <div className={styles.trendLegend}>{legend}</div>
+        {headerAction && <div className={styles.trendHeaderAction}>{headerAction}</div>}
+        {retry && (
+          <button type="button" className={styles.trendRetry} onClick={() => void retry()}>
+            {t('common.retry')}
+          </button>
+        )}
+        <TrendCollapseToggle available={rows.length > 0} collapsed={collapsed} onChange={setCollapsed} t={t} />
       </header>
-      {statistics.trend.kind === 'ready' && rows.length > 0 ? (
+      {!collapsed && statistics.trend.kind === 'ready' && rows.length > 0 ? (
         <TrendResult
           trend={statistics.trend.data}
           timeWindow={timeWindow}
@@ -131,6 +102,31 @@ function Trend({
   );
 }
 
+function TrendCollapseToggle({
+  available,
+  collapsed,
+  onChange,
+  t
+}: {
+  available: boolean;
+  collapsed: boolean;
+  onChange: (collapsed: boolean) => void;
+  t: TFunction;
+}) {
+  if (!available) return null;
+  return (
+    <button
+      type="button"
+      className={styles.trendToggle}
+      aria-label={t(collapsed ? 'explore.perses.expandTrend' : 'explore.perses.collapseTrend')}
+      aria-expanded={!collapsed}
+      onClick={() => onChange(!collapsed)}
+    >
+      {collapsed ? <DownOutlined aria-hidden /> : <UpOutlined aria-hidden />}
+    </button>
+  );
+}
+
 function trendEvidenceState(
   trend: LogHistoryEvidence['trend'],
   rowCount: number,
@@ -140,7 +136,7 @@ function trendEvidenceState(
   if (trend.kind === 'error') {
     return (
       <span className={styles.evidenceState} role="alert">
-        {t('exploreLog.statisticsUnavailable')}
+        {t(trend.reason === 'permission' ? 'exploreLog.trendPermission' : 'exploreLog.statisticsUnavailable')}
       </span>
     );
   }
@@ -167,6 +163,7 @@ function TrendResult({
   t: TFunction;
 }) {
   const result = createLogTrendPersesResult(trend, timeWindow, runtimeIdentity);
+  const peak = Math.max(...trend.buckets.map(bucket => bucket.count));
   return (
     <HertzBeatMetricTimeSeriesResult
       className={styles.trendChart}
@@ -177,6 +174,9 @@ function TrendResult({
       runtimeIdentity={result.runtimeIdentity}
       messages={explorePersesMessages(t)}
       timeSeriesDisplay="bar"
+      timeSeriesCompact
+      timeSeriesCountAxisMax={peak}
+      timeSeriesYDomain={peak > 0 ? { min: 0, max: peak } : undefined}
       onTimeWindowChange={onTimeWindowChange}
       timeWindowChangeEnabled={onTimeWindowChange != null}
       variant="compact"

@@ -14,6 +14,22 @@ import zhCn from '@/assets/i18n/zh-cn.json';
 import zhTw from '@/assets/i18n/zh-tw.json';
 
 describe('Alert Rule locale coverage', () => {
+  it('keeps severity names uppercase across all runtime locales and surfaces', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      for (const level of ['info', 'warning', 'critical', 'emergency'] as const) {
+        expect(locale.alert.severity[level]).toBe(level.toUpperCase());
+      }
+      for (const level of ['warning', 'critical', 'emergency'] as const) {
+        expect(locale.alert.summary[level]).toBe(level.toUpperCase());
+      }
+      for (const level of ['trace', 'debug', 'info', 'warn', 'error', 'fatal'] as const) {
+        expect(locale.exploreLog.statistics[level]).toBe(level.toUpperCase());
+      }
+      expect(locale.topology.legend.warning).toBe('WARNING');
+      expect(locale.topology.legend.critical).toBe('CRITICAL');
+    }
+  });
+
   it('uses the exact stable Latin 1.8.0 target-derived row-count labels', () => {
     expect(en.alertRules.metricTarget.rowCount).toBe('Value rows');
     expect(pt.alertRules.metricTarget.rowCount).toBe('Contagem de linhas de valor do Sistema-Métricas');

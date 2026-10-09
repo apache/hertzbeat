@@ -108,6 +108,10 @@ public class GreptimeQueryGuard implements AutoCloseable {
         }
     }
 
+    <T> T executeWithDeadline(java.util.function.LongFunction<T> query) {
+        return execute(() -> query.apply(System.nanoTime() + queryTimeout.toNanos()));
+    }
+
     private void acquirePermit() {
         try {
             if (!permits.tryAcquire(admissionWait.toNanos(), TimeUnit.NANOSECONDS)) {

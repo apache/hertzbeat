@@ -47,7 +47,7 @@ public class EntityDefinitionHertzbeatNormalizationService {
     }
 
     public EntityDefinition.Hertzbeat extractDefinitionHertzbeat(Object value, Object legacyPipelineFingerprints) {
-        Map<String, Object> hertzbeatMap = toObjectMap(value);
+        Map<String, Object> hertzbeatMap = EntityDefinitionMaps.toObjectMap(value);
         EntityDefinition.Hertzbeat hertzbeat = new EntityDefinition.Hertzbeat();
         if (!hertzbeatMap.isEmpty()) {
             hertzbeat.setCodeLocations(extractDefinitionCodeLocations(hertzbeatMap.get("codeLocations")));
@@ -86,7 +86,7 @@ public class EntityDefinitionHertzbeatNormalizationService {
         }
         List<EntityDefinition.CodeLocation> results = new ArrayList<>();
         for (Object item : items) {
-            Map<String, Object> codeLocationMap = toObjectMap(item);
+            Map<String, Object> codeLocationMap = EntityDefinitionMaps.toObjectMap(item);
             String repositoryUrl = defaultText(asText(codeLocationMap.get("repositoryURL")), asText(codeLocationMap.get("repositoryUrl")));
             List<String> paths = extractDefinitionStringList("paths", codeLocationMap);
             if (!StringUtils.hasText(repositoryUrl) && CollectionUtils.isEmpty(paths)) {
@@ -106,7 +106,7 @@ public class EntityDefinitionHertzbeatNormalizationService {
         }
         List<EntityDefinition.SavedQuery> results = new ArrayList<>();
         for (Object item : items) {
-            Map<String, Object> queryMap = toObjectMap(item);
+            Map<String, Object> queryMap = EntityDefinitionMaps.toObjectMap(item);
             String query = defaultText(asText(queryMap.get("query")), asText(queryMap.get("search")));
             if (!StringUtils.hasText(query)) {
                 continue;
@@ -120,7 +120,7 @@ public class EntityDefinitionHertzbeatNormalizationService {
     }
 
     private EntityDefinition.PerformanceData extractDefinitionPerformanceData(Object value) {
-        Map<String, Object> performanceMap = toObjectMap(value);
+        Map<String, Object> performanceMap = EntityDefinitionMaps.toObjectMap(value);
         if (performanceMap.isEmpty()) {
             return null;
         }
@@ -134,7 +134,7 @@ public class EntityDefinitionHertzbeatNormalizationService {
     }
 
     private EntityDefinition.Pipelines extractDefinitionPipelines(Object value) {
-        Map<String, Object> pipelinesMap = toObjectMap(value);
+        Map<String, Object> pipelinesMap = EntityDefinitionMaps.toObjectMap(value);
         if (pipelinesMap.isEmpty()) {
             return null;
         }
@@ -178,18 +178,6 @@ public class EntityDefinitionHertzbeatNormalizationService {
         return Collections.emptyList();
     }
 
-    private Map<String, Object> toObjectMap(Object value) {
-        if (!(value instanceof Map<?, ?> rawMap)) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            if (entry.getKey() != null) {
-                result.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
-        return result;
-    }
 
     private String asText(Object value) {
         if (value == null) {

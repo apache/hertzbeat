@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.hertzbeat.common.observability.model.CodeNavigationHint;
+import org.apache.hertzbeat.common.observability.dto.trace.TraceRepresentativeSpanDto;
 
 /** Bounded multi-signal investigation view for one exact trace. */
 @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -46,7 +47,7 @@ public record TraceInvestigationView(String traceId,
         Objects.requireNonNull(dependencies, "dependencies");
     }
 
-    /** Complete Gantt evidence. Partial traces are never ready. */
+    /** Valid observed Gantt evidence, including incomplete forests. */
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public record GanttBlock(InvestigationEvidenceState state,
                              InvestigationReason reason,
@@ -66,7 +67,11 @@ public record TraceInvestigationView(String traceId,
         }
 
         public static GanttBlock empty() {
-            return new GanttBlock(InvestigationEvidenceState.EMPTY, InvestigationReason.NO_DATA,
+            return empty(InvestigationReason.NO_DATA);
+        }
+
+        public static GanttBlock empty(InvestigationReason reason) {
+            return new GanttBlock(InvestigationEvidenceState.EMPTY, reason,
                     InvestigationSource.GREPTIME_TRACES, null);
         }
 
@@ -220,7 +225,7 @@ public record TraceInvestigationView(String traceId,
         }
     }
 
-    /** Complete validated trace detail used by the Gantt renderer. */
+    /** Validated observed trace detail; root metadata is authoritative only for a unique root. */
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public record TraceDetail(String rootSpanId,
                               String serviceName,
@@ -231,21 +236,44 @@ public record TraceInvestigationView(String traceId,
                               String rootSpanName,
                               String durationNanos,
                               String status,
-                              long startTime,
+                              Long startTime,
                               int errorSpanCount,
                               Map<String, String> resourceAttributes,
-                              List<Span> spans) {
+                              List<Span> spans,
+                              String rootState,
+                              long rootSpanCount,
+                              TraceRepresentativeSpanDto representativeSpan,
+                              long observedStartTime,
+                              long observedEndTime,
+                              int missingParentCount,
+                              boolean partial) {
 
         public TraceDetail {
-            requireText(rootSpanId, "rootSpanId");
-            requireText(serviceName, "serviceName");
-            requireText(rootSpanName, "rootSpanName");
-            requireText(status, "status");
-            validateNonNegativeDecimal(durationNanos, "durationNanos");
-            if (startTime <= 0L || errorSpanCount < 0) {
+            String expectedState = rootSpanCount == 0 ? "missing" : rootSpanCount == 1 ? "unique" : "ambiguous";
+            if (rootSpanCount < 0 || !expectedState.equals(rootState)) {
+                throw new IllegalArgumentException("Trace root evidence is inconsistent");
+            }
+            if (rootSpanCount == 1) {
+                requireText(rootSpanId, "rootSpanId");
+                requireText(status, "status");
+                validateNonNegativeDecimal(durationNanos, "durationNanos");
+                if (startTime == null || startTime < 0L) {
+                    throw new IllegalArgumentException("Root start time is invalid");
+                }
+            } else if (rootSpanId != null || serviceName != null || serviceNamespace != null
+                    || deploymentEnvironment != null || entityId != null || entityType != null
+                    || rootSpanName != null || durationNanos != null || status != null || startTime != null) {
+                throw new IllegalArgumentException("Non-unique roots cannot carry root metadata");
+            }
+            if (errorSpanCount < 0 || missingParentCount < 0 || observedStartTime < 0L
+                    || observedEndTime < observedStartTime || observedEndTime > 9_007_199_254_740_991L) {
                 throw new IllegalArgumentException("Trace detail numeric value is invalid");
             }
-            resourceAttributes = immutable(resourceAttributes);
+            Objects.requireNonNull(representativeSpan, "representativeSpan");
+            if (rootSpanCount != 1 && resourceAttributes != null) {
+                throw new IllegalArgumentException("Non-unique roots cannot carry resource attributes");
+            }
+            resourceAttributes = rootSpanCount == 1 ? immutable(resourceAttributes) : null;
             spans = immutable(spans);
             if (spans.isEmpty()) {
                 throw new IllegalArgumentException("Trace detail requires spans");
@@ -271,6 +299,7 @@ public record TraceInvestigationView(String traceId,
                        String scopeVersion,
                        String durationNanos,
                        long startTime,
+                       String startTimeUnixNano,
                        boolean highlighted,
                        Map<String, String> resourceAttributes,
                        Map<String, String> spanAttributes,
@@ -280,12 +309,14 @@ public record TraceInvestigationView(String traceId,
 
         public Span {
             requireText(spanId, "spanId");
-            requireText(spanName, "spanName");
-            requireText(serviceName, "serviceName");
             requireText(status, "status");
             validateNonNegativeDecimal(durationNanos, "durationNanos");
-            if (startTime <= 0L) {
+            validateNonNegativeDecimal(startTimeUnixNano, "startTimeUnixNano");
+            if (startTime < 0L || startTime > 9_007_199_254_740_991L) {
                 throw new IllegalArgumentException("Span numeric value is invalid");
+            }
+            if (Long.parseLong(startTimeUnixNano) / 1_000_000L != startTime) {
+                throw new IllegalArgumentException("Span timestamps must describe the same instant");
             }
             resourceAttributes = immutable(resourceAttributes);
             spanAttributes = immutable(spanAttributes);

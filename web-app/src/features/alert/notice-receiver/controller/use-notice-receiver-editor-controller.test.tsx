@@ -23,6 +23,50 @@ describe('notice receiver editor controller', () => {
     loadExact.mockResolvedValue(persistedNoticeReceiver);
   });
 
+  it('tracks dirty changes against the initial new draft and retires the baseline on close', () => {
+    const { result } = renderEditorController(loadExact);
+    act(() => {
+      result.current.editor.actions.create();
+    });
+    expect(result.current.editor.state.dirty).toBe(false);
+    act(() => {
+      result.current.editor.actions.updateDraft({ name: 'Temporary', email: 'ops@example.test' });
+    });
+    expect(result.current.editor.state.dirty).toBe(true);
+    act(() => {
+      result.current.editor.actions.updateDraft({ name: '', email: '' });
+    });
+    expect(result.current.editor.state.dirty).toBe(false);
+    act(() => {
+      result.current.editor.actions.close();
+    });
+    expect(result.current.editor.state.dirty).toBe(false);
+    act(() => {
+      result.current.editor.actions.create();
+    });
+    expect(result.current.editor.state.dirty).toBe(false);
+  });
+
+  it('compares loaded detail by value, including explicit secret-clear restoration', async () => {
+    const { result } = renderEditorController(loadExact);
+    await act(() => result.current.editor.actions.edit(7));
+    expect(result.current.editor.state.dirty).toBe(false);
+    act(() => {
+      result.current.editor.actions.setSecretCleared('hookUrl', true);
+    });
+    expect(result.current.editor.state.dirty).toBe(true);
+    act(() => {
+      result.current.editor.actions.setSecretCleared('hookUrl', false);
+    });
+    expect(result.current.editor.state.dirty).toBe(false);
+    act(() => {
+      result.current.editor.actions.updateDraft({ name: 'Temporary' });
+    });
+    expect(result.current.editor.state.dirty).toBe(true);
+    act(() => result.current.editor.controls.setDraft(null));
+    expect(result.current.editor.state.dirty).toBe(false);
+  });
+
   it('deduplicates the same id, publishes only the latest id, and invalidates detail on create and close', async () => {
     const first = deferred<NoticeReceiver>();
     const latest = deferred<NoticeReceiver>();

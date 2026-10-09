@@ -66,6 +66,7 @@ class ReleaseReadinessRuntimeAssemblyTest {
                     "route",
                     "query_snapshot",
                     "payload",
+                    "revision",
                     "create_time",
                     "update_time"
             ),
@@ -95,6 +96,8 @@ class ReleaseReadinessRuntimeAssemblyTest {
                     "variables",
                     "panel_map",
                     "version",
+                    "document",
+                    "revision",
                     "create_time",
                     "update_time"
             )
@@ -132,6 +135,25 @@ class ReleaseReadinessRuntimeAssemblyTest {
         assertThat(dependencyBlock(startupPom, "hertzbeat-observability"))
                 .doesNotContain("<scope>test</scope>")
                 .doesNotContain("<scope>provided</scope>");
+    }
+
+    @Test
+    void collectorAutoConfigurationKeepsOneResolvableSourceOwner() throws IOException {
+        Path collectorRoot = repoRoot().resolve("hertzbeat-collector");
+        String sourcePath = "src/main/java/org/apache/hertzbeat/collector/config/CollectorAutoConfiguration.java";
+        try (Stream<Path> files = Files.walk(collectorRoot)) {
+            assertThat(files.filter(path -> path.endsWith(sourcePath)).toList())
+                    .containsExactly(collectorRoot.resolve("hertzbeat-collector-common").resolve(sourcePath));
+        }
+        String collectorPom = readRepoFile("hertzbeat-collector/hertzbeat-collector-collector/pom.xml");
+        String basicPom = readRepoFile("hertzbeat-collector/hertzbeat-collector-basic/pom.xml");
+        assertThat(dependencyBlock(collectorPom, "hertzbeat-collector-basic"))
+                .doesNotContain("<scope>test</scope>", "<scope>provided</scope>", "<optional>true</optional>");
+        assertThat(dependencyBlock(basicPom, "hertzbeat-collector-common"))
+                .doesNotContain("<scope>test</scope>", "<scope>provided</scope>", "<optional>true</optional>");
+        assertThat(readRepoFile("hertzbeat-collector/hertzbeat-collector-collector/src/main/resources/"
+                + "META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports"))
+                .contains("org.apache.hertzbeat.collector.config.CollectorAutoConfiguration");
     }
 
     @Test

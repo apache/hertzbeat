@@ -17,6 +17,17 @@
 
 package org.apache.hertzbeat.observability.logs.service;
 
+import org.apache.hertzbeat.observability.logs.query.LogComparisonParser;
+import org.apache.hertzbeat.common.observability.dto.log.LogComparison;
+import org.apache.hertzbeat.common.observability.dto.log.LogQuerySet;
+import org.apache.hertzbeat.common.observability.dto.log.LogCalculated;
+import org.apache.hertzbeat.observability.logs.query.LogQuerySetParser;
+import org.apache.hertzbeat.observability.logs.query.LogCalculatedParser;
+import org.apache.hertzbeat.common.observability.dto.log.LogTransactions;
+import org.apache.hertzbeat.common.observability.dto.log.LogAnalysis;
+import org.apache.hertzbeat.common.observability.dto.log.LogSort;
+import org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory;
+import org.apache.hertzbeat.common.observability.dto.log.LogFacets;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.dto.log.LogTrend;
@@ -26,12 +37,99 @@ import org.springframework.data.domain.Page;
  * Log query application service.
  */
 public interface LogQueryService {
+    /** Selected context restrictions, separate from authored transaction seed filters. */
+    record ContextFilters(String resourceFilter, String attributeFilter) { }
+
+    LogTransactions.Result transactions(FacetQuery query, ContextFilters context, LogTransactions.Request request);
+
+    LogTransactions.DetailResult transactionDetail(FacetQuery query, ContextFilters context,
+                                                   LogTransactions.Request request, LogTransactions.Detail detail);
+
+    LogComparison.Result compare(FacetQuery query, LogAnalysis.Request request,
+            java.util.List<LogComparisonParser.Query> queries, String formula);
+
+    LogQuerySet.Result querySet(FacetQuery query, LogQuerySetParser.Envelope envelope);
+
+    LogCalculated.Result calculated(FacetQuery query, LogCalculatedParser.Envelope envelope);
+
+    org.apache.hertzbeat.common.observability.dto.log.LogSubquery.Result subquery(
+            FacetQuery query, org.apache.hertzbeat.observability.logs.query.LogSubqueryParser.Envelope envelope);
+
+    LogCalculated.Preview calculatedPreview(LogCalculated.Definition definition, String sample);
+
+    void calculatedPattern(String pattern);
+
+    LogAnalysis.Result analysis(FacetQuery query, LogAnalysis.Request request);
+
+    /** Submitted facet scope before canonical entity resolution. */
+    record FacetQuery(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
+                      Integer severityNumber, String severityText, LogSeverityCategory severityCategory, String search,
+                      String serviceName, String serviceNamespace, String environment,
+                      String resourceFilter, String attributeFilter, boolean hideInternal, boolean hideNoise, String searchSyntax, String logGroupSelection, String logNumericRange) {
+        public FacetQuery(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
+                          Integer severityNumber, String severityText, LogSeverityCategory severityCategory, String search,
+                          String serviceName, String serviceNamespace, String environment, String resourceFilter, String attributeFilter,
+                          boolean hideInternal, boolean hideNoise, String searchSyntax, String logGroupSelection) {
+            this(workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, severityCategory,
+                    search, serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                    hideInternal, hideNoise, searchSyntax, logGroupSelection, null);
+        }
+
+        public FacetQuery(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
+                          Integer severityNumber, String severityText, LogSeverityCategory severityCategory, String search,
+                          String serviceName, String serviceNamespace, String environment,
+                          String resourceFilter, String attributeFilter, boolean hideInternal, boolean hideNoise, String searchSyntax) {
+            this(workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, severityCategory,
+                    search, serviceName, serviceNamespace, environment, resourceFilter, attributeFilter, hideInternal, hideNoise, searchSyntax, null);
+        }
+
+        public FacetQuery(String workspaceId, Long entityId, long start, long end, String traceId, String spanId,
+                          Integer severityNumber, String severityText, LogSeverityCategory severityCategory, String search,
+                          String serviceName, String serviceNamespace, String environment,
+                          String resourceFilter, String attributeFilter, boolean hideInternal, boolean hideNoise) {
+            this(workspaceId, entityId, start, end, traceId, spanId, severityNumber, severityText, severityCategory,
+                    search, serviceName, serviceNamespace, environment, resourceFilter, attributeFilter, hideInternal, hideNoise, null);
+        }
+    }
+
+    Page<LogEntry> sortedList(FacetQuery query, Integer pageIndex, Integer pageSize, LogSort sort);
+
+    Page<LogEntry> structuredList(FacetQuery query, Integer pageIndex, Integer pageSize, String sort);
+
+    Map<String, Object> structuredOverview(FacetQuery query);
+
+    Map<String, Long> structuredTraceCoverage(FacetQuery query);
+
+    LogTrend structuredTrend(FacetQuery query);
+
+    Map<String, Object> structuredGroups(FacetQuery query, String groupBy, Integer limit, String orderBy, Integer minCount);
+
+    LogFacets.Fields facetFields(FacetQuery query);
+
+    LogFacets.Values facetValues(FacetQuery query, LogFacets.Field field, int limit);
+
+    LogFacets.Values facetValues(FacetQuery query, LogFacets.Field field, int limit, String valueSearch);
+
+    Page<LogEntry> list(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
+                        Integer severityNumber, String severityText, String search,
+                        String serviceName, String serviceNamespace, String environment,
+                        String resourceFilter, String attributeFilter, Integer pageIndex, Integer pageSize,
+                        boolean hideInternal, boolean hideNoise, LogSeverityCategory severityCategory, String sort);
+
+
 
     Page<LogEntry> list(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
                         Integer severityNumber, String severityText, String search,
                         String serviceName, String serviceNamespace, String environment,
                         String resourceFilter, String attributeFilter,
                         Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise);
+
+    Page<LogEntry> list(String workspaceId, Long entityId, Long start, Long end, String traceId, String spanId,
+                        Integer severityNumber, String severityText, String search,
+                        String serviceName, String serviceNamespace, String environment,
+                        String resourceFilter, String attributeFilter,
+                        Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise,
+                        LogSeverityCategory severityCategory);
 
     Map<String, Object> context(String workspaceId, Long entityId, Long logTimeUnixNano, Long start, Long end,
                                 String serviceName, String serviceNamespace, String environment,
@@ -45,11 +143,25 @@ public interface LogQueryService {
                                       String resourceFilter, String attributeFilter,
                                       boolean hideInternal, boolean hideNoise);
 
+    Map<String, Object> overviewStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                      String spanId, Integer severityNumber, String severityText, String search,
+                                      String serviceName, String serviceNamespace, String environment,
+                                      String resourceFilter, String attributeFilter,
+                                      boolean hideInternal, boolean hideNoise,
+                                      LogSeverityCategory severityCategory);
+
     Map<String, Object> traceCoverageStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
                                            String spanId, Integer severityNumber, String severityText, String search,
                                            String serviceName, String serviceNamespace, String environment,
                                            String resourceFilter, String attributeFilter,
                                            boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> traceCoverageStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                           String spanId, Integer severityNumber, String severityText, String search,
+                                           String serviceName, String serviceNamespace, String environment,
+                                           String resourceFilter, String attributeFilter,
+                                           boolean hideInternal, boolean hideNoise,
+                                           LogSeverityCategory severityCategory);
 
     LogTrend trendStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
                         String spanId, Integer severityNumber, String severityText, String search,
@@ -57,12 +169,27 @@ public interface LogQueryService {
                         String resourceFilter, String attributeFilter,
                         boolean hideInternal, boolean hideNoise);
 
+    LogTrend trendStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                        String spanId, Integer severityNumber, String severityText, String search,
+                        String serviceName, String serviceNamespace, String environment,
+                        String resourceFilter, String attributeFilter,
+                        boolean hideInternal, boolean hideNoise,
+                        LogSeverityCategory severityCategory);
+
     Map<String, Object> groupByStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
                                      String spanId, Integer severityNumber, String severityText, String search,
                                      String serviceName, String serviceNamespace, String environment,
                                      String resourceFilter, String attributeFilter, String groupBy,
                                      Integer limit, String orderBy, Integer minCount,
                                      boolean hideInternal, boolean hideNoise);
+
+    Map<String, Object> groupByStats(String workspaceId, Long entityId, Long start, Long end, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String search,
+                                     String serviceName, String serviceNamespace, String environment,
+                                     String resourceFilter, String attributeFilter, String groupBy,
+                                     Integer limit, String orderBy, Integer minCount,
+                                     boolean hideInternal, boolean hideNoise,
+                                     LogSeverityCategory severityCategory);
 
     default Page<LogEntry> list(Long start, Long end, String traceId, String spanId,
                                 Integer severityNumber, String severityText, String search,

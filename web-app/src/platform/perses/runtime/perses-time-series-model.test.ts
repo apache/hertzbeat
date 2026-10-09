@@ -43,6 +43,14 @@ describe('Perses time-series adapter', () => {
     ]);
   });
 
+  it('uses an explicit presentation alias without changing native labels or series identity', () => {
+    const source = { ...metricSeries[0]!, displayName: 'method="POST"' };
+    const result = toPersesTimeSeriesData([source]);
+    expect(result.series[0]?.formattedName).toBe('method="POST"');
+    expect(result.series[0]?.labels).toEqual(source.labels);
+    expect(result.series[0]?.name).toBe(source.key);
+  });
+
   it('uses the canonical exact window and derives an honest bounded fallback only when absent', () => {
     expect(resolvePersesTimeWindow(metricSeries, { from: 10, to: 20 })).toEqual({ from: 10, to: 20 });
     expect(resolvePersesTimeWindow(metricSeries)).toEqual({ from: 1_750_000_000_000, to: 1_750_000_060_000 });

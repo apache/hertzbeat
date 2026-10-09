@@ -572,7 +572,7 @@ class AccountServiceTest {
     }
 
     @Test
-    void testDeleteTokenInvalidatesCache() throws Exception {
+    void testDeleteTokenPersistsRevocation() throws Exception {
         AuthToken token = AuthToken.builder().id(1L).tokenHash("hash123").creator(identifier).build();
         when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(token));
         when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
@@ -757,15 +757,15 @@ class AccountServiceTest {
     }
 
     @Test
-    void testCheckTokenStatusUsesCache() {
+    void testCheckTokenStatusReadsStorageOnEveryCall() {
         when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(true);
 
         // First call - hits DB
         assertNull(accountService.checkTokenStatus("cached-token"));
-        // Second call - should use cache, no additional DB call
+        // The second call must query current storage again.
         assertNull(accountService.checkTokenStatus("cached-token"));
 
-        verify(authTokenDao, times(1)).existsByTokenHashAndStatus(any(String.class), eq((byte) 0));
+        verify(authTokenDao, times(2)).existsByTokenHashAndStatus(any(String.class), eq((byte) 0));
     }
 
     @Test
@@ -835,31 +835,23 @@ class AccountServiceTest {
     }
 
     @Test
-    void testDeleteTokenCacheInvalidation() throws Exception {
-        // Setup: token is active and cached
-        String tokenValue = "token-to-revoke";
-        when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(true);
+    void testDeleteTokenIsObservedAfterPriorStatusCheck() throws Exception {
+        String tokenValue = "synthetic-owner-revocation";
+        String tokenHash = org.apache.hertzbeat.alert.util.CryptoUtils.sha256Hex(tokenValue);
+        AuthToken row = AuthToken.builder().id(1L).tokenHash(tokenHash).creator(identifier).status((byte) 0).build();
+        when(authTokenDao.existsByTokenHashAndStatus(tokenHash, (byte) 0))
+                .thenAnswer(invocation -> row.getStatus() == 0);
         assertNull(accountService.checkTokenStatus(tokenValue));
-
-        // Now revoke it
-        AuthToken authToken = AuthToken.builder().id(1L).tokenHash("some-hash").creator(identifier).build();
-        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(authToken));
-        when(authTokenDao.findById(1L)).thenReturn(Optional.of(authToken));
-        SubjectSum subjectSum = mockAdminSubject(identifier);
-        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
-            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(row));
+        when(authTokenDao.findById(1L)).thenReturn(Optional.of(row));
+        SubjectSum owner = mockAdminSubject(identifier);
+        try (var subject = mockStatic(SurenessContextHolder.class)) {
+            subject.when(SurenessContextHolder::getBindSubject).thenReturn(owner);
             assertEquals(AccountService.TokenRevocationResult.REVOKED, accountService.deleteToken(1L));
         }
-
-        // After revoke, the next check should hit DB again (cache invalidated for that hash)
-        // Note: the tokenHash in DB differs from sha256(tokenValue), so this tests cache invalidation path
-        verify(authTokenDao).findByIdForUpdate(1L);
-        verify(authTokenDao).findById(1L);
-        ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
-        verify(authTokenDao).saveAndFlush(captor.capture());
-        assertEquals((byte) 1, captor.getValue().getStatus());
-        assertEquals(identifier, captor.getValue().getRevokedBy());
-        assertNotNull(captor.getValue().getRevokedTime());
+        assertEquals("Token has been revoked", accountService.checkTokenStatus(tokenValue));
+        verify(authTokenDao, times(2)).existsByTokenHashAndStatus(tokenHash, (byte) 0);
+        verify(authTokenDao).saveAndFlush(row);
         verify(authTokenDao, never()).deleteById(1L);
     }
 

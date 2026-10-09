@@ -1,0 +1,52 @@
+.fields {
+  container-type: inline-size;
+  min-width: 0;
+}
+.tools {
+  display: flex;
+  gap: var(--hb-space-2);
+  position: sticky;
+  top: 0;
+  background: var(--hb-bg-raised);
+}
+.fields dl {
+  margin: var(--hb-space-2) 0;
+}
+.fields dl > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.4fr) minmax(0, 1fr);
+  gap: var(--hb-space-2);
+  align-items: start;
+  padding-block: var(--hb-space-1);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.fields dt {
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+  overflow-wrap: anywhere;
+}
+.fields dd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.fields pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: inline-flex;
+  gap: var(--hb-space-1);
+  margin-inline-start: var(--hb-space-2);
+  flex-wrap: wrap;
+}
+
+@container (max-width: 520px) {
+  .fields dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-1);
+  }
+}

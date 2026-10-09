@@ -16,36 +16,73 @@
  */
 
 .workspace {
+  composes: workspace from './explore-metrics-workspace.module.css';
   display: flex;
   width: 100%;
   min-width: 0;
-  height: calc(100dvh - var(--hb-shell-header-height, 52px) - 62px);
+  scrollbar-gutter: stable;
+  height: calc(100dvh - var(--hb-shell-header-height, 52px) - 16px);
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  background: var(--hb-bg-raised);
+  background: transparent;
+  padding-inline: var(--hb-space-4);
 }
 
 .pageHeader {
+  flex: none;
+  min-width: 0;
+  padding-block: var(--hb-space-2);
+}
+.headingRow {
   display: flex;
-  height: 56px;
-  min-height: 56px;
   align-items: center;
-  flex: 0 0 56px;
-  border-bottom: 1px solid var(--hb-border-subtle);
+  gap: var(--hb-space-3);
+  min-height: 42px;
 }
-
-.pageHeader :global([data-hb-operational-page-header]) {
-  width: 100%;
-}
-
-.pageHeader :global(h2.ant-typography) {
-  font-size: 20px;
+.headingRow h2 {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--hb-page-title-size);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.4;
+}
+.headingRow > details {
+  margin-left: auto;
+}
+.scopeNavigation {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  flex-wrap: wrap;
+}
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+  min-height: 40px;
+  align-items: flex-start;
+}
+.viewSlot {
+  width: max-content;
+  min-width: 144px;
+  flex: none;
+}
+.viewSlot :global(.ant-btn) {
+  height: 32px;
+}
+@media (width <= 1300px) {
+  .toolbarRow {
+    flex-wrap: wrap;
+  }
+  .toolbarRow > :last-child {
+    flex-basis: 100%;
+  }
 }
 
 .signalPanel {
+  composes: signalPanel from './explore-metrics-workspace.module.css';
   display: flex;
   width: 100%;
   min-width: 0;
@@ -63,12 +100,60 @@
   gap: 0;
 }
 
+.queryRegion {
+  flex: none;
+  min-width: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.resultRegion {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.resultRegion > * {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.resultRegion:has(> [data-result-layout='fill']) {
+  overflow: hidden;
+}
+
+.resultRegion > [data-result-layout='fill'] {
+  flex-shrink: 1;
+}
+
+.metricWorkspace {
+  composes: metricWorkspace from './explore-metrics-workspace.module.css';
+}
+.metricResult {
+  composes: metricResult from './explore-metrics-workspace.module.css';
+}
+.draftNotice {
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--hb-text-muted);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.draftNotice[aria-hidden='true'] {
+  visibility: hidden;
+}
+
+.resultRegion:has(> [data-explore-log-region]) {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .navigationRow {
   display: flex;
   align-items: stretch;
-  min-height: var(--hb-workbench-header-height);
-  flex: 0 0 var(--hb-workbench-header-height);
-  border-bottom: 1px solid var(--hb-border-subtle);
+  height: 44px;
 }
 
 .signalNavigation {
@@ -80,7 +165,7 @@
 .signal,
 .activeSignal {
   position: relative;
-  height: var(--hb-workbench-header-height);
+  height: 44px;
   padding: 0;
   border: 0;
   color: var(--hb-text-muted);
@@ -112,10 +197,12 @@
 }
 
 @media (max-width: 768px) {
-  :global(body:has([data-explore-workspace='true'])) {
-    min-width: 0;
+  .metricWorkspace {
+    flex-direction: column;
   }
-
+  .metricResult {
+    overflow: visible;
+  }
   :global(body:has([data-explore-workspace='true']) [data-testid='shell-time-policy']),
   :global(body:has([data-explore-workspace='true']) [data-testid='shell-status-greptime']),
   :global(body:has([data-explore-workspace='true']) [data-testid='shell-status-collector']) {
@@ -126,11 +213,27 @@
     height: auto;
     min-height: 0;
     overflow: visible;
+    padding-inline: var(--hb-space-2);
   }
 
   .signalNavigation {
-    width: 100%;
-    justify-content: space-between;
     gap: 12px;
   }
+
+  .headingRow {
+    flex-wrap: wrap;
+    gap: var(--hb-space-2);
+  }
+
+  .resultRegion {
+    overflow: visible;
+  }
+}
+
+.splitQueryRegion {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 }

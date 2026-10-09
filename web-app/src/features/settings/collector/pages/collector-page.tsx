@@ -6,6 +6,7 @@
  */
 
 import { Alert } from 'antd';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
@@ -25,6 +26,8 @@ export function CollectorPage() {
   const { t } = useTranslation();
   const controller = useCollectorController();
   const deploy = useCollectorDeployController({ canWrite: controller.capabilities.canWrite });
+  const deployTriggerRef = useRef<HTMLButtonElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
   const selected = controller.selected;
   const submitSearch = () => controller.actions.submitName();
   return (
@@ -45,6 +48,8 @@ export function CollectorPage() {
         onSearch={submitSearch}
         onRefresh={controller.actions.refresh}
         onDeploy={deploy.open}
+        deployTriggerRef={deployTriggerRef}
+        searchButtonRef={searchButtonRef}
         onAction={controller.actions.requestAction}
       />
       <OperationalResultRegion>
@@ -66,6 +71,8 @@ export function CollectorPage() {
       <CollectorDialogs controller={controller} />
       <CollectorDeployDialog
         state={deploy.state}
+        returnFocusRef={deployTriggerRef}
+        fallbackFocusRef={searchButtonRef}
         onSubmit={collector => void deploy.submit(collector)}
         onCancel={deploy.cancel}
         onClose={deploy.close}

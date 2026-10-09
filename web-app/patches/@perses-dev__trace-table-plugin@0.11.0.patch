@@ -1,0 +1,235 @@
+diff --git a/lib/DataTable.d.ts b/lib/DataTable.d.ts
+index 2df16cd0f51980761d16a5ab3c32553e18839a16..e04dc3363406fbddad406a69fe5995fcf17aec8f 100644
+--- a/lib/DataTable.d.ts
++++ b/lib/DataTable.d.ts
+@@ -1,14 +1,37 @@
+ import { PanelData } from '@perses-dev/plugin-system';
+ import { ReactElement } from 'react';
+-import { QueryDefinition, TraceData } from '@perses-dev/spec';
++import { QueryDefinition, TraceData, TraceSearchResult } from '@perses-dev/spec';
++import { GridColDef } from '@mui/x-data-grid';
+ import { TraceTableOptions } from './trace-table-model';
+ export type TraceLink = (params: {
+     query: QueryDefinition;
+     traceId: string;
+ }) => string;
++// HertzBeat host extension: keep nullable root evidence local to the table.
++export type TraceTableRow = Omit<TraceSearchResult, 'rootServiceName' | 'rootTraceName' | 'durationMs' | 'startTimeUnixMs'> & {
++    rootServiceName: string | null;
++    rootTraceName: string | null;
++    durationMs: number | null;
++    startTimeUnixMs: number | null;
++};
++export type TraceTableData = Omit<TraceData, 'searchResult'> & { searchResult?: TraceTableRow[] };
++export type TraceTableColumnOverrides = Partial<Record<'name' | 'spanCount' | 'durationMs' | 'startTimeUnixMs',
++    Partial<Pick<GridColDef<TraceTableRow>, 'headerName' | 'valueGetter' | 'valueFormatter' | 'renderCell' |
++    'getSortComparator' | 'width' | 'minWidth' | 'maxWidth' | 'flex' | 'align' | 'headerAlign'>>>>;
+ export interface DataTableProps {
+     options: TraceTableOptions;
+-    result: Array<PanelData<TraceData>>;
++    result: Array<PanelData<TraceTableData>>;
++    columnOverrides?: TraceTableColumnOverrides;
++    serverPagination?: TraceTableServerPagination;
++    displayColumns?: GridColDef<TraceTableRow>[];
++    density?: 'compact' | 'standard';
++}
++export interface TraceTableServerPagination {
++    page: number;
++    pageSize: number;
++    total: number;
++    disabled: boolean;
++    onPageChange: (page: number) => void;
+ }
+ export declare function DataTable(props: DataTableProps): ReactElement;
+ //# sourceMappingURL=DataTable.d.ts.map
+\ No newline at end of file
+diff --git a/lib/DataTable.js b/lib/DataTable.js
+index 018790a8bdce8c329e59b9d63f6cccb292841900..7a15b62718ad887c6701272504f464830eacb1d8 100644
+--- a/lib/DataTable.js
++++ b/lib/DataTable.js
+@@ -35,7 +35,7 @@ const dateFormatterUTC = new Intl.DateTimeFormat(undefined, {
+     timeZoneName: 'short'
+ }).format;
+ export function DataTable(props) {
+-    const { options, result } = props;
++    const { options, result, columnOverrides, serverPagination, displayColumns, density } = props;
+     const muiTheme = useTheme();
+     const chartsTheme = useChartsTheme();
+     const variableValues = useAllVariableValues();
+@@ -122,7 +122,7 @@ export function DataTable(props) {
+                 type: 'string',
+                 flex: 4,
+                 display: 'flex',
+-                valueGetter: (_, trace)=>`${trace.rootServiceName}: ${trace.rootTraceName}`,
++                valueGetter: (_, trace)=>[trace.rootServiceName, trace.rootTraceName].filter(Boolean).join(': '),
+                 renderCell: ({ row })=>/*#__PURE__*/ _jsxs(Box, {
+                         sx: {
+                             my: 1
+@@ -195,7 +195,7 @@ export function DataTable(props) {
+                 display: 'flex',
+                 renderCell: ({ row })=>/*#__PURE__*/ _jsx(Typography, {
+                         display: "inline",
+-                        children: row.durationMs < 1 ? '<1ms' : formatDuration(convertTimeToDuration(row.durationMs))
++                        children: row.durationMs == null ? '—' : row.durationMs < 1 ? '<1ms' : formatDuration(convertTimeToDuration(row.durationMs))
+                     })
+             },
+             {
+@@ -208,12 +208,12 @@ export function DataTable(props) {
+                 minWidth: 110,
+                 display: 'flex',
+                 renderCell: ({ row })=>/*#__PURE__*/ _jsx(Tooltip, {
+-                        title: dateFormatterUTC(row.startTimeUnixMs),
++                        title: row.startTimeUnixMs == null ? '' : dateFormatterUTC(row.startTimeUnixMs),
+                         placement: "top",
+                         arrow: true,
+                         children: /*#__PURE__*/ _jsx(Typography, {
+                             component: "span",
+-                            children: dateFormatter(row.startTimeUnixMs)
++                            children: row.startTimeUnixMs == null ? '—' : dateFormatter(row.startTimeUnixMs)
+                         }, `st-${row.traceId}`)
+                     })
+             },
+@@ -230,11 +230,13 @@ export function DataTable(props) {
+                         })
+                 }
+             ] : []
+-        ], [
++        // HertzBeat host extension: only existing display columns can be adapted.
++        ].map(column => ({ ...column, ...columnOverrides?.[column.field] })), [
+         serviceColorGenerator,
+         actionsList,
+         getItemActionButtons,
+-        dateFormatter
++        dateFormatter,
++        columnOverrides
+     ]);
+     return /*#__PURE__*/ _jsxs(_Fragment, {
+         children: [
+@@ -243,16 +245,29 @@ export function DataTable(props) {
+                 sx: {
+                     borderWidth: 0
+                 },
+-                columns: columns,
++                columns: displayColumns ?? columns,
++                density: density,
+                 rows: rows,
+                 getRowId: (row)=>row.traceId,
+-                getRowHeight: ()=>'auto',
++                getRowHeight: displayColumns ? undefined : ()=>'auto',
++                rowHeight: displayColumns ? 60 : undefined,
+                 getEstimatedRowHeight: ()=>66,
+                 checkboxSelection: selectionEnabled,
+                 rowSelectionModel: selectionEnabled ? rowSelectionModel : undefined,
+                 onRowSelectionModelChange: selectionEnabled ? handleRowSelectionModelChange : undefined,
+                 disableRowSelectionOnClick: !selectionEnabled,
+-                pageSizeOptions: [
++                disableColumnFilter: !!serverPagination,
++                disableColumnSorting: !!serverPagination,
++                sortingMode: serverPagination ? 'server' : 'client',
++                sortModel: serverPagination ? [] : undefined,
++                paginationMode: serverPagination ? 'server' : 'client',
++                rowCount: serverPagination?.total,
++                paginationModel: serverPagination ? { page: serverPagination.page, pageSize: serverPagination.pageSize } : undefined,
++                onPaginationModelChange: serverPagination ? (model)=>{
++                    if (!serverPagination.disabled && model.page !== serverPagination.page) serverPagination.onPageChange(model.page);
++                } : undefined,
++                slotProps: serverPagination ? { pagination: { disabled: serverPagination.disabled } } : undefined,
++                pageSizeOptions: serverPagination ? [serverPagination.pageSize] : [
+                     10,
+                     20,
+                     50,
+diff --git a/lib/cjs/DataTable.js b/lib/cjs/DataTable.js
+index 611d5f8673895a49423aa42fb53f41dacb156bfb..7dd427b58cd5fc84fdecf467557c4aab13352ec3 100644
+--- a/lib/cjs/DataTable.js
++++ b/lib/cjs/DataTable.js
+@@ -50,7 +50,7 @@ const dateFormatterUTC = new Intl.DateTimeFormat(undefined, {
+     timeZoneName: 'short'
+ }).format;
+ function DataTable(props) {
+-    const { options, result } = props;
++    const { options, result, columnOverrides, serverPagination, displayColumns, density } = props;
+     const muiTheme = (0, _material.useTheme)();
+     const chartsTheme = (0, _components.useChartsTheme)();
+     const variableValues = (0, _pluginsystem.useAllVariableValues)();
+@@ -137,7 +137,7 @@ function DataTable(props) {
+                 type: 'string',
+                 flex: 4,
+                 display: 'flex',
+-                valueGetter: (_, trace)=>`${trace.rootServiceName}: ${trace.rootTraceName}`,
++                valueGetter: (_, trace)=>[trace.rootServiceName, trace.rootTraceName].filter(Boolean).join(': '),
+                 renderCell: ({ row })=>/*#__PURE__*/ (0, _jsxruntime.jsxs)(_material.Box, {
+                         sx: {
+                             my: 1
+@@ -210,7 +210,7 @@ function DataTable(props) {
+                 display: 'flex',
+                 renderCell: ({ row })=>/*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Typography, {
+                         display: "inline",
+-                        children: row.durationMs < 1 ? '<1ms' : (0, _spec.formatDuration)((0, _spec.convertTimeToDuration)(row.durationMs))
++                        children: row.durationMs == null ? '—' : row.durationMs < 1 ? '<1ms' : (0, _spec.formatDuration)((0, _spec.convertTimeToDuration)(row.durationMs))
+                     })
+             },
+             {
+@@ -223,12 +223,12 @@ function DataTable(props) {
+                 minWidth: 110,
+                 display: 'flex',
+                 renderCell: ({ row })=>/*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Tooltip, {
+-                        title: dateFormatterUTC(row.startTimeUnixMs),
++                        title: row.startTimeUnixMs == null ? '' : dateFormatterUTC(row.startTimeUnixMs),
+                         placement: "top",
+                         arrow: true,
+                         children: /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Typography, {
+                             component: "span",
+-                            children: dateFormatter(row.startTimeUnixMs)
++                            children: row.startTimeUnixMs == null ? '—' : dateFormatter(row.startTimeUnixMs)
+                         }, `st-${row.traceId}`)
+                     })
+             },
+@@ -245,11 +245,13 @@ function DataTable(props) {
+                         })
+                 }
+             ] : []
+-        ], [
++        // HertzBeat host extension: only existing display columns can be adapted.
++        ].map(column => ({ ...column, ...columnOverrides?.[column.field] })), [
+         serviceColorGenerator,
+         actionsList,
+         getItemActionButtons,
+-        dateFormatter
++        dateFormatter,
++        columnOverrides
+     ]);
+     return /*#__PURE__*/ (0, _jsxruntime.jsxs)(_jsxruntime.Fragment, {
+         children: [
+@@ -258,16 +260,29 @@ function DataTable(props) {
+                 sx: {
+                     borderWidth: 0
+                 },
+-                columns: columns,
++                columns: displayColumns ?? columns,
++                density: density,
+                 rows: rows,
+                 getRowId: (row)=>row.traceId,
+-                getRowHeight: ()=>'auto',
++                getRowHeight: displayColumns ? undefined : ()=>'auto',
++                rowHeight: displayColumns ? 60 : undefined,
+                 getEstimatedRowHeight: ()=>66,
+                 checkboxSelection: selectionEnabled,
+                 rowSelectionModel: selectionEnabled ? rowSelectionModel : undefined,
+                 onRowSelectionModelChange: selectionEnabled ? handleRowSelectionModelChange : undefined,
+                 disableRowSelectionOnClick: !selectionEnabled,
+-                pageSizeOptions: [
++                disableColumnFilter: !!serverPagination,
++                disableColumnSorting: !!serverPagination,
++                sortingMode: serverPagination ? 'server' : 'client',
++                sortModel: serverPagination ? [] : undefined,
++                paginationMode: serverPagination ? 'server' : 'client',
++                rowCount: serverPagination?.total,
++                paginationModel: serverPagination ? { page: serverPagination.page, pageSize: serverPagination.pageSize } : undefined,
++                onPaginationModelChange: serverPagination ? (model)=>{
++                    if (!serverPagination.disabled && model.page !== serverPagination.page) serverPagination.onPageChange(model.page);
++                } : undefined,
++                slotProps: serverPagination ? { pagination: { disabled: serverPagination.disabled } } : undefined,
++                pageSizeOptions: serverPagination ? [serverPagination.pageSize] : [
+                     10,
+                     20,
+                     50,

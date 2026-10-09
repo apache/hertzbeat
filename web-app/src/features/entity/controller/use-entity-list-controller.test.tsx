@@ -23,6 +23,74 @@ describe('useEntityListController', () => {
   });
   afterEach(cleanup);
 
+  it('retains unsent search through type, status, sort, pagination and same-search history', async () => {
+    const v = renderController('/entities?search=old');
+    await waitFor(() => expect(v.current().state.evidence.kind).toBe('ready'));
+    act(() => v.current().actions.updateDraft('pending'));
+    act(() => v.current().actions.changeFilter('type', 'service'));
+    expect(v.current().state.draft).toBe('pending');
+    act(() => v.current().actions.changeFilter('status', 'active'));
+    expect(v.current().state.draft).toBe('pending');
+    act(() => v.current().actions.changeSort('name', 'asc'));
+    act(() => v.current().actions.changePage(2, 20));
+    expect(v.current().state.query.search).toBe('old');
+    expect(v.current().state.draft).toBe('pending');
+    await act(() => v.router.navigate(-1));
+    expect(v.current().state.draft).toBe('pending');
+    await act(() => v.router.navigate(1));
+    expect(v.current().state.draft).toBe('pending');
+    act(() => v.current().actions.updateDraft('  next  '));
+    act(() => v.current().actions.submit());
+    expect(v.current().state.draft).toBe('next');
+    await act(() => v.router.navigate(-1));
+    expect(v.current().state.draft).toBe('old');
+    await act(() => v.router.navigate(1));
+    expect(v.current().state.draft).toBe('next');
+    act(() => v.current().actions.updateDraft('  next  '));
+    act(() => v.current().actions.submit());
+    expect(v.current().state.draft).toBe('next');
+  });
+
+  it('rehydrates the committed search after a detail route unmount', async () => {
+    const v = renderController('/entities?search=old');
+    await waitFor(() => expect(v.current().state.evidence.kind).toBe('ready'));
+    act(() => v.current().actions.updateDraft('pending'));
+    await act(() => v.router.navigate('/entities/7'));
+    await act(() => v.router.navigate(-1));
+    expect(v.current().state.draft).toBe('old');
+  });
+
+  it('applies and clears canonical or custom types with page reset while preserving unsent search through history', async () => {
+    const routed = renderController('/entities?search=old&pageIndex=3&type=vendor_resource');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    expect(routed.current().state.query.type).toBe('vendor_resource');
+    act(() => routed.current().actions.updateDraft('pending'));
+    act(() => routed.current().actions.changeFilter('type', 'service'));
+    await waitFor(() =>
+      expect(api.loadEntities).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'service', search: 'old', pageIndex: 0 }),
+        expect.any(AbortSignal)
+      )
+    );
+    act(() => routed.current().actions.changeFilter('type', 'custom_type/v2'));
+    expect(routed.current().state.query.type).toBe('custom_type/v2');
+    expect(new URLSearchParams(routed.router.state.location.search).get('type')).toBe('custom_type/v2');
+    act(() => routed.current().actions.changeFilter('type', ''));
+    expect(new URLSearchParams(routed.router.state.location.search).has('type')).toBe(false);
+    await act(() => routed.router.navigate(-1));
+    expect(routed.current().state.query.type).toBe('custom_type/v2');
+    expect(routed.current().state.navigation).toEqual({ key: routed.router.state.location.key, type: 'POP' });
+    expect(routed.current().state.draft).toBe('pending');
+    await act(() => routed.router.navigate(-1));
+    expect(routed.current().state.query.type).toBe('service');
+    await act(() => routed.router.navigate(1));
+    expect(routed.current().state.query.type).toBe('custom_type/v2');
+    await act(() => routed.router.navigate(1));
+    expect(routed.current().state.query.type).toBe('');
+    expect(routed.current().state.query.search).toBe('old');
+    expect(routed.current().state.draft).toBe('pending');
+  });
+
   it('canonicalizes direct list URLs and drops unrelated parameters', async () => {
     const routed = renderController('/entities?search=%20checkout%20&pageIndex=-1&pageSize=999&token=private');
 

@@ -17,7 +17,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { useLayoutEffect, type PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
@@ -44,6 +44,7 @@ import {
   monitorListQueryOptions,
   useMonitorListController
 } from './use-monitor-list-controller';
+import { MonitorListToolbar } from '../components/monitor-list-toolbar';
 import { MonitorContractError } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
 
@@ -135,6 +136,90 @@ describe('useMonitorListController URL evidence', () => {
       void view.result.current.navigate(-1);
     });
     await waitFor(() => expect(view.result.current.controller.state.draft.search).toBe('alpha'));
+  });
+
+  it('keeps typed toolbar text through a status change until the Query button submits it', async () => {
+    function Workspace() {
+      const { state, actions } = useMonitorListController();
+      return (
+        <MonitorListToolbar
+          query={state.query}
+          draft={state.draft}
+          apps={state.apps}
+          disabled={state.operating}
+          refreshing={state.refreshing}
+          actions={actions}
+        />
+      );
+    }
+    render(<Workspace />, { wrapper: wrapper(['/monitors?search=committed&labels=env%3Alive'], 0) });
+    await waitFor(() => expect(api.loadMonitors).toHaveBeenCalled());
+    const search = screen.getByPlaceholderText(i18n.t('monitor.search'));
+    const labels = screen.getByPlaceholderText(i18n.t('labels.filter'));
+    fireEvent.change(search, { target: { value: 'draft' } });
+    fireEvent.change(labels, { target: { value: 'env:draft' } });
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: i18n.t('monitor.status.label') }));
+    fireEvent.click(screen.getByText(i18n.t('monitor.status.available')));
+    await waitFor(() => expect(api.loadMonitors.mock.lastCall?.[0].status).toBe('1'));
+    expect(search).toHaveValue('draft');
+    expect(labels).toHaveValue('env:draft');
+    expect(api.loadMonitors.mock.lastCall?.[0]).toMatchObject({ search: 'committed', labels: 'env:live' });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.query') }));
+    await waitFor(() =>
+      expect(api.loadMonitors.mock.lastCall?.[0]).toMatchObject({ search: 'draft', labels: 'env:draft' })
+    );
+  });
+
+  it('preserves unsubmitted search and tag drafts through immediate filters without querying them', async () => {
+    const view = renderHook(() => ({ controller: useMonitorListController(), navigate: useNavigate() }), {
+      wrapper: wrapper(['/monitors?search=committed&labels=env%3Alive'], 0)
+    });
+    await waitFor(() => expect(view.result.current.controller.state.monitors.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.setSearch('draft'));
+    act(() => view.result.current.controller.actions.setLabels('env:draft'));
+    act(() => view.result.current.controller.actions.changeStatus('1'));
+    await waitFor(() => expect(view.result.current.controller.state.query.status).toBe('1'));
+    expect(view.result.current.controller.state.draft).toEqual({ search: 'draft', labels: 'env:draft' });
+    act(() => view.result.current.controller.actions.changeApp('http'));
+    act(() => view.result.current.controller.actions.changeSort('name', 'asc'));
+    act(() => view.result.current.controller.actions.changePage(1, 20));
+    await waitFor(() => expect(view.result.current.controller.state.query.pageSize).toBe(20));
+    expect(view.result.current.controller.state.draft).toEqual({ search: 'draft', labels: 'env:draft' });
+    expect(
+      api.loadMonitors.mock.calls.every(([query]) => query.search === 'committed' && query.labels === 'env:live')
+    ).toBe(true);
+
+    act(() => view.result.current.controller.actions.submitSearch());
+    await waitFor(() => expect(view.result.current.controller.state.query.search).toBe('draft'));
+    expect(view.result.current.controller.state.query.labels).toBe('env:live');
+    expect(view.result.current.controller.state.draft.labels).toBe('env:draft');
+    act(() => view.result.current.controller.actions.submitFilters());
+    await waitFor(() => expect(view.result.current.controller.state.query.labels).toBe('env:draft'));
+    act(() => view.result.current.controller.actions.setSearch(''));
+    act(() => view.result.current.controller.actions.changeStatus('2'));
+    await waitFor(() => expect(view.result.current.controller.state.query.status).toBe('2'));
+    expect(view.result.current.controller.state.draft.search).toBe('');
+    expect(view.result.current.controller.state.query.search).toBe('draft');
+    act(() => view.result.current.controller.actions.submitFilters());
+    await waitFor(() => expect(view.result.current.controller.state.query.search).toBe(''));
+    act(() => {
+      void view.result.current.navigate(-1);
+    });
+    await waitFor(() => expect(view.result.current.controller.state.draft.search).toBe('draft'));
+  });
+
+  it('normalizes explicitly submitted drafts even when the committed text is unchanged', async () => {
+    const view = renderHook(() => useMonitorListController(), {
+      wrapper: wrapper(['/monitors?search=committed&labels=env%3Alive'], 0)
+    });
+    await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('ready'));
+    act(() => view.result.current.actions.setSearch('  committed  '));
+    act(() => view.result.current.actions.setLabels('  env:live  '));
+    act(() => view.result.current.actions.submitSearch());
+    expect(view.result.current.state.draft).toEqual({ search: 'committed', labels: '  env:live  ' });
+    act(() => view.result.current.actions.submitFilters());
+    expect(view.result.current.state.draft).toEqual({ search: 'committed', labels: 'env:live' });
+    expect(view.result.current.state.query).toMatchObject({ search: 'committed', labels: 'env:live' });
   });
 
   it('opens the type picker before carrying an explicit app and safe list return target into creation', async () => {

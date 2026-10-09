@@ -44,3 +44,26 @@ Clients should consume server-provided catalog choices and intake profiles
 rather than inventing endpoints, package coordinates, health states, or signal
 support. Unknown or unavailable data must remain distinguishable from healthy
 or zero-valued data.
+
+## Observation and troubleshooting
+
+Detection is a bounded observation, not a liveness monitor. The current service
+queries the selected identity within the fixed 120-second window beginning at
+`startedAt`. Automatic polling ends when supported signals have arrived or the
+window reaches its deadline; unavailable and failed queries require an explicit
+retry. Check each signal independently: partial reception must not become an
+all-signals success.
+
+A `received` result reports evidence in that window. It does not mean an emitter
+is still running. Start a new check after stopping an application; old data stays
+queryable. Distinguish an unsupported catalog signal from an empty observation,
+a store that cannot answer and a failed query. Inspect actual exporter HTTP/gRPC
+errors for rejected credentials; absence of data alone is not proof of an
+authentication failure.
+
+The alpha's real reference checks use Agentless MySQL and an official Java
+OpenTelemetry agent. The catalog remains the authority for other recipes and
+per-signal maturity. Never infer validation of every runtime or platform from a
+catalog entry. Application identity resolution is conservative: unrelated
+service names must not inherit an Entity merely because namespace/environment
+match. Signals without resolved Entity identity remain directly queryable.

@@ -4,12 +4,21 @@
   "vendorChunkMaxBytes": 614400,
   "shellGzipBytes": 460800,
   "baseApplicationJavaScriptBytes": 7100000,
-  "persesRuntimeJavaScriptAllowanceBytes": 1400000,
+  "persesRuntimeJavaScriptAllowanceBytes": 1401536,
   "persesMultiSignalJavaScriptAllowanceBytes": 600000,
   "observabilityWorkbenchJavaScriptAllowanceBytes": 40000,
   "alertInvestigationJavaScriptAllowanceBytes": 40000,
-  "persesDynamicRuntimeSources": [
-    "src/platform/perses/runtime/perses-time-series-runtime.tsx",
-    "src/platform/perses/runtime/perses-signal-runtime.tsx"
-  ]
+  "intakeDailyJavaScriptAllowanceBytes": 24000,
+  "queryInvestigationJavaScriptAllowanceBytes": 278208,
+  "servicesJavaScriptAllowanceBytes": 48000,
+  "savedQueriesJavaScriptAllowanceBytes": 38752,
+  "dashboardsJavaScriptAllowanceBytes": 130192,
+  "dashboardPersesStatGaugeTableAllowanceBytes": 163840,
+  "logPatternsJavaScriptAllowanceBytes": 12288,
+  "logCalculatedJavaScriptAllowanceBytes": 12288,
+  "logExplorerWorkspaceJavaScriptAllowanceBytes": 91136,
+  "logAddJavaScriptAllowanceBytes": 98304,
+  "retiredReferenceSentinelAllowanceBytes": 2048,
+  "signalInvestigationEvidenceJavaScriptAllowanceBytes": 8192,
+  "persesDynamicRuntimeSources": ["src/platform/perses/runtime/perses-signal-runtime.tsx"]
 }

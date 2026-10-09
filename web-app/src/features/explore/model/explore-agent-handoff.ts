@@ -3,13 +3,13 @@
 import type { ExactTimeWindow } from '@/shared/query-context';
 import type { LogInvestigationTarget, TraceInvestigationTarget } from '@/shared/investigation';
 
-import type { LogExploreQuery, TraceExploreQuery } from './explore-query';
+import { LOG_SEVERITY_CATEGORIES, type LogExploreQuery, type TraceExploreQuery } from './explore-query';
 
 export type ReadyTraceEvidence = { traceId: string; spanId?: string | undefined };
 
 const maximumWindowMs = 7 * 24 * 60 * 60_000;
 const safeId = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
-const supportedSeverities = new Set(['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as const);
+const supportedSeverities = new Set(LOG_SEVERITY_CATEGORIES);
 
 export type ReadyLogEvidence = {
   totalElements: number;
@@ -19,19 +19,21 @@ export type ReadyLogEvidence = {
 };
 
 export function materializeLogInvestigation(
-  query: LogExploreQuery,
+  input: LogExploreQuery,
   evidence: ReadyLogEvidence | undefined,
   effectiveWindow?: ExactTimeWindow
 ): LogInvestigationTarget | undefined {
+  const query = literalInvestigationScope(input);
+  if (!query) return undefined;
   const window = routeWindow(query.start, query.end) ?? effectiveWindow;
   const pageIndex = query.pageIndex ?? 0;
-  if (!windowWithinBounds(window) || !validLogEvidence(evidence, pageIndex)) return undefined;
+  if (!window || !windowWithinBounds(window) || !validLogEvidence(evidence, pageIndex)) return undefined;
   if (!supportedLogScope(query)) return undefined;
   const severityText = normalizedSeverity(query.severityText);
   if (query.severityText !== undefined && severityText === undefined) return undefined;
   const log: LogInvestigationTarget['log'] = {
-    start: window?.from ?? 0,
-    end: window?.to ?? 0,
+    start: window.from,
+    end: window.to,
     hideInternal: Boolean(query.hideInternal),
     hideNoise: Boolean(query.hideNoise),
     pageIndex,
@@ -49,6 +51,19 @@ export function materializeLogInvestigation(
   return { log };
 }
 
+// The investigation tool accepts only literal search. A single quoted term is lossless.
+function literalInvestigationScope(query: LogExploreQuery): LogExploreQuery | undefined {
+  if (!query.searchSyntax) return query;
+  if (query.searchSyntax !== 'structured-v1') return undefined;
+  if (!query.query) return { ...query, searchSyntax: undefined };
+  if (!/^"(?:[^"\\]|\\["\\])*"$/u.test(query.query)) return undefined;
+  try {
+    return { ...query, searchSyntax: undefined, query: JSON.parse(query.query) as string };
+  } catch {
+    return undefined;
+  }
+}
+
 function validLogEvidence(evidence: ReadyLogEvidence | undefined, pageIndex: number) {
   if (!evidence || evidence.number !== pageIndex || evidence.size !== 20) return false;
   if (![evidence.totalElements, evidence.number, evidence.size, evidence.contentCount].every(Number.isSafeInteger))
@@ -58,7 +73,14 @@ function validLogEvidence(evidence: ReadyLogEvidence | undefined, pageIndex: num
 }
 
 function supportedLogScope(query: LogExploreQuery) {
-  if (query.live || [query.intakeProfileId, query.collectorId, query.instance, query.endpoint].some(Boolean))
+  if (
+    query.logGroupSelection !== undefined ||
+    query.logNumericRange !== undefined ||
+    query.searchSyntax !== undefined ||
+    query.severityCategory ||
+    query.live ||
+    [query.intakeProfileId, query.collectorId, query.instance, query.endpoint].some(Boolean)
+  )
     return false;
   if (
     (query.traceId !== undefined && !safeId.test(query.traceId)) ||

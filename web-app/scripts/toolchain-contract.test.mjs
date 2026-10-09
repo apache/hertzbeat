@@ -16,14 +16,32 @@
  */
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { loadConfigFromFile } from 'vite';
 
 import { assertRuntimeMajor, readToolchainRequirements } from './check-toolchain.mjs';
 import vitestResourcePolicy from './vitest-resource-policy.json' with { type: 'json' };
 
 const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const preCommitHook = readFileSync(new URL('../../.githooks/pre-commit', import.meta.url), 'utf8');
+
+test('native test aliases resolve from the physical pnpm package without changing production aliases', async () => {
+  const loaded = await loadConfigFromFile(
+    { command: 'build', mode: 'production' },
+    fileURLToPath(new URL('../vite.config.ts', import.meta.url))
+  );
+  const packageRequire = createRequire(
+    realpathSync(new URL('../node_modules/@perses-dev/tracing-gantt-chart-plugin/package.json', import.meta.url))
+  );
+  for (const dependency of ['react-virtuoso', 'use-resize-observer']) {
+    const alias = loaded.config.test.alias.find(item => item.find.test(dependency));
+    assert.equal(realpathSync(alias.replacement), realpathSync(packageRequire.resolve(dependency)));
+    assert.equal(loaded.config.resolve.alias[dependency], undefined);
+  }
+});
 
 test('the application uses one exact React 18 runtime for embedded Perses', () => {
   assert.equal(packageManifest.dependencies.react, '18.3.1');
@@ -47,9 +65,12 @@ test('the Perses runtime boundary uses fixed supported packages without deprecat
       // plugin-system's published aggregate runtime resolves Explore even though
       // the HertzBeat snapshot adapter does not import or render Explore itself.
       '@perses-dev/explore': '0.54.0',
+      '@perses-dev/gauge-chart-plugin': '0.13.0',
       '@perses-dev/logs-table-plugin': '0.3.0',
       '@perses-dev/plugin-system': '0.54.0',
       '@perses-dev/spec': '0.2.0',
+      '@perses-dev/stat-chart-plugin': '0.14.0',
+      '@perses-dev/table-plugin': '0.13.0',
       '@perses-dev/timeseries-chart-plugin': '0.13.0',
       '@perses-dev/trace-table-plugin': '0.11.0',
       '@perses-dev/tracing-gantt-chart-plugin': '0.13.0'

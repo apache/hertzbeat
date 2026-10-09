@@ -243,6 +243,9 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
             return AuthTokenScopes.OTLP_INGEST;
         }
         String method = request.getMethod();
+        if ("POST".equalsIgnoreCase(method) && "/api/logs/analysis/compare".equals(requestUri)) {
+            return AuthTokenScopes.READONLY_QUERY;
+        }
         if ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method) || "OPTIONS".equalsIgnoreCase(method)) {
             return AuthTokenScopes.READONLY_QUERY;
         }
@@ -299,6 +302,9 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         response.setContentType("application/json");
         try (PrintWriter writer = response.getWriter()) {
             writer.write(JsonUtil.toJson(Map.of("code", status.value(), "msg", message)));
+        } finally {
+            // Rejected preHandle calls do not receive this interceptor's afterCompletion callback.
+            AuthTokenRequestContext.clear();
         }
         return false;
     }

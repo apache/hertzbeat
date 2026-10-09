@@ -18,6 +18,9 @@ import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import { requireDomElement } from '@/test/dom-element';
 
 const owner = vi.hoisted(() => ({ useController: vi.fn() }));
+vi.mock('../controller/use-monitor-definition-unsaved-navigation', () => ({
+  useMonitorDefinitionUnsavedNavigation: vi.fn()
+}));
 vi.mock('../controller/use-monitor-definition-controller', () => ({
   useMonitorDefinitionController: owner.useController
 }));

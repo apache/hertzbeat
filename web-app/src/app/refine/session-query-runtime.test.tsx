@@ -28,7 +28,7 @@ import {
   SessionRequestError,
   type UiSession
 } from '@/core/auth/session-api';
-import { apiFetch } from '@/core/http/http-client';
+import { apiFetch, refreshBrowserSessionResult } from '@/core/http/http-client';
 
 const sessionApi = vi.hoisted(() => ({ refreshSession: vi.fn() }));
 const convergence = vi.hoisted(() => ({
@@ -210,7 +210,7 @@ describe('SessionQueryRuntime', () => {
     expect(userBClient?.getQueryData(['protected', 'late-mutation-a'])).toBeUndefined();
   });
 
-  it('publishes the full refreshed session through a new QueryClient before retrying a safe read', async () => {
+  it('updates the refreshed lifetime in the current QueryClient before retrying a safe read', async () => {
     const clients: QueryClient[] = [];
     const refreshed = { ...userA, expiresAt: '2030-01-01T00:30:00.000Z' };
     sessionApi.refreshSession.mockResolvedValue(refreshed);
@@ -221,14 +221,16 @@ describe('SessionQueryRuntime', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderRuntime(clients);
     fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
     convergence.broadcast.mockClear();
 
     await expect(apiFetch('/api/protected')).resolves.toMatchObject({ status: 200 });
 
     await waitFor(() => expect(clients.at(-1)?.getQueryData(sessionQueryKey)).toEqual(refreshed));
     expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
-    expect(convergence.broadcast).toHaveBeenCalledOnce();
-    expect(clients).toHaveLength(3);
+    expect(convergence.broadcast).not.toHaveBeenCalled();
+    expect(clients).toHaveLength(2);
+    expect(clients.at(-1)).toBe(currentClient);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -367,7 +369,7 @@ describe('SessionQueryRuntime', () => {
     fireEvent.focus(window);
     fireEvent(document, new Event('visibilitychange'));
 
-    expect(fetchMock).toHaveBeenCalledOnce();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
     expect(fetchMock).toHaveBeenCalledWith('/api/ui/session', expect.objectContaining({ credentials: 'same-origin' }));
     sessionRead.resolve(sessionResponse(userA));
     await waitFor(() => expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(userA));
@@ -378,8 +380,7 @@ describe('SessionQueryRuntime', () => {
   it.each([
     ['capabilities', { ...userA, roles: ['USER'] }],
     ['account', { ...userA, username: 'operator-b' }],
-    ['workspace', { ...userA, workspaceId: 'workspace-b' }],
-    ['expiry', { ...userA, expiresAt: '2030-01-01T00:30:00.000Z' }]
+    ['workspace', { ...userA, workspaceId: 'workspace-b' }]
   ])(
     'rotates the QueryClient generation when foreground revalidation changes %s',
     async (_boundary, changedSession) => {
@@ -399,6 +400,51 @@ describe('SessionQueryRuntime', () => {
       expect(convergence.broadcast).toHaveBeenCalledOnce();
     }
   );
+
+  it('updates only the expiry and keeps protected data in the current generation', async () => {
+    const clients: QueryClient[] = [];
+    const refreshed = { ...userA, expiresAt: '2030-01-01T00:30:00.000Z' };
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(sessionResponse(refreshed)));
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
+    currentClient?.setQueryData(['protected', 'workspace-a'], 'operator-a');
+    convergence.broadcast.mockClear();
+
+    fireEvent.focus(window);
+
+    await waitFor(() => expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(refreshed));
+    expect(clients).toHaveLength(2);
+    expect(clients.at(-1)).toBe(currentClient);
+    expect(currentClient?.getQueryData(['protected', 'workspace-a'])).toBe('operator-a');
+    expect(convergence.broadcast).not.toHaveBeenCalled();
+  });
+
+  it('ignores a foreground session read that began before a same-identity renewal', async () => {
+    const clients: QueryClient[] = [];
+    const staleSession = { ...userA, expiresAt: '2030-01-01T00:01:00.000Z' };
+    const renewedSession = { ...userA, expiresAt: '2030-01-01T00:30:00.000Z' };
+    const foregroundRead = deferred<Response>();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockReturnValueOnce(foregroundRead.promise)
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    sessionApi.refreshSession.mockResolvedValue(renewedSession);
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
+
+    fireEvent.focus(window);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    await expect(refreshBrowserSessionResult()).resolves.toMatchObject({ status: 'renewed' });
+    foregroundRead.resolve(sessionResponse(staleSession));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    await waitFor(() => expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(renewedSession));
+    expect(clients).toHaveLength(2);
+  });
 
   it.each([401, 403])('retires the current identity after an authoritative %s rejection', async status => {
     const clients: QueryClient[] = [];
@@ -438,16 +484,18 @@ describe('SessionQueryRuntime', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
 
     fireEvent.focus(window);
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
     fireEvent.click(screen.getByRole('button', { name: 'Publish anonymous' }));
     const anonymousClient = clients.at(-1);
     const firstSignal = vi.mocked(fetch).mock.calls[0]?.[1]?.signal;
 
     fireEvent.focus(window);
     expect(firstSignal?.aborted).toBe(true);
+    firstRead.resolve(sessionResponse(userB));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
     view.unmount();
     const secondSignal = vi.mocked(fetch).mock.calls[1]?.[1]?.signal;
     expect(secondSignal?.aborted).toBe(true);
-    firstRead.resolve(sessionResponse(userB));
     secondRead.resolve(sessionResponse(userB));
     await Promise.all([firstRead.promise, secondRead.promise]);
     expect(clients.at(-1)).toBe(anonymousClient);

@@ -29,5 +29,5 @@ public interface SignalSavedViewService {
 
     SignalSavedView upsertSignalSavedView(String creator, SignalSavedView savedView);
 
-    void deleteSignalSavedView(String creator, String signal, String viewKey);
+    void deleteSignalSavedView(String creator, String signal, String viewKey, long revision);
 }

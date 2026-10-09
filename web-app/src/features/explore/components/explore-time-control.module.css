@@ -1,0 +1,174 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.control {
+  display: grid;
+  grid-template-columns: 80px minmax(45px, max-content) 375px 110px;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+
+.relativeLabel {
+  flex: 0 0 80px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.picker {
+  flex-wrap: nowrap;
+  row-gap: 4px;
+  width: 375px;
+  flex: 0 1 375px;
+  min-width: min(100%, 375px);
+  max-width: 100%;
+}
+.picker :global(.ant-picker-input) {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.windowControls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+.popup {
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.footer {
+  display: grid;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-2) 0;
+}
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hb-space-1);
+}
+.presets button {
+  font-weight: 400;
+  padding-inline: var(--hb-space-2);
+}
+.footer small {
+  color: var(--hb-text-secondary);
+}
+.footerError {
+  color: var(--ant-color-error);
+  white-space: normal;
+}
+.footerNote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: var(--hb-space-2);
+}
+.footerActions {
+  display: flex;
+  gap: var(--hb-space-1);
+}
+@container (width <= 650px) {
+  .control {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .picker {
+    width: min(375px, 100%);
+  }
+}
+
+@media (width <= 600px) {
+  .control {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .picker {
+    width: 100%;
+  }
+  .windowControls {
+    max-width: 100%;
+  }
+  .popup {
+    width: calc(100dvw - 16px);
+    max-width: calc(100dvw - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .popup :global(.ant-picker-panel-layout > div) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .popup :global(.ant-picker-panel) {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .popup :global(.ant-picker-footer),
+  .popup :global(.ant-picker-footer-extra) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .footerNote {
+    flex-wrap: wrap;
+  }
+
+  .footerActions {
+    flex: none;
+  }
+}
+
+.timeWithZone {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (width <= 480px) {
+  .picker {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding-block: 6px;
+  }
+  .picker :global(.ant-picker-input) {
+    flex: none;
+    width: 100%;
+  }
+  .picker :global(.ant-picker-input:first-child) {
+    padding-right: 24px;
+  }
+  .picker :global(.ant-picker-range-separator),
+  .picker :global(.ant-picker-active-bar) {
+    display: none;
+  }
+  .picker :global(.ant-picker-suffix) {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+  }
+}
+
+.inlineZone {
+  flex: none;
+  white-space: nowrap;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+.inlineZone:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}

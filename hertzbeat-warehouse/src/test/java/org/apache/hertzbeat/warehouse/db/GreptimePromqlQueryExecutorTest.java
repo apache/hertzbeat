@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Test case for {@link GreptimePromqlQueryExecutor}.
@@ -80,6 +83,24 @@ class GreptimePromqlQueryExecutorTest {
     @AfterEach
     void tearDown() {
         queryGuard.close();
+    }
+
+    @Test
+    void distinguishesStructuredInvalidQueryFromUnclassifiedBadRequestAndTransport() {
+        var query = DatasourceQuery.builder().refId("invalid-regex").expr("metric{label=~\"[\"}")
+                .timeType("range").start(1000L).end(2000L).step("10s").build();
+        var invalid = org.springframework.web.client.HttpClientErrorException.create(HttpStatus.BAD_REQUEST,
+                "Bad Request", org.springframework.http.HttpHeaders.EMPTY,
+                "{\"status\":\"error\",\"errorType\":\"InvalidArguments\",\"error\":\"private expression\"}"
+                        .getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        var unknown = org.springframework.web.client.HttpClientErrorException.create(HttpStatus.BAD_REQUEST,
+                "Bad Request", org.springframework.http.HttpHeaders.EMPTY,
+                "{\"status\":\"error\",\"errorType\":\"Internal\"}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class)))
+                .thenThrow(invalid).thenThrow(unknown).thenThrow(new ResourceAccessException("unreachable"));
+        assertEquals("promql_query_invalid", greptimePromqlQueryExecutor.query(query).getMsg());
+        assertFalse("promql_query_invalid".equals(greptimePromqlQueryExecutor.query(query).getMsg()));
+        assertFalse("promql_query_invalid".equals(greptimePromqlQueryExecutor.query(query).getMsg()));
     }
 
     @Test
@@ -124,6 +145,43 @@ class GreptimePromqlQueryExecutorTest {
         verify(restTemplate).exchange(
                 uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class));
         assertTrue(uriCaptor.getValue().getQuery().contains("limit=32"));
+    }
+
+    @Test
+    void queryRangeWithLimitDoesNotDoubleEncodePromql() {
+        PromQlQueryContent response = new PromQlQueryContent();
+        PromQlQueryContent.ContentData data = new PromQlQueryContent.ContentData();
+        data.setResult(List.of());
+        response.setData(data);
+        when(restTemplate.exchange(
+                any(URI.class),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(PromQlQueryContent.class)
+        )).thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+        String promql = "sum by (service_name) (rate(http_server_requests_seconds_count{uri=\"/api/monitor\"}[5m]))";
+        DatasourceQuery query = DatasourceQuery.builder()
+                .refId("metrics-console")
+                .datasource("Greptime-promql")
+                .expr(promql)
+                .exprType("promql")
+                .timeType("range")
+                .start(1_775_034_288_092L)
+                .end(1_775_037_888_092L)
+                .step("30s")
+                .limit(32)
+                .build();
+
+        greptimePromqlQueryExecutor.query(query);
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(
+                uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class));
+        URI queryUri = uriCaptor.getValue();
+        assertFalse(queryUri.getRawQuery().contains("%25"));
+        String decodedQuery = UriUtils.decode(queryUri.getRawQuery(), StandardCharsets.UTF_8);
+        assertEquals(promql, UriComponentsBuilder.fromUriString("?" + decodedQuery).build()
+                .getQueryParams().getFirst("query"));
     }
 
     @Test

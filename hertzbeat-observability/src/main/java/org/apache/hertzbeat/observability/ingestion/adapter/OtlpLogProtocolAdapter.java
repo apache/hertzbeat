@@ -17,9 +17,10 @@
 
 package org.apache.hertzbeat.observability.ingestion.adapter;
 
+import org.apache.hertzbeat.observability.ingestion.util.OtlpJsonIdNormalizer;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
@@ -44,8 +45,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
@@ -65,12 +64,14 @@ import java.util.zip.GZIPInputStream;
 @Service
 public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
 
+    private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId");
+
     private static final String PROTOCOL_NAME = "otlp";
     private static final String CONTENT_ENCODING = "Content-Encoding";
     private static final String CONTENT_ENCODING_GZIP = "gzip";
     private static final int OTLP_TRACE_ID_BYTES = 16;
     private static final int OTLP_SPAN_ID_BYTES = 8;
-    private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId");
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final CommonDataQueue commonDataQueue;
@@ -143,9 +144,10 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     }
 
     private void processLogsRequest(ExportLogsServiceRequest request, String format) {
-        List<LogEntry> logEntries = extractLogEntries(request);
+        List<LogEntry> logEntries = extractLogEntries(request, false);
         log.debug("Successfully extracted {} log entries from OTLP {} payload", logEntries.size(), format);
-        commonDataQueue.sendLogEntryToAlertBatch(logEntries);
+        // Alert expressions retain their existing normalized-key projection. Live search uses exact OTLP keys.
+        commonDataQueue.sendLogEntryToAlertBatch(extractLogEntries(request, true));
         logEntries.forEach(logSseManager::broadcast);
         logEntries.forEach(this::publishLogIntakeEvent);
     }
@@ -199,19 +201,19 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
      * @param request the OTLP export logs service request
      * @return list of extracted log entries
      */
-    private List<LogEntry> extractLogEntries(ExportLogsServiceRequest request) {
+    private List<LogEntry> extractLogEntries(ExportLogsServiceRequest request, boolean normalizeKeys) {
         List<LogEntry> logEntries = new ArrayList<>();
 
         for (ResourceLogs resourceLogs : request.getResourceLogsList()) {
             // Extract resource attributes
             Map<String, Object> resourceAttributes = extractAttributes(
-                resourceLogs.getResource().getAttributesList()
+                resourceLogs.getResource().getAttributesList(), normalizeKeys
             );
             bindAuthenticatedResourceScope(resourceAttributes);
 
             for (ScopeLogs scopeLogs : resourceLogs.getScopeLogsList()) {
                 // Extract instrumentation scope information
-                LogEntry.InstrumentationScope instrumentationScope = extractInstrumentationScope(scopeLogs);
+                LogEntry.InstrumentationScope instrumentationScope = extractInstrumentationScope(scopeLogs, normalizeKeys);
 
                 for (LogRecord logRecord : scopeLogs.getLogRecordsList()) {
                     LogEntry logEntry = convertLogRecordToLogEntry(
@@ -219,7 +221,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
                         resourceAttributes,
                         instrumentationScope,
                         resourceLogs.getSchemaUrl(),
-                        scopeLogs.getSchemaUrl()
+                        scopeLogs.getSchemaUrl(), normalizeKeys
                     );
                     logEntries.add(logEntry);
                 }
@@ -248,15 +250,15 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             Map<String, Object> resourceAttributes,
             LogEntry.InstrumentationScope instrumentationScope,
             String resourceSchemaUrl,
-            String scopeSchemaUrl) {
+            String scopeSchemaUrl, boolean normalizeKeys) {
 
         return LogEntry.builder()
             .timeUnixNano(logRecord.getTimeUnixNano())
             .observedTimeUnixNano(logRecord.getObservedTimeUnixNano())
             .severityNumber(logRecord.getSeverityNumberValue())
             .severityText(logRecord.getSeverityText())
-            .body(extractBody(logRecord.getBody()))
-            .attributes(extractAttributes(logRecord.getAttributesList()))
+            .body(extractBody(logRecord.getBody(), normalizeKeys))
+            .attributes(extractAttributes(logRecord.getAttributesList(), normalizeKeys))
             .droppedAttributesCount(logRecord.getDroppedAttributesCount())
             .traceId(bytesToOtlpIdHex(logRecord.getTraceId().toByteArray(), OTLP_TRACE_ID_BYTES))
             .spanId(bytesToOtlpIdHex(logRecord.getSpanId().toByteArray(), OTLP_SPAN_ID_BYTES))
@@ -315,7 +317,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     /**
      * Extract instrumentation scope information from ScopeLogs.
      */
-    private LogEntry.InstrumentationScope extractInstrumentationScope(ScopeLogs scopeLogs) {
+    private LogEntry.InstrumentationScope extractInstrumentationScope(ScopeLogs scopeLogs, boolean normalizeKeys) {
         if (!scopeLogs.hasScope()) {
             return null;
         }
@@ -324,7 +326,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
         return LogEntry.InstrumentationScope.builder()
             .name(scope.getName())
             .version(scope.getVersion())
-            .attributes(extractAttributes(scope.getAttributesList()))
+            .attributes(extractAttributes(scope.getAttributesList(), normalizeKeys))
             .droppedAttributesCount(scope.getDroppedAttributesCount())
             .build();
     }
@@ -332,7 +334,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     /**
      * Extract attributes from a list of KeyValue pairs.
      */
-    private Map<String, Object> extractAttributes(List<KeyValue> keyValueList) {
+    private Map<String, Object> extractAttributes(List<KeyValue> keyValueList, boolean normalizeKeys) {
         if (keyValueList == null || keyValueList.isEmpty()) {
             return new HashMap<>();
         }
@@ -342,7 +344,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
                         .addAllValues(keyValueList)
                         .build())
                 .build();
-        Object extractedAnyValue = extractAnyValue(anyValue);
+        Object extractedAnyValue = extractAnyValue(anyValue, normalizeKeys);
         if (extractedAnyValue instanceof Map<?, ?> genericMap) {
             Map<String, Object> resultMap = new HashMap<>();
             for (Map.Entry<?, ?> entry : genericMap.entrySet()) {
@@ -360,14 +362,14 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     /**
      * Extract body content from AnyValue.
      */
-    private Object extractBody(AnyValue body) {
-        return redactionService.redactObject(null, extractAnyValue(body));
+    private Object extractBody(AnyValue body, boolean normalizeKeys) {
+        return redactionService.redactObject(null, extractAnyValue(body, normalizeKeys));
     }
 
     /**
      * Extract value from OpenTelemetry AnyValue.
      */
-    private Object extractAnyValue(AnyValue anyValue) {
+    private Object extractAnyValue(AnyValue anyValue, boolean normalizeKeys) {
         switch (anyValue.getValueCase()) {
             case STRING_VALUE:
                 return anyValue.getStringValue();
@@ -380,15 +382,15 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             case ARRAY_VALUE:
                 List<Object> arrayList = new ArrayList<>();
                 for (AnyValue item : anyValue.getArrayValue().getValuesList()) {
-                    arrayList.add(extractAnyValue(item));
+                    arrayList.add(extractAnyValue(item, normalizeKeys));
                 }
                 return arrayList;
             case KVLIST_VALUE:
                 Map<String, Object> kvMap = new HashMap<>();
                 for (KeyValue kv : anyValue.getKvlistValue().getValuesList()) {
-                    String normalizedKey = normalizeKey(kv.getKey());
-                    kvMap.put(normalizedKey, redactionService.redactObject(normalizedKey,
-                            extractAnyValue(kv.getValue())));
+                    String originalKey = normalizeKeys ? kv.getKey().replace(".", "_").replace(" ", "_") : kv.getKey();
+                    kvMap.put(originalKey, redactionService.redactObject(originalKey,
+                            extractAnyValue(kv.getValue(), normalizeKeys)));
                 }
                 return kvMap;
             case BYTES_VALUE:
@@ -397,19 +399,6 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             default:
                 return null;
         }
-    }
-
-    /**
-     * Normalize key by replacing dots and spaces with underscores.
-     *
-     * @param key the original key
-     * @return normalized key with dots and spaces replaced by underscores
-     */
-    private String normalizeKey(String key) {
-        if (key == null) {
-            return null;
-        }
-        return key.replace(".", "_").replace(" ", "_");
     }
 
     private String emptyToNull(String value) {
@@ -456,52 +445,14 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     private String normalizeOtlpJson(String content) throws InvalidProtocolBufferException {
         try {
             JsonNode root = OBJECT_MAPPER.readTree(content);
-            normalizeOtlpHexEncodedIds(root);
+            OtlpJsonIdNormalizer.normalize(root, OTLP_HEX_ID_FIELDS);
             return OBJECT_MAPPER.writeValueAsString(root);
         } catch (Exception ex) {
             throw new InvalidProtocolBufferException("Failed to normalize OTLP JSON: " + ex.getMessage());
         }
     }
 
-    private void normalizeOtlpHexEncodedIds(JsonNode node) {
-        if (node == null) {
-            return;
-        }
-        if (node.isObject()) {
-            ObjectNode objectNode = (ObjectNode) node;
-            objectNode.fieldNames().forEachRemaining(fieldName -> {
-                JsonNode child = objectNode.get(fieldName);
-                if (OTLP_HEX_ID_FIELDS.contains(fieldName) && child != null && child.isTextual()) {
-                    String normalized = tryConvertHexToBase64(child.asText());
-                    if (normalized != null) {
-                        objectNode.put(fieldName, normalized);
-                    }
-                } else {
-                    normalizeOtlpHexEncodedIds(child);
-                }
-            });
-            return;
-        }
-        if (node.isArray()) {
-            node.forEach(this::normalizeOtlpHexEncodedIds);
-        }
-    }
 
-    private String tryConvertHexToBase64(String value) {
-        if (value == null || value.isBlank() || (value.length() & 1) != 0) {
-            return null;
-        }
-        for (int i = 0; i < value.length(); i++) {
-            if (Character.digit(value.charAt(i), 16) < 0) {
-                return null;
-            }
-        }
-        try {
-            return Base64.getEncoder().encodeToString(HexFormat.of().parseHex(value));
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
-    }
 
     @Override
     public String supportProtocol() {

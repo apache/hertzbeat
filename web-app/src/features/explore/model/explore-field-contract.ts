@@ -15,31 +15,19 @@
  * limitations under the License.
  */
 
-export const EXPLORE_METRIC_AGGREGATIONS = ['avg', 'sum', 'min', 'max', 'count'] as const;
+export {
+  EXPLORE_METRIC_AGGREGATIONS,
+  parseMetricAggregation,
+  parseMetricStep,
+  isMetricQueryName
+} from '@/platform/perses';
+export type { OptionalExploreField } from '@/platform/perses';
+import { parseMetricAggregation, parseMetricStep, type OptionalExploreField } from '@/platform/perses';
 
-export type ExploreMetricAggregation = (typeof EXPLORE_METRIC_AGGREGATIONS)[number];
-export type OptionalExploreField<T> = { valid: true; value: T | undefined } | { valid: false };
-
-const MAX_METRIC_STEP_SECONDS = 86_400;
-
-/** Keeps URL parsing and form submission on the same backend field contract. */
-export function parseMetricAggregation(
-  value: string | null | undefined
-): OptionalExploreField<ExploreMetricAggregation> {
-  const normalized = normalizeOptionalText(value)?.toLowerCase();
-  if (!normalized) return { valid: true, value: undefined };
-  const aggregation = EXPLORE_METRIC_AGGREGATIONS.find(candidate => candidate === normalized);
-  return aggregation ? { valid: true, value: aggregation } : { valid: false };
-}
-
-export function parseMetricStep(value: string | null | undefined): OptionalExploreField<string> {
-  const normalized = normalizeOptionalText(value);
-  if (!normalized) return { valid: true, value: undefined };
-  if (!/^[1-9]\d*$/.test(normalized)) return { valid: false };
-  const seconds = Number(normalized);
-  return Number.isSafeInteger(seconds) && seconds <= MAX_METRIC_STEP_SECONDS
-    ? { valid: true, value: normalized }
-    : { valid: false };
+export function parseExploreAutoRefresh(value: string | null) {
+  if (!value || !/^\d+$/u.test(value)) return undefined;
+  const interval = Number(value);
+  return interval === 30_000 || interval === 60_000 ? interval : undefined;
 }
 
 export function parseTraceDuration(value: string | null | undefined): OptionalExploreField<number> {
@@ -74,4 +62,20 @@ export function parseExploreFilterParams(params: URLSearchParams) {
 function normalizeOptionalText(value: string | null | undefined) {
   const normalized = value?.trim();
   return normalized || undefined;
+}
+
+export const LOG_RECORD_UID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
+
+export function isLogRecordUid(value: unknown): value is string {
+  return typeof value === 'string' && LOG_RECORD_UID_PATTERN.test(value);
+}
+
+export function validExploreTimeZone(value: string | undefined) {
+  if (!value) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format(0);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.observability.ingestion.service;
 
+import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService.LabelsRequest;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
@@ -29,6 +31,11 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsD
  * OTLP ingestion workspace aggregation service.
  */
 public interface OtlpIngestionWorkspaceService {
+
+    default OtlpMetricLabelsDto getMetricLabels(
+            LabelsRequest request) {
+        throw new UnsupportedOperationException("Metric label discovery is unavailable");
+    }
 
     OtlpIngestionOverviewDto getOverview(String workspaceId);
 
@@ -89,11 +96,7 @@ public interface OtlpIngestionWorkspaceService {
             String limit,
             String operationName);
 
-    OtlpMetricsInventoryDto getMetricsInventory(String workspaceId, Long entityId, String entityType, Long start, Long end,
-                                                String serviceName, String serviceNamespace, String environment,
-                                                String limit);
-
-    default OtlpMetricsInventoryDto getMetricsInventory(
+    OtlpMetricsInventoryDto getMetricsInventory(
             String workspaceId,
             Long entityId,
             String entityType,
@@ -105,10 +108,8 @@ public interface OtlpIngestionWorkspaceService {
             String collectorId,
             String instance,
             String endpoint,
-            String limit) {
-        return getMetricsInventory(workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
-                environment, limit);
-    }
+            String search,
+            String limit);
 
     OtlpRelatedMetricsDto getRelatedMetrics(String workspaceId, Long entityId, String entityType, Long start, Long end,
                                             String serviceName,

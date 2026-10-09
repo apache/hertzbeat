@@ -1,0 +1,18 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.windows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2) var(--hb-space-3);
+  padding-block: var(--hb-space-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.windows small {
+  flex-basis: 100%;
+  color: var(--hb-text-secondary);
+}
+.facet {
+  font-size: 11px;
+  color: var(--hb-text-secondary);
+  overflow-wrap: anywhere;
+}

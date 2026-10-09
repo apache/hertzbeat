@@ -20,11 +20,16 @@
 from __future__ import annotations
 
 import io
+import os
+import signal
+import socket
 import subprocess
 import sys
 import tarfile
 import tempfile
+import threading
 import unittest
+import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
@@ -195,6 +200,196 @@ class ServerReleasePackageVerifierTest(unittest.TestCase):
 
         self.assertNotEqual(0, local_result.returncode)
         self.assertNotEqual(0, link_result.returncode)
+
+
+class ServerLauncherContractTest(unittest.TestCase):
+    """Run packaged shell entry points with isolated child/HTTP commands only."""
+
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        self.app = self.root / "app with spaces"
+        self.bin = self.app / "bin"
+        self.bin.mkdir(parents=True)
+        for name in ("config", "lib", "ext-lib"):
+            (self.app / name).mkdir()
+        self.fake_bin = self.root / "fake" / "bin"
+        self.fake_bin.mkdir(parents=True)
+        self.capture = self.root / "java-args.txt"
+        self.stub("ps", 'if [ -f "$CAPTURE.pid" ]; then pid=$(cat "$CAPTURE.pid"); args=$(cat "$CAPTURE.flat"); case "$1" in -p) printf "java %s\\n" "$args";; *) printf "%s java %s\\n" "$pid" "$args";; esac; fi')
+        self.stub("lsof", "exit 0")
+        self.stub("netstat", "exit 0")
+        self.stub("java", 'printf "%s\\n" "$@" > "$CAPTURE"; printf "%s " "$@" > "$CAPTURE.flat"; echo $$ > "$CAPTURE.pid"; [ "$CHILD_MODE" = fail ] && exit 42; exec sleep 30')
+        self.stub("curl", 'printf "%s\\n" "$HTTP_BODY"; exit "$HTTP_EXIT"')
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            self.port = listener.getsockname()[1]
+        self.env = {key: value for key, value in os.environ.items()
+                    if key not in ("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS", "JAVA_OPTS")}
+        self.env.update(PATH=str(self.fake_bin) + ":/usr/bin:/bin", CAPTURE=str(self.capture),
+                        CHILD_MODE="alive", HTTP_BODY='{"phase":"configuration_required"}',
+                        HTTP_EXIT="0", SERVER_PORT=str(self.port), START_TIMEOUT="1")
+
+    def tearDown(self) -> None:
+        self.temp_dir.cleanup()
+
+    def stub(self, name: str, body: str) -> None:
+        path = self.fake_bin / name
+        path.write_text("#!/bin/sh\n" + body + "\n")
+        path.chmod(0o755)
+
+    def launcher(self, name: str) -> Path:
+        source = REPO_ROOT / "script/assembly/server/bin" / name
+        path = self.bin / name
+        path.write_text(source.read_text().replace("${project.artifactId}", "apache-hertzbeat")
+                        .replace("${project.build.finalName}", "apache-hertzbeat-2.0.0"))
+        path.chmod(0o755)
+        return path
+
+    def run_launcher(self, name: str, timeout: int = 4, args: tuple[str, ...] = ()) -> tuple[int | None, str]:
+        shell = "/bin/sh" if name == "entrypoint.sh" else "/bin/bash"
+        process = subprocess.Popen([shell, str(self.launcher(name)), *args], cwd=self.app,
+                                   env=self.env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   text=True, start_new_session=True)
+        try:
+            output, _ = process.communicate(timeout=timeout)
+            return process.returncode, output
+        except subprocess.TimeoutExpired:
+            return None, "Launcher did not finish within the bounded test deadline"
+        finally:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            process.communicate(timeout=2)
+
+    def test_failed_java_child_exits_without_waiting_for_an_unrelated_port(self) -> None:
+        self.env["CHILD_MODE"] = "fail"
+        code, output = self.run_launcher("startup.sh")
+        self.assertEqual(1, code, output)
+        self.assertIn("startup.log", output)
+        self.assertNotIn("Service Start Success", output)
+
+    def test_shutdown_does_not_signal_other_java_or_prefix_configuration(self) -> None:
+        for mismatch in ("config", "main", "classpath"):
+            with self.subTest(mismatch=mismatch):
+                child = subprocess.Popen(["/bin/sleep", "30"])
+                reaper = threading.Thread(target=child.wait, daemon=True)
+                reaper.start()
+                config = f"{self.app}/config/" + ("other/" if mismatch == "config" else "")
+                main = "OtherJavaApplication" if mismatch == "main" else "org.apache.hertzbeat.startup.HertzBeatApplication"
+                cp = "/other.jar" if mismatch == "classpath" else f"{self.app}/apache-hertzbeat-2.0.0.jar:{self.app}/lib/*:{self.app}/ext-lib/*"
+                self.env.update(PROOF_PID=str(child.pid), PROOF_ARGS=f"java -Xmx64m -Dspring.config.location={config} -cp {cp} {main}")
+                self.stub("ps", 'case "$1" in -ef) printf "user %s 1 now %s\\n" "$PROOF_PID" "$PROOF_ARGS";; -p) printf "%s\\n" "$PROOF_ARGS";; *) printf "%s %s\\n" "$PROOF_PID" "$PROOF_ARGS";; esac')
+                try:
+                    status = subprocess.run(["/bin/bash", str(self.launcher("startup.sh")), "status"],
+                                            env=self.env, capture_output=True, text=True, timeout=5)
+                    result = subprocess.run(["/bin/bash", str(self.launcher("shutdown.sh"))],
+                                            env=self.env, capture_output=True, text=True, timeout=5)
+                    self.assertIsNone(child.poll(), result.stdout + result.stderr)
+                    self.assertIn("is stopped", status.stdout)
+                    self.assertEqual(0, result.returncode, result.stderr)
+                finally:
+                    child.kill()
+                    reaper.join(timeout=2)
+
+    def test_owned_shutdown_requires_exit_and_preserves_other_identity(self) -> None:
+        for mode in ("graceful", "deadline", "changed"):
+            with self.subTest(mode=mode):
+                if mode == "graceful":
+                    child = subprocess.Popen(["/bin/sleep", "30"])
+                else:
+                    child = subprocess.Popen([sys.executable, "-c",
+                        "import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); print('ready',flush=True); time.sleep(30)"],
+                        stdout=subprocess.PIPE, text=True)
+                    self.assertEqual("ready", child.stdout.readline().strip())
+                reaper = threading.Thread(target=child.wait, daemon=True)
+                reaper.start()
+                count = self.root / "ps-count"
+                count.unlink(missing_ok=True)
+                cp = f"{self.app}/apache-hertzbeat-2.0.0.jar:{self.app}/lib/*:{self.app}/ext-lib/*"
+                self.env.update(PROOF_PID=str(child.pid), PROOF_MODE=mode, PROOF_COUNT=str(count), STOP_TIMEOUT="1",
+                    PROOF_ARGS=f"java -Xmx64m -Dproof.setting=kept -Dspring.config.location={self.app}/config/ -cp {cp} org.apache.hertzbeat.startup.HertzBeatApplication --server.port=1234")
+                self.stub("ps", '''args="$PROOF_ARGS"
+if [ "$1" = -p ]; then
+  n=$(cat "$PROOF_COUNT" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$PROOF_COUNT"
+  if [ "$PROOF_MODE" = changed ] && [ "$n" -ge 3 ]; then args="java AnotherApplication"; fi
+  printf '%s\n' "$args"
+else
+  printf '%s %s\n' "$PROOF_PID" "$args"
+fi''')
+                try:
+                    result = subprocess.run(["/bin/bash", str(self.launcher("shutdown.sh"))],
+                                            env=self.env, capture_output=True, text=True, timeout=5)
+                    self.assertEqual(0 if mode == "graceful" else 1, result.returncode, result.stdout + result.stderr)
+                    self.assertEqual(mode != "graceful", child.poll() is None)
+                    self.assertEqual(mode == "graceful", "Shutdown Apache HertzBeat apache-hertzbeat Success" in result.stdout)
+                    if mode == "changed":
+                        self.assertIn("changed identity", result.stderr)
+                finally:
+                    child.kill()
+                    reaper.join(timeout=2)
+                    if child.stdout is not None:
+                        child.stdout.close()
+
+    def test_setup_document_ready_keeps_custom_options_and_quoted_paths(self) -> None:
+        self.env["JAVA_OPTS"] = "-Xmx256m -Dproof.setting=kept"
+        code, output = self.run_launcher("startup.sh")
+        self.assertEqual(0, code, output)
+        self.assertIn("Setup required", output)
+        arguments = self.capture.read_text().splitlines()
+        self.assertIn("-Xmx256m", arguments)
+        self.assertIn("-Dproof.setting=kept", arguments)
+        self.assertIn(f"-Dspring.config.location={self.app}/config/", arguments)
+        self.assertIn(f"{self.app}/apache-hertzbeat-2.0.0.jar:{self.app}/lib/*:{self.app}/ext-lib/*", arguments)
+        self.assertTrue(any(arg.startswith("--add-opens=java.base/java.nio=") for arg in arguments))
+
+    def test_unrelated_listener_is_rejected_before_launching_java(self) -> None:
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", self.port))
+            listener.listen()
+            code, output = self.run_launcher("startup.sh")
+        self.assertEqual(1, code, output)
+        self.assertIn("already used", output)
+        self.assertFalse(self.capture.exists())
+
+    def test_http_200_without_setup_phase_is_not_ready(self) -> None:
+        self.env["HTTP_BODY"] = '{"phase":"application_starting"}'
+        code, output = self.run_launcher("startup.sh")
+        self.assertEqual(1, code, output)
+        self.assertIn("timed out", output)
+        self.assertNotIn("Service Start Success", output)
+
+    def test_entrypoint_custom_options_retain_required_arrow_access(self) -> None:
+        self.env.update(CHILD_MODE="fail", JAVA_OPTS="-Xmx256m")
+        code, output = self.run_launcher("entrypoint.sh", args=("--server.port=9123",))
+        self.assertEqual(42, code, output)
+        arguments = self.capture.read_text().splitlines()
+        self.assertIn("-Xmx256m", arguments)
+        self.assertTrue(any(arg.startswith("--add-opens=java.base/java.nio=") for arg in arguments))
+        self.assertIn(f"-Dspring.config.location={self.app}/config/", arguments)
+        self.assertEqual("--server.port=9123", arguments[-1])
+        self.assertLess(arguments.index("org.apache.hertzbeat.startup.HertzBeatApplication"),
+                        arguments.index("--server.port=9123"))
+
+    def test_restart_propagates_shutdown_and_startup_failure(self) -> None:
+        for shutdown, startup in ((7, 0), (0, 8)):
+            with self.subTest(shutdown=shutdown, startup=startup):
+                for name, code in (("shutdown.sh", shutdown), ("startup.sh", startup)):
+                    path = self.bin / name
+                    path.write_text(f"#!/bin/sh\nexit {code}\n")
+                    path.chmod(0o755)
+                code, output = self.run_launcher("restart.sh")
+                self.assertEqual(shutdown or startup, code, output)
+                self.assertNotIn("Restart Success", output)
+
+    def test_docker_archive_selection_is_exact_and_matches_distribution_version(self) -> None:
+        pom = ET.parse(REPO_ROOT / "pom.xml")
+        version = pom.findtext("m:properties/m:hzb.version", namespaces={"m": "http://maven.apache.org/POM/4.0.0"})
+        dockerfile = (REPO_ROOT / "script/docker/server/Dockerfile").read_text()
+        self.assertIn(f"ARG HERTZBEAT_VERSION={version}", dockerfile)
+        self.assertIn("ADD apache-hertzbeat-${HERTZBEAT_VERSION}-docker-bin.tar.gz /opt/", dockerfile)
+        self.assertNotIn("1.*-docker-bin", dockerfile)
 
 
 if __name__ == "__main__":

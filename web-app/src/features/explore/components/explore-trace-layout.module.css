@@ -1,0 +1,43 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.command {
+  display: grid;
+  grid-template-columns: max-content minmax(180px, 1fr) max-content;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  align-self: center;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.help {
+  margin-block: 6px;
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+.help > summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.help p {
+  margin-block: 6px;
+}
+@media (width <= 700px) {
+  .command {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .actions {
+    justify-content: flex-end;
+  }
+}
+
+.command :global([data-log-command-slot] > span) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

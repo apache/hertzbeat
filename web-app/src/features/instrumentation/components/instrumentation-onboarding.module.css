@@ -1,13 +1,16 @@
 .page {
   min-height: 100dvh;
+  min-width: 0;
   width: 100%;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   background: var(--hb-bg-canvas);
 }
 
 .onboardingHeader {
   position: relative;
+  min-width: 0;
   min-height: 56px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -39,6 +42,7 @@
 
 .onboardingBody {
   width: min(100%, 1440px);
+  min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
@@ -46,6 +50,7 @@
 }
 
 .flowRail {
+  min-width: 0;
   border-right: 1px solid var(--hb-border);
   padding: 34px 22px;
   background: var(--hb-bg-chrome);
@@ -57,8 +62,10 @@
 }
 
 .sourceStage {
+  min-width: 0;
   min-height: calc(100dvh - 185px);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 24px;
 }
@@ -69,7 +76,7 @@
 
 @media (max-width: 760px) {
   .onboardingHeader {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     padding-inline: 12px;
   }
@@ -84,7 +91,7 @@
   }
 
   .onboardingBody {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .flowRail {

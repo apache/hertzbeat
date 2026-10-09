@@ -44,6 +44,14 @@ required_java=$(sed -n 's:.*<java.version>\([0-9][0-9]*\)</java.version>.*:\1:p'
 runtime_java=$(sed -n 's#^FROM eclipse-temurin:\([0-9][0-9]*\)-.*#\1#p' "$dockerfile" | head -1)
 release_version=$(sed -n 's:.*<hzb.version>\([^<][^<]*\)</hzb.version>.*:\1:p' pom.xml | head -1)
 
+docker_version=$(sed -n 's/^ARG HERTZBEAT_VERSION=//p' "$dockerfile")
+if [ "$docker_version" != "$release_version" ] \
+  || ! grep -Fq 'ADD apache-hertzbeat-${HERTZBEAT_VERSION}-docker-bin.tar.gz /opt/' "$dockerfile" \
+  || grep -Eq '^ADD .*\*.*docker-bin' "$dockerfile"; then
+  echo "server Dockerfile must select the exact current distribution archive" >&2
+  failed=1
+fi
+
 if [ "$release_version" != "2.0.0" ]; then
   echo "the frozen community-preview distribution version must be 2.0.0" >&2
   failed=1
@@ -93,6 +101,12 @@ if ! grep -Fq 'LIB_PATH="$DEPLOY_DIR/lib"' "$startup_script" \
 fi
 
 for descriptor in $assembly_descriptors; do
+  if ! grep -Fq '<directory>../script/assembly/server/config</directory>' "$descriptor" \
+    || sed -n '/<directory>src\/main\/resources<\/directory>/,/<\/fileSet>/p' "$descriptor" \
+      | grep -Fq '<include>application.yml</include>'; then
+    echo "$descriptor must use the operator-only external configuration template" >&2
+    failed=1
+  fi
   if ! grep -Fq '<useProjectArtifact>false</useProjectArtifact>' "$descriptor"; then
     echo "$descriptor must not duplicate the Server application JAR in lib" >&2
     failed=1

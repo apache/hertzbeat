@@ -82,6 +82,16 @@ class EntityRouteAuthorizationConfigTest {
     }
 
     @Test
+    void servicePerformanceUsesExistingEntityReadAuthorization() {
+        String resource = "/api/entities/services/red===get";
+        assertAll(
+                () -> assertAnonymousDenied(resource),
+                () -> assertRoleAllowed("guest", resource),
+                () -> assertRoleAllowed("user", resource),
+                () -> assertRoleAllowed("admin", resource));
+    }
+
+    @Test
     void actualSurenessAuthorizationEnforcesEntityReadWriteAndDeleteRoles() {
         assertAll(
                 () -> assertAnonymousDenied(GET_DISCOVERY),

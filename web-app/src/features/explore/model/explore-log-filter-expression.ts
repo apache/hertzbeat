@@ -107,7 +107,7 @@ function splitClauses(raw: string): string[] | undefined {
 function scanCharacter(raw: string, index: number, quote: Quote | undefined, depth: number): ScanResult {
   const character = raw.charAt(index);
   if (quote) {
-    return { quote: character === quote && raw.charAt(index - 1) !== '\\' ? undefined : quote, depth };
+    return { quote: character === quote && !escapedAt(raw, index) ? undefined : quote, depth };
   }
   if (character === '"' || character === "'") return { quote: character, depth };
   if (character === '(') return { quote, depth: depth + 1 };
@@ -182,7 +182,7 @@ function splitListItems(value: string): string[] | undefined {
   for (let index = 0; index < value.length; index += 1) {
     const character = value[index];
     if (quote) {
-      if (character === quote && value[index - 1] !== '\\') quote = undefined;
+      if (character === quote && !escapedAt(value, index)) quote = undefined;
       continue;
     }
     if (character === '"' || character === "'") quote = character;
@@ -205,7 +205,7 @@ function hasBalancedQuotes(value: string) {
   for (let index = 0; index < value.length; index += 1) {
     const character = value[index];
     if (quote) {
-      if (character === quote && value[index - 1] !== '\\') quote = undefined;
+      if (character === quote && !escapedAt(value, index)) quote = undefined;
     } else if (character === '"' || character === "'") {
       quote = character;
     }
@@ -218,11 +218,17 @@ function hasUnquotedDelimiter(value: string) {
   for (let index = 0; index < value.length; index += 1) {
     const character = value[index];
     if (quote) {
-      if (character === quote && value[index - 1] !== '\\') quote = undefined;
+      if (character === quote && !escapedAt(value, index)) quote = undefined;
       continue;
     }
     if (character === '"' || character === "'") quote = character;
     else if (character === ',' || character === '(' || character === ')') return true;
   }
   return false;
+}
+
+function escapedAt(value: string, index: number) {
+  let backslashes = 0;
+  for (let position = index - 1; position >= 0 && value[position] === '\\'; position -= 1) backslashes += 1;
+  return backslashes % 2 === 1;
 }

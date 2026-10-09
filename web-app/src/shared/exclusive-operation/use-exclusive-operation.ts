@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-type OperationOwner = { token: symbol };
+type OperationOwner = symbol;
 
 /** Serializes a command and retires its async callbacks when the owner unmounts. */
 export function useExclusiveOperation(scope: string) {
   const mountedRef = useRef(true);
   const ownerRef = useRef<OperationOwner | undefined>(undefined);
   const [pending, setPending] = useState(false);
-  const begin = () => {
+  const begin = (): OperationOwner | undefined => {
     if (!mountedRef.current || ownerRef.current) return undefined;
-    const owner = { token: Symbol(scope) };
+    const owner = Symbol(scope);
     ownerRef.current = owner;
     setPending(true);
     return owner;

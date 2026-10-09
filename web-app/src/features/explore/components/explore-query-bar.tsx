@@ -14,30 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { Button, Input, Radio, Select } from 'antd';
+import { ExploreLogOrderRecovery } from './explore-log-order-recovery';
+import type { LogSearchSuggestions } from '../model/explore-log-search-authoring';
+import type { LogScopeSuggestions } from '../model/explore-log-scope-suggestions';
 import type { TFunction } from 'i18next';
 import { useState, type ReactNode } from 'react';
-
 import { OperationalCommandBar } from '@/shared/operational-page';
-import { globalAutoRefreshValues, type SharedTimeValue } from '@/shared/time';
-
-import {
-  EXPLORE_TIME_RANGES,
-  exploreUsesExactWindow,
-  presetTimeRangePatch,
-  type ExploreQuery,
-  type ExploreQueryPatch,
-  type ExploreTimeRange
-} from '../model/explore-model';
+import type { SharedTimeValue } from '@/shared/time';
+import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
 import type { ExploreSubmissionViewModel } from '../model/explore-submission-model';
-import { parseLogFilterExpression } from '../model/explore-log-filter-expression';
+import type { LogQueryBuilderViewModel } from '../model/explore-log-builder-model';
+import type { MetricPlanEditorProps } from './explore-metric-plan-editor';
 import { ExploreActiveFilters } from './explore-active-filters';
 import { ExploreAdvancedFilters, ExploreGuidedFilters } from './explore-advanced-filters';
 import { ExploreLogQueryBuilder, type LogQueryEditorMode } from './explore-log-query-builder';
+import type { RecentLogSearchesViewModel } from '../model/explore-recent-log-searches';
+import type { LogExploreSubmissionDraft } from '../model/explore-submission-model';
+import { ExploreRecentLogSearches } from './explore-recent-log-searches';
+import { ExploreQueryControls } from './explore-query-controls';
+import { ExploreTraceStructureEditor } from './explore-trace-structure-editor';
+import { ExploreQueryBody } from './explore-query-body';
+import { ExploreQueryActions } from './explore-query-command';
+import { useExploreQueryCommand } from './use-explore-query-command';
 import styles from './explore-query-bar.module.css';
+import layout from './explore-query-layout.module.css';
+import { ExploreMetricQueryDisclosure } from './explore-metric-query-disclosure';
 
 type Props = {
+  history: RecentLogSearchesViewModel;
+  searchSuggestions?: LogSearchSuggestions | undefined;
   query: ExploreQuery;
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
@@ -45,184 +50,174 @@ type Props = {
   refresh: () => Promise<void>;
   time: SharedTimeValue | null | undefined;
   submission: ExploreSubmissionViewModel;
+  editor: LogQueryBuilderViewModel;
+  suggestions?: LogScopeSuggestions | undefined;
+  results?: ReactNode;
+  facets?: ReactNode;
+  logAuthoring?: ReactNode;
+  logTrend?: ReactNode;
+  metricEditor?: MetricPlanEditorProps | undefined;
 };
 
-const EXACT_WINDOW_OPTION = 'exact-window';
-export const LOG_QUERY_EDITOR_MODE_STORAGE_KEY = 'hertzbeat.explore.logs.query-mode';
-
-export function ExploreQueryBar({ query, t, updateQuery, updateScope, refresh, time, submission }: Props) {
-  const { draft, errors, updateField } = submission;
-  const [logEditorPreference, setLogEditorPreference] = useState<LogQueryEditorMode>(readLogEditorPreference);
-  const logFiltersAreLossless =
-    draft.signal !== 'logs' ||
-    (parseLogFilterExpression(draft.resourceFilter).valid && parseLogFilterExpression(draft.attributeFilter).valid);
-  const logEditorMode: LogQueryEditorMode = logFiltersAreLossless ? logEditorPreference : 'code';
-
+export function ExploreQueryBar(props: Props) {
+  const { query, t, submission, editor, results, history } = props;
+  const [logFiltersOpen, setLogFiltersOpen] = useState(false);
+  const { mode, lossless, changeMode, submit, restore, queryRef } = useExploreQueryCommand({
+    submission,
+    editor,
+    history
+  });
+  const activeFilters = activeFiltersForQuery(props);
   return (
-    <form
-      className={styles.form}
-      aria-label={t('explore.queryToolbar')}
-      onSubmit={event => {
-        event.preventDefault();
-        submission.submit();
-      }}
+    <div
+      ref={queryRef}
+      className={[styles.form, results && layout.queryWorkspace].filter(Boolean).join(' ')}
+      data-explore-query-layout={results ? 'split' : 'stack'}
     >
-      <OperationalCommandBar
-        primary={
-          query.signal === 'logs' && draft.signal === 'logs' ? (
-            <div className={styles.logCommandFields}>
-              <ToolbarField label={t('explore.logQueryBuilder.editor')}>
-                <div className={styles.logMode} aria-label={t('explore.logQueryBuilder.editor')} role="radiogroup">
-                  <Radio.Group
-                    name="log-query-editor"
-                    value={logEditorMode}
-                    onChange={event => {
-                      const mode = event.target.value as LogQueryEditorMode;
-                      if (mode === 'builder' && !logFiltersAreLossless) return;
-                      setLogEditorPreference(mode);
-                      writeLogEditorPreference(mode);
-                    }}
-                  >
-                    <Radio.Button value="builder" disabled={!logFiltersAreLossless}>
-                      {t('explore.logQueryBuilder.builder')}
-                    </Radio.Button>
-                    <Radio.Button value="code">{t('explore.logQueryBuilder.code')}</Radio.Button>
-                  </Radio.Group>
-                </div>
-              </ToolbarField>
-              <ToolbarField label={t('explore.timeRange')}>
-                <ExploreTimeRange query={query} t={t} updateScope={updateScope} />
-              </ToolbarField>
-              <ToolbarField className={styles.queryInput ?? ''} label={t('explore.logQueryBuilder.messageSearch')}>
-                <Input
-                  value={draft.query}
-                  aria-label={t(`explore.queryLabels.${query.signal}`)}
-                  onChange={event => updateField({ field: 'query', value: event.target.value })}
-                  placeholder={t(`explore.queryPlaceholders.${query.signal}`)}
-                />
-              </ToolbarField>
-              <ToolbarField label={t('exploreLog.mode')}>
-                <ExploreLogMode query={query} t={t} updateScope={updateScope} />
-              </ToolbarField>
-            </div>
-          ) : (
-            <div className={styles.commandFields}>
-              <ExploreTimeRange query={query} t={t} updateScope={updateScope} />
-              <Input
-                className={styles.queryInput ?? ''}
-                value={draft.query}
-                aria-label={t(`explore.queryLabels.${query.signal}`)}
-                onChange={event => updateField({ field: 'query', value: event.target.value })}
-                placeholder={t(`explore.queryPlaceholders.${query.signal}`)}
-              />
-              <ExploreAutoRefresh query={query} t={t} time={time} />
-            </div>
-          )
-        }
-        secondary={
-          <div className={styles.commandActions}>
-            <Button className={styles.run ?? ''} type="primary" htmlType="submit">
-              {t('common.query')}
-            </Button>
-            <Button type="text" onClick={() => void refresh()}>
-              {t('common.refresh')}
-            </Button>
-          </div>
-        }
+      <form tabIndex={-1} className={layout.commandForm} aria-label={t('explore.queryToolbar')} onSubmit={submit}>
+        <ExploreQueryCommand
+          {...props}
+          restore={restore}
+          recent={
+            submission.draft.signal === 'logs' ? (
+              <ExploreRecentLogSearches history={history} t={t} restore={restore} />
+            ) : undefined
+          }
+          mode={mode}
+          lossless={lossless}
+          changeMode={changeMode}
+        />
+      </form>
+      <ExploreLogOrderRecovery query={query} submission={submission} t={t} />
+      {query.signal !== 'logs' && activeFilters}
+      {props.logAuthoring}
+      {props.logTrend}
+      <ExploreQueryBody
+        query={query}
+        draft={submission.draft}
+        facets={props.facets}
+        activeFilters={query.signal === 'logs' ? activeFilters : undefined}
+        results={results}
+        submit={submit}
+        t={t}
+      >
+        {query.signal === 'logs' ? (
+          <details
+            className={styles.logFilterDisclosure}
+            open={logFiltersOpen || mode === 'code' || !editor.valid}
+            onToggle={event => setLogFiltersOpen(event.currentTarget.open)}
+          >
+            <summary>{t('explore.logFacets.core.moreFilters')}</summary>
+            <ExploreQueryFilters {...props} mode={mode} />
+          </details>
+        ) : (
+          <ExploreQueryFilters {...props} mode={mode} />
+        )}
+      </ExploreQueryBody>
+    </div>
+  );
+}
+
+function ExploreQueryCommand(
+  props: Props & {
+    recent?: ReactNode;
+    restore: (entry: LogExploreSubmissionDraft) => void;
+    mode: LogQueryEditorMode;
+    lossless: boolean;
+    changeMode: (mode: LogQueryEditorMode) => void;
+  }
+) {
+  const { query, t, refresh, submission, editor, metricEditor, history, restore } = props;
+  if (metricEditor) {
+    return (
+      <ExploreQueryControls
+        {...props}
+        metricRows
+        draft={submission.draft}
+        updateField={submission.updateField}
+        actions={<ExploreQueryActions refreshFirst {...{ query, submission, editor, refresh, t }} />}
       />
+    );
+  }
+  if (query.signal === 'traces') {
+    return (
+      <ExploreQueryControls
+        {...props}
+        draft={submission.draft}
+        updateField={submission.updateField}
+        actions={<ExploreQueryActions {...{ query, submission, editor, refresh, t }} />}
+      />
+    );
+  }
+  return (
+    <OperationalCommandBar
+      primary={
+        <ExploreQueryControls
+          {...props}
+          metricRows={Boolean(metricEditor)}
+          draft={submission.draft}
+          updateField={submission.updateField}
+          recentQueries={history.entries}
+          restoreRecentQuery={restore}
+        />
+      }
+      secondary={<ExploreQueryActions {...{ query, submission, editor, refresh, t }} />}
+    />
+  );
+}
+
+function ExploreQueryFilters(props: Props & { mode: LogQueryEditorMode }) {
+  const { draft, errors, updateField } = props.submission;
+  const { t, editor, mode } = props;
+  if (draft.signal === 'metrics' && props.metricEditor) {
+    return <ExploreMetricQueryDisclosure submission={props.submission} metricEditor={props.metricEditor} t={t} />;
+  }
+  return (
+    <>
       {draft.signal === 'logs' ? (
-        <ExploreLogQueryBuilder draft={draft} mode={logEditorMode} t={t} updateField={updateField} />
+        <ExploreLogQueryBuilder
+          draft={draft}
+          mode={mode}
+          t={t}
+          updateField={updateField}
+          editor={editor}
+          suggestions={props.suggestions}
+        />
+      ) : draft.signal === 'traces' && draft.traceStructure !== undefined ? (
+        <ExploreTraceStructureEditor draft={draft} errors={errors} t={t} updateField={updateField} />
       ) : (
         <>
-          <ExploreGuidedFilters draft={draft} t={t} updateField={updateField} />
-          <ExploreAdvancedFilters draft={draft} errors={errors} t={t} updateField={updateField} />
+          {!props.metricEditor && (
+            <ExploreGuidedFilters
+              appliedTraceView={props.query.signal === 'traces' ? props.query.traceView : undefined}
+              metricRows={Boolean(props.metricEditor)}
+              draft={draft}
+              errors={errors}
+              t={t}
+              updateField={updateField}
+            />
+          )}
+          <ExploreAdvancedFilters
+            metricRows={Boolean(props.metricEditor)}
+            draft={draft}
+            errors={errors}
+            t={t}
+            updateField={updateField}
+          />
         </>
       )}
-      <ExploreActiveFilters query={query} t={t} updateQuery={updateQuery} removeFilter={submission.removeFilter} />
-    </form>
+    </>
   );
 }
 
-function ToolbarField({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+function activeFiltersForQuery({ query, t, updateQuery, submission }: Props) {
   return (
-    <div className={[styles.toolbarField, className].filter(Boolean).join(' ')}>
-      <span>{label}</span>
-      {children}
-    </div>
-  );
-}
-
-function ExploreLogMode({ query, t, updateScope }: Pick<Props, 'query' | 't' | 'updateScope'>) {
-  const live = query.signal === 'logs' && Boolean(query.live);
-  return (
-    <div className={styles.logMode} aria-label={t('exploreLog.mode')} role="radiogroup">
-      <Radio.Group
-        name="log-mode"
-        value={live ? 'live' : 'history'}
-        onChange={event => updateScope(event.target.value === 'live' ? { live: true } : { live: undefined })}
-      >
-        <Radio.Button value="history">{t('exploreLog.history')}</Radio.Button>
-        <Radio.Button value="live">{t('exploreLog.live')}</Radio.Button>
-      </Radio.Group>
-    </div>
-  );
-}
-
-function ExploreTimeRange({ query, t, updateScope }: Pick<Props, 'query' | 't' | 'updateScope'>) {
-  const exactWindow = exploreUsesExactWindow(query);
-  const exactOption = exactWindow
-    ? [{ value: EXACT_WINDOW_OPTION, label: t('explore.exactWindow'), disabled: true }]
-    : [];
-  return (
-    <Select<string>
-      className={styles.timeRange ?? ''}
-      aria-label={t('explore.timeRange')}
-      value={exactWindow ? EXACT_WINDOW_OPTION : query.timeRange}
-      options={[
-        ...exactOption,
-        ...EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))
-      ]}
-      onChange={value => updateTimeRange(query, value, updateScope)}
+    <ExploreActiveFilters
+      query={query}
+      t={t}
+      updateQuery={updateQuery}
+      removeFilter={submission.removeFilter}
+      removeFilters={submission.removeFilters}
     />
   );
-}
-
-function ExploreAutoRefresh({ query, t, time }: Pick<Props, 'query' | 't' | 'time'>) {
-  const fixedWindowFields = query.start != null || query.end != null;
-  if (fixedWindowFields || !time) return null;
-  return (
-    <Select<number>
-      className={styles.timeRange ?? ''}
-      aria-label={autoRefreshLabel(time.autoRefreshMs, t)}
-      value={time.autoRefreshMs}
-      options={globalAutoRefreshValues.map(interval => ({ value: interval, label: autoRefreshLabel(interval, t) }))}
-      onChange={interval => time.setAutoRefresh(interval)}
-    />
-  );
-}
-
-function updateTimeRange(query: ExploreQuery, value: string, updateScope: Props['updateScope']) {
-  if (!EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange)) return;
-  updateScope(presetTimeRangePatch(query, value as ExploreTimeRange));
-}
-
-function autoRefreshLabel(interval: number, t: TFunction) {
-  if (interval === 0) return t('shell.time.autoRefreshOff');
-  return t('shell.time.autoRefreshSeconds', { seconds: interval / 1_000 });
-}
-
-function readLogEditorPreference(): LogQueryEditorMode {
-  try {
-    return globalThis.localStorage?.getItem(LOG_QUERY_EDITOR_MODE_STORAGE_KEY) === 'code' ? 'code' : 'builder';
-  } catch {
-    return 'builder';
-  }
-}
-
-function writeLogEditorPreference(mode: LogQueryEditorMode) {
-  try {
-    globalThis.localStorage?.setItem(LOG_QUERY_EDITOR_MODE_STORAGE_KEY, mode);
-  } catch {
-    // Storage can be unavailable in restricted browser contexts; the in-memory preference still works.
-  }
 }

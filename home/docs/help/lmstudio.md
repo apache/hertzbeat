@@ -1,49 +1,26 @@
 ---
 id: lmstudio
-title: Monitoring LM Studio
-sidebar_label: LM Studio
-keywords: [ open source monitoring system, open source network monitoring, LM Studio monitoring, local LLM monitoring ]
+title: LM Studio monitoring
+sidebar_label: LM Studio monitoring
 ---
 
-## Prerequisites
->
-> Ensure that the LM Studio server is running and the REST API is enabled.
-> By default, LM Studio listens on `localhost:1234`.
+This guide describes the existing **Agentless monitor template** for LM Studio model metadata. It does not configure LM Studio as an AI Gateway provider, instrument inference requests or establish model quality/performance.
 
-### Notes
+## Configure the monitor
 
-> 1. HertzBeat needs network access to the LM Studio server. Ensure the target host and port are reachable.
-> 2. By default, LM Studio does not require authentication for API requests. To enable authentication so that only
-     requests with a valid API Token are accepted, toggle the switch in the Developers Page > Server Settings.
+1. Start the LM Studio HTTP service and verify that it is reachable **from the selected HertzBeat collector**. A collector running in another host or container has its own `localhost`.
+2. Select LM Studio in the monitor creation catalog. Set **Host**, **Port** (template default `1234`) and **HTTPS** to match that service.
+3. If the endpoint requires authentication, set the monitor's **API Token**. The template uses Bearer authentication. Keep credentials in protected configuration and out of screenshots and diagnostic exports.
+4. Run the form's detection, inspect the returned model fields, then save. Recheck current samples after at least one configured collection interval.
 
-### Configuration Parameters
+The source template `hertzbeat-manager/src/main/resources/define/app-lmstudio.yml` sends `GET /api/v1/models` and reads `models`. The matching upstream contract is documented in [LM Studio's model-list API](https://lmstudio.ai/docs/developer/rest/list). An older or different endpoint is not automatically compatible with this template.
 
-| Parameter Name    | Parameter Description                                                                          |
-|:------------------|:-----------------------------------------------------------------------------------------------|
-| Target Host       | The IP address or domain of the LM Studio server. Default: `localhost`.                        |
-| Port              | The port of the LM Studio REST API. Default: `1234`.                                           |
-| HTTPS             | Whether to enable HTTPS.                                                                       |
-| API Token         | The API token for authentication (optional, required if API auth is enabled in LM Studio).     |
-| Task Name         | Identify the name of this monitoring, ensuring uniqueness.                                     |
-| Collector         | Configure which collector to use for scheduling collection for this monitoring.                |
-| Monitoring Period | Interval time for periodic data collection, in seconds, with a minimum interval of 30 seconds. |
-| Bound Tags        | Tags for managing classification of monitoring resources.                                      |
-| Description       | Additional identification and description for this monitoring, users can leave remarks here.   |
+## What the rows mean
 
-### Collection Metrics
+The template exposes model key, display name, type, publisher, architecture, quantization, model size, parameter description, maximum context length and format. Model size is converted from bytes to MB by the monitor configuration. Optional or absent model fields must not be read as measured zeroes. This is an inventory response, not per-request latency, token throughput or GPU utilization.
 
-#### Metric Set: Models
+## Diagnose an unsuccessful collection
 
-| Metric Name        | Metric Unit | Metric Description                       |
-|--------------------|-------------|------------------------------------------|
-| Model Key          | None        | Unique model identifier                  |
-| Display Name       | None        | Human-readable model name                |
-| Model Type         | None        | Model category: llm or embedding         |
-| Publisher          | None        | Model creator identifier                 |
-| Architecture       | None        | Model architecture (e.g., gemma3, llama) |
-| Quantization       | None        | Quantization method (e.g., Q4_0, F16)    |
-| Quantization Bits  | None        | Bits per weight for quantization         |
-| Model Size         | MB          | Model file size                          |
-| Parameters         | None        | Parameter count (e.g., 7B, 270M)         |
-| Max Context Length | None        | Maximum token context window             |
-| Format             | None        | Model file format (gguf, mlx)            |
+Check host reachability and the exact port/protocol before changing credentials. A `401`/`403` response requires an authentication/permission correction; it is not an empty model list. For a parsing failure, compare the endpoint and response field names with the source template. An empty `models` array can be valid when there are no available models; it does not prove inference availability.
+
+This alpha acceptance validated the Agentless MySQL and OTel Java paths, not a real LM Studio installation. The template and upstream API were reviewed; test your LM Studio version and retain the actual result before treating it as a verified source. For provider setup, use the separate [AI Gateway guide](./ai_agent.md).

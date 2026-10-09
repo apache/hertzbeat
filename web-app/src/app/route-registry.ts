@@ -23,6 +23,8 @@ import {
   monitorRoutePaths
 } from '@/shared/navigation/app-paths';
 import { settingsPaths } from '@/shared/settings/settings-routes';
+import { legacySignalRoutes } from '@/shared/navigation/signal-route-paths';
+import { signalDashboardPath } from '@/shared/navigation/signal-dashboard-paths';
 
 export type AppRouteDefinition = {
   id: string;
@@ -71,8 +73,12 @@ export const appRouteCatalog = {
   topology: pageRoute('topology', applicationRoutePaths.topology, {
     resource: { labelKey: 'menu.topology' }
   }),
+  services: pageRoute('services', applicationRoutePaths.services, { resource: { labelKey: 'services.title' } }),
   explore: pageRoute('explore', applicationRoutePaths.explore, {
     resource: { labelKey: 'menu.explore' }
+  }),
+  'signal-dashboards': pageRoute('signal-dashboards', signalDashboardPath, {
+    resource: { labelKey: 'signalDashboard.title' }
   }),
   instrumentation: pageRoute('instrumentation', applicationRoutePaths.instrumentation, {
     layout: 'blank',
@@ -167,15 +173,13 @@ export type LegacyRouteDefinition = {
 
 export const legacyRouteCatalog = [
   legacyRoute('legacy-overview', '/overview', 'dashboard'),
-  legacyRoute('legacy-metrics-manage', '/metrics/manage', 'explore', [['signal', 'metrics']]),
-  legacyRoute('legacy-trace-manage', '/trace/manage', 'explore', [['signal', 'traces']]),
+  ...legacySignalRoutes.map(({ id, path, signal }) => legacyRoute(id, path, 'explore', [['signal', signal]])),
   legacyRoute('legacy-log', '/log', 'instrumentation'),
   legacyRoute('legacy-log-stream', '/log/stream', 'explore', [
     ['signal', 'logs'],
     ['mode', 'live']
   ]),
   legacyRoute('legacy-log-integration', '/log/integration/:source', 'instrumentation'),
-  legacyRoute('legacy-log-manage', '/log/manage', 'explore', [['signal', 'logs']]),
   legacyRoute('legacy-ingestion-otlp', '/ingestion/otlp', 'instrumentation'),
   legacyRoute('legacy-ingestion-otlp-child', '/ingestion/otlp/*', 'instrumentation'),
   legacyRoute('legacy-alert', '/alert', 'alerts'),

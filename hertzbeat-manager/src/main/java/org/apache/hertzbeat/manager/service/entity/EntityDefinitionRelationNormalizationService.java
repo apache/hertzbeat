@@ -69,7 +69,7 @@ public class EntityDefinitionRelationNormalizationService {
         }
         List<EntityDefinition.Relation> result = new ArrayList<>();
         for (Object item : items) {
-            Map<String, Object> relationMap = toObjectMap(item);
+            Map<String, Object> relationMap = EntityDefinitionMaps.toObjectMap(item);
             Long targetEntityId = asLong(defaultText(relationMap.containsKey("targetEntityId") ? "targetEntityId" : null,
                     relationMap.containsKey("target") ? "target" : null), relationMap);
             String targetRef = defaultText(asText(relationMap.get("targetRef")), asText(relationMap.get("ref")));
@@ -100,7 +100,7 @@ public class EntityDefinitionRelationNormalizationService {
             if (item instanceof String text) {
                 relation.setTargetRef(asText(text));
             } else {
-                Map<String, Object> dependencyMap = toObjectMap(item);
+                Map<String, Object> dependencyMap = EntityDefinitionMaps.toObjectMap(item);
                 relation.setTargetRef(defaultText(asText(dependencyMap.get("ref")),
                         asText(dependencyMap.get("entity")), asText(dependencyMap.get("entityRef"))));
                 relation.setTargetEntityId(asLong(defaultText(
@@ -167,18 +167,6 @@ public class EntityDefinitionRelationNormalizationService {
         return entityRelationService.buildEntityReference(entityId);
     }
 
-    private Map<String, Object> toObjectMap(Object value) {
-        if (!(value instanceof Map<?, ?> rawMap)) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-            if (entry.getKey() != null) {
-                result.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
-        return result;
-    }
 
     private Map<String, String> toStringMap(Object value) {
         if (!(value instanceof Map<?, ?> rawMap)) {

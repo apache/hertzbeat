@@ -5,6 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import type { FocusEvent } from 'react';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, type MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
@@ -17,14 +18,20 @@ import { resolveLocale } from '@/core/i18n/locale';
 import { useShellAlertNotificationController } from '@/features/alert/shell';
 import { useShellMonitorImportTaskNotifications } from '@/features/monitor/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';
-import { materializeTopologyInvestigation } from '@/features/topology';
+import { materializeTopologyInvestigation } from '@/features/topology/navigation';
 import { useShellInvestigation } from '@/shared/investigation';
 import {
   buildAgentWorkspacePath,
   canMaterializeAgentInvestigation,
   materializeAgentInvestigation
 } from '@/features/ai-workspace/model/agent-workspace-context';
-import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
+import {
+  formatShortLocalTimeRange,
+  globalAutoRefreshValues,
+  globalTimeRanges,
+  type GlobalTimeRange,
+  type SharedTimeValue
+} from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
 import statusStyles from './hertzbeat-shell-status.module.css';
@@ -37,7 +44,7 @@ export function ShellHeader() {
   const { session } = useSession();
   const location = useLocation();
   const navigate = useNavigate();
-  const actions = useShellHeaderActionController();
+  const actions = useShellHeaderActionController(location);
   useShellMonitorImportTaskNotifications();
   const alertNotifications = useShellAlertNotificationController({
     locale: i18n.resolvedLanguage,
@@ -56,9 +63,9 @@ export function ShellHeader() {
       <div className={styles.brandSlot}>
         <ShellBrand theme={actions.theme} />
       </div>
-      <div className={styles.headerSpine}>
+      <div className={styles.headerSpine} onFocusCapture={revealFocusedHeaderAction}>
         <ShellStatusSpine locale={i18n.resolvedLanguage} runtime={runtimeStatus} t={t} />
-        <ShellTimeControl time={actions.sharedTime} t={t} locale={i18n.resolvedLanguage} />
+        {actions.showTimeControl && <ShellTimeControl time={actions.sharedTime} t={t} locale={i18n.resolvedLanguage} />}
         <ShellHeaderActions
           accountName={accountName}
           activeLocale={resolveLocale(i18n.resolvedLanguage)}
@@ -89,6 +96,14 @@ export function ShellHeader() {
       </div>
     </header>
   );
+}
+
+function revealFocusedHeaderAction({ currentTarget, target }: FocusEvent<HTMLDivElement>) {
+  if (!currentTarget.contains(target) || currentTarget.scrollWidth <= currentTarget.clientWidth) return;
+  // The spine owns scrolling; actions may be wider than its viewport.
+  const action = target.getBoundingClientRect();
+  const strip = currentTarget.getBoundingClientRect();
+  currentTarget.scrollLeft += Math.min(action.left - strip.left - 8, 0) || Math.max(action.right - strip.right + 8, 0);
 }
 
 function hasShellInvestigation(
@@ -173,6 +188,6 @@ function globalTimeLabel(time: SharedTimeValue, t: TFunction) {
 }
 
 function formatExactWindow(window: { from: number; to: number }, locale: string | undefined) {
-  const formatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  return `${formatter.format(window.from)} – ${formatter.format(window.to)}`;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `${formatShortLocalTimeRange(window.from, window.to, { ...(locale ? { locale } : {}), timeZone })} · ${timeZone}`;
 }

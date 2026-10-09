@@ -78,30 +78,19 @@ public class AlibabaSmsClientImpl implements SmsClient {
 
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
-        sendSms(receiver.getPhone(), buildTemplateParam(alert));
-    }
+        // Extract alert info
+        SmsAlertFields fields = SmsAlertFields.from(alert);
+        String instance = fields.instance();
+        String priority = fields.priority();
+        String content = fields.content();
 
-    // Aliyun rejects the whole request when any template variable is null or blank,
-    // so every value must fall back to non-blank text
-    String buildTemplateParam(GroupAlert alert) {
-        Map<String, String> labels = alert.getCommonLabels() == null ? Map.of() : alert.getCommonLabels();
-        Map<String, String> annotations = alert.getCommonAnnotations() == null ? Map.of() : alert.getCommonAnnotations();
-
+        // Build template parameters
         Map<String, String> templateParam = new HashMap<>();
-        templateParam.put("instance", firstNonBlank(labels.get("instance"), alert.getGroupKey(), "unknown"));
-        templateParam.put("priority", firstNonBlank(labels.get("priority"), "unknown"));
-        templateParam.put("content", firstNonBlank(annotations.get("summary"), annotations.get("description"),
-                annotations.values().stream().findFirst().orElse(null), "alert triggered"));
-        return JsonUtil.toJson(templateParam);
-    }
+        templateParam.put("instance", instance);
+        templateParam.put("priority", priority);
+        templateParam.put("content", content);
 
-    private static String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return "unknown";
+        sendSms(receiver.getPhone(), JsonUtil.toJson(templateParam));
     }
 
     private void sendSms(String phoneNumber, String templateParam) {

@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.apache.hertzbeat.observability.logs.service.impl.LogQueryServiceImpl;
+import org.apache.hertzbeat.observability.investigation.service.LogInvestigationReadModelService;
 import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ class LogQueryControllerContextTest {
             .withBean(LogQueryServiceImpl.class)
             .withBean(ObservabilityQueryAdmissionService.class,
                     () -> mock(ObservabilityQueryAdmissionService.class))
+            .withBean(LogInvestigationReadModelService.class,
+                    () -> mock(LogInvestigationReadModelService.class))
             .withBean(LogQueryController.class);
 
     @Test

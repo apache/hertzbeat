@@ -33,14 +33,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionSnapshot;
@@ -53,6 +57,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 @ExtendWith(MockitoExtension.class)
 class GreptimeInstrumentationSignalDetectionStoreTest {
@@ -109,6 +116,179 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
             assertFalse(sql.toLowerCase().contains("token"));
             assertFalse(sql.contains("SELECT *"));
         });
+    }
+
+    @Test
+    void waitsForTheNativeMetricsTableBeforeTheFirstOtlpMetricArrives() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenThrow(missingTable("greptime_physical_table", 4001));
+
+        var snapshot = store.detect(criteria("checkout", "commerce", "prod", null));
+
+        assertEquals(WAITING, snapshot.observation(METRICS).status());
+        assertEquals(SIGNAL_NOT_RECEIVED, snapshot.observation(METRICS).errorCode());
+        assertEquals(ERROR, snapshot.observation(TRACES).status());
+        assertEquals(ERROR, snapshot.observation(LOGS).status());
+    }
+
+    @Test
+    void detectsDirectMetricsWhenTheOptionalCollectorColumnHasNeverBeenCreated() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.equals("DESCRIBE greptime_physical_table")) {
+                return List.of(Map.of("Column", "greptime_timestamp"));
+            }
+            if (sql.contains("FROM greptime_physical_table")) {
+                if (sql.contains("hertzbeat_collector_id")) {
+                    throw missingColumn("hertzbeat_collector_id");
+                }
+                assertTrue(sql.contains("service_name = 'checkout'"));
+                assertTrue(sql.contains("service_namespace = 'commerce'"));
+                assertTrue(sql.contains("deployment_environment_name = 'prod'"));
+                assertTrue(sql.contains("service_instance_id = 'instance-1'"));
+                assertTrue(sql.contains("http_route = '/checkout'"));
+                assertTrue(sql.contains(">= to_timestamp_millis(" + STARTED_AT + ")"));
+                assertTrue(sql.contains("< to_timestamp_millis(" + (DETECTED_AT + 1) + ")"));
+                return List.of(Map.of("last_received_at", STARTED_AT + 100));
+            }
+            return List.of();
+        });
+
+        var snapshot = store.detect(new DetectionCriteria(
+                "checkout", "commerce", "prod", null, "instance-1", "/checkout", STARTED_AT, DETECTED_AT));
+
+        assertReceived(snapshot.observation(METRICS), STARTED_AT + 100);
+        verify(executor).executeStrict("DESCRIBE greptime_physical_table");
+    }
+
+    @Test
+    void cannotFindCollectorScopedMetricsBeforeTheCollectorColumnExists() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenThrow(missingColumn("hertzbeat_collector_id"));
+
+        var snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
+
+        assertEquals(WAITING, snapshot.observation(METRICS).status());
+        assertEquals(ERROR, snapshot.observation(LOGS).status());
+        assertEquals(ERROR, snapshot.observation(TRACES).status());
+        verify(executor, org.mockito.Mockito.times(3)).executeStrict(anyString());
+    }
+
+    @Test
+    void discardsTheUnscopedResultWhenTheFirstCollectorCreatesItsColumnDuringTheQuery() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        AtomicInteger scopedQueries = new AtomicInteger();
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.equals("DESCRIBE greptime_physical_table")) {
+                return List.of(Map.of("Column", "greptime_timestamp"), Map.of("Column", "hertzbeat_collector_id"));
+            }
+            if (sql.contains("FROM greptime_physical_table")) {
+                if (sql.contains("hertzbeat_collector_id IS NULL")) {
+                    if (scopedQueries.incrementAndGet() == 1) {
+                        throw missingColumn("hertzbeat_collector_id");
+                    }
+                    return List.of(Map.of("last_received_at", STARTED_AT + 100));
+                }
+                return List.of(Map.of("last_received_at", STARTED_AT + 4000));
+            }
+            return List.of();
+        });
+
+        var snapshot = store.detect(criteria("checkout", "commerce", "prod", null));
+
+        assertReceived(snapshot.observation(METRICS), STARTED_AT + 100);
+        assertEquals(2, scopedQueries.get());
+    }
+
+    @Test
+    void failsWithoutAnotherRetryWhenTheCollectorColumnDisappearsAgain() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.equals("DESCRIBE greptime_physical_table")) {
+                return List.of(Map.of("Column", "hertzbeat_collector_id"));
+            }
+            if (sql.contains("FROM greptime_physical_table")) {
+                if (sql.contains("hertzbeat_collector_id")) {
+                    throw missingColumn("hertzbeat_collector_id");
+                }
+                return List.of(Map.of("last_received_at", STARTED_AT + 100));
+            }
+            return List.of();
+        });
+
+        var snapshot = store.detect(criteria("checkout", "commerce", "prod", null));
+
+        assertEquals(ERROR, snapshot.observation(METRICS).status());
+        verify(executor, org.mockito.Mockito.times(6)).executeStrict(anyString());
+    }
+
+    @Test
+    void failsClosedWhenThePostQuerySchemaCannotConfirmTheCollectorColumnIsAbsent() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        for (List<Map<String, Object>> schema : List.<List<Map<String, Object>>>of(
+                List.of(), List.of(Map.of("unexpected", "schema")))) {
+            doAnswer(invocation -> {
+                String sql = invocation.getArgument(0);
+                if (sql.equals("DESCRIBE greptime_physical_table")) {
+                    return schema;
+                }
+                if (sql.contains("FROM greptime_physical_table")) {
+                    if (sql.contains("hertzbeat_collector_id")) {
+                        throw missingColumn("hertzbeat_collector_id");
+                    }
+                    return List.of(Map.of("last_received_at", STARTED_AT + 100));
+                }
+                return List.of();
+            }).when(executor).executeStrict(anyString());
+            var snapshot = store.detect(criteria("checkout", "commerce", "prod", null));
+            assertEquals(ERROR, snapshot.observation(METRICS).status());
+        }
+    }
+
+    @Test
+    void doesNotRelaxTheScopeWhenAnyOtherMetricDimensionIsMissing() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        for (String column : List.of("service_namespace", "deployment_environment_name", "hertzbeat_workspace_id",
+                "service_instance_id", "http_route")) {
+            doThrow(missingColumn(column)).when(executor).executeStrict(anyString());
+            var snapshot = store.detect(criteria("checkout", "commerce", "prod", null));
+            assertEquals(ERROR, snapshot.observation(METRICS).status());
+        }
+        verify(executor, never()).executeStrict("DESCRIBE greptime_physical_table");
+    }
+
+    @Test
+    void doesNotHideOtherTablesMalformedResponsesOrQueryFailures() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        for (RuntimeException failure : List.of(
+                missingTable("other_table", 4001), missingTable("greptime_physical_table", 3000),
+                new RuntimeException("connection timeout"),
+                HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY,
+                        "not JSON".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))) {
+            doThrow(failure).when(executor).executeStrict(anyString());
+            var snapshot = store.detect(criteria("checkout", "commerce", "prod", null));
+            assertEquals(ERROR, snapshot.observation(METRICS).status());
+            assertEquals(STORAGE_QUERY_FAILED, snapshot.observation(METRICS).errorCode());
+        }
+    }
+
+    private static RuntimeException missingTable(String table, int code) {
+        String body = "{\"code\":" + code
+                + ",\"error\":\"Failed to plan SQL: Table not found: greptime.public." + table + "\"}";
+        return new RuntimeException("Failed to execute GreptimeDB SQL query", HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY,
+                body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
+    }
+
+    private static RuntimeException missingColumn(String column) {
+        String body = "{\"code\":3000,\"error\":\"Failed to plan SQL: No field named " + column
+                + ". Valid fields are greptime_physical_table.greptime_timestamp.\"}";
+        return new RuntimeException("Failed to execute GreptimeDB SQL query", HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY,
+                body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
     }
 
     @Test

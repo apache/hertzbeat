@@ -18,6 +18,9 @@
 package org.apache.hertzbeat.observability.metrics.inventory.greptime;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto.Metadata;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +38,7 @@ import org.springframework.util.StringUtils;
 @Repository
 public class GreptimeMetricInventoryRepository implements MetricInventoryRepository {
 
-    private static final int MAX_LIMIT = 64;
+    private static final int MAX_LIMIT = 201;
     private static final Pattern METRIC_NAME = Pattern.compile("[A-Za-z_:][A-Za-z0-9_:]*");
     private static final Logger LOG = LoggerFactory.getLogger(GreptimeMetricInventoryRepository.class);
 
@@ -76,38 +79,87 @@ public class GreptimeMetricInventoryRepository implements MetricInventoryReposit
         }
     }
 
+    @Override
+    public Map<String, Metadata> findMetadata(List<String> authorizedNames) {
+        if (authorizedNames == null || authorizedNames.isEmpty() || authorizedNames.size() > MAX_LIMIT
+                || authorizedNames.stream().anyMatch(name -> metricName(name) == null)) {
+            return Map.of();
+        }
+        try {
+            var executor = executorProvider.getIfAvailable();
+            if (executor == null) {
+                return Map.of();
+            }
+            String names = authorizedNames.stream().map(name -> "'" + name + "'")
+                    .collect(java.util.stream.Collectors.joining(","));
+            var rows = executor.executeStrict("SELECT table_name, source, metadata_quality, semantic_options"
+                    + " FROM information_schema.table_semantics WHERE table_catalog = 'greptime'"
+                    + " AND table_schema = current_schema() AND table_name IN (" + names + ")");
+            Map<String, Metadata> result = new LinkedHashMap<>();
+            for (var row : rows) {
+                String name = row.get("table_name") instanceof String text ? text : null;
+                if (name == null || !authorizedNames.contains(name)) {
+                    continue;
+                }
+                var options = JsonUtil.fromJson(String.valueOf(row.get("semantic_options")));
+                result.put(name, new Metadata("available", text(row.get("source")),
+                        text(row.get("metadata_quality")), options.path("metric.original_name").asText(null),
+                        options.path("metric.type").asText(null), options.path("metric.unit").asText(null),
+                        options.path("metric.temporality").asText(null), null, "unknown", null));
+            }
+            return Map.copyOf(result);
+        } catch (RuntimeException exception) {
+            // Older stores do not expose table_semantics. Name discovery remains independently usable.
+            return Map.of();
+        }
+    }
+
+    private String text(Object value) {
+        return value instanceof String text ? text : null;
+    }
+
+    @Override
+    public Labels findLabels(String metric, List<String> matchers, long start, long end, String label, int limit) {
+        try {
+            var executor = executorProvider.getIfAvailable();
+            return executor == null ? new Labels("unavailable", false, List.of())
+                    : GreptimeMetricLabels.query(executor, metric, matchers, start, end, label, limit);
+        } catch (RuntimeException exception) {
+            return new Labels("unavailable", false, List.of());
+        }
+    }
+
     private boolean supports(Query query) {
         return query != null
                 && StringUtils.hasText(query.workspaceId())
-                && StringUtils.hasText(query.serviceName())
-                && StringUtils.hasText(query.serviceNamespace())
-                && StringUtils.hasText(query.environment())
                 && query.start() >= 0
                 && query.end() >= query.start()
-                && query.limit() > 0;
+                && query.limit() > 0
+                && (query.search() == null || query.search().length() <= 128);
     }
 
     private String buildQuery(Query query) {
         List<String> filters = new ArrayList<>();
         filters.add(equalsColumn("p.hertzbeat_workspace_id", query.workspaceId()));
-        filters.add(equalsColumn("p.service_name", query.serviceName()));
-        filters.add(equalsColumn("p.service_namespace", query.serviceNamespace()));
-        filters.add(equalsColumn("p.deployment_environment_name", query.environment()));
+        addOptionalEqualsColumn(filters, "p.service_name", query.serviceName());
+        addOptionalEqualsColumn(filters, "p.service_namespace", query.serviceNamespace());
+        addOptionalEqualsColumn(filters, "p.deployment_environment_name", query.environment());
         addOptionalEqualsColumn(filters, "p.hertzbeat_collector_id", query.collectorId());
         addOptionalEqualsColumn(filters, "p.service_instance_id", query.instance());
         addOptionalEqualsColumn(filters, "p.http_route", query.endpoint());
         filters.add("p.greptime_timestamp >= to_timestamp_millis(" + query.start() + ")");
-        filters.add("p.greptime_timestamp < to_timestamp_millis(" + inclusiveEnd(query.end()) + ")");
+        filters.add(query.end() == Long.MAX_VALUE
+                ? "p.greptime_timestamp <= to_timestamp_millis(" + query.end() + ")"
+                : "p.greptime_timestamp < to_timestamp_millis(" + (query.end() + 1L) + ")");
+        if (StringUtils.hasText(query.search())) {
+            filters.add("strpos(lower(t.table_name), lower('" + query.search().replace("'", "''") + "')) > 0");
+        }
         return "SELECT DISTINCT t.table_name AS table_name"
                 + " FROM greptime_physical_table AS p"
                 + " JOIN information_schema.tables AS t ON p.__table_id = t.table_id"
                 + " WHERE " + String.join(" AND ", filters)
                 + " ORDER BY t.table_name"
                 + " LIMIT " + Math.min(query.limit(), MAX_LIMIT);
-    }
-
-    private long inclusiveEnd(long end) {
-        return end == Long.MAX_VALUE ? Long.MAX_VALUE : end + 1;
     }
 
     private void addOptionalEqualsColumn(List<String> filters, String column, String value) {

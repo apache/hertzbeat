@@ -112,8 +112,14 @@ function useTopologyBootstrap(
     publishState(inputRef, 'loading');
     // Keep G6 inside the mounted runtime so route chunks do not evaluate it before a canvas is requested.
     void import('@antv/g6')
-      .then(async module => {
-        const candidate = await initializeCandidateGraph(module, container, resources, runtimeRefs, () => cancelled);
+      .then(async ({ Graph, NodeEvent, EdgeEvent, CanvasEvent, GraphEvent }) => {
+        const candidate = await initializeCandidateGraph(
+          { Graph, NodeEvent, EdgeEvent, CanvasEvent, GraphEvent },
+          container,
+          resources,
+          runtimeRefs,
+          () => cancelled
+        );
         if (candidate) commitCandidateGraph(candidate, resources, runtimeRefs);
       })
       .catch(() => {

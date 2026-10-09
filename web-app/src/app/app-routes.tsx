@@ -209,10 +209,24 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('services'),
+                lazy: async () => {
+                  const { ServicesPage } = await import('@/features/services');
+                  return { Component: ServicesPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('explore'),
                 lazy: async () => {
                   const { ExplorePage } = await import('@/features/explore');
                   return { Component: ExplorePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('signal-dashboards'),
+                lazy: async () => {
+                  const { SignalDashboardsPage } = await import('@/features/signal-dashboard');
+                  return { Component: SignalDashboardsPage };
                 }
               },
               {

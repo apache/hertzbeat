@@ -17,71 +17,38 @@
 
 import { z } from 'zod';
 
-import { ExploreSignalContractError, type ExplorePageResult, type TraceRow } from '../model/explore-signal-contract';
-import {
-  nullableJavaLongSchema,
-  nullableNonNegativeIntegerSchema,
-  nullableStringMapSchema,
-  nullableStringSchema,
-  nonNegativeIntegerSchema,
-  parseExplorePage
-} from './explore-wire-schema';
+import { traceEvidenceSchema } from '@/shared/trace-evidence';
 
-const traceSummaryShape = {
-  traceId: z.string().min(1),
-  rootSpanId: nullableStringSchema,
-  serviceName: nullableStringSchema,
-  serviceNamespace: nullableStringSchema,
-  rootSpanName: nullableStringSchema,
-  durationNanos: nullableJavaLongSchema,
-  status: nullableStringSchema,
-  startTime: nullableNonNegativeIntegerSchema,
-  errorSpanCount: nonNegativeIntegerSchema,
-  resourceAttributes: nullableStringMapSchema
-};
-const traceServiceStatSchema = z
+import { ExploreSignalContractError, type TracePageResult } from '../model/explore-signal-contract';
+import { parseExplorePage } from './explore-wire-schema';
+
+const querySchema = z
   .object({
-    spanCount: nonNegativeIntegerSchema.positive(),
-    errorCount: nonNegativeIntegerSchema
+    sort: z.enum(['newest', 'duration_desc']),
+    coverage: z.enum(['window', 'bounded']),
+    rowLimit: z.number().int().positive().safe().nullable(),
+    truncated: z.boolean().nullable()
   })
-  .refine(stat => stat.errorCount <= stat.spanCount);
-const traceServiceStatsSchema = z
-  .record(
-    z.string().refine(serviceName => serviceName.trim().length > 0),
-    traceServiceStatSchema
-  )
-  .refine(stats => Object.keys(stats).length > 0);
-const traceRowShape = {
-  ...traceSummaryShape,
-  spanCount: nonNegativeIntegerSchema.positive().nullable(),
-  serviceStats: traceServiceStatsSchema.nullable()
-};
-const traceRowSchema: z.ZodType<TraceRow> = z.object(traceRowShape).superRefine((row, context) => {
-  if ((row.spanCount === null) !== (row.serviceStats === null)) {
-    context.addIssue({ code: 'custom', message: 'Trace completeness evidence must be jointly available' });
-    return;
-  }
-  if (row.spanCount === null || row.serviceStats === null) return;
-  const stats = Object.values(row.serviceStats);
-  const spanTotal = stats.reduce((sum, stat) => sum + stat.spanCount, 0);
-  const errorTotal = stats.reduce((sum, stat) => sum + stat.errorCount, 0);
-  if (
-    !Number.isSafeInteger(spanTotal) ||
-    !Number.isSafeInteger(errorTotal) ||
-    spanTotal !== row.spanCount ||
-    errorTotal !== row.errorSpanCount
-  ) {
-    context.addIssue({ code: 'custom', message: 'Trace service statistics do not match trace totals' });
-  }
-});
+  .refine(query =>
+    query.coverage === 'window' ? query.rowLimit === null && query.truncated === false : query.rowLimit !== null
+  );
 
-export function parseTracePage(value: unknown, pageIndex: number, pageSize: number): ExplorePageResult<TraceRow> {
-  const page = parseExplorePage(value, pageIndex, pageSize, traceRowSchema);
+export function parseTracePage(
+  value: unknown,
+  pageIndex: number,
+  pageSize: number,
+  expectedSort?: 'newest' | 'duration_desc'
+): TracePageResult {
+  const page = parseExplorePage(value, pageIndex, pageSize, traceEvidenceSchema);
   requireUnique(
     page.content.map(row => row.traceId),
     'trace page contains duplicate traceId'
   );
-  return page;
+  const parsed = z.object({ query: querySchema.optional() }).safeParse(value);
+  if (!parsed.success || (expectedSort && parsed.data.query && parsed.data.query.sort !== expectedSort)) {
+    throw new ExploreSignalContractError('Trace query coverage does not match request');
+  }
+  return parsed.data.query ? { ...page, query: parsed.data.query } : page;
 }
 
 function requireUnique(values: string[], message: string) {

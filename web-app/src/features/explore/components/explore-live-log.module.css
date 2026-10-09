@@ -1,0 +1,31 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.table {
+  height: clamp(360px, 60vh, 640px);
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  align-items: center;
+  min-height: var(--hb-workbench-header-height);
+}
+.untimed {
+  border-top: 1px solid var(--hb-border-subtle);
+  padding-block: var(--hb-space-2);
+}
+.untimed ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.untimed button {
+  border: 0;
+  background: transparent;
+  color: var(--hb-text-primary);
+  text-align: start;
+  padding: var(--hb-space-2);
+  cursor: pointer;
+}

@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
+import type { LogFilterFailureReason } from './explore-log-filter-failure';
 import type {
-  ExplorePageResult,
+  TracePageResult,
   LogHistoryEvidence,
   MetricConsole,
-  MetricSignalEvidence,
-  TraceRow
+  MetricSignalEvidence
 } from './explore-signal-contract';
 import type { MetricResultState } from './explore-signal-model';
 import type { ExactTimeWindow } from '@/shared/query-context';
@@ -30,12 +30,24 @@ type EvidenceOwner = { window: ExactTimeWindow; revision: number };
 export type HistoricalEvidence =
   | (EvidenceOwner & { signal: 'metrics'; data: MetricSignalEvidence })
   | (EvidenceOwner & { signal: 'logs'; data: LogHistoryEvidence })
-  | (EvidenceOwner & { signal: 'traces'; data: ExplorePageResult<TraceRow> });
+  | (EvidenceOwner & { signal: 'traces'; data: TracePageResult });
 
-export type ExploreFailureKind = 'permission' | 'transport_error' | 'contract_error' | 'error';
+export type ExploreFailureKind =
+  | 'permission'
+  | 'transport_error'
+  | 'contract_error'
+  | 'invalid_query'
+  | 'invalid_filter'
+  | 'calculated_budget_exceeded'
+  | 'calculated_invalid_pattern'
+  | 'error';
 
 type ExploreFailureResultState = {
-  [Kind in ExploreFailureKind]: { kind: Kind };
+  [Kind in ExploreFailureKind]: {
+    kind: Kind;
+    invalidFilterReason?: LogFilterFailureReason | undefined;
+    syntaxDiagnostic?: import('./explore-log-filter-failure').LogSyntaxDiagnostic | undefined;
+  };
 }[ExploreFailureKind];
 
 export type ExploreCurrentResultState = EvidenceOwner &
@@ -46,8 +58,9 @@ export type ExploreCurrentResultState = EvidenceOwner &
         signal: 'logs';
         data: LogHistoryEvidence['page'];
         statistics: Pick<LogHistoryEvidence, 'overview' | 'trend'>;
+        calculated?: LogHistoryEvidence['calculated'];
       }
-    | { kind: 'empty' | 'ready'; signal: 'traces'; data: ExplorePageResult<TraceRow> }
+    | { kind: 'empty' | 'ready'; signal: 'traces'; data: TracePageResult }
   );
 
 export type ExplorePageResultState =
@@ -57,4 +70,19 @@ export type ExplorePageResultState =
   | ExploreFailureResultState
   | ExploreCurrentResultState
   | { kind: 'refreshing'; evidence: ExploreCurrentResultState }
-  | { kind: 'stale_error'; errorKind: ExploreFailureKind; evidence: ExploreCurrentResultState };
+  | {
+      kind: 'stale_error';
+      errorKind: ExploreFailureKind;
+      invalidFilterReason?: LogFilterFailureReason | undefined;
+      syntaxDiagnostic?: import('./explore-log-filter-failure').LogSyntaxDiagnostic | undefined;
+      evidence: ExploreCurrentResultState;
+    };
+
+export function hasMetricQueryEvidence(result: ExplorePageResultState) {
+  const evidence = result.kind === 'refreshing' || result.kind === 'stale_error' ? result.evidence : result;
+  return (
+    evidence.kind === 'metric' &&
+    Boolean(evidence.data) &&
+    (evidence.state.kind === 'ready' || evidence.state.kind === 'empty')
+  );
+}

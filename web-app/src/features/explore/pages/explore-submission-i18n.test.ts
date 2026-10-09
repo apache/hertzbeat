@@ -23,6 +23,21 @@ const runtimeLocales = [en, ja, pt, zhCn, zhTw] as LocaleRoot[];
 const exploreLocales = [exploreEn, exploreJa, explorePt, exploreZhCn, exploreZhTw] as ExploreLocale[];
 
 describe('Explore submission locale contract', () => {
+  it('localizes log time-window navigation in every Explore locale', () => {
+    for (const locale of exploreLocales) {
+      for (const label of [
+        locale.explore.timeControl.windowNavigation,
+        locale.explore.timeControl.previousWindow,
+        locale.explore.timeControl.nextWindow,
+        locale.explore.timeControl.pause,
+        locale.explore.timeControl.play
+      ]) {
+        expect(label).toEqual(expect.any(String));
+        expect(label).not.toBe('');
+      }
+    }
+  });
+
   it('keeps every field validation message available in all runtime locales', () => {
     for (const locale of runtimeLocales) {
       for (const key of submissionErrorKeys) {
@@ -33,18 +48,13 @@ describe('Explore submission locale contract', () => {
 
   it('describes the metric step in the integer-seconds format accepted by submission', () => {
     for (const locale of runtimeLocales) {
-      expect(locale.exploreMetric.step).not.toContain('60s');
-      expect(locale.exploreMetric.step).toMatch(/60$/);
+      expect(locale.exploreMetric.step).not.toContain('60');
+      expect(locale.exploreMetric.stepExample).not.toContain('60s');
+      expect(locale.exploreMetric.stepExample).toMatch(/60$/);
     }
-    expect(en.exploreMetric.step).toBe('Step in seconds, for example 60');
-    expect(pt.exploreMetric.step).toBe('Passo em segundos, por exemplo 60');
-  });
-
-  it('localizes the visible metric chart failure fallback', () => {
-    for (const locale of runtimeLocales) {
-      expect(locale.exploreMetric.chartUnavailable).toEqual(expect.any(String));
-      expect(locale.exploreMetric.chartUnavailable).not.toBe('');
-    }
+    expect(en.exploreMetric.step).toBe('Step (seconds)');
+    expect(en.exploreMetric.stepExample).toBe('e.g. 60');
+    expect(pt.exploreMetric.step).toBe('Passo (segundos)');
   });
 
   it('localizes every visible signal-parity filter and enum option', () => {
@@ -90,6 +100,16 @@ describe('Explore submission locale contract', () => {
     expect(pt.exploreLog.history).toBe('Histórico');
     expect(ja.exploreLog.history).not.toBe(en.exploreLog.history);
     expect(zhCn.exploreLog.history).not.toBe(zhTw.exploreLog.history);
+  });
+
+  it('labels recent log queries as submitted with an unrecorded outcome in every locale', () => {
+    for (const locale of exploreLocales) {
+      expect(locale.explore.recentLogs.statusUnknown).toEqual(expect.any(String));
+      expect(locale.explore.recentLogs.statusUnknown).not.toBe('');
+      expect(locale.explore.recentLogs.hint).toEqual(expect.any(String));
+      expect(locale.explore.recentLogs.hint).not.toBe('');
+    }
+    expect(exploreEn.explore.recentLogs.statusUnknown).toBe('Submitted · outcome not recorded');
   });
 
   it('describes a rendered single trend bucket without claiming the chart is unavailable', () => {
@@ -143,13 +163,40 @@ describe('Explore submission locale contract', () => {
       }
     }
   });
+
+  it('localizes automatic interval recovery and source-log return guidance in every Explore locale', () => {
+    for (const locale of exploreLocales) {
+      for (const value of [
+        locale.explore.logAnalysis.useAuto,
+        locale.explore.logAnalysis.throughputViews,
+        locale.explore.logAnalysis.openGroup,
+        locale.explore.logAnalysis.return,
+        locale.explore.logAnalysis.logsUnit,
+        locale.explore.logAnalysis.throughputLogsUnit,
+        locale.explore.logComparison.inspect
+      ]) {
+        expect(value).toEqual(expect.any(String));
+        expect(value).not.toBe('');
+      }
+    }
+  });
 });
 
 type ExploreLocale = {
   explore: {
     serviceNamespace: string;
+    timeControl: {
+      windowNavigation: string;
+      previousWindow: string;
+      nextWindow: string;
+      pause: string;
+      play: string;
+    };
+    recentLogs: { statusUnknown: string; hint: string };
     logQueryBuilder: Record<string, string>;
-    perses: Record<string, string>;
+    perses: Record<string, string | Record<string, string>>;
+    logAnalysis: Record<string, string>;
+    logComparison: Record<string, string>;
   };
 };
 
@@ -157,7 +204,7 @@ type LocaleRoot = {
   explore: { submissionErrors: Record<(typeof submissionErrorKeys)[number], string> };
   exploreMetric: {
     step: string;
-    chartUnavailable: string;
+    stepExample: string;
     temporalAggregation: string;
     temporalAggregationContext: string;
     temporalAggregationValues: Record<'raw' | 'rate' | 'increase' | 'delta', string>;

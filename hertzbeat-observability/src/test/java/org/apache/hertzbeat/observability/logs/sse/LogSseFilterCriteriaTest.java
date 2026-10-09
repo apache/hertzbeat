@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import java.util.Map;
+
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,31 @@ class LogSseFilterCriteriaTest {
     private LogEntry testLogEntry;
     private LogSseFilterCriteria filterCriteria;
 
+    @Test
+    void numericRangeUsesOnlyNativeScalarsAndImmutableSnapshot() {
+        var criteria = new LogSseFilterCriteria();
+        criteria.setWorkspaceId("default");
+        criteria.setLogNumericRange("{\"version\":1,\"field\":\"attribute:x\",\"min\":2,\"max\":6}");
+        var matcher = criteria.snapshot().matcher();
+        criteria.setLogNumericRange("{}");
+        for (Object value : java.util.List.of(4L, 2.5, 2, 6)) {
+            assertTrue(matcher.test(LogEntry.builder().resource(Map.of("hertzbeat.workspace_id", "default"))
+                    .attributes(Map.of("x", value)).build()));
+        }
+        for (Object value : java.util.List.of("4", java.util.List.of(4), false, Double.POSITIVE_INFINITY, Double.NaN, 7)) {
+            assertFalse(matcher.test(LogEntry.builder().resource(Map.of("hertzbeat.workspace_id", "default"))
+                    .attributes(Map.of("x", value)).build()));
+        }
+        assertFalse(matcher.test(LogEntry.builder().resource(Map.of("hertzbeat.workspace_id", "default"))
+                .attributes(Map.of()).build()));
+        assertThrows(IllegalArgumentException.class, criteria::snapshot);
+        criteria.setLogNumericRange("{\"version\":1,\"field\":\"attribute:x\",\"min\":0,\"max\":0}");
+        for (double zero : new double[] {0.0, -0.0}) {
+            assertTrue(criteria.snapshot().matcher().test(LogEntry.builder()
+                    .resource(Map.of("hertzbeat.workspace_id", "default")).attributes(Map.of("x", zero)).build()));
+        }
+    }
+
     @BeforeEach
     void setUp() {
         // Create test LogEntry
@@ -49,6 +76,38 @@ class LogSseFilterCriteriaTest {
 
         filterCriteria = new LogSseFilterCriteria();
         filterCriteria.setWorkspaceId("default");
+    }
+
+    @Test
+    void categoryMatchesEveryNumberInItsRangeAndKeepsExactFilters() {
+        filterCriteria.setSeverityCategory("ERROR");
+        testLogEntry.setSeverityText("SEVERE");
+        for (int number = 17; number <= 20; number++) {
+            testLogEntry.setSeverityNumber(number);
+            assertTrue(filterCriteria.matches(testLogEntry));
+        }
+        for (Integer number : java.util.Arrays.asList(null, 0, 16, 21)) {
+            testLogEntry.setSeverityNumber(number);
+            assertFalse(filterCriteria.matches(testLogEntry));
+        }
+        testLogEntry.setSeverityNumber(17);
+        filterCriteria.setSeverityText("ERROR");
+        assertFalse(filterCriteria.matches(testLogEntry));
+        filterCriteria.setSeverityText("SEVERE");
+        assertTrue(filterCriteria.matches(testLogEntry));
+        testLogEntry.setSeverityText("severe");
+        assertFalse(filterCriteria.matches(testLogEntry));
+        testLogEntry.setSeverityText("SEVERE");
+        filterCriteria.setSeverityNumber(18);
+        assertFalse(filterCriteria.matches(testLogEntry));
+    }
+
+    @Test
+    void invalidSeverityCategoryIsRejectedAtSubscriptionValidation() {
+        filterCriteria.setSeverityCategory("SEVERE");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+        filterCriteria.setSeverityCategory("");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
     }
 
     @Test
@@ -67,9 +126,9 @@ class LogSseFilterCriteriaTest {
         filterCriteria.setSeverityText("ERROR");
         assertFalse(filterCriteria.matches(testLogEntry));
 
-        // Test severity text filter - case insensitive
+        // Match the historical exact source-text predicate, including case.
         filterCriteria.setSeverityText("info");
-        assertTrue(filterCriteria.matches(testLogEntry));
+        assertFalse(filterCriteria.matches(testLogEntry));
     }
 
     @Test
@@ -137,11 +196,11 @@ class LogSseFilterCriteriaTest {
         filterCriteria.setLogContent("Error message");
         assertFalse(filterCriteria.matches(testLogEntry));
 
-        // Test log content filter - case insensitive
+        // Preserve historical case-sensitive literal matching when switching to Live.
         filterCriteria.setLogContent("test log");
-        assertTrue(filterCriteria.matches(testLogEntry));
+        assertFalse(filterCriteria.matches(testLogEntry));
 
-        // Test log content filter - partial match
+        // A whole word inside a longer message still matches.
         filterCriteria.setLogContent("message");
         assertTrue(filterCriteria.matches(testLogEntry));
 
@@ -520,4 +579,17 @@ class LogSseFilterCriteriaTest {
                 .body("live log")
                 .build();
     }
+
+    @Test
+    void reservedEqualityValuesRemainLiteralInLiveFilters() {
+        for (String value : java.util.List.of("!foo", "__hz_exists__", "__hz_in__:bar")) {
+            var filter = LogSseAttributeFilter.parse("key='" + value + "'");
+            assertTrue(filter.matches(java.util.Map.of("key", value)));
+            assertFalse(filter.matches(java.util.Map.of("key", "other")));
+            assertFalse(filter.matches(java.util.Map.of()));
+        }
+        assertThrows(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.class,
+                () -> LogSseAttributeFilter.parse("key=a OR key=b"));
+    }
+
 }

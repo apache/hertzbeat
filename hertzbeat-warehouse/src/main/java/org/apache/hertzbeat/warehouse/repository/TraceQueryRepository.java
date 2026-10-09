@@ -30,6 +30,13 @@ import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailable
  */
 public interface TraceQueryRepository {
 
+    default org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Evidence<?> queryAnalytics(
+            org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Scope scope,
+            org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Options options) {
+        throw new UnsupportedOperationException("Trace analytics unavailable");
+    }
+
+
     /** Maximum number of per-service aggregate rows returned for one trace-list page. */
     int MAX_TRACE_LIST_SERVICE_ROWS = 4096;
 
@@ -197,7 +204,7 @@ public interface TraceQueryRepository {
      * @param limit page size
      * @return trace-list rows with optional total_count
      */
-    default List<Map<String, Object>> queryTraceListRows(Long start,
+    default TraceListPage queryTraceListRows(Long start,
                                                          Long end,
                                                          Boolean errorOnly,
                                                          String serviceName,
@@ -212,7 +219,7 @@ public interface TraceQueryRepository {
                 null, null, null, workspaceId, resourceIdentityFilters, hideInternal, offset, limit);
     }
 
-    default List<Map<String, Object>> queryTraceListRows(Long start,
+    default TraceListPage queryTraceListRows(Long start,
                                                          Long end,
                                                          Boolean errorOnly,
                                                          String serviceName,
@@ -226,10 +233,10 @@ public interface TraceQueryRepository {
                                                          Boolean hideInternal,
                                                          int offset,
                                                          int limit) {
-        return List.of();
+        return new TraceListPage(List.of(), 0L);
     }
 
-    default List<Map<String, Object>> queryTraceListRows(Long start,
+    default TraceListPage queryTraceListRows(Long start,
                                                          Long end,
                                                          Boolean errorOnly,
                                                          String serviceName,
@@ -247,6 +254,51 @@ public interface TraceQueryRepository {
         return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
                 operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
                 hideInternal, offset, limit);
+    }
+
+    /** Supported ordering of complete traces before pagination. */
+    enum TraceSort {
+        NEWEST("newest"), DURATION_DESC("duration_desc");
+
+        private final String value;
+
+        TraceSort(String value) {
+            this.value = value;
+        }
+
+        public String value() {
+            return value;
+        }
+    }
+
+    default TraceListPage queryTraceListRows(Long start, Long end, Boolean errorOnly,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                            String workspaceId, Map<String, Set<String>> resourceIdentityFilters,
+                                            Boolean hideInternal, String spanScope, int offset, int limit, TraceSort sort) {
+        if (sort != TraceSort.NEWEST) {
+            throw new UnsupportedOperationException("Trace duration ordering is unavailable");
+        }
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
+                hideInternal, spanScope, offset, limit);
+    }
+
+    default TraceListPage queryTraceListRows(Long start, Long end, Boolean errorOnly,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                            String workspaceId, Map<String, Set<String>> resourceIdentityFilters,
+                                            Boolean hideInternal, String spanScope, int offset, int limit, TraceSort sort,
+                                            boolean endExclusive) {
+        if (endExclusive) {
+            throw new UnsupportedOperationException("Exclusive trace window unavailable");
+        }
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment, operationName,
+                minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, spanScope, offset, limit, sort);
+    }
+
+    /** Complete evidence for the selected trace page and the exact matching trace count, including empty pages. */
+    record TraceListPage(List<Map<String, Object>> rows, long totalCount) {
     }
 
     /**

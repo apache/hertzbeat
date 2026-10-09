@@ -17,6 +17,16 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import jakarta.persistence.OptimisticLockException;
+import java.sql.SQLException;
+import org.apache.hertzbeat.manager.service.impl.SignalSavedViewConflictException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOGIN_FAILED_CODE;
 
@@ -79,7 +89,7 @@ public class SignalSavedViewController {
 
     @DeleteMapping("/{signal}/{viewKey}")
     @Operation(summary = "Delete signal saved view", description = "Delete a shared saved signal explorer view")
-    public ResponseEntity<Message<Void>> deleteSignalSavedView(@PathVariable String signal, @PathVariable String viewKey) {
+    public ResponseEntity<Message<Void>> deleteSignalSavedView(@PathVariable String signal, @PathVariable String viewKey, @RequestParam long revision) {
         SubjectSum subject = getCurrentSubject();
         String user = getCurrentUser(subject);
         if (user == null) {
@@ -88,8 +98,38 @@ public class SignalSavedViewController {
         if (!canEditSharedAsset(subject)) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
-        signalSavedViewService.deleteSignalSavedView(user, signal, viewKey);
+        signalSavedViewService.deleteSignalSavedView(user, signal, viewKey, revision);
         return ResponseEntity.ok(Message.success("Signal saved view deleted successfully"));
+    }
+
+    // These handlers run after the transactional service has rolled back.
+    @ExceptionHandler({SignalSavedViewConflictException.class, OptimisticLockingFailureException.class,
+            OptimisticLockException.class})
+    public ResponseEntity<Message<Void>> revisionConflict() {
+        return ResponseEntity.status(409).body(Message.fail(FAIL_CODE, "signal_saved_view_revision_conflict"));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Message<Void>> integrityFailure(DataIntegrityViolationException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof SQLException sql && ("23505".equals(sql.getSQLState()) || sql.getErrorCode() == 1062)) {
+                return revisionConflict();
+            }
+        }
+        return storageFailure(exception);
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Message<Void>> storageFailure(DataAccessException exception) {
+        log.error("Signal saved view storage failed", exception);
+        return ResponseEntity.internalServerError().body(Message.fail(FAIL_CODE, "signal_saved_view_storage_failed"));
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<Message<Void>> invalidRequest(Exception exception) {
+        String message = exception instanceof IllegalArgumentException ? exception.getMessage() : "signal_saved_view_revision_invalid";
+        return ResponseEntity.badRequest().body(Message.fail(FAIL_CODE, message));
     }
 
     private String getCurrentUser() {

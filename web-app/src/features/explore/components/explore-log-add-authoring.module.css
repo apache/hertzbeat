@@ -1,0 +1,98 @@
+.authoring {
+  min-width: 0;
+  font-size: 13px;
+}
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.row {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  flex-wrap: wrap;
+  padding-block: 4px;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.label {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+.queryInput,
+.formula {
+  flex: 1;
+  min-width: 0;
+}
+.row :global(.ant-checkbox-wrapper) {
+  flex: 0 0 auto;
+}
+.formula {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+.functionChip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 4px;
+}
+.functionChip :global(.ant-input-number) {
+  width: 54px;
+}
+.formula :global(.ant-input) {
+  min-width: 0;
+  height: 32px;
+}
+.source {
+  min-width: 0;
+}
+.alias {
+  width: 112px;
+  min-width: 68px;
+}
+.aliasEditor {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+.aliasTrigger {
+  flex: 0 0 auto;
+}
+.settings {
+  padding: 4px 0 8px 24px;
+}
+.settings summary {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 28px;
+  overflow-wrap: anywhere;
+}
+.settings summary {
+  width: fit-content;
+  cursor: pointer;
+}
+.settingsBody,
+.commonSettings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 8px 0;
+}
+.settingsBody label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

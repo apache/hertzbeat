@@ -17,6 +17,55 @@ import {
 describe('Agent Gateway browser API', () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it('preserves recorded tool identities without exposing inputs or inventing execution metadata', async () => {
+    const payloads = [
+      {
+        role: 'assistant',
+        content: [{ type: 'toolCall', id: 'call-1', name: 'logs.query', input: { serviceName: 'checkout' } }]
+      },
+      {
+        role: 'toolResult',
+        toolCallId: 'call-1',
+        toolName: 'logs.query',
+        errorMessage: 'The request was declined.',
+        content: [{ type: 'text', text: 'No data was read.' }]
+      },
+      { role: 'assistant', content: [{ type: 'toolCall', id: null, name: 'tool.search' }] }
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        Response.json({
+          code: 0,
+          data: {
+            content: payloads.map((payload, index) => ({
+              id: index + 1,
+              sessionSequence: index + 1,
+              messageRole: payload.role,
+              payloadJson: JSON.stringify(payload),
+              gmtCreate: null
+            })),
+            totalElements: 3,
+            totalPages: 1,
+            number: 0,
+            size: 200
+          }
+        })
+      )
+    );
+    const messages = await listAgentTranscript('session-1');
+    expect(messages[0]).toMatchObject({ text: '', toolCalls: [{ toolCallId: 'call-1', toolName: 'logs.query' }] });
+    expect(messages[0]?.toolCalls?.[0]).not.toHaveProperty('input');
+    expect(messages[1]).toMatchObject({
+      toolCallId: 'call-1',
+      toolName: 'logs.query',
+      errorMessage: 'The request was declined.'
+    });
+    expect(messages[1]).not.toHaveProperty('elapsedMs');
+    expect(messages[1]).not.toHaveProperty('status');
+    expect(messages[2]?.toolCalls).toEqual([{ toolCallId: 'transcript:3:call:0', toolName: 'tool.search' }]);
+  });
+
   it('posts a long-lived authenticated stream and parses events split across chunks', async () => {
     document.cookie = 'hb_ui_csrf=agent-csrf; path=/';
     const fetchMock = vi

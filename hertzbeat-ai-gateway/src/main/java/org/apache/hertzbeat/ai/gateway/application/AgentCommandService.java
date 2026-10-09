@@ -184,6 +184,10 @@ public class AgentCommandService {
                     }
                     return gatewayEvent;
                 })
+                .transformDeferred(events -> {
+                    AgentGatewayMessageBuffer messages = new AgentGatewayMessageBuffer();
+                    return events.concatMapIterable(messages::accept).doFinally(ignored -> messages.clear());
+                })
                 .onErrorResume(exception -> {
                     if (exception instanceof Error error && isFatalJvmError(error)) {
                         completed.set(true);
@@ -244,6 +248,8 @@ public class AgentCommandService {
             }
             if (event.getStatus() == EventStatus.RECOVERY_REQUIRED) {
                 runService.markRecoveryRequired(run, terminalMessage);
+            } else if (event.getStatus() == EventStatus.CANCELLED) {
+                runService.markCancelled(run, terminalMessage);
             } else {
                 runService.markFailed(run, terminalMessage);
             }
@@ -327,6 +333,10 @@ public class AgentCommandService {
         if (terminalEvent.payload() instanceof ErrorPayload payload
                 && EventStatus.RECOVERY_REQUIRED.externalName().equals(payload.status())) {
             return AgentRunStatus.RECOVERY_REQUIRED.name();
+        }
+        if (terminalEvent.payload() instanceof ErrorPayload payload
+                && EventStatus.CANCELLED.externalName().equals(payload.status())) {
+            return AgentRunStatus.CANCELLED.name();
         }
         return AgentRunStatus.FAILED.name();
     }

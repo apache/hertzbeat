@@ -73,6 +73,30 @@ describe('Explore log filter expression', () => {
     }
   });
 
+  for (const operator of ['IN', 'NOT IN'] as const) {
+    for (const quote of ['"', "'"]) {
+      it(`preserves ${operator} list delimiters after odd and even backslashes with ${quote} quotes`, () => {
+        for (const count of [1, 2, 3, 4]) {
+          const slash = '\\'.repeat(count);
+          const first = count % 2 === 1 ? `${quote}a${slash}${quote},inside${quote}` : `${quote}a${slash}${quote}`;
+          const value = `(${first}, ${quote}second${quote})`;
+          const expression = `region ${operator} ${value} AND tier = stable`;
+          const clauses: LogFilterClause[] = [
+            { field: 'region', operator, value },
+            { field: 'tier', operator: '=', value: 'stable' }
+          ];
+          expect(parseLogFilterExpression(expression)).toEqual({ valid: true, clauses });
+          expect(serializeLogFilterExpression(clauses)).toBe(expression);
+          // An even slash run closes the quote: this comma exposes an empty list item.
+          if (count % 2 === 0) {
+            const raw = `region ${operator} (${first},, ${quote}second${quote})`;
+            expect(parseLogFilterExpression(raw)).toEqual({ valid: false, raw });
+          }
+        }
+      });
+    }
+  }
+
   it('treats blank expressions as an authorized unfiltered query', () => {
     expect(parseLogFilterExpression('   ')).toEqual({ valid: true, clauses: [] });
   });

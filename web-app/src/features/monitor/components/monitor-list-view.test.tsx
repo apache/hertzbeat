@@ -79,6 +79,12 @@ describe('MonitorListView evidence states', () => {
     expect(openImport).toHaveBeenCalledOnce();
   });
 
+  it('labels the search and tag drafts independently of their placeholders', () => {
+    renderView({ monitors: { kind: 'empty' } });
+    expect(screen.getByRole('textbox', { name: i18n.t('monitor.search') })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: i18n.t('labels.filter') })).toBeVisible();
+  });
+
   it('keeps permission-gated header management actions absent', () => {
     renderView({
       capabilities: {

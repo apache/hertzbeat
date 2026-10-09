@@ -75,11 +75,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /** Minimal setup assembly shared by setup-only and full setup-gated contexts. */
 @Configuration(proxyBeanMethods = false)
 @Import({SetupController.class, SetupExceptionHandler.class})
-public class SetupApiConfiguration {
+public class SetupApiConfiguration implements WebMvcConfigurer {
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/setup").setViewName("forward:/index.html");
+    }
+
     @Bean
     public ManagedConfigCapability setupManagedConfigCapability(Environment environment) {
         return new ManagedConfigDeploymentDetector(SetupInstallationPaths.root(environment)).detect();

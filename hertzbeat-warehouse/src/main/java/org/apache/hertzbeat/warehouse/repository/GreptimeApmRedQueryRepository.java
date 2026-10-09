@@ -73,6 +73,53 @@ public class GreptimeApmRedQueryRepository implements ApmRedQueryRepository {
         }
     }
 
+    @Override
+    public ApmRedBatchResult querySummaries(List<ApmRedQuery> queries) {
+        if (queries.isEmpty()) {
+            return new ApmRedBatchResult(true, Map.of());
+        }
+        if (queries.size() > 500) {
+            throw new IllegalArgumentException("Too many RED candidates");
+        }
+        Map<String, ApmRedQuery> scopes = new java.util.LinkedHashMap<>();
+        ApmRedQuery first = queries.getFirst();
+        for (ApmRedQuery query : queries) {
+            if (query.start() != first.start() || query.end() != first.end()
+                    || !query.workspaceId().equals(first.workspaceId())
+                    || scopes.putIfAbsent(query.entityId(), query) != null) {
+                throw new IllegalArgumentException("RED batch scopes must share workspace and window with unique entities");
+            }
+        }
+        try {
+            GreptimeSqlQueryExecutor executor = executorProvider.getIfAvailable();
+            if (executor == null) {
+                return new ApmRedBatchResult(false, Map.of());
+            }
+            String filters = queries.stream().map(query -> "(" + predicate(query).substring(7) + ")")
+                    .collect(java.util.stream.Collectors.joining(" OR "));
+            String sql = "SELECT entity_id, entity_type, SUM(calls_total) AS request_count, "
+                    + "SUM(error_total) AS error_count, SUM(duration_sum_nano) AS duration_sum_nano, "
+                    + "SUM(duration_count) AS duration_count, "
+                    + "uddsketch_calc(0.95, uddsketch_merge(128, 0.01, duration_sketch)) / 1000000.0 "
+                    + "AS latency_p95_ms FROM " + FLOW_TABLE + " WHERE " + filters
+                    + " GROUP BY entity_id, entity_type LIMIT " + (queries.size() + 1);
+            Map<String, ApmRedSummary> summaries = new java.util.LinkedHashMap<>();
+            for (Map<String, Object> row : executor.executeStrict(sql)) {
+                String id = String.valueOf(requiredValue(row, "entity_id"));
+                ApmRedQuery scope = scopes.get(id);
+                if (scope == null || !scope.entityType().equals(String.valueOf(requiredValue(row, "entity_type")))
+                        || summaries.containsKey(id)) {
+                    return new ApmRedBatchResult(false, Map.of());
+                }
+                summaries.put(id, toSummary(row, scope));
+            }
+            return new ApmRedBatchResult(true, summaries);
+        } catch (RuntimeException exception) {
+            log.debug("Greptime APM RED batch is unavailable: {}", exception.getClass().getSimpleName());
+            return new ApmRedBatchResult(false, Map.of());
+        }
+    }
+
     private List<ApmRedPoint> toPoints(List<Map<String, Object>> rows, ApmRedQuery query) {
         if (rows.size() > MAX_POINTS) {
             throw new IllegalArgumentException("APM RED Flow returned too many points");

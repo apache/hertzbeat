@@ -75,6 +75,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
@@ -1131,6 +1134,234 @@ class OtlpIngestionWorkspaceServiceImplTest {
         );
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "http_duration_seconds_bucket,,le",
+            "http_duration_seconds_bucket,http_route,http_route|le",
+            "http_duration_seconds_bucket,le,le",
+            "http_duration_seconds_count,,",
+            "http_duration_seconds_sum,http_route,http_route"
+    })
+    void boundedMetricsConsolePreservesHistogramThresholdGrouping(String metric, String groupBy, String extraLabels) {
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"), anyString(), eq(1_000L), eq(2_000L), eq("30s"), eq(32)))
+                .thenReturn(promqlSuccess(new DatasourceQueryData("otlp-metrics-console", 200, null, List.of())));
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                metric, null, groupBy, "sum", "raw", "30", "32", null);
+        String labels = extraLabels == null ? "" : extraLabels.replace("|", ", ");
+        String expected = groupedMetricPromql((groupBy == null || groupBy.isBlank())
+                        ? (labels.isEmpty() ? "" : labels + ", ")
+                        + "__name__, service_name, service_namespace, deployment_environment_name, "
+                        + "hertzbeat_entity_id, hertzbeat_entity_type, hertzbeat_entity_name"
+                        : (labels.isEmpty() ? "" : labels + ", ") + "__name__",
+                "__name__=\"" + metric + "\", service_name=\"checkout\", service_namespace=\"commerce\", "
+                        + "deployment_environment_name=\"prod\"");
+        assertEquals(expected, console.getQuery());
+    }
+
+    @Test
+    void explicitMetricGroupingCollapsesEntityIdentityAfterProtectedSelection() {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", "http_route:/checkout", "http_route",
+                "sum", "raw", "30", "32", null);
+        assertEquals(groupedMetricPromql("http_route, __name__",
+                "__name__=\"http_duration_seconds_count\", service_name=\"checkout\", "
+                        + "service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                        + "http_route=\"/checkout\""), console.getQuery());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"a,b", "  padded  ", "quote\",comma", "path\\part", "line\nnext", "", "   "})
+    void metricEqualityPreservesExactQuotedDiscoveredValues(String value) {
+        String literal = org.apache.hertzbeat.common.util.JsonUtil.toJson(value);
+        var console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", "http_route=" + literal + ",http_method=GET",
+                null, "sum", "raw", "30", "32", null);
+        assertTrue(console.getQuery().contains("http_route=" + literal));
+        assertTrue(console.getQuery().contains("http_method=\"GET\""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "broken", "http_route=\"/checkout\" and broken", "http_route ~~ /checkout",
+            "http_route=\"bad\\q\"", "http_route=/checkout,", ",http_route=/checkout",
+            "http_route=/checkout,,http_method=GET", "http_route in (/checkout,)"
+    })
+    void boundedMetricsConsoleRejectsMalformedFilterClauses(String filter) {
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                        AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                        "checkout", "commerce", "prod", null, null, null,
+                        "http_duration_seconds_count", filter, null, "sum", "raw", "30", "32", null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "http_route=\"/checkout\"", "http_route!=\"/other\"", "http_route=~\"/checkout.*\"",
+            "http_route!~\"/other.*\"", "http_route in (\"/checkout\", \"/pay\")",
+            "http_route not in (\"/other\")", "http_route contains \"checkout\"",
+            "http_route not contains \"other\"", "http_route exists", "http_route not exists"
+    })
+    void boundedMetricsConsoleRetainsValidFiltersAndDedicatedIdentity(String filter) {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", filter, null, "sum", "raw", "30", "32", null);
+        assertEquals(1, countOccurrences(console.getQuery(), "service_name="));
+        assertTrue(console.getQuery().contains("service_name=\"checkout\""));
+        assertTrue(console.getQuery().contains("http_route"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "service_name=\"other\"", "service_name in (\"other\")",
+            "service_name not exists", "service_name contains \"other\"",
+            "hertzbeat_workspace_id=\"other\"", "__name__!=\"http_duration_seconds_count\""
+    })
+    void boundedMetricsConsoleRejectsFiltersThatConflictWithLockedScope(String filter) {
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                        AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                        "checkout", "commerce", "prod", null, null, null,
+                        "http_duration_seconds_count", filter, null, "sum", "raw", "30", "32", null));
+        verify(metricQueryRepository, never()).hasPromqlExecutor();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "http_route=/check*,http_route=~\"^/check.*$\"",
+            "http_route=*/checkout,http_route=~\"^.*/checkout$\"",
+            "http_route=*check*,http_route=~\"^.*check.*$\"",
+            "http_route!=/other*,http_route!~\"^/other.*$\""
+    })
+    void boundedMetricsConsoleExpandsUnquotedWildcardValues(String filter, String expectedMatcher) {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", filter, null, "sum", "raw", "30", "32", null);
+        assertTrue(console.getQuery().contains(expectedMatcher));
+    }
+
+    @Test
+    void boundedMetricsConsoleKeepsQuotedWildcardAsAnExactLiteral() {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", "http_route=\"/literal*\"",
+                null, "sum", "raw", "30", "32", null);
+        assertTrue(console.getQuery().contains("http_route=\"/literal*\""));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "http_route:/checkout,http_route=\"/checkout\"",
+            "http_route:/check*,http_route=~\"^/check.*$\"",
+            "http_route:\"/checkout path\",http_route=\"/checkout path\"",
+            "NOT http_route:/other,http_route!=\"/other\"",
+            "!http_route:/other*,http_route!~\"^/other.*$\""
+    })
+    void boundedMetricsConsoleAcceptsBoundedDatadogColonAndExclusion(String filter, String matcher) {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", filter, null, "sum", "raw", "30", "32", null);
+        assertTrue(console.getQuery().contains(matcher));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "service_name:other", "NOT service_name:checkout", "!hertzbeat_workspace_id:default",
+            "NOT broken", "http_route:/checkout OR ", "(http_route:/checkout OR http_method:GET)",
+            "http_route:/checkout) OR http_method:GET"
+    })
+    void boundedMetricsConsoleRejectsUnsafeOrUnsupportedDatadogFilter(String filter) {
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                        AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                        "checkout", "commerce", "prod", null, null, null,
+                        "http_duration_seconds_count", filter, null, "sum", "raw", "30", "32", null));
+        verify(metricQueryRepository, never()).hasPromqlExecutor();
+    }
+
+    @Test
+    void boundedMetricsConsoleAcceptsEquivalentLockedColonMatcherOnce() {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", "service_name:checkout", null, "sum", "raw", "30", "32", null);
+        assertEquals(1, countOccurrences(console.getQuery(), "service_name=\"checkout\""));
+    }
+
+    @Test
+    void boundedMetricsConsoleUnionsCrossLabelOrWithinTheLockedScope() {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", "http_route:/checkout OR http_method:GET", null,
+                "sum", "raw", "30", "32", null);
+        String query = console.getQuery();
+        assertTrue(query.contains("http_route=\"/checkout\"} or {"));
+        assertTrue(query.contains("http_method=\"GET\"}"));
+        assertEquals(2, countOccurrences(query, "hertzbeat_workspace_id=\"default\""));
+        assertEquals(2, countOccurrences(query, "service_name=\"checkout\""));
+    }
+
+    @Test
+    void boundedMetricsConsoleAppliesTemporalAggregationWithinEachOrBranch() {
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", "http_route:/checkout OR http_method:GET", null,
+                "sum", "rate", "30", "32", null);
+        assertTrue(console.getQuery().contains("rate({"));
+        assertTrue(console.getQuery().contains("[5m]) or rate({"));
+        assertEquals(2, countOccurrences(console.getQuery(), "hertzbeat_workspace_id=\"default\""));
+    }
+
+    @Test
+    void boundedMetricsConsoleRejectsConflictInAnyOrBranch() {
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                        AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                        "checkout", "commerce", "prod", null, null, null,
+                        "http_duration_seconds_count", "http_route:/checkout OR service_name:other", null,
+                        "sum", "raw", "30", "32", null));
+        verify(metricQueryRepository, never()).hasPromqlExecutor();
+    }
+
+    @Test
+    void boundedMetricsConsoleCapsDisjunctionAndTotalClauseCount() {
+        for (String filter : List.of(
+                String.join(" OR ", java.util.Collections.nCopies(17, "http_route:/checkout")),
+                String.join(",", java.util.Collections.nCopies(101, "http_route:/checkout")))) {
+            assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                    () -> otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                            AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                            "checkout", "commerce", "prod", null, null, null,
+                            "http_duration_seconds_count", filter, null,
+                            "sum", "raw", "30", "32", null));
+        }
+        verify(metricQueryRepository, never()).hasPromqlExecutor();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"invalid?", "http_route,invalid?", "hertzbeat.invalid?", ",http_route", "http_route,", "http_route,,service_name"})
+    void boundedMetricsConsoleRejectsInvalidGroupingWithoutPartialExecution(String groupBy) {
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                        AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                        "checkout", "commerce", "prod", null, null, null,
+                        "http_duration_seconds_bucket", null, groupBy, "sum", "raw", "30", "32", null));
+        verify(metricQueryRepository, never()).hasPromqlExecutor();
+    }
+
     @Test
     void boundedMetricsConsolePushesTheSeriesLimitToTheQueryRepository() {
         DatasourceQueryData oversizedQueryData = new DatasourceQueryData(
@@ -1334,7 +1565,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "commerce",
                 "prod",
                 null,
-                "hertzbeat.entity_id=\"99\" and hertzbeat.entity_type=\"host\"",
+                "hertzbeat.entity_id=\"42\" and hertzbeat.entity_type=\"service\"",
                 null,
                 null,
                 null,
@@ -1997,15 +2228,15 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "collector-a",
                 "checkout-01",
                 "/checkout",
+                null,
                 "20"
         );
 
         assertEquals("greptime-inventory", inventory.getSource());
-        assertEquals(1, inventory.getTotal());
+        assertEquals(20, inventory.getLimit());
+        assertFalse(inventory.isTruncated());
         assertEquals("http_server_duration", inventory.getItems().getFirst().getMetricName());
         assertEquals("latency", inventory.getItems().getFirst().getFamily());
-        assertEquals(0, inventory.getItems().getFirst().getTimeSeriesCount());
-        assertNull(inventory.getItems().getFirst().getLatestObservedAt());
         verify(metricInventoryRepository).findMetricNames(argThat(query ->
                 "checkout".equals(query.serviceName())
                         && "commerce".equals(query.serviceNamespace())
@@ -2017,6 +2248,93 @@ class OtlpIngestionWorkspaceServiceImplTest {
                         && query.end() == 2_000L));
         verify(metricQueryRepository, never()).queryPromqlRange(
                 eq("otlp-related-metrics-inventory"), anyString(), anyLong(), anyLong(), anyString());
+    }
+
+    @Test
+    void inventorySearchesAllPersistedWorkspaceMetricsAndProvesTruncation() {
+        recordRecentMetricContext();
+        when(metricInventoryRepository.findMetricNames(
+                org.mockito.ArgumentMatchers.any(MetricInventoryRepository.Query.class)))
+                .thenReturn(MetricInventoryRepository.Result.success(List.of("cpu_a", "cpu_b", "cpu_c")));
+
+        OtlpMetricsInventoryDto result = otlpIngestionWorkspaceService.getMetricsInventory(
+                "team-a", null, null, 0L, 0L, null, null, null, null, null, null, " CPU_ ", "2");
+
+        assertEquals(2, result.getLimit());
+        assertTrue(result.isTruncated());
+        assertEquals(List.of("cpu_a", "cpu_b"), result.getItems().stream()
+                .map(OtlpMetricsInventoryDto.Item::getMetricName).toList());
+        assertEquals(0L, result.getContext().getStart());
+        assertEquals(0L, result.getContext().getEnd());
+        verify(metricInventoryRepository).findMetricNames(argThat(query ->
+                "team-a".equals(query.workspaceId()) && query.serviceName() == null
+                        && query.serviceNamespace() == null && query.environment() == null
+                        && query.start() == 0L && query.end() == 0L
+                        && "CPU_".equals(query.search()) && query.limit() == 3));
+    }
+
+    @Test
+    void inventoryKeepsPartialAndExplicitNoiseResourceFilters() {
+        recordRecentMetricContext();
+        when(metricInventoryRepository.findMetricNames(
+                org.mockito.ArgumentMatchers.any(MetricInventoryRepository.Query.class)))
+                .thenReturn(MetricInventoryRepository.Result.success(List.of()));
+        for (String service : List.of("checkout", "otel-collector")) {
+            OtlpMetricsInventoryDto result = otlpIngestionWorkspaceService.getMetricsInventory(
+                    "team-a", null, null, 100L, 200L, service, null, null, null, null, null, null, null);
+            assertEquals(service, result.getContext().getServiceName());
+            assertNull(result.getContext().getServiceNamespace());
+            assertNull(result.getContext().getEnvironment());
+            verify(metricInventoryRepository).findMetricNames(argThat(query -> service.equals(query.serviceName())
+                    && query.serviceNamespace() == null && query.environment() == null));
+        }
+    }
+
+    private void recordRecentMetricContext() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of("hertzbeat.workspace_id", "team-a", "service.name", "checkout",
+                        "service.namespace", "commerce", "deployment.environment.name", "prod"),
+                1_710_000_000_000L, "http_server_requests_total", "sum", "1", 42.0, Map.of());
+    }
+
+    @Test
+    void inventoryDistinguishesExactLimitEmptyAndUnavailableWithoutMemoryFallback() {
+        when(metricInventoryRepository.findMetricNames(
+                org.mockito.ArgumentMatchers.any(MetricInventoryRepository.Query.class)))
+                .thenReturn(MetricInventoryRepository.Result.success(List.of("cpu_a", "cpu_b")))
+                .thenReturn(MetricInventoryRepository.Result.success(List.of()))
+                .thenReturn(MetricInventoryRepository.Result.failure())
+                .thenReturn(MetricInventoryRepository.Result.unsupported());
+        OtlpMetricsInventoryDto exact = otlpIngestionWorkspaceService.getMetricsInventory(
+                "team-a", null, null, 100L, 200L, null, null, null, null, null, null, null, "2");
+        assertEquals(2, exact.getItems().size());
+        assertFalse(exact.isTruncated());
+        OtlpMetricsInventoryDto empty = otlpIngestionWorkspaceService.getMetricsInventory(
+                "team-a", null, null, 100L, 200L, null, null, null, null, null, null, null, null);
+        assertEquals(100, empty.getLimit());
+        assertTrue(empty.getItems().isEmpty());
+        assertFalse(empty.isTruncated());
+        for (int attempt = 0; attempt < 2; attempt++) {
+            assertThrows(org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException.class,
+                    () -> otlpIngestionWorkspaceService.getMetricsInventory(
+                            "team-a", null, null, 100L, 200L, null, null, null, null, null, null, null, null));
+        }
+    }
+
+    @Test
+    void inventoryRejectsInvalidExplicitWindowSearchAndLimitBeforeStorage() {
+        for (String limit : List.of("0", "201", "-1", "", "1.5", "not-a-number")) {
+            assertThrows(IllegalArgumentException.class, () -> otlpIngestionWorkspaceService.getMetricsInventory(
+                    "team-a", null, null, 100L, 200L, null, null, null, null, null, null, null, limit));
+        }
+        assertThrows(IllegalArgumentException.class, () -> otlpIngestionWorkspaceService.getMetricsInventory(
+                "team-a", null, null, 201L, 200L, null, null, null, null, null, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> otlpIngestionWorkspaceService.getMetricsInventory(
+                "team-a", null, null, -1L, 200L, null, null, null, null, null, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> otlpIngestionWorkspaceService.getMetricsInventory(
+                "team-a", null, null, 100L, 200L, null, null, null, null, null, null, "x".repeat(129), null));
+        verify(metricInventoryRepository, never()).findMetricNames(
+                org.mockito.ArgumentMatchers.any(MetricInventoryRepository.Query.class));
     }
 
     @Test
@@ -2059,6 +2377,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
 
     @Test
     void explicitMetricWithoutServiceContextStillCarriesTrustedWorkspaceSelector() {
+        recordRecentMetricContext();
         DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
         when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
         when(metricQueryRepository.queryPromqlRange(
@@ -2071,6 +2390,10 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null, null, null, null, null, null, null);
 
         assertTrue(console.getQuery().contains("__name__=\"http_server_requests_total\""));
+        assertNull(console.getContext().getServiceName());
+        assertNull(console.getContext().getServiceNamespace());
+        assertNull(console.getContext().getEnvironment());
+        assertFalse(console.getQuery().contains("service_name="));
         assertEquals(1, countOccurrences(console.getQuery(), "hertzbeat_workspace_id=\"team-a\""));
         verify(metricQueryRepository).queryPromqlRange(
                 eq("otlp-metrics-console"),
@@ -2083,8 +2406,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
     @Test
     void metricsConsoleMapsOtelResourceGroupByWhenQueryIsExplicitMetricName() {
         String expectedQuery = groupedMetricPromql(
-                "service_version, __name__, service_name, service_namespace, deployment_environment_name, "
-                        + "hertzbeat_entity_id, hertzbeat_entity_type, hertzbeat_entity_name",
+                "service_version, __name__",
                 "__name__=\"hertzbeat_demo_checkout_latency_ms_milliseconds\", "
                         + "service_name=\"checkout\", service_namespace=\"hertzbeat-demo\", "
                         + "deployment_environment_name=\"demo\"");
@@ -2124,8 +2446,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
     @Test
     void metricsConsoleMapsCanonicalEntityResourceGroupByWhenQueryIsExplicitMetricName() {
         String expectedQuery = groupedMetricPromql(
-                "host_name, k8s_pod_name, cloud_resource_id, __name__, service_name, service_namespace, "
-                        + "deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_type, hertzbeat_entity_name",
+                "host_name, k8s_pod_name, cloud_resource_id, __name__",
                 "__name__=\"hertzbeat_demo_checkout_latency_ms_milliseconds\", "
                         + "service_name=\"checkout\", service_namespace=\"hertzbeat-demo\", "
                         + "deployment_environment_name=\"demo\"");
@@ -2239,6 +2560,22 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 anyLong(),
                 eq("60s")
         );
+    }
+
+    @Test
+    void metricsConsoleNestsOuterTimeAggregationAfterScopedInnerSpaceAggregation() {
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"), anyString(), eq(1_000L), eq(2_000L), eq("1800s"), eq(32)))
+                .thenReturn(promqlSuccess(new DatasourceQueryData("otlp-metrics-console", 200, null, List.of())));
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getBoundedMetricsConsole(
+                AuthTokenScopes.DEFAULT_WORKSPACE_ID, null, null, 1_000L, 2_000L,
+                "checkout", "commerce", "prod", null, null, null,
+                "http_duration_seconds_count", null, null, "sum", "nested_max_1800_after_avg_300", "1800", "32", null);
+        String query = console.getQuery();
+        assertTrue(query.startsWith("max_over_time((sum by ("));
+        assertTrue(query.contains("avg_over_time({hertzbeat_workspace_id=\"default\""));
+        assertTrue(query.endsWith("[300s])))[1800s:300s])"));
     }
 
     @Test

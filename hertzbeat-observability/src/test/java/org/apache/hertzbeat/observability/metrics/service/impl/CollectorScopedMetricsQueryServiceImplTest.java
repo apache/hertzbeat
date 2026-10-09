@@ -53,6 +53,27 @@ class CollectorScopedMetricsQueryServiceImplTest {
     }
 
     @Test
+    void labelDiscoveryValidatesWindowAndPreservesTheFullSubmittedScope() {
+        var request = new CollectorScopedMetricsQueryService.LabelsRequest("team-a", null, null,
+                1000L, 2000L, "checkout", "commerce", "prod", "collector-a", "instance-a", "/orders",
+                "duration_bucket", "http_route!=/private", "http_route", "100", null);
+        service.labels(request);
+        verify(workspaceService).getMetricLabels(request);
+    }
+
+    @Test
+    void labelDiscoveryRejectsUnboundedAndCallerControlledWorkspaceBeforeRead() {
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> service.labels(new CollectorScopedMetricsQueryService.LabelsRequest("team-a", null, null,
+                        null, 2000L, null, null, null, null, null, null, "metric", null, null, null, null)));
+        assertThrows(org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException.class,
+                () -> service.labels(new CollectorScopedMetricsQueryService.LabelsRequest("team-a", null, null,
+                        1000L, 2000L, null, null, null, null, null, null, "metric",
+                        "hertzbeat_workspace_id=other", null, null, null)));
+        verifyNoInteractions(workspaceService);
+    }
+
+    @Test
     void scopesGeneratedMetricQueryThroughCanonicalCollectorLabel() {
         OtlpMetricsConsoleDto result = new OtlpMetricsConsoleDto();
         result.setContext(new OtlpMetricsConsoleDto.Context());
@@ -67,6 +88,61 @@ class CollectorScopedMetricsQueryServiceImplTest {
     }
 
     @Test
+    void acceptsOnlyBoundedRollupControlsWithoutChangingScope() {
+        OtlpMetricsConsoleDto result = new OtlpMetricsConsoleDto();
+        result.setContext(new OtlpMetricsConsoleDto.Context());
+        when(workspaceService.getBoundedMetricsConsole(
+                "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", null, null, "http_server_duration", "span_kind=server",
+                null, "sum", "rollup_avg_300", "300", "32", null)).thenReturn(result);
+        service.query(withControls(request("collector-a", "http_server_duration"), "sum", "rollup_avg_300", "300", "32"));
+        verify(workspaceService).getBoundedMetricsConsole(
+                "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", null, null, "http_server_duration", "span_kind=server",
+                null, "sum", "rollup_avg_300", "300", "32", null);
+        assertThrows(ObservabilityQueryRequestException.class,
+                () -> service.query(withControls(request("collector-a", "http_server_duration"),
+                        "sum", "rollup_avg_300", "60", "32")));
+        for (String invalid : List.of("rollup_avg_0", "rollup_avg_86401", "rollup_predict_300", "rollup_avg_300)")) {
+            assertThrows(ObservabilityQueryRequestException.class,
+                    () -> service.query(withControls(request("collector-a", "http_server_duration"),
+                            "sum", invalid, "60", "32")));
+        }
+    }
+
+    @Test
+    void derivesRollupStepWhenAbsentAndRejectsResolutionThatCannotBeHonored() {
+        service.query(withControls(request("collector-a", "http_server_duration"),
+                "sum", "rollup_avg_300", null, "32"));
+        verify(workspaceService).getBoundedMetricsConsole(
+                "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", null, null, "http_server_duration", "span_kind=server",
+                null, "sum", "rollup_avg_300", "300", "32", null);
+        var longWindow = withWindow(withControls(request("collector-a", "http_server_duration"),
+                "sum", "rollup_avg_60", "60", "32"), 100L, 86_400_100L);
+        assertThrows(ObservabilityQueryRequestException.class, () -> service.query(longWindow));
+    }
+
+    @Test
+    void validatesBothNestedTimeStagesAndOuterResolution() {
+        service.query(withControls(request("collector-a", "http_server_duration"),
+                "sum", "nested_max_1800_after_avg_300", "1800", "32"));
+        verify(workspaceService).getBoundedMetricsConsole(
+                "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", null, null, "http_server_duration", "span_kind=server",
+                null, "sum", "nested_max_1800_after_avg_300", "1800", "32", null);
+        for (String invalid : List.of("nested_max_300_after_avg_300", "nested_max_60_after_avg_300",
+                "nested_max_86401_after_avg_300", "nested_max_1800_after_avg_0")) {
+            assertThrows(ObservabilityQueryRequestException.class,
+                    () -> service.query(withControls(request("collector-a", "http_server_duration"),
+                            "sum", invalid, "1800", "32")));
+        }
+        assertThrows(ObservabilityQueryRequestException.class,
+                () -> service.query(withControls(request("collector-a", "http_server_duration"),
+                        "sum", "nested_max_1800_after_avg_300", "300", "32")));
+    }
+
+    @Test
     void rejectsMissingOrCallerControlledWorkspaceBeforeMetricsRead() {
         assertThrows(TelemetryStorageUnavailableException.class,
                 () -> service.query(new CollectorScopedMetricsQueryService.Request(
@@ -75,7 +151,7 @@ class CollectorScopedMetricsQueryServiceImplTest {
         assertThrows(TelemetryStorageUnavailableException.class, () -> service.inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
                         null, null, null, 100L, 200L, "checkout", "commerce", "prod", null,
-                        null, null, "20")));
+                        null, null, null, "20")));
         for (String workspaceKey : java.util.List.of(
                 "workspace_id", "workspace.id", "hertzbeat.workspace_id",
                 "hertzbeat_workspace_id")) {
@@ -266,6 +342,29 @@ class CollectorScopedMetricsQueryServiceImplTest {
     }
 
     @Test
+    void preservesHistogramBucketsWithinTheSharedPointBudget() {
+        var frames = java.util.stream.IntStream.range(0, 35).mapToObj(bucket ->
+                new DatasourceQueryData.SchemaData(
+                        new DatasourceQueryData.MetricSchema(List.of(), java.util.Map.of("le", Integer.toString(bucket)),
+                                java.util.Map.of()), List.<Object[]>of(new Object[] {1_000L, 1.0}))).toList();
+        var result = new OtlpMetricsConsoleDto();
+        result.setResults(new DatasourceQueryData("A", 200, null, frames));
+        when(workspaceService.getBoundedMetricsConsole(
+                "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod", "collector-a", null, null,
+                "duration_bucket", "span_kind=server", null, "sum", "raw", "60", "64", null))
+                .thenReturn(result);
+        assertEquals(frames, service.query(request("collector-a", "duration_bucket")).getResults().getFrames());
+        var oversized = new DatasourceQueryData.SchemaData(frames.getFirst().getSchema(),
+                java.util.stream.IntStream.range(0, 1_200).mapToObj(index -> new Object[] {1_000L, 1.0}).toList());
+        result.getResults().setFrames(java.util.stream.IntStream.range(0, 35).mapToObj(index -> oversized).toList());
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> service.query(request("collector-a", "duration_bucket")));
+        result.getResults().setFrames(java.util.stream.IntStream.range(0, 65).mapToObj(index -> frames.getFirst()).toList());
+        assertThrows(TelemetryStorageUnavailableException.class,
+                () -> service.query(request("collector-a", "duration_bucket")));
+    }
+
+    @Test
     void rejectsInvalidOrDuplicateCollectorScope() {
         assertThrows(IllegalArgumentException.class, () ->
                 service.query(request("collector-a\" or other=\"x", null)));
@@ -281,12 +380,12 @@ class CollectorScopedMetricsQueryServiceImplTest {
         result.setContext(new OtlpMetricsConsoleDto.Context());
         when(workspaceService.getMetricsInventory(
                 "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
-                "collector-a", "checkout-01", "/checkout", "20")).thenReturn(result);
+                "collector-a", "checkout-01", "/checkout", "cpu", "20")).thenReturn(result);
 
         OtlpMetricsInventoryDto actual = service.inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
                         "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
-                        "collector-a", "checkout-01", "/checkout", "20"));
+                        "collector-a", "checkout-01", "/checkout", "cpu", "20"));
 
         assertEquals("collector-a", actual.getContext().getCollectorId());
         assertEquals("checkout-01", actual.getContext().getInstance());
@@ -294,11 +393,11 @@ class CollectorScopedMetricsQueryServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
                         "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
-                        "collector-a\"bad", "checkout-01", "/checkout", "20")));
+                        "collector-a\"bad", "checkout-01", "/checkout", null, "20")));
         assertThrows(IllegalArgumentException.class, () -> service.inventory(
                 new CollectorScopedMetricsQueryService.InventoryRequest(
                         "team-a", null, null, 100L, 200L, "checkout", "commerce", "prod",
-                        "collector-a", "checkout-01", "POST /checkout", "20")));
+                        "collector-a", "checkout-01", "POST /checkout", null, "20")));
     }
 
     private CollectorScopedMetricsQueryService.Request request(String collectorId, String query) {

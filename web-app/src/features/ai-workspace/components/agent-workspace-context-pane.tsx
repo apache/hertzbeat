@@ -64,11 +64,12 @@ function ContextTools({ tools }: { tools: AgentToolActivity[] }) {
 }
 
 function ToolActivity({ tool }: { tool: AgentToolActivity }) {
+  const { t } = useTranslation();
   return (
     <div className={styles.activity}>
       <div className={styles.activitySummary}>
         <code>{tool.toolName}</code>
-        <Tag>{tool.status}</Tag>
+        <Tag>{tool.status === 'UNKNOWN' ? t('aiWorkspace.context.statusUnknown') : tool.status}</Tag>
       </div>
       {tool.errorMessage ? (
         <Typography.Text className={styles.activityError ?? ''} type="danger">

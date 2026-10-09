@@ -232,6 +232,29 @@ describe('useCollectorController list mutation and intake', () => {
     });
   });
 
+  it('recovers validation after a corrected intake draft without closing or reopening first', async () => {
+    load
+      .mockResolvedValueOnce(page(0, [collector('edge')], 1))
+      .mockResolvedValueOnce(page(0, [collector('edge', intakeAvailable())], 1));
+    saveIntake.mockResolvedValue(intakeAvailable());
+    const { result } = renderHook(useCollectorControllerTestHook, { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    act(() => result.current.actions.openIntake('edge'));
+    await act(async () =>
+      result.current.actions.saveIntake({ ...intakeRequest(), otlpGrpcEndpoint: 'ftp://invalid.example.test' })
+    );
+    expect(result.current.intakeFailure).toBe('validation');
+    expect(result.current.intakeEditor).not.toBeNull();
+    expect(saveIntake).not.toHaveBeenCalled();
+    expect(load).toHaveBeenCalledOnce();
+    await act(async () => result.current.actions.saveIntake(intakeRequest()));
+    expect(saveIntake).toHaveBeenCalledOnce();
+    expect(saveIntake).toHaveBeenCalledWith('edge', intakeRequest());
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(result.current.intakeFailure).toBeNull();
+    expect(result.current.intakeEditor).toBeNull();
+  });
+
   it('rejects an invalid intake draft before transport', async () => {
     load.mockResolvedValue(page(0, [collector('edge')], 1));
     const { result } = renderHook(useCollectorControllerTestHook, { wrapper: wrapper('/settings/collectors') });

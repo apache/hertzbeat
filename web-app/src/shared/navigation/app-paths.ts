@@ -30,6 +30,7 @@ export const applicationRoutePaths = {
   instrumentation: '/observability/integration',
   topology: '/topology',
   explore: '/explore',
+  services: '/observability/services',
   status: '/status',
   login: loginPath,
   lock: sessionLockPath

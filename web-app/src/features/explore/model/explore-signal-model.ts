@@ -15,39 +15,39 @@
  * limitations under the License.
  */
 
+import { compositionSeries } from '@/platform/perses';
+import { logSummary } from '@/shared/log-summary';
 import type { LiveLogRow, LogRow, MetricConsole } from './explore-signal-contract';
 
-export type LiveLogStatus = 'waiting' | 'connected' | 'degraded' | 'paused' | 'unavailable' | 'error' | 'contract';
-export type MetricSeries = {
-  key: string;
-  name: string;
-  unit?: string | undefined;
-  labels: Record<string, string>;
-  points: unknown[][];
-};
-
-export type MetricPoint = { timestamp: number; value: number };
-
-export type MetricResultState =
-  | { kind: 'error'; message?: string }
-  | { kind: 'contract_error' }
-  | { kind: 'storage_unavailable' }
-  | { kind: 'missing_context' }
-  | { kind: 'unsupported_query' }
-  | { kind: 'empty' }
-  | { kind: 'ready'; series: MetricSeries[] };
+export type LiveLogStatus =
+  | 'waiting'
+  | 'connected'
+  | 'degraded'
+  | 'paused'
+  | 'unavailable'
+  | 'error'
+  | 'contract'
+  | 'invalid_filter'
+  | 'permission';
+export type { MetricSeries, MetricResultState } from '@/platform/perses';
+import { metricNumber } from '@/platform/perses';
+import type { MetricSeries, MetricResultState } from '@/platform/perses';
 
 export function metricResultState(console: MetricConsole): MetricResultState {
+  if (console.composition) return { kind: 'ready', series: compositionSeries(console.composition) };
   const unavailable = metricUnavailableState(console);
   if (unavailable) return unavailable;
   if (console.errorMessage != null) return metricErrorState(console.errorMessage);
   const results = console.results;
-  if (!results || results.status == null) return { kind: 'storage_unavailable' };
+  if (results?.status == null) return { kind: 'storage_unavailable' };
   if (results.status !== 200) return metricErrorState(results.msg ?? undefined);
   if (!Array.isArray(results.frames)) return { kind: 'storage_unavailable' };
   if (results.frames.length === 0) return { kind: 'empty' };
   if (results.frames.some(frame => !hasMetricFrameData(frame))) return { kind: 'storage_unavailable' };
-  const series = metricSeries(console);
+  return metricReadyState(metricSeries(console));
+}
+
+function metricReadyState(series: MetricSeries[]): MetricResultState {
   if (series.some(item => item.points.some(point => !validMetricPoint(point)))) return { kind: 'contract_error' };
   return series.some(item => item.points.length > 0) ? { kind: 'ready', series } : { kind: 'empty' };
 }
@@ -74,28 +74,13 @@ export function metricSeries(console: MetricConsole): MetricSeries[] {
   });
 }
 
-export function metricPoints(series: MetricSeries): MetricPoint[] {
-  return series.points.flatMap(point => {
-    if (!Array.isArray(point)) return [];
-    const timestamp = metricNumber(point[0]);
-    const value = metricNumber(point[1]);
-    return timestamp != null && value != null ? [{ timestamp, value }] : [];
-  });
-}
-
 export function logServiceName(row: LogRow | LiveLogRow) {
   const value = row.resource?.['service.name'] ?? row.resource?.service_name;
   return typeof value === 'string' ? value : undefined;
 }
 
 export function logBody(row: LogRow | LiveLogRow) {
-  if (typeof row.body === 'string') return row.body;
-  if (row.body == null) return undefined;
-  try {
-    return JSON.stringify(row.body);
-  } catch {
-    return undefined;
-  }
+  return logSummary(row.body);
 }
 
 export function logTimestampMs(row: LogRow | LiveLogRow) {
@@ -112,13 +97,6 @@ function metricErrorState(message?: string): MetricResultState {
   return normalized ? { kind: 'error', message: normalized } : { kind: 'error' };
 }
 
-function metricNumber(value: unknown) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
-  if (typeof value !== 'string' || value.trim() === '') return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
 function validMetricPoint(point: unknown[]) {
   const timestamp = metricNumber(point[0]);
   return (
@@ -133,3 +111,5 @@ function validMetricPoint(point: unknown[]) {
 function hasMetricFrameData(frame: unknown) {
   return typeof frame === 'object' && frame !== null && Array.isArray((frame as { data?: unknown }).data);
 }
+
+export { metricPoints } from '@/platform/perses';

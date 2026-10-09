@@ -32,16 +32,31 @@ PID_FILE="$LOGS_DIR/${project.artifactId}.pid"
 APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
 SERVER_PORT=1159
 
+# A PID file is only a hint; PID reuse must not target another process.
+is_collector_pid() {
+    local candidate="$1"
+    case "$candidate" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$candidate" -gt 0 ] 2>/dev/null || return 1
+    kill -0 "$candidate" 2>/dev/null || return 1
+    [ "$(ps -p "$candidate" -o args= -ww 2>/dev/null)" = "$APP_PATH --spring.config.location=$CONF_DIR/" ]
+}
+
 find_running_pid() {
+    local candidate
     if [ -f "$PID_FILE" ]; then
-        PID="$(cat "$PID_FILE" 2>/dev/null)"
-        if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
-            echo "$PID"
+        candidate="$(cat "$PID_FILE" 2>/dev/null)"
+        if is_collector_pid "$candidate"; then
+            echo "$candidate"
             return 0
         fi
     fi
 
-    ps -ef | grep "$APP_PATH" | grep "$CONF_DIR" | grep -v grep | awk '{print $2}' | head -n 1
+    ps -axo pid=,args= -ww | while read -r candidate command; do
+        if [ "$command" = "$APP_PATH --spring.config.location=$CONF_DIR/" ] && is_collector_pid "$candidate"; then
+            echo "$candidate"
+            break
+        fi
+    done
 }
 
 RUNNING_PID="$(find_running_pid)"
@@ -90,11 +105,26 @@ while [ $COUNT -lt 30 ]; do
         rm -f "$PID_FILE"
         exit 1
     fi
-    if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:$SERVER_PORT -sTCP:LISTEN | grep -q "$APP_PID"; then
-        break
+    if ! is_collector_pid "$APP_PID"; then
+        echo "ERROR: PID $APP_PID no longer identifies this Collector; no signal sent. Inspect $LOGS_DIR/startup.log" >&2
+        exit 1
+    fi
+    if ! command -v lsof >/dev/null 2>&1; then
+        echo "Native process launched (PID: $APP_PID); readiness unverified without lsof. Inspect $LOGS_DIR/startup.log and verify collection."
+        exit 0
+    fi
+    if lsof -nP -iTCP:$SERVER_PORT -sTCP:LISTEN | awk -v pid="$APP_PID" '$2 == pid { found = 1 } END { exit !found }'; then
+        echo "Service Start Success!"
+        echo "Service PID: $APP_PID"
+        exit 0
     fi
     COUNT=$((COUNT + 1))
 done
 
-echo "Service Start Success!"
-echo "Service PID: $APP_PID"
+# Recheck ownership before signaling; retain the PID file for inspection.
+if is_collector_pid "$APP_PID" && kill "$APP_PID" 2>/dev/null; then
+    echo "ERROR: Native startup timed out waiting for PID $APP_PID on port $SERVER_PORT; requested shutdown. Inspect $LOGS_DIR/startup.log" >&2
+else
+    echo "ERROR: Native startup timed out; shutdown of PID $APP_PID was not requested. Inspect its identity and $LOGS_DIR/startup.log" >&2
+fi
+exit 1

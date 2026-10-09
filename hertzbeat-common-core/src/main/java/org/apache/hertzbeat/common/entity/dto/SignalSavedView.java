@@ -36,6 +36,10 @@ public class SignalSavedView {
 
     private Long id;
 
+    private Long revision;
+
+    private String creator;
+
     @NotBlank
     @Size(max = 32)
     private String signal;

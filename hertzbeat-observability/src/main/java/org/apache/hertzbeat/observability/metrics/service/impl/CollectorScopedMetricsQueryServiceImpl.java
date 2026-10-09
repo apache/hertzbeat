@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
@@ -48,6 +49,8 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
     private static final Duration MAX_TIME_RANGE = Duration.ofDays(1);
     private static final int MAX_SERIES = 32;
     private static final int MAX_POINTS_PER_SERIES = 1_200;
+    private static final int MAX_HISTOGRAM_SERIES = 64;
+    private static final int MAX_TOTAL_POINTS = MAX_SERIES * MAX_POINTS_PER_SERIES;
     private static final Set<String> AGGREGATIONS = Set.of("avg", "sum", "min", "max", "count");
     private static final Set<String> TEMPORAL_AGGREGATIONS = Set.of("raw", "rate", "increase", "delta");
 
@@ -66,10 +69,17 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
             throw new ObservabilityQueryRequestException();
         }
         String aggregation = normalizeAllowlistedControl(request.aggregation(), "sum", AGGREGATIONS);
-        String temporalAggregation = normalizeAllowlistedControl(
-                request.temporalAggregation(), "raw", TEMPORAL_AGGREGATIONS);
-        String step = resolveEffectiveStep(start, end, request.step());
-        String limit = resolveSeriesLimit(request.limit());
+        String temporalAggregation = normalizeTemporalAggregation(request.temporalAggregation());
+        String rollupStep = temporalAggregation.startsWith("rollup_")
+                ? temporalAggregation.substring(temporalAggregation.lastIndexOf('_') + 1)
+                : temporalAggregation.startsWith("nested_") ? temporalAggregation.split("_")[2] : null;
+        String step = resolveEffectiveStep(start, end,
+                StringUtils.hasText(request.step()) ? request.step() : rollupStep);
+        if (rollupStep != null && !rollupStep.equals(step)) {
+            throw new ObservabilityQueryRequestException();
+        }
+        int maxSeries = query.endsWith("_bucket") ? MAX_HISTOGRAM_SERIES : MAX_SERIES;
+        String limit = resolveSeriesLimit(request.limit(), maxSeries);
         String scopedFilter = applyCollectorFilter(request.filter(), collectorId);
         queryContextScope.validateMetricFilter(scopedFilter);
         OtlpMetricsConsoleDto result = workspaceService.getBoundedMetricsConsole(
@@ -77,7 +87,7 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
                 request.serviceNamespace(), request.environment(), collectorId, queryContextScope.instance(),
                 queryContextScope.endpoint(), query, scopedFilter, request.groupBy(), aggregation,
                 temporalAggregation, step, limit, request.operationName());
-        sanitizeAndBoundResponse(result);
+        sanitizeAndBoundResponse(result, maxSeries);
         if (result != null && result.getContext() != null) {
             result.getContext().setCollectorId(collectorId);
             result.getContext().setInstance(queryContextScope.instance());
@@ -95,13 +105,30 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
         OtlpMetricsInventoryDto result = workspaceService.getMetricsInventory(
                 workspaceId, request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
                 request.serviceNamespace(), request.environment(), collectorId, queryContextScope.instance(),
-                queryContextScope.endpoint(), request.limit());
+                queryContextScope.endpoint(), request.search(), request.limit());
         if (result != null && result.getContext() != null) {
             result.getContext().setCollectorId(collectorId);
             result.getContext().setInstance(queryContextScope.instance());
             result.getContext().setEndpoint(queryContextScope.endpoint());
         }
         return result;
+    }
+
+    @Override
+    public OtlpMetricLabelsDto labels(LabelsRequest request) {
+        requireExactTimeWindow(request.start(), request.end());
+        String workspace = requireWorkspaceId(request.workspaceId());
+        String collector = normalizeCollectorId(request.collectorId());
+        var context = new TelemetryQueryContextScope(request.instance(), request.endpoint());
+        String filter;
+        try {
+            filter = applyCollectorFilter(request.filter(), collector);
+        } catch (IllegalArgumentException exception) {
+            throw new ObservabilityQueryRequestException();
+        }
+        return workspaceService.getMetricLabels(new LabelsRequest(workspace, request.entityId(), request.entityType(),
+                request.start(), request.end(), request.serviceName(), request.serviceNamespace(), request.environment(),
+                collector, context.instance(), context.endpoint(), request.query(), filter, request.label(), request.limit(), request.operationName()));
     }
 
     private String normalizeCollectorId(String collectorId) {
@@ -166,6 +193,35 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
         return normalized;
     }
 
+    private String normalizeTemporalAggregation(String value) {
+        String normalized = StringUtils.trimWhitespace(value);
+        if (!StringUtils.hasText(normalized)) {
+            return "raw";
+        }
+        normalized = normalized.toLowerCase(Locale.ROOT);
+        if (TEMPORAL_AGGREGATIONS.contains(normalized)) {
+            return normalized;
+        }
+        if (normalized.matches("nested_(avg|sum|min|max|count)_[1-9][0-9]{0,4}_after_"
+                + "(avg|sum|min|max|count)_[1-9][0-9]{0,4}")) {
+            String[] parts = normalized.split("_");
+            long outer = Long.parseLong(parts[2]);
+            long inner = Long.parseLong(parts[5]);
+            if (outer > 86400 || inner > 86400 || outer <= inner) {
+                throw new ObservabilityQueryRequestException();
+            }
+            return normalized;
+        }
+        if (!normalized.matches("rollup_(avg|sum|min|max|count)_[1-9][0-9]{0,4}")) {
+            throw new ObservabilityQueryRequestException();
+        }
+        long seconds = Long.parseLong(normalized.substring(normalized.lastIndexOf('_') + 1));
+        if (seconds > 86400) {
+            throw new ObservabilityQueryRequestException();
+        }
+        return normalized;
+    }
+
     private String resolveEffectiveStep(long start, long end, String requestedStep) {
         long minimumStepSeconds = Math.max(
                 1L,
@@ -198,22 +254,22 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
         return 300L;
     }
 
-    private String resolveSeriesLimit(String requestedLimit) {
+    private String resolveSeriesLimit(String requestedLimit, int maxSeries) {
         String normalized = StringUtils.trimWhitespace(requestedLimit);
         if (!StringUtils.hasText(normalized)) {
-            return Integer.toString(MAX_SERIES);
+            return Integer.toString(maxSeries);
         }
         if (!normalized.matches("[1-9]\\d*")) {
             throw new ObservabilityQueryRequestException();
         }
         try {
-            return Integer.toString(Math.min(Integer.parseInt(normalized), MAX_SERIES));
+            return Integer.toString(Math.min(Integer.parseInt(normalized), maxSeries));
         } catch (NumberFormatException exception) {
             throw new ObservabilityQueryRequestException();
         }
     }
 
-    private void sanitizeAndBoundResponse(OtlpMetricsConsoleDto result) {
+    private void sanitizeAndBoundResponse(OtlpMetricsConsoleDto result, int maxSeries) {
         if (result == null) {
             return;
         }
@@ -227,7 +283,10 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
         if (frames == null) {
             return;
         }
-        if (frames.size() > MAX_SERIES || frames.stream().anyMatch(this::exceedsPointBudget)) {
+        long totalPoints = frames.stream().filter(java.util.Objects::nonNull)
+                .filter(frame -> frame.getData() != null).mapToLong(frame -> frame.getData().size()).sum();
+        if (frames.size() > maxSeries || totalPoints > MAX_TOTAL_POINTS
+                || frames.stream().anyMatch(this::exceedsPointBudget)) {
             throw new TelemetryStorageUnavailableException();
         }
     }

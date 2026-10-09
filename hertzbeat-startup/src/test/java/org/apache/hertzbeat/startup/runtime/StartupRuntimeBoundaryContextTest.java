@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
@@ -50,6 +51,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 class StartupRuntimeBoundaryContextTest {
+
+    private static final String SETUP_DOCUMENT = "<!doctype html><title>Setup document fixture</title>";
 
     private static final SetupRuntimeTransition SETUP_RUNTIME_TRANSITION = () -> { };
 
@@ -106,9 +109,11 @@ class StartupRuntimeBoundaryContextTest {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
         StartupDecision decision = new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         String databaseName = "m5_setup_security_" + System.nanoTime();
+        String staticLocation = setupStaticLocation();
         try (ConfigurableApplicationContext context = launcher.launchAdmittedSpringContext(decision, new String[]{
                 "--spring.profiles.active=test",
                 "--server.port=0",
+                "--spring.web.resources.static-locations=" + staticLocation,
                 "--spring.datasource.url=jdbc:h2:mem:" + databaseName + ";MODE=MYSQL;DB_CLOSE_DELAY=-1",
                 "--spring.flyway.enabled=false",
                 "--hertzbeat.installation.root=" + installationRoot,
@@ -118,6 +123,8 @@ class StartupRuntimeBoundaryContextTest {
         }, SETUP_RUNTIME_TRANSITION, installationRoot);
              HttpClient client = HttpClient.newHttpClient()) {
             int port = ((WebServerApplicationContext) context).getWebServer().getPort();
+
+            assertSetupDocument(client, port);
 
             HttpResponse<String> status = client.send(
                     request(port, "/api/setup/status").GET().build(), HttpResponse.BodyHandlers.ofString());
@@ -198,6 +205,36 @@ class StartupRuntimeBoundaryContextTest {
     }
 
     @Test
+    void setupOnlyDocumentSupportsRefreshWithoutAddingBusinessOrUnknownRoutes() throws Exception {
+        SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
+        try (ConfigurableApplicationContext context = launcher.launchAdmittedSpringContext(
+                new StartupDecision(RuntimeMode.SETUP_ONLY), new String[]{
+                        "--server.port=0", "--server.address=127.0.0.1",
+                        "--spring.web.resources.static-locations=" + setupStaticLocation()
+                }, SETUP_RUNTIME_TRANSITION, installationRoot);
+             HttpClient client = HttpClient.newHttpClient()) {
+            int port = ((WebServerApplicationContext) context).getWebServer().getPort();
+            assertSetupDocument(client, port);
+            HttpResponse<String> status = client.send(request(port, "/api/setup/status").GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, status.statusCode());
+            assertEquals("configuration_required", JsonUtil.fromJson(status.body()).path("phase").asText());
+            for (String path : new String[]{"/setup/unknown", "/unknown", "/assets/missing.css",
+                    "/api/setup/unknown", "/dashboard", "/ai"}) {
+                HttpResponse<String> missing = client.send(request(port, path).header("Accept", "text/html")
+                        .GET().build(), HttpResponse.BodyHandlers.ofString());
+                assertEquals(404, missing.statusCode(), path);
+                assertFalse(missing.body().equals(SETUP_DOCUMENT), path);
+            }
+            HttpResponse<String> write = client.send(request(port, "/setup")
+                    .POST(HttpRequest.BodyPublishers.noBody()).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(405, write.statusCode());
+            assertFalse(context.containsBeanDefinition("spaForwardController"));
+            assertFalse(context.containsBeanDefinition("dataSource"));
+        }
+    }
+
+    @Test
     void setupOnlySourceStartsWithoutBusinessAutoConfiguration() {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
         StartupDecision decision = new StartupDecision(RuntimeMode.SETUP_ONLY);
@@ -217,6 +254,26 @@ class StartupRuntimeBoundaryContextTest {
             assertFalse(context.containsBeanDefinition("warehouseAutoConfiguration"));
             assertFalse(context.containsBeanDefinition("otlpGrpcServerConfig"));
         }
+    }
+
+    private String setupStaticLocation() throws Exception {
+        Path directory = Files.createDirectories(installationRoot.resolve("static"));
+        Files.writeString(directory.resolve("index.html"), SETUP_DOCUMENT);
+        return directory.toUri().toString();
+    }
+
+    private static void assertSetupDocument(HttpClient client, int port) throws Exception {
+        for (String path : new String[]{"/setup", "/setup?resume=configuration", "/setup"}) {
+            HttpResponse<String> document = client.send(request(port, path).header("Accept", "text/html")
+                    .GET().build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, document.statusCode(), path);
+            assertEquals(SETUP_DOCUMENT, document.body());
+            assertTrue(document.headers().firstValue("Content-Type").orElse("").startsWith("text/html"));
+        }
+        HttpResponse<String> head = client.send(request(port, "/setup").method("HEAD", HttpRequest.BodyPublishers.noBody())
+                .build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, head.statusCode());
+        assertEquals("", head.body());
     }
 
     private static HttpRequest.Builder request(int port, String path) {

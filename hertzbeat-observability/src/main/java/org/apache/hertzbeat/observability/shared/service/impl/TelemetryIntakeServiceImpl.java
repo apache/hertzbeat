@@ -1627,17 +1627,6 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                                      Map<String, String> spanAttributes) {
     }
 
-    private String extractLatestTraceId(List<EntityLogQueryHint> logQueryHints) {
-        if (CollectionUtils.isEmpty(logQueryHints)) {
-            return null;
-        }
-        return logQueryHints.stream()
-                .map(EntityLogQueryHint::getTraceId)
-                .map(this::trimToNull)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(null);
-    }
 
     private Long latestMonitorObservedAt(List<Monitor> monitors) {
         if (CollectionUtils.isEmpty(monitors)) {

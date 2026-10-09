@@ -188,16 +188,7 @@
 @media (max-width: 760px) {
   .guidedProgress {
     position: static;
-    min-width: 620px;
-  }
-
-  .guidedProgress :global(.ant-steps) {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .guidedProgress :global(.ant-steps-item) {
-    flex: 1;
+    min-width: 0;
   }
 }
 

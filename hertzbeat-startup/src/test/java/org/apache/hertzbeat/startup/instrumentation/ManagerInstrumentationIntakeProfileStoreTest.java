@@ -19,19 +19,30 @@ package org.apache.hertzbeat.startup.instrumentation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfig;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfigRequest;
+import org.apache.hertzbeat.manager.service.PublicAccessConfigService;
+import org.apache.hertzbeat.manager.service.impl.PublicAccessGeneralConfigServiceImpl;
+import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Environment;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
@@ -52,10 +63,143 @@ import org.apache.hertzbeat.observability.instrumentation.v2.service.Instrumenta
 import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationGuideV2Renderer;
 import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationIntakeProfileV2Service;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 class ManagerInstrumentationIntakeProfileStoreTest {
+
+    @TempDir
+    private Path installationRoot;
+
+    @Test
+    void onePublicAccessSnapshotControlsProfileQuotaAndMapping() {
+        PublicAccessConfigService publicAccess = mock(PublicAccessConfigService.class);
+        when(publicAccess.getConfig()).thenReturn(
+                new PublicAccessConfig(null, "https://updated.example.test/api/otlp", null),
+                new PublicAccessConfig(null, null, null));
+        CollectorDao dao = emptyDao();
+        var store = new ManagerInstrumentationIntakeProfileStore(dao,
+                mock(CollectorIntakeAdvertisementReader.class), configuredServer(), unconfiguredExternal(), publicAccess);
+
+        IntakeProfile server = profile(store.profiles(), "server-direct");
+
+        assertEquals(Availability.AVAILABLE, server.availability());
+        assertEquals("https://updated.example.test/api/otlp", server.endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+        verify(publicAccess).getConfig();
+        verify(dao).findAll(org.springframework.data.domain.PageRequest.of(
+                0, 127, org.springframework.data.domain.Sort.by("name").ascending()));
+    }
+
+    @Test
+    void savedPublicEndpointsReachDiscoveryAndRenderingWithoutRebindingStartupProperties() {
+        GeneralConfigDao dao = publicAccessDao();
+        PublicAccessGeneralConfigServiceImpl publicAccess = publicAccess(dao);
+        var store = new ManagerInstrumentationIntakeProfileStore(emptyDao(),
+                mock(CollectorIntakeAdvertisementReader.class), configuredServer(), unconfiguredExternal(), publicAccess);
+        assertEquals("https://server.example.test/api/otlp", profile(store.profiles(), "server-direct")
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+
+        saveEndpoints(publicAccess, "https://updated.example.test/api/otlp", "https://updated.example.test:4317");
+        IntakeProfile updated = profile(store.profiles(), "server-direct");
+        assertEquals("https://updated.example.test/api/otlp", updated.endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+        assertEquals("https://updated.example.test:4317", updated.endpoints().get(OtlpTransport.GRPC).url());
+        assertEquals(Authentication.BEARER_TOKEN, updated.authentication());
+        assertNull(updated.collectorId());
+        String content = renderContent(store);
+        assertTrue(content.contains("https://updated.example.test/api/otlp"));
+        assertFalse(content.contains("https://server.example.test/api/otlp"));
+
+        saveEndpoints(publicAccess, "https://second.example.test/api/otlp", null);
+        assertEquals("https://second.example.test/api/otlp", profile(store.profiles(), "server-direct")
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+        var recreated = new ManagerInstrumentationIntakeProfileStore(emptyDao(),
+                mock(CollectorIntakeAdvertisementReader.class), configuredServer(), unconfiguredExternal(), publicAccess(dao));
+        assertEquals(profile(store.profiles(), "server-direct"), profile(recreated.profiles(), "server-direct"));
+    }
+
+    @Test
+    void clearingPublicEndpointsRetiresOldTransportsAndNeverRendersStaleAddresses() {
+        PublicAccessGeneralConfigServiceImpl publicAccess = publicAccess(publicAccessDao());
+        var store = new ManagerInstrumentationIntakeProfileStore(emptyDao(),
+                mock(CollectorIntakeAdvertisementReader.class), configuredServer(), unconfiguredExternal(), publicAccess);
+        saveEndpoints(publicAccess, null, "https://grpc-only.example.test:4317");
+        IntakeProfile grpc = profile(store.profiles(), "server-direct");
+        assertEquals(List.of(OtlpTransport.GRPC), grpc.supportedTransports());
+        assertEquals("https://grpc-only.example.test:4317", grpc.endpoints().get(OtlpTransport.GRPC).url());
+
+        saveEndpoints(publicAccess, null, null);
+        IntakeProfile cleared = profile(store.profiles(), "server-direct");
+        assertEquals(Availability.UNAVAILABLE, cleared.availability());
+        assertEquals(ErrorCode.ADVERTISEMENT_INVALID, cleared.errorCode());
+        assertEquals(Map.of(), cleared.endpoints());
+        assertNull(new InstrumentationIntakeProfileV2Service(store).profiles().defaultProfileId());
+        assertThrows(org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException.class,
+                () -> renderContent(store));
+    }
+
+    @Test
+    void savedEndpointsCannotInventMissingProfileIdentityOrAuthentication() {
+        PublicAccessGeneralConfigServiceImpl publicAccess = publicAccess(publicAccessDao());
+        saveEndpoints(publicAccess, "https://updated.example.test/api/otlp", null);
+        for (ServerInstrumentationIntakeProperties properties : List.of(unconfiguredServer(),
+                new ServerInstrumentationIntakeProperties("server-direct", null, null, null))) {
+            var store = new ManagerInstrumentationIntakeProfileStore(emptyDao(),
+                    mock(CollectorIntakeAdvertisementReader.class), properties, unconfiguredExternal(), publicAccess);
+            IntakeProfile invalid = store.profiles().getFirst();
+            assertEquals(Availability.UNAVAILABLE, invalid.availability());
+            assertEquals(ErrorCode.ADVERTISEMENT_INVALID, invalid.errorCode());
+            assertNull(invalid.authentication());
+            assertNull(invalid.collectorId());
+            assertEquals(Map.of(), invalid.endpoints());
+        }
+    }
+
+    private GeneralConfigDao publicAccessDao() {
+        GeneralConfigDao dao = mock(GeneralConfigDao.class);
+        AtomicReference<GeneralConfig> row = new AtomicReference<>();
+        when(dao.findByType("public_access")).thenAnswer(ignored -> row.get());
+        when(dao.save(any(GeneralConfig.class))).thenAnswer(invocation -> {
+            row.set(invocation.getArgument(0));
+            return row.get();
+        });
+        return dao;
+    }
+
+    private PublicAccessGeneralConfigServiceImpl publicAccess(GeneralConfigDao dao) {
+        return new PublicAccessGeneralConfigServiceImpl(dao, new MockEnvironment()
+                .withProperty(SetupInstallationPaths.ROOT_PROPERTY, installationRoot.toString())
+                .withProperty("hertzbeat.instrumentation.server.otlp-http-endpoint",
+                        configuredServer().otlpHttpEndpoint()));
+    }
+
+    private void saveEndpoints(PublicAccessGeneralConfigServiceImpl service, String http, String grpc) {
+        PublicAccessConfigRequest request = new PublicAccessConfigRequest();
+        request.setServerOtlpHttpEndpoint(http);
+        request.setServerOtlpGrpcEndpoint(grpc);
+        service.saveAndGetConfig(request);
+    }
+
+    private String renderContent(ManagerInstrumentationIntakeProfileStore store) {
+        InstrumentationCatalogV2Service catalog = new InstrumentationCatalogV2Service(new InstrumentationCatalogService());
+        var renderer = new InstrumentationGuideV2Renderer(catalog, new InstrumentationIntakeProfileV2Service(store),
+                new InstrumentationApplicationGuideV2Adapter(catalog, InstrumentationGuideAdapterRegistry.official()));
+        return renderer.render(new RenderRequest(2, SourceKind.EXISTING_OPENTELEMETRY, "existing_otlp",
+                        null, null, null, null, null, "server-direct",
+                        new ServiceIdentity("checkout-api", "commerce", "prod", "checkout-1", "/checkout")))
+                .blocks().stream().map(block -> block.content() == null ? "" : block.content())
+                .collect(java.util.stream.Collectors.joining("\n"));
+    }
+
+    private ManagerInstrumentationIntakeProfileStore store(CollectorDao dao, CollectorIntakeAdvertisementReader reader,
+            ServerInstrumentationIntakeProperties server, ExternalOtelCollectorIntakeProperties external) {
+        PublicAccessConfigService publicAccess = mock(PublicAccessConfigService.class);
+        when(publicAccess.getConfig()).thenReturn(new PublicAccessConfig(null,
+                server.otlpHttpEndpoint(), server.otlpGrpcEndpoint()));
+        return new ManagerInstrumentationIntakeProfileStore(dao, reader, server, external, publicAccess);
+    }
+
 
     @Test
     void mapsGlobalServerAndCollectorDestinationsWithoutUsingLegacyServerAdvertisements() {
@@ -70,7 +214,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         when(reader.read(edge)).thenReturn(CollectorInstrumentationIntake.unavailable(
                 "edge", CollectorInstrumentationIntake.ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE));
 
-        var profiles = new ManagerInstrumentationIntakeProfileStore(
+        var profiles = store(
                 dao, reader, configuredServer(), unconfiguredExternal()).profiles();
 
         assertEquals(3, profiles.size());
@@ -109,7 +253,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(server)));
         when(reader.read(server)).thenReturn(availableServer());
 
-        var profiles = new ManagerInstrumentationIntakeProfileStore(
+        var profiles = store(
                 dao, reader, unconfiguredServer(), unconfiguredExternal()).profiles();
 
         assertTrue(profiles.isEmpty());
@@ -125,7 +269,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         ServerInstrumentationIntakeProperties collidingServer = new ServerInstrumentationIntakeProperties(
                 "collector:loopback", "https://server.example.test/api/otlp", null, "bearer_token");
 
-        var profiles = new ManagerInstrumentationIntakeProfileStore(
+        var profiles = store(
                 dao, reader, collidingServer, unconfiguredExternal()).profiles();
 
         assertEquals(2, profiles.size());
@@ -143,7 +287,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         CollectorIntakeAdvertisementReader reader = mock(CollectorIntakeAdvertisementReader.class);
         when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(server)));
         when(reader.read(server)).thenReturn(availableServer());
-        var store = new ManagerInstrumentationIntakeProfileStore(
+        var store = store(
                 dao,
                 reader,
                 configuredServer(),
@@ -210,7 +354,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                 "https://otel.example.test:4318/v1?token=secret-value",
                 "https://otel.example.test:4318/v1#secret-value",
                 "otel.example.test:4318")) {
-            var profile = new ManagerInstrumentationIntakeProfileStore(
+            var profile = store(
                             emptyDao(),
                             mock(CollectorIntakeAdvertisementReader.class),
                             unconfiguredServer(),
@@ -234,7 +378,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
 
     @Test
     void externalAuthenticationIsExplicitBoundedAndSecretFree() throws Exception {
-        var none = new ManagerInstrumentationIntakeProfileStore(
+        var none = store(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
                         unconfiguredServer(),
@@ -258,7 +402,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                 new ObjectMapper().writeValueAsString(none));
 
         for (String authentication : List.of("", "basic", "Bearer secret-value")) {
-            var invalid = new ManagerInstrumentationIntakeProfileStore(
+            var invalid = store(
                             emptyDao(),
                             mock(CollectorIntakeAdvertisementReader.class),
                             unconfiguredServer(),
@@ -409,13 +553,13 @@ class ManagerInstrumentationIntakeProfileStoreTest {
 
     @Test
     void absentConfigurationCreatesNoProfileWhileIncompleteOrUnsafeIdUsesSafeFailureId() {
-        assertTrue(new ManagerInstrumentationIntakeProfileStore(
+        assertTrue(store(
                         emptyDao(), mock(CollectorIntakeAdvertisementReader.class),
                         unconfiguredServer(), unconfiguredExternal())
                 .profiles()
                 .isEmpty());
 
-        var incomplete = new ManagerInstrumentationIntakeProfileStore(
+        var incomplete = store(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
                         unconfiguredServer(),
@@ -426,7 +570,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         assertEquals("external-west", incomplete.id());
         assertEquals(ErrorCode.ADVERTISEMENT_INVALID, incomplete.errorCode());
 
-        var unsafeId = new ManagerInstrumentationIntakeProfileStore(
+        var unsafeId = store(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
                         unconfiguredServer(),
@@ -449,7 +593,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         CollectorIntakeAdvertisementReader reader = mock(CollectorIntakeAdvertisementReader.class);
         when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(server)));
         when(reader.read(server)).thenReturn(availableServer());
-        var store = new ManagerInstrumentationIntakeProfileStore(
+        var store = store(
                 dao,
                 reader,
                 configuredServer(),
@@ -504,7 +648,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         InstrumentationCatalogV2Service catalog =
                 new InstrumentationCatalogV2Service(new InstrumentationCatalogService());
         InstrumentationIntakeProfileV2Service profiles = new InstrumentationIntakeProfileV2Service(
-                new ManagerInstrumentationIntakeProfileStore(
+                store(
                         emptyDao(), mock(CollectorIntakeAdvertisementReader.class), unconfiguredServer(), properties));
         return new InstrumentationGuideV2Renderer(
                 catalog,

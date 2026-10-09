@@ -26,8 +26,9 @@ export function useAlertInhibitQueryController() {
   const management = readAlertInhibitManagementContext(params);
   const source = writeAlertInhibitRoute(query, management).toString();
   useCanonicalQuerySearch(locationSearch, source, setParams);
-  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
+  const { value: search, setValue: setSearch } = useStringQueryDraft(query.search, query.search);
   const updateQuery = (patch: Partial<AlertInhibitQuery>) => {
+    if (patch.search !== undefined) setSearch(patch.search.trim());
     setParams(writeAlertInhibitRoute({ ...query, ...patch }, management));
   };
   const updateManagement = (patch: Pick<AlertInhibitManagementContext, 'mode'>) => {

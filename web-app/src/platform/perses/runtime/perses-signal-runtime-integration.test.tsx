@@ -1,9 +1,12 @@
+import { formatShortLocalTime } from '@/shared/time';
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
+
+import { traceEvidenceFixture } from '@/test/trace-evidence-fixtures';
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,6 +55,33 @@ describe('Perses official signal panel integration', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps the mounted virtual list and its scroll position while a live snapshot changes', async () => {
+    const props = {
+      kind: 'logs-table' as const,
+      title: 'Live logs',
+      timeWindow,
+      display: { rowHeight: 'small' as const, density: 'compact' as const, wrap: false, showTime: true },
+      data: { entries: [{ timestamp: timeWindow.from / 1_000, line: 'first', labels: {} }] }
+    };
+    const view = render(<PersesSignalRuntime {...props} />);
+    const scroller = await screen.findByTestId('virtuoso-scroller');
+    scroller.scrollTop = 120;
+    view.rerender(
+      <PersesSignalRuntime
+        {...props}
+        timeWindow={{ ...timeWindow, to: timeWindow.to + 1_000 }}
+        data={{
+          entries: [{ timestamp: (timeWindow.from + 1_000) / 1_000, line: 'second', labels: {} }, ...props.data.entries]
+        }}
+      />
+    );
+    expect(scroller.isConnected).toBe(true);
+    expect(screen.getByTestId('virtuoso-scroller')).toBe(scroller);
+    expect(scroller.scrollTop).toBe(120);
+    await screen.findByText('second');
+    expect(screen.getByTestId('virtuoso-scroller')).toBe(scroller);
+  });
+
   it('loads and renders the four official panel implementations with snapshot query data', async () => {
     const metric = render(
       <PersesSignalRuntime
@@ -72,6 +102,7 @@ describe('Perses official signal panel integration', () => {
     const logs = render(
       <PersesSignalRuntime
         kind="logs-table"
+        display={{ density: 'compact', wrap: false, showTime: true, timeZone: 'Asia/Shanghai' }}
         title="Logs"
         timeWindow={timeWindow}
         data={{
@@ -80,6 +111,12 @@ describe('Perses official signal panel integration', () => {
       />
     );
     expectRuntimeFrame(logs.container, 'logs-table');
+    await waitFor(() =>
+      expect(logs.container.querySelector('time')).toHaveTextContent(
+        formatShortLocalTime(timeWindow.from, { milliseconds: true, timeZone: 'Asia/Shanghai' })
+      )
+    );
+    expect(logs.container.querySelector('time')).toHaveAttribute('datetime', new Date(timeWindow.from).toISOString());
     expect((timeWindow.from / 1_000) * 1_000).toBe(timeWindow.from);
     expect(await screen.findByTestId('virtuoso-scroller')).toBeInTheDocument();
     const expandLog = await screen.findByRole('button', { name: 'Expand log details' });
@@ -94,6 +131,7 @@ describe('Perses official signal panel integration', () => {
     const traces = render(
       <PersesSignalRuntime
         kind="trace-table"
+        rows={[traceEvidenceFixture()]}
         title="Traces"
         timeWindow={timeWindow}
         data={{
@@ -145,7 +183,8 @@ describe('Perses official signal panel integration', () => {
       />
     );
     expectRuntimeFrame(gantt.container, 'tracing-gantt-chart');
-    expect(await screen.findByRole('heading', { name: /checkout: POST \/orders/u })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /checkout: POST \/orders/u })).not.toBeInTheDocument();
+    expect(await screen.findByTestId('virtuoso-scroller')).toBeInTheDocument();
     expect(gantt.container.querySelector('[data-perses-primitive="tracing-gantt-chart"]')).not.toBeNull();
   });
 });

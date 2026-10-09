@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,7 +46,7 @@ public class SignalSavedViewServiceImpl implements SignalSavedViewService {
     private static final int MAX_LABEL_LENGTH = 255;
     private static final int MAX_DESCRIPTION_LENGTH = 512;
     private static final int MAX_ROUTE_LENGTH = 2048;
-    private static final int MAX_TEXT_LENGTH = 65535;
+    private static final int MAX_TEXT_BYTES = 65535;
     private static final Map<String, String> SIGNAL_ROUTE_PREFIXES = Map.of(
             "logs", "/log/manage",
             "traces", "/trace/manage",
@@ -68,35 +72,46 @@ public class SignalSavedViewServiceImpl implements SignalSavedViewService {
         if (savedView == null) {
             throw new IllegalArgumentException("Saved view is required");
         }
+        if (savedView.getRevision() != null && savedView.getRevision() < 0) {
+            throw new IllegalArgumentException("signal_saved_view_revision_invalid");
+        }
         String normalizedSignal = normalizeSignal(savedView.getSignal());
         String viewKey = normalizeViewKey(savedView.getViewKey());
         String route = normalizeRoute(normalizedSignal, savedView.getRoute());
         LocalDateTime now = LocalDateTime.now();
-        SignalSavedViewEntity entity = signalSavedViewDao
-                .findBySignalAndViewKey(normalizedSignal, viewKey)
-                .orElseGet(() -> SignalSavedViewEntity.builder()
-                        .creator(normalizedCreator)
-                        .signal(normalizedSignal)
-                        .viewKey(viewKey)
-                        .createTime(now)
-                        .build());
+        SignalSavedViewEntity entity = signalSavedViewDao.findBySignalAndViewKey(normalizedSignal, viewKey).orElse(null);
+        checkRevision(entity, savedView.getRevision());
+        if (entity == null) {
+            entity = SignalSavedViewEntity.builder().creator(normalizedCreator).signal(normalizedSignal)
+                    .viewKey(viewKey).createTime(now).build();
+        }
 
         entity.setLabel(limit(requireText(savedView.getLabel(), "label"), MAX_LABEL_LENGTH, "label"));
         entity.setDescription(limit(StringUtils.trimToEmpty(savedView.getDescription()), MAX_DESCRIPTION_LENGTH, "description"));
         entity.setRoute(route);
-        entity.setQuerySnapshot(limitNullable(savedView.getQuerySnapshot(), MAX_TEXT_LENGTH, "querySnapshot"));
-        entity.setPayload(limitJsonNullable(savedView.getPayload(), MAX_TEXT_LENGTH, "payload"));
+        entity.setQuerySnapshot(limitNullable(savedView.getQuerySnapshot(), MAX_TEXT_BYTES, "querySnapshot"));
+        entity.setPayload(limitJsonNullable(savedView.getPayload(), MAX_TEXT_BYTES, "payload"));
         entity.setUpdateTime(now);
-        return toDto(signalSavedViewDao.save(entity));
+        return toDto(signalSavedViewDao.saveAndFlush(entity));
     }
 
     @Override
-    public void deleteSignalSavedView(String creator, String signal, String viewKey) {
+    public void deleteSignalSavedView(String creator, String signal, String viewKey, long revision) {
         requireText(creator, "creator");
-        signalSavedViewDao.deleteBySignalAndViewKey(
-                normalizeSignal(signal),
-                normalizeViewKey(viewKey)
-        );
+        if (revision < 0) {
+            throw new IllegalArgumentException("signal_saved_view_revision_invalid");
+        }
+        var entity = signalSavedViewDao.findBySignalAndViewKey(normalizeSignal(signal), normalizeViewKey(viewKey))
+                .orElseThrow(SignalSavedViewConflictException::new);
+        checkRevision(entity, revision);
+        signalSavedViewDao.delete(entity);
+        signalSavedViewDao.flush();
+    }
+
+    private void checkRevision(SignalSavedViewEntity entity, Long revision) {
+        if (entity == null ? revision != null : revision == null || revision < 0 || !revision.equals(entity.getRevision())) {
+            throw new SignalSavedViewConflictException();
+        }
     }
 
     private String normalizeSignal(String signal) {
@@ -117,11 +132,24 @@ public class SignalSavedViewServiceImpl implements SignalSavedViewService {
 
     private String normalizeRoute(String signal, String route) {
         String normalized = limit(requireText(route, "route"), MAX_ROUTE_LENGTH, "route");
-        String expectedPrefix = SIGNAL_ROUTE_PREFIXES.get(signal);
-        if (!normalized.equals(expectedPrefix) && !normalized.startsWith(expectedPrefix + "?")) {
-            throw new IllegalArgumentException("Saved view route does not match signal");
+        URI uri = URI.create(normalized);
+        if (uri.isAbsolute() || uri.getRawAuthority() != null || uri.getRawFragment() != null) {
+            throw new IllegalArgumentException("Saved view route must be a local explorer route");
         }
-        return normalized;
+        if (SIGNAL_ROUTE_PREFIXES.get(signal).equals(uri.getRawPath())) {
+            return normalized;
+        }
+        if ("/explore".equals(uri.getRawPath())) {
+            List<String> signals = Arrays.stream(StringUtils.defaultString(uri.getRawQuery()).split("&"))
+                    .map(parameter -> parameter.split("=", 2))
+                    .filter(parts -> "signal".equals(URLDecoder.decode(parts[0], StandardCharsets.UTF_8)))
+                    .map(parts -> parts.length == 2 ? URLDecoder.decode(parts[1], StandardCharsets.UTF_8) : "")
+                    .toList();
+            if (signals.size() == 1 && signal.equals(signals.getFirst())) {
+                return normalized;
+            }
+        }
+        throw new IllegalArgumentException("Saved view route does not match signal");
     }
 
     private String requireText(String value, String field) {
@@ -136,7 +164,10 @@ public class SignalSavedViewServiceImpl implements SignalSavedViewService {
         if (value == null) {
             return null;
         }
-        return limit(value, limit, field);
+        if (value.getBytes(StandardCharsets.UTF_8).length > limit) {
+            throw new IllegalArgumentException(field + " is too long");
+        }
+        return value;
     }
 
     private String limitJsonNullable(String value, int limit, String field) {
@@ -144,7 +175,7 @@ public class SignalSavedViewServiceImpl implements SignalSavedViewService {
         if (normalized == null) {
             return null;
         }
-        String limited = limit(normalized, limit, field);
+        String limited = limitNullable(normalized, limit, field);
         if (!JsonUtil.isJsonStr(limited)) {
             throw new IllegalArgumentException(field + " must be valid JSON");
         }
@@ -161,6 +192,8 @@ public class SignalSavedViewServiceImpl implements SignalSavedViewService {
     private SignalSavedView toDto(SignalSavedViewEntity entity) {
         return SignalSavedView.builder()
                 .id(entity.getId())
+                .revision(entity.getRevision())
+                .creator(entity.getCreator())
                 .signal(entity.getSignal())
                 .viewKey(entity.getViewKey())
                 .label(entity.getLabel())

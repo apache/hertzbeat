@@ -677,6 +677,33 @@ test('enforces feature presentation, model, and public API dependency boundaries
   assert.deepEqual(checkArchitecture(publicApi), []);
 });
 
+for (const [feature, entry, exported, implementation] of [
+  ['entity', 'queries', 'loadEntities', 'api/entity-api'],
+  ['topology', 'navigation', 'buildTopologyFocusPath', 'model/topology-navigation-model']
+]) {
+  test(`accepts the ${feature} ${entry} public entry without exposing its internal files`, () => {
+    const files = {
+      ...requiredProjectFiles(),
+      [`src/features/${feature}/${implementation}.ts`]: `export const ${exported} = true;`,
+      [`src/features/${feature}/${entry}/index.ts`]: `export { ${exported} } from '../${implementation}';`,
+      [`src/features/${feature}/${entry}/internal.ts`]: 'export const internal = true;'
+    };
+    const publicEntry = createProject({
+      ...files,
+      'src/features/orders/controller/orders-controller.ts': `import { ${exported} } from '@/features/${feature}/${entry}'; export const useOrders = () => ${exported};`
+    });
+    assert.deepEqual(checkArchitecture(publicEntry), []);
+    const internalEntry = createProject({
+      ...files,
+      'src/features/orders/controller/orders-controller.ts': `import { internal } from '@/features/${feature}/${entry}/internal'; export const useOrders = () => internal;`
+    });
+    assert.match(
+      checkArchitecture(internalEntry).join('\n'),
+      new RegExp(`cross-feature imports must use the target public API.*features/${feature}/${entry}/internal`)
+    );
+  });
+}
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-source-rules-'));
   temporaryProjects.push(directory);

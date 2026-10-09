@@ -23,6 +23,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.observability.ingestion.retry.OtlpIngestionRetryService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.beans.factory.ObjectProvider;
@@ -53,6 +54,11 @@ public class GreptimeTraceTableInitializer {
 
     public static final String TRACE_TABLE_RESOURCE = "greptime/tables/hzb_traces.sql";
 
+    private static final List<String> IDENTITY_COLUMNS = List.of(
+            "resource_attributes.hertzbeat.workspace_id", "resource_attributes.hertzbeat.entity_id",
+            "resource_attributes.hertzbeat.entity_type", "resource_attributes.service.namespace",
+            "resource_attributes.service.instance.id", "resource_attributes.deployment.environment.name",
+            "resource_attributes.hertzbeat.collector.id");
     private static final String SQL_PATH = "/v1/sql";
     private static final String DEFAULT_GREPTIME_DB_NAME = "public";
 
@@ -85,6 +91,14 @@ public class GreptimeTraceTableInitializer {
         }
         try {
             executeStatement(greptimeProperties, readTraceTableStatement());
+            // Native ingestion can create this table before ApplicationReadyEvent.
+            executeStatement(greptimeProperties, "ALTER TABLE hzb_traces " + IDENTITY_COLUMNS.stream()
+                    .map(column -> "ADD COLUMN IF NOT EXISTS \"" + column + "\" STRING NULL")
+                    .collect(java.util.stream.Collectors.joining(", ")));
+            String projection = IDENTITY_COLUMNS.stream().map(column -> "\"" + column + "\"")
+                    .collect(java.util.stream.Collectors.joining(", "));
+            requireIdentitySchema(executeStatement(greptimeProperties,
+                    "SELECT " + projection + " FROM hzb_traces LIMIT 0"));
             log.info("[observability greptime-trace-table] initialized Greptime native trace table.");
         } catch (IOException | RuntimeException ex) {
             log.warn("[observability greptime-trace-table] failed to initialize Greptime native trace table: {}",
@@ -102,7 +116,7 @@ public class GreptimeTraceTableInitializer {
         }
     }
 
-    private void executeStatement(GreptimeProperties greptimeProperties, String statement) {
+    private String executeStatement(GreptimeProperties greptimeProperties, String statement) {
         ResponseEntity<String> response = retryService.execute(() -> restTemplate.exchange(
                         endpoint(greptimeProperties),
                         HttpMethod.POST,
@@ -111,13 +125,24 @@ public class GreptimeTraceTableInitializer {
                 ),
                 responseEntity -> responseEntity == null
                         || retryService.isRetryableStatus(responseEntity.getStatusCode()));
-        if (response == null) {
-            log.warn("[observability greptime-trace-table] Greptime SQL statement returned no response.");
-            return;
+        if (response == null || !response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("Greptime native trace table statement failed");
         }
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            log.warn("[observability greptime-trace-table] Greptime SQL statement returned status {}.",
-                    response.getStatusCode());
+        return response.getBody();
+    }
+
+    static void requireIdentitySchema(String response) {
+        var schema = JsonUtil.fromJson(response).path("output").path(0)
+                .path("records").path("schema").path("column_schemas");
+        if (!schema.isArray() || schema.size() != IDENTITY_COLUMNS.size()) {
+            throw new IllegalStateException("Greptime native trace identity schema is unavailable");
+        }
+        for (int index = 0; index < IDENTITY_COLUMNS.size(); index++) {
+            var column = schema.get(index);
+            if (!IDENTITY_COLUMNS.get(index).equals(column.path("name").asText())
+                    || !"String".equals(column.path("data_type").asText())) {
+                throw new IllegalStateException("Greptime native trace identity schema is incompatible");
+            }
         }
     }
 

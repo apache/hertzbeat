@@ -12,6 +12,7 @@ import {
   ApartmentOutlined,
   AreaChartOutlined,
   AuditOutlined,
+  BranchesOutlined,
   CloudServerOutlined,
   ClusterOutlined,
   ContactsOutlined,
@@ -20,9 +21,11 @@ import {
   DatabaseOutlined,
   DeploymentUnitOutlined,
   FileTextOutlined,
+  FileSearchOutlined,
   HddOutlined,
   HeartOutlined,
   KeyOutlined,
+  LayoutOutlined,
   LineChartOutlined,
   LinkOutlined,
   MailOutlined,
@@ -33,6 +36,7 @@ import {
   RadarChartOutlined,
   RobotOutlined,
   ScheduleOutlined,
+  ShareAltOutlined,
   SettingOutlined,
   StopOutlined,
   TagsOutlined,
@@ -82,6 +86,8 @@ type NavigationResource = {
 
 type RoutedNavigationResource = Omit<NavigationResource, 'name' | 'list' | 'labelKey'> & {
   name?: string;
+  list?: string;
+  labelKey?: string;
 };
 
 const groupResources = [
@@ -182,10 +188,43 @@ const staticRefineResources: ResourceProps[] = [
     order: 10,
     timePolicy: 'none'
   }),
+  routedNavigationResource('services', {
+    parent: 'shell-application-observability',
+    icon: <BranchesOutlined />,
+    order: 15,
+    timePolicy: 'route_owned'
+  }),
   routedNavigationResource('explore', {
     parent: 'shell-application-observability',
     icon: <AreaChartOutlined />,
+    labelKey: 'explore.signals.metrics',
     order: 20,
+    timePolicy: 'route_owned'
+  }),
+  routedNavigationResource('explore', {
+    name: 'explore-logs',
+    parent: 'shell-application-observability',
+    icon: <FileSearchOutlined />,
+    list: `${getAppRoute('explore').path}?signal=logs`,
+    activePath: `${getAppRoute('explore').path}?signal=logs`,
+    labelKey: 'explore.signals.logs',
+    order: 21,
+    timePolicy: 'route_owned'
+  }),
+  routedNavigationResource('explore', {
+    name: 'explore-traces',
+    parent: 'shell-application-observability',
+    icon: <ShareAltOutlined />,
+    list: `${getAppRoute('explore').path}?signal=traces`,
+    activePath: `${getAppRoute('explore').path}?signal=traces`,
+    labelKey: 'explore.signals.traces',
+    order: 22,
+    timePolicy: 'route_owned'
+  }),
+  routedNavigationResource('signal-dashboards', {
+    parent: 'shell-application-observability',
+    icon: <LayoutOutlined />,
+    order: 25,
     timePolicy: 'route_owned'
   }),
   routedNavigationResource('alerts', {
@@ -423,10 +462,10 @@ function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedN
   if (!routeDefinition.resource) throw new Error(`Route ${routeId} is not a Refine resource.`);
   return navigationResource({
     ...resource,
-    activePath: routeDefinition.path,
+    activePath: resource.activePath ?? routeDefinition.path,
     name: resource.name ?? routeDefinition.id,
-    list: routeDefinition.resource.listPath ?? routeDefinition.path,
-    labelKey: routeDefinition.resource.labelKey,
+    list: resource.list ?? routeDefinition.resource.listPath ?? routeDefinition.path,
+    labelKey: resource.labelKey ?? routeDefinition.resource.labelKey,
     ...(routeDefinition.resource.requiredRoles ? { requiredRoles: [...routeDefinition.resource.requiredRoles] } : {})
   });
 }

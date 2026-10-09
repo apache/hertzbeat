@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { EyeOutlined, FileTextOutlined, LineChartOutlined } from '@ant-design/icons';
-import { Button, Input, InputNumber, Radio, Select, Switch, Tooltip, Typography } from 'antd';
+import { FileTextOutlined, LineChartOutlined } from '@ant-design/icons';
+import { Input, InputNumber, Radio, Select, Switch, Tooltip, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,8 @@ import {
   type InvalidAlertRuleDraftField
 } from '../model/alert-rule-model';
 import type { AlertLabelSuggestionState } from '../model/alert-label-suggestion-model';
+import type { AlertRulePreviewState } from '../model/alert-rule-editor-evidence';
+import { AlertRulePreviewAction } from './alert-rule-preview-action';
 import type { AlertRuleMetricTargetState } from '../model/alert-rule-metric-target-state';
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleFieldLabel } from './alert-rule-field-label';
@@ -38,7 +40,7 @@ type AlertRuleFieldsProps = {
   datasource: AlertRuleDatasourceState;
   invalidFields: InvalidAlertRuleDraftField[];
   preview: () => unknown;
-  previewLoading: boolean;
+  previewState: AlertRulePreviewState;
   update: (patch: Partial<AlertRuleDraft>) => void;
   changeDataType: (dataType: AlertRuleDataType) => void;
   labelSuggestions: AlertLabelSuggestionState;
@@ -216,17 +218,7 @@ function QueryExpressionFields(props: AlertRuleFieldsProps) {
               onChange={event => props.update({ expr: event.target.value })}
             />
           )}
-          {periodic && (
-            <Button
-              icon={<EyeOutlined aria-hidden="true" />}
-              type="primary"
-              loading={props.previewLoading}
-              disabled={props.busy}
-              onClick={() => void props.preview()}
-            >
-              {t('alertRules.preview')}
-            </Button>
-          )}
+          {periodic && <AlertRulePreviewAction busy={props.busy} state={props.previewState} preview={props.preview} />}
         </div>
       </FieldRow>
       {!periodic && <FinalExpressionField expression={props.draft.expr} />}

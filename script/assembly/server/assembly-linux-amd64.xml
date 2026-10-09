@@ -46,11 +46,19 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <fileMode>0755</fileMode>
         </fileSet>
 
+        <!-- External configuration contains only imports and explicit operator overrides. -->
+        <fileSet>
+            <directory>../script/assembly/server/config</directory>
+            <includes>
+                <include>application.yml</include>
+            </includes>
+            <outputDirectory>${file.separator}config</outputDirectory>
+        </fileSet>
+
         <!-- Configuration files under the src/main/resources directory are packaged to the config directory-->
         <fileSet>
             <directory>src/main/resources</directory>
             <includes>
-                <include>application.yml</include>
                 <include>logback-spring.xml</include>
                 <include>sureness.yml</include>
             </includes>

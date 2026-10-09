@@ -18,7 +18,10 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.SignalDashboard;
@@ -28,6 +31,7 @@ import org.apache.hertzbeat.manager.dao.SignalDashboardDao;
 import org.apache.hertzbeat.manager.service.SignalDashboardService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Signal dashboard service implementation.
@@ -44,6 +48,7 @@ public class SignalDashboardServiceImpl implements SignalDashboardService {
     private static final int MAX_TEXT_LENGTH = 65535;
 
     private final SignalDashboardDao signalDashboardDao;
+    private final PersesDashboardDocumentValidator documentValidator;
 
     @Override
     @Transactional(readOnly = true)
@@ -62,33 +67,127 @@ public class SignalDashboardServiceImpl implements SignalDashboardService {
             throw new IllegalArgumentException("Signal dashboard is required");
         }
         String dashboardKey = normalizeDashboardKey(dashboard.getDashboardKey());
-        LocalDateTime now = LocalDateTime.now();
-        SignalDashboardEntity entity = signalDashboardDao
-                .findByDashboardKey(dashboardKey)
-                .orElseGet(() -> SignalDashboardEntity.builder()
-                        .creator(normalizedCreator)
-                        .dashboardKey(dashboardKey)
-                        .createTime(now)
-                        .build());
-
-        entity.setTitle(limit(requireText(dashboard.getTitle(), "title"), MAX_TITLE_LENGTH, "title"));
-        entity.setDescription(limit(StringUtils.trimToEmpty(dashboard.getDescription()),
-                MAX_DESCRIPTION_LENGTH, "description"));
-        entity.setTags(limit(StringUtils.trimToEmpty(dashboard.getTags()), MAX_TAGS_LENGTH, "tags"));
-        entity.setLayout(limitJson(requireText(dashboard.getLayout(), "layout"), MAX_TEXT_LENGTH, "layout"));
-        entity.setWidgets(limitJson(requireText(dashboard.getWidgets(), "widgets"), MAX_TEXT_LENGTH, "widgets"));
-        entity.setVariables(limitJsonNullable(dashboard.getVariables(), MAX_TEXT_LENGTH, "variables"));
-        entity.setPanelMap(limitJsonNullable(dashboard.getPanelMap(), MAX_TEXT_LENGTH, "panelMap"));
-        entity.setVersion(limit(StringUtils.defaultIfBlank(dashboard.getVersion(), "v1"),
-                MAX_VERSION_LENGTH, "version"));
-        entity.setUpdateTime(now);
-        return toDto(signalDashboardDao.save(entity));
+        boolean documentMode = dashboard.getDocument() != null;
+        if (documentMode) {
+            documentValidator.validate(dashboardKey, dashboard.getDocument());
+            if (!PersesDashboardDocumentValidator.VERSION.equals(dashboard.getVersion())) {
+                throw new IllegalArgumentException("signal_dashboard_document_version_invalid");
+            }
+        }
+        String title = documentMode ? documentValidator.title(dashboard.getDocument())
+                : limit(requireText(dashboard.getTitle(), "title"), MAX_TITLE_LENGTH, "title");
+        String description = documentMode ? documentValidator.description(dashboard.getDocument())
+                : limit(StringUtils.trimToEmpty(dashboard.getDescription()), MAX_DESCRIPTION_LENGTH, "description");
+        String tags = documentMode ? documentValidator.tags(dashboard.getDocument())
+                : limit(StringUtils.trimToEmpty(dashboard.getTags()), MAX_TAGS_LENGTH, "tags");
+        String layout = documentMode ? null : limitJson(requireText(dashboard.getLayout(), "layout"), MAX_TEXT_LENGTH, "layout");
+        String widgets = documentMode ? null : limitJson(requireText(dashboard.getWidgets(), "widgets"), MAX_TEXT_LENGTH, "widgets");
+        String variables = documentMode ? null : limitJsonNullable(dashboard.getVariables(), MAX_TEXT_LENGTH, "variables");
+        String panelMap = documentMode ? null : limitJsonNullable(dashboard.getPanelMap(), MAX_TEXT_LENGTH, "panelMap");
+        String version = documentMode ? PersesDashboardDocumentValidator.VERSION
+                : limit(StringUtils.defaultIfBlank(dashboard.getVersion(), "v1"), MAX_VERSION_LENGTH, "version");
+        if (documentMode) {
+            consistentMetadata(dashboard.getTitle(), title);
+            consistentMetadata(dashboard.getDescription(), description);
+            consistentMetadata(dashboard.getTags(), tags);
+            if (dashboard.getLayout() != null || dashboard.getWidgets() != null
+                    || dashboard.getVariables() != null || dashboard.getPanelMap() != null) {
+                throw new IllegalArgumentException("signal_dashboard_document_has_legacy_fields");
+            }
+        }
+        SignalDashboardEntity entity = signalDashboardDao.findByDashboardKey(dashboardKey).orElse(null);
+        checkRevision(entity, dashboard.getRevision());
+        boolean create = entity == null;
+        if (create) {
+            if (!documentMode) {
+                throw new IllegalArgumentException("signal_dashboard_document_required");
+            }
+            entity = SignalDashboardEntity.builder().creator(normalizedCreator).dashboardKey(dashboardKey)
+                    .createTime(LocalDateTime.now()).build();
+        } else if (documentMode && entity.getDocument() == null) {
+            if (!emptyLegacy(entity) || !Objects.equals(title, entity.getTitle())
+                    || !Objects.equals(description, StringUtils.defaultString(entity.getDescription()))
+                    || !Objects.equals(tags, StringUtils.defaultString(entity.getTags()))
+                    || !legacyTagsMatch(entity.getTags(), dashboard.getDocument())
+                    || !exactEmptyConversion(entity, dashboard.getDocument())) {
+                throw new IllegalArgumentException("signal_dashboard_legacy_conversion_unsupported");
+            }
+        } else if (!documentMode && entity.getDocument() != null) {
+            throw new IllegalArgumentException("signal_dashboard_legacy_write_blocked");
+        }
+        entity.setTitle(title);
+        entity.setDescription(description);
+        entity.setTags(tags);
+        if (documentMode) {
+            entity.setDocument(dashboard.getDocument().toString());
+            if (create) {
+                entity.setLayout("[]");
+                entity.setWidgets("[]");
+            }
+        } else {
+            entity.setLayout(layout);
+            entity.setWidgets(widgets);
+            entity.setVariables(variables);
+            entity.setPanelMap(panelMap);
+        }
+        entity.setVersion(version);
+        entity.setUpdateTime(LocalDateTime.now());
+        return toDto(signalDashboardDao.saveAndFlush(entity));
     }
 
     @Override
-    public void deleteSignalDashboard(String creator, String dashboardKey) {
+    public void deleteSignalDashboard(String creator, String dashboardKey, long revision) {
         requireText(creator, "creator");
-        signalDashboardDao.deleteByDashboardKey(normalizeDashboardKey(dashboardKey));
+        if (revision < 0) {
+            throw new IllegalArgumentException("signal_dashboard_revision_invalid");
+        }
+        SignalDashboardEntity entity = signalDashboardDao.findByDashboardKey(normalizeDashboardKey(dashboardKey))
+                .orElseThrow(SignalDashboardConflictException::new);
+        checkRevision(entity, revision);
+        signalDashboardDao.delete(entity);
+        signalDashboardDao.flush();
+    }
+
+    private void checkRevision(SignalDashboardEntity entity, Long revision) {
+        if (entity == null ? revision != null : revision == null || revision < 0 || !revision.equals(entity.getRevision())) {
+            throw new SignalDashboardConflictException();
+        }
+    }
+
+    private void consistentMetadata(String supplied, String derived) {
+        if (supplied != null && !supplied.equals(derived)) {
+            throw new IllegalArgumentException("signal_dashboard_document_metadata_conflict");
+        }
+    }
+
+    private boolean exactEmptyConversion(SignalDashboardEntity entity, JsonNode document) {
+        JsonNode spec = document.path("spec");
+        return "30m".equals(spec.path("duration").asText()) && spec.path("variables").isEmpty()
+                && spec.path("panels").isEmpty() && !spec.has("timezone") && !spec.has("refreshInterval")
+                && spec.path("display").has("description") == (entity.getDescription() != null)
+                && document.path("metadata").has("tags") == StringUtils.isNotEmpty(entity.getTags());
+    }
+
+    private boolean legacyTagsMatch(String tags, JsonNode document) {
+        List<String> oldTags = tags == null || tags.isEmpty() ? List.of() : Arrays.asList(tags.split(",", -1));
+        List<String> newTags = new ArrayList<>();
+        document.path("metadata").path("tags").forEach(tag -> newTags.add(tag.asText()));
+        return oldTags.equals(newTags);
+    }
+
+    private boolean emptyLegacy(SignalDashboardEntity entity) {
+        return "v1".equals(entity.getVersion()) && emptyFragment(entity.getLayout(), false, false)
+                && emptyFragment(entity.getWidgets(), false, false)
+                && emptyFragment(entity.getVariables(), true, false)
+                && emptyFragment(entity.getPanelMap(), true, true);
+    }
+
+    private boolean emptyFragment(String value, boolean optional, boolean object) {
+        if (value == null) {
+            return optional;
+        }
+        var node = JsonUtil.fromJsonQuietly(value);
+        return node != null && node.isEmpty() && (object ? node.isObject() : node.isArray());
     }
 
     private String normalizeDashboardKey(String dashboardKey) {
@@ -105,13 +204,6 @@ public class SignalDashboardServiceImpl implements SignalDashboardService {
             throw new IllegalArgumentException(field + " is required");
         }
         return normalized;
-    }
-
-    private String limitNullable(String value, int limit, String field) {
-        if (value == null) {
-            return null;
-        }
-        return limit(value, limit, field);
     }
 
     private String limitJsonNullable(String value, int limit, String field) {
@@ -149,6 +241,8 @@ public class SignalDashboardServiceImpl implements SignalDashboardService {
                 .variables(entity.getVariables())
                 .panelMap(entity.getPanelMap())
                 .version(entity.getVersion())
+                .document(entity.getDocument() == null ? null : JsonUtil.fromJson(entity.getDocument(), JsonNode.class))
+                .revision(entity.getRevision())
                 .createTime(entity.getCreateTime())
                 .updateTime(entity.getUpdateTime())
                 .build();

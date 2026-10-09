@@ -15,89 +15,38 @@
  * limitations under the License.
  */
 
-import type { ExploreQuery, ExploreQueryPatch } from './explore-model';
+import { parseMetricPlan, validateMetricPlan, parseLogAnalysis } from '@/platform/perses';
+import { parseTraceStructure } from './explore-trace-structure';
+import { logModeError, logFilterError } from './explore-log-submission-validation';
+
+import { readValue as normalizedValue } from './explore-url-values';
+import { sharedSubmissionPatch } from './explore-submission-shared';
+import type { ExploreQuery } from './explore-model';
 import {
   isOrderedTraceDurationRange,
   parseMetricAggregation,
   parseMetricStep,
   parseTraceDuration
 } from './explore-field-contract';
-import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
+import {
+  enabledFilterValue,
+  temporalAggregationValue,
+  traceSortValue,
+  traceSpanScopeValue
+} from './explore-parity-filter-model';
 
 export { EXPLORE_METRIC_AGGREGATIONS } from './explore-field-contract';
 
-type SharedExploreSubmissionDraft = {
-  serviceName: string;
-  serviceNamespace: string;
-  environment: string;
-  instance: string;
-  endpoint: string;
-  query: string;
-};
-
-export type MetricExploreSubmissionDraft = SharedExploreSubmissionDraft & {
-  signal: 'metrics';
-  metricFilter: string;
-  groupBy: string;
-  aggregation: string;
-  temporalAggregation: string;
-  stepSeconds: string;
-};
-
-export type LogExploreSubmissionDraft = SharedExploreSubmissionDraft & {
-  signal: 'logs';
-  severityText: string;
-  traceId: string;
-  spanId: string;
-  resourceFilter: string;
-  attributeFilter: string;
-  hideInternal: boolean;
-  hideNoise: boolean;
-};
-
-export type TraceExploreSubmissionDraft = SharedExploreSubmissionDraft & {
-  signal: 'traces';
-  traceId: string;
-  resourceFilter: string;
-  attributeFilter: string;
-  minDurationMs: string;
-  maxDurationMs: string;
-  errorOnly: boolean;
-  spanScope: string;
-  hideInternal: boolean;
-};
-
-export type ExploreSubmissionDraft =
-  MetricExploreSubmissionDraft | LogExploreSubmissionDraft | TraceExploreSubmissionDraft;
-
-type ExploreSubmissionError =
-  | { field: 'aggregation'; code: 'unsupported_aggregation' }
-  | { field: 'stepSeconds'; code: 'invalid_step' }
-  | { field: 'minDurationMs' | 'maxDurationMs'; code: 'invalid_duration' }
-  | { field: 'maxDurationMs'; code: 'min_exceeds_max' };
-
-type KeysOfUnion<T> = T extends unknown ? keyof T : never;
-export type ExploreDraftField = Exclude<KeysOfUnion<ExploreSubmissionDraft>, 'signal'>;
-
-export type ExploreDraftFieldUpdate = {
-  [Field in ExploreDraftField]: {
-    field: Field;
-    value: Field extends 'errorOnly' | 'hideInternal' | 'hideNoise' ? boolean : string;
-  };
-}[ExploreDraftField];
-
-export type ExploreSubmissionErrors = Partial<Record<ExploreSubmissionError['field'], ExploreSubmissionError['code']>>;
-
-export type ExploreSubmissionViewModel = {
-  draft: ExploreSubmissionDraft;
-  errors: ExploreSubmissionErrors;
-  updateField: (update: ExploreDraftFieldUpdate) => void;
-  submit: () => void;
-  removeFilter: (key: keyof ExploreQueryPatch) => boolean;
-};
-
-export type ExploreSubmissionResult =
-  { valid: true; patch: ExploreQueryPatch } | { valid: false; errors: ExploreSubmissionError[] };
+export type * from './explore-submission-types';
+import type {
+  SharedExploreSubmissionDraft,
+  ExploreSubmissionError,
+  MetricExploreSubmissionDraft,
+  LogExploreSubmissionDraft,
+  TraceExploreSubmissionDraft,
+  ExploreSubmissionDraft,
+  ExploreSubmissionResult
+} from './explore-submission-types';
 
 export function draftFromQuery(query: ExploreQuery): ExploreSubmissionDraft {
   if (query.signal === 'metrics') return metricDraftFromQuery(query);
@@ -115,6 +64,7 @@ function metricDraftFromQuery(query: Extract<ExploreQuery, { signal: 'metrics' }
   return {
     ...sharedDraftFromQuery(query),
     signal: 'metrics',
+    metricPlan: query.metricPlan ?? '',
     metricFilter: query.metricFilter ?? '',
     groupBy: query.groupBy ?? '',
     aggregation: query.aggregation ?? '',
@@ -127,7 +77,20 @@ function logDraftFromQuery(query: Extract<ExploreQuery, { signal: 'logs' }>): Lo
   return {
     ...sharedDraftFromQuery(query),
     signal: 'logs',
+    sort: query.sort ?? 'newest',
+    logSort: query.logSort,
+    logAnalysis: query.logAnalysis,
+    logAggregation: query.logAggregation,
+    logTransactions: query.logTransactions,
+    logCalculated: query.logCalculated,
+    logCalculatedV2: query.logCalculatedV2,
+    logSubquery: query.logSubquery,
+    logReferenceJoin: query.logReferenceJoin,
+    logGroupSelection: query.logGroupSelection,
+    logNumericRange: query.logNumericRange,
+    searchSyntax: query.searchSyntax ?? '',
     severityText: query.severityText ?? '',
+    severityCategory: query.severityCategory ?? '',
     traceId: query.traceId ?? '',
     spanId: query.spanId ?? '',
     resourceFilter: query.resourceFilter ?? '',
@@ -141,6 +104,8 @@ function traceDraftFromQuery(query: Extract<ExploreQuery, { signal: 'traces' }>)
   return {
     ...sharedDraftFromQuery(query),
     signal: 'traces',
+    traceStructure: query.traceStructure,
+    sort: traceSortValue(query.sort),
     traceId: query.traceId ?? '',
     resourceFilter: query.resourceFilter ?? '',
     attributeFilter: query.attributeFilter ?? '',
@@ -164,12 +129,11 @@ function sharedDraftFromQuery(query: ExploreQuery): SharedExploreSubmissionDraft
 }
 
 function buildMetricSubmissionPatch(draft: MetricExploreSubmissionDraft): ExploreSubmissionResult {
+  if (draft.metricPlan) return buildCompositionSubmissionPatch(draft);
   const aggregation = parseMetricAggregation(draft.aggregation);
   const step = parseMetricStep(draft.stepSeconds);
   const errors: ExploreSubmissionError[] = [];
-  if (!aggregation.valid) {
-    errors.push({ field: 'aggregation', code: 'unsupported_aggregation' });
-  }
+  if (!aggregation.valid) errors.push({ field: 'aggregation', code: 'unsupported_aggregation' });
   if (!step.valid) {
     errors.push({ field: 'stepSeconds', code: 'invalid_step' });
   }
@@ -189,11 +153,28 @@ function buildMetricSubmissionPatch(draft: MetricExploreSubmissionDraft): Explor
 }
 
 function buildLogSubmissionPatch(draft: LogExploreSubmissionDraft): ExploreSubmissionResult {
+  const failure = logModeError(draft) ?? logFilterError(draft);
+  if (failure) return { valid: false, errors: [failure] };
+  const querySet = draft.logAnalysis ? parseLogAnalysis(draft.logAnalysis).querySet : undefined;
   return {
     valid: true,
     patch: {
       ...sharedSubmissionPatch(draft),
+      ...(querySet ? { query: undefined } : {}),
+      sort: draft.sort,
+      logSort: draft.logSort,
+      logAnalysis: draft.logAnalysis,
+      logAggregation: draft.logAggregation,
+      logTransactions: draft.logTransactions,
+      logCalculated: draft.logCalculated,
+      logCalculatedV2: draft.logCalculatedV2,
+      logSubquery: draft.logSubquery,
+      logReferenceJoin: draft.logReferenceJoin,
+      logGroupSelection: draft.logGroupSelection,
+      logNumericRange: draft.logNumericRange,
+      searchSyntax: querySet ? undefined : normalizedValue(draft.searchSyntax ?? ''),
       severityText: normalizedValue(draft.severityText),
+      severityCategory: normalizedValue(draft.severityCategory ?? ''),
       traceId: normalizedValue(draft.traceId),
       spanId: normalizedValue(draft.spanId),
       resourceFilter: normalizedValue(draft.resourceFilter),
@@ -206,6 +187,33 @@ function buildLogSubmissionPatch(draft: LogExploreSubmissionDraft): ExploreSubmi
 }
 
 function buildTraceSubmissionPatch(draft: TraceExploreSubmissionDraft): ExploreSubmissionResult {
+  if (draft.traceStructure !== undefined) {
+    if (!parseTraceStructure(draft.traceStructure)) {
+      return { valid: false, errors: [{ field: 'traceStructure', code: 'invalid_trace_structure' }] };
+    }
+    if (hasTraceStructureConflict(draft))
+      return { valid: false, errors: [{ field: 'traceStructure', code: 'trace_structure_conflict' }] };
+    return {
+      valid: true,
+      patch: {
+        ...sharedSubmissionPatch(draft),
+        traceStructure: draft.traceStructure,
+        traceId: undefined,
+        resourceFilter: undefined,
+        attributeFilter: undefined,
+        minDurationMs: undefined,
+        maxDurationMs: undefined,
+        errorOnly: undefined,
+        sort: undefined,
+        spanScope: undefined,
+        hideInternal: undefined,
+        traceView: undefined,
+        endExclusive: undefined,
+        pageIndex: undefined,
+        traceStructureView: undefined
+      }
+    };
+  }
   const minDuration = parseTraceDuration(draft.minDurationMs);
   const maxDuration = parseTraceDuration(draft.maxDurationMs);
   const errors: ExploreSubmissionError[] = [];
@@ -219,12 +227,15 @@ function buildTraceSubmissionPatch(draft: TraceExploreSubmissionDraft): ExploreS
     valid: true,
     patch: {
       ...sharedSubmissionPatch(draft),
+      traceStructure: undefined,
+      traceStructureView: undefined,
       traceId: normalizedValue(draft.traceId),
       resourceFilter: normalizedValue(draft.resourceFilter),
       attributeFilter: normalizedValue(draft.attributeFilter),
       minDurationMs: minDuration.value,
       maxDurationMs: maxDuration.value,
       errorOnly: draft.errorOnly || undefined,
+      sort: traceSortValue(draft.sort),
       spanScope: traceSpanScopeValue(draft.spanScope.trim()),
       hideInternal: enabledFilterValue(draft.hideInternal),
       pageIndex: undefined
@@ -232,18 +243,48 @@ function buildTraceSubmissionPatch(draft: TraceExploreSubmissionDraft): ExploreS
   };
 }
 
-function sharedSubmissionPatch(draft: SharedExploreSubmissionDraft): ExploreQueryPatch {
-  return {
-    serviceName: normalizedValue(draft.serviceName),
-    serviceNamespace: normalizedValue(draft.serviceNamespace),
-    environment: normalizedValue(draft.environment),
-    instance: normalizedValue(draft.instance),
-    endpoint: normalizedValue(draft.endpoint),
-    query: normalizedValue(draft.query)
-  };
+function hasTraceStructureConflict(draft: TraceExploreSubmissionDraft) {
+  return (
+    [
+      draft.serviceName,
+      draft.serviceNamespace,
+      draft.environment,
+      draft.instance,
+      draft.endpoint,
+      draft.query,
+      draft.traceId,
+      draft.resourceFilter,
+      draft.attributeFilter,
+      draft.minDurationMs,
+      draft.maxDurationMs,
+      draft.spanScope
+    ].some(Boolean) ||
+    draft.errorOnly ||
+    draft.hideInternal ||
+    draft.sort !== 'newest'
+  );
 }
 
-function normalizedValue(value: string) {
-  const normalized = value.trim();
-  return normalized || undefined;
+function buildCompositionSubmissionPatch(draft: MetricExploreSubmissionDraft): ExploreSubmissionResult {
+  try {
+    const plan = parseMetricPlan(draft.metricPlan);
+    if (validateMetricPlan(plan).length) throw new Error('Invalid metric plan');
+    const first = plan.queries[0]!;
+    return {
+      valid: true,
+      patch: {
+        ...sharedSubmissionPatch(draft),
+        metricPlan: draft.metricPlan,
+        query: first.metric,
+        metricFilter: first.metricFilter,
+        groupBy: first.groupBy,
+        aggregation: first.aggregation,
+        temporalAggregation: first.temporalAggregation,
+        step: first.step,
+        pageIndex: undefined
+      }
+    };
+  } catch {
+    return { valid: false, errors: [{ field: 'metricPlan', code: 'invalid_metric_plan' }] };
+  }
 }

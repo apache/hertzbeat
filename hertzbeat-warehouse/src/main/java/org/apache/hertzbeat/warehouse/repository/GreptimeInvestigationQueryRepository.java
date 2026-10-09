@@ -21,6 +21,13 @@ package org.apache.hertzbeat.warehouse.repository;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.DateTimeException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.ResolverStyle;
+import java.time.temporal.ChronoField;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,13 +50,18 @@ import org.springframework.stereotype.Repository;
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 public class GreptimeInvestigationQueryRepository implements InvestigationQueryRepository {
 
+    private static final DateTimeFormatter EVENT_TIME = new DateTimeFormatterBuilder()
+            .appendPattern("uuuu-MM-dd HH:mm:ss")
+            .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).optionalEnd()
+            .appendOffset("+HHMM", "+0000")
+            .toFormatter(Locale.ROOT).withResolverStyle(ResolverStyle.STRICT);
     private static final Pattern TRACE_ID = Pattern.compile("[0-9a-f]{32}");
     private static final Pattern SPAN_ID = Pattern.compile("[0-9a-f]{16}");
     private static final String LOG_TABLE = WarehouseConstants.LOG_TABLE_NAME;
 
     private static final String TRACE_COLUMNS = "CAST(timestamp AS BIGINT) / 1000000 AS start_time, "
-            + "trace_id, span_id, parent_span_id, span_name, service_name, span_status_code, span_status_message, "
-            + "span_kind, trace_state, scope_name, scope_version, duration_nano, span_events, span_links, "
+            + "CAST(timestamp AS BIGINT) AS start_time_unix_nano, "
+            + "CAST(timestamp_end AS BIGINT) AS end_time_unix_nano, *, "
             + "\"resource_attributes.hertzbeat.workspace_id\" AS workspace_id, "
             + "\"resource_attributes.hertzbeat.entity_id\" AS entity_id, "
             + "\"resource_attributes.hertzbeat.entity_type\" AS entity_type, "
@@ -71,21 +83,40 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
 
     @Override
     public RowsResult<TraceSpanRow> trace(TraceQuery query) {
-        String sql = "SELECT " + TRACE_COLUMNS + " FROM hzb_traces WHERE trace_id = " + literal(query.traceId())
+        String scope = " FROM hzb_traces WHERE trace_id = " + literal(query.traceId())
                 + " AND \"resource_attributes.hertzbeat.workspace_id\" = " + literal(query.workspaceId())
-                + window("timestamp", query.start(), query.end())
-                + " ORDER BY timestamp ASC LIMIT " + (MAX_TRACE_SPANS + 1);
+                + window("timestamp", query.start(), query.end());
+        String sql = "SELECT " + TRACE_COLUMNS + scope + " ORDER BY timestamp ASC, span_id ASC LIMIT "
+                + (MAX_TRACE_SPANS + 1);
         try {
             List<Map<String, Object>> rawRows = execute(sql);
-            if (rawRows.size() > MAX_TRACE_SPANS) {
-                return RowsResult.failed(Status.LIMIT_EXCEEDED);
+            boolean truncated = rawRows.size() > MAX_TRACE_SPANS;
+            int baseRowCount = Math.min(rawRows.size(), MAX_TRACE_SPANS);
+            List<TraceSpanRow> rows = new ArrayList<>(baseRowCount + 1);
+            for (Map<String, Object> row : rawRows.subList(0, baseRowCount)) {
+                rows.add(traceRow(row, query));
             }
-            List<TraceSpanRow> rows = new ArrayList<>(rawRows.size());
-            for (Map<String, Object> row : rawRows) {
-                TraceSpanRow mapped = traceRow(row, query);
-                rows.add(mapped);
+            if (truncated && query.selectedSpanId() != null && rows.stream()
+                    .noneMatch(span -> query.selectedSpanId().equals(span.spanId()))) {
+                List<Map<String, Object>> selectedRows = execute("SELECT " + TRACE_COLUMNS + scope
+                        + " AND span_id = " + literal(query.selectedSpanId()) + " LIMIT 2");
+                if (selectedRows.size() > 1) {
+                    throw new MalformedRowException();
+                }
+                if (selectedRows.size() == 1) {
+                    TraceSpanRow mapped = traceRow(selectedRows.getFirst(), query);
+                    if (!query.selectedSpanId().equals(mapped.spanId())) {
+                        throw new MalformedRowException();
+                    }
+                    rows.add(mapped);
+                }
             }
-            return RowsResult.available(rows, false);
+            for (TraceSpanRow span : rows) {
+                if (!query.traceId().equals(span.traceId()) || !query.workspaceId().equals(span.workspaceId())) {
+                    throw new MalformedRowException();
+                }
+            }
+            return RowsResult.available(rows, truncated);
         } catch (MalformedRowException exception) {
             return RowsResult.failed(Status.MALFORMED_DATA);
         } catch (RuntimeException exception) {
@@ -143,9 +174,7 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
             if (moreAfter) {
                 after = new ArrayList<>(after.subList(0, MAX_NEARBY_LOGS));
             }
-            if (!before.isEmpty()) {
-                java.util.Collections.reverse(before);
-            }
+            before = before.reversed();
             return new NearbyResult(Status.AVAILABLE, before, after, moreBefore, moreAfter);
         } catch (MalformedRowException | IllegalArgumentException exception) {
             return new NearbyResult(Status.MALFORMED_DATA, List.of(), List.of(), false, false);
@@ -202,13 +231,18 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
         String order = before ? "DESC" : "ASC";
         String selectedUid = literal(query.selectedLogRecordUid());
         String selectedTime = Long.toString(query.selectedTimeUnixNano());
+        String identityScope = query.entityId() != null
+                ? " AND hertzbeat_entity_id = " + literal(query.entityId())
+                        + " AND json_get_string(resource_attributes, '$[\"hertzbeat.entity_type\"]') = "
+                        + literal(query.entityType())
+                : " AND COALESCE(json_get_string(resource_attributes, '$[\"host.name\"]'), "
+                        + "json_get_string(resource_attributes, '$[\"host\"][\"name\"]')) = "
+                        + literal(query.hostName());
         return "SELECT " + LOG_COLUMNS + " FROM " + LOG_TABLE + " WHERE hertzbeat_workspace_id = "
                 + literal(query.workspaceId()) + " AND service_name = " + literal(query.serviceName())
-                + " AND hertzbeat_entity_id = " + literal(query.entityId())
-                + " AND json_get_string(resource_attributes, '$[\"hertzbeat.entity_type\"]') = "
-                + literal(query.entityType())
+                + identityScope
                 + optionalJsonScope("service.namespace", query.serviceNamespace())
-                + optionalJsonScope("deployment.environment.name", query.deploymentEnvironment())
+                + optionalEnvironmentScope(query.deploymentEnvironment())
                 + " AND log_record_uid != " + selectedUid
                 + window("timestamp", query.start(), query.end())
                 + " AND (CAST(timestamp AS BIGINT) " + comparator + " " + selectedTime
@@ -266,7 +300,7 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
     }
 
     private TraceSpanRow traceRow(Map<String, Object> row, TraceQuery query) {
-        long startTime = positiveLong(value(row, "start_time"));
+        long startTime = nonNegativeLong(value(row, "start_time"));
         long durationNanos = nonNegativeLong(value(row, "duration_nano"));
         String traceId = requiredIdentifier(row, "trace_id", TRACE_ID);
         String spanId = requiredIdentifier(row, "span_id", SPAN_ID);
@@ -276,14 +310,16 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
             throw new MalformedRowException();
         }
         Map<String, String> resource = canonicalResource(row);
-        return new TraceSpanRow(startTime, traceId, spanId, optionalIdentifier(row, "parent_span_id", SPAN_ID),
-                required(row, "span_name", 512), required(row, "service_name", 256),
-                required(row, "span_status_code", 64), optional(row, "span_status_message", 4_096),
+        return new TraceSpanRow(startTime, nonNegativeLong(value(row, "start_time_unix_nano")),
+                observedEndTime(row, durationNanos), traceId, spanId,
+                optionalIdentifier(row, "parent_span_id", SPAN_ID),
+                optional(row, "span_name", 512), optional(row, "service_name", 256),
+                optional(row, "span_status_code", 64), optional(row, "span_status_message", 4_096),
                 optional(row, "span_kind", 64), optional(row, "trace_state", 512),
                 optional(row, "scope_name", 256), optional(row, "scope_version", 128), durationNanos,
                 workspaceId, optional(row, "entity_id", 20), optional(row, "entity_type", 64),
                 optional(row, "service_namespace", 256), optional(row, "deployment_environment", 128),
-                resource, Map.of(), spanEvents(value(row, "span_events")),
+                resource, attributes(row, "span_attributes."), spanEvents(value(row, "span_events")),
                 spanLinks(value(row, "span_links")), null);
     }
 
@@ -303,19 +339,32 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
             InvestigationServiceIdentity identity = entityId == null || entityType == null || serviceName == null
                     ? null : new InvestigationServiceIdentity(
                             rowWorkspace, entityId, entityType, serviceName, namespace, environment);
+            AttributePreview attributes = logAttributePreview(value(row, "log_attributes"));
+            Object rawResourceAttributes = value(row, "resource_attributes");
+            Map<?, ?> rawResourceMap = structuredMap(rawResourceAttributes);
+            AttributePreview resourceAttributes = logAttributePreview(rawResourceMap);
+            Map<String, String> canonicalResources = canonicalLogResources(
+                    resourceAttributes.values(), rawResourceMap, serviceName);
+            Map<String, List<String>> truncatedFields = new LinkedHashMap<>();
+            if (!attributes.truncatedKeys().isEmpty()) {
+                truncatedFields.put("attributes", attributes.truncatedKeys());
+            }
+            if (!resourceAttributes.truncatedKeys().isEmpty()) {
+                truncatedFields.put("resourceAttributes", resourceAttributes.truncatedKeys());
+            }
             mapped.add(new InvestigationLogRecord(uid,
                     Long.toString(positiveLong(value(row, "time_unix_nano"))),
                     nullablePositiveLongText(value(row, "observed_time_unix_nano")),
                     nullableInteger(value(row, "severity_number")), optional(row, "severity_text", 64),
                     boundedText(value(row, "body"), InvestigationLogRecord.MAX_BODY_LENGTH),
                     optional(row, "trace_id", 128), optional(row, "span_id", 128), identity,
-                    stringMap(value(row, "log_attributes")), stringMap(value(row, "resource_attributes"))));
+                    attributes.values(), canonicalResources, Map.copyOf(truncatedFields)));
         }
         return List.copyOf(mapped);
     }
 
     private Map<String, String> canonicalResource(Map<String, Object> row) {
-        Map<String, String> values = new LinkedHashMap<>();
+        Map<String, String> values = new LinkedHashMap<>(attributes(row, "resource_attributes."));
         put(values, "hertzbeat.workspace_id", optional(row, "workspace_id", 128));
         put(values, "hertzbeat.entity_id", optional(row, "entity_id", 20));
         put(values, "hertzbeat.entity_type", optional(row, "entity_type", 64));
@@ -325,7 +374,96 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
         return Map.copyOf(values);
     }
 
+    private long observedEndTime(Map<String, Object> row, long durationNanos) {
+        long startNanos = nonNegativeLong(value(row, "start_time_unix_nano"));
+        Object endValue = value(row, "end_time_unix_nano");
+        BigInteger end = endValue == null ? BigInteger.valueOf(startNanos).add(BigInteger.valueOf(durationNanos))
+                : BigInteger.valueOf(nonNegativeLong(endValue));
+        if (end.subtract(BigInteger.valueOf(startNanos)).compareTo(BigInteger.valueOf(durationNanos)) != 0
+                || end.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new MalformedRowException();
+        }
+        return end.add(BigInteger.valueOf(999_999L)).divide(BigInteger.valueOf(1_000_000L)).longValueExact();
+    }
+
+    private Map<String, String> attributes(Map<String, Object> row, String prefix) {
+        Map<String, String> attributes = new LinkedHashMap<>();
+        row.forEach((key, item) -> {
+            if (key.startsWith(prefix) && key.length() > prefix.length() && item != null) {
+                attributes.put(key.substring(prefix.length()), attributeText(item));
+            }
+        });
+        return Map.copyOf(attributes);
+    }
+
+    private String attributeText(Object value) {
+        return value instanceof Map<?, ?> || value instanceof List<?> ? JsonUtil.toJson(value) : value.toString();
+    }
+
     private Map<String, String> stringMap(Object value) {
+        Map<?, ?> map = structuredMap(value);
+        Map<String, String> result = new LinkedHashMap<>();
+        map.forEach((key, item) -> {
+            if (key != null && item != null) {
+                result.put(key.toString(), item.toString());
+            }
+        });
+        return Map.copyOf(result);
+    }
+
+    private AttributePreview logAttributePreview(Object value) {
+        Map<?, ?> map = structuredMap(value);
+        return logAttributePreview(map);
+    }
+
+    private AttributePreview logAttributePreview(Map<?, ?> map) {
+        Map<String, String> result = new LinkedHashMap<>();
+        List<String> truncatedKeys = new ArrayList<>();
+        map.forEach((key, item) -> {
+            if (key != null && item != null) {
+                String name = key.toString();
+                String text = item.toString();
+                if (text.length() > InvestigationLogRecord.MAX_ATTRIBUTE_VALUE_LENGTH) {
+                    int end = InvestigationLogRecord.MAX_ATTRIBUTE_VALUE_LENGTH;
+                    if (Character.isHighSurrogate(text.charAt(end - 1)) && Character.isLowSurrogate(text.charAt(end))) {
+                        end--;
+                    }
+                    text = text.substring(0, end);
+                    truncatedKeys.add(name);
+                }
+                result.put(name, text);
+            }
+        });
+        return new AttributePreview(Map.copyOf(result), List.copyOf(truncatedKeys));
+    }
+
+    private Map<String, String> canonicalLogResources(Map<String, String> preview,
+                                                       Map<?, ?> raw,
+                                                       String serviceName) {
+        Map<String, String> canonical = new LinkedHashMap<>(preview);
+        if (serviceName != null) {
+            canonical.put("service.name", serviceName);
+        }
+        canonical.remove("host.name");
+        String hostName = scalarHostName(raw.get("host.name"));
+        if (hostName == null && raw.get("host") instanceof Map<?, ?> host) {
+            hostName = scalarHostName(host.get("name"));
+        }
+        if (hostName != null) {
+            canonical.put("host.name", hostName);
+        }
+        return Map.copyOf(canonical);
+    }
+
+    private String scalarHostName(Object value) {
+        if (!(value instanceof String hostName) || hostName.isBlank() || hostName.length() > 256
+                || hostName.codePoints().anyMatch(Character::isISOControl)) {
+            return null;
+        }
+        return hostName;
+    }
+
+    private Map<?, ?> structuredMap(Object value) {
         if (value == null) {
             return Map.of();
         }
@@ -340,14 +478,10 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
         if (!(parsed instanceof Map<?, ?> map)) {
             throw new MalformedRowException();
         }
-        Map<String, String> result = new LinkedHashMap<>();
-        map.forEach((key, item) -> {
-            if (key != null && item != null) {
-                result.put(key.toString(), item.toString());
-            }
-        });
-        return Map.copyOf(result);
+        return map;
     }
+
+    private record AttributePreview(Map<String, String> values, List<String> truncatedKeys) { }
 
     private List<SpanEvent> spanEvents(Object raw) {
         List<?> values = structuredList(raw);
@@ -359,12 +493,26 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
             if (!(value instanceof Map<?, ?> map)) {
                 throw new MalformedRowException();
             }
-            Object timestamp = first(map, "time_unix_nano", "timeUnixNano");
-            events.add(new SpanEvent(Long.toString(positiveLong(timestamp)), text(map.get("name"), 512),
+            events.add(new SpanEvent(Long.toString(spanEventTime(map)), text(map.get("name"), 512),
                     stringMap(map.get("attributes")), nullableInteger(
                             first(map, "dropped_attributes_count", "droppedAttributesCount"))));
         }
         return List.copyOf(events);
+    }
+
+    private long spanEventTime(Map<?, ?> event) {
+        if (event.containsKey("time_unix_nano") || event.containsKey("timeUnixNano")) {
+            return positiveLong(first(event, "time_unix_nano", "timeUnixNano"));
+        }
+        if (!(event.get("time") instanceof String timestamp)) {
+            throw new MalformedRowException();
+        }
+        try {
+            var instant = OffsetDateTime.parse(timestamp, EVENT_TIME).toInstant();
+            return positiveLong(Math.addExact(Math.multiplyExact(instant.getEpochSecond(), 1_000_000_000L), instant.getNano()));
+        } catch (DateTimeException | ArithmeticException invalid) {
+            throw new MalformedRowException();
+        }
     }
 
     private List<SpanLink> spanLinks(Object raw) {
@@ -379,7 +527,7 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
             }
             links.add(new SpanLink(requiredIdentifier(first(map, "trace_id", "traceId"), TRACE_ID),
                     requiredIdentifier(first(map, "span_id", "spanId"), SPAN_ID),
-                    text(first(map, "trace_state", "traceState"), 512), stringMap(map.get("attributes")),
+                    boundedText(first(map, "trace_state", "traceState"), 512), stringMap(map.get("attributes")),
                     nullableInteger(first(map, "dropped_attributes_count", "droppedAttributesCount"))));
         }
         return List.copyOf(links);
@@ -540,6 +688,17 @@ public class GreptimeInvestigationQueryRepository implements InvestigationQueryR
     private String optionalJsonScope(String key, String value) {
         return value == null ? "" : " AND json_get_string(resource_attributes, '$[\"" + key + "\"]') = "
                 + literal(value);
+    }
+
+    private String optionalEnvironmentScope(String value) {
+        String environment = "COALESCE(" + environmentValue("deployment.environment.name") + ", "
+                + environmentValue("deployment.environment") + ", json_get_string(resource_attributes, '$[\"env\"]'))";
+        return value == null ? "" : " AND " + environment + " = " + literal(value);
+    }
+
+    private String environmentValue(String key) {
+        String value = "json_get_string(resource_attributes, '$[\"" + key + "\"]')";
+        return "CASE WHEN TRIM(" + value + ") = '' THEN NULL ELSE " + value + " END";
     }
 
     private String exactOptionalScope(String column, String value) {

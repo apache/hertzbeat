@@ -153,7 +153,10 @@ public class AgentRuntimeService {
                     .run(context, control, publisher, runSink);
             completeStream(sink);
         } catch (AgentRuntimeStoppedException exception) {
-            publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR, exception.getMessage());
+            String traceId = context == null ? null : context.getTraceId();
+            publisher.publish(exception.isCancelled()
+                    ? AgentRuntimeEvent.runCancelled(traceId, exception.getMessage(), Instant.now(clock))
+                    : AgentRuntimeEvent.runError(traceId, exception.getMessage(), Instant.now(clock)));
             completeStream(sink);
         } catch (AgentToolCompletionIndeterminateException exception) {
             String traceId = context == null ? null : context.getTraceId();

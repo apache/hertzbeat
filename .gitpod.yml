@@ -1,35 +1,10 @@
-image:
-    file: .gitpod.Dockerfile
-
+# Hosted Gitpod execution is not validated for the HertzBeat 2.0 alpha.
+# Use the local Java 25 / Node.js 22 source workflow in docs/alpha-preview.md.
 tasks:
-
-    - name: Run backend
-      before: cd hertzbeat-startup
+    - name: Unsupported preview environment
       command: |
-          gp sync-await setup-backend
-          mvn spring-boot:run
-
-    - name: Run frontend
-      before: cd web-app
-      command: |
-          gp sync-await setup-frontend
-          pnpm start --public-host "`gp url 4200`"
-      openMode: split-right
-
-    - name: Setup backend
-      init: |
-          mvn clean install -DskipTests
-      command: |
-          gp sync-done setup-backend
-          exit 0
-
-    - name: Setup frontend
-      init: |
-          cd web-app && pnpm install
-      command: |
-          gp sync-done setup-frontend
-          exit 0
-      openMode: split-right
+          printf '%s\n' 'Gitpod is not validated for HertzBeat 2.0 alpha. Follow docs/alpha-preview.md for the supported local source workflow.' >&2
+          exit 1
 
 vscode:
     extensions:
@@ -41,14 +16,3 @@ vscode:
         - ms-azuretools.vscode-docker
         - cweijan.vscode-database-client2
         - GitHub.vscode-pull-request-github
-
-ports:
-    - port: 4200
-      name: HertzBeat
-      onOpen: open-browser
-
-    - port: 1157
-      onOpen: ignore
-
-    - port: 1158
-      onOpen: ignore

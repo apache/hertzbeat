@@ -15,19 +15,25 @@
  * limitations under the License.
  */
 
+import type { LogFilterFailureReason, LogSyntaxDiagnostic } from '../model/explore-log-filter-failure';
+
+import { ExploreInvalidLogFilter } from './explore-invalid-log-filter';
 import { Alert, Button } from 'antd';
 import type { TFunction } from 'i18next';
 
 import { LIVE_LOG_RETENTION_LIMIT, type LiveLogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
 import type { LiveLogStatus } from '../model/explore-signal-model';
-import { LogRows } from './log-rows';
+import { LogRows, type LiveLogTableControls } from './log-rows';
 import styles from './log-result.module.css';
 import { SignalEmptyState, SignalResultFrame } from './signal-result-frame';
 
 export type LiveLogView = {
+  invalidFilterReason?: LogFilterFailureReason | undefined;
+  syntaxDiagnostic?: LogSyntaxDiagnostic | undefined;
   rows: LiveLogRow[];
   status: LiveLogStatus;
+  connectionStatus?: Exclude<LiveLogStatus, 'paused' | 'degraded'> | undefined;
   gapDroppedCount?: number | undefined;
   locallyDroppedCount?: number | undefined;
   pauseDisconnectGap?: boolean | undefined;
@@ -40,28 +46,27 @@ export function LogStreamResult({
   stream,
   query,
   t,
-  navigate
-}: {
+  navigate,
+  ...controls
+}: LiveLogTableControls & {
   stream: LiveLogView;
   query: LogExploreQuery;
   t: TFunction;
   navigate: (path: string) => void;
 }) {
   const terminal = isTerminalStreamStatus(stream.status);
-  const gapMessage =
-    stream.gapDroppedCount == null
-      ? t('exploreLog.streamGap')
-      : t('exploreLog.streamGapCount', { count: stream.gapDroppedCount });
   const actions = <LogStreamActions stream={stream} t={t} />;
-  const connection = <StreamConnection status={stream.status} t={t} />;
+  const connection = (
+    <StreamConnection
+      status={stream.status === 'degraded' && stream.connectionStatus === 'waiting' ? 'waiting' : stream.status}
+      t={t}
+    />
+  );
 
   return (
     <div>
-      {stream.status === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
-      {stream.status === 'error' && <Alert type="error" showIcon message={t('exploreLog.streamFailed')} />}
-      {stream.status === 'contract' && <Alert type="error" showIcon message={t('explore.loadFailed')} />}
-      {stream.status === 'degraded' && <Alert type="warning" showIcon message={gapMessage} />}
-      {stream.pauseDisconnectGap && <Alert type="warning" showIcon message={t('exploreLog.pauseDisconnectGap')} />}
+      <StreamFailure stream={stream} t={t} />
+      <StreamGapAlert stream={stream} t={t} />
       {(stream.locallyDroppedCount ?? 0) > 0 && (
         <p className={styles.retentionNotice} role="status">
           {t('exploreLog.localRetention', {
@@ -77,15 +82,17 @@ export function LogStreamResult({
           meta={[{ label: t('exploreLog.streamStatus'), value: connection }]}
           actions={actions}
         >
-          {terminal ? null : <SignalEmptyState title={t('exploreLog.waiting')} hint={t('explore.description')} />}
+          {terminal ? null : (
+            <SignalEmptyState title={t('exploreLog.waiting')} hint={t('explore.liveFlow.incomingHint')} />
+          )}
         </SignalResultFrame>
       ) : (
         <LogRows
+          {...controls}
           rows={stream.rows}
           query={query}
           t={t}
           navigate={navigate}
-          live
           connection={connection}
           actions={actions}
         />
@@ -94,15 +101,31 @@ export function LogStreamResult({
   );
 }
 
+function StreamGapAlert({ stream, t }: { stream: LiveLogView; t: TFunction }) {
+  const knownDrops = (stream.gapDroppedCount ?? 0) > 0;
+  if (stream.status !== 'degraded' && !stream.pauseDisconnectGap && !knownDrops) return null;
+  const gapMessage =
+    stream.gapDroppedCount == null
+      ? t('exploreLog.streamGap')
+      : t('exploreLog.streamGapCount', { count: stream.gapDroppedCount });
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={stream.pauseDisconnectGap ? t('exploreLog.pauseDisconnectGap') : gapMessage}
+      description={stream.pauseDisconnectGap && knownDrops ? gapMessage : undefined}
+    />
+  );
+}
+
 function LogStreamActions({ stream, t }: { stream: LiveLogView; t: TFunction }) {
   const terminal = isTerminalStreamStatus(stream.status);
-  const retryable = terminal || stream.status === 'degraded';
   return (
     <div className={styles.streamActions}>
       <Button size="small" disabled={terminal} onClick={stream.togglePaused}>
         {t(stream.status === 'paused' ? 'exploreLog.resumeNewStream' : 'exploreLog.pauseDisconnect')}
       </Button>
-      {retryable && (
+      {terminal && stream.status !== 'invalid_filter' && stream.status !== 'permission' && (
         <Button size="small" onClick={stream.retry}>
           {t('common.retry')}
         </Button>
@@ -115,7 +138,13 @@ function LogStreamActions({ stream, t }: { stream: LiveLogView; t: TFunction }) 
 }
 
 function isTerminalStreamStatus(status: LiveLogStatus) {
-  return status === 'unavailable' || status === 'error' || status === 'contract';
+  return (
+    status === 'unavailable' ||
+    status === 'error' ||
+    status === 'contract' ||
+    status === 'invalid_filter' ||
+    status === 'permission'
+  );
 }
 
 function StreamConnection({ status, t }: { status: LiveLogStatus; t: TFunction }) {
@@ -123,7 +152,7 @@ function StreamConnection({ status, t }: { status: LiveLogStatus; t: TFunction }
 
   return (
     <span className={styles.streamConnection}>
-      <i data-connected={status === 'connected'} />
+      <i data-connected={status === 'connected' || status === 'degraded'} />
       {t(streamConnectionKey(status))}
     </span>
   );
@@ -131,6 +160,10 @@ function StreamConnection({ status, t }: { status: LiveLogStatus; t: TFunction }
 
 function streamConnectionKey(status: LiveLogStatus) {
   switch (status) {
+    case 'invalid_filter':
+      return 'explore.logQueryBuilder.checkFilter';
+    case 'permission':
+      return 'common.permission.roleRequiredDescription';
     case 'unavailable':
       return 'common.unavailable';
     case 'error':
@@ -138,11 +171,31 @@ function streamConnectionKey(status: LiveLogStatus) {
     case 'contract':
       return 'explore.loadFailed';
     case 'degraded':
-      return 'exploreLog.streamGap';
+      return 'explore.liveFlow.connectedGap';
     case 'connected':
       return 'exploreLog.connected';
     case 'waiting':
     case 'paused':
       return 'exploreLog.connecting';
   }
+}
+
+function StreamFailure({ stream, t }: { stream: LiveLogView; t: TFunction }) {
+  return (
+    <>
+      {stream.status === 'invalid_filter' && (
+        <ExploreInvalidLogFilter
+          retained={stream.rows.length > 0}
+          invalidFilterReason={stream.invalidFilterReason}
+          syntaxDiagnostic={stream.syntaxDiagnostic}
+        />
+      )}
+      {stream.status === 'permission' && (
+        <Alert type="error" showIcon message={t('common.permission.roleRequiredDescription')} />
+      )}
+      {stream.status === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
+      {stream.status === 'error' && <Alert type="error" showIcon message={t('exploreLog.streamFailed')} />}
+      {stream.status === 'contract' && <Alert type="error" showIcon message={t('explore.loadFailed')} />}
+    </>
+  );
 }

@@ -28,16 +28,19 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 /** Production Greptime adapter for scoped instrumentation signal detection. */
 @Primary
@@ -87,7 +90,7 @@ public class GreptimeInstrumentationSignalDetectionStore implements Instrumentat
             Signal signal,
             DetectionCriteria criteria) {
         try {
-            List<Map<String, Object>> rows = executor.executeStrict(queryFactory.latestReceivedAt(signal, criteria));
+            List<Map<String, Object>> rows = latestRows(executor, signal, criteria);
             Long lastReceivedAt = latestTimestamp(rows);
             if (lastReceivedAt == null
                     || lastReceivedAt < criteria.startedAt()
@@ -96,8 +99,59 @@ public class GreptimeInstrumentationSignalDetectionStore implements Instrumentat
             }
             return SignalObservation.received(lastReceivedAt);
         } catch (RuntimeException exception) {
+            if (signal == Signal.METRICS && nativeMetricsTableNotCreated(exception)) {
+                return SignalObservation.waiting();
+            }
             return SignalObservation.error(DetectionErrorCode.STORAGE_QUERY_FAILED, null);
         }
+    }
+
+    private List<Map<String, Object>> latestRows(
+            GreptimeSqlQueryExecutor executor, Signal signal, DetectionCriteria criteria) {
+        String query = queryFactory.latestReceivedAt(signal, criteria);
+        try {
+            return executor.executeStrict(query);
+        } catch (RuntimeException exception) {
+            String error = greptimeError(exception, 3000);
+            if (signal != Signal.METRICS || error == null || !error.startsWith(
+                    "Failed to plan SQL: No field named hertzbeat_collector_id. Valid fields are greptime_physical_table.")) {
+                throw exception;
+            }
+            if (criteria.collectorId() != null) {
+                return List.of();
+            }
+        }
+        List<Map<String, Object>> rows = executor.executeStrict(queryFactory.directMetricsWithoutCollectorColumn(criteria));
+        List<Map<String, Object>> columns = executor.executeStrict("DESCRIBE greptime_physical_table");
+        if (columns == null || columns.isEmpty() || columns.stream().anyMatch(
+                column -> column == null || !(column.get("Column") instanceof String))) {
+            throw new IllegalStateException("Greptime returned an unexpected native metrics schema");
+        }
+        // A first Collector export can add its column while the direct query runs. In that case
+        // discard the result and reapply the complete scope once; never cache an absent column.
+        if (columns.stream().anyMatch(column -> OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID.equals(column.get("Column")))) {
+            return executor.executeStrict(query);
+        }
+        return rows;
+    }
+
+    private boolean nativeMetricsTableNotCreated(RuntimeException exception) {
+        String error = greptimeError(exception, 4001);
+        return error != null && error.startsWith("Failed to plan SQL: Table not found: ")
+                && error.endsWith(".greptime_physical_table");
+    }
+
+    private String greptimeError(RuntimeException exception, int code) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof HttpClientErrorException http && http.getStatusCode().value() == 400) {
+                var body = JsonUtil.fromJsonQuietly(http.getResponseBodyAsString());
+                if (body == null || !body.path("code").isIntegralNumber() || body.path("code").asInt() != code) {
+                    return null;
+                }
+                return body.path("error").asText("");
+            }
+        }
+        return null;
     }
 
     private GreptimeSqlQueryExecutor executorOrNull() {

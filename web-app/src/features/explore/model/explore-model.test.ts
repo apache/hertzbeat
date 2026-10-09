@@ -16,9 +16,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_LOG_ANALYSIS, encodeLogAnalysis } from '@/platform/perses';
 
 import {
   buildCrossSignalPath,
+  buildExploreSignalNavigationPath,
   buildExplorePath,
   exploreHandoffState,
   exploreQueryContext,
@@ -28,6 +30,7 @@ import {
   mergeExploreQuery,
   parseExploreQuery,
   presetTimeRangePatch,
+  exactTimeRangePatch,
   querySubmissionTimePatch,
   retireInstrumentationHandoff,
   signalSelectionPatch,
@@ -56,9 +59,55 @@ describe('explore query state', () => {
       timeZone: 'Asia/Shanghai'
     });
     expect(buildExplorePath(query)).toBe(
-      '/explore?signal=logs&timeRange=last-30m&start=1723454400000&end=1723456200000' +
+      '/explore?signal=logs&timeRange=last-30m&searchSyntax=structured-v1&start=1723454400000&end=1723456200000' +
         '&timeZone=Asia%2FShanghai&entityId=7&monitorId=42&serviceName=checkout'
     );
+  });
+
+  it.each(['table', 'toplist'] as const)(
+    'falls back from legacy Logs %s URLs while retaining applied scope',
+    representation => {
+      const analysis = encodeLogAnalysis({
+        ...DEFAULT_LOG_ANALYSIS,
+        representation,
+        field: 'attribute:thread.name'
+      });
+      const params = new URLSearchParams({
+        signal: 'logs',
+        query: 'exception',
+        serviceName: 'HertzBeat',
+        start: '1790388951138',
+        end: '1790390751138',
+        logAnalysis: analysis,
+        logGroupSelection: '{"version":1,"groups":[{"field":"attribute:thread.name","kind":"value","value":"worker"}]}'
+      });
+
+      const query = parseExploreQuery(params);
+
+      expect(query).toMatchObject({
+        signal: 'logs',
+        query: '"exception"',
+        serviceName: 'HertzBeat',
+        start: 1_790_388_951_138,
+        end: 1_790_390_751_138,
+        logGroupSelection: '{"version":1,"groups":[{"field":"attribute:thread.name","kind":"value","value":"worker"}]}'
+      });
+      if (query.signal !== 'logs') throw new Error('Expected Logs query');
+      expect(query.logAnalysis).toContain('"representation":"logs"');
+      const built = buildExplorePath(query);
+      expect(built).toContain('logGroupSelection=');
+      const roundTrip = parseExploreQuery(new URLSearchParams(built.split('?')[1]));
+      if (roundTrip.signal !== 'logs') throw new Error('Expected Logs query');
+      expect(roundTrip.logAnalysis).toContain('"representation":"logs"');
+    }
+  );
+
+  it('preserves malformed legacy analysis for explicit recovery instead of broadening the query', () => {
+    const raw = '{"version":1,"representation":"table"';
+    const query = parseExploreQuery(new URLSearchParams(`signal=logs&logAnalysis=${encodeURIComponent(raw)}`));
+    expect(query.signal).toBe('logs');
+    if (query.signal !== 'logs') throw new Error('Expected Logs query');
+    expect(query.logAnalysis).toBe(raw);
   });
 
   it('accepts an exact entity investigation without inventing monitor or ingestion identity', () => {
@@ -86,7 +135,7 @@ describe('explore query state', () => {
       signal: 'logs',
       timeRange: 'last-1h',
       serviceName: 'checkout',
-      query: 'timeout'
+      query: '"timeout"'
     });
     expect(query).not.toHaveProperty('errorOnly');
   });
@@ -210,7 +259,7 @@ describe('explore query state', () => {
       timeRange: 'last-30m',
       live: true
     });
-    expect(canonical).toBe('/explore?signal=logs&timeRange=last-30m&mode=live');
+    expect(canonical).toBe('/explore?signal=logs&timeRange=last-30m&mode=live&searchSyntax=structured-v1');
     expect(canonical).not.toContain('live=true');
   });
 
@@ -248,6 +297,15 @@ describe('explore query state', () => {
     expect(buildExplorePath(metrics)).not.toMatch(/mode=live|live=true/u);
   });
 
+  it('builds sidebar signal links from applied URL scope without resetting the selected signal', () => {
+    const current =
+      '?signal=logs&timeRange=last-30m&start=1723454400000&end=1723456200000&serviceName=checkout&query=error';
+    expect(buildExploreSignalNavigationPath(current, 'logs')).toBe(`/explore${current}`);
+    expect(buildExploreSignalNavigationPath(current, 'traces')).toBe(
+      '/explore?signal=traces&timeRange=last-30m&start=1723454400000&end=1723456200000&serviceName=checkout'
+    );
+  });
+
   it('preserves trace context when moving from logs to traces', () => {
     expect(
       buildCrossSignalPath(
@@ -263,7 +321,7 @@ describe('explore query state', () => {
     ).toBe('/explore?signal=traces&timeRange=last-30m&traceId=trace-1&serviceName=checkout');
   });
 
-  it('keeps only shared context and an explicit trace handoff across signals', () => {
+  it('keeps shared context, applicable attribute filters and an explicit trace handoff across signals', () => {
     const source = parseExploreQuery(
       new URLSearchParams(
         'signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
@@ -274,7 +332,7 @@ describe('explore query state', () => {
     );
 
     expect(buildCrossSignalPath(source, 'logs', { traceId: 'trace-1' })).toBe(
-      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&serviceName=checkout' +
+      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&resourceFilter=cloud.region%3Dus-east&attributeFilter=http.route%3D%2Fcheckout&searchSyntax=structured-v1&serviceName=checkout' +
         '&serviceNamespace=commerce&environment=prod&instance=checkout-1&endpoint=%2Fcheckout'
     );
     expect(buildCrossSignalPath(source, 'metrics', {})).toBe(
@@ -422,6 +480,7 @@ describe('explore query state', () => {
     );
     expect(querySubmissionTimePatch(exact)).toEqual({});
     expect(presetTimeRangePatch(exact, 'last-1h')).toEqual({
+      pageIndex: undefined,
       timeRange: 'last-1h',
       windowMode: 'preset',
       start: undefined,
@@ -503,7 +562,7 @@ describe('explore query state', () => {
       instance: undefined,
       endpoint: undefined,
       collectorId: undefined,
-      query: 'timeout',
+      query: '"timeout"',
       severityText: 'ERROR',
       start: 1_000,
       end: 2_000
@@ -515,7 +574,7 @@ describe('explore query state', () => {
       instance: undefined,
       endpoint: undefined,
       collectorId: undefined,
-      query: 'timeout',
+      query: '"timeout"',
       severityText: 'ERROR'
     });
   });
@@ -622,7 +681,7 @@ describe('explore query state', () => {
       signal: 'logs',
       serviceName: 'payments',
       collectorId: 'collector-east',
-      query: 'timeout',
+      query: '"timeout"',
       resourceFilter: 'cloud.region=us-east',
       attributeFilter: 'http.status_code=500',
       serviceNamespace: undefined,
@@ -730,7 +789,7 @@ describe('explore query state', () => {
       serviceName: 'checkout',
       serviceNamespace: 'commerce',
       environment: 'prod',
-      query: 'timeout',
+      query: '"timeout"',
       severityText: 'warn',
       resourceFilter: 'cloud.region=us-east',
       attributeFilter: 'http.status_code=500',
@@ -764,4 +823,22 @@ describe('explore query state', () => {
       )
     ).toBeUndefined();
   });
+});
+
+it('resets pagination for preset and valid exact time changes without authoring fields', () => {
+  expect(presetTimeRangePatch({ signal: 'logs', timeRange: 'last-30m', pageIndex: 3 }, 'last-1h')).toHaveProperty(
+    'pageIndex',
+    undefined
+  );
+  expect(exactTimeRangePatch({ from: 1000, to: 61000 }, 'UTC')).toEqual({
+    start: 1000,
+    end: 61000,
+    timeZone: 'UTC',
+    windowMode: undefined,
+    autoRefreshMs: undefined,
+    pageIndex: undefined
+  });
+  expect(exactTimeRangePatch({ from: 61000, to: 1000 }, 'UTC')).toBeUndefined();
+  expect(exactTimeRangePatch({ from: 1000, to: 86401001 }, 'UTC')).toBeUndefined();
+  expect(exactTimeRangePatch({ from: 1000, to: 2000 }, 'invalid-zone')).toBeUndefined();
 });

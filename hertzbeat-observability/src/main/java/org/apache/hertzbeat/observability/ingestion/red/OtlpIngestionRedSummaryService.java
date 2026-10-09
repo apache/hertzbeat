@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.observability.ingestion.red;
 
-import io.grpc.Status;
-import java.math.BigDecimal;
+import org.apache.hertzbeat.observability.ingestion.util.OtlpStatusCodes;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -53,25 +53,7 @@ public class OtlpIngestionRedSummaryService {
     private static final Set<String> SUPPORTED_SIGNALS = Set.copyOf(SIGNAL_ORDER);
     private static final Set<String> SUPPORTED_PROTOCOLS = Set.copyOf(PROTOCOL_ORDER);
     private static final Set<String> SUPPORTED_OUTCOMES = Set.of("accepted", OUTCOME_REJECTED, "dropped");
-    private static final Set<String> SUPPORTED_STATUS_CODES = Set.of(
-            "OK",
-            "CANCELLED",
-            "UNKNOWN",
-            "INVALID_ARGUMENT",
-            "DEADLINE_EXCEEDED",
-            "NOT_FOUND",
-            "ALREADY_EXISTS",
-            "PERMISSION_DENIED",
-            "RESOURCE_EXHAUSTED",
-            "FAILED_PRECONDITION",
-            "ABORTED",
-            "OUT_OF_RANGE",
-            "UNIMPLEMENTED",
-            "INTERNAL",
-            "UNAVAILABLE",
-            "DATA_LOSS",
-            "UNAUTHENTICATED"
-    );
+
 
     private final OtlpIngestionAuditService auditService;
     private final List<OtlpIngestionAuditEventReader> eventReaders;
@@ -235,50 +217,10 @@ public class OtlpIngestionRedSummaryService {
     }
 
     private String normalizedStatusCode(String value) {
-        String text = StringUtils.trimToNull(value);
-        if (text == null) {
-            return null;
-        }
-        String grpcStatusName = numericGrpcStatusName(text);
-        if (grpcStatusName != null) {
-            return grpcStatusName;
-        }
-        if (isNumericStatusCode(text)) {
-            return null;
-        }
-        String normalized = text.replaceAll("[\\s-]+", "_").replaceAll("^_+|_+$", "");
-        normalized = StringUtils.trimToNull(normalized) == null ? null : normalized.toUpperCase(Locale.ROOT);
-        return normalized != null && SUPPORTED_STATUS_CODES.contains(normalized) ? normalized : null;
+        return OtlpStatusCodes.normalize(value);
     }
 
-    private String numericGrpcStatusName(String text) {
-        String trimmed = StringUtils.trimToEmpty(text);
-        if (trimmed.isEmpty()) {
-            return null;
-        }
-        try {
-            BigDecimal numericStatus = new BigDecimal(trimmed).stripTrailingZeros();
-            if (numericStatus.scale() > 0) {
-                return null;
-            }
-            int codeValue = numericStatus.intValueExact();
-            if (codeValue < Status.Code.OK.value() || codeValue > Status.Code.UNAUTHENTICATED.value()) {
-                return null;
-            }
-            return Status.fromCodeValue(codeValue).getCode().name();
-        } catch (ArithmeticException | NumberFormatException ignored) {
-            return null;
-        }
-    }
 
-    private boolean isNumericStatusCode(String text) {
-        try {
-            new BigDecimal(text);
-            return true;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
 
     private List<OtlpIngestionRedSummaryDto.SignalRedMetric> buildSignalSummaries(
             List<OtlpIngestionAuditEvent> events, Long startMillis, Long endMillis) {

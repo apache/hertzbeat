@@ -397,7 +397,7 @@ function renderFields(
       retryMetricTargetApps={vi.fn()}
       retryMetricTargetHierarchy={vi.fn()}
       preview={preview}
-      previewLoading={false}
+      previewState={{ kind: 'idle' }}
       invalidFields={invalidFields}
     />
   );

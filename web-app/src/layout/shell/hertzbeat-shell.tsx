@@ -10,6 +10,7 @@ import { useResourceParams } from '@refinedev/core';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
+import { signalDashboardPath } from '@/shared/navigation/signal-dashboard-paths';
 import { ShellInvestigationProvider } from '@/shared/investigation';
 import { QueryContextProvider } from '@/shared/query-context';
 import { GlobalTimeProvider, RouteTimeProvider, type TimeOwnership } from '@/shared/time';
@@ -19,7 +20,7 @@ import { ShellNavigation } from './shell-navigation';
 import { readShellResourceMeta, resolveShellTimePolicy } from './shell-navigation-model';
 import styles from './hertzbeat-shell.module.css';
 
-const NARROW_EXPLORE_QUERY = '(max-width: 768px)';
+const NARROW_SHELL_QUERY = '(max-width: 768px)';
 
 export function HertzBeatShell() {
   return (
@@ -34,15 +35,19 @@ export function HertzBeatShell() {
 function RouteOwnedShell() {
   const [manualCollapsed, setManualCollapsed] = useState(false);
   const location = useLocation();
-  const routeCollapsed = useNarrowExploreNavigation(location.pathname);
-  const collapsed = manualCollapsed || routeCollapsed;
+  const narrowCollapsed = useNarrowNavigation();
+  const collapsed = manualCollapsed || narrowCollapsed;
   const { action, resource } = useResourceParams();
   const policy: TimeOwnership = resolveShellTimePolicy(readShellResourceMeta(resource?.meta?.shell), action);
   return (
     <RouteTimeProvider
       key={`${location.pathname}:${policy}`}
       policy={policy}
-      canonicalizeInvalidExact={location.pathname !== applicationRoutePaths.explore}
+      canonicalizeInvalidExact={
+        location.pathname !== applicationRoutePaths.explore &&
+        location.pathname !== applicationRoutePaths.services &&
+        location.pathname !== signalDashboardPath
+      }
     >
       <ShellInvestigationProvider>
         <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
@@ -50,7 +55,7 @@ function RouteOwnedShell() {
           <div className={styles.shellBody}>
             <ShellNavigation
               collapsed={collapsed}
-              collapseLocked={routeCollapsed}
+              collapseLocked={narrowCollapsed}
               onCollapsedChange={setManualCollapsed}
             />
             <main className={styles.content}>
@@ -63,19 +68,19 @@ function RouteOwnedShell() {
   );
 }
 
-function useNarrowExploreNavigation(pathname: string) {
-  const [narrow, setNarrow] = useState(() => matchesNarrowExplore());
+function useNarrowNavigation() {
+  const [narrow, setNarrow] = useState(() => matchesNarrowViewport());
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
-    const media = window.matchMedia(NARROW_EXPLORE_QUERY);
+    const media = window.matchMedia(NARROW_SHELL_QUERY);
     const update = () => setNarrow(media.matches);
     update();
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
-  return pathname === applicationRoutePaths.explore && narrow;
+  return narrow;
 }
 
-function matchesNarrowExplore() {
-  return typeof window.matchMedia === 'function' && window.matchMedia(NARROW_EXPLORE_QUERY).matches;
+function matchesNarrowViewport() {
+  return typeof window.matchMedia === 'function' && window.matchMedia(NARROW_SHELL_QUERY).matches;
 }

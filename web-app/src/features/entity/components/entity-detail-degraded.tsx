@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { OperationalCommandBar, OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import type { EntityRecord } from '../model/entity-contract';
-import { localizeEntityCode } from '../model/entity-display';
+import { EntityDetailContext } from './entity-detail-context';
+import { EntityDetailNavigation, EntityDetailSection } from './entity-detail-navigation';
 import type { EntityExploreSignal } from '../model/entity-operational-navigation';
 import type { EntitySignalViewState } from '../model/entity-signal-view-model';
 import { EntityIdentityMetadata } from './entity-detail-metadata';
@@ -22,23 +23,20 @@ type DegradedEntityDetailActions = {
   remove: () => void;
 };
 
-export function DegradedEntityDetail({
-  entity,
-  state,
-  actions,
-  signals
-}: {
+type DegradedEntityDetailProps = {
   entity: EntityRecord;
   state: { deleting: boolean; refreshing: boolean; canWrite: boolean; canDelete: boolean };
   actions: DegradedEntityDetailActions;
   signals?: EntitySignalViewState | undefined;
-}) {
+};
+
+export function DegradedEntityDetail({ entity, state, actions, signals }: DegradedEntityDetailProps) {
   const { t } = useTranslation();
   return (
     <OperationalPage>
       <OperationalPageHeader
         title={entity.displayName || entity.name}
-        description={localizeEntityCode(t, 'type', entity.type)}
+        description={<EntityDetailContext entity={entity} unavailable />}
         actions={
           <Space wrap>
             <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refresh}>
@@ -52,9 +50,7 @@ export function DegradedEntityDetail({
         primary={
           state.canWrite ? (
             <Space wrap>
-              <Button type="primary" onClick={actions.edit}>
-                {t('common.edit')}
-              </Button>
+              <Button onClick={actions.edit}>{t('common.edit')}</Button>
               <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
             </Space>
           ) : undefined
@@ -67,6 +63,12 @@ export function DegradedEntityDetail({
           ) : undefined
         }
       />
+      <EntityDetailNavigation
+        chapters={[
+          ...(signals ? [{ id: 'entity-signals', label: 'entity.signals.title' }] : []),
+          { id: 'entity-details', label: 'entity.sections.details' }
+        ]}
+      />
       <Alert
         showIcon
         type="warning"
@@ -74,7 +76,9 @@ export function DegradedEntityDetail({
         description={t('entity.degraded.description')}
       />
       {signals ? (
-        <EntitySignalView state={signals} openSignal={actions.explore} openTopology={actions.topology} />
+        <EntityDetailSection id="entity-signals" label={t('entity.signals.title')}>
+          <EntitySignalView state={signals} openSignal={actions.explore} openTopology={actions.topology} />
+        </EntityDetailSection>
       ) : null}
       <EntityIdentityMetadata entity={entity} />
     </OperationalPage>

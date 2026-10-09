@@ -1,0 +1,49 @@
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-1);
+  height: 44px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--hb-bg-navigation);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  scroll-padding-inline: var(--hb-space-2);
+}
+
+.navigation :global(.ant-btn) {
+  flex: 0 0 auto;
+}
+
+.navigation :global([aria-current='location']) {
+  color: var(--hb-brand-accent);
+  border-bottom: 2px solid currentColor;
+  font-weight: 600;
+}
+
+.navigation :global(.ant-btn:focus-visible),
+.chapter:focus-visible,
+.chapter :global(#entity-status-evidence:focus-visible),
+.context :global(.ant-btn:focus-visible) {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: -2px;
+}
+
+.chapter {
+  min-width: 0;
+  scroll-margin-top: calc(var(--hb-shell-header-height, 0px) + 64px);
+}
+
+.context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--hb-space-1) var(--hb-space-4);
+  overflow-wrap: anywhere;
+}
+
+.context :global(.ant-btn) {
+  height: auto;
+  padding: 0;
+  white-space: normal;
+  text-align: start;
+}

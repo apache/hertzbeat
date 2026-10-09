@@ -38,7 +38,14 @@ export function AlertRuleDetailEvidence(props: { state: AlertRuleEditorDetailSta
 
 export function AlertRulePreviewEvidence({ state }: { state: AlertRulePreviewState }) {
   const { t } = useTranslation();
-  if (state.kind === 'idle' || state.kind === 'loading') return null;
+  if (state.kind === 'idle') return null;
+  if (state.kind === 'loading') {
+    return (
+      <span role="status">
+        <Spin size="small" /> {t('alertRules.previewLoading')}
+      </span>
+    );
+  }
   if (state.kind === 'input') {
     return <Alert type="error" showIcon message={t('alertRules.previewInputInvalid')} />;
   }

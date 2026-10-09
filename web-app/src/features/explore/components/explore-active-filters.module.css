@@ -1,0 +1,51 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.activeFilters :global(.ant-tag) {
+  margin: 0;
+  border-color: var(--hb-border-subtle);
+  background: transparent;
+}
+
+.label {
+  align-self: center;
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+
+.activeFilters :global(.ant-tag) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hb-space-1);
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+}
+
+.remove:hover {
+  color: var(--ant-color-primary);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 1px;
+}

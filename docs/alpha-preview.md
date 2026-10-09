@@ -18,6 +18,11 @@ toward a beta.
 
 ## Local Source Quickstart
 
+Use Java 25, Node.js 22 and pnpm 10. Build the production frontend before a
+source release package; a development server is not release evidence. See the
+[installation guide](../home/docs/start/package-deploy.md) for first-run Setup
+and the [upgrade guide](../home/docs/start/upgrade.md) before reusing data.
+
 1. Start the backend from `hertzbeat-startup` with Java 25.
 
    Keep the Arrow JVM open option when running locally:
@@ -38,8 +43,15 @@ toward a beta.
 
    The preview frontend listens on `http://127.0.0.1:4200`.
 
-3. Open `http://127.0.0.1:4200` and sign in with the local development account
-   configured for your environment.
+3. Open `http://127.0.0.1:4200`. For a fresh installation, complete Setup using
+   the installation-local unlock credential and create an administrator. For an
+   existing installation, use its configured account. Do not assume a built-in
+   default password. Keep Setup credentials and tokens out of issue reports.
+
+See the [Explore and saved-query guide](../home/docs/help/explore_saved_queries.md)
+for three-signal query, recovery, Live, sharing and conflict workflows, and the
+[Dashboard guide](../home/docs/help/perses_dashboard.md) for the supported document
+subset. These describe alpha capabilities, not full parity with another product.
 
 ## Alpha Validation Checklist
 
@@ -57,7 +69,7 @@ Backend entity, topology, observability, and Greptime query changes:
 Startup source package proof:
 
 ```shell
-./mvnw -pl hertzbeat-startup -am -DskipTests package
+./mvnw -pl hertzbeat-startup -am -Prelease -DskipTests package
 ```
 
 Topology, entity, observability, shell, session, and shared UI changes:
@@ -80,56 +92,137 @@ Visible changes also require a production build, a real backend, and a Browser
 check of the affected workflow. Do not use mocked topology or signal data as
 release evidence.
 
-## Three-Signal SigNoz-Alignment Alpha Cutoff
+## Delivered Operator Workflows
 
-HertzBeat 2.0 treats SigNoz as a product-shape reference for the alpha
-observability workspace, not as a full parity claim. The alpha cutoff is the
-operator workflow where metrics, logs, and traces can stay attached to the same
-HertzBeat entity context, be saved as reusable views, be composed into
-dashboards, and drill from service or operation metrics into related traces and
-logs.
+The alpha uses Greptime's query organization, Perses' document model and mature
+APM service drilldowns as design references. It does not claim feature parity
+with those products, SigNoz, SkyWalking or Datadog.
 
-This alpha scope includes:
+- **First use:** distinguish Agentless target monitoring from application OTLP
+  instrumentation. The intake catalog declares each recipe's signal support.
+  The real reference paths are an Agentless MySQL target and an application
+  using the official OpenTelemetry Java agent. Other catalog entries are not
+  automatically covered by this acceptance.
+- **Daily entry:** Start links to real monitors, unresolved alerts, registered
+  services and saved queries. Each query reports its own loading, empty or
+  failure state; an empty Entity catalog does not establish that no telemetry
+  exists.
+- **Explore:** metrics, logs and traces share service, namespace, environment,
+  filters and a fixed absolute investigation window when navigating. Trace
+  newest/duration sorting runs before pagination. Coverage identifies a complete
+  query window or a bounded fallback; missing or ambiguous roots have unknown
+  root duration and sort after valid durations. Live data can change between
+  requests; pagination is not a snapshot isolation guarantee.
+  Query controls sit above the results, with log/trace filters in a companion
+  column. A collapsible **Workflow guide** explains each signal’s query and
+  inspection steps. Metrics keep an inspectable catalog and chart/sample-table
+  switch; selecting a metric changes the draft until **Query** is applied.
+  A base metric query names one stored metric; a typed composition can combine
+  up to four source queries and four bounded arithmetic formulas. Supported
+  controls include aggregation, grouping, label filters, rate/increase/delta,
+  fixed time shifts, rollup and nested time aggregation, not arbitrary PromQL.
+  Aggregation preserves protected service and entity scope. Count means
+  contributing series, not requests. Histogram bucket queries retain `le`;
+  bucket values are not latency percentiles. Invalid filter clauses or grouping
+  labels fail rather than silently widening the query. The trend precedes the
+  sampled summary; concise legends do not remove complete labels from it.
+  Apply a draft with **Query**; open a result to inspect its evidence and
+  use **Back to results** to retain the original time window and filters.
+  Log severity categories use the OTel numeric bands (for example Error is
+  17–20 and includes Java `SEVERE`). **Original severity text** remains an
+  independent exact filter; both conditions combine with AND. Category-filtered
+  queries can be saved and reopened, but the restricted Dashboard and AI
+  handoff contracts currently reject that filter rather than omit it.
+  Historical Logs also offer bounded Patterns, identity-based Transactions and
+  sampled calculated fields. Their disclosed sample or identity boundary is
+  part of the result; a sampled calculation is not a full-window aggregate.
+  Traces offer a typed two-span structural query plus bounded structural
+  Patterns and a source-backed Request Flow Map. The map does not infer missing
+  parent spans or services, and a missing correlated log does not establish a
+  request outcome.
+- **Services:** registered service Entities provide source, environment, last
+  observed Trace time, service-wide RED and observed root operations. Greptime
+  Flow aggregates SERVER requests into minute buckets; P95 is approximate and
+  can be unavailable, and sampling completeness is unknown. Ingestion audit
+  counts are separate from business request RED. Existing registered relations
+  and monitor-linked alerts are evidence, not complete inferred dependencies.
+  An operation can lead to matching Traces and then associated Logs while
+  retaining the investigation context. Direct service Logs do not imply an
+  operation filter. The detail heading identifies the canonical service and
+  environment; **Service information** exposes the catalog alias, source,
+  historical freshness and bounded associations. Identity metadata can remain
+  visible during refresh while signal values retain loading or failure states.
+  The **Performance** directory compares observed requests, errors, error rate
+  and P95 across matching services. Choose a window, optionally narrow by search
+  or environment, run Query, then sort and open a service to inspect its trends
+  and root operations. Both return actions preserve the directory view, filters,
+  order, page and exact investigation window. **Registered** remains a separate
+  metadata view when request evidence is unavailable.
+  The server ranks all matching authorized services before pagination, bounded
+  by 500 candidates and a 24-hour window. A larger scope requires narrower
+  filters and returns no partial ranking. Missing observations remain unavailable
+  values, not zero errors or healthy services; a storage failure returns no
+  ranking. Catalog and telemetry reads do not share a snapshot, so late data can
+  change order on refresh. This is not a health score, anomaly detector or
+  complete resource catalog.
+  Metrics API operation predicates match real metric labels
+  and can correctly return no matching data.
+- **Saved queries:** save applied conditions, reopen, update, save as and delete
+  installation-shared assets under existing role permissions. Relative or exact
+  time mode survives restart; reopening starts on the first page. The versioned
+  query document is authoritative. Convertible legacy records open without an
+  automatic write; unsupported records remain available for raw export.
+- **Dashboards:** create, edit, copy, delete, import/export, adjust layout, save
+  or cancel and add a panel from Explore. Standard Perses Dashboard JSON is
+  accepted only within the HertzBeat subset: seven visual plugins, controlled query
+  plugins, one Grid and service/namespace/environment variables. Metrics can use
+  TimeSeries, Stat, Gauge or Table; the restricted Logs, Trace table and fixed
+  Trace waterfall panels remain available. Panels load
+  and fail independently. Shared runtime time and Explore return context remain
+  explicit; fixed Trace waterfalls stay pinned when a service variable changes.
+  Native revisions reject stale updates or deletes with HTTP 409. Cancel does
+  not persist a draft. See the [Dashboard guide](../home/docs/help/perses_dashboard.md).
+- **AI investigation:** bounded read-only tools, durable transcript replay,
+  refusal, no-data, timeout, Stop/Retry and redaction are exercised with actual
+  application data and a labeled local protocol provider. This establishes
+  transport and policy behavior, not external model quality. See the
+  [AI guide](../home/docs/help/ai_agent.md).
 
-- OTLP metrics, logs, and traces carrying HertzBeat entity context through
-  `entityId`, `entityType`, `entityName`, service, namespace, environment,
-  collector, template, and source query parameters.
-- Saved query views, dashboard panel drafts, dashboard variables, and persisted
-  dashboards for metrics, logs, and traces.
-- A service overview dashboard with RED-style metrics, Apdex, database calls,
-  external calls, key operations, logs, log errors, traces, trace errors,
-  exceptions, exception messages, and firing alerts.
-- An operation drilldown dashboard from `operationName` context, with metrics
-  filtered by `operation`, logs filtered by `http.route`, traces filtered by
-  `operationName`, and exceptions grouped by `exception.type`.
-- Runtime dashboard evidence flows from metric/log/trace points into related
-  signal handoffs, evidence panel drafts, and breakout panel drafts.
-- Stable entity binding from OpenTelemetry resource identity such as
-  `service.name`, host, and Kubernetes pod attributes.
+Service identity matching requires meaningful service-name or instance evidence;
+namespace/environment alone cannot bind an unrelated service. Unresolved
+identity does not prevent direct signal queries. The correction affects new
+intake; previously stored identity attributes are not rewritten automatically.
+Runtime dimensions such as Trace ID, operation and HTTP route are query context,
+not new long-lived Entity identities.
 
-This alpha scope does not claim full SigNoz parity. In particular, it does not
-claim public dashboard sharing, Terraform-managed dashboards, a prebuilt
-dashboard template marketplace, a ClickHouse SQL dashboard builder, a log
-pipeline builder, cost-meter dashboards, full flamegraph parity, or automatic
-APM RED metric derivation from traces beyond the explicit telemetry/query data
-seeded or stored in the current HertzBeat runtime.
+The bounded intake check observes a fixed 120-second window. Previously received
+signals are historical evidence, not continuing emitter liveness. Start a fresh
+check after stopping an emitter, and inspect exporter authentication errors
+separately. See the [instrumentation contract](instrumentation-api.md).
 
-Runtime signal dimensions such as `trace_id`, `span.name`, `http.route`,
-`operation`, `operationName`, `exception.type`, and `exception.message` are
-filter, group-by, handoff, and drilldown dimensions. They must not be promoted
-into long-lived `ObserveEntity` identities unless a later design explicitly
-adds an endpoint or operation entity model.
+## Installation, Recovery and Acceptance Boundary
 
-The focused live proof for this cutoff is:
+The local candidate was built from a frozen source snapshot with a fresh
+production frontend and Java 25 startup package. Installed API and Browser
+checks used the same archive. The reference environment covered H2, MySQL 8.4
+and PostgreSQL 17 management persistence, separate GreptimeDB 1.1.4 telemetry,
+restart, native metadata backup/restore, and a stopped single-node Greptime data
+copy and restore. Preserve management data, telemetry, configuration and secrets
+as separate backup responsibilities. This is not an online or distributed
+backup guarantee. Do not copy a running database directory.
 
-```shell
-TRACE_ID=6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b bash script/dev/run-three-signal-live-proof.sh
-```
+The real alert check raised MySQL connection count, observed firing notification
+receipts, released the connections and observed recovery receipts. Repeated
+firing notifications are possible; the proof does not establish exactly-once
+delivery. AI protocol tests use a local controlled provider with explicit test
+timeout/retry settings, not new product defaults.
 
-That proof starts a non-persistent H2 backend, seeds OTLP metrics/logs/traces,
-verifies entity binding and signal query breakouts, starts `web-app`, and checks
-that the active React routes are served. Product-level browser acceptance remains
-a separate real-backend validation step.
+Release evidence must record the source revision and uncommitted snapshot,
+lockfiles, toolchain, archive digest, test commands and limits. Keep credentials,
+runtime databases, screenshots and local evidence out of public commits. The
+[release checklist](alpha-release-checklist.md) separates local acceptance from
+publication. Source changes after an accepted archive require a new build and
+appropriate revalidation.
 
 ## Local Scale Proof Data
 
@@ -151,9 +244,28 @@ required alpha setup.
 
 - The Vite React frontend is still an alpha preview. Parity claims require
   route, action, API read/write, refresh, context-handoff, and Browser evidence.
-- Three-signal work is scoped to the alpha cutoff above. Do not describe it as
-  full SigNoz parity unless a later release adds and proves the omitted product
-  capabilities.
+- Background tabs suspend manager-event connections and reread current state
+  when shown again; alert notification connections remain active. For many
+  simultaneously open tabs, use an HTTP/2-capable HTTPS proxy: browser HTTP/1
+  per-origin connection limits still apply to long-lived alert streams. See the
+  [browser SSE connection limit](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events).
+- Services do not yet provide a complete operation RED inventory, Apdex, a
+  database/external-call product, causal root-cause analysis or complete inferred
+  service dependencies. Trace duration distributions are deferred.
+- Dashboard import/export is limited to the HertzBeat Perses subset. No
+  standalone Perses service, arbitrary SQL, external data-source plugins, public
+  sharing or plugin marketplace is included. Saved-query updates and deletes
+  use revisions and reject stale writes; resolve conflicts or save a copy.
+- Three-signal exploration does not provide Datadog's full query grammar,
+  function and widget catalogs, prediction/anomaly algorithms, archive search,
+  Watchdog/Findings, natural-language queries, public or scheduled dashboards,
+  standalone resource pages, or direct metric-point-to-trace correlation.
+  Patterns and calculated fields are bounded sampled views; structural Trace
+  Patterns and Flow Map use a bounded observed-span population.
+- Earlier alpha snapshots with a different V200 migration checksum require a
+  fresh database for this preview. Do not repair the checksum or assume an
+  automatic in-place upgrade. Historical PostgreSQL saved-query OID strings
+  are not automatically converted into valid query documents.
 - Topology large-graph behavior is optimized for inspection with render
   windows, table drilldown, and optional browser smoke. Continue filing cases
   where real data feels confusing or slow.

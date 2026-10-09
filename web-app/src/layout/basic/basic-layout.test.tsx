@@ -128,8 +128,18 @@ describe('BasicLayout shell', () => {
     expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'true');
   });
 
-  it('uses the real collapsed navigation on a narrow Explore route without overwriting manual state', () => {
-    const viewport = controlledExploreViewport(true);
+  it.each(['/dashboard', '/monitors', '/observability/integration', '/settings/notifications/templates'])(
+    'starts with the existing collapsed navigation on narrow %s',
+    path => {
+      vi.stubGlobal('matchMedia', controlledShellViewport(true).matchMedia);
+      renderLayout(path);
+      expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'true');
+      expect(screen.queryByRole('button', { name: 'Expand navigation' })).not.toBeInTheDocument();
+    }
+  );
+
+  it('keeps narrow navigation collapsed across routes without overwriting desktop manual state', () => {
+    const viewport = controlledShellViewport(true);
     vi.stubGlobal('matchMedia', viewport.matchMedia);
     renderLayout('/explore', <RouteLinks />);
 
@@ -140,6 +150,8 @@ describe('BasicLayout shell', () => {
     expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
     act(() => viewport.setNarrow(true));
     fireEvent.click(screen.getByRole('link', { name: 'Leave Explore test route' }));
+    expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'true');
+    act(() => viewport.setNarrow(false));
     expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'false');
 
     fireEvent.click(screen.getByRole('button', { name: 'Collapse navigation' }));
@@ -159,10 +171,10 @@ function RouteLinks() {
   );
 }
 
-function controlledExploreViewport(initialNarrow: boolean) {
+function controlledShellViewport(initialNarrow: boolean) {
   let narrow = initialNarrow;
   const listeners = new Set<(event: MediaQueryListEvent) => void>();
-  const exploreMedia = {
+  const shellMedia = {
     get matches() {
       return narrow;
     },
@@ -176,11 +188,11 @@ function controlledExploreViewport(initialNarrow: boolean) {
   } as MediaQueryList;
   return {
     matchMedia: vi.fn((query: string) =>
-      query === exploreMedia.media ? exploreMedia : { ...exploreMedia, matches: false, media: query }
+      query === shellMedia.media ? shellMedia : { ...shellMedia, matches: false, media: query }
     ),
     setNarrow(value: boolean) {
       narrow = value;
-      const event = { matches: value, media: exploreMedia.media } as MediaQueryListEvent;
+      const event = { matches: value, media: shellMedia.media } as MediaQueryListEvent;
       listeners.forEach(listener => listener(event));
     }
   };

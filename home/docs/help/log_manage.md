@@ -5,6 +5,8 @@ sidebar_label: Log Management (Beta)
 keywords: [open source monitoring, log management, log query, log statistics, log deletion]
 ---
 
+For the 2.0 alpha React workbench, use [Explore and saved queries](./explore_saved_queries.md). Its history/live controls, field inspector, query grammar and gap behavior are documented there. The screenshots and navigation below describe the earlier interface.
+
 > HertzBeat's log management feature provides comprehensive log data management capabilities, including log querying, statistical analysis, and batch deletion operations. Users can precisely search logs through various filter conditions, view detailed statistical charts, and clean up unnecessary log data.
 
 :::warning

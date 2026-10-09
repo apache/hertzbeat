@@ -1,0 +1,52 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.options {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.options h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.addColumn {
+  width: 100%;
+}
+
+.list {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-inline-start: 8px;
+  border-radius: var(--hb-radius-sm);
+  background: var(--hb-bg-subtle);
+}
+
+.columnLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--hb-text-primary);
+  font-size: 12px;
+}
+
+.row button {
+  flex: none;
+  color: var(--hb-text-secondary);
+}
+
+.empty {
+  margin: 0;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}

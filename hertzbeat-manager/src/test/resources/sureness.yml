@@ -147,6 +147,7 @@ resourceRole:
   - /api/otlp/**===post===[admin,user]
   - /api/logs/otlp/**===post===[admin,user]
   - /api/logs/**===get===[admin,user,guest]
+  - /api/logs/analysis/compare===post===[admin,user,guest]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
   - /api/manager/import-tasks/**===get===[admin,user]
@@ -216,7 +217,11 @@ excludedResource:
   - /api/push/**===*
   - /api/status/page/public/**===*
   # web ui resource
+  - /setup===get
+  - /setup===head
   - /===get
+  - /ai===get
+  - /ai/schedules===get
   - /assets/**===get
   - /dashboard/**===get
   - /monitors/**===get

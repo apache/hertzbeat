@@ -4,166 +4,92 @@ title: 通过安装包安装 HertzBeat
 sidebar_label: 安装包方式安装
 ---
 
-:::tip
-Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
-当前分支默认使用 `Java 25`，且标准安装包不再提供内置 JDK。可参考以下情况使用 HertzBeat：
+本文适用于 HertzBeat 2.0 alpha／社区预览版。建议使用全新安装环境进行评估；复用已有数据库前，请先阅读[升级边界](upgrade.md)。
 
-- 当你的服务器中默认环境变量为 `Java 25` 时，这一步无需任何操作。
-- 当你的服务器中默认环境变量不为 `Java 25` 时，如 `Java 8`、`Java 11`、`Java 21`，若你服务器中**没有**其他应用需要低版本 `Java`，根据你的系统到 [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/) 下载 `Java 25`，并将环境变量指向新的 `Java 25`。
-- 当你的服务器中默认环境变量不为 `Java 25` 时，如 `Java 8`、`Java 11`、`Java 21`，若你服务器中**有**其他应用需要低版本 `Java`，不希望修改全局环境变量，可根据你的系统到 [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/) 下载 `Java 25`，并将解压后的文件夹重命名为 `java`，复制到 HertzBeat 的解压目录下。
+## 前置条件
 
-:::
+- Java 25。安装包不包含 JDK。Bash 启动脚本使用 `PATH` 中的 `java`；如果解压目录下存在可执行的 `java/bin/java`，则优先使用它。
+- Bash、`curl`，以及安装目录中 `data`、`config`、`logs` 的写权限。服务端启动脚本使用 curl 执行有时间上限的 HTTP 启动检查。
+- 可访问的 GreptimeDB，用于三信号查询；准备 HTTP 地址、gRPC 地址、数据库名称，以及服务要求的凭据。
+- 元数据库：本地评估可使用内嵌 H2，也可使用 MySQL 或 PostgreSQL。本轮本地 alpha 验收覆盖 H2、MySQL 8.4、PostgreSQL 17 和 GreptimeDB 1.1.4，不代表所有数据库版本、操作系统或原生发行包均已验证。
 
-## 部署 HertzBeat Server
+以下命令使用 Bash 服务端安装包。其他平台应采用对应制品和说明。启动前检查工具链：
 
-1. 下载安装包
+```shell
+java -version
+curl --version
+```
 
-   从 [下载页面](/docs/download) 下载您系统环境对应的安装包版本 `apache-hertzbeat-xxx-bin.tar.gz`
+## 安装并完成 Setup
 
-2. 设置配置文件(可选)
-
-   解压安装包到主机 eg: /opt/hertzbeat
-
-   ```shell
-   tar zxvf apache-hertzbeat-xxx-bin.tar.gz
-   ```
-
-   :::tip
-   位于 `config/application.yml` 的配置文件，您可以根据需求修改配置文件来配置外部依赖的服务，如数据库，时序数据库等参数。
-   HertzBeat 启动时默认全使用内部服务，但生产环境建议切换为外部数据库服务。
-   :::
-
-   建议元数据存储使用 [PostgreSQL](postgresql-change), 指标数据存储使用 [VictoriaMetrics](victoria-metrics-init), 具体步骤参见
-
-   - [内置 H2 数据库切换为 PostgreSQL](postgresql-change)
-   - [使用 VictoriaMetrics 存储指标数据](victoria-metrics-init)
-
-3. 配置账户文件(可选)
-
-   HertzBeat 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
-   若需要新增删除修改账户或密码，可以通过修改位于 `config/sureness.yml` 的配置文件实现，具体参考
-
-   - [配置修改账户密码](account-modify)
-
-4. 启动
-
-   执行位于安装目录 bin 下的启动脚本 startup.sh, windows 环境下为 startup.bat
+1. 从[下载页面](/docs/download)或维护者提供的评估渠道取得 alpha 安装包；如已提供签名或校验值，应先核对。源码构建需记录源码快照，并构建生产前端和启动模块安装包；Vite 开发服务器不能替代发行制品。
+2. 解压到新目录。将下面的文件名替换为实际选定的安装包：
 
    ```shell
-   ./startup.sh
+   tar -xzf apache-hertzbeat-2.0.0-bin.tar.gz
+   cd apache-hertzbeat-2.0.0-bin
+   ./bin/startup.sh
    ```
 
-5. 开始探索HertzBeat
-   浏览器访问 [http://ip:1157/](http://ip:1157/) 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
+3. 打开 `http://<server>:1157/setup`。首次出现 **Setup required** 说明配置服务已可访问，并不代表安装完成。如果页面要求解锁码，请以安装目录所有者身份读取本地 `data/config/setup-unlock-code`，并妥善保密。
+4. 配置元数据库和 GreptimeDB，执行连接检查。安装包的 H2 初始化应使用 `jdbc:h2:./data/hertzbeat;MODE=MYSQL`；本 alpha 的 H2 建表流程需要 MySQL 兼容模式。填写 HertzBeat 服务端能够访问的地址；容器内的 `127.0.0.1` 指向该容器自身。
+5. 创建管理员，检查可选的公开访问地址和通知配置，并确认适用的警告。H2 用于评估，不作为生产部署建议。完成 Setup 后使用刚创建的账号登录，不要假设存在 `admin/hertzbeat` 等默认密码。
+6. 为服务端以外的客户端配置对外公布的 OTLP 地址。浏览器访问地址和 OTLP HTTP 摄入地址不是同一概念，应使用接入页面生成的指南，不要猜测接口路径。
 
-### 部署 HertzBeat Collector 集群(可选)
+保留安装包 `config/application.yml` 中的导入配置。Setup 将受管理的配置写入安装目录的 `data/config`；运维人员显式设置的环境变量、命令行和外部配置文件仍保留其优先级。把类路径中的全部默认值复制到外部配置，可能意外覆盖之后的 Setup 修改。
 
-:::note
-HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数据发送到 HertzBeat Server。
-通过部署多个 HertzBeat Collector 可以实现数据的高可用，负载均衡和云边协同。
-:::
+服务端安装包包含元数据库 JDBC 依赖。如果自定义构建省略了驱动，应在启动前通过 `ext-lib` 提供兼容驱动，不要修改正在运行的制品。
 
-:::tip Native 采集器推荐
-如果你的监控任务不依赖从 `ext-lib` 动态加载外部 JDBC 驱动，优先选择 Native 采集器安装包，通常启动更快、常驻内存更低。MySQL、MariaDB、OceanBase 在没有提供 `mysql-connector-j` 时，也可以直接使用 Native 采集器安装包；TiDB 的 SQL 查询指标也遵循同样规则。
+## 启动与排错
 
-在选择前，建议先阅读 [Native 采集器指南](native-collector) 了解它的限制和取舍。
-:::
+Bash 启动脚本默认使用 1157 端口和 120 秒启动期限。指定其他端口或更长等待时间：
 
-![HertzBeat](/img/docs/cluster-arch.png)
+```shell
+SERVER_PORT=1257 START_TIMEOUT=180 ./bin/startup.sh
+```
 
-1. 下载安装包
+`SERVER_PORT` 同时作为 Spring Boot 的服务端口配置。其他显式端口设置应保持一致。`JAVA_OPTS` 和 `JAVA_MEM_OPTS` 接受按空白分隔的 JVM 参数；使用其他启动方式时，应保留脚本要求的 Arrow JVM 访问参数。
 
-   按部署形态选择对应的采集器安装包：
-   - JVM 采集器安装包：`apache-hertzbeat-collector-xxx-bin.tar.gz`
-   - Linux 或 macOS 的 Native 采集器安装包：`apache-hertzbeat-collector-native-xxx-{platform}-bin.tar.gz`
-   - Windows 的 Native 采集器安装包：`apache-hertzbeat-collector-native-xxx-windows-amd64-bin.zip`
-   - 从 [下载页面](/docs/download) 下载
+```shell
+./bin/startup.sh status
+curl --fail http://127.0.0.1:1157/api/setup/status
+./bin/shutdown.sh
+```
 
-2. 设置配置文件
+`status` 命令检查进程，不检查信号健康度。端口已监听也不能单独证明初始化成功。进程退出、启动超时或出现 `recovery_required` 时，应查看 `logs/startup.log` 和 Setup 状态，先解决地址、凭据、文件权限或 schema 兼容问题。不要通过修复 Flyway 校验值或替换运行时 JAR 掩盖初始化失败。
 
-   解压安装包到主机 eg: /opt/hertzbeat-collector
+## 无人值守评估或 CI
 
-   ```shell
-   tar zxvf apache-hertzbeat-collector-xxx-bin.tar.gz
-   # 或
-   tar zxvf apache-hertzbeat-collector-native-xxx-linux-amd64-bin.tar.gz
-   # 或
-   unzip apache-hertzbeat-collector-native-xxx-windows-amd64-bin.zip
-   ```
+自动化应复用现有的无人值守 Setup 流程。分别提供非空的元数据库密码文件和管理员密码文件，文件应归 HertzBeat 运行账号所有，并仅允许该账号读取，例如权限 `0600`。不要同时设置明文 `password` 和 `password-file`，也不要把密码写入仓库或 CI 输出。
 
-   配置采集器的配置文件 `config/application.yml` 里面的 HertzBeat Server 连接 IP, 端口, 采集器名称(需保证唯一性)等参数。
+在保留安装包导入配置的前提下，将以下设置加入当前生效的配置，并调整文件路径和 Greptime 地址：
 
-   ```yaml
-   collector:
-     dispatch:
-       entrance:
-         netty:
-           enabled: true
-           identity: ${IDENTITY:}
-           mode: ${MODE:public}
-           manager-host: ${MANAGER_HOST:127.0.0.1}
-           manager-port: ${MANAGER_PORT:1158}
-   ```
+```yaml
+hertzbeat:
+  setup:
+    unattended:
+      enabled: true
+      acknowledged-warnings: H2_NON_PRODUCTION
+    metadata:
+      kind: H2
+      jdbc-url: 'jdbc:h2:./data/hertzbeat;MODE=MYSQL'
+      username: sa
+      password-file: /run/secrets/hertzbeat-metadata-password
+    telemetry:
+      grpc-endpoints: 127.0.0.1:4001
+      http-endpoint: http://127.0.0.1:4000
+      database: public
+    administrator:
+      username: admin
+      password-file: /run/secrets/hertzbeat-administrator-password
+```
 
-   > 参数详解
+如果 Greptime 要求鉴权，还需设置 `hertzbeat.setup.telemetry.username` 和 `hertzbeat.setup.telemetry.password-file`。无人值守流程使用与 UI 相同的校验器和持久化阶段；等待 `/api/setup/status` 返回 `complete` 后，再验证登录。它不会绕过连接检查失败、恢复流程或必要的警告确认。管理员密码应符合当前 BCrypt 编码器的要求，包括 72 字节输入上限。
 
-   - `identity` : (可选) 设置采集器的唯一标识名称。注意多采集器时名称需保证唯一性。
-   - `mode` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-   - `manager-host` : 重要, 配置连接的 HertzBeat Server 地址，
-   - `manager-port` :  (可选) 配置连接的 HertzBeat Server 端口，默认 1158.
+## 验证首批数据
 
-3. 启动
+- **Agentless MySQL：** 使用可访问目标上的最小权限账号创建 MySQL 监控，运行检测，然后检查新鲜的当前值和历史采集值。该目标账号与 HertzBeat 元数据库账号是两个不同用途的账号。
+- **OTel Java 应用：** 选择 Java 应用接入方案，将生成的配置用于官方 OpenTelemetry Java agent，产生真实应用请求，再检查首批指标、链路及关联日志。每个信号都必须实际到达；一个信号到达不代表三信号全部接通。
+- 首信号检测观察固定时间窗口。停止上报后，应创建新的检测并查看 exporter 错误；之前收到过数据不能证明现在仍在持续上报。
 
-   JVM 采集器安装包执行位于安装目录 `hertzbeat-collector/bin/` 下的启动脚本 `startup.sh`，Windows 环境下为 `startup.bat`；Linux 或 macOS 的 Native 采集器安装包执行 `./startup.sh`，Windows 的 Native 采集器安装包执行 `bin\\startup.bat`
-
-4. 开始探索 HertzBeat Collector
-   浏览器访问主 HertzBeat 服务 [http://manager-host:1157/](http://manager-host:1157/) 的概览页面，即可确认新采集器已注册。
-
-:::important Native 采集器限制说明
-Native 采集器适合不依赖外部 JVM classpath 扩展的监控类型。
-
-关于包选择、安装包命名和平台相关限制，详见 [Native 采集器指南](native-collector)。
-
-基于 `ext-lib` 的 JDBC 驱动加载能力是 JVM 采集器的能力。Native 采集器当前不支持在运行时从 `ext-lib` 目录动态加载外部 JDBC 驱动 JAR。
-
-因此，凡是依赖外置 JDBC 驱动的监控类型，请使用 JVM 采集器，不要使用 Native 采集器。当前至少包括：
-
-- Oracle，需要 `ojdbc8`，部分场景还需要 `orai18n`
-- DB2，需要 `jcc`
-- 任何明确把 `mysql-connector-j` 放进 `ext-lib` 并希望继续走 JDBC 的 MySQL、MariaDB、OceanBase 场景
-
-建议部署方式：
-
-- `API`、`网站`、`端口可用性`、`Ping` 等非 JDBC 类型，以及不依赖 `ext-lib` 的 MySQL、MariaDB、OceanBase，优先使用 Native 采集器
-- 需要 `ext-lib` 扩展驱动时使用 JVM 采集器
-:::
-
-**HAVE FUN**
-
-----
-
-### 安装包部署常见问题
-
-**最多的问题就是网络环境问题，请先提前排查**
-
-1. 启动失败，需您提前准备JAVA运行环境
-
-   安装JAVA运行环境-可参考[官方网站](https://www.oracle.com/java/technologies/downloads/)
-   要求：JAVA25环境
-   下载JAVA安装包: [镜像站](https://mirrors.huaweicloud.com/openjdk/)
-   安装后命令行检查是否成功安装
-
-   ```shell
-   $ java -version
-     openjdk version "25.0.2" 2026-01-20
-     OpenJDK Runtime Environment (build 25.0.2+8)
-     OpenJDK 64-Bit Server VM (build 25.0.2+8, mixed mode, sharing)
-
-   ```
-
-2. 按照流程部署，访问 [http://ip:1157/](http://ip:1157/) 无界面
-   请参考下面几点排查问题：
-
-   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
-   > 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确
-   > 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
+这两条参考链路不要求单独部署 Collector。独立 Collector 的连接、注册、身份和对外摄入地址需另行配置；本地验收不证明 Collector 集群高可用，也不覆盖接入目录中的每一种方案。

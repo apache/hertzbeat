@@ -19,6 +19,8 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import en from '@/assets/i18n/en-us.json';
+import exploreEn from '@/assets/i18n/explore/en-us.json';
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
 import { ExploreActiveFilters } from './explore-active-filters';
@@ -31,6 +33,93 @@ describe('Explore active filters', () => {
   });
 
   afterEach(cleanup);
+
+  it('discloses applied numeric bounds and stages removal without navigation', () => {
+    const removeFilter = vi.fn(() => true);
+    const updateQuery = vi.fn();
+    const removeFilters = vi.fn();
+    const raw = JSON.stringify({ version: 1, field: 'attribute:duration', min: 2.5, max: 6.75 });
+    const { rerender } = render(
+      <ExploreActiveFilters
+        query={{ signal: 'logs', timeRange: 'last-30m', live: true, logNumericRange: raw }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+        removeFilters={removeFilters}
+      />
+    );
+    closeFilter(`${exploreEn.explore.logNumericRange.title}: attribute:duration [2.5, 6.75]`);
+    expect(removeFilter).toHaveBeenCalledWith('logNumericRange');
+    expect(updateQuery).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('explore.clearFilters') }));
+    expect(removeFilters).toHaveBeenCalledWith(['logNumericRange']);
+    rerender(
+      <ExploreActiveFilters
+        query={{ signal: 'logs', timeRange: 'last-30m', logNumericRange: '{}' }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
+    expect(screen.getByText(exploreEn.explore.logNumericRange.invalid)).toBeInTheDocument();
+  });
+
+  it('clears applied filters atomically without resetting the query or time', () => {
+    const removeFilters = vi.fn();
+    const updateQuery = vi.fn();
+    render(
+      <ExploreActiveFilters
+        query={{
+          signal: 'logs',
+          timeRange: 'last-30m',
+          query: 'checkout',
+          serviceName: 'checkout',
+          severityCategory: 'ERROR'
+        }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={vi.fn()}
+        removeFilters={removeFilters}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('explore.clearFilters') }));
+    expect(removeFilters).toHaveBeenCalledExactlyOnceWith(['severityCategory']);
+    expect(updateQuery).not.toHaveBeenCalled();
+  });
+
+  it('shows legacy log filters as removable chips while keeping trusted query scope locked', () => {
+    const removeFilter = vi.fn(() => true);
+    const removeFilters = vi.fn();
+    render(
+      <ExploreActiveFilters
+        query={{
+          signal: 'logs',
+          timeRange: 'last-30m',
+          serviceName: 'checkout',
+          environment: 'prod',
+          traceId: 'trace-1',
+          resourceFilter: 'host.name = "host"',
+          attributeFilter: 'event.name = "request"'
+        }}
+        t={i18n.t}
+        updateQuery={vi.fn()}
+        removeFilter={removeFilter}
+        removeFilters={removeFilters}
+      />
+    );
+    expect(screen.getByText('Service: checkout')).toBeInTheDocument();
+    expect(screen.getByText('Environment: prod')).toBeInTheDocument();
+    expect(screen.getByText('Trace ID: trace-1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Resource attributes, key=value/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Log attributes, key:value/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Service: checkout/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Environment: prod/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Trace ID: trace-1/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Resource attributes, key=value/ }));
+    expect(removeFilter).toHaveBeenCalledWith('resourceFilter');
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('explore.clearFilters') }));
+    expect(removeFilters).toHaveBeenCalledWith(['resourceFilter', 'attributeFilter']);
+  });
 
   it('delegates draft-owned removal without applying the query fallback', () => {
     const removeFilter = vi.fn(() => true);
@@ -49,7 +138,7 @@ describe('Explore active filters', () => {
       />
     );
 
-    expect(screen.getByText('Severity: ERROR')).toBeInTheDocument();
+    expect(screen.getByText('Original severity text: ERROR')).toBeInTheDocument();
     closeFilter('Instance: checkout-7d9');
 
     expect(removeFilter).toHaveBeenCalledWith(QUERY_CONTEXT_FIELDS.instance);
@@ -130,7 +219,7 @@ describe('Explore active filters', () => {
         removeFilter={removeFilter}
       />
     );
-    expect(screen.getByText('Hide internal logs')).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('exploreLog.hideInternal'))).toBeInTheDocument();
     closeFilter('Hide noise logs');
     expect(removeFilter).toHaveBeenCalledWith('hideNoise');
     expect(updateQuery).not.toHaveBeenCalled();
@@ -140,7 +229,7 @@ describe('Explore active filters', () => {
     [
       'metric label filter',
       { signal: 'metrics', timeRange: 'last-30m', metricFilter: 'method=GET' },
-      'Label filter, key=value: method=GET',
+      `${en.exploreMetric.filter}: method=GET`,
       'metricFilter'
     ],
     [
@@ -155,12 +244,7 @@ describe('Explore active filters', () => {
       'Aggregation: sum',
       'aggregation'
     ],
-    [
-      'metric step',
-      { signal: 'metrics', timeRange: 'last-30m', step: '60' },
-      'Step in seconds, for example 60: 60',
-      'step'
-    ],
+    ['metric step', { signal: 'metrics', timeRange: 'last-30m', step: '60' }, `${en.exploreMetric.step}: 60`, 'step'],
     [
       'log resource filter',
       { signal: 'logs', timeRange: 'last-30m', resourceFilter: 'service.name=checkout' },
@@ -216,5 +300,35 @@ describe('Explore active filters', () => {
 function closeFilter(label: string) {
   const tag = screen.getByText(label).closest('.ant-tag');
   expect(tag).not.toBeNull();
-  fireEvent.click(within(tag as HTMLElement).getByRole('img', { name: 'Close' }));
+  fireEvent.click(
+    within(tag as HTMLElement).getByRole('button', { name: i18n.t('explore.removeAppliedFilter', { filter: label }) })
+  );
 }
+
+it('keeps exact selections visible in Live and clears only the selector', async () => {
+  await initializeI18n();
+  await loadLocale('en-US');
+  const updateQuery = vi.fn();
+  const { container } = render(
+    <ExploreActiveFilters
+      query={{
+        signal: 'logs',
+        timeRange: 'last-30m',
+        live: true,
+        query: 'a OR b',
+        logGroupSelection: JSON.stringify({
+          version: 1,
+          groups: [{ field: 'attribute:status', kind: 'value', value: '2.0' }]
+        })
+      }}
+      t={i18n.t}
+      updateQuery={updateQuery}
+      removeFilter={() => false}
+    />
+  );
+  const clear = container.querySelector<HTMLButtonElement>('[data-log-group-selection-clear]');
+  expect(clear).not.toBeNull();
+  fireEvent.click(clear!);
+  expect(updateQuery).toHaveBeenCalledExactlyOnceWith({ logGroupSelection: undefined });
+  cleanup();
+});

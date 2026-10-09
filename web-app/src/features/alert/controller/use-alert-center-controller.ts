@@ -54,7 +54,7 @@ export function useAlertCenterController() {
   const query = readAlertQuery(params);
   const source = writeAlertQuery(query).toString();
   useCanonicalQuerySearch(locationSearch, source, setParams);
-  const draft = useAlertFilterDraft(query, source);
+  const draft = useAlertFilterDraft(query);
 
   const data = useAlertCenterData(query);
   const { list: listQuery, summary: summaryQuery, refetchList, refetchSummary, refresh } = data;
@@ -80,7 +80,7 @@ export function useAlertCenterController() {
   const setDraft = (field: AlertDraftField, value: string) => {
     draft.setValue({ ...draft.value, [field]: value });
   };
-  const submitFilters = () => submitAlertFilters(draft.value, updateQuery);
+  const submitFilters = () => submitAlertFilters(draft.value, updateQuery, draft.setValue);
   const commands = createAlertCenterActionCommands(capabilities, operation, list, selectedIds, selectIds);
 
   const state: AlertCenterState = {
@@ -108,19 +108,23 @@ export function useAlertCenterController() {
   };
 }
 
-function submitAlertFilters(draft: AlertFilterDraft, updateQuery: (patch: Partial<AlertQuery>) => void) {
-  updateQuery({
+function submitAlertFilters(
+  draft: AlertFilterDraft,
+  updateQuery: (patch: Partial<AlertQuery>) => void,
+  setDraft: (draft: AlertFilterDraft) => void
+) {
+  const submitted = {
+    ...draft,
     search: draft.search.trim(),
     serviceName: draft.serviceName.trim(),
     serviceNamespace: draft.serviceNamespace.trim(),
-    environment: draft.environment.trim(),
-    status: draft.status,
-    severity: draft.severity,
-    pageIndex: 0
-  });
+    environment: draft.environment.trim()
+  };
+  setDraft(submitted);
+  updateQuery({ ...submitted, pageIndex: 0 });
 }
 
-function useAlertFilterDraft(query: AlertQuery, source: string) {
+function useAlertFilterDraft(query: AlertQuery) {
   const canonicalDraft = useMemo<AlertFilterDraft>(
     () => ({
       search: query.search,
@@ -132,7 +136,7 @@ function useAlertFilterDraft(query: AlertQuery, source: string) {
     }),
     [query.environment, query.search, query.serviceName, query.serviceNamespace, query.severity, query.status]
   );
-  return useQueryDraft(source, canonicalDraft);
+  return useQueryDraft(JSON.stringify(canonicalDraft), canonicalDraft);
 }
 
 function resolveListState(query: {

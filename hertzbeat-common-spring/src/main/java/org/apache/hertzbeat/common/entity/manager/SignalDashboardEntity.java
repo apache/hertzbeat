@@ -22,9 +22,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -34,7 +34,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Workspace-shared dashboard composition for signal panel widgets.
+ * Installation-shared dashboard document and preserved legacy composition.
  */
 @Entity
 @Table(name = "hzb_signal_dashboard",
@@ -72,25 +72,28 @@ public class SignalDashboardEntity {
     @Column(name = "tags")
     private String tags;
 
-    @Lob
     @Column(name = "layout", nullable = false, columnDefinition = "TEXT")
     private String layout;
 
-    @Lob
     @Column(name = "widgets", nullable = false, columnDefinition = "TEXT")
     private String widgets;
 
-    @Lob
     @Column(name = "variables", columnDefinition = "TEXT")
     private String variables;
 
-    @Lob
     @Column(name = "panel_map", columnDefinition = "TEXT")
     private String panelMap;
 
     @Size(max = 32)
     @Column(name = "version")
     private String version;
+
+    @Column(name = "document", columnDefinition = "TEXT")
+    private String document;
+
+    @Version
+    @Column(name = "revision", nullable = false)
+    private Long revision;
 
     @Column(name = "create_time")
     private LocalDateTime createTime;

@@ -37,7 +37,7 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.StreamingChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -48,7 +48,7 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.util.StringUtils;
 
 /**
- * HertzBeat model execution semantics backed by a Spring AI ChatModel.
+ * HertzBeat model execution semantics backed by a Spring AI StreamingChatModel.
  */
 public class HertzBeatModel {
 
@@ -57,24 +57,24 @@ public class HertzBeatModel {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
 
-    private final ChatModel chatModel;
+    private final StreamingChatModel chatModel;
     private final ObjectMapper objectMapper;
     private final AgentModelRequestOptionsFactory requestOptionsFactory;
 
-    public HertzBeatModel(ChatModel chatModel) {
+    public HertzBeatModel(StreamingChatModel chatModel) {
         this(chatModel, new ObjectMapper(), HertzBeatModel::genericRequestOptions);
     }
 
-    public HertzBeatModel(ChatModel chatModel,
+    public HertzBeatModel(StreamingChatModel chatModel,
                           AgentModelRequestOptionsFactory requestOptionsFactory) {
         this(chatModel, new ObjectMapper(), requestOptionsFactory);
     }
 
-    HertzBeatModel(ChatModel chatModel, ObjectMapper objectMapper) {
+    HertzBeatModel(StreamingChatModel chatModel, ObjectMapper objectMapper) {
         this(chatModel, objectMapper, HertzBeatModel::genericRequestOptions);
     }
 
-    HertzBeatModel(ChatModel chatModel, ObjectMapper objectMapper,
+    HertzBeatModel(StreamingChatModel chatModel, ObjectMapper objectMapper,
                    AgentModelRequestOptionsFactory requestOptionsFactory) {
         this.chatModel = chatModel;
         this.objectMapper = objectMapper;

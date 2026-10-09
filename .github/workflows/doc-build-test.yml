@@ -19,17 +19,15 @@ name: DOC CI
 
 on:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, action*, "2.*" ]
     paths:
       - 'home/**'
+      - '.github/workflows/doc-build-test.yml'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, "2.*" ]
     paths:
       - 'home/**'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+      - '.github/workflows/doc-build-test.yml'
 
 jobs:
   docs-build:
@@ -38,27 +36,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: pnpm
-          cache-dependency-path: home/pnpm-lock.yaml
+          node-version: 22
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.9.0 --activate
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
       - name: Check Markdown
-        uses: DavidAnson/markdownlint-cli2-action@8de2aa07cae85fd17c0b35642db70cf5495f1d25  # v24.0.0
+        uses: DavidAnson/markdownlint-cli2-action@992badcdf24e3b8eb7e87ff9287fe931bcb00c6e
         with:
-          globs: |
-            ./home/README.md
-            ./home/blog/**/*.md
-            ./home/docs/**/*.md
-            ./home/i18n/zh-cn/docusaurus-plugin-content-blog/**/*.md
-            ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/**/*.md
+          globs: './home/**/*.md'
 
       - name: Check filenames
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
@@ -66,15 +59,14 @@ jobs:
       - name: Dead Link Check
         run: |
           sudo npm install -g markdown-link-check@3.8.7
-          find ./home/docs ./home/blog ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current ./home/i18n/zh-cn/docusaurus-plugin-content-blog -name "*.md" > all_md_files.txt
-          printf '%s\n' ./home/README.md >> all_md_files.txt
+          find ./home -name "*.md" > all_md_files.txt
           grep -vFf ./script/ci/exclude_files.txt all_md_files.txt > to_check.txt
           xargs -P 8 -a to_check.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
 
-      - name: PNPM INSTALL
+      - name: Install docs dependencies
         working-directory: home
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: PNPM BUILD
+      - name: Build documentation
         working-directory: home
-        run: pnpm run build
+        run: pnpm build

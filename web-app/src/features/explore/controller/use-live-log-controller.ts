@@ -35,7 +35,7 @@ export function useLiveLogController(query: LogExploreQuery) {
   const [retryRevision, setRetryRevision] = useState(0);
   const { evidenceState, setEvidenceState, connectionState, setConnectionState, evidenceScopeRef } =
     useScopedLiveLogState(evidenceScope, connectionScope);
-  useLiveLogStream({
+  const streamControls = useLiveLogStream({
     path,
     connectionScope,
     evidenceScopeRef,
@@ -52,6 +52,7 @@ export function useLiveLogController(query: LogExploreQuery) {
     connectionScope,
     evidence,
     evidenceScope,
+    streamControls,
     paused,
     setConnectionState,
     setEvidenceState,
@@ -59,8 +60,12 @@ export function useLiveLogController(query: LogExploreQuery) {
     setRetryRevision
   });
   return {
+    evidenceIdentity: evidenceScope,
     rows: evidence.rows,
     status,
+    connectionStatus,
+    syntaxDiagnostic: connectionState.scope === connectionScope ? connectionState.syntaxDiagnostic : undefined,
+    invalidFilterReason: connectionState.scope === connectionScope ? connectionState.invalidFilterReason : undefined,
     gapDroppedCount: evidence.gapDroppedCount,
     locallyDroppedCount: evidence.locallyDroppedCount,
     pauseDisconnectGap: evidence.pauseDisconnectGap,
@@ -72,16 +77,19 @@ function createLiveLogControls(input: {
   connectionScope: string;
   evidence: ReturnType<typeof evidenceForScope>;
   evidenceScope: string;
+  streamControls: ReturnType<typeof useLiveLogStream>;
   paused: boolean;
   setConnectionState: ReturnType<typeof useScopedLiveLogState>['setConnectionState'];
   setEvidenceState: ReturnType<typeof useScopedLiveLogState>['setEvidenceState'];
   setPaused: React.Dispatch<React.SetStateAction<boolean>>;
   setRetryRevision: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const { connectionScope, evidence, evidenceScope, paused, setConnectionState, setEvidenceState } = input;
+  const { connectionScope, evidence, evidenceScope, paused, setConnectionState, setEvidenceState, streamControls } =
+    input;
   const togglePaused = () => {
     const nextPaused = !paused;
-    if (nextPaused)
+    if (nextPaused) {
+      streamControls.flushPending();
       setEvidenceState(current => {
         const currentEvidence = evidenceForScope(current, evidenceScope);
         return {
@@ -94,12 +102,14 @@ function createLiveLogControls(input: {
           pauseDisconnectGap: true
         };
       });
+    }
     if (!nextPaused) setConnectionState({ scope: connectionScope, value: 'waiting' });
     input.setPaused(nextPaused);
   };
   return {
     togglePaused,
     retry: () => {
+      streamControls.cancelPending();
       setEvidenceState({
         scope: evidenceScope,
         rows: [],
@@ -112,7 +122,10 @@ function createLiveLogControls(input: {
       setConnectionState({ scope: connectionScope, value: 'waiting' });
       input.setRetryRevision(current => current + 1);
     },
-    clear: () => setEvidenceState({ scope: evidenceScope, ...evidence, rows: [] })
+    clear: () => {
+      streamControls.cancelPending();
+      setEvidenceState({ scope: evidenceScope, ...evidence, rows: [] });
+    }
   };
 }
 

@@ -21,9 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.SignalDashboardEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  * Signal dashboard repository.
@@ -34,7 +31,4 @@ public interface SignalDashboardDao extends JpaRepository<SignalDashboardEntity,
 
     Optional<SignalDashboardEntity> findByDashboardKey(String dashboardKey);
 
-    @Modifying
-    @Query("delete from SignalDashboardEntity dashboard where dashboard.dashboardKey = :dashboardKey")
-    void deleteByDashboardKey(@Param("dashboardKey") String dashboardKey);
 }

@@ -144,7 +144,9 @@ public class AgentRuntimeLoop {
                 }
             }
         } catch (AgentRuntimeStoppedException exception) {
-            publishRunCompleted(loopRun, AgentRuntimeEventType.ERROR, exception.getMessage());
+            publish(loopRun, exception.isCancelled()
+                    ? AgentRuntimeEvent.runCancelled(context.getTraceId(), exception.getMessage(), Instant.now(clock))
+                    : AgentRuntimeEvent.runError(context.getTraceId(), exception.getMessage(), Instant.now(clock)));
         }
     }
 

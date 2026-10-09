@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { withCookieHeaderAdmission } from './cookie-header-admission';
 import { refreshBrowserSession } from './http-client';
 
 const RETRY_DELAYS_MS = [1_000, 3_000, 10_000] as const;
@@ -35,6 +36,7 @@ export function openBrowserEventStream(path: string, handlers: BrowserEventStrea
 
 class BrowserEventStream {
   private source: EventSource | undefined;
+  private opening: AbortController | undefined;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private consecutiveFailures = 0;
   private refreshAttemptedInFailureEpisode = false;
@@ -49,40 +51,82 @@ class BrowserEventStream {
   open() {
     if (this.closed) return;
     this.retryScheduled = false;
-    let current: EventSource;
-    try {
-      current = new EventSource(this.path);
-      this.source = current;
-    } catch {
-      this.scheduleRetry();
-      return;
-    }
-    current.onopen = () => {
-      if (!this.owns(current)) return;
-      this.consecutiveFailures = 0;
-      // A native open event is the only proof that the previous failure
-      // episode recovered. Construction alone must not restore refresh credit.
-      this.refreshAttemptedInFailureEpisode = false;
-      this.handlers.onOpen();
-    };
-    current.onerror = () => {
-      if (!this.owns(current)) return;
-      current.close();
-      this.source = undefined;
-      this.scheduleRetry();
-    };
-    for (const eventName of this.handlers.eventNames) {
-      current.addEventListener(eventName, event => {
-        if (!this.owns(current)) return;
-        this.handlers.onEvent(eventName, (event as MessageEvent<string>).data);
+    const opening = new AbortController();
+    this.opening = opening;
+    void withCookieHeaderAdmission('shared', signal => this.connect(signal), opening.signal)
+      .then(source => {
+        if (!this.owns(source)) return;
+        this.consecutiveFailures = 0;
+        this.refreshAttemptedInFailureEpisode = false;
+        this.notify(() => this.handlers.onOpen());
+      })
+      .catch(() => {
+        if (!this.closed) this.scheduleRetry();
+      })
+      .finally(() => {
+        if (this.opening === opening) this.opening = undefined;
       });
-    }
+  }
+
+  private connect(signal: AbortSignal): Promise<EventSource> {
+    return new Promise((resolve, reject) => {
+      signal.throwIfAborted();
+      const source = new EventSource(this.path);
+      this.source = source;
+      let opened = false;
+      const abort = () => {
+        // Native close aborts its fetch and disables automatic reconnection.
+        source.close();
+        if (this.source === source) this.source = undefined;
+        reject(new DOMException('Stream opening cancelled', 'AbortError'));
+      };
+      signal.addEventListener('abort', abort, { once: true });
+      source.onopen = () => {
+        if (!this.owns(source)) return;
+        opened = true;
+        signal.removeEventListener('abort', abort);
+        resolve(source);
+      };
+      source.onerror = () => {
+        if (!this.owns(source)) return;
+        source.close();
+        this.source = undefined;
+        signal.removeEventListener('abort', abort);
+        if (opened) this.scheduleRetry();
+        else reject(new Error('Stream opening failed'));
+      };
+      for (const eventName of this.handlers.eventNames) {
+        source.addEventListener(eventName, event => {
+          if (!this.owns(source)) return;
+          this.notify(() => this.handlers.onEvent(eventName, (event as MessageEvent<string>).data));
+        });
+      }
+    });
   }
 
   close() {
     this.closed = true;
     if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.opening?.abort();
     this.source?.close();
+    this.source = undefined;
+  }
+
+  /** Consumer exceptions retire ownership; they are never network retry signals. */
+  private notify(callback: () => void): boolean {
+    try {
+      callback();
+      return true;
+    } catch (reason) {
+      this.close();
+      // Preserve the browser's error channel after transport cleanup.
+      if (typeof reportError === 'function') reportError(reason);
+      else
+        queueMicrotask(() => {
+          throw reason;
+        });
+      return false;
+    }
   }
 
   private owns(candidate: EventSource) {
@@ -94,11 +138,11 @@ class BrowserEventStream {
     this.retryScheduled = true;
     const delay = RETRY_DELAYS_MS[this.consecutiveFailures];
     if (delay === undefined) {
-      this.handlers.onUnavailable();
+      this.notify(() => this.handlers.onUnavailable());
       return;
     }
     this.consecutiveFailures += 1;
-    this.handlers.onRetrying();
+    if (!this.notify(() => this.handlers.onRetrying()) || this.closed) return;
     void this.recoverAndReconnect(delay);
   }
 

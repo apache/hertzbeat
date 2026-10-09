@@ -5,6 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import type { LogSortControls } from '../model/explore-log-order';
+import type { LogColumn, LogColumnControls } from '../model/explore-log-columns';
+import { Popover } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import type { TFunction } from 'i18next';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
@@ -13,9 +17,13 @@ import type { LogExploreQuery } from '../model/explore-query';
 import type { LogHistoryEvidence } from '../model/explore-signal-contract';
 import type { ExploreLogDisplayPreferences } from './explore-log-display-preferences';
 import { ExploreHistoryPagination } from './explore-history-pagination';
+import { ExploreLogResultOptions } from './explore-log-result-options';
 import styles from './explore-log-result-toolbar.module.css';
 
 export function ExploreLogResultToolbar({
+  logColumns,
+  logOrder,
+  availableColumns,
   page,
   query,
   timeWindow,
@@ -25,6 +33,9 @@ export function ExploreLogResultToolbar({
   openPath,
   t
 }: {
+  logOrder?: LogSortControls | undefined;
+  logColumns?: LogColumnControls | undefined;
+  availableColumns?: LogColumn[] | undefined;
   page: LogHistoryEvidence['page'];
   query: LogExploreQuery;
   timeWindow: ExactTimeWindow;
@@ -34,48 +45,12 @@ export function ExploreLogResultToolbar({
   openPath: (path: string) => void;
   t: TFunction;
 }) {
-  const exactWindow = `${new Date(timeWindow.from).toISOString()} – ${new Date(timeWindow.to).toISOString()}`;
-  const currentPage = page.totalPages === 0 ? 0 : (query.pageIndex ?? page.number) + 1;
   return (
     <div className={styles.toolbar} role="group" aria-label={t('explore.perses.resultToolbar')}>
-      <dl className={styles.status}>
-        <Status
-          label={t('explore.perses.returnedStatus')}
-          value={`${page.content.length.toLocaleString()} / ${page.totalElements.toLocaleString()}`}
-        />
-        <Status
-          label={t('explore.perses.pageStatus')}
-          value={`${currentPage.toLocaleString()} / ${page.totalPages.toLocaleString()}`}
-        />
-        <Status
-          label={t('explore.perses.windowStatus')}
-          value={compactEvidenceWindow(timeWindow)}
-          title={exactWindow}
-        />
-        <Status label={t('explore.perses.provenance')} value={t('explore.perses.historicalEvidence')} />
-      </dl>
-      <div className={styles.preferences} role="group" aria-label={t('explore.perses.displayPreferences')}>
-        <PreferenceButton
-          label={t('explore.perses.compactRows')}
-          pressed={preferences.density === 'compact'}
-          onClick={() =>
-            onPreferencesChange({
-              ...preferences,
-              density: preferences.density === 'compact' ? 'comfortable' : 'compact'
-            })
-          }
-        />
-        <PreferenceButton
-          label={t('explore.perses.wrapMessages')}
-          pressed={preferences.wrap}
-          onClick={() => onPreferencesChange({ ...preferences, wrap: !preferences.wrap })}
-        />
-        <PreferenceButton
-          label={t('explore.perses.showTime')}
-          pressed={preferences.showTime}
-          onClick={() => onPreferencesChange({ ...preferences, showTime: !preferences.showTime })}
-        />
-      </div>
+      <ExploreLogResultOptions
+        {...{ logColumns, availableColumns, logOrder, query, preferences, onPreferencesChange, t }}
+      />
+      <ResultStatus page={page} query={query} timeWindow={timeWindow} t={t} />
       <ExploreHistoryPagination
         page={page}
         query={query}
@@ -88,26 +63,49 @@ export function ExploreLogResultToolbar({
   );
 }
 
-function Status({ label, value, title }: { label: string; value: string; title?: string | undefined }) {
+function Status({ label, value }: { label: string; value: string }) {
   return (
-    <div aria-label={`${label}: ${title ?? value}`} title={title ?? label}>
+    <div aria-label={`${label}: ${value}`}>
       <dt>{label}</dt>
-      <dd>{title ? <span aria-label={title}>{value}</span> : value}</dd>
+      <dd>{value}</dd>
     </div>
   );
 }
 
-function PreferenceButton({ label, pressed, onClick }: { label: string; pressed: boolean; onClick: () => void }) {
+function ResultStatus({
+  page,
+  query,
+  timeWindow,
+  t
+}: Pick<Parameters<typeof ExploreLogResultToolbar>[0], 'page' | 'query' | 'timeWindow' | 't'>) {
+  const exactWindow = `${new Date(timeWindow.from).toISOString()} – ${new Date(timeWindow.to).toISOString()}`;
+  const currentPage = page.totalPages === 0 ? 0 : (query.pageIndex ?? page.number) + 1;
   return (
-    <button type="button" aria-pressed={pressed} onClick={onClick}>
-      {label}
-    </button>
+    <>
+      <Popover
+        trigger="click"
+        placement="bottomRight"
+        content={
+          <dl className={styles.details}>
+            <Status
+              label={t('explore.perses.returnedStatus')}
+              value={`${page.content.length.toLocaleString()} / ${page.totalElements.toLocaleString()}`}
+            />
+            <Status label={t('explore.perses.windowStatus')} value={exactWindow} />
+            <Status label={t('explore.perses.provenance')} value={t('explore.perses.historicalEvidence')} />
+          </dl>
+        }
+      >
+        <button type="button" className={styles.detailsButton} aria-label={t('explore.perses.queryDetails')}>
+          <InfoCircleOutlined aria-hidden />
+        </button>
+      </Popover>
+      <dl className={styles.status}>
+        <Status
+          label={t('explore.perses.pageStatus')}
+          value={`${currentPage.toLocaleString()} / ${page.totalPages.toLocaleString()}`}
+        />
+      </dl>
+    </>
   );
-}
-
-function compactEvidenceWindow(window: ExactTimeWindow) {
-  const from = new Date(window.from).toISOString();
-  const to = new Date(window.to).toISOString();
-  if (from.slice(0, 10) === to.slice(0, 10)) return `${from.slice(11, 19)}–${to.slice(11, 19)} UTC`;
-  return `${from.slice(0, 16).replace('T', ' ')}–${to.slice(0, 16).replace('T', ' ')} UTC`;
 }

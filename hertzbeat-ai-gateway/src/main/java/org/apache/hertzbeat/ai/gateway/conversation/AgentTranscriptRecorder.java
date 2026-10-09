@@ -53,7 +53,6 @@ public class AgentTranscriptRecorder {
     private static final int TRANSCRIPT_TOOL_NAME_LIMIT = 128;
     private static final int TRANSCRIPT_TOOL_CALL_ID_LIMIT = 128;
     private static final int TRANSCRIPT_TOOL_ERROR_LIMIT = 2048;
-    private static final int MYSQL_TEXT_MAX_UTF8_BYTES = 65535;
     private static final String REDACTED_REQUEST_VALUE = "[REDACTED]";
 
     private final AgentSessionService sessionService;
@@ -139,8 +138,10 @@ public class AgentTranscriptRecorder {
     }
 
     private boolean exceedsTranscriptPayloadBudget(TranscriptMessage message) {
-        String finalPayload = GatewayText.redactSecrets(toJson(message));
-        return finalPayload.getBytes(StandardCharsets.UTF_8).length > MYSQL_TEXT_MAX_UTF8_BYTES;
+        String rawPayload = toJson(message);
+        return rawPayload.getBytes(StandardCharsets.UTF_8).length > AgentSessionService.TRANSCRIPT_MAX_UTF8_BYTES
+                || AgentSessionService.redactTranscriptPayload(rawPayload).getBytes(StandardCharsets.UTF_8).length
+                > AgentSessionService.TRANSCRIPT_MAX_UTF8_BYTES;
     }
 
     private TranscriptMessage validateTranscriptMessage(TranscriptMessage message) {

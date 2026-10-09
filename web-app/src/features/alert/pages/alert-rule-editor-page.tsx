@@ -29,6 +29,7 @@ import {
 import { AlertRuleFields } from '../components/alert-rule-fields';
 import { useAlertRuleActionCapabilities } from '../controller/use-alert-rule-action-capabilities';
 import { useAlertRuleEditorController } from '../controller/use-alert-rule-editor-controller';
+import { useAlertRuleUnsavedHistory } from '../controller/use-alert-rule-unsaved-history';
 import { validateAlertRuleDraft, type AlertRuleDraft } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleListPage } from './alert-rule-list-page';
@@ -52,13 +53,14 @@ function AlertRuleEditorWorkspacePage({ mode }: { mode: 'new' | 'edit' }) {
   const controller = useAlertRuleEditorController(mode);
   const { detail, draft } = controller.state;
   const cancel = controller.cancel;
+  const requestClose = useAlertRuleUnsavedHistory(controller.state.dirty, cancel);
   const [validationAttempted, setValidationAttempted] = useState(false);
   const missingNewStrategy = mode === 'new' && controller.state.requestedKind === null;
   useEffect(() => {
     if (missingNewStrategy) cancel();
   }, [cancel, missingNewStrategy]);
   const busy = controller.state.command === 'saving' || controller.state.recovery !== undefined;
-  useAlertRuleDialogEscape({ busy, cancel, enabled: !missingNewStrategy });
+  useAlertRuleDialogEscape({ busy, cancel: requestClose, enabled: !missingNewStrategy });
   if (missingNewStrategy) return <AlertRuleListPage />;
   const titleKey = resolveEditorTitleKey(mode, controller.state.requestedKind ?? draft?.kind ?? 'realtime');
   return (
@@ -70,7 +72,11 @@ function AlertRuleEditorWorkspacePage({ mode }: { mode: 'new' | 'edit' }) {
         closable={!busy}
         footer={
           detail.kind === 'ready' && draft ? (
-            <AlertRuleEditorActions controller={controller} validate={() => setValidationAttempted(true)} />
+            <AlertRuleEditorActions
+              controller={controller}
+              cancel={requestClose}
+              validate={() => setValidationAttempted(true)}
+            />
           ) : null
         }
         keyboard={false}
@@ -79,7 +85,7 @@ function AlertRuleEditorWorkspacePage({ mode }: { mode: 'new' | 'edit' }) {
         title={t(titleKey)}
         width="70%"
         onCancel={() => {
-          if (!busy) cancel();
+          if (!busy) requestClose();
         }}
       >
         <div className={styles.editorDialogBody}>
@@ -100,6 +106,7 @@ function useAlertRuleDialogEscape({ busy, cancel, enabled }: { busy: boolean; ca
       if (event.key !== 'Escape' || busy) return;
       const target = event.target instanceof Element ? event.target : null;
       if (target && !target.closest('.hb-alert-rule-dialog-root')) return;
+      if (target?.closest('[role="combobox"][aria-expanded="true"]')) return;
       const sqlEditor = target?.closest('[data-hb-alert-sql-editor="codemirror"]');
       if (sqlEditor?.querySelector('.cm-tooltip-autocomplete')) return;
       event.preventDefault();
@@ -143,7 +150,7 @@ function AlertRuleEditorWorkspace({
       )}
       <AlertRuleDatasourceEvidence state={datasource} retry={controller.retryDatasource} />
       <AlertRuleEditorForm controller={controller} draft={draft} busy={busy} invalidFields={invalidFields} />
-      <AlertRulePreviewEvidence state={preview} />
+      {draft.kind !== 'periodic' && <AlertRulePreviewEvidence state={preview} />}
     </>
   );
 }
@@ -183,23 +190,25 @@ function AlertRuleEditorForm({
       retryMetricTargetApps={controller.retryMetricTargetApps}
       retryMetricTargetHierarchy={controller.retryMetricTargetHierarchy}
       preview={controller.preview}
-      previewLoading={controller.state.preview.kind === 'loading'}
+      previewState={controller.state.preview}
     />
   );
 }
 
 function AlertRuleEditorActions({
   controller,
+  cancel,
   validate
 }: {
   controller: AlertRuleEditorController;
+  cancel: () => void;
   validate: () => void;
 }) {
   const { t } = useTranslation();
   const { canSave, command, recovery } = controller.state;
   return (
     <div className={styles.actions}>
-      <Button disabled={command === 'saving'} onClick={controller.cancel}>
+      <Button disabled={command === 'saving'} onClick={cancel}>
         {t('common.cancel')}
       </Button>
       <Button

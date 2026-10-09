@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.observability.ingestion.service.impl;
 
+import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService.LabelsRequest;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
+import org.apache.hertzbeat.observability.shared.util.SignalFilterScanner;
+
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -58,6 +62,7 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.metrics.inventory.MetricInventoryRepository;
+import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
@@ -95,6 +100,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private static final String RELATED_METRICS_REF_ID = "otlp-related-metrics";
     private static final Pattern METRICS_FILTER_MATCHER = Pattern.compile(
             "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s*(=~|!~|!=|=)\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)'|([^,\\s]+))\\s*"
+    );
+    private static final Pattern METRICS_COLON_FILTER_MATCHER = Pattern.compile(
+            "([A-Za-z_][A-Za-z0-9_.-]*)\\s*:\\s*(.+)"
     );
     private static final Pattern METRICS_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
             "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))\\s*",
@@ -177,8 +185,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         TraceOverviewDto traceOverview = new TraceOverviewDto(
                 externalTraces.size(),
                 (int) externalTraces.stream().filter(item -> "error".equalsIgnoreCase(item.getStatus())).count(),
-                externalTraces.stream().map(TraceListItemDto::getStartTime).filter(Objects::nonNull).max(Long::compareTo).orElse(null),
-                externalTraces.stream().anyMatch(item -> item.getStartTime() != null && item.getStartTime() >= now - LOOKBACK_MILLIS)
+                externalTraces.stream().map(TraceListItemDto::getObservedEndTime).filter(Objects::nonNull).max(Long::compareTo).orElse(null),
+                externalTraces.stream().anyMatch(item -> item.getObservedEndTime() != null && item.getObservedEndTime() >= now - LOOKBACK_MILLIS)
         );
         List<TelemetryIdentitySnapshot> identitySnapshots =
                 observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(
@@ -215,7 +223,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     "traces",
                     defaultText(latestTrace.getRootSpanName(), latestTrace.getTraceId()),
                     defaultText(latestTrace.getServiceName(), latestTrace.getTraceId()),
-                    latestTrace.getStartTime() instanceof Number ? ((Number) latestTrace.getStartTime()).longValue() : traceOverview.getLatestObservedAt()
+                    latestTrace.getObservedEndTime()
             ));
         }
         LogEntry latestLog = externalLogs.stream()
@@ -618,10 +626,11 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             String operationName,
             boolean sourceSeriesLimit) {
         String trustedWorkspaceId = requireMetricsWorkspace(workspaceId);
-        long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
-        long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
-                ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
-                : start;
+        long resolvedEnd = end == null ? System.currentTimeMillis() : end;
+        long resolvedStart = start == null ? Math.max(0L, resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS) : start;
+        if (resolvedStart < 0 || resolvedEnd < resolvedStart) {
+            throw new ObservabilityQueryRequestException();
+        }
         String resolvedStep = resolvePromqlStep(resolvedStart, resolvedEnd, step);
         int resolvedSeriesLimit = resolveMetricsSeriesLimit(limit);
         boolean explicitContextRequested = entityId != null
@@ -631,7 +640,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 || StringUtils.hasText(trimToNull(environment));
         OtlpMetricsConsoleDto.Context context = resolveMetricsConsoleContext(
                 trustedWorkspaceId, entityId, entityType, resolvedStart, resolvedEnd,
-                serviceName, serviceNamespace, environment
+                serviceName, serviceNamespace, environment, !StringUtils.hasText(query)
         );
         context.setWorkspaceId(trustedWorkspaceId);
         context.setCollectorId(trimToNull(collectorId));
@@ -761,16 +770,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     @Override
-    public OtlpMetricsInventoryDto getMetricsInventory(String workspaceId, Long entityId, String entityType, Long start,
-                                                       Long end,
-                                                       String serviceName, String serviceNamespace, String environment,
-                                                       String limit) {
-        return getMetricsInventory(
-                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment,
-                null, null, null, limit);
-    }
-
-    @Override
     public OtlpMetricsInventoryDto getMetricsInventory(
             String workspaceId,
             Long entityId,
@@ -783,56 +782,117 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             String collectorId,
             String instance,
             String endpoint,
+            String search,
             String limit) {
         String trustedWorkspaceId = requireMetricsWorkspace(workspaceId);
-        long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
-        long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
-                ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
-                : start;
-        int resolvedLimit = resolveRelatedMetricsLimit(limit);
+        long resolvedEnd = end == null ? System.currentTimeMillis() : end;
+        long resolvedStart = start == null ? Math.max(0L, resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS) : start;
+        if (resolvedStart < 0 || resolvedEnd < resolvedStart) {
+            throw new ObservabilityQueryRequestException();
+        }
+        String resolvedSearch = trimToNull(search);
+        if (resolvedSearch != null && resolvedSearch.length() > 128) {
+            throw new ObservabilityQueryRequestException();
+        }
+        int resolvedLimit = resolveMetricInventoryLimit(limit);
         OtlpMetricsConsoleDto.Context context = resolveMetricsConsoleContext(
                 trustedWorkspaceId, entityId, entityType, resolvedStart, resolvedEnd,
-                serviceName, serviceNamespace, environment
+                serviceName, serviceNamespace, environment, false
         );
         context.setWorkspaceId(trustedWorkspaceId);
         context.setCollectorId(trimToNull(collectorId));
         context.setInstance(trimToNull(instance));
         context.setEndpoint(trimToNull(endpoint));
         MetricInventoryRepository.Result persistent =
-                discoverPersistentMetricNames(context, resolvedStart, resolvedEnd, resolvedLimit);
+                discoverPersistentMetricNames(context, resolvedStart, resolvedEnd, resolvedSearch, resolvedLimit + 1);
         if (persistent.status() == MetricInventoryRepository.Status.SUCCESS) {
+            var metadata = discoverMetricMetadata(persistent.names().stream().limit(resolvedLimit).toList());
             List<OtlpMetricsInventoryDto.Item> items = persistent.names().stream()
+                    .limit(resolvedLimit)
                     .map(metricName -> new OtlpMetricsInventoryDto.Item(
                             metricName,
                             relatedMetricFamily(metricName),
-                            0,
-                            null,
-                            serviceContextResourceMatch(context)
+                            metadata.getOrDefault(metricName, OtlpMetricsInventoryDto.Metadata.unavailable())
                     ))
                     .toList();
-            return new OtlpMetricsInventoryDto(context, "greptime-inventory", items.size(), items);
+            return new OtlpMetricsInventoryDto(context, "greptime-inventory", resolvedLimit,
+                    persistent.names().size() > resolvedLimit, items);
         }
-        if (persistent.status() == MetricInventoryRepository.Status.FAILURE) {
-            return new OtlpMetricsInventoryDto(context, "load-failed", 0, List.of());
-        }
-        List<OtlpMetricsInventoryDto.Item> fallbackItems = candidateMetricNames(context).stream()
-                .limit(resolvedLimit)
-                .map(metricName -> new OtlpMetricsInventoryDto.Item(
-                        metricName,
-                        relatedMetricFamily(metricName),
-                        0,
-                        null,
-                        serviceContextResourceMatch(context)
-                ))
-                .toList();
-        return new OtlpMetricsInventoryDto(context, "recent-intake-fallback", fallbackItems.size(), fallbackItems);
+        throw new TelemetryStorageUnavailableException();
     }
 
     OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
                                                 String serviceName, String serviceNamespace, String environment,
-                                                String collectorId, String instance, String endpoint, String limit) {
+                                                String collectorId, String instance, String endpoint, String search, String limit) {
         return getMetricsInventory(AuthTokenScopes.DEFAULT_WORKSPACE_ID, entityId, entityType, start, end, serviceName,
-                serviceNamespace, environment, collectorId, instance, endpoint, limit);
+                serviceNamespace, environment, collectorId, instance, endpoint, search, limit);
+    }
+
+    @Override
+    public OtlpMetricLabelsDto getMetricLabels(
+            LabelsRequest request) {
+        String workspace = requireMetricsWorkspace(request.workspaceId());
+        if (request.start() == null || request.end() == null || request.start() <= 0
+                || request.end() <= request.start() || request.end() - request.start() > 86_400_000L
+                || !StringUtils.hasText(request.query()) || !SIMPLE_METRIC_NAME.matcher(request.query()).matches()
+                || (request.label() != null && !request.label().matches("[A-Za-z_][A-Za-z0-9_]*"))) {
+            throw new ObservabilityQueryRequestException();
+        }
+        int limit = resolveMetricInventoryLimit(request.limit());
+        if (limit > 100) {
+            throw new ObservabilityQueryRequestException();
+        }
+        var context = resolveMetricsConsoleContext(workspace, request.entityId(), request.entityType(),
+                request.start(), request.end(), request.serviceName(), request.serviceNamespace(), request.environment(), false);
+        context.setWorkspaceId(workspace);
+        context.setCollectorId(request.collectorId());
+        context.setInstance(request.instance());
+        context.setEndpoint(request.endpoint());
+        context.setOperationName(trimToNull(request.operationName()));
+        if (StringUtils.hasText(request.operationName())) {
+            return new OtlpMetricLabelsDto(
+                    context, "greptime-labels", "unavailable", limit, false, List.of());
+        }
+        String metric = normalizePromqlMetricName(request.query());
+        var matchers = metricScopeMatchers(context, metric, request.filter(), null, null);
+        for (var repository : metricInventoryRepositories) {
+            if (repository != null) {
+                var result = repository.findLabels(metric, matchers, request.start(), request.end(), request.label(), limit);
+                if (result != null) {
+                    return new OtlpMetricLabelsDto(
+                            context, "greptime-labels", result.state(), limit, result.truncated(), result.items());
+                }
+            }
+        }
+        return new OtlpMetricLabelsDto(
+                context, "greptime-labels", "unavailable", limit, false, List.of());
+    }
+
+    private Map<String, OtlpMetricsInventoryDto.Metadata> discoverMetricMetadata(List<String> names) {
+        for (var repository : metricInventoryRepositories) {
+            if (repository != null) {
+                var metadata = repository.findMetadata(names);
+                if (metadata != null && !metadata.isEmpty()) {
+                    return metadata;
+                }
+            }
+        }
+        return Map.of();
+    }
+
+    private int resolveMetricInventoryLimit(String limit) {
+        if (limit == null) {
+            return 100;
+        }
+        try {
+            int parsed = Integer.parseInt(limit.trim());
+            if (parsed >= 1 && parsed <= 200) {
+                return parsed;
+            }
+        } catch (NumberFormatException ignored) {
+            // Reject invalid explicit limits rather than silently changing the request.
+        }
+        throw new ObservabilityQueryRequestException();
     }
 
     @Override
@@ -998,6 +1058,15 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             long start,
             long end,
             int limit) {
+        return discoverPersistentMetricNames(context, start, end, null, limit);
+    }
+
+    private MetricInventoryRepository.Result discoverPersistentMetricNames(
+            OtlpMetricsConsoleDto.Context context,
+            long start,
+            long end,
+            String search,
+            int limit) {
         if (context == null || metricInventoryRepositories.isEmpty()) {
             return MetricInventoryRepository.Result.unsupported();
         }
@@ -1011,6 +1080,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 trimToNull(context.getEndpoint()),
                 start,
                 end,
+                search,
                 limit
         );
         for (MetricInventoryRepository repository : metricInventoryRepositories) {
@@ -1182,7 +1252,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return List.of();
         }
         List<OtlpRelatedMetricsDto.ResourceMatcher> matchers = new ArrayList<>();
-        for (String rawClause : splitMetricsFilterClauses(normalized)) {
+        for (String rawClause : SignalFilterScanner.splitClauses(normalized)) {
             String clause = trimToNull(rawClause);
             if (!StringUtils.hasText(clause)) {
                 continue;
@@ -1386,9 +1456,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return snapshot != null && TelemetryIdentitySnapshot.SOURCE_OTLP.equals(snapshot.getSource());
     }
 
-    private long safeLogCount(long start, long end) {
-        return logQueryRepository.countRecentLogs(start, end);
-    }
 
     private void appendIdentitySamples(List<OtlpEntityBindingSummaryDto.CanonicalIdentitySample> samples,
                                        List<TelemetryIdentitySnapshot> snapshots) {
@@ -1418,10 +1485,17 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private boolean isExternalTrace(TraceListItemDto traceItem) {
-        if (traceItem == null || CollectionUtils.isEmpty(traceItem.getResourceAttributes())) {
-            return true;
+        if (traceItem == null) {
+            return false;
         }
-        return !isWorkspaceNoiseResource(traceItem.getResourceAttributes());
+        if (!CollectionUtils.isEmpty(traceItem.getServiceStats())) {
+            return traceItem.getServiceStats().keySet().stream()
+                    .anyMatch(service -> !isSelfTelemetryResource(Map.of("service.name", service))
+                            && !isWorkspaceNoiseService(service));
+        }
+        return !CollectionUtils.isEmpty(traceItem.getResourceAttributes())
+                && !isWorkspaceNoiseResource(traceItem.getResourceAttributes())
+                && !isSelfTelemetryResource(traceItem.getResourceAttributes());
     }
 
     private boolean isSelfTelemetryResource(Map<?, ?> resourceAttributes) {
@@ -1655,15 +1729,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return trimmed.trim();
     }
 
-    private String metricsIntakeMode(long monitorTotalCount, long otlpMetricCount) {
-        if (monitorTotalCount > 0 && otlpMetricCount > 0) {
-            return message("observability.otlp.overview.metrics.mode.mixed");
-        }
-        if (otlpMetricCount > 0) {
-            return "OTLP";
-        }
-        return message("observability.otlp.overview.metrics.mode.monitor");
-    }
 
     private static String message(String key) {
         return OtlpIngestionMessages.get(key);
@@ -1683,6 +1748,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                                                        long start, long end,
                                                                        String serviceName, String serviceNamespace,
                                                                        String environment) {
+        return resolveMetricsConsoleContext(workspaceId, entityId, requestedEntityType, start, end,
+                serviceName, serviceNamespace, environment, true);
+    }
+
+    private OtlpMetricsConsoleDto.Context resolveMetricsConsoleContext(
+            String workspaceId, Long entityId, String requestedEntityType, long start, long end,
+            String serviceName, String serviceNamespace, String environment, boolean inferRecentContext) {
         String resolvedServiceName = trimToNull(serviceName);
         String resolvedServiceNamespace = trimToNull(serviceNamespace);
         String resolvedEnvironment = trimToNull(environment);
@@ -1727,6 +1799,12 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 resolvedEnvironment = trimToNull(entity.get().getEnvironment());
             }
         }
+        OtlpMetricsConsoleDto.Context context = new OtlpMetricsConsoleDto.Context(
+                entityId, entityType, entityName, resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment,
+                null, null, start, end);
+        if (!inferRecentContext) {
+            return context;
+        }
         TelemetryIdentitySnapshot recentMetricContext = observabilitySignalIntakeGateway.resolveRecentOtlpMetricContext(
                 workspaceId, resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment
         );
@@ -1764,18 +1842,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 }
             }
         }
-        return new OtlpMetricsConsoleDto.Context(
-                entityId,
-                entityType,
-                entityName,
-                resolvedServiceName,
-                resolvedServiceNamespace,
-                resolvedEnvironment,
-                null,
-                null,
-                start,
-                end
-        );
+        context.setServiceName(resolvedServiceName);
+        context.setServiceNamespace(resolvedServiceNamespace);
+        context.setEnvironment(resolvedEnvironment);
+        return context;
     }
 
     private List<EntityIdentity> rankedEntityIdentities(List<EntityIdentity> identities) {
@@ -1909,15 +1979,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return null;
     }
 
-    private String buildDefaultMetricsQuery(OtlpMetricsConsoleDto.Context context,
-                                            String filter,
-                                            String groupBy,
-                                            String aggregation,
-                                            String temporalAggregation) {
-        return buildDefaultMetricsQueries(context, filter, groupBy, aggregation, temporalAggregation, null).stream()
-                .findFirst()
-                .orElse(null);
-    }
 
     private OtlpMetricsConsoleDto unsupportedMetricsQuery(
             OtlpMetricsConsoleDto.Context context, String query) {
@@ -2061,6 +2122,75 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         if (!StringUtils.hasText(normalizedMetricName)) {
             return null;
         }
+        List<String> selectors = metricScopedSelectors(context, normalizedMetricName, filter, operationLabel, operationName);
+        String group = normalizeGroupBy(groupBy, normalizedMetricName);
+        String spaceAggregation = normalizeAggregation(aggregation);
+        String normalizedTemporal = trimToNull(temporalAggregation);
+        if (StringUtils.hasText(normalizedTemporal) && normalizedTemporal.toLowerCase(Locale.ROOT).startsWith("nested_")) {
+            String control = normalizedTemporal.toLowerCase(Locale.ROOT);
+            if (!control.matches("nested_(avg|sum|min|max|count)_[1-9][0-9]{0,4}_after_"
+                    + "(avg|sum|min|max|count)_[1-9][0-9]{0,4}")) {
+                throw new ObservabilityQueryRequestException();
+            }
+            String[] parts = control.split("_");
+            long outer = Long.parseLong(parts[2]);
+            long inner = Long.parseLong(parts[5]);
+            if (outer > 86400 || inner > 86400 || outer <= inner) {
+                throw new ObservabilityQueryRequestException();
+            }
+            String firstStage = spaceAggregation + " by (" + group + ") ("
+                    + combineMetricExpressions(selectors, "rollup_" + parts[4] + "_" + inner) + ")";
+            return parts[1] + "_over_time((" + firstStage + ")[" + outer + "s:" + inner + "s])";
+        }
+        return spaceAggregation + " by (" + group + ") ("
+                + combineMetricExpressions(selectors, temporalAggregation) + ")";
+    }
+
+    private List<String> metricScopedSelectors(OtlpMetricsConsoleDto.Context context, String metricName,
+                                               String filter, String operationLabel, String operationName) {
+        String normalized = trimToNull(filter);
+        if (!StringUtils.hasText(normalized)) {
+            return List.of("{" + String.join(", ",
+                    metricScopeMatchers(context, metricName, null, operationLabel, operationName)) + "}");
+        }
+        if (normalized.length() > 8192) {
+            throw new ObservabilityQueryRequestException();
+        }
+        List<String> alternatives;
+        try {
+            alternatives = SignalFilterScanner.splitDisjunctionsPreservingEmpty(normalized);
+        } catch (IllegalArgumentException exception) {
+            throw new ObservabilityQueryRequestException();
+        }
+        if (alternatives.size() > 16) {
+            throw new ObservabilityQueryRequestException();
+        }
+        List<String> selectors = new ArrayList<>();
+        int clauseCount = 0;
+        for (String alternative : alternatives) {
+            if (!StringUtils.hasText(alternative)) {
+                throw new ObservabilityQueryRequestException();
+            }
+            clauseCount += SignalFilterScanner.splitClausesPreservingEmpty(alternative).size();
+            if (clauseCount > 100) {
+                throw new ObservabilityQueryRequestException();
+            }
+            selectors.add("{" + String.join(", ",
+                    metricScopeMatchers(context, metricName, alternative, operationLabel, operationName)) + "}");
+        }
+        return selectors;
+    }
+
+    private String combineMetricExpressions(List<String> selectors, String temporalAggregation) {
+        List<String> expressions = selectors.stream()
+                .map(selector -> wrapMetricSelectorForTemporalAggregation(selector, temporalAggregation))
+                .toList();
+        return expressions.size() == 1 ? expressions.getFirst() : "(" + String.join(" or ", expressions) + ")";
+    }
+
+
+    private List<String> metricScopeMatchers(OtlpMetricsConsoleDto.Context context, String normalizedMetricName,
+                                             String filter, String operationLabel, String operationName) {
         List<String> matchers = new ArrayList<>();
         Set<String> scopedLabels = new LinkedHashSet<>();
         addExactMetricMatcher(matchers, scopedLabels, OtlpMetricSemanticLabels.HERTZBEAT_WORKSPACE_ID,
@@ -2093,49 +2223,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             matchers.add(operationLabel + "=\"" + escapePromqlLabelValue(normalizedOperationName) + "\"");
             scopedLabels.add(operationLabel);
         }
-        matchers.addAll(parseMetricsFilterMatchers(filter, scopedLabels));
-        String selector = "{" + String.join(", ", matchers) + "}";
-        return normalizeAggregation(aggregation)
-                + " by (" + normalizeGroupBy(groupBy) + ") ("
-                + wrapMetricSelectorForTemporalAggregation(selector, temporalAggregation) + ")";
-    }
-
-    private String buildMetricsQueryForContext(OtlpMetricsConsoleDto.Context context,
-                                               String filter,
-                                               String groupBy,
-                                               String aggregation,
-                                               String temporalAggregation) {
-        if (context == null || !StringUtils.hasText(context.getServiceName())) {
-            return null;
-        }
-        List<String> matchers = new ArrayList<>();
-        Set<String> scopedLabels = new LinkedHashSet<>();
-        addExactMetricMatcher(matchers, scopedLabels, OtlpMetricSemanticLabels.HERTZBEAT_WORKSPACE_ID,
-                context.getWorkspaceId());
-        matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
-        scopedLabels.add("service_name");
-        if (StringUtils.hasText(context.getServiceNamespace())) {
-            matchers.add("service_namespace=\"" + escapePromqlLabelValue(context.getServiceNamespace()) + "\"");
-            scopedLabels.add("service_namespace");
-        }
-        if (StringUtils.hasText(context.getEnvironment())) {
-            matchers.add("deployment_environment_name=\"" + escapePromqlLabelValue(context.getEnvironment()) + "\"");
-            scopedLabels.add("deployment_environment_name");
-        }
-        if (context.getEntityId() != null) {
-            matchers.add("hertzbeat_entity_id=\"" + escapePromqlLabelValue(String.valueOf(context.getEntityId())) + "\"");
-            scopedLabels.add("hertzbeat_entity_id");
-        }
-        if (StringUtils.hasText(context.getEntityType())) {
-            matchers.add("hertzbeat_entity_type=\"" + escapePromqlLabelValue(context.getEntityType()) + "\"");
-            scopedLabels.add("hertzbeat_entity_type");
-        }
-        addDedicatedMetricsScope(matchers, scopedLabels, context);
-        matchers.addAll(parseMetricsFilterMatchers(filter, scopedLabels));
-        String selector = "{" + String.join(", ", matchers) + "}";
-        return normalizeAggregation(aggregation)
-                + " by (" + normalizeGroupBy(groupBy) + ") ("
-                + wrapMetricSelectorForTemporalAggregation(selector, temporalAggregation) + ")";
+        matchers.addAll(parseMetricsFilterMatchers(filter, scopedLabels, matchers));
+        return matchers;
     }
 
     private void addDedicatedMetricsScope(
@@ -2159,17 +2248,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         scopedLabels.add(label);
     }
 
-    private String buildMetricsQueryForExplicitMetric(OtlpMetricsConsoleDto.Context context,
-                                                      String query,
-                                                      String filter,
-                                                      String groupBy,
-                                                      String aggregation,
-                                                      String temporalAggregation) {
-        return buildMetricsQueriesForExplicitMetric(context, query, filter, groupBy, aggregation, temporalAggregation, null)
-                .stream()
-                .findFirst()
-                .orElse(null);
-    }
 
     private List<String> buildMetricsQueriesForExplicitMetric(OtlpMetricsConsoleDto.Context context,
                                                               String query,
@@ -2188,19 +2266,42 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private List<String> parseMetricsFilterMatchers(String filter) {
-        return parseMetricsFilterMatchers(filter, Set.of());
+        return parseMetricsFilterMatchers(filter, Set.of(), List.of());
     }
 
-    private List<String> parseMetricsFilterMatchers(String filter, Set<String> excludedLabels) {
+    private String normalizeMetricsColonFilter(String clause) {
+        if (!StringUtils.hasText(clause)) {
+            return clause;
+        }
+        boolean exclude = false;
+        if (clause.regionMatches(true, 0, "NOT ", 0, 4)) {
+            clause = trimToNull(clause.substring(4));
+            exclude = true;
+        } else if (clause.startsWith("!")) {
+            clause = trimToNull(clause.substring(1));
+            exclude = true;
+        }
+        Matcher matcher = METRICS_COLON_FILTER_MATCHER.matcher(clause == null ? "" : clause);
+        if (matcher.matches()) {
+            return matcher.group(1) + (exclude ? "!=" : "=") + matcher.group(2);
+        }
+        if (exclude) {
+            throw new ObservabilityQueryRequestException();
+        }
+        return clause;
+    }
+
+    private List<String> parseMetricsFilterMatchers(String filter, Set<String> excludedLabels,
+                                                    List<String> lockedMatchers) {
         String normalized = trimToNull(filter);
         if (!StringUtils.hasText(normalized)) {
             return List.of();
         }
         List<String> matchers = new ArrayList<>();
-        for (String rawClause : splitMetricsFilterClauses(normalized)) {
-            String clause = trimToNull(rawClause);
+        for (String rawClause : SignalFilterScanner.splitClausesPreservingEmpty(normalized)) {
+            String clause = normalizeMetricsColonFilter(trimToNull(rawClause));
             if (!StringUtils.hasText(clause)) {
-                continue;
+                throw new ObservabilityQueryRequestException();
             }
             String parsedMatcher = parseMetricsFriendlyFilterMatcher(clause, excludedLabels);
             if (StringUtils.hasText(parsedMatcher)) {
@@ -2209,20 +2310,30 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             }
             Matcher matcher = METRICS_FILTER_MATCHER.matcher(clause);
             if (!matcher.matches()) {
-                continue;
+                throw new ObservabilityQueryRequestException();
             }
             String labelName = normalizePromqlLabelName(matcher.group(1));
             if (!isPromqlLabelName(labelName)) {
-                continue;
+                throw new ObservabilityQueryRequestException();
             }
+            String quoted = matcher.group(3) != null ? matcher.group(3) : matcher.group(4);
+            String labelValue = quoted == null ? matcher.group(5) : decodeMetricLiteral(quoted, matcher.group(4) != null);
+            if (labelValue == null) {
+                throw new ObservabilityQueryRequestException();
+            }
+            String operator = matcher.group(2);
+            if (quoted == null && labelValue.contains("*") && ("=".equals(operator) || "!=".equals(operator))) {
+                labelValue = "^" + escapePromqlRegexValue(labelValue).replace("\\*", ".*") + "$";
+                operator = "=".equals(operator) ? "=~" : "!~";
+            }
+            String parsed = labelName + operator + "\"" + escapePromqlLabelValue(labelValue) + "\"";
             if (excludedLabels.contains(labelName)) {
-                continue;
+                if ("=".equals(matcher.group(2)) && lockedMatchers.contains(parsed)) {
+                    continue;
+                }
+                throw new ObservabilityQueryRequestException();
             }
-            String labelValue = firstText(matcher.group(3), matcher.group(4), matcher.group(5));
-            if (!StringUtils.hasText(labelValue)) {
-                continue;
-            }
-            matchers.add(labelName + matcher.group(2) + "\"" + escapePromqlLabelValue(labelValue) + "\"");
+            matchers.add(parsed);
         }
         return matchers;
     }
@@ -2253,11 +2364,11 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 || !valueList.startsWith("(") || !valueList.endsWith(")")) {
             return null;
         }
-        List<String> values = splitMetricsFilterListValues(valueList.substring(1, valueList.length() - 1)).stream()
+        List<String> values = SignalFilterScanner.splitListValuesPreservingEmpty(
+                        valueList.substring(1, valueList.length() - 1)).stream()
                 .map(value -> stripMetricsFilterQuotes(trimToNull(value)))
-                .filter(StringUtils::hasText)
                 .toList();
-        if (values.isEmpty()) {
+        if (values.isEmpty() || values.stream().anyMatch(value -> !StringUtils.hasText(value))) {
             return null;
         }
         String regex = "^(?:" + values.stream()
@@ -2307,89 +2418,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return labelName + promqlOperator + "\".+\"";
     }
 
-    private List<String> splitMetricsFilterClauses(String filter) {
-        List<String> clauses = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int depth = 0;
-        char quote = 0;
-        for (int index = 0; index < filter.length(); index++) {
-            char character = filter.charAt(index);
-            if (quote != 0) {
-                current.append(character);
-                if (character == quote) {
-                    quote = 0;
-                }
-                continue;
-            }
-            if (character == '\'' || character == '"') {
-                quote = character;
-                current.append(character);
-                continue;
-            }
-            if (character == '(') {
-                depth++;
-                current.append(character);
-                continue;
-            }
-            if (character == ')') {
-                depth = Math.max(0, depth - 1);
-                current.append(character);
-                continue;
-            }
-            if (depth == 0 && character == ',') {
-                addMetricsFilterClause(clauses, current);
-                continue;
-            }
-            if (depth == 0 && isMetricsFilterAndDelimiter(filter, index)) {
-                addMetricsFilterClause(clauses, current);
-                index += 4;
-                continue;
-            }
-            current.append(character);
-        }
-        addMetricsFilterClause(clauses, current);
-        return clauses;
-    }
 
-    private List<String> splitMetricsFilterListValues(String values) {
-        List<String> result = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        char quote = 0;
-        for (int index = 0; index < values.length(); index++) {
-            char character = values.charAt(index);
-            if (quote != 0) {
-                current.append(character);
-                if (character == quote) {
-                    quote = 0;
-                }
-                continue;
-            }
-            if (character == '\'' || character == '"') {
-                quote = character;
-                current.append(character);
-                continue;
-            }
-            if (character == ',') {
-                addMetricsFilterClause(result, current);
-                continue;
-            }
-            current.append(character);
-        }
-        addMetricsFilterClause(result, current);
-        return result;
-    }
 
-    private void addMetricsFilterClause(List<String> clauses, StringBuilder current) {
-        String clause = trimToNull(current.toString());
-        if (StringUtils.hasText(clause)) {
-            clauses.add(clause);
-        }
-        current.setLength(0);
-    }
 
-    private boolean isMetricsFilterAndDelimiter(String value, int index) {
-        return index + 5 <= value.length() && value.regionMatches(true, index, " and ", 0, 5);
-    }
 
     private String stripMetricsFilterQuotes(String value) {
         if (value == null || value.length() < 2) {
@@ -2425,7 +2456,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return null;
         }
         normalized = normalized.replaceAll("[^A-Za-z0-9_:]", "_");
-        normalized = normalized.replaceAll("_+", "_");
         if (!normalized.isEmpty() && Character.isDigit(normalized.charAt(0))) {
             normalized = "_" + normalized;
         }
@@ -2496,6 +2526,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     MetricQueryRepository.PROMQL_QUERY_FAILED
             );
         }
+        if (MetricQueryRepository.PROMQL_QUERY_INVALID.equals(queryResult.errorMessage())) {
+            throw new ObservabilityQueryRequestException();
+        }
         if (queryResult.errorMessage() != null) {
             log.warn(queryResult.errorMessage());
             return new MetricsQueryExecution(
@@ -2538,16 +2571,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return List.copyOf(services);
     }
 
-    private String selectPreferredMetricName(List<String> metricNames) {
-        if (CollectionUtils.isEmpty(metricNames)) {
-            return null;
-        }
-        return metricNames.stream()
-                .filter(StringUtils::hasText)
-                .sorted(Comparator.comparingInt(this::metricNamePriority).thenComparing(String::compareTo))
-                .findFirst()
-                .orElse(null);
-    }
 
     private int metricNamePriority(String metricName) {
         String normalized = trimToNull(metricName);
@@ -2622,29 +2645,47 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return selector;
         }
         String function = normalized.toLowerCase(Locale.ROOT);
+        if (function.matches("rollup_(avg|sum|min|max|count)_[1-9][0-9]{0,4}")) {
+            int separator = function.lastIndexOf('_');
+            long seconds = Long.parseLong(function.substring(separator + 1));
+            if (seconds > 86400) {
+                throw new ObservabilityQueryRequestException();
+            }
+            return function.substring("rollup_".length(), separator) + "_over_time(" + selector + "[" + seconds + "s])";
+        }
         if (!List.of("rate", "increase", "delta").contains(function)) {
-            return selector;
+            throw new ObservabilityQueryRequestException();
         }
         return function + "(" + selector + "[5m])";
     }
 
-    private String normalizeGroupBy(String groupBy) {
+    private String normalizeGroupBy(String groupBy, String metricName) {
         String normalized = trimToNull(groupBy);
-        if (!StringUtils.hasText(normalized)) {
+        if (!StringUtils.hasText(normalized) && !metricName.endsWith("_bucket")) {
             return DEFAULT_METRICS_GROUP_BY;
         }
         LinkedHashSet<String> groupLabels = new LinkedHashSet<>();
-        for (String label : normalized.split(",")) {
+        for (String label : (normalized == null ? "" : normalized).split(",", -1)) {
             String trimmed = trimToNull(label);
             if (!StringUtils.hasText(trimmed)) {
+                if (normalized != null) {
+                    throw new ObservabilityQueryRequestException();
+                }
                 continue;
             }
             String resolvedLabel = normalizeMetricsGroupByLabel(trimmed);
-            if (StringUtils.hasText(resolvedLabel)) {
-                groupLabels.add(resolvedLabel);
+            if (!isPromqlLabelName(resolvedLabel)) {
+                throw new ObservabilityQueryRequestException();
             }
+            groupLabels.add(resolvedLabel);
         }
-        groupLabels.addAll(METRICS_ENTITY_CONTEXT_GROUP_LABELS);
+        if (metricName.endsWith("_bucket")) {
+            groupLabels.add("le");
+        }
+        groupLabels.add("__name__");
+        if (normalized == null) {
+            groupLabels.addAll(METRICS_ENTITY_CONTEXT_GROUP_LABELS);
+        }
         return String.join(", ", groupLabels);
     }
 
@@ -2668,11 +2709,30 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return label != null && label.matches("[A-Za-z_:][A-Za-z0-9_:]*");
     }
 
-    private String escapePromqlLabelValue(String value) {
-        if (!StringUtils.hasText(value)) {
-            return "";
+    private String decodeMetricLiteral(String value, boolean singleQuoted) {
+        StringBuilder json = new StringBuilder("\"");
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (character == '\\' && index + 1 < value.length()) {
+                char escaped = value.charAt(++index);
+                if (singleQuoted && escaped == '\'') {
+                    json.append(escaped);
+                } else {
+                    json.append('\\').append(escaped);
+                }
+            } else {
+                if (singleQuoted && character == '"') {
+                    json.append('\\');
+                }
+                json.append(character);
+            }
         }
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+        return org.apache.hertzbeat.common.util.JsonUtil.fromJsonQuietly(json.append('"').toString(), String.class);
+    }
+
+    private String escapePromqlLabelValue(String value) {
+        String literal = org.apache.hertzbeat.common.util.JsonUtil.toJson(value == null ? "" : value);
+        return literal.substring(1, literal.length() - 1);
     }
 
     private String resolvePromqlStep(long start, long end, String requestedStep) {

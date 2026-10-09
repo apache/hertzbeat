@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.observability.ingestion.audit;
 
-import io.grpc.Status;
-import java.math.BigDecimal;
+import org.apache.hertzbeat.observability.ingestion.util.OtlpStatusCodes;
+
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -58,25 +58,7 @@ public class GreptimeOtlpIngestionAuditEventSink implements OtlpIngestionAuditEv
     private static final Set<String> SUPPORTED_SIGNALS = Set.of("metrics", "logs", "traces");
     private static final Set<String> SUPPORTED_PROTOCOLS = Set.of("http", "grpc");
     private static final Set<String> SUPPORTED_OUTCOMES = Set.of("accepted", "rejected", "dropped");
-    private static final Set<String> SUPPORTED_STATUS_CODES = Set.of(
-            "OK",
-            "CANCELLED",
-            "UNKNOWN",
-            "INVALID_ARGUMENT",
-            "DEADLINE_EXCEEDED",
-            "NOT_FOUND",
-            "ALREADY_EXISTS",
-            "PERMISSION_DENIED",
-            "RESOURCE_EXHAUSTED",
-            "FAILED_PRECONDITION",
-            "ABORTED",
-            "OUT_OF_RANGE",
-            "UNIMPLEMENTED",
-            "INTERNAL",
-            "UNAVAILABLE",
-            "DATA_LOSS",
-            "UNAUTHENTICATED"
-    );
+
     private static final String CREATE_TABLE_SQL = """
             CREATE TABLE IF NOT EXISTS hertzbeat_otlp_ingest_red (
               observed_at TIMESTAMP(3) TIME INDEX,
@@ -238,46 +220,10 @@ public class GreptimeOtlpIngestionAuditEventSink implements OtlpIngestionAuditEv
     }
 
     private String normalizedStatusCode(String value) {
-        String text = StringUtils.trimToNull(value);
-        if (text == null) {
-            return null;
-        }
-        String grpcStatusName = numericGrpcStatusName(text);
-        if (grpcStatusName != null) {
-            return grpcStatusName;
-        }
-        if (isNumericStatusCode(text)) {
-            return null;
-        }
-        String normalized = text.replaceAll("[\\s-]+", "_").replaceAll("^_+|_+$", "");
-        normalized = StringUtils.trimToNull(normalized) == null ? null : normalized.toUpperCase(Locale.ROOT);
-        return normalized != null && SUPPORTED_STATUS_CODES.contains(normalized) ? normalized : null;
+        return OtlpStatusCodes.normalize(value);
     }
 
-    private String numericGrpcStatusName(String text) {
-        try {
-            BigDecimal numericStatus = new BigDecimal(text).stripTrailingZeros();
-            if (numericStatus.scale() > 0) {
-                return null;
-            }
-            int codeValue = numericStatus.intValueExact();
-            if (codeValue < Status.Code.OK.value() || codeValue > Status.Code.UNAUTHENTICATED.value()) {
-                return null;
-            }
-            return Status.fromCodeValue(codeValue).getCode().name();
-        } catch (ArithmeticException | NumberFormatException ignored) {
-            return null;
-        }
-    }
 
-    private boolean isNumericStatusCode(String text) {
-        try {
-            new BigDecimal(text);
-            return true;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
 
     private String trimmedOptional(String value) {
         return StringUtils.trimToNull(value);

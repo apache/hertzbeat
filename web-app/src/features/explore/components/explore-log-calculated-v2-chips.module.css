@@ -1,0 +1,27 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.row,
+.tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+}
+.row {
+  min-height: 28px;
+  padding-block: 2px;
+}
+.label {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding-inline: 4px;
+}
+.tagAction {
+  height: 22px;
+  padding-inline: 2px;
+}

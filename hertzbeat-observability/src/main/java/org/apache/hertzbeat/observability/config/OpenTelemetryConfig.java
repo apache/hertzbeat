@@ -26,6 +26,7 @@ import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporterBuilder;
 import io.opentelemetry.sdk.autoconfigure.spi.AutoConfigurationCustomizerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -35,9 +36,12 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.observability.ingestion.forwarder.GreptimeOtlpForwarder;
+import org.apache.hertzbeat.observability.ingestion.redaction.OtlpIngestionRedactionService;
+import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,6 +49,7 @@ import org.springframework.context.annotation.Configuration;
  * OpenTelemetry SDK customization for Greptime-backed logs and traces.
  */
 @Configuration
+@EnableConfigurationProperties(OtelTraceIngressProperties.class)
 @Slf4j
 public class OpenTelemetryConfig {
 
@@ -103,6 +108,22 @@ public class OpenTelemetryConfig {
         return StringUtils.stripEnd(StringUtils.trimToEmpty(endpoint), "/") + path;
     }
 
+    private String traceEndpoint(GreptimeProperties greptimeProps,
+                                 OtelTraceIngressProperties traceIngressProperties) {
+        if (traceIngressProperties.isEnabled()) {
+            return traceIngressProperties.validatedEndpoint().toString();
+        }
+        return greptimeOtlpEndpoint(greptimeProps, GREPTIME_TRACES_PATH);
+    }
+
+    private Map<String, String> traceHeaders(GreptimeProperties greptimeProps,
+                                             OtelTraceIngressProperties traceIngressProperties) {
+        if (traceIngressProperties.isEnabled()) {
+            return Map.of("Authorization", traceIngressProperties.authorizationHeader());
+        }
+        return buildGreptimeOtlpTraceHeaders(greptimeProps);
+    }
+
     @Bean
     public AutoConfigurationCustomizerProvider defaultOtelCustomizer() {
         log.info("Applying default OpenTelemetry SDK customizations (logs & traces only).");
@@ -123,7 +144,9 @@ public class OpenTelemetryConfig {
 
     @Bean
     @ConditionalOnProperty(name = "warehouse.store.greptime.enabled", havingValue = "true")
-    public AutoConfigurationCustomizerProvider greptimeOtelCustomizer(GreptimeProperties greptimeProperties) {
+    public AutoConfigurationCustomizerProvider greptimeOtelCustomizer(
+            GreptimeProperties greptimeProperties, OtelTraceIngressProperties traceIngressProperties,
+            LogSseManager logSseManager, OtlpIngestionRedactionService redactionService) {
         log.info("GreptimeDB is enabled. Applying OpenTelemetry customizations for GreptimeDB logs & traces.");
         return providerCustomizer -> providerCustomizer
                 .addPropertiesCustomizer(sdkConfigProperties -> {
@@ -132,13 +155,21 @@ public class OpenTelemetryConfig {
                     return newProperties;
                 })
                 .addSpanExporterCustomizer((originalSpanExporter, configProperties) -> {
-                    String traceEndpoint = greptimeOtlpEndpoint(greptimeProperties, GREPTIME_TRACES_PATH);
-                    log.info("Configuring OtlpHttpSpanExporter for GreptimeDB. Endpoint: {}", traceEndpoint);
+                    String traceEndpoint = traceEndpoint(greptimeProperties, traceIngressProperties);
+                    if (traceIngressProperties.isEnabled()) {
+                        log.info("Configuring OtlpHttpSpanExporter for authenticated local ingress. Endpoint: {}",
+                                traceEndpoint);
+                    } else {
+                        log.info("Configuring OtlpHttpSpanExporter for GreptimeDB. Endpoint: {}", traceEndpoint);
+                    }
                     OtlpHttpSpanExporterBuilder httpExporterBuilder = OtlpHttpSpanExporter.builder()
                             .setEndpoint(traceEndpoint)
-                            .setHeaders(() -> buildGreptimeOtlpTraceHeaders(greptimeProperties))
+                            .setHeaders(() -> traceHeaders(greptimeProperties, traceIngressProperties))
                             .setTimeout(10000, TimeUnit.MILLISECONDS);
-                    return httpExporterBuilder.build();
+                    SpanExporter exporter = httpExporterBuilder.build();
+                    return traceIngressProperties.isEnabled()
+                            ? new OtlpIngressFilteringSpanExporter(exporter)
+                            : exporter;
                 })
                 .addLoggerProviderCustomizer((sdkLoggerProviderBuilder, configProperties) -> {
                     log.info("Customizing SdkLoggerProviderBuilder for GreptimeDB logs.");
@@ -153,7 +184,9 @@ public class OpenTelemetryConfig {
                             .setMaxExportBatchSize(512)
                             .build();
 
-                    return sdkLoggerProviderBuilder.addLogRecordProcessor(batchLogProcessor);
+                    return sdkLoggerProviderBuilder
+                            .addLogRecordProcessor(batchLogProcessor)
+                            .addLogRecordProcessor(new SdkLogSseProcessor(logSseManager, redactionService));
                 });
     }
 }

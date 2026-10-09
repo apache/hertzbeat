@@ -1,0 +1,65 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 32px;
+  padding-block: 0;
+  font-size: 13px;
+}
+.controls > div {
+  display: flex;
+}
+.controls > span:first-child {
+  width: 88px;
+  flex: none;
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  padding-inline: 10px;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control) 0 0 var(--hb-radius-control);
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-secondary);
+  font-size: 13px;
+}
+.controls > div > :global(.ant-btn) {
+  border-radius: 0;
+  font-size: 13px;
+}
+.controls > div > :global(.ant-btn:first-child) {
+  margin-inline-start: -1px;
+  border-radius: 0;
+}
+.controls > div > :global(.ant-btn:last-child) {
+  border-radius: 0 var(--hb-radius-control) var(--hb-radius-control) 0;
+}
+.controls > div > :global(.ant-btn + .ant-btn) {
+  margin-left: -1px;
+}
+.controls .calculatedAction {
+  margin-inline-start: auto;
+}
+.controls [data-log-search-summary] {
+  margin-inline-start: auto;
+}
+.controls :global(.ant-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--hb-workbench-control-height, 32px);
+  line-height: 1;
+}
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.controls label input {
+  max-width: 240px;
+}
+.controls [aria-pressed='true'] {
+  border-color: var(--hb-border-subtle);
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-primary);
+}

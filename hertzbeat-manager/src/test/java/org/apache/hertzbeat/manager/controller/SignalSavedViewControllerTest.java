@@ -43,6 +43,8 @@ import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -76,7 +78,26 @@ class SignalSavedViewControllerTest {
     }
 
     @Test
-    void listSignalSavedViewsUsesCurrentUser() throws Exception {
+    void revisionConflictsAndInvalidDeletesUseRealHttpStatus() throws Exception {
+        when(signalSavedViewService.upsertSignalSavedView(any(String.class), any(SignalSavedView.class)))
+                .thenThrow(new org.apache.hertzbeat.manager.service.impl.SignalSavedViewConflictException());
+        org.mockito.Mockito.doThrow(new org.springframework.orm.ObjectOptimisticLockingFailureException(SignalSavedView.class, 1L))
+                .when(signalSavedViewService).deleteSignalSavedView(USER, "logs", "shared", 1L);
+        try (var ignored = bindUser(USER, "user")) {
+            mockMvc.perform(put("/api/signal/saved-view").contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"signal\":\"logs\",\"viewKey\":\"shared\",\"label\":\"Edit\",\"route\":\"/log/manage\",\"revision\":1}"))
+                    .andExpect(status().isConflict()).andExpect(jsonPath("$.msg").value("signal_saved_view_revision_conflict"));
+            mockMvc.perform(delete("/api/signal/saved-view/logs/shared").param("revision", "1"))
+                    .andExpect(status().isConflict()).andExpect(jsonPath("$.msg").value("signal_saved_view_revision_conflict"));
+            mockMvc.perform(delete("/api/signal/saved-view/logs/shared")).andExpect(status().isBadRequest());
+            mockMvc.perform(delete("/api/signal/saved-view/logs/shared").param("revision", "not-a-number"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"admin", "user", "guest"})
+    void listSignalSavedViewsUsesCurrentUser(String role) throws Exception {
         SignalSavedView view = SignalSavedView.builder()
                 .id(1L)
                 .signal("logs")
@@ -86,7 +107,7 @@ class SignalSavedViewControllerTest {
                 .build();
         when(signalSavedViewService.listSignalSavedViews(USER, "logs")).thenReturn(List.of(view));
 
-        try (var ignored = bindUser(USER)) {
+        try (var ignored = bindUser(USER, role)) {
             mockMvc.perform(get("/api/signal/saved-view/logs"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value((int) SUCCESS_CODE))
@@ -97,8 +118,9 @@ class SignalSavedViewControllerTest {
         verify(signalSavedViewService).listSignalSavedViews(USER, "logs");
     }
 
-    @Test
-    void upsertSignalSavedViewUsesCurrentUser() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"admin", "user"})
+    void upsertSignalSavedViewUsesCurrentUser(String role) throws Exception {
         SignalSavedView saved = SignalSavedView.builder()
                 .id(9L)
                 .signal("metrics")
@@ -108,7 +130,7 @@ class SignalSavedViewControllerTest {
                 .build();
         when(signalSavedViewService.upsertSignalSavedView(any(String.class), any(SignalSavedView.class))).thenReturn(saved);
 
-        try (var ignored = bindUser(USER)) {
+        try (var ignored = bindUser(USER, role)) {
             mockMvc.perform(put("/api/signal/saved-view")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
@@ -149,28 +171,29 @@ class SignalSavedViewControllerTest {
         verify(signalSavedViewService, never()).upsertSignalSavedView(any(String.class), any(SignalSavedView.class));
     }
 
-    @Test
-    void deleteSignalSavedViewUsesCurrentUser() throws Exception {
-        try (var ignored = bindUser(USER)) {
-            mockMvc.perform(delete("/api/signal/saved-view/traces/slow-checkout"))
+    @ParameterizedTest
+    @ValueSource(strings = {"admin", "user"})
+    void deleteSignalSavedViewUsesCurrentUser(String role) throws Exception {
+        try (var ignored = bindUser(USER, role)) {
+            mockMvc.perform(delete("/api/signal/saved-view/traces/slow-checkout").param("revision", "2"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value((int) SUCCESS_CODE))
                     .andExpect(jsonPath("$.msg").value("Signal saved view deleted successfully"));
         }
 
-        verify(signalSavedViewService).deleteSignalSavedView(USER, "traces", "slow-checkout");
+        verify(signalSavedViewService).deleteSignalSavedView(USER, "traces", "slow-checkout", 2L);
     }
 
     @Test
     void guestCannotDeleteSharedSignalSavedView() throws Exception {
         try (var ignored = bindUser("viewer", "guest")) {
-            mockMvc.perform(delete("/api/signal/saved-view/traces/slow-checkout"))
+            mockMvc.perform(delete("/api/signal/saved-view/traces/slow-checkout").param("revision", "2"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value((int) FAIL_CODE))
                     .andExpect(jsonPath("$.msg").value("No permission"));
         }
 
-        verify(signalSavedViewService, never()).deleteSignalSavedView(any(String.class), any(String.class), any(String.class));
+        verify(signalSavedViewService, never()).deleteSignalSavedView(any(String.class), any(String.class), any(String.class), org.mockito.ArgumentMatchers.anyLong());
     }
 
     @Test

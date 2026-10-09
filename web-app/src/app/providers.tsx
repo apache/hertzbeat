@@ -16,11 +16,11 @@
  */
 
 import { App as AntApp, ConfigProvider } from 'antd';
-import { useCallback, useState, type PropsWithChildren } from 'react';
+import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 
 import { i18n } from '@/core/i18n/i18n';
-import { resolveAntLocale } from '@/core/i18n/ant-locale';
+import { resolveAntLocale, syncDayjsLocale } from '@/core/i18n/ant-locale';
 import {
   persistSystemPreferences,
   readRuntimeLocale,
@@ -34,6 +34,7 @@ import { createHertzBeatTheme } from '@/shared/theme/hertzbeat-theme';
 function RuntimeProviders({ children }: PropsWithChildren) {
   const { i18n: runtimeI18n } = useTranslation();
   const [runtimeTheme, setRuntimeTheme] = useState(readRuntimeTheme);
+  useEffect(() => syncDayjsLocale(runtimeI18n.resolvedLanguage), [runtimeI18n.resolvedLanguage]);
   const updateTheme = useCallback(
     (next: RuntimeTheme) => {
       document.documentElement.dataset.theme = next;

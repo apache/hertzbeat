@@ -108,6 +108,34 @@ describe('useCollectorController runtime configuration', () => {
     expect(result.current.runtimeFailure).toBe('validation');
   });
 
+  it('recovers validation after a corrected runtime draft without closing or reopening first', async () => {
+    const current = runtimeConfig();
+    const saved = runtimeConfig({
+      revision: current.revision + 1,
+      environment: 'staging',
+      hostMetricsInterval: 'PT45S'
+    });
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValueOnce(current).mockResolvedValueOnce(saved);
+    saveRuntime.mockResolvedValue(saved);
+    const { result } = renderHook(useCollectorControllerTestHook, { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+    await act(async () => result.current.actions.saveRuntimeConfig(runtimeDraft({ hostMetricsIntervalSeconds: 9 })));
+    expect(result.current.runtimeFailure).toBe('validation');
+    expect(result.current.runtimeEditor).not.toBeNull();
+    expect(saveRuntime).not.toHaveBeenCalled();
+    expect(loadRuntime).toHaveBeenCalledOnce();
+    await act(async () =>
+      result.current.actions.saveRuntimeConfig(runtimeDraft({ environment: 'staging', hostMetricsIntervalSeconds: 45 }))
+    );
+    expect(saveRuntime).toHaveBeenCalledOnce();
+    expect(saveRuntime).toHaveBeenCalledWith('edge', saved);
+    expect(loadRuntime).toHaveBeenCalledTimes(2);
+    expect(result.current.runtimeFailure).toBeNull();
+    expect(result.current.runtimeEditor).toBeNull();
+  });
+
   it('rejects an invalid runtime draft before PUT and clears owned failure on cancel', async () => {
     load.mockResolvedValue(page(0, [collector('edge')], 1));
     loadRuntime.mockResolvedValue(runtimeConfig());

@@ -27,7 +27,6 @@ export function investigationPrimitiveMessages(
     truncated: t(key('query.truncated')),
     truncationUnknown: t(key('query.truncationUnknown')),
     runtimeError: t(key('query.runtimeError')),
-    investigationActions: count => t('explore.perses.investigationActions', { count }),
     failures: {
       'perses.query.invalid': t(key('query.invalid')),
       'perses.query.permission': t(key('query.permission')),

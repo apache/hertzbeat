@@ -18,11 +18,11 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Version;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
@@ -48,6 +48,10 @@ public class SignalSavedViewEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    @Column(name = "revision", nullable = false)
+    private Long revision;
 
     @NotBlank
     @Size(max = 255)
@@ -78,11 +82,9 @@ public class SignalSavedViewEntity {
     @Column(name = "route", nullable = false, length = 2048)
     private String route;
 
-    @Lob
     @Column(name = "query_snapshot", columnDefinition = "TEXT")
     private String querySnapshot;
 
-    @Lob
     @Column(name = "payload", columnDefinition = "TEXT")
     private String payload;
 

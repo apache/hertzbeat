@@ -27,5 +27,6 @@ export function completeAcknowledgedMonitorSave(input: MonitorEditorCommandInput
   void input.message.success(input.text.saveSuccess);
   if (!input.draft) return;
   const target = input.mode === 'edit' ? input.returnTo : buildMonitorListPath({ app: input.draft.monitor.app });
+  input.saved?.();
   void input.navigate(target);
 }

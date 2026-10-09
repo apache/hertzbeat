@@ -11,7 +11,7 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { useLayoutEffect } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UiSession } from '@/core/auth/session-api';
 
@@ -34,13 +34,55 @@ vi.mock('@/core/auth/session-context', () => ({ useSession: () => auth.state }))
 
 describe('Live Log controller', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
     FakeSource.instances = [];
     auth.state.session = authenticatedSession();
     api.buildLogStreamPath.mockImplementation((query: LogExploreQuery) => `/stream?query=${query.query ?? ''}`);
     api.openLogStream.mockImplementation((_path: string, handlers: FakeHandlers) => new FakeSource(handlers));
   });
+  afterEach(() => vi.useRealTimers());
 
+  it('exposes a Live preflight diagnostic only for its owning connection generation', () => {
+    type Handlers = Parameters<typeof import('../api/explore-api').openLogStream>[1];
+    let reject: Handlers['onInvalidFilter'];
+    api.openLogStream.mockImplementationOnce((_path: string, handlers: Handlers) => {
+      reject = handlers.onInvalidFilter;
+      return new FakeSource(handlers);
+    });
+    const view = renderLive(query('service:', { searchSyntax: 'structured-v1' }));
+    const diagnostic = { issue: 'missing_value', start: 8, end: 8, expression: 'service:' } as const;
+    act(() => reject?.(undefined, diagnostic));
+    expect(view.result.current.syntaxDiagnostic).toEqual(diagnostic);
+    expect(view.result.current.status).toBe('invalid_filter');
+    view.rerender({ query: query('service:checkout', { searchSyntax: 'structured-v1' }) });
+    act(() => reject?.(undefined, diagnostic));
+    expect(view.result.current.syntaxDiagnostic).toBeUndefined();
+  });
+
+  it('retains Live evidence and connection when only historical ordering changes', () => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    act(() => source.event(logRow('retained')));
+    view.rerender({
+      query: query('errors', {
+        logSort: JSON.stringify({ version: 1, field: 'attribute:duration', type: 'number', direction: 'desc' })
+      })
+    });
+    expect(view.result.current.rows.map(row => row.body)).toEqual(['retained']);
+    expect(source.close).not.toHaveBeenCalled();
+    expect(FakeSource.instances).toHaveLength(1);
+    view.rerender({ query: query('errors', { sort: 'oldest' }) });
+    expect(view.result.current.rows.map(row => row.body)).toEqual(['retained']);
+    expect(FakeSource.instances).toHaveLength(1);
+  });
+
+  it('exposes actual transport state without discarding gap integrity', () => {
+    const view = renderLive(query());
+    expect(view.result.current.connectionStatus).toBe('waiting');
+    act(() => FakeSource.instances[0]!.open());
+    expect(view.result.current.connectionStatus).toBe('connected');
+  });
   it('owns waiting, connected, paused, unavailable, and clear transitions', () => {
     const view = renderLive(query());
     expect(view.result.current.status).toBe('waiting');
@@ -347,6 +389,27 @@ describe('Live Log controller', () => {
     expect(FakeSource.instances).toHaveLength(2);
   });
 
+  it('preserves divergent records sharing generated IDs within one batch', () => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    const first = {
+      ...logRow('record'),
+      attributes: { 'log.record.uid': 'generated-id', 'hertzbeat.event_id': 'generated-id' },
+      resource: { 'service.name': 'checkout' }
+    };
+    const differentBody = { ...first, body: 'other record' };
+    const differentService = { ...first, resource: { 'service.name': 'payments' } };
+    act(() => {
+      source.event(first, false);
+      source.event(differentBody, false);
+      source.event(differentService, false);
+      source.event(structuredClone(first), false);
+      vi.advanceTimersByTime(200);
+    });
+    expect(view.result.current.rows).toEqual([differentService, differentBody, first]);
+    expect(view.result.current.locallyDroppedCount).toBe(0);
+  });
+
   it('ignores old connection callbacks between layout commit and passive cleanup', () => {
     const view = renderHook(
       ({ query: current, afterLayout }) => {
@@ -419,6 +482,85 @@ describe('Live Log controller', () => {
     expect(FakeSource.instances).toHaveLength(1);
   });
 
+  it('deduplicates retained event identities without merging distinct untitled objects', () => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    const noUid = logRow('same content');
+    const peer = { ...noUid };
+    const uid = { ...logRow('identified'), attributes: { 'log.record.uid': 'event-1' } };
+    act(() => {
+      source.event(noUid, false);
+      source.event(noUid, false);
+      source.event(peer, false);
+      source.event(uid, false);
+      source.event({ ...uid }, false);
+      vi.advanceTimersByTime(200);
+    });
+    expect(view.result.current.rows).toEqual([uid, peer, noUid]);
+    expect(view.result.current.locallyDroppedCount).toBe(0);
+    act(() => {
+      source.event(noUid, false);
+      source.event({ ...uid }, false);
+      vi.advanceTimersByTime(200);
+    });
+    expect(view.result.current.rows).toEqual([uid, peer, noUid]);
+    expect(view.result.current.locallyDroppedCount).toBe(0);
+  });
+
+  it('does not let replayed retained events evict unique rows at the 500-row boundary', () => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    const rows = Array.from({ length: 500 }, (_, index) => ({
+      ...logRow(String(index)),
+      attributes: { 'log.record.uid': String(index) }
+    }));
+    act(() => {
+      rows.forEach(row => source.event(row, false));
+      vi.advanceTimersByTime(200);
+    });
+    const before = view.result.current.rows;
+    act(() => {
+      source.event({ ...rows[0]! }, false);
+      source.event({ ...rows[499]! }, false);
+      vi.advanceTimersByTime(200);
+    });
+    expect(view.result.current.rows).toEqual(before);
+    expect(view.result.current.locallyDroppedCount).toBe(0);
+    act(() => source.event({ ...logRow('new'), attributes: { 'log.record.uid': 'new' } }));
+    expect(view.result.current.rows).toHaveLength(500);
+    expect(view.result.current.locallyDroppedCount).toBe(1);
+    act(() => source.event({ ...rows[0]! }));
+    expect(view.result.current.rows[0]?.attributes?.['log.record.uid']).toBe('0');
+    expect(view.result.current.locallyDroppedCount).toBe(2);
+  });
+
+  it.each([
+    ['body', { body: 'different record' }],
+    ['service resource', { resource: { 'service.name': 'payments' } }],
+    [
+      'instrumentation scope',
+      { instrumentationScope: { name: 'other-library', version: '2', attributes: null, droppedAttributesCount: 0 } }
+    ],
+    ['ingestion identity', { attributes: { 'log.record.uid': 'collision', 'hertzbeat.ingest_id': 'second-ingestion' } }]
+  ] as const)('preserves equal IDs with different %s payloads', (_field, difference) => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    const first = {
+      ...logRow('record'),
+      attributes: { 'log.record.uid': 'collision' },
+      resource: { 'service.name': 'checkout' }
+    };
+    const second = { ...first, ...difference };
+    act(() => {
+      source.event(first);
+      source.event(second);
+    });
+    expect(view.result.current.rows).toEqual([second, first]);
+    expect(view.result.current.locallyDroppedCount).toBe(0);
+    act(() => source.event(structuredClone(second)));
+    expect(view.result.current.rows).toEqual([second, first]);
+  });
+
   it('keeps only the latest 500 canonical rows', () => {
     const view = renderLive(query());
     const source = FakeSource.instances[0]!;
@@ -429,6 +571,106 @@ describe('Live Log controller', () => {
     expect(view.result.current.rows[0]?.body).toBe('500');
     expect(view.result.current.rows.at(-1)?.body).toBe('1');
     expect(view.result.current.locallyDroppedCount).toBe(1);
+  });
+
+  it('commits high-volume bursts in bounded batches and counts every evicted row', () => {
+    let renders = 0;
+    const view = renderHook(() => {
+      renders += 1;
+      return useLiveLogController(query());
+    });
+    const source = FakeSource.instances[0]!;
+    act(() => {
+      for (let index = 1; index <= 2500; index += 1) source.event(logRow(String(index)), false);
+      vi.advanceTimersByTime(200);
+    });
+    expect(view.result.current.rows).toHaveLength(500);
+    expect(view.result.current.rows[0]?.body).toBe('2500');
+    expect(view.result.current.rows.at(-1)?.body).toBe('2001');
+    expect(view.result.current.locallyDroppedCount).toBe(2000);
+    expect(renders).toBeLessThanOrEqual(4);
+  });
+
+  it('does not restore queued rows after clear and flushes accepted rows before pause', () => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    act(() => source.event(logRow('cleared'), false));
+    act(() => view.result.current.clear());
+    act(() => void vi.advanceTimersByTime(200));
+    expect(view.result.current.rows).toEqual([]);
+
+    act(() => source.event(logRow('kept-on-pause'), false));
+    act(() => view.result.current.togglePaused());
+    expect(view.result.current.rows.map(row => row.body)).toEqual(['kept-on-pause']);
+  });
+
+  it('drains queued evidence before terminal errors and cancels it at a query boundary', () => {
+    const terminal = renderLive(query());
+    const first = FakeSource.instances[0]!;
+    act(() => first.event(logRow('before-terminal'), false));
+    act(() => first.contractError());
+    expect(terminal.result.current.rows.map(row => row.body)).toEqual(['before-terminal']);
+    expect(terminal.result.current.status).toBe('contract');
+
+    const rerouted = renderLive(query('first'));
+    const oldSource = FakeSource.instances.at(-1)!;
+    act(() => oldSource.event(logRow('stale-scope'), false));
+    rerouted.rerender({ query: query('second') });
+    act(() => void vi.advanceTimersByTime(200));
+    expect(rerouted.result.current.rows).toEqual([]);
+  });
+
+  it('ignores every retired callback during pause and after resume into another query', () => {
+    const view = renderLive(query('first'));
+    const first = FakeSource.instances[0]!;
+    act(() => first.event(logRow('retained'), false));
+    act(() => view.result.current.togglePaused());
+    const deliverRetired = () => {
+      first.open();
+      first.retrying();
+      first.event(logRow('stale'), false);
+      first.gap();
+      first.contractError();
+      first.error();
+      vi.advanceTimersByTime(200);
+    };
+    act(deliverRetired);
+    expect(view.result.current.status).toBe('paused');
+    expect(view.result.current.rows.map(row => row.body)).toEqual(['retained']);
+    expect(view.result.current.gapDroppedCount).toBeUndefined();
+    expect(view.result.current.locallyDroppedCount).toBe(0);
+    expect(FakeSource.instances).toHaveLength(1);
+    view.rerender({ query: query('second') });
+    act(() => view.result.current.togglePaused());
+    const resumed = FakeSource.instances[1]!;
+    act(() => {
+      resumed.open();
+      resumed.event(logRow('current'));
+    });
+    act(deliverRetired);
+    expect(view.result.current.connectionStatus).toBe('connected');
+    expect(view.result.current.rows.map(row => row.body)).toEqual(['current']);
+    expect(view.result.current.gapDroppedCount).toBeUndefined();
+    expect(resumed.close).not.toHaveBeenCalled();
+  });
+
+  it('cancels a queued flush on unmount and never recreates a retired connection', () => {
+    const view = renderLive(query());
+    const source = FakeSource.instances[0]!;
+    act(() => source.event(logRow('queued'), false));
+    expect(vi.getTimerCount()).toBe(1);
+    view.unmount();
+    expect(source.close).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => {
+      source.open();
+      source.retrying();
+      source.event(logRow('late'), false);
+      source.error();
+    });
+    act(() => void vi.advanceTimersByTime(20_000));
+    expect(vi.getTimerCount()).toBe(0);
+    expect(FakeSource.instances).toHaveLength(1);
   });
 });
 
@@ -458,7 +700,7 @@ function authenticatedSession(override: Partial<UiSession> = {}): UiSession {
     ...override
   };
 }
-function logRow(body: string) {
+function logRow(body: string): import('../model/explore-signal-contract').LiveLogRow {
   return {
     timeUnixNano: 1_750_000_000_000_000_000,
     observedTimeUnixNano: null,
@@ -504,8 +746,9 @@ class FakeSource {
   contractError() {
     this.handlers.onContractError();
   }
-  event(row: ReturnType<typeof logRow>) {
+  event(row: ReturnType<typeof logRow>, flush = true) {
     this.handlers.onLog(row);
+    if (flush) vi.advanceTimersByTime(200);
   }
   gap(droppedCount = 37) {
     this.handlers.onGap({ observedAt: 1_750_000_000_000, reason: 'queue_overflow', droppedCount });

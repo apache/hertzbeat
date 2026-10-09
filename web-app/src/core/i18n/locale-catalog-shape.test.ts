@@ -41,6 +41,73 @@ describe('locale catalog shape', () => {
     }
   );
 
+  it('describes full-text search scope in every Explore locale', () => {
+    for (const catalog of Object.values(catalogFamilies.explore)) {
+      expect(catalog.explore.logAuthoring.fullTextHelp).toContain('*:');
+      expect(catalog.explore.logAuthoring.full_text_unsupported).toContain('*:');
+    }
+    expect(enExplore.explore.logAuthoring.fullTextHelp).toContain('History');
+    expect(enExplore.explore.logAuthoring.fullTextHelp).toContain('Unlike bare terms');
+    expect(enExplore.explore.logAuthoring.fullTextHelp).toContain('Live search does not support');
+    expect(enExplore.explore.logAuthoring.full_text_unsupported).toContain('Live search');
+  });
+
+  it('localizes data-backed subquery rank metrics in every Explore locale', () => {
+    for (const catalog of Object.values(catalogFamilies.explore)) {
+      expect(catalog.explore.logSubquery.countUniqueOf).toBeTruthy();
+      expect(catalog.explore.logSubquery.countUniqueOf).not.toContain('{{field}}');
+      expect(catalog.explore.logSubquery.allLogs).toBeTruthy();
+    }
+  });
+
+  it('localizes the facet query target selector in every Explore locale', () => {
+    for (const catalog of Object.values(catalogFamilies.explore)) {
+      expect(catalog.explore.logComparison.queryTarget).toContain('{{ref}}');
+      expect(catalog.explore.logComparison.timelineTarget).toBeTruthy();
+      expect(catalog.explore.logComparison.sourceNotExecuted).toBeTruthy();
+    }
+  });
+
+  it('explains that extraction captures become calculated fields automatically', () => {
+    for (const catalog of Object.values(catalogFamilies.explore)) {
+      expect(catalog.explore.logCalculatedV2.regexHint).toContain('(?<token>...)');
+      expect(catalog.explore.logCalculatedV2.grokMacros).toContain('%{notSpace:token}');
+    }
+    expect(enExplore.explore.logCalculatedV2.regexHint).toContain('automatically');
+    expect(enExplore.explore.logCalculatedV2.grokMacros).toContain('automatically');
+    expect(enExplore.explore.logCalculatedV2.regexHint).not.toContain('Output names');
+    expect(enExplore.explore.logCalculatedV2.grokMacros).not.toContain('Output names');
+  });
+
+  it('localizes log result options and copy actions in every Explore locale', () => {
+    for (const catalog of Object.values(catalogFamilies.explore)) {
+      expect(catalog.explore.perses.rowHeight).toBeTruthy();
+      expect(catalog.explore.perses.timelineGraph).toBeTruthy();
+      expect(catalog.explore.perses.standardizeHeaders).toBeTruthy();
+      expect(catalog.explore.logColumns.moveLeft).toContain('{{field}}');
+      expect(catalog.explore.logColumns.moveRight).toContain('{{field}}');
+      expect(catalog.explore.logColumns.actions).toBeTruthy();
+      expect(catalog.explore.logColumns.insertLeft).toBeTruthy();
+      expect(catalog.explore.logColumns.insertRight).toBeTruthy();
+      expect(catalog.explore.logColumns.replace).toBeTruthy();
+      expect(catalog.explore.logColumns.remove).toBeTruthy();
+      expect(catalog.explore.logColumns.remove).toContain('{{field}}');
+      expect(catalog.explore.logColumns.addColumn).toBeTruthy();
+      expect(catalog.explore.logColumns.empty).toBeTruthy();
+      expect(catalog.explore.logColumns.reorderHint).toBeTruthy();
+      expect(catalog.explore.logCopy.copyTimestamp).toBeTruthy();
+      expect(catalog.explore.logCopy.copyMessageDescription).toBeTruthy();
+      expect(catalog.explore.logCopy.copyJsonDescription).toBeTruthy();
+    }
+  });
+
+  it.each(Object.entries(catalogFamilies.root))(
+    '%s saved-query copy has no literal unicode escape text',
+    (_locale, catalog) => {
+      expect(JSON.stringify(catalog.exploreSaved)).not.toMatch(/\\u[0-9a-f]{4}/iu);
+    }
+  );
+
   it('reports missing, extra, and wrong-typed leaves with stable paths', () => {
     expect(
       compareLocaleCatalogShape(

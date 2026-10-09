@@ -33,6 +33,9 @@ class SpaForwardControllerTest {
     @Test
     void forwardsCanonicalAndLegacyBrowserRoutesToPackagedIndex() throws Exception {
         for (String path : new String[] {
+                "/ai",
+                "/ai?source=log&start=1000&end=2000",
+                "/ai/schedules",
                 "/dashboard",
                 "/entities/42/edit",
                 "/observability/integration",

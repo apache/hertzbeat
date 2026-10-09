@@ -40,7 +40,7 @@ vi.mock('../api/monitor-api', async importOriginal => ({
 }));
 vi.mock('antd', async importOriginal => ({
   ...(await importOriginal<typeof import('antd')>()),
-  App: { useApp: () => ({ message: notify }) }
+  App: { useApp: () => ({ message: notify, modal: { confirm: vi.fn(() => ({ destroy: vi.fn() })) } }) }
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

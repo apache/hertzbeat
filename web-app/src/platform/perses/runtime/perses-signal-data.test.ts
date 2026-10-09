@@ -53,6 +53,7 @@ describe('HertzBeat to Perses signal data', () => {
         {
           timestamp: 1_750_000_001,
           line: '{"message":"checkout failed","attempt":2}',
+          hertzbeatAttributes: { 'http.route': '/orders', nested: { ignored: true } },
           labels: {
             'resource.service.name': 'checkout',
             'attribute.http.route': '/orders',
@@ -67,6 +68,39 @@ describe('HertzBeat to Perses signal data', () => {
       direction: 'backward'
     });
     expect(toPersesLogData(data, timeWindow).entries[0]!.timestamp * 1_000).toBe(1_750_000_001_000);
+  });
+
+  it('keeps event identity in attributes and the message line faithful to its body', () => {
+    const attributes = { 'event.name': 'codex.tool_result', 'tool.name': 'exec', success: false, output: 'secret' };
+    const row = logRow({ body: 'null', attributes });
+    expect(toPersesLogData({ rows: [row], total: 1 }, timeWindow).entries[0]).toMatchObject({
+      line: 'null',
+      labels: { 'attribute.event.name': 'codex.tool_result', 'attribute.success': 'false' }
+    });
+    expect(row.body).toBe('null');
+    expect(row.attributes).toBe(attributes);
+  });
+
+  it('carries full attributes separately for content display and stack mode reads only the OTEL stack field', () => {
+    const attributes = { nested: { safe: true }, 'exception.stacktrace': 'Error: failed\\n at handler' };
+    expect(toPersesLogData({ rows: [logRow({ attributes })], total: 1 }, timeWindow).entries[0]).toMatchObject({
+      line: 'log body',
+      hertzbeatAttributes: attributes,
+      hertzbeatStack: 'Error: failed\\n at handler'
+    });
+  });
+
+  it('keeps absent, empty, and JSON bodies distinct in displayed log lines', () => {
+    const attributes = { 'event.name': 'tool.complete' };
+    const rows = [
+      logRow({ body: null, attributes }),
+      logRow({ body: '', attributes }),
+      logRow({ body: { result: 'ok' }, attributes }),
+      logRow({ body: null })
+    ];
+    expect(
+      toPersesLogData({ rows, total: rows.length }, timeWindow, 'preserve').entries.map(entry => entry.line)
+    ).toEqual(['', '', '{"result":"ok"}', '']);
   });
 
   it('rejects a log row without an observed timestamp instead of fabricating one', () => {
@@ -135,8 +169,33 @@ describe('HertzBeat to Perses signal data', () => {
     ]);
   });
 
+  it('honors oldest order and preserves incoming equal-timestamp ties', () => {
+    const rows = [
+      logRow({ body: 'b', timeUnixNano: '1750000003000000000' }),
+      logRow({ body: 'a', timeUnixNano: '1750000001000000000' }),
+      logRow({ body: 'c', timeUnixNano: '1750000003000000000' })
+    ];
+    expect(orderHertzBeatLogRowsForPerses(rows, 'oldest').map(row => row.body)).toEqual(['a', 'b', 'c']);
+    const data = toPersesLogData({ rows, total: 3 }, timeWindow, 'oldest');
+    expect(data.direction).toBe('forward');
+    expect(data.entries.map(entry => entry.line)).toEqual(['a', 'b', 'c']);
+  });
+
   it('maps complete per-service trace statistics without attributing totals to the root service', () => {
     const row = {
+      rootState: 'unique',
+      rootSpanCount: 1,
+      representativeSpan: {
+        spanId: '0123456789abcdef',
+        spanName: 'POST /orders',
+        serviceName: 'checkout',
+        serviceNamespace: 'commerce',
+        startTime: 1_750_000_001_000,
+        durationNanos: 12_500_000
+      },
+      observedStartTime: 1_750_000_001_000,
+      observedEndTime: 1_750_000_001_000 + Math.ceil(12_500_000 / 1_000_000),
+      unattributedServiceStats: null,
       traceId: '0123456789abcdef0123456789abcdef',
       rootSpanId: '0123456789abcdef',
       serviceName: 'checkout',
@@ -172,10 +231,23 @@ describe('HertzBeat to Perses signal data', () => {
     });
   });
 
-  it.each([{ serviceName: null }, { serviceName: '   ' }, { rootSpanName: null }, { rootSpanName: '   ' }])(
-    'rejects trace table rows without a proven root identity',
+  it.each([{ serviceName: '   ' }, { rootSpanName: '   ' }])(
+    'rejects blank trace metadata instead of displaying fabricated names',
     override => {
       const row = {
+        rootState: 'unique',
+        rootSpanCount: 1,
+        representativeSpan: {
+          spanId: '0123456789abcdef',
+          spanName: 'POST /orders',
+          serviceName: 'checkout',
+          serviceNamespace: 'commerce',
+          startTime: 1_750_000_001_000,
+          durationNanos: 12_500_000
+        },
+        observedStartTime: 1_750_000_001_000,
+        observedEndTime: 1_750_000_001_000 + Math.ceil(12_500_000 / 1_000_000),
+        unattributedServiceStats: null,
         traceId: '0123456789abcdef0123456789abcdef',
         rootSpanId: '0123456789abcdef',
         serviceName: 'checkout',
@@ -231,6 +303,19 @@ describe('HertzBeat to Perses signal data', () => {
     });
   });
 
+  it('preserves distinct native waterfall offsets inside the same millisecond', () => {
+    const detail = traceDetail();
+    detail.spans[0]!.startTimeUnixNano = '1750000001000000001';
+    detail.spans[1]!.startTime = detail.spans[0]!.startTime;
+    detail.spans[1]!.startTimeUnixNano = '1750000001000000999';
+    const spans = toPersesTraceDetailData(detail).trace!.resourceSpans.flatMap(resource =>
+      resource.scopeSpans.flatMap(scope => scope.spans)
+    );
+    expect(spans[0]!.startTimeUnixNano).toBe('1750000001000000001');
+    expect(spans[1]!.startTimeUnixNano).toBe('1750000001000000999');
+    expect(spans[1]!.endTimeUnixNano).toBe('1750000001002000999');
+  });
+
   it('preserves epoch nanoseconds above Number.MAX_SAFE_INTEGER as exact OTLP decimal strings', () => {
     const detail = traceDetail();
     detail.spans[1]!.events = [
@@ -245,6 +330,19 @@ describe('HertzBeat to Perses signal data', () => {
     expect(
       toPersesTraceDetailData(detail).trace?.resourceSpans[1]?.scopeSpans[0]?.spans[0]?.events?.[0]?.timeUnixNano
     ).toBe('1750000001005000123');
+  });
+
+  it.each(['99', '999999999', '9223372036854775807'])('preserves legal decimal duration %s numerically', value => {
+    const detail = traceDetail();
+    detail.spans[0]!.durationNanos = value;
+    const span = toPersesTraceDetailData(detail).trace?.resourceSpans[0]?.scopeSpans[0]?.spans[0];
+    expect(span?.endTimeUnixNano).toBe((1750000001000000000n + BigInt(value)).toString());
+  });
+
+  it('rejects decimal duration beyond signed long instead of rounding it', () => {
+    const detail = traceDetail();
+    detail.spans[0]!.durationNanos = '9223372036854775808';
+    expect(() => toPersesTraceDetailData(detail)).toThrow('Perses signal data');
   });
 
   it('preserves contract-valid string event attributes', () => {
@@ -263,14 +361,14 @@ describe('HertzBeat to Perses signal data', () => {
     expect(event?.attributes).toEqual([{ key: 'present', value: { stringValue: 'evidence' } }]);
   });
 
-  it('rejects unsafe integer log attributes instead of stringifying rounded labels', () => {
+  it('displays received finite JSON log attributes without inferring an OTLP integer type', () => {
     const row = {
       logRecordUid: 'event-1',
       timeUnixNano: '1750000001000000000',
       observedTimeUnixNano: null,
       severityNumber: null,
       severityText: null,
-      body: 'unsafe evidence',
+      body: 'received numeric evidence',
       attributes: { sequence: 9_007_199_254_740_992 },
       droppedAttributesCount: null,
       traceId: null,
@@ -282,15 +380,17 @@ describe('HertzBeat to Perses signal data', () => {
       scopeSchemaUrl: null
     } satisfies HertzBeatLogRow;
 
-    expect(() => toPersesLogData({ rows: [row], total: 1 }, timeWindow)).toThrow('Perses signal data');
+    expect(toPersesLogData({ rows: [row], total: 1 }, timeWindow).entries[0]?.labels['attribute.sequence']).toBe(
+      '9007199254740992'
+    );
   });
 
-  it('rejects unsafe integers nested in a structured log body instead of displaying rounded evidence', () => {
+  it('preserves finite received numbers nested in structured log bodies', () => {
     const row = logRow({
       body: { request: { sequence: 9_007_199_254_740_992 } }
     });
 
-    expect(() => toPersesLogData({ rows: [row], total: 1 }, timeWindow)).toThrow('Perses signal data');
+    expect(toPersesLogData({ rows: [row], total: 1 }, timeWindow).entries[0]?.line).toBe(JSON.stringify(row.body));
   });
 
   it('preserves safe nested structured log bodies', () => {
@@ -357,6 +457,19 @@ function logRow(overrides: Partial<HertzBeatLogRow> = {}): HertzBeatLogRow {
 
 function traceDetail(): HertzBeatTraceDetail {
   return {
+    rootState: 'unique',
+    rootSpanCount: 1,
+    missingParentCount: 0,
+    representativeSpan: {
+      spanId: '0123456789abcdef',
+      spanName: 'POST /orders',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      startTime: 1_750_000_001_000,
+      durationNanos: Number('10000000')
+    },
+    observedStartTime: 1_750_000_001_000,
+    observedEndTime: 1_750_000_001_000 + Math.ceil(Number('10000000') / 1_000_000),
     traceId: '0123456789abcdef0123456789abcdef',
     rootSpanId: '0123456789abcdef',
     serviceName: 'checkout',
@@ -369,6 +482,7 @@ function traceDetail(): HertzBeatTraceDetail {
     resourceAttributes: { 'service.name': 'checkout', 'service.namespace': 'commerce' },
     spans: [
       {
+        startTimeUnixNano: (BigInt(1_750_000_001_000) * 1_000_000n).toString(),
         traceId: '0123456789abcdef0123456789abcdef',
         spanId: '0123456789abcdef',
         parentSpanId: null,
@@ -390,6 +504,7 @@ function traceDetail(): HertzBeatTraceDetail {
         codeNavigationHint: null
       },
       {
+        startTimeUnixNano: (BigInt(1_750_000_001_004) * 1_000_000n).toString(),
         traceId: '0123456789abcdef0123456789abcdef',
         spanId: 'fedcba9876543210',
         parentSpanId: '0123456789abcdef',
@@ -421,3 +536,20 @@ function traceDetail(): HertzBeatTraceDetail {
     ]
   };
 }
+it('preserves finite double extrema in log labels and structured bodies', () => {
+  const row = logRow({ attributes: { value: Number.MAX_VALUE }, body: { value: -Number.MAX_VALUE } });
+  const entry = toPersesLogData({ rows: [row], total: 1 }, timeWindow).entries[0]!;
+  expect(Object.values(entry.labels)).toContain(String(Number.MAX_VALUE));
+  expect(entry.line).toBe(JSON.stringify(row.body));
+});
+it.each([NaN, Infinity, -Infinity])('rejects non-finite log numbers %s', value => {
+  for (const row of [logRow({ attributes: { value } }), logRow({ body: { nested: [value] } })]) {
+    expect(() => toPersesLogData({ rows: [row], total: 1 }, timeWindow)).toThrow('Perses signal data');
+  }
+});
+it('shows INFO for number-only OTLP logs without changing the raw record', () => {
+  const row = logRow({ severityText: '', severityNumber: 9 });
+  expect(toPersesLogData({ rows: [row], total: 1 }, timeWindow).entries[0]?.labels.severity).toBe('INFO');
+  expect(row.severityText).toBe('');
+  expect(row.severityNumber).toBe(9);
+});

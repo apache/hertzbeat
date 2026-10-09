@@ -20,6 +20,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ShellNavigation } from './shell-navigation';
+import { buildRefineResources } from '@/app/refine/refine-resource-registry';
 
 const refine = vi.hoisted(() => ({
   go: vi.fn(),
@@ -50,6 +51,30 @@ describe('collapsed ShellNavigation', () => {
     refine.resources = navigationResources();
   });
   afterEach(cleanup);
+
+  it('uses the same scoped destination for a sidebar link and its click while keeping same-signal state', () => {
+    refine.resources = buildRefineResources() as unknown as ReturnType<typeof navigationResources>;
+    const current =
+      '/explore?signal=logs&timeRange=last-30m&start=1723454400000&end=1723456200000&serviceName=checkout&query=error';
+    render(
+      <MemoryRouter initialEntries={[current]}>
+        <ShellNavigation collapsed={false} onCollapsedChange={vi.fn()} />
+      </MemoryRouter>
+    );
+    const logs = screen.getByRole('link', { name: 'explore.signals.logs' });
+    expect(logs).toHaveAttribute('href', current);
+    expect(logs).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(logs);
+    expect(refine.go).not.toHaveBeenCalled();
+    const traces = screen.getByRole('link', { name: 'explore.signals.traces' });
+    const destination =
+      '/explore?signal=traces&timeRange=last-30m&start=1723454400000&end=1723456200000&serviceName=checkout';
+    expect(traces).toHaveAttribute('href', destination);
+    fireEvent.click(traces, { metaKey: true });
+    expect(refine.go).not.toHaveBeenCalled();
+    fireEvent.click(traces);
+    expect(refine.go).toHaveBeenCalledWith({ to: destination, type: 'push' });
+  });
 
   it('opens every route-less root with the shared permitted descendant tree and navigates by mouse', async () => {
     renderNavigation();

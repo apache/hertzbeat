@@ -15,11 +15,16 @@
  * limitations under the License.
  */
 
-import enUS from 'antd/locale/en_US';
-import jaJP from 'antd/locale/ja_JP';
-import ptBR from 'antd/locale/pt_BR';
-import zhCN from 'antd/locale/zh_CN';
-import zhTW from 'antd/locale/zh_TW';
+import enUS from 'antd/es/locale/en_US';
+import jaJP from 'antd/es/locale/ja_JP';
+import ptBR from 'antd/es/locale/pt_BR';
+import zhCN from 'antd/es/locale/zh_CN';
+import zhTW from 'antd/es/locale/zh_TW';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ja';
+import 'dayjs/locale/pt-br';
+import 'dayjs/locale/zh-cn';
+import 'dayjs/locale/zh-tw';
 
 import { isSupportedLocale } from './locale';
 
@@ -27,4 +32,8 @@ const locales = { 'en-US': enUS, 'ja-JP': jaJP, 'pt-BR': ptBR, 'zh-CN': zhCN, 'z
 
 export function resolveAntLocale(language?: string) {
   return isSupportedLocale(language) ? locales[language] : enUS;
+}
+
+export function syncDayjsLocale(language?: string) {
+  dayjs.locale(resolveAntLocale(language).locale);
 }

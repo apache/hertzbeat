@@ -17,12 +17,14 @@
 
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import { useState } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import type { ExploreSubmissionViewModel, LogExploreSubmissionDraft } from '../model/explore-submission-model';
 import { ExploreLogQueryBuilder } from './explore-log-query-builder';
+import { useLogQueryBuilder } from '../controller/use-log-query-builder';
 
 describe('ExploreLogQueryBuilder', () => {
   beforeAll(async () => {
@@ -32,7 +34,7 @@ describe('ExploreLogQueryBuilder', () => {
 
   afterEach(cleanup);
 
-  it('keeps the six common log dimensions permanently labeled above scannable condition rows', () => {
+  it('keeps essential log dimensions visible and rare dimensions in a collapsed counted disclosure', () => {
     const updateField = vi.fn();
     const { container } = renderBuilder(logDraft(), 'builder', updateField);
 
@@ -53,14 +55,40 @@ describe('ExploreLogQueryBuilder', () => {
       'Log attribute'
     );
     expect(screen.getByRole('textbox', { name: 'Condition 2 field' })).toHaveValue('http.route');
-    expect(screen.getByRole('checkbox', { name: 'Hide internal logs' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: i18n.t('exploreLog.hideInternal') })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Hide noise logs' })).toBeInTheDocument();
-    expect(container.querySelector('details')).toBeNull();
+    expect(container.querySelector('details')).not.toHaveAttribute('open');
+    expect(screen.getByRole('textbox', { name: 'Service name' })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Environment' })).toBeVisible();
+    expect(screen.getByLabelText('Service namespace')).not.toBeVisible();
+    fireEvent.click(screen.getByText('More filters'));
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Service namespace' }), {
       target: { value: 'commerce' }
     });
     expect(updateField).toHaveBeenCalledWith({ field: 'serviceNamespace', value: 'commerce' });
+  });
+
+  it('shows the number of active rare filters without expanding and preserves manual disclosure state', () => {
+    const { container } = renderBuilder(
+      logDraft({ serviceNamespace: 'hertzbeat', traceId: 'abc' }),
+      'builder',
+      vi.fn()
+    );
+    expect(container.querySelector('details')).not.toHaveAttribute('open');
+    expect(screen.getByText('More filters').parentElement).toHaveTextContent('2');
+    fireEvent.click(screen.getByText('More filters'));
+    expect(screen.getByRole('textbox', { name: 'Trace ID' })).toHaveValue('abc');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Trace ID' }), { target: { value: 'abcd' } });
+    expect(container.querySelector('details')).toHaveAttribute('open');
+  });
+
+  it('does not mark backend colon syntax invalid because Builder cannot represent it', () => {
+    const resourceFilter = 'service.name:checkout';
+    renderBuilder(logDraft({ resourceFilter }), 'code', vi.fn());
+    const field = screen.getByRole('textbox', { name: 'Resource filter code' });
+    expect(field).toHaveValue(resourceFilter);
+    expect(field).not.toHaveAttribute('aria-invalid');
   });
 
   it('keeps exact unparseable URL filters in Code and explains why Builder is unavailable', () => {
@@ -71,7 +99,7 @@ describe('ExploreLogQueryBuilder', () => {
     expect(screen.getByRole('textbox', { name: 'Log attribute filter code' })).toHaveValue(
       'http.route CONTAINS "/pay"'
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(
+    expect(screen.getByRole('status')).toHaveTextContent(
       'This filter cannot be represented without loss in Builder. Keep editing the exact expression in Code.'
     );
   });
@@ -103,7 +131,7 @@ describe('ExploreLogQueryBuilder', () => {
 
     const conditions = screen.getByRole('group', { name: 'Attribute conditions' });
     expect(within(conditions).getByRole('button', { name: 'Add condition' })).toBeInTheDocument();
-    expect(within(conditions).getByRole('checkbox', { name: 'Hide internal logs' })).toBeInTheDocument();
+    expect(within(conditions).getByRole('checkbox', { name: i18n.t('exploreLog.hideInternal') })).toBeInTheDocument();
     expect(within(conditions).getByRole('checkbox', { name: 'Hide noise logs' })).toBeInTheDocument();
     expect(within(conditions).queryByRole('textbox', { name: 'Condition 1 field' })).not.toBeInTheDocument();
     expect(within(conditions).queryByText('Scope')).not.toBeInTheDocument();
@@ -117,8 +145,24 @@ function renderBuilder(
 ) {
   return render(
     <I18nextProvider i18n={i18n}>
-      <ExploreLogQueryBuilder draft={draft} mode={mode} t={i18n.t} updateField={updateField} />
+      <BuilderHarness draft={draft} mode={mode} updateField={updateField} />
     </I18nextProvider>
+  );
+}
+
+function BuilderHarness(props: {
+  draft: LogExploreSubmissionDraft;
+  mode: 'builder' | 'code';
+  updateField: ExploreSubmissionViewModel['updateField'];
+}) {
+  const [draft, setDraft] = useState(props.draft);
+  const updateField: ExploreSubmissionViewModel['updateField'] = change => {
+    props.updateField(change);
+    setDraft(current => ({ ...current, [change.field]: change.value }));
+  };
+  const editor = useLogQueryBuilder({ draft, updateField });
+  return (
+    <ExploreLogQueryBuilder draft={draft} mode={props.mode} t={i18n.t} updateField={updateField} editor={editor} />
   );
 }
 

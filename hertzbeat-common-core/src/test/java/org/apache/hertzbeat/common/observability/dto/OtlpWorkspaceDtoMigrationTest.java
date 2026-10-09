@@ -70,14 +70,12 @@ class OtlpWorkspaceDtoMigrationTest {
         );
         OtlpMetricsInventoryDto inventory = new OtlpMetricsInventoryDto(
                 console.getContext(),
-                "promql-inventory",
-                1,
+                "greptime-inventory",
+                100,
+                false,
                 List.of(new OtlpMetricsInventoryDto.Item(
                         "http_server_duration",
-                        "latency",
-                        2,
-                        2000L,
-                        Map.of("__name__", "http_server_duration", "service_name", "checkout")
+                        "latency"
                 ))
         );
         OtlpEntityBindingSummaryDto bindingSummary = new OtlpEntityBindingSummaryDto(

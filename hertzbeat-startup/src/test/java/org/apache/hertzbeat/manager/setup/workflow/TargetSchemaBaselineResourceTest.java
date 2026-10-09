@@ -19,6 +19,8 @@ package org.apache.hertzbeat.manager.setup.workflow;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +29,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 
@@ -51,6 +56,7 @@ class TargetSchemaBaselineResourceTest {
             "hzb_alert_group",
             "hzb_alert_group_converge",
             "hzb_alert_inhibit",
+            "hzb_alert_integration_verification",
             "hzb_alert_silence",
             "hzb_alert_single",
             "hzb_auth_token",
@@ -92,6 +98,31 @@ class TargetSchemaBaselineResourceTest {
             "hzb_status_page_incident_content",
             "hzb_status_page_org",
             "hzb_tag");
+
+    @ParameterizedTest
+    @ValueSource(strings = {"h2", "mysql", "postgresql"})
+    void savedViewsHavePersistentRevisionInVersionedSchema(String database) throws IOException {
+        String path = "db/migration/" + database + "/V200__create_entity_foundation.sql";
+        try (InputStream resource = getClass().getClassLoader().getResourceAsStream(path)) {
+            assertThat(resource).isNotNull();
+            String sql = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
+            String table = sql.substring(sql.indexOf("hzb_signal_saved_view ("));
+            assertThat(table.substring(0, table.indexOf(';'))).contains("revision BIGINT NOT NULL DEFAULT 0");
+        }
+    }
+
+    @Test
+    void tableInventoryIncludesEveryCurrentJpaEntity() throws ClassNotFoundException {
+        var scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AnnotationTypeFilter(Entity.class));
+        Set<String> actual = new HashSet<>();
+        for (var candidate : scanner.findCandidateComponents("org.apache.hertzbeat")) {
+            Table table = Class.forName(candidate.getBeanClassName()).getAnnotation(Table.class);
+            assertThat(table).as(candidate.getBeanClassName()).isNotNull();
+            actual.add(table.name().toLowerCase(Locale.ROOT));
+        }
+        assertThat(actual).containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"mysql", "postgresql"})

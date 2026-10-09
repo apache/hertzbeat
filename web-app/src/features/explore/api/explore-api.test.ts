@@ -38,8 +38,10 @@ import {
   buildSignalApiPath,
   classifyExploreSignalError,
   loadLogHistoryEvidence,
+  loadLogStatistics,
   loadLogSignal,
   loadMetricSignal,
+  loadMetricInventory,
   loadTraceSignal,
   openLogStream
 } from './explore-api';
@@ -47,6 +49,14 @@ import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/
 import { parseExploreQuery } from '../model/explore-model';
 
 describe('explore API paths', () => {
+  it('uses severity categories for both history and live without rewriting original text', () => {
+    const query = { signal: 'logs', timeRange: 'last-30m', severityCategory: 'ERROR', severityText: 'SEVERE' } as const;
+    for (const path of [buildSignalApiPath(query, 10_000_000), buildLogStreamPath(query)]) {
+      const params = new URL(path, 'http://local').searchParams;
+      expect(params.get('severityCategory')).toBe('ERROR');
+      expect(params.get('severityText')).toBe('SEVERE');
+    }
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -66,7 +76,7 @@ describe('explore API paths', () => {
       '/api/logs/list?serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&pageIndex=0&pageSize=20&search=timeout&traceId=0123456789abcdef0123456789abcdef'
     );
     expect(buildSignalApiPath({ ...base, signal: 'traces' }, 1_000_000)).toBe(
-      '/api/traces/list?serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&pageIndex=0&pageSize=20&operationName=timeout&traceId=0123456789abcdef0123456789abcdef'
+      '/api/traces/list?serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&pageIndex=0&pageSize=20&sort=newest&operationName=timeout&traceId=0123456789abcdef0123456789abcdef'
     );
     expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe(
       '/api/ingestion/otlp/metrics/console?serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&query=timeout'
@@ -238,7 +248,8 @@ describe('explore API paths', () => {
     expect(path).toBe(
       `${prefix}serviceName=checkout-api&serviceNamespace=commerce&environment=prod` +
         '&start=1710000000000&end=1710000005000' +
-        (signal === 'metrics' ? '' : '&pageIndex=0&pageSize=20')
+        (signal === 'metrics' ? '' : '&pageIndex=0&pageSize=20') +
+        (signal === 'traces' ? '&sort=newest' : '')
     );
     expect(path).not.toMatch(/intakeProfileId|collectorId/u);
   });
@@ -285,58 +296,30 @@ describe('explore API paths', () => {
     ).toBe(true);
   });
 
-  it('resolves an empty metric query from source-backed inventory before querying the console', async () => {
+  it('requires explicit metric selection without querying inventory or a hidden first console metric', async () => {
     const signal = new AbortController().signal;
-    apiMessageGet
-      .mockResolvedValueOnce({
-        context: null,
-        source: 'greptime-inventory',
-        total: 1,
-        items: [
-          {
-            metricName: 'http_server_duration',
-            family: 'latency',
-            timeSeriesCount: 2,
-            latestObservedAt: 2_000,
-            labels: { service_name: 'checkout' }
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        context: null,
-        query: 'http_server_duration',
-        datasource: 'greptime',
-        queryMode: 'inventory',
-        results: null,
-        stats: null,
-        emptyStateReason: 'no-series',
-        errorMessage: null
-      });
 
     await expect(loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m' }, signal)).resolves.toMatchObject({
-      query: 'http_server_duration'
+      kind: 'selection_required'
     });
-    expect(apiMessageGet).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining('/api/ingestion/otlp/metrics/inventory?'),
-      { signal }
-    );
-    expect(apiMessageGet).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(/\/metrics\/console\?.*query=http_server_duration/u),
-      { signal }
-    );
+    expect(apiMessageGet).not.toHaveBeenCalled();
   });
 
-  it('keeps a truly empty metric inventory empty without querying a hidden fallback metric', async () => {
+  it('fetches an honest bounded inventory with literal remote search and abort support', async () => {
     const signal = new AbortController().signal;
-    apiMessageGet.mockResolvedValueOnce({ context: null, source: 'greptime-inventory', total: 0, items: [] });
-
-    await expect(loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m' }, signal)).resolves.toMatchObject({
-      kind: 'inventory_empty'
+    const response = { context: null, source: 'greptime-inventory', limit: 100, truncated: false, items: [] };
+    apiMessageGet.mockResolvedValueOnce(response);
+    await expect(
+      loadMetricInventory({ signal: 'metrics', timeRange: 'last-15m', start: 1000, end: 2000 }, ' cpu_% ', signal)
+    ).resolves.toEqual(response);
+    const path = new URL(String(apiMessageGet.mock.calls[0]?.[0]), 'http://localhost');
+    expect(Object.fromEntries(path.searchParams)).toEqual({
+      start: '1000',
+      end: '2000',
+      limit: '100',
+      search: 'cpu_%'
     });
-    expect(apiMessageGet).toHaveBeenCalledOnce();
-    expect(String(apiMessageGet.mock.calls[0]?.[0])).not.toContain('query=up');
+    expect(apiMessageGet.mock.calls[0]?.[1]).toEqual({ signal });
   });
 
   it('keeps log overview and trend failures independent from a valid page', async () => {
@@ -374,6 +357,38 @@ describe('explore API paths', () => {
     ]);
     expect(apiMessageGet.mock.calls.every(call => call[1]?.signal === signal)).toBe(true);
     nowSpy.mockRestore();
+  });
+
+  it('loads only source scoped log statistics for an exact shifted timeline window', async () => {
+    apiMessageGet.mockRejectedValueOnce(new Error('overview unavailable')).mockResolvedValueOnce({
+      start: 1_754_467_200_000,
+      end: 1_754_468_100_000,
+      intervalMs: 60_000,
+      buckets: [{ start: 1_754_467_200_000, count: 1 }]
+    });
+    const query = {
+      signal: 'logs' as const,
+      timeRange: 'last-15m' as const,
+      serviceName: 'shared-service',
+      query: '@event.name:source',
+      searchSyntax: 'structured-v1',
+      start: 1_754_467_200_000,
+      end: 1_754_468_100_000
+    };
+
+    await expect(loadLogStatistics(query)).resolves.toMatchObject({
+      overview: { kind: 'error' },
+      trend: { kind: 'ready', data: { start: 1_754_467_200_000, end: 1_754_468_100_000 } }
+    });
+    expect(apiMessageGet).toHaveBeenCalledTimes(2);
+    const paths = apiMessageGet.mock.calls.map(call => String(call[0]));
+    expect(paths).toEqual([
+      expect.stringContaining(
+        '/api/logs/stats/overview?serviceName=shared-service&start=1754467200000&end=1754468100000'
+      ),
+      expect.stringContaining('/api/logs/stats/trend?serviceName=shared-service&start=1754467200000&end=1754468100000')
+    ]);
+    expect(paths.every(path => path.includes('search=%40event.name%3Asource'))).toBe(true);
   });
 
   it('rejects trend evidence for a different relative request window', async () => {
@@ -415,6 +430,73 @@ describe('explore API paths', () => {
     expect(evidence.trend).toEqual({ kind: 'error' });
   });
 
+  it('captures one relative window for delayed page, overview and trend and publishes statistics atomically', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const page = deferredStatistics<ReturnType<typeof stableLogPage>>();
+    const overview = deferredStatistics<ReturnType<typeof overviewFixture>>();
+    const trend = deferredStatistics<ReturnType<typeof trendFixture>>();
+    apiMessageGet
+      .mockReturnValueOnce(page.promise)
+      .mockReturnValueOnce(overview.promise)
+      .mockReturnValueOnce(trend.promise);
+    const scope = {
+      signal: 'logs' as const,
+      timeRange: 'last-15m' as const,
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      query: 'timeout'
+    };
+    let published = false;
+    const load = loadLogHistoryEvidence(scope).then(value => {
+      published = true;
+      return value;
+    });
+    try {
+      clock.mockReturnValue(2_000_000);
+      page.resolve(stableLogPage([logRow('valid')]));
+      await vi.waitFor(() => expect(apiMessageGet).toHaveBeenCalledTimes(3));
+      for (const [path] of apiMessageGet.mock.calls) {
+        const params = new URL(String(path), 'http://fixture').searchParams;
+        expect(Object.fromEntries(params)).toMatchObject({
+          start: '100000',
+          end: '1000000',
+          serviceName: 'checkout',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          search: 'timeout'
+        });
+      }
+      trend.resolve(trendFixture());
+      await trend.promise;
+      expect(published).toBe(false);
+      overview.resolve(overviewFixture());
+      await expect(load).resolves.toMatchObject({
+        overview: { kind: 'ready' },
+        trend: { kind: 'ready', data: { start: 100000, end: 1000000 } }
+      });
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('rejects cancelled statistics even when late transport success ignores abort', async () => {
+    const overview = deferredStatistics<ReturnType<typeof overviewFixture>>();
+    const trend = deferredStatistics<ReturnType<typeof trendFixture>>();
+    apiMessageGet.mockReturnValueOnce(overview.promise).mockReturnValueOnce(trend.promise);
+    const abort = new AbortController();
+    const load = loadLogStatistics(
+      { signal: 'logs', timeRange: 'last-15m', start: 100000, end: 1000000 },
+      abort.signal
+    );
+    const rejected = expect(load).rejects.toMatchObject({ name: 'AbortError' });
+    abort.abort(new DOMException('Aborted', 'AbortError'));
+    overview.resolve(overviewFixture());
+    trend.resolve(trendFixture());
+    await rejected;
+    expect(apiMessageGet.mock.calls.every(call => call[1]?.signal === abort.signal)).toBe(true);
+  });
+
   it('does not turn aborted log statistics into cacheable partial evidence', async () => {
     const controller = new AbortController();
     apiMessageGet.mockResolvedValueOnce(stableLogPage([logRow('valid')])).mockImplementation(
@@ -442,7 +524,8 @@ describe('explore API paths', () => {
     expect(classifyExploreSignalError(new Error('bad'))).toBe('error');
   });
 
-  it('parses stream events at the API boundary and reports malformed payloads without values', () => {
+  it('parses stream events at the API boundary and reports malformed payloads without values', async () => {
+    apiMessageGet.mockResolvedValueOnce(null);
     const onLog = vi.fn();
     const onGap = vi.fn();
     const onContractError = vi.fn();
@@ -454,6 +537,7 @@ describe('explore API paths', () => {
       onUnavailable: vi.fn(),
       onContractError
     });
+    await vi.waitFor(() => expect(openBrowserEventStream).toHaveBeenCalledOnce());
     const transportHandlers = openBrowserEventStream.mock.calls[0]?.[1] as
       | {
           onEvent: (name: string, data: string) => void;
@@ -502,6 +586,19 @@ function stableLogPage(content: unknown[]) {
 
 function traceRow(traceId: string) {
   return {
+    rootState: 'missing',
+    rootSpanCount: 0,
+    representativeSpan: {
+      spanId: '0123456789abcdef',
+      spanName: null,
+      serviceName: null,
+      serviceNamespace: null,
+      startTime: 1_750_000_001_000,
+      durationNanos: 1_000_000
+    },
+    observedStartTime: 1_750_000_001_000,
+    observedEndTime: 1_750_000_001_000 + Math.ceil(1_000_000 / 1_000_000),
+    unattributedServiceStats: null,
     traceId,
     rootSpanId: null,
     serviceName: null,
@@ -556,3 +653,102 @@ function liveLogRow(body: string) {
     scopeSchemaUrl: row.scopeSchemaUrl
   };
 }
+
+function deferredStatistics<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+function overviewFixture() {
+  return { totalCount: 1, traceCount: 0, debugCount: 0, infoCount: 1, warnCount: 0, errorCount: 0, fatalCount: 0 };
+}
+function trendFixture() {
+  return { start: 100000, end: 1000000, intervalMs: 60000, buckets: [{ start: 120000, count: 1 }] };
+}
+
+it.each([401, 403, 500].flatMap(status => ['overview', 'trend'].map(failed => [status, failed] as const)))(
+  'retains ordinary history sibling evidence for HTTP%s %s failure',
+  async (status, failed) => {
+    apiMessageGet.mockReset();
+    const query = {
+      signal: 'logs' as const,
+      timeRange: 'last-15m' as const,
+      start: 1000,
+      end: 2000,
+      serviceName: 'checkout'
+    };
+    const overview = {
+      totalCount: 9,
+      traceCount: 0,
+      debugCount: 0,
+      infoCount: 9,
+      warnCount: 0,
+      errorCount: 0,
+      fatalCount: 0
+    };
+    const trend = { start: 1000, end: 2000, intervalMs: 60000, buckets: [{ start: 0, count: 9 }] };
+    apiMessageGet.mockResolvedValueOnce(stableLogPage([logRow('valid')]));
+    apiMessageGet.mockImplementation(path =>
+      String(path).includes(`/stats/${failed}?`)
+        ? Promise.reject(new ApiMessageError('Synthetic private server text', { status }))
+        : Promise.resolve(failed === 'overview' ? trend : overview)
+    );
+    const result = await loadLogHistoryEvidence(query);
+    expect(result.page.totalElements).toBe(1);
+    expect(result[failed as 'overview' | 'trend']).toEqual(
+      status === 500 ? { kind: 'error' } : { kind: 'error', reason: 'permission' }
+    );
+    expect(result[failed === 'overview' ? 'trend' : 'overview']).toEqual({
+      kind: 'ready',
+      data: failed === 'overview' ? trend : overview
+    });
+    expect(apiMessageGet).toHaveBeenCalledTimes(3);
+    expect(apiMessageGet.mock.calls.every(call => String(call[0]).includes('start=1000&end=2000'))).toBe(true);
+  }
+);
+
+it.each([401, 403, 500].flatMap(status => ['overview', 'trend'].map(failed => [status, failed] as const)))(
+  'keeps selected-source statistics scoped and partial for HTTP%s %s',
+  async (status, failed) => {
+    apiMessageGet.mockReset();
+    const query = {
+      signal: 'logs' as const,
+      timeRange: 'last-15m' as const,
+      start: 1000,
+      end: 2000,
+      serviceName: 'checkout',
+      query: '@event.name:source-a',
+      searchSyntax: 'structured-v1'
+    };
+    const overview = overviewFixture();
+    const trend = { start: 1000, end: 2000, intervalMs: 60000, buckets: [{ start: 0, count: 1 }] };
+    apiMessageGet.mockImplementation(path =>
+      String(path).includes(`/stats/${failed}?`)
+        ? Promise.reject(new ApiMessageError('Synthetic private server text', { status }))
+        : Promise.resolve(failed === 'overview' ? trend : overview)
+    );
+    const abort = new AbortController();
+    const result = await loadLogStatistics(query, abort.signal);
+    expect(result[failed as 'overview' | 'trend']).toEqual(
+      status === 500 ? { kind: 'error' } : { kind: 'error', reason: 'permission' }
+    );
+    expect(result[failed === 'overview' ? 'trend' : 'overview']).toEqual({
+      kind: 'ready',
+      data: failed === 'overview' ? trend : overview
+    });
+    expect(apiMessageGet).toHaveBeenCalledTimes(2);
+    for (const [path, request] of apiMessageGet.mock.calls) {
+      const params = new URL(String(path), 'http://local').searchParams;
+      expect(Object.fromEntries(params)).toMatchObject({
+        serviceName: 'checkout',
+        start: '1000',
+        end: '2000',
+        search: '@event.name:source-a',
+        searchSyntax: 'structured-v1'
+      });
+      expect(request?.signal).toBe(abort.signal);
+    }
+  }
+);

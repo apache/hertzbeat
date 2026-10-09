@@ -1,0 +1,49 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+.groups {
+  min-width: 0;
+}
+.group {
+  padding-block: 8px;
+  border-bottom: 1px solid var(--hb-border);
+}
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.heading > button {
+  margin-left: auto;
+}
+.values {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.values li {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  gap: 6px;
+}
+.values li > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.group button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  color: var(--hb-text-primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.group button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.group button:focus-visible {
+  outline: 2px solid var(--hb-primary);
+}

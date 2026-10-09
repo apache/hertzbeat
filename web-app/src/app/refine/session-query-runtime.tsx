@@ -74,7 +74,12 @@ export function SessionQueryRuntime({ children, createQueryClient }: SessionQuer
         generation: runtimeRef.current.generation,
         session: runtimeRef.current.queryClient.getQueryData<UiSession>(sessionQueryKey)
       }),
-      replaceIdentity
+      replaceIdentity,
+      updateSession: (generation, session) => {
+        if (runtimeRef.current.generation === generation) {
+          publishSession(runtimeRef.current.queryClient, session);
+        }
+      }
     });
     return () => {
       mountedRef.current = false;
@@ -144,6 +149,8 @@ function useSessionRefresh(
           const currentSession = runtimeRef.current.queryClient.getQueryData<UiSession>(sessionQueryKey);
           if (hasSessionIdentityBoundaryChanged(currentSession, refreshedSession)) {
             replaceIdentity(refreshedSession, options);
+          } else {
+            publishSession(runtimeRef.current.queryClient, refreshedSession);
           }
           return {
             status: refreshedSession.authenticated ? 'renewed' : 'rejected'
@@ -179,6 +186,11 @@ function useSessionRefresh(
     [mountedRef, replaceIdentity, runtimeRef]
   );
   return refreshIdentity;
+}
+
+function publishSession(queryClient: QueryClient, session: UiSession) {
+  void queryClient.cancelQueries({ queryKey: sessionQueryKey, exact: true });
+  queryClient.setQueryData(sessionQueryKey, session);
 }
 
 function classifyUncertainSessionRefreshFailure(reason: unknown) {
