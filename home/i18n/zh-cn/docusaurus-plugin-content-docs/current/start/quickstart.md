@@ -41,7 +41,7 @@ HertzBeat 提供多种安装选项：
 
     ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`。默认镜像启用 Basic 和 JWT 认证，Web UI 使用 JWT。Digest 认证需要显式开启，因为其浏览器质询可能弹出原生用户名密码框。配置方法参见 [通过 Docker 方式安装 HertzBeat](docker-deploy#认证方式)。
 
 3. 部署采集器集群(可选)
 
