@@ -26,16 +26,19 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverMutationResponse;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverOptionResponse;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverRequest;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverResponse;
+import org.apache.hertzbeat.alert.notice.NoticeTemplateRenderer;
 import org.apache.hertzbeat.alert.service.NoticeReceiverContractService;
 import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
@@ -70,6 +73,9 @@ public class NoticeConfigController {
 
     @Autowired
     private NoticeReceiverContractService noticeReceiverService;
+
+    @Autowired
+    private AlerterProperties alerterProperties;
 
     @PostMapping(path = "/receiver")
     @Operation(summary = "Add a recipient", description = "Add a recipient")
@@ -314,6 +320,20 @@ public class NoticeConfigController {
             return receiverStorageUnavailable("test", e);
         } catch (Exception e) {
             return receiverError("test", e);
+        }
+    }
+
+    @PostMapping(path = "/template/preview")
+    @Operation(summary = "Preview how a notice template renders against a sample alert",
+            description = "Preview how a notice template renders against a sample alert, without sending anything")
+    public ResponseEntity<Message<String>> previewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
+        try {
+            String rendered = NoticeTemplateRenderer.renderContent(
+                    noticeTemplate, NoticeTemplateRenderer.sampleGroupAlert(), alerterProperties.getConsoleUrl(),
+                    ResourceBundleUtil.getBundle("alerter"));
+            return ResponseEntity.ok(Message.successWithData(rendered));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Failed to render template: " + e.getMessage()));
         }
     }
 

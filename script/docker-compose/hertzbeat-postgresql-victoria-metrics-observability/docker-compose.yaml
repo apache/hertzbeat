@@ -29,8 +29,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    # Bind data-store ports to localhost only: these services carry default
+    # credentials (see POSTGRES_PASSWORD) and are only meant for the operator
+    # on the host, not for remote access.
     ports:
-      - "15432:5432"
+      - "127.0.0.1:15432:5432"
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: 123456
@@ -56,7 +59,7 @@ services:
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "18428:8428"
+      - "127.0.0.1:18428:8428"
     volumes:
       - ./dbdata/tsdbdata:/victoria-metrics-data
     networks:
@@ -81,9 +84,14 @@ services:
       - ../hertzbeat-postgresql-victoria-metrics/conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
       - ./logs/hertzbeat:/opt/hertzbeat/logs
       - ./ext-lib:/opt/hertzbeat/ext-lib
+    # Keep the quick-start manager and collector listeners local by default.
+    # Set HERTZBEAT_BIND_ADDRESS explicitly only after replacing the bundled
+    # credentials and applying the required network access controls.
     ports:
-      - "4317:4317"
-      - "1157:1157"
-      - "1158:1158"
+      - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1157:1157"
+      - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1158:1158"
+      # OTLP/gRPC ingestion. 14317 rather than the OpenTelemetry standard 4317, which a local
+      # OTel Collector normally holds - and a clash on a published port stops the container.
+      - "${HERTZBEAT_OTLP_BIND_ADDRESS:-127.0.0.1}:14317:14317"
     networks:
       - hertzbeat

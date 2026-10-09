@@ -58,6 +58,7 @@ class AlertDefineJsonImExportServiceTest {
         alertDefine.setName("App1");
         alertDefine.setType("realtime");
         alertDefine.setDatasource("lifecycle-promql");
+        alertDefine.setQueryLanguage("promql");
         alertDefine.setExpr("Expr1");
         alertDefine.setPeriod(3000);
         alertDefine.setTimes(3);
@@ -101,9 +102,11 @@ class AlertDefineJsonImExportServiceTest {
         assertTrue(result.contains("App1"));
         assertTrue(result.contains("realtime"));
         assertTrue(result.contains("\"datasource\":\"lifecycle-promql\""));
+        assertTrue(result.contains("\"queryLanguage\":\"promql\""));
         List<ExportAlertDefineDTO> parsed = service.parseImport(
                 new ByteArrayInputStream(outputStream.toByteArray()));
         assertEquals("lifecycle-promql", parsed.getFirst().getAlertDefine().getDatasource());
+        assertEquals("promql", parsed.getFirst().getAlertDefine().getQueryLanguage());
     }
 
     @Test

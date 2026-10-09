@@ -69,5 +69,13 @@ public class NoticeReceiverOptions {
     private String serverChanToken;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String gotifyToken;
+    private String ntfyServerUrl;
+    private String ntfyTopic;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String ntfyToken;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String wpushToken;
+    private String wpushChannel;
+    private String wpushTopicCode;
     private Set<String> clearSecrets = new LinkedHashSet<>();
 }

@@ -336,14 +336,21 @@ public class AlarmGroupReduce implements DisposableBean {
 
             long now = System.currentTimeMillis();
             String status = determineGroupStatus(snapshot.values());
+            boolean hasResolvedAlert = snapshot.values().stream()
+                    .anyMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
 
             // For firing alerts, check repeat interval without consuming the retained snapshot.
             if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
                 AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-                long repeatInterval = ruleConfig.getRepeatInterval() != null
+                // The rule may have been deleted, renamed or disabled while this group cache
+                // still holds firing alerts; fall back to the default interval like shouldSendGroup.
+                long repeatInterval = ruleConfig != null && ruleConfig.getRepeatInterval() != null
                         ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
 
-                if (cache.getLastRepeatTime() > 0
+                // The throttle only suppresses repeated firing notifications; it must never
+                // swallow a pending resolved transition.
+                if (!hasResolvedAlert
+                        && cache.getLastRepeatTime() > 0
                         && now - cache.getLastRepeatTime() < repeatInterval) {
                     return;
                 }
@@ -362,8 +369,16 @@ public class AlarmGroupReduce implements DisposableBean {
             if (!alarmInhibitReduce.inhibitAlarm(groupAlert)) {
                 return;
             }
-            snapshot.forEach((fingerprint, alert) ->
-                    cache.getAlertFingerprints().remove(fingerprint, alert));
+            // The resolved members have now been emitted, so drop them from the group. Firing
+            // members are retained until they recover, keeping the group firing while any member
+            // is still active instead of flushing the whole cache after every send.
+            if (hasResolvedAlert) {
+                snapshot.forEach((fingerprint, alert) -> {
+                    if (CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
+                        cache.getAlertFingerprints().remove(fingerprint, alert);
+                    }
+                });
+            }
             cache.setLastSendTime(now);
             if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
                 cache.setLastRepeatTime(now);

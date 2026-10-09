@@ -33,7 +33,8 @@ public class NoticeReceiverContractMapper {
 
     private static final Set<String> SECRET_FIELDS = Set.of(
             "hookUrl", "hookAuthToken", "wechatId", "accessToken", "tgBotToken", "slackWebHookUrl",
-            "appSecret", "discordBotToken", "smnAk", "smnSk", "serverChanToken", "gotifyToken");
+            "appSecret", "discordBotToken", "smnAk", "smnSk", "serverChanToken", "gotifyToken",
+            "ntfyToken", "wpushToken");
     private static final Map<Byte, String> TYPE_KEYS = Map.ofEntries(
             Map.entry((byte) 0, "sms"), Map.entry((byte) 1, "email"), Map.entry((byte) 2, "webhook"),
             Map.entry((byte) 3, "wechat-official"), Map.entry((byte) 4, "wecom-robot"),
@@ -41,7 +42,8 @@ public class NoticeReceiverContractMapper {
             Map.entry((byte) 7, "telegram-bot"), Map.entry((byte) 8, "slack-webhook"),
             Map.entry((byte) 9, "discord-bot"), Map.entry((byte) 10, "wecom-app"),
             Map.entry((byte) 11, "huawei-smn"), Map.entry((byte) 12, "server-chan"),
-            Map.entry((byte) 13, "gotify"), Map.entry((byte) 14, "feishu-app"));
+            Map.entry((byte) 13, "gotify"), Map.entry((byte) 14, "feishu-app"),
+            Map.entry((byte) 15, "ntfy"), Map.entry((byte) 16, "wpush"));
     private static final Map<Byte, Set<String>> ALLOWED_FIELDS = Map.ofEntries(
             Map.entry((byte) 0, Set.of("phone")),
             Map.entry((byte) 1, Set.of("email")),
@@ -57,7 +59,9 @@ public class NoticeReceiverContractMapper {
             Map.entry((byte) 11, Set.of("smnAk", "smnSk", "smnProjectId", "smnRegion", "smnTopicUrn")),
             Map.entry((byte) 12, Set.of("serverChanToken")),
             Map.entry((byte) 13, Set.of("gotifyToken")),
-            Map.entry((byte) 14, Set.of("appId", "appSecret", "larkReceiveType", "userId", "chatId", "partyId")));
+            Map.entry((byte) 14, Set.of("appId", "appSecret", "larkReceiveType", "userId", "chatId", "partyId")),
+            Map.entry((byte) 15, Set.of("ntfyServerUrl", "ntfyTopic", "ntfyToken")),
+            Map.entry((byte) 16, Set.of("wpushToken", "wpushChannel", "wpushTopicCode")));
 
     public NoticeReceiver toEntity(NoticeReceiverRequest request, NoticeReceiver existing) {
         Byte type = request.getType();
@@ -106,6 +110,10 @@ public class NoticeReceiverContractMapper {
         options.setSmnProjectId(receiver.getSmnProjectId());
         options.setSmnRegion(receiver.getSmnRegion());
         options.setSmnTopicUrn(receiver.getSmnTopicUrn());
+        options.setNtfyServerUrl(receiver.getNtfyServerUrl());
+        options.setNtfyTopic(receiver.getNtfyTopic());
+        options.setWpushChannel(receiver.getWpushChannel());
+        options.setWpushTopicCode(receiver.getWpushTopicCode());
         options.setClearSecrets(null);
         Set<String> configuredSecrets = configuredSecrets(receiver);
         return new NoticeReceiverResponse(
@@ -132,6 +140,10 @@ public class NoticeReceiverContractMapper {
         target.setSmnProjectId(source.getSmnProjectId());
         target.setSmnRegion(source.getSmnRegion());
         target.setSmnTopicUrn(source.getSmnTopicUrn());
+        target.setNtfyServerUrl(source.getNtfyServerUrl());
+        target.setNtfyTopic(source.getNtfyTopic());
+        target.setWpushChannel(source.getWpushChannel());
+        target.setWpushTopicCode(source.getWpushTopicCode());
         target.setHookUrl(secret("hookUrl", source.getHookUrl(), existing == null ? null : existing.getHookUrl(), source));
         target.setHookAuthToken(secret("hookAuthToken", source.getHookAuthToken(), existing == null ? null : existing.getHookAuthToken(), source));
         target.setWechatId(secret("wechatId", source.getWechatId(), existing == null ? null : existing.getWechatId(), source));
@@ -144,6 +156,8 @@ public class NoticeReceiverContractMapper {
         target.setSmnSk(secret("smnSk", source.getSmnSk(), existing == null ? null : existing.getSmnSk(), source));
         target.setServerChanToken(secret("serverChanToken", source.getServerChanToken(), existing == null ? null : existing.getServerChanToken(), source));
         target.setGotifyToken(secret("gotifyToken", source.getGotifyToken(), existing == null ? null : existing.getGotifyToken(), source));
+        target.setNtfyToken(secret("ntfyToken", source.getNtfyToken(), existing == null ? null : existing.getNtfyToken(), source));
+        target.setWpushToken(secret("wpushToken", source.getWpushToken(), existing == null ? null : existing.getWpushToken(), source));
     }
 
     private String secret(String field, String supplied, String existing, NoticeReceiverOptions options) {
@@ -198,6 +212,8 @@ public class NoticeReceiverContractMapper {
             }
             case 12 -> require(receiver.getServerChanToken(), "serverChanToken");
             case 13 -> require(receiver.getGotifyToken(), "gotifyToken");
+            case 15 -> require(receiver.getNtfyTopic(), "ntfyTopic");
+            case 16 -> require(receiver.getWpushToken(), "wpushToken");
             case 14 -> {
                 require(receiver.getAppId(), "appId");
                 require(receiver.getAppSecret(), "appSecret");
@@ -245,6 +261,12 @@ public class NoticeReceiverContractMapper {
         add(fields, "smnTopicUrn", options.getSmnTopicUrn());
         add(fields, "serverChanToken", options.getServerChanToken());
         add(fields, "gotifyToken", options.getGotifyToken());
+        add(fields, "ntfyServerUrl", options.getNtfyServerUrl());
+        add(fields, "ntfyTopic", options.getNtfyTopic());
+        add(fields, "ntfyToken", options.getNtfyToken());
+        add(fields, "wpushToken", options.getWpushToken());
+        add(fields, "wpushChannel", options.getWpushChannel());
+        add(fields, "wpushTopicCode", options.getWpushTopicCode());
         return fields;
     }
 
@@ -262,6 +284,8 @@ public class NoticeReceiverContractMapper {
         add(fields, "smnSk", receiver.getSmnSk());
         add(fields, "serverChanToken", receiver.getServerChanToken());
         add(fields, "gotifyToken", receiver.getGotifyToken());
+        add(fields, "ntfyToken", receiver.getNtfyToken());
+        add(fields, "wpushToken", receiver.getWpushToken());
         return fields;
     }
 

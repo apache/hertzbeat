@@ -81,6 +81,9 @@ class NoticeConfigControllerTest {
     @Mock
     private NoticeReceiverContractService noticeReceiverService;
 
+    @Mock
+    private org.apache.hertzbeat.alert.AlerterProperties alerterProperties;
+
     @InjectMocks
     private NoticeConfigController noticeConfigController;
 
@@ -636,6 +639,44 @@ class NoticeConfigControllerTest {
                 .andExpect(jsonPath("$.data[0].id").value(5))
                 .andExpect(jsonPath("$.data[0].name").value("tom"))
                 .andExpect(jsonPath("$.data[0].type").value(5))
+                .andReturn();
+    }
+
+    @Test
+    void previewNoticeTemplate() throws Exception {
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        noticeTemplate.setId(5L);
+        noticeTemplate.setName("preview-test");
+        noticeTemplate.setType((byte) 5);
+        noticeTemplate.setContent("""
+                [${title}] status=${status}
+                <#list alerts as alert>
+                ${alert.labels.alertname} - ${alert.content}
+                </#list>""");
+        when(alerterProperties.getConsoleUrl()).thenReturn("http://localhost:1157");
+
+        this.mockMvc.perform(post("/api/notice/template/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data").value(containsString("HighCPUUsage")))
+                .andReturn();
+    }
+
+    @Test
+    void previewNoticeTemplateWithInvalidContent() throws Exception {
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        noticeTemplate.setId(5L);
+        noticeTemplate.setName("preview-test-invalid");
+        noticeTemplate.setType((byte) 5);
+        noticeTemplate.setContent("${undefinedVariable}");
+
+        this.mockMvc.perform(post("/api/notice/template/preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andReturn();
     }
 

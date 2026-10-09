@@ -17,25 +17,6 @@
  * under the License.
  */
 
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
 package org.apache.hertzbeat.alert.reduce;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
@@ -51,6 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.AfterEach;
@@ -290,9 +274,12 @@ class AlarmGroupReduceTest {
 
         dispatchAndDrain();
         dispatchAndDrain();
-        dispatchAndDrain();
 
-        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+        ArgumentCaptor<GroupAlert> captor = ArgumentCaptor.forClass(GroupAlert.class);
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(captor.capture());
+        assertTrue(captor.getAllValues().stream().anyMatch(group ->
+                group.getAlerts().stream().anyMatch(a -> "fp-2".equals(a.getFingerprint()))),
+                "concurrently inserted alert was dropped with the emitted snapshot");
     }
 
     @Test
@@ -313,6 +300,89 @@ class AlarmGroupReduceTest {
                 && group.getWorkspaceId().equals(group.getAlerts().getFirst().getWorkspaceId())));
     }
 
+    /**
+     * Regression for issue #4160 (Bug 1): while one member of a group is still firing, the
+     * recovery of another member must not flip the whole group to resolved. The group has to
+     * stay firing until every member has actually cleared.
+     */
+    @Test
+    void whenOneMemberRecoversButAnotherStillFiring_groupMustNotResolve() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("mem", "firing", "host1"));
+        dispatchAndDrain();
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        dispatchAndDrain();
+
+        ArgumentCaptor<GroupAlert> captor = ArgumentCaptor.forClass(GroupAlert.class);
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(captor.capture());
+        List<GroupAlert> groups = captor.getAllValues();
+
+        assertTrue(groups.stream().noneMatch(g -> "resolved".equals(g.getStatus())),
+                "group wrongly resolved while a member alert was still firing");
+        assertTrue(groups.stream().anyMatch(g -> "firing".equals(g.getStatus())
+                        && g.getAlerts().stream().anyMatch(
+                                a -> "cpu".equals(a.getFingerprint()) && "resolved".equals(a.getStatus()))),
+                "CPU recovery was not communicated within the still-firing group");
+    }
+
+    /**
+     * Regression for issue #4160 (Bug 2): a resolved transition that happens while the group is
+     * firing and inside the firing repeat-interval window must still be emitted. The firing
+     * throttle may only suppress repeated firing notifications, never a pending recovery.
+     */
+    @Test
+    void whenMemberRecoversInsideRepeatInterval_recoveryMustStillBeEmitted() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("mem", "firing", "host1"));
+        dispatchAndDrain();
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("mem", "resolved", "host1"));
+        dispatchAndDrain();
+
+        ArgumentCaptor<GroupAlert> captor = ArgumentCaptor.forClass(GroupAlert.class);
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(captor.capture());
+        List<GroupAlert> groups = captor.getAllValues();
+
+        assertTrue(groups.stream().anyMatch(g -> g.getAlerts().stream().anyMatch(
+                        a -> "mem".equals(a.getFingerprint()) && "resolved".equals(a.getStatus()))),
+                "memory recovery was silently dropped by the firing repeat-interval throttle");
+    }
+
+    /**
+     * Regression: deleting (or renaming/disabling) a converge rule while its group cache still
+     * holds a firing alert must not break the periodic group dispatch with an NPE. The orphaned
+     * group has to fall back to the default repeat interval, like shouldSendGroup already does
+     * for the group wait/interval.
+     */
+    @Test
+    void whenRuleDeleted_firingGroupCacheMustStillBeDispatched() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+
+        alarmGroupReduce.refreshGroupDefines(Collections.emptyList());
+
+        Field cachesField = AlarmGroupReduce.class.getDeclaredField("groupCacheMap");
+        cachesField.setAccessible(true);
+        Map<?, ?> caches = (Map<?, ?>) cachesField.get(alarmGroupReduce);
+        for (Object cache : caches.values()) {
+            Field createTimeField = cache.getClass().getDeclaredField("createTime");
+            createTimeField.setAccessible(true);
+            createTimeField.setLong(cache, System.currentTimeMillis() - 60_000);
+        }
+
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(argThat(group ->
+                group.getAlerts().stream().anyMatch(a -> "cpu".equals(a.getFingerprint()))));
+    }
+
     private void dispatchAndDrain() throws Exception {
         alarmGroupReduce.dispatchCheckAndSendGroups();
         alarmGroupReduce.pauseAdmission();
@@ -328,6 +398,26 @@ class AlarmGroupReduceTest {
         rule.setGroupInterval(0L);
         rule.setRepeatInterval(repeatInterval);
         return rule;
+    }
+
+    private AlertGroupConverge instanceRule(long repeatInterval) {
+        AlertGroupConverge rule = new AlertGroupConverge();
+        rule.setName("instance-rule");
+        rule.setGroupLabels(Collections.singletonList("instance"));
+        rule.setGroupWait(0L);
+        rule.setGroupInterval(0L);
+        rule.setRepeatInterval(repeatInterval);
+        return rule;
+    }
+
+    private SingleAlert instanceAlert(String fingerprint, String status, String instance) {
+        return SingleAlert.builder()
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
+                .fingerprint(fingerprint)
+                .status(status)
+                .labels(createLabels("instance", instance))
+                .annotations(new HashMap<>())
+                .build();
     }
 
     private SingleAlert groupAlert(String fingerprint, String status) {

@@ -73,6 +73,12 @@ public class NoticeReceiverRequest {
             case "smnTopicUrn" -> options.setSmnTopicUrn(asString(value));
             case "serverChanToken" -> options.setServerChanToken(asString(value));
             case "gotifyToken" -> options.setGotifyToken(asString(value));
+            case "ntfyServerUrl" -> options.setNtfyServerUrl(asString(value));
+            case "ntfyTopic" -> options.setNtfyTopic(asString(value));
+            case "ntfyToken" -> options.setNtfyToken(asString(value));
+            case "wpushToken" -> options.setWpushToken(asString(value));
+            case "wpushChannel" -> options.setWpushChannel(asString(value));
+            case "wpushTopicCode" -> options.setWpushTopicCode(asString(value));
             case "clearSecrets" -> options.setClearSecrets(asStringSet(value));
             case "creator", "modifier", "gmtCreate", "gmtUpdate" -> { }
             default -> throw new IllegalArgumentException("Unsupported receiver field: " + name);

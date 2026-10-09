@@ -20,6 +20,7 @@
 package org.apache.hertzbeat.warehouse.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -86,6 +88,37 @@ class GreptimeSqlQueryExecutorTest {
     @AfterEach
     void tearDown() {
         queryGuard.close();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testRequestBodyIsFormEncoded() {
+        when(restTemplate.exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(new ResponseEntity<>(new GreptimeSqlQueryContent(), HttpStatus.OK));
+
+        // SQL carrying form-urlencoded metacharacters that would pollute the request body
+        // if concatenated raw: '&' would start a second sql= parameter and override the query.
+        String sql = "SELECT * FROM t WHERE name = 'x&sql=DROP TABLE t'";
+        greptimeSqlQueryExecutor.execute(sql);
+
+        ArgumentCaptor<HttpEntity<String>> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            captor.capture(),
+            eq(GreptimeSqlQueryContent.class));
+
+        String body = captor.getValue().getBody();
+        assertNotNull(body);
+        // The body must be a single sql= parameter; the '&' inside the SQL must be encoded.
+        String encodedValue = body.substring("sql=".length());
+        assertFalse(encodedValue.contains("&"), "raw '&' in body causes HTTP parameter pollution");
+        // Decoding the value must yield exactly the original SQL, lossless round-trip.
+        assertEquals(sql, URLDecoder.decode(encodedValue, StandardCharsets.UTF_8));
     }
 
     @Test
