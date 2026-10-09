@@ -138,7 +138,7 @@ fi
 toolchain_line=$(grep -n 'corepack prepare pnpm@10.9.0 --activate' "$workflow" | head -1 | cut -d: -f1 || true)
 install_line=$(grep -n 'pnpm install --frozen-lockfile' "$workflow" | head -1 | cut -d: -f1 || true)
 build_line=$(grep -n 'pnpm build' "$workflow" | head -1 | cut -d: -f1 || true)
-package_line=$(grep -n 'mvnd clean -B package -Prelease' "$workflow" | head -1 | cut -d: -f1 || true)
+package_line=$(python3 script/ci/find_maven_release_command.py "$workflow")
 package_verify_line=$(grep -n 'verify-server-release-package.py' "$workflow" | head -1 | cut -d: -f1 || true)
 
 if [ -z "$toolchain_line" ] || [ -z "$install_line" ] || [ -z "$build_line" ] || [ -z "$package_line" ] \

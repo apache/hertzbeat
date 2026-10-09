@@ -36,6 +36,12 @@ for required_file in $required_files; do
   fi
 done
 
+if ! grep -Fqx 'go 1.26.9' "$runtime_dir/go.mod" \
+    || ! grep -Fq 'export GOTOOLCHAIN := go$(GO_VERSION)' "$runtime_dir/Makefile"; then
+  echo "runtime builds must select the reviewed Go 1.26.9 toolchain" >&2
+  exit 1
+fi
+
 if grep -R "hertzbeat-collector-go" "$runtime_dir" >/dev/null 2>&1; then
   echo "the new runtime must not reference the retired hertzbeat-collector-go project" >&2
   exit 1
@@ -51,14 +57,14 @@ for component in hostmetricsreceiver prometheusreceiver filelogreceiver otlprece
   fi
 done
 
-if ! grep -Fq -- '- golang.org/x/text => golang.org/x/text v0.39.0' \
+if ! grep -Fq -- '- golang.org/x/text => golang.org/x/text v0.42.0' \
     "$runtime_dir/builder-config.yaml"; then
-  echo "the Runtime must pin golang.org/x/text to the reviewed vulnerability-free version" >&2
+  echo "the Runtime must pin golang.org/x/text to the reviewed security baseline" >&2
   exit 1
 fi
-if ! grep -Fqx '  - google.golang.org/grpc => google.golang.org/grpc v1.82.1' \
+if ! grep -Fqx '  - google.golang.org/grpc => google.golang.org/grpc v1.83.2' \
     "$runtime_dir/builder-config.yaml"; then
-  echo "generated runtime must constrain google.golang.org/grpc to v1.82.1" >&2
+  echo "generated runtime must constrain google.golang.org/grpc to v1.83.2" >&2
   exit 1
 fi
 

@@ -23,10 +23,6 @@ name: Backend CI
 permissions:
   contents: read
 
-concurrency:
-  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
   push:
     branches: [ master, dev, action*, '2.*' ]
