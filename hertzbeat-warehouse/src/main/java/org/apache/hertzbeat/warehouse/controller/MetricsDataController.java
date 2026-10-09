@@ -86,7 +86,9 @@ public class MetricsDataController {
             @Parameter(description = "query historical time period, default 6h-6 hours: s-seconds, M-minutes, h-hours, d-days, w-weeks", example = "6h")
             @RequestParam(required = false) String history,
             @Parameter(description = "aggregate data calc. off by default; 4-hour window, query limit >1 week", example = "false")
-            @RequestParam(required = false) Boolean interval
+            @RequestParam(required = false) Boolean interval,
+            @Parameter(description = "monitor id", example = "343254354")
+            @RequestParam(required = false) Long monitorId
     ) {
         if (!metricsDataService.getWarehouseStorageServerStatus()) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
@@ -98,7 +100,9 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval);
+        MetricsHistoryData historyData = monitorId == null
+                ? metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval)
+                : metricsDataService.getMetricHistoryData(monitorId, instance, app, metrics, metric, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
     }
 }

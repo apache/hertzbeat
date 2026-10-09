@@ -123,6 +123,7 @@ class MetricsDataControllerTest {
 
     @Test
     void getMetricHistoryData() throws Exception {
+        final long monitorId = 599733946907392L;
         final String instance = "127.0.0.1:8081";
         final String app = "linux";
         final String metrics = "cpu";
@@ -140,6 +141,7 @@ class MetricsDataControllerTest {
         params.add("label", label);
         params.add("history", history);
         params.add("interval", String.valueOf(interval));
+        params.add("monitorId", String.valueOf(monitorId));
 
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(false);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
@@ -163,7 +165,8 @@ class MetricsDataControllerTest {
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history), eq(interval)))
+        lenient().when(metricsDataService.getMetricHistoryData(eq(monitorId), eq(instance), eq(app), eq(metrics),
+                        eq(metric), eq(history), eq(interval)))
                 .thenReturn(metricsHistoryData);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())

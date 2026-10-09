@@ -22,8 +22,11 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -32,9 +35,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.hertzbeat.common.timer.TimerTask;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -53,8 +58,53 @@ import org.springframework.web.client.RestTemplate;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class VictoriaMetricsClusterDataStorageTest {
 
+    private static final long MONITOR_ID = 599733946907392L;
+    private static final String INSTANCE = "hdp-hadoop2:10003";
+
     @Mock
     private RestTemplate restTemplate;
+
+    @Test
+    void shouldQueryHistoryByMonitorIdInsteadOfInstance() {
+        mockHealthCheck();
+        when(restTemplate.exchange(
+                any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(""));
+        VictoriaMetricsClusterDataStorage storage = createStorage(1, 0);
+
+        try {
+            storage.getHistoryMetricData(
+                    MONITOR_ID, INSTANCE, "flink", "taskmanager", "value", "6h");
+
+            ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+            verify(restTemplate).exchange(
+                    uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+            assertUsesMonitorId(uriCaptor.getValue());
+        } finally {
+            storage.destroy();
+        }
+    }
+
+    @Test
+    void shouldQueryIntervalHistoryByMonitorIdInsteadOfInstance() {
+        mockHealthCheck();
+        when(restTemplate.exchange(
+                any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        VictoriaMetricsClusterDataStorage storage = createStorage(1, 0);
+
+        try {
+            storage.getHistoryIntervalMetricData(
+                    MONITOR_ID, INSTANCE, "flink", "taskmanager", "value", "1w");
+
+            ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+            verify(restTemplate, times(4)).exchange(
+                    uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class));
+            assertThat(uriCaptor.getAllValues()).allSatisfy(this::assertUsesMonitorId);
+        } finally {
+            storage.destroy();
+        }
+    }
 
     @Test
     void flushesDataAddedWhileAnImmediateFlushIsRunning() throws Exception {
@@ -245,5 +295,11 @@ class VictoriaMetricsClusterDataStorageTest {
 
     private static long lineCount(String body) {
         return body.lines().filter(line -> !line.isBlank()).count();
+    }
+
+    private void assertUsesMonitorId(URI uri) {
+        assertThat(uri.getQuery())
+                .contains("__monitor_id__=\"" + MONITOR_ID + "\"")
+                .doesNotContain("instance=\"" + INSTANCE + "\"");
     }
 }
