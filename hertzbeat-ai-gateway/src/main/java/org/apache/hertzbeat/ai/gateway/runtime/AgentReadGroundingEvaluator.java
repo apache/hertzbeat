@@ -40,7 +40,7 @@ final class AgentReadGroundingEvaluator {
             return Optional.empty();
         }
         AgentReadObservationClassifier.Observation observation = classifier.classify(call, result.getOutput());
-        if (observation == null || observation.count() <= 0) {
+        if (observation == null || observation.count() == null || observation.count() < 0) {
             return Optional.empty();
         }
         return Optional.of(AgentGroundingProof.builder()
@@ -74,7 +74,7 @@ final class AgentReadGroundingEvaluator {
                 && Objects.equals(outputHash(message.text()), proof.getOutputHash())
                 && StringUtils.hasText(proof.getObservationKind())
                 && proof.getObservationCount() != null
-                && proof.getObservationCount() > 0
+                && proof.getObservationCount() >= 0
                 && proof.getTargetFingerprint() == null
                 && proof.getTargetVersion() == null
                 && proof.getEntityId() == null

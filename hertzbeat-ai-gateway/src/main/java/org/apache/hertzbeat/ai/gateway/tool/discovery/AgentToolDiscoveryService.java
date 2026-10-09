@@ -56,7 +56,8 @@ public class AgentToolDiscoveryService {
                             + "Loaded tools receive structured schemas on the next model request.")
             Boolean includeSchema) {
         boolean schemas = Boolean.TRUE.equals(includeSchema);
-        List<Map<String, Object>> tools = registryProvider.getObject()
+        AgentToolRegistry registry = registryProvider.getObject();
+        List<Map<String, Object>> tools = registry
             .discoverableDescriptors(namespace, query).stream()
             .map(descriptor -> toolRow(descriptor, schemas))
             .toList();
@@ -65,6 +66,8 @@ public class AgentToolDiscoveryService {
         result.put("query", query);
         result.put("tools", tools);
         result.put("count", tools.size());
+        // Surface the full namespace catalog so a missed query still teaches the model where to look next.
+        result.put("availableNamespaces", registry.discoverableNamespaces());
         return result;
     }
 

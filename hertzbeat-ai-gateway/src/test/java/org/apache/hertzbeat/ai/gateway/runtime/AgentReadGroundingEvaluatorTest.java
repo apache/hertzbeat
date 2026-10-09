@@ -47,6 +47,43 @@ class AgentReadGroundingEvaluatorTest {
     }
 
     @Test
+    void wellFormedEmptyReadsShouldStillCountAsObservations() {
+        Map<String, Object> emptyHistoryArguments = Map.of(
+                "monitorId", 7L, "metricKey", "basic.qps", "start", 1_000L, "end", 2_000L);
+        Map<String, Object> emptyHistory = Map.of(
+                "monitorId", 7L, "metricKey", "basic.qps", "start", 1_000L, "end", 2_000L,
+                "values", Map.of(), "returnedPoints", 0, "totalPoints", 0);
+        List<Observation> emptyReads = List.of(
+                observation("monitor.query", Map.of(), page(List.of()), "monitor-list", 0),
+                observation("logs.query", Map.of(), page(List.of()), "log-records", 0),
+                observation("traces.query", Map.of(), page(List.of()), "trace-records", 0),
+                observation("entity.query", Map.of(), page(List.of()), "entity-list", 0),
+                observation("collector.list", Map.of(), page(List.of()), "collector-list", 0),
+                observation("topology.query", Map.of(),
+                        Map.of("apiBacked", true, "nodes", List.of()), "topology-nodes", 0),
+                observation("alert.query", Map.of(),
+                        Map.of("result", page(List.of())), "alert-records", 0),
+                observation("alert.query", Map.of(),
+                        Map.of("single", page(List.of()), "group", page(List.of())), "alert-records", 0),
+                observation("alert.similar", Map.of(),
+                        Map.of("content", List.of(), "returnedCount", 0), "similar-alerts", 0),
+                observation("alert.summary", Map.of(), Map.of("total", 0), "alert-summary", 0),
+                observation("metrics.history", emptyHistoryArguments, emptyHistory, "metric-points", 0),
+                observation("metrics.realtime", Map.of("monitorId", 7L, "metrics", "basic"),
+                        Map.of("monitorId", 7L, "metrics", "basic", "valueRows", List.of(),
+                                "rowCount", 0), "metric-rows", 0),
+                observation("database.mysql_slow_queries", Map.of(),
+                        Map.of("rows", List.of(), "rowCount", 0), "database-rows", 0));
+
+        emptyReads.forEach(observation -> {
+            AgentGroundingProof proof = evaluator.evaluate("run-1", call(observation), result(observation))
+                    .orElseThrow(() -> new AssertionError(observation.toolName()));
+            assertEquals(observation.kind(), proof.getObservationKind(), observation.toolName());
+            assertEquals(0, proof.getObservationCount(), observation.toolName());
+        });
+    }
+
+    @Test
     void identifiersRowsAndUnknownDatabaseNamespaceMustFailClosed() {
         List<Observation> denied = List.of(
                 observation("monitor.get", Map.of("monitorId", 7L), Map.of("monitorId", 8L)),
@@ -140,6 +177,11 @@ class AgentReadGroundingEvaluatorTest {
     private Observation observation(String toolName, Map<String, Object> arguments, Map<String, Object> output,
                                     String kind) {
         return new Observation(toolName, arguments, output, kind, 1);
+    }
+
+    private Observation observation(String toolName, Map<String, Object> arguments, Map<String, Object> output,
+                                    String kind, int count) {
+        return new Observation(toolName, arguments, output, kind, count);
     }
 
     private AgentRuntimeToolCall call(Observation observation) {

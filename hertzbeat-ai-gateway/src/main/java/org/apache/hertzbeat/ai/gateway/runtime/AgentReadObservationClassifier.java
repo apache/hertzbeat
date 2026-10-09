@@ -94,7 +94,7 @@ final class AgentReadObservationClassifier {
                 }
             }
         }
-        Integer returned = positiveInteger(output.get("returnedPoints"));
+        Integer returned = nonNegativeInteger(output.get("returnedPoints"));
         Long total = nonNegativeLong(output.get("totalPoints"));
         return returned != null && returned == visible && total != null && total >= visible
                 ? new Observation("metric-points", visible) : null;
@@ -103,7 +103,7 @@ final class AgentReadObservationClassifier {
     private Observation page(Map<String, Object> output, String kind, RowShape rowShape) {
         List<?> content = list(output.get("content"));
         Long total = nonNegativeLong(output.get("totalElements"));
-        return content != null && !content.isEmpty() && content.stream().allMatch(rowShape::valid)
+        return content != null && content.stream().allMatch(rowShape::valid)
                 && total != null && total >= content.size()
                 ? new Observation(kind, content.size()) : null;
     }
@@ -115,8 +115,11 @@ final class AgentReadObservationClassifier {
         }
         Observation single = page(cast(map(output.get("single"))), "alert-records", RowShape.ALERT);
         Observation group = page(cast(map(output.get("group"))), "alert-records", RowShape.ALERT);
+        if (single == null && group == null) {
+            return null;
+        }
         int count = (single == null ? 0 : single.count()) + (group == null ? 0 : group.count());
-        return count > 0 ? new Observation("alert-records", count) : null;
+        return new Observation("alert-records", count);
     }
 
     private Observation alertGet(AgentRuntimeToolCall call, Map<String, Object> output) {
@@ -133,7 +136,7 @@ final class AgentReadObservationClassifier {
 
     private Observation topology(Map<String, Object> output) {
         List<?> nodes = list(output.get("nodes"));
-        return Boolean.TRUE.equals(output.get("apiBacked")) && nodes != null && !nodes.isEmpty()
+        return Boolean.TRUE.equals(output.get("apiBacked")) && nodes != null
                 && nodes.stream().allMatch(RowShape.TOPOLOGY_NODE::valid)
                 ? new Observation("topology-nodes", nodes.size()) : null;
     }
@@ -204,7 +207,7 @@ final class AgentReadObservationClassifier {
     private Observation exactListCount(Map<String, Object> output, String listKey,
                                        String countKey, String kind, RowShape rowShape) {
         List<?> values = list(output.get(listKey));
-        Integer count = positiveInteger(output.get(countKey));
+        Integer count = nonNegativeInteger(output.get(countKey));
         return values != null && count != null && count == values.size()
                 && values.stream().allMatch(rowShape::valid) ? new Observation(kind, count) : null;
     }
@@ -266,7 +269,7 @@ final class AgentReadObservationClassifier {
     }
 
     private Observation positiveNumber(Map<String, Object> output, String key, String kind) {
-        Long count = positiveLong(output.get(key));
+        Long count = nonNegativeLong(output.get(key));
         return count != null && count <= Integer.MAX_VALUE ? new Observation(kind, count.intValue()) : null;
     }
 
@@ -299,6 +302,11 @@ final class AgentReadObservationClassifier {
 
     private Integer positiveInteger(Object value) {
         Long converted = positiveLong(value);
+        return converted != null && converted <= Integer.MAX_VALUE ? converted.intValue() : null;
+    }
+
+    private Integer nonNegativeInteger(Object value) {
+        Long converted = nonNegativeLong(value);
         return converted != null && converted <= Integer.MAX_VALUE ? converted.intValue() : null;
     }
 

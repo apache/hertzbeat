@@ -53,6 +53,17 @@ public class AgentToolRegistry {
             .toList();
     }
 
+    public List<String> discoverableNamespaces() {
+        return handlers.values().stream()
+            .map(RegisteredTool::descriptor)
+            .filter(descriptor -> descriptor.getExposure() == AgentToolExposure.MODEL_ON_DEMAND)
+            .map(AgentToolDescriptor::getNamespace)
+            .filter(Objects::nonNull)
+            .distinct()
+            .sorted()
+            .toList();
+    }
+
     public List<AgentToolDescriptor> discoverableDescriptors(String namespace, String query) {
         // An unscoped discovery call would inject the entire on-demand catalog into the model context.
         if ((namespace == null || namespace.isBlank()) && (query == null || query.isBlank())) {

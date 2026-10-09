@@ -90,6 +90,17 @@ class AgentToolRegistryTest {
     }
 
     @Test
+    void shouldListOnlyOnDemandNamespaces() {
+        AgentToolRegistry registry = new AgentToolRegistry();
+        registry.register(handler("jdbc.query", AgentToolExposure.MODEL_ON_DEMAND));
+        registry.register(handler("alert_analysis_policy.create", AgentToolExposure.MODEL_ON_DEMAND));
+        registry.register(handler("monitor.get", AgentToolExposure.MODEL_VISIBLE));
+
+        assertEquals(java.util.List.of("alert_analysis_policy", "jdbc"),
+            registry.discoverableNamespaces());
+    }
+
+    @Test
     void shouldRejectUnscopedDiscovery() {
         AgentToolRegistry registry = new AgentToolRegistry();
         registry.register(handler("jdbc.query", AgentToolExposure.MODEL_ON_DEMAND));
