@@ -54,6 +54,23 @@ sidebar_label: Docker方式安装
 2. 开始探索 HertzBeat  
    浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
 
+### 认证方式
+
+默认镜像启用 Basic 和 JWT 认证。Web UI 通过表单接口登录，后续使用 JWT；Basic 保留给 API 客户端使用。凭据或令牌经过不可信网络时，请使用 TLS。
+
+Digest 认证默认不启用。如需调整认证方式，请下载完整的 [`application.yml`](https://github.com/apache/hertzbeat/raw/master/script/application.yml)，修改其中的 `sureness.auths` 列表，并按上面的命令挂载完整文件。例如，显式启用 Digest：
+
+```yaml
+sureness:
+  container: jakarta_servlet
+  auths:
+    - digest
+    - basic
+    - jwt
+```
+
+启用 Digest 后，未认证请求访问受保护接口时会收到 `WWW-Authenticate: Digest` 质询，因此在浏览器中直接打开这类接口可能弹出浏览器原生用户名密码框；这是 HTTP 认证提示，不是 TLS 或证书错误。如只需 JWT，可将 `auths` 设置为仅包含 `jwt`。修改文件后需要重启容器。
+
 ### 部署 HertzBeat Collector 集群(可选)
 
 :::note
