@@ -75,6 +75,12 @@ export function createNoticeReceiverDraft(): NoticeReceiverDraft {
     appId: '',
     larkReceiveType: 0,
     chatId: '',
+    ntfyServerUrl: '',
+    ntfyTopic: '',
+    ntfyToken: '',
+    wpushToken: '',
+    wpushChannel: '',
+    wpushTopicCode: '',
     configuredSecrets: [],
     clearSecrets: []
   };

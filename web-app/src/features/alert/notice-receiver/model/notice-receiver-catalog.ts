@@ -37,7 +37,13 @@ export type NoticeReceiverOptionKey =
   | 'smnRegion'
   | 'smnTopicUrn'
   | 'serverChanToken'
-  | 'gotifyToken';
+  | 'gotifyToken'
+  | 'ntfyServerUrl'
+  | 'ntfyTopic'
+  | 'ntfyToken'
+  | 'wpushToken'
+  | 'wpushChannel'
+  | 'wpushTopicCode';
 
 export const noticeReceiverSecretKeyCatalog = [
   'hookUrl',
@@ -51,7 +57,9 @@ export const noticeReceiverSecretKeyCatalog = [
   'smnAk',
   'smnSk',
   'serverChanToken',
-  'gotifyToken'
+  'gotifyToken',
+  'ntfyToken',
+  'wpushToken'
 ] as const;
 export type NoticeReceiverSecretKey = (typeof noticeReceiverSecretKeyCatalog)[number];
 
@@ -158,6 +166,20 @@ export const receiverTypeDefinitions = [
       field('chatId', 'text', false),
       field('partyId', 'text', false)
     ]
+  },
+  {
+    type: 15,
+    labelKey: 'noticeReceivers.types.ntfy',
+    fields: [field('ntfyServerUrl', 'url', false), field('ntfyTopic'), field('ntfyToken', 'password', false)]
+  },
+  {
+    type: 16,
+    labelKey: 'noticeReceivers.types.wpush',
+    fields: [
+      field('wpushToken', 'password'),
+      field('wpushChannel', 'text', false),
+      field('wpushTopicCode', 'text', false)
+    ]
   }
 ] as const satisfies readonly {
   type: number;
@@ -184,7 +206,9 @@ export const noticeReceiverTypeKeys: Record<NoticeReceiverType, string> = {
   11: 'huawei-smn',
   12: 'server-chan',
   13: 'gotify',
-  14: 'feishu-app'
+  14: 'feishu-app',
+  15: 'ntfy',
+  16: 'wpush'
 };
 
 const receiverTypeDefinitionByType = new Map(

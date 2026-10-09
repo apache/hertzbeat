@@ -2775,7 +2775,8 @@
       "gotify": "Gotify",
       "larkApp": "飞书应用",
       "ntfy": "Ntfy",
-      "unknown": "未知"
+      "unknown": "未知",
+      "wpush": "WPUSH"
     },
     "larkReceiveTypes": {
       "0": "用户",
@@ -2815,7 +2816,10 @@
       "chatId": "群聊 ID",
       "ntfyServerUrl": "Ntfy 服务地址",
       "ntfyTopic": "Ntfy 主题",
-      "ntfyToken": "Ntfy 令牌"
+      "ntfyToken": "Ntfy 令牌",
+      "wpushToken": "WPUSH API Key",
+      "wpushChannel": "WPUSH 渠道",
+      "wpushTopicCode": "WPUSH 主题码"
     }
   },
   "noticeTemplates": {

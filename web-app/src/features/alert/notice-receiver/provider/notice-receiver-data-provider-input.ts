@@ -76,6 +76,12 @@ const draftShape = {
   appId: z.string(),
   larkReceiveType: larkReceiveTypeSchema,
   chatId: z.string(),
+  ntfyServerUrl: z.string(),
+  ntfyTopic: z.string(),
+  ntfyToken: z.string(),
+  wpushToken: z.string(),
+  wpushChannel: z.string(),
+  wpushTopicCode: z.string(),
   configuredSecrets: secretKeyArraySchema,
   clearSecrets: secretKeyArraySchema
 };

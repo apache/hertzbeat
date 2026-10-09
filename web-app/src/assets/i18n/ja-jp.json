@@ -2775,7 +2775,8 @@
       "gotify": "Gotify",
       "larkApp": "Lark アプリ",
       "ntfy": "Ntfy",
-      "unknown": "不明"
+      "unknown": "不明",
+      "wpush": "WPUSH"
     },
     "larkReceiveTypes": {
       "0": "ユーザー",
@@ -2815,7 +2816,10 @@
       "chatId": "チャット ID",
       "ntfyServerUrl": "Ntfy サーバー URL",
       "ntfyTopic": "Ntfy トピック",
-      "ntfyToken": "Ntfy トークン"
+      "ntfyToken": "Ntfy トークン",
+      "wpushToken": "WPUSH API キー",
+      "wpushChannel": "WPUSH チャネル",
+      "wpushTopicCode": "WPUSH トピックコード"
     }
   },
   "noticeTemplates": {
