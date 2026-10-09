@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelRequestOptionsFactory;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -54,6 +55,7 @@ public class HertzBeatModel {
 
     private static final int MODEL_ERROR_MESSAGE_LIMIT = 1024;
     private static final String FUNCTION_TOOL_TYPE = "function";
+    private static final Pattern WIRE_UNSAFE_TOOL_NAME_CHARS = Pattern.compile("[^a-zA-Z0-9_-]");
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
 
@@ -84,10 +86,11 @@ public class HertzBeatModel {
     public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
                                             Consumer<String> textDeltaConsumer) {
         control.checkpoint();
-        Prompt prompt = toPrompt(request);
+        ToolNameCodec toolNameCodec = ToolNameCodec.of(request.getAvailableTools());
+        Prompt prompt = toPrompt(request, toolNameCodec);
         Thread currentThread = Thread.currentThread();
         AutoCloseable abortRegistration = control.onAbort(currentThread::interrupt);
-        ChatResponseAccumulator accumulator = new ChatResponseAccumulator(textDeltaConsumer);
+        ChatResponseAccumulator accumulator = new ChatResponseAccumulator(textDeltaConsumer, toolNameCodec);
         try {
             chatModel.stream(prompt)
                     .doOnNext(response -> {
@@ -117,14 +120,14 @@ public class HertzBeatModel {
         return accumulator.toRuntimeResponse();
     }
 
-    private Prompt toPrompt(AgentRuntimeModelRequest request) {
+    private Prompt toPrompt(AgentRuntimeModelRequest request, ToolNameCodec toolNameCodec) {
         RuntimePrompt runtimePrompt = request.getPrompt();
         List<Message> messages = new ArrayList<>();
-        List<ToolCallback> toolCallbacks = toToolCallbacks(request.getAvailableTools());
+        List<ToolCallback> toolCallbacks = toToolCallbacks(request.getAvailableTools(), toolNameCodec);
         addBaseInstructions(messages, runtimePrompt);
         addPromptBlocks(messages, runtimePrompt, RuntimePrompt.Role.SYSTEM);
         addPromptBlocks(messages, runtimePrompt, RuntimePrompt.Role.USER);
-        addHistoryMessages(messages, request.getChatHistory());
+        addHistoryMessages(messages, request.getChatHistory(), toolNameCodec);
         ChatOptions options = requestOptionsFactory.create(request, toolCallbacks);
         return new Prompt(messages, options);
     }
@@ -166,19 +169,20 @@ public class HertzBeatModel {
                 .build();
     }
 
-    private void addHistoryMessages(List<Message> messages, List<TranscriptMessage> chatHistory) {
+    private void addHistoryMessages(List<Message> messages, List<TranscriptMessage> chatHistory,
+                                    ToolNameCodec toolNameCodec) {
         if (chatHistory.isEmpty()) {
             return;
         }
         for (TranscriptMessage historyMessage : chatHistory) {
-            Message message = toSpringHistoryMessage(historyMessage);
+            Message message = toSpringHistoryMessage(historyMessage, toolNameCodec);
             if (message != null) {
                 messages.add(message);
             }
         }
     }
 
-    private Message toSpringHistoryMessage(TranscriptMessage historyMessage) {
+    private Message toSpringHistoryMessage(TranscriptMessage historyMessage, ToolNameCodec toolNameCodec) {
         TranscriptMessage.TranscriptRole role = historyMessage.getRole();
         if (role == TranscriptMessage.TranscriptRole.USER) {
             return UserMessage.builder()
@@ -193,20 +197,21 @@ public class HertzBeatModel {
                     .build();
         }
         if (role == TranscriptMessage.TranscriptRole.ASSISTANT && !historyMessage.toolCalls().isEmpty()) {
-            return assistantToolCallHistoryMessage(historyMessage);
+            return assistantToolCallHistoryMessage(historyMessage, toolNameCodec);
         }
         if (role == TranscriptMessage.TranscriptRole.ASSISTANT) {
             return assistantTextHistoryMessage(historyMessage);
         }
         if (role == TranscriptMessage.TranscriptRole.TOOL_RESULT) {
-            return toolResponseHistoryMessage(historyMessage);
+            return toolResponseHistoryMessage(historyMessage, toolNameCodec);
         }
         return null;
     }
 
-    private AssistantMessage assistantToolCallHistoryMessage(TranscriptMessage historyMessage) {
+    private AssistantMessage assistantToolCallHistoryMessage(TranscriptMessage historyMessage,
+                                                             ToolNameCodec toolNameCodec) {
         List<AssistantMessage.ToolCall> toolCalls = historyMessage.toolCalls().stream()
-                .map(this::springToolCall)
+                .map(block -> springToolCall(block, toolNameCodec))
                 .toList();
         return AssistantMessage.builder()
                 .content(historyMessage.text())
@@ -215,11 +220,11 @@ public class HertzBeatModel {
                 .build();
     }
 
-    private AssistantMessage.ToolCall springToolCall(TranscriptContent block) {
+    private AssistantMessage.ToolCall springToolCall(TranscriptContent block, ToolNameCodec toolNameCodec) {
         return new AssistantMessage.ToolCall(
                 block.getId(),
                 FUNCTION_TOOL_TYPE,
-                block.getName(),
+                toolNameCodec.encode(block.getName()),
                 assistantToolArguments(block));
     }
 
@@ -230,10 +235,11 @@ public class HertzBeatModel {
                 .build();
     }
 
-    private ToolResponseMessage toolResponseHistoryMessage(TranscriptMessage historyMessage) {
+    private ToolResponseMessage toolResponseHistoryMessage(TranscriptMessage historyMessage,
+                                                           ToolNameCodec toolNameCodec) {
         ToolResponseMessage.ToolResponse response = new ToolResponseMessage.ToolResponse(
                 historyMessage.getToolCallId(),
-                historyMessage.getToolName(),
+                toolNameCodec.encode(historyMessage.getToolName()),
                 toolResponseData(historyMessage));
         return ToolResponseMessage.builder()
                 .responses(List.of(response))
@@ -329,7 +335,8 @@ public class HertzBeatModel {
                 "Runtime model returned neither a final answer nor tool calls.", usage);
     }
 
-    private List<AgentRuntimeToolCall> toRuntimeToolCalls(List<AssistantMessage.ToolCall> toolCalls) {
+    private List<AgentRuntimeToolCall> toRuntimeToolCalls(List<AssistantMessage.ToolCall> toolCalls,
+                                                          ToolNameCodec toolNameCodec) {
         // Spring AI returns null when the assistant message has no tool calls.
         if (toolCalls == null || toolCalls.isEmpty()) {
             return List.of();
@@ -344,20 +351,21 @@ public class HertzBeatModel {
             }
             result.add(AgentRuntimeToolCall.builder()
                     .toolCallId(toolCallId)
-                    .toolName(toolCall.name())
+                    .toolName(toolNameCodec.decode(toolCall.name()))
                     .arguments(arguments)
                     .build());
         }
         return List.copyOf(result);
     }
 
-    private List<ToolCallback> toToolCallbacks(List<AgentToolDescriptor> availableTools) {
+    private List<ToolCallback> toToolCallbacks(List<AgentToolDescriptor> availableTools,
+                                               ToolNameCodec toolNameCodec) {
         if (availableTools.isEmpty()) {
             return List.of();
         }
         List<ToolCallback> callbacks = new ArrayList<>(availableTools.size());
         for (AgentToolDescriptor tool : availableTools) {
-            callbacks.add(new DisabledRuntimeToolCallback(tool));
+            callbacks.add(new DisabledRuntimeToolCallback(tool, toolNameCodec));
         }
         return List.copyOf(callbacks);
     }
@@ -407,12 +415,14 @@ public class HertzBeatModel {
     private final class ChatResponseAccumulator {
 
         private final Consumer<String> textDeltaConsumer;
+        private final ToolNameCodec toolNameCodec;
         private final StringBuilder text = new StringBuilder();
         private List<AgentRuntimeToolCall> toolCalls = List.of();
         private ChatResponseMetadata metadata;
 
-        private ChatResponseAccumulator(Consumer<String> textDeltaConsumer) {
+        private ChatResponseAccumulator(Consumer<String> textDeltaConsumer, ToolNameCodec toolNameCodec) {
             this.textDeltaConsumer = textDeltaConsumer;
+            this.toolNameCodec = toolNameCodec;
         }
 
         private void accept(ChatResponse response) {
@@ -427,7 +437,7 @@ public class HertzBeatModel {
                 return;
             }
             AssistantMessage output = generation.getOutput();
-            List<AgentRuntimeToolCall> responseToolCalls = toRuntimeToolCalls(output.getToolCalls());
+            List<AgentRuntimeToolCall> responseToolCalls = toRuntimeToolCalls(output.getToolCalls(), toolNameCodec);
             if (!responseToolCalls.isEmpty()) {
                 toolCalls = responseToolCalls;
             }
@@ -451,9 +461,9 @@ public class HertzBeatModel {
 
         private final ToolDefinition toolDefinition;
 
-        private DisabledRuntimeToolCallback(AgentToolDescriptor tool) {
+        private DisabledRuntimeToolCallback(AgentToolDescriptor tool, ToolNameCodec toolNameCodec) {
             this.toolDefinition = ToolDefinition.builder()
-                    .name(tool.getName())
+                    .name(toolNameCodec.encode(tool.getName()))
                     .description(tool.getDescription())
                     .inputSchema(tool.getInputSchema())
                     .build();
@@ -467,6 +477,58 @@ public class HertzBeatModel {
         @Override
         public String call(String toolInput) {
             throw new UnsupportedOperationException("Tool execution is owned by AgentRuntimeLoop");
+        }
+    }
+
+    /**
+     * Maps canonical tool names (namespaced with '.') to wire-safe names accepted by providers that enforce
+     * the OpenAI function-name pattern {@code ^[a-zA-Z0-9_-]+$}, and maps provider tool call names back.
+     */
+    private static final class ToolNameCodec {
+
+        private final Map<String, String> canonicalToWire;
+        private final Map<String, String> wireToCanonical;
+
+        private ToolNameCodec(Map<String, String> canonicalToWire, Map<String, String> wireToCanonical) {
+            this.canonicalToWire = canonicalToWire;
+            this.wireToCanonical = wireToCanonical;
+        }
+
+        private static ToolNameCodec of(List<AgentToolDescriptor> tools) {
+            Map<String, String> canonicalToWire = new LinkedHashMap<>();
+            Map<String, String> wireToCanonical = new LinkedHashMap<>();
+            if (tools == null) {
+                return new ToolNameCodec(canonicalToWire, wireToCanonical);
+            }
+            for (AgentToolDescriptor tool : tools) {
+                String canonical = tool.getName();
+                if (!StringUtils.hasText(canonical)) {
+                    continue;
+                }
+                String wire = sanitize(canonical);
+                int suffix = 2;
+                while (wireToCanonical.containsKey(wire) && !canonical.equals(wireToCanonical.get(wire))) {
+                    wire = sanitize(canonical) + "_" + suffix++;
+                }
+                canonicalToWire.put(canonical, wire);
+                wireToCanonical.put(wire, canonical);
+            }
+            return new ToolNameCodec(canonicalToWire, wireToCanonical);
+        }
+
+        private static String sanitize(String name) {
+            return name == null ? null : WIRE_UNSAFE_TOOL_NAME_CHARS.matcher(name).replaceAll("_");
+        }
+
+        private String encode(String name) {
+            if (name == null) {
+                return null;
+            }
+            return canonicalToWire.getOrDefault(name, sanitize(name));
+        }
+
+        private String decode(String name) {
+            return wireToCanonical.getOrDefault(name, name);
         }
     }
 }

@@ -209,6 +209,27 @@ public final class AesUtil {
     }
     
     /**
+     * Determine whether the value carries the HertzBeat encrypted payload header
+     * without attempting to decrypt it. A payload that matches this shape but
+     * cannot be decrypted (for example a mismatched secret key) is still
+     * ciphertext and must never be treated as plaintext.
+     * @param text text
+     * @return true false
+     */
+    public static boolean isEncryptedPayload(String text) {
+        if (text == null || !Base64Util.isBase64(text)) {
+            return false;
+        }
+        try {
+            byte[] payload = Base64.getDecoder().decode(text);
+            return hasPayloadHeader(payload, AUTHENTICATED_PAYLOAD_HEADER)
+                    || hasPayloadHeader(payload, CBC_PAYLOAD_HEADER);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Determine whether it is encrypted
      * @param text text
      * @return true false

@@ -184,6 +184,25 @@ class HertzBeatModelTest {
     }
 
     @Test
+    void wireSafeToolCallNameShouldDecodeToCanonicalName() {
+        AssistantMessage.ToolCall toolCall = new AssistantMessage.ToolCall(
+                "call-9", "function", "monitor_get", "{\"pageSize\":1}");
+        AssistantMessage assistantMessage = AssistantMessage.builder()
+                .content("")
+                .toolCalls(List.of(toolCall))
+                .build();
+        CapturingChatModel chatModel = new CapturingChatModel(response(assistantMessage,
+                ChatResponseMetadata.builder().build()));
+        HertzBeatModel client = new HertzBeatModel(chatModel);
+
+        AgentRuntimeModelResponse response = stream(client, requestWithTools());
+
+        assertEquals(AgentRuntimeModelResponse.ResponseType.TOOL_CALLS, response.getType());
+        assertEquals(1, response.getToolCalls().size());
+        assertEquals("monitor.get", response.getToolCalls().get(0).getToolName());
+    }
+
+    @Test
     void missingToolCallIdsShouldBeGenerated() {
         AssistantMessage assistantMessage = AssistantMessage.builder()
                 .content("")
@@ -239,7 +258,7 @@ class HertzBeatModelTest {
         assertEquals(1, options.getToolCallbacks().size());
         ToolCallback callback = options.getToolCallbacks().get(0);
         ToolDefinition definition = callback.getToolDefinition();
-        assertEquals("monitor.get", definition.name());
+        assertEquals("monitor_get", definition.name());
         assertTrue(definition.description().contains("Query monitor inventory"));
         assertTrue(definition.description().contains("apiKey=secret"));
         assertTrue(definition.inputSchema().contains("\"type\": \"object\""));
@@ -291,7 +310,7 @@ class HertzBeatModelTest {
         assertEquals(1, toolCallMessage.getToolCalls().size());
         AssistantMessage.ToolCall toolCall = toolCallMessage.getToolCalls().get(0);
         assertEquals("call-1", toolCall.id());
-        assertEquals("alert.history", toolCall.name());
+        assertEquals("alert_history", toolCall.name());
         assertTrue(toolCall.arguments().contains("\"alertId\":1001")
                 || toolCall.arguments().contains("\"alertId\": 1001"));
         assertFalse(toolCall.arguments().contains("agc-1"));
@@ -300,7 +319,7 @@ class HertzBeatModelTest {
         assertEquals(1, toolResponseMessage.getResponses().size());
         ToolResponseMessage.ToolResponse toolResponse = toolResponseMessage.getResponses().get(0);
         assertEquals("call-1", toolResponse.id());
-        assertEquals("alert.history", toolResponse.name());
+        assertEquals("alert_history", toolResponse.name());
         assertTrue(toolResponse.responseData().contains("status=SUCCEEDED"));
         assertFalse(toolResponse.responseData().contains("object://agent-output/1"));
 

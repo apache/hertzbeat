@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,8 @@ import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegist
 import org.apache.hertzbeat.alert.service.AgentClientAvailability;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
+import org.springframework.context.SmartLifecycle;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -32,14 +35,19 @@ import org.springframework.util.StringUtils;
  */
 @Slf4j
 @Component
-public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClient, AgentClientAvailability {
+public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClient, AgentClientAvailability, SmartLifecycle {
 
     private static final String DEFAULT_PROVIDER_TYPE = "openai-compatible";
+
+    // Must run after ConfigInitializer (SmartLifecycle, phase Ordered.HIGHEST_PRECEDENCE) so that
+    // AesUtil's default secret key is installed before persisted provider secrets are decrypted.
+    private static final int LIFECYCLE_PHASE = Ordered.HIGHEST_PRECEDENCE + 10;
 
     private final ModelProviderConfigurationService configurationService;
     private final AgentProviderProperties providerProperties;
     private final AgentModelProviderRegistry providerRegistry;
     private final AtomicReference<HertzBeatModel> model = new AtomicReference<>();
+    private final AtomicBoolean running = new AtomicBoolean();
 
     public ReloadableAgentRuntimeModelClient(ModelProviderConfigurationService configurationService,
                                              AgentProviderProperties providerProperties,
@@ -73,6 +81,37 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
      * Refresh the runtime after the configuration service has committed a state change.
      */
     public void refreshConfiguration() {
+        reloadQuietly();
+    }
+
+    @Override
+    public void start() {
+        // Re-run after all SmartLifecycle initializers so encryption secrets are loaded.
+        reloadQuietly();
+        running.set(true);
+    }
+
+    @Override
+    public void stop() {
+        running.set(false);
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running.get();
+    }
+
+    @Override
+    public boolean isAutoStartup() {
+        return true;
+    }
+
+    @Override
+    public int getPhase() {
+        return LIFECYCLE_PHASE;
+    }
+
+    private void reloadQuietly() {
         try {
             reload();
         } catch (RuntimeException exception) {

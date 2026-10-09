@@ -212,7 +212,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
     }
 
     private String encryptSecret(String secret) {
-        if (!StringUtils.hasText(secret) || AesUtil.isCiphertext(secret)) {
+        if (!StringUtils.hasText(secret) || AesUtil.isCiphertext(secret) || AesUtil.isEncryptedPayload(secret)) {
             return secret;
         }
         String encrypted = AesUtil.aesEncode(secret);
@@ -224,8 +224,11 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
 
     private ModelProviderConfig decryptedConfiguration(ModelProviderConfig persisted) {
         ModelProviderConfig copy = copyConfiguration(persisted);
-        if (StringUtils.hasText(copy.getApiKey()) && AesUtil.isCiphertext(copy.getApiKey())) {
+        if (StringUtils.hasText(copy.getApiKey()) && AesUtil.isEncryptedPayload(copy.getApiKey())) {
             String ciphertext = copy.getApiKey();
+            if (!AesUtil.isCiphertext(ciphertext)) {
+                throw new IllegalStateException("Model provider secret cannot be decrypted with the configured AES key");
+            }
             String plaintext = AesUtil.aesDecode(ciphertext);
             if (Objects.equals(ciphertext, plaintext)) {
                 throw new IllegalStateException("Model provider secret decryption failed");

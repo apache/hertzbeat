@@ -108,6 +108,22 @@ class ModelProviderConfigServiceImplTest {
         verify(generalConfigDao, never()).save(any(GeneralConfig.class));
     }
 
+    @Test
+    void undecryptableCiphertextFailsInsteadOfLeakingToRuntime() {
+        AesUtil.setDefaultSecretKey("0123456789abcdef");
+        ModelProviderConfigState created = service.createConfiguration(provider(API_KEY));
+        String uid = created.getProviders().getFirst().getUid();
+        String ciphertext = persistedState(stored.get().getContent()).getProviders().getFirst().getApiKey();
+
+        AesUtil.setDefaultSecretKey("fedcba9876543210");
+
+        assertThrows(IllegalStateException.class, () -> service.getConfiguration(uid));
+
+        service.updateConfiguration(uid, provider(""));
+
+        assertEquals(ciphertext, persistedState(stored.get().getContent()).getProviders().getFirst().getApiKey());
+    }
+
     private ModelProviderConfig provider(String apiKey) {
         ModelProviderConfig config = new ModelProviderConfig();
         config.setType("openai-compatible");

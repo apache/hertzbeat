@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +35,7 @@ import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.core.Ordered;
 
 /**
  * Test case for {@link ReloadableAgentRuntimeModelClient}.
@@ -89,6 +91,33 @@ class ReloadableAgentRuntimeModelClientTest {
         assertEquals("property-model", properties.getModel());
         assertEquals("https://property.example.test/v1", properties.getBaseUrl());
         assertTrue(client.isAgentClientConfigured());
+    }
+
+    @Test
+    void startShouldRecoverWhenSecretsWereNotReadyAtConstruction() {
+        ModelProviderConfigurationService configurationService = mock(ModelProviderConfigurationService.class);
+        when(configurationService.getActiveConfiguration())
+                .thenThrow(new IllegalStateException("secrets not initialized yet"));
+        TestAgentModelProvider provider = new TestAgentModelProvider();
+        ReloadableAgentRuntimeModelClient client =
+                new ReloadableAgentRuntimeModelClient(configurationService, new AgentProviderProperties(),
+                        new AgentModelProviderRegistry(List.of(provider)));
+
+        assertFalse(client.isAgentClientConfigured());
+
+        ModelProviderConfig databaseProvider = new ModelProviderConfig();
+        databaseProvider.setType("test-provider");
+        databaseProvider.setCode("database-preset");
+        databaseProvider.setModel("database-model");
+        databaseProvider.setApiKey("database-secret");
+        doReturn(databaseProvider).when(configurationService).getActiveConfiguration();
+
+        client.start();
+
+        assertTrue(client.isRunning());
+        assertTrue(client.isAgentClientConfigured());
+        assertEquals("database-model", provider.lastCreatedModel().model);
+        assertTrue(client.getPhase() > Ordered.HIGHEST_PRECEDENCE);
     }
 
     @Test
