@@ -78,6 +78,18 @@ class AgentToolRegistryTest {
     }
 
     @Test
+    void shouldMatchNaturalLanguageQueryAgainstDelimitedToolNames() {
+        AgentToolRegistry registry = new AgentToolRegistry();
+        registry.register(handler("alert_analysis_policy.create", AgentToolExposure.MODEL_ON_DEMAND));
+        registry.register(handler("jdbc.query", AgentToolExposure.MODEL_ON_DEMAND));
+
+        assertEquals(java.util.List.of("alert_analysis_policy.create"),
+            registry.discoverableDescriptors(null, "alert analysis policy create").stream()
+                .map(AgentToolDescriptor::getName).toList());
+        assertTrue(registry.discoverableDescriptors(null, "no-matching-token").isEmpty());
+    }
+
+    @Test
     void shouldRejectUnscopedDiscovery() {
         AgentToolRegistry registry = new AgentToolRegistry();
         registry.register(handler("jdbc.query", AgentToolExposure.MODEL_ON_DEMAND));

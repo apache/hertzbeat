@@ -65,13 +65,32 @@ public class AgentToolRegistry {
             .filter(descriptor -> descriptor.getExposure() == AgentToolExposure.MODEL_ON_DEMAND)
             .filter(descriptor -> namespace == null || namespace.isBlank()
                 || namespace.equalsIgnoreCase(descriptor.getNamespace()))
-            .filter(descriptor -> searchText == null || searchText.isBlank()
-                || descriptor.getName().toLowerCase(java.util.Locale.ROOT)
-                    .contains(searchText)
-                || descriptor.getDescription().toLowerCase(java.util.Locale.ROOT)
-                    .contains(searchText))
+            .filter(descriptor -> matchesSearchText(descriptor, searchText))
             .limit(MAX_DISCOVERED_TOOLS_PER_SEARCH)
             .toList();
+    }
+
+    private boolean matchesSearchText(AgentToolDescriptor descriptor, String searchText) {
+        if (searchText == null || searchText.isBlank()) {
+            return true;
+        }
+        String name = descriptor.getName().toLowerCase(java.util.Locale.ROOT);
+        String description = descriptor.getDescription().toLowerCase(java.util.Locale.ROOT);
+        if (name.contains(searchText) || description.contains(searchText)) {
+            return true;
+        }
+        // Model queries arrive as natural language ("alert analysis policy create") while tool
+        // names are delimited by dots and underscores ("alert_analysis_policy.create"), so also
+        // compare token-by-token: every query token must appear in a name or description token.
+        List<String> queryTokens = java.util.Arrays.stream(searchText.split("[^a-z0-9]+"))
+            .filter(token -> !token.isEmpty())
+            .toList();
+        if (queryTokens.isEmpty()) {
+            return false;
+        }
+        String[] haystackTokens = (name + " " + description).split("[^a-z0-9]+");
+        return queryTokens.stream().allMatch(queryToken -> java.util.Arrays.stream(haystackTokens)
+            .anyMatch(part -> part.contains(queryToken)));
     }
 
     /**
