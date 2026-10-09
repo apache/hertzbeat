@@ -16,7 +16,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/apache/hertzbeat)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
 **Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
