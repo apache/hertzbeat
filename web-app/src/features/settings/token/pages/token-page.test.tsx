@@ -275,6 +275,47 @@ describe('TokenPage', () => {
     expect(controller.revoke).toHaveBeenCalledWith(7);
   });
 
+  it('paginates the complete collection locally and confirms the selected second-page token', () => {
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({ list: { kind: 'ready', records: tokenRows(11) } })
+    );
+    renderTokenPage();
+
+    expect(screen.getByText('Total 11')).toBeInTheDocument();
+    expect(screen.getByText('Client 10')).toBeInTheDocument();
+    expect(screen.queryByText('Client 11')).not.toBeInTheDocument();
+    fireEvent.click(requireHtmlElement(document.querySelector('.ant-pagination-item-2'), 'Second page'));
+    expect(screen.getByText('Client 11')).toBeInTheDocument();
+    expect(screen.queryByText('Client 1')).not.toBeInTheDocument();
+    expect(controller.retry).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
+    const dialog = screen.getByRole('dialog', { name: 'Revoke this token?' });
+    expect(within(dialog).getByText(/Client 11/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Revoke' }));
+    expect(controller.revoke).toHaveBeenCalledWith(11);
+  });
+
+  it('returns to the remaining page when the last second-page record disappears', () => {
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({ list: { kind: 'ready', records: tokenRows(11) } })
+    );
+    const view = renderTokenPage();
+    fireEvent.click(requireHtmlElement(document.querySelector('.ant-pagination-item-2'), 'Second page'));
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({ list: { kind: 'ready', records: tokenRows(10) } })
+    );
+    view.rerender(tokenPageTree());
+    expect(screen.getByText('Client 1')).toBeInTheDocument();
+    expect(screen.getByText('Client 10')).toBeInTheDocument();
+    expect(document.querySelector('.ant-pagination')).not.toBeInTheDocument();
+  });
+
+  it('hides pagination for a single page without changing token actions', () => {
+    renderTokenPage();
+    expect(document.querySelector('.ant-pagination')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Revoke' })).toBeEnabled();
+  });
+
   it('locks every revoke action while the exclusive revoke command is pending', () => {
     controller.useTokenResourceController.mockReturnValue(
       buildController({
@@ -329,7 +370,15 @@ function buildController(state: Record<string, unknown> = {}) {
 }
 
 function renderTokenPage(path = '/settings/tokens?scope=otlp-ingest') {
-  render(
+  return render(tokenPageTree(path));
+}
+
+function tokenRows(count: number) {
+  return Array.from({ length: count }, (_, index) => ({ ...record, id: index + 1, name: `Client ${index + 1}` }));
+}
+
+function tokenPageTree(path = '/settings/tokens?scope=otlp-ingest') {
+  return (
     <I18nextProvider i18n={i18n}>
       <MemoryRouter initialEntries={[path]}>
         <App>

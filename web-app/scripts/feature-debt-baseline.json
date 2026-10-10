@@ -88,11 +88,6 @@
     },
     {
       "rule": "feature-module-size",
-      "path": "features/settings/token/components/token-list.tsx",
-      "allowedMax": 251
-    },
-    {
-      "rule": "feature-module-size",
       "path": "features/status/management/components/status-incident-editor.tsx",
       "allowedMax": 283
     },

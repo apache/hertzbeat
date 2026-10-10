@@ -22,22 +22,16 @@ import {
   SafetyCertificateOutlined,
   TagOutlined
 } from '@ant-design/icons';
-import { App, Button, Space, Table, Tag, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { TFunction } from 'i18next';
+import { App, Button, Table, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
 
-import {
-  isTokenExpired,
-  tokenScopeLabelKey,
-  type TokenListState,
-  type TokenResourceRecord
-} from '../model/token-model';
+import { tokenListPageSize, type TokenListState, type TokenResourceRecord } from '../model/token-model';
 import type { TokenFailureKind } from '../model/token-failure';
+import { tokenColumns } from './token-list-columns';
 import styles from './token.module.css';
 
 type TokenListProps = {
@@ -93,7 +87,12 @@ export function TokenList(props: TokenListProps) {
         loading={props.refreshing}
         dataSource={records}
         columns={tokenColumns(t, confirmRevoke, props.revokingId)}
-        pagination={false}
+        pagination={{
+          defaultPageSize: tokenListPageSize,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
+          showTotal: total => t('token.total', { count: total })
+        }}
         scroll={{ x: 1380 }}
       />
     </div>
@@ -178,108 +177,4 @@ function tokenFailureMessageKey(kind: TokenFailureKind) {
   if (kind === 'invalid') return 'token.invalid';
   if (kind === 'permission') return 'common.permission.roleRequiredDescription';
   return 'common.routeError.description';
-}
-
-function tokenColumns(
-  t: TFunction,
-  confirmRevoke: (token: TokenResourceRecord) => void,
-  revokingId: number | null
-): ColumnsType<TokenResourceRecord> {
-  return [...tokenIdentityColumns(t), ...tokenActivityColumns(t), tokenActionColumn(t, confirmRevoke, revokingId)];
-}
-
-function tokenIdentityColumns(t: TFunction): ColumnsType<TokenResourceRecord> {
-  return [
-    {
-      title: t('token.name'),
-      dataIndex: 'name',
-      width: 180,
-      render: (value: TokenResourceRecord['name']) => value || '—'
-    },
-    {
-      title: t('token.mask'),
-      dataIndex: 'tokenMask',
-      width: 180,
-      render: (value: TokenResourceRecord['tokenMask']) => (
-        <Typography.Text className={styles.tokenMask ?? ''} code>
-          {value || '—'}
-        </Typography.Text>
-      )
-    },
-    {
-      title: t('token.scope.label'),
-      dataIndex: 'tokenScope',
-      width: 150,
-      render: (value: TokenResourceRecord['tokenScope']) => {
-        const labelKey = tokenScopeLabelKey(value);
-        return labelKey ? <Tag>{t(labelKey)}</Tag> : '—';
-      }
-    },
-    {
-      title: t('token.creator'),
-      dataIndex: 'creator',
-      width: 140,
-      render: (value: TokenResourceRecord['creator']) => value || '—'
-    }
-  ];
-}
-
-function tokenActivityColumns(t: TFunction): ColumnsType<TokenResourceRecord> {
-  return [
-    {
-      title: t('token.created'),
-      dataIndex: 'gmtCreate',
-      width: 190,
-      render: (value: TokenResourceRecord['gmtCreate']) => formatTokenTime(value)
-    },
-    {
-      title: t('token.expires'),
-      dataIndex: 'expireTime',
-      width: 210,
-      render: (value: TokenResourceRecord['expireTime'], token: TokenResourceRecord) =>
-        value == null ? (
-          <Tag color="success">{t('token.expiration.never')}</Tag>
-        ) : (
-          <Space size={6}>
-            <span>{formatTokenTime(value)}</span>
-            {isTokenExpired(token) && <Tag color="error">{t('token.expired')}</Tag>}
-          </Space>
-        )
-    },
-    {
-      title: t('token.lastUsed'),
-      dataIndex: 'lastUsedTime',
-      width: 190,
-      render: (value: TokenResourceRecord['lastUsedTime']) => formatTokenTime(value)
-    }
-  ];
-}
-
-function tokenActionColumn(
-  t: TFunction,
-  confirmRevoke: (token: TokenResourceRecord) => void,
-  revokingId: number | null
-): ColumnsType<TokenResourceRecord>[number] {
-  return {
-    title: t('common.actions'),
-    fixed: 'right',
-    width: 110,
-    render: (_value: unknown, token: TokenResourceRecord) => (
-      <Button
-        danger
-        type="link"
-        disabled={revokingId !== null}
-        loading={revokingId === token.id}
-        onClick={() => confirmRevoke(token)}
-      >
-        {t('token.revoke')}
-      </Button>
-    )
-  };
-}
-
-function formatTokenTime(value: string | number | null) {
-  if (value == null) return '—';
-  const timestamp = typeof value === 'number' ? value : Date.parse(value);
-  return new Date(timestamp).toLocaleString();
 }
