@@ -82,6 +82,37 @@ p {
   }
 }
 
+.history-chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px;
+  line-height: 1.5;
+}
+
+.history-group-filter {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.history-chart-groups {
+  margin: 8px;
+  line-height: 1.5;
+}
+
+.history-group-empty {
+  display: block;
+  padding: 24px 0;
+}
+
+@media (max-width: 768px) {
+  .history-chart-group .cards .card {
+    width: 100%;
+  }
+}
+
 .favorite-content {
   padding: 8px;
   border-radius: 6px;

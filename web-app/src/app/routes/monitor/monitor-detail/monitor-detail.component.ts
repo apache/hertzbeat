@@ -31,6 +31,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { groupHistoryCharts, HistoryChartGroup, HistoryChartMetric } from './history-chart-groups';
 
 @Component({
   selector: 'app-monitor-detail',
@@ -56,7 +57,11 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   port: number | undefined;
   metrics!: string[];
   metricsInfo: any[] = [];
-  chartMetrics: any[] = [];
+  chartMetrics: HistoryChartMetric[] = [];
+  chartMetricGroups: HistoryChartGroup[] = [];
+  displayedChartGroups: HistoryChartGroup[] = [];
+  selectedChartGroups: string[] = [];
+  collapsedChartGroups = new Set<string>();
   deadline = 90;
   countDownTime: number = 0;
   interval$!: any;
@@ -71,7 +76,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   hasMoreMetrics: boolean = true;
 
   // Lazy loading state for chart metrics
-  displayedChartMetrics: any[] = [];
+  displayedChartMetrics: HistoryChartMetric[] = [];
   chartPageSize: number = 6;
   currentChartPage: number = 0;
   isLoadingMoreCharts: boolean = false;
@@ -97,6 +102,9 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   private chartIo?: IntersectionObserver;
   private favoriteIo: IntersectionObserver | undefined;
   private favoriteChartIo: IntersectionObserver | undefined;
+  private chartGroupsMonitorId?: number;
+  private chartObserverVersion = 0;
+  private destroyed = false;
 
   ngOnInit(): void {
     this.countDownTime = this.deadline;
@@ -152,6 +160,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
                 });
               }
             });
+            this.syncChartMetricGroups();
             this.loadInitialCharts();
             this.setupChartIntersectionObserver();
             this.cdr.detectChanges();
@@ -197,6 +206,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
             this.hasMoreMetrics = true;
             this.isLoadingMore = false;
             this.displayedChartMetrics = [];
+            this.displayedChartGroups = [];
             this.currentChartPage = 0;
             this.hasMoreCharts = true;
             this.isLoadingMoreCharts = false;
@@ -226,35 +236,109 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       );
   }
 
-  private loadInitialCharts(): void {
-    const end = Math.min(this.chartPageSize, this.chartMetrics?.length || 0);
-    this.displayedChartMetrics = (this.chartMetrics || []).slice(0, end);
-    this.currentChartPage = 1;
-    this.hasMoreCharts = end < (this.chartMetrics?.length || 0);
+  onChartGroupsChanged(names: string[]): void {
+    const selected = new Set(names);
+    this.selectedChartGroups = this.chartMetricGroups.map(group => group.name).filter(name => selected.has(name));
+    this.loadInitialCharts();
+    this.setupChartIntersectionObserver();
+  }
+
+  onChartGroupActiveChange(name: string, active: boolean): void {
+    if (active === !this.collapsedChartGroups.has(name)) return;
+    if (active) {
+      this.collapsedChartGroups.delete(name);
+    } else {
+      this.collapsedChartGroups.add(name);
+    }
+    this.loadInitialCharts(Math.max(this.chartPageSize, this.displayedChartMetrics.length));
+    this.setupChartIntersectionObserver();
+  }
+
+  setChartGroupsExpanded(expanded: boolean): void {
+    for (const name of this.selectedChartGroups) {
+      if (expanded) {
+        this.collapsedChartGroups.delete(name);
+      } else {
+        this.collapsedChartGroups.add(name);
+      }
+    }
+    this.loadInitialCharts(Math.max(this.chartPageSize, this.displayedChartMetrics.length));
+    this.setupChartIntersectionObserver();
+  }
+
+  getChartGroupLabel(name: string): string {
+    const key = `monitor.app.${this.app}.metrics.${name}`;
+    const label = this.i18nSvc.fanyi(key);
+    return label === key ? name : label;
+  }
+
+  trackChartGroup(_index: number, group: HistoryChartGroup): string {
+    return group.name;
+  }
+
+  private syncChartMetricGroups(): void {
+    const monitorChanged = this.chartGroupsMonitorId !== this.monitorId;
+    const allSelected = this.chartMetricGroups.every(group => this.selectedChartGroups.includes(group.name));
+    this.chartMetricGroups = groupHistoryCharts(this.chartMetrics);
+    const names = this.chartMetricGroups.map(group => group.name);
+    const available = new Set(names);
+    this.selectedChartGroups = monitorChanged || allSelected ? names : this.selectedChartGroups.filter(name => available.has(name));
+    this.collapsedChartGroups = monitorChanged
+      ? new Set<string>()
+      : new Set(Array.from(this.collapsedChartGroups).filter(name => available.has(name)));
+    this.chartGroupsMonitorId = this.monitorId;
+  }
+
+  private getFilteredChartMetrics(): HistoryChartMetric[] {
+    const selected = new Set(this.selectedChartGroups);
+    return this.chartMetrics.filter(chart => selected.has(chart.metrics) && !this.collapsedChartGroups.has(chart.metrics));
+  }
+
+  private updateDisplayedChartGroups(): void {
+    const loaded = new Map(groupHistoryCharts(this.displayedChartMetrics).map(group => [group.name, group.charts]));
+    const selected = new Set(this.selectedChartGroups);
+    this.displayedChartGroups = this.chartMetricGroups
+      .filter(group => selected.has(group.name))
+      .map(group => ({ name: group.name, charts: loaded.get(group.name) ?? [] }))
+      .filter(group => group.charts.length > 0 || this.collapsedChartGroups.has(group.name));
+  }
+
+  private loadInitialCharts(limit: number = this.chartPageSize): void {
+    const charts = this.getFilteredChartMetrics();
+    const end = Math.min(limit, charts.length);
+    this.displayedChartMetrics = charts.slice(0, end);
+    this.currentChartPage = Math.ceil(end / this.chartPageSize);
+    this.hasMoreCharts = end < charts.length;
+    this.isLoadingMoreCharts = false;
+    this.updateDisplayedChartGroups();
     this.cdr.detectChanges();
   }
 
   private loadMoreCharts(): void {
     if (this.isLoadingMoreCharts || !this.hasMoreCharts) return;
     this.isLoadingMoreCharts = true;
-    const start = this.currentChartPage * this.chartPageSize;
-    const end = Math.min(start + this.chartPageSize, this.chartMetrics.length);
-    const nextChunk = this.chartMetrics.slice(start, end);
+    const charts = this.getFilteredChartMetrics();
+    const start = this.displayedChartMetrics.length;
+    const end = Math.min(start + this.chartPageSize, charts.length);
+    const nextChunk = charts.slice(start, end);
     this.displayedChartMetrics = this.displayedChartMetrics.concat(nextChunk);
     this.currentChartPage++;
-    this.hasMoreCharts = end < this.chartMetrics.length;
+    this.hasMoreCharts = end < charts.length;
     this.isLoadingMoreCharts = false;
+    this.updateDisplayedChartGroups();
     this.cdr.detectChanges();
   }
 
   private setupChartIntersectionObserver(): void {
+    const version = ++this.chartObserverVersion;
     if (this.chartIo) {
       this.chartIo.disconnect();
       this.chartIo = undefined;
     }
 
+    if (!this.hasMoreCharts || this.destroyed) return;
     setTimeout(() => {
-      this.initChartObserver();
+      this.initChartObserver(0, version);
     }, 0);
   }
 
@@ -319,14 +403,15 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  private initChartObserver(retryCount: number = 0): void {
+  private initChartObserver(retryCount: number = 0, version: number = this.chartObserverVersion): void {
+    if (version !== this.chartObserverVersion || this.destroyed || this.whichTabIndex !== 1 || !this.hasMoreCharts) return;
     const maxRetries = 3;
     const sentinel = document.getElementById('charts-load-sentinel');
 
     if (!sentinel) {
       if (retryCount < maxRetries) {
         setTimeout(() => {
-          this.initChartObserver(retryCount + 1);
+          this.initChartObserver(retryCount + 1, version);
         }, 100 * (retryCount + 1));
       }
       return;
@@ -336,7 +421,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       this.chartIo = new IntersectionObserver(
         entries => {
           for (const entry of entries) {
-            if (entry.isIntersecting && !this.isLoadingMoreCharts) {
+            if (entry.isIntersecting && version === this.chartObserverVersion && this.whichTabIndex === 1 && !this.isLoadingMoreCharts) {
               this.loadMoreCharts();
             }
           }
@@ -353,7 +438,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       console.error('Failed to setup chart intersection observer:', error);
       if (retryCount < maxRetries) {
         setTimeout(() => {
-          this.initChartObserver(retryCount + 1);
+          this.initChartObserver(retryCount + 1, version);
         }, 200 * (retryCount + 1));
       }
     }
@@ -633,6 +718,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.chartObserverVersion++;
     if (this.interval$) {
       clearInterval(this.interval$);
       this.interval$ = undefined;
@@ -690,6 +777,10 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     this.displayedFavoriteChartMetrics = [];
     this.metrics = [];
     this.chartMetrics = [];
+    this.chartMetricGroups = [];
+    this.displayedChartGroups = [];
+    this.selectedChartGroups = [];
+    this.collapsedChartGroups.clear();
     this.favoriteMetrics = [];
     this.favoriteChartMetrics = [];
     this.favoriteMetricsSet.clear();
