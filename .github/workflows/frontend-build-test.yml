@@ -37,7 +37,7 @@ on:
       - '.github/workflows/frontend-build-test.yml'
 
 jobs:
-  verify:
+  static-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -63,6 +63,82 @@ jobs:
     - name: Install
       working-directory: web-app
       run: pnpm install --frozen-lockfile
-    - name: Verify
+    - name: Verify static contracts
       working-directory: web-app
-      run: pnpm verify
+      run: pnpm toolchain:check && pnpm architecture && pnpm i18n:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm diff:check
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.9.0 --activate
+    - name: Resolve pnpm store
+      id: pnpm-store
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('web-app/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
+    - name: Install
+      working-directory: web-app
+      run: pnpm install --frozen-lockfile
+    - name: Verify unit tests
+      working-directory: web-app
+      run: pnpm test --shard=${{ matrix.shard }}/2
+
+  build-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.9.0 --activate
+    - name: Resolve pnpm store
+      id: pnpm-store
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('web-app/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
+    - name: Install
+      working-directory: web-app
+      run: pnpm install --frozen-lockfile
+    - name: Verify production build
+      working-directory: web-app
+      run: pnpm build && pnpm budget && pnpm dead-code && pnpm diff:check
+
+  verify:
+    if: ${{ always() }}
+    needs: [static-checks, unit-tests, build-checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - name: Require every frontend gate
+      run: |
+        test "${{ needs.static-checks.result }}" = success
+        test "${{ needs.unit-tests.result }}" = success
+        test "${{ needs.build-checks.result }}" = success
