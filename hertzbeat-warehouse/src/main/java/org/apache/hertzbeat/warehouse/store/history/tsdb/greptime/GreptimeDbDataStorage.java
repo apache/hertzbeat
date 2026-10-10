@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
+
 import org.apache.hertzbeat.common.observability.dto.log.LogAnalysis;
 import org.apache.hertzbeat.common.observability.dto.log.LogComparison;
 import org.apache.hertzbeat.common.observability.dto.log.LogQuerySet;
@@ -933,7 +935,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 .queryParam("start", start)
                 .queryParam("end", end)
                 .queryParam("step", step)
-                .queryParam("db", greptimeProperties.database());
+                .queryParam("db", TelemetrySourceContext.database(greptimeProperties.database()));
         UriComponents cloneUriComponents = uriComponentsBuilder.cloneBuilder().build(true);
         String queryValue = queryFunction.apply(cloneUriComponents);
         if (!StringUtils.hasText(queryValue)) {
@@ -2225,7 +2227,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             // workspace column. Referencing optional JSON aliases as columns
             // makes the whole correlation query fail during SQL planning.
             String workspaceMatch = workspaceColumn + " = '" + escaped + "'";
-            conditions.add("default".equals(escaped)
+            conditions.add(!TelemetrySourceContext.isSelf() && "default".equals(escaped)
                     ? "(" + workspaceMatch + " OR " + workspaceColumn + " IS NULL OR "
                             + workspaceColumn + " = '')"
                     : workspaceMatch);
@@ -2309,6 +2311,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return null;
         }
         String normalizedWorkspaceId = safeString(workspaceId.trim());
+        if (TelemetrySourceContext.isSelf()) {
+            if (!workspaceId.trim().equals(TelemetrySourceContext.capture().workspaceId())) {
+                throw new IllegalArgumentException("Self telemetry workspace does not match the authorized route");
+            }
+            return workspaceJsonExpression("hertzbeat.workspace_id") + " = '" + normalizedWorkspaceId + "'";
+        }
         List<String> workspaceExpressions = List.of(
                 workspaceJsonExpression("hertzbeat.workspace_id"),
                 workspaceJsonExpression("hertzbeat_workspace_id"),
@@ -2316,7 +2324,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 workspaceJsonExpression("workspace_id"));
         int lowestPriority = workspaceExpressions.size() - 1;
         String condition = workspaceExpressions.get(lowestPriority) + " = '" + normalizedWorkspaceId + "'";
-        if ("default".equals(normalizedWorkspaceId)) {
+        if (!TelemetrySourceContext.isSelf() && "default".equals(normalizedWorkspaceId)) {
             condition = "(" + condition + " OR " + missingWorkspaceExpression(
                     workspaceExpressions.get(lowestPriority)) + ")";
         }
@@ -2528,6 +2536,34 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             log.error("[warehouse greptime-log] batchDeleteLogs error: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    @Override
+    public boolean supportsSelfTelemetry() {
+        return true;
+    }
+
+    @Override
+    public boolean batchDeleteLogs(String workspaceId, List<Long> timeUnixNanos) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new IllegalArgumentException("Workspace is required for log deletion");
+        }
+        if (!isServerAvailable() || timeUnixNanos == null || timeUnixNanos.isEmpty()) {
+            return false;
+        }
+        String timestamps = timeUnixNanos.stream().filter(Objects::nonNull)
+                .map(timestamp -> "to_timestamp_nanos(" + timestamp + ")").collect(Collectors.joining(", "));
+        if (timestamps.isEmpty()) {
+            return false;
+        }
+        String sql = "DELETE FROM " + LOG_TABLE_NAME + " WHERE timestamp IN (" + timestamps + ") AND ("
+                + workspaceCondition(workspaceId) + ")";
+        try {
+            greptimeSqlQueryExecutor.executeMutationStrict(sql);
+        } catch (RuntimeException failure) {
+            throw new IllegalStateException("Greptime log deletion is unavailable; managed append-mode tables do not support DELETE", failure);
+        }
+        return true;
     }
 
     @Override

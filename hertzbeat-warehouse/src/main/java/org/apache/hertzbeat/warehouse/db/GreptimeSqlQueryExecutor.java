@@ -38,6 +38,7 @@ import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -106,6 +107,11 @@ public class GreptimeSqlQueryExecutor implements QueryExecutor {
         return executeGuarded(queryString, true);
     }
 
+    /** Discovers table names only when the response schema is verifiable, including an empty database. */
+    public List<Map<String, Object>> discoverTables() {
+        return queryGuard.execute(() -> executeDirect("SHOW TABLES", true, true));
+    }
+
     /** Prepares only the bounded managed-log projection; never exposes unguarded SQL to callers. */
     public org.apache.hertzbeat.common.observability.dto.log.PreparedLogGroupSelection prepareLogGroupSelection(
             org.apache.hertzbeat.common.observability.dto.log.LogGroupSelection selection) {
@@ -122,36 +128,13 @@ public class GreptimeSqlQueryExecutor implements QueryExecutor {
     }
 
     private List<Map<String, Object>> executeDirect(String queryString, boolean strict) {
+        return executeDirect(queryString, strict, false);
+    }
+
+    private List<Map<String, Object>> executeDirect(String queryString, boolean strict, boolean tableDiscovery) {
         List<Map<String, Object>> results = new LinkedList<>();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        String username = trimmed(greptimeProperties.username());
-        String password = trimmed(greptimeProperties.password());
-        if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
-            String authStr = username + ":" + password;
-            String encodedAuth = Base64Util.encode(authStr);
-            headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
-        }
-
-        String requestBody = "sql=" + URLEncoder.encode(queryString, StandardCharsets.UTF_8);
-        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
-
-        String url = sqlEndpoint(greptimeProperties.httpEndpoint());
-        String database = trimmed(greptimeProperties.database());
-        if (StringUtils.hasText(database)) {
-            url += "?db=" + UriUtils.encodeQueryParam(database, StandardCharsets.UTF_8);
-        }
-
-        ResponseEntity<GreptimeSqlQueryContent> responseEntity;
-        try {
-            responseEntity = restTemplate.exchange(url,
-                    HttpMethod.POST, httpEntity, GreptimeSqlQueryContent.class);
-        } catch (Exception e) {
-            log.error("Exception occurred while querying GreptimeDB SQL: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to execute GreptimeDB SQL query", e);
-        }
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity = exchangeSql(queryString, GreptimeSqlQueryContent.class);
 
         if (responseEntity == null) {
             if (strict) {
@@ -173,6 +156,9 @@ public class GreptimeSqlQueryExecutor implements QueryExecutor {
                     if (output != null && output.getRecords() != null && output.getRecords().getRows() != null) {
                         GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
                         List<List<Object>> rows = output.getRecords().getRows();
+                        if (tableDiscovery) {
+                            validateTableDiscoverySchema(schema);
+                        }
                         validateStrictSchema(schema, rows, strict);
 
                         for (List<Object> row : rows) {
@@ -200,6 +186,56 @@ public class GreptimeSqlQueryExecutor implements QueryExecutor {
             log.error("query metrics data from greptime failed. {}", responseEntity);
         }
         return results;
+    }
+
+    /** Validates a single mutation acknowledgement, including successful zero-row deletions. */
+    public long executeMutationStrict(String sql) {
+        ResponseEntity<GreptimeSqlMutationResponse> response = exchangeSql(sql, GreptimeSqlMutationResponse.class);
+        if (response == null || !response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new IllegalStateException("GreptimeDB SQL mutation returned no successful HTTP acknowledgement");
+        }
+        return response.getBody().affectedRows();
+    }
+
+    private <T> ResponseEntity<T> exchangeSql(String queryString, Class<T> responseType) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        String username = trimmed(greptimeProperties.username());
+        String password = trimmed(greptimeProperties.password());
+        if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+            String authStr = username + ":" + password;
+            String encodedAuth = Base64Util.encode(authStr);
+            headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+        }
+
+        String requestBody = "sql=" + URLEncoder.encode(queryString, StandardCharsets.UTF_8);
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
+        String url = sqlEndpoint(greptimeProperties.httpEndpoint());
+        String database = trimmed(TelemetrySourceContext.database(greptimeProperties.database()));
+        if (StringUtils.hasText(database)) {
+            url += "?db=" + UriUtils.encodeQueryParam(database, StandardCharsets.UTF_8);
+        }
+
+        try {
+            return restTemplate.exchange(url,
+                    HttpMethod.POST, httpEntity, responseType);
+        } catch (Exception e) {
+            log.error("Exception occurred while querying GreptimeDB SQL: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to execute GreptimeDB SQL query", e);
+        }
+
+    }
+
+    private void validateTableDiscoverySchema(GreptimeSqlQueryContent.Output.Records.Schema schema) {
+        if (schema == null || schema.getColumnSchemas() == null || schema.getColumnSchemas().size() != 1) {
+            throw new IllegalStateException("GreptimeDB table discovery returned an unverifiable schema");
+        }
+        GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema column = schema.getColumnSchemas().getFirst();
+        if (column == null || !StringUtils.hasText(column.getName()) || !"String".equals(column.getDataType())) {
+            throw new IllegalStateException("GreptimeDB table discovery requires a named String column");
+        }
     }
 
     private void validateStrictResponse(GreptimeSqlQueryContent responseBody, boolean strict) {

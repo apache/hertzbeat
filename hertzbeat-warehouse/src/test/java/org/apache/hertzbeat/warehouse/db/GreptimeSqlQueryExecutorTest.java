@@ -42,6 +42,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySource;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,6 +90,22 @@ class GreptimeSqlQueryExecutorTest {
     @AfterEach
     void tearDown() {
         queryGuard.close();
+        TelemetrySourceContext.clear();
+    }
+
+    @Test
+    void selectsOnlyCapturedTrustedDatabaseAndReturnsToExternalAfterClear() {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class))).thenReturn(ResponseEntity.ok(new GreptimeSqlQueryContent()));
+        TelemetrySourceContext.bind(new TelemetrySourceContext.Route(TelemetrySource.SELF, "hertzbeat_self", "operations"));
+        greptimeSqlQueryExecutor.execute("SELECT body FROM hertzbeat_logs WHERE trace_id = 'same-id'");
+        TelemetrySourceContext.clear();
+        greptimeSqlQueryExecutor.execute("SELECT body FROM hertzbeat_logs WHERE trace_id = 'same-id'");
+        ArgumentCaptor<String> urls = ArgumentCaptor.forClass(String.class);
+        verify(restTemplate, org.mockito.Mockito.times(2)).exchange(urls.capture(), eq(HttpMethod.POST),
+                any(HttpEntity.class), eq(GreptimeSqlQueryContent.class));
+        assertEquals(List.of("http://127.0.0.1:4000/v1/sql?db=hertzbeat_self",
+                "http://127.0.0.1:4000/v1/sql?db=hertzbeat"), urls.getAllValues());
     }
 
     @Test
@@ -119,6 +137,41 @@ class GreptimeSqlQueryExecutorTest {
         assertFalse(encodedValue.contains("&"), "raw '&' in body causes HTTP parameter pollution");
         // Decoding the value must yield exactly the original SQL, lossless round-trip.
         assertEquals(sql, URLDecoder.decode(encodedValue, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void mutationAcknowledgementUsesTrustedSelfRouteAndEncodedBody() {
+        GreptimeSqlMutationResponse payload = new GreptimeSqlMutationResponse(null, null,
+                List.of(new GreptimeSqlMutationResponse.Output(2L, null, null)));
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class),
+                eq(GreptimeSqlMutationResponse.class))).thenReturn(ResponseEntity.ok(payload));
+        TelemetrySourceContext.bind(new TelemetrySourceContext.Route(TelemetrySource.SELF, "hertzbeat_self", "team-a"));
+        String sql = "DELETE FROM hertzbeat_logs WHERE body = 'a&sql=DROP TABLE t'";
+
+        assertEquals(2, greptimeSqlQueryExecutor.executeMutationStrict(sql));
+        ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<HttpEntity<String>> request = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(url.capture(), eq(HttpMethod.POST), request.capture(), eq(GreptimeSqlMutationResponse.class));
+        assertEquals("http://127.0.0.1:4000/v1/sql?db=hertzbeat_self", url.getValue());
+        assertEquals(sql, URLDecoder.decode(request.getValue().getBody().substring(4), StandardCharsets.UTF_8));
+    }
+
+    @ParameterizedTest
+    @MethodSource("failedMutationResponses")
+    void mutationDoesNotAcknowledgeHttpOrBodyFailure(ResponseEntity<GreptimeSqlMutationResponse> response) {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class),
+                eq(GreptimeSqlMutationResponse.class))).thenReturn(response);
+        assertThrows(RuntimeException.class, () -> greptimeSqlQueryExecutor.executeMutationStrict("DELETE FROM hertzbeat_logs"));
+    }
+
+    private static Stream<Arguments> failedMutationResponses() {
+        GreptimeSqlMutationResponse valid = new GreptimeSqlMutationResponse(0, null,
+                List.of(new GreptimeSqlMutationResponse.Output(1L, null, null)));
+        GreptimeSqlMutationResponse error = new GreptimeSqlMutationResponse(1004, "append mode", valid.output());
+        return Stream.of(Arguments.of((Object) null),
+                Arguments.of(new ResponseEntity<>(valid, HttpStatus.SERVICE_UNAVAILABLE)),
+                Arguments.of(ResponseEntity.ok().build()), Arguments.of(ResponseEntity.ok(error)),
+                Arguments.of(ResponseEntity.ok(new GreptimeSqlMutationResponse(0, null, List.of()))));
     }
 
     @Test

@@ -72,6 +72,8 @@ import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -1156,6 +1158,27 @@ class GreptimeDbDataStorageTest {
         }
     }
 
+
+    @Test
+    void scopedDeletionUsesWorkspaceAndSelfNeverFallsBackToUnscopedLegacyRows() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard);
+            TelemetrySourceContext.bind(new TelemetrySourceContext.Route(TelemetrySource.SELF, "hertzbeat_self", "default"));
+            assertTrue(greptimeDbDataStorage.batchDeleteLogs("default", List.of(1L, 2L)));
+            ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).executeMutationStrict(sql.capture());
+            assertTrue(sql.getValue().contains("timestamp IN (to_timestamp_nanos(1), to_timestamp_nanos(2)) AND"));
+            assertTrue(sql.getValue().contains("hertzbeat.workspace_id"));
+            assertTrue(sql.getValue().contains("= 'default'"));
+            assertFalse(sql.getValue().contains("IS NULL"));
+            assertThrows(IllegalArgumentException.class, () -> greptimeDbDataStorage.batchDeleteLogs("", List.of(1L)));
+            when(greptimeSqlQueryExecutor.executeMutationStrict(anyString())).thenThrow(new IllegalStateException("append mode rejects DELETE"));
+            assertThrows(IllegalStateException.class, () -> greptimeDbDataStorage.batchDeleteLogs("default", List.of(1L)));
+        } finally {
+            TelemetrySourceContext.clear();
+        }
+    }
 
     @Test
     void testBatchDeleteLogsWithValidList() {
