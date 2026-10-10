@@ -104,6 +104,21 @@ ALLOWED_JVM_NATIVE_JAR_PREFIXES = (
     "xugu-jdbc-",
     "zstd-jni-",
 )
+# Maven Central com.alibaba.nacos:nacos-client:3.1.1 shades gRPC Netty
+# transport/TLS libraries used by the existing Nacos discovery client.
+NACOS_COLLECTOR_JAR_PATH = re.compile(
+    r"!/apache-hertzbeat-collector-[^/]+/lib/nacos-client-3\.1\.1\.jar$"
+)
+NACOS_CLIENT_SHA256 = "08bc00766deb3a5044e1e16561ac49df74f397ca268ee6ef2f84a3317485c6c1"
+NACOS_NATIVE_MEMBERS = {
+    "meta-inf/native/libio_grpc_netty_shaded_netty_tcnative_linux_x86_64.so",
+    "meta-inf/native/libio_grpc_netty_shaded_netty_tcnative_linux_aarch_64.so",
+    "meta-inf/native/libio_grpc_netty_shaded_netty_tcnative_osx_x86_64.jnilib",
+    "meta-inf/native/libio_grpc_netty_shaded_netty_tcnative_osx_aarch_64.jnilib",
+    "meta-inf/native/io_grpc_netty_shaded_netty_tcnative_windows_x86_64.dll",
+    "meta-inf/native/libio_grpc_netty_shaded_netty_transport_native_epoll_x86_64.so",
+    "meta-inf/native/libio_grpc_netty_shaded_netty_transport_native_epoll_aarch_64.so",
+}
 ALLOWED_STARTUP_NATIVE_JAR_PREFIXES = (
     "grpc-netty-shaded-",
     "jna-",
@@ -171,6 +186,7 @@ def reject_unsafe_archive_member(name: str, logical_path: str) -> None:
     normalized = name.replace("\\", "/")
     if (not normalized
             or "\x00" in normalized
+            or "!/" in normalized
             or normalized.startswith("/")
             or re.match(r"^[a-zA-Z]:/", normalized)
             or ".." in PurePosixPath(normalized).parts):
@@ -265,6 +281,8 @@ def is_allowed_packaged_native_path(name: str, logical_path: str) -> bool:
     if jvm_native is None:
         return False
     jar_name, native_member = jvm_native.groups()
+    if jar_name == "nacos-client-3.1.1.jar":
+        return native_member in NACOS_NATIVE_MEMBERS
     return (jar_name.startswith(ALLOWED_JVM_NATIVE_JAR_PREFIXES)
             and native_member.endswith((".so", ".dll", ".dylib", ".jnilib")))
 
@@ -437,6 +455,9 @@ def inspect_nested_member(payload: bytes, logical_path: str, depth: int) -> None
     if len(payload) > MAX_ARCHIVE_MEMBER_BYTES:
         raise ReleasePolicyError(f"nested archive member exceeds safety limit: {logical_path}")
     reject_distribution_name(logical_path)
+    if (NACOS_COLLECTOR_JAR_PATH.search(normalized_name(logical_path)) is not None
+            and hashlib.sha256(payload).hexdigest() != NACOS_CLIENT_SHA256):
+        raise ReleasePolicyError(f"Nacos client artifact differs from the reviewed Maven Central jar: {logical_path}")
     try:
         if zipfile.is_zipfile(io.BytesIO(payload)):
             inspect_zip(payload, logical_path, depth)

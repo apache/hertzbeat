@@ -30,6 +30,7 @@ import tarfile
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 import zipfile
 from pathlib import Path
 
@@ -612,6 +613,79 @@ class ReleaseContentPolicyTest(unittest.TestCase):
                 startup = self.write(archive_name, zip_bytes(entries))
                 with self.assertRaises(release_content.ReleasePolicyError):
                     release_content.inspect_release_archive(startup)
+
+    def test_collector_allows_only_reviewed_nacos_native_members(self) -> None:
+        nacos = zip_bytes({name: b"\x7fELF" + b"\0" * 64
+                           for name in release_content.NACOS_NATIVE_MEMBERS})
+        release = self.write("collector-nacos.tar.gz", tar_bytes({
+            "apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.1.jar": nacos,
+        }))
+        # Synthetic bytes stand in for the pinned artifact; path/member scanning
+        # remains real, and the separate tampering test uses the production pin.
+        with patch.object(release_content, "NACOS_CLIENT_SHA256", hashlib.sha256(nacos).hexdigest()):
+            release_content.inspect_release_archive(release)
+
+    def test_collector_rejects_tampered_nacos_artifact(self) -> None:
+        nacos = zip_bytes({next(iter(release_content.NACOS_NATIVE_MEMBERS)): b"\x7fELF" + b"\0" * 64})
+        release = self.write("tampered-nacos.tar.gz", tar_bytes({
+            "apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.1.jar": nacos,
+        }))
+        with self.assertRaisesRegex(release_content.ReleasePolicyError, "differs from the reviewed"):
+            release_content.inspect_release_archive(release)
+
+    def test_collector_rejects_nacos_format_substitution_before_dispatch(self) -> None:
+        member = next(iter(release_content.NACOS_NATIVE_MEMBERS))
+        payloads = {
+            "renamed-tar": tar_bytes({member: b"\x7fELF" + b"\0" * 64}),
+            "non-archive": b"not an archive",
+            "invalid-zip": b"PK\x03\x04invalid",
+            "empty": b"",
+        }
+        for name, payload in payloads.items():
+            with self.subTest(name=name):
+                # Keep the production hash unchanged: matching member names
+                # cannot grant trust to an artifact with different bytes.
+                release = self.write(name + ".tar.gz", tar_bytes({
+                    "apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.1.jar": payload,
+                }))
+                with self.assertRaisesRegex(release_content.ReleasePolicyError, "differs from the reviewed"):
+                    release_content.inspect_release_archive(release)
+
+    def test_collector_rejects_literal_archive_boundary_in_member_names(self) -> None:
+        member = next(iter(release_content.NACOS_NATIVE_MEMBERS))
+        name = "apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.1.jar!/" + member
+        for separator in ("/", "\\"):
+            for archive_kind, builder in (("tar", tar_bytes), ("zip", zip_bytes)):
+                with self.subTest(separator=separator, archive=archive_kind):
+                    release = self.write("forged-" + archive_kind + ".bin", builder({
+                        name.replace("/", separator): b"\x7fELF" + b"\0" * 64,
+                    }))
+                    with self.assertRaisesRegex(release_content.ReleasePolicyError, "unsafe archive member path"):
+                        release_content.inspect_release_archive(release)
+
+    def test_release_preserves_unambiguous_exclamation_member_names(self) -> None:
+        for archive_kind, builder in (("tar", tar_bytes), ("zip", zip_bytes)):
+            with self.subTest(archive=archive_kind):
+                release = self.write("safe-" + archive_kind + ".bin", builder({"docs/readme!.txt": b"text"}))
+                release_content.inspect_release_archive(release)
+
+    def test_collector_rejects_nacos_outside_reviewed_version_members_and_layout(self) -> None:
+        member = next(iter(release_content.NACOS_NATIVE_MEMBERS))
+        fixtures = {
+            "wrong-version": ("apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.2.jar", member),
+            "wrong-layout": ("other-product/lib/nacos-client-3.1.1.jar", member),
+            "wrong-member": ("apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.1.jar",
+                             "META-INF/native/unknown.so"),
+            "renamed-agent": ("apache-hertzbeat-collector-2.0.0-bin/lib/nacos-client-3.1.1.jar",
+                              "io/opentelemetry/javaagent/OpenTelemetryAgent.class"),
+        }
+        for name, (jar_path, entry) in fixtures.items():
+            with self.subTest(name=name):
+                nacos = zip_bytes({entry: b"\x7fELF" + b"\0" * 64})
+                release = self.write(name + ".tar.gz", tar_bytes({jar_path: nacos}))
+                with patch.object(release_content, "NACOS_CLIENT_SHA256", hashlib.sha256(nacos).hexdigest()):
+                    with self.assertRaises(release_content.ReleasePolicyError):
+                        release_content.inspect_release_archive(release)
 
     def test_collector_sbom_rejects_ecosystem_specific_sdk_purls(self) -> None:
         purls = [
