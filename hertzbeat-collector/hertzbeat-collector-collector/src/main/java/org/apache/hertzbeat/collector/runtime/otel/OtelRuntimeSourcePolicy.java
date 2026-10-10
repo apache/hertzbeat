@@ -153,11 +153,10 @@ public class OtelRuntimeSourcePolicy {
         if (value.contains("**") || hasTraversalSegment(value)) {
             throw new IllegalArgumentException("Recursive globs and path traversal are not allowed");
         }
-        Path patternPath = Path.of(value);
-        if (!patternPath.isAbsolute()) {
+        Path configuredBase = pathBeforeGlob(value);
+        if (!configuredBase.isAbsolute()) {
             throw new IllegalArgumentException("File log path pattern must be absolute");
         }
-        Path configuredBase = pathBeforeGlob(value);
         Path realBase = configuredBase.toRealPath();
         if (allowRoots.stream().noneMatch(realBase::startsWith)) {
             throw new IllegalArgumentException("File log path escapes local allow roots");
@@ -165,14 +164,14 @@ public class OtelRuntimeSourcePolicy {
         if (denyPaths.stream().anyMatch(realBase::startsWith)) {
             throw new IllegalArgumentException("File log path is denied by local policy");
         }
-        matchedFiles.addAll(matchedFiles(value, configuredBase, realBase, allowRoots, denyPaths));
+        matchedFiles.addAll(matchedFiles(value, realBase, allowRoots, denyPaths));
         if (matchedFiles.size() > MAXIMUM_FILES_PER_SOURCE) {
             throw new IllegalArgumentException("File log source matches too many existing files; maximum is 256");
         }
         return value.replace('\\', '/');
     }
 
-    private List<Path> matchedFiles(String pattern, Path configuredBase, Path realBase, List<Path> allowRoots,
+    private List<Path> matchedFiles(String pattern, Path realBase, List<Path> allowRoots,
                                     List<Path> denyPaths) throws IOException {
         if (firstGlobIndex(pattern) < 0) {
             if (!Files.isRegularFile(realBase)) {
@@ -180,12 +179,15 @@ public class OtelRuntimeSourcePolicy {
             }
             return List.of(realBase);
         }
-        String relativePattern = pattern.substring(configuredBase.toString().length());
-        while (relativePattern.startsWith("/") || relativePattern.startsWith("\\")) {
-            relativePattern = relativePattern.substring(1);
+        int firstGlob = firstGlobIndex(pattern);
+        int lastSeparator = Math.max(pattern.lastIndexOf('/', firstGlob), pattern.lastIndexOf('\\', firstGlob));
+        String relativePattern = pattern.substring(lastSeparator + 1);
+        if (realBase.getFileSystem().getSeparator().equals("\\")) {
+            relativePattern = relativePattern.replace('\\', '/');
         }
         PathMatcher matcher = realBase.getFileSystem().getPathMatcher("glob:" + relativePattern);
-        int depth = Math.max(1, Path.of(relativePattern).getNameCount());
+        int depth = Math.max(1, (int) java.util.Arrays.stream(relativePattern.split("/"))
+                .filter(segment -> !segment.isEmpty()).count());
         try (var paths = Files.walk(realBase, depth)) {
             List<Path> matches = paths.filter(path -> matcher.matches(realBase.relativize(path)))
                     .filter(Files::isRegularFile)
@@ -216,7 +218,7 @@ public class OtelRuntimeSourcePolicy {
         if (lastSeparator < 0) {
             throw new IllegalArgumentException("File log path pattern has no absolute base directory");
         }
-        return Path.of(pattern.substring(0, lastSeparator));
+        return Path.of(pattern.substring(0, lastSeparator + 1));
     }
 
     private int firstGlobIndex(String value) {

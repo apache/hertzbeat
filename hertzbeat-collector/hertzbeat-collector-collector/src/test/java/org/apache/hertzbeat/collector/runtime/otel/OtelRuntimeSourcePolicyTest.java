@@ -38,12 +38,12 @@ class OtelRuntimeSourcePolicyTest {
     void resolvesOnlyLocallyApprovedFileProfiles() throws Exception {
         Path applicationLogs = Files.createDirectories(tempDir.resolve("applications/payments"));
         OtelRuntimeProperties properties = propertiesFor(
-                Map.of("payments-logs", List.of(applicationLogs.resolve("*.log").toString())));
+                Map.of("payments-logs", List.of(glob(applicationLogs, "*.log"))));
         ManagedOtelRuntimeConfig config = configWithProfile("payments-logs");
 
         OtelRuntimeSourcePolicy.ResolvedSources resolved = new OtelRuntimeSourcePolicy().resolve(config, properties);
 
-        assertEquals(List.of(applicationLogs.resolve("*.log").toString()),
+        assertEquals(List.of(glob(applicationLogs, "*.log").replace('\\', '/')),
                 resolved.fileLogSources().getFirst().includePatterns());
     }
 
@@ -55,12 +55,12 @@ class OtelRuntimeSourcePolicyTest {
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("missing"), unknown));
 
         OtelRuntimeProperties traversal = propertiesFor(
-                Map.of("escape", List.of(tempDir.resolve("applications/../outside/*.log").toString())));
+                Map.of("escape", List.of(glob(tempDir, "applications/../outside/*.log"))));
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("escape"), traversal));
 
         OtelRuntimeProperties deniedProperties = propertiesFor(
-                Map.of("private", List.of(denied.resolve("*.log").toString())));
+                Map.of("private", List.of(glob(denied, "*.log"))));
         deniedProperties.setFileLogDenyPaths(List.of(denied));
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("private"), deniedProperties));
@@ -70,7 +70,7 @@ class OtelRuntimeSourcePolicyTest {
     void rejectsRecursiveGlobsAndSymlinkEscape() throws Exception {
         Path allowed = Files.createDirectories(tempDir.resolve("applications"));
         OtelRuntimeProperties recursive = propertiesFor(
-                Map.of("recursive", List.of(allowed.resolve("**/*.log").toString())));
+                Map.of("recursive", List.of(glob(allowed, "**/*.log"))));
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("recursive"), recursive));
 
@@ -82,7 +82,7 @@ class OtelRuntimeSourcePolicyTest {
             return;
         }
         OtelRuntimeProperties symlink = propertiesFor(
-                Map.of("linked", List.of(link.resolve("*.log").toString())));
+                Map.of("linked", List.of(glob(link, "*.log"))));
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("linked"), symlink));
     }
@@ -119,7 +119,7 @@ class OtelRuntimeSourcePolicyTest {
             Files.createFile(allowed.resolve("application-" + index + ".log"));
         }
         OtelRuntimeProperties properties = propertiesFor(
-                Map.of("many", List.of(allowed.resolve("*.log").toString())));
+                Map.of("many", List.of(glob(allowed, "*.log"))));
 
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("many"), properties));
@@ -134,7 +134,7 @@ class OtelRuntimeSourcePolicyTest {
             Files.createFile(second.resolve("second-" + index + ".log"));
         }
         OtelRuntimeProperties properties = propertiesFor(Map.of(
-                "many", List.of(first.resolve("*.log").toString(), second.resolve("*.log").toString())));
+                "many", List.of(glob(first, "*.log"), glob(second, "*.log"))));
 
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("many"), properties));
@@ -147,6 +147,42 @@ class OtelRuntimeSourcePolicyTest {
         properties.setFileLogAllowRoots(List.of(allowed));
         properties.setFileLogProfiles(profiles);
         return properties;
+    }
+
+    @Test
+    void resolvesNativeSeparatorGlobsAndLiteralFiles() throws Exception {
+        Path allowed = Files.createDirectories(tempDir.resolve("applications/native"));
+        Path literal = Files.writeString(allowed.resolve("current.log"), "log");
+        String nativeGlob = allowed + allowed.getFileSystem().getSeparator() + "*.log";
+        OtelRuntimeProperties properties = propertiesFor(
+                Map.of("native", List.of(nativeGlob, literal.toString())));
+
+        var resolved = new OtelRuntimeSourcePolicy().resolve(configWithProfile("native"), properties);
+
+        assertEquals(List.of(nativeGlob.replace('\\', '/'), literal.toString().replace('\\', '/')),
+                resolved.fileLogSources().getFirst().includePatterns());
+    }
+
+    @Test
+    void countsNestedGlobSegmentsWithoutParsingWildcardsAsPaths() throws Exception {
+        Path allowed = Files.createDirectories(tempDir.resolve("applications/nested"));
+        Path logs = Files.createDirectories(allowed.resolve("service/logs"));
+        for (int index = 0; index < 257; index++) {
+            Files.createFile(logs.resolve("application-" + index + ".log"));
+        }
+        OtelRuntimeProperties properties = propertiesFor(
+                Map.of("nested", List.of(glob(allowed, "*/logs/*.log"))));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("nested"), properties));
+    }
+
+    @Test
+    void rejectsRelativeGlobBases() throws Exception {
+        OtelRuntimeProperties properties = propertiesFor(Map.of("relative", List.of("applications/*.log")));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("relative"), properties));
     }
 
     private static ManagedOtelRuntimeConfig configWithProfile(String profile) {
@@ -180,4 +216,9 @@ class OtelRuntimeSourcePolicyTest {
                 null
         );
     }
+
+    private static String glob(Path directory, String pattern) {
+        return directory.toString().replace('\\', '/') + "/" + pattern;
+    }
+
 }

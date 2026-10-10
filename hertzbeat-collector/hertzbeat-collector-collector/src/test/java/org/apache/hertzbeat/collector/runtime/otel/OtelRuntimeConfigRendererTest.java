@@ -228,7 +228,7 @@ class OtelRuntimeConfigRendererTest {
         properties.setPrometheusTargets(List.of(ManagedOtelRuntimeConfig.PrometheusTarget.basic(
                 "payments", URI.create("https://payments.internal:9464/metrics"), Duration.ofSeconds(30))));
         properties.setFileLogAllowRoots(List.of(tempDir.resolve("logs")));
-        properties.setFileLogProfiles(Map.of("payments-logs", List.of(logs.resolve("*.log").toString())));
+        properties.setFileLogProfiles(Map.of("payments-logs", List.of(glob(logs, "*.log"))));
         properties.setFileLogSources(List.of(
                 new ManagedOtelRuntimeConfig.FileLogSource("payments", "payments-logs")));
 
@@ -393,7 +393,7 @@ class OtelRuntimeConfigRendererTest {
         properties.setPrometheusTargets(List.of(ManagedOtelRuntimeConfig.PrometheusTarget.basic(
                 "payments", URI.create("http://127.0.0.1:9464/metrics"), Duration.ofSeconds(30))));
         properties.setFileLogAllowRoots(List.of(tempDir.resolve("logs")));
-        properties.setFileLogProfiles(Map.of("payments-logs", List.of(logs.resolve("*.log").toString())));
+        properties.setFileLogProfiles(Map.of("payments-logs", List.of(glob(logs, "*.log"))));
         properties.setFileLogSources(List.of(
                 new ManagedOtelRuntimeConfig.FileLogSource("payments", "payments-logs")));
         OtelRuntimeConfigRenderer renderer = new OtelRuntimeConfigRenderer();
@@ -412,4 +412,9 @@ class OtelRuntimeConfigRendererTest {
     private static int occurrences(String value, String target) {
         return (value.length() - value.replace(target, "").length()) / target.length();
     }
+
+    private static String glob(Path directory, String pattern) {
+        return directory.toString().replace('\\', '/') + "/" + pattern;
+    }
+
 }
