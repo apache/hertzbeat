@@ -60,7 +60,7 @@ describe('Explore Query Key factory', () => {
         window: '1000:2000',
         refreshRevision: 4
       },
-      { traceId: 'trace-1', spanId: 'span-1' }
+      { traceId: 'trace-1', spanId: 'span-1', source: 'external' }
     ]);
     expect(exploreQueryKeys.logInvestigation(context, window, 'record-1', 5)).toEqual([
       'explore-investigation',
@@ -70,7 +70,7 @@ describe('Explore Query Key factory', () => {
         window: '1000:2000',
         refreshRevision: 5
       },
-      { logRecordUid: 'record-1' }
+      { logRecordUid: 'record-1', source: 'external' }
     ]);
   });
 
@@ -84,7 +84,9 @@ describe('Explore Query Key factory', () => {
       },
       'metrics',
       {
+        source: 'external',
         relativeTimeRange: undefined,
+        metricPlan: undefined,
         query: 'rate(requests_total[5m])',
         metricFilter: 'status=500',
         groupBy: 'service.name',
@@ -96,6 +98,27 @@ describe('Explore Query Key factory', () => {
     ]);
     expect(exploreQueryKeys.history({ ...metricQuery }, { ...window }, 3)).toEqual(
       exploreQueryKeys.history(metricQuery, window, 3)
+    );
+  });
+
+  it('defaults to external and separates the same evidence across sources', () => {
+    for (const signal of ['metrics', 'logs', 'traces'] as const) {
+      const query = { ...sharedQuery, signal };
+      const external = exploreQueryKeys.history(query, window, 3);
+      expect(exploreQueryKeys.history({ ...query, source: 'external' }, window, 3)).toEqual(external);
+      expect(exploreQueryKeys.history({ ...query, source: 'self' }, window, 3)).not.toEqual(external);
+    }
+    expect(exploreQueryKeys.traceInvestigation(context, window, 'trace-1', 'span-1', 4, 'external')).toEqual(
+      exploreQueryKeys.traceInvestigation(context, window, 'trace-1', 'span-1', 4)
+    );
+    expect(exploreQueryKeys.traceInvestigation(context, window, 'trace-1', 'span-1', 4, 'self')).not.toEqual(
+      exploreQueryKeys.traceInvestigation(context, window, 'trace-1', 'span-1', 4)
+    );
+    expect(exploreQueryKeys.logInvestigation(context, window, 'record-1', 5, 'external')).toEqual(
+      exploreQueryKeys.logInvestigation(context, window, 'record-1', 5)
+    );
+    expect(exploreQueryKeys.logInvestigation(context, window, 'record-1', 5, 'self')).not.toEqual(
+      exploreQueryKeys.logInvestigation(context, window, 'record-1', 5)
     );
   });
 
@@ -136,6 +159,7 @@ describe('Explore Query Key factory', () => {
     for (const [field, value] of [
       ['query', 'sum(memory_bytes)'],
       ['metricFilter', 'region=west'],
+      ['metricPlan', '{"version":1}'],
       ['groupBy', 'service.namespace'],
       ['aggregation', 'max'],
       ['temporalAggregation', 'rate'],

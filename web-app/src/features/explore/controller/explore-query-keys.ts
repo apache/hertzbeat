@@ -23,6 +23,7 @@ const historyRootKey = ['explore-history'] as const;
 const metricInventoryRootKey = ['explore-metric-inventory'] as const;
 
 export const exploreQueryKeys = {
+  telemetrySources: (identity: string) => ['explore-telemetry-sources', identity] as const,
   logSourceTrend: (query: ExploreQuery, window: ExactTimeWindow | undefined, refreshRevision: number) =>
     ['explore-log-source-trend', exploreQueryKeys.history(query, window, refreshRevision), refreshRevision] as const,
   logPatterns: (path: string, revision: number) => ['explore-log-patterns', path, revision] as const,
@@ -43,7 +44,10 @@ export const exploreQueryKeys = {
   metricLabels: (path: string, identity: string) => ['explore-metric-labels', path, identity] as const,
   logScopeSuggestions: (path: string) => ['explore-log-scope-suggestions', path] as const,
   metricInventoryScope: (query: ExploreQuery) =>
-    [...metricInventoryRootKey, { context: queryContextScopeKey(exploreQueryContext(query)) }] as const,
+    [
+      ...metricInventoryRootKey,
+      { context: queryContextScopeKey(exploreQueryContext(query)), source: query.source ?? 'external' }
+    ] as const,
   metricInventory: (
     query: ExploreQuery,
     window: ExactTimeWindow,
@@ -53,22 +57,37 @@ export const exploreQueryKeys = {
     refreshRevision = 0
   ) =>
     [
-      ...scopedQueryKey(metricInventoryRootKey, exploreQueryContext(query), window, refreshRevision),
-      { identity, search, limit }
+      ...scopedQueryKey(
+        exploreQueryKeys.metricInventoryScope(query),
+        exploreQueryContext(query),
+        window,
+        refreshRevision
+      ),
+      { identity, search, limit, source: query.source ?? 'external' }
     ] as const,
   traceInvestigation: (
     context: QueryContext,
     window: ExactTimeWindow,
     traceId: string,
     spanId: string | undefined,
-    refreshRevision: number
+    refreshRevision: number,
+    source?: string
   ) =>
     [
       ...scopedQueryKey(['explore-investigation', 'trace'], context, window, refreshRevision),
-      { traceId, spanId }
+      { traceId, spanId, source: source ?? 'external' }
     ] as const,
-  logInvestigation: (context: QueryContext, window: ExactTimeWindow, logRecordUid: string, refreshRevision: number) =>
-    [...scopedQueryKey(['explore-investigation', 'log'], context, window, refreshRevision), { logRecordUid }] as const,
+  logInvestigation: (
+    context: QueryContext,
+    window: ExactTimeWindow,
+    logRecordUid: string,
+    refreshRevision: number,
+    source?: string
+  ) =>
+    [
+      ...scopedQueryKey(['explore-investigation', 'log'], context, window, refreshRevision),
+      { logRecordUid, source: source ?? 'external' }
+    ] as const,
   history: (query: ExploreQuery, window: ExactTimeWindow | undefined, refreshRevision: number) =>
     [
       ...scopedQueryKey(historyRootKey, exploreQueryContext(query), window, refreshRevision),
@@ -84,6 +103,7 @@ function historyRequestIdentity(query: ExploreQuery) {
     return [
       'logs',
       {
+        source: query.source ?? 'external',
         sort: query.sort ?? 'newest',
         logSort: query.logSort,
         relativeTimeRange,
@@ -108,6 +128,7 @@ function historyRequestIdentity(query: ExploreQuery) {
   return [
     'traces',
     {
+      source: query.source ?? 'external',
       relativeTimeRange,
       query: query.query,
       traceId: query.traceId,
@@ -133,6 +154,7 @@ function metricHistoryIdentity(
   return [
     'metrics',
     {
+      source: query.source ?? 'external',
       relativeTimeRange,
       query: query.query,
       operationName: query.operationName,
