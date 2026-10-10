@@ -40,7 +40,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { DefaultInterceptor } from '@core';
 const INTERCEPTOR_PROVIDES = [{ provide: HTTP_INTERCEPTORS, useClass: DefaultInterceptor, multi: true }];
 
-const GLOBAL_THIRD_MODULES: Array<Type<void>> = [SlickCarouselModule, TagCloudComponent];
+const GLOBAL_THIRD_MODULES: Array<Type<void>> = [TagCloudComponent];
 
 import { StartupService } from '@core';
 export function StartupServiceFactory(startupService: StartupService): () => Observable<void> {
@@ -64,7 +64,6 @@ import { RoutesModule } from './routes/routes.module';
 import { SharedModule } from './shared/shared.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
-import { SlickCarouselModule } from 'ngx-slick-carousel';
 import { TagCloudComponent } from 'angular-tag-cloud-module';
 import { MarkdownModule } from 'ngx-markdown';
 

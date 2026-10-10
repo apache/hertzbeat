@@ -52,7 +52,7 @@ importers:
         version: 4.2.0
       '@delon/abc':
         specifier: 17.0.5
-        version: 17.0.5(3a74f0e17f1ee83cf0178f42d12d00d9)
+        version: 17.0.5(ocnofbzi2atvejerafh7bih3oy)
       '@delon/acl':
         specifier: 17.3.1
         version: 17.3.1
@@ -64,13 +64,13 @@ importers:
         version: 17.3.1
       '@delon/form':
         specifier: 17.3.1
-        version: 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+        version: 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/mock':
         specifier: 17.3.1
         version: 17.3.1
       '@delon/theme':
         specifier: 17.3.1
-        version: 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+        version: 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/util':
         specifier: 17.3.1
         version: 17.3.1
@@ -101,9 +101,6 @@ importers:
       isutf8:
         specifier: ^4.0.1
         version: 4.0.1
-      jquery:
-        specifier: 3.7.1
-        version: 3.7.1
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
@@ -121,7 +118,7 @@ importers:
         version: 16.1.0(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))
       ng-zorro-antd:
         specifier: 17.4.1
-        version: 17.4.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+        version: 17.4.1(ocnofbzi2atvejerafh7bih3oy)
       ngx-color-picker:
         specifier: 16.0.0
         version: 16.0.0(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/forms@17.3.10(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/platform-browser@17.3.10(@angular/animations@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(rxjs@7.8.1))
@@ -131,18 +128,15 @@ importers:
       ngx-markdown:
         specifier: 19.0.0
         version: 19.0.0(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/platform-browser@17.3.10(@angular/animations@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(marked@15.0.6)(rxjs@7.8.1)(zone.js@0.14.5)
-      ngx-slick-carousel:
-        specifier: 17.0.0
-        version: 17.0.0(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/forms@17.3.10(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/platform-browser@17.3.10(@angular/animations@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(rxjs@7.8.1))(rxjs@7.8.1)(zone.js@0.14.5)
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
       screenfull:
         specifier: 6.0.2
         version: 6.0.2
-      slick-carousel:
-        specifier: 1.8.1
-        version: 1.8.1(jquery@3.7.1)
+      swiper:
+        specifier: 14.3.0
+        version: 14.3.0
       tslib:
         specifier: 2.6.2
         version: 2.6.2
@@ -4870,9 +4864,6 @@ packages:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
 
-  jquery@3.7.1:
-    resolution: {integrity: sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==}
-
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -5547,15 +5538,6 @@ packages:
       marked: ^15.0.0
       rxjs: ^6.5.3 || ^7.4.0
       zone.js: ~0.15.0
-
-  ngx-slick-carousel@17.0.0:
-    resolution: {integrity: sha512-4GS13vjbfEUzQR6St9tq9ms69ODSxkPR0HhXJ97YhDlOlbirk9wHxnSKNneutitlKIt9G/MCrIV4u0L3wiC8rQ==}
-    peerDependencies:
-      '@angular/common': ^17.0.0
-      '@angular/core': ^17.0.0
-      '@angular/forms': ^17.0.0
-      rxjs: ^7.0.0
-      zone.js: '>=0.10.2'
 
   nice-napi@1.0.2:
     resolution: {integrity: sha512-px/KnJAJZf5RuBGcfD+Sp2pAKq0ytz8j+1NehvgIGFkvtvFrDM3T8E4x/JJODXK9WZow8RRGrbA9QQ3hs+pDhA==}
@@ -6743,11 +6725,6 @@ packages:
     resolution: {integrity: sha512-FC+lgizVPfie0kkhqUScwRu1O/lF6NOgJmlCgK+/LYxDCTk8sGelYaHDhFcDN+Sn3Cv+3VSa4Byeo+IMCzpMgQ==}
     engines: {node: '>=12'}
 
-  slick-carousel@1.8.1:
-    resolution: {integrity: sha512-XB9Ftrf2EEKfzoQXt3Nitrt/IPbT+f1fgqBdoxO3W/+JYvtEOW6EgxnWfr9GH6nmULv7Y2tPmEX3koxThVmebA==}
-    peerDependencies:
-      jquery: '>=1.8.0'
-
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
@@ -7079,6 +7056,10 @@ packages:
   swagger2openapi@7.0.8:
     resolution: {integrity: sha512-upi/0ZGkYgEcLeGieoz8gT74oWHA0E7JivX7aN9mAf+Tc7BQoRBvnIGHoPDw+f9TXTW4s6kGYCZJtauP6OYp7g==}
     hasBin: true
+
+  swiper@14.3.0:
+    resolution: {integrity: sha512-qw0Xv1+sylM8KCQxWxV2iYAK2G6XjFGPZ/8F1baEsY8DK4A3sTnLx6jUJ0G71rDbVQ05JHMWkcWmJ5NvlxZO0w==}
+    engines: {node: '>= 4.7.0'}
 
   symbol-observable@4.0.0:
     resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
@@ -7837,7 +7818,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.1703.8(chokidar@3.6.0)
-      '@angular-devkit/build-webpack': 0.1703.8(chokidar@3.6.0)(webpack-dev-server@4.15.1(webpack@5.90.3(esbuild@0.20.1)))(webpack@5.90.3(esbuild@0.20.1))
+      '@angular-devkit/build-webpack': 0.1703.8(chokidar@3.6.0)(webpack-dev-server@4.15.1(webpack@5.90.3))(webpack@5.90.3(esbuild@0.20.1))
       '@angular-devkit/core': 17.3.8(chokidar@3.6.0)
       '@angular/compiler-cli': 17.3.10(@angular/compiler@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(typescript@5.3.3)
       '@babel/core': 7.24.0
@@ -7897,7 +7878,7 @@ snapshots:
       watchpack: 2.4.0
       webpack: 5.90.3(esbuild@0.20.1)
       webpack-dev-middleware: 6.1.2(webpack@5.90.3(esbuild@0.20.1))
-      webpack-dev-server: 4.15.1(webpack@5.90.3(esbuild@0.20.1))
+      webpack-dev-server: 4.15.1(webpack@5.90.3)
       webpack-merge: 5.10.0
       webpack-subresource-integrity: 5.1.0(webpack@5.90.3(esbuild@0.20.1))
     optionalDependencies:
@@ -7923,12 +7904,12 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@angular-devkit/build-webpack@0.1703.8(chokidar@3.6.0)(webpack-dev-server@4.15.1(webpack@5.90.3(esbuild@0.20.1)))(webpack@5.90.3(esbuild@0.20.1))':
+  '@angular-devkit/build-webpack@0.1703.8(chokidar@3.6.0)(webpack-dev-server@4.15.1(webpack@5.90.3))(webpack@5.90.3(esbuild@0.20.1))':
     dependencies:
       '@angular-devkit/architect': 0.1703.8(chokidar@3.6.0)
       rxjs: 7.8.1
       webpack: 5.90.3(esbuild@0.20.1)
-      webpack-dev-server: 4.15.1(webpack@5.90.3(esbuild@0.20.1))
+      webpack-dev-server: 4.15.1(webpack@5.90.3)
     transitivePeerDependencies:
       - chokidar
 
@@ -9011,10 +8992,10 @@ snapshots:
 
   '@ctrl/tinycolor@4.2.0': {}
 
-  '@delon/abc@17.0.5(3a74f0e17f1ee83cf0178f42d12d00d9)':
+  '@delon/abc@17.0.5(ocnofbzi2atvejerafh7bih3oy)':
     dependencies:
       '@delon/acl': 17.3.1
-      '@delon/theme': 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+      '@delon/theme': 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/util': 17.3.1
       '@github/hotkey': 2.3.1
       file-saver: 2.0.5
@@ -9033,10 +9014,10 @@ snapshots:
       - '@angular/router'
       - rxjs
 
-  '@delon/abc@17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)':
+  '@delon/abc@17.3.1(ocnofbzi2atvejerafh7bih3oy)':
     dependencies:
       '@delon/acl': 17.3.1
-      '@delon/theme': 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+      '@delon/theme': 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/util': 17.3.1
       '@github/hotkey': 2.3.1
       file-saver: 2.0.5
@@ -9070,10 +9051,10 @@ snapshots:
       '@delon/util': 17.3.1
       tslib: 2.6.2
 
-  '@delon/form@17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)':
+  '@delon/form@17.3.1(ocnofbzi2atvejerafh7bih3oy)':
     dependencies:
       '@delon/acl': 17.3.1
-      '@delon/theme': 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+      '@delon/theme': 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/util': 17.3.1
       ajv: 8.12.0
       ajv-formats: 2.1.1(ajv@8.12.0)
@@ -9098,13 +9079,13 @@ snapshots:
     dependencies:
       tslib: 2.6.2
 
-  '@delon/theme@17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)':
+  '@delon/theme@17.3.1(ocnofbzi2atvejerafh7bih3oy)':
     dependencies:
-      '@delon/abc': 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+      '@delon/abc': 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/acl': 17.3.1
-      '@delon/form': 17.3.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+      '@delon/form': 17.3.1(ocnofbzi2atvejerafh7bih3oy)
       '@delon/util': 17.3.1
-      ng-zorro-antd: 17.4.1(3a74f0e17f1ee83cf0178f42d12d00d9)
+      ng-zorro-antd: 17.4.1(ocnofbzi2atvejerafh7bih3oy)
       tslib: 2.6.2
     transitivePeerDependencies:
       - '@angular/animations'
@@ -13116,8 +13097,6 @@ snapshots:
 
   jiti@1.21.7: {}
 
-  jquery@3.7.1: {}
-
   js-tokens@4.0.0: {}
 
   js-yaml@3.14.2:
@@ -13855,7 +13834,7 @@ snapshots:
       lodash-es: 4.17.22
       tslib: 2.6.2
 
-  ng-zorro-antd@17.4.1(3a74f0e17f1ee83cf0178f42d12d00d9):
+  ng-zorro-antd@17.4.1(ocnofbzi2atvejerafh7bih3oy):
     dependencies:
       '@angular/animations': 17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))
       '@angular/cdk': 17.3.10(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1)
@@ -13901,15 +13880,6 @@ snapshots:
       katex: 0.16.27
       mermaid: 11.12.2
       prismjs: 1.30.0
-
-  ngx-slick-carousel@17.0.0(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/forms@17.3.10(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/platform-browser@17.3.10(@angular/animations@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(rxjs@7.8.1))(rxjs@7.8.1)(zone.js@0.14.5):
-    dependencies:
-      '@angular/common': 17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1)
-      '@angular/core': 17.3.10(rxjs@7.8.1)(zone.js@0.14.5)
-      '@angular/forms': 17.3.10(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(@angular/platform-browser@17.3.10(@angular/animations@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(@angular/common@17.3.10(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5))(rxjs@7.8.1))(@angular/core@17.3.10(rxjs@7.8.1)(zone.js@0.14.5)))(rxjs@7.8.1)
-      rxjs: 7.8.1
-      tslib: 2.6.2
-      zone.js: 0.14.5
 
   nice-napi@1.0.2:
     dependencies:
@@ -14471,13 +14441,13 @@ snapshots:
     dependencies:
       htmlparser2: 3.10.1
       postcss: 7.0.39
-      postcss-syntax: 0.36.2(postcss-html@0.36.0)(postcss-jsx@0.36.4)(postcss-less@3.1.4)(postcss-markdown@0.36.0)(postcss-scss@2.1.1)(postcss@7.0.39)
+      postcss-syntax: 0.36.2(postcss-less@6.0.0(postcss@8.5.6))(postcss@8.5.6)
 
   postcss-jsx@0.36.4(postcss-syntax@0.36.2)(postcss@7.0.39):
     dependencies:
       '@babel/core': 7.28.6
       postcss: 7.0.39
-      postcss-syntax: 0.36.2(postcss-html@0.36.0)(postcss-jsx@0.36.4)(postcss-less@3.1.4)(postcss-markdown@0.36.0)(postcss-scss@2.1.1)(postcss@7.0.39)
+      postcss-syntax: 0.36.2(postcss-less@6.0.0(postcss@8.5.6))(postcss@8.5.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -14503,7 +14473,7 @@ snapshots:
   postcss-markdown@0.36.0(postcss-syntax@0.36.2)(postcss@7.0.39):
     dependencies:
       postcss: 7.0.39
-      postcss-syntax: 0.36.2(postcss-html@0.36.0)(postcss-jsx@0.36.4)(postcss-less@3.1.4)(postcss-markdown@0.36.0)(postcss-scss@2.1.1)(postcss@7.0.39)
+      postcss-syntax: 0.36.2(postcss-less@6.0.0(postcss@8.5.6))(postcss@8.5.6)
       remark: 10.0.1
       unist-util-find-all-after: 1.0.5
 
@@ -14581,15 +14551,11 @@ snapshots:
     dependencies:
       postcss: 8.5.6
 
-  postcss-syntax@0.36.2(postcss-html@0.36.0)(postcss-jsx@0.36.4)(postcss-less@3.1.4)(postcss-markdown@0.36.0)(postcss-scss@2.1.1)(postcss@7.0.39):
+  postcss-syntax@0.36.2(postcss-less@6.0.0(postcss@8.5.6))(postcss@8.5.6):
     dependencies:
-      postcss: 7.0.39
+      postcss: 8.5.6
     optionalDependencies:
-      postcss-html: 0.36.0(postcss-syntax@0.36.2)(postcss@7.0.39)
-      postcss-jsx: 0.36.4(postcss-syntax@0.36.2)(postcss@7.0.39)
-      postcss-less: 3.1.4
-      postcss-markdown: 0.36.0(postcss-syntax@0.36.2)(postcss@7.0.39)
-      postcss-scss: 2.1.1
+      postcss-less: 6.0.0(postcss@8.5.6)
 
   postcss-value-parser@3.3.1: {}
 
@@ -15304,10 +15270,6 @@ snapshots:
       ansi-styles: 6.2.3
       is-fullwidth-code-point: 4.0.0
 
-  slick-carousel@1.8.1(jquery@3.7.1):
-    dependencies:
-      jquery: 3.7.1
-
   smart-buffer@4.2.0: {}
 
   snapdragon-node@2.1.1:
@@ -15740,7 +15702,7 @@ snapshots:
       postcss-sass: 0.3.5
       postcss-scss: 2.1.1
       postcss-selector-parser: 3.1.2
-      postcss-syntax: 0.36.2(postcss-html@0.36.0)(postcss-jsx@0.36.4)(postcss-less@3.1.4)(postcss-markdown@0.36.0)(postcss-scss@2.1.1)(postcss@7.0.39)
+      postcss-syntax: 0.36.2(postcss-less@6.0.0(postcss@8.5.6))(postcss@8.5.6)
       postcss-value-parser: 3.3.1
       resolve-from: 4.0.0
       signal-exit: 3.0.7
@@ -15821,6 +15783,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
+  swiper@14.3.0: {}
+
   symbol-observable@4.0.0: {}
 
   table@5.4.6:
@@ -15862,7 +15826,7 @@ snapshots:
       mkdirp: 0.5.6
       rimraf: 2.6.3
 
-  terser-webpack-plugin@5.3.16(esbuild@0.20.1)(webpack@5.90.3(esbuild@0.20.1)):
+  terser-webpack-plugin@5.3.16(esbuild@0.20.1)(webpack@5.90.3):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -16305,7 +16269,7 @@ snapshots:
 
   webidl-conversions@3.0.1: {}
 
-  webpack-dev-middleware@5.3.4(webpack@5.90.3(esbuild@0.20.1)):
+  webpack-dev-middleware@5.3.4(webpack@5.90.3):
     dependencies:
       colorette: 2.0.20
       memfs: 3.5.3
@@ -16324,7 +16288,7 @@ snapshots:
     optionalDependencies:
       webpack: 5.90.3(esbuild@0.20.1)
 
-  webpack-dev-server@4.15.1(webpack@5.90.3(esbuild@0.20.1)):
+  webpack-dev-server@4.15.1(webpack@5.90.3):
     dependencies:
       '@types/bonjour': 3.5.13
       '@types/connect-history-api-fallback': 1.5.4
@@ -16354,7 +16318,7 @@ snapshots:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack-dev-middleware: 5.3.4(webpack@5.90.3(esbuild@0.20.1))
+      webpack-dev-middleware: 5.3.4(webpack@5.90.3)
       ws: 8.19.0
     optionalDependencies:
       webpack: 5.90.3(esbuild@0.20.1)
@@ -16400,7 +16364,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 3.3.0
       tapable: 2.3.0
-      terser-webpack-plugin: 5.3.16(esbuild@0.20.1)(webpack@5.90.3(esbuild@0.20.1))
+      terser-webpack-plugin: 5.3.16(esbuild@0.20.1)(webpack@5.90.3)
       watchpack: 2.4.0
       webpack-sources: 3.3.3
     transitivePeerDependencies:

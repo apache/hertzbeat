@@ -78,19 +78,6 @@
     justify-content: right;
     padding:0 16px;
   }
-  .slick-prev{
-    left: -12px;
-  }
-  .slick-next{
-    right: -12px;
-  }
-  .slick-prev,
-  .slick-next {
-    z-index:10;
-    &:before {
-      color: @primary-color !important;
-    }
-  }
 }
 
 [data-theme='dark'] {
@@ -147,6 +134,19 @@
 
 .dashboard-rounded{
   border-radius: 6px !important;
+}
+
+.dashboard-carousel {
+  --swiper-navigation-color: @primary-color;
+  --swiper-navigation-size: 28px;
+
+  box-sizing: border-box;
+  width: 100%;
+  padding: 3px 12px;
+}
+
+.dashboard-slide {
+  height: auto;
 }
 
 .hoverCard {

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -26,6 +26,8 @@ import { EChartsOption } from 'echarts';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { SwiperContainer } from 'swiper/element/bundle';
+import { SwiperOptions } from 'swiper/types';
 
 import { AppCount } from '../../pojo/AppCount';
 import { CollectorSummary } from '../../pojo/CollectorSummary';
@@ -37,15 +39,32 @@ import { MonitorService } from '../../service/monitor.service';
 import { ThemeService } from '../../service/theme.service';
 import { formatLabelName } from '../../shared/utils/common-util';
 
-interface SlideConfig {
-  infinite: boolean;
-  speed: number;
-  slidesToShow: number;
-  slidesToScroll: number;
-  autoplay: boolean;
-  autoplaySpeed: number;
-  rows: number;
-  responsive: Array<{ breakpoint: number; settings: Record<string, number | boolean> }>;
+export function createCategoryCarouselOptions(cardCount: number): SwiperOptions {
+  const canScroll = cardCount > 4;
+  return {
+    slidesPerView: 0.75,
+    slidesPerGroup: 1,
+    spaceBetween: 6,
+    speed: 4000,
+    navigation: true,
+    watchOverflow: true,
+    observer: true,
+    observeParents: true,
+    rewind: canScroll,
+    autoplay: canScroll ? { delay: 2400, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
+    breakpoints: {
+      480: {
+        slidesPerView: 2.75,
+        slidesPerGroup: 3,
+        speed: 4000
+      },
+      1024: {
+        slidesPerView: 4,
+        slidesPerGroup: 1,
+        speed: 1800
+      }
+    }
+  };
 }
 
 @Component({
@@ -135,34 +154,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
   categoryCards: Array<{ category: string; icon: string; count: AppCount }> = [];
   totalMonitors: number = 0;
 
-  slideConfig: SlideConfig = {
-    infinite: true,
-    speed: 1800,
-    slidesToShow: 4,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2400,
-    rows: 1,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2.75,
-          slidesToScroll: 3,
-          speed: 4000,
-          infinite: true
-        }
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          speed: 4000,
-          slidesToShow: 0.75,
-          slidesToScroll: 1
-        }
-      }
-    ]
-  };
+  categoryCarouselOptions: SwiperOptions = createCategoryCarouselOptions(0);
+
+  @ViewChild('categoryCarousel') private categoryCarousel?: ElementRef<SwiperContainer>;
+  private configuredCarousel?: SwiperContainer;
+  private appliedCarouselConfig?: string;
+
+  private updateCategoryCarousel(): void {
+    const element = this.categoryCarousel?.nativeElement;
+    if (!element) {
+      this.configuredCarousel = undefined;
+      this.appliedCarouselConfig = undefined;
+      return;
+    }
+    // The factory returns JSON-compatible options, but each summary response creates new object references.
+    // Reapplying equal base props would overwrite the resolved breakpoint (e.g. 4 cards -> 0.75 cards).
+    const config = JSON.stringify(this.categoryCarouselOptions);
+    if (element === this.configuredCarousel && config === this.appliedCarouselConfig && element.swiper?.initialized) {
+      element.swiper.update();
+      return;
+    }
+
+    // Configure only after Angular renders the cards; recreate only for actual configuration changes.
+    if (element.swiper?.initialized) {
+      element.swiper.destroy(true, true);
+    }
+    Object.assign(element, this.categoryCarouselOptions);
+    element.initialize();
+    this.configuredCarousel = element;
+    this.appliedCarouselConfig = config;
+  }
 
   // start -- quantity overall overview
   interval$!: any;
@@ -385,6 +406,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    const swiper = this.categoryCarousel?.nativeElement.swiper;
+    if (swiper && !swiper.destroyed) swiper.destroy(true, true);
     clearInterval(this.interval$);
     if (this.pageResize$) {
       this.pageResize$.unsubscribe();
@@ -511,19 +534,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
             { category: 'network', icon: 'global', count: appCountNetwork },
             { category: 'custom', icon: 'project', count: appCountCustom }
           ].filter(card => card.count.size > 0);
-          const loop = this.categoryCards.length > this.slideConfig.slidesToShow;
-          this.slideConfig = {
-            ...this.slideConfig,
-            infinite: loop,
-            autoplay: loop,
-            responsive: this.slideConfig.responsive.map(r => ({ ...r, settings: { ...r.settings, infinite: loop } }))
-          };
+          this.categoryCarouselOptions = createCategoryCarouselOptions(this.categoryCards.length);
           // @ts-ignore
           this.appsCountTheme.series[0].data = [{ value: total, name: this.i18nSvc.fanyi('dashboard.monitors.total') }];
           // @ts-ignore
           this.appsCountTheme.series[1].data = this.appsCountTableData;
           this.appsCountEChartOption = this.appsCountTheme;
           this.cdr.detectChanges();
+          this.updateCategoryCarousel();
         } else {
           this.appsCountEChartOption = this.appsCountTheme;
           this.cdr.detectChanges();
