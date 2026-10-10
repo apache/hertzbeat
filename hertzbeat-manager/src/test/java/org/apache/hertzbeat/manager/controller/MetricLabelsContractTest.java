@@ -94,7 +94,7 @@ class MetricLabelsContractTest {
         mvc.perform(get("/api/ingestion/otlp/metrics/labels").param("start", "1000").param("end", "2000")
                         .param("query", "duration_bucket").param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce").param("environment", "prod")
-                        .param("filter", "service_name=other,http_route!=/private"))
+                        .param("filter", "service_name=checkout,http_route!=/private"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.items[0]").value("http_route"));
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<String>> matchers = ArgumentCaptor.forClass(List.class);
@@ -105,7 +105,21 @@ class MetricLabelsContractTest {
         assertTrue(matchers.getValue().contains("service_namespace=\"commerce\""));
         assertTrue(matchers.getValue().contains("deployment_environment_name=\"prod\""));
         assertTrue(matchers.getValue().contains("http_route!=\"/private\""));
+        assertTrue(matchers.getValue().contains("service_name=\"checkout\""));
         assertEquals(1, matchers.getValue().stream().filter(value -> value.startsWith("service_name=")).count());
+    }
+
+    @Test
+    void conflictingCanonicalScopeIsRejectedBeforeAnyRepositoryRead() throws Exception {
+        var result = mvc.perform(get("/api/ingestion/otlp/metrics/labels")
+                        .param("start", "1000").param("end", "2000").param("query", "duration_bucket")
+                        .param("serviceName", "checkout").param("serviceNamespace", "commerce")
+                        .param("environment", "prod").param("filter", "service_name=private-scope-marker"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.msg").value("observability_query_context_invalid"));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                result.andReturn().getResponse().getContentAsString().contains("private-scope-marker"));
+        verifyNoInteractions(repository, metrics);
     }
 
     @Test

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.support;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,7 +32,9 @@ import org.apache.hertzbeat.observability.investigation.service.LogInvestigation
 import org.apache.hertzbeat.observability.logs.controller.LogQueryController;
 import org.apache.hertzbeat.observability.logs.controller.LogSseController;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
-import org.apache.hertzbeat.observability.logs.service.LogSseService;
+import org.apache.hertzbeat.observability.logs.service.impl.LogSseServiceImpl;
+import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
 import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.junit.jupiter.api.AfterEach;
@@ -41,7 +45,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class LogSeverityCategoryHttpContractTest {
     private final LogQueryService queryService = mock(LogQueryService.class);
-    private final LogSseService sseService = mock(LogSseService.class);
+    private final LogSseManager emitters = mock(LogSseManager.class);
+    private final HistoryDataReader reader = mock(HistoryDataReader.class);
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -50,7 +55,8 @@ class LogSeverityCategoryHttpContractTest {
         AuthTokenRequestContext.bindWorkspaceId("default");
         var admission = new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100));
         var controller = new LogQueryController(queryService, admission, mock(LogInvestigationReadModelService.class));
-        mockMvc = MockMvcBuilders.standaloneSetup(controller, new LogSseController(sseService))
+        mockMvc = MockMvcBuilders.standaloneSetup(controller,
+                        new LogSseController(new LogSseServiceImpl(emitters, List.of(reader), admission)))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 
@@ -74,11 +80,19 @@ class LogSeverityCategoryHttpContractTest {
 
     @Test
     void invalidLiveCategoriesStayBadRequestsWithProductionAdvice() throws Exception {
-        for (String category : List.of("SEVERE", "", "error", "17")) {
-            mockMvc.perform(get("/api/logs/sse/subscribe").param("severityCategory", category))
-                    .andExpect(status().isBadRequest());
+        for (String endpoint : List.of("validate", "subscribe")) {
+            for (String category : List.of("SEVERE", "", "error", "17")) {
+                var result = mockMvc.perform(get("/api/logs/sse/" + endpoint).param("severityCategory", category))
+                        .andExpect(status().isBadRequest());
+                String body = result.andReturn().getResponse().getContentAsString();
+                // IllegalArgumentException currently maps to an HTTP 400 with no JSON error envelope.
+                assertEquals("", body);
+                if (!category.isEmpty()) {
+                    assertFalse(body.contains(category));
+                }
+            }
         }
-        verifyNoInteractions(sseService);
+        verifyNoInteractions(reader, emitters, queryService);
     }
 
 }

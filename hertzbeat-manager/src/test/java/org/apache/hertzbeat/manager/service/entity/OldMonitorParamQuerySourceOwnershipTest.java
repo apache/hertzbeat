@@ -43,9 +43,12 @@ class OldMonitorParamQuerySourceOwnershipTest {
         assertFalse(source.contains("paramDao.findParamsByMonitorId"),
                 "MonitorServiceImpl should delegate submitted parameter reads to the old monitor query boundary");
         assertTrue(source.contains("private OldMonitorParamQueryService oldMonitorParamQueryService"));
-        assertEquals(4, countOccurrences(normalizedSource,
+        assertEquals(5, countOccurrences(normalizedSource,
                 "oldMonitorParamQueryService.findParamsByMonitorId("),
-                "old monitor detail, resume, template refresh, and copy should use the query boundary");
+                "old monitor detail, resume, template refresh, copy, and masked credential restore should use the query boundary");
+        assertTrue(normalizedSource.contains(
+                "storedParams = restoresMaskedCredential ? oldMonitorParamQueryService.findParamsByMonitorId(monitor.getId())"),
+                "masked credential restore must read through the boundary only when a stored secret is needed");
 
         assertTrue(Files.exists(OLD_MONITOR_PARAM_QUERY_SERVICE));
         String querySource = Files.readString(OLD_MONITOR_PARAM_QUERY_SERVICE);

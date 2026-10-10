@@ -23,6 +23,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,6 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Duration;
 import java.util.List;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.dto.log.LogFacets;
+import org.apache.hertzbeat.common.observability.dto.log.LogSearchQuery;
+import org.apache.hertzbeat.observability.logs.query.LogSearchParser;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.observability.investigation.service.LogInvestigationReadModelService;
 import org.apache.hertzbeat.observability.logs.controller.LogQueryController;
@@ -45,6 +51,7 @@ import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -196,28 +203,58 @@ class LogFilterHttpContractTest {
 
     @Test
     void unsupportedStructuredCapabilitiesHaveStableReasonsBeforeReading() throws Exception {
-        String[][] examples = {{"*:hello", "full_text_unsupported"},
-            {"CIDR(@network.ip,10.0.0.0/8)", "cidr_unsupported"},
+        String[][] examples = {{"CIDR(@network.ip,10.0.0.0/8)", "cidr_unsupported"},
             {"@network.items[*].ip:value", "nested_path_unsupported"}};
         for (String[] example : examples) {
             for (String endpoint : List.of("list", "stats/overview", "stats/trace-coverage", "stats/trend",
                     "stats/group-by", "facets/fields", "facets/values")) {
-                mvc.perform(get("/api/logs/" + endpoint).param("start", "1000").param("end", "5000")
+                var result = mvc.perform(get("/api/logs/" + endpoint).param("start", "1000").param("end", "5000")
                                 .param("groupBy", "service.name").param("field", "builtin:severityCategory")
                                 .param("searchSyntax", "structured-v1").param("search", example[0]))
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.msg").value("observability_log_filter_invalid"))
                         .andExpect(jsonPath("$.data.reason").value(example[1]));
+                assertFalse(result.andReturn().getResponse().getContentAsString().contains(example[0]));
             }
             for (String endpoint : List.of("validate", "subscribe")) {
-                mvc.perform(get("/api/logs/sse/" + endpoint).param("searchSyntax", "structured-v1")
+                var result = mvc.perform(get("/api/logs/sse/" + endpoint).param("searchSyntax", "structured-v1")
                                 .param("logContent", example[0]).accept(endpoint.equals("subscribe") ? "text/event-stream" : "application/json"))
                         .andExpect(status().isBadRequest())
                         .andExpect(jsonPath("$.msg").value("observability_log_filter_invalid"))
                         .andExpect(jsonPath("$.data.reason").value(example[1]));
+                assertFalse(result.andReturn().getResponse().getContentAsString().contains(example[0]));
             }
         }
         verifyNoInteractions(reader, emitters);
+    }
+
+    @Test
+    void fullTextIsUnsupportedForLiveBeforeAnyReaderOrEmitterCall() throws Exception {
+        for (String endpoint : List.of("validate", "subscribe")) {
+            var result = mvc.perform(get("/api/logs/sse/" + endpoint).param("searchSyntax", "structured-v1")
+                            .param("logContent", "*:private-marker")
+                            .accept(endpoint.equals("subscribe") ? "text/event-stream" : "application/json"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.msg").value(LogFilterQueryException.ERROR_CODE))
+                    .andExpect(jsonPath("$.data.reason").value("full_text_unsupported"));
+            assertFalse(result.andReturn().getResponse().getContentAsString().contains("private-marker"));
+        }
+        verifyNoInteractions(reader, emitters);
+    }
+
+    @Test
+    void historyFullTextReachesTheStructuredReaderWithTrustedWorkspace() throws Exception {
+        when(reader.structuredLogFacetFields(any())).thenReturn(LogFacets.Fields.empty(new LogFacets.Window(1000L, 5000L)));
+        mvc.perform(get("/api/logs/facets/fields").param("start", "1000").param("end", "5000")
+                        .param("searchSyntax", "structured-v1").param("search", "*:private-marker"))
+                .andExpect(status().isOk());
+        var query = ArgumentCaptor.forClass(LogSearchQuery.class);
+        verify(reader).structuredLogFacetFields(query.capture());
+        assertEquals(LogSearchParser.parse("*:private-marker"), query.getValue().expression());
+        assertEquals("default", query.getValue().scope().workspaceId());
+        assertEquals(1000L, query.getValue().scope().start());
+        assertEquals(5000L, query.getValue().scope().end());
+        verifyNoInteractions(emitters);
     }
 
     @Test

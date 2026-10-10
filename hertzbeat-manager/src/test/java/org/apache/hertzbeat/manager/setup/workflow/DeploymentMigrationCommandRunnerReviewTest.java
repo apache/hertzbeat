@@ -60,6 +60,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.invocation.InvocationOnMock;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @Timeout(15)
 class DeploymentMigrationCommandRunnerReviewTest {
@@ -199,7 +200,12 @@ class DeploymentMigrationCommandRunnerReviewTest {
         RetainedCutoverCoordinator coordinator = mock(RetainedCutoverCoordinator.class);
         CountDownLatch afterExecute = new CountDownLatch(1);
         CountDownLatch releaseWorker = new CountDownLatch(1);
-        ThreadPoolExecutor worker = blockingAfterExecute(afterExecute, releaseWorker);
+        CountDownLatch retryObserved = new CountDownLatch(1);
+        CountDownLatch retryCompleted = new CountDownLatch(1);
+        CountDownLatch retrySubmissionAttempted = new CountDownLatch(1);
+        AtomicReference<Throwable> workerFailure = new AtomicReference<>();
+        ThreadPoolExecutor worker = blockingAfterExecute(
+                afterExecute, releaseWorker, retryCompleted, retrySubmissionAttempted, workerFailure);
         when(coordinator.execute(any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> {
                     prepare(invocation);
@@ -208,17 +214,34 @@ class DeploymentMigrationCommandRunnerReviewTest {
         when(coordinator.recoveryPhase(OPERATION)).thenReturn(
                 RetainedCutoverRecoveryPhase.RELEASE_PENDING,
                 RetainedCutoverRecoveryPhase.NONE);
-        when(coordinator.retryRelease(OPERATION, Duration.ofSeconds(2))).thenReturn(retained());
+        when(coordinator.retryRelease(OPERATION, Duration.ofSeconds(2))).thenAnswer(invocation -> {
+            retryObserved.countDown();
+            return retained();
+        });
         DeploymentMigrationCommandRunner runner = runner(
                 store, coordinator, Clock.fixed(NOW, ZoneOffset.UTC), worker);
         try {
             runner.start(request());
             assertThat(afterExecute.await(5, SECONDS)).isTrue();
-            CompletableFuture<?> retry = CompletableFuture.runAsync(() -> runner.start(request()));
+            CountDownLatch retryCallerEntered = new CountDownLatch(1);
+            CompletableFuture<?> retry = CompletableFuture.runAsync(() -> {
+                retryCallerEntered.countDown();
+                runner.start(request());
+            });
+            assertThat(retryCallerEntered.await(5, SECONDS)).isTrue();
+            assertThat(retrySubmissionAttempted.await(5, SECONDS)).isTrue();
             assertThatThrownBy(() -> retry.get(100, MILLISECONDS))
                     .isInstanceOf(java.util.concurrent.TimeoutException.class);
+            verify(coordinator, times(0)).retryRelease(OPERATION, Duration.ofSeconds(2));
             releaseWorker.countDown();
             retry.get(5, SECONDS);
+            assertThat(retryObserved.await(5, SECONDS)).isTrue();
+            assertThat(retryCompleted.await(5, SECONDS)).isTrue();
+            assertThat(workerFailure.get()).as("worker task and afterExecute failures").isNull();
+            assertThat(runner.activeRecoveryPhase()).isEmpty();
+            assertThat(ReflectionTestUtils.getField(runner, "active"))
+                    .as("release recovery relinquishes in-memory task ownership").isNull();
+            verify(coordinator, times(2)).recoveryPhase(OPERATION);
             verify(coordinator).retryRelease(OPERATION, Duration.ofSeconds(2));
             verify(coordinator).execute(any(), any(), any(), any(), any(), any(), any());
         } finally {
@@ -233,7 +256,12 @@ class DeploymentMigrationCommandRunnerReviewTest {
         RetainedCutoverCoordinator coordinator = mock(RetainedCutoverCoordinator.class);
         CountDownLatch afterExecute = new CountDownLatch(1);
         CountDownLatch releaseWorker = new CountDownLatch(1);
-        ThreadPoolExecutor worker = blockingAfterExecute(afterExecute, releaseWorker);
+        CountDownLatch retryObserved = new CountDownLatch(1);
+        CountDownLatch retryCompleted = new CountDownLatch(1);
+        CountDownLatch retrySubmissionAttempted = new CountDownLatch(1);
+        AtomicReference<Throwable> workerFailure = new AtomicReference<>();
+        ThreadPoolExecutor worker = blockingAfterExecute(
+                afterExecute, releaseWorker, retryCompleted, retrySubmissionAttempted, workerFailure);
         when(coordinator.execute(any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> {
                     prepare(invocation);
@@ -242,7 +270,10 @@ class DeploymentMigrationCommandRunnerReviewTest {
         when(coordinator.recoveryPhase(OPERATION)).thenReturn(
                 RetainedCutoverRecoveryPhase.RELEASE_PENDING,
                 RetainedCutoverRecoveryPhase.NONE);
-        when(coordinator.retryRelease(OPERATION, Duration.ofMillis(100))).thenReturn(retained());
+        when(coordinator.retryRelease(OPERATION, Duration.ofMillis(100))).thenAnswer(invocation -> {
+            retryObserved.countDown();
+            return retained();
+        });
         DeploymentMigrationCommandRunner runner = new DeploymentMigrationCommandRunner(
                 store, configuration(), coordinator, Clock.fixed(NOW, ZoneOffset.UTC),
                 Duration.ofMillis(100), worker);
@@ -255,9 +286,17 @@ class DeploymentMigrationCommandRunnerReviewTest {
                                     .isEqualTo(SetupErrorCode.MIGRATION_UNAVAILABLE));
             assertThat(runner.activeRecoveryPhase())
                     .contains(RetainedCutoverRecoveryPhase.RELEASE_PENDING);
+            verify(coordinator, times(0)).retryRelease(OPERATION, Duration.ofMillis(100));
 
             releaseWorker.countDown();
             runner.start(request());
+            assertThat(retryObserved.await(5, SECONDS)).isTrue();
+            assertThat(retryCompleted.await(5, SECONDS)).isTrue();
+            assertThat(workerFailure.get()).as("worker task and afterExecute failures").isNull();
+            assertThat(runner.activeRecoveryPhase()).isEmpty();
+            assertThat(ReflectionTestUtils.getField(runner, "active"))
+                    .as("release recovery relinquishes in-memory task ownership").isNull();
+            verify(coordinator, times(2)).recoveryPhase(OPERATION);
             verify(coordinator).retryRelease(OPERATION, Duration.ofMillis(100));
             verify(coordinator).execute(any(), any(), any(), any(), any(), any(), any());
         } finally {
@@ -374,15 +413,39 @@ class DeploymentMigrationCommandRunnerReviewTest {
     }
 
     private static ThreadPoolExecutor blockingAfterExecute(
-            CountDownLatch afterExecute, CountDownLatch releaseWorker) {
+            CountDownLatch afterExecute, CountDownLatch releaseWorker, CountDownLatch retryCompleted,
+            CountDownLatch retrySubmissionAttempted, AtomicReference<Throwable> workerFailure) {
+        AtomicInteger submissions = new AtomicInteger();
+        AtomicInteger executions = new AtomicInteger();
         return new ThreadPoolExecutor(1, 1, 0, MILLISECONDS, new SynchronousQueue<>()) {
             @Override
+            public void execute(Runnable task) {
+                if (submissions.incrementAndGet() > 1) {
+                    retrySubmissionAttempted.countDown();
+                }
+                super.execute(task);
+            }
+
+            @Override
             protected void afterExecute(Runnable task, Throwable failure) {
-                afterExecute.countDown();
+                boolean retry = executions.incrementAndGet() > 1;
                 try {
-                    assertThat(releaseWorker.await(5, SECONDS)).isTrue();
+                    if (failure != null) {
+                        workerFailure.compareAndSet(null, failure);
+                    }
+                    if (!retry) {
+                        afterExecute.countDown();
+                        assertThat(releaseWorker.await(5, SECONDS)).isTrue();
+                    }
                 } catch (InterruptedException interrupted) {
                     Thread.currentThread().interrupt();
+                    workerFailure.compareAndSet(null, interrupted);
+                } catch (RuntimeException | Error hookFailure) {
+                    workerFailure.compareAndSet(null, hookFailure);
+                } finally {
+                    if (retry) {
+                        retryCompleted.countDown();
+                    }
                 }
             }
         };
