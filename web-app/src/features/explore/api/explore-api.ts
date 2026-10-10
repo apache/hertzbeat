@@ -18,32 +18,22 @@
 import { logStatisticEvidence } from './log-statistic-evidence';
 import { loadMetricComposition } from './explore-metric-composition-api';
 import { apiMessageGet } from '@/core/http/api-message';
-import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
-
-import {
-  exploreHandoffState,
-  exploreUsesExactWindow,
-  timeRangeMilliseconds,
-  validTraceStructureQuery,
-  type ExploreQuery,
-  type LogExploreQuery,
-  type MetricExploreQuery,
-  type TraceExploreQuery
-} from '../model/explore-query';
-import {
-  acceptedExploreField,
-  isOrderedTraceDurationRange,
-  parseMetricAggregation,
-  parseMetricStep,
-  parseTraceDuration
-} from '../model/explore-field-contract';
+import type { LogExploreQuery, MetricExploreQuery, TraceExploreQuery } from '../model/explore-query';
 import { ExploreSignalContractError } from '../model/explore-signal-contract';
 import { METRIC_INVENTORY_LIMIT } from '../model/explore-metric-inventory';
 import { parseLogOverview, parseLogPage, parseLogTrend } from './explore-log-schema';
 import { parseMetricConsole, parseMetricInventory } from './explore-metric-schema';
 import { parseTracePage } from './explore-trace-schema';
-import { parseTraceStructure } from '../model/explore-trace-structure';
-
+import {
+  buildSignalApiPath,
+  buildLogStatsApiPath,
+  resolveSignalWindow,
+  requireQueryableScope,
+  sharedSignalParams,
+  setValue
+} from './explore-signal-paths';
+export { buildSignalApiPath, buildLogStreamPath, buildTraceStructureAnalysisPath } from './explore-signal-paths';
+export { openLogStream } from './explore-log-stream';
 export { classifyExploreSignalError } from './explore-signal-api-model';
 
 export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
@@ -109,140 +99,6 @@ export async function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSi
   );
 }
 
-export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
-  requireQueryableScope(query);
-  if (query.signal === 'traces' && query.traceStructure !== undefined) {
-    return `/api/traces/structure?${traceStructureParams(query, now).toString()}`;
-  }
-  return buildOrdinarySignalApiPath(query, now);
-}
-
-function buildOrdinarySignalApiPath(query: ExploreQuery, now: number) {
-  const params = sharedSignalParams(query, now);
-
-  if (query.signal === 'metrics') {
-    setValue(params, 'query', query.query);
-    setValue(params, 'operationName', query.operationName);
-    setValue(params, 'filter', query.metricFilter);
-    setValue(params, 'groupBy', query.groupBy);
-    setValue(params, 'aggregation', acceptedExploreField(parseMetricAggregation(query.aggregation)));
-    setValue(params, 'temporalAggregation', query.temporalAggregation);
-    setValue(params, 'step', acceptedExploreField(parseMetricStep(query.step)));
-    return `/api/ingestion/otlp/metrics/console?${params.toString()}`;
-  }
-
-  params.set('pageIndex', String(query.pageIndex ?? 0));
-  params.set('pageSize', '20');
-  if (query.signal === 'logs') {
-    setValue(params, 'sort', query.sort);
-    setValue(params, 'logSort', query.logSort);
-    appendLogFilters(params, query);
-    return `/api/logs/list?${params.toString()}`;
-  }
-
-  params.set('sort', query.sort ?? 'newest');
-  setEnabled(params, 'endExclusive', query.endExclusive);
-  setValue(params, 'operationName', query.query);
-  setValue(params, 'traceId', query.traceId);
-  setValue(params, 'resourceFilter', query.resourceFilter);
-  setValue(params, 'attributeFilter', query.attributeFilter);
-  const minimumDuration = acceptedExploreField(parseTraceDuration(String(query.minDurationMs ?? '')));
-  const maximumDuration = acceptedExploreField(parseTraceDuration(String(query.maxDurationMs ?? '')));
-  if (isOrderedTraceDurationRange(minimumDuration, maximumDuration)) {
-    if (minimumDuration != null) params.set('minDurationMs', String(minimumDuration));
-    if (maximumDuration != null) params.set('maxDurationMs', String(maximumDuration));
-  }
-  if (query.errorOnly) params.set('errorOnly', 'true');
-  setValue(params, 'spanScope', query.spanScope);
-  setEnabled(params, 'hideInternal', query.hideInternal);
-  return `/api/traces/list?${params.toString()}`;
-}
-
-export function buildTraceStructureAnalysisPath(query: TraceExploreQuery, now = Date.now()) {
-  requireQueryableScope(query);
-  return `/api/traces/structure/analysis?${traceStructureParams(query, now).toString()}`;
-}
-
-function traceStructureParams(query: TraceExploreQuery, now: number) {
-  if (!validTraceStructureQuery(query) || query.traceStructure === undefined)
-    throw new ExploreSignalContractError('Invalid structural trace query');
-  const structure = parseTraceStructure(query.traceStructure)!;
-  const window = resolveSignalWindow(query, now);
-  const params = new URLSearchParams({
-    start: String(window.start),
-    end: String(window.end),
-    relation: structure.relation,
-    pageIndex: String(query.pageIndex ?? 0),
-    pageSize: '20'
-  });
-  for (const [label, clause] of [
-    ['a', structure.a],
-    ['b', structure.b]
-  ] as const) {
-    setValue(params, `${label}ServiceName`, clause.serviceName ?? undefined);
-    setValue(params, `${label}OperationName`, clause.operationName ?? undefined);
-    setValue(params, `${label}Status`, clause.status ?? undefined);
-  }
-  return params;
-}
-
-function buildLogStatsApiPath(query: LogExploreQuery, kind: 'overview' | 'trend', now = Date.now()) {
-  requireQueryableScope(query);
-  const params = sharedSignalParams(query, now);
-  appendLogFilters(params, query);
-  return `/api/logs/stats/${kind}?${params.toString()}`;
-}
-
-export function buildLogStreamPath(query: LogExploreQuery) {
-  requireQueryableScope(query);
-  const params = new URLSearchParams();
-  const scoped = exploreHandoffState(query) === 'scoped';
-  setValue(params, 'serviceName', query.serviceName);
-  setValue(params, 'serviceNamespace', query.serviceNamespace);
-  setValue(params, 'environment', query.environment);
-  if (scoped) setValue(params, 'collectorId', query.collectorId);
-  appendOptionalDimensions(params, query);
-  setValue(params, 'logContent', query.query);
-  setValue(params, 'traceId', query.traceId);
-  setValue(params, 'spanId', query.spanId);
-  setValue(params, 'searchSyntax', query.searchSyntax);
-  if (query.logGroupSelection !== undefined) params.set('logGroupSelection', query.logGroupSelection);
-  if (query.logNumericRange !== undefined) params.set('logNumericRange', query.logNumericRange);
-  setValue(params, 'severityText', query.severityText);
-  setValue(params, 'severityCategory', query.severityCategory);
-  setValue(params, 'resourceFilter', query.resourceFilter);
-  setValue(params, 'attributeFilter', query.attributeFilter);
-  setEnabled(params, 'hideInternal', query.hideInternal);
-  setEnabled(params, 'hideNoise', query.hideNoise);
-  const suffix = params.toString();
-  return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
-}
-
-export { openLogStream } from './explore-log-stream';
-
-function sharedSignalParams(query: ExploreQuery, now: number) {
-  const params = new URLSearchParams();
-  const scoped = exploreHandoffState(query) === 'scoped';
-  const window = resolveSignalWindow(query, now);
-  setValue(params, QUERY_CONTEXT_FIELDS.entityId, query.entityId);
-  setValue(params, 'serviceName', query.serviceName);
-  setValue(params, 'serviceNamespace', query.serviceNamespace);
-  setValue(params, 'environment', query.environment);
-  if (scoped) setValue(params, 'collectorId', query.collectorId);
-  appendOptionalDimensions(params, query);
-  // Relative windows slide on every request; route timestamps are authoritative only for an exact window.
-  params.set('start', String(window.start));
-  params.set('end', String(window.end));
-  return params;
-}
-
-function resolveSignalWindow(query: ExploreQuery, observedAt: number) {
-  if (exploreUsesExactWindow(query)) {
-    return { start: query.start!, end: query.end! };
-  }
-  return { start: observedAt - timeRangeMilliseconds(query.timeRange), end: observedAt };
-}
-
 function requireTrendWindow<T extends { start: number; end: number }>(
   trend: T,
   requestWindow: { start: number; end: number }
@@ -261,40 +117,6 @@ export async function loadMetricInventory(query: MetricExploreQuery, search: str
   return parseMetricInventory(
     await apiMessageGet(`/api/ingestion/otlp/metrics/inventory?${params.toString()}`, requestSignal(signal))
   );
-}
-
-function appendLogFilters(params: URLSearchParams, query: LogExploreQuery) {
-  setValue(params, 'search', query.query);
-  setValue(params, 'traceId', query.traceId);
-  setValue(params, 'spanId', query.spanId);
-  setValue(params, 'searchSyntax', query.searchSyntax);
-  if (query.logGroupSelection !== undefined) params.set('logGroupSelection', query.logGroupSelection);
-  if (query.logNumericRange !== undefined) params.set('logNumericRange', query.logNumericRange);
-  setValue(params, 'severityText', query.severityText);
-  setValue(params, 'severityCategory', query.severityCategory);
-  setValue(params, 'resourceFilter', query.resourceFilter);
-  setValue(params, 'attributeFilter', query.attributeFilter);
-  setEnabled(params, 'hideInternal', query.hideInternal);
-  setEnabled(params, 'hideNoise', query.hideNoise);
-}
-
-function setValue(params: URLSearchParams, key: string, value: string | undefined) {
-  if (value) params.set(key, value);
-}
-
-function setEnabled(params: URLSearchParams, key: string, value: boolean | undefined) {
-  if (value) params.set(key, 'true');
-}
-
-function appendOptionalDimensions(params: URLSearchParams, query: ExploreQuery) {
-  setValue(params, QUERY_CONTEXT_FIELDS.instance, query.instance);
-  setValue(params, QUERY_CONTEXT_FIELDS.endpoint, query.endpoint);
-}
-
-function requireQueryableScope(query: ExploreQuery) {
-  if (exploreHandoffState(query) === 'invalid') {
-    throw new Error('Invalid instrumentation context');
-  }
 }
 
 function requestSignal(signal?: AbortSignal) {

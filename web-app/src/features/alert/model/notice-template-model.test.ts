@@ -61,11 +61,11 @@ describe('notice template model', () => {
   it('validates required content and all backend channel types', () => {
     const draft = createNoticeTemplateDraft();
     expect(validateNoticeTemplateDraft(draft)).toEqual(['name', 'content']);
-    expect(validateNoticeTemplateDraft({ ...draft, name: 'Ntfy', type: 15 as never, content: '${content}' })).toEqual([
-      'type'
-    ]);
+    for (const type of [15, 16] as const) {
+      expect(validateNoticeTemplateDraft({ ...draft, name: 'Supported', type, content: '${content}' })).toEqual([]);
+    }
     expect(
-      validateNoticeTemplateDraft({ ...draft, name: 'Invalid', type: 16 as never, content: '${content}' })
+      validateNoticeTemplateDraft({ ...draft, name: 'Invalid', type: 17 as never, content: '${content}' })
     ).toEqual(['type']);
   });
 

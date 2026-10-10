@@ -202,5 +202,3 @@ function emailSecretSatisfied(draft: EmailServerDraft) {
     draft.clearSecrets.includes('emailPassword')
   );
 }
-
-

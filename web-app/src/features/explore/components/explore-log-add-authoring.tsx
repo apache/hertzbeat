@@ -1,4 +1,20 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Button, Dropdown } from 'antd';
 import { useState } from 'react';
 import type { TFunction } from 'i18next';
@@ -11,7 +27,7 @@ import {
 import { readLogAnalysisDraft } from '../model/explore-log-analysis';
 import { ExploreLogLegacyRows, VisibilityButton } from './explore-log-add-legacy-rows';
 import { ExploreLogQuerySetAuthoring } from './explore-log-query-set-authoring';
-import { ExploreLogCalculatedV2Editor } from './explore-log-calculated-v2-editor';
+import { CalculatedAddEditor } from './explore-log-calculated-add-editor';
 import type { ValidateCalculatedFields } from '../model/explore-calculated-validation-contract';
 import { addMenuItems } from './explore-log-add-menu-items';
 import type { LogFacetField } from '../model/explore-log-facets';
@@ -19,7 +35,6 @@ import { defaultLogSubquery } from '../model/explore-log-subquery';
 import { writeQuerySet } from './explore-log-add-query-set';
 import styles from './explore-log-add-authoring.module.css';
 import { useLogCalculatedFromField } from './explore-log-calculated-from-field-context';
-import type { LogRow } from '../model/explore-signal-contract';
 
 type Props = {
   raw: string | undefined;
@@ -140,47 +155,6 @@ function handleAddMenuClick(
   if (key === 'query' || key === 'formula') changeV2(key);
   if (key === 'calculated') setCalculatedOpen(true);
   if (key === 'subquery' && props.subqueryAvailable) props.onSubqueryChange?.(JSON.stringify(defaultLogSubquery()));
-}
-
-function CalculatedAddEditor({
-  open,
-  raw,
-  validate,
-  t,
-  onClose,
-  onChange,
-  onSyntaxChange,
-  sources,
-  initialExpression,
-  contextRow
-}: {
-  open: boolean;
-  raw: string | undefined;
-  validate: ValidateCalculatedFields | undefined;
-  t: TFunction;
-  onClose: () => void;
-  onChange: ((raw: string) => void) | undefined;
-  onSyntaxChange: ((syntax: string) => void) | undefined;
-  sources: LogFacetField[];
-  initialExpression?: string | undefined;
-  contextRow?: LogRow | undefined;
-}) {
-  if (!open || !validate || !onChange) return null;
-  return (
-    <ExploreLogCalculatedV2Editor
-      raw={raw}
-      {...(initialExpression ? { initialExpression } : {})}
-      {...(contextRow ? { contextRow } : {})}
-      sources={sources}
-      validate={validate}
-      t={t}
-      onClose={onClose}
-      onApply={next => {
-        onChange(next);
-        onSyntaxChange?.('structured-v2');
-      }}
-    />
-  );
 }
 
 export function ExploreLogAddAuthoring({

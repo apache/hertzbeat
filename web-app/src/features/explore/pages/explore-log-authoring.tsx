@@ -1,4 +1,20 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Button } from 'antd';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
@@ -35,18 +51,8 @@ type Props = {
   onQuery?: (() => void) | undefined;
 };
 
-export function ExploreLogAuthoring({
-  controller,
-  t,
-  focusIntent,
-  onAnalysisFocused,
-  calculatedOpen,
-  onCalculatedOpenChange,
-  onAddComparison,
-  onAddCalculated,
-  queryActions,
-  onQuery
-}: Props) {
+export function ExploreLogAuthoring(props: Props) {
+  const { controller } = props;
   const { query, submission, result } = controller;
   const searchSuggestions = useLogSearchSuggestions(query, result);
   const transactionWindow = controller.transactions?.active ? controller.transactions.window : undefined;
@@ -59,37 +65,12 @@ export function ExploreLogAuthoring({
   if (query.signal !== 'logs' || submission.draft.signal !== 'logs' || query.logRecordUid) return null;
   if (query.live && query.logAggregation !== 'transactions') return null;
   return (
-    <LogAuthoringContent
-      controller={controller}
-      t={t}
-      focusIntent={focusIntent}
-      onAnalysisFocused={onAnalysisFocused}
-      calculatedOpen={calculatedOpen}
-      onCalculatedOpenChange={onCalculatedOpenChange}
-      onAddComparison={onAddComparison}
-      onAddCalculated={onAddCalculated}
-      queryActions={queryActions}
-      onQuery={onQuery}
-      fields={facets.fields.data?.fields ?? []}
-      searchSuggestions={searchSuggestions}
-    />
+    <LogAuthoringContent {...props} fields={facets.fields.data?.fields ?? []} searchSuggestions={searchSuggestions} />
   );
 }
 
-function LogAuthoringContent({
-  controller,
-  t,
-  focusIntent,
-  onAnalysisFocused,
-  calculatedOpen,
-  onCalculatedOpenChange,
-  onAddComparison,
-  onAddCalculated,
-  queryActions,
-  onQuery,
-  fields,
-  searchSuggestions
-}: Props & { fields: LogFacetField[]; searchSuggestions: LogSearchSuggestions }) {
+function LogAuthoringContent(props: Props & { fields: LogFacetField[]; searchSuggestions: LogSearchSuggestions }) {
+  const { controller, t, fields, searchSuggestions, onQuery } = props;
   const { query, submission } = controller;
   if (query.signal !== 'logs' || submission.draft.signal !== 'logs') return null;
   const draft = submission.draft;
@@ -112,14 +93,8 @@ function LogAuthoringContent({
         suggestions={searchSuggestions}
       />
       <ExploreRetiredLogReferenceNotice submission={submission} t={t} />
-      <ExploreLogLegacyAuthoring
-        {...{ controller, t, fields, calculatedOpen, onCalculatedOpenChange, onAddComparison, onAddCalculated }}
-      />
-      {returnPath && (
-        <Button type="link" className={styles.return ?? ''} onClick={() => controller.openPath(returnPath)}>
-          {t('explore.logAnalysis.return')}
-        </Button>
-      )}
+      <ExploreLogLegacyAuthoring {...props} />
+      <AnalysisReturnLink returnPath={returnPath} openPath={controller.openPath} t={t} />
       <ExploreLogAuthoringRepresentation
         current={readLogAnalysisDraft(draft.logAnalysis) ?? DEFAULT_LOG_ANALYSIS}
         raw={query.logAnalysis}
@@ -130,9 +105,9 @@ function LogAuthoringContent({
           applyLogRepresentationChange(query.logAnalysis, representation, patch => submission.applyLogPatch(patch));
         }}
         onSettingsApply={value => applyAnalysisSettings(submission, draft.logCalculatedV2, value)}
-        focusIntent={focusIntent}
-        onFocused={onAnalysisFocused}
-        queryActions={queryActions}
+        focusIntent={props.focusIntent}
+        onFocused={props.onAnalysisFocused}
+        queryActions={props.queryActions}
         t={t}
       />
     </div>
@@ -159,4 +134,20 @@ function applyAnalysisSettings(
     return true;
   }
   return submission.applyLogPatch({ logAnalysis: JSON.stringify(value) });
+}
+
+function AnalysisReturnLink({
+  returnPath,
+  openPath,
+  t
+}: {
+  returnPath: string | undefined;
+  openPath: (path: string) => void;
+  t: TFunction;
+}) {
+  return returnPath ? (
+    <Button type="link" className={styles.return ?? ''} onClick={() => openPath(returnPath)}>
+      {t('explore.logAnalysis.return')}
+    </Button>
+  ) : null;
 }

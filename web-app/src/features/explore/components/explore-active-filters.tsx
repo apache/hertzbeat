@@ -15,18 +15,17 @@
  * limitations under the License.
  */
 
-import { Button, Tag } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import { Button, Tag } from 'antd';
 import type { TFunction } from 'i18next';
 
 import { readLogNumericRange } from '@/shared/log-numeric-range';
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
-import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
 import { logGroupSelectionLabel } from '../model/explore-log-group-selection';
+import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
 import { readTraceView } from '../model/explore-trace-view';
-import styles from './explore-active-filters.module.css';
-import filterStyles from './explore-active-filters.module.css';
+import { default as filterStyles, default as styles } from './explore-active-filters.module.css';
 
 type Props = {
   query: ExploreQuery;
@@ -39,44 +38,7 @@ type Props = {
 type ActiveFilter = { key: keyof ExploreQueryPatch; label: string; locked?: boolean };
 
 export function ExploreActiveFilters({ query, t, updateQuery, removeFilter, removeFilters }: Props) {
-  const signalFilters = signalActiveFilters(query, t);
-  const filters = [
-    ...activeFilter(
-      query.serviceName,
-      'serviceName',
-      t('explore.serviceContext', { value: query.serviceName }),
-      query.signal === 'logs'
-    ),
-    ...activeFilter(
-      query.serviceNamespace,
-      'serviceNamespace',
-      t('explore.serviceNamespaceContext', { value: query.serviceNamespace }),
-      query.signal === 'logs'
-    ),
-    ...activeFilter(
-      query.environment,
-      'environment',
-      t('explore.environmentContext', { value: query.environment }),
-      query.signal === 'logs'
-    ),
-    ...activeFilter(
-      query.collectorId,
-      'collectorId',
-      t('explore.collectorContext', { value: query.collectorId }),
-      query.signal === 'logs'
-    ),
-    ...activeFilter(
-      query.instance,
-      QUERY_CONTEXT_FIELDS.instance,
-      t('explore.instanceContext', { value: query.instance })
-    ),
-    ...activeFilter(
-      query.endpoint,
-      QUERY_CONTEXT_FIELDS.endpoint,
-      t('explore.endpointContext', { value: query.endpoint })
-    ),
-    ...signalFilters
-  ];
+  const { signalFilters, filters } = queryActiveFilters(query, t);
   const predicateKeys = signalFilters.filter(filter => !filter.locked).map(filter => filter.key);
   if (!filters.length) return null;
   return (
@@ -193,4 +155,46 @@ function logActiveFilters(query: Extract<ExploreQuery, { signal: 'logs' }>, t: T
     ...activeFilter(query.hideInternal, 'hideInternal', t('exploreLog.hideInternal')),
     ...activeFilter(query.hideNoise, 'hideNoise', t('exploreLog.hideNoise'))
   ];
+}
+
+function queryActiveFilters(query: ExploreQuery, t: TFunction) {
+  const signalFilters = signalActiveFilters(query, t);
+  const filters = [
+    ...activeFilter(
+      query.serviceName,
+      'serviceName',
+      t('explore.serviceContext', { value: query.serviceName }),
+      query.signal === 'logs'
+    ),
+    ...activeFilter(
+      query.serviceNamespace,
+      'serviceNamespace',
+      t('explore.serviceNamespaceContext', { value: query.serviceNamespace }),
+      query.signal === 'logs'
+    ),
+    ...activeFilter(
+      query.environment,
+      'environment',
+      t('explore.environmentContext', { value: query.environment }),
+      query.signal === 'logs'
+    ),
+    ...activeFilter(
+      query.collectorId,
+      'collectorId',
+      t('explore.collectorContext', { value: query.collectorId }),
+      query.signal === 'logs'
+    ),
+    ...activeFilter(
+      query.instance,
+      QUERY_CONTEXT_FIELDS.instance,
+      t('explore.instanceContext', { value: query.instance })
+    ),
+    ...activeFilter(
+      query.endpoint,
+      QUERY_CONTEXT_FIELDS.endpoint,
+      t('explore.endpointContext', { value: query.endpoint })
+    ),
+    ...signalFilters
+  ];
+  return { signalFilters, filters };
 }

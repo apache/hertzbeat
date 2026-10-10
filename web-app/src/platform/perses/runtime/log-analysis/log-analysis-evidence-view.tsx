@@ -1,4 +1,20 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import type { TFunction } from 'i18next';
 import type { LogAnalysisEvidence } from '../../logs/log-analysis-query';
 import type { LogComparisonResult } from '../../logs/log-comparison-result';
@@ -129,40 +145,7 @@ function FormulaOnlyEvidence({
       ) : (
         <p role="status">{t('explore.logAnalysis.singleBucket')}</p>
       )}
-      <table className={tableStyles.table}>
-        <thead>
-          <tr>
-            <th>{t('explore.logAnalysis.by')}</th>
-            {!hidden.includes('a') && <th data-log-stat>{`a${unit ? ` · ${t(unit)}` : ''}`}</th>}
-            {!hidden.includes('formula') && <th data-log-stat>{t('explore.logAdd.formula', { ref: 'f1' })}</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {values.groups.map(({ group, a, value }) => (
-            <tr key={groupIdentity(group)}>
-              <th>{logAnalysisGroupLabel(group, t)}</th>
-              {!hidden.includes('a') && (
-                <td data-log-stat>
-                  {a === null ? (
-                    t('explore.logComparison.unavailable')
-                  ) : (
-                    <span title={String(a)}>{formatLogNumericValue(a)}</span>
-                  )}
-                </td>
-              )}
-              {!hidden.includes('formula') && (
-                <td data-log-stat>
-                  {value === null ? (
-                    t('explore.logComparison.unavailable')
-                  ) : (
-                    <span title={String(value)}>{formatLogNumericValue(value)}</span>
-                  )}
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <FormulaOnlyTable values={values} unit={unit} hidden={hidden} t={t} />
     </>
   );
 }
@@ -207,5 +190,54 @@ function AnalysisHints({
       {analysis.grouping && <p>{t('explore.logAnalysis.scalarGrouping')}</p>}
       {analysis.measure && <p>{t(logMeasureHintKey(analysis.measure))}</p>}
     </details>
+  );
+}
+
+function FormulaOnlyTable({
+  values,
+  unit,
+  hidden,
+  t
+}: {
+  values: ReturnType<typeof formulaOnlyValues>;
+  unit: ReturnType<typeof logAnalysisUnitKey>;
+  hidden: readonly string[];
+  t: TFunction;
+}) {
+  return (
+    <table className={tableStyles.table}>
+      <thead>
+        <tr>
+          <th>{t('explore.logAnalysis.by')}</th>
+          {!hidden.includes('a') && <th data-log-stat>{`a${unit ? ` · ${t(unit)}` : ''}`}</th>}
+          {!hidden.includes('formula') && <th data-log-stat>{t('explore.logAdd.formula', { ref: 'f1' })}</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {values.groups.map(({ group, a, value }) => (
+          <tr key={groupIdentity(group)}>
+            <th>{logAnalysisGroupLabel(group, t)}</th>
+            {!hidden.includes('a') && (
+              <td data-log-stat>
+                {a === null ? (
+                  t('explore.logComparison.unavailable')
+                ) : (
+                  <span title={String(a)}>{formatLogNumericValue(a)}</span>
+                )}
+              </td>
+            )}
+            {!hidden.includes('formula') && (
+              <td data-log-stat>
+                {value === null ? (
+                  t('explore.logComparison.unavailable')
+                ) : (
+                  <span title={String(value)}>{formatLogNumericValue(value)}</span>
+                )}
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

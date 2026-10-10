@@ -91,6 +91,20 @@ type LogAdapterProps =
       getServiceLabel?: never;
       messageSearch?: never;
     };
+type LogRowMetadata = {
+  columns: LogAdapterProps['columns'];
+  timeZone: LogAdapterProps['timeZone'];
+  controlsId: LogAdapterProps['controlsId'];
+  selectedIndex: LogAdapterProps['selectedIndex'];
+  getAriaLabel: LogAdapterProps['getAriaLabel'];
+  getSeverityLabel: LogAdapterProps['getSeverityLabel'];
+  getServiceLabel: LogAdapterProps['getServiceLabel'];
+  getArrival: LogAdapterProps['getArrival'];
+  messageSearch: LogAdapterProps['messageSearch'];
+  showTime: LogAdapterProps['showTime'];
+  rowHeight: LogAdapterProps['rowHeight'];
+  showContent: LogAdapterProps['showContent'];
+};
 type HeaderReorderProps = {
   onColumnMove?: ((columnId: string, direction: 'left' | 'right') => void) | undefined;
   onColumnDrop?: ((sourceId: string, targetId: string, after: boolean) => void) | undefined;
@@ -105,37 +119,7 @@ export function HertzBeatLogsTableAdapter(props: LogAdapterProps & HeaderReorder
   );
   const draggedColumn = useRef<string>();
   const { rootRef, rovingIndexRef } = useLogRowMetadata(props);
-  const selectFromTarget = (target: EventTarget | null) => {
-    if (!(target instanceof Element) || target.closest(interactiveSelector)) return;
-    const row = target.closest<HTMLElement>('[data-log-index]');
-    const index = row ? logIndex(row) : undefined;
-    if (row && index != null && onSelect) {
-      rovingIndexRef.current = index;
-      setRovingFocus(rootRef.current, row);
-      onSelect(index, row);
-    }
-  };
-
-  const onClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target instanceof Element && event.target.closest(interactiveSelector)) {
-      event.stopPropagation();
-      return;
-    }
-    selectFromTarget(event.target);
-  };
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement) || !target.matches('[data-log-index]')) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      selectFromTarget(target);
-      return;
-    }
-    const index = moveLogRowFocus(rootRef.current, target, event.key);
-    if (index == null) return;
-    event.preventDefault();
-    rovingIndexRef.current = index;
-  };
+  const { onClick, onKeyDown } = useLogRowEvents(rootRef, rovingIndexRef, onSelect);
 
   return (
     <div
@@ -368,30 +352,21 @@ function useLogRowMetadata({
 
   const synchronizeRows = useCallback(() => {
     const root = rootRef.current;
-    if (!root) return;
-    const rows = Array.from(root.querySelectorAll<HTMLElement>('[data-log-index]'));
-    const rovingIndex = resolveRovingIndex(rows, selectedIndex, rovingIndexRef.current);
-    rovingIndexRef.current = rovingIndex;
-    for (const row of rows) {
-      const index = logIndex(row);
-      if (index == null) continue;
-      formatVisibleTimestamp(row.querySelector('time'), timeZone);
-      if (!columns) resetLogColumns(row);
-      if (controlsId && getAriaLabel)
-        decorateRow(row, index, index === rovingIndex, selectedIndex === index, {
-          controlsId,
-          ariaLabel: getAriaLabel(index),
-          severityLabel: getSeverityLabel?.(index),
-          serviceLabel: getServiceLabel?.(index),
-          showService: getServiceLabel != null,
-          showTime
-        });
-      else row.setAttribute('role', 'row');
-      if (columns) decorateLogColumns(row, index, columns, rowHeight, showContent, showTime);
-      animateLogArrival(row, getArrival?.(index));
-    }
-    clearHighlights.current();
-    clearHighlights.current = highlightLogMessages(root, messageSearch);
+    if (root)
+      synchronizeLogRows(root, rovingIndexRef, clearHighlights, {
+        columns,
+        timeZone,
+        controlsId,
+        selectedIndex,
+        getAriaLabel,
+        getSeverityLabel,
+        getServiceLabel,
+        getArrival,
+        messageSearch,
+        showTime,
+        rowHeight,
+        showContent
+      });
   }, [
     columns,
     timeZone,
@@ -430,4 +405,114 @@ function observeLogRows(root: HTMLElement, synchronizeRows: () => void, clearHig
     observer.disconnect();
     clearHighlights();
   };
+}
+
+function useLogRowEvents(
+  rootRef: MutableRefObject<HTMLDivElement | null>,
+  rovingIndexRef: MutableRefObject<number | undefined>,
+  onSelect: LogAdapterProps['onSelect']
+) {
+  const selectFromTarget = (target: EventTarget | null) => {
+    if (!(target instanceof Element) || target.closest(interactiveSelector)) return;
+    const row = target.closest<HTMLElement>('[data-log-index]');
+    const index = row ? logIndex(row) : undefined;
+    if (row && index != null && onSelect) {
+      rovingIndexRef.current = index;
+      setRovingFocus(rootRef.current, row);
+      onSelect(index, row);
+    }
+  };
+
+  const onClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest(interactiveSelector)) {
+      event.stopPropagation();
+      return;
+    }
+    selectFromTarget(event.target);
+  };
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !target.matches('[data-log-index]')) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      selectFromTarget(target);
+      return;
+    }
+    const index = moveLogRowFocus(rootRef.current, target, event.key);
+    if (index == null) return;
+    event.preventDefault();
+    rovingIndexRef.current = index;
+  };
+
+  return { onClick, onKeyDown };
+}
+
+function synchronizeLogRows(
+  root: HTMLElement,
+  rovingIndexRef: MutableRefObject<number | undefined>,
+  clearHighlights: MutableRefObject<() => void>,
+  {
+    columns,
+    timeZone,
+    controlsId,
+    selectedIndex,
+    getAriaLabel,
+    getSeverityLabel,
+    getServiceLabel,
+    getArrival,
+    messageSearch,
+    showTime = true,
+    rowHeight = 'small',
+    showContent = true
+  }: LogRowMetadata
+) {
+  const rows = Array.from(root.querySelectorAll<HTMLElement>('[data-log-index]'));
+  const rovingIndex = resolveRovingIndex(rows, selectedIndex, rovingIndexRef.current);
+  rovingIndexRef.current = rovingIndex;
+  for (const row of rows) {
+    const index = logIndex(row);
+    if (index == null) continue;
+    formatVisibleTimestamp(row.querySelector('time'), timeZone);
+    if (!columns) resetLogColumns(row);
+    decorateSelectableLogRow(row, index, rovingIndex, {
+      controlsId,
+      getAriaLabel,
+      getSeverityLabel,
+      getServiceLabel,
+      selectedIndex,
+      showTime
+    });
+    if (columns) decorateLogColumns(row, index, columns, rowHeight, showContent, showTime);
+    animateLogArrival(row, getArrival?.(index));
+  }
+  clearHighlights.current();
+  clearHighlights.current = highlightLogMessages(root, messageSearch);
+}
+
+function decorateSelectableLogRow(
+  row: HTMLElement,
+  index: number,
+  rovingIndex: number | undefined,
+  {
+    controlsId,
+    getAriaLabel,
+    getSeverityLabel,
+    getServiceLabel,
+    selectedIndex,
+    showTime = true
+  }: Pick<
+    LogRowMetadata,
+    'controlsId' | 'getAriaLabel' | 'getSeverityLabel' | 'getServiceLabel' | 'selectedIndex' | 'showTime'
+  >
+) {
+  if (controlsId && getAriaLabel)
+    decorateRow(row, index, index === rovingIndex, selectedIndex === index, {
+      controlsId,
+      ariaLabel: getAriaLabel(index),
+      severityLabel: getSeverityLabel?.(index),
+      serviceLabel: getServiceLabel?.(index),
+      showService: getServiceLabel != null,
+      showTime
+    });
+  else row.setAttribute('role', 'row');
 }

@@ -1,67 +1,42 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Select, Tooltip } from 'antd';
-import { useContext, useEffect, useRef, useState } from 'react';
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import type { TFunction } from 'i18next';
-import { FacetReadState } from './explore-log-facet-state';
+import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import styles from './explore-log-facets.module.css';
-import { FacetSections } from './explore-log-facet-sections';
-import { FacetFieldSearch } from './explore-log-facet-catalog-search';
-import { LogFacetVisibilityContext } from './explore-log-facet-visibility-context';
-import type { ExploreLogFacetsProps } from './explore-log-facet-types';
 import type { LogFacetField } from '../model/explore-log-facets';
 import { searchFieldName } from '../model/explore-log-search-authoring';
+import { FacetFieldSearch } from './explore-log-facet-catalog-search';
+import { FacetCatalogToolbar } from './explore-log-facet-catalog-toolbar';
+import { FacetSections } from './explore-log-facet-sections';
+import { FacetReadState } from './explore-log-facet-state';
+import type { ExploreLogFacetsProps } from './explore-log-facet-types';
+import { LogFacetVisibilityContext } from './explore-log-facet-visibility-context';
+import styles from './explore-log-facets.module.css';
 export type { ExploreLogFacetsProps } from './explore-log-facet-types';
 export function ExploreLogFacets(props: ExploreLogFacetsProps) {
   const { t } = useTranslation();
   const { data, hasCatalog, unavailable } = facetCatalog(props);
-  const workspace = useContext(LogFacetVisibilityContext);
-  const [localExpanded, setLocalExpanded] = useState(['builtin:severityCategory']);
-  const [localAdded, setLocalAdded] = useState<string[]>([]);
-  const expanded = workspace?.expandedFacetIds ?? localExpanded;
-  const added = workspace?.addedFacetIds ?? localAdded;
-  const setAvailableFacetIds = workspace?.setAvailableFacetIds;
-  useEffect(() => {
-    setAvailableFacetIds?.(
-      hasCatalog
-        ? [
-            ...(data?.state === 'ready' ? data.fields.map(field => field.id) : []),
-            ...(props.extraFields?.map(field => field.id) ?? [])
-          ]
-        : []
-    );
-    return () => setAvailableFacetIds?.([]);
-  }, [data, hasCatalog, props.extraFields, setAvailableFacetIds]);
-  const { fieldOptions, coreFields, addedFields } = facetFieldLists(data, props.extraFields, added, t);
-  const chooseField = (id: string) => {
-    if (props.extraFields?.some(field => field.id === id)) {
-      if (workspace) {
-        if (!expanded.includes(id)) workspace.toggleFacet(id);
-      } else setLocalExpanded(current => (current.includes(id) ? current : [...current, id]));
-      return;
-    }
-    const field = data?.state === 'ready' ? data.fields.find(item => item.id === id) : undefined;
-    if (!field) return;
-    if (workspace) workspace.onAddFacet(field);
-    else {
-      if (!coreFields.some(item => item.id === id))
-        setLocalAdded(current => (current.includes(id) ? current : [...current, id]));
-      setLocalExpanded(current => (current.includes(id) ? current : [...current, id]));
-    }
-  };
-  const toggleField = (id: string) =>
-    workspace
-      ? workspace.toggleFacet(id)
-      : setLocalExpanded(current => (current.includes(id) ? current.filter(item => item !== id) : [...current, id]));
-  const removeField = (id: string) => {
-    if (workspace) {
-      workspace.removeFacet(id);
-      return;
-    }
-    setLocalAdded(current => current.filter(item => item !== id));
-    setLocalExpanded(current => current.filter(item => item !== id));
-  };
+  const { fieldOptions, coreFields, addedFields, expanded, chooseField, toggleField, removeField } = useFacetSelection(
+    props,
+    data,
+    hasCatalog,
+    t
+  );
   return (
     <section className={styles.facets} aria-label={t('explore.logFacets.title')}>
       <FacetFieldSearch options={fieldOptions} enabled={hasCatalog} onFieldChange={chooseField} />
@@ -115,82 +90,6 @@ function facetFieldLabel(field: LogFacetField) {
   return searchFieldName(field) ?? field.key;
 }
 
-function FacetCatalogToolbar({
-  data,
-  hasCatalog,
-  fieldOptions,
-  chooseField
-}: {
-  data: ReturnType<typeof facetCatalog>['data'];
-  hasCatalog: boolean;
-  fieldOptions: { value: string; label: string }[];
-  chooseField: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [addingField, setAddingField] = useState(false);
-  const addButton = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
-  return (
-    <>
-      <div className={styles.catalogToolbar}>
-        {data?.state === 'ready' && <FacetCatalogHelp data={data} />}
-        <Button
-          ref={addButton}
-          className={styles.addField ?? ''}
-          type="link"
-          size="small"
-          disabled={!hasCatalog}
-          aria-expanded={addingField}
-          onClick={() => setAddingField(open => !open)}
-        >
-          {t('explore.logFacets.core.add')}
-        </Button>
-      </div>
-      {addingField && (
-        <div className={styles.addFieldSelectRow}>
-          <Select<string>
-            showSearch
-            aria-label={t('explore.logFacets.field')}
-            placeholder={t('explore.logFacets.field')}
-            value={null}
-            disabled={!hasCatalog}
-            options={fieldOptions}
-            onChange={id => {
-              chooseField(id);
-              setAddingField(false);
-              addButton.current?.focus();
-            }}
-            onInputKeyDown={event => {
-              if (event.key !== 'Escape') return;
-              setAddingField(false);
-              addButton.current?.focus();
-            }}
-          />
-        </div>
-      )}
-    </>
-  );
-}
-
-function FacetCatalogHelp({ data }: { data: NonNullable<ReturnType<typeof facetCatalog>['data']> }) {
-  const { t } = useTranslation();
-  if (data.state !== 'ready') return null;
-  return (
-    <Tooltip
-      title={
-        <>
-          {t('explore.logFacets.discovery', { count: data.coverage.scannedRows, limit: data.coverage.rowLimit })}{' '}
-          {(data.truncated || data.coverage.hasMore) && t('explore.logFacets.limited')}
-        </>
-      }
-      trigger={['hover', 'focus']}
-    >
-      <button className={styles.help} type="button" aria-label={t('explore.logFacets.discoveryHelp')}>
-        <InfoCircleOutlined />
-      </button>
-    </Tooltip>
-  );
-}
-
 function facetCatalog(props: ExploreLogFacetsProps) {
   const typedFailure = ['calculated_budget_exceeded', 'calculated_invalid_pattern'].includes(props.fields.state);
   const data = [
@@ -209,4 +108,59 @@ function facetCatalog(props: ExploreLogFacetsProps) {
     hasCatalog,
     unavailable: data?.state === 'unavailable' || (data?.state === 'ready' && !hasCatalog)
   };
+}
+
+function useFacetSelection(
+  props: ExploreLogFacetsProps,
+  data: ReturnType<typeof facetCatalog>['data'],
+  hasCatalog: boolean,
+  t: TFunction
+) {
+  const workspace = useContext(LogFacetVisibilityContext);
+  const [localExpanded, setLocalExpanded] = useState(['builtin:severityCategory']);
+  const [localAdded, setLocalAdded] = useState<string[]>([]);
+  const expanded = workspace?.expandedFacetIds ?? localExpanded;
+  const added = workspace?.addedFacetIds ?? localAdded;
+  const setAvailableFacetIds = workspace?.setAvailableFacetIds;
+  useEffect(() => {
+    setAvailableFacetIds?.(
+      hasCatalog
+        ? [
+            ...(data?.state === 'ready' ? data.fields.map(field => field.id) : []),
+            ...(props.extraFields?.map(field => field.id) ?? [])
+          ]
+        : []
+    );
+    return () => setAvailableFacetIds?.([]);
+  }, [data, hasCatalog, props.extraFields, setAvailableFacetIds]);
+  const { fieldOptions, coreFields, addedFields } = facetFieldLists(data, props.extraFields, added, t);
+  const chooseField = (id: string) => {
+    if (props.extraFields?.some(field => field.id === id)) {
+      if (workspace) {
+        if (!expanded.includes(id)) workspace.toggleFacet(id);
+      } else setLocalExpanded(current => (current.includes(id) ? current : [...current, id]));
+      return;
+    }
+    const field = data?.state === 'ready' ? data.fields.find(item => item.id === id) : undefined;
+    if (!field) return;
+    if (workspace) workspace.onAddFacet(field);
+    else {
+      if (!coreFields.some(item => item.id === id))
+        setLocalAdded(current => (current.includes(id) ? current : [...current, id]));
+      setLocalExpanded(current => (current.includes(id) ? current : [...current, id]));
+    }
+  };
+  const toggleField = (id: string) =>
+    workspace
+      ? workspace.toggleFacet(id)
+      : setLocalExpanded(current => (current.includes(id) ? current.filter(item => item !== id) : [...current, id]));
+  const removeField = (id: string) => {
+    if (workspace) {
+      workspace.removeFacet(id);
+      return;
+    }
+    setLocalAdded(current => current.filter(item => item !== id));
+    setLocalExpanded(current => current.filter(item => item !== id));
+  };
+  return { fieldOptions, coreFields, addedFields, expanded, chooseField, toggleField, removeField };
 }

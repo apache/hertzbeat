@@ -1,4 +1,20 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Button, Popover, Select } from 'antd';
 import type { TFunction } from 'i18next';
 import { DEFAULT_LOG_ANALYSIS, type LogAnalysisState, type LogQuerySource } from '@/platform/perses';
@@ -45,29 +61,7 @@ export function SourceSettings({
       {(source.analysis.field || source.analysis.grouping) && (
         <SourceRankControls source={source} update={update} t={t} />
       )}
-      <Popover
-        trigger="click"
-        content={
-          <div className={styles.settingsBody}>
-            <ExploreLogThroughputControl value={control} onChange={updateAnalysis} t={t} />
-            <label>
-              {t('explore.logAdd.timeShift')}
-              <Select
-                value={source.timeShiftMs ?? 0}
-                options={[
-                  { value: 0, label: t('explore.logComparison.sameWindow') },
-                  { value: 3600000, label: t('explore.logComparison.hourEarlier') },
-                  { value: 86400000, label: t('explore.logComparison.dayEarlier') },
-                  { value: 604800000, label: t('explore.logComparison.weekEarlier') }
-                ]}
-                onChange={timeShiftMs => update({ ...source, timeShiftMs })}
-              />
-            </label>
-          </div>
-        }
-      >
-        <Button type="text">{t('explore.logAdd.functionsAndTime')}</Button>
-      </Popover>
+      <SourceTimeControls source={source} control={control} updateAnalysis={updateAnalysis} update={update} t={t} />
     </div>
   );
 }
@@ -106,5 +100,45 @@ function SourceRankControls({
         />
       </label>
     </>
+  );
+}
+
+function SourceTimeControls({
+  source,
+  control,
+  updateAnalysis,
+  update,
+  t
+}: {
+  source: LogQuerySource;
+  control: LogAnalysisState;
+  updateAnalysis: (next: LogAnalysisState) => void;
+  update: (next: LogQuerySource) => void;
+  t: TFunction;
+}) {
+  return (
+    <Popover
+      trigger="click"
+      content={
+        <div className={styles.settingsBody}>
+          <ExploreLogThroughputControl value={control} onChange={updateAnalysis} t={t} />
+          <label>
+            {t('explore.logAdd.timeShift')}
+            <Select
+              value={source.timeShiftMs ?? 0}
+              options={[
+                { value: 0, label: t('explore.logComparison.sameWindow') },
+                { value: 3600000, label: t('explore.logComparison.hourEarlier') },
+                { value: 86400000, label: t('explore.logComparison.dayEarlier') },
+                { value: 604800000, label: t('explore.logComparison.weekEarlier') }
+              ]}
+              onChange={timeShiftMs => update({ ...source, timeShiftMs })}
+            />
+          </label>
+        </div>
+      }
+    >
+      <Button type="text">{t('explore.logAdd.functionsAndTime')}</Button>
+    </Popover>
   );
 }

@@ -1,8 +1,18 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
+ * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -15,6 +25,7 @@ import type { ShellAlertNotificationState } from '@/features/alert/model/shell-a
 import { ShellAlertNotifications } from './shell-alert-notifications';
 import styles from './hertzbeat-shell.module.css';
 import shellStyles from './hertzbeat-shell.module.css?raw';
+import notificationStyles from './hertzbeat-shell-notifications.css?raw';
 
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${Object.values(options).join('|')}` : key) as TFunction;
@@ -167,7 +178,8 @@ describe('ShellAlertNotifications', () => {
     const control = screen.getByRole('button', { name: 'shell.alerts.soundEnabled' });
     expect(control.querySelector('[data-icon="sound"]')).toBeInTheDocument();
     expect(control.querySelector('[aria-label="sound"]')).toHaveClass(soundControlIconClass);
-    expect(shellStyles).toMatch(/\.soundControlIcon\s*\{[^}]*font-size:\s*14px/);
+    expect(shellStyles).toContain("@import './hertzbeat-shell-notifications.css'");
+    expect(notificationStyles).toMatch(/\.soundControlIcon\s*\{[^}]*font-size:\s*14px/);
   });
 
   it('shows canonical mute evidence but disables the global action for a read-only role', () => {

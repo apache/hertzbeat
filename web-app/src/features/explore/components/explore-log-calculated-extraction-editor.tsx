@@ -1,4 +1,20 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import type { ReactNode } from 'react';
 import { Button, Input, Modal, Select } from 'antd';
 import type { TFunction } from 'i18next';
@@ -76,29 +92,7 @@ function ExtractionInputs({
         <Input.TextArea value={editor.sample} onChange={event => editor.setSample(event.target.value)} rows={2} />
       </label>
       <small>{t('explore.logCalculatedV2.sampleOnly')}</small>
-      <div className={styles.extractionPatternRow}>
-        <label>
-          {t('explore.logCalculatedV2.pattern')}
-          <Input.TextArea
-            value={editor.pattern}
-            onChange={event => editor.setPattern(event.target.value)}
-            placeholder={editor.engine === 'regex' ? '^(?<token>[A-Za-z]+)$' : '^%{notSpace:token}$'}
-            rows={3}
-          />
-        </label>
-        <label>
-          {t('explore.logCalculatedV2.engine')}
-          <Select
-            aria-label={t('explore.logCalculatedV2.engine')}
-            value={editor.engine}
-            onChange={editor.setEngine}
-            options={[
-              { value: 'grok', label: 'Grok' },
-              { value: 'regex', label: 'Regex' }
-            ]}
-          />
-        </label>
-      </div>
+      <ExtractionPattern editor={editor} t={t} />
       <small>
         {t(editor.engine === 'regex' ? 'explore.logCalculatedV2.regexHint' : 'explore.logCalculatedV2.grokMacros')}
       </small>
@@ -175,4 +169,32 @@ function previewValue(value: string | number | boolean | null, t: TFunction) {
   if (value === null) return t('explore.logCalculatedV2.noValue');
   if (value === '') return t('explore.logCalculatedV2.emptyValue');
   return typeof value === 'string' ? JSON.stringify(value) : String(value);
+}
+
+function ExtractionPattern({ editor, t }: { editor: ReturnType<typeof useExtractionEditor>; t: TFunction }) {
+  return (
+    <div className={styles.extractionPatternRow}>
+      <label>
+        {t('explore.logCalculatedV2.pattern')}
+        <Input.TextArea
+          value={editor.pattern}
+          onChange={event => editor.setPattern(event.target.value)}
+          placeholder={editor.engine === 'regex' ? '^(?<token>[A-Za-z]+)$' : '^%{notSpace:token}$'}
+          rows={3}
+        />
+      </label>
+      <label>
+        {t('explore.logCalculatedV2.engine')}
+        <Select
+          aria-label={t('explore.logCalculatedV2.engine')}
+          value={editor.engine}
+          onChange={editor.setEngine}
+          options={[
+            { value: 'grok', label: 'Grok' },
+            { value: 'regex', label: 'Regex' }
+          ]}
+        />
+      </label>
+    </div>
+  );
 }

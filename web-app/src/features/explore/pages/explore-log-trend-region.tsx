@@ -1,8 +1,24 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import type { TFunction } from 'i18next';
 import { parseLogView } from '@/platform/perses';
-import { Button, Select } from 'antd';
-import { useRef, useState, type RefObject } from 'react';
+import { Button } from 'antd';
+import { useRef, type RefObject } from 'react';
 import { useLogPreferenceScope } from '../controller/use-log-preference-scope';
 
 import { ExploreLogStatistics } from '../components/explore-log-statistics';
@@ -14,13 +30,7 @@ import { buildExplorePath, logTrendZoomPatch, mergeExploreQuery, type LogExplore
 import type { useExplorePageController } from '../controller/use-explore-page-controller';
 import { focusLogSyntaxDiagnostic } from '../components/focus-log-syntax-diagnostic';
 import { trendAction, trendFailureMessage } from './explore-log-trend-failure';
-import {
-  comparisonFacetContext,
-  nextQuerySetTarget,
-  querySetTimelineContext
-} from './explore-workspace-log-facet-context';
-import { facetRequestsEnabled, logFacetEvidenceWindow } from '../controller/use-log-facets';
-import { useLogSourceTrend } from '../controller/use-log-source-trend';
+import { QuerySetTrend } from './explore-query-set-log-trend';
 import styles from './explore-logs-workspace.module.css';
 
 export function ExploreLogTrendRegion({
@@ -65,112 +75,6 @@ function hasLogQuerySet(controller: Controller) {
   return Boolean(
     (query.signal === 'logs' && readLogAnalysisDraft(query.logAnalysis)?.querySet) ||
     (draft?.signal === 'logs' && readLogAnalysisDraft(draft.logAnalysis)?.querySet)
-  );
-}
-
-function QuerySetTrend({ controller, t }: { controller: Controller; t: TFunction }) {
-  const { query } = controller;
-  if (query.signal !== 'logs') return null;
-  return <QuerySetTrendForLogs controller={controller} query={query} t={t} />;
-}
-
-// eslint-disable-next-line complexity -- selected source, request state, and zoom share one timeline context.
-function QuerySetTrendForLogs({
-  controller,
-  query,
-  t
-}: {
-  controller: Controller;
-  query: LogExploreQuery;
-  t: TFunction;
-}) {
-  const [selection, setSelection] = useState<{ refs: string[]; ref: string }>({ refs: [], ref: 'a' });
-  const first = comparisonFacetContext(controller, selection.ref);
-  const refs = first.targets?.map(target => target.value) ?? [];
-  const target = nextQuerySetTarget(refs, selection.refs, selection.ref);
-  if (refs.join(',') !== selection.refs.join(',') || selection.ref !== target) setSelection({ refs, ref: target });
-  const context = querySetTimelineContext(controller, target);
-  const source = context.appliedSource;
-  const window = context.window;
-  const projected = context.query;
-  const active = Boolean(
-    source && context.draftSource && window && projected && facetRequestsEnabled(query, controller.result, window)
-  );
-  const sourcePending = Boolean(context.draftSource && !source);
-  const refreshRevision =
-    controller.result.kind === 'refreshing' || controller.result.kind === 'stale_error'
-      ? controller.result.evidence.revision
-      : controller.result.kind === 'ready' || controller.result.kind === 'empty'
-        ? controller.result.revision
-        : 0;
-  const trend = useLogSourceTrend({ query, projected, window, refreshRevision, active });
-  return (
-    <>
-      {active && trend.data && !trend.isError ? (
-        <ExploreLogStatistics
-          headerAction={
-            <TimelineTargetControl refs={refs} target={target} onChange={ref => setSelection({ refs, ref })} t={t} />
-          }
-          statistics={trend.data}
-          timeWindow={window!}
-          runtimeIdentity={JSON.stringify(['querySet-source-trend', target, projected, window])}
-          retry={trend.data.trend.kind === 'error' ? async () => void (await trend.refetch()) : undefined}
-          onTimeWindowChange={next => {
-            if (controller.result.kind !== 'ready' && controller.result.kind !== 'empty') return;
-            if (trend.isFetching) return;
-            const shift = source?.timeShiftMs ?? 0;
-            const baseWindow = logFacetEvidenceWindow(query, controller.result);
-            if (!baseWindow) return;
-            const mapped = { from: next.from + shift, to: next.to + shift };
-            const patch = logTrendZoomPatch(query, baseWindow, mapped);
-            if (patch) controller.openPath(buildExplorePath(mergeExploreQuery(query, patch)));
-          }}
-          t={t}
-        />
-      ) : (
-        <div className={styles.trendPlaceholder}>
-          <TimelineTargetControl refs={refs} target={target} onChange={ref => setSelection({ refs, ref })} t={t} />
-          <span role={trend.isPending && active ? 'status' : 'alert'}>
-            {trend.isPending && active
-              ? t('common.loading')
-              : sourcePending
-                ? t('explore.logComparison.sourceNotExecuted')
-                : active || trend.isError
-                  ? t('exploreLog.statisticsUnavailable')
-                  : trendFailureMessage(controller.result, t, query)}
-          </span>
-          {active && trend.isError && (
-            <Button size="small" onClick={() => void trend.refetch()}>
-              {t('common.retry')}
-            </Button>
-          )}
-        </div>
-      )}
-    </>
-  );
-}
-
-function TimelineTargetControl({
-  refs,
-  target,
-  onChange,
-  t
-}: {
-  refs: string[];
-  target: string;
-  onChange: (ref: string) => void;
-  t: TFunction;
-}) {
-  return (
-    <label className={styles.timelineTarget}>
-      {t('explore.logComparison.timelineTarget')}{' '}
-      <Select
-        aria-label={t('explore.logComparison.timelineTarget')}
-        value={target}
-        onChange={onChange}
-        options={refs.map(ref => ({ value: ref, label: t('explore.logComparison.queryTarget', { ref }) }))}
-      />
-    </label>
   );
 }
 

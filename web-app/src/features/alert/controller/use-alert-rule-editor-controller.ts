@@ -1,18 +1,25 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import isEqual from 'lodash/isEqual';
-import { useCallback, useEffect } from 'react';
 
-import {
-  buildAlertRuleStrategyPatch,
-  firstSupportedPeriodicDataType,
-  isAlertRuleStrategySupported,
-  synchronizeMetricAlertDraftPatch,
-  type AlertRuleDraft
-} from '../model/alert-rule-model';
+import { useAlertRuleDraftController } from './use-alert-rule-draft-controller';
 import { createAlertRuleStrategyCommands } from './alert-rule-editor-strategy-commands';
 import { createAlertRuleMetricEditorCommands } from './alert-rule-metric-editor-commands';
-import type { AlertRuleRouteState } from './alert-rule-editor-state';
 import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
 import { useAlertRuleDatasourceController } from './use-alert-rule-datasource-controller';
 import { useAlertRuleEditorRoute } from './use-alert-rule-editor-route';
@@ -26,50 +33,11 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const datasource = useAlertRuleDatasourceController();
   const labelSuggestions = useAlertLabelSuggestionController();
   const draft = route.draft;
-  let baselineDraft = route.baselineDraft;
-  if (
-    mode === 'new' &&
-    baselineDraft?.kind === 'periodic' &&
-    datasource.state.kind === 'ready' &&
-    !isAlertRuleStrategySupported(datasource.state.status, 'periodic', baselineDraft.dataType)
-  ) {
-    const supportedDataType = firstSupportedPeriodicDataType(datasource.state.status);
-    if (supportedDataType)
-      baselineDraft = {
-        ...baselineDraft,
-        ...buildAlertRuleStrategyPatch(baselineDraft, 'periodic', supportedDataType)
-      };
-  }
   const metricTarget = useAlertRuleMetricTargetController(draft);
   const command = useAlertRuleCommandController(mode, draft, route.identity, route.updateRoute);
   const preview = useAlertRulePreviewController(command.canSave, draft, route.identity, route.updateRoute);
-  const isCommandLocked = command.isLocked;
-  const invalidateIdentity = route.identity.invalidate;
-  const invalidatePreview = preview.invalidate;
-  const updateRoute = route.updateRoute;
-  const updateDraft = useCallback(
-    (patch: Partial<AlertRuleDraft>) => {
-      if (!draft || isCommandLocked()) return;
-      invalidateIdentity();
-      invalidatePreview();
-      updateRoute(updatedDraftState(draft, patch));
-    },
-    [draft, invalidateIdentity, invalidatePreview, isCommandLocked, updateRoute]
-  );
+  const { baselineDraft, updateDraft } = useAlertRuleDraftController(mode, route, datasource, command, preview);
   const strategy = createAlertRuleStrategyCommands(draft, datasource.state, updateDraft);
-  useEffect(() => {
-    if (
-      mode !== 'new' ||
-      route.requestedKind !== 'periodic' ||
-      !draft ||
-      datasource.state.kind !== 'ready' ||
-      isAlertRuleStrategySupported(datasource.state.status, 'periodic', draft.dataType)
-    ) {
-      return;
-    }
-    const supportedDataType = firstSupportedPeriodicDataType(datasource.state.status);
-    if (supportedDataType) updateDraft(buildAlertRuleStrategyPatch(draft, 'periodic', supportedDataType));
-  }, [datasource.state, draft, mode, route.requestedKind, updateDraft]);
   const metricEditor = createAlertRuleMetricEditorCommands(draft, metricTarget.state, updateDraft);
   const metricBindings = useAlertRuleMetricBindingController(draft, metricTarget.state, updateDraft);
   return {
@@ -106,14 +74,5 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     retryMetricTargetApps: metricTarget.retryApps,
     retryMetricTargetHierarchy: metricTarget.retryHierarchy,
     cancel: route.cancel
-  };
-}
-
-function updatedDraftState(draft: AlertRuleDraft, patch: Partial<AlertRuleDraft>): Partial<AlertRuleRouteState> {
-  return {
-    draft: { ...draft, ...synchronizeMetricAlertDraftPatch(draft, patch) },
-    preview: { kind: 'idle' },
-    saveFailure: undefined,
-    recovery: undefined
   };
 }

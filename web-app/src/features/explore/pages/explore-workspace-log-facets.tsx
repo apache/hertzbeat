@@ -1,20 +1,29 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { ExploreLogFacetSourceControls } from '../components/explore-log-facet-source-controls';
-import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExploreLogFacets } from '../components/explore-log-facets';
 import { ExploreWorkspaceFacetValues } from './explore-workspace-facet-values';
 import type { useExplorePageController } from '../controller/use-explore-page-controller';
-import { useLogFacetCatalog } from '../controller/use-log-facets';
-import {
-  comparisonFacetContext,
-  facetAction,
-  nextQuerySetTarget,
-  querySetFacetAction
-} from './explore-workspace-log-facet-context';
+import { useWorkspaceLogFacets } from '../controller/use-workspace-log-facets';
+import type { comparisonFacetContext, facetAction } from './explore-workspace-log-facet-context';
 import { ExploreCalculatedFacetValues } from './explore-calculated-facet-values';
 import type { ExactTimeWindow } from '@/shared/query-context';
-import { calculatedCatalogQuery } from '../model/explore-calculated-source-catalog';
 export function ExploreWorkspaceLogFacets(props: {
   controller: ReturnType<typeof useExplorePageController>;
   enabled: boolean;
@@ -23,7 +32,6 @@ export function ExploreWorkspaceLogFacets(props: {
     <HistoricalLogFacets {...props} />
   );
 }
-// eslint-disable-next-line complexity -- comparison and multi-query facet states share this rendering path.
 function HistoricalLogFacets({
   controller,
   enabled
@@ -31,45 +39,13 @@ function HistoricalLogFacets({
   controller: ReturnType<typeof useExplorePageController>;
   enabled: boolean;
 }) {
-  const [targetSelection, setTargetSelection] = useState<{ sourceIds: string[]; refId: string }>({
-    sourceIds: [],
-    refId: 'a'
-  });
-  const preliminaryContext = comparisonFacetContext(controller, targetSelection.refId);
-  const sourceIds = preliminaryContext.targets?.map(item => item.value) ?? [];
-  const target = nextQuerySetTarget(sourceIds, targetSelection.sourceIds, targetSelection.refId);
-  if (sourceIds.join(',') !== targetSelection.sourceIds.join(',') || targetSelection.refId !== target)
-    setTargetSelection({ sourceIds, refId: target });
-  const context =
-    target === preliminaryContext.source ? preliminaryContext : comparisonFacetContext(controller, target);
-  const { current, source, facetQuery } = context;
-  const calculated = controller.query.signal === 'logs' && controller.query.logCalculatedV2 !== undefined;
-  const rawCatalogQuery = calculatedCatalogQuery(facetQuery);
-  const facetAvailable = context.querySet
-    ? Boolean(context.appliedSource && context.draftSource && context.targetSyntax === 'structured-v1')
-    : source === 'a' || facetQuery !== controller.query;
-  const transactionWindow =
-    !context.querySet && controller.transactions?.active ? controller.transactions.window : undefined;
-  const facets = useLogFacetCatalog(
-    rawCatalogQuery,
-    controller.result,
-    facetAvailable,
-    transactionWindow,
-    context.querySet || source !== 'a'
-  );
-  const { query } = controller;
-  const extraFields = useMemo(() => calculatedOutputFields(controller.result), [controller.result]);
-  if (query.signal !== 'logs') return null;
-  const actionForValue = context.querySet
-    ? querySetFacetAction(controller, enabled && facetAvailable, source)
-    : facetAction(controller, enabled && facetAvailable, source === 'b' ? 'b' : 'a', Boolean(current));
+  const { context, facets, calculated, extraFields, facetAvailable, transactionWindow, actionForValue, onTarget } =
+    useWorkspaceLogFacets(controller, enabled);
+  const { source, facetQuery } = context;
+  if (controller.query.signal !== 'logs') return null;
   return (
     <>
-      <HistoricalFacetSource
-        controller={controller}
-        context={context}
-        onTarget={refId => setTargetSelection({ sourceIds, refId })}
-      />
+      <HistoricalFacetSource controller={controller} context={context} onTarget={onTarget} />
       <ExploreLogFacets
         {...facets}
         extraFields={calculated ? extraFields : undefined}
@@ -153,15 +129,5 @@ function HistoricalFacetSource({
       onTarget={onTarget}
       t={t}
     />
-  );
-}
-
-function calculatedOutputFields(result: ReturnType<typeof useExplorePageController>['result']) {
-  const evidence = result.kind === 'refreshing' || result.kind === 'stale_error' ? result.evidence : result;
-  if ((evidence.kind !== 'ready' && evidence.kind !== 'empty') || evidence.signal !== 'logs') return [];
-  return (
-    evidence.calculated?.executed.calculatedFields.fields.flatMap(field =>
-      field.outputs.map(output => ({ id: `calculated:${output.name}`, label: `#${output.name}` }))
-    ) ?? []
   );
 }

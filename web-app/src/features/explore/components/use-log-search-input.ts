@@ -1,14 +1,30 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { isolateHistory } from '@codemirror/commands';
-import type { EditorView, ViewUpdate } from '@codemirror/view';
+import type { EditorView } from '@codemirror/view';
 import {
   insertSearchCompletion,
   searchCompletionContext,
   type LogSearchSuggestions
 } from '../model/explore-log-search-authoring';
 import { isStructuredLogSyntax } from '../model/explore-log-structured-syntax';
-import { queryTokens } from './log-search-token-scanner';
+import { useLogSearchEvents } from './use-log-search-events';
 
 type Props = {
   value: string;
@@ -25,9 +41,7 @@ export function useLogSearchInput(
   const [open, setOpen] = useState(false);
   const [caret, setCaret] = useState(value.length);
   const [selected, setSelected] = useState(-1);
-  const composing = useRef(false);
   const submitFocus = useInvalidSubmitCompletionFocus(view, setOpen, setSelected);
-  const lastEnterSubmittedValue = useRef<string | null>(null);
   const id = useId();
   const structured = isStructuredLogSyntax(syntax);
   const context = searchCompletionContext(value, caret);
@@ -52,6 +66,16 @@ export function useLogSearchInput(
   useLayoutEffect(() => {
     current.current = { open, selected, options, accept, structured };
   });
+  const events = useLogSearchEvents({
+    view,
+    current,
+    onChange,
+    onSubmit,
+    onBlurSubmit,
+    setCaret,
+    setOpen,
+    setSelected
+  });
   return {
     open: structured && open,
     id,
@@ -60,67 +84,9 @@ export function useLogSearchInput(
     prefix: context?.prefix ?? '',
     accept,
     close: () => setOpen(false),
-    onUpdate: (update: ViewUpdate, external = false) => {
-      if (update.docChanged && !external) {
-        lastEnterSubmittedValue.current = null;
-        onChange(update.state.doc.toString());
-        setOpen(true);
-        setSelected(-1);
-      }
-      if (update.selectionSet || update.docChanged) setCaret(update.state.selection.main.head);
-    },
     ...submitFocus,
-    onBlur: (event?: FocusEvent) => {
-      setOpen(false);
-      const wasComposing = composing.current || Boolean(view.current?.composing);
-      composing.current = false;
-      const submittedOnEnter = view.current?.state.doc.toString() === lastEnterSubmittedValue.current;
-      submitOnBlur(view.current, event, onBlurSubmit, wasComposing || submittedOnEnter);
-    },
-    onCompositionStart: () => {
-      composing.current = true;
-    },
-    onCompositionEnd: () => {
-      composing.current = false;
-    },
-    onKeyDown: (event: KeyboardEvent) => {
-      if (event.isComposing || event.keyCode === 229) return;
-      const state = current.current;
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        if (state.structured && state.open && state.selected >= 0) state.accept(state.selected);
-        else {
-          if (view.current) lastEnterSubmittedValue.current = view.current.state.doc.toString();
-          submitSearch(view.current, onSubmit);
-        }
-        return;
-      }
-      if (state.structured) navigateSuggestions(event, state.options.length, setOpen, setSelected);
-    }
+    ...events
   };
-}
-function submitOnBlur(
-  editor: EditorView | null,
-  event: FocusEvent | undefined,
-  enabled: boolean | undefined,
-  composing: boolean
-) {
-  if (!editor || editor.composing || composing || !enabled || focusStaysInCommand(editor.dom, event)) return;
-  const query = editor.state.doc.toString().trim();
-  const last = queryTokens(query).at(-1);
-  if (query && (!last || last.end !== query.length || !last.removable)) return;
-  editor.dom.closest('form')?.requestSubmit();
-}
-function focusStaysInCommand(editor: HTMLElement, event: FocusEvent | undefined) {
-  const target = event?.relatedTarget;
-  return (
-    (target instanceof Node && editor.closest('[data-log-command-fields]')?.contains(target)) ||
-    (target instanceof Element && Boolean(target.closest('[data-log-command-skip-submit]')))
-  );
-}
-function submitSearch(view: EditorView | null, onSubmit: (() => void) | undefined) {
-  if (onSubmit) onSubmit();
-  else view?.dom.closest('form')?.requestSubmit();
 }
 function applyCompletion(
   editor: EditorView,
@@ -149,27 +115,6 @@ function matchingOptions(
         (item.condition ?? item.label).toLowerCase().includes(context.prefix.toLowerCase())
     )
     .slice(0, 20);
-}
-
-function navigateSuggestions(
-  event: KeyboardEvent,
-  count: number,
-  setOpen: (open: boolean) => void,
-  setSelected: React.Dispatch<React.SetStateAction<number>>
-) {
-  if (event.key === 'Escape') {
-    event.preventDefault();
-    setOpen(false);
-    setSelected(-1);
-  }
-  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-  event.preventDefault();
-  setOpen(true);
-  setSelected(index => {
-    if (!count) return -1;
-    if (index < 0) return event.key === 'ArrowDown' ? 0 : count - 1;
-    return (index + (event.key === 'ArrowDown' ? 1 : -1) + count) % count;
-  });
 }
 
 /** Suppress only the focus event caused synchronously by a rejected explicit submit. */

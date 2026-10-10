@@ -15,22 +15,16 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Modal } from 'antd';
+import { Alert, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  AlertRuleDatasourceEvidence,
-  AlertRuleDetailEvidence,
-  AlertRulePreviewEvidence,
-  AlertRuleSaveEvidence,
-  AlertRuleSaveRecoveryEvidence
-} from '../components/alert-rule-editor-evidence';
-import { AlertRuleFields } from '../components/alert-rule-fields';
+import { AlertRuleDetailEvidence } from '../components/alert-rule-editor-evidence';
+import { AlertRuleEditorActions, AlertRuleEditorWorkspace } from './alert-rule-editor-dialog-content';
 import { useAlertRuleActionCapabilities } from '../controller/use-alert-rule-action-capabilities';
 import { useAlertRuleEditorController } from '../controller/use-alert-rule-editor-controller';
 import { useAlertRuleUnsavedHistory } from '../controller/use-alert-rule-unsaved-history';
-import { validateAlertRuleDraft, type AlertRuleDraft } from '../model/alert-rule-model';
+import { type AlertRuleDraft } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleListPage } from './alert-rule-list-page';
 
@@ -121,107 +115,4 @@ function useAlertRuleDialogEscape({ busy, cancel, enabled }: { busy: boolean; ca
 function resolveEditorTitleKey(mode: 'new' | 'edit', kind: AlertRuleDraft['kind']) {
   if (mode === 'new') return kind === 'periodic' ? 'alertRules.newPeriodic' : 'alertRules.newRealtime';
   return kind === 'periodic' ? 'alertRules.editPeriodic' : 'alertRules.editRealtime';
-}
-
-type AlertRuleEditorController = ReturnType<typeof useAlertRuleEditorController>;
-
-function AlertRuleEditorWorkspace({
-  controller,
-  draft,
-  validationAttempted
-}: {
-  controller: AlertRuleEditorController;
-  draft: AlertRuleDraft;
-  validationAttempted: boolean;
-}) {
-  const { command, datasource, preview, recovery, saveFailure } = controller.state;
-  const busy = command === 'saving' || recovery !== undefined;
-  const invalidFields = validationAttempted ? validateAlertRuleDraft(draft) : [];
-  return (
-    <>
-      {recovery ? (
-        <AlertRuleSaveRecoveryEvidence
-          recovery={recovery}
-          retrying={command === 'saving'}
-          retry={controller.retrySave}
-        />
-      ) : (
-        <AlertRuleSaveEvidence failure={saveFailure} />
-      )}
-      <AlertRuleDatasourceEvidence state={datasource} retry={controller.retryDatasource} />
-      <AlertRuleEditorForm controller={controller} draft={draft} busy={busy} invalidFields={invalidFields} />
-      {draft.kind !== 'periodic' && <AlertRulePreviewEvidence state={preview} />}
-    </>
-  );
-}
-
-function AlertRuleEditorForm({
-  controller,
-  draft,
-  busy,
-  invalidFields
-}: {
-  controller: AlertRuleEditorController;
-  draft: AlertRuleDraft;
-  busy: boolean;
-  invalidFields: ReturnType<typeof validateAlertRuleDraft>;
-}) {
-  return (
-    <AlertRuleFields
-      draft={draft}
-      busy={busy}
-      invalidFields={invalidFields}
-      datasource={controller.state.datasource}
-      metricBindings={controller.state.metricBindings}
-      metricTarget={controller.state.metricTarget}
-      labelSuggestions={controller.state.labelSuggestions}
-      update={controller.updateDraft}
-      changeDataType={controller.changeDataType}
-      changeMetricAuthoringMode={controller.changeMetricAuthoringMode}
-      changeMetricBindingIds={controller.changeMetricBindingIds}
-      changeMetricBindingLabels={controller.changeMetricBindingLabels}
-      changeMetricExpertCondition={controller.changeMetricExpertCondition}
-      changeMetricStructuredCondition={controller.changeMetricStructuredCondition}
-      changeMetricTarget={controller.changeMetricTarget}
-      openMetricBindings={controller.openMetricBindings}
-      cancelMetricBindings={controller.cancelMetricBindings}
-      confirmMetricBindings={controller.confirmMetricBindings}
-      retryMetricBindings={controller.retryMetricBindings}
-      retryMetricTargetApps={controller.retryMetricTargetApps}
-      retryMetricTargetHierarchy={controller.retryMetricTargetHierarchy}
-      preview={controller.preview}
-      previewState={controller.state.preview}
-    />
-  );
-}
-
-function AlertRuleEditorActions({
-  controller,
-  cancel,
-  validate
-}: {
-  controller: AlertRuleEditorController;
-  cancel: () => void;
-  validate: () => void;
-}) {
-  const { t } = useTranslation();
-  const { canSave, command, recovery } = controller.state;
-  return (
-    <div className={styles.actions}>
-      <Button disabled={command === 'saving'} onClick={cancel}>
-        {t('common.cancel')}
-      </Button>
-      <Button
-        type="primary"
-        loading={command === 'saving' && !recovery}
-        disabled={!canSave || recovery !== undefined}
-        onClick={() => {
-          validate();
-          void controller.save();
-        }}
-      >
-        {t('alertRules.confirm')}
-      </Button>
-    </div>
-  );
 }

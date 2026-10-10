@@ -14,31 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ExploreLogOrderRecovery } from './explore-log-order-recovery';
-import type { LogSearchSuggestions } from '../model/explore-log-search-authoring';
-import type { LogScopeSuggestions } from '../model/explore-log-scope-suggestions';
-import type { TFunction } from 'i18next';
-import { useState, type ReactNode } from 'react';
 import { OperationalCommandBar } from '@/shared/operational-page';
 import type { SharedTimeValue } from '@/shared/time';
-import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
-import type { ExploreSubmissionViewModel } from '../model/explore-submission-model';
+import type { TFunction } from 'i18next';
+import { useState, type ReactNode } from 'react';
 import type { LogQueryBuilderViewModel } from '../model/explore-log-builder-model';
-import type { MetricPlanEditorProps } from './explore-metric-plan-editor';
-import { ExploreActiveFilters } from './explore-active-filters';
-import { ExploreAdvancedFilters, ExploreGuidedFilters } from './explore-advanced-filters';
-import { ExploreLogQueryBuilder, type LogQueryEditorMode } from './explore-log-query-builder';
+import type { LogScopeSuggestions } from '../model/explore-log-scope-suggestions';
+import type { LogSearchSuggestions } from '../model/explore-log-search-authoring';
+import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
 import type { RecentLogSearchesViewModel } from '../model/explore-recent-log-searches';
-import type { LogExploreSubmissionDraft } from '../model/explore-submission-model';
-import { ExploreRecentLogSearches } from './explore-recent-log-searches';
-import { ExploreQueryControls } from './explore-query-controls';
-import { ExploreTraceStructureEditor } from './explore-trace-structure-editor';
+import type { ExploreSubmissionViewModel, LogExploreSubmissionDraft } from '../model/explore-submission-model';
+import { ExploreActiveFilters } from './explore-active-filters';
+import { ExploreLogOrderRecovery } from './explore-log-order-recovery';
+import { type LogQueryEditorMode } from './explore-log-query-builder';
+import type { MetricPlanEditorProps } from './explore-metric-plan-editor';
+import styles from './explore-query-bar.module.css';
 import { ExploreQueryBody } from './explore-query-body';
 import { ExploreQueryActions } from './explore-query-command';
-import { useExploreQueryCommand } from './use-explore-query-command';
-import styles from './explore-query-bar.module.css';
+import { ExploreQueryControls } from './explore-query-controls';
+import { ExploreQueryFilters } from './explore-query-filter-panel';
 import layout from './explore-query-layout.module.css';
-import { ExploreMetricQueryDisclosure } from './explore-metric-query-disclosure';
+import { ExploreRecentLogSearches } from './explore-recent-log-searches';
+import { useExploreQueryCommand } from './use-explore-query-command';
 
 type Props = {
   history: RecentLogSearchesViewModel;
@@ -163,50 +160,6 @@ function ExploreQueryCommand(
       }
       secondary={<ExploreQueryActions {...{ query, submission, editor, refresh, t }} />}
     />
-  );
-}
-
-function ExploreQueryFilters(props: Props & { mode: LogQueryEditorMode }) {
-  const { draft, errors, updateField } = props.submission;
-  const { t, editor, mode } = props;
-  if (draft.signal === 'metrics' && props.metricEditor) {
-    return <ExploreMetricQueryDisclosure submission={props.submission} metricEditor={props.metricEditor} t={t} />;
-  }
-  return (
-    <>
-      {draft.signal === 'logs' ? (
-        <ExploreLogQueryBuilder
-          draft={draft}
-          mode={mode}
-          t={t}
-          updateField={updateField}
-          editor={editor}
-          suggestions={props.suggestions}
-        />
-      ) : draft.signal === 'traces' && draft.traceStructure !== undefined ? (
-        <ExploreTraceStructureEditor draft={draft} errors={errors} t={t} updateField={updateField} />
-      ) : (
-        <>
-          {!props.metricEditor && (
-            <ExploreGuidedFilters
-              appliedTraceView={props.query.signal === 'traces' ? props.query.traceView : undefined}
-              metricRows={Boolean(props.metricEditor)}
-              draft={draft}
-              errors={errors}
-              t={t}
-              updateField={updateField}
-            />
-          )}
-          <ExploreAdvancedFilters
-            metricRows={Boolean(props.metricEditor)}
-            draft={draft}
-            errors={errors}
-            t={t}
-            updateField={updateField}
-          />
-        </>
-      )}
-    </>
   );
 }
 

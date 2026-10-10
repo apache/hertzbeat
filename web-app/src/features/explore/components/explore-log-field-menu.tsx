@@ -1,21 +1,37 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
-import type { LogInspectorAnalysisControls } from '../model/explore-log-inspector-analysis';
-import { logAnalysisMenuItems } from './explore-log-field-analysis-menu';
-import { useContext, useRef, useState, type ContextType } from 'react';
-import { Dropdown, type MenuProps } from 'antd';
-import { EllipsisOutlined } from '@ant-design/icons';
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
+import { useContext, useRef, useState, type ContextType } from 'react';
 import { useTranslation } from 'react-i18next';
+import { inspectorCalculatedExpression } from '../model/explore-log-calculated-field-expression';
 import { MAX_LOG_COLUMNS, logColumnId, logColumnLabel, type LogColumnControls } from '../model/explore-log-columns';
+import type { LogInspectorAnalysisControls } from '../model/explore-log-inspector-analysis';
 import type { LogInspectorFilterControls } from '../model/explore-log-inspector-filter';
-import type { InspectorField } from './explore-log-inspector-model';
+import type { LogRow } from '../model/explore-signal-contract';
 import { useEvidenceCopy } from './explore-evidence-copy';
+import { useLogCalculatedFromField } from './explore-log-calculated-from-field-context';
 import { LogFacetVisibilityContext } from './explore-log-facet-visibility-context';
+import { logAnalysisMenuItems } from './explore-log-field-analysis-menu';
+import { LogFieldDropdown } from './explore-log-field-dropdown';
 import { logFilterMenuItems } from './explore-log-field-filter-menu';
 import styles from './explore-log-inspector-fields.module.css';
-import { useLogCalculatedFromField } from './explore-log-calculated-from-field-context';
-import type { LogRow } from '../model/explore-signal-contract';
-import { inspectorCalculatedExpression } from '../model/explore-log-calculated-field-expression';
+import type { InspectorField } from './explore-log-inspector-model';
 
 type Props = LogInspectorFilterControls &
   LogInspectorAnalysisControls & {
@@ -56,41 +72,7 @@ export function LogFieldMenu({ field, row, logColumns, allowCalculatedField, ...
   );
   return (
     <>
-      <Dropdown
-        trigger={['click']}
-        open={open}
-        onOpenChange={(nextOpen, info) => {
-          // Menu actions own dismissal so rejected analysis retains its recovery surface.
-          if (info.source === 'trigger') setOpen(nextOpen);
-        }}
-        autoFocus
-        destroyOnHidden
-        menu={{
-          items,
-          'aria-label': actionLabel,
-          onClick: ({ key }) => {
-            if (!key.startsWith('analysis-')) setOpen(false);
-          },
-          onKeyDown: event => {
-            if (event.key === 'Escape') {
-              event.stopPropagation();
-              setOpen(false);
-              trigger.current?.focus();
-            }
-          }
-        }}
-      >
-        <button
-          ref={trigger}
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          className={styles.fieldMenu}
-          aria-label={actionLabel}
-        >
-          <EllipsisOutlined aria-hidden="true" />
-        </button>
-      </Dropdown>
+      <LogFieldDropdown {...{ open, trigger, items, actionLabel }} onOpenChange={setOpen} />
       <span role="status" className={styles.copyAnnouncement}>
         {status !== 'idle'
           ? t(`explore.logFieldMenu.${status}`)
