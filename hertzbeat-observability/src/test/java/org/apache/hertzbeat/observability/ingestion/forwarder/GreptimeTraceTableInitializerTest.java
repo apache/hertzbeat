@@ -114,7 +114,10 @@ class GreptimeTraceTableInitializerTest {
         verify(restTemplate, times(3)).exchange(
                 eq("http://greptime:4000/v1/sql?db=public"), eq(HttpMethod.POST), requests.capture(), eq(String.class));
         var statements = requests.getAllValues().stream().map(this::decodeSql).toList();
-        assertTrue(statements.get(0).startsWith("CREATE TABLE IF NOT EXISTS"));
+        var traceTableDdl = GreptimeSqlScript.statements(statements.getFirst());
+        assertEquals(1, traceTableDdl.size());
+        assertTrue(traceTableDdl.getFirst().startsWith("CREATE TABLE IF NOT EXISTS hzb_traces ("));
+        assertTrue(statements.get(1).startsWith("ALTER TABLE hzb_traces "));
         assertTrue(statements.get(1).contains("ADD COLUMN IF NOT EXISTS \"resource_attributes.hertzbeat.workspace_id\" STRING NULL"));
         assertTrue(statements.get(1).contains("ADD COLUMN IF NOT EXISTS \"resource_attributes.service.instance.id\" STRING NULL"));
         assertTrue(statements.get(2).startsWith("SELECT "));
