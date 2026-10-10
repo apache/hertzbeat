@@ -132,6 +132,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
+        this.metrics = CollectUtil.replaceUuidInHttpPayload(metrics, job.getCollectionUuid());
         this.id = job.getMonitorId();
         this.tenantId = job.getTenantId();
         this.app = job.getApp();

@@ -30,8 +30,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.beans.BeanUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -62,6 +64,7 @@ public final class CollectUtil {
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b", "Ki", "Mi", "Gi");
     private static final Gson GSON = new Gson();
+    private static final String UUID_PLACEHOLDER = "{{v4uuid}}";
     /**
      * Regularly verifying whether a string is a combination of numbers and units
      */
@@ -245,6 +248,29 @@ public final class CollectUtil {
         JsonElement metricJson = GSON.toJsonTree(metricItem);
         CollectUtil.replaceCryPlaceholder(metricJson, configmap);
         return GSON.fromJson(metricJson, Metrics.class);
+    }
+
+    /**
+     * Resolve the collection UUID in an HTTP payload without changing its reusable template.
+     *
+     * @param metrics metric template, possibly carrying shared subtask state
+     * @param collectionUuid UUID generated for the current collection cycle
+     * @return task configuration with a resolved payload, or the unchanged template when not needed
+     */
+    public static Metrics replaceUuidInHttpPayload(Metrics metrics, String collectionUuid) {
+        HttpProtocol http = metrics.getHttp();
+        if (collectionUuid == null || http == null || http.getPayload() == null
+                || !http.getPayload().contains(UUID_PLACEHOLDER)) {
+            return metrics;
+        }
+        // Shallow copies preserve the shared subtask counters and response buffer.
+        Metrics taskMetrics = new Metrics();
+        BeanUtils.copyProperties(metrics, taskMetrics);
+        HttpProtocol taskHttp = new HttpProtocol();
+        BeanUtils.copyProperties(http, taskHttp);
+        taskHttp.setPayload(http.getPayload().replace(UUID_PLACEHOLDER, collectionUuid));
+        taskMetrics.setHttp(taskHttp);
+        return taskMetrics;
     }
 
     /**
