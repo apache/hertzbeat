@@ -54,7 +54,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   @Input()
   metric!: string;
   @Input()
-  unit!: string;
+  unit?: string;
   eChartOption!: EChartsOption;
   lineHistoryTheme!: EChartsOption;
   loading: string | null = null;
