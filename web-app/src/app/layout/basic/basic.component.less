@@ -179,6 +179,11 @@
     padding: 12px !important;
     width: 100% !important;
     height: 100% !important;
+
+    // The monitor list scrolls with the page. An overflow ancestor would trap its sticky toolbar.
+    &:has(app-monitor-list) {
+      overflow: visible !important;
+    }
   }
 
   /* Sidebar navigation modern styling */

@@ -33,7 +33,11 @@
 
 <nz-divider></nz-divider>
 
-<app-toolbar>
+<app-toolbar
+  class="monitor-toolbar"
+  wrapperStyle="margin-bottom: 0; flex-wrap: wrap; gap: 8px;"
+  containerStyle="flex-wrap: wrap; max-width: 100%;"
+>
   <ng-template #left>
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>

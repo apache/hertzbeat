@@ -1,5 +1,20 @@
 @import '~src/styles/theme';
 
+:host {
+  display: block;
+}
+
+.monitor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: block;
+  margin-bottom: 12px;
+  padding: 8px 0;
+  background: var(--content-background, @common-background-color);
+  border-bottom: 1px solid @common-tint-border;
+}
+
 ::ng-deep {
   .monitor-select-menu-modal {
     .ant-modal-body {
@@ -337,11 +352,10 @@
   }
 }
 
-
 .monitor-unavailable {
   opacity: 0.6;
   transition: opacity 0.3s ease;
-  
+
   .monitor-card-content {
     filter: grayscale(50%);
   }
@@ -363,7 +377,7 @@
     opacity: 0.3;
     cursor: not-allowed;
   }
-  
+
   button[disabled] {
     opacity: 0.4;
     cursor: not-allowed;
