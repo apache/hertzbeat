@@ -1,0 +1,864 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useState } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { applicationRoutePaths, buildMonitorCreatePath, monitorRoutePaths } from '@/shared/navigation/app-paths';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key
+  })
+}));
+vi.mock('./instrumentation-i18n', () => ({ translateBackend: (_t: unknown, key: string) => key }));
+const notifications = vi.hoisted(() => ({ success: vi.fn(), warning: vi.fn() }));
+vi.mock('antd', async importOriginal => {
+  const actual = await importOriginal<typeof import('antd')>();
+  return { ...actual, App: { useApp: () => ({ message: notifications }) } };
+});
+
+import { InstrumentationConfigureStep } from './instrumentation-configure-step';
+import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
+import { InstrumentationGuideWorkspace } from './instrumentation-guide-workspace';
+import { InstrumentationSourceStep } from './instrumentation-source-step';
+import configureCss from './instrumentation-configure.module.css?raw';
+import destinationCss from './instrumentation-destination-selector.module.css?raw';
+import guideCss from './instrumentation-guide.module.css?raw';
+import questionCss from './instrumentation-question.module.css?raw';
+import shellCss from './instrumentation-shell.module.css?raw';
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+describe('instrumentation v2 interaction', () => {
+  it.each([true, false])('keeps the Agentless alternative within the monitor capability (%s)', canCreateMonitor => {
+    const target = canCreateMonitor
+      ? buildMonitorCreatePath({ returnTo: applicationRoutePaths.instrumentation })
+      : monitorRoutePaths.list;
+    render(
+      <MemoryRouter>
+        <InstrumentationSourceStep
+          catalog={catalog}
+          agentlessTarget={target}
+          canCreateMonitor={canCreateMonitor}
+          onSource={vi.fn()}
+          onApplicationAnswer={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('instrumentation.v2.directory.agentlessBoundary')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: canCreateMonitor ? 'dashboard.start.active.action' : 'dashboard.openMonitors' })
+    ).toHaveAttribute('href', target);
+  });
+
+  it('searches grouped backend sources, shows category counts, and blocks unsupported entries', () => {
+    const onSource = vi.fn();
+    const onApplicationAnswer = vi.fn();
+    const view = render(
+      <InstrumentationSourceStep catalog={catalog} onSource={onSource} onApplicationAnswer={onApplicationAnswer} />
+    );
+    expect(screen.getByRole('searchbox')).toBeVisible();
+    const allSources = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*3/ });
+    expect(allSources).toBeVisible();
+    expect(allSources).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
+    const javaSource = screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ });
+    expect(javaSource).toBeVisible();
+    expect(javaSource).toHaveAttribute('title', 'instrumentation.v2.directory.source.java');
+    expect(
+      within(screen.getByRole('region', { name: 'instrumentation.v2.directory.commonPaths' })).getByTitle(
+        'instrumentation.v2.directory.source.java'
+      )
+    ).toBe(javaSource);
+    expect(within(javaSource).getByText('instrumentation.v2.directory.source.java').tagName).toBe('SPAN');
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
+    expect(shellCss).toMatch(/\.sourceGrid\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
+    expect(shellCss).toMatch(
+      /\.sourceTile\s*\{[^}]*min-width:\s*max-content[^}]*min-height:\s*36px[^}]*flex:\s*0\s+0\s+auto/
+    );
+    expect(shellCss).toMatch(/\.sourceTile\s*\{[^}]*gap:\s*8px[^}]*padding:\s*6px 10px/);
+    expect(shellCss).toMatch(
+      /\.sourceTile\s*\{[^}]*border:\s*var\(--ant-line-width\) solid var\(--hb-border\)[^}]*background:\s*var\(--hb-bg-raised\)/
+    );
+    expect(shellCss).toMatch(
+      /\.sourceTile:hover:not\(:disabled\),\s*\.sourceTile:focus-visible\s*\{[^}]*border-color:\s*var\(--ant-color-border-secondary\)[^}]*background:\s*var\(--hb-bg-hover\)/
+    );
+    expect(shellCss).toMatch(/\.sourceTile:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--hb-focus-ring\)/);
+    expect(shellCss).toMatch(
+      /\.sourceTileSelected,\s*\.sourceTileSelected:hover:not\(:disabled\),\s*\.sourceTileSelected:focus-visible\s*\{[^}]*border-color:\s*var\(--hb-brand-accent\)/
+    );
+    expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*font-weight:\s*600[^}]*white-space:\s*nowrap/);
+    expect(shellCss).toMatch(
+      /\.sourceIcon\s*\{[^}]*width:\s*var\(--ant-font-size\)[^}]*height:\s*var\(--ant-font-size\)/
+    );
+    expect(shellCss).toMatch(
+      /\.categoryActionSelected,[\s\S]*?\{[^}]*border-radius:\s*0[^}]*background:\s*transparent[^}]*box-shadow:\s*inset 2px 0 0 var\(--hb-brand-accent\)/
+    );
+    expect(shellCss).not.toMatch(/\.categoryActionSelected,[\s\S]*?\{[^}]*background:\s*var\(--hb-bg-selected\)/);
+    const assistiveDescription = within(javaSource).getByText('instrumentation.v2.directory.source.java_description');
+    expect(assistiveDescription).toHaveClass(/sourceAssistiveText/);
+    expect(within(assistiveDescription).getByText(/instrumentation\.signal\.metrics/)).toBeInTheDocument();
+    expect(javaSource.querySelector('[data-support]')).toBeNull();
+    expect(shellCss).toMatch(
+      /\.sourceAssistiveText\s*\{[^}]*position:\s*absolute[^}]*clip:\s*rect\(0,\s*0,\s*0,\s*0\)/
+    );
+    expect(
+      screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.applications.*2/ })
+    ).toBeVisible();
+    const logsCategory = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*1/ });
+    fireEvent.click(logsCategory);
+    expect(logsCategory).toHaveAttribute('aria-current', 'true');
+    expect(allSources).not.toHaveAttribute('aria-current');
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.fluent_bit/ })).toBeNull();
+    const capabilityDetails = screen.getByText('instrumentation.v2.directory.unsupportedGuides').closest('details')!;
+    expect(capabilityDetails).not.toHaveAttribute('open');
+    fireEvent.click(within(capabilityDetails).getByText('instrumentation.v2.directory.unsupportedGuides'));
+    expect(within(capabilityDetails).getByText('instrumentation.v2.directory.source.fluent_bit')).toBeVisible();
+    expect(within(capabilityDetails).getByText('instrumentation.v2.directory.otlpBoundary')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeNull();
+    view.rerender(
+      <InstrumentationSourceStep
+        key="after-reset"
+        catalog={catalog}
+        onSource={onSource}
+        onApplicationAnswer={onApplicationAnswer}
+      />
+    );
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*1/ }));
+    expect(screen.queryAllByRole('combobox')).toHaveLength(0);
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'logstash' } });
+    expect(screen.getAllByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toHaveLength(
+      1
+    );
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'java' } });
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ }));
+    expect(onSource).toHaveBeenCalledWith('java');
+    view.rerender(
+      <InstrumentationSourceStep
+        catalog={catalog}
+        sourceId="java"
+        onSource={onSource}
+        onApplicationAnswer={onApplicationAnswer}
+      />
+    );
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('button', { name: 'spring_boot' })).toBeVisible();
+    expect(screen.queryByText('instrumentation.v2.recipeLabel')).not.toBeInTheDocument();
+  });
+
+  it('provides a usable localized application question sequence', async () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    render(<ApplicationQuestionHarness />);
+    const framework = screen.getByRole('button', { name: 'spring_boot' });
+    expect(screen.getByText('instrumentation.question.framework')).toBeVisible();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(questionCss).toMatch(/\.questionGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill/);
+    expect(framework).toBeEnabled();
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    fireEvent.click(framework);
+    expect(screen.queryByRole('button', { name: 'spring_boot' })).toBeNull();
+    expect(screen.queryByText('instrumentation.question.framework')).toBeNull();
+    expect(screen.queryByText('instrumentation.field.method')).toBeNull();
+    expect(screen.getByText('instrumentation.question.environment')).toBeVisible();
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('button', { name: 'docker' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'docker' }));
+    expect(screen.getByRole('button', { name: 'docker' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/java · spring_boot · zero_code/)).toBeVisible();
+  });
+
+  it('does not promote a common source when backend support changes to preview', () => {
+    render(
+      <InstrumentationSourceStep
+        catalog={{
+          ...catalog,
+          sources: catalog.sources.map(source =>
+            source.id === 'java' ? { ...source, support: 'preview' as const } : source
+          )
+        }}
+        onSource={vi.fn()}
+        onApplicationAnswer={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole('region', { name: 'instrumentation.v2.directory.commonPaths' })).toBeNull();
+    expect(
+      within(screen.getByTitle('instrumentation.v2.directory.source.java')).getByText(
+        'instrumentation.capability.preview'
+      )
+    ).toBeVisible();
+  });
+
+  it('explains all three telemetry routes and keeps missing destinations visible without inventing endpoints', () => {
+    const availableProfiles = {
+      schemaVersion: 2 as const,
+      status: 'available' as const,
+      defaultProfileId: 'server-default',
+      profiles: [
+        guide.intakeProfile,
+        {
+          id: 'hybrid-edge',
+          kind: 'hertzbeat_collector' as const,
+          availability: 'unavailable' as const,
+          supportedTransports: [],
+          endpoints: {},
+          authorizationHeader: null,
+          errorCode: 'intake_profile_unavailable'
+        }
+      ]
+    };
+    const props = {
+      phase: 'destination' as const,
+      profileId: '',
+      service: {
+        name: '',
+        namespace: 'default',
+        environment: 'default',
+        serviceInstanceId: '',
+        endpoint: ''
+      },
+      platformOptions: [],
+      canRender: false,
+      rendering: false,
+      renderError: false,
+      token: '',
+      tokenDraft: undefined,
+      tokenGenerating: false,
+      tokenError: false,
+      tokenAcknowledgementRequired: false,
+      requiresToken: true,
+      canGenerateToken: true,
+      onProfile: vi.fn(),
+      onService: vi.fn(),
+      onPlatform: vi.fn(),
+      onToken: vi.fn(),
+      onRender: vi.fn(),
+      onPrevious: vi.fn(),
+      onNext: vi.fn(),
+      onOpenToken: vi.fn(),
+      onCloseToken: vi.fn(),
+      onTokenDraft: vi.fn(),
+      onGenerateToken: vi.fn(),
+      onAcknowledgeToken: vi.fn()
+    };
+    const view = render(<InstrumentationConfigureStep profiles={availableProfiles} {...props} />);
+    expect(screen.getByRole('heading', { name: 'instrumentation.v2.guided.destinationTitle', level: 3 })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'instrumentation.v2.destination' })).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.guided.destinationDescription')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileRoute.server')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileRoute.hertzbeat_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileRoute.external_otel_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profilePurpose.server')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profilePurpose.hertzbeat_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profilePurpose.external_otel_collector')).toBeVisible();
+    expect(screen.queryByText('instrumentation.v2.profileBoundary.server')).toBeNull();
+    expect(screen.queryByText('instrumentation.v2.profileBoundary.hertzbeat_collector')).toBeNull();
+    expect(screen.queryByText('instrumentation.v2.profileBoundary.external_otel_collector')).toBeNull();
+    expect(destinationCss).toMatch(/\.destinationList\s*\{[^}]*display:\s*grid/);
+    expect(destinationCss).toMatch(
+      /\.destinationAvailability\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*1[^}]*justify-self:\s*end/
+    );
+    expect(configureCss).toMatch(/\.configureActions\s*\{[^}]*border-top:\s*1px solid var\(--hb-border\)/);
+    view.rerender(<InstrumentationConfigureStep profiles={availableProfiles} {...props} phase="service" />);
+    const serviceName = screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' });
+    const serviceEnvironment = screen.getByRole('textbox', {
+      name: 'instrumentation.field.serviceEnvironment'
+    });
+    expect(serviceName).toBeVisible();
+    expect(serviceEnvironment).toBeVisible();
+    fireEvent.change(serviceName, { target: { value: 'checkout' } });
+    fireEvent.change(serviceEnvironment, { target: { value: 'production' } });
+    expect(screen.getByRole('textbox', { name: 'instrumentation.field.serviceNamespace' })).not.toBeVisible();
+    fireEvent.click(screen.getByText('instrumentation.action.reviewContext'));
+    const namespace = screen.getByRole('textbox', { name: 'instrumentation.field.serviceNamespace' });
+    const instance = screen.getByRole('textbox', { name: 'instrumentation.field.serviceInstanceId' });
+    const endpoint = screen.getByRole('textbox', { name: 'instrumentation.field.endpoint' });
+    expect(namespace).toBeVisible();
+    expect(instance).toBeVisible();
+    expect(endpoint).toBeVisible();
+    fireEvent.change(namespace, { target: { value: 'payments' } });
+    fireEvent.change(instance, { target: { value: 'checkout-7d9' } });
+    fireEvent.change(endpoint, { target: { value: '/checkout' } });
+    expect(props.onService).toHaveBeenNthCalledWith(1, { name: 'checkout' });
+    expect(props.onService).toHaveBeenNthCalledWith(2, { environment: 'production' });
+    expect(props.onService).toHaveBeenNthCalledWith(3, { namespace: 'payments' });
+    expect(props.onService).toHaveBeenNthCalledWith(4, { serviceInstanceId: 'checkout-7d9' });
+    expect(props.onService).toHaveBeenNthCalledWith(5, { endpoint: '/checkout' });
+    expect(screen.queryByText(/entity/iu)).toBeNull();
+    view.rerender(<InstrumentationConfigureStep profiles={availableProfiles} {...props} />);
+    expect(screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.server/ })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.hertzbeat_collector/ })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.external_otel_collector/ })
+    ).toBeDisabled();
+    for (const destination of screen.getAllByRole('button', { name: /instrumentation\.v2\.profileKind\./ })) {
+      expect(destination.querySelector('div')).toBeNull();
+    }
+    expect(screen.getByText('instrumentation.v2.profileReason.destinationUnavailable')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.externalCollectorSetupHint')).toBeVisible();
+
+    view.rerender(
+      <InstrumentationConfigureStep profiles={{ schemaVersion: 2, status: 'unconfigured', profiles: [] }} {...props} />
+    );
+    expect(screen.getByText('instrumentation.v2.profile.unconfigured')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.v2.hybridCollectorSetupHint')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.v2.serverSetupHint')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.v2.externalCollectorSetupHint')).toBeInTheDocument();
+    expect(screen.queryByText(/https?:\/\//)).toBeNull();
+    view.rerender(
+      <InstrumentationConfigureStep
+        profiles={{
+          schemaVersion: 2,
+          status: 'unavailable',
+          errorCode: 'intake_profile_discovery_unavailable',
+          profiles: []
+        }}
+        {...props}
+      />
+    );
+    expect(screen.getByText('instrumentation.v2.profile.unavailable')).toBeInTheDocument();
+  });
+
+  it('generates an OTLP ingest token through a name and expiry modal without a credential field', () => {
+    const onOpenToken = vi.fn();
+    const onGenerateToken = vi.fn();
+    render(
+      <InstrumentationConfigureStep
+        phase="guide"
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'server-default',
+          profiles: [guide.intakeProfile]
+        }}
+        profileId="server-default"
+        service={configureService}
+        platformOptions={[]}
+        canRender={false}
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenDraft={{ name: 'Checkout ingest', expireSeconds: 2_592_000, scope: 'otlp-ingest' }}
+        tokenGenerating={false}
+        tokenError
+        tokenAcknowledgementRequired={false}
+        requiresToken
+        canGenerateToken
+        onProfile={vi.fn()}
+        onService={vi.fn()}
+        onPlatform={vi.fn()}
+        onToken={vi.fn()}
+        onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onOpenToken={onOpenToken}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={onGenerateToken}
+        onAcknowledgeToken={vi.fn()}
+      />
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('textbox', { name: 'instrumentation.token.name' })).toHaveValue('Checkout ingest');
+    expect(within(dialog).getByText('instrumentation.token.fixedScope')).toBeInTheDocument();
+    expect(within(dialog).getByText('instrumentation.token.generateError')).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('combobox')).toHaveLength(1);
+    expect(within(dialog).queryByLabelText('instrumentation.field.token')).toBeNull();
+    expect(dialog.querySelector('input[type="password"]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.token.generate' }));
+    expect(onGenerateToken).toHaveBeenCalledOnce();
+  });
+
+  it('keeps manual token entry but removes generation for a non-writer capability', () => {
+    const onToken = vi.fn();
+    render(
+      <InstrumentationConfigureStep
+        phase="guide"
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'server-default',
+          profiles: [guide.intakeProfile]
+        }}
+        profileId="server-default"
+        service={configureService}
+        platformOptions={[]}
+        canRender={false}
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenGenerating={false}
+        tokenError={false}
+        tokenAcknowledgementRequired={false}
+        requiresToken
+        canGenerateToken={false}
+        onProfile={vi.fn()}
+        onService={vi.fn()}
+        onPlatform={vi.fn()}
+        onToken={onToken}
+        onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onOpenToken={vi.fn()}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={vi.fn()}
+        onAcknowledgeToken={vi.fn()}
+      />
+    );
+
+    const tokenInput = screen.getByLabelText('instrumentation.field.token');
+    fireEvent.change(tokenInput, { target: { value: 'existing-otlp-token' } });
+    expect(onToken).toHaveBeenCalledWith('existing-otlp-token');
+    expect(screen.queryByRole('button', { name: 'instrumentation.token.generateAccess' })).not.toBeInTheDocument();
+  });
+
+  it('shows endpoint security and an explicit Bearer risk for a selected plaintext destination', () => {
+    render(
+      <InstrumentationConfigureStep
+        phase="guide"
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'server-default',
+          profiles: [
+            {
+              ...guide.intakeProfile,
+              endpoints: {
+                http_protobuf: { url: 'http://example.test:4318', security: 'plaintext' }
+              }
+            }
+          ]
+        }}
+        profileId="server-default"
+        service={configureService}
+        platformOptions={[]}
+        canRender={false}
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenGenerating={false}
+        tokenError={false}
+        tokenAcknowledgementRequired={false}
+        requiresToken
+        canGenerateToken
+        onProfile={vi.fn()}
+        onService={vi.fn()}
+        onPlatform={vi.fn()}
+        onToken={vi.fn()}
+        onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onOpenToken={vi.fn()}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={vi.fn()}
+        onAcknowledgeToken={vi.fn()}
+      />
+    );
+    expect(screen.getByText('instrumentation.v2.transport.http_protobuf')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.security.plaintext')).toBeVisible();
+    expect(screen.getByText('instrumentation.token.plaintextBearerWarning')).toBeVisible();
+  });
+
+  it('shows an unauthenticated destination without token controls, status, or Bearer warnings', () => {
+    render(
+      <InstrumentationConfigureStep
+        phase="guide"
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'external-local',
+          profiles: [noneGuide.intakeProfile]
+        }}
+        profileId="external-local"
+        service={configureService}
+        platformOptions={[]}
+        canRender
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenGenerating={false}
+        tokenError={false}
+        tokenAcknowledgementRequired={false}
+        requiresToken={false}
+        canGenerateToken={false}
+        onProfile={vi.fn()}
+        onService={vi.fn()}
+        onPlatform={vi.fn()}
+        onToken={vi.fn()}
+        onRender={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onOpenToken={vi.fn()}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={vi.fn()}
+        onAcknowledgeToken={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByLabelText('instrumentation.field.token')).not.toBeInTheDocument();
+    expect(screen.queryByText('instrumentation.token.notGenerated')).not.toBeInTheDocument();
+    expect(screen.queryByText('instrumentation.token.plaintextBearerWarning')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'instrumentation.token.generateAccess' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'instrumentation.action.next' })).toBeEnabled();
+  });
+
+  it('materializes the memory-only token visibly without mutating the backend guide', () => {
+    const onAcknowledgeToken = vi.fn();
+    render(
+      <InstrumentationGuideWorkspace
+        catalog={catalog}
+        draft={{
+          sourceId: 'quick_start',
+          sourceKind: 'quick_start',
+          recipeId: 'telemetrygen',
+          intakeProfileId: 'server-default',
+          service: guide.service
+        }}
+        guide={guide}
+        token="valid-token-123"
+        tokenAcknowledgementRequired
+        detection={detection}
+        detecting={false}
+        detectionError={false}
+        onCopy={vi.fn().mockResolvedValue(undefined)}
+        onEdit={vi.fn()}
+        onDetect={vi.fn()}
+        onNewCheck={vi.fn()}
+        onOpen={vi.fn()}
+        onAcknowledgeToken={onAcknowledgeToken}
+      />
+    );
+    expect(screen.getByText('instrumentation.token.guideAcknowledgementRequired')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.token.acknowledge' }));
+    expect(onAcknowledgeToken).toHaveBeenCalledOnce();
+    expect(screen.getByText('token=valid-token-123')).toBeVisible();
+    expect(screen.getByText('https://example.test/otlp')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.security.tls')).toBeVisible();
+    expect(screen.queryByText('[object Object]')).toBeNull();
+    expect(guide.blocks[0]!.content).toBe('token=${HERTZBEAT_TOKEN}');
+    const openButtons = screen.getAllByRole('button', { name: 'instrumentation.action.openExplore' });
+    expect(openButtons.map(button => button.hasAttribute('disabled'))).toEqual([false, true, true]);
+    expect(screen.getByText('instrumentation.detection.status.waiting')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
+    expect(guideCss).toMatch(/\.workspace\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+    expect(guideCss).toMatch(/\.workspaceBody\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) 320px/);
+  });
+
+  it('renders and copies backend no-auth guide blocks without token UI or substitution', async () => {
+    const onCopy = vi.fn().mockResolvedValue(undefined);
+    render(
+      <InstrumentationGuideWorkspace
+        catalog={catalog}
+        draft={{
+          sourceId: 'quick_start',
+          sourceKind: 'quick_start',
+          recipeId: 'telemetrygen',
+          intakeProfileId: 'external-local',
+          service: noneGuide.service
+        }}
+        guide={noneGuide}
+        token=""
+        detecting={false}
+        detectionError={false}
+        onCopy={onCopy}
+        onEdit={vi.fn()}
+        onDetect={vi.fn()}
+        onNewCheck={vi.fn()}
+        onOpen={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('endpoint: http://otel.example.test:4318')).toBeVisible();
+    expect(screen.queryByText('instrumentation.token.notGenerated')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'instrumentation.action.startDetection' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'instrumentation.action.retryDetection' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.action.copy' }));
+    await waitFor(() => expect(onCopy).toHaveBeenCalledWith(noneGuide.blocks[0]));
+  });
+
+  it.each([
+    { viewport: 390, rows: 4 },
+    { viewport: 1280, rows: 2 }
+  ])(
+    'keeps component details readable at $viewport px and marks an absent version accurately',
+    ({ viewport, rows }) => {
+      const matchMedia = window.matchMedia;
+      vi.spyOn(window, 'matchMedia').mockImplementation(query => {
+        const width = query.match(/\((min|max)-width:\s*(\d+(?:\.\d+)?)px\)/);
+        const matches = width
+          ? width[1] === 'min'
+            ? viewport >= Number(width[2])
+            : viewport <= Number(width[2])
+          : false;
+        return { ...matchMedia(query), matches };
+      });
+      render(
+        <InstrumentationGuideBlocks
+          guide={{
+            ...guide,
+            components: [
+              {
+                name: 'OpenTelemetry Collector',
+                sourceUrl: 'https://github.com/open-telemetry/opentelemetry-collector',
+                version: null,
+                versionPolicy: 'language_specific',
+                license: 'Apache-2.0',
+                installationLocationKey: 'instrumentation.location.otel_collector',
+                official: true,
+                bundledWithHertzBeat: false,
+                dependencies: [],
+                artifacts: []
+              }
+            ]
+          }}
+          token=""
+          onCopy={vi.fn().mockResolvedValue(undefined)}
+        />
+      );
+      expect(within(screen.getByRole('table')).getAllByRole('row')).toHaveLength(rows);
+      expect(screen.getByText('instrumentation.v2.versionNotApplicable')).toBeInTheDocument();
+      expect(screen.queryByText('common.unavailable')).not.toBeInTheDocument();
+    }
+  );
+
+  it('handles token validation and clipboard rejection without an unhandled promise', async () => {
+    const onCopy = vi.fn().mockRejectedValue(new Error('private token must not surface'));
+    render(<InstrumentationGuideBlocks guide={guide} token="invalid token" onCopy={onCopy} />);
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.action.copy' }));
+    await waitFor(() => expect(notifications.warning).toHaveBeenCalledWith('instrumentation.copyFailed'));
+    expect(JSON.stringify(notifications.warning.mock.calls)).not.toContain('private token');
+  });
+});
+
+function ApplicationQuestionHarness() {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  return (
+    <InstrumentationSourceStep
+      catalog={catalog}
+      sourceId="java"
+      {...answers}
+      onSource={vi.fn()}
+      onApplicationAnswer={(field, value) => setAnswers(current => ({ ...current, [field]: value }))}
+    />
+  );
+}
+
+const catalog = {
+  schemaVersion: 2 as const,
+  groups: [
+    { id: 'quick_start', labelKey: 'instrumentation.v2.directory.group.quick_start' },
+    { id: 'applications', labelKey: 'instrumentation.v2.directory.group.applications' },
+    { id: 'logs', labelKey: 'instrumentation.v2.directory.group.logs' }
+  ],
+  sources: [
+    {
+      id: 'quick_start',
+      labelKey: 'instrumentation.v2.directory.source.quick_start',
+      descriptionKey: 'instrumentation.v2.directory.source.quick_start_description',
+      iconKey: 'quick-start',
+      groupIds: ['quick_start'],
+      support: 'supported' as const,
+      sourceKind: 'quick_start' as const,
+      recipeIds: ['telemetrygen'],
+      signals: { metrics: 'supported' as const, logs: 'supported' as const, traces: 'supported' as const }
+    },
+    {
+      id: 'java',
+      labelKey: 'instrumentation.v2.directory.source.java',
+      descriptionKey: 'instrumentation.v2.directory.source.java_description',
+      iconKey: 'java',
+      groupIds: ['applications'],
+      support: 'supported' as const,
+      sourceKind: 'application' as const,
+      recipeIds: ['java_spring', 'java_jar'],
+      signals: { metrics: 'supported' as const, logs: 'preview' as const, traces: 'supported' as const }
+    },
+    {
+      id: 'fluent_bit',
+      labelKey: 'instrumentation.v2.directory.source.fluent_bit',
+      descriptionKey: 'instrumentation.v2.directory.source.fluent_bit_description',
+      iconKey: 'fluent-bit',
+      groupIds: ['logs'],
+      support: 'unsupported' as const,
+      recipeIds: [],
+      signals: { metrics: 'unsupported' as const, logs: 'unsupported' as const, traces: 'unsupported' as const }
+    },
+    {
+      id: 'logstash',
+      labelKey: 'instrumentation.v2.directory.source.logstash',
+      descriptionKey: 'instrumentation.v2.directory.source.logstash_description',
+      iconKey: 'logstash',
+      groupIds: ['applications', 'logs'],
+      support: 'preview' as const,
+      recipeIds: [],
+      signals: { metrics: 'unsupported' as const, logs: 'preview' as const, traces: 'unsupported' as const }
+    }
+  ],
+  recipes: [
+    {
+      id: 'telemetrygen',
+      kind: 'quick_start' as const,
+      labelKey: 'instrumentation.v2.recipe.telemetrygen',
+      preview: false,
+      environments: ['docker'],
+      platforms: ['linux_amd64'],
+      signals: { metrics: 'supported' as const, logs: 'supported' as const, traces: 'supported' as const },
+      components: [],
+      blocksPreview: ['command' as const]
+    },
+    {
+      id: 'java_spring',
+      kind: 'application' as const,
+      labelKey: 'instrumentation.v2.recipe.java_spring',
+      preview: false,
+      language: 'java',
+      framework: 'spring_boot',
+      method: 'zero_code',
+      environments: ['docker', 'kubernetes'],
+      platforms: ['linux_amd64'],
+      signals: { metrics: 'supported' as const, logs: 'preview' as const, traces: 'supported' as const },
+      components: [],
+      blocksPreview: ['environment' as const]
+    },
+    {
+      id: 'java_jar',
+      kind: 'application' as const,
+      labelKey: 'instrumentation.v2.recipe.java_jar',
+      preview: false,
+      language: 'java',
+      framework: 'java_jar',
+      method: 'zero_code',
+      environments: ['docker'],
+      platforms: ['linux_amd64'],
+      signals: { metrics: 'supported' as const, logs: 'preview' as const, traces: 'supported' as const },
+      components: [],
+      blocksPreview: ['environment' as const]
+    }
+  ]
+};
+
+const context = {
+  serviceName: 'checkout',
+  serviceNamespace: 'shop',
+  environment: 'prod',
+  intakeProfileId: 'server-default',
+  startedAt: 1000,
+  detectedAt: 2000
+};
+const configureService = {
+  name: 'checkout',
+  namespace: 'default',
+  environment: 'default'
+};
+const guide = {
+  schemaVersion: 2 as const,
+  sourceKind: 'quick_start' as const,
+  recipeId: 'opentelemetry_telemetrygen',
+  intakeProfile: {
+    id: 'server-default',
+    kind: 'server' as const,
+    availability: 'available' as const,
+    gateway: 'server' as const,
+    supportedTransports: ['http_protobuf' as const],
+    endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' as const } },
+    authentication: 'bearer_token' as const,
+    authorizationHeader: 'Authorization' as const
+  },
+  service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
+  signals: { metrics: 'supported' as const, logs: 'supported' as const, traces: 'supported' as const },
+  components: [],
+  secretPlaceholders: {
+    authorizationToken: { marker: '${HERTZBEAT_TOKEN}' as const, kind: 'authorization_token' as const }
+  },
+  blocks: [
+    {
+      id: 'send',
+      type: 'command' as const,
+      titleKey: 'instrumentation.v2.block.send_metrics',
+      executionLocationKey: 'instrumentation.location.application_host',
+      language: 'shell',
+      content: 'token=${HERTZBEAT_TOKEN}',
+      placeholders: ['authorizationToken' as const]
+    }
+  ]
+};
+const noneGuide = {
+  ...guide,
+  intakeProfile: {
+    id: 'external-local',
+    kind: 'external_otel_collector' as const,
+    availability: 'available' as const,
+    gateway: 'external' as const,
+    supportedTransports: ['http_protobuf' as const],
+    endpoints: { http_protobuf: { url: 'http://otel.example.test:4318', security: 'plaintext' as const } },
+    authentication: 'none' as const,
+    authorizationHeader: null
+  },
+  secretPlaceholders: {},
+  blocks: [
+    {
+      id: 'configure',
+      type: 'code' as const,
+      titleKey: 'instrumentation.v2.block.configure_exporter',
+      executionLocationKey: 'instrumentation.location.otel_collector',
+      language: 'yaml',
+      content: 'endpoint: http://otel.example.test:4318',
+      placeholders: []
+    }
+  ]
+};
+const detection = {
+  schemaVersion: 2 as const,
+  detectedAt: 2000,
+  context: {
+    sourceKind: 'quick_start' as const,
+    recipeId: 'opentelemetry_telemetrygen',
+    service: guide.service,
+    intakeProfileId: 'server-default',
+    startedAt: 1000,
+    windowEndAt: 121000
+  },
+  signals: {
+    metrics: { status: 'received' as const, lastReceivedAt: 1900 },
+    logs: { status: 'waiting' as const, errorCode: 'signal_not_received' as const },
+    traces: { status: 'unsupported' as const, errorCode: 'signal_not_supported' as const }
+  },
+  polling: { decision: 'continue_polling' as const, pollAfterMs: 3000, deadlineAt: 121000 },
+  queryJumpContext: context,
+  queryJumps: [
+    { signal: 'metrics' as const, enabled: true, context },
+    { signal: 'logs' as const, enabled: false, context },
+    { signal: 'traces' as const, enabled: false, context }
+  ]
+};

@@ -1,0 +1,617 @@
+diff --git a/dist/EChart/EChart.js b/dist/EChart/EChart.js
+index 1b97691d232faa29e79701112c49b15e6f8bdcae..d265bca2509fe6832c38c8a8a8c8844f3aa1f9ac 100644
+--- a/dist/EChart/EChart.js
++++ b/dist/EChart/EChart.js
+@@ -11,7 +11,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+-import { memo, useEffect, useLayoutEffect, useRef } from 'react';
++import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+ import { init, connect, use } from 'echarts/core';
+ import { Box } from '@mui/material';
+ import isEqual from 'lodash/isEqual';
+@@ -63,11 +63,21 @@ export const EChart = /*#__PURE__*/ memo(function EChart({ option, theme, render
+     const prevOption = useRef(option);
+     const containerRef = useRef(null);
+     const chartElement = useRef(null);
++    // zrender caches density at module load; follow the current screen instead.
++    const [pixelRatio, setPixelRatio] = useState(()=>window.devicePixelRatio || 1);
++    useEffect(()=>{
++        const media = window.matchMedia(`(resolution: ${pixelRatio}dppx)`);
++        const update = ()=>setPixelRatio(window.devicePixelRatio || 1);
++        media.addEventListener('change', update);
++        update();
++        return ()=>media.removeEventListener('change', update);
++    }, [pixelRatio]);
+     // Initialize chart, dispose on unmount
+     useLayoutEffect(()=>{
+         if (containerRef.current === null || chartElement.current !== null) return;
+         chartElement.current = init(containerRef.current, theme, {
+-            renderer: renderer ?? 'canvas'
++            renderer: renderer ?? 'canvas',
++            devicePixelRatio: pixelRatio
+         });
+         if (chartElement.current === undefined) return;
+         chartElement.current.setOption(initialOption.current, true);
+@@ -77,6 +87,9 @@ export const EChart = /*#__PURE__*/ memo(function EChart({ option, theme, render
+         }
+         return ()=>{
+             if (chartElement.current === null) return;
++            if (pixelRatio !== (window.devicePixelRatio || 1)) {
++                initialOption.current = chartElement.current.getOption();
++            }
+             chartElement.current.dispose();
+             chartElement.current = null;
+         };
+@@ -84,7 +97,8 @@ export const EChart = /*#__PURE__*/ memo(function EChart({ option, theme, render
+         _instance,
+         onChartInitialized,
+         theme,
+-        renderer
++        renderer,
++        pixelRatio
+     ]);
+     // When syncGroup is explicitly set, charts within same group share interactions such as crosshair
+     useEffect(()=>{
+@@ -95,7 +109,8 @@ export const EChart = /*#__PURE__*/ memo(function EChart({ option, theme, render
+         ]); // more info: https://echarts.apache.org/en/api.html#echarts.connect
+     }, [
+         syncGroup,
+-        chartElement
++        chartElement,
++        pixelRatio
+     ]);
+     // Update chart data when option changes
+     useEffect(()=>{
+@@ -106,16 +121,20 @@ export const EChart = /*#__PURE__*/ memo(function EChart({ option, theme, render
+     }, [
+         option
+     ]);
+-    // Resize chart, cleanup listener on unmount
++    // Track the chart's own box: host panels can resize without a window event.
+     useLayoutEffect(()=>{
+-        const updateSize = debounce(()=>{
+-            if (!chartElement.current) return;
+-            chartElement.current.resize();
+-        }, 200);
++        const container = containerRef.current;
++        if (!container) return;
++        const resize = ()=>chartElement.current?.resize();
++        const updateSize = debounce(resize, 200);
++        const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(()=>resize());
++        observer?.observe(container);
+         window.addEventListener('resize', updateSize);
+-        updateSize();
++        resize();
+         return ()=>{
++            observer?.disconnect();
+             window.removeEventListener('resize', updateSize);
++            updateSize.cancel();
+         };
+     }, []);
+     // Bind and unbind chart events passed as prop
+@@ -131,25 +150,8 @@ export const EChart = /*#__PURE__*/ memo(function EChart({ option, theme, render
+             }
+         };
+     }, [
+-        onEvents
+-    ]);
+-    // TODO: re-evaluate how this is triggered. It's technically working right
+-    // now because the sx prop is an object that gets re-created, but that also
+-    // means it runs unnecessarily some of the time and theoretically might
+-    // not run in some other cases. Maybe it should use a resize observer?
+-    useEffect(()=>{
+-        // TODO: fix this debouncing. This likely isn't working as intended because
+-        // the debounced function is re-created every time this useEffect is called.
+-        const updateSize = debounce(()=>{
+-            if (!chartElement.current) return;
+-            chartElement.current.resize();
+-        }, 200, {
+-            leading: true
+-        });
+-        updateSize();
+-    }, [
+-        sx,
+-        style
++        onEvents,
++        pixelRatio
+     ]);
+     return /*#__PURE__*/ _jsx(Box, {
+         ref: containerRef,
+diff --git a/dist/TimeSeriesTooltip/TimeChartTooltip.d.ts b/dist/TimeSeriesTooltip/TimeChartTooltip.d.ts
+index bd65c1ad2f25fb2f7cab6ab5a15f634539cca0af..da69ec0c13f0d1af9280e2e5da1f6bf031f97378 100644
+--- a/dist/TimeSeriesTooltip/TimeChartTooltip.d.ts
++++ b/dist/TimeSeriesTooltip/TimeChartTooltip.d.ts
+@@ -15,6 +15,8 @@ export interface TimeChartTooltipProps {
+      */
+     containerId?: string;
+     onUnpinClick?: () => void;
++    /** Optional host timestamp content; native tooltip controls remain unchanged. */
++    renderTimestamp?: (timestamp: number) => import("react").ReactNode;
+     format?: FormatOptions;
+     /**
+      * Map of series ID to format options for per-series formatting (used with multiple Y axes)
+diff --git a/dist/TimeSeriesTooltip/TimeChartTooltip.js b/dist/TimeSeriesTooltip/TimeChartTooltip.js
+index 4518280ce7263000e1376607ca2b515156f39ca5..a76f12e625d4c6b975ead028a8e6050a99ba90fe 100644
+--- a/dist/TimeSeriesTooltip/TimeChartTooltip.js
++++ b/dist/TimeSeriesTooltip/TimeChartTooltip.js
+@@ -19,7 +19,7 @@ import { assembleTransform, getTooltipStyles } from './utils';
+ import { getNearbySeriesData } from './nearby-series';
+ import { TooltipHeader } from './TooltipHeader';
+ import { TooltipContent } from './TooltipContent';
+-export const TimeChartTooltip = /*#__PURE__*/ memo(function TimeChartTooltip({ containerId, chartRef, data, seriesMapping, enablePinning = true, wrapLabels, format, seriesFormatMap, onUnpinClick, pinnedPos }) {
++export const TimeChartTooltip = /*#__PURE__*/ memo(function TimeChartTooltip({ containerId, chartRef, data, seriesMapping, enablePinning = true, wrapLabels, format, seriesFormatMap, onUnpinClick, pinnedPos, renderTimestamp }) {
+     const [showAllSeries, setShowAllSeries] = useState(false);
+     const transform = useRef();
+     const tooltipElementRef = useRef(null);
+@@ -80,6 +80,7 @@ export const TimeChartTooltip = /*#__PURE__*/ memo(function TimeChartTooltip({ c
+                 children: [
+                     /*#__PURE__*/ _jsx(TooltipHeader, {
+                         nearbySeries: nearbySeries,
++                        renderTimestamp: renderTimestamp,
+                         totalSeries: totalSeries,
+                         enablePinning: enablePinning,
+                         isTooltipPinned: isTooltipPinned,
+diff --git a/dist/TimeSeriesTooltip/TooltipHeader.d.ts b/dist/TimeSeriesTooltip/TooltipHeader.d.ts
+index 8fab66f1168c314f9b4b29691a337c9141523641..501f29a8170ac4a469b0e005100bc9c8d3bdc92d 100644
+--- a/dist/TimeSeriesTooltip/TooltipHeader.d.ts
++++ b/dist/TimeSeriesTooltip/TooltipHeader.d.ts
+@@ -8,6 +8,8 @@ export interface TooltipHeaderProps {
+     enablePinning?: boolean;
+     onShowAllClick?: (checked: boolean) => void;
+     onUnpinClick?: () => void;
++    /** Optional host timestamp content; native tooltip controls remain unchanged. */
++    renderTimestamp?: (timestamp: number) => import("react").ReactNode;
+ }
+ export declare const TooltipHeader: import("react").NamedExoticComponent<TooltipHeaderProps>;
+ //# sourceMappingURL=TooltipHeader.d.ts.map
+\ No newline at end of file
+diff --git a/dist/TimeSeriesTooltip/TooltipHeader.js b/dist/TimeSeriesTooltip/TooltipHeader.js
+index 62f9026d888995cf43997f5478952e39cd8c87dc..dfee131d9ae66d81b211ecd37832477c63ecf0ca 100644
+--- a/dist/TimeSeriesTooltip/TooltipHeader.js
++++ b/dist/TimeSeriesTooltip/TooltipHeader.js
+@@ -17,7 +17,7 @@ import PinOutline from 'mdi-material-ui/PinOutline';
+ import { memo } from 'react';
+ import { useTimeZone } from '../context/TimeZoneProvider';
+ import { TOOLTIP_BG_COLOR_FALLBACK, TOOLTIP_MAX_WIDTH, PIN_TOOLTIP_HELP_TEXT, UNPIN_TOOLTIP_HELP_TEXT } from './tooltip-model';
+-export const TooltipHeader = /*#__PURE__*/ memo(function TooltipHeader({ nearbySeries, totalSeries, isTooltipPinned, showAllSeries, enablePinning = true, onShowAllClick, onUnpinClick }) {
++export const TooltipHeader = /*#__PURE__*/ memo(function TooltipHeader({ nearbySeries, totalSeries, isTooltipPinned, showAllSeries, enablePinning = true, onShowAllClick, onUnpinClick, renderTimestamp }) {
+     const { formatWithUserTimeZone } = useTimeZone();
+     const seriesTimeMs = nearbySeries[0]?.date ?? null;
+     if (seriesTimeMs === null) {
+@@ -63,12 +63,14 @@ export const TooltipHeader = /*#__PURE__*/ memo(function TooltipHeader({ nearbyS
+                 sx: {
+                     width: '100%',
+                     display: 'flex',
++                    flexDirection: renderTimestamp ? 'column' : 'row',
++                    minWidth: 0,
+                     justifyContent: 'start',
+-                    alignItems: 'center',
++                    alignItems: renderTimestamp ? 'stretch' : 'center',
+                     paddingBottom: 0.5
+                 },
+                 children: [
+-                    formatTimeSeriesHeader(seriesTimeMs),
++                    renderTimestamp ? renderTimestamp(seriesTimeMs) : formatTimeSeriesHeader(seriesTimeMs),
+                     /*#__PURE__*/ _jsxs(Stack, {
+                         direction: "row",
+                         gap: 1,
+diff --git a/dist/TimeSeriesTooltip/utils.js b/dist/TimeSeriesTooltip/utils.js
+index 02ef3235638a8bf770832cca9d12b996487d9e83..c95c949be6cdc97beb875c22ad930b66dd6fa16c 100644
+--- a/dist/TimeSeriesTooltip/utils.js
++++ b/dist/TimeSeriesTooltip/utils.js
+@@ -48,10 +48,11 @@ import { TOOLTIP_MAX_WIDTH, TOOLTIP_MAX_HEIGHT, TOOLTIP_MIN_WIDTH, TOOLTIP_BG_CO
+     if (x + effectiveWidth > window.innerWidth) {
+         x = mousePos.page.x - effectiveWidth - cursorPaddingX; // Move to the left of the cursor
+     }
+-    // Ensure tooltip does not go out of the screen on the left
+-    if (x < cursorPaddingX) {
+-        x = cursorPaddingX;
+-    }
++    // Keep the measured box within viewport edges, including positioned portals.
++    const viewportOffset = containerElement ? containerElement.getBoundingClientRect().left - containerElement.scrollLeft : -window.scrollX;
++    const minX = 8 - viewportOffset;
++    const maxX = Math.max(minX, window.innerWidth - 8 - effectiveWidth - viewportOffset);
++    x = Math.min(Math.max(x, minX), maxX);
+     // Ensure tooltip does not go out of the screen on the top
+     if (y < TOOLTIP_PADDING / 2) {
+         y = TOOLTIP_PADDING / 2;
+@@ -63,8 +64,9 @@ import { TOOLTIP_MAX_WIDTH, TOOLTIP_MAX_HEIGHT, TOOLTIP_MIN_WIDTH, TOOLTIP_BG_CO
+  */ export function getTooltipStyles(theme, pinnedPos, maxHeight) {
+     const adjustedMaxHeight = maxHeight ? maxHeight - TOOLTIP_PADDING : undefined;
+     return {
+-        minWidth: TOOLTIP_MIN_WIDTH,
+-        maxWidth: TOOLTIP_MAX_WIDTH,
++        minWidth: `min(${TOOLTIP_MIN_WIDTH}px, calc(100vw - 16px))`,
++        maxWidth: `min(${TOOLTIP_MAX_WIDTH}px, calc(100vw - 16px))`,
++        boxSizing: 'border-box',
+         maxHeight: adjustedMaxHeight ?? TOOLTIP_MAX_HEIGHT,
+         padding: 0,
+         position: 'absolute',
+@@ -78,8 +80,8 @@ import { TOOLTIP_MAX_WIDTH, TOOLTIP_MAX_HEIGHT, TOOLTIP_MIN_WIDTH, TOOLTIP_BG_CO
+         opacity: 1,
+         // Animating transform causes intermediate positions outside the viewport; animate opacity/visibility instead.
+         transition: 'opacity 0.1s ease-out, visibility 0.1s ease-out',
+-        // Pinned tooltip should not float above the drawer/sticky header.
+-        zIndex: pinnedPos !== null ? 'auto' : theme.zIndex.tooltip,
++        // Pinned layer is above result headers (2), below host header and inspector (20).
++        zIndex: pinnedPos !== null ? 3 : theme.zIndex.tooltip,
+         overflow: 'hidden',
+         '&:hover': {
+             overflowY: 'auto'
+diff --git a/dist/cjs/EChart/EChart.js b/dist/cjs/EChart/EChart.js
+index 42ae75505dd74a3adae56205fa8868c0b32159ae..cb83d1d9acd72c990ae5614cd5f0c0237a73201d 100644
+--- a/dist/cjs/EChart/EChart.js
++++ b/dist/cjs/EChart/EChart.js
+@@ -78,11 +78,21 @@ const EChart = /*#__PURE__*/ (0, _react.memo)(function EChart({ option, theme, r
+     const prevOption = (0, _react.useRef)(option);
+     const containerRef = (0, _react.useRef)(null);
+     const chartElement = (0, _react.useRef)(null);
++    // zrender caches density at module load; follow the current screen instead.
++    const [pixelRatio, setPixelRatio] = (0, _react.useState)(()=>window.devicePixelRatio || 1);
++    (0, _react.useEffect)(()=>{
++        const media = window.matchMedia(`(resolution: ${pixelRatio}dppx)`);
++        const update = ()=>setPixelRatio(window.devicePixelRatio || 1);
++        media.addEventListener('change', update);
++        update();
++        return ()=>media.removeEventListener('change', update);
++    }, [pixelRatio]);
+     // Initialize chart, dispose on unmount
+     (0, _react.useLayoutEffect)(()=>{
+         if (containerRef.current === null || chartElement.current !== null) return;
+         chartElement.current = (0, _core.init)(containerRef.current, theme, {
+-            renderer: renderer ?? 'canvas'
++            renderer: renderer ?? 'canvas',
++            devicePixelRatio: pixelRatio
+         });
+         if (chartElement.current === undefined) return;
+         chartElement.current.setOption(initialOption.current, true);
+@@ -92,6 +102,9 @@ const EChart = /*#__PURE__*/ (0, _react.memo)(function EChart({ option, theme, r
+         }
+         return ()=>{
+             if (chartElement.current === null) return;
++            if (pixelRatio !== (window.devicePixelRatio || 1)) {
++                initialOption.current = chartElement.current.getOption();
++            }
+             chartElement.current.dispose();
+             chartElement.current = null;
+         };
+@@ -99,7 +112,8 @@ const EChart = /*#__PURE__*/ (0, _react.memo)(function EChart({ option, theme, r
+         _instance,
+         onChartInitialized,
+         theme,
+-        renderer
++        renderer,
++        pixelRatio
+     ]);
+     // When syncGroup is explicitly set, charts within same group share interactions such as crosshair
+     (0, _react.useEffect)(()=>{
+@@ -110,7 +124,8 @@ const EChart = /*#__PURE__*/ (0, _react.memo)(function EChart({ option, theme, r
+         ]); // more info: https://echarts.apache.org/en/api.html#echarts.connect
+     }, [
+         syncGroup,
+-        chartElement
++        chartElement,
++        pixelRatio
+     ]);
+     // Update chart data when option changes
+     (0, _react.useEffect)(()=>{
+@@ -121,16 +136,20 @@ const EChart = /*#__PURE__*/ (0, _react.memo)(function EChart({ option, theme, r
+     }, [
+         option
+     ]);
+-    // Resize chart, cleanup listener on unmount
++    // Track the chart's own box: host panels can resize without a window event.
+     (0, _react.useLayoutEffect)(()=>{
+-        const updateSize = (0, _debounce.default)(()=>{
+-            if (!chartElement.current) return;
+-            chartElement.current.resize();
+-        }, 200);
++        const container = containerRef.current;
++        if (!container) return;
++        const resize = ()=>chartElement.current?.resize();
++        const updateSize = (0, _debounce.default)(resize, 200);
++        const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(()=>resize());
++        observer?.observe(container);
+         window.addEventListener('resize', updateSize);
+-        updateSize();
++        resize();
+         return ()=>{
++            observer?.disconnect();
+             window.removeEventListener('resize', updateSize);
++            updateSize.cancel();
+         };
+     }, []);
+     // Bind and unbind chart events passed as prop
+@@ -146,25 +165,8 @@ const EChart = /*#__PURE__*/ (0, _react.memo)(function EChart({ option, theme, r
+             }
+         };
+     }, [
+-        onEvents
+-    ]);
+-    // TODO: re-evaluate how this is triggered. It's technically working right
+-    // now because the sx prop is an object that gets re-created, but that also
+-    // means it runs unnecessarily some of the time and theoretically might
+-    // not run in some other cases. Maybe it should use a resize observer?
+-    (0, _react.useEffect)(()=>{
+-        // TODO: fix this debouncing. This likely isn't working as intended because
+-        // the debounced function is re-created every time this useEffect is called.
+-        const updateSize = (0, _debounce.default)(()=>{
+-            if (!chartElement.current) return;
+-            chartElement.current.resize();
+-        }, 200, {
+-            leading: true
+-        });
+-        updateSize();
+-    }, [
+-        sx,
+-        style
++        onEvents,
++        pixelRatio
+     ]);
+     return /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Box, {
+         ref: containerRef,
+diff --git a/dist/cjs/TimeSeriesTooltip/TimeChartTooltip.js b/dist/cjs/TimeSeriesTooltip/TimeChartTooltip.js
+index c5f8901df86fd6d3c74a5a10ba9ee2ca22282c1c..9a53d70c9b3e00994c98218fb28012b318b7457a 100644
+--- a/dist/cjs/TimeSeriesTooltip/TimeChartTooltip.js
++++ b/dist/cjs/TimeSeriesTooltip/TimeChartTooltip.js
+@@ -34,7 +34,7 @@ function _interop_require_default(obj) {
+         default: obj
+     };
+ }
+-const TimeChartTooltip = /*#__PURE__*/ (0, _react.memo)(function TimeChartTooltip({ containerId, chartRef, data, seriesMapping, enablePinning = true, wrapLabels, format, seriesFormatMap, onUnpinClick, pinnedPos }) {
++const TimeChartTooltip = /*#__PURE__*/ (0, _react.memo)(function TimeChartTooltip({ containerId, chartRef, data, seriesMapping, enablePinning = true, wrapLabels, format, seriesFormatMap, onUnpinClick, pinnedPos, renderTimestamp }) {
+     const [showAllSeries, setShowAllSeries] = (0, _react.useState)(false);
+     const transform = (0, _react.useRef)();
+     const tooltipElementRef = (0, _react.useRef)(null);
+@@ -95,6 +95,7 @@ const TimeChartTooltip = /*#__PURE__*/ (0, _react.memo)(function TimeChartToolti
+                 children: [
+                     /*#__PURE__*/ (0, _jsxruntime.jsx)(_TooltipHeader.TooltipHeader, {
+                         nearbySeries: nearbySeries,
++                        renderTimestamp: renderTimestamp,
+                         totalSeries: totalSeries,
+                         enablePinning: enablePinning,
+                         isTooltipPinned: isTooltipPinned,
+diff --git a/dist/cjs/TimeSeriesTooltip/TooltipHeader.js b/dist/cjs/TimeSeriesTooltip/TooltipHeader.js
+index 0153a08d62bebfbbbdb4a40fddee643736bafa04..ba7810212c5f8f646f9144e970b26f0fdb2d912d 100644
+--- a/dist/cjs/TimeSeriesTooltip/TooltipHeader.js
++++ b/dist/cjs/TimeSeriesTooltip/TooltipHeader.js
+@@ -32,7 +32,7 @@ function _interop_require_default(obj) {
+         default: obj
+     };
+ }
+-const TooltipHeader = /*#__PURE__*/ (0, _react.memo)(function TooltipHeader({ nearbySeries, totalSeries, isTooltipPinned, showAllSeries, enablePinning = true, onShowAllClick, onUnpinClick }) {
++const TooltipHeader = /*#__PURE__*/ (0, _react.memo)(function TooltipHeader({ nearbySeries, totalSeries, isTooltipPinned, showAllSeries, enablePinning = true, onShowAllClick, onUnpinClick, renderTimestamp }) {
+     const { formatWithUserTimeZone } = (0, _TimeZoneProvider.useTimeZone)();
+     const seriesTimeMs = nearbySeries[0]?.date ?? null;
+     if (seriesTimeMs === null) {
+@@ -78,12 +78,14 @@ const TooltipHeader = /*#__PURE__*/ (0, _react.memo)(function TooltipHeader({ ne
+                 sx: {
+                     width: '100%',
+                     display: 'flex',
++                    flexDirection: renderTimestamp ? 'column' : 'row',
++                    minWidth: 0,
+                     justifyContent: 'start',
+-                    alignItems: 'center',
++                    alignItems: renderTimestamp ? 'stretch' : 'center',
+                     paddingBottom: 0.5
+                 },
+                 children: [
+-                    formatTimeSeriesHeader(seriesTimeMs),
++                    renderTimestamp ? renderTimestamp(seriesTimeMs) : formatTimeSeriesHeader(seriesTimeMs),
+                     /*#__PURE__*/ (0, _jsxruntime.jsxs)(_material.Stack, {
+                         direction: "row",
+                         gap: 1,
+diff --git a/dist/cjs/TimeSeriesTooltip/utils.js b/dist/cjs/TimeSeriesTooltip/utils.js
+index 561623366bd20fbea8c989808122b6f4dfa2ef20..678e67b74e374b874d94a36c620b7080cdeca092 100644
+--- a/dist/cjs/TimeSeriesTooltip/utils.js
++++ b/dist/cjs/TimeSeriesTooltip/utils.js
+@@ -79,10 +79,11 @@ function assembleTransform(mousePos, pinnedPos, tooltipHeight, tooltipWidth, con
+     if (x + effectiveWidth > window.innerWidth) {
+         x = mousePos.page.x - effectiveWidth - cursorPaddingX; // Move to the left of the cursor
+     }
+-    // Ensure tooltip does not go out of the screen on the left
+-    if (x < cursorPaddingX) {
+-        x = cursorPaddingX;
+-    }
++    // Keep the measured box within viewport edges, including positioned portals.
++    const viewportOffset = containerElement ? containerElement.getBoundingClientRect().left - containerElement.scrollLeft : -window.scrollX;
++    const minX = 8 - viewportOffset;
++    const maxX = Math.max(minX, window.innerWidth - 8 - effectiveWidth - viewportOffset);
++    x = Math.min(Math.max(x, minX), maxX);
+     // Ensure tooltip does not go out of the screen on the top
+     if (y < _tooltipmodel.TOOLTIP_PADDING / 2) {
+         y = _tooltipmodel.TOOLTIP_PADDING / 2;
+@@ -92,8 +93,9 @@ function assembleTransform(mousePos, pinnedPos, tooltipHeight, tooltipWidth, con
+ function getTooltipStyles(theme, pinnedPos, maxHeight) {
+     const adjustedMaxHeight = maxHeight ? maxHeight - _tooltipmodel.TOOLTIP_PADDING : undefined;
+     return {
+-        minWidth: _tooltipmodel.TOOLTIP_MIN_WIDTH,
+-        maxWidth: _tooltipmodel.TOOLTIP_MAX_WIDTH,
++        minWidth: `min(${_tooltipmodel.TOOLTIP_MIN_WIDTH}px, calc(100vw - 16px))`,
++        maxWidth: `min(${_tooltipmodel.TOOLTIP_MAX_WIDTH}px, calc(100vw - 16px))`,
++        boxSizing: 'border-box',
+         maxHeight: adjustedMaxHeight ?? _tooltipmodel.TOOLTIP_MAX_HEIGHT,
+         padding: 0,
+         position: 'absolute',
+@@ -107,8 +109,8 @@ function getTooltipStyles(theme, pinnedPos, maxHeight) {
+         opacity: 1,
+         // Animating transform causes intermediate positions outside the viewport; animate opacity/visibility instead.
+         transition: 'opacity 0.1s ease-out, visibility 0.1s ease-out',
+-        // Pinned tooltip should not float above the drawer/sticky header.
+-        zIndex: pinnedPos !== null ? 'auto' : theme.zIndex.tooltip,
++        // Pinned layer is above result headers (2), below host header and inspector (20).
++        zIndex: pinnedPos !== null ? 3 : theme.zIndex.tooltip,
+         overflow: 'hidden',
+         '&:hover': {
+             overflowY: 'auto'
+diff --git a/dist/cjs/model/currency.js b/dist/cjs/model/currency.js
+index 6af5e4347397067fd3a10bb0ac680424cf880865..eeaff090c3a24fa2930e5282039de9eb89f7b6f6 100644
+--- a/dist/cjs/model/currency.js
++++ b/dist/cjs/model/currency.js
+@@ -31,7 +31,7 @@ _export(exports, {
+         return formatCurrency;
+     }
+ });
+-const _lodash = require("lodash");
++const _lodash = require("lodash/toUpper");
+ const _constants = require("./constants");
+ const _utils = require("./utils");
+ const _formatterCache = require("./formatterCache");
+@@ -105,7 +105,7 @@ const CURRENCY_UNIT_CONFIG = {
+ function formatCurrency(value, { unit, decimalPlaces }) {
+     const formatterOptions = {
+         style: 'currency',
+-        currency: (0, _lodash.toUpper)(unit),
++        currency: _lodash(unit),
+         currencyDisplay: 'symbol'
+     };
+     if ((0, _utils.hasDecimalPlaces)(decimalPlaces)) {
+diff --git a/dist/cjs/model/decimal.js b/dist/cjs/model/decimal.js
+index 2c73c40eb320fffc792829154d2210b17cead94d..93c3159935f4f1dc57b547b9b70b58dd5c2122c6 100644
+--- a/dist/cjs/model/decimal.js
++++ b/dist/cjs/model/decimal.js
+@@ -46,6 +46,9 @@ const DECIMAL_UNIT_CONFIG = {
+     }
+ };
+ function formatDecimal(value, { shortValues, decimalPlaces }) {
++    if (Number.isFinite(value) && value !== 0 && (Math.abs(value) >= 1e15 || Math.abs(value) < 1e-6)) {
++        return new Intl.NumberFormat('en-US', { notation: 'scientific', maximumSignificantDigits: 3 }).format(value);
++    }
+     const formatterOptions = {
+         style: 'decimal',
+         useGrouping: true
+diff --git a/dist/cjs/utils/mathjs.js b/dist/cjs/utils/mathjs.js
+index 11e2d87ff8ed446ed739a87cb6e4eaad7aea2e1e..dc58d455338185049ea48f0c232baac2c7491238 100644
+--- a/dist/cjs/utils/mathjs.js
++++ b/dist/cjs/utils/mathjs.js
+@@ -30,9 +30,7 @@ _export(exports, {
+ });
+ const _mathjs = require("mathjs");
+ // This ensures we get a minimal mathjs bundle for just what we need (see https://mathjs.org/docs/custom_bundling.html)
+-const { round } = (0, _mathjs.create)({
+-    roundDependencies: _mathjs.roundDependencies
+-});
++const round = /*#__PURE__*/ (() => (0, _mathjs.create)({ roundDependencies: _mathjs.roundDependencies }).round)();
+ const { gcd } = (0, _mathjs.create)({
+     gcdDependencies: _mathjs.gcdDependencies
+ });
+diff --git a/dist/cjs/utils/time-series-data.js b/dist/cjs/utils/time-series-data.js
+index 2760ea4927f9a7a69688eb67ac02af294def3c21..acf89550fb1daa23442eecb8ac630bc96737ed6c 100644
+--- a/dist/cjs/utils/time-series-data.js
++++ b/dist/cjs/utils/time-series-data.js
+@@ -31,7 +31,7 @@ _export(exports, {
+         return getTimeSeriesValues;
+     }
+ });
+-const _mathjs = require("./mathjs");
++const _mathjs = require("mathjs/number");
+ const MIN_STEP_INTERVAL_MS = 10;
+ function getTimeSeriesValues(series, timeScale) {
+     let timestamp = timeScale.startMs;
+@@ -46,12 +46,12 @@ function getTimeSeriesValues(series, timeScale) {
+             ]);
+             timestamp += timeScale.stepMs;
+         }
+-        // Now add the current value since timestamp should match
++        // Preserve observed timestamps when the requested grid has a different phase.
+         processedValues.push([
+-            timestamp,
++            valueTuple[0],
+             valueTuple[1]
+         ]);
+-        timestamp += timeScale.stepMs;
++        timestamp = valueTuple[0] + timeScale.stepMs;
+     }
+     // Add null values at the end of the series if necessary
+     while(timestamp <= timeScale.endMs){
+@@ -126,7 +126,7 @@ function getCommonTimeScale(seriesData) {
+     if (steps.length === 1) {
+         stepMs = steps[0];
+     } else {
+-        const calculatedStepMs = (0, _mathjs.gcd)(...steps);
++        const calculatedStepMs = steps.reduce((a, b) => (0, _mathjs.gcd)(a, b));
+         stepMs = calculatedStepMs < MIN_STEP_INTERVAL_MS ? MIN_STEP_INTERVAL_MS : calculatedStepMs;
+     }
+     const startMs = timeRange.start.valueOf();
+diff --git a/dist/model/currency.js b/dist/model/currency.js
+index 51801a3913ea101b2a375852c71d318a8a626ae0..13e32b4b9f143579224c30198a91a471bffc4014 100644
+--- a/dist/model/currency.js
++++ b/dist/model/currency.js
+@@ -10,7 +10,7 @@
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+-import { toUpper } from 'lodash';
++import toUpper from 'lodash/toUpper';
+ import { MAX_SIGNIFICANT_DIGITS } from './constants';
+ import { hasDecimalPlaces, limitDecimalPlaces } from './utils';
+ import { getFormatterFromCache } from './formatterCache';
+diff --git a/dist/model/decimal.js b/dist/model/decimal.js
+index 82e4abc0d6edb3699cc97de89e7ad92faa23a238..5854e75d9696bd50698032a9d81f5e2c52ba2b7d 100644
+--- a/dist/model/decimal.js
++++ b/dist/model/decimal.js
+@@ -25,6 +25,9 @@ export const DECIMAL_UNIT_CONFIG = {
+     }
+ };
+ export function formatDecimal(value, { shortValues, decimalPlaces }) {
++    if (Number.isFinite(value) && value !== 0 && (Math.abs(value) >= 1e15 || Math.abs(value) < 1e-6)) {
++        return new Intl.NumberFormat('en-US', { notation: 'scientific', maximumSignificantDigits: 3 }).format(value);
++    }
+     const formatterOptions = {
+         style: 'decimal',
+         useGrouping: true
+diff --git a/dist/utils/mathjs.js b/dist/utils/mathjs.js
+index d64432153f8c8b1d848b93e808b44565d76f157d..805d1368668837debb17256077602152bbbdd696 100644
+--- a/dist/utils/mathjs.js
++++ b/dist/utils/mathjs.js
+@@ -12,9 +12,7 @@
+ // limitations under the License.
+ import { roundDependencies, gcdDependencies, create } from 'mathjs';
+ // This ensures we get a minimal mathjs bundle for just what we need (see https://mathjs.org/docs/custom_bundling.html)
+-const { round } = create({
+-    roundDependencies
+-});
++const round = /*#__PURE__*/ (() => create({ roundDependencies }).round)();
+ const { gcd } = create({
+     gcdDependencies
+ });
+diff --git a/dist/utils/time-series-data.js b/dist/utils/time-series-data.js
+index 436ae3096ad6f5e8289c9fa6150a7182949330d8..a5980378d158ff27563a7bfd1643a34501b16c8c 100644
+--- a/dist/utils/time-series-data.js
++++ b/dist/utils/time-series-data.js
+@@ -10,7 +10,7 @@
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+-import { gcd } from './mathjs';
++import { gcd } from 'mathjs/number';
+ export const MIN_STEP_INTERVAL_MS = 10;
+ /**
+  * Given a TimeSeries from a query and a common time scale (see `getCommonTimeScale`),
+@@ -29,12 +29,12 @@ export const MIN_STEP_INTERVAL_MS = 10;
+             ]);
+             timestamp += timeScale.stepMs;
+         }
+-        // Now add the current value since timestamp should match
++        // Preserve observed timestamps when the requested grid has a different phase.
+         processedValues.push([
+-            timestamp,
++            valueTuple[0],
+             valueTuple[1]
+         ]);
+-        timestamp += timeScale.stepMs;
++        timestamp = valueTuple[0] + timeScale.stepMs;
+     }
+     // Add null values at the end of the series if necessary
+     while(timestamp <= timeScale.endMs){
+@@ -113,7 +113,7 @@ export const MIN_STEP_INTERVAL_MS = 10;
+     if (steps.length === 1) {
+         stepMs = steps[0];
+     } else {
+-        const calculatedStepMs = gcd(...steps);
++        const calculatedStepMs = steps.reduce((a, b) => gcd(a, b));
+         stepMs = calculatedStepMs < MIN_STEP_INTERVAL_MS ? MIN_STEP_INTERVAL_MS : calculatedStepMs;
+     }
+     const startMs = timeRange.start.valueOf();

@@ -18,24 +18,23 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import java.util.List;
-import java.util.Optional;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.event.CollectionExecutionEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
+import org.apache.hertzbeat.warehouse.store.metadata.MonitorAvailability;
+import org.apache.hertzbeat.warehouse.store.metadata.MonitorStatusMetadataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,28 +46,38 @@ public class DataStorageDispatch {
 
     private final CommonDataQueue commonDataQueue;
     private final WarehouseWorkerPool workerPool;
-    private final JdbcTemplate jdbcTemplate;
+    private final MonitorStatusMetadataWriter monitorStatusWriter;
     private final RealTimeDataWriter realTimeDataWriter;
-    private final Optional<HistoryDataWriter> historyDataWriter;
+    private final List<HistoryDataWriter> historyDataWriters;
+    private final List<HistoryDataWriter> collectionEventWriters;
+    private final BoundedCollectionExecutionEventBuffer collectionEventBuffer;
     private final PluginRunner pluginRunner;
     private static final int LOG_BATCH_SIZE = 1000;
-    @PersistenceContext
-    private EntityManager entityManager;
+    private static final int COLLECTION_EVENT_QUEUE_CAPACITY = 8192;
+    private static final int COLLECTION_EVENT_BATCH_SIZE = 256;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
-                               JdbcTemplate jdbcTemplate,
-                               Optional<HistoryDataWriter> historyDataWriter,
+                               MonitorStatusMetadataWriter monitorStatusWriter,
+                               List<HistoryDataWriter> historyDataWriters,
                                RealTimeDataWriter realTimeDataWriter,
                                PluginRunner pluginRunner) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
-        this.jdbcTemplate = jdbcTemplate;
+        this.monitorStatusWriter = monitorStatusWriter;
         this.realTimeDataWriter = realTimeDataWriter;
-        this.historyDataWriter = historyDataWriter;
+        this.historyDataWriters = historyDataWriters == null ? List.of()
+                : historyDataWriters.stream().filter(Objects::nonNull).toList();
+        this.collectionEventWriters = this.historyDataWriters.stream()
+                .filter(HistoryDataWriter::supportsCollectionExecutionEvents)
+                .toList();
+        this.collectionEventBuffer = collectionEventWriters.isEmpty()
+                ? null
+                : new BoundedCollectionExecutionEventBuffer(COLLECTION_EVENT_QUEUE_CAPACITY);
         this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
         startLogDataStorage();
+        startCollectionExecutionEventStorage();
     }
 
     protected void startPersistentDataStorage() {
@@ -82,13 +91,7 @@ public class DataStorageDispatch {
                         continue;
                     }
                     backoff.reset();
-                    try {
-                        calculateMonitorStatus(metricsData);
-                        historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
-                        pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
-                    } finally {
-                        realTimeDataWriter.saveData(metricsData);
-                    }
+                    persistMetricsData(metricsData);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
@@ -114,13 +117,7 @@ public class DataStorageDispatch {
                         continue;
                     }
                     backoff.reset();
-                    historyDataWriter.ifPresent(dataWriter -> {
-                        try {
-                            dataWriter.saveLogDataBatch(logEntries);
-                        } catch (Exception e) {
-                            log.error("Failed to save log entries batch: {}", e.getMessage(), e);
-                        }
-                    });
+                    persistLogs(logEntries);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
@@ -134,22 +131,122 @@ public class DataStorageDispatch {
         };
         workerPool.executeLongRunning(runnable);
     }
-    
+
+    protected void startCollectionExecutionEventStorage() {
+        if (collectionEventBuffer == null) {
+            return;
+        }
+        Runnable runnable = () -> {
+            Thread.currentThread().setName("warehouse-collection-event-storage");
+            List<CollectionExecutionEvent> pendingEvents = null;
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    HistoryDataWriter writer = resolveCollectionExecutionEventWriter();
+                    if (writer == null) {
+                        Thread.sleep(1000L);
+                        continue;
+                    }
+                    if (pendingEvents == null) {
+                        pendingEvents = collectionEventBuffer.takeBatch(COLLECTION_EVENT_BATCH_SIZE);
+                    }
+                    if (writer.saveCollectionExecutionEvents(pendingEvents)) {
+                        pendingEvents = null;
+                    } else {
+                        Thread.sleep(1000L);
+                    }
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception exception) {
+                    log.error("Failed to persist collection execution event batch", exception);
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException interruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        };
+        workerPool.executeLongRunning(runnable);
+    }
+
+    private HistoryDataWriter resolveMetricsHistoryWriter() {
+        return historyDataWriters.stream()
+                .filter(HistoryDataWriter::isServerAvailable)
+                .findFirst()
+                .or(() -> historyDataWriters.stream().findFirst())
+                .orElse(null);
+    }
+
+    private HistoryDataWriter resolveCollectionExecutionEventWriter() {
+        return collectionEventWriters.stream()
+                .filter(HistoryDataWriter::isServerAvailable)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void persistLogs(List<LogEntry> logEntries) {
+        for (HistoryDataWriter historyDataWriter : historyDataWriters) {
+            try {
+                historyDataWriter.saveLogDataBatch(logEntries);
+                return;
+            } catch (UnsupportedOperationException ex) {
+                // Try the next writer. Not every metrics backend supports log persistence.
+            } catch (Exception e) {
+                log.error("Failed to save log entries batch: {}", e.getMessage(), e);
+            }
+        }
+    }
+
     protected void calculateMonitorStatus(CollectRep.MetricsData metricsData) {
         if (metricsData.getPriority() == 0) {
             long id = metricsData.getId();
             CollectRep.Code code = metricsData.getCode();
             try {
-                String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status = ?";
-                int status = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_UP_CODE : CommonConstants.MONITOR_DOWN_CODE;
-                int preStatus = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_DOWN_CODE : CommonConstants.MONITOR_UP_CODE;
-                int matchedRows = jdbcTemplate.update(sql, status, id, preStatus);
-                if (matchedRows > 0) {
-                    entityManager.getEntityManagerFactory().getCache().evict(Monitor.class, id);
-                }
+                MonitorAvailability availability = code == CollectRep.Code.SUCCESS
+                        ? MonitorAvailability.UP : MonitorAvailability.DOWN;
+                monitorStatusWriter.updateAvailability(id, availability);
+            } catch (MetadataWriteAdmissionException exception) {
+                log.debug("Monitor status metadata write skipped during maintenance");
             } catch (Exception e) {
                 log.error("Update monitor status failed for monitor id: {}", id, e);
             }
         }
+    }
+
+    protected void persistMetricsData(CollectRep.MetricsData metricsData) {
+        publishCollectionExecutionEvent(metricsData);
+        try {
+            calculateMonitorStatus(metricsData);
+            HistoryDataWriter historyDataWriter = resolveMetricsHistoryWriter();
+            if (historyDataWriter != null) {
+                historyDataWriter.saveData(metricsData);
+            }
+            pluginRunner.pluginExecute(PostCollectPlugin.class,
+                    (postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext));
+        } finally {
+            realTimeDataWriter.saveData(metricsData);
+        }
+    }
+
+    private void publishCollectionExecutionEvent(CollectRep.MetricsData metricsData) {
+        if (collectionEventBuffer == null) {
+            return;
+        }
+        try {
+            if (!collectionEventBuffer.offer(CollectionExecutionEvent.from(metricsData))) {
+                long rejected = collectionEventBuffer.stats().rejected();
+                if (rejected == 1L || Long.bitCount(rejected) == 1) {
+                    log.warn("Collection execution event buffer is full; rejected {} events", rejected);
+                }
+            }
+        } catch (RuntimeException exception) {
+            log.warn("Failed to publish collection execution event for monitor {}", metricsData.getId(), exception);
+        }
+    }
+
+    BoundedCollectionExecutionEventBuffer.Stats collectionExecutionEventStats() {
+        return collectionEventBuffer == null
+                ? new BoundedCollectionExecutionEventBuffer.Stats(0L, 0L, 0, 0)
+                : collectionEventBuffer.stats();
     }
 }

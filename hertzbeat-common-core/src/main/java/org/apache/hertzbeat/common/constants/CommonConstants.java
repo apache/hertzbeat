@@ -56,21 +56,18 @@ public interface CommonConstants {
      * Response status code: Incorrect login account password
      */
     byte LOGIN_FAILED_CODE = 0x05;
-    
-    /**
-     * Monitoring status 0: Paused, 1: Up, 2: Down
-     */
+
+    /** Monitoring status 0: Paused. */
     byte MONITOR_PAUSED_CODE = 0x00;
 
-    /**
-     * Monitoring status 0: Paused, 1: Up, 2: Down
-     */
+    /** Monitoring status 1: Up. */
     byte MONITOR_UP_CODE = 0x01;
 
-    /**
-     * Monitoring status 0: Paused, 1: Up, 2: Down
-     */
+    /** Monitoring status 2: Down. */
     byte MONITOR_DOWN_CODE = 0x02;
+
+    /** Monitoring status 3: Scheduled and waiting for the first availability result. */
+    byte MONITOR_PENDING_CODE = 0x03;
 
     /**
      * scrape type static
@@ -78,7 +75,7 @@ public interface CommonConstants {
     String SCRAPE_STATIC = "static";
 
     /**
-     * scrape type 
+     * scrape type
      */
     String SCRAPE_HTTP_SD = "http_sd";
 
@@ -101,7 +98,17 @@ public interface CommonConstants {
      * label key: instance name
      */
     String LABEL_INSTANCE_NAME = "instancename";
-    
+
+    /**
+     * Internal authority label for the HertzBeat monitor that produced an alert.
+     */
+    String LABEL_MONITOR_ID = "hertzbeat.monitor.id";
+
+    /**
+     * Internal authority label for one unambiguous entity associated with an alert.
+     */
+    String LABEL_ENTITY_ID = "hertzbeat.entity.id";
+
     /**
      * Alarm severity label key
      */
@@ -111,7 +118,7 @@ public interface CommonConstants {
      * Alarm severity fatal level
      */
     String LABEL_ALERT_FATAL = "fatal";
-    
+
     /**
      * alarm severity emergency level
      */
@@ -143,6 +150,11 @@ public interface CommonConstants {
     String ALERT_STATUS_RESOLVED = "resolved";
 
     /**
+     * Alarm status: acknowledged
+     */
+    String ALERT_STATUS_ACKNOWLEDGED = "acknowledged";
+
+    /**
      * Alarm status: pending
      */
     String ALERT_STATUS_PENDING = "pending";
@@ -166,6 +178,16 @@ public interface CommonConstants {
      * log alert threshold type: periodic
      */
     String LOG_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_log";
+
+    /**
+     * trace alert threshold type: periodic
+     */
+    String TRACE_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_trace";
+
+    /**
+     * Maximum number of rows or series returned by an alert rule preview.
+     */
+    int ALERT_PREVIEW_RESULT_LIMIT = 100;
 
     /**
      * Alert mode label key
@@ -324,7 +346,7 @@ public interface CommonConstants {
     String PROMETHEUS_APP_PREFIX = "_prometheus_";
 
     /**
-     * prometheus 
+     * prometheus
      */
     String PROMETHEUS = "prometheus";
 
@@ -332,12 +354,12 @@ public interface CommonConstants {
      * status page component state normal
      */
     byte STATUS_PAGE_COMPONENT_STATE_NORMAL = 0;
-    
+
     /**
      * status page component state abnormal
      */
     byte STATUS_PAGE_COMPONENT_STATE_ABNORMAL = 1;
-    
+
     /**
      * status page component state unknown
      */
@@ -357,12 +379,12 @@ public interface CommonConstants {
      * status page org state all abnormal
      */
     byte STATUS_PAGE_ORG_STATE_ALL_ABNORMAL = 2;
-    
+
     /**
      * status page component calculate method auto
      */
     byte STATUE_PAGE_CALCULATE_METHOD_AUTO = 0;
-    
+
     /**
      * status page component calculate method manual
      */
@@ -372,17 +394,17 @@ public interface CommonConstants {
      * status page incident state investigating
      */
     byte STATUS_PAGE_INCIDENT_STATE_INVESTIGATING = 0;
-    
+
     /**
      * status page incident state identified
      */
     byte STATUS_PAGE_INCIDENT_STATE_IDENTIFIED = 1;
-    
+
     /**
      * status page incident state monitoring
      */
     byte STATUS_PAGE_INCIDENT_STATE_MONITORING = 2;
-    
+
     /**
      * status page incident state resolved
      */

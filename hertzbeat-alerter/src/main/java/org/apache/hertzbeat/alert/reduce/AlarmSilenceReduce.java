@@ -49,7 +49,7 @@ public class AlarmSilenceReduce {
      *
      * @param groupAlert The alert to be processed
      */
-    public void silenceAlarm(GroupAlert groupAlert) {
+    public boolean silenceAlarm(GroupAlert groupAlert) {
         List<AlertSilence> alertSilenceList = CacheFactory.getAlertSilenceCache();
         if (alertSilenceList == null) {
             alertSilenceList = alertSilenceDao.findAlertSilencesByEnableTrue();
@@ -75,21 +75,21 @@ public class AlarmSilenceReduce {
                         continue;
                     }
                     // Alert is silenced
-                    return;
+                    return true;
                 } else if (alertSilence.getType() == 1) {
                     // Cyclic silence rule
                     int currentDayOfWeek = now.getDayOfWeek().getValue();
                     if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek)
                         && !checkAndSave(now, alertSilence)) {
                         // Alert is silenced
-                        return;
+                        return true;
                     }
                 }
             }
         }
 
         // No matching silence rule, forward the alert
-        dispatcherAlarm.dispatchAlarm(groupAlert);
+        return dispatcherAlarm.dispatchAlarm(groupAlert);
     }
 
     /**

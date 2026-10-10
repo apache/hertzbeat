@@ -17,74 +17,72 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.headerDoesNotExist;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-import org.apache.hertzbeat.common.constants.NetworkConstants;
+import java.util.List;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.grafana.dao.GrafanaConfigDao;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * Test case for {@link ServiceAccountService}.
- */
-@ExtendWith(MockitoExtension.class)
 class ServiceAccountServiceTest {
 
-    @Mock
-    private GrafanaProperties grafanaProperties;
+    @ParameterizedTest
+    @ValueSource(strings = {"list", "create", "token"})
+    void accountRequestsKeepAuthenticationLocalToTheRequest(String operation) {
+        RestTemplate shared = new RestTemplate();
+        ClientHttpRequestInterceptor existing = (request, body, execution) -> {
+            request.getHeaders().set("X-Shared-Client", "retained");
+            return execution.execute(request, body);
+        };
+        shared.setInterceptors(List.of(existing));
+        MockRestServiceServer server = MockRestServiceServer.bindTo(shared).build();
+        HttpHeaders authentication = new HttpHeaders();
+        authentication.setBasicAuth("fixture-user", "fixture-password");
+        String basic = authentication.getFirst(HttpHeaders.AUTHORIZATION);
+        server.expect(requestTo("https://grafana.example/api/serviceaccounts/search"))
+                .andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, basic))
+                .andRespond(withSuccess("{\"serviceAccounts\":[]}", MediaType.APPLICATION_JSON));
+        if (!"list".equals(operation)) {
+            server.expect(requestTo("https://grafana.example/api/serviceaccounts"))
+                    .andExpect(method(HttpMethod.POST)).andExpect(header(HttpHeaders.AUTHORIZATION, basic))
+                    .andRespond(withSuccess("{\"id\":7}", MediaType.APPLICATION_JSON));
+        }
+        if ("token".equals(operation)) {
+            server.expect(requestTo("https://grafana.example/api/serviceaccounts/7/tokens"))
+                    .andExpect(method(HttpMethod.POST)).andExpect(header(HttpHeaders.AUTHORIZATION, basic))
+                    .andRespond(withSuccess("{\"key\":\"fixture-token\"}", MediaType.APPLICATION_JSON));
+        }
+        server.expect(requestTo("https://notification.example/receiver"))
+                .andExpect(headerDoesNotExist(HttpHeaders.AUTHORIZATION))
+                .andExpect(header("X-Shared-Client", "retained"))
+                .andRespond(withSuccess("accepted", MediaType.TEXT_PLAIN));
+        ServiceAccountService service = new ServiceAccountService(new GrafanaProperties(
+                true, "https://grafana.example", "https://grafana.example", "fixture-user", "fixture-password"),
+                mock(GrafanaConfigDao.class), shared);
+        service.init();
 
-    @Mock
-    private GrafanaConfigDao grafanaConfigDao;
+        switch (operation) {
+            case "list" -> service.getAccounts();
+            case "create" -> assertThat(service.createServiceAccount()).isEqualTo(7L);
+            case "token" -> assertThat(service.applyForToken()).isEqualTo("fixture-token");
+            default -> throw new IllegalArgumentException(operation);
+        }
+        shared.getForObject("https://notification.example/receiver", String.class);
 
-    @Mock
-    private RestTemplate restTemplate;
-
-    private ServiceAccountService serviceAccountService;
-
-    @BeforeEach
-    void setUp() {
-        when(grafanaProperties.getPrefix()).thenReturn("https://");
-        when(grafanaProperties.getUrl()).thenReturn("grafana.example");
-        when(grafanaProperties.username()).thenReturn("admin");
-        when(grafanaProperties.password()).thenReturn("password");
-        serviceAccountService = new ServiceAccountService(grafanaProperties, grafanaConfigDao, restTemplate);
-        serviceAccountService.init();
-    }
-
-    @Test
-    void keepsGrafanaAuthenticationScopedToTheRequest() {
-        when(restTemplate.exchange(
-                eq("https://grafana.example/api/serviceaccounts/search"),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(String.class)))
-                .thenReturn(ResponseEntity.ok("{\"serviceAccounts\":[]}"));
-
-        serviceAccountService.getAccounts();
-
-        verify(restTemplate, never()).getInterceptors();
-        ArgumentCaptor<HttpEntity<String>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).exchange(
-                eq("https://grafana.example/api/serviceaccounts/search"),
-                eq(HttpMethod.GET),
-                requestCaptor.capture(),
-                eq(String.class));
-        assertEquals(
-                "Basic YWRtaW46cGFzc3dvcmQ=",
-                requestCaptor.getValue().getHeaders().getFirst(NetworkConstants.AUTHORIZATION));
+        assertThat(shared.getInterceptors()).containsExactly(existing);
+        server.verify();
     }
 }

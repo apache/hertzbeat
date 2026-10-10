@@ -15,8 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
-version: '3.8'
 services:
+  setup-inputs:
+    extends:
+      file: ../docker-compose.yml
+      service: setup-inputs
+  greptime:
+    extends:
+      file: ../docker-compose.yml
+      service: greptime
   init:
     image: bitnami/kubectl:latest
     privileged: true
@@ -89,7 +96,7 @@ services:
       - checker
       - k3s
   checker:
-    image: alpine:latest
+    image: alpine:3.22
     container_name: e2e-checker
     command: sh -c "apk add --update curl && tail -f /dev/null"
     healthcheck:
@@ -98,7 +105,7 @@ services:
       ]
       interval: 3s
       timeout: 60s
-      retries: 10
+      retries: 60
       start_period: 10s
     networks:
       k3s_network:
@@ -106,13 +113,13 @@ services:
     depends_on:
       - init
   hertzbeat:
-    image: apache/hertzbeat:test
-    container_name: e2e-hertzbeat
+    extends:
+      file: ../docker-compose.yml
+      service: hertzbeat
     volumes:
       - ./logs/:/opt/hertzbeat/logs/
-    ports:
-      - "1157:1157"
     networks:
+      default: {}
       k3s_network:
         ipv4_address: 172.29.0.14
 networks:
@@ -121,3 +128,6 @@ networks:
     ipam:
       config:
         - subnet: 172.29.0.0/16
+
+volumes:
+  setup-inputs:

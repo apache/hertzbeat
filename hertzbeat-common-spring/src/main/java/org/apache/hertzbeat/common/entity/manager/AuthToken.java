@@ -29,6 +29,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -72,6 +73,28 @@ public class AuthToken {
     @Column(length = 64)
     private String tokenMask;
 
+    @Schema(title = "Token scope", example = "api-admin", accessMode = READ_WRITE)
+    @Column(name = "token_scope", length = 32)
+    @Builder.Default
+    private String tokenScope = AuthTokenScopes.API_ADMIN;
+
+    @Schema(title = "Token workspace boundary", example = "default", accessMode = READ_WRITE)
+    @Column(name = "workspace_id", length = 64)
+    @Builder.Default
+    private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
+
+    @Schema(title = "Token audience", example = "managed-collector", accessMode = READ_ONLY)
+    @Column(name = "token_audience", length = 32)
+    private String tokenAudience;
+
+    @Schema(title = "Bound Collector identity", example = "edge-west", accessMode = READ_ONLY)
+    @Column(name = "collector_id", length = 128)
+    private String collectorId;
+
+    @Schema(title = "Allowed OTLP signals", example = "metrics,logs,traces", accessMode = READ_ONLY)
+    @Column(name = "allowed_signals", length = 64)
+    private String allowedSignals;
+
     @Schema(title = "Token status: 0-active", accessMode = READ_ONLY)
     @Column(nullable = false)
     @Builder.Default
@@ -90,5 +113,12 @@ public class AuthToken {
 
     @Schema(title = "Token last used time", accessMode = READ_ONLY)
     private LocalDateTime lastUsedTime;
+
+    @Schema(title = "Token revoked time", accessMode = READ_ONLY)
+    private LocalDateTime revokedTime;
+
+    @Schema(title = "Token revoker", accessMode = READ_ONLY)
+    @Column(length = 64)
+    private String revokedBy;
 
 }

@@ -1,0 +1,150 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Descriptions, Drawer, Space, Tag, Typography, type DescriptionsProps } from 'antd';
+import type { TFunction } from 'i18next';
+import { useId } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { monitorParamTypes, type Monitor, type MonitorParam } from '../model/monitor-contract';
+import { monitorStatusColor, monitorStatusKey, parseMonitorTimestamp } from '../model/monitor-model';
+
+import styles from './monitor-detail-view.module.css';
+
+/**
+ * Full configuration stays available without competing with the metric workbench.
+ * A drawer preserves Angular's data-first detail flow while keeping audit fields
+ * and encrypted parameter evidence one explicit action away.
+ */
+export function MonitorDetailConfigurationDrawer({
+  open,
+  onClose,
+  monitor,
+  collector,
+  params
+}: {
+  open: boolean;
+  onClose: () => void;
+  monitor: Monitor;
+  collector: string | null | undefined;
+  params: MonitorParam[] | undefined;
+}) {
+  const { t } = useTranslation();
+  const parameterHeadingId = useId();
+  return (
+    <Drawer
+      title={t('monitor.metadata.configuration')}
+      open={open}
+      onClose={onClose}
+      width="min(560px, 100vw)"
+      destroyOnHidden
+    >
+      <div className={styles.configurationBody}>
+        <Descriptions size="small" column={1} items={monitorMetadataItems(t, monitor, collector)} />
+        <section className={styles.parameterSection} aria-labelledby={parameterHeadingId}>
+          <Typography.Title id={parameterHeadingId} level={5}>
+            {t('monitor.metadata.parameters')}
+          </Typography.Title>
+          <MonitorParameters params={params} />
+        </section>
+      </div>
+    </Drawer>
+  );
+}
+
+function monitorMetadataItems(
+  t: TFunction,
+  monitor: Monitor,
+  collector: string | null | undefined
+): NonNullable<DescriptionsProps['items']> {
+  return [
+    {
+      key: 'status',
+      label: t('monitor.status.label'),
+      children: <Tag color={monitorStatusColor(monitor.status)}>{t(monitorStatusKey(monitor.status))}</Tag>
+    },
+    { key: 'id', label: t('monitor.metadata.id'), children: monitor.id },
+    { key: 'app', label: t('monitor.application'), children: monitor.app },
+    { key: 'instance', label: t('monitor.editor.endpoint'), children: monitor.instance },
+    { key: 'schedule', label: t('monitor.metadata.schedule'), children: monitorSchedule(t, monitor) },
+    { key: 'collector', label: t('monitor.metadata.collector'), children: collector || '—' },
+    { key: 'created', label: t('monitor.metadata.created'), children: monitorTime(monitor.gmtCreate) },
+    { key: 'updated', label: t('monitor.metadata.updated'), children: monitorTime(monitor.gmtUpdate) },
+    {
+      key: 'description',
+      label: t('monitor.editor.descriptionLabel'),
+      children: monitor.description || '—'
+    },
+    {
+      key: 'labels',
+      label: t('monitor.metadata.labels'),
+      children: <MetadataEntries entries={monitor.labels} />
+    },
+    {
+      key: 'annotations',
+      label: t('monitor.metadata.annotations'),
+      children: <MetadataEntries entries={monitor.annotations} />
+    }
+  ];
+}
+
+function monitorSchedule(t: TFunction, monitor: Monitor) {
+  if (monitor.scheduleType === 'cron' && monitor.cronExpression?.trim()) {
+    return <Typography.Text code>{monitor.cronExpression}</Typography.Text>;
+  }
+  return monitor.intervals == null ? '—' : t('monitor.metadata.interval', { seconds: monitor.intervals });
+}
+
+function monitorTime(value?: number | string | null) {
+  const timestamp = parseMonitorTimestamp(value);
+  return timestamp === undefined
+    ? '—'
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp);
+}
+
+function MetadataEntries({ entries }: { entries: Record<string, string> | null | undefined }) {
+  if (!entries || Object.keys(entries).length === 0) return <>—</>;
+  return (
+    <Space className={styles.metadataTags ?? ''} size={[4, 4]} wrap>
+      {Object.entries(entries).map(([key, value]) => (
+        <Tag key={key}>
+          <span>{key}</span>
+          <span>{value}</span>
+        </Tag>
+      ))}
+    </Space>
+  );
+}
+
+function MonitorParameters({ params }: { params: MonitorParam[] | undefined }) {
+  if (!params || params.length === 0) return <>—</>;
+  return (
+    <dl className={styles.parameterGrid}>
+      {params.map((param, index) => (
+        <div className={styles.parameterEntry} key={param.id ?? `${param.field}:${index}`}>
+          <dt>{param.field}</dt>
+          <dd>{monitorParameterValue(param)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function monitorParameterValue(param: MonitorParam) {
+  if (param.paramValue === null || param.paramValue === undefined || param.paramValue === '') return '—';
+  return param.type === monitorParamTypes.encrypted ? '••••••••' : param.paramValue;
+}

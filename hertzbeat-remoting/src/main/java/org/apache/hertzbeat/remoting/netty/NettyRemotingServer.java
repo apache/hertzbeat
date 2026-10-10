@@ -43,14 +43,14 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
-import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
 /**
- * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer 
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer
  * netty server
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingServer.java">NettyRemotingServer</a>
  */
@@ -120,6 +120,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 channel.closeFuture().sync();
             } catch (InterruptedException ignored) {
                 log.info("server shutdown now!");
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 log.error("Netty Server start exception, {}", e.getMessage());
                 throw new RuntimeException(e);

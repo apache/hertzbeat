@@ -1,0 +1,709 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.observability.ingestion.adapter;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.util.JsonFormat;
+import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
+import io.opentelemetry.proto.common.v1.AnyValue;
+import io.opentelemetry.proto.common.v1.KeyValue;
+import io.opentelemetry.proto.logs.v1.LogRecord;
+import io.opentelemetry.proto.logs.v1.ResourceLogs;
+import io.opentelemetry.proto.logs.v1.ScopeLogs;
+import io.opentelemetry.proto.resource.v1.Resource;
+import io.opentelemetry.proto.common.v1.InstrumentationScope;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.observability.TelemetryIntakeSignalEvent;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpHeaders;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+
+/**
+ * Unit tests for OtlpLogProtocolAdapter.
+ */
+@ExtendWith(MockitoExtension.class)
+class OtlpLogProtocolAdapterTest {
+
+    @Mock
+    private CommonDataQueue commonDataQueue;
+
+    @Mock
+    private LogSseManager logSseManager;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    private OtlpLogProtocolAdapter adapter;
+
+    @BeforeEach
+    void setUp() {
+        adapter = new OtlpLogProtocolAdapter(commonDataQueue, logSseManager, applicationEventPublisher);
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void preservesExactKeysForStructuredLiveSearch() {
+        String[] kinds = {"server", "server", "timeout", "server", "server", "client", "timeout", "server"};
+        String[] names = {"alpha", "beta", "gamma", "skip-one", "delta", "alpha", "skip-two", "omega"};
+        long[] codes = {500, 503, 200, 501, 0, 200, 0, 599};
+        ScopeLogs.Builder scope = ScopeLogs.newBuilder();
+        for (int index = 0; index < kinds.length; index++) {
+            LogRecord.Builder row = LogRecord.newBuilder()
+                    .setBody(AnyValue.newBuilder().setStringValue("structured-" + (char) ('a' + index)))
+                    .addAttributes(stringAttribute("proof.kind", kinds[index]))
+                    .addAttributes(stringAttribute("proof.name", names[index]))
+                    .addAttributes(stringAttribute("proof_kind", "independent"));
+            if (index == 1 || index == 4) {
+                row.addAttributes(stringAttribute("proof.status", index == 1 ? "503" : "bad"));
+            } else if (index != 6) {
+                row.addAttributes(KeyValue.newBuilder().setKey("proof.status")
+                        .setValue(AnyValue.newBuilder().setIntValue(codes[index])));
+            }
+            scope.addLogRecords(row);
+        }
+        adapter.publishRealtimeSignals(ExportLogsServiceRequest.newBuilder().addResourceLogs(
+                ResourceLogs.newBuilder().setResource(Resource.newBuilder()
+                        .addAttributes(stringAttribute("service.name", "proof-service"))).addScopeLogs(scope)).build());
+        ArgumentCaptor<LogEntry> captured = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager, times(8)).broadcast(captured.capture());
+        var criteria = new org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria();
+        criteria.setWorkspaceId("default");
+        criteria.setServiceName("proof-service");
+        criteria.setSearchSyntax("structured-v1");
+        criteria.setLogContent("(@proof.status:[500 TO 599] OR @proof.kind:timeout) AND -@proof.name:skip*");
+        assertEquals(List.of("structured-a", "structured-b", "structured-c", "structured-h"),
+                captured.getAllValues().stream().filter(criteria::matches).map(LogEntry::getBody).toList());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<LogEntry>> alertCapture = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue).sendLogEntryToAlertBatch(alertCapture.capture());
+        assertEquals("proof-service", alertCapture.getValue().getFirst().getResource().get("service_name"));
+        assertEquals("independent", alertCapture.getValue().getFirst().getAttributes().get("proof_kind"));
+        assertEquals("default", alertCapture.getValue().getFirst().getResource().get("hertzbeat_workspace_id"));
+        assertEquals("default", captured.getAllValues().getFirst().getResource().get("hertzbeat_workspace_id"));
+        assertEquals("server", captured.getAllValues().getFirst().getAttributes().get("proof.kind"));
+        assertEquals("independent", captured.getAllValues().getFirst().getAttributes().get("proof_kind"));
+    }
+
+    @Test
+    void keepsNestedBodyAndScopeNormalizationOnlyInAlertProjection() {
+        AnyValue nested = AnyValue.newBuilder().setKvlistValue(
+                io.opentelemetry.proto.common.v1.KeyValueList.newBuilder()
+                        .addValues(stringAttribute("request.path", "/checkout"))).build();
+        adapter.publishRealtimeSignals(ExportLogsServiceRequest.newBuilder().addResourceLogs(
+                ResourceLogs.newBuilder().addScopeLogs(ScopeLogs.newBuilder()
+                        .setScope(InstrumentationScope.newBuilder().addAttributes(stringAttribute("scope.version", "v1")))
+                        .addLogRecords(LogRecord.newBuilder().setBody(nested)))).build());
+        ArgumentCaptor<LogEntry> live = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager).broadcast(live.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<LogEntry>> alerts = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue).sendLogEntryToAlertBatch(alerts.capture());
+        LogEntry alert = alerts.getValue().getFirst();
+        assertEquals(Map.of("request.path", "/checkout"), live.getValue().getBody());
+        assertEquals(Map.of("request_path", "/checkout"), alert.getBody());
+        assertEquals(Map.of("scope.version", "v1"), live.getValue().getInstrumentationScope().getAttributes());
+        assertEquals(Map.of("scope_version", "v1"), alert.getInstrumentationScope().getAttributes());
+    }
+
+    private static KeyValue stringAttribute(String key, String value) {
+        return KeyValue.newBuilder().setKey(key).setValue(AnyValue.newBuilder().setStringValue(value)).build();
+    }
+
+    @Test
+    void testIngestWithNullContent() {
+        adapter.ingest(null);
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestWithEmptyContent() {
+        adapter.ingest("");
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestBinaryWithNullContent() {
+        adapter.ingestBinary(null);
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestBinaryWithEmptyContent() {
+        adapter.ingestBinary(new byte[0]);
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestBinaryWithValidOtlpLogData() throws Exception {
+        byte[] binaryPayload = createValidOtlpLogBinaryPayload();
+
+        adapter.ingestBinary(binaryPayload);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
+
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+
+        LogEntry capturedEntry = capturedList.get(0);
+        assertEquals("binary-test-service", capturedEntry.getResource().get("service_name"));
+        assertEquals("binary log message", capturedEntry.getBody());
+        assertEquals("INFO", capturedEntry.getSeverityText());
+    }
+
+    @Test
+    void testIngestBinaryWithInvalidContent() {
+        byte[] invalidBinary = "not a valid protobuf".getBytes();
+
+        assertThrows(IllegalArgumentException.class, () -> adapter.ingestBinary(invalidBinary));
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestBinaryWithGzipCompressedOtlpLogData() throws Exception {
+        byte[] binaryPayload = gzip(createValidOtlpLogBinaryPayload());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_ENCODING, "gzip");
+
+        adapter.ingestBinary(binaryPayload, headers);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+        assertEquals("binary log message", capturedList.get(0).getBody());
+    }
+
+    @Test
+    void testIngestBinaryWithGzipContentEncodingOptionalWhitespace() throws Exception {
+        byte[] binaryPayload = gzip(createValidOtlpLogBinaryPayload());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_ENCODING, " gzip ");
+
+        adapter.ingestBinary(binaryPayload, headers);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+        assertEquals("binary log message", capturedList.get(0).getBody());
+    }
+
+    @Test
+    void testIngestBinaryWithGzipContentEncodingBlankFirstValue() throws Exception {
+        byte[] binaryPayload = gzip(createValidOtlpLogBinaryPayload());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_ENCODING, " ");
+        headers.add(HttpHeaders.CONTENT_ENCODING, "gzip");
+
+        adapter.ingestBinary(binaryPayload, headers);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+        assertEquals("binary log message", capturedList.get(0).getBody());
+    }
+
+    @Test
+    void testIngestBinaryWithGzipContentEncodingCommaSeparatedBlankValue() throws Exception {
+        byte[] binaryPayload = gzip(createValidOtlpLogBinaryPayload());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_ENCODING, " , gzip ");
+
+        adapter.ingestBinary(binaryPayload, headers);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+        assertEquals("binary log message", capturedList.get(0).getBody());
+    }
+
+    @Test
+    void testIngestWithValidOtlpLogData() throws Exception {
+        String otlpPayload = createValidOtlpLogPayload();
+
+        adapter.ingest(otlpPayload);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
+
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+
+        LogEntry capturedEntry = capturedList.get(0);
+        assertEquals("test-service", capturedEntry.getResource().get("service_name"));
+        assertEquals("test-version", capturedEntry.getResource().get("service_version"));
+        assertEquals("https://schemas.example/resource/1.0", capturedEntry.getResourceSchemaUrl());
+        assertEquals("test-scope", capturedEntry.getInstrumentationScope().getName());
+        assertEquals("1.0.0", capturedEntry.getInstrumentationScope().getVersion());
+        assertEquals("https://schemas.example/scope/1.0", capturedEntry.getScopeSchemaUrl());
+        assertEquals("test log message", capturedEntry.getBody());
+        assertEquals("INFO", capturedEntry.getSeverityText());
+        assertEquals(9, capturedEntry.getSeverityNumber());
+    }
+
+    @Test
+    void testIngestWithMultipleLogRecords() throws Exception {
+        String otlpPayload = createOtlpPayloadWithMultipleLogs();
+
+        adapter.ingest(otlpPayload);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        verify(logSseManager, times(2)).broadcast(any(LogEntry.class));
+
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertEquals(2, capturedList.size());
+    }
+
+    @Test
+    void authenticatedContextOverridesPayloadWorkspaceAndCollectorBeforeRealtimePublication() {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        AuthTokenRequestContext.bindCollectorId("collector-authenticated");
+        ExportLogsServiceRequest request = createScopedRequest("payload-workspace", "payload-collector");
+
+        adapter.ingestBinary(request.toByteArray());
+
+        ArgumentCaptor<LogEntry> entryCaptor = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager).broadcast(entryCaptor.capture());
+        Map<String, Object> resource = entryCaptor.getValue().getResource();
+        assertEquals("team-a", resource.get("hertzbeat_workspace_id"));
+        assertEquals("collector-authenticated", resource.get("hertzbeat_collector_id"));
+        assertFalse(resource.containsValue("payload-workspace"));
+        assertFalse(resource.containsValue("payload-collector"));
+    }
+
+    @Test
+    void missingAuthenticatedIdentityClearsPayloadCollectorAndUsesDefaultWorkspace() {
+        ExportLogsServiceRequest request = createScopedRequest("payload-workspace", "payload-collector");
+
+        adapter.ingestBinary(request.toByteArray());
+
+        ArgumentCaptor<LogEntry> entryCaptor = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager).broadcast(entryCaptor.capture());
+        Map<String, Object> resource = entryCaptor.getValue().getResource();
+        assertEquals("default", resource.get("hertzbeat_workspace_id"));
+        assertFalse(resource.containsValue("payload-workspace"));
+        assertFalse(resource.containsValue("payload-collector"));
+        assertFalse(resource.containsKey("hertzbeat_collector_id"));
+    }
+
+    @Test
+    void testIngestWithComplexAttributes() throws Exception {
+        String otlpPayload = createOtlpPayloadWithComplexAttributes();
+
+        adapter.ingest(otlpPayload);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
+
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+
+        LogEntry capturedEntry = capturedList.get(0);
+        Map<String, Object> attributes = capturedEntry.getAttributes();
+        assertEquals("string_value", attributes.get("string_attr"));
+        assertEquals(true, attributes.get("bool_attr"));
+        assertEquals(42L, attributes.get("int_attr"));
+        assertEquals(3.14, attributes.get("double_attr"));
+
+        List<Object> arrayAttr = (List<Object>) attributes.get("array_attr");
+        assertNotNull(arrayAttr);
+        assertEquals(3, arrayAttr.size());
+        assertEquals("item1", arrayAttr.get(0));
+        assertEquals("item2", arrayAttr.get(1));
+        assertEquals("item3", arrayAttr.get(2));
+    }
+
+    @Test
+    void testIngestWithTraceAndSpanIds() throws Exception {
+        String otlpPayload = createOtlpPayloadWithTraceSpanIds();
+
+        adapter.ingest(otlpPayload);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
+
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertEquals(1, capturedList.size());
+
+        LogEntry capturedEntry = capturedList.get(0);
+        assertEquals("1234567890abcdef1234567890abcdef", capturedEntry.getTraceId());
+        assertEquals("1234567890abcdef", capturedEntry.getSpanId());
+        assertEquals(1, capturedEntry.getTraceFlags());
+    }
+
+    @Test
+    void allZeroTraceAndSpanIdsAreNotPublishedAsLocalCorrelationEvidence() {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder()
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("service.name")
+                        .setValue(AnyValue.newBuilder().setStringValue("checkout").build())
+                        .build())
+                    .build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder().build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setBody(AnyValue.newBuilder().setStringValue("zero ids should stay unlinked").build())
+                        .setTraceId(ByteString.fromHex("00000000000000000000000000000000"))
+                        .setSpanId(ByteString.fromHex("0000000000000000"))
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        adapter.ingestBinary(request.toByteArray());
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
+
+        LogEntry capturedEntry = listCaptor.getValue().get(0);
+        assertNull(capturedEntry.getTraceId());
+        assertNull(capturedEntry.getSpanId());
+
+        ArgumentCaptor<TelemetryIntakeSignalEvent> eventCaptor =
+                ArgumentCaptor.forClass(TelemetryIntakeSignalEvent.class);
+        verify(applicationEventPublisher, times(1)).publishEvent(eventCaptor.capture());
+        assertNull(eventCaptor.getValue().getTraceId());
+        assertNull(eventCaptor.getValue().getSpanId());
+    }
+
+    @Test
+    void redactsSensitiveLogBodyAndAttributesBeforeLocalPublication() {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder()
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("service.name")
+                        .setValue(AnyValue.newBuilder().setStringValue("checkout").build())
+                        .build())
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("cloud.auth.token")
+                        .setValue(AnyValue.newBuilder().setStringValue("resource-token").build())
+                        .build())
+                    .build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder().build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setBody(AnyValue.newBuilder()
+                            .setStringValue("failed login password=hunter2 token=abc123")
+                            .build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("http.request.header.authorization")
+                            .setValue(AnyValue.newBuilder().setStringValue("Bearer live-token").build())
+                            .build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("user.id")
+                            .setValue(AnyValue.newBuilder().setStringValue("alice").build())
+                            .build())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        adapter.ingestBinary(request.toByteArray());
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+        LogEntry capturedEntry = listCaptor.getValue().get(0);
+        assertEquals("checkout", capturedEntry.getResource().get("service_name"));
+        assertEquals("[REDACTED]", capturedEntry.getResource().get("cloud_auth_token"));
+        assertEquals("failed login password=[REDACTED] token=[REDACTED]", capturedEntry.getBody());
+        assertEquals("[REDACTED]", capturedEntry.getAttributes().get("http_request_header_authorization"));
+        assertEquals("alice", capturedEntry.getAttributes().get("user_id"));
+
+        String rendered = capturedEntry.toString();
+        assertFalse(rendered.contains("resource-token"));
+        assertFalse(rendered.contains("hunter2"));
+        assertFalse(rendered.contains("abc123"));
+        assertFalse(rendered.contains("live-token"));
+    }
+
+    @Test
+    void testIngestWithInvalidJsonContent() {
+        String invalidJson = "{ invalid json content }";
+
+        assertThrows(IllegalArgumentException.class, () -> adapter.ingest(invalidJson));
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestWithEmptyResourceLogs() throws Exception {
+        String otlpPayload = createEmptyResourceLogsPayload();
+
+        adapter.ingest(otlpPayload);
+
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, never()).sendLogEntryToStorageBatch(anyList());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(listCaptor.capture());
+
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(0, capturedList.size());
+
+        verifyNoInteractions(logSseManager);
+    }
+
+    private String createValidOtlpLogPayload() throws Exception {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setSchemaUrl("https://schemas.example/resource/1.0")
+                .setResource(Resource.newBuilder()
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("service.name")
+                        .setValue(AnyValue.newBuilder().setStringValue("test-service").build())
+                        .build())
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("service.version")
+                        .setValue(AnyValue.newBuilder().setStringValue("test-version").build())
+                        .build())
+                    .build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setSchemaUrl("https://schemas.example/scope/1.0")
+                    .setScope(InstrumentationScope.newBuilder()
+                        .setName("test-scope")
+                        .setVersion("1.0.0")
+                        .build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setObservedTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setSeverityNumberValue(9)
+                        .setSeverityText("INFO")
+                        .setBody(AnyValue.newBuilder().setStringValue("test log message").build())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        return JsonFormat.printer().print(request);
+    }
+
+    private byte[] gzip(byte[] content) throws Exception {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+            gzipOutputStream.write(content);
+        }
+        return outputStream.toByteArray();
+    }
+
+    private String createOtlpPayloadWithMultipleLogs() throws Exception {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder().build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder().build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setBody(AnyValue.newBuilder().setStringValue("first log").build())
+                        .build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setBody(AnyValue.newBuilder().setStringValue("second log").build())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        return JsonFormat.printer().print(request);
+    }
+
+    private String createOtlpPayloadWithComplexAttributes() throws Exception {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder().build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder().build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setBody(AnyValue.newBuilder().setStringValue("complex attributes test").build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("string.attr")
+                            .setValue(AnyValue.newBuilder().setStringValue("string_value").build())
+                            .build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("bool.attr")
+                            .setValue(AnyValue.newBuilder().setBoolValue(true).build())
+                            .build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("int.attr")
+                            .setValue(AnyValue.newBuilder().setIntValue(42).build())
+                            .build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("double.attr")
+                            .setValue(AnyValue.newBuilder().setDoubleValue(3.14).build())
+                            .build())
+                        .addAttributes(KeyValue.newBuilder()
+                            .setKey("array.attr")
+                            .setValue(AnyValue.newBuilder()
+                                .setArrayValue(io.opentelemetry.proto.common.v1.ArrayValue.newBuilder()
+                                    .addValues(AnyValue.newBuilder().setStringValue("item1").build())
+                                    .addValues(AnyValue.newBuilder().setStringValue("item2").build())
+                                    .addValues(AnyValue.newBuilder().setStringValue("item3").build())
+                                    .build())
+                                .build())
+                            .build())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        return JsonFormat.printer().print(request);
+    }
+
+    private String createOtlpPayloadWithTraceSpanIds() throws Exception {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder().build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder().build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setBody(AnyValue.newBuilder().setStringValue("trace test").build())
+                        .setTraceId(ByteString.fromHex("1234567890abcdef1234567890abcdef"))
+                        .setSpanId(ByteString.fromHex("1234567890abcdef"))
+                        .setFlags(1)
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        return JsonFormat.printer().print(request);
+    }
+
+    private String createEmptyResourceLogsPayload() throws Exception {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder().build();
+        return JsonFormat.printer().print(request);
+    }
+
+    private byte[] createValidOtlpLogBinaryPayload() {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder()
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("service.name")
+                        .setValue(AnyValue.newBuilder().setStringValue("binary-test-service").build())
+                        .build())
+                    .build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder()
+                        .setName("binary-test-scope")
+                        .setVersion("1.0.0")
+                        .build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setObservedTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setSeverityNumberValue(9)
+                        .setSeverityText("INFO")
+                        .setBody(AnyValue.newBuilder().setStringValue("binary log message").build())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        return request.toByteArray();
+    }
+
+    private ExportLogsServiceRequest createScopedRequest(String workspaceId, String collectorId) {
+        return ExportLogsServiceRequest.newBuilder()
+                .addResourceLogs(ResourceLogs.newBuilder()
+                        .setResource(Resource.newBuilder()
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat.workspace_id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(workspaceId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat.collector.id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat_collector_id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat.collector")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat_collector")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("collector.id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("collector_id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId))))
+                        .addScopeLogs(ScopeLogs.newBuilder()
+                                .addLogRecords(LogRecord.newBuilder()
+                                        .setBody(AnyValue.newBuilder().setStringValue("scoped log")))))
+                .build();
+    }
+}

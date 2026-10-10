@@ -1,0 +1,201 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { LOG_RECORD_UID_PATTERN } from '../model/explore-field-contract';
+
+import { z } from 'zod';
+
+import {
+  ExploreSignalContractError,
+  type ExplorePageResult,
+  type LogOverview,
+  type LogRow,
+  type LiveLogRow,
+  type LogStreamGap,
+  type LogTrend
+} from '../model/explore-signal-contract';
+import {
+  jsonValueSchema,
+  nullableJavaLongSchema,
+  nullableJsonMapSchema,
+  nullableNonNegativeIntegerSchema,
+  nonNegativeIntegerSchema,
+  nullableStringSchema
+} from './explore-wire-schema';
+
+const instrumentationScopeSchema = z.object({
+  name: nullableStringSchema,
+  version: nullableStringSchema,
+  attributes: nullableJsonMapSchema,
+  droppedAttributesCount: nullableNonNegativeIntegerSchema
+});
+
+const sharedLogRowShape = {
+  severityNumber: nullableNonNegativeIntegerSchema,
+  severityText: nullableStringSchema,
+  body: jsonValueSchema,
+  attributes: nullableJsonMapSchema,
+  droppedAttributesCount: nullableNonNegativeIntegerSchema,
+  traceId: nullableStringSchema,
+  spanId: nullableStringSchema,
+  traceFlags: nullableNonNegativeIntegerSchema,
+  resource: nullableJsonMapSchema,
+  resourceSchemaUrl: nullableStringSchema,
+  instrumentationScope: instrumentationScopeSchema.nullable(),
+  scopeSchemaUrl: nullableStringSchema
+};
+
+const nullablePositiveLongDecimal = z
+  .string()
+  .regex(/^[1-9]\d{0,18}$/u)
+  .refine(value => value.length < 19 || value <= '9223372036854775807')
+  .nullable();
+const nullableLogRecordUid = z.string().regex(LOG_RECORD_UID_PATTERN).nullable();
+export const logRowSchema: z.ZodType<LogRow> = z
+  .object({
+    logRecordUid: nullableLogRecordUid,
+    timeUnixNano: nullablePositiveLongDecimal,
+    observedTimeUnixNano: nullablePositiveLongDecimal,
+    ...sharedLogRowShape
+  })
+  .strict();
+const liveLogRowSchema: z.ZodType<LiveLogRow> = z
+  .object({
+    timeUnixNano: nullableJavaLongSchema,
+    observedTimeUnixNano: nullableJavaLongSchema,
+    ...sharedLogRowShape
+  })
+  .strict();
+
+const logStreamGapSchema: z.ZodType<LogStreamGap> = z
+  .object({
+    observedAt: z.number().int().safe().positive(),
+    reason: z.literal('queue_overflow'),
+    droppedCount: z.number().int().safe().positive()
+  })
+  .strict();
+
+const logPageSchema = z
+  .object({
+    content: z.array(logRowSchema),
+    totalElements: nonNegativeIntegerSchema,
+    pageIndex: nonNegativeIntegerSchema,
+    pageSize: nonNegativeIntegerSchema.positive()
+  })
+  .strict();
+
+export function parseLogPage(value: unknown, pageIndex: number, pageSize: number): ExplorePageResult<LogRow> {
+  const result = logPageSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  const page = result.data;
+  if (page.pageIndex !== pageIndex || page.pageSize !== pageSize) {
+    throw new ExploreSignalContractError('Log page does not match request');
+  }
+  const totalPages = Math.ceil(page.totalElements / page.pageSize);
+  validateLogPageContent(page, totalPages);
+  return {
+    content: page.content,
+    totalElements: page.totalElements,
+    totalPages,
+    number: page.pageIndex,
+    size: page.pageSize
+  };
+}
+
+export function parseLiveLogRow(value: unknown): LiveLogRow {
+  const result = liveLogRowSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+export function parseLogStreamGap(value: unknown): LogStreamGap {
+  const result = logStreamGapSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+const logOverviewSchema: z.ZodType<LogOverview> = z.object({
+  totalCount: nonNegativeIntegerSchema,
+  traceCount: nonNegativeIntegerSchema,
+  debugCount: nonNegativeIntegerSchema,
+  infoCount: nonNegativeIntegerSchema,
+  warnCount: nonNegativeIntegerSchema,
+  errorCount: nonNegativeIntegerSchema,
+  fatalCount: nonNegativeIntegerSchema
+});
+
+const logTrendIntervals = new Set([60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 86_400_000]);
+
+const logTrendSchema: z.ZodType<LogTrend> = z
+  .object({
+    start: nonNegativeIntegerSchema,
+    end: nonNegativeIntegerSchema,
+    intervalMs: nonNegativeIntegerSchema.positive().refine(interval => logTrendIntervals.has(interval)),
+    buckets: z.array(
+      z
+        .object({
+          start: nonNegativeIntegerSchema,
+          count: nonNegativeIntegerSchema
+        })
+        .strict()
+    )
+  })
+  .strict()
+  .superRefine((trend, context) => {
+    if (trend.start > trend.end) {
+      context.addIssue({ code: 'custom', message: 'Trend start must not be after end' });
+    }
+    if (trend.buckets.length > 60) {
+      context.addIssue({ code: 'custom', message: 'Trend contains too many buckets' });
+    }
+    const firstBucketIndex = Math.floor(trend.start / trend.intervalMs);
+    const lastBucketIndex = Math.floor(trend.end / trend.intervalMs);
+    for (const [index, bucket] of trend.buckets.entries()) {
+      const previous = trend.buckets[index - 1];
+      const bucketIndex = Math.floor(bucket.start / trend.intervalMs);
+      if (
+        bucket.start % trend.intervalMs !== 0 ||
+        bucketIndex < firstBucketIndex ||
+        bucketIndex > lastBucketIndex ||
+        (previous != null && previous.start >= bucket.start)
+      ) {
+        context.addIssue({ code: 'custom', message: 'Trend bucket is invalid', path: ['buckets', index] });
+      }
+    }
+  });
+
+export function parseLogOverview(value: unknown): LogOverview {
+  const result = logOverviewSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+export function parseLogTrend(value: unknown): LogTrend {
+  const result = logTrendSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+function validateLogPageContent(page: z.infer<typeof logPageSchema>, totalPages: number) {
+  const remaining = Math.max(0, page.totalElements - page.pageIndex * page.pageSize);
+  if (page.content.length > Math.min(page.pageSize, remaining)) {
+    throw new ExploreSignalContractError('Log page content is invalid');
+  }
+  if (page.pageIndex < totalPages && page.content.length === 0 && page.totalElements > 0) {
+    throw new ExploreSignalContractError('Log page content is missing');
+  }
+}

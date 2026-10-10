@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -77,5 +79,61 @@ class OptionParamValidatorTest {
         param.setParamValue("val1");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
+    }
+
+    @Test
+    void radioRemainsSingleSelectAndNormalizesCanonicalValue() {
+        ParamDefineInfo definition = definition("radio");
+        MonitorParam parameter = parameter("FAST");
+
+        assertDoesNotThrow(() -> validator.validate(definition, parameter));
+        assertEquals("fast", parameter.getParamValue());
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(definition, parameter("fast,safe")));
+        assertFalse(failure.getMessage().contains("fast,safe"));
+    }
+
+    @Test
+    void checkboxNormalizesCanonicalValuesAndPreservesSelectionOrder() {
+        ParamDefineInfo definition = definition("checkbox");
+        MonitorParam parameter = parameter("SAFE, fast");
+
+        assertDoesNotThrow(() -> validator.validate(definition, parameter));
+
+        assertEquals("safe,fast", parameter.getParamValue());
+    }
+
+    @Test
+    void checkboxRejectsEmptyDuplicateAndUnknownItemsWithoutEcho() {
+        ParamDefineInfo definition = definition("checkbox");
+
+        assertInvalidWithoutValueEcho(definition, "");
+        assertInvalidWithoutValueEcho(definition, "fast,,safe");
+        assertInvalidWithoutValueEcho(definition, "fast,FAST");
+        assertInvalidWithoutValueEcho(definition, "fast,caller-secret");
+    }
+
+    private void assertInvalidWithoutValueEcho(ParamDefineInfo definition, String value) {
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(definition, parameter(value)));
+        if (!value.isEmpty()) {
+            assertFalse(failure.getMessage().contains(value));
+        }
+    }
+
+    private static ParamDefineInfo definition(String type) {
+        ParamDefineInfo definition = new ParamDefineInfo();
+        definition.setType(type);
+        definition.setOptions(List.of(
+                new ParamDefineInfo.OptionInfo("Fast", "fast"),
+                new ParamDefineInfo.OptionInfo("Safe", "safe")));
+        return definition;
+    }
+
+    private static MonitorParam parameter(String value) {
+        MonitorParam parameter = new MonitorParam();
+        parameter.setParamValue(value);
+        return parameter;
     }
 }

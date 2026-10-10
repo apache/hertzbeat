@@ -1,0 +1,158 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Alert, Button, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import type { InstrumentationDraft } from '../model/instrumentation-flow';
+import { intakeEndpointEntries, profileRequiresToken } from '../model/intake-profile';
+import type {
+  CatalogResponse,
+  DetectionResponse,
+  GuideBlock,
+  RenderResponse,
+  Signal
+} from '../model/instrumentation-v2-contract';
+import { InstrumentationDetectionPanel } from './instrumentation-detection-panel';
+import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
+import { translateBackend } from './instrumentation-i18n';
+import styles from './instrumentation-guide.module.css';
+
+export function InstrumentationGuideWorkspace(props: {
+  catalog: CatalogResponse;
+  draft: InstrumentationDraft;
+  guide: RenderResponse;
+  token: string;
+  tokenAcknowledgementRequired?: boolean;
+  detection?: DetectionResponse;
+  detecting: boolean;
+  detectionError: boolean;
+  onCopy: (block: GuideBlock) => Promise<void>;
+  onEdit: () => void;
+  onDetect: () => void;
+  onNewCheck: () => void;
+  onOpen: (signal: Signal) => void;
+  onAcknowledgeToken?: () => void;
+}) {
+  return (
+    <div className={styles.workspace}>
+      {props.tokenAcknowledgementRequired && <TokenAcknowledgement onAcknowledge={props.onAcknowledgeToken} />}
+      <SelectionSummary
+        catalog={props.catalog}
+        draft={props.draft}
+        editingDisabled={Boolean(props.tokenAcknowledgementRequired)}
+        onEdit={props.onEdit}
+      />
+      <div className={styles.workspaceBody}>
+        <InstrumentationGuideBlocks guide={props.guide} token={props.token} onCopy={props.onCopy} />
+        <DestinationRail {...props} />
+      </div>
+    </div>
+  );
+}
+
+function TokenAcknowledgement(props: { onAcknowledge: (() => void) | undefined }) {
+  const { t } = useTranslation();
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={t('instrumentation.token.guideAcknowledgementRequired')}
+      action={
+        <Button size="small" onClick={() => props.onAcknowledge?.()}>
+          {t('instrumentation.token.acknowledge')}
+        </Button>
+      }
+    />
+  );
+}
+
+function SelectionSummary(props: {
+  catalog: CatalogResponse;
+  draft: InstrumentationDraft;
+  editingDisabled: boolean;
+  onEdit: () => void;
+}) {
+  const { t } = useTranslation();
+  const source = props.catalog.sources.find(item => item.id === props.draft.sourceId);
+  const dimensions = ['framework', 'method', 'environment', 'platform'] as const;
+  return (
+    <aside className={styles.summary}>
+      <div className={styles.railHeading}>
+        <Typography.Text strong>{t('instrumentation.v2.selection')}</Typography.Text>
+        <Button size="small" type="link" disabled={props.editingDisabled} onClick={props.onEdit}>
+          {t('common.edit')}
+        </Button>
+      </div>
+      {source && (
+        <SummaryRow label={t('instrumentation.v2.sourceLabel')} value={translateBackend(t, source.labelKey)} />
+      )}
+      {dimensions.map(field =>
+        props.draft[field] ? (
+          <SummaryRow
+            key={field}
+            label={t(`instrumentation.field.${field === 'environment' ? 'deploymentEnvironment' : field}`)}
+            value={t(`instrumentation.${field}.${props.draft[field]}`, { defaultValue: props.draft[field] })}
+          />
+        ) : null
+      )}
+      <SummaryRow label={t('instrumentation.field.serviceName')} value={props.draft.service.name} />
+    </aside>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.summaryRow}>
+      <Typography.Text type="secondary">{label}</Typography.Text>
+      <Typography.Text>{value}</Typography.Text>
+    </div>
+  );
+}
+
+function DestinationRail(props: Parameters<typeof InstrumentationGuideWorkspace>[0]) {
+  const { t } = useTranslation();
+  const endpoints = intakeEndpointEntries(props.guide.intakeProfile);
+  return (
+    <aside className={styles.statusRail}>
+      <Typography.Text strong>{t('instrumentation.v2.destination')}</Typography.Text>
+      <Typography.Text>{t(`instrumentation.v2.profileKind.${props.guide.intakeProfile.kind}`)}</Typography.Text>
+      {endpoints.map(([transport, endpoint]) => (
+        <div key={transport} className={styles.endpoint}>
+          <Typography.Text type="secondary">{t(`instrumentation.v2.transport.${transport}`)}</Typography.Text>
+          <Typography.Text type={endpoint.security === 'plaintext' ? 'danger' : 'success'}>
+            {t(`instrumentation.v2.security.${endpoint.security}`)}
+          </Typography.Text>
+          <code>{endpoint.url}</code>
+        </div>
+      ))}
+      {profileRequiresToken(props.guide.intakeProfile) && (
+        <Typography.Text type={props.token ? 'success' : 'secondary'}>
+          {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
+        </Typography.Text>
+      )}
+      <InstrumentationDetectionPanel
+        {...(props.detection ? { response: props.detection } : {})}
+        detecting={props.detecting}
+        error={props.detectionError}
+        onRetry={props.onDetect}
+        onNewCheck={props.onNewCheck}
+        onOpen={props.onOpen}
+      />
+    </aside>
+  );
+}

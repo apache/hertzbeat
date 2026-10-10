@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.controller;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -136,6 +137,28 @@ class AlertDefineControllerTest {
                 .andExpect(jsonPath("$.code").exists())
                 .andExpect(jsonPath("$.msg").value("Expression error"));
 
+    }
+
+    @Test
+    void testGetPeriodicTraceDefinePreview() throws Exception {
+        List<Map<String, Object>> previewData = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("__value__", 0.12D);
+        row.put("service_name", "checkout");
+        previewData.add(row);
+
+        Mockito.when(alertDefineService.getDefinePreview(eq("sql"), eq("periodic_trace"), anyString()))
+                .thenReturn(previewData);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/define/preview/{datasource}", "sql")
+                        .param("type", "periodic_trace")
+                        .param("expr", "SELECT service_name, 0.12 AS __value__ FROM hertzbeat_apm_red_1m"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data[0].__value__").value(0.12D))
+                .andExpect(jsonPath("$.data[0].service_name").value("checkout"));
+
+        Mockito.verify(alertDefineService).getDefinePreview(eq("sql"), eq("periodic_trace"), anyString());
     }
 
     @Test

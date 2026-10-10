@@ -17,6 +17,13 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
+
+import org.apache.hertzbeat.common.observability.dto.log.LogAnalysis;
+import org.apache.hertzbeat.common.observability.dto.log.LogComparison;
+import org.apache.hertzbeat.common.observability.dto.log.LogQuerySet;
+import org.apache.hertzbeat.common.observability.dto.log.LogFacets;
+import org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory;
 import io.greptime.GreptimeDB;
 import io.greptime.models.AuthInfo;
 import io.greptime.models.DataType;
@@ -34,46 +41,56 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.dto.observability.LogQueryFilter;
+import org.apache.hertzbeat.common.entity.event.CollectionExecutionEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.metric.NativeMetricSystemContext;
+import org.apache.hertzbeat.common.observability.dto.log.LogTrendBucket;
+import org.apache.hertzbeat.common.observability.dto.log.LogSearchQuery;
+import org.apache.hertzbeat.common.observability.dto.log.LogTransactions;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.common.support.exception.StorageUnavailableException;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.apache.hertzbeat.warehouse.db.GreptimeQueryGuard;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -90,6 +107,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * GreptimeDB data storage, only supports GreptimeDB version >= v0.5
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Slf4j
 public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
@@ -100,28 +118,362 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
     private static final String LOG_TABLE_NAME = WarehouseConstants.LOG_TABLE_NAME;
+    private static final String TRACE_TABLE_NAME = "hzb_traces";
+    private static final String COLLECTION_EVENT_TABLE_NAME = "hzb_collection_events";
+    private static final TableSchema COLLECTION_EVENT_SCHEMA = TableSchema.newBuilder(COLLECTION_EVENT_TABLE_NAME)
+            .addTag("monitor_id", DataType.String)
+            .addTag("entity_id", DataType.String)
+            .addTag("app", DataType.String)
+            .addTag("metric_set", DataType.String)
+            .addTag("outcome", DataType.String)
+            .addTag("failure_class", DataType.String)
+            .addTag("phase", DataType.String)
+            .addTag("collector_id", DataType.String)
+            .addTimestamp("observed_at", DataType.TimestampMillisecond)
+            .addField("duration_ms", DataType.Int64)
+            .addField("target", DataType.String)
+            .addField("field_count", DataType.Int32)
+            .addField("row_count", DataType.Int32)
+            .build();
+
+    @Override
+    public LogFacets.Values logFacetValues(
+            LogFacets.Scope scope,
+            LogFacets.Field field, int limit) {
+        return GreptimeLogFacets.values(greptimeSqlQueryExecutor, scope, field, limit, facetWhere(scope));
+    }
+
+    @Override
+    public LogFacets.Values logFacetValues(LogFacets.Scope scope, LogFacets.Field field, int limit, String valueSearch) {
+        return GreptimeLogFacets.values(greptimeSqlQueryExecutor, scope, field, limit, facetWhere(scope), valueSearch);
+    }
+
+    @Override
+    public LogFacets.Values structuredLogFacetValues(LogSearchQuery query, LogFacets.Field field, int limit, String valueSearch) {
+        return GreptimeLogFacets.values(greptimeSqlQueryExecutor, query.scope(), field, limit, structuredWhere(query), valueSearch);
+    }
+
+    @Override
+    public LogFacets.Fields logFacetFields(
+            LogFacets.Scope scope) {
+        return GreptimeLogFacets.fields(greptimeSqlQueryExecutor, scope, facetWhere(scope));
+    }
+
+
+    private String structuredWhere(LogSearchQuery query) {
+        return facetWhere(query.scope()) + " AND " + GreptimeStructuredLogPredicate.compile(query.expression())
+                + (query.selection() == null ? "" : " AND " + GreptimeLogGroupProjection.selection(query.selection()));
+    }
+
+    @Override
+    public LogFacets.Fields structuredLogFacetFields(LogSearchQuery query) {
+        return GreptimeLogFacets.fields(greptimeSqlQueryExecutor, query.scope(), structuredWhere(query));
+    }
+
+    @Override
+    public LogFacets.Values structuredLogFacetValues(LogSearchQuery query, LogFacets.Field field, int limit) {
+        return GreptimeLogFacets.values(greptimeSqlQueryExecutor, query.scope(), field, limit, structuredWhere(query));
+    }
+
+    @Override
+    public List<LogEntry> queryStructuredLogs(LogSearchQuery query, int offset, int limit, String sort) {
+        var scope = query.scope();
+        return queryLogsByMultipleConditionsWithPagination(scope.start(), scope.end(), scope.traceId(), scope.spanId(),
+                scope.severityNumber(), scope.severityText(), null, offset, limit, scope.excludedServiceNames(),
+                scope.requireServiceName(), scope.workspaceId(), scope.serviceName(), scope.serviceNamespace(), scope.environment(),
+                scope.resourceFilters(), scope.attributeFilters(), scope.severityCategory(), sort, structuredWhere(query));
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.log.LogCalculated.PageResult calculatedPage(
+            org.apache.hertzbeat.common.observability.dto.log.LogCalculated.Query query) {
+        return GreptimeLogCalculatedPage.read(greptimeSqlQueryExecutor, query, facetWhere(query.scope()), this::mapRowsToLogEntries);
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.log.LogCalculated.TrendResult calculatedTrend(
+            org.apache.hertzbeat.common.observability.dto.log.LogCalculated.Query query) {
+        return GreptimeLogCalculatedAggregate.trend(greptimeSqlQueryExecutor, query, facetWhere(query.scope()));
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.log.LogCalculated.FacetResult calculatedFacet(
+            org.apache.hertzbeat.common.observability.dto.log.LogCalculated.Query query) {
+        return GreptimeLogCalculatedAggregate.facet(greptimeSqlQueryExecutor, query, facetWhere(query.scope()));
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.log.LogCalculated.AnalysisResult calculatedAnalysis(
+            org.apache.hertzbeat.common.observability.dto.log.LogCalculated.Query query) {
+        return GreptimeLogCalculatedAnalysis.read(greptimeSqlQueryExecutor, query, facetWhere(query.scope()));
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.log.LogCalculated.Preview calculatedPreview(
+            org.apache.hertzbeat.common.observability.dto.log.LogCalculated.Definition definition, String sample) {
+        return GreptimeLogCalculatedPreview.read(greptimeSqlQueryExecutor, definition, sample);
+    }
+
+    @Override
+    public void calculatedPattern(String pattern) {
+        GreptimeLogCalculatedPreview.checkPattern(greptimeSqlQueryExecutor, pattern);
+    }
+
+    @Override
+    public long countStructuredLogs(LogSearchQuery query) {
+        var scope = query.scope();
+        return countLogsByMultipleConditions(scope.start(), scope.end(), scope.traceId(), scope.spanId(), scope.severityNumber(),
+                scope.severityText(), null, scope.excludedServiceNames(), scope.requireServiceName(), scope.workspaceId(),
+                scope.serviceName(), scope.serviceNamespace(), scope.environment(), scope.resourceFilters(),
+                scope.attributeFilters(), scope.severityCategory(), structuredWhere(query));
+    }
+
+    @Override
+    public Map<String, Long> structuredLogOverview(LogSearchQuery query) {
+        var scope = query.scope();
+        return countLogsBySeverityBuckets(scope.start(), scope.end(), scope.traceId(), scope.spanId(), scope.severityNumber(),
+                scope.severityText(), null, scope.excludedServiceNames(), scope.requireServiceName(), scope.workspaceId(),
+                scope.serviceName(), scope.serviceNamespace(), scope.environment(), scope.resourceFilters(),
+                scope.attributeFilters(), scope.severityCategory(), structuredWhere(query));
+    }
+
+    @Override
+    public Map<String, Long> structuredLogTraceCoverage(LogSearchQuery query) {
+        var scope = query.scope();
+        return countLogTraceCoverage(scope.start(), scope.end(), scope.traceId(), scope.spanId(), scope.severityNumber(),
+                scope.severityText(), null, scope.excludedServiceNames(), scope.requireServiceName(), scope.workspaceId(),
+                scope.serviceName(), scope.serviceNamespace(), scope.environment(), scope.resourceFilters(),
+                scope.attributeFilters(), scope.severityCategory(), structuredWhere(query));
+    }
+
+    @Override
+    public List<LogTrendBucket> structuredLogTrend(LogSearchQuery query, long intervalMs) {
+        var scope = query.scope();
+        return countLogsByInterval(scope.start(), scope.end(), intervalMs, scope.traceId(), scope.spanId(), scope.severityNumber(),
+                scope.severityText(), null, scope.excludedServiceNames(), scope.requireServiceName(), scope.workspaceId(),
+                scope.serviceName(), scope.serviceNamespace(), scope.environment(), scope.resourceFilters(),
+                scope.attributeFilters(), scope.severityCategory(), structuredWhere(query));
+    }
+
+    @Override
+    public Map<String, Long> structuredLogGroups(LogSearchQuery query, String groupBy, int limit, String orderBy, long minCount) {
+        if (limit < 1 || limit > 100 || minCount < 1 || minCount > 1_000_000
+                || !List.of("count-asc", "count-desc").contains(orderBy)) {
+            throw new IllegalArgumentException("Invalid structured grouping controls");
+        }
+        String expression = logGroupByExpression(groupBy);
+        if (!StringUtils.hasText(expression)) {
+            throw new IllegalArgumentException("Invalid log grouping field");
+        }
+        String sql = "SELECT COALESCE(NULLIF(" + expression + ", ''), 'unknown') as groupValue, COUNT(*) as count FROM "
+                + LOG_TABLE_NAME + structuredWhere(query) + " GROUP BY groupValue HAVING COUNT(*) >= " + minCount
+                + " ORDER BY count " + ("count-asc".equals(orderBy) ? "ASC" : "DESC") + ", groupValue ASC LIMIT " + limit;
+        try {
+            var rows = greptimeSqlQueryExecutor.executeStrict(sql);
+            Map<String, Long> result = new java.util.LinkedHashMap<>();
+            for (var row : rows) {
+                validateScopedGroupedRow(query.scope().workspaceId(), row, "groupValue");
+                result.put(String.valueOf(columnValue(row, "groupValue")),
+                        aggregateLong(query.scope().workspaceId(), row, "count", false));
+            }
+            return result;
+        } catch (RuntimeException failure) {
+            throw new TelemetryStorageUnavailableException();
+        }
+    }
+
+    @Override
+    public org.apache.hertzbeat.common.observability.dto.log.PreparedLogGroupSelection prepareLogGroupSelection(
+            String workspaceId, org.apache.hertzbeat.common.observability.dto.log.LogGroupSelection selection) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("Trusted workspace required");
+        }
+        try {
+            return greptimeSqlQueryExecutor.prepareLogGroupSelection(selection);
+        } catch (UnsupportedOperationException unsupported) {
+            throw unsupported;
+        } catch (RuntimeException unavailable) {
+            throw new TelemetryStorageUnavailableException();
+        }
+    }
+
+    @Override
+    public LogComparison.Result logComparison(LogComparison.Source a, LogComparison.Source b,
+                                              LogAnalysis.Request request, long intervalMs, String formula) {
+        LogComparison.validateSources(a, b);
+        return GreptimeLogComparison.read(greptimeSqlQueryExecutor, a.scope().window(), request, intervalMs,
+                comparisonWhere(a), comparisonWhere(b), formula);
+    }
+
+    @Override
+    public LogComparison.Result logComparison(LogComparison.Source a, LogComparison.Source b,
+                                              LogAnalysis.Request request, long intervalMs, String formula, Long timeShiftMs) {
+        if (timeShiftMs == null) { return logComparison(a, b, request, intervalMs, formula); }
+        LogComparison.validateShiftedSources(a, b, timeShiftMs);
+        return GreptimeLogComparison.read(greptimeSqlQueryExecutor, a.scope().window(), request, intervalMs,
+                comparisonWhere(a), comparisonWhere(b), formula, timeShiftMs);
+    }
+
+    @Override
+    public LogQuerySet.Result logQuerySet(LogFacets.Window window, List<LogQuerySet.Population> sources,
+                                          List<LogQuerySet.Formula> formulas, String view, long intervalMs) {
+        return GreptimeLogQuerySet.read(greptimeSqlQueryExecutor, window, sources, formulas, view, intervalMs,
+                sources.stream().map(population -> comparisonWhere(population.source())).toList());
+    }
+
+    @Override
+    public LogTransactions.Result logTransactions(LogTransactions.Query query) {
+        try {
+            String sql = GreptimeLogTransactions.sql(query, facetWhere(query.population()), comparisonWhere(query.seed()), LOG_TABLE_NAME);
+            return GreptimeLogTransactions.map(greptimeSqlQueryExecutor.executeStrict(sql), query);
+        } catch (RuntimeException failure) {
+            throw new TelemetryStorageUnavailableException();
+        }
+    }
+
+    @Override
+    public LogTransactions.DetailResult logTransactionDetail(LogTransactions.Query query, LogTransactions.Detail detail) {
+        var p = query.population();
+        var localScope = new LogFacets.Scope(p.workspaceId(), p.start(), p.end(), p.traceId(), p.spanId(), null, null,
+                detail.literal(), p.serviceName(), p.serviceNamespace(), p.environment(), p.resourceFilters(), p.attributeFilters(),
+                p.excludedServiceNames(), p.requireServiceName(), null);
+        var local = new LogComparison.Source(localScope, detail.expression(), null);
+        try {
+            String sql = GreptimeLogTransactions.detailSql(query, detail, facetWhere(p), comparisonWhere(query.seed()), comparisonWhere(local), LOG_TABLE_NAME);
+            return GreptimeLogTransactions.mapDetail(greptimeSqlQueryExecutor.executeStrict(sql), query, detail, this::mapRowsToLogEntries);
+        } catch (RuntimeException failure) {
+            throw new TelemetryStorageUnavailableException();
+        }
+    }
+
+    @Override
+    public List<LogEntry> querySortedLogs(LogComparison.Source source, int offset, int limit,
+                                         org.apache.hertzbeat.common.observability.dto.log.LogSort sort) {
+        String suffix = GreptimeLogSort.suffix(sort, offset, limit);
+        return mapRowsToLogEntries(greptimeSqlQueryExecutor.executeStrict("SELECT " + NATIVE_LOG_SELECT_COLUMNS
+                + ", " + GreptimeLogSort.projection(sort) + " FROM " + LOG_TABLE_NAME + comparisonWhere(source) + suffix));
+    }
+
+    @Override
+    public long countSortedLogs(LogComparison.Source source) {
+        var scope = source.scope();
+        return countLogsByMultipleConditions(scope.start(), scope.end(), scope.traceId(), scope.spanId(), scope.severityNumber(),
+                scope.severityText(), null, scope.excludedServiceNames(), scope.requireServiceName(), scope.workspaceId(),
+                scope.serviceName(), scope.serviceNamespace(), scope.environment(), scope.resourceFilters(),
+                scope.attributeFilters(), scope.severityCategory(), comparisonWhere(source));
+    }
+
+    private String comparisonWhere(LogComparison.Source source) {
+        return facetWhere(source.scope()) + " AND " + GreptimeStructuredLogPredicate.compile(source.expression())
+                + (source.selection() == null ? "" : " AND " + GreptimeLogGroupProjection.selection(source.selection()));
+    }
+
+    @Override
+    public LogAnalysis.Result logAnalysis(LogSearchQuery query, LogAnalysis.Request request, long intervalMs) {
+        return GreptimeLogAnalysis.read(greptimeSqlQueryExecutor, query.scope().window(), request, intervalMs, structuredWhere(query));
+    }
+
+    @Override
+    public LogAnalysis.Result logAnalysis(LogFacets.Scope scope,
+            org.apache.hertzbeat.common.observability.dto.log.LogSearchExpression expression,
+            LogAnalysis.Request request, long intervalMs) {
+        String where = facetWhere(scope);
+        if (expression != null) { where += " AND " + GreptimeStructuredLogPredicate.compile(expression); }
+        return GreptimeLogAnalysis.read(greptimeSqlQueryExecutor, scope.window(), request, intervalMs, where);
+    }
+
+    private String facetWhere(LogFacets.Scope scope) {
+        StringBuilder sql = new StringBuilder();
+        boolean complex = java.util.stream.Stream.concat(scope.resourceFilters().values().stream(),
+                scope.attributeFilters().values().stream()).anyMatch(GreptimeLogFilterPredicate::complex);
+        buildWhereConditions(sql, scope.start(), scope.end(), scope.traceId(), scope.spanId(),
+                scope.severityNumber(), scope.severityText(), scope.search(), scope.excludedServiceNames(),
+                scope.requireServiceName(), scope.workspaceId(), scope.serviceName(), scope.serviceNamespace(),
+                scope.environment(), complex ? Map.of() : scope.resourceFilters(),
+                complex ? Map.of() : scope.attributeFilters(), scope.severityCategory());
+        if (complex) {
+            scope.resourceFilters().forEach((key, value) -> sql.append(" AND ")
+                    .append(GreptimeLogFilterPredicate.condition("resource_attributes", key, value)));
+            scope.attributeFilters().forEach((key, value) -> sql.append(" AND ")
+                    .append(GreptimeLogFilterPredicate.condition("log_attributes", key, value)));
+        }
+        if (scope.numericRange() != null) {
+            var range = scope.numericRange();
+            // Pinned Float64 ordering distinguishes signed zero; inclusive numeric bounds must admit both signs.
+            sql.append(" AND (").append(GreptimeLogMeasurement.numericSample(range.field()))
+                    .append(" BETWEEN ").append(range.min() == 0 ? -0.0 : range.min())
+                    .append(" AND ").append(range.max() == 0 ? 0.0 : range.max()).append(")");
+        }
+        return sql.toString();
+    }
+
+    private static final String HTTP_ROUTE = "http.route";
+    static final String NATIVE_LOG_SELECT_COLUMNS = "timestamp, trace_id, span_id, severity_number, "
+            + "severity_text, body, json_to_string(log_attributes) AS log_attributes, "
+            + "json_to_string(resource_attributes) AS resource_attributes, hertzbeat_event_id, log_record_uid, "
+            + "hertzbeat_ingest_id, hertzbeat_entity_id, hertzbeat_workspace_id, service_name";
     private static final String LABEL_KEY_START_TIME = "start";
     private static final String LABEL_KEY_END_TIME = "end";
-    private static final String LABEL_KEY_TS = "ts";
     private static final int LOG_BATCH_SIZE = 500;
-    private static final Map<String, String> OTLP_RESOURCE_KEY_ALIASES = Map.of(
-            "service_name", "service.name",
-            "service_namespace", "service.namespace",
-            "deployment_environment_name", "deployment.environment.name");
+    private static final Pattern DAY_PATTERN = Pattern.compile("^(\\d+)[dD]$");
+    private static final Map<Long, String> LOG_TREND_INTERVAL_LITERALS = Map.of(
+            60_000L, "1 minute",
+            300_000L, "5 minutes",
+            900_000L, "15 minutes",
+            1_800_000L, "30 minutes",
+            3_600_000L, "1 hour",
+            21_600_000L, "6 hours",
+            86_400_000L, "1 day");
+    private static final MetricQueryResolutionPlanner METRIC_QUERY_RESOLUTION_PLANNER =
+            MetricQueryResolutionPlanner.defaults();
 
     private GreptimeDB greptimeDb;
+
+    private final GreptimeMetricSchemaCache metricSchemaCache = new GreptimeMetricSchemaCache();
 
     private final GreptimeProperties greptimeProperties;
 
     private final RestTemplate restTemplate;
 
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
-    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
+    private final GreptimeQueryGuard queryGuard;
+    private final GreptimeServerAvailabilityProbe serverAvailabilityProbe;
+    private final NativeMetricSystemContextResolver nativeMetricSystemContextResolver;
 
-    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties,
-                                 @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
-                                 RestTemplate restTemplate,
-                                 GreptimeSqlQueryExecutor greptimeSqlQueryExecutor) {
+    public GreptimeDbDataStorage(
+            GreptimeProperties greptimeProperties,
+            @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE) RestTemplate restTemplate,
+            GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+            GreptimeQueryGuard queryGuard) {
+        this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard,
+                createServerAvailabilityProbe(greptimeProperties), (metricsData, intrinsic) -> intrinsic);
+    }
+
+    @Autowired
+    public GreptimeDbDataStorage(
+            GreptimeProperties greptimeProperties,
+            @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE) RestTemplate restTemplate,
+            GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+            GreptimeQueryGuard queryGuard,
+            ObjectProvider<NativeMetricSystemContextResolver> nativeMetricSystemContextResolverProvider) {
+        this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard,
+                createServerAvailabilityProbe(greptimeProperties),
+                nativeMetricSystemContextResolverProvider.getIfAvailable(() -> (metricsData, intrinsic) -> intrinsic));
+    }
+
+    GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
+                          GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+                          GreptimeQueryGuard queryGuard,
+                          GreptimeServerAvailabilityProbe serverAvailabilityProbe) {
+        this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor, queryGuard, serverAvailabilityProbe,
+                (metricsData, intrinsic) -> intrinsic);
+    }
+
+    GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
+                          GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+                          GreptimeQueryGuard queryGuard,
+                          GreptimeServerAvailabilityProbe serverAvailabilityProbe,
+                          NativeMetricSystemContextResolver nativeMetricSystemContextResolver) {
         if (greptimeProperties == null) {
             log.error("init error, please config Warehouse GreptimeDB props in application.yml");
             throw new IllegalArgumentException("please config Warehouse GreptimeDB props");
@@ -129,7 +481,30 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         this.restTemplate = restTemplate;
         this.greptimeProperties = greptimeProperties;
         this.greptimeSqlQueryExecutor = greptimeSqlQueryExecutor;
+        this.queryGuard = Objects.requireNonNull(queryGuard);
+        this.serverAvailabilityProbe = Objects.requireNonNull(serverAvailabilityProbe);
+        this.nativeMetricSystemContextResolver = Objects.requireNonNull(nativeMetricSystemContextResolver);
         serverAvailable = initGreptimeDbClient(greptimeProperties);
+        if (serverAvailable) {
+            applyDatabaseTtlIfConfigured(greptimeProperties);
+        }
+    }
+
+    private static GreptimeServerAvailabilityProbe createServerAvailabilityProbe(GreptimeProperties properties) {
+        return properties == null ? null : new GreptimeServerAvailabilityProbe(properties.httpEndpoint());
+    }
+
+    @Override
+    public ServerAvailability getServerAvailability() {
+        if (!serverAvailable) {
+            return ServerAvailability.UNAVAILABLE;
+        }
+        return serverAvailabilityProbe.current();
+    }
+
+    @Override
+    public boolean supportsLogQuery() {
+        return true;
     }
 
     private boolean initGreptimeDbClient(GreptimeProperties greptimeProperties) {
@@ -141,12 +516,49 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .routeTableRefreshPeriodSeconds(30)
                     .build();
             this.greptimeDb = GreptimeDB.create(opts);
-        } catch (Exception e) {
-            log.error("[warehouse greptime] Fail to start GreptimeDB client");
+        } catch (Throwable t) {
+            log.error("[warehouse greptime] Fail to start GreptimeDB client", t);
             return false;
         }
 
         return true;
+    }
+
+    private void applyDatabaseTtlIfConfigured(GreptimeProperties properties) {
+        String expireTime = normalizeExpireTime(properties.expireTime());
+        if (expireTime == null) {
+            return;
+        }
+        String database = properties.database();
+        if (!StringUtils.hasText(database)) {
+            log.warn("[warehouse greptime] skip ttl init because database is blank.");
+            return;
+        }
+        String sql = "ALTER DATABASE " + database.trim() + " SET 'ttl'='" + expireTime + "'";
+        try {
+            greptimeSqlQueryExecutor.execute(sql);
+            log.info("[warehouse greptime] applied database ttl {} for {}.", expireTime, database.trim());
+        } catch (Exception ex) {
+            log.warn("[warehouse greptime] failed to apply database ttl {} for {}: {}",
+                    expireTime, database.trim(), ex.getMessage());
+        }
+    }
+
+    private String normalizeExpireTime(String expireTime) {
+        if (!StringUtils.hasText(expireTime)) {
+            return null;
+        }
+        String normalized = expireTime.trim();
+        if (NumberUtils.isParsable(normalized) || DAY_PATTERN.matcher(normalized).matches()) {
+            return normalized;
+        }
+        try {
+            TemporalAmount ignored = TimePeriodUtil.parseTokenTime(normalized);
+            return normalized;
+        } catch (Exception ex) {
+            log.warn("[warehouse greptime] invalid expire-time {}, skip ttl init.", normalized);
+            return null;
+        }
     }
 
     @Override
@@ -154,85 +566,40 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValues().isEmpty()) {
-            log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
+        if (metricsData.rowCount() == 0) {
+            log.info("[warehouse greptime] metrics data {} {} is empty, ignore.",
+                    metricsData.getId(), metricsData.getMetrics());
             return;
         }
-        String instance = metricsData.getInstance();
         String app = metricsData.getApp();
         String tableName = getTableName(app, metricsData.getMetrics());
-        TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
-
-        tableSchemaBuilder.addTag("instance", DataType.String)
-                .addTimestamp("ts", DataType.TimestampMillisecond);
         List<CollectRep.Field> fields = metricsData.getFields();
-        Map<String, String> customLabels = metricsData.getLabels();
-        List<String> fieldNames = fields.stream().map(CollectRep.Field::getName).collect(Collectors.toList());
-        Set<String> labelCollisions = findLabelCollisions(customLabels, fieldNames);
-        if (!labelCollisions.isEmpty()) {
-            long previousCount = ignoredLabelCollisionCount.getAndAdd(labelCollisions.size());
-            long ignoredCount = previousCount + labelCollisions.size();
-            if (shouldLogLabelCollisions(previousCount, ignoredCount)) {
-                log.warn("[warehouse greptime] ignore custom labels {} from metrics data {} because "
-                                + "the keys are storage-managed; cumulative ignored labels: {}.",
-                        labelCollisions, metricsData.getId(), ignoredCount);
-            }
+        GreptimeMetricSchemaCache.ResolvedSchema resolvedSchema = metricSchemaCache.resolve(tableName, fields);
+        Table table = Table.from(resolvedSchema.schema());
+        if (resolvedSchema.schemaChanged() && !resolvedSchema.rejectedNames().isEmpty()) {
+            log.warn("[warehouse greptime] ignored Collector fields that collide with system dimensions: {}",
+                    resolvedSchema.rejectedNames());
         }
-        fields.forEach(field -> {
-            if (field.getLabel()) {
-                tableSchemaBuilder.addTag(field.getName(), DataType.String);
-            } else {
-                if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                    tableSchemaBuilder.addField(field.getName(), DataType.Float64);
-                } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                    tableSchemaBuilder.addField(field.getName(), DataType.String);
-                }
-            }
-        });
-        List<String> labelKeys = new LinkedList<>();
-        if (!Objects.isNull(customLabels) && !customLabels.isEmpty()) {
-            for (Map.Entry<String, String> label : customLabels.entrySet()) {
-                String key = label.getKey();
-                if (!LABEL_KEY_INSTANCE.equals(key) && !LABEL_KEY_TS.equals(key) && !fieldNames.contains(key)) {
-                    tableSchemaBuilder.addTag(key, DataType.String);
-                    labelKeys.add(key);
-                }
-            }
-        }
-        Table table = Table.from(tableSchemaBuilder.build());
-        long now = System.currentTimeMillis();
-        Object[] values = new Object[2 + fields.size() + labelKeys.size()];
-        values[0] = instance;
-        values[1] = now;
+        long collectionTime = metricsData.getTime();
+        long timestamp = collectionTime > 0 ? collectionTime : System.currentTimeMillis();
+        Object[] systemTagValues = resolveNativeMetricSystemContext(metricsData).tagValues();
+        int fieldOffset = systemTagValues.length + 1;
         RowWrapper rowWrapper = metricsData.readRow();
         while (rowWrapper.hasNextRow()) {
             rowWrapper = rowWrapper.nextRow();
-
-            AtomicInteger index = new AtomicInteger(-1);
-            rowWrapper.cellStream().forEach(cell -> {
-                index.getAndIncrement();
-
-                if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
-                    values[2 + index.get()] = null;
-                    return;
+            Object[] values = new Object[fieldOffset + resolvedSchema.sourceIndexes().size()];
+            System.arraycopy(systemTagValues, 0, values, 0, systemTagValues.length);
+            values[systemTagValues.length] = timestamp;
+            int sourceIndex = 0;
+            int acceptedIndex = 0;
+            while (rowWrapper.hasNextCell()) {
+                ArrowCell cell = rowWrapper.nextCell();
+                if (acceptedIndex < resolvedSchema.sourceIndexes().size()
+                        && resolvedSchema.sourceIndexes().get(acceptedIndex) == sourceIndex) {
+                    values[fieldOffset + acceptedIndex] = metricCellValue(cell);
+                    acceptedIndex++;
                 }
-
-                Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
-                Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
-
-                if (label) {
-                    values[2 + index.get()] = cell.getValue();
-                } else {
-                    if (type == CommonConstants.TYPE_NUMBER) {
-                        values[2 + index.get()] = Double.parseDouble(cell.getValue());
-                    } else if (type == CommonConstants.TYPE_STRING) {
-                        values[2 + index.get()] = cell.getValue();
-                    }
-                }
-            });
-
-            for (int i = 0; i < labelKeys.size(); i++) {
-                values[2 + fields.size() + i] = customLabels.get(labelKeys.get(i));
+                sourceIndex++;
             }
 
             table.addRow(values);
@@ -251,37 +618,97 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
-    private Set<String> findLabelCollisions(Map<String, String> customLabels, List<String> fieldNames) {
-        if (customLabels == null || customLabels.isEmpty()) {
-            return Set.of();
+    private NativeMetricSystemContext resolveNativeMetricSystemContext(CollectRep.MetricsData metricsData) {
+        NativeMetricSystemContext intrinsic = NativeMetricSystemContext.from(metricsData);
+        try {
+            NativeMetricSystemContext resolved = nativeMetricSystemContextResolver.resolve(metricsData, intrinsic);
+            return resolved == null ? intrinsic : resolved;
+        } catch (RuntimeException exception) {
+            log.warn("[warehouse greptime] native metric entity authority unavailable for monitor {}: {}",
+                    metricsData.getId(), exception.getClass().getSimpleName());
+            return intrinsic;
         }
-        Set<String> collisions = new TreeSet<>();
-        for (String key : customLabels.keySet()) {
-            if (LABEL_KEY_INSTANCE.equals(key) || LABEL_KEY_TS.equals(key) || fieldNames.contains(key)) {
-                collisions.add(key);
+    }
+
+    private Object metricCellValue(ArrowCell cell) {
+        if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+            return null;
+        }
+        Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+        Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+        if (Boolean.TRUE.equals(label) || type != null && type == CommonConstants.TYPE_STRING) {
+            return cell.getValue();
+        }
+        if (type != null && type == CommonConstants.TYPE_NUMBER) {
+            return Double.parseDouble(cell.getValue());
+        }
+        return null;
+    }
+
+    @Override
+    public boolean supportsCollectionExecutionEvents() {
+        return true;
+    }
+
+    @Override
+    public boolean saveCollectionExecutionEvents(List<CollectionExecutionEvent> events) {
+        if (!isServerAvailable() || events == null || events.isEmpty()) {
+            return false;
+        }
+        try {
+            Table table = Table.from(COLLECTION_EVENT_SCHEMA);
+            for (CollectionExecutionEvent event : events) {
+                table.addRow(collectionExecutionEventValues(event));
             }
+            Result<WriteOk, Err> result = greptimeDb.write(table).get(10, TimeUnit.SECONDS);
+            if (result.isOk()) {
+                log.debug("[warehouse greptime-collection-event] Batch write {} events successful", events.size());
+                return true;
+            } else {
+                log.warn("[warehouse greptime-collection-event] Batch write failed: {}", result.getErr());
+            }
+        } catch (Exception exception) {
+            log.error("[warehouse greptime-collection-event] Error saving event batch", exception);
         }
-        return collisions;
+        return false;
     }
 
-    private boolean shouldLogLabelCollisions(long previousCount, long currentCount) {
-        return previousCount == 0 || previousCount / 100 < currentCount / 100;
-    }
-
-    long getIgnoredLabelCollisionCount() {
-        return ignoredLabelCollisionCount.get();
+    private static Object[] collectionExecutionEventValues(CollectionExecutionEvent event) {
+        CollectionExecutionEvent.RuntimeContext runtime = event.runtime();
+        CollectionExecutionEvent.Observation observation = event.observation();
+        return new Object[] {
+                String.valueOf(event.entity().monitorId()),
+                event.entity().entityId() == null ? "" : String.valueOf(event.entity().entityId()),
+                event.entity().app(),
+                observation.metricSet(),
+                observation.outcome().name(),
+                observation.failureClass().name(),
+                observation.phase().name(),
+                runtime == null ? "" : runtime.collectorId(),
+                observation.observedAt(),
+                observation.durationMillis(),
+                runtime == null ? "" : runtime.target(),
+                observation.fieldCount(),
+                observation.rowCount()
+        };
     }
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String history) {
-        Map<String, Long> timeRange = getTimeRange(history);
-        Long start = timeRange.get(LABEL_KEY_START_TIME);
-        Long end = timeRange.get(LABEL_KEY_END_TIME);
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
 
-        String step = getTimeStep(start, end);
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
+        Map<String, Long> timeRange = getTimeRange(history, start, end);
+        Long startTime = timeRange.get(LABEL_KEY_START_TIME);
+        Long endTime = timeRange.get(LABEL_KEY_END_TIME);
 
-        return getHistoryData(start, end, step, instance, app, metrics, metric);
+        String queryStep = METRIC_QUERY_RESOLUTION_PLANNER.resolveStep(startTime, endTime, step);
+
+        return getHistoryData(startTime, endTime, queryStep, instance, app, metrics, metric);
     }
 
     private String getTableName(String app, String metrics) {
@@ -291,24 +718,35 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String history) {
-        Map<String, Long> timeRange = getTimeRange(history);
-        Long start = timeRange.get(LABEL_KEY_START_TIME);
-        Long end = timeRange.get(LABEL_KEY_END_TIME);
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
 
-        String step = getTimeStep(start, end);
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
+        Map<String, Long> timeRange = getTimeRange(history, start, end);
+        Long startTime = timeRange.get(LABEL_KEY_START_TIME);
+        Long endTime = timeRange.get(LABEL_KEY_END_TIME);
 
-        Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, instance, app, metrics, metric);
+        String queryStep = METRIC_QUERY_RESOLUTION_PLANNER.resolveStep(startTime, endTime, step);
+
+        Map<String, List<Value>> instanceValuesMap = getHistoryData(startTime, endTime, queryStep, instance, app,
+                metrics, metric);
 
         if (instanceValuesMap.isEmpty()) {
             return Collections.emptyMap();
         }
         // Queries below this point may yield inconsistent results due to exceeding the valid data range.
         // Therefore, we restrict the valid range by obtaining the post-query timeframe.
-        // Since `gretime`'s `end` excludes the specified time, we add 4 hours.
+        // Since Greptime's end excludes the specified time, add one query step.
         List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().iterator().next());
-        // effective time
-        long effectiveStart = values.get(0).getTime() / 1000;
-        long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
+        // Keep explicitly requested query windows stable across the base, max, min, and avg requests.
+        boolean hasAbsoluteWindow = start != null && end != null && start > 0 && end > 0 && start < end;
+        long effectiveStart = hasAbsoluteWindow ? startTime : values.get(0).getTime() / 1000;
+        long effectiveEnd = hasAbsoluteWindow
+                ? endTime
+                : values.get(values.size() - 1).getTime() / 1000 + parseStepSeconds(queryStep);
 
         String name = getTableName(app, metrics);
         String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
@@ -317,22 +755,26 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
         timeSeriesSelector = timeSeriesSelector + "}";
 
+        Map<String, List<Value>> intervalValuesMap = new HashMap<>(instanceValuesMap.size());
         try {
             // max
             String finalTimeSeriesSelector = timeSeriesSelector;
-            URI uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
-            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMax);
+            URI uri = getUri(effectiveStart, effectiveEnd, queryStep,
+                    uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
+            requestIntervalMetricAndPutValue(uri, intervalValuesMap, Value::setMax);
             // min
-            uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
-            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMin);
+            uri = getUri(effectiveStart, effectiveEnd, queryStep,
+                    uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
+            requestIntervalMetricAndPutValue(uri, intervalValuesMap, Value::setMin);
             // avg
-            uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
-            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMean);
+            uri = getUri(effectiveStart, effectiveEnd, queryStep,
+                    uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
+            requestIntervalMetricAndPutValue(uri, intervalValuesMap, Value::setMean);
         } catch (Exception e) {
             log.error("query interval metrics data from greptime error. {}", e.getMessage(), e);
         }
 
-        return instanceValuesMap;
+        return intervalValuesMap;
     }
 
     /**
@@ -363,22 +805,35 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return Map.of("start", start, "end", end);
     }
 
-    /**
-     * Get time step
-     *
-     * @param start start time
-     * @param end   end time
-     * @return step
-     */
-    private String getTimeStep(long start, long end) {
-        // get step
-        String step = "60s";
-        if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
-            step = "1h";
-        } else if (end - start >= Duration.ofDays(7).getSeconds()) {
-            step = "4h";
+    private Map<String, Long> getTimeRange(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            return Map.of(LABEL_KEY_START_TIME, start / 1000, LABEL_KEY_END_TIME, end / 1000);
         }
-        return step;
+        return getTimeRange(history);
+    }
+
+    private long parseStepSeconds(String step) {
+        if (!StringUtils.hasText(step)) {
+            return Duration.ofMinutes(1).getSeconds();
+        }
+        try {
+            String normalized = step.trim().toLowerCase(Locale.ROOT);
+            if (normalized.endsWith("ms")) {
+                long value = Long.parseLong(normalized.substring(0, normalized.length() - 2));
+                return Math.max(1L, value / 1000L);
+            }
+            long value = Long.parseLong(normalized.substring(0, normalized.length() - 1));
+            String unit = normalized.substring(normalized.length() - 1);
+            return switch (unit) {
+                case "s" -> value;
+                case "m" -> Duration.ofMinutes(value).getSeconds();
+                case "h" -> Duration.ofHours(value).getSeconds();
+                case "d" -> Duration.ofDays(value).getSeconds();
+                default -> Duration.ofMinutes(1).getSeconds();
+            };
+        } catch (Exception e) {
+            return Duration.ofMinutes(1).getSeconds();
+        }
     }
 
     /**
@@ -416,8 +871,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
             ResponseEntity<PromQlQueryContent> responseEntity = null;
             if (uri != null) {
-                responseEntity = restTemplate.exchange(uri,
-                        HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                responseEntity = queryGuard.execute(() -> restTemplate.exchange(uri,
+                        HttpMethod.GET, httpEntity, PromQlQueryContent.class));
             }
             if (responseEntity != null && responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from greptime success. {}", uri);
@@ -480,7 +935,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 .queryParam("start", start)
                 .queryParam("end", end)
                 .queryParam("step", step)
-                .queryParam("db", greptimeProperties.database());
+                .queryParam("db", TelemetrySourceContext.database(greptimeProperties.database()));
         UriComponents cloneUriComponents = uriComponentsBuilder.cloneBuilder().build(true);
         String queryValue = queryFunction.apply(cloneUriComponents);
         if (!StringUtils.hasText(queryValue)) {
@@ -506,8 +961,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         HttpEntity<Void> httpEntity = getHttpEntity();
-        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
-                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+        ResponseEntity<PromQlQueryContent> responseEntity = queryGuard.execute(() -> restTemplate.exchange(uri,
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class));
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             log.error("query interval metrics data from greptime failed. {}", responseEntity);
             return;
@@ -527,21 +982,30 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 continue;
             }
             List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
-            if (valueList.size() == content.getValues().size()) {
-                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                    Value value = valueList.get(timestampIndex);
-                    Object[] valueArr = content.getValues().get(timestampIndex);
-                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                    valueConsumer.accept(value, avgValue);
-                }
+            Map<Long, Value> valuesByTime = valueList.stream()
+                    .collect(Collectors.toMap(Value::getTime, Function.identity(), (first, ignored) -> first));
+            for (Object[] valueArr : content.getValues()) {
+                long timestamp = ((Double) valueArr[0]).longValue() * 1000;
+                Value value = valuesByTime.computeIfAbsent(timestamp, key -> new Value(null, key));
+                String intervalValue = new BigDecimal(String.valueOf(valueArr[1]))
+                        .setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                valueConsumer.accept(value, intervalValue);
             }
+            valueList.clear();
+            valueList.addAll(valuesByTime.values().stream()
+                    .sorted((left, right) -> Long.compare(left.getTime(), right.getTime()))
+                    .toList());
         }
     }
 
     @Override
     public void destroy() {
         if (this.greptimeDb != null) {
-            this.greptimeDb.shutdownGracefully();
+            try {
+                this.greptimeDb.shutdownGracefully();
+            } catch (Throwable t) {
+                log.warn("[warehouse greptime] Fail to shutdown GreptimeDB client gracefully", t);
+            }
             this.greptimeDb = null;
         }
     }
@@ -553,38 +1017,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         try {
-            // Create table schema
-            TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
-            tableSchemaBuilder.addTimestamp("time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("severity_number", DataType.Int32)
-                    .addField("severity_text", DataType.String)
-                    .addField("body", DataType.String)
-                    .addField("trace_id", DataType.String)
-                    .addField("span_id", DataType.String)
-                    .addField("trace_flags", DataType.Int32)
-                    .addField("attributes", DataType.Json)
-                    .addField("resource", DataType.Json)
-                    .addField("instrumentation_scope", DataType.Json)
-                    .addField("dropped_attributes_count", DataType.Int32);
-
-            Table table = Table.from(tableSchemaBuilder.build());
-
-            // Convert LogEntry to table row
-            Object[] values = new Object[] {
-                    logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
-                    logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
-                    logEntry.getSeverityNumber(),
-                    logEntry.getSeverityText(),
-                    logBodyAsString(logEntry.getBody()),
-                    logEntry.getTraceId(),
-                    logEntry.getSpanId(),
-                    logEntry.getTraceFlags(),
-                    JsonUtil.toJson(logEntry.getAttributes()),
-                    JsonUtil.toJson(logEntry.getResource()),
-                    JsonUtil.toJson(logEntry.getInstrumentationScope()),
-                    logEntry.getDroppedAttributesCount()
-            };
+            Table table = newLogTable();
+            Object[] values = logValues(logEntry);
 
             table.addRow(values);
 
@@ -606,14 +1040,81 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                         String spanId, Integer severityNumber,
                                                         String severityText, String searchContent) {
-        try {
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
-            sql.append(" ORDER BY time_unix_nano DESC");
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, Collections.emptySet(), false);
+    }
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName, null, null, null, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent, excludedServiceNames,
+                requireServiceName, workspaceId, serviceName, serviceNamespace, environment,
+                resourceFilters, attributeFilters, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters,
+                                                        LogSeverityCategory severityCategory) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
+                    .append(" FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            sql.append(" ORDER BY timestamp DESC, log_record_uid DESC");
+
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             return mapRowsToLogEntries(rows);
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
             return List.of();
         }
@@ -624,10 +1125,149 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                                       String spanId, Integer severityNumber,
                                                                       String severityText, String searchContent,
                                                                       Integer offset, Integer limit) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, Collections.emptySet(), false);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                workspaceId, null, null, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                workspaceId, null, null, null, resourceFilters, attributeFilters);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent, offset, limit,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace,
+                environment, resourceFilters, attributeFilters, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters,
+                                                                      LogSeverityCategory severityCategory) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName, workspaceId,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory, "newest");
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters,
+                                                                      LogSeverityCategory severityCategory, String sort) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, offset, limit, excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace,
+                environment, resourceFilters, attributeFilters, severityCategory, sort, null);
+    }
+
+    private List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters,
+                                                                      LogSeverityCategory severityCategory, String sort, String structuredWhere) {
+        if (!List.of("newest", "oldest").contains(sort)) {
+            throw new IllegalArgumentException("Invalid log sort");
+        }
         try {
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
-            sql.append(" ORDER BY time_unix_nano DESC");
+            StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
+                    .append(" FROM ").append(LOG_TABLE_NAME);
+            if (structuredWhere == null) {
+                buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            } else {
+                sql.append(structuredWhere);
+            }
+            String direction = "oldest".equals(sort) ? " ASC" : " DESC";
+            sql.append(" ORDER BY timestamp").append(direction).append(", log_record_uid").append(direction);
 
             // Add pagination
             if (limit != null && limit > 0) {
@@ -637,9 +1277,14 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
             return mapRowsToLogEntries(rows);
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] queryLogsByMultipleConditionsWithPagination error: {}", e.getMessage(), e);
             return List.of();
         }
@@ -649,11 +1294,125 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                              String spanId, Integer severityNumber,
                                              String severityText, String searchContent) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, Collections.emptySet(), false);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                null, null, null, resourceFilters, attributeFilters);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent, excludedServiceNames,
+                requireServiceName, workspaceId, serviceName, serviceNamespace, environment,
+                resourceFilters, attributeFilters, null);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters,
+                                             LogSeverityCategory severityCategory) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace, environment, resourceFilters,
+                attributeFilters, severityCategory, null);
+    }
+
+    private long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters,
+                                             LogSeverityCategory severityCategory, String structuredWhere) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+            if (structuredWhere == null) {
+                buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            } else {
+                sql.append(structuredWhere);
+            }
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
+            requireScopedAggregateRow(workspaceId, rows);
+            if (StringUtils.hasText(workspaceId)) {
+                Map<String, Object> row = rows.get(0);
+                return requireConvertibleLong(row, "count", false);
+            }
             if (rows != null && !rows.isEmpty()) {
                 Object countObj = rows.get(0).get("count");
                 if (countObj instanceof Number) {
@@ -662,173 +1421,568 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             }
             return 0;
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[warehouse greptime-log] countLogsByMultipleConditions error: {}", e.getMessage(), e);
             return 0;
         }
     }
 
     @Override
-    public List<LogEntry> queryObservabilityLogs(LogQueryFilter filter, Integer offset, Integer limit) {
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent, excludedServiceNames,
+                requireServiceName, workspaceId, serviceName, serviceNamespace, environment,
+                resourceFilters, attributeFilters, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters,
+                                                        LogSeverityCategory severityCategory) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace, environment, resourceFilters,
+                attributeFilters, severityCategory, null);
+    }
+
+    private Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters,
+                                                        LogSeverityCategory severityCategory, String structuredWhere) {
         try {
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildObservabilityWhereConditions(sql, filter);
-            sql.append(" ORDER BY time_unix_nano DESC");
-            if (limit != null && limit > 0) {
-                sql.append(" LIMIT ").append(Math.min(limit, 200));
-                if (offset != null && offset > 0) {
-                    sql.append(" OFFSET ").append(offset);
-                }
+            StringBuilder sql = new StringBuilder("SELECT ")
+                    .append("COUNT(*) as totalCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 21 AND severity_number <= 24 THEN 1 ELSE 0 END) as fatalCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 17 AND severity_number <= 20 THEN 1 ELSE 0 END) as errorCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 13 AND severity_number <= 16 THEN 1 ELSE 0 END) as warnCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 9 AND severity_number <= 12 THEN 1 ELSE 0 END) as infoCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 5 AND severity_number <= 8 THEN 1 ELSE 0 END) as debugCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 1 AND severity_number <= 4 THEN 1 ELSE 0 END) as traceCount, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' THEN 1 ELSE 0 END) as withTrace, ")
+                    .append("SUM(CASE WHEN span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withSpan, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' ")
+                    .append("AND span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withBothTraceAndSpan ")
+                    .append("FROM ").append(LOG_TABLE_NAME);
+            if (structuredWhere == null) {
+                buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            } else {
+                sql.append(structuredWhere);
             }
-            return mapRowsToLogEntries(greptimeSqlQueryExecutor.execute(sql.toString()));
-        } catch (IllegalArgumentException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
-        }
-    }
-
-    @Override
-    public long countObservabilityLogs(LogQueryFilter filter) {
-        try {
-            StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS count FROM ").append(LOG_TABLE_NAME);
-            buildObservabilityWhereConditions(sql, filter);
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
-            return rows.isEmpty() ? 0 : valueAsLong(rows.getFirst(), "count");
-        } catch (IllegalArgumentException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
-        }
-    }
-
-    @Override
-    public boolean supportsLogQuery() {
-        return true;
-    }
-
-    @Override
-    public Map<String, Object> queryLogOverviewAggregate(LogQueryFilter filter) {
-        try {
-            StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total_count, ")
-                    .append("SUM(CASE WHEN severity_number BETWEEN 21 AND 24 THEN 1 ELSE 0 END) AS fatal_count, ")
-                    .append("SUM(CASE WHEN severity_number BETWEEN 17 AND 20 THEN 1 ELSE 0 END) AS error_count, ")
-                    .append("SUM(CASE WHEN severity_number BETWEEN 13 AND 16 THEN 1 ELSE 0 END) AS warn_count, ")
-                    .append("SUM(CASE WHEN severity_number BETWEEN 9 AND 12 THEN 1 ELSE 0 END) AS info_count, ")
-                    .append("SUM(CASE WHEN severity_number BETWEEN 5 AND 8 THEN 1 ELSE 0 END) AS debug_count, ")
-                    .append("SUM(CASE WHEN severity_number BETWEEN 1 AND 4 THEN 1 ELSE 0 END) AS trace_count, ")
-                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id <> '' THEN 1 ELSE 0 END) AS with_trace, ")
-                    .append("SUM(CASE WHEN span_id IS NOT NULL AND span_id <> '' THEN 1 ELSE 0 END) AS with_span, ")
-                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id <> '' AND span_id IS NOT NULL ")
-                    .append("AND span_id <> '' THEN 1 ELSE 0 END) AS with_both FROM ")
-                    .append(LOG_TABLE_NAME);
-            buildObservabilityWhereConditions(sql, filter);
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
-            if (rows.isEmpty()) {
-                return emptyLogOverview();
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                requireScopedAggregateRow(workspaceId, rows);
+                return Map.of();
             }
-            Map<String, Object> row = rows.getFirst();
-            long total = valueAsLong(row, "total_count");
-            Map<String, Long> coverage = new HashMap<>();
-            coverage.put("withTrace", valueAsLong(row, "with_trace"));
-            coverage.put("withoutTrace", total - coverage.get("withTrace"));
-            coverage.put("withSpan", valueAsLong(row, "with_span"));
-            coverage.put("withBothTraceAndSpan", valueAsLong(row, "with_both"));
-            Map<String, Object> overview = new HashMap<>();
-            overview.put("totalCount", total);
-            overview.put("fatalCount", valueAsLong(row, "fatal_count"));
-            overview.put("errorCount", valueAsLong(row, "error_count"));
-            overview.put("warnCount", valueAsLong(row, "warn_count"));
-            overview.put("infoCount", valueAsLong(row, "info_count"));
-            overview.put("debugCount", valueAsLong(row, "debug_count"));
-            overview.put("traceCount", valueAsLong(row, "trace_count"));
-            overview.put("traceCoverage", coverage);
-            return overview;
-        } catch (IllegalArgumentException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
+            requireScopedAggregateRow(workspaceId, rows);
+            Map<String, Object> row = rows.get(0);
+            Map<String, Long> result = new HashMap<>();
+            result.put("totalCount", aggregateLong(workspaceId, row, "totalCount", false));
+            result.put("fatalCount", aggregateLong(workspaceId, row, "fatalCount", true));
+            result.put("errorCount", aggregateLong(workspaceId, row, "errorCount", true));
+            result.put("warnCount", aggregateLong(workspaceId, row, "warnCount", true));
+            result.put("infoCount", aggregateLong(workspaceId, row, "infoCount", true));
+            result.put("debugCount", aggregateLong(workspaceId, row, "debugCount", true));
+            result.put("traceCount", aggregateLong(workspaceId, row, "traceCount", true));
+            long totalCount = result.get("totalCount");
+            long withTrace = aggregateLong(workspaceId, row, "withTrace", true);
+            result.put("withTrace", withTrace);
+            result.put("withoutTrace", Math.max(totalCount - withTrace, 0));
+            result.put("withSpan", aggregateLong(workspaceId, row, "withSpan", true));
+            result.put("withBothTraceAndSpan",
+                    aggregateLong(workspaceId, row, "withBothTraceAndSpan", true));
+            return result;
+        } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            log.error("[warehouse greptime-log] countLogsBySeverityBuckets error: {}", e.getMessage(), e);
+            return Map.of();
         }
     }
 
     @Override
-    public Map<String, Long> queryLogTrendAggregate(LogQueryFilter filter) {
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId,
+                                                   String serviceName,
+                                                   String serviceNamespace,
+                                                   String environment) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId,
+                                                   String serviceName,
+                                                   String serviceNamespace,
+                                                   String environment,
+                                                   Map<String, String> resourceFilters,
+                                                   Map<String, String> attributeFilters) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent, excludedServiceNames,
+                requireServiceName, workspaceId, serviceName, serviceNamespace, environment,
+                resourceFilters, attributeFilters, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId,
+                                                   String serviceName,
+                                                   String serviceNamespace,
+                                                   String environment,
+                                                   Map<String, String> resourceFilters,
+                                                   Map<String, String> attributeFilters,
+                                                   LogSeverityCategory severityCategory) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace, environment, resourceFilters,
+                attributeFilters, severityCategory, null);
+    }
+
+    private Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId,
+                                                   String serviceName,
+                                                   String serviceNamespace,
+                                                   String environment,
+                                                   Map<String, String> resourceFilters,
+                                                   Map<String, String> attributeFilters,
+                                                   LogSeverityCategory severityCategory, String structuredWhere) {
         try {
-            StringBuilder sql = new StringBuilder("SELECT date_bin(INTERVAL '1 hour', time_unix_nano) AS bucket, ")
-                    .append("COUNT(*) AS count FROM ").append(LOG_TABLE_NAME);
-            buildObservabilityWhereConditions(sql, filter);
+            StringBuilder sql = new StringBuilder("SELECT ")
+                    .append("COUNT(*) as totalCount, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' THEN 1 ELSE 0 END) as withTrace, ")
+                    .append("SUM(CASE WHEN span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withSpan, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' ")
+                    .append("AND span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withBothTraceAndSpan ")
+                    .append("FROM ").append(LOG_TABLE_NAME);
+            if (structuredWhere == null) {
+                buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            } else {
+                sql.append(structuredWhere);
+            }
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                requireScopedAggregateRow(workspaceId, rows);
+                return Map.of();
+            }
+            requireScopedAggregateRow(workspaceId, rows);
+            Map<String, Object> row = rows.get(0);
+            long totalCount = aggregateLong(workspaceId, row, "totalCount", false);
+            long withTrace = aggregateLong(workspaceId, row, "withTrace", true);
+            Map<String, Long> result = new HashMap<>();
+            result.put("withTrace", withTrace);
+            result.put("withoutTrace", Math.max(totalCount - withTrace, 0));
+            result.put("withSpan", aggregateLong(workspaceId, row, "withSpan", true));
+            result.put("withBothTraceAndSpan",
+                    aggregateLong(workspaceId, row, "withBothTraceAndSpan", true));
+            return result;
+        } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            log.error("[warehouse greptime-log] countLogTraceCoverage error: {}", e.getMessage(), e);
+            return Map.of();
+        }
+    }
+
+    @Override
+    public List<LogTrendBucket> countLogsByInterval(Long startTime, Long endTime, long intervalMs,
+                                                    String traceId, String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName) {
+        return countLogsByInterval(startTime, endTime, intervalMs, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public List<LogTrendBucket> countLogsByInterval(Long startTime, Long endTime, long intervalMs,
+                                                    String traceId, String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId) {
+        return countLogsByInterval(startTime, endTime, intervalMs, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public List<LogTrendBucket> countLogsByInterval(Long startTime, Long endTime, long intervalMs,
+                                                    String traceId, String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment) {
+        return countLogsByInterval(startTime, endTime, intervalMs, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public List<LogTrendBucket> countLogsByInterval(Long startTime, Long endTime, long intervalMs,
+                                                    String traceId, String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment,
+                                                    Map<String, String> resourceFilters,
+                                                    Map<String, String> attributeFilters) {
+        return countLogsByInterval(startTime, endTime, intervalMs, traceId, spanId, severityNumber, severityText, searchContent,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace,
+                environment, resourceFilters, attributeFilters, null);
+    }
+
+    @Override
+    public List<LogTrendBucket> countLogsByInterval(Long startTime, Long endTime, long intervalMs,
+                                                    String traceId, String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment,
+                                                    Map<String, String> resourceFilters,
+                                                    Map<String, String> attributeFilters,
+                                                    LogSeverityCategory severityCategory) {
+        return countLogsByInterval(startTime, endTime, intervalMs, traceId, spanId, severityNumber, severityText, searchContent,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace, environment, resourceFilters,
+                attributeFilters, severityCategory, null);
+    }
+
+    private List<LogTrendBucket> countLogsByInterval(Long startTime, Long endTime, long intervalMs,
+                                                    String traceId, String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment,
+                                                    Map<String, String> resourceFilters,
+                                                    Map<String, String> attributeFilters,
+                                                    LogSeverityCategory severityCategory, String structuredWhere) {
+        String intervalLiteral = logTrendIntervalLiteral(intervalMs);
+        try {
+            StringBuilder sql = new StringBuilder("SELECT date_bin('").append(intervalLiteral)
+                    .append("', timestamp) as bucket, ")
+                    .append("COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
+            if (structuredWhere == null) {
+                buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            } else {
+                sql.append(structuredWhere);
+            }
             sql.append(" GROUP BY bucket ORDER BY bucket ASC");
-            Map<String, Long> trend = new LinkedHashMap<>();
-            for (Map<String, Object> row : greptimeSqlQueryExecutor.execute(sql.toString())) {
-                trend.put(String.valueOf(row.get("bucket")), valueAsLong(row, "count"));
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                return List.of();
             }
-            return trend;
-        } catch (IllegalArgumentException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new StorageUnavailableException("GreptimeDB log storage is unavailable", exception);
-        }
-    }
-
-    private Map<String, Object> emptyLogOverview() {
-        Map<String, Long> coverage = Map.of("withTrace", 0L, "withoutTrace", 0L,
-                "withSpan", 0L, "withBothTraceAndSpan", 0L);
-        Map<String, Object> overview = new HashMap<>();
-        for (String key : List.of("totalCount", "fatalCount", "errorCount", "warnCount", "infoCount",
-                "debugCount", "traceCount")) {
-            overview.put(key, 0L);
-        }
-        overview.put("traceCoverage", coverage);
-        return overview;
-    }
-
-    private static long valueAsLong(Map<String, Object> row, String key) {
-        Long value = castToLong(row.get(key));
-        return value == null ? 0 : value;
-    }
-
-    private void buildObservabilityWhereConditions(StringBuilder sql, LogQueryFilter filter) {
-        buildWhereConditions(sql, filter.start(), filter.end(), filter.traceId(), filter.spanId(),
-                filter.severityNumber(), filter.severityText(), filter.search());
-        List<String> resourceConditions = new ArrayList<>();
-        addJsonCondition(resourceConditions, "service.name", filter.serviceName());
-        addJsonCondition(resourceConditions, "service.namespace", filter.serviceNamespace());
-        addJsonCondition(resourceConditions, "deployment.environment.name", filter.environment());
-        if (StringUtils.hasText(filter.resourceFilter())) {
-            for (ResourceFilterExpression.Clause clause : ResourceFilterExpression.parse(filter.resourceFilter())) {
-                String attribute = resourceAttributeExpression(clause.key());
-                switch (clause.operator()) {
-                    case EQUALS -> resourceConditions.add(attribute + " = '" + safeString(clause.value()) + "'");
-                    case NOT_EQUALS -> resourceConditions.add(attribute + " <> '" + safeString(clause.value()) + "'");
-                    case EXISTS -> resourceConditions.add(attribute + " IS NOT NULL");
-                    case NOT_EXISTS -> resourceConditions.add(attribute + " IS NULL");
-                    default -> throw new IllegalArgumentException("Invalid resource filter expression");
+            List<LogTrendBucket> result = new ArrayList<>(rows.size());
+            for (Map<String, Object> row : rows) {
+                validateScopedGroupedRow(workspaceId, row, "bucket");
+                Long bucketStart = timestampMillis(columnValue(row, "bucket"));
+                if (bucketStart != null) {
+                    result.add(new LogTrendBucket(bucketStart, aggregateLong(workspaceId, row, "count", false)));
                 }
             }
-        }
-        if (!resourceConditions.isEmpty()) {
-            sql.append(sql.indexOf(" WHERE ") >= 0 ? " AND " : " WHERE ")
-                    .append(String.join(" AND ", resourceConditions));
-        }
-    }
-
-    private void addJsonCondition(List<String> conditions, String key, String value) {
-        if (StringUtils.hasText(value)) {
-            conditions.add(resourceAttributeExpression(key) + " = '" + safeString(value) + "'");
+            return List.copyOf(result);
+        } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            log.error("[warehouse greptime-log] countLogsByInterval error: {}", e.getMessage(), e);
+            return List.of();
         }
     }
 
-    private String resourceAttributeExpression(String key) {
-        String normalizedKey = key.replace('.', '_');
-        String canonical = "json_get_string(resource, '$[\"" + key + "\"]')";
-        if (normalizedKey.equals(key)) {
-            return canonical;
+    @Override
+    public Map<String, Long> countLogsByGroup(Long startTime, Long endTime, String traceId,
+                                              String spanId, Integer severityNumber,
+                                              String severityText, String searchContent,
+                                              Set<String> excludedServiceNames,
+                                              boolean requireServiceName,
+                                              String workspaceId,
+                                              String serviceName,
+                                              String serviceNamespace,
+                                              String environment,
+                                              Map<String, String> resourceFilters,
+                                              Map<String, String> attributeFilters,
+                                              String groupBy) {
+        return countLogsByGroup(startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent, excludedServiceNames,
+                requireServiceName, workspaceId, serviceName, serviceNamespace, environment,
+                resourceFilters, attributeFilters, groupBy, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsByGroup(Long startTime, Long endTime, String traceId,
+                                              String spanId, Integer severityNumber,
+                                              String severityText, String searchContent,
+                                              Set<String> excludedServiceNames,
+                                              boolean requireServiceName,
+                                              String workspaceId,
+                                              String serviceName,
+                                              String serviceNamespace,
+                                              String environment,
+                                              Map<String, String> resourceFilters,
+                                              Map<String, String> attributeFilters,
+                                              String groupBy,
+                                              LogSeverityCategory severityCategory) {
+        String groupExpression = logGroupByExpression(groupBy);
+        if (!StringUtils.hasText(groupExpression)) {
+            return Map.of();
         }
-        String normalized = "json_get_string(resource, '$[\"" + normalizedKey + "\"]')";
-        return "COALESCE(" + canonical + ", " + normalized + ")";
+        try {
+            String normalizedGroupExpression = "COALESCE(NULLIF(" + groupExpression + ", ''), 'unknown')";
+            StringBuilder sql = new StringBuilder("SELECT ")
+                    .append(normalizedGroupExpression)
+                    .append(" as groupValue, COUNT(*) as count FROM ")
+                    .append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, severityCategory);
+            sql.append(" GROUP BY groupValue ORDER BY count DESC LIMIT 20");
+            List<Map<String, Object>> rows = StringUtils.hasText(workspaceId)
+                    ? greptimeSqlQueryExecutor.executeStrict(sql.toString())
+                    : greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                return Map.of();
+            }
+            Map<String, Long> result = new java.util.LinkedHashMap<>();
+            for (Map<String, Object> row : rows) {
+                validateScopedGroupedRow(workspaceId, row, "groupValue");
+                String value = String.valueOf(columnValue(row, "groupValue"));
+                if (!StringUtils.hasText(value) || "null".equalsIgnoreCase(value)) {
+                    value = "unknown";
+                }
+                result.put(value, aggregateLong(workspaceId, row, "count", false));
+            }
+            return result;
+        } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
+            log.error("[warehouse greptime-log] countLogsByGroup error: {}", e.getMessage(), e);
+            return Map.of();
+        }
     }
 
     private static long msToNs(Long ms) {
         return ms * 1_000_000L;
+    }
+
+    private static Object columnValue(Map<String, Object> row, String key) {
+        if (row == null || key == null) {
+            return null;
+        }
+        if (row.containsKey(key)) {
+            return row.get(key);
+        }
+        String lowercaseKey = key.toLowerCase(Locale.ROOT);
+        if (row.containsKey(lowercaseKey)) {
+            return row.get(lowercaseKey);
+        }
+        for (Map.Entry<String, Object> entry : row.entrySet()) {
+            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(key)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private static void requireScopedAggregateRow(String workspaceId, List<Map<String, Object>> rows) {
+        if (StringUtils.hasText(workspaceId) && (rows == null || rows.size() != 1)) {
+            throw new IllegalStateException("Scoped aggregate returned an invalid row count");
+        }
+    }
+
+    private static void validateScopedGroupedRow(
+            String workspaceId, Map<String, Object> row, String groupAlias) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return;
+        }
+        if (!hasColumn(row, groupAlias) || columnValue(row, groupAlias) == null) {
+            throw new IllegalStateException("Scoped aggregate returned a missing group alias");
+        }
+        requireConvertibleLong(row, "count", false);
+    }
+
+    private static long aggregateLong(
+            String workspaceId, Map<String, Object> row, String alias, boolean nullable) {
+        return StringUtils.hasText(workspaceId)
+                ? requireConvertibleLong(row, alias, nullable)
+                : normalizeLong(columnValue(row, alias));
+    }
+
+    private static long requireConvertibleLong(Map<String, Object> row, String alias, boolean nullable) {
+        if (!hasColumn(row, alias)) {
+            throw new IllegalStateException("Scoped aggregate returned a missing count alias");
+        }
+        Object value = columnValue(row, alias);
+        if (value == null && nullable) {
+            return 0L;
+        }
+        Long parsed = parseNonnegativeExactLong(value);
+        if (parsed == null) {
+            throw new IllegalStateException("Scoped aggregate returned an invalid count");
+        }
+        return parsed;
+    }
+
+    private static Long parseNonnegativeExactLong(Object value) {
+        if (!(value instanceof Number) && !(value instanceof CharSequence)) {
+            return null;
+        }
+        String literal = String.valueOf(value).trim();
+        if (!StringUtils.hasText(literal)) {
+            return null;
+        }
+        try {
+            BigDecimal decimal = new BigDecimal(literal);
+            return decimal.signum() < 0 ? null : decimal.longValueExact();
+        } catch (ArithmeticException | NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static boolean hasColumn(Map<String, Object> row, String alias) {
+        return row != null && row.keySet().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(key -> key.equalsIgnoreCase(alias));
+    }
+
+    private static long normalizeLong(Object value) {
+        Long normalized = castToLong(value);
+        return normalized == null ? 0L : normalized;
+    }
+
+    static Long timestampMillis(Object value) {
+        Long nanos = castTimestampToNanos(value);
+        return nanos == null ? null : Math.floorDiv(nanos, 1_000_000L);
+    }
+
+    private static String logTrendIntervalLiteral(long intervalMs) {
+        String literal = LOG_TREND_INTERVAL_LITERALS.get(intervalMs);
+        if (literal == null) {
+            throw new IllegalArgumentException("unsupported log trend interval: " + intervalMs);
+        }
+        return literal;
     }
 
     private static String safeString(String input) {
@@ -849,11 +2003,60 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      */
     private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
                                      String spanId, Integer severityNumber, String severityText, String searchContent) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, Collections.emptySet(), false);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId, String serviceName,
+                                     String serviceNamespace, String environment) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId, String serviceName,
+                                     String serviceNamespace, String environment,
+                                     Map<String, String> resourceFilters,
+                                     Map<String, String> attributeFilters) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent,
+                excludedServiceNames, requireServiceName, workspaceId, serviceName, serviceNamespace,
+                environment, resourceFilters, attributeFilters, null);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId, String serviceName,
+                                     String serviceNamespace, String environment,
+                                     Map<String, String> resourceFilters,
+                                     Map<String, String> attributeFilters,
+                                     LogSeverityCategory severityCategory) {
         List<String> conditions = new ArrayList<>();
 
-        // Time range condition
         if (startTime != null && endTime != null) {
-            conditions.add("time_unix_nano >= " + msToNs(startTime) + " AND time_unix_nano <= " + msToNs(endTime));
+            conditions.add("timestamp >= to_timestamp_millis(" + startTime + ")"
+                    + " AND timestamp <= to_timestamp_millis(" + endTime + ")");
         }
 
         // TraceId condition
@@ -867,6 +2070,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         // Severity condition
+        if (severityCategory != null) {
+            conditions.add("severity_number >= " + severityCategory.minimum()
+                    + " AND severity_number <= " + severityCategory.maximum());
+        }
         if (severityNumber != null) {
             conditions.add("severity_number = " + severityNumber);
         }
@@ -876,15 +2083,265 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             conditions.add("severity_text = '" + safeString(severityText) + "'");
         }
 
-        // Search content condition - search in body field
         if (StringUtils.hasText(searchContent)) {
-            conditions.add("body LIKE '%" + safeString(searchContent) + "%'");
+            String escaped = safeString(searchContent);
+            conditions.add("matches_term(body, '" + escaped + "')");
+        }
+
+        if (StringUtils.hasText(serviceName)) {
+            conditions.add("service_name = '" + safeString(serviceName.trim()) + "'");
+        }
+
+        String serviceNamespaceCondition = resourceAttributeCondition("service.namespace", serviceNamespace);
+        if (StringUtils.hasText(serviceNamespaceCondition)) {
+            conditions.add(serviceNamespaceCondition);
+        }
+
+        String environmentCondition = resourceAttributeCondition("deployment.environment.name", environment);
+        if (StringUtils.hasText(environmentCondition)) {
+            conditions.add(environmentCondition);
+        }
+
+        appendJsonAttributeConditions(conditions, "resource_attributes", resourceFilters);
+        appendLogAttributeConditions(
+                conditions, startTime, endTime, workspaceId, serviceName, serviceNamespace,
+                environment, resourceFilters, attributeFilters);
+
+        if (requireServiceName) {
+            conditions.add("service_name IS NOT NULL");
+            conditions.add("service_name != ''");
+        }
+
+        if (excludedServiceNames != null && !excludedServiceNames.isEmpty()) {
+            String excludedNames = excludedServiceNames.stream()
+                    .filter(StringUtils::hasText)
+                    .map(name -> "'" + safeString(name.trim().toLowerCase()) + "'")
+                    .sorted()
+                    .collect(Collectors.joining(", "));
+            if (StringUtils.hasText(excludedNames)) {
+                conditions.add("LOWER(service_name) NOT IN (" + excludedNames + ")");
+            }
+        }
+
+        String workspaceCondition = workspaceCondition(workspaceId);
+        if (StringUtils.hasText(workspaceCondition)) {
+            conditions.add(workspaceCondition);
         }
 
         // Add WHERE clause if there are conditions
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", conditions));
         }
+    }
+
+    private String resourceAttributeCondition(String key, String value) {
+        return jsonAttributeCondition("resource_attributes", key, value);
+    }
+
+    private void appendJsonAttributeConditions(List<String> conditions, String columnName, Map<String, String> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return;
+        }
+        filters.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> jsonAttributeCondition(columnName, entry.getKey(), entry.getValue()))
+                .filter(StringUtils::hasText)
+                .forEach(conditions::add);
+    }
+
+    private void appendLogAttributeConditions(
+            List<String> conditions,
+            Long startTime,
+            Long endTime,
+            String workspaceId,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters,
+            Map<String, String> attributeFilters) {
+        if (attributeFilters == null || attributeFilters.isEmpty()) {
+            return;
+        }
+        attributeFilters.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> logAttributeCondition(
+                        entry.getKey(), entry.getValue(), startTime, endTime, workspaceId,
+                        serviceName, serviceNamespace, environment, resourceFilters))
+                .filter(StringUtils::hasText)
+                .forEach(conditions::add);
+    }
+
+    private String logAttributeCondition(
+            String key,
+            String value,
+            Long startTime,
+            Long endTime,
+            String workspaceId,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters) {
+        String directCondition = jsonAttributeCondition("log_attributes", key, value);
+        if (!HTTP_ROUTE.equals(key) || !StringUtils.hasText(value) || value.trim().startsWith("!")) {
+            return directCondition;
+        }
+        String route = value.trim();
+        List<String> traceConditions = traceCorrelationConditions(
+                startTime, endTime, workspaceId, serviceName, serviceNamespace, environment, resourceFilters);
+        traceConditions.add(quotedIdentifier("span_attributes." + HTTP_ROUTE)
+                + " = '" + safeString(route) + "'");
+        traceConditions.add("trace_id IS NOT NULL");
+        // Log records normally carry trace/span IDs instead of copying HTTP span attributes.
+        // The subquery keeps route filtering precise while retaining the complete outer log scope.
+        return "(" + directCondition + " OR trace_id IN (SELECT trace_id FROM " + TRACE_TABLE_NAME
+                + " WHERE " + String.join(" AND ", traceConditions) + "))";
+    }
+
+    private List<String> traceCorrelationConditions(
+            Long startTime,
+            Long endTime,
+            String workspaceId,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters) {
+        List<String> conditions = new ArrayList<>();
+        if (startTime != null && endTime != null) {
+            conditions.add("timestamp >= to_timestamp_millis(" + startTime + ")"
+                    + " AND timestamp <= to_timestamp_millis(" + endTime + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            conditions.add("service_name = '" + safeString(serviceName.trim()) + "'");
+        }
+        addTraceResourceCondition(conditions, "service.namespace", serviceNamespace);
+        addTraceResourceCondition(conditions, "deployment.environment.name", environment);
+        if (resourceFilters != null) {
+            resourceFilters.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> addTraceResourceCondition(conditions, entry.getKey(), entry.getValue()));
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String escaped = safeString(workspaceId.trim());
+            String workspaceColumn = quotedIdentifier("resource_attributes.hertzbeat.workspace_id");
+            // Flattened trace tables expose only the canonical HertzBeat
+            // workspace column. Referencing optional JSON aliases as columns
+            // makes the whole correlation query fail during SQL planning.
+            String workspaceMatch = workspaceColumn + " = '" + escaped + "'";
+            conditions.add(!TelemetrySourceContext.isSelf() && "default".equals(escaped)
+                    ? "(" + workspaceMatch + " OR " + workspaceColumn + " IS NULL OR "
+                            + workspaceColumn + " = '')"
+                    : workspaceMatch);
+        }
+        return conditions;
+    }
+
+    private void addTraceResourceCondition(List<String> conditions, String key, String value) {
+        if (!StringUtils.hasText(key) || !StringUtils.hasText(value)) {
+            return;
+        }
+        String trimmedValue = value.trim();
+        boolean negate = trimmedValue.startsWith("!");
+        String expectedValue = negate ? trimmedValue.substring(1) : trimmedValue;
+        if (!StringUtils.hasText(expectedValue)) {
+            return;
+        }
+        String expression = quotedIdentifier("resource_attributes." + key.trim());
+        String equals = expression + " = '" + safeString(expectedValue) + "'";
+        conditions.add(negate
+                ? "(" + expression + " IS NULL OR " + expression + " != '" + safeString(expectedValue) + "')"
+                : equals);
+    }
+
+    private String quotedIdentifier(String identifier) {
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
+    }
+
+    private String jsonAttributeCondition(String columnName, String key, String value) {
+        if (!StringUtils.hasText(key) || !StringUtils.hasText(value)) {
+            return null;
+        }
+        String trimmedValue = value.trim();
+        boolean negate = trimmedValue.startsWith("!");
+        String expectedValue = negate ? trimmedValue.substring(1) : trimmedValue;
+        if (!StringUtils.hasText(expectedValue)) {
+            return null;
+        }
+        String attributeExpression = "json_get_string(" + columnName + ", '$[\"" + safeString(key.trim()) + "\"]')";
+        String expectedCondition = attributeExpression + " = '" + safeString(expectedValue) + "'";
+        if (negate) {
+            return "(" + attributeExpression + " IS NULL OR "
+                    + attributeExpression + " != '" + safeString(expectedValue) + "')";
+        }
+        return expectedCondition;
+    }
+
+    private String logGroupByExpression(String groupBy) {
+        if (!StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        String normalized = groupBy.trim();
+        if (!normalized.matches("[A-Za-z0-9_.:-]+")) {
+            return null;
+        }
+        String lower = normalized.toLowerCase(Locale.ROOT);
+        if ("service.name".equals(lower) || "service_name".equals(lower)) {
+            return "service_name";
+        }
+        if ("severity".equals(lower) || "severity_text".equals(lower)) {
+            return "severity_text";
+        }
+        if (lower.startsWith("resource:")) {
+            return jsonAttributeExpression("resource_attributes", normalized.substring("resource:".length()));
+        }
+        if (lower.startsWith("attribute:")) {
+            return jsonAttributeExpression("log_attributes", normalized.substring("attribute:".length()));
+        }
+        return jsonAttributeExpression("resource_attributes", normalized);
+    }
+
+    private String jsonAttributeExpression(String columnName, String key) {
+        if (!StringUtils.hasText(key) || !key.matches("[A-Za-z0-9_.:-]+")) {
+            return null;
+        }
+        return "json_get_string(" + columnName + ", '$[\"" + safeString(key.trim()) + "\"]')";
+    }
+
+    private String workspaceCondition(String workspaceId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return null;
+        }
+        String normalizedWorkspaceId = safeString(workspaceId.trim());
+        if (TelemetrySourceContext.isSelf()) {
+            if (!workspaceId.trim().equals(TelemetrySourceContext.capture().workspaceId())) {
+                throw new IllegalArgumentException("Self telemetry workspace does not match the authorized route");
+            }
+            return workspaceJsonExpression("hertzbeat.workspace_id") + " = '" + normalizedWorkspaceId + "'";
+        }
+        List<String> workspaceExpressions = List.of(
+                workspaceJsonExpression("hertzbeat.workspace_id"),
+                workspaceJsonExpression("hertzbeat_workspace_id"),
+                workspaceJsonExpression("workspace.id"),
+                workspaceJsonExpression("workspace_id"));
+        int lowestPriority = workspaceExpressions.size() - 1;
+        String condition = workspaceExpressions.get(lowestPriority) + " = '" + normalizedWorkspaceId + "'";
+        if (!TelemetrySourceContext.isSelf() && "default".equals(normalizedWorkspaceId)) {
+            condition = "(" + condition + " OR " + missingWorkspaceExpression(
+                    workspaceExpressions.get(lowestPriority)) + ")";
+        }
+        for (int index = lowestPriority - 1; index >= 0; index--) {
+            String expression = workspaceExpressions.get(index);
+            condition = "(" + expression + " = '" + normalizedWorkspaceId + "' OR ("
+                    + missingWorkspaceExpression(expression) + " AND " + condition + "))";
+        }
+        return condition;
+    }
+
+    private String workspaceJsonExpression(String key) {
+        return "TRIM(json_get_string(resource_attributes, '$[\"" + key + "\"]'))";
+    }
+
+    private String missingWorkspaceExpression(String expression) {
+        return "(" + expression + " IS NULL OR " + expression + " = '')";
     }
 
     private List<LogEntry> mapRowsToLogEntries(List<Map<String, Object>> rows) {
@@ -904,14 +2361,23 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
 
+                Long timeUnixNano = firstNonNull(
+                        castTimestampToNanos(row.get("timestamp")),
+                        castToLong(row.get("time_unix_nano"))
+                );
                 Object bodyObj = parseJsonMaybe(row.get("body"));
-                Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
-                Map<String, Object> resource = canonicalizeOtlpResource(
-                        castToMap(parseJsonMaybe(row.get("resource"))));
+                Map<String, Object> attributes = GreptimeNativeLogJson.decode(firstNonNull(
+                        row.get("log_attributes"), row.get("attributes")));
+                Map<String, Object> resource = GreptimeNativeLogJson.decode(firstNonNull(
+                        row.get("resource_attributes"), row.get("resource")));
+                attributes = enrichNativeLogAttributes(attributes, row);
+                resource = enrichNativeLogResource(resource, row);
 
                 LogEntry entry = LogEntry.builder()
-                        .timeUnixNano(castToLong(row.get("time_unix_nano")))
-                        .observedTimeUnixNano(castToLong(row.get("observed_time_unix_nano")))
+                        .timeUnixNano(timeUnixNano)
+                        .observedTimeUnixNano(firstNonNull(
+                                castTimestampToNanos(row.get("observed_timestamp")),
+                                firstNonNull(castToLong(row.get("observed_time_unix_nano")), timeUnixNano)))
                         .severityNumber(castToInteger(row.get("severity_number")))
                         .severityText(castToString(row.get("severity_text")))
                         .body(bodyObj)
@@ -925,17 +2391,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                         .build();
                 list.add(entry);
             } catch (Exception e) {
-                log.warn("[warehouse greptime-log] map row to LogEntry error: {}", e.getMessage());
+                throw new TelemetryStorageUnavailableException();
             }
         }
         return list;
-    }
-
-    private static String logBodyAsString(Object body) {
-        if (body == null) {
-            return null;
-        }
-        return body instanceof String value ? value : JsonUtil.toJson(body);
     }
 
     private static Object parseJsonMaybe(Object value) {
@@ -944,15 +2403,37 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (value instanceof String str) {
             String s = str.trim();
             if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
-                try {
-                    return JsonUtil.fromJson(s, Object.class);
-                } catch (Exception e) {
-                    return s;
-                }
+                Object parsed = JsonUtil.fromJsonQuietly(s, Object.class);
+                return parsed == null ? str : parsed;
             }
-            return s;
+            return str;
         }
         return value;
+    }
+
+    private static Map<String, Object> enrichNativeLogAttributes(Map<String, Object> attributes, Map<String, Object> row) {
+        Map<String, Object> normalized = attributes == null ? new HashMap<>() : new HashMap<>(attributes);
+        putIfPresent(normalized, "hertzbeat.event_id", row.get("hertzbeat_event_id"));
+        putIfPresent(normalized, "log.record.uid", row.get("log_record_uid"));
+        putIfPresent(normalized, "hertzbeat.ingest_id", row.get("hertzbeat_ingest_id"));
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static Map<String, Object> enrichNativeLogResource(Map<String, Object> resource, Map<String, Object> row) {
+        Map<String, Object> normalized = resource == null ? new HashMap<>() : new HashMap<>(resource);
+        Object serviceName = row.get("service_name");
+        putIfPresent(normalized, "service.name", serviceName);
+        putIfPresent(normalized, "service_name", serviceName);
+        putIfPresent(normalized, "hertzbeat.entity_id", row.get("hertzbeat_entity_id"));
+        putIfPresent(normalized, "hertzbeat.workspace_id", row.get("hertzbeat_workspace_id"));
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static void putIfPresent(Map<String, Object> target, String key, Object value) {
+        if (target == null || !StringUtils.hasText(key) || value == null) {
+            return;
+        }
+        target.putIfAbsent(key, value);
     }
 
     @SuppressWarnings("unchecked")
@@ -963,19 +2444,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return null;
     }
 
-    private static Map<String, Object> canonicalizeOtlpResource(Map<String, Object> resource) {
-        if (resource == null || resource.isEmpty()) {
-            return resource;
-        }
-        Map<String, Object> canonical = new LinkedHashMap<>(resource);
-        OTLP_RESOURCE_KEY_ALIASES.forEach((normalized, dotted) -> {
-            if (!canonical.containsKey(dotted) && resource.containsKey(normalized)) {
-                canonical.put(dotted, resource.get(normalized));
-            }
-        });
-        return canonical;
-    }
-
     private static Long castToLong(Object obj) {
         if (obj == null) return null;
         if (obj instanceof Number n) return n.longValue();
@@ -984,6 +2452,52 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static Long castTimestampToNanos(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof Number n) {
+            return n.longValue();
+        }
+        if (obj instanceof Instant instant) {
+            return instantToNanos(instant);
+        }
+        String text = String.valueOf(obj).trim();
+        if (!StringUtils.hasText(text)) {
+            return null;
+        }
+        if (NumberUtils.isCreatable(text)) {
+            return castToLong(text);
+        }
+        Instant instant = parseTimestampInstant(text);
+        return instant == null ? null : instantToNanos(instant);
+    }
+
+    private static Instant parseTimestampInstant(String text) {
+        try {
+            return Instant.parse(text);
+        } catch (Exception ignore) {
+            // Try Greptime SQL's common local timestamp rendering next.
+        }
+        try {
+            String normalized = text.contains("T") ? text : text.replace(' ', 'T');
+            return LocalDateTime.parse(normalized).toInstant(ZoneOffset.UTC);
+        } catch (Exception ignore) {
+            return null;
+        }
+    }
+
+    private static Long instantToNanos(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return instant.getEpochSecond() * 1_000_000_000L + instant.getNano();
+    }
+
+    private static <T> T firstNonNull(T first, T second) {
+        return first != null ? first : second;
     }
 
     private static Integer castToInteger(Object obj) {
@@ -1007,10 +2521,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         try {
-            StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE time_unix_nano IN (");
+            StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE timestamp IN (");
             sql.append(timeUnixNanos.stream()
                     .filter(Objects::nonNull)
-                    .map(String::valueOf)
+                    .map(timeUnixNano -> "to_timestamp_nanos(" + timeUnixNano + ")")
                     .collect(Collectors.joining(", ")));
             sql.append(")");
 
@@ -1022,6 +2536,34 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             log.error("[warehouse greptime-log] batchDeleteLogs error: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    @Override
+    public boolean supportsSelfTelemetry() {
+        return true;
+    }
+
+    @Override
+    public boolean batchDeleteLogs(String workspaceId, List<Long> timeUnixNanos) {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new IllegalArgumentException("Workspace is required for log deletion");
+        }
+        if (!isServerAvailable() || timeUnixNanos == null || timeUnixNanos.isEmpty()) {
+            return false;
+        }
+        String timestamps = timeUnixNanos.stream().filter(Objects::nonNull)
+                .map(timestamp -> "to_timestamp_nanos(" + timestamp + ")").collect(Collectors.joining(", "));
+        if (timestamps.isEmpty()) {
+            return false;
+        }
+        String sql = "DELETE FROM " + LOG_TABLE_NAME + " WHERE timestamp IN (" + timestamps + ") AND ("
+                + workspaceCondition(workspaceId) + ")";
+        try {
+            greptimeSqlQueryExecutor.executeMutationStrict(sql);
+        } catch (RuntimeException failure) {
+            throw new IllegalStateException("Greptime log deletion is unavailable; managed append-mode tables do not support DELETE", failure);
+        }
+        return true;
     }
 
     @Override
@@ -1040,38 +2582,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private void doSaveLogBatch(List<LogEntry> logEntries) {
         try {
-            TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
-            tableSchemaBuilder.addTimestamp("time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("severity_number", DataType.Int32)
-                    .addField("severity_text", DataType.String)
-                    .addField("body", DataType.String)
-                    .addField("trace_id", DataType.String)
-                    .addField("span_id", DataType.String)
-                    .addField("trace_flags", DataType.Int32)
-                    .addField("attributes", DataType.Json)
-                    .addField("resource", DataType.Json)
-                    .addField("instrumentation_scope", DataType.Json)
-                    .addField("dropped_attributes_count", DataType.Int32);
-
-            Table table = Table.from(tableSchemaBuilder.build());
+            Table table = newLogTable();
 
             for (LogEntry logEntry : logEntries) {
-                Object[] values = new Object[] {
-                        logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
-                        logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
-                        logEntry.getSeverityNumber(),
-                        logEntry.getSeverityText(),
-                        logBodyAsString(logEntry.getBody()),
-                        logEntry.getTraceId(),
-                        logEntry.getSpanId(),
-                        logEntry.getTraceFlags(),
-                        JsonUtil.toJson(logEntry.getAttributes()),
-                        JsonUtil.toJson(logEntry.getResource()),
-                        JsonUtil.toJson(logEntry.getInstrumentationScope()),
-                        logEntry.getDroppedAttributesCount()
-                };
-                table.addRow(values);
+                table.addRow(logValues(logEntry));
             }
 
             CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
@@ -1085,6 +2599,64 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         } catch (Exception e) {
             log.error("[warehouse greptime-log] Error saving log entries batch", e);
         }
+    }
+
+    private static Table newLogTable() {
+        TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
+        tableSchemaBuilder.addTimestamp("timestamp", DataType.TimestampNanosecond)
+                .addField("trace_id", DataType.String)
+                .addField("span_id", DataType.String)
+                .addField("severity_number", DataType.Int32)
+                .addField("severity_text", DataType.String)
+                .addField("body", DataType.String)
+                .addField("log_attributes", DataType.Json)
+                .addField("resource_attributes", DataType.Json)
+                .addField("hertzbeat_event_id", DataType.String)
+                .addField("log_record_uid", DataType.String)
+                .addField("hertzbeat_ingest_id", DataType.String)
+                .addField("hertzbeat_entity_id", DataType.String)
+                .addField("hertzbeat_workspace_id", DataType.String)
+                .addField("service_name", DataType.String);
+        return Table.from(tableSchemaBuilder.build());
+    }
+
+    private static Object[] logValues(LogEntry logEntry) {
+        Map<String, Object> attributes = logEntry.getAttributes();
+        Map<String, Object> resource = logEntry.getResource();
+        return new Object[] {
+                logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
+                logEntry.getTraceId(),
+                logEntry.getSpanId(),
+                logEntry.getSeverityNumber(),
+                logEntry.getSeverityText(),
+                logBodyAsString(logEntry.getBody()),
+                JsonUtil.toJson(attributes),
+                JsonUtil.toJson(resource),
+                stringValue(attributes, "hertzbeat.event_id"),
+                stringValue(attributes, "log.record.uid"),
+                stringValue(attributes, "hertzbeat.ingest_id"),
+                stringValue(resource, "hertzbeat.entity_id"),
+                stringValue(resource, "hertzbeat.workspace_id"),
+                stringValue(resource, "service.name")
+        };
+    }
+
+    private static String logBodyAsString(Object body) {
+        if (body == null) {
+            return null;
+        }
+        if (body instanceof CharSequence) {
+            return body.toString();
+        }
+        return JsonUtil.toJson(body);
+    }
+
+    private static String stringValue(Map<String, Object> values, String key) {
+        if (values == null || !StringUtils.hasText(key)) {
+            return null;
+        }
+        Object value = values.get(key);
+        return value == null ? null : String.valueOf(value);
     }
 
 }

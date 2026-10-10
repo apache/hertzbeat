@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import tools.jackson.core.type.TypeReference;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dto.AlibabaCloudSlsExternAlert;
@@ -44,7 +43,6 @@ import java.util.Optional;
 /**
  * Alibaba Cloud 'Simple Log Service(SLS)'  external alarm service impl
  */
-@Slf4j
 @Service
 public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
 
@@ -57,24 +55,21 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
     }
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
         List<AlibabaCloudSlsExternAlert> externAlerts = new ArrayList<>();
         if (BooleanUtils.isTrue(JsonUtil.isArray(content))) {
             TypeReference<List<AlibabaCloudSlsExternAlert>> typeReference = new TypeReference<>() {};
-            externAlerts = JsonUtil.fromJson(content, typeReference);
+            externAlerts = JsonUtil.fromJsonQuietly(content, typeReference);
         } else {
-            AlibabaCloudSlsExternAlert externAlert = JsonUtil.fromJson(content, AlibabaCloudSlsExternAlert.class);
+            AlibabaCloudSlsExternAlert externAlert = JsonUtil.fromJsonQuietly(content, AlibabaCloudSlsExternAlert.class);
             if (null != externAlert) {
                 externAlerts.add(externAlert);
             }
         }
-        if (null == externAlerts || externAlerts.isEmpty()) {
-            log.warn("Failure to parse external alert content. content: {}", content);
-            return;
-        }
-        for (AlibabaCloudSlsExternAlert externAlert : externAlerts) {
-            SingleAlert singleAlert = CONVERTER.convert(externAlert);
-            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+        externAlerts = ExternalAlertIngressValidator.requireBatch(externAlerts);
+        List<SingleAlert> alerts = externAlerts.stream().map(CONVERTER::convert).toList();
+        for (SingleAlert singleAlert : alerts) {
+            alarmCommonReduce.reduceAndSendAlarm(workspaceId, singleAlert);
         }
     }
 
@@ -179,6 +174,12 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
             labels.put("region", externAlert.getRegion());
             // The project name is globally unique.
             labels.put("project", externAlert.getProject());
+            if (StringUtils.isNotBlank(externAlert.getAlertId())) {
+                labels.put("alert_id", externAlert.getAlertId());
+            }
+            if (StringUtils.isNotBlank(externAlert.getAlertInstanceId())) {
+                labels.put("alert_instance_id", externAlert.getAlertInstanceId());
+            }
             // Filling the labels with the alibaba cloud sls.
             if (null != externAlert.getLabels() && !externAlert.getLabels().isEmpty()){
                 labels.putAll(externAlert.getLabels());

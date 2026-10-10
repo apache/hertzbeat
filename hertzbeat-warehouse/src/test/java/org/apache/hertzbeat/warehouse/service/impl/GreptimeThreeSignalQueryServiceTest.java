@@ -57,7 +57,7 @@ class GreptimeThreeSignalQueryServiceTest {
     void setUp() {
         service = new GreptimeThreeSignalQueryService(
                 new GreptimeProperties(true, "127.0.0.1:4001", "http://127.0.0.1:4000",
-                        "public", "greptime", "secret"),
+                        "public", "greptime", "secret", "90d"),
                 sqlQueryExecutor,
                 restTemplate);
     }

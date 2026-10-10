@@ -20,18 +20,29 @@ package org.apache.hertzbeat.manager.dao;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * AuthToken DAO
  */
 public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecificationExecutor<AuthToken> {
+
+    /**
+     * Lock the exact token row while applying a revocation.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT token FROM AuthToken token WHERE token.id = :id")
+    Optional<AuthToken> findByIdForUpdate(@Param("id") Long id);
 
     /**
      * Find all active tokens (status = 0)
@@ -44,9 +55,47 @@ public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecifi
     List<AuthToken> findByStatusAndCreator(Byte status, String creator);
 
     /**
+     * Find active tokens inside one workspace.
+     */
+    List<AuthToken> findByStatusAndWorkspaceId(Byte status, String workspaceId);
+
+    /**
+     * Find active tokens created by the given user inside one workspace.
+     */
+    List<AuthToken> findByStatusAndCreatorAndWorkspaceId(Byte status, String creator, String workspaceId);
+
+    /**
      * Check if an active token exists with the given hash
      */
     boolean existsByTokenHashAndStatus(String tokenHash, Byte status);
+
+    /**
+     * Check if an active token exists with the given hash and one of the allowed scopes
+     */
+    boolean existsByTokenHashAndStatusAndTokenScopeIn(String tokenHash, Byte status, Collection<String> tokenScopes);
+
+    /**
+     * Check if an active token exists with the given hash, scope, and workspace boundary.
+     */
+    boolean existsByTokenHashAndStatusAndTokenScopeInAndWorkspaceId(
+            String tokenHash,
+            Byte status,
+            Collection<String> tokenScopes,
+            String workspaceId);
+
+    /**
+     * Count active tokens created by the given user for one scope.
+     */
+    long countByStatusAndCreatorAndTokenScope(Byte status, String creator, String tokenScope);
+
+    /**
+     * Count active tokens created by the given user for one scope and workspace.
+     */
+    long countByStatusAndCreatorAndTokenScopeAndWorkspaceId(
+            Byte status,
+            String creator,
+            String tokenScope,
+            String workspaceId);
 
     /**
      * Update last used time for a token identified by its hash
@@ -55,4 +104,11 @@ public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecifi
     @Transactional
     @Query("UPDATE AuthToken t SET t.lastUsedTime = :lastUsedTime WHERE t.tokenHash = :tokenHash")
     void updateLastUsedTime(@Param("tokenHash") String tokenHash, @Param("lastUsedTime") LocalDateTime lastUsedTime);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE AuthToken t SET t.status = 1, t.revokedBy = :revokedBy, t.revokedTime = :revokedTime "
+            + "WHERE t.creator = :creator AND t.status = 0")
+    int revokeActiveByCreator(@Param("creator") String creator, @Param("revokedBy") String revokedBy,
+                              @Param("revokedTime") LocalDateTime revokedTime);
 }

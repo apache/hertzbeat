@@ -1,0 +1,63 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+
+import {
+  buildNoticeTemplatePayload,
+  NoticeTemplateContractError,
+  writeNoticeTemplateQuery,
+  type NoticeTemplateDraft,
+  type NoticeTemplateQuery
+} from '../model/notice-template-model';
+import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
+import { noticeTemplateApiRequest } from './notice-template-api-failure';
+import { noticeTemplateCreateActionUrl } from './notice-template-resource';
+import { parseNoticeTemplateDetailWire, parseNoticeTemplatePageWire } from './notice-template-schema';
+
+export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
+  return noticeTemplateApiRequest('collection', async () => {
+    const response = await apiMessageGet(`${noticeTemplatesEndpoint}?${writeNoticeTemplateQuery(query).toString()}`);
+    return parseNoticeTemplatePageWire(response, query);
+  });
+}
+
+export async function loadNoticeTemplate(id: number) {
+  return noticeTemplateApiRequest('detail', async () => {
+    const response = await apiMessageGet(noticeTemplateDetailEndpoint(id));
+    return parseNoticeTemplateDetailWire(response);
+  });
+}
+
+export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
+  return noticeTemplateApiRequest('write', async () => {
+    const payload = buildNoticeTemplatePayload(draft);
+    const response = await (draft.id
+      ? apiMessagePut(noticeTemplateCreateActionUrl, payload)
+      : apiMessagePost(noticeTemplateCreateActionUrl, payload));
+    if (response !== null) throw new NoticeTemplateContractError();
+    return null;
+  });
+}
+
+export async function deleteNoticeTemplate(id: number) {
+  await noticeTemplateApiRequest('write', () => apiMessageDelete(noticeTemplateDetailEndpoint(id)));
+}
+
+function noticeTemplateDetailEndpoint(id: number) {
+  return `${noticeTemplateEndpoint}/${id}`;
+}

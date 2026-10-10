@@ -39,6 +39,13 @@ public interface ConfigService {
     Object getConfig(String type);
 
     /**
+     * Apply runtime side effects after a dedicated persistence boundary has saved a configuration.
+     * @param type config type
+     * @param config persisted config
+     */
+    void handleConfig(String type, Object config);
+
+    /**
      * Update the app template config
      * @param app       monitoring type
      * @param template  template config

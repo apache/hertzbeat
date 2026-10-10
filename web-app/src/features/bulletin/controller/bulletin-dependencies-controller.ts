@@ -1,0 +1,203 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+
+import { resolveLocale } from '@/core/i18n/i18n';
+import { classifyMonitorReadError, MonitorContractError, type Monitor } from '@/features/monitor';
+import {
+  BulletinMetricTreeError,
+  resolveSavedMetricTreeSelection,
+  type BulletinMetricTreeMetricNode
+} from '../model/bulletin-metric-tree-model';
+import type {
+  BulletinDependencyKind,
+  BulletinDependencyProof,
+  BulletinDependencySelection
+} from '../model/bulletin-dependency-proof';
+import type { BulletinDraft } from '../model/bulletin-model';
+import {
+  BulletinMonitorPaginationEvidenceError,
+  isBulletinDependencyApplication
+} from '../model/bulletin-dependency-policy';
+import { loadAllBulletinMonitors, loadBulletinApps, loadBulletinMetricTree } from './bulletin-dependency-loaders';
+import { bulletinQueryKeys } from './bulletin-query-keys';
+import { normalizeBulletinApiFailure } from '../api/bulletin-api-failure';
+
+export { loadBulletinApps } from './bulletin-dependency-loaders';
+
+const bulletinDependencyStaleTimeMs = 30_000;
+
+type DependencyResourceState = Exclude<BulletinDependencyKind, 'idle'>;
+
+type DependencyResource<T> = {
+  status: 'pending' | 'error' | 'success';
+  fetchStatus: 'idle' | 'fetching' | 'paused';
+  data: T | undefined;
+  error: unknown;
+};
+
+type BulletinDependencyResources = {
+  app: string;
+  apps: DependencyResource<Awaited<ReturnType<typeof loadBulletinApps>>>;
+  monitors: DependencyResource<Monitor[]>;
+  hierarchy: DependencyResource<BulletinMetricTreeMetricNode[]>;
+};
+
+export function useBulletinDependencies(draft: BulletinDraft | null, canRead = true): BulletinDependencyProof {
+  const resources = useBulletinDependencyResources(draft, canRead);
+  return canRead ? resolveBulletinDependencies(draft, resources) : idleBulletinDependencies();
+}
+
+function idleBulletinDependencies(): BulletinDependencyProof {
+  return {
+    kind: 'idle',
+    fieldSelection: 'unverified',
+    monitorSelection: 'unverified',
+    apps: [],
+    monitors: [],
+    metrics: [],
+    metricTree: []
+  };
+}
+
+function useBulletinDependencyResources(draft: BulletinDraft | null, canRead: boolean) {
+  const { i18n } = useTranslation();
+  const app = draft?.app ?? '';
+  const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
+  const apps = useQuery({
+    queryKey: bulletinQueryKeys.apps(locale),
+    queryFn: ({ signal }) => loadBulletinApps(locale, signal),
+    enabled: canRead && draft != null,
+    retry: false,
+    staleTime: bulletinDependencyStaleTimeMs
+  });
+  const monitors = useQuery({
+    queryKey: bulletinQueryKeys.monitors(app),
+    queryFn: ({ signal }) => loadAllBulletinMonitors(app, signal),
+    enabled: canRead && Boolean(draft && app),
+    retry: false
+  });
+  const hierarchy = useQuery({
+    queryKey: bulletinQueryKeys.hierarchy(app, locale),
+    queryFn: ({ signal }) => loadBulletinMetricTree(app, locale, signal),
+    enabled: canRead && Boolean(draft && app),
+    retry: false
+  });
+  return { app, apps, hierarchy, monitors };
+}
+
+export function resolveBulletinDependencies(
+  draft: BulletinDraft | null,
+  resources: BulletinDependencyResources
+): BulletinDependencyProof {
+  const { app, apps, hierarchy, monitors } = resources;
+  const kind = resolveDependencyKind(draft, resources);
+  const appsData = apps.status === 'success' ? apps.data : undefined;
+  const activeMonitors = kind === 'ready' && app ? monitors.data : undefined;
+  const metricTree = kind === 'ready' && app ? hierarchy.data : undefined;
+  const records = buildBulletinDependencyRecords(appsData, activeMonitors, metricTree);
+  const monitorSelection = resolveSelection(kind, draft, current =>
+    hasUnknownMonitorSelection(current, activeMonitors ?? [])
+  );
+  const fieldSelection = resolveSelection(kind, draft, current => hasUnknownFieldSelection(current, metricTree ?? []));
+  return { kind, fieldSelection, monitorSelection, metricTree: metricTree ?? [], ...records };
+}
+
+export function buildBulletinDependencyRecords(
+  apps: Awaited<ReturnType<typeof loadBulletinApps>> | undefined,
+  monitors: Monitor[] | undefined,
+  metricTree: BulletinMetricTreeMetricNode[] | undefined
+) {
+  return {
+    apps: (apps ?? []).flatMap(item => {
+      const value = item.value;
+      if (!value || !isBulletinDependencyApplication(value)) return [];
+      return [{ value, label: item.label ?? null, hide: item.hide ?? null }];
+    }),
+    monitors: (monitors ?? []).map(item => ({
+      id: item.id,
+      name: item.name,
+      app: item.app,
+      labels: item.labels ?? {}
+    })),
+    metrics: (metricTree ?? []).map(item => ({
+      name: item.metric,
+      fields: item.children.map(field => field.field)
+    }))
+  };
+}
+
+export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'permission' | 'unavailable' | 'error' {
+  if (
+    error instanceof MonitorContractError ||
+    error instanceof BulletinMetricTreeError ||
+    error instanceof BulletinMonitorPaginationEvidenceError
+  ) {
+    return 'invalid';
+  }
+  const normalized = normalizeBulletinApiFailure(error, 'list');
+  if (normalized.kind === 'permission') return 'permission';
+  return classifyMonitorReadError(error) === 'unavailable' ? 'unavailable' : 'error';
+}
+
+function resolveDependencyKind(
+  draft: BulletinDraft | null,
+  resources: BulletinDependencyResources
+): BulletinDependencyKind {
+  if (!draft) return 'idle' as const;
+  const { app, apps, monitors, hierarchy } = resources;
+  const states = [resolveResourceState(apps)];
+  if (app) states.push(resolveResourceState(monitors), resolveResourceState(hierarchy));
+  const failure = states.find(isFailure);
+  if (failure) return failure;
+  if (states.includes('loading')) return 'loading' as const;
+  return 'ready' as const;
+}
+
+function resolveResourceState(resource: DependencyResource<unknown>): DependencyResourceState {
+  if (resource.status === 'error') return classifyBulletinMonitorError(resource.error);
+  if (resource.status === 'pending') return 'loading' as const;
+  // An empty collection is authoritative; a successful query without data violates the query contract.
+  if (resource.data === undefined) return 'invalid' as const;
+  // Cached data cannot validate a saved selection while its authoritative refresh is still in flight.
+  return resource.fetchStatus === 'idle' ? ('ready' as const) : ('loading' as const);
+}
+
+function isFailure(kind: DependencyResourceState): kind is Exclude<DependencyResourceState, 'loading' | 'ready'> {
+  return kind === 'invalid' || kind === 'permission' || kind === 'unavailable' || kind === 'error';
+}
+
+function resolveSelection(
+  kind: BulletinDependencyKind,
+  draft: BulletinDraft | null,
+  hasUnknownSelection: (current: BulletinDraft) => boolean
+): BulletinDependencySelection {
+  // Pending or failed dependencies cannot prove that a persisted selection is valid or stale.
+  if (kind !== 'ready' || !draft) return 'unverified';
+  return hasUnknownSelection(draft) ? 'stale' : 'valid';
+}
+
+function hasUnknownMonitorSelection(draft: BulletinDraft, monitors: Monitor[]) {
+  const knownIds = new Set(monitors.map(monitor => monitor.id));
+  return draft.monitorIds.some(id => !knownIds.has(id));
+}
+
+function hasUnknownFieldSelection(draft: BulletinDraft, tree: BulletinMetricTreeMetricNode[]) {
+  return Object.keys(resolveSavedMetricTreeSelection(tree, draft.fields).unknownFields).length > 0;
+}

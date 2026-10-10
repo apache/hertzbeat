@@ -1,0 +1,205 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.manager.controller;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Set;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.support.exception.CommonException;
+import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
+import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
+import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+/**
+ * Test case for topology read API.
+ */
+@ExtendWith(MockitoExtension.class)
+class TopologyControllerTest {
+
+    private MockMvc mockMvc;
+
+    @InjectMocks
+    private TopologyController topologyController;
+
+    @Mock
+    private EntityTopologyQueryService entityTopologyQueryService;
+
+    @Spy
+    private ObservabilityQueryAdmissionService queryAdmissionService =
+            new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100));
+
+    @BeforeEach
+    void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        this.mockMvc = MockMvcBuilders.standaloneSetup(topologyController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
+    @AfterEach
+    void clearRequestContext() {
+        AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void capturesTrustedWorkspaceBeforeCallingTopologyService() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId(" team-a ");
+        EntityTopologyGraphInfo graph = new EntityTopologyGraphInfo();
+        graph.setApiBacked(true);
+        when(entityTopologyQueryService.buildFocusedTopology(
+                "team-a", null, 1, "prod", "otlp-trace-call", 1710000000000L, 1710003600000L,
+                null, true, null, null)).thenReturn(graph);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("environment", "prod")
+                        .param("sourceKind", "otlp-trace-call")
+                        .param("start", "1710000000000")
+                        .param("end", "1710003600000")
+                        .param("hideInternal", "true")
+                        .param("workspaceId", "team-b"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+
+        verify(entityTopologyQueryService).buildFocusedTopology(
+                "team-a", null, 1, "prod", "otlp-trace-call", 1710000000000L, 1710003600000L,
+                null, true, null, null);
+    }
+
+    @Test
+    void blankTrustedWorkspaceIsUnavailableBeforeTopologyService() throws Exception {
+        AuthTokenRequestContext.clear();
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("sourceKind", "otlp-trace-call"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("topology_workspace_unavailable"));
+
+        verifyNoInteractions(entityTopologyQueryService);
+    }
+
+    @Test
+    void returnsStableParameterErrorWithoutEchoingUnknownSourceKind() throws Exception {
+        String unknownSourceKind = "unknown' OR 1=1 -- private-sql";
+        when(entityTopologyQueryService.buildFocusedTopology(
+                "default", null, 1, null, unknownSourceKind, null, null,
+                null, null, null, null))
+                .thenThrow(new IllegalArgumentException("topology_source_kind_invalid"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("sourceKind", unknownSourceKind))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.PARAM_INVALID_CODE))
+                .andExpect(jsonPath("$.msg").value("topology_source_kind_invalid"))
+                .andExpect(content().string(not(containsString(unknownSourceKind))));
+
+        verify(entityTopologyQueryService).buildFocusedTopology(
+                "default", null, 1, null, unknownSourceKind, null, null,
+                null, null, null, null);
+    }
+
+    @Test
+    void returnsSafeUnavailableEvidenceThroughExistingMessageLayer() throws Exception {
+        when(entityTopologyQueryService.buildFocusedTopology(
+                "default", null, 1, "prod", "otlp-trace-call", null, null,
+                null, null, null, null))
+                .thenThrow(new CommonException("trace_topology_unavailable"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("environment", "prod")
+                        .param("sourceKind", "otlp-trace-call"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("trace_topology_unavailable"))
+                .andExpect(content().string(not(containsString("SELECT"))))
+                .andExpect(content().string(not(containsString("secret"))));
+    }
+
+    @Test
+    void returnsApiBackedFocusedTopologyGraph() throws Exception {
+        EntityTopologyGraphInfo graph = new EntityTopologyGraphInfo();
+        graph.setApiBacked(true);
+        graph.setFocusEntityId(10L);
+        graph.setDepth(2);
+        graph.setSourceKinds(List.of("entity-relation"));
+        graph.setPartial(true);
+        graph.setPartialReasons(Set.of("edge_page"));
+        graph.setEdgePage(new EntityTopologyGraphInfo.EdgePage(1, 25, 48, true));
+        graph.setNodes(List.of(new EntityTopologyGraphInfo.Node(
+                "10", 10L, "checkout-api", "service", "commerce", "prod", "warning", true,
+                List.of("entity-relation"), new EntityTopologyGraphInfo.RedMetrics())));
+        graph.setEdges(List.of(new EntityTopologyGraphInfo.Edge(
+                "101", 101L, "10", "20", 10L, 20L, null, null, null, null, null, "depends_on", "manual", "confirmed", 92,
+                List.of("entity-relation", "manual"), new EntityTopologyGraphInfo.RedMetrics())));
+        when(entityTopologyQueryService.buildFocusedTopology(
+                "default", 10L, 2, "prod", "entity-relation", 1710000000000L, 1710003600000L,
+                "depends_on", true, 1, 25)).thenReturn(graph);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("focusEntityId", "10")
+                        .param("depth", "2")
+                        .param("environment", "prod")
+                        .param("sourceKind", "entity-relation")
+                        .param("start", "1710000000000")
+                        .param("end", "1710003600000")
+                        .param("relationType", "depends_on")
+                        .param("hideInternal", "true")
+                        .param("pageIndex", "1")
+                        .param("pageSize", "25"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.apiBacked").value(true))
+                .andExpect(jsonPath("$.data.focusEntityId").value(10))
+                .andExpect(jsonPath("$.data.depth").value(2))
+                .andExpect(jsonPath("$.data.partial").value(true))
+                .andExpect(jsonPath("$.data.partialReasons[0]").value("edge_page"))
+                .andExpect(jsonPath("$.data.edgePage.pageIndex").value(1))
+                .andExpect(jsonPath("$.data.edgePage.pageSize").value(25))
+                .andExpect(jsonPath("$.data.edgePage.totalElements").value(48))
+                .andExpect(jsonPath("$.data.edgePage.hasNext").value(true))
+                .andExpect(jsonPath("$.data.nodes[0].entityName").value("checkout-api"))
+                .andExpect(jsonPath("$.data.edges[0].relationType").value("depends_on"));
+
+        verify(entityTopologyQueryService).buildFocusedTopology(
+                "default", 10L, 2, "prod", "entity-relation", 1710000000000L, 1710003600000L,
+                "depends_on", true, 1, 25);
+    }
+}

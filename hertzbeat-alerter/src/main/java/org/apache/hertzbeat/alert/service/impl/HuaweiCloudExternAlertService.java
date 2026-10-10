@@ -48,7 +48,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.apache.hertzbeat.alert.dto.HuaweiCloudExternAlert.AlertType.NOTIFICATION;
 import static org.apache.hertzbeat.alert.dto.HuaweiCloudExternAlert.AlertType.SUBSCRIPTION;
@@ -81,17 +80,17 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
     }
 
     @Override
-    public void addExternAlert(String content) {
-        HuaweiCloudExternAlert externAlert = JsonUtil.fromJson(content, HuaweiCloudExternAlert.class);
+    public void addExternAlert(String workspaceId, String content) {
+        HuaweiCloudExternAlert externAlert = JsonUtil.fromJsonQuietly(content, HuaweiCloudExternAlert.class);
         if (externAlert == null || StringUtils.isBlank(externAlert.getMessage())) {
-            log.warn("Failure to parse external alert content. content: {}", content);
-            return;
+            log.warn("Failed to parse Huawei Cloud external alert content");
+            throw ExternalAlertIngressValidator.rejected();
         }
         if (!isMessageValid(externAlert)) {
-            log.warn("Huawei cloud alert verify failed. content: {}", content);
-            return;
+            log.warn("Huawei Cloud external alert verification failed");
+            throw ExternalAlertIngressValidator.rejected();
         }
-        process(externAlert);
+        process(workspaceId, externAlert);
     }
 
     /**
@@ -99,9 +98,10 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
      *
      * @param externAlert alert content entity
      */
-    private void process(HuaweiCloudExternAlert externAlert) {
+    private void process(String workspaceId, HuaweiCloudExternAlert externAlert) {
         if (NOTIFICATION.getType().equals(externAlert.getType())) {
-            Optional.ofNullable(buildSendAlert(externAlert)).ifPresent(alarmCommonReduce::reduceAndSendAlarm);
+            SingleAlert alert = ExternalAlertIngressValidator.requirePresent(buildSendAlert(externAlert));
+            alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert);
         } else if (SUBSCRIPTION.getType().equals(externAlert.getType())) {
             autoSubscribeForUrl(externAlert.getSubscribeUrl());
         } else if (UNSUBSCRIBE.getType().equals(externAlert.getType())) {
@@ -116,9 +116,10 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
      * @return single alert
      */
     private SingleAlert buildSendAlert(HuaweiCloudExternAlert externAlert) {
-        HuaweiCloudExternAlert.AlertMessage message = JsonUtil.fromJson(externAlert.getMessage(), HuaweiCloudExternAlert.AlertMessage.class);
+        HuaweiCloudExternAlert.AlertMessage message = JsonUtil.fromJsonQuietly(
+                externAlert.getMessage(), HuaweiCloudExternAlert.AlertMessage.class);
         if (null == message || null == message.getData()) {
-            log.warn("Failure to parse external alert message. message: {}", externAlert.getMessage());
+            log.warn("Failed to parse Huawei Cloud external alert message");
             return null;
         }
         // Note: Empty and false are both recovery notifications.
@@ -199,7 +200,7 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
      */
     public void autoSubscribeForUrl(String subscribeUrl) {
         if (StringUtils.isBlank(subscribeUrl)) {
-            return;
+            throw ExternalAlertIngressValidator.rejected();
         }
         if (!subscribeUrl.startsWith(SUBSCRIBE_URL_PREFIX)) {
             throw new SecurityException("Untrusted domain: " + subscribeUrl);
@@ -211,10 +212,10 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
                 String responseBody = EntityUtils.toString(response.getEntity());
 
                 if (statusCode != 200) {
-                    log.error("Subscribe url request failed with status code: " + statusCode + ", response: " + responseBody);
-                    return;
+                    log.error("Subscribe URL request failed with status code: {}", statusCode);
+                    throw ExternalAlertIngressValidator.rejected();
                 }
-                JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
+                JsonNode jsonResponse = JsonUtil.fromJsonQuietly(responseBody);
                 if (jsonResponse == null) {
                     throw new IgnoreException("Subscribe url failed with status code: " + statusCode + ", response: " + responseBody);
                 }
@@ -224,8 +225,11 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
                 }
                 log.info("Successfully subscribed to Huawei Cloud(SMN) url.");
             }
-        } catch (Exception e) {
-            log.error("Failed to subscribe url request: {}", e.getMessage());
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.error("Failed to subscribe URL request: {}", exception.getClass().getSimpleName());
+            throw ExternalAlertIngressValidator.rejected();
         }
     }
 
@@ -244,8 +248,8 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
             }
             X509Certificate cert = getCertificate(externAlert.getSigningCertUrl());
             return verifySignature(signMessage, cert, externAlert.getSignature());
-        } catch (Exception e) {
-            log.error("Failed to verify message signature: ", e);
+        } catch (Exception exception) {
+            log.error("Failed to verify message signature: {}", exception.getClass().getSimpleName());
             return false;
         }
     }

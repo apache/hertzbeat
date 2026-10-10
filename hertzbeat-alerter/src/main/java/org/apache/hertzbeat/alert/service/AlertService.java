@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.service;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -40,17 +41,20 @@ public interface AlertService {
      * @param pageSize pageSize
      * @return single alerts
      */
-    Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
+    Page<SingleAlert> getSingleAlerts(String workspaceId, String status, String search, String sort, String order,
+                                      int pageIndex, int pageSize);
 
     /**
      * export single alerts matching the filters to an Excel sheet
+     * @param workspaceId workspace
      * @param status   status
      * @param search   search
      * @param sort     sort
      * @param order    order
      * @param response servlet response the Excel sheet is written to
      */
-    void exportSingleAlerts(String status, String search, String sort, String order, HttpServletResponse response);
+    void exportSingleAlerts(String workspaceId, String status, String search, String sort, String order,
+                            HttpServletResponse response);
 
     /**
      * Dynamic conditional query
@@ -59,39 +63,58 @@ public interface AlertService {
      * @param order         Sort Type
      * @param pageIndex     List current page
      * @param pageSize      Number of list pagination
-     * @return search result    
+     * @return search result
      */
-    Page<GroupAlert> getGroupAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
+    Page<GroupAlert> getGroupAlerts(String workspaceId, String status, String search, String severity,
+                                    String serviceName,
+                                    String serviceNamespace, String environment, String sort, String order,
+                                    int pageIndex, int pageSize);
+
+    /**
+     * Find one individual alert by its exact persistent identifier.
+     *
+     * @param id alert identifier
+     * @return matching alert
+     */
+    Optional<SingleAlert> findSingleAlert(String workspaceId, long id);
+
+    /**
+     * Find one grouped alert by its exact persistent identifier.
+     *
+     * @param id grouped alert identifier
+     * @return matching grouped alert
+     */
+    Optional<GroupAlert> findGroupAlert(String workspaceId, long id);
 
     /**
      * delete the group alarm according to the alarm ID
      * @param ids Alarm ID List
      */
-    void deleteGroupAlerts(HashSet<Long> ids);
+    void deleteGroupAlerts(String workspaceId, HashSet<Long> ids);
 
     /**
      * delete the single alarm according to the alarm ID
      * @param ids Alarm ID List
      */
-    void deleteSingleAlerts(HashSet<Long> ids);
+    void deleteSingleAlerts(String workspaceId, HashSet<Long> ids);
 
     /**
      * Update the alarm status according to the alarm ID-status value
      * @param status Alarm status to be modified
      * @param ids   Alarm ID List to be modified
      */
-    void editGroupAlertStatus(String status, List<Long> ids);
+    void editGroupAlertStatus(String workspaceId, String status, List<Long> ids);
 
     /**
      * Update the alarm status according to the alarm ID-status value
      * @param status Alarm status to be modified
      * @param ids  Alarm ID List to be modified
      */
-    void editSingleAlertStatus(String status, List<Long> ids);
-    
+    void editSingleAlertStatus(String workspaceId, String status, List<Long> ids);
+
     /**
      * Get alarm statistics information
-     * @return Alarm statistics information 
+     * @return Alarm statistics information
      */
-    AlertSummary getAlertsSummary();
+    AlertSummary getAlertsSummary(String workspaceId);
 }

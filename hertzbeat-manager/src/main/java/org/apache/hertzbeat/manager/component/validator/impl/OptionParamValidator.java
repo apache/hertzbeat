@@ -17,12 +17,17 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import org.apache.hertzbeat.manager.component.validator.ParamValidator;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * Option parameter validator for radio and checkbox types
@@ -36,19 +41,56 @@ public class OptionParamValidator implements ParamValidator {
 
     @Override
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
-        List<ParamDefineInfo.OptionInfo> options = paramDefine.getOptions();
-        boolean invalid = true;
-        if (options != null) {
-            for (ParamDefineInfo.OptionInfo option : options) {
-                if (param.getParamValue().equalsIgnoreCase(option.getValue())) {
-                    invalid = false;
-                    break;
-                }
+        Map<String, String> canonicalOptions = canonicalOptions(paramDefine.getOptions());
+        if ("checkbox".equals(paramDefine.getType())) {
+            param.setParamValue(validateCheckbox(param.getParamValue(), canonicalOptions));
+            return;
+        }
+        String selection = param.getParamValue() == null ? "" : param.getParamValue().trim();
+        String canonical = canonicalOptions.get(selection.toLowerCase(Locale.ROOT));
+        if (selection.isEmpty() || canonical == null) {
+            throw invalidOption();
+        }
+        param.setParamValue(canonical);
+    }
+
+    private static String validateCheckbox(String value, Map<String, String> canonicalOptions) {
+        if (value == null) {
+            throw invalidOption();
+        }
+        String[] selections = value.split(",", -1);
+        Set<String> selected = new HashSet<>();
+        List<String> canonicalSelections = new ArrayList<>(selections.length);
+        for (String rawSelection : selections) {
+            String selection = rawSelection.trim();
+            String key = selection.toLowerCase(Locale.ROOT);
+            String canonical = canonicalOptions.get(key);
+            if (selection.isEmpty() || canonical == null || !selected.add(key)) {
+                throw invalidOption();
+            }
+            canonicalSelections.add(canonical);
+        }
+        return String.join(",", canonicalSelections);
+    }
+
+    private static Map<String, String> canonicalOptions(List<ParamDefineInfo.OptionInfo> options) {
+        if (options == null || options.isEmpty()) {
+            throw invalidOption();
+        }
+        Map<String, String> canonical = new LinkedHashMap<>();
+        for (ParamDefineInfo.OptionInfo option : options) {
+            if (option == null || option.getValue() == null || option.getValue().isBlank()) {
+                throw invalidOption();
+            }
+            String key = option.getValue().toLowerCase(Locale.ROOT);
+            if (canonical.putIfAbsent(key, option.getValue()) != null) {
+                throw invalidOption();
             }
         }
-        if (invalid) {
-            throw new IllegalArgumentException("Params field " + paramDefine.getField() + " value "
-                    + param.getParamValue() + " is invalid option value");
-        }
+        return canonical;
+    }
+
+    private static IllegalArgumentException invalidOption() {
+        return ParamValidator.invalidParameter();
     }
 }

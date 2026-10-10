@@ -17,29 +17,30 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
-import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.JsonWebTokenUtil;
-import com.usthe.sureness.util.Md5Util;
 import com.usthe.sureness.util.SurenessContextHolder;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.AuthTokenDao;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 import org.apache.hertzbeat.manager.service.AccountService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.hertzbeat.manager.setup.identity.AccountCredentialVerifier;
+import org.apache.hertzbeat.manager.setup.identity.VersionedAccount;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
@@ -47,8 +48,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of Account service
@@ -59,7 +60,6 @@ import java.util.concurrent.TimeUnit;
 public class AccountServiceImpl implements AccountService {
 
     private static final String REFRESH_CLAIM = "refresh";
-
     /**
      * Token validity time in seconds
      */
@@ -72,27 +72,15 @@ public class AccountServiceImpl implements AccountService {
 
     private static final byte TOKEN_STATUS_ACTIVE = 0;
 
-    /**
-     * Custom JWT claim key to mark tokens as managed (persisted in DB for lifecycle management).
-     * Only tokens with this claim will be validated against the database.
-     * Legacy tokens without this claim are allowed to pass through for backward compatibility.
-     */
-    public static final String CLAIM_MANAGED = "managed";
+    private static final byte TOKEN_STATUS_REVOKED = 1;
+
+    private static final long MAX_ACTIVE_TOKENS_PER_SCOPE_PER_USER = 20;
 
     /**
      * Minimum interval (in minutes) between lastUsedTime DB updates for the same token.
      * Reduces write pressure under high-frequency requests.
      */
     private static final long LAST_USED_UPDATE_INTERVAL_MINUTES = 5;
-
-    /**
-     * Local cache: tokenHash -> isActive.
-     * TTL 60s to reduce DB queries; invalidated on token revocation.
-     */
-    private final Cache<String, Boolean> tokenStatusCache = Caffeine.newBuilder()
-        .maximumSize(1000)
-        .expireAfterWrite(60, TimeUnit.SECONDS)
-        .build();
 
     /**
      * Tracks when each token's lastUsedTime was last written to DB.
@@ -104,40 +92,32 @@ public class AccountServiceImpl implements AccountService {
      * account data provider
      */
     private final SurenessAccountProvider accountProvider;
+    private final AccountCredentialVerifier credentialVerifier;
 
-    public AccountServiceImpl() {
-        this(new DocumentAccountProvider());
-    }
-
-    public AccountServiceImpl(SurenessAccountProvider accountProvider) {
+    public AccountServiceImpl(SurenessAccountProvider accountProvider, AuthTokenDao authTokenDao,
+                              AccountCredentialVerifier credentialVerifier) {
         this.accountProvider = accountProvider;
+        this.authTokenDao = authTokenDao;
+        this.credentialVerifier = credentialVerifier;
     }
 
-    @Autowired
-    private AuthTokenDao authTokenDao;
+    private final AuthTokenDao authTokenDao;
 
     @Override
     public Map<String, String> authGetToken(LoginDto loginDto) throws AuthenticationException {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
-        if (account == null || StringUtils.isBlank(account.getPassword())) {
+        if (!credentialVerifier.matches(account, loginDto.getCredential())) {
             throw new AuthenticationException("Incorrect Account or Password");
-        } else {
-            String password = loginDto.getCredential();
-            if (StringUtils.isNotBlank(account.getSalt())) {
-                password = Md5Util.md5(password + account.getSalt());
-            }
-            if (!account.getPassword().equals(password)) {
-                throw new AuthenticationException("Incorrect Account or Password");
-            }
-            if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
-                throw new AuthenticationException("Expired or Illegal Account");
-            }
+        }
+        if (!credentialVerifier.usable(account)) {
+            throw new AuthenticationException("Expired or Illegal Account");
         }
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
         // Issue TOKEN
-        String issueToken = issueAccessToken(loginDto.getIdentifier(), roles, PERIOD_TIME);
-        String issueRefresh = issueRefreshToken(loginDto.getIdentifier(), PERIOD_TIME << 5);
+        Long credentialVersion = credentialVersion(account);
+        String issueToken = issueAccessToken(loginDto.getIdentifier(), roles, PERIOD_TIME, credentialVersion);
+        String issueRefresh = issueRefreshToken(loginDto.getIdentifier(), PERIOD_TIME << 5, credentialVersion);
         Map<String, String> resp = new HashMap<>(2);
         resp.put("token", issueToken);
         resp.put("refreshToken", issueRefresh);
@@ -161,14 +141,57 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
+        Long tokenVersion = claims.get(
+                ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, Long.class);
+        if (!credentialVersionMatches(account, tokenVersion)) {
+            throw new AuthenticationException("Expired or Illegal Account");
+        }
         List<String> roles = account.getOwnRoles();
-        String issueToken = issueAccessToken(userId, roles, PERIOD_TIME);
-        String issueRefresh = issueRefreshToken(userId, PERIOD_TIME << 5);
+        Long credentialVersion = credentialVersion(account);
+        String issueToken = issueAccessToken(userId, roles, PERIOD_TIME, credentialVersion);
+        String issueRefresh = issueRefreshToken(userId, PERIOD_TIME << 5, credentialVersion);
         return new RefreshTokenResponse(issueToken, issueRefresh);
     }
 
     @Override
     public String generateToken(String tokenName, Long expireSeconds) throws AuthenticationException {
+        return generateToken(tokenName, expireSeconds, AuthTokenScopes.API_ADMIN);
+    }
+
+    @Override
+    public String generateToken(String tokenName, Long expireSeconds, String tokenScope) throws AuthenticationException {
+        return generateToken(tokenName, expireSeconds, tokenScope, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
+    }
+
+    @Override
+    public String generateToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId)
+            throws AuthenticationException {
+        return generateManagedToken(tokenName, expireSeconds, tokenScope, workspaceId, null, null, List.of());
+    }
+
+    @Override
+    public String generateCollectorIntakeToken(String collectorId, String workspaceId, Long expireSeconds)
+            throws AuthenticationException {
+        String normalizedCollectorId = StringUtils.trimToNull(collectorId);
+        if (normalizedCollectorId == null || normalizedCollectorId.length() > 128) {
+            throw new IllegalArgumentException("Collector identity must contain 1 to 128 characters");
+        }
+        return generateManagedToken(
+                "Collector " + normalizedCollectorId,
+                expireSeconds,
+                AuthTokenScopes.OTLP_INGEST,
+                workspaceId,
+                AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE,
+                normalizedCollectorId,
+                AuthTokenScopes.OTLP_SIGNALS
+        );
+    }
+
+    private String generateManagedToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId,
+                                        String tokenAudience, String collectorId, List<String> allowedSignals)
+            throws AuthenticationException {
+        validateTokenExpiration(expireSeconds);
+        String normalizedScope = AuthTokenScopes.normalizeApiTokenScope(tokenScope);
         SubjectSum subjectSum = requireCurrentSubject();
         String userId = getCurrentUserId(subjectSum);
         SurenessAccount account = accountProvider.loadAccount(userId);
@@ -178,8 +201,16 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+        long activeTokens = authTokenDao.countByStatusAndCreatorAndTokenScopeAndWorkspaceId(
+            TOKEN_STATUS_ACTIVE, userId, normalizedScope, normalizedWorkspaceId);
+        if (activeTokens >= MAX_ACTIVE_TOKENS_PER_SCOPE_PER_USER) {
+            throw new AuthenticationException("Token quota exceeded");
+        }
         List<String> roles = account.getOwnRoles();
-        String token = issueApiToken(userId, roles, expireSeconds);
+        Long credentialVersion = credentialVersion(account);
+        String token = issueApiToken(userId, roles, expireSeconds, normalizedScope, normalizedWorkspaceId,
+                tokenAudience, collectorId, allowedSignals, credentialVersion);
 
         // Persist token metadata for management
         String tokenHash = CryptoUtils.sha256Hex(token);
@@ -192,6 +223,11 @@ public class AccountServiceImpl implements AccountService {
             .name(tokenName)
             .tokenHash(tokenHash)
             .tokenMask(tokenMask)
+            .tokenScope(normalizedScope)
+            .workspaceId(normalizedWorkspaceId)
+            .tokenAudience(tokenAudience)
+            .collectorId(collectorId)
+            .allowedSignals(String.join(",", allowedSignals))
             .status(TOKEN_STATUS_ACTIVE)
             .creator(userId)
             .expireTime(expireTime)
@@ -201,8 +237,21 @@ public class AccountServiceImpl implements AccountService {
         return token;
     }
 
-    private String issueAccessToken(String userId, List<String> roles, long expirationSeconds) {
-        return JsonWebTokenUtil.issueJwt(userId, expirationSeconds, roles, new HashMap<>(0));
+    private void validateTokenExpiration(Long expireSeconds) {
+        if (expireSeconds != null
+                && (expireSeconds == 0 || expireSeconds < -1 || expireSeconds > NON_EXPIRING_TOKEN_SECONDS)) {
+            throw new IllegalArgumentException("Invalid token expiration");
+        }
+    }
+
+    private String issueAccessToken(String userId, List<String> roles, long expirationSeconds, Long credentialVersion) {
+        Map<String, Object> customClaimMap = new HashMap<>(3);
+        customClaimMap.put(AuthTokenScopes.CLAIM_TOKEN_SCOPE, AuthTokenScopes.UI_SESSION);
+        customClaimMap.put(AuthTokenScopes.CLAIM_WORKSPACE_ID, AuthTokenScopes.DEFAULT_WORKSPACE_ID);
+        if (credentialVersion != null) {
+            customClaimMap.put(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, credentialVersion);
+        }
+        return JsonWebTokenUtil.issueJwt(userId, expirationSeconds, roles, customClaimMap);
     }
 
     @Override
@@ -211,6 +260,17 @@ public class AccountServiceImpl implements AccountService {
         if (subjectSum == null) {
             return List.of();
         }
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (StringUtils.isNotBlank(workspaceId)) {
+            String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+            if (subjectSum.hasRole("admin")) {
+                return authTokenDao.findByStatusAndWorkspaceId(TOKEN_STATUS_ACTIVE, normalizedWorkspaceId);
+            }
+            return authTokenDao.findByStatusAndCreatorAndWorkspaceId(
+                    TOKEN_STATUS_ACTIVE,
+                    getCurrentUserId(subjectSum),
+                    normalizedWorkspaceId);
+        }
         if (subjectSum.hasRole("admin")) {
             return authTokenDao.findByStatus(TOKEN_STATUS_ACTIVE);
         }
@@ -218,38 +278,112 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void deleteToken(Long id) throws AuthenticationException {
+    @Transactional
+    public TokenRevocationResult deleteToken(Long id) throws AuthenticationException {
         SubjectSum subjectSum = requireCurrentSubject();
         String userId = getCurrentUserId(subjectSum);
-        AuthToken token = authTokenDao.findById(id).orElse(null);
+        AuthToken token = authTokenDao.findByIdForUpdate(id).orElse(null);
         if (token == null) {
-            return;
+            return TokenRevocationResult.MISSING;
         }
         if (!subjectSum.hasRole("admin") && !StringUtils.equals(userId, token.getCreator())) {
             throw new AuthenticationException("No permission");
         }
-        tokenStatusCache.invalidate(token.getTokenHash());
-        lastUsedWriteTimestamps.remove(token.getTokenHash());
-        authTokenDao.deleteById(id);
+        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        if (StringUtils.isNotBlank(workspaceId)
+                && !StringUtils.equals(
+                        AuthTokenScopes.normalizeWorkspaceId(workspaceId),
+                        AuthTokenScopes.normalizeWorkspaceId(token.getWorkspaceId()))) {
+            throw new AuthenticationException("No workspace permission");
+        }
+        if (!Byte.valueOf(TOKEN_STATUS_ACTIVE).equals(token.getStatus())) {
+            return TokenRevocationResult.ALREADY_REVOKED;
+        }
+        String tokenHash = token.getTokenHash();
+        if (StringUtils.isNotBlank(tokenHash)) {
+            lastUsedWriteTimestamps.remove(tokenHash);
+        }
+        token.setStatus(TOKEN_STATUS_REVOKED);
+        token.setRevokedBy(userId);
+        token.setRevokedTime(LocalDateTime.now());
+        authTokenDao.saveAndFlush(token);
+        AuthToken persistedToken = authTokenDao.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Revoked token is unavailable after persistence"));
+        if (!Byte.valueOf(TOKEN_STATUS_REVOKED).equals(persistedToken.getStatus())) {
+            throw new IllegalStateException("Token revocation was not persisted");
+        }
+        return TokenRevocationResult.REVOKED;
     }
 
     @Override
     public String checkTokenStatus(String tokenValue) {
         String tokenHash = CryptoUtils.sha256Hex(tokenValue);
-        Boolean active = tokenStatusCache.get(tokenHash,
-            hash -> authTokenDao.existsByTokenHashAndStatus(hash, TOKEN_STATUS_ACTIVE));
-        if (!Boolean.TRUE.equals(active)) {
+        // Revocable authorization state must be read from storage on every check, including after an in-flight read.
+        if (!authTokenDao.existsByTokenHashAndStatus(tokenHash, TOKEN_STATUS_ACTIVE)) {
             return "Token has been revoked";
         }
         return null;
     }
 
     @Override
-    public String checkManagedTokenAccess(String userId, List<String> claimedRoles) {
+    public String checkTokenStatus(String tokenValue, String requiredScope) {
+        String tokenHash = CryptoUtils.sha256Hex(tokenValue);
+        String normalizedRequiredScope = AuthTokenScopes.normalizeRequiredScope(requiredScope);
+        Set<String> allowedScopes = AuthTokenScopes.allowedTokenScopesFor(normalizedRequiredScope);
+        if (authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes)) {
+            return null;
+        }
+        if (authTokenDao.existsByTokenHashAndStatus(tokenHash, TOKEN_STATUS_ACTIVE)) {
+            return "Token scope is not allowed";
+        }
+        return "Token has been revoked";
+    }
+
+    @Override
+    public String checkTokenStatus(String tokenValue, String requiredScope, String workspaceId) {
+        if (StringUtils.isBlank(workspaceId)) {
+            return checkTokenStatus(tokenValue, requiredScope);
+        }
+        String tokenHash = CryptoUtils.sha256Hex(tokenValue);
+        String normalizedRequiredScope = AuthTokenScopes.normalizeRequiredScope(requiredScope);
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+        Set<String> allowedScopes = AuthTokenScopes.allowedTokenScopesFor(normalizedRequiredScope);
+        if (authTokenDao.existsByTokenHashAndStatusAndTokenScopeInAndWorkspaceId(
+                tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes, normalizedWorkspaceId)) {
+            return null;
+        }
+        if (authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(
+            tokenHash, TOKEN_STATUS_ACTIVE, allowedScopes)) {
+            return "Token workspace is not allowed";
+        }
+        if (authTokenDao.existsByTokenHashAndStatus(tokenHash, TOKEN_STATUS_ACTIVE)) {
+            return "Token scope is not allowed";
+        }
+        return "Token has been revoked";
+    }
+
+    @Override
+    public String checkManagedTokenAccess(String userId, List<String> claimedRoles, Long credentialVersion) {
+        return checkCurrentAccess(userId, claimedRoles, credentialVersion);
+    }
+
+    @Override
+    public String checkSessionAccess(String userId, List<String> claimedRoles, Long credentialVersion) {
+        return checkCurrentAccess(userId, claimedRoles, credentialVersion);
+    }
+
+    private String checkCurrentAccess(String userId, List<String> claimedRoles, Long credentialVersion) {
         if (StringUtils.isBlank(userId)) {
             return "Token owner account is no longer valid";
         }
         SurenessAccount account = accountProvider.loadAccount(userId);
+        if (!credentialVersionMatches(account, credentialVersion)) {
+            return "Token credentials are outdated";
+        }
+        return currentAccountAccess(account, claimedRoles);
+    }
+
+    private static String currentAccountAccess(SurenessAccount account, List<String> claimedRoles) {
         if (account == null || account.isDisabledAccount() || account.isExcessiveAttempts()) {
             return "Token owner account is no longer valid";
         }
@@ -282,17 +416,51 @@ public class AccountServiceImpl implements AccountService {
      *
      * @param expireSeconds optional expiration in seconds, null means never expire
      */
-    private String issueApiToken(String userId, List<String> roles, Long expireSeconds) {
-        Map<String, Object> customClaimMap = new HashMap<>(2);
-        customClaimMap.put(CLAIM_MANAGED, true);
+    private String issueApiToken(String userId,
+                                 List<String> roles,
+                                 Long expireSeconds,
+                                 String tokenScope,
+                                 String workspaceId,
+                                 String tokenAudience,
+                                 String collectorId,
+                                 List<String> allowedSignals,
+                                 Long credentialVersion) {
+        Map<String, Object> customClaimMap = new HashMap<>(8);
+        customClaimMap.put(ObservabilityAccessTokenGateway.CLAIM_MANAGED, true);
+        customClaimMap.put(AuthTokenScopes.CLAIM_TOKEN_SCOPE, tokenScope);
+        customClaimMap.put(AuthTokenScopes.CLAIM_WORKSPACE_ID, workspaceId);
+        if (credentialVersion != null) {
+            customClaimMap.put(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, credentialVersion);
+        }
+        if (StringUtils.isNotBlank(tokenAudience)) {
+            customClaimMap.put(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE, tokenAudience);
+        }
+        if (StringUtils.isNotBlank(collectorId)) {
+            customClaimMap.put(AuthTokenScopes.CLAIM_COLLECTOR_ID, collectorId);
+        }
+        if (allowedSignals != null && !allowedSignals.isEmpty()) {
+            customClaimMap.put(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS, List.copyOf(allowedSignals));
+        }
         long effectiveExpire = (expireSeconds != null && expireSeconds > 0) ? expireSeconds : NON_EXPIRING_TOKEN_SECONDS;
         return JsonWebTokenUtil.issueJwt(userId, effectiveExpire, roles, customClaimMap);
     }
 
-    private String issueRefreshToken(String userId, Long expirationMillis) {
-        Map<String, Object> customClaimMap = new HashMap<>(1);
+    private String issueRefreshToken(String userId, Long expirationMillis, Long credentialVersion) {
+        Map<String, Object> customClaimMap = new HashMap<>(2);
         customClaimMap.put(REFRESH_CLAIM, true);
+        if (credentialVersion != null) {
+            customClaimMap.put(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, credentialVersion);
+        }
         return JsonWebTokenUtil.issueJwt(userId, expirationMillis, customClaimMap);
+    }
+
+    private static Long credentialVersion(SurenessAccount account) {
+        return account instanceof VersionedAccount versioned ? versioned.credentialVersion() : null;
+    }
+
+    private static boolean credentialVersionMatches(SurenessAccount account, Long claimedVersion) {
+        return !(account instanceof VersionedAccount versioned)
+                || claimedVersion != null && claimedVersion == versioned.credentialVersion();
     }
 
     private static String maskToken(String token) {
@@ -311,4 +479,5 @@ public class AccountServiceImpl implements AccountService {
         Object principal = subjectSum.getPrincipal();
         return principal == null ? null : String.valueOf(principal);
     }
+
 }

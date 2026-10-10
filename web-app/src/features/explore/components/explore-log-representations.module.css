@@ -1,0 +1,99 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.representations {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0;
+  min-height: 32px;
+  padding: 0;
+}
+.representationLabel {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding-inline: 10px;
+  border: 1px solid var(--hb-border-subtle);
+  border-right: 0;
+  border-radius: var(--hb-radius-control) 0 0 var(--hb-radius-control);
+  background: var(--hb-bg-hover);
+  flex: none;
+  color: var(--hb-text-secondary);
+  font-size: 13px;
+}
+.segmented {
+  display: inline-flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+.segmented :global(.ant-btn) {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--hb-space-1) var(--hb-space-3);
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 0;
+  color: var(--hb-text-primary);
+  font-size: 13px;
+}
+.segmented :global(.ant-btn:first-child) {
+  border-radius: 0;
+}
+.segmented :global(.ant-btn:last-child) {
+  border-radius: 0 var(--hb-radius-control) var(--hb-radius-control) 0;
+}
+.segmented :global(.ant-btn + .ant-btn) {
+  margin-left: -1px;
+}
+.segmented :global(.ant-btn[aria-pressed='true']) {
+  background: var(--hb-brand-accent);
+  border-color: var(--hb-brand-accent);
+  color: var(--ant-color-white);
+}
+.segmented :global(.ant-btn[aria-pressed='true']:hover) {
+  background: var(--ant-color-primary-hover);
+  border-color: var(--ant-color-primary-hover);
+  color: var(--ant-color-white);
+}
+.settingsAction {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+.analysisStatus {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settingsAction > :global(.ant-btn) {
+  width: 32px;
+  height: 32px;
+}
+
+.representations :global(.ant-btn:focus-visible) {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}

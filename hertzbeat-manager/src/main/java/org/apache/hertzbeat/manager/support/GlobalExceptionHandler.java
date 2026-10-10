@@ -17,29 +17,39 @@
 
 package org.apache.hertzbeat.manager.support;
 
+import org.apache.hertzbeat.observability.logs.service.LogAnalysisIntervalTooSmallException;
 import static org.apache.hertzbeat.common.constants.CommonConstants.DETECT_FAILED_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
 import java.util.Objects;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
+import org.apache.hertzbeat.observability.logs.query.LogFilterQueryException;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.manager.support.exception.MonitorMetricsException;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -50,6 +60,68 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final String CONNECT_STR = "||";
+    private static final String UNKNOWN_ERROR_MESSAGE = "unknown error happen";
+    private static final String TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE = "telemetry storage unavailable";
+
+    @ExceptionHandler(LogAnalysisIntervalTooSmallException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleLogAnalysisIntervalTooSmall() {
+        return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(Message.fail(PARAM_INVALID_CODE,
+                        LogAnalysisIntervalTooSmallException.ERROR_CODE));
+    }
+
+    /** Return an explicit retryable response when a bounded signal-query lane cannot accept work. */
+    @ExceptionHandler(ObservabilityQueryAdmissionException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleObservabilityQueryAdmissionException(
+            ObservabilityQueryAdmissionException exception) {
+        HttpStatus status = exception.getReason() == ObservabilityQueryAdmissionException.Reason.OVERLOADED
+                ? HttpStatus.TOO_MANY_REQUESTS
+                : HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(status)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.RETRY_AFTER, "1")
+                .body(Message.fail(FAIL_CODE, exception.getMessage()));
+    }
+
+    /**
+     * Preserve the difference between a valid empty telemetry query and an unavailable store.
+     *
+     * @return a stable response that does not expose SQL, credentials, telemetry, or exception details
+     */
+    @ExceptionHandler(TelemetryStorageUnavailableException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleTelemetryStorageUnavailable() {
+        log.warn("[telemetry storage unavailable]");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(Message.fail(FAIL_CODE, TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE));
+    }
+
+    /** Return a stable HTTP error without echoing rejected query content. */
+    @ExceptionHandler(LogFilterQueryException.class)
+    @ResponseBody
+    ResponseEntity<Message<LogFilterQueryException.Detail>> handleLogFilterQueryException(LogFilterQueryException exception) {
+        Message<LogFilterQueryException.Detail> message = Message.fail(PARAM_INVALID_CODE, LogFilterQueryException.ERROR_CODE);
+        message.setData(exception.detail());
+        return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.APPLICATION_JSON).body(message);
+    }
+
+    @ExceptionHandler(ObservabilityQueryRequestException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleObservabilityQueryRequestException() {
+        return ResponseEntity.badRequest()
+                .body(Message.fail(PARAM_INVALID_CODE, ObservabilityQueryRequestException.ERROR_CODE));
+    }
+
+    /** Return a retryable, cache-safe maintenance response without logging private state. */
+    @ExceptionHandler(MetadataWriteAdmissionException.class)
+    @ResponseBody
+    ResponseEntity<MetadataWriteMaintenanceErrorResponse> handleMetadataWriteAdmissionException(
+            MetadataWriteAdmissionException exception) {
+        return MetadataWriteMaintenanceErrorResponse.httpResponse(exception);
+    }
 
     /**
      * Processing probe failure
@@ -195,10 +267,8 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleDataAccessException(DataAccessException exception) {
         String errorMessage = "database error happen";
-        if (exception != null) {
-            errorMessage = exception.getMessage();
-        }
-        log.warn("[database error happen]-{}", errorMessage, exception);
+        String exceptionType = exception == null ? "unknown" : exception.getClass().getName();
+        log.warn("[database error happen]-exceptionType={}", exceptionType);
         Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
@@ -255,6 +325,35 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Ignore an async response that the client has already disconnected from.
+     * @param exception async response no longer usable
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException exception) {
+        log.debug("[monitor]-[async response no longer usable]-exceptionType={}",
+                exception.getClass().getName());
+    }
+
+    /**
+     * Ignore a converter write failure only when an already committed response
+     * became unusable after an async client disconnect.
+     * @param exception response write failure
+     * @param response servlet response
+     * @return generic error response for genuine conversion failures
+     */
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleHttpMessageNotWritableException(
+            HttpMessageNotWritableException exception, HttpServletResponse response) {
+        if (response.isCommitted() && exception.contains(AsyncRequestNotUsableException.class)) {
+            log.debug("[monitor]-[committed response no longer writable]-exceptionType={}",
+                    exception.getClass().getName());
+            return null;
+        }
+        return handleUnknownException(exception);
+    }
+
+    /**
      * handler the exception thrown for unCatch and unKnown
      * @param exception UnknownException
      * @return response
@@ -262,12 +361,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleUnknownException(Exception exception) {
-        String errorMessage = "unknown error happen";
-        if (exception != null) {
-            errorMessage = exception.getMessage();
-        }
-        log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
+        String exceptionType = exception == null ? "unknown" : exception.getClass().getName();
+        log.error("[monitor]-[unknown error happen]-exceptionType={}", exceptionType);
+        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, UNKNOWN_ERROR_MESSAGE);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
     }
 }

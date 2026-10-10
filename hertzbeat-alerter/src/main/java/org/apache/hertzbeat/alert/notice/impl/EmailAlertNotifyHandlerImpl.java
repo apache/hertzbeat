@@ -54,6 +54,9 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
     @Value("${spring.mail.username:demo}")
     private String username;
 
+    @Value("${hertzbeat.mail.from-address:${spring.mail.username:demo}}")
+    private String fromAddress;
+
     @Value("${spring.mail.password:demo}")
     private String password;
 
@@ -82,7 +85,7 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
         try {
             // get sender
             JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
-            String fromUsername = username;
+            String fromUsername = fromAddress;
             try {
                 boolean useDatabase = false;
                 GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);

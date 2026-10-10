@@ -16,14 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# restart start time
-startTime=$(date +%s)
-echo -e "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Now!\033[0m"
+set -e
+cd "$(dirname "$0")"
 ./shutdown.sh
-echo
-sleep 2
-echo
-./startup.sh
-# restart end time
-endTime=$(date +%s)
-echo -e  "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Success！Spend $((endTime - startTime)) seconds \033[0m";
+./startup.sh "$@"
+echo "Restart Success"

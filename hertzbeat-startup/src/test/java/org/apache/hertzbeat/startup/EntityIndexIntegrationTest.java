@@ -61,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Slf4j
 @SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TrustedStartup
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
     "spring.jpa.hibernate.ddl-auto=create-drop",

@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -31,16 +34,20 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.util.export.YamlExportUtils;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl.ExportMonitorDTO;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl.MonitorDTO;
+import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl.ParamDTO;
 import org.apache.hertzbeat.manager.service.impl.YamlImExportServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -60,6 +67,8 @@ import org.yaml.snakeyaml.Yaml;
 @ExtendWith(MockitoExtension.class)
 class YamlImExportServiceTest {
 
+    private static final String INVALID_YAML_MESSAGE = "Monitor YAML import content is invalid.";
+
     @InjectMocks
     private YamlImExportServiceImpl yamlImExportService;
 
@@ -67,7 +76,7 @@ class YamlImExportServiceTest {
     private MonitorService monitorService;
 
     @Mock
-    private ManagerSseManager managerSseManager;
+    private ImportTaskService importTaskService;
 
     @Test
     void testType() {
@@ -106,13 +115,21 @@ class YamlImExportServiceTest {
     }
 
     @ParameterizedTest
-    @EmptySource
-    @ValueSource(strings = {"   ", "# comment", "null", "[]", "{}", "plain text", "- null", "- 1",
+    @ValueSource(strings = {"{}", "plain text", "- null", "- 1",
             "- {}", "- monitor: null", "- monitor: invalid", "- monitor: {intervals: invalid}", "- monitor: ["})
     void testInvalidImportDoesNotPersistMonitors(String yaml) {
         assertThrows(IllegalArgumentException.class,
                 () -> yamlImExportService.importConfig("invalid.yaml", input(yaml)));
-        verifyNoInteractions(monitorService, managerSseManager);
+        verifyNoInteractions(monitorService, importTaskService);
+    }
+
+    @ParameterizedTest
+    @EmptySource
+    @ValueSource(strings = {"   ", "# comment", "null", "[]"})
+    void testEmptyImportIsCompletedAsNoOp(String yaml) {
+        assertDoesNotThrow(() -> yamlImExportService.importConfig("empty.yaml", input(yaml)));
+        verifyNoInteractions(monitorService);
+        verify(importTaskService).complete("empty.yaml");
     }
 
     @ParameterizedTest
@@ -124,7 +141,7 @@ class YamlImExportServiceTest {
     void testRejectsUnapprovedGlobalTags(String yaml) {
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> yamlImExportService.parseImport(input(yaml)));
-        assertTrue(error.getCause().getMessage().contains("Global tag is not allowed"));
+        assertEquals(INVALID_YAML_MESSAGE, error.getMessage());
     }
 
     @ParameterizedTest
@@ -162,7 +179,7 @@ class YamlImExportServiceTest {
         assertEquals("cron", monitor.getScheduleType());
         assertEquals("0 */5 * * * ?", monitor.getCronExpression());
         assertEquals("HBA2-export-ciphertext", paramsCaptor.getValue().get(2).getParamValue());
-        verify(managerSseManager).broadcastImportTaskSuccess("monitors.yaml");
+        verify(importTaskService).complete("monitors.yaml");
     }
 
     @Test
@@ -178,7 +195,119 @@ class YamlImExportServiceTest {
         yamlImExportService.importConfig("monitors.yaml", new ByteArrayInputStream(output.toByteArray()));
 
         verify(monitorService).addMonitor(any(Monitor.class), eq(List.of()), eq("collector-1"), isNull());
-        verify(managerSseManager).broadcastImportTaskSuccess("monitors.yaml");
+        verify(importTaskService).complete("monitors.yaml");
+    }
+
+
+    @Test
+    void testParseImportNull() {
+
+        InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
+
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = yamlImExportService.parseImport(is);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void importConfigMapsValidYamlIntoMonitorWritePipeline() {
+        String yamlContent = """
+                - monitor:
+                    name: website-prod
+                    app: website
+                    host: example.com
+                    intervals: 60
+                    status: 1
+                  params:
+                    - field: host
+                      type: 1
+                      value: example.com
+                """;
+
+        assertDoesNotThrow(() -> yamlImExportService.importConfig(
+                "monitors.yaml",
+                new ByteArrayInputStream(yamlContent.getBytes(StandardCharsets.UTF_8))));
+
+        ArgumentCaptor<MonitorDto> monitorDtoCaptor = ArgumentCaptor.forClass(MonitorDto.class);
+        verify(monitorService).validate(monitorDtoCaptor.capture(), eq(false));
+        MonitorDto monitorDto = monitorDtoCaptor.getValue();
+        assertEquals("website-prod", monitorDto.getMonitor().getName());
+        assertEquals("website", monitorDto.getMonitor().getApp());
+        assertEquals("example.com", monitorDto.getMonitor().getInstance());
+        assertEquals(1, monitorDto.getParams().size());
+        verify(monitorService).addMonitor(any(Monitor.class), anyList(), isNull(), isNull());
+        verify(importTaskService).complete("monitors.yaml");
+    }
+
+    @Test
+    void importConfigTreatsEmptyYamlAsNoOp() {
+        assertDoesNotThrow(() -> yamlImExportService.importConfig(
+                "empty.yaml",
+                new ByteArrayInputStream(new byte[0])));
+
+        verifyNoInteractions(monitorService);
+        verify(importTaskService).complete("empty.yaml");
+    }
+
+    @Test
+    void importConfigRejectsInvalidFieldTypeWithoutInputLeakage() {
+        String yamlContent = """
+                - monitor:
+                    name: website-prod
+                    app: website
+                    host: example.com
+                    intervals: private-input-value
+                  params: []
+                """;
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> yamlImExportService.importConfig("monitors.yaml", input(yamlContent)));
+
+        assertEquals(INVALID_YAML_MESSAGE, exception.getMessage());
+        assertFalse(exception.getMessage().contains("private-input-value"));
+        verifyNoInteractions(monitorService, importTaskService);
+    }
+
+    @Test
+    void importConfigRejectsRecordWithoutMonitorWithStableMessage() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> yamlImExportService.importConfig("monitors.yaml", input("- foo: bar")));
+
+        assertEquals(INVALID_YAML_MESSAGE, exception.getMessage());
+        verifyNoInteractions(monitorService, importTaskService);
+    }
+
+    @Test
+    void testWriteOs() {
+
+        AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
+        paramDTO.setType((byte) 1);
+        paramDTO.setField("Test");
+        paramDTO.setValue("Test");
+        AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
+        monitorDTO.setLabels(Map.of("env", "prod"));
+        monitorDTO.setIntervals(1);
+        monitorDTO.setStatus((byte) 1);
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto1 = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDto1.setParams(List.of(paramDTO));
+        exportMonitorDto1.setMonitor(monitorDTO);
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto2 = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDto2.setParams(List.of(paramDTO));
+        exportMonitorDto2.setMonitor(monitorDTO);
+
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = Arrays.asList(
+                exportMonitorDto1,
+                exportMonitorDto2
+        );
+        OutputStream os = new ByteArrayOutputStream();
+
+        yamlImExportService.writeOs(monitorList, os);
+
+        String output = os.toString();
+        assertFalse(output.contains("!!"));
+        assertTrue(output.contains("field: Test"));
+        assertTrue(output.contains("params:"));
     }
 
     private ExportMonitorDTO exportedMonitor() {

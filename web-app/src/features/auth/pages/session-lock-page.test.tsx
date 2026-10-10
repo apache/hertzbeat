@@ -1,0 +1,119 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
+import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+
+const controller = vi.hoisted(() => ({
+  canUnlock: true,
+  failure: null as string | null,
+  failureKey: undefined as string | undefined,
+  identity: { username: 'operator', workspaceId: 'workspace-a' },
+  loading: false,
+  logout: vi.fn(),
+  operation: null as 'unlock' | 'logout' | null,
+  password: '',
+  retrySession: vi.fn(),
+  retryableSessionFailure: false,
+  setPassword: vi.fn(),
+  unlock: vi.fn()
+}));
+vi.mock('../controller/use-session-lock-controller', () => ({ useSessionLockController: () => controller }));
+
+import { SessionLockPage } from './session-lock-page';
+import styles from './login-page.module.css';
+
+describe('SessionLockPage', () => {
+  beforeAll(async () => {
+    await initializeI18n();
+    await loadLocale('en-US');
+  });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    controller.loading = false;
+  });
+
+  it('renders an honest loading state without exposing the unlock form', () => {
+    controller.loading = true;
+    render(
+      <I18nextProvider i18n={i18n}>
+        <SessionLockPage />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByText('Checking the current session').closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'loading'
+    );
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+  });
+
+  it('renders a passport-layout re-auth surface without username or redirect inputs', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <SessionLockPage />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Session locked' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/logo.svg');
+    expect(screen.getByText('Enter your password to continue this session.')).toBeInTheDocument();
+    expect(screen.getByText('operator')).toBeInTheDocument();
+    expect(screen.getByText('Workspace: workspace-a')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
+    expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/redirect/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unlock' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+  });
+
+  it('keeps the password controlled in memory and exposes real unlock/logout actions', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <SessionLockPage />
+      </I18nextProvider>
+    );
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'in-memory-only' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+
+    expect(controller.setPassword).toHaveBeenCalledWith('in-memory-only');
+    await waitFor(() => expect(controller.unlock).toHaveBeenCalledOnce());
+    expect(controller.logout).toHaveBeenCalledOnce();
+    expect(document.body.textContent).not.toContain('in-memory-only');
+  });
+
+  it('owns a full-width vertical action stack with two block buttons', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <SessionLockPage />
+      </I18nextProvider>
+    );
+
+    const unlock = screen.getByRole('button', { name: 'Unlock' });
+    const logout = screen.getByRole('button', { name: 'Sign out' });
+    const actionStack = unlock.closest('.ant-space-vertical');
+
+    expect(actionStack).toHaveClass(styles.actions ?? '');
+    expect(unlock).toHaveClass('ant-btn-block');
+    expect(logout).toHaveClass('ant-btn-block');
+  });
+});

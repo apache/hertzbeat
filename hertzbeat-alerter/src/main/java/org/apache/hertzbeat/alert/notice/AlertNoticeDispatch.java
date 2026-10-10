@@ -42,7 +42,10 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Alarm information storage and distribution
@@ -57,17 +60,20 @@ public class AlertNoticeDispatch {
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
     private final PluginRunner pluginRunner;
     private final AlertSseManager emitterManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AlertNoticeDispatch(AlerterWorkerPool workerPool,
                                NoticeConfigService noticeConfigService,
                                AlertStoreHandler alertStoreHandler,
-                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner, AlertSseManager emitterManager) {
+                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner,
+                               AlertSseManager emitterManager, ApplicationEventPublisher eventPublisher) {
         this.workerPool = workerPool;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
         this.pluginRunner = pluginRunner;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
         this.emitterManager = emitterManager;
+        this.eventPublisher = eventPublisher;
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
     }
 
@@ -114,18 +120,60 @@ public class AlertNoticeDispatch {
         return Optional.ofNullable(noticeConfigService.getReceiverFilterRule(alert));
     }
     
-    public void dispatchAlarm(GroupAlert groupAlert) {
-        if (groupAlert != null) {
-            // Determining alarm type storage
-            GroupAlert storedGroupAlert = alertStoreHandler.store(groupAlert);
-            // Notice distribution
-            sendNotify(storedGroupAlert);
-            // Execute the plugin if enable (Compatible with old version plugins, will be removed in later versions)
-            pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(storedGroupAlert));
-            // Execute the plugin if enable with params
-            pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(storedGroupAlert, pluginContext));
-            // Send alert to the sse client
-            emitterManager.broadcast(JsonUtil.toJson(storedGroupAlert));
+    public boolean dispatchAlarm(GroupAlert groupAlert) {
+        if (groupAlert == null) {
+            return false;
+        }
+        GroupAlert storedGroupAlert = alertStoreHandler.store(groupAlert);
+        dispatchAfterStore(storedGroupAlert);
+        return true;
+    }
+
+    private void dispatchAfterStore(GroupAlert storedGroupAlert) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+                throw new IllegalStateException("transaction_synchronization_required");
+            }
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    dispatchPersisted(storedGroupAlert);
+                }
+            });
+            return;
+        }
+        dispatchPersisted(storedGroupAlert);
+    }
+
+    private void dispatchPersisted(GroupAlert storedGroupAlert) {
+        runAfterStore(() -> publishPersistedAlerts(storedGroupAlert), "created-event");
+        runAfterStore(() -> sendNotify(storedGroupAlert), "notice");
+        runAfterStore(() -> pluginRunner.pluginExecute(
+                Plugin.class, plugin -> plugin.alert(storedGroupAlert)), "legacy-plugin");
+        runAfterStore(() -> pluginRunner.pluginExecute(PostAlertPlugin.class,
+                (plugin, context) -> plugin.execute(storedGroupAlert, context)), "post-plugin");
+        runAfterStore(() -> emitterManager.broadcast(
+                storedGroupAlert.getWorkspaceId(), JsonUtil.toJson(storedGroupAlert)), "sse");
+    }
+
+    private void publishPersistedAlerts(GroupAlert storedGroupAlert) {
+        if (storedGroupAlert == null || storedGroupAlert.getAlerts() == null) {
+            return;
+        }
+        for (SingleAlert alert : storedGroupAlert.getAlerts()) {
+            if (alert == null || alert.getId() == null || alert.getWorkspaceId() == null
+                    || alert.getWorkspaceId().isBlank()) {
+                throw new IllegalStateException("persisted_alert_required");
+            }
+            eventPublisher.publishEvent(new SingleAlert.CreatedEvent(alert.clone()));
+        }
+    }
+
+    private void runAfterStore(Runnable action, String stage) {
+        try {
+            action.run();
+        } catch (RuntimeException exception) {
+            log.warn("Post-store alert dispatch failed at stage: {}", stage);
         }
     }
 

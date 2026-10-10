@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.warehouse.listener;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -31,15 +34,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class WareHouseApplicationReadyListener {
 
-    private final Optional<AbstractHistoryDataStorage> historyDataStorage;
+    private final List<AbstractHistoryDataStorage> historyDataStorages;
+
+    @Autowired
+    public WareHouseApplicationReadyListener(List<AbstractHistoryDataStorage> historyDataStorages) {
+        this.historyDataStorages = historyDataStorages == null ? List.of()
+                : historyDataStorages.stream().filter(Objects::nonNull).toList();
+    }
 
     public WareHouseApplicationReadyListener(Optional<AbstractHistoryDataStorage> historyDataStorage) {
-        this.historyDataStorage = historyDataStorage;
+        this(historyDataStorage == null ? List.of() : historyDataStorage.stream().toList());
     }
 
     @EventListener(classes = {ApplicationReadyEvent.class})
     public void listen() {
-        if (historyDataStorage.isEmpty()) {
+        if (historyDataStorages.isEmpty()) {
             log.warn("The historical data repository is not configured");
         }
     }

@@ -1,0 +1,107 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.table th,
+.table td {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  text-align: left;
+}
+.table [data-log-stat] {
+  width: 110px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table td:first-child {
+  position: relative;
+}
+.label {
+  display: block;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  background: var(--hb-bg-selected);
+}
+.scroll {
+  max-height: min(55vh, 560px);
+  overflow: auto;
+}
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--hb-surface-container);
+}
+
+.zeroAxis {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-left: 1px solid var(--hb-border-default);
+}
+
+@media (max-width: 600px) {
+  .table th:last-child,
+  .table td:last-child {
+    width: 80px;
+  }
+}
+
+.controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--hb-space-3);
+  padding: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hb-space-1);
+  font-size: 12px;
+}
+.controls select {
+  height: var(--hb-workbench-control-height, 32px);
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 4px;
+  background: var(--hb-surface-container);
+  color: var(--hb-text-primary);
+}
+.controls select:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+.measureHint {
+  color: var(--hb-text-secondary);
+  margin: var(--hb-space-2) 0;
+}

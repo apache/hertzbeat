@@ -28,6 +28,12 @@
     <artifactId>hertzbeat-collector-rocketmq</artifactId>
     <name>${project.artifactId}</name>
 
+    <properties>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>

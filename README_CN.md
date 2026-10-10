@@ -10,22 +10,21 @@
 </p>
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
+[![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 
 
-**官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
+**官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
 **邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅邮件列表
 
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
@@ -39,26 +38,26 @@
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 
-> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。
+> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。    
 
 ----
 
 ----
 
-## 🥐 模块
+## 🥐 模块  
 
-![hertzBeat](home/static/img/docs/hertzbeat-architecture.png)
+![hertzBeat](home/static/img/docs/hertzbeat-architecture.png)      
 
-## 🐕 快速开始
+## 🐕 快速开始  
 
-- 如果您是想将 HertzBeat 部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。
+- 如果您是想将 HertzBeat 部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
 
 ### 🍞 HertzBeat 安装
 > HertzBeat 支持通过源码安装启动，Docker 容器运行和安装包方式安装部署，CPU 架构支持 x86/arm64。
 
-##### 方式一：Docker 方式快速安装
+##### 方式一：Docker 方式快速安装  
 
-1. `docker` 环境仅需一条命令即可开始
+1. `docker` 环境仅需一条命令即可开始     
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
@@ -82,12 +81,12 @@
 
 ##### 方式二：通过安装包安装
 
-1. 下载您系统环境对应的安装包 `apache-hertzbeat-xx-bin.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+1. 下载您系统环境对应的安装包 `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 5. 部署采集器集群（可选）
-   - 下载采集器安装包 `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM 采集器）或与你目标平台匹配的 Native 采集器安装包，例如 `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`，到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
+   - 下载采集器安装包 `hertzbeat-collector-xx.tar.gz` 到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主 HertzBeat 服务的对外 IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
@@ -100,9 +99,7 @@
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - 如果没有在 `ext-lib` 中提供 JDBC 驱动，MySQL、MariaDB、OceanBase 可以直接使用内置查询引擎，也可以使用 Native 采集器安装包；TiDB 的 SQL 查询指标也遵循同样规则。
-   - 如果在 `ext-lib` 中放入了 `mysql-connector-j`，主程序内置采集器或 JVM 采集器会在重启后自动优先走 JDBC；这一点现在适用于 MySQL、MariaDB、OceanBase，TiDB 的 SQL 查询指标也遵循同样规则，而它的 HTTP 指标不受影响。Oracle、DB2 仍然必须使用 JVM 采集器安装包，因为它们依赖外置 JDBC 驱动。
-   - JVM 采集器安装包使用 `$ ./bin/startup.sh ` 或 `bin/startup.bat` 启动。Linux 或 macOS 的 Native 采集器安装包使用 `$ ./bin/startup.sh ` 启动，Windows 的 Native 采集器安装包使用 `bin\\startup.bat` 启动
+   - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
    - 浏览器访问主 HertzBeat 服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
@@ -110,8 +107,8 @@
 ##### 方式三：本地代码启动
 
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `hertzbeat-startup` 和前端工程 `web-app`
-2. 后端：需要 `maven3+`, `java25` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
-3. 前端：需要 `nodejs` 和 `pnpm` 环境，待本地后端启动后，在 `web-app` 目录下执行 `pnpm install` 再执行 `pnpm start`
+2. 后端：需要 `maven3+`、Java 25 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
+3. 前端：需要 `Node.js 22` 和 `pnpm 10` 环境，待本地后端启动后，在 `web-app` 目录下执行 `corepack pnpm@10.9.0 install --frozen-lockfile && corepack pnpm@10.9.0 dev`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
@@ -120,7 +117,7 @@
 
 通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)
+详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
 
 ##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
 
@@ -141,7 +138,7 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 社区交流
 
-##### Channel
+##### Channel 
 
 [订阅邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : 发送邮件至 `dev-subscribe@hertzbeat.apache.org` 来订阅邮件列表.
 
@@ -151,7 +148,11 @@ Thanks these wonderful people, welcome to join us:
 
 微信公众号 : 搜索 ID `usthecom`.
 
+[QQ交流群](https://qm.qq.com/q/xxqecSC2cw) : 群号 `1035688434`
+
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
+
+[Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
 [Follow Us Twitter](https://x.com/hertzbeat1024)
 
@@ -163,7 +164,7 @@ Thanks these wonderful people, welcome to join us:
 HertzBeat is built on so many great open source projects, thanks to them!
 
 - `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Protobuf HttpClient Guava SnakeYaml JsonPath ...`
-- `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
+- `TypeScript Next.js React Tailwind CSS Node.js Npm ECharts G6 MonacoEditor Docusaurus ...`
 
 
 ## Landscape

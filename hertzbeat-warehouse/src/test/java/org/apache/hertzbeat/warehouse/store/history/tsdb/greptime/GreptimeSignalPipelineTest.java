@@ -20,10 +20,32 @@ package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
 class GreptimeSignalPipelineTest {
+
+    @Test
+    void pipelineResourceHasOneCanonicalClasspathDefinition() throws Exception {
+        var resources = Thread.currentThread().getContextClassLoader()
+                .getResources("greptime/pipelines/hertzbeat_otlp_log_v1.yaml");
+        assertThat(Collections.list(resources)).hasSize(1);
+    }
+
+    @Test
+    void precreatedTableMatchesTheCanonicalPipelineColumnsAndIndexes() throws Exception {
+        String schema = new ClassPathResource("greptime/tables/hertzbeat_logs.sql")
+                .getContentAsString(StandardCharsets.UTF_8);
+        for (String name : new String[] {"trace_id", "span_id", "hertzbeat_event_id", "log_record_uid",
+                "hertzbeat_ingest_id", "hertzbeat_entity_id", "hertzbeat_workspace_id"}) {
+            assertThat(schema).contains("\"" + name + "\" STRING NULL SKIPPING INDEX");
+        }
+        assertThat(schema).contains("\"timestamp\" TIMESTAMP(9) TIME INDEX", "\"body\" STRING NULL FULLTEXT INDEX",
+                "\"log_attributes\" JSON NULL", "\"resource_attributes\" JSON NULL", "PRIMARY KEY (\"service_name\")",
+                "'append_mode' = 'true'");
+        assertThat(schema).doesNotContain("\"time_unix_nano\"", "\"attributes\"", "\"resource\"");
+    }
 
     @Test
     void shouldStoreOtlpBodyAsStringAndAttributesAsJson() throws Exception {
@@ -32,6 +54,6 @@ class GreptimeSignalPipelineTest {
 
         assertThat(pipeline).contains("- field: body\n    type: string");
         assertThat(pipeline).doesNotContain("- body\n      - attributes");
-        assertThat(pipeline).contains("- attributes\n      - resource\n      - instrumentation_scope\n    type: json");
+        assertThat(pipeline).contains("- log_attributes\n      - resource_attributes\n    type: json");
     }
 }

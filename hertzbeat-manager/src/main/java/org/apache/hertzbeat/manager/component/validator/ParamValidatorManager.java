@@ -43,6 +43,6 @@ public class ParamValidatorManager {
             }
         }
         // No validator found for the given type.
-        throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
+        throw ParamValidator.invalidParameter();
     }
 }

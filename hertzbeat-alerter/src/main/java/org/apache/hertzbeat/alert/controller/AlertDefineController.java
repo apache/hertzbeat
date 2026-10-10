@@ -107,7 +107,7 @@ public class AlertDefineController {
             description = "If the expression is formal, then the result of the query will be returned, otherwise it will respond with an error")
     public ResponseEntity<Message<List<Map<String, Object>>>> getDefinePreview(
             @Parameter(description = "Data Source Type", example = "promql") @PathVariable("datasource") String datasource,
-            @Parameter(description = "alert threshold type:realtime,periodic") @RequestParam String type,
+            @Parameter(description = "alert threshold type, e.g. periodic_metric, periodic_log, periodic_trace") @RequestParam String type,
             @Parameter(description = "alert threshold expression") @RequestParam String expr) {
         try {
             return ResponseEntity.ok(Message.successWithData(alertDefineService.getDefinePreview(datasource, type, expr)));

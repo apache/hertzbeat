@@ -1,0 +1,629 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { objectStoreMigrationConflictCode, ObjectStoreRequestFailure } from '../model/object-store-failure';
+import { createObjectStoreDraft, type ObjectStoreResourceRecord } from '../model/object-store-model';
+import { useObjectStoreResourceController } from './object-store-resource-controller';
+
+const refine = vi.hoisted(() => ({
+  invalidate: vi.fn(),
+  notification: vi.fn(),
+  providerUpdate: vi.fn(),
+  refetch: vi.fn(),
+  useDataProvider: vi.fn(),
+  useInvalidate: vi.fn(),
+  useOne: vi.fn(),
+  useNotification: vi.fn()
+}));
+const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
+
+vi.mock('@refinedev/core', () => ({
+  useDataProvider: refine.useDataProvider,
+  useInvalidate: refine.useInvalidate,
+  useOne: refine.useOne,
+  useNotification: refine.useNotification
+}));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { authenticated: true, roles: auth.roles } })
+}));
+
+const serverRecord: ObjectStoreResourceRecord = {
+  id: 'current',
+  type: 'OBS',
+  config: {
+    bucketName: 'bucket',
+    endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+    savePath: 'hertzbeat'
+  },
+  configuredSecrets: ['accessKey', 'secretKey']
+};
+const databaseRecord: ObjectStoreResourceRecord = {
+  id: 'current',
+  type: 'DATABASE',
+  config: {},
+  configuredSecrets: []
+};
+
+describe('Object Store resource controller', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.roles = ['ADMIN'];
+    refine.refetch.mockReset();
+    refine.invalidate.mockReset();
+    refine.invalidate.mockResolvedValue(undefined);
+    refine.providerUpdate.mockReset();
+    refine.providerUpdate.mockReturnValue(new Promise(() => undefined));
+    refine.refetch.mockResolvedValue({ data: { data: serverRecord }, error: null, isError: false });
+    refine.useDataProvider.mockReturnValue(() => ({ update: refine.providerUpdate }));
+    refine.useInvalidate.mockReturnValue(refine.invalidate);
+    refine.useOne.mockReturnValue(buildOneResult());
+    refine.useNotification.mockReturnValue({ open: refine.notification });
+  });
+
+  it('uses the named singleton provider without placing secret variables in a shared mutation cache', () => {
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(refine.useOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'object-store',
+        id: 'current',
+        dataProviderName: 'object-store'
+      })
+    );
+    expect(refine.useDataProvider).toHaveBeenCalledWith();
+
+    const editable = createObjectStoreDraft(serverRecord);
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: {
+          ...editable.config,
+          accessKey: 'changed-ak',
+          secretKey: 'runtime-only-secret'
+        }
+      })
+    );
+    act(() => result.current.submit());
+
+    expect(refine.providerUpdate).toHaveBeenCalledWith({
+      resource: 'object-store',
+      id: 'current',
+      variables: expect.objectContaining({ type: 'OBS', config: expect.objectContaining({ accessKey: 'changed-ak' }) })
+    });
+  });
+
+  it.each([
+    ['loading', { isPending: true }],
+    ['unavailable', { isError: true, error: unavailableFailure(), result: undefined }],
+    [
+      'invalid',
+      {
+        isError: true,
+        error: invalidFailure(),
+        result: undefined
+      }
+    ],
+    ['error', { isError: true, error: { statusCode: 503 }, result: undefined }],
+    ['error', { isError: true, error: { statusCode: 400 }, result: undefined }],
+    ['ready', {}]
+  ])('maps authoritative evidence to the %s state', (kind, override) => {
+    refine.useOne.mockReturnValue(buildOneResult(override));
+
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(result.current.state.kind).toBe(kind);
+  });
+
+  it('creates an unsaved DATABASE baseline and accepts its first canonical save', async () => {
+    refine.useOne.mockReturnValue(buildOneResult({ isError: false, result: undefined }));
+    refine.providerUpdate.mockResolvedValue({ data: databaseRecord });
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      unconfigured: true,
+      current: { type: 'DATABASE', config: {}, configuredSecrets: [] },
+      dirty: false,
+      canSubmit: true
+    });
+
+    act(() => result.current.submit());
+
+    expect(refine.providerUpdate).toHaveBeenCalledWith({
+      resource: 'object-store',
+      id: 'current',
+      variables: { type: 'DATABASE', config: {}, configuredSecrets: [] }
+    });
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({
+        kind: 'ready',
+        unconfigured: false,
+        dirty: false,
+        canSubmit: false,
+        current: { type: 'DATABASE' }
+      })
+    );
+  });
+
+  it('keeps an unconfigured server non-editable for a read-only role', () => {
+    auth.roles = ['GUEST'];
+    refine.useOne.mockReturnValue(buildOneResult({ isError: false, result: undefined }));
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(result.current.state).toEqual({ kind: 'missing' });
+    act(() => result.current.submit());
+    expect(refine.providerUpdate).not.toHaveBeenCalled();
+  });
+
+  it('does not write for no-op, invalid, or discarded drafts', () => {
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      current: { config: { secretKey: '' } }
+    });
+    act(() => result.current.submit());
+    act(() => result.current.updateDraft({ type: 'OBS', config: {}, configuredSecrets: [] }));
+    act(() => result.current.submit());
+    expect(result.current.state).toMatchObject({ kind: 'ready', showValidation: true });
+    act(() => result.current.discard());
+
+    expect(refine.providerUpdate).not.toHaveBeenCalled();
+    expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, showValidation: false });
+  });
+
+  it('accepts canonical success and invalidates only the named singleton detail without its secret', async () => {
+    refine.providerUpdate.mockResolvedValue({
+      data: { ...serverRecord, config: { ...serverRecord.config, bucketName: 'canonical' } }
+    });
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const editable = createObjectStoreDraft(serverRecord);
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: { ...editable.config, secretKey: 'runtime-only-secret' }
+      })
+    );
+    act(() => result.current.submit());
+    expect(result.current.state).toMatchObject({ kind: 'ready', dirty: true });
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      dirty: true,
+      current: { config: expect.objectContaining({ secretKey: 'runtime-only-secret' }) }
+    });
+    await waitFor(() => {
+      expect(result.current.state).toMatchObject({
+        kind: 'ready',
+        dirty: false,
+        showValidation: false,
+        current: { config: expect.objectContaining({ bucketName: 'canonical', accessKey: '', secretKey: '' }) }
+      });
+      expect(JSON.stringify(result.current.state)).not.toContain('runtime-only-secret');
+    });
+    expect(refine.invalidate).toHaveBeenCalledWith({
+      resource: 'object-store',
+      id: 'current',
+      dataProviderName: 'object-store',
+      invalidates: ['detail']
+    });
+    expect(JSON.stringify(refine.invalidate.mock.calls)).not.toContain('runtime-only-secret');
+  });
+
+  it.each([
+    ['rejects', () => refine.invalidate.mockRejectedValue(new Error('private-invalidation-failure'))],
+    [
+      'throws',
+      () =>
+        refine.invalidate.mockImplementation(() => {
+          throw new Error('private-invalidation-failure');
+        })
+    ]
+  ])('keeps canonical success when best-effort cache invalidation %s', async (_label, failInvalidation) => {
+    refine.providerUpdate.mockResolvedValue({
+      data: { ...serverRecord, config: { ...serverRecord.config, bucketName: 'canonical' } }
+    });
+    failInvalidation();
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const editable = createObjectStoreDraft(serverRecord);
+
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: { ...editable.config, secretKey: 'runtime-only-secret' }
+      })
+    );
+    act(() => result.current.submit());
+
+    await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, saving: false }));
+    expect(result.current.state).toMatchObject({
+      current: { config: expect.objectContaining({ bucketName: 'canonical', accessKey: '', secretKey: '' }) }
+    });
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+    expect(refine.invalidate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
+    expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('private-invalidation-failure');
+  });
+
+  it('admits one save and locks draft mutations until its owner completes', () => {
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const submitted = {
+      ...createObjectStoreDraft(serverRecord),
+      config: {
+        ...createObjectStoreDraft(serverRecord).config,
+        accessKey: 'submitted-ak',
+        secretKey: 'runtime-only-secret'
+      }
+    };
+    act(() => result.current.updateDraft(submitted));
+
+    act(() => {
+      result.current.submit();
+      result.current.submit();
+      result.current.updateDraft({ ...submitted, config: { ...submitted.config, accessKey: 'late-ak' } });
+      result.current.discard();
+      void result.current.retry();
+    });
+
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(result.current.state).toMatchObject({ kind: 'ready', current: submitted, saving: true });
+  });
+
+  it('keeps the editable secret out of browser persistence and logs', () => {
+    const locationBeforeSave = window.location.href;
+    const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const editable = createObjectStoreDraft(serverRecord);
+
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: { ...editable.config, secretKey: 'runtime-only-secret' }
+      })
+    );
+    act(() => result.current.submit());
+
+    expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime-only-secret');
+    expect(
+      JSON.stringify([
+        ...log.mock.calls,
+        ...info.mock.calls,
+        ...debug.mock.calls,
+        ...warn.mock.calls,
+        ...error.mock.calls
+      ])
+    ).not.toContain('runtime-only-secret');
+    expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('runtime-only-secret');
+    expect(window.location.href).toBe(locationBeforeSave);
+    storageWrite.mockRestore();
+    log.mockRestore();
+    info.mockRestore();
+    debug.mockRestore();
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
+  it('owns retry without changing the singleton identity', async () => {
+    refine.useOne.mockReturnValue(buildOneResult({ isError: true, result: undefined }));
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    await act(async () => result.current.retry());
+
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(ambiguousWriteFailures)(
+    'proves an ambiguous %s save by canonical reread without repeating POST',
+    async (_label, failure) => {
+      refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+      refine.refetch.mockResolvedValue({
+        data: { data: { ...databaseRecord, type: 'FILE' } },
+        error: null,
+        isError: false
+      });
+      refine.providerUpdate.mockRejectedValueOnce(failure());
+      const { result } = renderHook(() => useObjectStoreResourceController());
+
+      act(() => result.current.updateDraft(fileDraft()));
+      act(() => result.current.submit());
+
+      await waitFor(() => expect(refine.refetch).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', recovery: null }));
+      expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
+      expectPrivateFailureNotPublished(result.current.state);
+    }
+  );
+
+  it('keeps a secret save locked when its canonical reconciliation reread is unavailable', async () => {
+    refine.providerUpdate.mockRejectedValueOnce(unavailableFailure());
+    refine.refetch.mockRejectedValueOnce(unavailableFailure());
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const submitted = {
+      ...createObjectStoreDraft(serverRecord),
+      config: { ...createObjectStoreDraft(serverRecord).config, secretKey: 'runtime-only-secret' }
+    };
+    act(() => result.current.updateDraft(submitted));
+    act(() => result.current.submit());
+    await waitFor(() => expect(result.current.state).toMatchObject({ recovery: { phase: 'commit-uncertain' } }));
+
+    await act(async () => result.current.retry());
+
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toMatchObject({ locked: true, recovery: { phase: 'commit-uncertain' } });
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
+
+  it.each(definiteWriteRejections)(
+    'unlocks an OBS secret draft after a definite %s rejection',
+    async (_label, rejection) => {
+      const locationBeforeSave = window.location.href;
+      const { result } = renderHook(() => useObjectStoreResourceController());
+      const submitted = {
+        ...createObjectStoreDraft(serverRecord),
+        config: { ...createObjectStoreDraft(serverRecord).config, secretKey: 'runtime-only-secret' }
+      };
+      refine.providerUpdate.mockRejectedValueOnce(rejection());
+
+      act(() => result.current.updateDraft(submitted));
+      act(() => result.current.submit());
+
+      await waitFor(() =>
+        expect(result.current.state).toMatchObject({
+          kind: 'ready',
+          current: submitted,
+          dirty: true,
+          locked: false,
+          recovery: null
+        })
+      );
+      expect(refine.refetch).not.toHaveBeenCalled();
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveFailed', type: 'error' });
+      expect(window.location.href).toBe(locationBeforeSave);
+      expectPrivateFailureNotPublished(result.current.state);
+      act(() => result.current.submit());
+      expect(refine.providerUpdate).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  it('keeps the draft and explains a target definition conflict without retrying the write', async () => {
+    refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+    refine.providerUpdate.mockRejectedValueOnce(
+      new ObjectStoreRequestFailure('invalid', 'rejected', { code: objectStoreMigrationConflictCode })
+    );
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    act(() => result.current.updateDraft(fileDraft()));
+    act(() => result.current.submit());
+
+    await waitFor(() => expect(result.current.state).toMatchObject({ locked: false, dirty: true }));
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(refine.notification).toHaveBeenCalledWith({
+      message: 'objectStore.migrationConflict',
+      type: 'error'
+    });
+  });
+
+  it.each(definiteWriteRejections)(
+    'does not start canonical proof after a definite FILE %s rejection',
+    async (_label, rejection) => {
+      refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+      refine.providerUpdate.mockRejectedValueOnce(rejection());
+      const { result } = renderHook(() => useObjectStoreResourceController());
+
+      act(() => result.current.updateDraft(fileDraft()));
+      act(() => result.current.submit());
+
+      await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null }));
+      expect(refine.refetch).not.toHaveBeenCalled();
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveFailed', type: 'error' });
+    }
+  );
+
+  it('retains proof-only recovery and retries GET without repeating an ambiguous write', async () => {
+    refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+    refine.refetch
+      .mockResolvedValueOnce({ data: undefined, error: unavailableFailure(), isError: true })
+      .mockResolvedValueOnce({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
+    refine.providerUpdate.mockRejectedValueOnce(envelopeFailure());
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    act(() => result.current.updateDraft(fileDraft()));
+    act(() => result.current.submit());
+
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({ kind: 'ready', locked: true, recovery: { phase: 'proof' } })
+    );
+    act(() => {
+      result.current.submit();
+      result.current.discard();
+      result.current.updateDraft(databaseDraft());
+    });
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.retry());
+
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null });
+  });
+
+  it.each(ambiguousWriteFailures)(
+    'reconciles an OBS secret save after an ambiguous %s outcome without replaying or claiming success',
+    async (_label, failure) => {
+      const locationBeforeSave = window.location.href;
+      const { result } = renderHook(() => useObjectStoreResourceController());
+      const submitted = {
+        ...createObjectStoreDraft(serverRecord),
+        config: { ...createObjectStoreDraft(serverRecord).config, secretKey: 'runtime-only-secret' }
+      };
+      refine.providerUpdate.mockRejectedValueOnce(failure());
+
+      act(() => result.current.updateDraft(submitted));
+      act(() => result.current.submit());
+
+      await waitFor(() =>
+        expect(result.current.state).toMatchObject({
+          kind: 'ready',
+          current: submitted,
+          locked: true,
+          recovery: { phase: 'commit-uncertain' }
+        })
+      );
+      await act(async () => result.current.retry());
+      expect(refine.refetch).toHaveBeenCalledTimes(1);
+      expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+      expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null, dirty: false });
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.reconcileComplete', type: 'progress' });
+      expect(refine.notification).not.toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
+      expect(window.location.href).toBe(locationBeforeSave);
+      expectPrivateFailureNotPublished(result.current.state);
+    }
+  );
+
+  it('retires fresh credentials and ignores a late write result after ADMIN access is lost', async () => {
+    const write = deferred<{ data: ObjectStoreResourceRecord }>();
+    refine.providerUpdate.mockReturnValue(write.promise);
+    const { result, rerender } = renderHook(() => useObjectStoreResourceController());
+    const submitted = {
+      ...createObjectStoreDraft(serverRecord),
+      config: {
+        ...createObjectStoreDraft(serverRecord).config,
+        accessKey: 'runtime-only-access',
+        secretKey: 'runtime-only-secret'
+      }
+    };
+    act(() => result.current.updateDraft(submitted));
+    act(() => result.current.submit());
+
+    auth.roles = ['USER'];
+    rerender();
+
+    expect(result.current.canWrite).toBe(false);
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      locked: false,
+      dirty: false,
+      current: { config: { accessKey: '', secretKey: '' } }
+    });
+    write.resolve({ data: { ...serverRecord, config: { ...serverRecord.config, bucketName: 'late-result' } } });
+    await act(async () => write.promise);
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      current: { config: { bucketName: 'bucket', accessKey: '', secretKey: '' } }
+    });
+    expect(refine.notification).not.toHaveBeenCalled();
+  });
+
+  it('retires an in-flight proof on unmount without publishing a notification', async () => {
+    const proof = deferred<{ data: { data: ObjectStoreResourceRecord }; error: null; isError: false }>();
+    refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+    refine.refetch.mockReturnValue(proof.promise);
+    refine.providerUpdate.mockRejectedValueOnce(unavailableFailure());
+    const { result, unmount } = renderHook(() => useObjectStoreResourceController());
+
+    act(() => result.current.updateDraft(fileDraft()));
+    act(() => result.current.submit());
+    unmount();
+    proof.resolve({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
+    await act(async () => proof.promise);
+
+    expect(refine.notification).not.toHaveBeenCalled();
+  });
+});
+
+function buildOneResult(override: Record<string, unknown> = {}) {
+  return {
+    query: {
+      error: null,
+      isError: false,
+      isFetching: false,
+      isPending: false,
+      refetch: refine.refetch,
+      ...override
+    },
+    result: Object.hasOwn(override, 'result') ? override.result : serverRecord
+  };
+}
+
+function fileDraft() {
+  return { type: 'FILE' as const, config: {}, configuredSecrets: [] };
+}
+
+function databaseDraft() {
+  return { type: 'DATABASE' as const, config: {}, configuredSecrets: [] };
+}
+
+const ambiguousWriteFailures = [
+  ['network', unavailableFailure],
+  ['5xx', unavailableFailure],
+  ['business envelope', envelopeFailure],
+  ['malformed success', invalidFailure],
+  ['unexpected cause', () => new Error(privateFailureMessage, { cause: new Error(privateFailureCause) })]
+] as const;
+
+const definiteWriteRejections = [['HTTP 4xx', rejectedFailure]] as const;
+
+function unavailableFailure() {
+  return new ObjectStoreRequestFailure('unavailable', 'uncertain');
+}
+
+function invalidFailure() {
+  return new ObjectStoreRequestFailure('invalid', 'uncertain', { code: 'OBJECT_STORE_RESPONSE_INVALID' });
+}
+
+function envelopeFailure() {
+  return new ObjectStoreRequestFailure('error', 'uncertain');
+}
+
+function rejectedFailure() {
+  return new ObjectStoreRequestFailure('error', 'rejected');
+}
+
+const privateFailureMessage = 'private-write-failure-message';
+const privateFailureCause = 'private-write-failure-cause';
+
+function expectPrivateFailureNotPublished(state: unknown) {
+  // The retry draft may retain plaintext in component memory. Query results and
+  // notifications are separate publishable surfaces and must remain secret-free.
+  const publishable = JSON.stringify({
+    queryResults: refine.useOne.mock.results,
+    notifications: refine.notification.mock.calls
+  });
+  expect(publishable).not.toContain('runtime-only-secret');
+  expect(JSON.stringify({ state, notifications: refine.notification.mock.calls })).not.toContain(privateFailureMessage);
+  expect(JSON.stringify({ state, notifications: refine.notification.mock.calls })).not.toContain(privateFailureCause);
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}

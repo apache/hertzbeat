@@ -17,55 +17,20 @@
 
 package org.apache.hertzbeat.manager.config;
 
-import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.CoreErrorCode;
-import org.flywaydb.core.api.ErrorDetails;
-import org.flywaydb.core.api.exception.FlywayValidateException;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
-import org.mockito.Mockito;
-import org.springframework.boot.flyway.autoconfigure.FlywayProperties;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-/**
- * Test case for {@link FlywayConfiguration}
- */
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.Test;
+
 class FlywayConfigurationTest {
 
-    private final Flyway flyway = Mockito.mock(Flyway.class);
-    private final FlywayConfiguration configuration = new FlywayConfiguration();
-
-    private FlywayProperties enabledProperties() {
-        FlywayProperties properties = new FlywayProperties();
-        properties.setEnabled(true);
-        return properties;
-    }
-
-    private static FlywayValidateException validateException(String message) {
-        return new FlywayValidateException(new ErrorDetails(CoreErrorCode.VALIDATE_ERROR, message), message);
-    }
-
     @Test
-    void repairsAndRetriesWhenHistoryHasFailedMigration() {
-        Mockito.when(flyway.migrate())
-                .thenThrow(validateException("Detected failed migration to version 190 (update column)"))
-                .thenReturn(null);
+    void migratesBeforeJpaInsteadOfWaitingForHibernateSchemaMutation() throws Exception {
+        Flyway flyway = mock(Flyway.class);
 
-        configuration.delayedFlywayInitializer(flyway, enabledProperties());
+        new FlywayConfiguration().flywayInitializer(flyway).afterPropertiesSet();
 
-        InOrder inOrder = Mockito.inOrder(flyway);
-        inOrder.verify(flyway).migrate();
-        inOrder.verify(flyway).repair();
-        inOrder.verify(flyway).migrate();
-    }
-
-    @Test
-    void rethrowsOtherValidationErrorsWithoutRepair() {
-        Mockito.when(flyway.migrate())
-                .thenThrow(validateException("Migration checksum mismatch for migration version 180"));
-
-        Assertions.assertThrows(FlywayValidateException.class,
-                () -> configuration.delayedFlywayInitializer(flyway, enabledProperties()));
-        Mockito.verify(flyway, Mockito.never()).repair();
+        verify(flyway).migrate();
     }
 }

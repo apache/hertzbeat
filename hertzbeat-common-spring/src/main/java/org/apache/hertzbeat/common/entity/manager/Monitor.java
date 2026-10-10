@@ -88,7 +88,6 @@ public class Monitor {
     private String instance;
 
     @Schema(title = "Monitoring of the acquisition interval time in seconds", example = "600", accessMode = READ_WRITE)
-    @Min(10)
     private Integer intervals;
 
     @Schema(title = "Schedule type: interval | cron", example = "interval", accessMode = READ_WRITE)
@@ -99,7 +98,7 @@ public class Monitor {
     @Size(max = 100)
     private String cronExpression;
 
-    @Schema(title = "Task status 0: Paused, 1: Up, 2: Down", accessMode = READ_WRITE)
+    @Schema(title = "Task status 0: Paused, 1: Up, 2: Down, 3: Pending", accessMode = READ_WRITE)
     @Min(0)
     @Max(4)
     private byte status;

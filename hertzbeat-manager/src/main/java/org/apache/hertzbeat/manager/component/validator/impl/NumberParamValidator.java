@@ -38,14 +38,12 @@ public class NumberParamValidator implements ParamValidator {
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         Double doubleValue = org.apache.hertzbeat.common.util.CommonUtil.parseStrDouble(param.getParamValue());
         if (doubleValue == null) {
-            throw new IllegalArgumentException("Params field " + paramDefine.getField() + " type "
-                    + paramDefine.getType() + " is invalid.");
+            throw ParamValidator.invalidParameter();
         }
         if (paramDefine.getRange() != null) {
             if (!IntervalExpressionUtil.validNumberIntervalExpress(doubleValue,
                     paramDefine.getRange())) {
-                throw new IllegalArgumentException("Params field " + paramDefine.getField() + " type "
-                        + paramDefine.getType() + " over range " + paramDefine.getRange());
+                throw ParamValidator.invalidParameter();
             }
         }
         param.setType(CommonConstants.PARAM_TYPE_NUMBER);

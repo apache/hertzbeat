@@ -182,5 +182,9 @@
   "sidebar.docs.category.log": {
     "message": "日志监控 (Beta)",
     "description": "The label for category log in sidebar docs"
+  },
+  "sidebar.docs.category.Roadmap": {
+    "message": "路线图（候选方向）",
+    "description": "The label for category Roadmap in sidebar docs"
   }
 }

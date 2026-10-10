@@ -1,0 +1,60 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { sessionFailureMessageKey, type SessionReadFailureKind } from '@/core/auth/session-model';
+
+export type LoginCredentials = {
+  identifier: string;
+  credential: string;
+};
+
+export type LoginFailureKind = 'invalid-credentials' | 'unavailable' | 'error';
+
+export type LoginSessionState = 'checking' | 'authenticated' | 'anonymous' | SessionReadFailureKind;
+
+// The session API exposes no default-password flag, so preserve the legacy warning locally without persisting credentials.
+const legacyDefaultCredential = 'hertzbeat';
+
+type LoginSessionEvidence = {
+  loading: boolean;
+  failure?: SessionReadFailureKind | undefined;
+  authenticated: boolean;
+};
+
+export function requiresDefaultPasswordConfirmation(credentials: LoginCredentials, confirmedIdentifier: string | null) {
+  return credentials.credential === legacyDefaultCredential && credentials.identifier !== confirmedIdentifier;
+}
+
+/** Gives session evidence a stable precedence before the page renders a state. */
+export function resolveLoginSessionState(evidence: LoginSessionEvidence): LoginSessionState {
+  if (evidence.loading) return 'checking';
+  if (evidence.failure) return evidence.failure;
+  if (evidence.authenticated) return 'authenticated';
+  return 'anonymous';
+}
+
+export function loginSessionFailureMessageKey(state: LoginSessionState) {
+  return state === 'unavailable' || state === 'contract' || state === 'error'
+    ? sessionFailureMessageKey(state)
+    : undefined;
+}
+
+export function loginErrorMessageKey(failure: LoginFailureKind) {
+  if (failure === 'invalid-credentials') return 'auth.invalidCredentials';
+  if (failure === 'unavailable') return 'common.unavailable';
+  return 'common.routeError.description';
+}

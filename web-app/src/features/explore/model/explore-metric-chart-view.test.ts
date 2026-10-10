@@ -1,0 +1,40 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { expect, it } from 'vitest';
+import { encodeMetricView, parseMetricView } from '@/platform/perses';
+it('keeps old defaults and roundtrips chart settings with zero and an automatic upper bound', () => {
+  expect(parseMetricView()).toEqual({ mode: 'chart', hidden: [] });
+  const raw = JSON.stringify({ mode: 'chart', hidden: ['b', 'f1'], chart: { display: 'bar', legend: false, min: 0 } });
+  const parsed = parseMetricView(raw);
+  expect(JSON.parse(encodeMetricView(parsed))).toEqual(JSON.parse(raw));
+});
+it.each([
+  { min: -1e308, max: 1e308 },
+  { min: 1, max: 1 },
+  { min: 2, max: 1 },
+  { min: null },
+  { min: '0' },
+  { display: 'pie' },
+  { legend: 'false' },
+  { extra: true }
+])('refuses unsafe chart state %j', chart => {
+  expect(() => parseMetricView(JSON.stringify({ mode: 'chart', hidden: [], chart }))).toThrow();
+});
+it('refuses nonfinite programmatic state rather than encoding null', () => {
+  expect(() => encodeMetricView({ mode: 'chart', hidden: [], chart: { min: Infinity } } as never)).toThrow();
+});

@@ -1,0 +1,167 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
+
+import { useTopologyGraphUpdates } from './topology-g6-draw-runtime';
+import {
+  commitCandidateGraph,
+  createPendingResources,
+  disposeGraph,
+  initializeCandidateGraph,
+  ownsActiveResources,
+  retainPendingResources,
+  retirePendingResources,
+  type GraphResources,
+  type RuntimeRefs
+} from './topology-g6-lifecycle';
+import type {
+  TopologyG6Graph,
+  TopologyG6InputRef,
+  TopologyG6RuntimeInput,
+  TopologyRuntimeState
+} from './topology-g6-runtime-contract';
+import {
+  fitTopologyGraph,
+  zoomTopologyGraph,
+  type ScaleSuppressions,
+  type TopologyViewport
+} from './topology-g6-viewport';
+
+export type { TopologyRuntimeState } from './topology-g6-runtime-contract';
+
+export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, input: TopologyG6RuntimeInput) {
+  const graphRef = useRef<TopologyG6Graph | undefined>(undefined);
+  const activeInputRef = useRef<TopologyG6InputRef | undefined>(undefined);
+  const activeResourcesRef = useRef<GraphResources | undefined>(undefined);
+  const activeStructureKeyRef = useRef<string | undefined>(undefined);
+  const pendingResourcesRef = useRef<GraphResources | undefined>(undefined);
+  const viewportRef = useRef<TopologyViewport | undefined>(undefined);
+  const suppressedScaleEventsRef = useRef<ScaleSuppressions>(new WeakMap());
+  const inputRef = useRef(input);
+  const refs: RuntimeRefs = {
+    activeInput: activeInputRef,
+    activeResources: activeResourcesRef,
+    activeStructureKey: activeStructureKeyRef,
+    graph: graphRef,
+    pendingResources: pendingResourcesRef,
+    scaleSuppressions: suppressedScaleEventsRef,
+    viewport: viewportRef
+  };
+  useEffect(() => {
+    inputRef.current = input;
+    const structureKey = input.presentation.graphStructureKey;
+    if (activeStructureKeyRef.current === structureKey && activeInputRef.current) {
+      activeInputRef.current.current = input;
+    }
+    const pending = pendingResourcesRef.current;
+    if (pending?.structureKey === structureKey) pending.input.current = input;
+  }, [input, activeInputRef, activeStructureKeyRef, pendingResourcesRef]);
+  useTopologyBootstrap(host, refs, inputRef, input.presentation.graphStructureKey);
+  useTopologyGraphUpdates(graphRef, activeStructureKeyRef, activeInputRef, input);
+  useEffect(
+    () => () => {
+      const active = activeResourcesRef.current;
+      const pending = pendingResourcesRef.current;
+      if (pending && pending !== active) disposeGraph(pending, graphRef, viewportRef, false);
+      if (active) disposeGraph(active, graphRef, viewportRef, true);
+      activeInputRef.current = undefined;
+      activeResourcesRef.current = undefined;
+      activeStructureKeyRef.current = undefined;
+      pendingResourcesRef.current = undefined;
+    },
+    [activeInputRef, activeResourcesRef, activeStructureKeyRef, graphRef, pendingResourcesRef, viewportRef]
+  );
+  const fit = useCallback(() => {
+    const activeInput = activeInputRef.current;
+    if (activeInput) fitTopologyGraph(graphRef, activeInput, suppressedScaleEventsRef.current);
+  }, []);
+  const zoomIn = useCallback(() => {
+    const activeInput = activeInputRef.current;
+    if (activeInput) zoomTopologyGraph(graphRef, activeInput, 1.2);
+  }, []);
+  const zoomOut = useCallback(() => {
+    const activeInput = activeInputRef.current;
+    if (activeInput) zoomTopologyGraph(graphRef, activeInput, 1 / 1.2);
+  }, []);
+  return { fit, zoomIn, zoomOut };
+}
+
+function useTopologyBootstrap(
+  host: RefObject<HTMLDivElement | null>,
+  refs: RuntimeRefs,
+  inputRef: TopologyG6InputRef,
+  structureKey: string
+) {
+  const { activeInput, activeResources, activeStructureKey, graph, pendingResources, scaleSuppressions, viewport } =
+    refs;
+  useEffect(() => {
+    const container = host.current;
+    if (!container) return;
+    let cancelled = false;
+    const runtimeRefs = {
+      activeInput,
+      activeResources,
+      activeStructureKey,
+      graph,
+      pendingResources,
+      scaleSuppressions,
+      viewport
+    };
+    const resources = createPendingResources(inputRef, structureKey);
+    retainPendingResources(runtimeRefs, resources);
+    publishState(inputRef, 'loading');
+    // Keep G6 inside the mounted runtime so route chunks do not evaluate it before a canvas is requested.
+    void import('@/platform/topology')
+      .then(async ({ Graph, NodeEvent, EdgeEvent, CanvasEvent, GraphEvent }) => {
+        const candidate = await initializeCandidateGraph(
+          { Graph, NodeEvent, EdgeEvent, CanvasEvent, GraphEvent },
+          container,
+          resources,
+          runtimeRefs,
+          () => cancelled
+        );
+        if (candidate) commitCandidateGraph(candidate, resources, runtimeRefs);
+      })
+      .catch(() => {
+        if (cancelled || ownsActiveResources(runtimeRefs, resources)) return;
+        disposeGraph(resources, graph, viewport, false);
+        retirePendingResources(runtimeRefs, resources);
+        publishState(inputRef, 'failure');
+      });
+    return () => {
+      cancelled = true;
+      retirePendingResources(runtimeRefs, resources);
+      if (!ownsActiveResources(runtimeRefs, resources)) disposeGraph(resources, graph, viewport, false);
+    };
+  }, [
+    activeInput,
+    activeResources,
+    activeStructureKey,
+    graph,
+    host,
+    inputRef,
+    pendingResources,
+    scaleSuppressions,
+    structureKey,
+    viewport
+  ]);
+}
+
+function publishState(input: TopologyG6InputRef, kind: TopologyRuntimeState['kind']) {
+  input.current.callbacks.onRuntimeStateChange({ kind });
+}

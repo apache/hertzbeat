@@ -1,0 +1,198 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.editor {
+  min-width: 0;
+  display: grid;
+  gap: var(--hb-space-1);
+}
+.source {
+  padding-block: var(--hb-space-1);
+  min-width: 0;
+}
+.source + .source {
+  border-top: 1px solid var(--hb-border-color);
+}
+.queryFields {
+  composes: fields from './metric-query-row-layout.module.css';
+}
+.row {
+  composes: row from './metric-query-row-layout.module.css';
+}
+.reference {
+  font-weight: 600;
+  min-width: 32px;
+  align-self: center;
+}
+.row > .reference {
+  align-self: start;
+}
+.formula {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.formula > input {
+  flex: 1;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+  border-top: 1px solid var(--hb-border-color);
+  padding-top: var(--hb-space-2);
+}
+.hint {
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+  margin: 0;
+}
+.issue {
+  color: var(--ant-color-error);
+  font-size: var(--ant-font-size-sm);
+}
+.advanced,
+.advancedSummary {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+}
+.advanced[hidden] {
+  display: none;
+}
+.advancedToggle {
+  padding-inline: var(--hb-space-1);
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+}
+.advancedSummary {
+  margin: 0;
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+  overflow-wrap: anywhere;
+}
+.advanced > .options {
+  margin-block: var(--hb-space-2);
+}
+.discovery {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+  margin-block: var(--hb-space-2);
+}
+.discovery > :global(.ant-select) {
+  min-width: 160px;
+  flex: 1;
+}
+.discovery p {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+
+.functionOption {
+  display: flex;
+  gap: var(--hb-space-3);
+  align-items: baseline;
+}
+.functionOption code {
+  min-width: 72px;
+}
+.functionOption > span {
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--hb-space-2) var(--hb-space-3);
+  align-items: end;
+}
+.options > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--hb-space-1);
+  min-width: 0;
+}
+.options > label > span {
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+  overflow-wrap: anywhere;
+}
+.options > label > :global(.ant-input),
+.options > label > :global(.ant-select) {
+  width: 100%;
+  min-width: 0;
+}
+
+.from {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-1);
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.from > span {
+  white-space: nowrap;
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+}
+.from > :global(.ant-input) {
+  min-width: 0;
+}
+.from > :global(.ant-btn) {
+  flex: none;
+}
+.labelPopover {
+  width: min(560px, calc(100vw - 48px));
+  min-width: 0;
+}
+.syntaxHelp {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.syntaxHelp summary {
+  cursor: pointer;
+}
+
+.metric {
+  composes: metric from './metric-query-row-layout.module.css';
+}
+.aggregation {
+  composes: aggregation from './metric-query-row-layout.module.css';
+}
+.groupBy {
+  composes: groupBy from './metric-query-row-layout.module.css';
+}
+@media (max-width: 575px) {
+  .from {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .formula {
+    flex-wrap: wrap;
+  }
+  .formula > input {
+    flex-basis: calc(100% - 48px);
+  }
+}

@@ -1,0 +1,146 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Button, Checkbox, Form, Input, InputNumber, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import {
+  optionalMailValidationReady,
+  setupPublicAccessValidationReady,
+  type SetupOptionalDraft,
+  type SetupOptionalValidationEvidence
+} from '../model/setup-optional';
+import { SetupOptionalValidation } from './setup-optional-validation';
+import { SetupOptionalMailFields } from './setup-optional-mail-fields';
+import styles from './setup-configuration-form.module.css';
+
+type Props = {
+  draft: SetupOptionalDraft;
+  disabled: boolean;
+  updateDraft: (patch: Partial<SetupOptionalDraft>) => void;
+  validation: { publicAccess: SetupOptionalValidationEvidence; mail: SetupOptionalValidationEvidence };
+  publicOrigin: string;
+  validatePublicAccess: () => void;
+  validateMail: () => void;
+};
+
+export function PublicAccessSection(props: Props) {
+  const { t } = useTranslation();
+  const validating = props.validation.publicAccess?.state === 'checking';
+  return (
+    <section className={styles.section} aria-labelledby="setup-public-access-title">
+      <SectionHeading
+        id="setup-public-access-title"
+        title={t('setup.optional.publicAccess.title')}
+        description={t('setup.optional.publicAccess.description')}
+      />
+      <Typography.Paragraph type="secondary">
+        {t('setup.optional.publicAccess.defaultAddress')} <Typography.Text code>{props.publicOrigin}</Typography.Text>
+      </Typography.Paragraph>
+      <Form.Item>
+        <Checkbox
+          checked={props.draft.useProxy}
+          disabled={props.disabled}
+          onChange={event => props.updateDraft({ useProxy: event.target.checked })}
+        >
+          {t('setup.optional.publicAccess.useProxy')}
+        </Checkbox>
+      </Form.Item>
+      {props.draft.useProxy && (
+        <Form.Item
+          label={t('setup.optional.publicAccess.proxyPublicBaseUrl')}
+          htmlFor="setup-proxy-public-base-url"
+          extra={t('setup.optional.publicAccess.proxyPublicBaseUrlHelp')}
+        >
+          <Input
+            id="setup-proxy-public-base-url"
+            value={props.draft.proxyPublicBaseUrl}
+            disabled={props.disabled}
+            onChange={event => props.updateDraft({ proxyPublicBaseUrl: event.target.value })}
+          />
+        </Form.Item>
+      )}
+      <SetupOptionalValidation evidence={props.validation.publicAccess} />
+      <Button
+        disabled={props.disabled || validating || !setupPublicAccessValidationReady(props.draft)}
+        loading={validating}
+        onClick={props.validatePublicAccess}
+      >
+        {t('setup.optional.validatePublicAccess')}
+      </Button>
+    </section>
+  );
+}
+
+export function RetentionSection(props: Props) {
+  const { t } = useTranslation();
+  return (
+    <section className={styles.section} aria-labelledby="setup-retention-title">
+      <SectionHeading
+        id="setup-retention-title"
+        title={t('setup.optional.retention.title')}
+        description={t('setup.optional.retention.description')}
+      />
+      <Form.Item label={t('setup.optional.retention.days')} htmlFor="setup-retention-days">
+        <InputNumber
+          id="setup-retention-days"
+          min={1}
+          precision={0}
+          disabled={props.disabled}
+          value={props.draft.retentionDays}
+          onChange={value => props.updateDraft({ retentionDays: value })}
+        />
+      </Form.Item>
+    </section>
+  );
+}
+
+export function MailSection(props: Props) {
+  const { t } = useTranslation();
+  const mail = props.draft.mail;
+  const validating = props.validation.mail?.state === 'checking';
+  const update = (patch: Partial<SetupOptionalDraft['mail']>) => props.updateDraft({ mail: { ...mail, ...patch } });
+  return (
+    <section className={styles.section} aria-labelledby="setup-mail-title">
+      <SectionHeading
+        id="setup-mail-title"
+        title={t('setup.optional.mail.title')}
+        description={t('setup.optional.mail.description')}
+      />
+      <SetupOptionalMailFields mail={mail} disabled={props.disabled} update={update} />
+      <SetupOptionalValidation evidence={props.validation.mail} />
+      <Button
+        disabled={props.disabled || validating || !optionalMailValidationReady(mail)}
+        loading={validating}
+        onClick={props.validateMail}
+      >
+        {t('setup.optional.validateMail')}
+      </Button>
+    </section>
+  );
+}
+
+function SectionHeading({ id, title, description }: { id: string; title: string; description: string }) {
+  return (
+    <header className={styles.heading}>
+      <Typography.Title id={id} level={3}>
+        {title}
+      </Typography.Title>
+      <Typography.Paragraph type="secondary">{description}</Typography.Paragraph>
+    </header>
+  );
+}

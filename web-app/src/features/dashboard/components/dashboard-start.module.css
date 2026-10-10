@@ -1,0 +1,209 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Hallmark · component-scope: data-path ledger · genre: modern-minimal · tone: utilitarian · theme: HertzBeat
+ * pre-emit critique: P5 H5 E5 S5 R5 V4 · contrast and focus: inherited from application tokens
+ */
+
+.startSurface {
+  --dashboard-entry-identity-min: 170px;
+  --dashboard-entry-flow-min: 440px;
+  --dashboard-entry-outcome-min: 280px;
+  --dashboard-entry-column-gap: var(--hb-space-7);
+
+  display: grid;
+  gap: 0;
+}
+
+.entry {
+  min-width: 0;
+}
+
+.entry + .entry {
+  border-block-start: 1px solid var(--hb-border-subtle);
+}
+
+.entryMain {
+  display: grid;
+  grid-template-columns:
+    minmax(var(--dashboard-entry-identity-min), 0.55fr) minmax(var(--dashboard-entry-flow-min), 1.8fr)
+    minmax(var(--dashboard-entry-outcome-min), 1fr);
+  column-gap: var(--dashboard-entry-column-gap);
+  min-height: 164px;
+}
+
+.entryMain > * {
+  min-width: 0;
+}
+
+.entryIdentity,
+.flow,
+.outcome {
+  padding-block: var(--hb-space-6) var(--hb-space-5);
+}
+
+.entryIdentity {
+  display: grid;
+  align-content: center;
+}
+
+.entryIdentity :global(.ant-typography),
+.outcome :global(.ant-typography) {
+  margin-block: 0 var(--hb-space-2);
+}
+
+.entryIdentity :global(h2.ant-typography) {
+  min-width: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+
+.entryIdentity :global(p.ant-typography) {
+  max-width: 28ch;
+  color: var(--hb-text-secondary);
+  line-height: 1.55;
+}
+
+.outcome :global(h3.ant-typography) {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: auto 24px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--hb-space-4);
+}
+
+.flow[data-direction='reverse'] {
+  grid-template-columns: minmax(0, 1fr) 24px auto;
+}
+
+.nodeGroup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(76px, 1fr));
+  align-items: start;
+  gap: var(--hb-space-4);
+  min-width: 0;
+}
+
+.technologyNode {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--hb-space-2);
+  min-width: 0;
+  text-align: center;
+}
+
+.technologyNode :global(.ant-typography) {
+  font-size: 12px;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.technologyIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  color: var(--hb-text-secondary);
+  font-size: 28px;
+}
+
+.technologyIcon :global(.anticon) {
+  font-size: 28px;
+}
+
+.direction {
+  color: var(--hb-text-muted);
+  font-size: 18px;
+}
+
+.outcome {
+  display: grid;
+  align-content: center;
+  padding-inline-start: var(--hb-space-6);
+}
+
+.outcome :global(p.ant-typography) {
+  color: var(--hb-text-secondary);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.entryFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-5);
+  min-height: 48px;
+  padding-block: 0 var(--hb-space-4);
+}
+
+.entryFooter :global(.ant-btn-link) {
+  flex: none;
+  padding-inline: var(--hb-space-2);
+  color: var(--hb-brand-accent);
+  white-space: nowrap;
+}
+
+.entryFooter :global(.ant-btn-link:hover) {
+  color: var(--hb-focus-ring);
+}
+
+.entryFooter :global(.ant-btn-link:active) {
+  color: var(--hb-brand-accent);
+}
+
+.entryFooter :global(.ant-btn-link:disabled),
+.entryFooter :global(.ant-btn-link.ant-btn-disabled) {
+  color: var(--hb-text-disabled);
+}
+
+.readOnlyAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-3);
+}
+
+@media (max-width: 1180px) {
+  .startSurface {
+    --dashboard-entry-identity-min: 160px;
+    --dashboard-entry-flow-min: 430px;
+    --dashboard-entry-column-gap: var(--hb-space-6);
+  }
+
+  .entryMain {
+    grid-template-columns: minmax(var(--dashboard-entry-identity-min), 0.65fr) minmax(
+        var(--dashboard-entry-flow-min),
+        1.7fr
+      );
+  }
+
+  .outcome {
+    grid-column: 1 / -1;
+    padding-inline-start: 0;
+  }
+}

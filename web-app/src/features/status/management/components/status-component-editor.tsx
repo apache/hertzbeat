@@ -1,0 +1,160 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Form, Input, Modal, Radio, Select, Typography } from 'antd';
+import type { FormInstance } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import type { StatusComponent } from '../model/status-management-contract';
+import {
+  buildStatusComponentPayload,
+  formatLabels,
+  statusComponentMethod,
+  statusComponentState
+} from '../model/status-management-model';
+import { StatusWriteRecoveryAlert } from './status-write-recovery-alert';
+
+type ComponentFormValue = {
+  name: string;
+  description?: string | null;
+  method: number;
+  configState?: number;
+  labelText?: string;
+};
+type StatusComponentEditorProps = {
+  component: StatusComponent;
+  components: StatusComponent[];
+  commandLocked: boolean;
+  writeRecovery: 'proof' | 'commit-uncertain' | undefined;
+  saving: boolean;
+  onCancel: () => void;
+  onRetry: () => void;
+  onSubmit: (component: StatusComponent) => void;
+};
+
+export function StatusComponentEditor(props: StatusComponentEditorProps) {
+  const { t } = useTranslation();
+  const [form] = Form.useForm<ComponentFormValue>();
+  const method = Form.useWatch('method', form) ?? props.component.method;
+  const isNew = props.component.id == null;
+  const submit = (values: ComponentFormValue) => {
+    if (!props.commandLocked) {
+      props.onSubmit(buildStatusComponentPayload({ component: props.component, ...values, method }));
+    }
+  };
+  return (
+    <Modal
+      open
+      closable={!props.commandLocked}
+      keyboard={!props.commandLocked}
+      maskClosable={!props.commandLocked}
+      destroyOnHidden
+      title={t(isNew ? 'statusManagement.newComponent' : 'statusManagement.editComponent')}
+      okText={t(props.writeRecovery === 'proof' ? 'common.retry' : 'common.save')}
+      confirmLoading={props.saving}
+      okButtonProps={{
+        disabled: props.writeRecovery === 'commit-uncertain' || (props.commandLocked && !props.writeRecovery)
+      }}
+      cancelButtonProps={{ disabled: props.commandLocked }}
+      onCancel={() => {
+        if (!props.commandLocked) props.onCancel();
+      }}
+      onOk={() => {
+        if (props.writeRecovery === 'proof') props.onRetry();
+        else if (!props.commandLocked) form.submit();
+      }}
+    >
+      {props.writeRecovery && <StatusWriteRecoveryAlert />}
+      <ComponentForm
+        form={form}
+        component={props.component}
+        components={props.components}
+        disabled={props.commandLocked || Boolean(props.writeRecovery)}
+        method={method}
+        onFinish={submit}
+      />
+    </Modal>
+  );
+}
+
+function ComponentForm(props: {
+  form: FormInstance<ComponentFormValue>;
+  component: StatusComponent;
+  components: StatusComponent[];
+  disabled: boolean;
+  method: number;
+  onFinish: (values: ComponentFormValue) => void;
+}) {
+  const { t } = useTranslation();
+  const isNew = props.component.id == null;
+  return (
+    <Form
+      disabled={props.disabled}
+      form={props.form}
+      layout="vertical"
+      initialValues={componentFormValue(props.component)}
+      onFinish={props.onFinish}
+    >
+      <Form.Item name="name" label={t('statusManagement.name')} rules={[{ required: true, whitespace: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="description" label={t('status.descriptionLabel')}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="method" label={t('statusManagement.method')} rules={[{ required: true }]}>
+        <Radio.Group optionType="button" options={componentMethodOptions(t)} />
+      </Form.Item>
+      {props.method === statusComponentMethod.automatic ? (
+        <Form.Item name="labelText" label={t('statusManagement.labels')} extra={t('statusManagement.labelsHint')}>
+          <Input placeholder={t('statusManagement.labelsHint')} />
+        </Form.Item>
+      ) : (
+        <Form.Item name="configState" label={t('status.state')} rules={[{ required: true }]}>
+          <Select options={componentStateOptions(t)} />
+        </Form.Item>
+      )}
+      {!isNew && props.components.some(item => item.id === props.component.id) && (
+        <Typography.Text type="secondary">{t('statusManagement.componentUpdateHint')}</Typography.Text>
+      )}
+    </Form>
+  );
+}
+
+function componentMethodOptions(t: (key: string) => string) {
+  return [
+    { value: statusComponentMethod.automatic, label: t('statusManagement.automatic') },
+    { value: statusComponentMethod.manual, label: t('statusManagement.manual') }
+  ];
+}
+
+function componentStateOptions(t: (key: string) => string) {
+  return [
+    { value: statusComponentState.normal, label: t('status.normal') },
+    { value: statusComponentState.abnormal, label: t('status.abnormal') },
+    { value: statusComponentState.unknown, label: t('statusManagement.unknown') }
+  ];
+}
+
+function componentFormValue(component: StatusComponent): ComponentFormValue {
+  return {
+    name: component.name,
+    description: component.description ?? '',
+    method: component.method,
+    configState: component.configState,
+    labelText: formatLabels(component.labels)
+  };
+}

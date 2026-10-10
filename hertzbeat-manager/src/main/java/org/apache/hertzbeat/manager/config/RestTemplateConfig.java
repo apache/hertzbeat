@@ -46,6 +46,12 @@ public class RestTemplateConfig {
         return createRestTemplate(factory);
     }
 
+    /**
+     * Query-only client so slow Greptime reads cannot consume the write and audit client.
+     *
+     * @param factory bounded query request factory
+     * @return query-only RestTemplate
+     */
     @Bean(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
     public RestTemplate greptimeQueryRestTemplate(
             @Qualifier("greptimeQueryClientHttpRequestFactory") ClientHttpRequestFactory factory) {

@@ -37,6 +37,8 @@ public class AlertDefineDTO {
     private String name;
     @Excel(name = "Type")
     private String type;
+    @Excel(name = "Datasource")
+    private String datasource;
     @Excel(name = "Expr")
     private String expr;
     @Excel(name = "Period")
@@ -51,8 +53,6 @@ public class AlertDefineDTO {
     private String template;
     @Excel(name = "Enable")
     private Boolean enable;
-    @Excel(name = "Datasource")
-    private String datasource;
     @Excel(name = "QueryLanguage")
     private String queryLanguage;
 }

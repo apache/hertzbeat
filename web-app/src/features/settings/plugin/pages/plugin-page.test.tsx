@@ -1,0 +1,155 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// @vitest-environment jsdom
+
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { requireDomElement } from '@/test/dom-element';
+
+const controller = vi.hoisted((): { value: unknown } => ({ value: undefined }));
+vi.mock('../controller/use-plugin-controller', () => ({ usePluginController: () => controller.value }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
+import { PluginPage } from './plugin-page';
+
+describe('PluginPage', () => {
+  afterEach(cleanup);
+  beforeEach(() => {
+    controller.value = pluginController();
+  });
+
+  it('owns Upload in the shared header and list commands in the search band', () => {
+    render(<PluginPage />);
+
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const headerActions = requireDomElement(
+      header.querySelector('[data-hb-operational-page-actions]'),
+      'Operational page actions'
+    );
+    const commandBand = screen.getByRole('search');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'plugins.title' }));
+    expect(headerActions).toContainElement(screen.getByRole('button', { name: 'plugins.upload' }));
+    expect(header).not.toContainElement(screen.getByRole('button', { name: 'common.refresh' }));
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'common.refresh' }));
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'plugins.deleteSelected' }));
+    expect(commandBand).not.toContainElement(screen.getByRole('button', { name: 'plugins.upload' }));
+  });
+
+  it('uses the shared command and result frame with a compact empty state', () => {
+    render(<PluginPage />);
+
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'plugins.empty' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['loading', 'plugins.loading'],
+    ['empty', 'plugins.empty'],
+    ['search-empty', 'plugins.searchEmpty'],
+    ['invalid', 'plugins.failure.invalid'],
+    ['permission', 'plugins.failure.permission'],
+    ['unavailable', 'plugins.failure.unavailable'],
+    ['error', 'plugins.failure.error']
+  ])('renders the explicit %s list state', (kind, message) => {
+    controller.value = pluginController({ listState: { kind } });
+    render(<PluginPage />);
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it('shows read-only admission and contains no parameter editor action', () => {
+    controller.value = pluginController({ canWrite: false });
+    render(<PluginPage />);
+
+    expect(screen.getByText('plugins.readOnly')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'plugins.upload' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('searchbox')).toBeDisabled();
+    expect(screen.queryByText(/parameter/i)).not.toBeInTheDocument();
+  });
+
+  it('does not leak an upload failure into a delete operation', () => {
+    controller.value = pluginController({
+      uploadFailure: 'error',
+      mutationFailure: null,
+      deleteTarget: { ids: [11], label: 'audit', mode: 'single' }
+    });
+    render(<PluginPage />);
+
+    expect(screen.queryByText('plugins.failure.error')).not.toBeInTheDocument();
+    expect(screen.getByText('plugins.deleteConfirm')).toBeInTheDocument();
+  });
+});
+
+function pluginController(overrides: Record<string, unknown> = {}) {
+  return {
+    canWrite: true,
+    query: { search: '', pageIndex: 0, pageSize: 8 },
+    searchDraft: '',
+    selectedIds: [],
+    listState: { kind: 'empty' },
+    busy: false,
+    uploadFailure: null,
+    mutationFailure: null,
+    notice: null,
+    upload: null,
+    uploadInvalid: { name: false, jarFile: false },
+    deleteTarget: null,
+    params: {
+      editor: null,
+      failure: null,
+      invalid: [],
+      busy: false,
+      actions: {
+        open: vi.fn(),
+        cancel: vi.fn(),
+        save: vi.fn(),
+        updateValue: vi.fn(),
+        updatePassword: vi.fn()
+      }
+    },
+    actions: {
+      cancelDelete: vi.fn(),
+      cancelUpload: vi.fn(),
+      confirmDelete: vi.fn(),
+      openUpload: vi.fn(),
+      openParams: vi.fn(),
+      refresh: vi.fn(),
+      requestDeleteOne: vi.fn(),
+      requestDeleteSelected: vi.fn(),
+      saveUpload: vi.fn(),
+      setPage: vi.fn(),
+      setSearchDraft: vi.fn(),
+      setSelected: vi.fn(),
+      setUploadEnabled: vi.fn(),
+      setUploadFile: vi.fn(),
+      setUploadName: vi.fn(),
+      submitSearch: vi.fn(),
+      toggleStatus: vi.fn()
+    },
+    ...overrides
+  };
+}

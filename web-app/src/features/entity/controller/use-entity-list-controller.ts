@@ -1,0 +1,105 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useLocation, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom';
+
+import { useQueryDraft } from '@/shared/query-context';
+import { entityRoutePaths } from '@/shared/navigation/app-paths';
+import { classifyEntityReadError, loadEntities } from '../api/entity-api';
+import { readEntityQuery, writeEntityQuery } from '../model/entity-query';
+import {
+  buildEntityCreatePath,
+  buildEntityDiscoveryRoute,
+  buildEntityImportRoute,
+  buildEntityDetailPath,
+  type EntityFilterKey,
+  type EntityListEvidence
+} from '../model/entity-view-model';
+import { useEntityCapabilities } from './use-entity-capabilities';
+import { entityQueryKeys } from './entity-query-keys';
+
+export function useEntityListController() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const [params, setParams] = useSearchParams();
+  const capabilities = useEntityCapabilities();
+  const query = readEntityQuery(params);
+  const source = writeEntityQuery(query).toString();
+  useEffect(() => {
+    if (location.pathname === entityRoutePaths.list && params.toString() !== source) {
+      setParams(source, { replace: true });
+    }
+  }, [location.pathname, params, setParams, source]);
+  const draft = useQueryDraft(query.search, query.search);
+  const client = useQueryClient();
+  const result = useQuery({
+    queryKey: entityQueryKeys.list(source),
+    queryFn: ({ signal }) => loadEntities(query, signal),
+    retry: false
+  });
+  const setQuery = (patch: Parameters<typeof writeEntityQuery>[1]) => setParams(writeEntityQuery(query, patch));
+  return {
+    state: {
+      query,
+      navigation: { key: location.key, type: navigationType },
+      draft: draft.value,
+      evidence: resolveEvidence(result.isPending, result.error, result.data),
+      refreshing: result.isFetching,
+      canWrite: capabilities.canWrite
+    },
+    actions: {
+      updateDraft: draft.setValue,
+      submit: () => {
+        const search = draft.value.trim();
+        draft.setValue(search);
+        setQuery({ search });
+      },
+      changeFilter: (key: EntityFilterKey, value: string) => setQuery({ [key]: value }),
+      changeSort: (sort: typeof query.sort, order: typeof query.order) => setQuery({ sort, order, pageIndex: 0 }),
+      changePage: (page: number, pageSize: number) =>
+        setQuery({ pageIndex: page - 1, pageSize: pageSize as typeof query.pageSize }),
+      refresh: () => {
+        void client.invalidateQueries({ queryKey: entityQueryKeys.list(source) });
+      },
+      discover: () => void navigate(buildEntityDiscoveryRoute(query)),
+      importDefinitions: () => {
+        if (capabilities.canWrite) void navigate(buildEntityImportRoute(query));
+      },
+      create: () => {
+        if (capabilities.canWrite) void navigate(buildEntityCreatePath(query));
+      },
+      open: (id: number) => {
+        if (location.pathname === entityRoutePaths.list) void navigate(buildEntityDetailPath(id, query));
+      }
+    }
+  };
+}
+
+function resolveEvidence(
+  pending: boolean,
+  error: Error | null,
+  page: Awaited<ReturnType<typeof loadEntities>> | undefined
+): EntityListEvidence {
+  if (pending) return { kind: 'loading' };
+  if (error) return { kind: classifyEntityReadError(error) };
+  if (!page) return { kind: 'error' };
+  if (page.content.length === 0 && page.totalElements === 0) return { kind: 'empty' };
+  return { kind: 'ready', records: page.content, total: page.totalElements };
+}

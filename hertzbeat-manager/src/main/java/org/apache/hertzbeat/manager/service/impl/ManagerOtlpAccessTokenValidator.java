@@ -53,7 +53,7 @@ public class ManagerOtlpAccessTokenValidator implements OtlpAccessTokenValidator
             @SuppressWarnings("unchecked")
             List<String> roles = claims.get("roles", List.class);
             String rejectReason = accountService.checkManagedTokenAccess(claims.getSubject(),
-                    roles == null ? Collections.emptyList() : roles);
+                    roles == null ? Collections.emptyList() : roles, null);
             if (rejectReason == null) {
                 accountService.touchTokenLastUsedTime(token);
             }

@@ -55,7 +55,7 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
             HttpEntity<SlackNotifyDTO> slackNotifyEntity = new HttpEntity<>(slackNotify, headers);
             String slackWebHookUrl = receiver.getSlackWebHookUrl();
             if (!isValidSlackWebHookUrl(slackWebHookUrl)) {
-                log.warn("Invalid Slack Webhook URL: {}", slackWebHookUrl);
+                log.warn("Invalid Slack webhook URL");
                 throw new AlertNoticeException("Invalid Slack Webhook URL");
             }
             var entity = restTemplate.postForEntity(slackWebHookUrl, slackNotifyEntity, String.class);

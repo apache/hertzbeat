@@ -1,0 +1,137 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.frame {
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-4);
+  min-height: var(--hb-workbench-header-height);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.identity {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.identity h3 {
+  margin: 0;
+  color: var(--hb-text-primary);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.identity span,
+.meta dt {
+  color: var(--hb-text-muted);
+  font-size: 12px;
+}
+
+.identity span {
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  display: flex;
+  min-width: 0;
+  gap: var(--hb-space-4);
+  margin: 0;
+  overflow-x: auto;
+}
+
+.headerTools {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--hb-space-3);
+}
+
+.meta div {
+  display: flex;
+  gap: 6px;
+}
+
+.meta dt,
+.meta dd {
+  margin: 0;
+}
+
+.frame[data-meta-presentation='compact'] .meta div {
+  gap: var(--hb-space-1);
+}
+
+.frame[data-meta-presentation='compact'] .meta dt {
+  color: var(--hb-text-muted);
+  font-size: 11px;
+}
+
+.meta dd {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .header {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    min-height: auto;
+    align-items: start;
+    padding-block: var(--hb-space-2);
+  }
+
+  .meta {
+    flex-wrap: wrap;
+  }
+
+  .headerTools {
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .meta {
+    width: 100%;
+  }
+
+  .headerTools {
+    width: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .headerTools {
+    width: 100%;
+  }
+}

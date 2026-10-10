@@ -41,12 +41,24 @@ public class KafkaMetricsDataDeserializer implements Deserializer<CollectRep.Met
 
     @Override
     public CollectRep.MetricsData deserialize(String s, byte[] bytes){
-        try (ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-             ArrowStreamReader reader = new ArrowStreamReader(Channels.newChannel(in), new RootAllocator())) {
+        RootAllocator allocator = new RootAllocator();
+        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+        ArrowStreamReader reader = new ArrowStreamReader(Channels.newChannel(in), allocator);
+        try {
             VectorSchemaRoot root = reader.getVectorSchemaRoot();
             reader.loadNextBatch();
-            return new CollectRep.MetricsData(new ArrowTable(root));
+            // The MetricsData takes ownership of the allocator and will close it when needed.
+            // The reader's lifecycle is tied to the root - closing the allocator will
+            // reclaim all memory including the reader's buffers.
+            return new CollectRep.MetricsData(new ArrowTable(root), allocator);
         } catch (IOException e) {
+            // On error, close the allocator to release all resources
+            try {
+                reader.close();
+            } catch (IOException closeEx) {
+                // Ignore close exception
+            }
+            allocator.close();
             throw new RuntimeException("Failed to deserialize Arrow table", e);
         }
     }

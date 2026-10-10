@@ -1,0 +1,228 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.page {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  gap: var(--hb-space-5);
+}
+
+.page > * {
+  min-width: 0;
+}
+
+.page[data-mode='workspace'] {
+  gap: var(--hb-space-3);
+}
+
+.page[data-mode='form'] {
+  --hb-form-label-width: 148px;
+  --hb-form-control-width: 360px;
+  --hb-form-column-gap: 24px;
+  --hb-form-control-offset: calc(var(--hb-form-label-width) + var(--hb-form-column-gap));
+  --hb-form-row-width: calc(var(--hb-form-control-offset) + var(--hb-form-control-width));
+  --hb-form-rail-width: 720px;
+  max-width: 840px;
+  margin-inline: auto;
+}
+
+.header {
+  min-width: 0;
+}
+
+.withActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 16px;
+}
+
+.copy {
+  flex: 1 1 240px;
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-1);
+}
+
+.copy :global(.ant-typography) {
+  margin: 0;
+}
+
+.copy :global(h2.ant-typography) {
+  font-size: var(--hb-page-title-size);
+  line-height: var(--hb-page-title-line-height);
+  letter-spacing: -0.018em;
+}
+
+.actions {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  margin-inline-start: auto;
+  min-height: 32px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+}
+
+.commandBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-3);
+  border-block: 0;
+}
+
+.commandPrimary,
+.commandSecondary {
+  min-width: 0;
+}
+
+/* A lone text search is a bounded operator control, not page content. Direct
+ * children keep this rule away from intentional multi-filter grids. */
+.commandBar[role='search'] .commandPrimary > :global(.ant-input),
+.commandBar[role='search'] .commandPrimary > :global(.ant-input-affix-wrapper),
+.commandBar[role='search'] .commandPrimary > :global(.ant-input-group-wrapper) {
+  width: min(480px, 100%);
+}
+
+.searchControl {
+  width: min(480px, 100%);
+}
+
+.commandSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+}
+
+.resultRegion {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-4);
+}
+
+.resultRegion > * {
+  min-width: 0;
+}
+
+.formActions {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-3);
+  background: var(--hb-bg-navigation);
+}
+
+.section {
+  min-width: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  min-height: 36px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hb-space-4);
+  padding-bottom: var(--hb-space-2);
+}
+
+.sectionCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sectionCopy :global(.ant-typography) {
+  margin: 0;
+}
+
+.sectionCopy :global(h4.ant-typography) {
+  font-size: var(--hb-section-title-size);
+  line-height: 1.4;
+}
+
+.sectionActions {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+
+.sectionBody {
+  min-width: 0;
+  padding-top: var(--hb-space-3);
+}
+
+.statePanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: var(--hb-space-3);
+  min-height: 76px;
+  padding: var(--hb-space-4);
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-raised);
+}
+
+.statePanel[data-presentation='quiet'] {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  min-height: 52px;
+  padding: var(--hb-space-3) 0;
+  border: 0;
+  background: transparent;
+}
+
+.stateCopy {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-1);
+}
+
+.stateAction {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .withActions {
+    display: grid;
+  }
+
+  .actions {
+    margin-inline-start: 0;
+  }
+
+  .withActions,
+  .commandBar,
+  .statePanel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .actions,
+  .commandSecondary {
+    justify-content: flex-start;
+  }
+}

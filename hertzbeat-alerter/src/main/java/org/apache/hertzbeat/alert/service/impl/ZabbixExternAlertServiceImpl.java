@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 /**
  * zabbix external alarm service impl
  */
-@Slf4j
 @Service
 public class ZabbixExternAlertServiceImpl implements ExternAlertService {
 
@@ -36,14 +34,11 @@ public class ZabbixExternAlertServiceImpl implements ExternAlertService {
     private AlarmCommonReduce alarmCommonReduce;
 
     @Override
-    public void addExternAlert(String content) {
-        SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
-        if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
-            return;
-        }
+    public void addExternAlert(String workspaceId, String content) {
+        SingleAlert alert = ExternalAlertIngressValidator.normalize(
+                JsonUtil.fromJsonQuietly(content, SingleAlert.class));
         alert.setId(null);
-        alarmCommonReduce.reduceAndSendAlarm(alert);
+        alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert);
     }
 
     @Override

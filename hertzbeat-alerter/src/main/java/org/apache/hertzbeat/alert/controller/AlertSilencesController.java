@@ -23,11 +23,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
+import org.apache.hertzbeat.alert.dto.AlertSilenceDeleteResponse;
+import org.apache.hertzbeat.alert.dto.AlertSilencePageResponse;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
-import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,28 +49,25 @@ public class AlertSilencesController {
     @GetMapping
     @Operation(summary = "Query the alarm silence list",
             description = "You can obtain the list of alarm silence by querying filter items")
-    public ResponseEntity<Message<Page<AlertSilence>>> getAlertSilences(
+    public ResponseEntity<Message<AlertSilencePageResponse>> getAlertSilences(
             @Parameter(description = "Alarm Silence ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
             @Parameter(description = "Search Name", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(ids, search, sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(alertSilencePage));
+        return ResponseEntity.ok(Message.success(
+                alertSilenceService.list(ids, search, sort, order, pageIndex, pageSize)));
     }
 
     @DeleteMapping
     @Operation(summary = "Delete alarm silence in batches",
             description = "Delete alarm silence in batches based on the alarm silence ID list")
-    public ResponseEntity<Message<Void>> deleteAlertDefines(
+    public ResponseEntity<Message<AlertSilenceDeleteResponse>> deleteAlertDefines(
             @Parameter(description = "Alarm Silence IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
-        if (ids != null && !ids.isEmpty()) {
-            alertSilenceService.deleteAlertSilences(new HashSet<>(ids));
-        }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success(
+                alertSilenceService.delete(ids == null ? null : new HashSet<>(ids))));
     }
 
 }

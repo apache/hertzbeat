@@ -15,45 +15,130 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+name: Frontend CI
 
-name: Frontend CI 
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, 'action*', 'codex/**', 'feature/**', 'release/**', '2.*' ]
     paths:
       - 'web-app/**'
+      - '.github/workflows/frontend-build-test.yml'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, 'codex/**', 'feature/**', 'release/**', '2.*' ]
     paths:
       - 'web-app/**'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+      - '.github/workflows/frontend-build-test.yml'
 
 jobs:
-  build:
+  static-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
-    - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
       with:
-        version: 10
+        fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
-        node-version: '20'
-        cache: pnpm
-        cache-dependency-path: web-app/pnpm-lock.yaml
+        node-version: 22
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.9.0 --activate
+    - name: Resolve pnpm store
+      id: pnpm-store
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('web-app/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
     - name: Install
       working-directory: web-app
-      run: pnpm install
-    - name: EsLint Test
+      run: pnpm install --frozen-lockfile
+    - name: Verify static contracts
       working-directory: web-app
-      run: pnpm lint:ts
-    - name: Unit Test
+      run: pnpm toolchain:check && pnpm architecture && pnpm i18n:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm diff:check
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.9.0 --activate
+    - name: Resolve pnpm store
+      id: pnpm-store
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('web-app/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
+    - name: Install
       working-directory: web-app
-      run: pnpm test
+      run: pnpm install --frozen-lockfile
+    - name: Verify unit tests
+      working-directory: web-app
+      run: pnpm test --shard=${{ matrix.shard }}/2
+
+  build-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.9.0 --activate
+    - name: Resolve pnpm store
+      id: pnpm-store
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('web-app/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
+    - name: Install
+      working-directory: web-app
+      run: pnpm install --frozen-lockfile
+    - name: Verify production build
+      working-directory: web-app
+      run: pnpm build && pnpm budget && pnpm dead-code && pnpm diff:check
+
+  verify:
+    if: ${{ always() }}
+    needs: [static-checks, unit-tests, build-checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - name: Require every frontend gate
+      run: |
+        test "${{ needs.static-checks.result }}" = success
+        test "${{ needs.unit-tests.result }}" = success
+        test "${{ needs.build-checks.result }}" = success

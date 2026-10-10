@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import javax.naming.AuthenticationException;
 
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
@@ -28,7 +29,15 @@ import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 /**
  * Account service
  */
-public interface AccountService {
+public interface AccountService extends ObservabilityAccessTokenGateway {
+
+    /** Confirmed result of one token revocation attempt. */
+    enum TokenRevocationResult {
+        REVOKED,
+        MISSING,
+        ALREADY_REVOKED
+    }
+
     /**
      * Account password login to obtain associated user information
      *
@@ -57,6 +66,39 @@ public interface AccountService {
     String generateToken(String tokenName, Long expireSeconds) throws AuthenticationException;
 
     /**
+     * Generate a managed API token with a specific access scope.
+     *
+     * @param tokenName     optional name/description for the token
+     * @param expireSeconds optional expiration time in seconds, null means never expire
+     * @param tokenScope    token access scope
+     * @return token string
+     */
+    String generateToken(String tokenName, Long expireSeconds, String tokenScope) throws AuthenticationException;
+
+    /**
+     * Generate a managed API token with a specific access scope and workspace boundary.
+     *
+     * @param tokenName     optional name/description for the token
+     * @param expireSeconds optional expiration time in seconds, null means never expire
+     * @param tokenScope    token access scope
+     * @param workspaceId   token workspace boundary
+     * @return token string
+     */
+    String generateToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId)
+            throws AuthenticationException;
+
+    /**
+     * Generate an OTLP intake token bound to one managed Collector.
+     *
+     * @param collectorId Collector identity
+     * @param workspaceId workspace boundary
+     * @param expireSeconds optional expiration time in seconds
+     * @return token string, shown only at creation time
+     */
+    String generateCollectorIntakeToken(String collectorId, String workspaceId, Long expireSeconds)
+            throws AuthenticationException;
+
+    /**
      * List all API tokens
      *
      * @return list of auth tokens
@@ -67,31 +109,11 @@ public interface AccountService {
      * Delete/revoke an API token by id
      *
      * @param id token id
+     * @return the confirmed revocation outcome
      */
-    void deleteToken(Long id) throws AuthenticationException;
+    TokenRevocationResult deleteToken(Long id) throws AuthenticationException;
 
-    /**
-     * Check the status of a managed token (revocation + expiration)
-     *
-     * @param tokenValue the raw token string
-     * @return null if the token is valid, otherwise a rejection reason string
-     */
-    String checkTokenStatus(String tokenValue);
+    /** Validates roles and the credential generation carried by a browser session. */
+    String checkSessionAccess(String userId, List<String> claimedRoles, Long credentialVersion);
 
-    /**
-     * Check whether the current account behind a managed token is still valid
-     * and still owns the roles claimed in that token.
-     *
-     * @param userId        token subject
-     * @param claimedRoles  roles embedded in the token claims
-     * @return null if the token owner is still valid, otherwise a rejection reason string
-     */
-    String checkManagedTokenAccess(String userId, List<String> claimedRoles);
-
-    /**
-     * Update the last used time of a managed token
-     *
-     * @param tokenValue the raw token string
-     */
-    void touchTokenLastUsedTime(String tokenValue);
 }

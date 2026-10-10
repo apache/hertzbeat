@@ -1,0 +1,170 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  captureBulletinCreateBaseline,
+  createBulletin,
+  deleteBulletins,
+  proveBulletinCreated,
+  proveBulletinsDeleted,
+  proveBulletinUpdated,
+  updateBulletin
+} from '../api/bulletin-api';
+import { classifyBulletinFailure, isBulletinWriteRejection } from '../model/bulletin-failure';
+import { normalizeBulletinIds, type Bulletin, type BulletinDraft } from '../model/bulletin-model';
+import type { BulletinRecovery } from '../model/bulletin-operation-state';
+import type { BulletinOperationGate, BulletinOperationOwner } from './bulletin-operation-gate';
+
+export type BulletinProofResult =
+  { operation: 'save'; saved: Bulletin } | { operation: 'delete'; ids: number[]; batch: boolean };
+
+export async function saveBulletinWithProof(
+  draft: BulletinDraft,
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+): Promise<Bulletin | null> {
+  return draft.id == null
+    ? createWithProof(copyDraft(draft), gate, owner)
+    : updateWithProof(copyUpdate(draft), gate, owner);
+}
+
+export async function deleteBulletinsWithProof(
+  ids: readonly number[],
+  batch: boolean,
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+) {
+  // Retain every identity before DELETE so every later continuation is GET-only.
+  const recovery: BulletinRecovery = {
+    stage: 'delete-proof',
+    ids: normalizeBulletinIds(ids),
+    batch,
+    failure: 'error'
+  };
+  if (!gate.setRecovery(owner, recovery)) return false;
+  try {
+    await deleteBulletins(recovery.ids);
+  } catch (reason) {
+    if (isBulletinWriteRejection(reason)) {
+      gate.clearRecovery(owner);
+      throw reason;
+    }
+  }
+  if (!gate.isCurrent(owner)) return false;
+  await proveDelete(recovery, gate, owner);
+  return gate.isCurrent(owner);
+}
+
+export async function retryBulletinProof(
+  recovery: Exclude<BulletinRecovery, { stage: 'projection' }>,
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+): Promise<BulletinProofResult | null> {
+  if (recovery.stage === 'delete-proof') {
+    await proveDelete(recovery, gate, owner);
+    return gate.isCurrent(owner) ? { operation: 'delete', ids: [...recovery.ids], batch: recovery.batch } : null;
+  }
+  const saved = await proveSave(recovery, gate, owner);
+  return gate.isCurrent(owner) ? { operation: 'save', saved } : null;
+}
+
+async function createWithProof(draft: BulletinDraft, gate: BulletinOperationGate, owner: BulletinOperationOwner) {
+  // Capture the identity baseline before issuing POST. If this read fails,
+  // no mutation started and there is no ambiguous receipt to recover.
+  const beforeIds = await captureBulletinCreateBaseline(draft.name);
+  if (!gate.isCurrent(owner)) return null;
+  const recovery: BulletinRecovery = { stage: 'create-proof', draft, beforeIds: [...beforeIds], failure: 'error' };
+  if (!gate.setRecovery(owner, recovery)) return null;
+  try {
+    await createBulletin(draft);
+  } catch (reason) {
+    if (isBulletinWriteRejection(reason)) {
+      gate.clearRecovery(owner);
+      throw reason;
+    }
+  }
+  if (!gate.isCurrent(owner)) return null;
+  return proveSave(recovery, gate, owner);
+}
+
+async function updateWithProof(
+  draft: BulletinDraft & { id: number },
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+) {
+  // Retain the submitted identity before PUT; an ambiguous response must not reopen PUT.
+  const recovery: BulletinRecovery = { stage: 'update-proof', draft, failure: 'error' };
+  if (!gate.setRecovery(owner, recovery)) return null;
+  try {
+    await updateBulletin(draft);
+  } catch (reason) {
+    if (isBulletinWriteRejection(reason)) {
+      gate.clearRecovery(owner);
+      throw reason;
+    }
+  }
+  if (!gate.isCurrent(owner)) return null;
+  return proveSave(recovery, gate, owner);
+}
+
+async function proveSave(
+  recovery: Extract<BulletinRecovery, { stage: 'create-proof' | 'update-proof' }>,
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+) {
+  try {
+    const saved =
+      recovery.stage === 'create-proof'
+        ? await proveBulletinCreated(recovery.draft, recovery.beforeIds)
+        : await proveBulletinUpdated(recovery.draft);
+    gate.clearRecovery(owner);
+    return saved;
+  } catch (reason) {
+    gate.setRecovery(owner, { ...recovery, failure: classifyBulletinFailure(reason) });
+    throw reason;
+  }
+}
+
+async function proveDelete(
+  recovery: Extract<BulletinRecovery, { stage: 'delete-proof' }>,
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+) {
+  try {
+    await proveBulletinsDeleted(recovery.ids);
+    gate.clearRecovery(owner);
+  } catch (reason) {
+    gate.setRecovery(owner, { ...recovery, failure: classifyBulletinFailure(reason) });
+    throw reason;
+  }
+}
+
+function copyDraft(draft: BulletinDraft): BulletinDraft {
+  return {
+    ...(draft.id == null ? {} : { id: draft.id }),
+    name: draft.name,
+    app: draft.app,
+    monitorIds: [...draft.monitorIds],
+    fields: Object.fromEntries(Object.entries(draft.fields).map(([metric, fields]) => [metric, [...fields]]))
+  };
+}
+
+function copyUpdate(draft: BulletinDraft): BulletinDraft & { id: number } {
+  const copy = copyDraft(draft);
+  if (copy.id == null) throw new Error('Bulletin update identity is missing');
+  return { ...copy, id: copy.id };
+}

@@ -39,4 +39,10 @@ public interface MetricDataConstants {
     String MSG = "msg";
     String INSTANCE_NAME = "instancename";
     String INSTANCE = "instance";
+
+    // Bounded collection execution context propagated with the Arrow schema.
+    String COLLECTION_STARTED_AT = "hertzbeat.collection.started_at";
+    String COLLECTION_PHASE = "hertzbeat.collection.phase";
+    String COLLECTOR_ID = "hertzbeat.collector.id";
+    String ENTITY_ID = "hertzbeat.entity.id";
 }

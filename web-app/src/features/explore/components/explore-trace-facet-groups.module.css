@@ -1,0 +1,65 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.groups {
+  min-width: 0;
+}
+.group {
+  padding-block: 8px;
+  border-bottom: 1px solid var(--hb-border);
+}
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.heading > button {
+  margin-left: auto;
+}
+.values {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.values li {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  gap: 6px;
+}
+.values li > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.group button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  color: var(--hb-text-primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.group button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.group button:focus-visible {
+  outline: 2px solid var(--hb-primary);
+}

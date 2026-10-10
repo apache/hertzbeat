@@ -36,8 +36,7 @@ public class BooleanParamValidator implements ParamValidator {
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         String booleanValue = param.getParamValue();
         if (!"true".equalsIgnoreCase(booleanValue) && !"false".equalsIgnoreCase(booleanValue)) {
-            throw new IllegalArgumentException("Params field " + paramDefine.getField() + " value "
-                    + booleanValue + " is invalid boolean value.");
+            throw ParamValidator.invalidParameter();
         }
     }
 }

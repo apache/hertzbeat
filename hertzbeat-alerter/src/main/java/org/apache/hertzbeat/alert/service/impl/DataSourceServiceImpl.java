@@ -30,7 +30,9 @@ import org.apache.hertzbeat.alert.expr.AlertExpressionEvalVisitor;
 import org.apache.hertzbeat.alert.expr.AlertExpressionLexer;
 import org.apache.hertzbeat.alert.expr.AlertExpressionParser;
 import org.apache.hertzbeat.alert.service.DataSourceService;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
+import org.apache.hertzbeat.common.support.valid.SqlSecurityException;
 import org.apache.hertzbeat.common.support.valid.SqlSecurityValidator;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
@@ -53,9 +55,13 @@ import java.util.concurrent.TimeUnit;
 public class DataSourceServiceImpl implements DataSourceService {
 
     /**
-     * Default allowed tables for SQL queries
+     * Default allowed tables for SQL queries.
      */
-    private static final List<String> DEFAULT_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
+    private static final List<String> LOG_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
+
+    private static final List<String> TRACE_ALLOWED_TABLES = List.of("hertzbeat_apm_red_1m", "hzb_traces");
+
+    private static final String PREVIEW_QUERY_EXECUTION_FAILED = "Preview query execution failed";
 
     /**
      * The policy for an alert expression is read only within the configured database. Metric
@@ -69,7 +75,9 @@ public class DataSourceServiceImpl implements DataSourceService {
     @Setter
     private List<QueryExecutor> executors;
 
-    private final SqlSecurityValidator sqlSecurityValidator;
+    private final SqlSecurityValidator logSqlSecurityValidator;
+
+    private final SqlSecurityValidator traceSqlSecurityValidator;
 
     @Getter
     private final Cache<String, ParseTree> expressionCache = Caffeine.newBuilder()
@@ -80,11 +88,21 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     public DataSourceServiceImpl(@Autowired(required = false) List<QueryExecutor> executors) {
         this.executors = executors != null ? executors : Collections.emptyList();
-        this.sqlSecurityValidator = new SqlSecurityValidator(DEFAULT_ALLOWED_TABLES);
+        this.logSqlSecurityValidator = new SqlSecurityValidator(LOG_ALLOWED_TABLES);
+        this.traceSqlSecurityValidator = new SqlSecurityValidator(TRACE_ALLOWED_TABLES);
     }
 
     @Override
     public List<Map<String, Object>> calculate(String datasource, String expr) {
+        return calculate(datasource, expr, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> calculatePreview(String datasource, String expr) {
+        return calculate(datasource, expr, true);
+    }
+
+    private List<Map<String, Object>> calculate(String datasource, String expr, boolean strict) {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
@@ -100,11 +118,19 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
         try {
-            return evaluate(expr, guardSql(new AlertQueryBudgetExecutor(executor), EXPRESSION_SQL_VALIDATOR));
+            return evaluate(expr, guardSql(new AlertQueryBudgetExecutor(executor), EXPRESSION_SQL_VALIDATOR), strict);
         } catch (AlertExpressionException ae) {
+            if (strict) {
+                log.warn("Alert preview calculation rejected for datasource {}", datasource);
+                throw new AlertExpressionException(PREVIEW_QUERY_EXECUTION_FAILED);
+            }
             log.error("Calculate query parse error, datasource: {}, expr: {}, msg: {}", datasource, expr, ae.getMessage(), ae);
             throw ae;
         } catch (Exception e) {
+            if (strict) {
+                log.warn("Alert preview calculation execution failed for datasource {}", datasource);
+                throw new AlertExpressionException(PREVIEW_QUERY_EXECUTION_FAILED);
+            }
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
             throw new RuntimeException("Query execution failed", e);
         }
@@ -112,6 +138,20 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     @Override
     public List<Map<String, Object>> query(String datasource, String expr) {
+        return query(datasource, expr, null);
+    }
+
+    @Override
+    public List<Map<String, Object>> query(String datasource, String expr, String alertType) {
+        return query(datasource, expr, alertType, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryPreview(String datasource, String expr, String alertType) {
+        return query(datasource, expr, alertType, true);
+    }
+
+    private List<Map<String, Object>> query(String datasource, String expr, String alertType, boolean strict) {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
@@ -127,15 +167,37 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
 
+        // SQL security validation for SQL-based datasources
+        if (isSqlDatasource(datasource)) {
+            validateSqlSecurity(expr, alertType);
+        }
+
         try {
-            return guardSql(new AlertQueryBudgetExecutor(executor), sqlSecurityValidator).execute(expr);
+            QueryExecutor budgetExecutor = new AlertQueryBudgetExecutor(executor);
+            QueryExecutor guardedExecutor = strict && executor.support(WarehouseConstants.SQL)
+                    ? new SqlValidatingQueryExecutor(budgetExecutor, sqlSecurityValidator(alertType), this::limitPreviewSql)
+                    : guardSql(budgetExecutor, sqlSecurityValidator(alertType));
+            return strict ? guardedExecutor.executePreview(expr) : guardedExecutor.execute(expr);
         } catch (AlertExpressionException ae) {
             // A statement the policy rejected, whose message names the part it broke.
             throw ae;
         } catch (Exception e) {
+            if (strict) {
+                log.warn("Alert preview query execution failed for datasource {}", datasource);
+                throw new AlertExpressionException(PREVIEW_QUERY_EXECUTION_FAILED);
+            }
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
             throw new AlertExpressionException(e.getMessage());
         }
+    }
+
+    private String limitPreviewSql(String sql) {
+        String boundedSql = sql.stripTrailing();
+        if (boundedSql.endsWith(";")) {
+            boundedSql = boundedSql.substring(0, boundedSql.length() - 1).stripTrailing();
+        }
+        return "SELECT * FROM (" + boundedSql + ") AS hertzbeat_preview LIMIT "
+                + CommonConstants.ALERT_PREVIEW_RESULT_LIMIT;
     }
 
     /**
@@ -150,6 +212,22 @@ public class DataSourceServiceImpl implements DataSourceService {
      * @param validator Policy to enforce, read only for expressions and whitelisting for raw log queries
      * @return The executor, guarded when it speaks sql
      */
+    private boolean isSqlDatasource(String datasource) {
+        return datasource != null && datasource.equalsIgnoreCase(WarehouseConstants.SQL);
+    }
+
+    /**
+     * Validate SQL statement for security
+     */
+    private void validateSqlSecurity(String sql, String alertType) {
+        try {
+            sqlSecurityValidator(alertType).validate(sql);
+        } catch (SqlSecurityException e) {
+            log.warn("SQL security validation failed: {}", e.getMessage());
+            throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
+        }
+    }
+
     private QueryExecutor guardSql(QueryExecutor executor, SqlSecurityValidator validator) {
         if (!executor.support(WarehouseConstants.SQL)) {
             return executor;
@@ -157,7 +235,14 @@ public class DataSourceServiceImpl implements DataSourceService {
         return new SqlValidatingQueryExecutor(executor, validator);
     }
 
-    private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {
+    private SqlSecurityValidator sqlSecurityValidator(String alertType) {
+        if (CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC.equals(alertType)) {
+            return traceSqlSecurityValidator;
+        }
+        return logSqlSecurityValidator;
+    }
+
+    private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor, boolean strict) {
         CommonTokenStream tokens = createTokenStream(expr);
         AlertExpressionParser parser = new AlertExpressionParser(tokens);
         ParseTree tree = expressionCache.get(expr, e -> parser.expr());
@@ -166,7 +251,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         if (tokens.index() > 0 && tokens.LA(1) != Token.EOF) {
             throw new AlertExpressionException(bundle.getString("alerter.calculate.parse.error"));
         }
-        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
+        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens, strict);
         return visitor.visit(tree);
     }
 

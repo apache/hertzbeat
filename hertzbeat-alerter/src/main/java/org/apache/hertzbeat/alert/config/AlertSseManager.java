@@ -19,50 +19,147 @@
 
 package org.apache.hertzbeat.alert.config;
 
-import org.apache.hertzbeat.common.support.SseEmitterRegistry;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+
 /**
- * SSE manager for alert.
- *
- * <p>Note: the lifecycle of a subscription - its timeout, the ceiling on how many may be held
- * and the cleanup of the ones that went away - belongs to {@link SseEmitterRegistry}; what is
- * alert specific is only the event these subscribers are waiting for.
+ * SSE manager for alert
  */
+@Slf4j
 @Component
-public class AlertSseManager {
+public class AlertSseManager implements ApplicationListener<ContextClosedEvent> {
 
-    private static final String ALERT_EVENT = "ALERT_EVENT";
+    private static final long RECONNECT_TIME_MILLIS = 3_000L;
 
-    private final SseEmitterRegistry registry = new SseEmitterRegistry("alert");
+    private final Map<WorkspaceClientKey, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Object lifecycleMonitor = new Object();
+    private final AtomicLong eventSequence = new AtomicLong(System.currentTimeMillis());
+    private final Supplier<SseEmitter> emitterFactory;
+    private boolean closing;
 
-    /**
-     * Registers a subscription for the given client.
-     *
-     * @param clientId Identifier of the subscriber, unique per subscription
-     * @return The emitter the controller returns to spring
-     */
-    public SseEmitter createEmitter(Long clientId) {
-        return registry.createEmitter(clientId);
+    public AlertSseManager() {
+        this(() -> new SseEmitter(Long.MAX_VALUE));
+    }
+
+    AlertSseManager(Supplier<SseEmitter> emitterFactory) {
+        this.emitterFactory = Objects.requireNonNull(emitterFactory);
     }
 
     /**
-     * Delivers one alert to every live subscriber.
-     *
-     * @param data Serialised alert payload
+     * Opens a reconnectable stream. The ready event is a convergence trigger:
+     * clients must reread canonical alert state rather than expect replay from
+     * this in-memory stream.
      */
+    public SseEmitter createEmitter(String workspaceId, Long clientId) {
+        WorkspaceClientKey clientKey = new WorkspaceClientKey(requireWorkspace(workspaceId), clientId);
+        SseEmitter emitter = emitterFactory.get();
+        emitter.onCompletion(() -> removeEmitter(clientKey, emitter));
+        emitter.onTimeout(() -> removeEmitter(clientKey, emitter));
+        emitter.onError((ex) -> removeEmitter(clientKey, emitter));
+        SseEmitter replacedEmitter;
+        synchronized (lifecycleMonitor) {
+            if (closing) {
+                tryComplete(emitter);
+                return emitter;
+            }
+            replacedEmitter = emitters.put(clientKey, emitter);
+        }
+        if (replacedEmitter != null && replacedEmitter != emitter) {
+            tryCompleteAndClean(clientKey, replacedEmitter);
+        }
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("ALERT_STREAM_READY")
+                    .data("{}")
+                    .reconnectTime(RECONNECT_TIME_MILLIS));
+        } catch (IOException | IllegalStateException exception) {
+            tryCompleteAndClean(clientKey, emitter);
+        }
+        return emitter;
+    }
+
     @Async
-    public void broadcast(String data) {
-        registry.broadcast(ALERT_EVENT, data);
+    public void broadcast(String workspaceId, String data) {
+        broadcast(requireWorkspace(workspaceId), data, "ALERT_EVENT");
     }
 
-    void setMaxEmitters(int maxEmitters) {
-        registry.setMaxEmitters(maxEmitters);
+    @Async
+    public void broadcastGroupMutation(String workspaceId, String data) {
+        broadcast(requireWorkspace(workspaceId), data, "ALERT_GROUP_MUTATION");
     }
 
-    int subscriptionCount() {
-        return registry.subscriptionCount();
+    private void broadcast(String workspaceId, String data, String eventName) {
+        String eventId = String.valueOf(eventSequence.incrementAndGet());
+        emitters.forEach((clientKey, emitter) -> {
+            if (!workspaceId.equals(clientKey.workspaceId())) {
+                return;
+            }
+            try {
+                emitter.send(SseEmitter.event()
+                        .id(eventId)
+                        .name(eventName)
+                        .data(data));
+            } catch (IOException | IllegalStateException e) {
+                tryCompleteAndClean(clientKey, emitter);
+            } catch (Exception exception) {
+                log.error("Failed to broadcast alert data to client: {}",
+                        exception.getClass().getSimpleName());
+                tryCompleteAndClean(clientKey, emitter);
+            }
+        });
+    }
+
+    private void tryCompleteAndClean(WorkspaceClientKey clientId, SseEmitter emitter) {
+        tryComplete(emitter);
+        removeEmitter(clientId, emitter);
+    }
+
+    private void tryComplete(SseEmitter emitter) {
+        try {
+            Optional.ofNullable(emitter).ifPresent(ResponseBodyEmitter::complete);
+        } catch (Throwable e) {
+            log.debug("Failed to complete alert emitter: {}", e.getClass().getSimpleName());
+        }
+    }
+
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        // Complete requests before the embedded server enters graceful shutdown;
+        // otherwise long-lived SSE responses can consume the entire shutdown grace period.
+        Map<WorkspaceClientKey, SseEmitter> activeEmitters;
+        synchronized (lifecycleMonitor) {
+            closing = true;
+            activeEmitters = new HashMap<>(emitters);
+            emitters.clear();
+        }
+        activeEmitters.forEach(this::tryCompleteAndClean);
+    }
+
+    private void removeEmitter(WorkspaceClientKey clientId, SseEmitter emitter) {
+        emitters.remove(clientId, emitter);
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
+    }
+
+    private record WorkspaceClientKey(String workspaceId, Long clientId) {
     }
 }

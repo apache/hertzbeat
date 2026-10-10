@@ -1,0 +1,1096 @@
+diff --git a/lib/TracingGanttChart/GanttTable/GanttTable.js b/lib/TracingGanttChart/GanttTable/GanttTable.js
+--- a/lib/TracingGanttChart/GanttTable/GanttTable.js
++++ b/lib/TracingGanttChart/GanttTable/GanttTable.js
+@@ -20,9 +20,13 @@
+ import { GanttTableHeader } from './GanttTableHeader';
+ import { ResizableDivider } from './ResizableDivider';
+ export function GanttTable(props) {
+-    const { options, customLinks, trace, viewport, selectedSpan, onSpanClick, matchingSpanIds, focusedSpanId } = props;
++    const { options, customLinks, trace, viewport, selectedSpan, onSpanClick, matchingSpanIds, focusedSpanId, displayOptions } = props;
+     const { collapsedSpans, setCollapsedSpans, setVisibleSpans } = useGanttTableContext();
+-    const [nameColumnWidth, setNameColumnWidth] = useState(0.25);
++    useEffect(()=>{
++        if (!displayOptions?.collapseRevision) return;
++        setCollapsedSpans(displayOptions.collapsed ? new Set(trace.spanById.keys()) : new Set());
++    }, [displayOptions?.collapseRevision,displayOptions?.collapsed,trace.spanById,setCollapsedSpans]);
++    const [nameColumnWidth, setNameColumnWidth] = useState(0.45);
+     const tableRef = useRef(null);
+     const virtuosoRef = useRef(null);
+     const theme = useTheme();
+@@ -35,10 +39,17 @@
+                 return false;
+             }
+         });
+-        return rows;
++        if (!displayOptions?.errorsOnly) return rows;
++        const included = new Set();
++        for (const span of trace.spanById.values()) if (span.status?.code === 'STATUS_CODE_ERROR') {
++            let current = span;
++            while (current) { included.add(current.spanId); current = current.parentSpan; }
++        }
++        return rows.filter(span=>included.has(span.spanId));
+     }, [
+         trace.rootSpans,
+-        collapsedSpans
++        collapsedSpans,
++        displayOptions?.errorsOnly
+     ]);
+     const matchingSpanIdSet = useMemo(()=>new Set(matchingSpanIds ?? []), [
+         matchingSpanIds
+@@ -115,10 +126,13 @@
+             borderRadius: `${theme.shape.borderRadius}px`
+         },
+         children: [
++            rows.length === 0 && displayOptions?.emptyLabel && _jsx(Box, {role: 'status', sx: {padding: '8px'}, children: displayOptions.emptyLabel}),
+             /*#__PURE__*/ _jsx(GanttTableHeader, {
+                 trace: trace,
+                 viewport: viewport,
+                 nameColumnWidth: nameColumnWidth,
++                listLabel: options.visual?.spanList ? displayOptions?.durationLabel : undefined,
++                nameLabel: displayOptions?.serviceOperationLabel,
+                 divider: divider
+             }),
+             /*#__PURE__*/ _jsx(Virtuoso, {
+diff --git a/lib/TracingGanttChart/GanttTable/GanttTableHeader.js b/lib/TracingGanttChart/GanttTable/GanttTableHeader.js
+--- a/lib/TracingGanttChart/GanttTable/GanttTableHeader.js
++++ b/lib/TracingGanttChart/GanttTable/GanttTableHeader.js
+@@ -15,7 +15,7 @@
+ import { rowHeight } from '../utils';
+ import { TicksHeader } from '../Ticks';
+ export function GanttTableHeader(props) {
+-    const { trace, viewport, nameColumnWidth, divider } = props;
++    const { trace, viewport, nameColumnWidth, divider, listLabel, nameLabel } = props;
+     const theme = useTheme();
+     return /*#__PURE__*/ _jsxs(Stack, {
+         direction: "row",
+@@ -34,7 +34,7 @@
+                     style: {
+                         padding: '.25rem'
+                     },
+-                    children: "Service & Operation"
++                    children: nameLabel ?? "Service & Operation"
+                 })
+             }),
+             divider,
+@@ -44,7 +44,7 @@
+                     height: '100%',
+                     flexGrow: 1
+                 },
+-                children: /*#__PURE__*/ _jsx(TicksHeader, {
++                children: listLabel ?? /*#__PURE__*/ _jsx(TicksHeader, {
+                     trace: trace,
+                     viewport: viewport
+                 })
+diff --git a/lib/TracingGanttChart/GanttTable/GanttTableRow.js b/lib/TracingGanttChart/GanttTable/GanttTableRow.js
+index e3e5fb4cd8ef36d2ef3193f0a09afc15a57295fa..5597f7c5480d8efed6f4eeafa7c9c1b8718f521f 100644
+--- a/lib/TracingGanttChart/GanttTable/GanttTableRow.js
++++ b/lib/TracingGanttChart/GanttTable/GanttTableRow.js
+@@ -19,9 +19,9 @@ import { SpanDuration } from './SpanDuration';
+ export const GanttTableRow = /*#__PURE__*/ memo(function GanttTableRow(props) {
+     const { options, customLinks, span, viewport, selected, matched, focused, nameColumnWidth, divider, onClick } = props;
+     const theme = useTheme();
+-    const handleOnClick = ()=>{
++    const handleOnClick = (event)=>{
+         // ignore event if triggered by selecting text
+-        if (document.getSelection()?.type === 'Range') return;
++        if (event.detail !== 0 && document.getSelection()?.type === 'Range') return;
+         onClick(span);
+     };
+     let backgroundColor;
+@@ -61,8 +61,7 @@ const RowContainer = styled(Stack)(({ theme })=>({
+         height: rowHeight,
+         '&:hover': {
+             backgroundColor: theme.palette.action.hover,
+-            borderTop: `1px solid ${theme.palette.divider}`,
+-            borderBottom: `1px solid ${theme.palette.divider}`
++            boxShadow: `inset 0 1px ${theme.palette.divider}, inset 0 -1px ${theme.palette.divider}`
+         }
+     }));
+ 
+diff --git a/lib/TracingGanttChart/GanttTable/SpanDuration.js b/lib/TracingGanttChart/GanttTable/SpanDuration.js
+index fa8f4b22e2614c2bdaed97dc528de4913f3dcf11..63609ad5ba823f8fe2e9992d3fb662937dfa8274 100644
+--- a/lib/TracingGanttChart/GanttTable/SpanDuration.js
++++ b/lib/TracingGanttChart/GanttTable/SpanDuration.js
+@@ -22,6 +22,7 @@ import { Ticks } from '../Ticks';
+     const muiTheme = useTheme();
+     const chartsTheme = useChartsTheme();
+     const spanDuration = span.endTimeUnixMs - span.startTimeUnixMs;
++    if (options.visual?.spanList) return _jsx(Box, {sx: {padding: '0 8px'}, children: formatDuration(spanDuration)});
+     const viewportDuration = viewport.endTimeUnixMs - viewport.startTimeUnixMs;
+     const relativeDuration = spanDuration / viewportDuration;
+     const relativeStart = (span.startTimeUnixMs - viewport.startTimeUnixMs) / viewportDuration;
+diff --git a/lib/TracingGanttChart/GanttTable/SpanIndents.js b/lib/TracingGanttChart/GanttTable/SpanIndents.js
+index 5a709acb983202d1f3c88a88f1356abde69ca52d..4a5d6fe41dbae14d2f67a91d3c17694c314b973f 100644
+--- a/lib/TracingGanttChart/GanttTable/SpanIndents.js
++++ b/lib/TracingGanttChart/GanttTable/SpanIndents.js
+@@ -68,10 +68,16 @@ const MAX_INDENT_WIDTH = 24;
+                 onMouseLeave: ()=>setHoveredParent(undefined),
+                 children: i === spans.length - 1 && span.childSpans.length > 0 && (collapsedSpans.has(span.spanId) ? /*#__PURE__*/ _jsx(ChevronRightIcon, {
+                     titleAccess: "expand",
++                    sx: { "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 } },
++                    role: "button", tabIndex: 0, "aria-expanded": false,
++                    onKeyDown: (event)=>{ if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleToggleClick(event); } },
+                     onClick: handleToggleClick,
+                     onMouseEnter: handleIconMouseEnter
+                 }) : /*#__PURE__*/ _jsx(ChevronDownIcon, {
+                     titleAccess: "collapse",
++                    sx: { "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 } },
++                    role: "button", tabIndex: 0, "aria-expanded": true,
++                    onKeyDown: (event)=>{ if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleToggleClick(event); } },
+                     onClick: handleToggleClick,
+                     onMouseEnter: handleIconMouseEnter
+                 }))
+@@ -84,7 +90,8 @@ const SpanIndentBox = styled('div')({
+     alignItems: 'center',
+     justifyContent: 'flex-end',
+     flexShrink: 0,
+-    transition: 'width 1s'
++    transition: 'width 140ms',
++    '@media (prefers-reduced-motion: reduce)': { transition: 'none' }
+ });
+ 
+ //# sourceMappingURL=SpanIndents.js.map
+\ No newline at end of file
+diff --git a/lib/TracingGanttChart/GanttTable/SpanName.js b/lib/TracingGanttChart/GanttTable/SpanName.js
+index 9e7a77cb3bc86661b1e37c409ea71daa591391d2..001c61ece502e50efe2b4c28f681010f73426854 100644
+--- a/lib/TracingGanttChart/GanttTable/SpanName.js
++++ b/lib/TracingGanttChart/GanttTable/SpanName.js
+@@ -40,19 +40,25 @@ import { SpanLinksButton } from './SpanLinksButton';
+                 }
+             }),
+             /*#__PURE__*/ _jsxs(Box, {
++                component: "button",
++                type: "button",
++                "data-span-trigger": span.spanId,
++                "aria-label": [span.resource.serviceName, span.name, span.spanId].filter(Boolean).join(" · "),
++                title: [span.resource.serviceName, span.name].filter(Boolean).join(": "),
+                 sx: {
++                    border: 0, background: "transparent", color: "inherit", font: "inherit", padding: 0,
++                    cursor: "pointer", textAlign: "left", minHeight: 32,
++                    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden'
+                 },
+                 children: [
+-                    /*#__PURE__*/ _jsxs("strong", {
+-                        children: [
+-                            span.resource.serviceName,
+-                            ":"
+-                        ]
+-                    }),
+-                    " ",
+-                    span.name
++                    /*#__PURE__*/ _jsx(Box, { component: "span", sx: { fontWeight: 500 }, children: span.name }),
++                    span.resource.serviceName && /*#__PURE__*/ _jsx(Box, {
++                        component: "span",
++                        sx: { color: "text.secondary", marginLeft: 0.5 },
++                        children: span.resource.serviceName
++                    })
+                 ]
+             }),
+             customLinks && customLinks.links.span && span.links.length > 0 && /*#__PURE__*/ _jsx(Box, {
+diff --git a/lib/TracingGanttChart/Search.js b/lib/TracingGanttChart/Search.js
+--- a/lib/TracingGanttChart/Search.js
++++ b/lib/TracingGanttChart/Search.js
+@@ -19,7 +19,7 @@
+ import { renderAttributeValue } from './DetailPane/Attributes';
+ import { forEachSpan } from './trace';
+ export function SearchBar(props) {
+-    const { search } = props;
++    const { search, labels } = props;
+     const { searchQuery, setSearchQuery, matchingSpanIds, focusedMatchIndex, setFocusedMatchIndex } = search;
+     const hasQuery = searchQuery.length > 0;
+     const matchCount = matchingSpanIds.length;
+@@ -47,16 +47,19 @@
+         sx: {
+             alignItems: 'center',
+             gap: 0.5,
+-            minWidth: 300
++            minWidth: 0,
++            flex: 1,
++            flexWrap: "wrap"
+         },
+         children: [
+             /*#__PURE__*/ _jsx(TextField, {
+                 size: "small",
+-                placeholder: "Search spans...",
++                placeholder: labels?.search ?? "Search spans...",
+                 value: searchQuery,
+                 onChange: (e)=>setSearchQuery(e.target.value),
+                 onKeyDown: handleKeyDown,
+                 slotProps: {
++                    htmlInput: { "aria-label": labels?.search ?? "Search spans..." },
+                     input: {
+                         endAdornment: /*#__PURE__*/ _jsx(InputAdornment, {
+                             position: "end",
+@@ -69,30 +72,32 @@
+                     }
+                 },
+                 sx: {
+-                    minWidth: 200
++                    minWidth: 0,
++                    flex: 1
+                 }
+             }),
+             /*#__PURE__*/ _jsx(IconButton, {
+                 size: "small",
+                 disabled: !hasMatches,
+-                "aria-label": "Previous match",
++                "aria-label": labels?.previous ?? "Previous match",
+                 onClick: handlePrev,
+                 children: /*#__PURE__*/ _jsx(ChevronUp, {})
+             }),
+             /*#__PURE__*/ _jsx(IconButton, {
+                 size: "small",
+                 disabled: !hasMatches,
+-                "aria-label": "Next match",
++                "aria-label": labels?.next ?? "Next match",
+                 onClick: handleNext,
+                 children: /*#__PURE__*/ _jsx(ChevronDown, {})
+             }),
+             /*#__PURE__*/ _jsx(IconButton, {
+                 size: "small",
+                 disabled: !hasQuery,
+-                "aria-label": "Clear search",
++                "aria-label": labels?.clear ?? "Clear search",
+                 onClick: ()=>setSearchQuery(''),
+                 children: /*#__PURE__*/ _jsx(Close, {})
+-            })
++            }),
++            hasQuery && !hasMatches && labels?.noMatches && _jsx("div", { role: "status", "aria-live": "polite", style: { flexBasis: "100%", fontSize: "0.875rem" }, children: labels.noMatches }),
+         ]
+     });
+ }
+diff --git a/lib/TracingGanttChart/Ticks.js b/lib/TracingGanttChart/Ticks.js
+index 13e6c17307973fbfcb74ef3ae2d0c836da68f6fd..2e5bd2229c506c246e7f6c3a50a0fd78e85c68aa 100644
+--- a/lib/TracingGanttChart/Ticks.js
++++ b/lib/TracingGanttChart/Ticks.js
+@@ -13,52 +13,53 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
+ // limitations under the License.
+ import { Box, styled } from '@mui/material';
+ import { formatDuration } from './utils';
++import { useRef, useState, useLayoutEffect } from 'react';
++import useResizeObserver from 'use-resize-observer';
+ /**
+  * TicksHeader renders all tick labels in the header
+  */ export function TicksHeader(props) {
+     const { trace, viewport } = props;
+     const duration = viewport.endTimeUnixMs - viewport.startTimeUnixMs;
+     const startAt = viewport.startTimeUnixMs - trace.startTimeUnixMs;
+-    return /*#__PURE__*/ _jsxs(_Fragment, {
+-        children: [
+-            /*#__PURE__*/ _jsx(TickBox, {
+-                style: {
+-                    left: '0%',
+-                    borderWidth: 0
+-                },
+-                children: formatDuration(startAt + duration * 0)
+-            }),
+-            /*#__PURE__*/ _jsx(TickBox, {
++    const container = useRef(null);
++    const { width = 0 } = useResizeObserver({ ref: container });
++    const [visible, setVisible] = useState([0, 4]);
++    const labels = [0, 0.25, 0.5, 0.75, 1].map((fraction)=>formatDuration(startAt + duration * fraction));
++    useLayoutEffect(()=>{
++        if (!container.current || width <= 0) return;
++        const widths = Array.from(container.current.querySelectorAll("[data-trace-tick]"),
++            (label)=>label.getBoundingClientRect().width);
++        const next = [0];
++        let previousRight = widths[0];
++        const endLeft = width - widths[4];
++        for (let index = 1; index < 4; index++) {
++            const center = width * index / 4;
++            const left = center - widths[index] / 2;
++            const right = center + widths[index] / 2;
++            if (left >= previousRight + 8 && right <= endLeft - 8) {
++                next.push(index);
++                previousRight = right;
++            }
++        }
++        next.push(4);
++        setVisible((current)=>current.join(",") === next.join(",") ? current : next);
++    }, [width, startAt, duration]);
++    return _jsx(Box, {
++        ref: container,
++        "data-trace-ruler": true,
++        sx: { position: "relative", width: "100%", height: "100%" },
++        children: labels.map((label, index)=>_jsx(TickBox, {
++            style: { left: `${index * 25}%`, borderWidth: index === 0 ? 0 : undefined, padding: 0 },
++            children: _jsx("span", {
++                "data-trace-tick": index,
+                 style: {
+-                    left: '25%'
++                    position: "absolute", whiteSpace: "nowrap", padding: ".25rem",
++                    transform: index === 4 ? "translateX(-100%)" : index === 0 ? undefined : "translateX(-50%)",
++                    visibility: visible.includes(index) ? "visible" : "hidden"
+                 },
+-                children: formatDuration(startAt + duration * 0.25)
+-            }),
+-            /*#__PURE__*/ _jsx(TickBox, {
+-                style: {
+-                    left: '50%'
+-                },
+-                children: formatDuration(startAt + duration * 0.5)
+-            }),
+-            /*#__PURE__*/ _jsx(TickBox, {
+-                style: {
+-                    left: '75%'
+-                },
+-                children: formatDuration(startAt + duration * 0.75)
+-            }),
+-            /*#__PURE__*/ _jsx(TickBox, {
+-                style: {
+-                    left: '100%'
+-                },
+-                children: /*#__PURE__*/ _jsx("span", {
+-                    style: {
+-                        position: 'absolute',
+-                        right: '.75rem'
+-                    },
+-                    children: formatDuration(startAt + duration * 1)
+-                })
++                children: label
+             })
+-        ]
++        }, index))
+     });
+ }
+ /**
+diff --git a/lib/TracingGanttChart/TracingGanttChart.d.ts b/lib/TracingGanttChart/TracingGanttChart.d.ts
+--- a/lib/TracingGanttChart/TracingGanttChart.d.ts
++++ b/lib/TracingGanttChart/TracingGanttChart.d.ts
+@@ -1,10 +1,17 @@
+-import { ReactElement } from 'react';
++import { ReactElement, ReactNode } from 'react';
+ import * as otlptracev1 from '@perses-dev/spec/dist/dashboard/query-type/otlp/trace/v1/trace';
+ import { CustomLinks, TracingGanttChartOptions } from '../gantt-chart-model';
+ export interface TracingGanttChartProps {
+     options: TracingGanttChartOptions;
+     customLinks?: CustomLinks;
+     trace: otlptracev1.TracesData;
++    selectedSpanId?: string;
++    onSelectSpan?: (spanId: string | undefined) => void;
++    hideHeader?: boolean;
++    hideDetails?: boolean;
++    hideMiniMap?: boolean;
++    toolbarActions?: ReactNode;
++    displayOptions?: {focusedSpanId?: string;errorsOnly?: boolean;collapsed?: boolean;collapseRevision?:number;durationLabel?:string;emptyLabel?:string;serviceOperationLabel?:string;searchLabels?:{search?:string;previous?:string;next?:string;clear?:string;noMatches?:string}};
+ }
+ /**
+  * The core GanttChart panel for Perses.
+diff --git a/lib/TracingGanttChart/TracingGanttChart.js b/lib/TracingGanttChart/TracingGanttChart.js
+--- a/lib/TracingGanttChart/TracingGanttChart.js
++++ b/lib/TracingGanttChart/TracingGanttChart.js
+@@ -11,7 +11,7 @@
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+-import { useMemo, useRef, useState } from 'react';
++import { useEffect, useMemo, useRef, useState } from 'react';
+ import { Box, Stack } from '@mui/material';
+ import { MiniGanttChart } from './MiniGanttChart/MiniGanttChart';
+ import { DetailPane } from './DetailPane/DetailPane';
+@@ -20,15 +20,15 @@
+ import { ResizableDivider } from './GanttTable/ResizableDivider';
+ import { getTraceModel } from './trace';
+ import { TraceHeaderBar } from './TraceHeaderBar';
+-import { useSpanSearch } from './Search';
++import { SearchBar, useSpanSearch } from './Search';
+ /**
+  * The core GanttChart panel for Perses.
+  *
+  * The UI/UX of this panel is based on Jaeger UI, licensed under Apache License, Version 2.0.
+  * https://github.com/jaegertracing/jaeger-ui
+  */ export function TracingGanttChart(props) {
+-    const { options, customLinks, trace: otlpTrace } = props;
+-    const trace = useMemo(()=>{
++    const { options, customLinks, trace: otlpTrace, selectedSpanId, onSelectSpan, hideHeader, hideDetails, hideMiniMap, toolbarActions, displayOptions } = props;
++    const fullTrace = useMemo(()=>{
+         try {
+             return getTraceModel(otlpTrace);
+         } catch (e) {
+@@ -37,17 +37,25 @@
+     }, [
+         otlpTrace
+     ]);
++    const focus = fullTrace.spanById.get(displayOptions?.focusedSpanId);
++    const trace = focus ? { ...fullTrace, rootSpans: [focus], startTimeUnixMs: focus.startTimeUnixMs, endTimeUnixMs: Math.max(focus.endTimeUnixMs, focus.startTimeUnixMs + 0.001) } : fullTrace;
+     const [viewport, setViewport] = useState({
+         startTimeUnixMs: trace.startTimeUnixMs,
+         endTimeUnixMs: trace.endTimeUnixMs
+     });
+-    const [selectedSpan, setSelectedSpan] = useState(()=>options.selectedSpanId ? trace.spanById.get(options.selectedSpanId) : undefined);
++    useEffect(()=>setViewport({startTimeUnixMs: trace.startTimeUnixMs,endTimeUnixMs:trace.endTimeUnixMs}), [trace.startTimeUnixMs,trace.endTimeUnixMs]);
++    const [localSelectedId, setLocalSelectedId] = useState(options.selectedSpanId);
++    const selectedSpan = trace.spanById.get(onSelectSpan ? selectedSpanId : localSelectedId);
++    const selectSpan = (span)=>{
++        if (onSelectSpan) onSelectSpan(span?.spanId);
++        else setLocalSelectedId(span?.spanId);
++    };
+     const search = useSpanSearch(trace);
+     const ganttChart = useRef(null);
+     // tableWidth only comes to effect if the detail pane is visible.
+     // setTableWidth() is only called by <ResizableDivider />
+     const [tableWidth, setTableWidth] = useState(0.82);
+-    const gap = 2;
++    const gap = hideHeader ? 0.5 : 2;
+     const spacing = ganttChart.current ? parseFloat(getComputedStyle(ganttChart.current).columnGap) || 0 : 0;
+     return /*#__PURE__*/ _jsxs(Stack, {
+         ref: ganttChart,
+@@ -64,11 +72,22 @@
+                     gap
+                 },
+                 children: [
+-                    /*#__PURE__*/ _jsx(TraceHeaderBar, {
++                    /*#__PURE__*/ hideHeader ? (toolbarActions ? _jsxs(Stack, {
++                        direction: "row",
++                        "data-perses-trace-toolbar": true,
++                        sx: { alignItems: "center", flexWrap: "wrap", gap: 0.5, minWidth: 0 },
++                        children: [
++                            _jsx(Box, {
++                                sx: { flex: "1 1 260px", minWidth: 0 },
++                                children: _jsx(SearchBar, { search, labels: displayOptions?.searchLabels })
++                            }),
++                            toolbarActions
++                        ]
++                    }) : _jsx(SearchBar, { search, labels: displayOptions?.searchLabels })) : _jsx(TraceHeaderBar, {
+                         trace: trace,
+                         search: search
+                     }),
+-                    /*#__PURE__*/ _jsx(MiniGanttChart, {
++                    /*#__PURE__*/ !hideMiniMap && _jsx(MiniGanttChart, {
+                         options: options,
+                         trace: trace,
+                         viewport: viewport,
+@@ -81,14 +100,15 @@
+                             trace: trace,
+                             viewport: viewport,
+                             selectedSpan: selectedSpan,
+-                            onSpanClick: setSelectedSpan,
++                            onSpanClick: selectSpan,
+                             matchingSpanIds: search.matchingSpanIds,
+-                            focusedSpanId: search.matchingSpanIds[search.focusedMatchIndex]
++                            focusedSpanId: search.matchingSpanIds[search.focusedMatchIndex],
++                            displayOptions
+                         })
+                     })
+                 ]
+             }),
+-            selectedSpan && /*#__PURE__*/ _jsxs(_Fragment, {
++            !hideDetails && selectedSpan && /*#__PURE__*/ _jsxs(_Fragment, {
+                 children: [
+                     /*#__PURE__*/ _jsx(ResizableDivider, {
+                         parentRef: ganttChart,
+@@ -107,7 +127,7 @@
+                             customLinks: customLinks,
+                             trace: trace,
+                             span: selectedSpan,
+-                            onCloseBtnClick: ()=>setSelectedSpan(undefined)
++                            onCloseBtnClick: ()=>selectSpan(undefined)
+                         })
+                     })
+                 ]
+diff --git a/lib/TracingGanttChart/trace.js b/lib/TracingGanttChart/trace.js
+index 455b123b90853c18a7f6191ae3b2865eda9747c8..d4a9ea93cff1b87e09a97e7ebde23af3827997ad 100644
+--- a/lib/TracingGanttChart/trace.js
++++ b/lib/TracingGanttChart/trace.js
+@@ -10,7 +10,7 @@
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+-import { sortedIndexBy } from 'lodash';
++import sortedIndexBy from 'lodash/sortedIndexBy';
+ /**
+  * getTraceModel builds a tree of spans from an OTLP trace,
+  * and precomputes common fields, for example the start and end time of a trace.
+diff --git a/lib/TracingGanttChart/utils.js b/lib/TracingGanttChart/utils.js
+index 6a132b6e7ee188eb77139c716b1090f4d2bdb88b..2646ab421e52fea212acde41abcebb077ed9b032 100644
+--- a/lib/TracingGanttChart/utils.js
++++ b/lib/TracingGanttChart/utils.js
+@@ -16,6 +16,7 @@ import { getConsistentCategoricalColor, getConsistentColor } from './palette';
+ export const rowHeight = '2rem';
+ export const spanHasError = (span)=>span.status?.code === otlptracev1.StatusCodeError;
+ export function getServiceColor(muiTheme, chartsTheme, paletteMode, serviceName, error = false) {
++    if (paletteMode === 'status') return error ? muiTheme.palette.error.main : muiTheme.palette.grey[500];
+     switch(paletteMode){
+         case 'categorical':
+             {
+@@ -29,7 +30,7 @@ export function getServiceColor(muiTheme, chartsTheme, paletteMode, serviceName,
+-                return getConsistentCategoricalColor(serviceName, error, categoricalPalette, errorPalette);
++                return getConsistentCategoricalColor(serviceName, false, categoricalPalette, errorPalette);
+             }
+         default:
+-            return getConsistentColor(serviceName, error);
++            return getConsistentColor(serviceName, false);
+     }
+ }
+ export function getSpanColor(muiTheme, chartsTheme, paletteMode, span) {
+diff --git a/lib/cjs/TracingGanttChart/GanttTable/GanttTable.js b/lib/cjs/TracingGanttChart/GanttTable/GanttTable.js
+--- a/lib/cjs/TracingGanttChart/GanttTable/GanttTable.js
++++ b/lib/cjs/TracingGanttChart/GanttTable/GanttTable.js
+@@ -30,9 +30,13 @@
+ const _GanttTableHeader = require("./GanttTableHeader");
+ const _ResizableDivider = require("./ResizableDivider");
+ function GanttTable(props) {
+-    const { options, customLinks, trace, viewport, selectedSpan, onSpanClick, matchingSpanIds, focusedSpanId } = props;
++    const { options, customLinks, trace, viewport, selectedSpan, onSpanClick, matchingSpanIds, focusedSpanId, displayOptions } = props;
+     const { collapsedSpans, setCollapsedSpans, setVisibleSpans } = (0, _GanttTableProvider.useGanttTableContext)();
+-    const [nameColumnWidth, setNameColumnWidth] = (0, _react.useState)(0.25);
++    (0, _react.useEffect)(()=>{
++        if (!displayOptions?.collapseRevision) return;
++        setCollapsedSpans(displayOptions.collapsed ? new Set(trace.spanById.keys()) : new Set());
++    }, [displayOptions?.collapseRevision,displayOptions?.collapsed,trace.spanById,setCollapsedSpans]);
++    const [nameColumnWidth, setNameColumnWidth] = (0, _react.useState)(0.45);
+     const tableRef = (0, _react.useRef)(null);
+     const virtuosoRef = (0, _react.useRef)(null);
+     const theme = (0, _material.useTheme)();
+@@ -45,10 +49,17 @@
+                 return false;
+             }
+         });
+-        return rows;
++        if (!displayOptions?.errorsOnly) return rows;
++        const included = new Set();
++        for (const span of trace.spanById.values()) if (span.status?.code === 'STATUS_CODE_ERROR') {
++            let current = span;
++            while (current) { included.add(current.spanId); current = current.parentSpan; }
++        }
++        return rows.filter(span=>included.has(span.spanId));
+     }, [
+         trace.rootSpans,
+-        collapsedSpans
++        collapsedSpans,
++        displayOptions?.errorsOnly
+     ]);
+     const matchingSpanIdSet = (0, _react.useMemo)(()=>new Set(matchingSpanIds ?? []), [
+         matchingSpanIds
+@@ -125,10 +136,13 @@
+             borderRadius: `${theme.shape.borderRadius}px`
+         },
+         children: [
++            rows.length === 0 && displayOptions?.emptyLabel && (0, _jsxruntime.jsx)(_material.Box, {role: 'status', sx: {padding: '8px'}, children: displayOptions.emptyLabel}),
+             /*#__PURE__*/ (0, _jsxruntime.jsx)(_GanttTableHeader.GanttTableHeader, {
+                 trace: trace,
+                 viewport: viewport,
+                 nameColumnWidth: nameColumnWidth,
++                listLabel: options.visual?.spanList ? displayOptions?.durationLabel : undefined,
++                nameLabel: displayOptions?.serviceOperationLabel,
+                 divider: divider
+             }),
+             /*#__PURE__*/ (0, _jsxruntime.jsx)(_reactvirtuoso.Virtuoso, {
+diff --git a/lib/cjs/TracingGanttChart/GanttTable/GanttTableHeader.js b/lib/cjs/TracingGanttChart/GanttTable/GanttTableHeader.js
+--- a/lib/cjs/TracingGanttChart/GanttTable/GanttTableHeader.js
++++ b/lib/cjs/TracingGanttChart/GanttTable/GanttTableHeader.js
+@@ -25,7 +25,7 @@
+ const _utils = require("../utils");
+ const _Ticks = require("../Ticks");
+ function GanttTableHeader(props) {
+-    const { trace, viewport, nameColumnWidth, divider } = props;
++    const { trace, viewport, nameColumnWidth, divider, listLabel, nameLabel } = props;
+     const theme = (0, _material.useTheme)();
+     return /*#__PURE__*/ (0, _jsxruntime.jsxs)(_material.Stack, {
+         direction: "row",
+@@ -44,7 +44,7 @@
+                     style: {
+                         padding: '.25rem'
+                     },
+-                    children: "Service & Operation"
++                    children: nameLabel ?? "Service & Operation"
+                 })
+             }),
+             divider,
+@@ -54,7 +54,7 @@
+                     height: '100%',
+                     flexGrow: 1
+                 },
+-                children: /*#__PURE__*/ (0, _jsxruntime.jsx)(_Ticks.TicksHeader, {
++                children: listLabel ?? /*#__PURE__*/ (0, _jsxruntime.jsx)(_Ticks.TicksHeader, {
+                     trace: trace,
+                     viewport: viewport
+                 })
+diff --git a/lib/cjs/TracingGanttChart/GanttTable/GanttTableRow.js b/lib/cjs/TracingGanttChart/GanttTable/GanttTableRow.js
+index f95e72f0b6a8747ae3ba00eee00a320ab8909e12..02cf25424a3cb8a44039a2a629e9796631b55f53 100644
+--- a/lib/cjs/TracingGanttChart/GanttTable/GanttTableRow.js
++++ b/lib/cjs/TracingGanttChart/GanttTable/GanttTableRow.js
+@@ -29,9 +29,9 @@ const _SpanDuration = require("./SpanDuration");
+ const GanttTableRow = /*#__PURE__*/ (0, _react.memo)(function GanttTableRow(props) {
+     const { options, customLinks, span, viewport, selected, matched, focused, nameColumnWidth, divider, onClick } = props;
+     const theme = (0, _material.useTheme)();
+-    const handleOnClick = ()=>{
++    const handleOnClick = (event)=>{
+         // ignore event if triggered by selecting text
+-        if (document.getSelection()?.type === 'Range') return;
++        if (event.detail !== 0 && document.getSelection()?.type === 'Range') return;
+         onClick(span);
+     };
+     let backgroundColor;
+@@ -71,7 +71,6 @@ const RowContainer = (0, _material.styled)(_material.Stack)(({ theme })=>({
+         height: _utils.rowHeight,
+         '&:hover': {
+             backgroundColor: theme.palette.action.hover,
+-            borderTop: `1px solid ${theme.palette.divider}`,
+-            borderBottom: `1px solid ${theme.palette.divider}`
++            boxShadow: `inset 0 1px ${theme.palette.divider}, inset 0 -1px ${theme.palette.divider}`
+         }
+     }));
+diff --git a/lib/cjs/TracingGanttChart/GanttTable/SpanDuration.js b/lib/cjs/TracingGanttChart/GanttTable/SpanDuration.js
+index 24c9a4e05a772ecdb6906fbb5c225d2198bbaea4..b0fec4f8b34c2ca105320c971a4ca7da478830ad 100644
+--- a/lib/cjs/TracingGanttChart/GanttTable/SpanDuration.js
++++ b/lib/cjs/TracingGanttChart/GanttTable/SpanDuration.js
+@@ -30,6 +30,7 @@ function SpanDuration(props) {
+     const muiTheme = (0, _material.useTheme)();
+     const chartsTheme = (0, _components.useChartsTheme)();
+     const spanDuration = span.endTimeUnixMs - span.startTimeUnixMs;
++    if (options.visual?.spanList) return (0, _jsxruntime.jsx)(_material.Box, {sx: {padding: '0 8px'}, children: (0, _utils.formatDuration)(spanDuration)});
+     const viewportDuration = viewport.endTimeUnixMs - viewport.startTimeUnixMs;
+     const relativeDuration = spanDuration / viewportDuration;
+     const relativeStart = (span.startTimeUnixMs - viewport.startTimeUnixMs) / viewportDuration;
+diff --git a/lib/cjs/TracingGanttChart/GanttTable/SpanIndents.js b/lib/cjs/TracingGanttChart/GanttTable/SpanIndents.js
+index 3b7cc81c4101902f76008649a70dae96c8c316a3..8134ca81abc3f1f03c193ac930a038f1cc76a33c 100644
+--- a/lib/cjs/TracingGanttChart/GanttTable/SpanIndents.js
++++ b/lib/cjs/TracingGanttChart/GanttTable/SpanIndents.js
+@@ -77,10 +77,16 @@ function SpanIndents(props) {
+                 onMouseLeave: ()=>setHoveredParent(undefined),
+                 children: i === spans.length - 1 && span.childSpans.length > 0 && (collapsedSpans.has(span.spanId) ? /*#__PURE__*/ (0, _jsxruntime.jsx)(_ChevronRight.default, {
+                     titleAccess: "expand",
++                    sx: { "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 } },
++                    role: "button", tabIndex: 0, "aria-expanded": false,
++                    onKeyDown: (event)=>{ if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleToggleClick(event); } },
+                     onClick: handleToggleClick,
+                     onMouseEnter: handleIconMouseEnter
+                 }) : /*#__PURE__*/ (0, _jsxruntime.jsx)(_ChevronDown.default, {
+                     titleAccess: "collapse",
++                    sx: { "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 } },
++                    role: "button", tabIndex: 0, "aria-expanded": true,
++                    onKeyDown: (event)=>{ if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleToggleClick(event); } },
+                     onClick: handleToggleClick,
+                     onMouseEnter: handleIconMouseEnter
+                 }))
+@@ -93,5 +99,6 @@ const SpanIndentBox = (0, _material.styled)('div')({
+     alignItems: 'center',
+     justifyContent: 'flex-end',
+     flexShrink: 0,
+-    transition: 'width 1s'
++    transition: 'width 140ms',
++    '@media (prefers-reduced-motion: reduce)': { transition: 'none' }
+ });
+diff --git a/lib/cjs/TracingGanttChart/GanttTable/SpanName.js b/lib/cjs/TracingGanttChart/GanttTable/SpanName.js
+index dca6205ff4406cb7d80ec82a770de1b56aa9125d..fefe5d8db7fb0a380cb839964116f36b14c8e16c 100644
+--- a/lib/cjs/TracingGanttChart/GanttTable/SpanName.js
++++ b/lib/cjs/TracingGanttChart/GanttTable/SpanName.js
+@@ -53,19 +53,25 @@ function SpanName(props) {
+                 }
+             }),
+             /*#__PURE__*/ (0, _jsxruntime.jsxs)(_material.Box, {
++                component: "button",
++                type: "button",
++                "data-span-trigger": span.spanId,
++                "aria-label": [span.resource.serviceName, span.name, span.spanId].filter(Boolean).join(" · "),
++                title: [span.resource.serviceName, span.name].filter(Boolean).join(": "),
+                 sx: {
++                    border: 0, background: "transparent", color: "inherit", font: "inherit", padding: 0,
++                    cursor: "pointer", textAlign: "left", minHeight: 32,
++                    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden'
+                 },
+                 children: [
+-                    /*#__PURE__*/ (0, _jsxruntime.jsxs)("strong", {
+-                        children: [
+-                            span.resource.serviceName,
+-                            ":"
+-                        ]
+-                    }),
+-                    " ",
+-                    span.name
++                    /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Box, { component: "span", sx: { fontWeight: 500 }, children: span.name }),
++                    span.resource.serviceName && /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Box, {
++                        component: "span",
++                        sx: { color: "text.secondary", marginLeft: 0.5 },
++                        children: span.resource.serviceName
++                    })
+                 ]
+             }),
+             customLinks && customLinks.links.span && span.links.length > 0 && /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.Box, {
+diff --git a/lib/cjs/TracingGanttChart/Search.js b/lib/cjs/TracingGanttChart/Search.js
+--- a/lib/cjs/TracingGanttChart/Search.js
++++ b/lib/cjs/TracingGanttChart/Search.js
+@@ -42,7 +42,7 @@
+     };
+ }
+ function SearchBar(props) {
+-    const { search } = props;
++    const { search, labels } = props;
+     const { searchQuery, setSearchQuery, matchingSpanIds, focusedMatchIndex, setFocusedMatchIndex } = search;
+     const hasQuery = searchQuery.length > 0;
+     const matchCount = matchingSpanIds.length;
+@@ -70,16 +70,19 @@
+         sx: {
+             alignItems: 'center',
+             gap: 0.5,
+-            minWidth: 300
++            minWidth: 0,
++            flex: 1,
++            flexWrap: "wrap"
+         },
+         children: [
+             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.TextField, {
+                 size: "small",
+-                placeholder: "Search spans...",
++                placeholder: labels?.search ?? "Search spans...",
+                 value: searchQuery,
+                 onChange: (e)=>setSearchQuery(e.target.value),
+                 onKeyDown: handleKeyDown,
+                 slotProps: {
++                    htmlInput: { "aria-label": labels?.search ?? "Search spans..." },
+                     input: {
+                         endAdornment: /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.InputAdornment, {
+                             position: "end",
+@@ -92,30 +95,32 @@
+                     }
+                 },
+                 sx: {
+-                    minWidth: 200
++                    minWidth: 0,
++                    flex: 1
+                 }
+             }),
+             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.IconButton, {
+                 size: "small",
+                 disabled: !hasMatches,
+-                "aria-label": "Previous match",
++                "aria-label": labels?.previous ?? "Previous match",
+                 onClick: handlePrev,
+                 children: /*#__PURE__*/ (0, _jsxruntime.jsx)(_ChevronUp.default, {})
+             }),
+             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.IconButton, {
+                 size: "small",
+                 disabled: !hasMatches,
+-                "aria-label": "Next match",
++                "aria-label": labels?.next ?? "Next match",
+                 onClick: handleNext,
+                 children: /*#__PURE__*/ (0, _jsxruntime.jsx)(_ChevronDown.default, {})
+             }),
+             /*#__PURE__*/ (0, _jsxruntime.jsx)(_material.IconButton, {
+                 size: "small",
+                 disabled: !hasQuery,
+-                "aria-label": "Clear search",
++                "aria-label": labels?.clear ?? "Clear search",
+                 onClick: ()=>setSearchQuery(''),
+                 children: /*#__PURE__*/ (0, _jsxruntime.jsx)(_Close.default, {})
+-            })
++            }),
++            hasQuery && !hasMatches && labels?.noMatches && (0, _jsxruntime.jsx)("div", { role: "status", "aria-live": "polite", style: { flexBasis: "100%", fontSize: "0.875rem" }, children: labels.noMatches }),
+         ]
+     });
+ }
+diff --git a/lib/cjs/TracingGanttChart/Ticks.js b/lib/cjs/TracingGanttChart/Ticks.js
+index 297504fb3e3310134ec8aa56d88ecbd8b04794cb..88fd60197536f6b08b9c8e4e7391c2a747ed94b0 100644
+--- a/lib/cjs/TracingGanttChart/Ticks.js
++++ b/lib/cjs/TracingGanttChart/Ticks.js
+@@ -31,50 +31,52 @@ _export(exports, {
+ const _jsxruntime = require("react/jsx-runtime");
+ const _material = require("@mui/material");
+ const _utils = require("./utils");
++const _react = require("react");
++const _resizeModule = require("use-resize-observer");
++const _useresizeobserver = _resizeModule && _resizeModule.__esModule ? _resizeModule : { default: _resizeModule };
+ function TicksHeader(props) {
+     const { trace, viewport } = props;
+     const duration = viewport.endTimeUnixMs - viewport.startTimeUnixMs;
+     const startAt = viewport.startTimeUnixMs - trace.startTimeUnixMs;
+-    return /*#__PURE__*/ (0, _jsxruntime.jsxs)(_jsxruntime.Fragment, {
+-        children: [
+-            /*#__PURE__*/ (0, _jsxruntime.jsx)(TickBox, {
+-                style: {
+-                    left: '0%',
+-                    borderWidth: 0
+-                },
+-                children: (0, _utils.formatDuration)(startAt + duration * 0)
+-            }),
+-            /*#__PURE__*/ (0, _jsxruntime.jsx)(TickBox, {
++    const container = _react.useRef(null);
++    const { width = 0 } = _useresizeobserver.default({ ref: container });
++    const [visible, setVisible] = _react.useState([0, 4]);
++    const labels = [0, 0.25, 0.5, 0.75, 1].map((fraction)=>(0, _utils.formatDuration)(startAt + duration * fraction));
++    _react.useLayoutEffect(()=>{
++        if (!container.current || width <= 0) return;
++        const widths = Array.from(container.current.querySelectorAll("[data-trace-tick]"),
++            (label)=>label.getBoundingClientRect().width);
++        const next = [0];
++        let previousRight = widths[0];
++        const endLeft = width - widths[4];
++        for (let index = 1; index < 4; index++) {
++            const center = width * index / 4;
++            const left = center - widths[index] / 2;
++            const right = center + widths[index] / 2;
++            if (left >= previousRight + 8 && right <= endLeft - 8) {
++                next.push(index);
++                previousRight = right;
++            }
++        }
++        next.push(4);
++        setVisible((current)=>current.join(",") === next.join(",") ? current : next);
++    }, [width, startAt, duration]);
++    return (0, _jsxruntime.jsx)(_material.Box, {
++        ref: container,
++        "data-trace-ruler": true,
++        sx: { position: "relative", width: "100%", height: "100%" },
++        children: labels.map((label, index)=>(0, _jsxruntime.jsx)(TickBox, {
++            style: { left: `${index * 25}%`, borderWidth: index === 0 ? 0 : undefined, padding: 0 },
++            children: (0, _jsxruntime.jsx)("span", {
++                "data-trace-tick": index,
+                 style: {
+-                    left: '25%'
++                    position: "absolute", whiteSpace: "nowrap", padding: ".25rem",
++                    transform: index === 4 ? "translateX(-100%)" : index === 0 ? undefined : "translateX(-50%)",
++                    visibility: visible.includes(index) ? "visible" : "hidden"
+                 },
+-                children: (0, _utils.formatDuration)(startAt + duration * 0.25)
+-            }),
+-            /*#__PURE__*/ (0, _jsxruntime.jsx)(TickBox, {
+-                style: {
+-                    left: '50%'
+-                },
+-                children: (0, _utils.formatDuration)(startAt + duration * 0.5)
+-            }),
+-            /*#__PURE__*/ (0, _jsxruntime.jsx)(TickBox, {
+-                style: {
+-                    left: '75%'
+-                },
+-                children: (0, _utils.formatDuration)(startAt + duration * 0.75)
+-            }),
+-            /*#__PURE__*/ (0, _jsxruntime.jsx)(TickBox, {
+-                style: {
+-                    left: '100%'
+-                },
+-                children: /*#__PURE__*/ (0, _jsxruntime.jsx)("span", {
+-                    style: {
+-                        position: 'absolute',
+-                        right: '.75rem'
+-                    },
+-                    children: (0, _utils.formatDuration)(startAt + duration * 1)
+-                })
++                children: label
+             })
+-        ]
++        }, index))
+     });
+ }
+ function Ticks() {
+diff --git a/lib/cjs/TracingGanttChart/TracingGanttChart.js b/lib/cjs/TracingGanttChart/TracingGanttChart.js
+--- a/lib/cjs/TracingGanttChart/TracingGanttChart.js
++++ b/lib/cjs/TracingGanttChart/TracingGanttChart.js
+@@ -32,8 +32,8 @@
+ const _TraceHeaderBar = require("./TraceHeaderBar");
+ const _Search = require("./Search");
+ function TracingGanttChart(props) {
+-    const { options, customLinks, trace: otlpTrace } = props;
+-    const trace = (0, _react.useMemo)(()=>{
++    const { options, customLinks, trace: otlpTrace, selectedSpanId, onSelectSpan, hideHeader, hideDetails, hideMiniMap, toolbarActions, displayOptions } = props;
++    const fullTrace = (0, _react.useMemo)(()=>{
+         try {
+             return (0, _trace.getTraceModel)(otlpTrace);
+         } catch (e) {
+@@ -42,17 +42,25 @@
+     }, [
+         otlpTrace
+     ]);
++    const focus = fullTrace.spanById.get(displayOptions?.focusedSpanId);
++    const trace = focus ? { ...fullTrace, rootSpans: [focus], startTimeUnixMs: focus.startTimeUnixMs, endTimeUnixMs: Math.max(focus.endTimeUnixMs, focus.startTimeUnixMs + 0.001) } : fullTrace;
+     const [viewport, setViewport] = (0, _react.useState)({
+         startTimeUnixMs: trace.startTimeUnixMs,
+         endTimeUnixMs: trace.endTimeUnixMs
+     });
+-    const [selectedSpan, setSelectedSpan] = (0, _react.useState)(()=>options.selectedSpanId ? trace.spanById.get(options.selectedSpanId) : undefined);
++    (0, _react.useEffect)(()=>setViewport({startTimeUnixMs: trace.startTimeUnixMs,endTimeUnixMs:trace.endTimeUnixMs}), [trace.startTimeUnixMs,trace.endTimeUnixMs]);
++    const [localSelectedId, setLocalSelectedId] = (0, _react.useState)(options.selectedSpanId);
++    const selectedSpan = trace.spanById.get(onSelectSpan ? selectedSpanId : localSelectedId);
++    const selectSpan = (span)=>{
++        if (onSelectSpan) onSelectSpan(span?.spanId);
++        else setLocalSelectedId(span?.spanId);
++    };
+     const search = (0, _Search.useSpanSearch)(trace);
+     const ganttChart = (0, _react.useRef)(null);
+     // tableWidth only comes to effect if the detail pane is visible.
+     // setTableWidth() is only called by <ResizableDivider />
+     const [tableWidth, setTableWidth] = (0, _react.useState)(0.82);
+-    const gap = 2;
++    const gap = hideHeader ? 0.5 : 2;
+     const spacing = ganttChart.current ? parseFloat(getComputedStyle(ganttChart.current).columnGap) || 0 : 0;
+     return /*#__PURE__*/ (0, _jsxruntime.jsxs)(_material.Stack, {
+         ref: ganttChart,
+@@ -69,11 +77,22 @@
+                     gap
+                 },
+                 children: [
+-                    /*#__PURE__*/ (0, _jsxruntime.jsx)(_TraceHeaderBar.TraceHeaderBar, {
++                    /*#__PURE__*/ hideHeader ? (toolbarActions ? (0, _jsxruntime.jsxs)(_material.Stack, {
++                        direction: "row",
++                        "data-perses-trace-toolbar": true,
++                        sx: { alignItems: "center", flexWrap: "wrap", gap: 0.5, minWidth: 0 },
++                        children: [
++                            (0, _jsxruntime.jsx)(_material.Box, {
++                                sx: { flex: "1 1 260px", minWidth: 0 },
++                                children: (0, _jsxruntime.jsx)(_Search.SearchBar, { search, labels: displayOptions?.searchLabels })
++                            }),
++                            toolbarActions
++                        ]
++                    }) : (0, _jsxruntime.jsx)(_Search.SearchBar, { search, labels: displayOptions?.searchLabels })) : (0, _jsxruntime.jsx)(_TraceHeaderBar.TraceHeaderBar, {
+                         trace: trace,
+                         search: search
+                     }),
+-                    /*#__PURE__*/ (0, _jsxruntime.jsx)(_MiniGanttChart.MiniGanttChart, {
++                    /*#__PURE__*/ !hideMiniMap && (0, _jsxruntime.jsx)(_MiniGanttChart.MiniGanttChart, {
+                         options: options,
+                         trace: trace,
+                         viewport: viewport,
+@@ -86,14 +105,15 @@
+                             trace: trace,
+                             viewport: viewport,
+                             selectedSpan: selectedSpan,
+-                            onSpanClick: setSelectedSpan,
++                            onSpanClick: selectSpan,
+                             matchingSpanIds: search.matchingSpanIds,
+-                            focusedSpanId: search.matchingSpanIds[search.focusedMatchIndex]
++                            focusedSpanId: search.matchingSpanIds[search.focusedMatchIndex],
++                            displayOptions
+                         })
+                     })
+                 ]
+             }),
+-            selectedSpan && /*#__PURE__*/ (0, _jsxruntime.jsxs)(_jsxruntime.Fragment, {
++            !hideDetails && selectedSpan && /*#__PURE__*/ (0, _jsxruntime.jsxs)(_jsxruntime.Fragment, {
+                 children: [
+                     /*#__PURE__*/ (0, _jsxruntime.jsx)(_ResizableDivider.ResizableDivider, {
+                         parentRef: ganttChart,
+@@ -112,7 +132,7 @@
+                             customLinks: customLinks,
+                             trace: trace,
+                             span: selectedSpan,
+-                            onCloseBtnClick: ()=>setSelectedSpan(undefined)
++                            onCloseBtnClick: ()=>selectSpan(undefined)
+                         })
+                     })
+                 ]
+diff --git a/lib/cjs/TracingGanttChart/trace.js b/lib/cjs/TracingGanttChart/trace.js
+index 3055c53f7c3919744663097ea0934f5b7ea763e1..0981fbf32ef75937797bbcd960139a928a004a3b 100644
+--- a/lib/cjs/TracingGanttChart/trace.js
++++ b/lib/cjs/TracingGanttChart/trace.js
+@@ -28,7 +28,7 @@ _export(exports, {
+         return getTraceModel;
+     }
+ });
+-const _lodash = require("lodash");
++const _lodash = require("lodash/sortedIndexBy");
+ function getTraceModel(trace) {
+     // first pass: build lookup table <spanId, Span> and compute min/max
+     const spanById = new Map();
+@@ -69,7 +69,7 @@ function getTraceModel(trace) {
+             continue;
+         }
+         span.parentSpan = parent;
+-        const insertChildSpanAt = (0, _lodash.sortedIndexBy)(parent.childSpans, span, (s)=>s.startTimeUnixMs);
++        const insertChildSpanAt = _lodash(parent.childSpans, span, (s)=>s.startTimeUnixMs);
+         parent.childSpans.splice(insertChildSpanAt, 0, span);
+     }
+     return {
+diff --git a/lib/cjs/TracingGanttChart/utils.js b/lib/cjs/TracingGanttChart/utils.js
+index 0e7330323f1f0cd465d01fb84f6717da384dce4e..b3b3a97764bc78e5ed6cc819d6effeea2c04f7f7 100644
+--- a/lib/cjs/TracingGanttChart/utils.js
++++ b/lib/cjs/TracingGanttChart/utils.js
+@@ -87,6 +87,7 @@ const minSpanWidthPx = 2;
+ const rowHeight = '2rem';
+ const spanHasError = (span)=>span.status?.code === _trace.StatusCodeError;
+ function getServiceColor(muiTheme, chartsTheme, paletteMode, serviceName, error = false) {
++    if (paletteMode === 'status') return error ? muiTheme.palette.error.main : muiTheme.palette.grey[500];
+     switch(paletteMode){
+         case 'categorical':
+             {
+@@ -100,7 +101,7 @@ function getServiceColor(muiTheme, chartsTheme, paletteMode, serviceName, error
+-                return (0, _palette.getConsistentCategoricalColor)(serviceName, error, categoricalPalette, errorPalette);
++                return (0, _palette.getConsistentCategoricalColor)(serviceName, false, categoricalPalette, errorPalette);
+             }
+         default:
+-            return (0, _palette.getConsistentColor)(serviceName, error);
++            return (0, _palette.getConsistentColor)(serviceName, false);
+     }
+ }
+ function getSpanColor(muiTheme, chartsTheme, paletteMode, span) {
+diff --git a/lib/cjs/index.js b/lib/cjs/index.js
+index 947b96b754d51e05dda4414eb0a41baa8bb035e9..03b6ff1568210fbfd4d693de6e09362a8d1512c0 100644
+--- a/lib/cjs/index.js
++++ b/lib/cjs/index.js
+@@ -24,6 +24,10 @@ _export_star(require("./gantt-chart-model"), exports);
+ const _getPluginModule = require("./getPluginModule");
+ _export_star(require("./TracingGanttChart"), exports);
+ _export_star(require("./TracingGanttChartPanel"), exports);
++Object.defineProperty(exports, "TracingGanttChartCore", {
++    enumerable: true,
++    get: function() { return require("./TracingGanttChart/TracingGanttChart").TracingGanttChart; }
++});
+ function _export_star(from, to) {
+     Object.keys(from).forEach(function(k) {
+         if (k !== "default" && !Object.prototype.hasOwnProperty.call(to, k)) {
+diff --git a/lib/gantt-chart-model.d.ts b/lib/gantt-chart-model.d.ts
+index 39c081e0a56e7fe5db8b893046e998c993f849ce..a2fd551185526d310f6d14169b26f0c8c0af4a9e 100644
+--- a/lib/gantt-chart-model.d.ts
++++ b/lib/gantt-chart-model.d.ts
+@@ -11,10 +11,11 @@ export interface TracingGanttChartOptions {
+     selectedSpanId?: string;
+ }
+ export interface TracingGanttChartVisualOptions {
++    spanList?: boolean;
+     palette?: TracingGanttChartPaletteOptions;
+ }
+ export interface TracingGanttChartPaletteOptions {
+-    mode: 'auto' | 'categorical';
++    mode: 'auto' | 'categorical' | 'status';
+ }
+ export interface TracingGanttChartCustomLinks {
+     /**
+diff --git a/lib/index.d.ts b/lib/index.d.ts
+index 56c1c0546f5f7df396fa806d9f8fb46ed903661a..f5a7ba64570114a3b11ea58daf086a0b61514056 100644
+--- a/lib/index.d.ts
++++ b/lib/index.d.ts
+@@ -2,4 +2,5 @@ export * from './gantt-chart-model';
+ export { getPluginModule } from './getPluginModule';
+ export * from './TracingGanttChart';
+ export * from './TracingGanttChartPanel';
++export { TracingGanttChart as TracingGanttChartCore, type TracingGanttChartProps } from './TracingGanttChart/TracingGanttChart';
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+diff --git a/lib/index.js b/lib/index.js
+index 559756ebce0b78764c74709f3c8bfaf890d07bac..419af46a2f9f34ec32cf7cdbc121a71f20c4828d 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -14,5 +14,6 @@ export * from './gantt-chart-model';
+ export { getPluginModule } from './getPluginModule';
+ export * from './TracingGanttChart';
+ export * from './TracingGanttChartPanel';
++export { TracingGanttChart as TracingGanttChartCore } from './TracingGanttChart/TracingGanttChart';
+ 
+ //# sourceMappingURL=index.js.map
+diff --git a/lib/TracingGanttChart/GanttTable/GanttTableHeader.d.ts b/lib/TracingGanttChart/GanttTable/GanttTableHeader.d.ts
+--- a/lib/TracingGanttChart/GanttTable/GanttTableHeader.d.ts
++++ b/lib/TracingGanttChart/GanttTable/GanttTableHeader.d.ts
+@@ -6,6 +6,8 @@
+     viewport: Viewport;
+     nameColumnWidth: number;
+     divider: React.ReactNode;
++    nameLabel?: string;
++    listLabel?: string;
+ }
+ export declare function GanttTableHeader(props: GanttTableHeaderProps): ReactElement;
+ export {};
+diff --git a/lib/TracingGanttChart/Search.d.ts b/lib/TracingGanttChart/Search.d.ts
+--- a/lib/TracingGanttChart/Search.d.ts
++++ b/lib/TracingGanttChart/Search.d.ts
+@@ -2,6 +2,7 @@
+ import { Trace } from './trace';
+ export interface SearchBarProps {
+     search: SpanSearch;
++    labels?: {search?:string;previous?:string;next?:string;clear?:string;noMatches?:string};
+ }
+ export declare function SearchBar(props: SearchBarProps): ReactElement;
+ export interface SpanSearch {

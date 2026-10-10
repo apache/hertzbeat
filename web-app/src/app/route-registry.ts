@@ -1,0 +1,246 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  alertRoutePaths,
+  applicationRoutePaths,
+  entityRoutePaths,
+  buildAlertIntegrationPath,
+  monitorRoutePaths
+} from '@/shared/navigation/app-paths';
+import { settingsPaths } from '@/shared/settings/settings-routes';
+import { legacySignalRoutes } from '@/shared/navigation/signal-route-paths';
+import { signalDashboardPath } from '@/shared/navigation/signal-dashboard-paths';
+
+export type AppRouteDefinition = {
+  id: string;
+  path: string;
+  layout: 'basic' | 'blank' | 'passport';
+  kind: 'page' | 'redirect';
+  resource?: {
+    labelKey: string;
+    listPath?: string;
+    requiredRoles?: readonly string[];
+  };
+};
+
+type AppRouteOptions = Partial<Pick<AppRouteDefinition, 'layout' | 'resource'>>;
+type AppRouteResource = NonNullable<AppRouteDefinition['resource']>;
+type ResourceRouteOptions = AppRouteOptions & { resource: AppRouteResource };
+type ResourceRouteDefinition = AppRouteDefinition & { resource: AppRouteResource };
+
+export const applicationRootPath = '/';
+
+export const appRouteCatalog = {
+  dashboard: pageRoute('dashboard', applicationRoutePaths.dashboard, {
+    resource: { labelKey: 'menu.dashboard' }
+  }),
+  'ai-workspace': pageRoute('ai-workspace', applicationRoutePaths.aiWorkspace, {
+    resource: { labelKey: 'menu.aiWorkspace', requiredRoles: ['ADMIN', 'USER'] }
+  }),
+  'ai-schedules': pageRoute('ai-schedules', applicationRoutePaths.aiSchedules, {
+    resource: { labelKey: 'aiSchedules.title', requiredRoles: ['ADMIN'] }
+  }),
+  monitors: pageRoute('monitors', monitorRoutePaths.list, {
+    resource: { labelKey: 'menu.monitors' }
+  }),
+  'monitor-new': pageRoute('monitor-new', monitorRoutePaths.create),
+  'monitor-edit': pageRoute('monitor-edit', monitorRoutePaths.edit),
+  'monitor-detail': pageRoute('monitor-detail', monitorRoutePaths.detail),
+  entities: pageRoute('entities', entityRoutePaths.list, {
+    resource: { labelKey: 'menu.entities' }
+  }),
+  'entity-discovery': pageRoute('entity-discovery', entityRoutePaths.discovery),
+  'entity-import': pageRoute('entity-import', entityRoutePaths.import),
+  'entity-new': pageRoute('entity-new', entityRoutePaths.create),
+  'entity-edit': pageRoute('entity-edit', entityRoutePaths.edit),
+  'entity-definition': pageRoute('entity-definition', entityRoutePaths.definition),
+  'entity-detail': pageRoute('entity-detail', entityRoutePaths.detail),
+  topology: pageRoute('topology', applicationRoutePaths.topology, {
+    resource: { labelKey: 'menu.topology' }
+  }),
+  services: pageRoute('services', applicationRoutePaths.services, { resource: { labelKey: 'services.title' } }),
+  explore: pageRoute('explore', applicationRoutePaths.explore, {
+    resource: { labelKey: 'menu.explore' }
+  }),
+  'signal-dashboards': pageRoute('signal-dashboards', signalDashboardPath, {
+    resource: { labelKey: 'signalDashboard.title' }
+  }),
+  instrumentation: pageRoute('instrumentation', applicationRoutePaths.instrumentation, {
+    layout: 'blank',
+    resource: { labelKey: 'instrumentation.menu', requiredRoles: ['ADMIN', 'USER'] }
+  }),
+  alerts: pageRoute('alerts', alertRoutePaths.center, {
+    resource: { labelKey: 'menu.alerts' }
+  }),
+  'alert-investigation': pageRoute('alert-investigation', alertRoutePaths.investigation),
+  'alert-rules': pageRoute('alert-rules', alertRoutePaths.rules, {
+    resource: { labelKey: 'alertRules.title' }
+  }),
+  'alert-rule-new': pageRoute('alert-rule-new', alertRoutePaths.ruleNew),
+  'alert-rule-edit': pageRoute('alert-rule-edit', alertRoutePaths.ruleEdit),
+  'alert-groups': pageRoute('alert-groups', alertRoutePaths.groups, {
+    resource: { labelKey: 'alertGroups.title' }
+  }),
+  'alert-inhibits': pageRoute('alert-inhibits', alertRoutePaths.inhibits, {
+    resource: { labelKey: 'alertInhibits.title' }
+  }),
+  'alert-silences': pageRoute('alert-silences', alertRoutePaths.silences, {
+    resource: { labelKey: 'alertSilences.title' }
+  }),
+  'alert-integrations': pageRoute('alert-integrations', alertRoutePaths.integrations, {
+    resource: { labelKey: 'alertIntegrations.menu', listPath: buildAlertIntegrationPath('webhook') }
+  }),
+  settings: redirectRoute('settings', settingsPaths.root, {
+    resource: { labelKey: 'menu.settings' }
+  }),
+  'notice-receivers': pageRoute('notice-receivers', settingsPaths.receivers, {
+    resource: { labelKey: 'settingsNavigation.receivers' }
+  }),
+  'notice-rules': pageRoute('notice-rules', settingsPaths.rules, {
+    resource: { labelKey: 'settingsNavigation.rules' }
+  }),
+  'notice-templates': pageRoute('notice-templates', settingsPaths.templates, {
+    resource: { labelKey: 'settingsNavigation.templates' }
+  }),
+  'message-server': pageRoute('message-server', settingsPaths.channels, {
+    resource: { labelKey: 'settingsNavigation.channels' }
+  }),
+  tokens: pageRoute('tokens', settingsPaths.tokens, {
+    resource: { labelKey: 'settingsNavigation.tokens', requiredRoles: ['ADMIN'] }
+  }),
+  collectors: pageRoute('collectors', settingsPaths.collectors, {
+    resource: { labelKey: 'settingsNavigation.collectors' }
+  }),
+  plugins: pageRoute('plugins', settingsPaths.plugins, {
+    resource: { labelKey: 'settingsNavigation.plugins', requiredRoles: ['ADMIN'] }
+  }),
+  'monitor-definitions': pageRoute('monitor-definitions', settingsPaths.monitorDefinitions, {
+    resource: { labelKey: 'settingsNavigation.monitorDefinitions' }
+  }),
+  'deployment-settings': pageRoute('deployment-settings', settingsPaths.deployment, {
+    resource: { labelKey: 'settingsNavigation.deployment', requiredRoles: ['ADMIN'] }
+  }),
+  'deployment-migration': pageRoute('deployment-migration', settingsPaths.deploymentMigration),
+  'system-settings': pageRoute('system-settings', settingsPaths.system, {
+    resource: { labelKey: 'settingsNavigation.system' }
+  }),
+  labels: pageRoute('labels', settingsPaths.labels, {
+    resource: { labelKey: 'settingsNavigation.labels', requiredRoles: ['ADMIN', 'USER', 'GUEST'] }
+  }),
+  'object-store': pageRoute('object-store', settingsPaths.objectStore, {
+    resource: { labelKey: 'settingsNavigation.objectStore' }
+  }),
+  'status-management': pageRoute('status-management', settingsPaths.statusPage, {
+    resource: { labelKey: 'settingsNavigation.statusPage' }
+  }),
+  bulletin: pageRoute('bulletin', '/bulletin', {
+    resource: { labelKey: 'menu.bulletin' }
+  }),
+  status: pageRoute('status', applicationRoutePaths.status, { layout: 'blank' }),
+  setup: pageRoute('setup', '/setup', { layout: 'blank' }),
+  login: pageRoute('login', applicationRoutePaths.login, { layout: 'passport' }),
+  lock: pageRoute('lock', applicationRoutePaths.lock, { layout: 'passport' }),
+  'not-found': pageRoute('not-found', '*', { layout: 'blank' })
+} as const satisfies Record<string, AppRouteDefinition>;
+
+export type AppRouteId = keyof typeof appRouteCatalog;
+export type AppResourceRouteId = {
+  [RouteId in AppRouteId]: (typeof appRouteCatalog)[RouteId] extends ResourceRouteDefinition ? RouteId : never;
+}[AppRouteId];
+
+export type LegacyRouteDefinition = {
+  id: `legacy-${string}`;
+  path: string;
+  targetRouteId: AppRouteId;
+  fixedSearch: readonly (readonly [string, string])[];
+  targetPathParam?: string;
+};
+
+export const legacyRouteCatalog = [
+  legacyRoute('legacy-overview', '/overview', 'dashboard'),
+  ...legacySignalRoutes.map(({ id, path, signal }) => legacyRoute(id, path, 'explore', [['signal', signal]])),
+  legacyRoute('legacy-log', '/log', 'instrumentation'),
+  legacyRoute('legacy-log-stream', '/log/stream', 'explore', [
+    ['signal', 'logs'],
+    ['mode', 'live']
+  ]),
+  legacyRoute('legacy-log-integration', '/log/integration/:source', 'instrumentation'),
+  legacyRoute('legacy-ingestion-otlp', '/ingestion/otlp', 'instrumentation'),
+  legacyRoute('legacy-ingestion-otlp-child', '/ingestion/otlp/*', 'instrumentation'),
+  legacyRoute('legacy-alert', '/alert', 'alerts'),
+  legacyRoute('legacy-alert-center', '/alert/center', 'alerts'),
+  legacyRoute('legacy-alert-setting', '/alert/setting', 'alert-rules'),
+  legacyRoute('legacy-alert-notice', '/alert/notice', 'notice-receivers'),
+  legacyRoute('legacy-alert-silence', '/alert/silence', 'alert-silences'),
+  legacyRoute('legacy-alert-group', '/alert/group', 'alert-groups'),
+  legacyRoute('legacy-alert-inhibit', '/alert/inhibit', 'alert-inhibits'),
+  legacyRoute('legacy-alert-integration', '/alert/integration/:source', 'alert-integrations', [], 'source'),
+  legacyRoute('legacy-notice-receivers', '/alerts/notifications/receivers', 'notice-receivers'),
+  legacyRoute('legacy-notice-templates', '/alerts/notifications/templates', 'notice-templates'),
+  legacyRoute('legacy-notice-rules', '/alerts/notifications/rules', 'notice-rules'),
+  legacyRoute('legacy-message-server', '/setting/settings/server', 'message-server'),
+  legacyRoute('legacy-system-settings', '/setting/settings/config', 'system-settings'),
+  legacyRoute('legacy-labels', '/setting/labels', 'labels'),
+  legacyRoute('legacy-object-store', '/setting/settings/object-store', 'object-store'),
+  legacyRoute('legacy-plugins', '/setting/plugin', 'plugins'),
+  legacyRoute('legacy-plugins-plural', '/setting/plugins', 'plugins'),
+  legacyRoute('legacy-settings', '/setting/settings', 'system-settings'),
+  legacyRoute('legacy-token', '/setting/settings/token', 'tokens'),
+  legacyRoute('legacy-collectors', '/setting/collector', 'collectors'),
+  legacyRoute('legacy-monitor-definitions', '/setting/define', 'monitor-definitions'),
+  legacyRoute('legacy-status-management', '/setting/status', 'status-management')
+] as const satisfies readonly LegacyRouteDefinition[];
+
+export const routeRegistry = Object.values(appRouteCatalog);
+
+export function getAppRoute<RouteId extends AppRouteId>(id: RouteId) {
+  return appRouteCatalog[id];
+}
+
+export function getAppRouteIdentity(id: AppRouteId) {
+  const definition = getAppRoute(id);
+  return { id: definition.id, path: definition.path };
+}
+
+function pageRoute(id: string, path: string, options: ResourceRouteOptions): ResourceRouteDefinition;
+function pageRoute(id: string, path: string, options?: AppRouteOptions): AppRouteDefinition;
+function pageRoute(id: string, path: string, options: AppRouteOptions = {}): AppRouteDefinition {
+  return {
+    id,
+    path,
+    layout: options.layout ?? 'basic',
+    kind: 'page',
+    ...(options.resource ? { resource: options.resource } : {})
+  };
+}
+
+function redirectRoute(id: string, path: string, options: ResourceRouteOptions): ResourceRouteDefinition;
+function redirectRoute(id: string, path: string, options?: AppRouteOptions): AppRouteDefinition;
+function redirectRoute(id: string, path: string, options: AppRouteOptions = {}): AppRouteDefinition {
+  return { ...pageRoute(id, path, options), kind: 'redirect' as const };
+}
+
+function legacyRoute(
+  id: LegacyRouteDefinition['id'],
+  path: string,
+  targetRouteId: AppRouteId,
+  fixedSearch: LegacyRouteDefinition['fixedSearch'] = [],
+  targetPathParam?: string
+): LegacyRouteDefinition {
+  return { id, path, targetRouteId, fixedSearch, ...(targetPathParam ? { targetPathParam } : {}) };
+}

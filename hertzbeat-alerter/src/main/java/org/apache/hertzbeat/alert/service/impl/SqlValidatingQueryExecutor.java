@@ -26,6 +26,7 @@ import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * A sql executor that validates before it runs anything.
@@ -48,13 +49,33 @@ public class SqlValidatingQueryExecutor implements QueryExecutor {
 
     private final SqlSecurityValidator validator;
 
+    private final UnaryOperator<String> previewSql;
+
     public SqlValidatingQueryExecutor(QueryExecutor delegate, SqlSecurityValidator validator) {
+        this(delegate, validator, UnaryOperator.identity());
+    }
+
+    SqlValidatingQueryExecutor(QueryExecutor delegate, SqlSecurityValidator validator,
+                              UnaryOperator<String> previewSql) {
         this.delegate = delegate;
         this.validator = validator;
+        this.previewSql = previewSql;
     }
 
     @Override
     public List<Map<String, Object>> execute(String query) {
+        validate(query);
+        return delegate.execute(query);
+    }
+
+    @Override
+    public List<Map<String, Object>> executePreview(String query) {
+        validate(query);
+        // Only server-generated transformations may follow validation of the original input.
+        return delegate.executePreview(previewSql.apply(query));
+    }
+
+    private void validate(String query) {
         try {
             validator.validate(query);
         } catch (SqlSecurityException e) {
@@ -63,7 +84,6 @@ public class SqlValidatingQueryExecutor implements QueryExecutor {
             // 400, so the author of the rule sees which part of the policy the statement broke
             throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
         }
-        return delegate.execute(query);
     }
 
     @Override

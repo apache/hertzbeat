@@ -26,7 +26,7 @@ import org.springframework.data.domain.Page;
  * collector service
  */
 public interface CollectorService {
-    
+
     /**
      * Dynamic conditional query
      * @param name Collector Name
@@ -36,7 +36,7 @@ public interface CollectorService {
      * @return Search result
      */
     Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize);
-    
+
     /**
      * delete registered collectors
      * @param collectors collector

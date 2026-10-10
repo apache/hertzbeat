@@ -17,15 +17,13 @@
 
 package org.apache.hertzbeat.alert.controller;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import java.util.Objects;
+import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
+import org.apache.hertzbeat.alert.dto.AlertSilenceResponse;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
-import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -50,30 +48,24 @@ public class AlertSilenceController {
 
     @PostMapping
     @Operation(summary = "New Alarm Silence", description = "Added an alarm Silence")
-    public ResponseEntity<Message<Void>> addNewAlertSilence(@Valid @RequestBody AlertSilence alertSilence) {
-        alertSilenceService.validate(alertSilence, false);
-        alertSilenceService.addAlertSilence(alertSilence);
-        return ResponseEntity.ok(Message.success("Add success"));
+    public ResponseEntity<Message<AlertSilenceResponse>> addNewAlertSilence(
+            @RequestBody AlertSilenceRequest request) {
+        return ResponseEntity.ok(Message.success(alertSilenceService.create(request)));
     }
 
     @PutMapping
     @Operation(summary = "Modifying an Alarm Silence", description = "Modify an existing alarm Silence")
-    public ResponseEntity<Message<Void>> modifyAlertSilence(@Valid @RequestBody AlertSilence alertSilence) {
-        alertSilenceService.validate(alertSilence, true);
-        alertSilenceService.modifyAlertSilence(alertSilence);
-        return ResponseEntity.ok(Message.success("Modify success"));
+    public ResponseEntity<Message<AlertSilenceResponse>> modifyAlertSilence(
+            @RequestBody AlertSilenceRequest request) {
+        return ResponseEntity.ok(Message.success(alertSilenceService.update(request)));
     }
 
     @GetMapping(path = "/{id}")
     @Operation(summary = "Querying Alarm Silence",
             description = "You can obtain alarm Silence information based on the alarm Silence ID")
-    public ResponseEntity<Message<AlertSilence>> getAlertSilence(
+    public ResponseEntity<Message<AlertSilenceResponse>> getAlertSilence(
             @Parameter(description = "Alarm Silence ID", example = "6565463543") @PathVariable("id") long id) {
-        AlertSilence alertSilence = alertSilenceService.getAlertSilence(id);
-
-        return Objects.isNull(alertSilence)
-                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertSilence not exist."))
-                : ResponseEntity.ok(Message.success(alertSilence));
+        return ResponseEntity.ok(Message.success(alertSilenceService.get(id)));
     }
 
 }

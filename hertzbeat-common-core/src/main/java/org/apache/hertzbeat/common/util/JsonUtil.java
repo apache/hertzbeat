@@ -99,6 +99,61 @@ public final class JsonUtil {
     }
 
     /**
+     * Parse sensitive JSON without logging parser exception details.
+     *
+     * @param jsonStr json string
+     * @param clazz target class
+     * @param <T> target type
+     * @return parsed value, or null when input is empty or invalid
+     */
+    public static <T> T fromJsonQuietly(String jsonStr, Class<T> clazz) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonStr, clazz);
+        } catch (JacksonException ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * Parse sensitive generic JSON without logging parser exception details.
+     *
+     * @param jsonStr json string
+     * @param type target type reference
+     * @param <T> target type
+     * @return parsed value, or null when input is empty or invalid
+     */
+    public static <T> T fromJsonQuietly(String jsonStr, TypeReference<T> type) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonStr, type);
+        } catch (JacksonException ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * Parse a sensitive JSON tree without logging parser exception details.
+     *
+     * @param jsonStr json string
+     * @return parsed tree, or null when input is empty or invalid
+     */
+    public static JsonNode fromJsonQuietly(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readTree(jsonStr);
+        } catch (JacksonException ignored) {
+            return null;
+        }
+    }
+
+    /**
      * check if the string is a json string
      * @param jsonStr json string
      * @return true if the string is a json string
@@ -189,6 +244,23 @@ public final class JsonUtil {
             return OBJECT_MAPPER.convertValue(fromValue, toValueType);
         } catch (JacksonException e) {
             log.error("Error converting value to {}: {}", toValueType.getName(), e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Convert a value without logging conversion details.
+     * @param fromValue source value
+     * @param toValueType target type
+     * @return converted value or null if conversion fails
+     */
+    public static <T> T convertValueQuietly(Object fromValue, Class<T> toValueType) {
+        if (fromValue == null) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.convertValue(fromValue, toValueType);
+        } catch (RuntimeException exception) {
             return null;
         }
     }

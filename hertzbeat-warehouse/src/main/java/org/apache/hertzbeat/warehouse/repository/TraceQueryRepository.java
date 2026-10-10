@@ -1,0 +1,697 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.apache.hertzbeat.warehouse.repository;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+
+/**
+ * Repository for raw trace row queries.
+ */
+public interface TraceQueryRepository {
+
+    default org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Evidence<?> queryAnalytics(
+            org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Scope scope,
+            org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics.Options options) {
+        throw new UnsupportedOperationException("Trace analytics unavailable");
+    }
+
+
+    /** Maximum number of per-service aggregate rows returned for one trace-list page. */
+    int MAX_TRACE_LIST_SERVICE_ROWS = 4096;
+
+    /**
+     * Storage-neutral contract for an exact trace-row query.
+     *
+     * <p>Resource and span-attribute filters are exact-match OR sets per key and AND across keys.</p>
+     */
+    record TraceRowQuery(
+            String traceId,
+            String spanId,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String operationName,
+            Long minDurationNanos,
+            Long maxDurationNanos,
+            String workspaceId,
+            Map<String, Set<String>> resourceFilters,
+            Map<String, Set<String>> attributeFilters,
+            Boolean hideInternal) {
+
+        public TraceRowQuery {
+            resourceFilters = immutableFilters(resourceFilters);
+            attributeFilters = immutableFilters(attributeFilters);
+        }
+
+        private static Map<String, Set<String>> immutableFilters(Map<String, Set<String>> filters) {
+            if (filters == null || filters.isEmpty()) {
+                return Map.of();
+            }
+            java.util.LinkedHashMap<String, Set<String>> copy = new java.util.LinkedHashMap<>();
+            filters.forEach((key, values) -> copy.put(key, values == null ? Set.of() : Set.copyOf(values)));
+            return Map.copyOf(copy);
+        }
+    }
+
+    /**
+     * Query recent trace rows.
+     *
+     * @param limit row limit
+     * @return raw trace rows
+     */
+    List<Map<String, Object>> queryRecentTraceRows(int limit);
+
+    /**
+     * Query recent trace rows with optional list-view filters.
+     *
+     * @param limit row limit
+     * @param serviceName service name filter
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(int limit, String serviceName, Boolean hideInternal) {
+        return queryRecentTraceRows(limit);
+    }
+
+    /**
+     * Query recent trace rows with optional list-view and time-window filters.
+     *
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param environment deployment environment filter
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(int limit,
+                                                           Long start,
+                                                           Long end,
+                                                           String serviceName,
+                                                           String environment,
+                                                           Boolean hideInternal) {
+        return queryRecentTraceRows(limit, serviceName, hideInternal);
+    }
+
+    /**
+     * Query recent trace rows with storage-owned workspace and entity scope filters.
+     *
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(int limit,
+                                                           Long start,
+                                                           Long end,
+                                                           String serviceName,
+                                                           String serviceNamespace,
+                                                           String environment,
+                                                           String workspaceId,
+                                                           Map<String, Set<String>> resourceIdentityFilters,
+                                                           Boolean hideInternal) {
+        return queryRecentTraceRows(limit, start, end, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    /**
+     * Query recent trace rows with storage-owned workspace and entity scope filters.
+     *
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param operationName operation/span name filter
+     * @param minDurationNanos minimum duration filter in nanoseconds
+     * @param maxDurationNanos maximum duration filter in nanoseconds
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(int limit,
+                                                           Long start,
+                                                           Long end,
+                                                           String serviceName,
+                                                           String serviceNamespace,
+                                                           String environment,
+                                                           String operationName,
+                                                           Long minDurationNanos,
+                                                           Long maxDurationNanos,
+                                                           String workspaceId,
+                                                           Map<String, Set<String>> resourceIdentityFilters,
+                                                           Boolean hideInternal) {
+        if (workspaceId != null && !workspaceId.isBlank()
+                || resourceIdentityFilters != null && !resourceIdentityFilters.isEmpty()) {
+            throw new TelemetryStorageUnavailableException();
+        }
+        return queryRecentTraceRows(limit, start, end, serviceName, environment, hideInternal);
+    }
+
+    /**
+     * Whether this repository can query trace-list rows with storage-owned grouping and pagination.
+     *
+     * @return true when storage-owned trace list rows are supported
+     */
+    default boolean supportsTraceListRows() {
+        return false;
+    }
+
+    /**
+     * Query trace-list rows grouped and paged by the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be returned
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @param offset pagination offset
+     * @param limit page size
+     * @return trace-list rows with optional total_count
+     */
+    default TraceListPage queryTraceListRows(Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         int offset,
+                                                         int limit) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal, offset, limit);
+    }
+
+    default TraceListPage queryTraceListRows(Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         int offset,
+                                                         int limit) {
+        return new TraceListPage(List.of(), 0L);
+    }
+
+    default TraceListPage queryTraceListRows(Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         String spanScope,
+                                                         int offset,
+                                                         int limit) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
+                hideInternal, offset, limit);
+    }
+
+    /** Supported ordering of complete traces before pagination. */
+    enum TraceSort {
+        NEWEST("newest"), DURATION_DESC("duration_desc");
+
+        private final String value;
+
+        TraceSort(String value) {
+            this.value = value;
+        }
+
+        public String value() {
+            return value;
+        }
+    }
+
+    default TraceListPage queryTraceListRows(Long start, Long end, Boolean errorOnly,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                            String workspaceId, Map<String, Set<String>> resourceIdentityFilters,
+                                            Boolean hideInternal, String spanScope, int offset, int limit, TraceSort sort) {
+        if (sort != TraceSort.NEWEST) {
+            throw new UnsupportedOperationException("Trace duration ordering is unavailable");
+        }
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
+                hideInternal, spanScope, offset, limit);
+    }
+
+    default TraceListPage queryTraceListRows(Long start, Long end, Boolean errorOnly,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String operationName, Long minDurationNanos, Long maxDurationNanos,
+                                            String workspaceId, Map<String, Set<String>> resourceIdentityFilters,
+                                            Boolean hideInternal, String spanScope, int offset, int limit, TraceSort sort,
+                                            boolean endExclusive) {
+        if (endExclusive) {
+            throw new UnsupportedOperationException("Exclusive trace window unavailable");
+        }
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment, operationName,
+                minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, spanScope, offset, limit, sort);
+    }
+
+    /** Complete evidence for the selected trace page and the exact matching trace count, including empty pages. */
+    record TraceListPage(List<Map<String, Object>> rows, long totalCount) {
+    }
+
+    /**
+     * Whether this repository can aggregate trace overview statistics in storage.
+     *
+     * @return true when storage-owned trace overview rows are supported
+     */
+    default boolean supportsTraceOverviewRows() {
+        return false;
+    }
+
+    /**
+     * Query trace overview statistics grouped in the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be counted
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return row with total_trace_count, error_trace_count, and latest_observed_at
+     */
+    default Map<String, Object> queryTraceOverviewRows(Long start,
+                                                       Long end,
+                                                       Boolean errorOnly,
+                                                       String serviceName,
+                                                       String serviceNamespace,
+                                                       String environment,
+                                                       String workspaceId,
+                                                       Map<String, Set<String>> resourceIdentityFilters,
+                                                       Boolean hideInternal) {
+        return queryTraceOverviewRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    default Map<String, Object> queryTraceOverviewRows(Long start,
+                                                       Long end,
+                                                       Boolean errorOnly,
+                                                       String serviceName,
+                                                       String serviceNamespace,
+                                                       String environment,
+                                                       String operationName,
+                                                       Long minDurationNanos,
+                                                       Long maxDurationNanos,
+                                                       String workspaceId,
+                                                       Map<String, Set<String>> resourceIdentityFilters,
+                                                       Boolean hideInternal) {
+        return Map.of();
+    }
+
+    default Map<String, Object> queryTraceOverviewRows(Long start,
+                                                       Long end,
+                                                       Boolean errorOnly,
+                                                       String serviceName,
+                                                       String serviceNamespace,
+                                                       String environment,
+                                                       String operationName,
+                                                       Long minDurationNanos,
+                                                       Long maxDurationNanos,
+                                                       String workspaceId,
+                                                       Map<String, Set<String>> resourceIdentityFilters,
+                                                       Boolean hideInternal,
+                                                       String spanScope) {
+        return queryTraceOverviewRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    /**
+     * Whether this repository can aggregate a single trace-id overview in storage.
+     *
+     * @return true when storage-owned trace-id overview rows are supported
+     */
+    default boolean supportsTraceIdOverviewRows() {
+        return false;
+    }
+
+    /**
+     * Query trace overview statistics for a single trace id in the storage layer.
+     *
+     * @param traceId trace id
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be counted
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return row with total_trace_count, error_trace_count, and latest_observed_at
+     */
+    default Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal) {
+        return queryTraceIdOverviewRows(traceId, start, end, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    default Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal) {
+        return Map.of();
+    }
+
+    default Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         String spanScope) {
+        return queryTraceIdOverviewRows(traceId, start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    /**
+     * Whether this repository can aggregate trace group-by rows in storage.
+     *
+     * @return true when storage-owned trace group-by rows are supported
+     */
+    default boolean supportsTraceGroupByRows() {
+        return false;
+    }
+
+    /**
+     * Query trace group-by statistics in the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be counted
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param operationName operation/span name filter
+     * @param minDurationNanos minimum duration filter in nanoseconds
+     * @param maxDurationNanos maximum duration filter in nanoseconds
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @param groupBy group-by field
+     * @param limit result limit
+     * @return rows with group_value, trace_count, error_trace_count, latency_avg_ms, and latency_p95_ms
+     */
+    default List<Map<String, Object>> queryTraceGroupByRows(Long start,
+                                                            Long end,
+                                                            Boolean errorOnly,
+                                                            String serviceName,
+                                                            String serviceNamespace,
+                                                            String environment,
+                                                            String operationName,
+                                                            Long minDurationNanos,
+                                                            Long maxDurationNanos,
+                                                            String workspaceId,
+                                                            Map<String, Set<String>> resourceIdentityFilters,
+                                                            Boolean hideInternal,
+                                                            String groupBy,
+                                                            String orderBy,
+                                                            long minCount,
+                                                            int limit) {
+        return List.of();
+    }
+
+    default List<Map<String, Object>> queryTraceGroupByRows(Long start,
+                                                            Long end,
+                                                            Boolean errorOnly,
+                                                            String serviceName,
+                                                            String serviceNamespace,
+                                                            String environment,
+                                                            String operationName,
+                                                            Long minDurationNanos,
+                                                            Long maxDurationNanos,
+                                                            String workspaceId,
+                                                            Map<String, Set<String>> resourceIdentityFilters,
+                                                            Boolean hideInternal,
+                                                            String spanScope,
+                                                            String groupBy,
+                                                            String orderBy,
+                                                            long minCount,
+                                                            int limit) {
+        return queryTraceGroupByRows(start, end, errorOnly, serviceName, serviceNamespace, environment, operationName,
+                minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, groupBy,
+                orderBy, minCount, limit);
+    }
+
+    /**
+     * Whether this repository can aggregate entity trace summaries in storage.
+     *
+     * @return true when storage-owned entity trace summary rows are supported
+     */
+    default boolean supportsTraceSummaryRows() {
+        return false;
+    }
+
+    /**
+     * Query entity trace summary statistics in the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return row with total_trace_count, error_trace_count, latest_observed_at, and latest_trace_id
+     */
+    default Map<String, Object> queryTraceSummaryRows(Long start,
+                                                      Long end,
+                                                      String serviceName,
+                                                      String serviceNamespace,
+                                                      String environment,
+                                                      String workspaceId,
+                                                      Map<String, Set<String>> resourceIdentityFilters,
+                                                      Boolean hideInternal) {
+        return Map.of();
+    }
+
+    /**
+     * Query service-to-service trace call graph rows with RED metrics aggregated by the storage layer.
+     *
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param environment deployment environment filter
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return service graph rows
+     */
+    default List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                 Long start,
+                                                                 Long end,
+                                                                 String environment,
+                                                                 Boolean hideInternal) {
+        return List.of();
+    }
+
+    /**
+     * Query service-to-service trace call graph rows with service scope pushed into the storage layer.
+     *
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param environment deployment environment filter
+     * @param serviceNames services that should appear as either source or target
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return service graph rows
+     */
+    default List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                 Long start,
+                                                                 Long end,
+                                                                 String environment,
+                                                                 Collection<String> serviceNames,
+                                                                 Boolean hideInternal) {
+        return queryTraceServiceGraphRows(limit, start, end, environment, hideInternal);
+    }
+
+    /**
+     * Query a service graph within one trusted workspace.
+     */
+    default List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                 Long start,
+                                                                 Long end,
+                                                                 String environment,
+                                                                 String workspaceId,
+                                                                 Collection<String> serviceNames,
+                                                                 Boolean hideInternal) {
+        throw new TelemetryStorageUnavailableException();
+    }
+
+    /**
+     * Query rows for a single trace id.
+     *
+     * @param traceId trace id
+     * @param limit row limit
+     * @return raw trace rows
+     */
+    List<Map<String, Object>> queryTraceRows(String traceId, int limit);
+
+    /**
+     * Query exact trace rows through the complete storage-neutral context.
+     *
+     * @param query trace row query
+     * @param limit row limit
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryTraceRows(TraceRowQuery query, int limit) {
+        return queryTraceRows(
+                query.traceId(),
+                limit,
+                query.start(),
+                query.end(),
+                query.serviceName(),
+                query.serviceNamespace(),
+                query.environment(),
+                query.operationName(),
+                query.minDurationNanos(),
+                query.maxDurationNanos(),
+                query.workspaceId(),
+                query.resourceFilters(),
+                query.hideInternal());
+    }
+
+    /**
+     * Query recent rows through the same complete storage-neutral context used by exact trace detail.
+     *
+     * @param query trace row query with an optional trace id
+     * @param limit row limit
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(TraceRowQuery query, int limit) {
+        return queryRecentTraceRows(
+                limit,
+                query.start(),
+                query.end(),
+                query.serviceName(),
+                query.serviceNamespace(),
+                query.environment(),
+                query.operationName(),
+                query.minDurationNanos(),
+                query.maxDurationNanos(),
+                query.workspaceId(),
+                query.resourceFilters(),
+                query.hideInternal());
+    }
+
+    /**
+     * Query rows for a single trace id with storage-owned route/detail filters.
+     *
+     * @param traceId trace id
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryTraceRows(String traceId,
+                                                     int limit,
+                                                     Long start,
+                                                     Long end,
+                                                     String serviceName,
+                                                     String serviceNamespace,
+                                                     String environment,
+                                                     String workspaceId,
+                                                     Map<String, Set<String>> resourceIdentityFilters,
+                                                     Boolean hideInternal) {
+        return queryTraceRows(traceId, limit, start, end, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    default List<Map<String, Object>> queryTraceRows(String traceId,
+                                                     int limit,
+                                                     Long start,
+                                                     Long end,
+                                                     String serviceName,
+                                                     String serviceNamespace,
+                                                     String environment,
+                                                     String operationName,
+                                                     Long minDurationNanos,
+                                                     Long maxDurationNanos,
+                                                     String workspaceId,
+                                                     Map<String, Set<String>> resourceIdentityFilters,
+                                                     Boolean hideInternal) {
+        return queryTraceRows(traceId, limit);
+    }
+}

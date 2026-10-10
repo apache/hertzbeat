@@ -74,6 +74,11 @@ public interface ExportFileConstants {
          * Export file suffix.
          */
         String FILE_SUFFIX = ".yaml";
+
+        /**
+         * Alternative YAML file suffix.
+         */
+        String FILE_SHORT_SUFFIX = ".yml";
     }
 
 }

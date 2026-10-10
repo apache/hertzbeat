@@ -1,0 +1,125 @@
+{
+  "shell": {
+    "navigation": {
+      "basicMonitoring": "基礎監控",
+      "applicationObservability": "應用可觀測",
+      "resources": "資源",
+      "alerting": "告警",
+      "administration": "管理",
+      "collapse": "收合導覽",
+      "expand": "展開導覽",
+      "toggleGroup": "展開或收合{{label}}"
+    },
+    "permission": {
+      "roleRequired": "需要管理員權限。"
+    },
+    "status": {
+      "summary": "執行狀態",
+      "server": "伺服器",
+      "greptime": "GreptimeDB",
+      "collector": "採集器",
+      "unknown": "未知",
+      "unavailable": "無法使用",
+      "state": {
+        "loading": "載入中",
+        "available": "可用",
+        "degraded": "需要關注",
+        "unavailable": "無法使用",
+        "unknown": "未知"
+      },
+      "currentStatusObservedAt": "目前狀態 · {{time}}",
+      "collectorLastReportedAt": "最後回報於 {{time}}",
+      "collectorCounts": "{{online}}/{{total}} 在線 · {{runtimeHealthy}} 個執行階段正常",
+      "collectorOnlineCount": "在線採集器：{{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "執行階段正常：{{count}} 個",
+      "collectorOfflineCount": "未上線採集器：{{count}} 個",
+      "collectorNotReported": "暫無執行階段回報",
+      "notObserved": "尚未觀測",
+      "details": "{{label}}狀態詳情",
+      "openManagement": "前往管理頁面",
+      "request": {
+        "permission": "無權檢視執行狀態",
+        "unavailable": "執行狀態請求無法使用",
+        "contract": "執行狀態回應無效",
+        "error": "無法載入執行狀態"
+      },
+      "reason": {
+        "server_unavailable": "伺服器無法使用",
+        "storage_unavailable": "儲存空間無法使用",
+        "storage_query_failed": "儲存空間查詢失敗",
+        "collector_status_unavailable": "採集器狀態無法使用"
+      }
+    },
+    "time": {
+      "global": "全域時間",
+      "route_owned": "頁面時間",
+      "none": "無共用時間",
+      "unknown": "時間策略未知",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "關閉",
+      "remaining": "{{seconds}} 秒",
+      "rangeOption": "範圍 {{range}}",
+      "autoRefreshOff": "關閉自動重新整理",
+      "autoRefreshSeconds": "每 {{seconds}} 秒自動重新整理"
+    },
+    "actions": {
+      "refresh": "重新整理目前資料",
+      "alerts": "開啟告警",
+      "investigate": "調查目前頁面",
+      "alertsWithCount": "開啟告警，目前 {{count}} 筆",
+      "useLightTheme": "使用淺色主題",
+      "useDarkTheme": "使用深色主題",
+      "fullscreenEnter": "進入全螢幕",
+      "fullscreenExit": "退出全螢幕",
+      "fullscreenFailed": "無法進入全螢幕",
+      "language": "切換語言",
+      "user": "使用者操作"
+    },
+    "account": {
+      "settings": "系統設定",
+      "lock": "鎖定工作階段",
+      "about": "關於 HertzBeat",
+      "logout": "登出"
+    },
+    "about": {
+      "title": "關於 HertzBeat",
+      "version": "版本 {{version}}",
+      "description": "Apache HertzBeat 是一套開源的即時監控系統。",
+      "website": "官方網站",
+      "documentation": "文件",
+      "repository": "原始碼",
+      "issues": "回報問題"
+    },
+    "alerts": {
+      "title": "活動告警",
+      "loading": "正在載入最近告警",
+      "empty": "目前沒有活動告警",
+      "unavailable": "最近告警暫時無法使用",
+      "error": "無法讀取最近告警",
+      "openCenter": "進入告警中心",
+      "soundLoading": "正在載入告警聲音設定",
+      "soundUnavailable": "告警聲音設定暫時無法使用",
+      "soundError": "無法讀取告警聲音設定",
+      "soundReadOnly": "只有管理員可以修改全域告警聲音設定",
+      "soundSaving": "正在更新告警聲音設定",
+      "soundSaveFailed": "無法更新告警聲音設定",
+      "soundMuted": "告警聲音已靜音",
+      "soundEnabled": "告警聲音已開啟",
+      "soundEnabledBrowserDenied": "告警聲音已開啟；瀏覽器通知被阻擋",
+      "soundEnabledBrowserUnsupported": "告警聲音已開啟；瀏覽器不支援系統通知",
+      "browserTitle": "HertzBeat 告警",
+      "browserBody": "有新的活動告警需要處理。"
+    },
+    "importTasks": {
+      "title": "監控匯入",
+      "progress": "匯入進度：{{progress}}%",
+      "success": "監控匯入已完成。",
+      "failure": "無法匯入監控設定。"
+    },
+    "capability": {
+      "supported": "可用",
+      "unknown": "能力未知",
+      "unsupported": "不支援"
+    }
+  }
+}

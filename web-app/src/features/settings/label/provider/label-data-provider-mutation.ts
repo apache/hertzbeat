@@ -1,0 +1,181 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { createRefineHttpError, isRefineHttpError } from '@/shared/refine/refine-http-error';
+
+import { deleteLabel, deleteLabels, findCanonicalLabel, saveLabel } from '../api/label-api';
+import { isExplicitLabelTransportRejection, LabelTransportFailure } from '../api/label-api-failure';
+import {
+  createLabelDeleteEvidence,
+  createLabelDeleteManyEvidence,
+  createLabelWriteEvidence,
+  LabelRequestFailure,
+  type LabelFailureKind,
+  type LabelMutationEvidence,
+  type LabelWriteEvidence,
+  type LabelWriteOutcome
+} from '../model/label-failure';
+import {
+  buildLabelExpectedWrite,
+  labelSaveConverged,
+  LabelContractError,
+  LabelRequestContractError,
+  type LabelIdentity,
+  type LabelRecord
+} from '../model/label-model';
+import { toLabelIdentity } from './label-data-provider-input';
+
+export async function writeAndProveLabel(
+  operation: LabelWriteEvidence['operation'],
+  draft: Partial<LabelRecord> & Pick<LabelRecord, 'name'>
+) {
+  const expected = buildLabelExpectedWrite(draft, operation);
+  try {
+    await saveLabel(draft, operation === 'create');
+  } catch (reason) {
+    throw mutationFailure(reason, writeEvidence(operation, 'write', expected, reason));
+  }
+  try {
+    const canonical = await requireCanonicalLabel(toLabelIdentity(expected));
+    if (!labelSaveConverged(expected, canonical)) {
+      throw new LabelRequestFailure('invalid', 'uncertain', { code: 'LABEL_CANONICAL_NOT_CONVERGED' });
+    }
+    return canonical;
+  } catch (reason) {
+    throw mutationFailure(reason, writeEvidence(operation, 'proof', expected));
+  }
+}
+
+export async function deleteAndProveLabel(id: number, draft: Partial<LabelRecord> & Pick<LabelRecord, 'name'>) {
+  const identity = toLabelIdentity(draft, id);
+  let canonical: LabelRecord;
+  try {
+    canonical = await requireCanonicalLabel(identity);
+  } catch (reason) {
+    const evidence = createLabelDeleteEvidence('preflight', 'rewrite', { ...draft, id });
+    throw mutationFailure(reason, evidence, 'not-attempted');
+  }
+  try {
+    await deleteLabel(id);
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteEvidence('write', deleteRecovery(reason), canonical));
+  }
+  try {
+    if (await findCanonicalLabel(identity)) {
+      throw new LabelRequestFailure('invalid', 'uncertain', { code: 'LABEL_DELETE_NOT_CONFIRMED' });
+    }
+    return canonical;
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteEvidence('proof', 'proof', canonical));
+  }
+}
+
+export async function deleteAndProveLabels(records: LabelRecord[]) {
+  let canonical: LabelRecord[];
+  try {
+    canonical = await Promise.all(records.map(record => requireCanonicalLabel(toLabelIdentity(record, record.id))));
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteManyEvidence('preflight', 'rewrite', records), 'not-attempted');
+  }
+  const ids = canonical.map(record => record.id);
+  try {
+    await deleteLabels(ids);
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteManyEvidence('write', deleteRecovery(reason), canonical));
+  }
+  try {
+    const matches = await Promise.all(canonical.map(record => findCanonicalLabel(toLabelIdentity(record, record.id))));
+    if (matches.some(Boolean)) {
+      throw new LabelRequestFailure('invalid', 'uncertain', { code: 'LABEL_DELETE_NOT_CONFIRMED' });
+    }
+    return canonical;
+  } catch (reason) {
+    throw mutationFailure(reason, createLabelDeleteManyEvidence('proof', 'proof', canonical));
+  }
+}
+
+export function toLabelRequestFailure(reason: LabelTransportFailure | LabelContractError) {
+  if (reason instanceof LabelTransportFailure) {
+    return new LabelRequestFailure(
+      transportFailureKind(reason),
+      isExplicitLabelTransportRejection(reason) ? 'rejected' : 'uncertain'
+    );
+  }
+  if (reason instanceof LabelRequestContractError) {
+    return new LabelRequestFailure('invalid', 'not-attempted', { code: reason.code });
+  }
+  return new LabelRequestFailure('invalid', 'uncertain', { code: reason.code });
+}
+
+async function requireCanonicalLabel(identity: LabelIdentity) {
+  const canonical = await findCanonicalLabel(identity);
+  if (!canonical) {
+    throw createRefineHttpError(
+      'Label canonical reread returned no matching server record',
+      502,
+      'LABEL_CANONICAL_REREAD_MISSING'
+    );
+  }
+  return canonical;
+}
+
+function writeEvidence(
+  operation: LabelWriteEvidence['operation'],
+  phase: LabelWriteEvidence['phase'],
+  expected: LabelWriteEvidence['expected'],
+  reason?: unknown
+) {
+  const safeToRewrite =
+    phase === 'write' && (isExplicitLabelTransportRejection(reason) || reason instanceof LabelRequestContractError);
+  return createLabelWriteEvidence(operation, phase, writeRecovery(operation, safeToRewrite), expected);
+}
+
+function writeRecovery(operation: LabelWriteEvidence['operation'], safeToRewrite: boolean) {
+  if (safeToRewrite) return 'rewrite';
+  return operation === 'update' ? 'proof' : 'commit-uncertain';
+}
+
+function deleteRecovery(reason: unknown): 'rewrite' | 'proof' {
+  return isExplicitLabelTransportRejection(reason) ? 'rewrite' : 'proof';
+}
+
+function mutationFailure(reason: unknown, evidence: LabelMutationEvidence, outcome?: LabelWriteOutcome) {
+  const failure = providerFailure(reason);
+  return new LabelRequestFailure(failure.kind, outcome ?? failure.writeOutcome, {
+    ...(failure.code === undefined ? {} : { code: failure.code }),
+    evidence
+  });
+}
+
+function providerFailure(reason: unknown) {
+  if (reason instanceof LabelRequestFailure) return reason;
+  if (reason instanceof LabelTransportFailure || reason instanceof LabelContractError) {
+    return toLabelRequestFailure(reason);
+  }
+  if (isRefineHttpError(reason)) {
+    return new LabelRequestFailure(reason.kind === 'network' ? 'unavailable' : 'invalid', 'uncertain', {
+      ...(typeof reason.code === 'string' ? { code: reason.code } : {})
+    });
+  }
+  return new LabelRequestFailure('error', 'uncertain');
+}
+
+function transportFailureKind(reason: LabelTransportFailure): LabelFailureKind {
+  if (reason.kind === 'permission') return 'permission';
+  if (reason.kind === 'unavailable') return 'unavailable';
+  return reason.kind === 'rejected' ? 'error' : reason.kind;
+}

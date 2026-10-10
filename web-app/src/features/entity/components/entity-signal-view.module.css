@@ -1,0 +1,199 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace,
+.signalStack {
+  display: grid;
+  gap: var(--hb-space-4);
+  min-width: 0;
+}
+
+.availability {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-md);
+  background: var(--hb-surface-container);
+}
+
+.availabilityItem {
+  display: grid;
+  min-height: 76px;
+  align-content: center;
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border-right: 1px solid var(--hb-border-subtle);
+}
+
+.availabilityItem:last-child {
+  border-right: 0;
+}
+.availabilityItem small {
+  color: var(--hb-text-secondary);
+}
+.stateTag {
+  width: fit-content;
+  margin: 0;
+}
+
+.investigationGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  align-items: start;
+  gap: var(--hb-space-4);
+}
+
+.signalSection,
+.evidenceRail {
+  min-width: 0;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-md);
+  background: var(--hb-surface-container);
+}
+
+.sectionHeader {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-2) var(--hb-space-4);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.sectionHeader h2,
+.evidenceRail h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.redSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-3) var(--hb-space-4) 0;
+}
+
+.summaryValue {
+  display: grid;
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-sm);
+}
+
+.summaryValue span,
+.window,
+.scopeNote {
+  color: var(--hb-text-secondary);
+}
+.summaryValue strong {
+  font-size: 18px;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-3);
+}
+
+.contextGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-4);
+}
+
+.compactSection {
+  min-height: 140px;
+}
+.nameList {
+  display: grid;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-4);
+}
+.nameList span {
+  color: var(--hb-text-secondary);
+}
+
+.evidenceRail {
+  position: sticky;
+  top: var(--hb-space-3);
+  display: grid;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-4);
+}
+
+.evidenceItem {
+  display: grid;
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border-left: 3px solid var(--hb-color-primary);
+  background: var(--hb-surface-muted);
+}
+
+.evidenceItem small {
+  color: var(--hb-text-secondary);
+}
+.compactState {
+  padding: var(--hb-space-3);
+  color: var(--hb-text-secondary);
+}
+.scopeNote {
+  padding-top: var(--hb-space-3);
+  border-top: 1px solid var(--hb-border-subtle);
+  font-size: 12px;
+}
+
+@media (max-width: 1180px) {
+  .availability {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .availabilityItem:nth-child(3) {
+    border-right: 0;
+  }
+  .availabilityItem:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--hb-border-subtle);
+  }
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .investigationGrid {
+    grid-template-columns: 1fr;
+  }
+  .evidenceRail {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .availability,
+  .redSummary,
+  .contextGrid {
+    grid-template-columns: 1fr;
+  }
+  .availabilityItem {
+    border-right: 0;
+    border-bottom: 1px solid var(--hb-border-subtle);
+  }
+  .availabilityItem:last-child {
+    border-bottom: 0;
+  }
+}

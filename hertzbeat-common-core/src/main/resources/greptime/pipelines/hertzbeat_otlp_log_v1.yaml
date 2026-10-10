@@ -1,0 +1,78 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: 2
+processors:
+  - vrl:
+      source: |
+        .timestamp = if (to_int(.Timestamp) ?? 0) > 0 { .Timestamp } else { .ObservedTimestamp }
+        .trace_id = .TraceId
+        .span_id = .SpanId
+        .severity_text = .SeverityText
+        .severity_number = .SeverityNumber
+        .body = .Body
+        .log_attributes = .LogAttributes
+        .resource_attributes = .ResourceAttributes
+        .hertzbeat_event_id = .LogAttributes."hertzbeat.event_id"
+        .log_record_uid = .LogAttributes."log.record.uid"
+        .hertzbeat_ingest_id = .LogAttributes."hertzbeat.ingest_id"
+        .hertzbeat_entity_id = .ResourceAttributes."hertzbeat.entity_id"
+        .hertzbeat_workspace_id = .ResourceAttributes."hertzbeat.workspace_id"
+        .service_name = .ResourceAttributes."service.name"
+        .
+  - select:
+      fields:
+        - timestamp
+        - trace_id
+        - span_id
+        - severity_text
+        - severity_number
+        - body
+        - log_attributes
+        - resource_attributes
+        - hertzbeat_event_id
+        - log_record_uid
+        - hertzbeat_ingest_id
+        - hertzbeat_entity_id
+        - hertzbeat_workspace_id
+        - service_name
+transform:
+  - field: timestamp
+    type: epoch, ns
+    index: timestamp
+  - fields:
+      - trace_id
+      - span_id
+      - hertzbeat_event_id
+      - log_record_uid
+      - hertzbeat_ingest_id
+      - hertzbeat_entity_id
+      - hertzbeat_workspace_id
+    type: string
+    index: skipping
+  - fields:
+      - log_attributes
+      - resource_attributes
+    type: json
+  - field: service_name
+    type: string
+    tag: true
+  - field: severity_text
+    type: string
+  - field: severity_number
+    type: int32
+  - field: body
+    type: string
+    index: fulltext

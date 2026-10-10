@@ -18,6 +18,13 @@
 
 package org.apache.hertzbeat.ai.config;
 
+import com.openai.client.OpenAIClient;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.observation.ObservationRegistry;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -27,12 +34,15 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.setup.OpenAiSetup;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
+import org.springframework.util.StringUtils;
 
 /**
  * Configuration class for Large Language Model (LLM) settings.
@@ -42,19 +52,41 @@ import org.springframework.context.event.EventListener;
 @Slf4j
 public class LlmConfig {
 
+    static final String OPEN_AI_CHAT_CLIENT_BEAN_NAME = "openAiChatClient";
+
     private final GeneralConfigDao generalConfigDao;
-    
+
+    private final ObservationRegistry observationRegistry;
+
+    private final MeterRegistry meterRegistry;
+
     private ApplicationContext applicationContext;
 
-    public LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext) {
-        this.generalConfigDao = generalConfigDao;
-        this.applicationContext = applicationContext;
+    @Autowired
+    public LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext,
+                     ObjectProvider<ObservationRegistry> observationRegistryProvider,
+                     ObjectProvider<MeterRegistry> meterRegistryProvider) {
+        this(generalConfigDao, applicationContext,
+                observationRegistryProvider.getIfAvailable(() -> ObservationRegistry.NOOP),
+                meterRegistryProvider.getIfAvailable(() -> Metrics.globalRegistry));
     }
 
-    /**
-     * Create ChatClient bean with all dependencies created internally
-     */
-    @Bean
+    private LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext,
+                      ObservationRegistry observationRegistry, MeterRegistry meterRegistry) {
+        this.generalConfigDao = generalConfigDao;
+        this.applicationContext = applicationContext;
+        this.observationRegistry = observationRegistry;
+        this.meterRegistry = meterRegistry;
+    }
+
+    LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext) {
+        this(generalConfigDao, applicationContext, ObservationRegistry.NOOP, Metrics.globalRegistry);
+    }
+
+    void registerInitialChatClient() {
+        registerChatClient();
+    }
+
     public ChatClient openAiChatClient() {
         return createChatClient();
     }
@@ -63,6 +95,15 @@ public class LlmConfig {
      * Create ChatClient with all necessary components
      */
     private ChatClient createChatClient() {
+        try {
+            return createConfiguredChatClient();
+        } catch (RuntimeException | LinkageError e) {
+            log.warn("LLM Provider configuration cannot create ChatClient, ChatClient bean will not be created", e);
+            return null;
+        }
+    }
+
+    private ChatClient createConfiguredChatClient() {
 
         GeneralConfig providerConfig = generalConfigDao.findByType("provider");
         if (providerConfig == null || providerConfig.getContent() == null) {
@@ -71,12 +112,12 @@ public class LlmConfig {
         }
         ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
 
-        if (modelProviderConfig == null || modelProviderConfig.getApiKey() == null) {
+        if (modelProviderConfig == null || !StringUtils.hasText(modelProviderConfig.getApiKey())) {
             log.warn("LLM Provider configuration is incomplete, ChatClient bean will not be created");
             return null;
         }
 
-        if (modelProviderConfig.getBaseUrl() == null) {
+        if (!StringUtils.hasText(modelProviderConfig.getBaseUrl())) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
             } else if ("zhipu".equals(modelProviderConfig.getCode())) {
@@ -87,8 +128,8 @@ public class LlmConfig {
                 modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
             }
         }
-        
-        if (modelProviderConfig.getModel() == null) {
+
+        if (!StringUtils.hasText(modelProviderConfig.getModel())) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("gpt-5");
             } else if ("zhipu".equals(modelProviderConfig.getCode())) {
@@ -100,19 +141,37 @@ public class LlmConfig {
             }
         }
 
-        // Create Chat Options with baseUrl and apiKey
+        OpenAIClient openAiClient = OpenAiSetup.setupSyncClient(
+                modelProviderConfig.getBaseUrl(),
+                modelProviderConfig.getApiKey(),
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                null,
+                Duration.ofSeconds(60),
+                10,
+                null,
+                Map.of(),
+                observationRegistry,
+                meterRegistry,
+                List.of());
+
+        // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
-                .baseUrl(modelProviderConfig.getBaseUrl())
-                .apiKey(modelProviderConfig.getApiKey())
                 .model(modelProviderConfig.getModel())
                 .temperature(0.3)
+                .apiKey(modelProviderConfig.getApiKey())
                 .build();
 
         // Create Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
+                .openAiClient(openAiClient)
                 .options(openAiChatOptions)
                 .build();
-        
+
         // Create and return ChatClient
         return ChatClient.create(openAiChatModel);
     }
@@ -124,25 +183,33 @@ public class LlmConfig {
     @EventListener(AiProviderConfigChangeEvent.class)
     public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
         log.info("Provider configuration change event received, refreshing ChatClient bean");
-        
+
+        registerChatClient();
+    }
+
+    private void registerChatClient() {
         try {
             ConfigurableApplicationContext configurableContext = (ConfigurableApplicationContext) applicationContext;
             DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) configurableContext.getBeanFactory();
-            
+
             // Remove the existing ChatClient bean
-            if (beanFactory.containsSingleton("openAiChatClient")) {
-                beanFactory.destroySingleton("openAiChatClient");
+            if (beanFactory.containsSingleton(OPEN_AI_CHAT_CLIENT_BEAN_NAME)) {
+                beanFactory.destroySingleton(OPEN_AI_CHAT_CLIENT_BEAN_NAME);
                 log.info("Existing ChatClient bean destroyed");
             }
-                        
+
             // Create new ChatClient with updated configuration
             ChatClient newChatClient = createChatClient();
-            
+            if (newChatClient == null) {
+                log.info("ChatClient bean refresh skipped because AI provider configuration is incomplete");
+                return;
+            }
+
             // Register the new ChatClient bean
-            beanFactory.registerSingleton("openAiChatClient", newChatClient);
-            
+            beanFactory.registerSingleton(OPEN_AI_CHAT_CLIENT_BEAN_NAME, newChatClient);
+
             log.info("ChatClient bean refreshed successfully with new AI provider configuration");
-            
+
         } catch (Exception e) {
             log.error("Failed to refresh ChatClient bean after configuration change", e);
         }

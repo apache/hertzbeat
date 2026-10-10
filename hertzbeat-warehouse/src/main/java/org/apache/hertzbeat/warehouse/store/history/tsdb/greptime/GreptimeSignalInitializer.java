@@ -17,13 +17,14 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
@@ -36,6 +37,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
 
 /** Fails startup clearly when the required Greptime signal schema cannot be prepared. */
 @Component
@@ -58,9 +60,19 @@ public class GreptimeSignalInitializer {
         this.restTemplate = restTemplate;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void initialize() {
         try {
+            // Reject incompatible existing logs before any schema or pipeline changes.
+            List<Map<String, Object>> tables = sqlQueryExecutor.discoverTables();
+            if (tables == null || tables.stream().anyMatch(row -> row == null || row.size() != 1
+                    || !(row.values().iterator().next() instanceof String))) {
+                throw new GreptimeLogSchemaValidator.SchemaValidationException(
+                        "GreptimeDB log table hertzbeat_logs existence cannot be verified; log ingestion is not ready.");
+            }
+            if (tables.stream().anyMatch(row -> row.containsValue(WarehouseConstants.LOG_TABLE_NAME))) {
+                validateLogSchema();
+            }
             String traceSchema = new ClassPathResource(TRACE_SCHEMA)
                     .getContentAsString(StandardCharsets.UTF_8).strip();
             sqlQueryExecutor.execute(StringUtils.trimTrailingCharacter(traceSchema, ';'));
@@ -71,15 +83,23 @@ public class GreptimeSignalInitializer {
             String logSchema = new ClassPathResource(LOG_SCHEMA)
                     .getContentAsString(StandardCharsets.UTF_8).strip();
             sqlQueryExecutor.execute(StringUtils.trimTrailingCharacter(logSchema, ';'));
+            validateLogSchema();
             uploadLogPipeline(new ClassPathResource(LOG_PIPELINE)
                     .getContentAsString(StandardCharsets.UTF_8));
-            if (sqlQueryExecutor.execute("SELECT 1 AS ready").isEmpty()) {
-                throw new IllegalStateException("GreptimeDB readiness query returned no data");
-            }
+        } catch (GreptimeLogSchemaValidator.SchemaValidationException exception) {
+            throw exception;
         } catch (Exception exception) {
-            throw new IllegalStateException("GreptimeDB is required for the three-signal release but initialization failed",
+            throw new IllegalStateException("GreptimeDB is required for the three-signal release but initialization failed; "
+                    + "log table hertzbeat_logs schema or backend could not be verified, so log ingestion is not ready",
                     exception);
         }
+    }
+
+    private void validateLogSchema() {
+        GreptimeLogSchemaValidator.validate(sqlQueryExecutor.executeStrict("DESCRIBE TABLE hertzbeat_logs"));
+        // A valid empty result is sufficient; strict execution rejects storage and permission errors.
+        sqlQueryExecutor.executeStrict("SELECT timestamp, log_attributes, resource_attributes, log_record_uid, "
+                + "hertzbeat_entity_id, hertzbeat_workspace_id, service_name FROM hertzbeat_logs LIMIT 0");
     }
 
     private void uploadLogPipeline(String pipeline) {
@@ -95,7 +115,9 @@ public class GreptimeSignalInitializer {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new HttpEntity<>(pipeline, partHeaders));
         String endpoint = StringUtils.trimTrailingCharacter(greptimeProperties.httpEndpoint(), '/')
-                + "/v1/pipelines/hertzbeat_otlp_log_v1";
+                + "/v1/pipelines/hertzbeat_otlp_log_v1?db="
+                + UriUtils.encodeQueryParam(StringUtils.hasText(greptimeProperties.database())
+                        ? greptimeProperties.database().trim() : "public", StandardCharsets.UTF_8);
         ResponseEntity<String> response = restTemplate.exchange(endpoint, HttpMethod.POST,
                 new HttpEntity<>(body, headers), String.class);
         if (!response.getStatusCode().is2xxSuccessful()) {

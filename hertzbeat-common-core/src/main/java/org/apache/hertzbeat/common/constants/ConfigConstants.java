@@ -43,7 +43,7 @@ public interface ConfigConstants {
     interface FunctionModuleConstants {
 
         String MANAGER = "manager";
-        
+
         String ALERT = "alert";
 
         String ALERTER = "alerter";

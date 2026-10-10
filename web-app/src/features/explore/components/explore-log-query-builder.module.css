@@ -1,0 +1,250 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.validation {
+  margin: 0;
+  color: var(--ant-color-error);
+  font-size: 12px;
+}
+
+.scopeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scopeFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: end;
+}
+
+.moreFilters {
+  min-width: 0;
+}
+
+.moreFilters[open] {
+  grid-column: 1 / -1;
+}
+
+.moreFilters > summary {
+  min-height: 32px;
+  align-content: center;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.filterCount {
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rareGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.field > :global(.ant-input),
+.field > :global(.ant-select),
+.conditionField > :global(.ant-input),
+.conditionField > :global(.ant-select) {
+  width: 100%;
+}
+
+.conditionField {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.conditionField > span {
+  display: none;
+  color: var(--hb-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.workspace :global(.ant-input),
+.workspace :global(.ant-select-selector),
+.workspace :global(.ant-btn) {
+  min-height: 32px;
+}
+
+.conditions {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid var(--hb-border-subtle);
+  gap: 8px;
+}
+
+.emptyConditions {
+  display: flex;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.emptyConditionsTitle {
+  color: var(--hb-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.conditions legend {
+  padding: 0;
+  color: var(--hb-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.conditionHeader,
+.conditionRow {
+  display: grid;
+  grid-template-columns: 132px minmax(160px, 1fr) 152px minmax(180px, 1.2fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.conditionHeader {
+  color: var(--hb-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.codeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.codeGrid p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.visibility {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.compactVisibility {
+  margin-left: auto;
+  padding-top: 0;
+  border-top: 0;
+}
+
+@media (max-width: 1100px) {
+  .conditionHeader {
+    display: none;
+  }
+
+  .conditionField > span {
+    display: block;
+  }
+
+  .conditionRow {
+    grid-template-columns: 132px minmax(160px, 1fr) 144px minmax(180px, 1fr) 36px;
+  }
+}
+
+@media (max-width: 700px) {
+  .conditionRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conditionRow > :global(.ant-btn) {
+    justify-self: end;
+  }
+
+  .workspace :global(.ant-input),
+  .workspace :global(.ant-select-selector),
+  .workspace :global(.ant-btn) {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 520px) {
+  .scopeFields,
+  .rareGrid,
+  .codeGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scopeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compactVisibility {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+:global([data-explore-query-layout='split']) .scopeFields,
+:global([data-explore-query-layout='split']) .scopeGrid,
+:global([data-explore-query-layout='split']) .rareGrid,
+:global([data-explore-query-layout='split']) .codeGrid,
+:global([data-explore-query-layout='split']) .conditionRow {
+  grid-template-columns: minmax(0, 1fr);
+}
+:global([data-explore-query-layout='split']) .conditionHeader {
+  display: none;
+}
+:global([data-explore-query-layout='split']) .conditionField > span {
+  display: block;
+}
+:global([data-explore-query-layout='split']) .compactVisibility {
+  margin-left: 0;
+}
+:global([data-explore-query-layout='split']) .conditionRow {
+  border-bottom: 1px solid var(--hb-border-subtle);
+}

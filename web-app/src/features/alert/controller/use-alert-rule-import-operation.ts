@@ -1,0 +1,109 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { App } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { AlertRuleImportError, importAlertRuleDefinitions } from '../api/alert-rule-import-api';
+import type { AlertRuleImportFailure } from '../model/alert-rule-import-model';
+
+export function useAlertRuleImportOperation(reread: () => Promise<unknown>) {
+  const context = useAlertRuleImportCommandContext(reread);
+  return {
+    busy: context.busy,
+    failure: context.failure,
+    inspectionRequired: context.failure?.outcome === 'uncertain',
+    clearRejectedFailure: () => {
+      if (context.failure?.outcome !== 'uncertain') context.setFailure(null);
+    },
+    execute: (file: File) => executeAlertRuleImport(file, context),
+    inspect: () => inspectAlertRuleImport(context)
+  };
+}
+
+function useAlertRuleImportCommandContext(reread: () => Promise<unknown>) {
+  const { message } = App.useApp();
+  const { t } = useTranslation();
+  const [failure, setFailure] = useState<AlertRuleImportFailure | null>(null);
+  const [busy, setBusy] = useState(false);
+  const active = useRef(false);
+  const request = useRef<{ controller: AbortController | null }>({ controller: null });
+  const mounted = useRef(true);
+  useEffect(() => {
+    const requestOwner = request.current;
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      requestOwner.controller?.abort();
+    };
+  }, []);
+  return { active, busy, failure, message, mounted, reread, request, setBusy, setFailure, t };
+}
+
+type AlertRuleImportCommandContext = ReturnType<typeof useAlertRuleImportCommandContext>;
+
+async function executeAlertRuleImport(file: File, context: AlertRuleImportCommandContext) {
+  if (context.active.current) return false;
+  const controller = new AbortController();
+  context.active.current = true;
+  context.request.current.controller = controller;
+  context.setBusy(true);
+  context.setFailure(null);
+  try {
+    await importAlertRuleDefinitions(file, controller.signal);
+    if (!context.mounted.current) return false;
+    try {
+      await context.reread();
+    } catch {
+      if (context.mounted.current) void context.message.warning(context.t('alertRules.import.refreshFailure'));
+    }
+    return true;
+  } catch (error) {
+    if (context.mounted.current) context.setFailure(importFailure(error));
+    return false;
+  } finally {
+    if (context.request.current.controller === controller) {
+      context.active.current = false;
+      context.request.current.controller = null;
+    }
+    if (context.mounted.current) context.setBusy(false);
+  }
+}
+
+async function inspectAlertRuleImport(context: AlertRuleImportCommandContext) {
+  if (context.active.current || context.failure?.outcome !== 'uncertain') return false;
+  context.active.current = true;
+  context.setBusy(true);
+  try {
+    await context.reread();
+    if (!context.mounted.current) return false;
+    context.setFailure(null);
+    return true;
+  } catch {
+    if (context.mounted.current) void context.message.warning(context.t('alertRules.import.refreshFailure'));
+    return false;
+  } finally {
+    context.active.current = false;
+    if (context.mounted.current) context.setBusy(false);
+  }
+}
+
+function importFailure(error: unknown): AlertRuleImportFailure {
+  if (error instanceof AlertRuleImportError) return { kind: error.kind, outcome: error.outcome };
+  return { kind: 'error', outcome: 'uncertain' };
+}

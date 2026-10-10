@@ -1,0 +1,184 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Input, Select, Space, Typography } from 'antd';
+import { useId, useState, type ReactNode } from 'react';
+
+import type { MonitorMetricField, MonitorParamFormValue } from '../model/monitor-editor-model';
+import type { RowEditorLabels } from './monitor-key-value-field';
+import styles from './monitor-structured-field.module.css';
+import { nextStructuredRowId } from './monitor-structured-field-model';
+
+export type MetricsEditorLabels = RowEditorLabels & {
+  unit: string;
+  type: string;
+  numberType: string;
+  stringType: string;
+};
+type MetricRow = Omit<MonitorMetricField, 'type'> & { id: number; type: 0 | 1 | null };
+type MetricsFieldProps = {
+  label: ReactNode;
+  className?: string | undefined;
+  value: MonitorParamFormValue;
+  onChange: (value: MonitorParamFormValue) => void;
+  onValidityChange?: (valid: boolean) => void;
+  labels: MetricsEditorLabels;
+  required: boolean;
+  disabled: boolean;
+};
+
+export function MetricsField({
+  label,
+  className,
+  value,
+  onChange,
+  onValidityChange,
+  labels,
+  required,
+  disabled
+}: MetricsFieldProps) {
+  const labelId = useId();
+  const editor = useMetricRows(value, required, onChange, onValidityChange);
+  return (
+    <div className={className} role="group" aria-labelledby={labelId}>
+      <span id={labelId} data-monitor-field-label="">
+        {label}
+      </span>
+      <Space className={styles.stack ?? ''} direction="vertical" size="small">
+        {editor.rows.map(row => (
+          <MetricRowEditor
+            key={row.id}
+            row={row}
+            duplicate={editor.duplicate.has(row.field.trim())}
+            disabled={disabled}
+            labels={labels}
+            change={editor.change}
+            remove={editor.remove}
+          />
+        ))}
+        <Button aria-label={labels.add} disabled={disabled} icon={<PlusOutlined />} onClick={editor.add}>
+          {labels.add}
+        </Button>
+        {editor.empty && (
+          <Typography.Text type="danger" role="alert">
+            {labels.emptyError}
+          </Typography.Text>
+        )}
+        {editor.duplicate.size > 0 && (
+          <Typography.Text type="danger" role="alert">
+            {labels.duplicateError}
+          </Typography.Text>
+        )}
+      </Space>
+    </div>
+  );
+}
+
+function MetricRowEditor({
+  row,
+  duplicate,
+  disabled,
+  labels,
+  change,
+  remove
+}: {
+  row: MetricRow;
+  duplicate: boolean;
+  disabled: boolean;
+  labels: MetricsEditorLabels;
+  change: (id: number, patch: Partial<MetricRow>) => void;
+  remove: (id: number) => void;
+}) {
+  return (
+    <Space className={styles.metricRow ?? ''}>
+      <Input
+        aria-label={labels.key}
+        disabled={disabled}
+        status={!row.field.trim() || duplicate ? 'error' : ''}
+        value={row.field}
+        onChange={event => change(row.id, { field: event.target.value })}
+      />
+      <Input
+        aria-label={labels.unit}
+        disabled={disabled}
+        status={!row.unit.trim() ? 'error' : ''}
+        value={row.unit}
+        onChange={event => change(row.id, { unit: event.target.value })}
+      />
+      <Select
+        aria-label={labels.type}
+        disabled={disabled}
+        status={row.type === null ? 'error' : ''}
+        value={row.type}
+        options={[
+          { value: 0, label: labels.numberType },
+          { value: 1, label: labels.stringType }
+        ]}
+        onChange={type => change(row.id, { type })}
+      />
+      <Button aria-label={labels.remove} disabled={disabled} icon={<DeleteOutlined />} onClick={() => remove(row.id)} />
+    </Space>
+  );
+}
+
+function useMetricRows(
+  value: MonitorParamFormValue,
+  required: boolean,
+  onChange: (value: MonitorParamFormValue) => void,
+  onValidityChange?: (valid: boolean) => void
+) {
+  const [rows, setRows] = useState<MetricRow[]>(() =>
+    Array.isArray(value) ? value.map((row, id) => ({ ...row, id })) : []
+  );
+  const commit = (next: MetricRow[]) => {
+    setRows(next);
+    if (next.length === 0) {
+      onValidityChange?.(!required);
+      if (!required) onChange(null);
+      return;
+    }
+    const fields = next.map(row => row.field.trim());
+    const valid = next.every(completeMetricRow) && new Set(fields).size === fields.length;
+    onValidityChange?.(valid);
+    if (valid) onChange(next.map(metricValue));
+  };
+  const fields = rows.map(row => row.field.trim());
+  return {
+    rows,
+    duplicate: new Set(fields.filter((field, index) => field && fields.indexOf(field) !== index)),
+    empty: (required && rows.length === 0) || rows.some(row => !completeMetricRow(row)),
+    add: () => commit([...rows, { id: nextStructuredRowId(rows), field: '', unit: '', type: null }]),
+    remove: (id: number) => commit(rows.filter(row => row.id !== id)),
+    change: (id: number, patch: Partial<MetricRow>) =>
+      commit(rows.map(row => (row.id === id ? { ...row, ...patch } : row)))
+  };
+}
+
+function completeMetricRow(row: MetricRow) {
+  return Boolean(row.field.trim() && row.unit.trim() && row.type !== null);
+}
+
+function metricValue(row: MetricRow): MonitorMetricField {
+  return {
+    field: row.field.trim(),
+    unit: row.unit.trim(),
+    type: row.type as 0 | 1,
+    ...(row.label === undefined ? {} : { label: row.label }),
+    ...(row.i18n === undefined ? {} : { i18n: row.i18n })
+  };
+}

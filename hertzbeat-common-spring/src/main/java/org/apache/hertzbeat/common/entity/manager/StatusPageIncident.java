@@ -70,7 +70,7 @@ public class StatusPageIncident {
     @Schema(title = "incident name", example = "Gateway")
     @NotBlank
     private String name;
-    
+
     @Schema(title = "incident current state: 0-Investigating 1-Identified 2-Monitoring 3-Resolved", example = "0")
     private byte state;
 

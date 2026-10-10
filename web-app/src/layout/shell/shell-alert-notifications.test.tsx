@@ -1,0 +1,223 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { TFunction } from 'i18next';
+import { useState } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { ShellAlertNotificationState } from '@/features/alert/model/shell-alert-notification-model';
+
+import { ShellAlertNotifications } from './shell-alert-notifications';
+import styles from './hertzbeat-shell.module.css';
+import shellStyles from './hertzbeat-shell.module.css?raw';
+import notificationStyles from './hertzbeat-shell-notifications.css?raw';
+
+const t = ((key: string, options?: Record<string, unknown>) =>
+  options ? `${key}:${Object.values(options).join('|')}` : key) as TFunction;
+const soundControlIconClass = styles.soundControlIcon;
+if (!soundControlIconClass) throw new Error('Missing sound control icon class.');
+
+describe('ShellAlertNotifications', () => {
+  afterEach(cleanup);
+
+  it('shows an authoritative count, recent evidence, and one Alert Center action', async () => {
+    const open = vi.fn();
+    render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'ready', total: 3 },
+          list: {
+            kind: 'ready',
+            items: [
+              {
+                id: 7,
+                title: 'Checkout latency',
+                detail: 'p95 exceeded',
+                severity: 'critical',
+                updatedAt: '2026-07-25 10:20:00'
+              }
+            ]
+          },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={open}
+      />
+    );
+
+    expect(screen.getByText('3')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.alertsWithCount:3' }));
+    expect(await screen.findByText('Checkout latency')).toBeInTheDocument();
+    expect(screen.getByText('p95 exceeded')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'shell.alerts.openCenter' }));
+    expect(open).toHaveBeenCalledOnce();
+  });
+
+  it('does not turn unavailable summary evidence into a fake zero badge', async () => {
+    render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'unavailable' },
+          list: { kind: 'unavailable' },
+          sound: { kind: 'unavailable' },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.alerts' }));
+    expect(await screen.findByText('shell.alerts.unavailable')).toBeInTheDocument();
+  });
+
+  it('renders an explicit empty state only after a successful read', async () => {
+    render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.alerts' }));
+    expect(await screen.findByText('shell.alerts.empty')).toBeInTheDocument();
+  });
+
+  it('keeps shell list and sound permission rejection distinct', async () => {
+    render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'permission' },
+          list: { kind: 'permission' },
+          sound: { kind: 'permission' },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.alerts' }));
+    expect(await screen.findByText('common.permission.roleRequiredDescription')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.permission.roleRequiredDescription' })).toBeDisabled();
+  });
+
+  it('exposes one compact server-backed sound action with honest disabled evidence', () => {
+    const toggleSound = vi.fn();
+    const { rerender } = render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    const mutedControl = screen.getByRole('button', { name: 'shell.alerts.soundMuted' });
+    expect(mutedControl.querySelector('[data-icon="muted"]')).toBeInTheDocument();
+    expect(mutedControl.querySelector('[aria-label="muted"]')).toHaveClass(soundControlIconClass);
+    fireEvent.click(mutedControl);
+    expect(toggleSound).toHaveBeenCalledOnce();
+
+    rerender(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'unavailable' },
+          toggleSound
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'shell.alerts.soundUnavailable' })).toBeDisabled();
+  });
+
+  it('uses the matching sound icon at the same compact size when audio is enabled', () => {
+    render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', canToggle: true, muted: false, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    const control = screen.getByRole('button', { name: 'shell.alerts.soundEnabled' });
+    expect(control.querySelector('[data-icon="sound"]')).toBeInTheDocument();
+    expect(control.querySelector('[aria-label="sound"]')).toHaveClass(soundControlIconClass);
+    expect(shellStyles).toContain("@import './hertzbeat-shell-notifications.css'");
+    expect(notificationStyles).toMatch(/\.soundControlIcon\s*\{[^}]*font-size:\s*14px/);
+  });
+
+  it('shows canonical mute evidence but disables the global action for a read-only role', () => {
+    const toggleSound = vi.fn();
+    render(
+      <ShellAlertNotificationsHarness
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', canToggle: false, muted: false, saving: false, permission: 'default', failure: null },
+          toggleSound
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    const control = screen.getByRole('button', { name: 'shell.alerts.soundReadOnly' });
+    expect(control).toBeDisabled();
+    fireEvent.click(control);
+    expect(toggleSound).not.toHaveBeenCalled();
+  });
+});
+
+type ShellAlertNotificationsHarnessProps = {
+  state: Omit<ShellAlertNotificationState, 'previewOpen' | 'setPreviewOpen'>;
+  t: TFunction;
+  onOpenAlerts: () => void;
+};
+
+function ShellAlertNotificationsHarness({ state, t: translate, onOpenAlerts }: ShellAlertNotificationsHarnessProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  return (
+    <ShellAlertNotifications
+      state={{ ...state, previewOpen, setPreviewOpen }}
+      t={translate}
+      onOpenAlerts={onOpenAlerts}
+    />
+  );
+}

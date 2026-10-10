@@ -1,0 +1,210 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { skipToken, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+
+import { applicationRoutePaths, entityRoutePaths } from '@/shared/navigation/app-paths';
+import type { ExactTimeWindow } from '@/shared/query-context';
+
+import { classifyTopologyError, loadTopologyGraph } from '../api/topology-api';
+import {
+  changeTopologyPage,
+  changeTopologyScope,
+  hasTopologyScopeRestrictions,
+  parseTopologyQuery,
+  parseTopologySelection,
+  withTopologyPageDefaults,
+  writeTopologyQuery,
+  writeTopologySelection,
+  type TopologyFailure,
+  type TopologyQuery,
+  type TopologyScopePatch
+} from '../model/topology-model';
+import type { TopologyPageController, TopologyPageEvidence, TopologyPageState } from '../model/topology-page-contract';
+import {
+  buildTopologyPresentation,
+  type TopologyInteraction,
+  type TopologyPresentation
+} from '../model/topology-view-model';
+import { buildTopologyEntityPath, buildTopologySignalPath } from '../model/topology-navigation-model';
+import { topologyQueryKeys } from './topology-query-keys';
+import { useTopologyInteraction } from './use-topology-interaction';
+
+type ControllerOptions = { effectiveWindow?: ExactTimeWindow; refreshRevision?: number };
+type SettledGraph = { semanticScope: string; presentation: TopologyPresentation };
+const invalidQueryKey = ['topology', 'invalid'] as const;
+
+export function useTopologyPageController(options: ControllerOptions = {}): TopologyPageController {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [params, setParams] = useSearchParams();
+  const request = resolveTopologyRequest(params, options.effectiveWindow, options.refreshRevision ?? 0);
+  const semanticScope = request?.semanticScope ?? 'invalid';
+  const result = useQuery({
+    queryKey: request?.key ?? invalidQueryKey,
+    queryFn: request ? ({ signal }) => loadTopologyGraph(request.query, signal) : skipToken,
+    retry: false,
+    staleTime: 0
+  });
+  const fetched = useMemo(() => (result.data ? buildTopologyPresentation(result.data) : undefined), [result.data]);
+  const presentation = useSettledTopologyGraph(semanticScope, fetched, result.isFetching, result.error);
+  const routeSelection = resolveTopologySelection(params);
+  const updateSelection = useCallback(
+    (selection: TopologyInteraction['selected']) => {
+      try {
+        const queryParams = writeTopologyQuery(parseTopologyQuery(params));
+        setParams(writeTopologySelection(queryParams, selection), { replace: true });
+      } catch {
+        // Invalid query evidence stays visible; selection cannot repair its request scope.
+      }
+    },
+    [params, setParams]
+  );
+  useEffect(() => {
+    if (routeSelection.valid) return;
+    updateSelection({ kind: 'none' });
+  }, [routeSelection.valid, updateSelection]);
+  const interaction = useTopologyInteraction(semanticScope, presentation, routeSelection.selection, updateSelection);
+  const failure = result.error ? classifyTopologyError(result.error) : undefined;
+  return {
+    state: topologyPageState(request?.query, presentation, interaction.interaction, result.isFetching, failure),
+    actions: {
+      ...interaction.actions,
+      configureTelemetry: () => void navigate(applicationRoutePaths.instrumentation),
+      discoverResources: () => void navigate(entityRoutePaths.discovery),
+      openEntity: entityId =>
+        void navigate(buildTopologyEntityPath(entityId, `${location.pathname}${location.search}`)),
+      querySignals: (node, window) => {
+        const path = buildTopologySignalPath(node, window);
+        if (path) void navigate(path);
+      },
+      changeScope: (patch: TopologyScopePatch) => {
+        updateRouteQuery(params, setParams, query => changeTopologyScope(query, patch));
+      },
+      changePage: (pageIndex: number, pageSize: number) => {
+        updateRouteQuery(params, setParams, query => changeTopologyPage(query, pageIndex, pageSize), true);
+      },
+      refresh: () => {
+        if (request) void result.refetch();
+      }
+    }
+  };
+}
+
+function resolveTopologySelection(params: URLSearchParams) {
+  try {
+    return { valid: true, selection: parseTopologySelection(params) };
+  } catch {
+    return { valid: false, selection: { kind: 'none' as const } };
+  }
+}
+
+function updateRouteQuery(
+  params: URLSearchParams,
+  setParams: ReturnType<typeof useSearchParams>[1],
+  update: (query: TopologyQuery) => TopologyQuery,
+  preserveSelection = false
+) {
+  try {
+    const queryParams = writeTopologyQuery(update(parseTopologyQuery(params)));
+    const next = preserveSelection ? writeTopologySelection(queryParams, parseTopologySelection(params)) : queryParams;
+    setParams(next);
+  } catch {
+    // Invalid URL evidence stays visible until the operator corrects the address.
+  }
+}
+
+function useSettledTopologyGraph(
+  semanticScope: string,
+  fetched: TopologyPresentation | undefined,
+  fetching: boolean,
+  error: Error | null
+) {
+  const [settled, setSettled] = useState<SettledGraph>();
+  useEffect(() => {
+    if (!fetched || fetching || error) return;
+    // TanStack evidence is the external source synchronized into the scope-owned canvas.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSettled({ semanticScope, presentation: fetched });
+  }, [error, fetched, fetching, semanticScope]);
+  return settled?.semanticScope === semanticScope ? settled.presentation : undefined;
+}
+
+function resolveTopologyRequest(
+  params: URLSearchParams,
+  effectiveWindow: ExactTimeWindow | undefined,
+  refreshRevision: number
+) {
+  try {
+    const routeQuery = withTopologyPageDefaults(parseTopologyQuery(params));
+    const query: TopologyQuery =
+      routeQuery.window || !effectiveWindow ? routeQuery : { ...routeQuery, window: effectiveWindow };
+    return {
+      query,
+      key: topologyQueryKeys.graph(query, refreshRevision),
+      semanticScope: topologySemanticScope(routeQuery, effectiveWindow)
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function topologySemanticScope(routeQuery: TopologyQuery, effectiveWindow: ExactTimeWindow | undefined) {
+  const routeScopeParams = writeTopologyQuery(routeQuery);
+  // Edge pages replace one render window inside the same operator graph scope.
+  routeScopeParams.delete('pageIndex');
+  routeScopeParams.delete('pageSize');
+  const routeScope = routeScopeParams.toString();
+  const inheritedDuration =
+    routeQuery.window || !effectiveWindow ? 'none' : String(effectiveWindow.to - effectiveWindow.from);
+  return `${routeScope}|inheritedDuration=${inheritedDuration}`;
+}
+
+function topologyPageState(
+  query: TopologyQuery | undefined,
+  presentation: TopologyPresentation | undefined,
+  interaction: TopologyInteraction,
+  fetching: boolean,
+  failure: TopologyFailure | undefined
+): TopologyPageState {
+  return {
+    ...(query ? { query } : {}),
+    evidence: resolveTopologyEvidence(query, failure, presentation),
+    interaction,
+    refreshing: fetching && presentation !== undefined,
+    ...(failure && presentation ? { refreshFailure: failure } : {})
+  };
+}
+
+function resolveTopologyEvidence(
+  query: TopologyQuery | undefined,
+  failure: TopologyFailure | undefined,
+  presentation: TopologyPresentation | undefined
+): TopologyPageEvidence {
+  if (!query) return { kind: 'contract' };
+  if (presentation) {
+    const empty = presentation.graph.nodes.length === 0 && presentation.graph.edges.length === 0;
+    if (empty && !presentation.summary.partial) {
+      return { kind: 'empty', scope: hasTopologyScopeRestrictions(query) ? 'filtered' : 'global', presentation };
+    }
+    return { kind: 'ready', presentation };
+  }
+  if (failure) return { kind: failure.kind };
+  return { kind: 'loading' };
+}

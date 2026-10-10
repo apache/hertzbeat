@@ -84,6 +84,15 @@ public final class TimePeriodUtil {
         }
     }
 
+    /**
+     * transform any timestamp to seconds
+     * @param timestamp timestamp
+     * @return seconds
+     */
+    public static long normalizeToSeconds(Object timestamp) {
+        return normalizeToMilliseconds(timestamp) / 1000;
+    }
+
     private static long convertNumericTimestamp(long numericTimestamp) {
         if (String.valueOf(numericTimestamp).length() <= 10) {
             return numericTimestamp * 1000;

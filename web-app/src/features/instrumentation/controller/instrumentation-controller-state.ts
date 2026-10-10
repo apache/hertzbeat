@@ -1,0 +1,78 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useRef, useState, type SetStateAction } from 'react';
+
+import type { AccessTokenGenerationDraft } from '@/shared/access-token/access-token-generation-model';
+import { emptyDraft, type InstrumentationDraft, type InstrumentationStage } from '../model/instrumentation-flow';
+import type { DetectionResponse, RenderResponse } from '../model/instrumentation-v2-contract';
+
+export function useInstrumentationControllerState() {
+  const [stage, setStage] = useState<InstrumentationStage>('source');
+  const [draft, setDraft] = useState<InstrumentationDraft>(emptyDraft);
+  const [guide, setGuide] = useState<RenderResponse>();
+  const [token, setToken] = useState('');
+  const tokenAcknowledgementRequiredRef = useRef(false);
+  const [tokenAcknowledgementRequired, setTokenAcknowledgementRequiredState] = useState(false);
+  const setTokenAcknowledgementRequired = (value: SetStateAction<boolean>) => {
+    const next = typeof value === 'function' ? value(tokenAcknowledgementRequiredRef.current) : value;
+    tokenAcknowledgementRequiredRef.current = next;
+    setTokenAcknowledgementRequiredState(next);
+  };
+  const [tokenDraft, setTokenDraft] = useState<AccessTokenGenerationDraft>();
+  const [tokenGenerating, setTokenGenerating] = useState(false);
+  const [tokenError, setTokenError] = useState(false);
+  const [rendering, setRendering] = useState(false);
+  const [renderError, setRenderError] = useState(false);
+  const [detection, setDetection] = useState<DetectionResponse>();
+  const [detecting, setDetecting] = useState(false);
+  const [detectionError, setDetectionError] = useState(false);
+  const [sourceDirectoryRevision, setSourceDirectoryRevision] = useState(0);
+  return {
+    stage,
+    setStage,
+    draft,
+    setDraft,
+    guide,
+    setGuide,
+    token,
+    setToken,
+    tokenAcknowledgementRequired,
+    tokenAcknowledgementRequiredRef,
+    setTokenAcknowledgementRequired,
+    tokenDraft,
+    setTokenDraft,
+    tokenGenerating,
+    setTokenGenerating,
+    tokenError,
+    setTokenError,
+    rendering,
+    setRendering,
+    renderError,
+    setRenderError,
+    detection,
+    setDetection,
+    detecting,
+    setDetecting,
+    detectionError,
+    setDetectionError,
+    sourceDirectoryRevision,
+    setSourceDirectoryRevision
+  };
+}
+
+export type InstrumentationControllerState = ReturnType<typeof useInstrumentationControllerState>;

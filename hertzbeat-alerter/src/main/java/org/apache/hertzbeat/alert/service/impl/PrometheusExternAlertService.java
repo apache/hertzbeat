@@ -19,10 +19,8 @@ package org.apache.hertzbeat.alert.service.impl;
 
 import tools.jackson.core.type.TypeReference;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.PrometheusExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
@@ -36,7 +34,6 @@ import org.springframework.util.StringUtils;
 /**
  * Prometheus external alarm service impl
  */
-@Slf4j
 @Service
 public class PrometheusExternAlertService implements ExternAlertService {
 
@@ -45,51 +42,49 @@ public class PrometheusExternAlertService implements ExternAlertService {
 
 
     @Override
-    public void addExternAlert(String content) {
+    public void addExternAlert(String workspaceId, String content) {
 
         TypeReference<List<PrometheusExternAlert>> typeReference = new TypeReference<>() {};
-        List<PrometheusExternAlert> alerts = JsonUtil.fromJson(content, typeReference);
-        if (alerts == null || alerts.isEmpty()) {
-            log.warn("parse prometheus extern alert content failed! content: {}", content);
-            return;
-        }
-        for (PrometheusExternAlert alert : alerts) {
-            Map<String, String> annotations = alert.getAnnotations();
-            if (annotations == null) {
-                annotations = new HashMap<>(8);
-            }
-            if (StringUtils.hasText(alert.getGeneratorURL())) {
-                annotations.put("generatorURL", alert.getGeneratorURL());
-            }
-            String description = annotations.get("description");
-            if (description == null) {
-                description = annotations.get("summary");
-            }
-            if (description == null) {
-                description = annotations.values().stream().findFirst().orElse("");
-            }
-            Map<String, String> labels = alert.getLabels();
-            if (labels == null) {
-                labels = new HashMap<>(8);
-            }
-            labels.put("__source__", "prometheus");
-            String status = CommonConstants.ALERT_STATUS_FIRING;
-            if (alert.getEndsAt() != null && alert.getEndsAt().isBefore(Instant.now())) {
-                status = CommonConstants.ALERT_STATUS_RESOLVED;
-            }
-            SingleAlert singleAlert = SingleAlert.builder()
-                    .content(description)
-                    .status(status)
-                    .activeAt(CommonConstants.ALERT_STATUS_FIRING.equals(status) ? Instant.now().toEpochMilli() : null)
-                    .startAt(alert.getStartsAt() != null ? alert.getStartsAt().toEpochMilli() : Instant.now().toEpochMilli())
-                    .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status) ? alert.getEndsAt().toEpochMilli() : null)
-                    .labels(labels)
-                    .annotations(alert.getAnnotations())
-                    .triggerTimes(1)
-                    .build();
+        List<PrometheusExternAlert> alerts = ExternalAlertIngressValidator.requireBatch(
+                JsonUtil.fromJsonQuietly(content, typeReference));
+        List<SingleAlert> singleAlerts = alerts.stream()
+                .map(this::toSingleAlert)
+                .toList();
+        singleAlerts.forEach(alert -> alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert));
+    }
 
-            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+    private SingleAlert toSingleAlert(PrometheusExternAlert alert) {
+        Map<String, String> annotations =
+                ExternalAlertIngressValidator.normalizeAnnotations(alert.getAnnotations());
+        if (StringUtils.hasText(alert.getGeneratorURL())) {
+            annotations.put("generatorURL", alert.getGeneratorURL());
         }
+        String description = annotations.get("description");
+        if (description == null) {
+            description = annotations.get("summary");
+        }
+        if (description == null) {
+            description = annotations.values().stream().findFirst().orElse("");
+        }
+        Map<String, String> labels =
+                ExternalAlertIngressValidator.requireBusinessLabels(alert.getLabels());
+        labels.put("__source__", "prometheus");
+        String status = CommonConstants.ALERT_STATUS_FIRING;
+        Instant endsAt = alert.getEndsAt();
+        // Prometheus uses its zero time (year 1) when an active alert has no end.
+        if (endsAt != null && endsAt.getEpochSecond() > 0 && endsAt.isBefore(Instant.now())) {
+            status = CommonConstants.ALERT_STATUS_RESOLVED;
+        }
+        return ExternalAlertIngressValidator.normalize(SingleAlert.builder()
+                .content(description)
+                .status(status)
+                .activeAt(CommonConstants.ALERT_STATUS_FIRING.equals(status) ? Instant.now().toEpochMilli() : null)
+                .startAt(alert.getStartsAt() != null ? alert.getStartsAt().toEpochMilli() : Instant.now().toEpochMilli())
+                .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status) ? endsAt.toEpochMilli() : null)
+                .labels(labels)
+                .annotations(annotations)
+                .triggerTimes(1)
+                .build());
     }
 
     @Override

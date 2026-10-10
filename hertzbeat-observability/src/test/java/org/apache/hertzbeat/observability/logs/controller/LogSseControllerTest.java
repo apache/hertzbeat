@@ -1,0 +1,250 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.observability.logs.controller;
+
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Map;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.observability.logs.service.impl.LogSseServiceImpl;
+import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
+import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+/**
+ * Unit tests for the {@link LogSseController}.
+ */
+@ExtendWith(MockitoExtension.class)
+class LogSseControllerTest {
+
+    private MockMvc mockMvc;
+    private LogSseServiceImpl service;
+
+    @Mock
+    private LogSseManager emitterManager;
+
+    @Captor
+    private ArgumentCaptor<LogSseFilterCriteria> filterCriteriaCaptor;
+
+    @BeforeEach
+    void setUp() {
+        service = org.mockito.Mockito.spy(new LogSseServiceImpl(emitterManager, java.util.List.of(),
+                new org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, java.time.Duration.ofMillis(100))));
+        LogSseController logSseController = new LogSseController(service);
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logSseController).build();
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId("default");
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void explicitHistoricalSortRejectsBeforeLivePreparation() throws Exception {
+        for (String endpoint : new String[] {"validate", "subscribe"}) {
+            mockMvc.perform(get("/api/logs/sse/" + endpoint).param("logSort", "")
+                            .accept(endpoint.equals("subscribe") ? MediaType.TEXT_EVENT_STREAM_VALUE : MediaType.APPLICATION_JSON_VALUE))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.msg")
+                            .value("observability_log_filter_invalid"));
+        }
+        org.mockito.Mockito.verifyNoInteractions(emitterManager);
+    }
+
+    @Test
+    void testSubscribeWithoutFilters() throws Exception {
+        // When: A request is made to the subscribe endpoint without any parameters
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        // Then: The emitter manager is called with an empty filter criteria
+        verify(service).subscribe(filterCriteriaCaptor.capture());
+        LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
+
+        Assertions.assertNull(capturedCriteria.getSeverityText());
+        Assertions.assertNull(capturedCriteria.getSeverityNumber());
+        Assertions.assertNull(capturedCriteria.getTraceId());
+        Assertions.assertNull(capturedCriteria.getSpanId());
+        Assertions.assertFalse(capturedCriteria.isHideInternal());
+        Assertions.assertFalse(capturedCriteria.isHideNoise());
+    }
+
+    @Test
+    void shouldDisableProxyBufferingForLiveLogStream() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-cache, no-transform"))
+                .andExpect(header().string("X-Accel-Buffering", "no"));
+    }
+
+    @Test
+    void testSubscribeWithMultipleFilters() throws Exception {
+        // Given: Multiple filter parameters
+        String severityText = "ERROR";
+        String severityNumber = "17";
+        String traceId = "abcdef1234567890abcdef1234567890";
+        String spanId = "abcdef1234567890";
+        String entityId = "42";
+        String entityType = "service";
+        String serviceName = "checkout";
+        String serviceNamespace = "payments";
+        String environment = "prod";
+        String collectorId = "collector-a";
+        String instance = "checkout-7d9";
+        String endpoint = "/checkout";
+        String resourceFilter = "service.version=1.2.3";
+        String attributeFilter = "error.type=Timeout";
+
+        // When: A request is made with all filter parameters
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("severityText", severityText)
+                        .param("severityNumber", severityNumber)
+                        .param("traceId", traceId)
+                        .param("spanId", spanId)
+                        .param("entityId", entityId)
+                        .param("entityType", entityType)
+                        .param("serviceName", serviceName)
+                        .param("serviceNamespace", serviceNamespace)
+                        .param("environment", environment)
+                        .param("collectorId", collectorId)
+                        .param("instance", instance)
+                        .param("endpoint", endpoint)
+                        .param("resourceFilter", resourceFilter)
+                        .param("attributeFilter", attributeFilter)
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        // Then: The emitter manager is called with a criteria object containing all filter values
+        verify(service).subscribe(filterCriteriaCaptor.capture());
+        LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
+
+        Assertions.assertEquals(capturedCriteria.getSeverityText(), severityText);
+        Assertions.assertEquals(capturedCriteria.getSeverityNumber(), Integer.parseInt(severityNumber));
+        Assertions.assertEquals(capturedCriteria.getTraceId(), traceId);
+        Assertions.assertEquals(capturedCriteria.getSpanId(), spanId);
+        Assertions.assertEquals(capturedCriteria.getEntityId(), entityId);
+        Assertions.assertEquals(capturedCriteria.getEntityType(), entityType);
+        Assertions.assertEquals(capturedCriteria.getServiceName(), serviceName);
+        Assertions.assertEquals(capturedCriteria.getServiceNamespace(), serviceNamespace);
+        Assertions.assertEquals(capturedCriteria.getEnvironment(), environment);
+        Assertions.assertEquals(capturedCriteria.getCollectorId(), collectorId);
+        Assertions.assertEquals(capturedCriteria.getInstance(), instance);
+        Assertions.assertEquals(capturedCriteria.getEndpoint(), endpoint);
+        Assertions.assertEquals(capturedCriteria.getResourceFilter(),
+                resourceFilter + " and service.instance.id=\"checkout-7d9\"");
+        Assertions.assertEquals(capturedCriteria.getAttributeFilter(),
+                attributeFilter + " and http.route=\"/checkout\"");
+    }
+
+    @Test
+    void subscribePreservesHistoricalVisibilityFilterIntent() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("hideInternal", "true")
+                        .param("hideNoise", "true")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        verify(service).subscribe(filterCriteriaCaptor.capture());
+        LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
+
+        Assertions.assertTrue(capturedCriteria.isHideInternal());
+        Assertions.assertTrue(capturedCriteria.isHideNoise());
+    }
+
+    @Test
+    void subscribeBindsRequestWorkspaceToLiveLogCriteria() throws Exception {
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId("team-a");
+
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        verify(service).subscribe(filterCriteriaCaptor.capture());
+        LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
+
+        Assertions.assertEquals("team-a", capturedCriteria.getWorkspaceId());
+        Assertions.assertTrue(capturedCriteria.matches(LogEntry.builder()
+                .resource(Map.of("hertzbeat.workspace_id", "team-a"))
+                .build()));
+        Assertions.assertFalse(capturedCriteria.matches(LogEntry.builder()
+                .resource(Map.of("hertzbeat.workspace_id", "team-b"))
+                .build()));
+    }
+
+    @Test
+    void subscribeUsesAuthenticatedWorkspaceInsteadOfClientWorkspace() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("workspaceId", "client-controlled")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        verify(service).subscribe(filterCriteriaCaptor.capture());
+        Assertions.assertEquals("default", filterCriteriaCaptor.getValue().getWorkspaceId());
+    }
+
+    @Test
+    void subscribeRejectsMissingAuthenticatedWorkspaceWithoutOpeningEmitter() throws Exception {
+        AuthTokenRequestContext.clear();
+
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("workspaceId", "client-controlled")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isForbidden());
+
+        verify(emitterManager, never()).createPreparedEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void subscribeRejectsInvalidAndPartiallyInvalidFiltersWithoutOpeningEmitter() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("resourceFilter", "service.version=1.2.3, malformed")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isBadRequest());
+
+        verify(emitterManager, never()).createPreparedEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void testSubscribeWithInvalidSeverityNumber() throws Exception {
+        // When: A request is made with a non-integer value for severityNumber
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("severityNumber", "not-a-number")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().is4xxClientError());
+    }
+}

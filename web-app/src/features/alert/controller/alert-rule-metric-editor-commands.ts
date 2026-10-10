@@ -1,0 +1,90 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  buildMetricAlertApplicationPatch,
+  buildMetricAlertAuthoringModePatch,
+  buildMetricAlertExpertConditionPatch,
+  buildMetricAlertStructuredConditionPatch,
+  buildMetricAlertTargetPatch,
+  isMetricAlertTargetInHierarchy,
+  metricAlertFieldsForTarget,
+  type AlertRuleDraft,
+  type MetricAlertAuthoring,
+  type MetricAlertConditionGroup,
+  type RealtimeMetricTarget
+} from '../model/alert-rule-model';
+import type { AlertRuleMetricTargetState } from './use-alert-rule-metric-target-controller';
+
+type UpdateDraft = (patch: Partial<AlertRuleDraft>) => void;
+
+/**
+ * Keeps Monitor-catalog guards and metric authoring transitions together.
+ * The route controller only coordinates lifecycle and save/preview ownership.
+ */
+export function createAlertRuleMetricEditorCommands(
+  draft: AlertRuleDraft | null,
+  targetState: AlertRuleMetricTargetState,
+  updateDraft: UpdateDraft
+) {
+  const fields = currentMetricFields(draft, targetState);
+  return {
+    changeMetricApplication: (application: string) => {
+      if (!draft || targetState.apps.kind !== 'ready') return;
+      if (!targetState.apps.apps.some(app => app.value === application)) return;
+      updateDraft(buildMetricAlertApplicationPatch(draft, application));
+    },
+    changeMetricTarget: (target: RealtimeMetricTarget) => {
+      if (!draft) return;
+      const hierarchy = hierarchyForTarget(targetState, target.app);
+      if (!hierarchy || !isMetricAlertTargetInHierarchy(hierarchy, target)) return;
+      const stagedDraft =
+        draft.metricEditor?.kind === 'targeted' && draft.metricEditor.app === target.app
+          ? draft
+          : { ...draft, ...buildMetricAlertApplicationPatch(draft, target.app) };
+      updateDraft(buildMetricAlertTargetPatch(stagedDraft, target));
+    },
+    changeMetricStructuredCondition: (condition: MetricAlertConditionGroup) => {
+      if (!draft || !fields) return;
+      updateDraft(buildMetricAlertStructuredConditionPatch(draft, condition, fields));
+    },
+    changeMetricExpertCondition: (condition: string) => {
+      if (!draft || !fields) return;
+      updateDraft(buildMetricAlertExpertConditionPatch(draft, condition));
+    },
+    changeMetricAuthoringMode: (mode: MetricAlertAuthoring['mode']) => {
+      if (!draft || !fields) return;
+      updateDraft(buildMetricAlertAuthoringModePatch(draft, mode, fields));
+    }
+  };
+}
+
+function hierarchyForTarget(state: AlertRuleMetricTargetState, app: string) {
+  if (state.hierarchy.kind === 'ready' && state.hierarchy.hierarchy.value === app) {
+    return state.hierarchy.hierarchy;
+  }
+  if (state.catalog?.kind === 'ready') {
+    return state.catalog.hierarchies.find(hierarchy => hierarchy.value === app) ?? null;
+  }
+  return null;
+}
+
+function currentMetricFields(draft: AlertRuleDraft | null, state: AlertRuleMetricTargetState) {
+  const target = draft?.metricEditor?.kind === 'targeted' ? draft.metricEditor.target : null;
+  if (state.hierarchy.kind !== 'ready' || target?.kind !== 'metric') return null;
+  return metricAlertFieldsForTarget(state.hierarchy.hierarchy, target);
+}

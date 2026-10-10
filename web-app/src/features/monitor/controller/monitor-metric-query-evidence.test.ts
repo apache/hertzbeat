@@ -1,0 +1,115 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
+
+import {
+  catalogEvidence,
+  favoriteCollectionEvidence,
+  favoriteEvidence,
+  metricEvidence
+} from './monitor-metric-query-evidence';
+
+const settledWithoutData = { isPending: false, isError: false, error: null, data: undefined };
+
+describe('monitor metric query evidence', () => {
+  it('does not turn a missing successful payload into ready or empty evidence', () => {
+    expect(catalogEvidence(settledWithoutData, [])).toEqual({ kind: 'error', options: [] });
+    expect(favoriteEvidence(settledWithoutData, { key: 'summary.value', group: 'summary', field: 'value' })).toEqual({
+      kind: 'error'
+    });
+    expect(favoriteCollectionEvidence(settledWithoutData, [])).toEqual({ kind: 'error' });
+    expect(metricEvidence(settledWithoutData, () => [])).toEqual({ kind: 'error', rows: [] });
+  });
+
+  it('preserves the embedded catalog only as an explicit request fallback', () => {
+    const query = {
+      isPending: false,
+      isError: true,
+      error: new ApiMessageError('offline', { status: 503 }),
+      data: undefined
+    };
+
+    expect(catalogEvidence(query, [{ name: 'summary', favorited: false }])).toEqual({
+      kind: 'fallback',
+      options: [],
+      references: ['summary']
+    });
+  });
+
+  it('exposes payloads only after a successful read', () => {
+    const query = { isPending: false, isError: false, error: null, data: ['summary'] };
+
+    expect(favoriteEvidence(query, { key: 'summary.value', group: 'summary', field: 'value' })).toEqual({
+      kind: 'ready',
+      value: true,
+      token: 'summary'
+    });
+    expect(
+      favoriteCollectionEvidence(query, [
+        { key: 'summary.value', group: 'summary', field: 'value' },
+        { key: 'summary.latency', group: 'summary', field: 'latency' }
+      ])
+    ).toEqual({
+      kind: 'ready',
+      items: [{ key: 'summary', available: true }]
+    });
+    expect(metricEvidence(query, values => values)).toEqual({ kind: 'ready', rows: ['summary'] });
+  });
+
+  it('keeps unresolved favorite tokens visible without presenting them as queryable metrics', () => {
+    const query = {
+      isPending: false,
+      isError: false,
+      error: null,
+      data: ['retired.value', 'retired.value', 'summary']
+    };
+
+    expect(favoriteCollectionEvidence(query, [{ key: 'summary.value', group: 'summary', field: 'value' }])).toEqual({
+      kind: 'ready',
+      items: [
+        { key: 'retired.value', available: false },
+        { key: 'summary', available: true }
+      ]
+    });
+  });
+
+  it('accepts only group tokens and keeps legacy field tokens unavailable', () => {
+    const query = { isPending: false, isError: false, error: null, data: ['summary', 'latency'] };
+
+    expect(
+      favoriteCollectionEvidence(query, [
+        { key: 'summary.value', group: 'summary', field: 'value' },
+        { key: 'summary.latency', group: 'summary', field: 'latency' },
+        { key: 'network.latency', group: 'network', field: 'latency' }
+      ])
+    ).toEqual({
+      kind: 'ready',
+      items: [
+        { key: 'summary', available: true },
+        { key: 'latency', available: false }
+      ]
+    });
+    expect(favoriteEvidence(query, { key: 'summary.value', group: 'summary', field: 'value' })).toEqual({
+      kind: 'ready',
+      value: true,
+      token: 'summary'
+    });
+  });
+});

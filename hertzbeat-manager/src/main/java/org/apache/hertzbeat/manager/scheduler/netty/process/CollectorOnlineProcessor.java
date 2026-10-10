@@ -54,7 +54,7 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
             collectorInfo.setIp(clientIP);
         }
         this.manageServer.addChannel(collector, ctx.channel());
-        this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(collector, collectorInfo);
+        this.manageServer.collectorOnline(collector, collectorInfo, true);
         ServerInfo serverInfo = ServerInfo.builder().aesSecret(AesUtil.getDefaultSecretKey()).build();
         return ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())

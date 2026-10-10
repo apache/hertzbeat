@@ -1,0 +1,169 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.pagination {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  overflow-x: auto;
+}
+
+.pagination :global(.ant-pagination) {
+  flex-wrap: nowrap;
+}
+
+.pagination :global(.ant-pagination-item),
+.pagination :global(.ant-pagination-prev),
+.pagination :global(.ant-pagination-next) {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+}
+
+.pagination[data-pagination-variant='compact'] {
+  height: 28px;
+  align-items: center;
+  gap: 2px;
+  overflow: visible;
+}
+
+.pagination[data-pagination-variant='compact'] button {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+  place-items: center;
+}
+
+.pagination[data-pagination-variant='compact'] button:hover:not(:disabled) {
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-primary);
+}
+
+.pagination[data-pagination-variant='compact'] button:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 1px;
+}
+
+.pagination[data-pagination-variant='compact'] button:disabled {
+  color: var(--hb-text-muted);
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.persesFrame {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.logResultBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.logRegion {
+  width: 100%;
+  min-width: 0;
+  padding-block: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.logRegion + .logRegion {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.logRegion[data-explore-log-region='query'] {
+  padding-block: 0;
+}
+
+.logRegion[data-explore-log-region='result'] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.logRegion[data-explore-log-region='result'] > section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.logRegion[data-explore-log-region='result'] > section > header {
+  flex: none;
+}
+
+.logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'],
+.logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+  height: 32px;
+}
+
+.logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+  width: 32px;
+}
+
+@media (width <= 700px) {
+  .logRegion[data-explore-log-region='result'] {
+    overflow: visible;
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'],
+  .logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+    height: 36px;
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header [data-pagination-variant='compact'] button {
+    width: 36px;
+  }
+}
+
+@media (width <= 520px) {
+  .logRegion[data-explore-log-region='result'] > section > header {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-rows: minmax(28px, auto) minmax(36px, auto) 36px;
+    align-items: center;
+    column-gap: var(--hb-space-1);
+    row-gap: 0;
+    padding-block: var(--hb-space-1);
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    gap: var(--hb-space-1);
+  }
+
+  .logRegion[data-explore-log-region='result'] > section > header > div:last-child {
+    display: contents;
+  }
+}

@@ -10,12 +10,11 @@
 </p>
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
+[![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 
 
@@ -63,7 +62,7 @@
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
-2. スタート：`http://localhost:1157`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
+2. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
 3. コレクタークラスタのデプロイメント（オプション）
 
@@ -77,17 +76,17 @@
     - `-e MANAGER_PORT=1158` ：メインhertzbeatサーバポート。
 
 
-詳細ステップ [Dockerで HertzBeat をインストール](https://hertzbeat.apache.org/docs/start/docker-deploy)
+詳細ステップ [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ##### 方式２：インストールパッケージ
 
-1. リリースパッケージ `apache-hertzbeat-xx-bin.tar.gz` をダウンロードします [Download](https://hertzbeat.apache.org/docs/download)
-2. HertzBeat の設定ファイル `hertzbeat/config/application.yml` を編集します（任意）
-3. コマンド `$ ./bin/startup.sh` または `bin/startup.bat` を実行します
-4. ブラウザで `http://localhost:1157` にアクセスします。デフォルトのアカウントとパスワードは `admin/hertzbeat` です
+1. リリースパッケージをダウンロード `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+2. HertzBeatのymlファイルを設定 `hertzbeat/config/application.yml` （オプション）
+3. コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行
+4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`
 5. コレクタークラスタのデプロイメント（オプション）
-   - 別ホストにコレクターのインストールパッケージ `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM コレクター）または対象プラットフォーム向けの Native コレクターパッケージ（例: `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`）をダウンロードします [Download](https://hertzbeat.apache.org/docs/download)
-   - コレクターの設定ファイル `hertzbeat-collector/config/application.yml` を編集します
+   - コレクターパッケージを別のホストにダウンロード `hertzbeat-collector-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+   - コレクターのymlファイルを設定 `hertzbeat-collector/config/application.yml`
      ```yaml
      collector:
        dispatch:
@@ -103,27 +102,25 @@
      - `mode: ${MODE:public}`：実行モード(パブリッククラスタまたはプライベートクラウドエッジ)。
      - `manager-host: ${MANAGER_HOST:127.0.0.1}`：メインhertzbeatサーバーのIP。
      - `manager-port: ${MANAGER_PORT:1158}`：メインhertzbeatサーバポート。
-   - `ext-lib` に JDBC ドライバーを置かない場合、MySQL、MariaDB、OceanBase は組み込みのクエリエンジンを使って Native コレクターパッケージでも監視できます。TiDB も SQL クエリのメトリクスセットについては同じルールです。
-   - `ext-lib` に `mysql-connector-j` を置いた場合は、再起動後に組み込みサーバーコレクターまたは JVM コレクターが MySQL、MariaDB、OceanBase で自動的に JDBC を優先します。TiDB も SQL クエリのメトリクスセットについては同じルールで、HTTP メトリクスは影響を受けません。Oracle と DB2 は引き続き外部 JDBC ドライバーに依存するため、JVM コレクターパッケージを使用してください。
-   - JVM コレクターのインストールパッケージは `$ ./bin/startup.sh` または `bin/startup.bat`、Linux/macOS の Native コレクターパッケージは `$ ./bin/startup.sh`、Windows の Native コレクターパッケージは `bin\\startup.bat` で起動します。
-   - メインの HertzBeat サービス `http://localhost:1157` にアクセスすると、登録された新しいコレクターを確認できます。
+   - コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行。
+   - `http://localhost:1157`にアクセスし、登録された新しいコレクターを見ることがでます。
 
-詳細ステップ [インストールパッケージで HertzBeat をインストール](https://hertzbeat.apache.org/docs/start/package-deploy)
+詳細ステップ [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
 
 ##### 方式３：ローカルの実行
 
 1. ローカルの実行には、バックエンドのプロジェクト`hertzbeat-startup`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
-2. バックエンド：`maven3+`、`Java25`、`lombok` の環境が必要です。`YML` 設定を修正し、Java 仮想マシンパラメータに `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加して `hertzbeat-startup` を起動します。
-3. フロントエンド：`nodejs` と `pnpm` の環境が必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `pnpm install` を実行し、続けて `pnpm start` を実行します。
+2. バックエンド：`maven3+`、Java 25、`lombok`の環境が必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`hertzbeat-startup` を起動します。
+3. フロントエンド：`Node.js 22` と `pnpm 10` の環境が必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `corepack pnpm@10.9.0 install --frozen-lockfile && corepack pnpm@10.9.0 dev` を実行します。
 4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
 詳細ステップ [貢献ガイド](CONTRIBUTING.md)
 
 ##### 方式４：Docker-Compose
 
-[Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzBeat一括デプロイ。
+[Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzbeat一括デプロイ。
 
-詳細ステップ [Docker-Compose で HertzBeat をインストール](script/docker-compose/README.md)
+詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)
 
 ##### 方式５：Kubernetes Helm Charts
 
@@ -154,7 +151,11 @@ WeChatグループ : `ahertzbeat` を検索.
 
 WeChat公式アカウント : `usthecom`を検索.
 
+[QQグループ](https://qm.qq.com/q/xxqecSC2cw) : グループ番号　`1035688434`
+
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
+
+[Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
 [Follow Us Twitter](https://x.com/hertzbeat1024)
 
@@ -166,7 +167,7 @@ WeChat公式アカウント : `usthecom`を検索.
 HertzBeat is built on so many great open source projects, thanks to them!
 
 - `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Protobuf HttpClient Guava SnakeYaml JsonPath ...`
-- `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
+- `TypeScript Next.js React Tailwind CSS Node.js Npm ECharts G6 MonacoEditor Docusaurus ...`
 
 
 ## Landscape

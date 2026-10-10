@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+import java.util.Map;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -30,9 +33,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * Test case for {@link ZabbixExternAlertServiceImpl}.
- */
 @ExtendWith(MockitoExtension.class)
 class ZabbixExternAlertServiceImplTest {
 
@@ -43,16 +43,30 @@ class ZabbixExternAlertServiceImplTest {
     private ZabbixExternAlertServiceImpl externAlertService;
 
     @Test
-    void ignoresExternalPersistenceIdentity() {
+    void ignoresExternalPersistenceIdentityWithoutChangingRecoverySemantics() {
         SingleAlert incoming = SingleAlert.builder()
                 .id(123L)
-                .fingerprint("zabbix-alert")
+                .fingerprint("untrusted-zabbix-fingerprint")
+                .labels(Map.of(
+                        "alertname", "High CPU usage",
+                        "source", "zabbix",
+                        "zabbix_trigger_id", "42"))
+                .annotations(Map.of("summary", "Recovered"))
+                .status("resolved")
+                .startAt(1_776_000_000_000L)
+                .activeAt(1_776_000_000_000L)
+                .endAt(1_776_000_300_000L)
                 .build();
 
-        externAlertService.addExternAlert(JsonUtil.toJson(incoming));
+        externAlertService.addExternAlert("team-a", JsonUtil.toJson(incoming));
 
         ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
-        verify(alarmCommonReduce).reduceAndSendAlarm(alertCaptor.capture());
-        assertNull(alertCaptor.getValue().getId());
+        verify(alarmCommonReduce).reduceAndSendAlarm(eq("team-a"), alertCaptor.capture());
+        SingleAlert submitted = alertCaptor.getValue();
+        assertNull(submitted.getId());
+        assertEquals("resolved", submitted.getStatus());
+        assertEquals(1_776_000_000_000L, submitted.getStartAt());
+        assertEquals(1_776_000_300_000L, submitted.getEndAt());
+        assertEquals(incoming.getLabels(), submitted.getLabels());
     }
 }

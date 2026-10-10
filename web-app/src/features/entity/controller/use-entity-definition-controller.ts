@@ -1,0 +1,164 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { App } from 'antd';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
+import { confirmUnsavedNavigation } from '@/shared/navigation/confirm-unsaved-navigation';
+
+import { classifyEntityDefinitionError, loadEntityDefinition } from '../api/entity-definition-api';
+import { loadEditableEntity } from '../api/entity-editor-api';
+import type { EditableEntityDto } from '../model/entity-editor-contract';
+import {
+  parseEntityDefinitionId,
+  safeEntityDefinitionReturnTo,
+  type EntityDefinitionFormat,
+  type EntityDefinitionViewModel
+} from '../model/entity-definition-model';
+import { entityQueryKeys } from './entity-query-keys';
+import { useEntityDefinitionEditing } from './use-entity-definition-editing';
+import { useEntityCapabilities } from './use-entity-capabilities';
+
+export function useEntityDefinitionController(): EntityDefinitionViewModel {
+  const navigate = useNavigate();
+  const { modal } = App.useApp();
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const { entityId } = useParams();
+  const [params] = useSearchParams();
+  const id = parseEntityDefinitionId(entityId);
+  const { canWrite } = useEntityCapabilities();
+  const [format, setFormat] = useState<EntityDefinitionFormat>('yaml');
+  const { context, definition } = useEntityDefinitionQueries(id, canWrite, format);
+  const editing = useEntityDefinitionEditing(
+    {
+      id,
+      format,
+      setFormat,
+      canonical: definition.data,
+      refetchCanonical: () => definition.refetch({ throwOnError: true }),
+      refreshAfterSave: savedId =>
+        refreshSavedDefinition(client, () => definition.refetch({ throwOnError: true }), savedId)
+    },
+    canWrite
+  );
+  const evidence = resolveDefinitionEvidence(canWrite, id, context, definition, editing.state.saved);
+  return definitionViewModel({
+    editing,
+    evidence,
+    format,
+    context,
+    definition,
+    id,
+    returnTo: params.get('returnTo'),
+    navigate,
+    modal,
+    t
+  });
+}
+
+function useEntityDefinitionQueries(id: number | undefined, canWrite: boolean, format: EntityDefinitionFormat) {
+  const context = useQuery({
+    queryKey: entityQueryKeys.editor(id),
+    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEditableEntity(id, signal),
+    retry: false
+  });
+  const definition = useQuery({
+    queryKey: entityQueryKeys.definition(id, format),
+    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEntityDefinition(id, format, signal),
+    retry: false
+  });
+  return { context, definition };
+}
+
+function definitionViewModel(input: {
+  editing: ReturnType<typeof useEntityDefinitionEditing>;
+  evidence: EntityDefinitionViewModel['state']['evidence'];
+  format: EntityDefinitionFormat;
+  context: ReturnType<typeof useEntityDefinitionQueries>['context'];
+  definition: ReturnType<typeof useEntityDefinitionQueries>['definition'];
+  id: number | undefined;
+  returnTo: string | null;
+  navigate: ReturnType<typeof useNavigate>;
+  modal: ReturnType<typeof App.useApp>['modal'];
+  t: ReturnType<typeof useTranslation>['t'];
+}): EntityDefinitionViewModel {
+  const { editing, evidence, format, context, definition, id, returnTo, navigate, modal, t } = input;
+  return {
+    state: {
+      evidence,
+      format,
+      ...editing.state
+    },
+    actions: {
+      ...editing.actions,
+      retry: () => {
+        if (editing.state.saved) {
+          if (context.error) void context.refetch();
+          void editing.retryRefresh();
+          return;
+        }
+        editing.clearFailure();
+        void context.refetch();
+        void definition.refetch();
+      },
+      back: () => {
+        if (!editing.canLeave() || id === undefined) return;
+        const target = safeEntityDefinitionReturnTo(id, returnTo);
+        if (!editing.state.dirty) return void navigate(target);
+        confirmUnsavedNavigation(modal, t, () => {
+          if (editing.canLeave()) void navigate(target);
+        });
+      }
+    }
+  };
+}
+
+function resolveDefinitionEvidence(
+  canWrite: boolean,
+  id: number | undefined,
+  context: { isPending: boolean; error: Error | null; data: EditableEntityDto | undefined },
+  definition: { isPending: boolean; error: Error | null; data: string | undefined },
+  hasCommittedDraft: boolean
+): EntityDefinitionViewModel['state']['evidence'] {
+  if (!canWrite) return { kind: 'permission' };
+  if (id === undefined) return { kind: 'missing' };
+  if (context.isPending || definition.isPending) return { kind: 'loading' };
+  const error = context.error ?? (hasCommittedDraft ? null : definition.error);
+  if (error) {
+    const kind = classifyEntityDefinitionError(error).kind;
+    return { kind: kind === 'validation' ? 'error' : kind };
+  }
+  return context.data && definition.data ? { kind: 'ready', resource: context.data } : { kind: 'error' };
+}
+
+async function refreshSavedDefinition(
+  client: ReturnType<typeof useQueryClient>,
+  refetch: () => Promise<unknown>,
+  id: number
+) {
+  await Promise.all([
+    client.invalidateQueries({ queryKey: entityQueryKeys.lists(), refetchType: 'none' }),
+    client.invalidateQueries({ queryKey: entityQueryKeys.detail(id), refetchType: 'none' }),
+    client.invalidateQueries({ queryKey: entityQueryKeys.editor(id), refetchType: 'none' }),
+    client.invalidateQueries({ queryKey: entityQueryKeys.definitions(), refetchType: 'none' }),
+    refetch()
+  ]);
+}

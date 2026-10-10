@@ -1,0 +1,251 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.form {
+  min-width: 0;
+  padding-block: 0;
+}
+
+.form :global([data-hb-operational-command-bar]) {
+  align-items: end;
+  padding-block: 0;
+}
+
+.form :global([data-hb-operational-command-primary]),
+.form :global([data-hb-operational-command-secondary]) {
+  align-self: end;
+}
+
+.form :global(.ant-btn),
+.form :global(.ant-input),
+.form :global(.ant-input-affix-wrapper),
+.form :global(.ant-select-selector) {
+  height: var(--hb-workbench-control-height);
+}
+
+.commandFields,
+.logCommandFields {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  gap: 8px;
+}
+
+.toolbarField {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.queryInput {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.queryInput :global(input) {
+  font-family: var(--hb-font-family-mono);
+}
+
+.queryInput :global(.ant-input-affix-wrapper) {
+  padding-block: 0;
+}
+
+.queryInput :global(.ant-input-affix-wrapper input),
+.queryInput :global(.ant-input-affix-wrapper .ant-btn),
+.queryInput :global(.ant-input-suffix) {
+  height: 100%;
+  min-height: 0;
+}
+
+.timeRange {
+  width: 164px;
+  min-width: 164px;
+}
+
+.logMode {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.logMode :global(.ant-radio-button-wrapper) {
+  height: var(--hb-workbench-control-height);
+  padding-inline: 10px;
+  border-color: var(--hb-border-subtle);
+  color: var(--hb-text-secondary);
+  font-size: 13px;
+  line-height: calc(var(--hb-workbench-control-height) - 2px);
+}
+
+.logMode :global(.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)) {
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-hover);
+  border-color: var(--hb-border-subtle);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.commandActions {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.run {
+  font-weight: 600;
+}
+
+.guidedFields,
+.advancedFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(164px, 100%), 1fr));
+  align-items: end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.guidedFields > :global(.ant-checkbox-wrapper),
+.advancedFields > :global(.ant-checkbox-wrapper) {
+  align-self: end;
+  min-height: 32px;
+  align-items: center;
+}
+
+.advanced {
+  margin-top: 8px;
+}
+
+.advanced summary {
+  width: max-content;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filterCount {
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.field {
+  min-width: 0;
+}
+
+.toolbarField > :global(.ant-select),
+.field > :global(.ant-select),
+.field > :global(.ant-input) {
+  width: 100%;
+}
+
+.fieldError {
+  display: block;
+  margin-top: 4px;
+  color: var(--ant-color-error);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1000px) {
+  .logCommandFields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .form :global([data-hb-operational-command-bar]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .commandActions {
+    justify-content: flex-end;
+  }
+
+  .form :global(.ant-btn),
+  .form :global(.ant-input),
+  .form :global(.ant-input-affix-wrapper),
+  .form :global(.ant-select-selector),
+  .logMode :global(.ant-radio-button-wrapper) {
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .logMode :global(.ant-radio-button-wrapper) {
+    line-height: 34px;
+  }
+
+  .queryInput :global(.ant-input-affix-wrapper .ant-btn) {
+    height: 34px;
+    min-height: 34px;
+  }
+}
+
+@media (max-width: 360px) {
+  .logCommandFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.metricHelp {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--hb-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.metricDefault {
+  color: var(--hb-text-primary);
+}
+
+.logFilterDisclosure {
+  margin-top: 14px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.logFilterDisclosure > summary {
+  min-height: 38px;
+  padding: 10px 0;
+  color: var(--hb-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.commandFields {
+  flex-wrap: wrap;
+}
+.toolbarField[data-log-command-slot='time'] {
+  flex: 1 1 510px;
+  min-width: min(100%, 510px);
+}
+.commandFields > .queryInput {
+  flex: 1 1 180px;
+}
+.commandFields > .toolbarField[data-log-command-slot='mode'] {
+  flex: none;
+  max-width: 100%;
+}
+.toolbarField[data-log-command-slot='mode'] :global(.ant-radio-group) {
+  display: inline-flex;
+  white-space: nowrap;
+}

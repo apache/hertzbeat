@@ -1,0 +1,140 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.investigation {
+  position: relative;
+  display: grid;
+  grid-template-rows: max-content minmax(0, 1fr) max-content;
+  min-width: 0;
+  min-height: 0;
+  background: var(--hb-bg-chrome);
+}
+.messageMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.transcript {
+  overflow: auto;
+  padding: clamp(28px, 4vw, 48px) clamp(16px, 5%, 64px);
+}
+.emptyConversation {
+  display: grid;
+  place-content: center;
+  align-content: center;
+  min-height: 100%;
+  padding-bottom: 72px;
+  text-align: center;
+}
+.emptyConversation h4 {
+  margin: 0 0 var(--hb-space-2);
+}
+.message {
+  display: grid;
+  gap: var(--hb-space-2);
+  max-width: 880px;
+  margin: 0 auto var(--hb-space-6);
+}
+.message[data-role='user'] {
+  justify-items: end;
+  padding-left: min(16%, 140px);
+}
+.messageMeta {
+  min-height: 28px;
+}
+.message[data-role='user'] .messageMeta {
+  justify-content: flex-end;
+}
+.assistantMark {
+  width: 28px;
+  height: 27px;
+  border-radius: 7px;
+}
+.messageRole,
+.messageTime {
+  font-size: 12px;
+}
+.messageRole {
+  font-weight: 600;
+}
+.messageText {
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.message[data-role='toolResult'] {
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border-left: 2px solid var(--ai-divider);
+}
+.messageError {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.message[data-role='user'] .messageText {
+  padding: 11px 14px;
+  border-radius: 12px 12px 3px;
+  background: color-mix(in srgb, var(--hb-bg-selected) 72%, var(--hb-bg-chrome));
+}
+.inlineActivity {
+  display: grid;
+  max-width: 880px;
+  margin: calc(-1 * var(--hb-space-2)) auto var(--hb-space-6);
+  border: 1px solid var(--ai-divider);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.inlineTool {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content max-content;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-height: 48px;
+  padding: 9px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--ai-divider-muted);
+  color: var(--hb-text-primary);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.inlineTool:last-child {
+  border-bottom: 0;
+}
+.inlineTool:hover {
+  background: color-mix(in srgb, var(--hb-bg-hover) 44%, transparent);
+}
+.inlineToolName {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inlineToolChevron {
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+.failure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-3);
+  border-left: 3px solid var(--hb-status-unavailable);
+  background: var(--hb-bg-raised);
+}

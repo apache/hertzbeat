@@ -1,0 +1,168 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useCallback, type MutableRefObject } from 'react';
+
+import { renderInstrumentationGuide } from '../api/instrumentation-api';
+import {
+  answerApplicationQuestion,
+  buildRenderRequest,
+  emptyDraft,
+  materializeBlock,
+  previousApplicationSelection,
+  previousInstrumentationStage,
+  selectSource,
+  type ApplicationQuestion,
+  type InstrumentationDraft
+} from '../model/instrumentation-flow';
+import type { CatalogResponse, GuideBlock, ServiceIdentity } from '../model/instrumentation-v2-contract';
+import type { InstrumentationControllerState } from './instrumentation-controller-state';
+
+export function useDraftActions(
+  state: InstrumentationControllerState,
+  catalog: CatalogResponse | undefined,
+  defaultProfileId: string | undefined,
+  startedAtRef: MutableRefObject<number | undefined>,
+  timerRef: MutableRefObject<number | undefined>,
+  generationRef: MutableRefObject<number>
+) {
+  const resetResults = useResetInstrumentationResults(state, generationRef, startedAtRef, timerRef);
+  const chooseSource = useCallback(
+    (sourceId: string) => {
+      if (!catalog) return;
+      if (!resetResults()) return;
+      state.setDraft(current => ({
+        ...selectSource(catalog, sourceId, current.service),
+        intakeProfileId: defaultProfileId ?? ''
+      }));
+    },
+    [catalog, defaultProfileId, resetResults, state]
+  );
+  const answerApplication = useCallback(
+    (field: ApplicationQuestion, value: string) => {
+      if (!catalog) return;
+      if (!resetResults()) return;
+      state.setDraft(current => answerApplicationQuestion(current, catalog, field, value));
+    },
+    [catalog, resetResults, state]
+  );
+  const patchDraft = useCallback(
+    (patch: Partial<InstrumentationDraft>) => {
+      if (!resetResults()) return;
+      state.setDraft(current => ({ ...current, ...patch }));
+    },
+    [resetResults, state]
+  );
+  const patchService = useCallback(
+    (patch: Partial<ServiceIdentity>) => {
+      if (!resetResults()) return;
+      state.setDraft(current => ({ ...current, service: { ...current.service, ...patch } }));
+    },
+    [resetResults, state]
+  );
+  const reset = useCallback(() => {
+    if (!resetResults()) return;
+    state.setDraft({ ...emptyDraft(), intakeProfileId: defaultProfileId ?? '' });
+    state.setStage('source');
+    state.setSourceDirectoryRevision(current => current + 1);
+  }, [defaultProfileId, resetResults, state]);
+  const goBack = useBackAction(state, resetResults, catalog);
+  return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
+}
+
+function useResetInstrumentationResults(
+  state: InstrumentationControllerState,
+  generationRef: MutableRefObject<number>,
+  startedAtRef: MutableRefObject<number | undefined>,
+  timerRef: MutableRefObject<number | undefined>
+) {
+  return useCallback(() => {
+    if (state.tokenAcknowledgementRequiredRef.current) return false;
+    generationRef.current += 1;
+    state.setGuide(undefined);
+    state.setDetection(undefined);
+    state.setDetecting(false);
+    state.setRenderError(false);
+    state.setRendering(false);
+    state.setDetectionError(false);
+    state.setToken('');
+    state.setTokenAcknowledgementRequired(false);
+    state.setTokenDraft(undefined);
+    state.setTokenError(false);
+    state.setTokenGenerating(false);
+    clearDetectionWindow(timerRef, startedAtRef);
+    return true;
+  }, [generationRef, startedAtRef, state, timerRef]);
+}
+
+function clearDetectionWindow(
+  timerRef: MutableRefObject<number | undefined>,
+  startedAtRef: MutableRefObject<number | undefined>
+) {
+  if (timerRef.current) window.clearTimeout(timerRef.current);
+  timerRef.current = undefined;
+  startedAtRef.current = undefined;
+}
+
+function useBackAction(
+  state: InstrumentationControllerState,
+  resetResults: () => boolean,
+  catalog: CatalogResponse | undefined
+) {
+  return useCallback(() => {
+    if (state.stage === 'source') {
+      if (!catalog || !state.draft.sourceId) return;
+      if (!resetResults()) return;
+      state.setDraft(current => previousApplicationSelection(current, catalog));
+      state.setSourceDirectoryRevision(current => current + 1);
+      return;
+    }
+    if (state.stage === 'configure' && !resetResults()) return;
+    state.setStage(previousInstrumentationStage(state.stage));
+  }, [catalog, resetResults, state]);
+}
+
+export function useGuideActions(
+  state: InstrumentationControllerState,
+  generationRef: MutableRefObject<number>,
+  startedAtRef: MutableRefObject<number | undefined>
+) {
+  const renderGuide = useCallback(async () => {
+    const currentGeneration = generationRef.current;
+    state.setRendering(true);
+    state.setRenderError(false);
+    try {
+      const value = await renderInstrumentationGuide(buildRenderRequest(state.draft));
+      if (generationRef.current !== currentGeneration) return;
+      startedAtRef.current = Date.now();
+      state.setGuide(value);
+    } catch {
+      if (generationRef.current !== currentGeneration) return;
+      state.setRenderError(true);
+    } finally {
+      if (generationRef.current === currentGeneration) state.setRendering(false);
+    }
+  }, [generationRef, startedAtRef, state]);
+  const copyBlock = useCallback(
+    async (block: GuideBlock) => {
+      if (!block.content) return;
+      await navigator.clipboard.writeText(materializeBlock(block.content, block.placeholders, state.token));
+    },
+    [state.token]
+  );
+  return { renderGuide, copyBlock };
+}

@@ -139,10 +139,10 @@ class CommonUtilTest {
     @Test
     void testGetLangMappingValueFromI18nMap() {
         Map<String, String> i18nMap = new HashMap<>();
-        i18nMap.put("zh-CN", "中文");
+        i18nMap.put("zh-CN", "Simplified Chinese");
         i18nMap.put("ja", null);
         i18nMap.put("en-US", "English");
-        assertEquals("中文", CommonUtil.getLangMappingValueFromI18nMap("zh-CN", i18nMap));
+        assertEquals("Simplified Chinese", CommonUtil.getLangMappingValueFromI18nMap("zh-CN", i18nMap));
         assertEquals("English", CommonUtil.getLangMappingValueFromI18nMap("en-US", i18nMap));
         assertNull(CommonUtil.getLangMappingValueFromI18nMap("zh", new HashMap<>()));
         assertNotNull(CommonUtil.getLangMappingValueFromI18nMap("ja", i18nMap));

@@ -158,10 +158,20 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             for (Map.Entry<String, MetricsTime> entry : metricsTimeoutMonitorMap.entrySet()) {
                 MetricsTime metricsTime = entry.getValue();
                 if (metricsTime.getStartTime() < deadline) {
+                    // Metrics collection timeout
+                    boolean claimed = metricsTimeoutMonitorMap.remove(entry.getKey(), metricsTime);
+                    if (!claimed) {
+                        continue;
+                    }
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
                     Job job = timerJob.getJob();
+                    // timeout metrics
+                    if (metricsCollector != null && metricsTime.getMetrics().getPriority() != 0) {
+                        long duration = System.currentTimeMillis() - metricsTime.getStartTime();
+                        metricsCollector.recordCollectMetrics(job, duration, "timeout");
+                    }
 
-                    CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                    CollectRep.MetricsData.Builder metricsDataBuilder = CollectRep.MetricsData.newBuilder()
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
                             .setApp(job.getApp())
@@ -171,20 +181,21 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             .setMetrics(metricsTime.getMetrics().getName())
                             .setPriority(metricsTime.getMetrics().getPriority())
                             .setTime(System.currentTimeMillis())
-                            .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
+                            .setCode(CollectRep.Code.TIMEOUT)
+                            .setMsg("collect timeout");
+                    MetricsCollect.addExecutionContext(
+                            metricsDataBuilder, metricsTime.getStartTime(), collectorIdentity);
+                    CollectRep.MetricsData metricsData = metricsDataBuilder.build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
                     if (metricsData.getPriority() == 0) {
-                        // dispatchCollectData removes the map entry as a once-wins gate;
-                        // cancel afterwards so cyclicJob() inside it still fires normally.
-                        dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                        // This scan already owns the entry. Do not claim it a second time.
+                        // Cancel afterwards so cyclicJob() still fires normally.
+                        dispatchClaimedCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData, metricsTime);
                         metricsTime.getTimeout().cancel();
                     } else {
-                        // remove the stale entry and cancel the in-flight collect so a
+                        // the entry is already removed above; cancel the in-flight collect so a
                         // late result does not produce a duplicate dispatch.
-                        MetricsTime removed = metricsTimeoutMonitorMap.remove(entry.getKey());
-                        if (removed != null) {
-                            metricsTime.getTimeout().cancel();
-                        }
+                        metricsTime.getTimeout().cancel();
                     }
                 }
             }
@@ -227,7 +238,22 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         } else {
             monitorKey = job.getId() + "-" + metrics.getName();
         }
-        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
+        // A callback from a previous cycle must not consume the next cycle's entry.
+        AtomicReference<MetricsTime> claimed = new AtomicReference<>();
+        metricsTimeoutMonitorMap.computeIfPresent(monitorKey, (key, current) -> {
+            if (current.getTimeout() != timeout) {
+                return current;
+            }
+            claimed.set(current);
+            return null;
+        });
+        dispatchClaimedCollectData(timeout, metrics, metricsData, claimed.get());
+    }
+
+    private void dispatchClaimedCollectData(Timeout timeout, Metrics metrics,
+                                          CollectRep.MetricsData metricsData, MetricsTime metricsTime) {
+        WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
+        Job job = timerJob.getJob();
 
         if (metricsTime != null && metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();

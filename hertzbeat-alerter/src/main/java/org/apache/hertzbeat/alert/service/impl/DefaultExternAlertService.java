@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import java.time.Instant;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Service;
 /**
  * Default external alarm service impl
  */
-@Slf4j
 @Service
 public class DefaultExternAlertService implements ExternAlertService {
 
@@ -38,12 +36,9 @@ public class DefaultExternAlertService implements ExternAlertService {
     private AlarmCommonReduce alarmCommonReduce;
     
     @Override
-    public void addExternAlert(String content) {
-        SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
-        if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
-            throw new IllegalArgumentException("parse extern alert content failed!");
-        }
+    public void addExternAlert(String workspaceId, String content) {
+        SingleAlert alert = ExternalAlertIngressValidator.normalize(
+                JsonUtil.fromJsonQuietly(content, SingleAlert.class));
         alert.setId(null);
         String status = alert.getStatus();
         if (status == null) {
@@ -76,7 +71,7 @@ public class DefaultExternAlertService implements ExternAlertService {
                 alert.setEndAt(Instant.now().toEpochMilli());
             }
         }
-        alarmCommonReduce.reduceAndSendAlarm(alert);
+        alarmCommonReduce.reduceAndSendAlarm(workspaceId, alert);
     }
 
     @Override

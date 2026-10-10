@@ -1,0 +1,144 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Button, Pagination, Space, Switch, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
+
+import type { PluginPageSize, PluginQuery, PluginRecord } from '../model/plugin-model';
+
+type PluginListProps = {
+  records: PluginRecord[];
+  total: number;
+  query: PluginQuery;
+  pageSizes: readonly PluginPageSize[];
+  selectedIds: number[];
+  canWrite: boolean;
+  busy: boolean;
+  onSelected: (ids: number[]) => void;
+  onPage: (pageIndex: number, pageSize: PluginPageSize) => void;
+  onToggle: (plugin: PluginRecord) => void;
+  onDelete: (plugin: PluginRecord) => void;
+  onConfigure: (plugin: PluginRecord) => void;
+};
+
+export function PluginList(props: PluginListProps) {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <Table
+        rowKey="id"
+        dataSource={props.records}
+        columns={columns(props, t)}
+        pagination={false}
+        rowSelection={{
+          selectedRowKeys: props.selectedIds,
+          getTitleCheckboxProps: () =>
+            pageSelectionTitleCheckboxProps(
+              props.selectedIds,
+              props.records.map(record => record.id),
+              pageSelectionLabels(t)
+            ),
+          onChange: keys => props.onSelected(keys.map(Number)),
+          getCheckboxProps: () => ({ disabled: !props.canWrite || props.busy })
+        }}
+        scroll={{ x: 1100 }}
+      />
+      <Pagination
+        current={props.query.pageIndex + 1}
+        pageSize={props.query.pageSize}
+        pageSizeOptions={[...props.pageSizes]}
+        total={props.total}
+        showSizeChanger
+        onChange={(page, size) => props.onPage(page - 1, size as PluginPageSize)}
+      />
+    </div>
+  );
+}
+
+function columns(props: PluginListProps, t: TFunction): ColumnsType<PluginRecord> {
+  return [...pluginIdentityColumns(props, t), pluginActionColumn(props, t)];
+}
+
+function pluginIdentityColumns(props: PluginListProps, t: TFunction): ColumnsType<PluginRecord> {
+  return [
+    { title: t('plugins.name'), dataIndex: 'name', key: 'name', width: 220 },
+    {
+      title: t('plugins.status'),
+      key: 'status',
+      width: 190,
+      render: (_, plugin) => (
+        <Space>
+          <Switch
+            checked={plugin.enableStatus}
+            disabled={!props.canWrite || props.busy}
+            aria-label={t('plugins.toggle', { name: plugin.name })}
+            onChange={() => props.onToggle(plugin)}
+          />
+          <Tag color={plugin.enableStatus ? 'success' : 'default'}>
+            {t(plugin.enableStatus ? 'plugins.enabled' : 'plugins.disabled')}
+          </Tag>
+        </Space>
+      )
+    },
+    {
+      title: t('plugins.creator'),
+      dataIndex: 'creator',
+      key: 'creator',
+      width: 140,
+      render: (value: string | undefined) => value || '—'
+    },
+    {
+      title: t('plugins.created'),
+      dataIndex: 'gmtCreate',
+      key: 'gmtCreate',
+      width: 190,
+      render: (value: string | undefined) => value || '—'
+    },
+    {
+      title: t('plugins.paramCount'),
+      dataIndex: 'paramCount',
+      key: 'paramCount',
+      width: 110,
+      render: (value: number | undefined) => value ?? t('plugins.unknown')
+    }
+  ];
+}
+
+function pluginActionColumn(props: PluginListProps, t: TFunction): ColumnsType<PluginRecord>[number] {
+  return {
+    title: t('common.actions'),
+    key: 'actions',
+    fixed: 'right',
+    width: 250,
+    render: (_, plugin) => (
+      <Space>
+        {plugin.paramCount !== undefined && plugin.paramCount > 0 && (
+          <Button disabled={!props.canWrite || props.busy} onClick={() => props.onConfigure(plugin)}>
+            {t('plugins.configureParams')}
+          </Button>
+        )}
+        <Button danger disabled={!props.canWrite || props.busy} onClick={() => props.onDelete(plugin)}>
+          {t('common.delete')}
+        </Button>
+      </Space>
+    )
+  };
+}

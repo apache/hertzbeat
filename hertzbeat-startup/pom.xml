@@ -98,6 +98,18 @@
             <artifactId>hertzbeat-ai</artifactId>
         </dependency>
 
+        <!-- HertzBeat Agent Gateway -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-ai-gateway</artifactId>
+        </dependency>
+
+        <!-- HertzBeat observability modules -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-observability</artifactId>
+        </dependency>
+
         <!-- Commons Lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -168,13 +180,27 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Test-only driver for the migration regression; the postgresql driver is already
-             on the test classpath transitively. Version comes from the root dependencyManagement
-             and nothing here is packaged into the distribution. -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-mysql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
@@ -192,11 +218,29 @@
                     <include>define/**</include>
                     <include>db/**</include>
                     <include>templates/**</include>
+                    <include>META-INF/**</include>
                     <include>**/*.html</include>
                 </includes>
             </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <jvmArguments>
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                    </jvmArguments>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

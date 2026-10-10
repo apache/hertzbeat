@@ -48,4 +48,5 @@ public class SecurityCorsConfiguration {
         bean.addUrlPatterns("/*");
         return bean;
     }
+
 }

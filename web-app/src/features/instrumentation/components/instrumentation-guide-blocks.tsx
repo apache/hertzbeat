@@ -1,0 +1,144 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Alert, App, Button, Descriptions, Space, Tag, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import type { GuideBlock, RenderResponse } from '../model/instrumentation-v2-contract';
+import { materializeBlock } from '../model/instrumentation-flow';
+import { translateBackend } from './instrumentation-i18n';
+import styles from './instrumentation-guide.module.css';
+
+export function InstrumentationGuideBlocks(props: {
+  guide: RenderResponse;
+  token: string;
+  onCopy: (block: GuideBlock) => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const { message } = App.useApp();
+  const copy = async (block: GuideBlock) => {
+    try {
+      await props.onCopy(block);
+      message.success(t('instrumentation.copySuccess'));
+    } catch {
+      message.warning(t('instrumentation.copyFailed'));
+    }
+  };
+  return (
+    <section className={styles.guide} aria-labelledby="instrumentation-guide-title">
+      <Typography.Title id="instrumentation-guide-title" level={4}>
+        {t('instrumentation.v2.installTitle')}
+      </Typography.Title>
+      <GuideSummary guide={props.guide} />
+      <div className={styles.blocks}>
+        {props.guide.blocks.map(block => (
+          <GuideBlockView key={block.id} block={block} token={props.token} onCopy={copy} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function GuideSummary({ guide }: { guide: RenderResponse }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {guide.components.map(component => (
+        <Descriptions
+          key={component.name}
+          size="small"
+          column={{ xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }}
+          className={styles.component!}
+        >
+          <Descriptions.Item label={t('instrumentation.v2.component')}>
+            <a href={component.sourceUrl}>{component.name}</a>
+          </Descriptions.Item>
+          <Descriptions.Item label={t('instrumentation.v2.version')}>
+            {component.version ?? t('instrumentation.v2.versionNotApplicable')}
+          </Descriptions.Item>
+          <Descriptions.Item label={t('instrumentation.v2.license')}>{component.license}</Descriptions.Item>
+          <Descriptions.Item label={t('instrumentation.official')}>
+            <Tag color="blue">{t('instrumentation.official')}</Tag>
+          </Descriptions.Item>
+        </Descriptions>
+      ))}
+      <Space wrap>
+        {(['metrics', 'logs', 'traces'] as const).map(signal => (
+          <Tag key={signal} color={guide.signals[signal] === 'preview' ? 'warning' : 'default'}>
+            {t(`instrumentation.signal.${signal}`)} · {t(`instrumentation.capability.${guide.signals[signal]}`)}
+          </Tag>
+        ))}
+      </Space>
+    </>
+  );
+}
+
+function GuideBlockView(props: { block: GuideBlock; token: string; onCopy: (block: GuideBlock) => Promise<void> }) {
+  const { t } = useTranslation();
+  const block = props.block;
+  const copyable = Boolean(block.content);
+  const tokenRequired = block.placeholders.includes('authorizationToken');
+  const alertType = guideAlertType(block.type);
+  if (!copyable) {
+    return (
+      <Alert
+        type={alertType}
+        showIcon
+        message={translateBackend(t, block.titleKey)}
+        description={
+          block.bodyKey ? (
+            translateBackend(t, block.bodyKey)
+          ) : block.href ? (
+            <a href={block.href}>{t('instrumentation.v2.openOfficialLink')}</a>
+          ) : undefined
+        }
+      />
+    );
+  }
+  return (
+    <article className={styles.block}>
+      <Space className={styles.blockHeader!}>
+        <div>
+          <Typography.Text strong>{translateBackend(t, block.titleKey)}</Typography.Text>
+          <Typography.Text type="secondary">{translateBackend(t, block.executionLocationKey)}</Typography.Text>
+        </div>
+        <Button size="small" disabled={tokenRequired && !props.token.trim()} onClick={() => void props.onCopy(block)}>
+          {tokenRequired && !props.token.trim() ? t('instrumentation.tokenRequired') : t('instrumentation.action.copy')}
+        </Button>
+      </Space>
+      <pre>
+        <code>{visibleContent(block, props.token)}</code>
+      </pre>
+      {block.href && <a href={block.href}>{t('instrumentation.v2.openOfficialLink')}</a>}
+    </article>
+  );
+}
+
+function guideAlertType(blockType: GuideBlock['type']): 'warning' | 'success' | 'info' {
+  if (blockType === 'warning') return 'warning';
+  if (blockType === 'check') return 'success';
+  return 'info';
+}
+
+function visibleContent(block: GuideBlock, token: string) {
+  if (!block.content || !token.trim()) return block.content;
+  try {
+    return materializeBlock(block.content, block.placeholders, token);
+  } catch {
+    return block.content;
+  }
+}

@@ -1,0 +1,533 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import './hertzbeat-shell-notifications.css';
+
+.shell {
+  --hb-shell-header-height: 52px;
+  --hb-shell-sidebar-width: 220px;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-canvas);
+  overflow-x: clip;
+}
+
+.shellCollapsed {
+  --hb-shell-sidebar-width: 48px;
+}
+
+.header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  height: var(--hb-shell-header-height);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-chrome);
+}
+
+.brandSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--hb-shell-sidebar-width);
+  /* Keep the full project wordmark legible after the navigation is collapsed. */
+  min-width: 168px;
+  padding: 0 12px;
+  overflow: hidden;
+  transition: flex-basis 160ms ease;
+}
+
+.brandLogo {
+  display: block;
+  flex: none;
+  width: 144px;
+  height: 36px;
+}
+
+.headerSpine {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0 10px;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-padding-inline: 10px;
+  overscroll-behavior-x: contain;
+}
+
+.headerSpine > * {
+  flex: 0 0 auto;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin-left: auto;
+  flex: none;
+}
+
+.headerAction {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--hb-text-secondary);
+}
+
+.headerAction:hover,
+.accountButton:hover {
+  color: var(--hb-text-primary) !important;
+  background: var(--hb-bg-hover) !important;
+}
+
+.themeSwitch {
+  flex: 0 0 auto;
+  margin: 0 3px;
+}
+
+.themeSwitch :global(.anticon) {
+  font-size: 10px;
+}
+
+.accountButton {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  max-width: 128px;
+  padding: 0 6px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.accountButton > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aboutDialog :global(.ant-modal-body) {
+  display: grid;
+  gap: 16px;
+}
+
+.aboutDialog :global(.ant-typography) {
+  margin: 0;
+}
+
+.aboutIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aboutIdentity > div {
+  display: grid;
+  gap: 2px;
+}
+
+.shellBody {
+  display: grid;
+  grid-template-columns: var(--hb-shell-sidebar-width) minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - var(--hb-shell-header-height));
+  overflow-x: clip;
+  overflow-y: visible;
+  transition: grid-template-columns 160ms ease;
+}
+
+.navigation {
+  position: sticky;
+  top: var(--hb-shell-header-height);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 40px;
+  height: calc(100vh - var(--hb-shell-header-height));
+  border-right: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-navigation);
+  overflow: hidden;
+}
+
+.navigationScroll {
+  padding: 8px 7px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.navigationBranch {
+  min-width: 0;
+}
+
+.navigationRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.navigationLink {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: var(--hb-radius-control);
+  color: var(--hb-nav-text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 30px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.navigationLink:hover {
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-hover);
+}
+
+.navigationLink:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: -2px;
+}
+
+.navigationLinkActive {
+  border-left-color: var(--hb-brand-accent);
+  border-radius: 0;
+  color: var(--hb-text-primary);
+  background: transparent;
+  font-weight: 600;
+}
+
+.navigationGroupLink {
+  height: 34px;
+  font-weight: 600;
+  line-height: 34px;
+}
+
+.navigationParentActive {
+  color: var(--hb-text-primary);
+}
+
+.navigationParentOpen {
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-hover);
+}
+
+.navigationLink[aria-disabled='true'] {
+  color: var(--hb-text-disabled);
+  cursor: not-allowed;
+}
+
+.navigationIcon {
+  display: inline-flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  color: currentColor;
+  font-size: 13px;
+}
+
+.navigationText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navigationChevron {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--hb-text-muted);
+  font-size: 9px;
+}
+
+.navigationChevron :global(.anticon),
+.navigationToggle :global(.anticon) {
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.navigationToggle {
+  position: absolute;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  color: var(--hb-text-muted);
+  background: transparent;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.navigationToggle:focus-visible,
+.collapseButton:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: -2px;
+}
+
+.navigationToggleClosed {
+  transform: rotate(180deg);
+}
+
+.navigationChildrenMotion {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 140ms ease,
+    visibility 0s linear 220ms;
+}
+
+.navigationChildrenMotion[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.navigationChildrenClip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.navigationChildren {
+  position: relative;
+  padding: 2px 0 4px 13px;
+}
+
+.navigationChildren::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 15px;
+  width: 1px;
+  background: var(--hb-border-subtle);
+  content: '';
+}
+
+.navigationChildren .navigationLink {
+  padding-left: 14px;
+}
+
+.navigationChildren .navigationChildren .navigationLink {
+  padding-left: 18px;
+}
+
+.navigationBranch[data-depth='0'] + .navigationBranch[data-depth='0'] {
+  margin-top: 5px;
+}
+
+.collapseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--hb-border-subtle);
+  color: var(--hb-text-muted);
+  background: var(--hb-bg-navigation);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.collapseButton:hover {
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-hover);
+}
+
+.shellCollapsed .navigationScroll {
+  padding-inline: 7px;
+}
+
+.shellCollapsed .navigationLink {
+  justify-content: center;
+  padding: 0;
+}
+
+.navigationFlyoutOverlay :global(.ant-popover-inner) {
+  padding: 0;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-navigation);
+}
+
+.navigationFlyout {
+  width: 216px;
+  max-height: min(520px, calc(100vh - 64px));
+  padding: 7px;
+  overflow-y: auto;
+}
+
+.navigationFlyoutTitle {
+  padding: 5px 8px 7px;
+  color: var(--hb-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.navigationFlyoutList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navigationFlyout .navigationLink {
+  justify-content: flex-start;
+  height: 30px;
+  padding: 0 8px;
+}
+
+.navigationFlyoutBranch[data-depth='1'] > .navigationLink {
+  padding-left: 20px;
+}
+
+.navigationFlyoutBranch[data-depth='2'] > .navigationLink {
+  padding-left: 32px;
+}
+
+.navigationFlyoutGroupLabel {
+  padding: 6px 8px 3px;
+  color: var(--hb-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - var(--hb-shell-header-height));
+  padding: 22px 28px 40px;
+  background: var(--hb-bg-navigation);
+  overflow-x: auto;
+}
+
+:where(.content > *) {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+}
+
+.content:has([data-hb-operational-page][data-inset='compact']),
+.content:has([data-explore-investigation='true']) {
+  padding: 0 16px 16px;
+}
+
+@media (max-width: 700px) {
+  .content:has([data-hb-operational-page][data-inset='compact']),
+  .content:has([data-explore-investigation='true']) {
+    padding-inline: 12px;
+  }
+
+  .headerSpine {
+    gap: 6px;
+    padding-inline: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 8px;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+  }
+
+  .headerSpine > * {
+    flex: 0 0 auto;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerSpine {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerSpine > :first-child {
+    flex: 0 0 auto;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) [data-testid='shell-status-server'] {
+    height: 36px;
+    margin-right: 0;
+    padding-inline: 0;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions {
+    flex: none;
+    min-width: 0;
+    height: 44px;
+    gap: 4px;
+    margin-left: 0;
+    padding: 1px 2px;
+    scroll-padding-inline: 8px;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions > * {
+    flex: 0 0 auto;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true'])
+    .headerActions
+    :is(button, a[href], [tabindex]) {
+    scroll-margin-inline: 8px;
+  }
+
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions .headerAction,
+  .shell:has([data-explore-workspace='true'], [data-explore-investigation='true']) .headerActions .accountButton {
+    height: 36px;
+    min-width: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigationChildrenMotion,
+  .navigationChevron :global(.anticon),
+  .navigationToggle :global(.anticon) {
+    transition-duration: 0.01ms;
+  }
+}
+
+@media (max-width: 1180px) {
+  .accountButton span:last-child {
+    display: none;
+  }
+}

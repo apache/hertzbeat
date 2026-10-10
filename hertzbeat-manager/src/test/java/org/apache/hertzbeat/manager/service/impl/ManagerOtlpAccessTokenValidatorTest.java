@@ -61,7 +61,7 @@ class ManagerOtlpAccessTokenValidatorTest {
     void shouldValidateManagedAccessTokenAndRecordUsage() {
         String token = JsonWebTokenUtil.issueJwt("admin", 3600L, List.of("admin"),
                 new HashMap<>(Map.of(AccountServiceImpl.CLAIM_MANAGED, true)));
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
 
         assertThat(validator.validate(token)).isNull();
         verify(accountService).checkTokenStatus(token);

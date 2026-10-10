@@ -1,0 +1,162 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { apiFetch } from '@/core/http/http-client';
+
+import {
+  canonicalServiceIdentity,
+  type DetectionRequest,
+  type RenderRequest,
+  type Selection
+} from '../model/instrumentation-v2-contract';
+import { messageEnvelopeSchema } from './instrumentation-v2-schema';
+import {
+  InstrumentationContractError,
+  parseCatalogResponse,
+  parseDetectionResponse,
+  parseIntakeProfilesResponse,
+  parseRenderResponse
+} from './instrumentation-v2-wire';
+
+export { InstrumentationContractError } from './instrumentation-v2-wire';
+
+const ROOT = '/api/instrumentation';
+const requestCodes = new Set([
+  'instrumentation_v2_schema_unsupported',
+  'instrumentation_v2_selection_invalid',
+  'instrumentation_v2_context_invalid',
+  'instrumentation_v2_intake_profile_not_found',
+  'instrumentation_v2_intake_profile_unavailable'
+]);
+
+class InstrumentationApiError extends Error {
+  constructor(readonly httpStatus?: number) {
+    super('Instrumentation request failed');
+    this.name = 'InstrumentationApiError';
+  }
+}
+
+class InstrumentationRequestError extends Error {
+  constructor(readonly machineCode: string) {
+    super(machineCode);
+    this.name = 'InstrumentationRequestError';
+  }
+}
+
+export const loadInstrumentationCatalog = (signal?: AbortSignal) =>
+  request(`${ROOT}/catalog`, get(signal), parseCatalogResponse);
+export const loadIntakeProfiles = (signal?: AbortSignal) =>
+  request(`${ROOT}/intake-profiles`, get(signal), parseIntakeProfilesResponse);
+export const renderInstrumentationGuide = (value: RenderRequest, signal?: AbortSignal) =>
+  request(`${ROOT}/render`, post(copyRequest(value), signal), response => {
+    const parsed = parseRenderResponse(response);
+    if (
+      parsed.sourceKind !== value.sourceKind ||
+      parsed.recipeId !== value.recipeId ||
+      parsed.intakeProfile.id !== value.intakeProfileId ||
+      !sameService(parsed.service, value.service)
+    ) {
+      throw new InstrumentationContractError('render response did not match request', undefined);
+    }
+    return parsed;
+  });
+export const detectInstrumentationSignals = (value: DetectionRequest, signal?: AbortSignal) =>
+  request(`${ROOT}/detect`, post(copyRequest(value), signal), response => {
+    const parsed = parseDetectionResponse(response);
+    if (
+      !sameSelection(parsed.context, value) ||
+      parsed.context.intakeProfileId !== value.intakeProfileId ||
+      parsed.context.startedAt !== value.startedAt ||
+      !sameService(parsed.context.service, value.service)
+    ) {
+      throw new InstrumentationContractError('detection response did not match request', undefined);
+    }
+    return parsed;
+  });
+
+async function request<T>(path: string, init: RequestInit, parse: (value: unknown) => T): Promise<T> {
+  let response: Response;
+  try {
+    response = await apiFetch(path, init);
+  } catch {
+    throw new InstrumentationApiError();
+  }
+  if (!response.ok) throw new InstrumentationApiError(response.status);
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch {
+    throw new InstrumentationApiError(response.status);
+  }
+  const envelope = messageEnvelopeSchema.safeParse(json);
+  if (!envelope.success) throw new InstrumentationApiError(response.status);
+  if (envelope.data.code !== 0) {
+    const code = envelope.data.msg;
+    if (code && requestCodes.has(code)) throw new InstrumentationRequestError(code);
+    throw new InstrumentationApiError(response.status);
+  }
+  return parse(envelope.data.data);
+}
+
+const get = (signal?: AbortSignal): RequestInit => ({ method: 'GET', ...(signal ? { signal } : {}) });
+const post = (body: RenderRequest | DetectionRequest, signal?: AbortSignal): RequestInit => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+  ...(signal ? { signal } : {})
+});
+
+function copyRequest<T extends RenderRequest | DetectionRequest>(value: T): T {
+  // An explicit allowlist keeps browser-only token state out of transport and errors.
+  return {
+    schemaVersion: 2,
+    sourceKind: value.sourceKind,
+    ...(value.recipeId ? { recipeId: value.recipeId } : {}),
+    ...(value.language ? { language: value.language } : {}),
+    ...(value.framework ? { framework: value.framework } : {}),
+    ...(value.method ? { method: value.method } : {}),
+    ...(value.environment ? { environment: value.environment } : {}),
+    ...(value.platform ? { platform: value.platform } : {}),
+    intakeProfileId: value.intakeProfileId,
+    service: canonicalServiceIdentity(value.service),
+    ...('startedAt' in value ? { startedAt: value.startedAt } : {})
+  } as T;
+}
+
+function sameService(left: RenderRequest['service'], right: RenderRequest['service']) {
+  const canonicalLeft = canonicalServiceIdentity(left);
+  const canonicalRight = canonicalServiceIdentity(right);
+  return (
+    canonicalLeft.name === canonicalRight.name &&
+    canonicalLeft.namespace === canonicalRight.namespace &&
+    canonicalLeft.environment === canonicalRight.environment &&
+    canonicalLeft.serviceInstanceId === canonicalRight.serviceInstanceId &&
+    canonicalLeft.endpoint === canonicalRight.endpoint
+  );
+}
+
+function sameSelection(left: Selection, right: Selection) {
+  return (
+    left.sourceKind === right.sourceKind &&
+    left.recipeId === right.recipeId &&
+    left.language === right.language &&
+    left.framework === right.framework &&
+    left.method === right.method &&
+    left.environment === right.environment &&
+    left.platform === right.platform
+  );
+}

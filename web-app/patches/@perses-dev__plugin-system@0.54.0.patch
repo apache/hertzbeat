@@ -1,0 +1,53 @@
+diff --git a/dist/cjs/components/PluginRegistry/getPluginSearchHelper.js b/dist/cjs/components/PluginRegistry/getPluginSearchHelper.js
+index 80df113be40e2a7006517dd140651cf9328358b8..41380815b2706079b4999413726ca63d60f9702c 100644
+--- a/dist/cjs/components/PluginRegistry/getPluginSearchHelper.js
++++ b/dist/cjs/components/PluginRegistry/getPluginSearchHelper.js
+@@ -20,7 +20,7 @@ Object.defineProperty(exports, "resolvePluginKeys", {
+         return resolvePluginKeys;
+     }
+ });
+-const _semver = require("semver");
++const _semver = require("semver/functions/gt");
+ const _model = require("../../model");
+ const PLUGIN_LOOKUP_PRECEDENCE_LOGIC = {
+     registryOverVersion: false
+@@ -59,12 +59,12 @@ const resolvePluginKeys = (allKeys, query, precedenceLogic = PLUGIN_LOOKUP_PRECE
+             continue;
+         }
+         if (reg) {
+-            if (!latestWithRegistry.key || (0, _semver.gt)(ver, latestWithRegistry.version)) {
++            if (!latestWithRegistry.key || _semver(ver, latestWithRegistry.version)) {
+                 latestWithRegistry.key = key;
+                 latestWithRegistry.version = ver;
+             }
+         } else {
+-            if (!latestWithoutRegistry.key || (0, _semver.gt)(ver, latestWithoutRegistry.version)) {
++            if (!latestWithoutRegistry.key || _semver(ver, latestWithoutRegistry.version)) {
+                 latestWithoutRegistry.key = key;
+                 latestWithoutRegistry.version = ver;
+             }
+@@ -74,9 +74,9 @@ const resolvePluginKeys = (allKeys, query, precedenceLogic = PLUGIN_LOOKUP_PRECE
+     let fallbackKey;
+     if (latestWithRegistry.key && latestWithoutRegistry.key) {
+         const { registryOverVersion } = precedenceLogic;
+-        if ((0, _semver.gt)(latestWithRegistry.version, latestWithoutRegistry.version)) {
++        if (_semver(latestWithRegistry.version, latestWithoutRegistry.version)) {
+             fallbackKey = latestWithRegistry.key;
+-        } else if ((0, _semver.gt)(latestWithoutRegistry.version, latestWithRegistry.version)) {
++        } else if (_semver(latestWithoutRegistry.version, latestWithRegistry.version)) {
+             fallbackKey = latestWithoutRegistry.key;
+         } else {
+             // Versions are equal — use the tie-breaker
+diff --git a/dist/components/PluginRegistry/getPluginSearchHelper.js b/dist/components/PluginRegistry/getPluginSearchHelper.js
+index 0bc2d48546a420d17e0c342a47a1dbeefb8f0673..aeba6bacf7be5a96d8edc8b55df6ac59a6ae6b25 100644
+--- a/dist/components/PluginRegistry/getPluginSearchHelper.js
++++ b/dist/components/PluginRegistry/getPluginSearchHelper.js
+@@ -10,7 +10,7 @@
+ // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+-import { gt } from 'semver';
++import gt from 'semver/functions/gt';
+ import { getPluginModuleCompoundKey } from '../../model';
+ const PLUGIN_LOOKUP_PRECEDENCE_LOGIC = {
+     registryOverVersion: false

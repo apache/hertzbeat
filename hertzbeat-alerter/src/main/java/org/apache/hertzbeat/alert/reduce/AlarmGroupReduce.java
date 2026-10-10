@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -56,12 +57,12 @@ public class AlarmGroupReduce implements DisposableBean {
      * Default initial group wait time 30s
      */
     private static final long DEFAULT_GROUP_WAIT = 30 * 1000L;
-    
+
     /**
      * Default group send interval 5min
      */
-    private static final long DEFAULT_GROUP_INTERVAL = 5 * 60 * 1000L;  
-    
+    private static final long DEFAULT_GROUP_INTERVAL = 5 * 60 * 1000L;
+
     /**
      * Default repeat interval 4h
      */
@@ -76,16 +77,16 @@ public class AlarmGroupReduce implements DisposableBean {
      * Check interval for group send ms
      */
     private static final long CHECK_INTERVAL = 1000L;
-    
+
     private final AlarmInhibitReduce alarmInhibitReduce;
-    
+
     /**
      * Group define rules
      * key: rule name
      * value: group rule configuration
      */
     private final Map<String, AlertGroupConverge> groupDefines;
-    
+
     /**
      * Alert cache grouped by labels
      * key: groupDefineKey:groupKey
@@ -93,57 +94,100 @@ public class AlarmGroupReduce implements DisposableBean {
      */
     private final Map<String, GroupAlertCache> groupCacheMap;
 
-    private final ScheduledExecutorService scheduledExecutor;
+    private final AlertGroupConvergeDao alertGroupConvergeDao;
+    private final VirtualThreadProperties virtualThreadProperties;
+    private ScheduledExecutorService scheduledExecutor;
 
-    private final ExecutorService workerExecutor;
+    private ExecutorService workerExecutor;
 
-    private final ScheduledDispatchTask checkTask;
+    private ScheduledDispatchTask checkTask;
 
     public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao) {
-        this(alarmInhibitReduce, alertGroupConvergeDao, VirtualThreadProperties.defaults(), true);
+        this(alarmInhibitReduce, alertGroupConvergeDao, VirtualThreadProperties.defaults());
     }
 
     @Autowired
     public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
                             VirtualThreadProperties virtualThreadProperties) {
-        this(alarmInhibitReduce, alertGroupConvergeDao, virtualThreadProperties, true);
-    }
-
-    AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
-                     VirtualThreadProperties virtualThreadProperties, boolean autoStart) {
         this.alarmInhibitReduce = alarmInhibitReduce;
         this.groupDefines = new ConcurrentHashMap<>(8);
         this.groupCacheMap = new ConcurrentHashMap<>(8);
-        VirtualThreadProperties properties =
-                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        this.scheduledExecutor = createScheduler();
-        this.workerExecutor = createVirtualExecutor(properties);
-        this.checkTask = new ScheduledDispatchTask(workerExecutor, this::runCheckAndSendGroups);
-        List<AlertGroupConverge> groupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
-        refreshGroupDefines(groupConverges);
-        if (autoStart) {
-            startCheckAndSendGroups();
-        }
+        this.alertGroupConvergeDao = alertGroupConvergeDao;
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
     }
 
-    private void startCheckAndSendGroups() {
-        scheduledExecutor.scheduleAtFixedRate(this::dispatchCheckAndSendGroups, 10000, CHECK_INTERVAL,
+    synchronized void start() {
+        if (scheduledExecutor != null) {
+            return;
+        }
+        scheduledExecutor = createScheduler();
+        workerExecutor = createVirtualExecutor(virtualThreadProperties);
+        ScheduledDispatchTask currentCheckTask =
+                new ScheduledDispatchTask(workerExecutor, this::runCheckAndSendGroups);
+        checkTask = currentCheckTask;
+        refreshGroupDefines(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue());
+        startCheckAndSendGroups(currentCheckTask);
+    }
+
+    private void startCheckAndSendGroups(ScheduledDispatchTask currentCheckTask) {
+        scheduledExecutor.scheduleAtFixedRate(currentCheckTask::dispatch, 10000, CHECK_INTERVAL,
                 TimeUnit.MILLISECONDS);
     }
 
-    void dispatchCheckAndSendGroups() {
-        checkTask.dispatch();
+    synchronized void dispatchCheckAndSendGroups() {
+        if (checkTask != null) {
+            checkTask.dispatch();
+        }
     }
 
     void beforeCheckAndSendGroupsRun() {
     }
 
+    public void pauseAdmission() {
+        ScheduledDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = checkTask;
+        }
+        if (currentTask != null) {
+            currentTask.pauseAdmission();
+        }
+    }
+
+    public void awaitDrained(long timeoutNanos) throws InterruptedException, TimeoutException {
+        ScheduledDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = checkTask;
+        }
+        if (currentTask != null) {
+            currentTask.awaitDrained(timeoutNanos);
+        }
+    }
+
+    public void resumeAdmission() {
+        ScheduledDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = checkTask;
+        }
+        if (currentTask != null) {
+            currentTask.resumeAdmission();
+        }
+    }
+
     @Override
-    public void destroy() {
-        scheduledExecutor.shutdownNow();
+    public synchronized void destroy() {
+        if (checkTask != null) {
+            checkTask.cancel();
+        }
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdownNow();
+            scheduledExecutor = null;
+        }
         if (workerExecutor != null) {
             workerExecutor.shutdownNow();
+            workerExecutor = null;
         }
+        checkTask = null;
     }
 
     private ScheduledExecutorService createScheduler() {
@@ -171,14 +215,13 @@ public class AlarmGroupReduce implements DisposableBean {
                 .factory());
     }
 
-    void runCheckAndSendGroups() {
+    private void runCheckAndSendGroups() {
         beforeCheckAndSendGroupsRun();
         try {
             long now = System.currentTimeMillis();
             groupCacheMap.forEach((groupKey, cache) -> {
                 if (shouldSendGroup(cache, now)) {
                     sendGroupAlert(cache);
-                    cache.setLastSendTime(now);
                 }
             });
         } catch (Exception e) {
@@ -194,37 +237,40 @@ public class AlarmGroupReduce implements DisposableBean {
         this.groupDefines.clear();
         groupDefines.forEach(define -> this.groupDefines.put(define.getName(), define));
     }
-    
+
     /**
      * Process single alert and group by defined rules
      */
     public void processGroupAlert(SingleAlert alert) {
+        String workspaceId = requireWorkspace(alert == null ? null : alert.getWorkspaceId());
         Map<String, String> labels = alert.getLabels();
         if (labels == null || labels.isEmpty() || groupDefines.isEmpty()) {
             sendSingleAlert(alert);
             return;
         }
-        
+
         // Process each group define rule
         boolean matched = false;
         for (Map.Entry<String, AlertGroupConverge> define : groupDefines.entrySet()) {
             String defineName = define.getKey();
             AlertGroupConverge ruleConfig = define.getValue();
-            
+
             // Check if alert has all required group labels
             if (hasRequiredLabels(labels, ruleConfig.getGroupLabels())) {
                 matched = true;
-                processAlertByGroupDefine(alert, defineName, ruleConfig);
+                processAlertByGroupDefine(workspaceId, alert, defineName, ruleConfig);
             }
         }
-        
+
         if (!matched) {
             sendSingleAlert(alert);
         }
     }
 
     public void processGroupAlert(Map<String, String> groupLabels, List<SingleAlert> alertList) {
+        String workspaceId = requireCommonWorkspace(alertList);
         GroupAlert groupAlert = GroupAlert.builder()
+                .workspaceId(workspaceId)
                 .groupKey(generateGroupKey(groupLabels))
                 .groupLabels(groupLabels)
                 .commonLabels(extractCommonLabels(alertList))
@@ -239,20 +285,23 @@ public class AlarmGroupReduce implements DisposableBean {
     private boolean hasRequiredLabels(Map<String, String> labels, List<String> requiredLabels) {
         return requiredLabels.stream().allMatch(labels::containsKey);
     }
-    
-    private void processAlertByGroupDefine(SingleAlert alert, String defineName, AlertGroupConverge ruleConfig) {
+
+    private void processAlertByGroupDefine(String workspaceId, SingleAlert alert, String defineName,
+                                           AlertGroupConverge ruleConfig) {
         // Extract group labels based on define
         Map<String, String> extractedLabels = new HashMap<>();
         for (String labelKey : ruleConfig.getGroupLabels()) {
             extractedLabels.put(labelKey, alert.getLabels().get(labelKey));
         }
-        
-        // Generate group key 
+
+        // Generate group key
         String groupKey = generateGroupKey(extractedLabels);
-        
+
         // Get or create group cache
-        GroupAlertCache cache = groupCacheMap.computeIfAbsent(groupKey, k -> {
+        String cacheKey = workspaceId + '\0' + groupKey;
+        GroupAlertCache cache = groupCacheMap.computeIfAbsent(cacheKey, k -> {
             GroupAlertCache newCache = new GroupAlertCache();
+            newCache.setWorkspaceId(workspaceId);
             newCache.setGroupKey(groupKey);
             newCache.setGroupLabels(extractedLabels);
             newCache.setGroupDefineName(defineName);
@@ -261,97 +310,108 @@ public class AlarmGroupReduce implements DisposableBean {
             return newCache;
         });
         String fingerprint = alert.getFingerprint();
-        // Preserve the original startAt when updating an alert that is still tracked
+        // Check if this is a duplicate alert
         SingleAlert existingAlert = cache.getAlertFingerprints().get(fingerprint);
         if (existingAlert != null) {
+            // Update existing alert timestamp
             alert.setStartAt(existingAlert.getStartAt());
+            cache.getAlertFingerprints().put(fingerprint, alert);
+            return;
         }
-        // Add or update the alert. The cache retains every currently-active alert of the
-        // group, so the group status is always computed over the full member set rather
-        // than only the alerts received within the current send window.
+
+        // Add new alert
         cache.getAlertFingerprints().put(fingerprint, alert);
 
         if (shouldSendGroupImmediately(cache)) {
             sendGroupAlert(cache);
-            cache.setLastSendTime(System.currentTimeMillis());
         }
     }
-    
+
     private void sendGroupAlert(GroupAlertCache cache) {
-        if (cache.getAlertFingerprints().isEmpty()) {
-            return;
-        }
-        
-        long now = System.currentTimeMillis();
-        String status = determineGroupStatus(cache.getAlertFingerprints().values());
-
-        boolean hasResolvedAlert = cache.getAlertFingerprints().values().stream()
-                .anyMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
-
-        // For firing alerts, check repeat interval
-        if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
-            AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-            // The rule may have been deleted, renamed or disabled while this group cache
-            // still holds firing alerts; fall back to the default interval like shouldSendGroup.
-            long repeatInterval = ruleConfig != null && ruleConfig.getRepeatInterval() != null
-                    ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
-
-            // Skip if within repeat interval. The throttle only suppresses repeated firing
-            // notifications; it must never swallow a pending resolved transition, so we still
-            // send when the batch carries a member that has just recovered.
-            if (!hasResolvedAlert
-                && cache.getLastRepeatTime() > 0
-                && now - cache.getLastRepeatTime() < repeatInterval) {
+        synchronized (cache) {
+            Map<String, SingleAlert> snapshot = new HashMap<>(cache.getAlertFingerprints());
+            if (snapshot.isEmpty()) {
                 return;
             }
-            cache.setLastRepeatTime(now);
-        }
 
-        GroupAlert groupAlert = GroupAlert.builder()
-                .groupKey(cache.getGroupKey())
-                .groupLabels(cache.getGroupLabels())
-                .commonLabels(extractCommonLabels(cache.getAlertFingerprints().values()))
-                .commonAnnotations(extractCommonAnnotations(cache.getAlertFingerprints().values()))
-                .alerts(new ArrayList<>(cache.getAlertFingerprints().values()))
-                .status(status)
-                .build();
+            long now = System.currentTimeMillis();
+            String status = determineGroupStatus(snapshot.values());
+            boolean hasResolvedAlert = snapshot.values().stream()
+                    .anyMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
 
-        alarmInhibitReduce.inhibitAlarm(groupAlert);
+            // For firing alerts, check repeat interval without consuming the retained snapshot.
+            if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
+                AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
+                // The rule may have been deleted, renamed or disabled while this group cache
+                // still holds firing alerts; fall back to the default interval like shouldSendGroup.
+                long repeatInterval = ruleConfig != null && ruleConfig.getRepeatInterval() != null
+                        ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
 
-        // The resolved members have now been emitted, so drop them from the group. Firing
-        // members are retained until they recover, keeping the group firing while any member
-        // is still active instead of flushing the whole cache after every send.
-        if (hasResolvedAlert) {
-            cache.getAlertFingerprints().values().removeIf(
-                    alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
+                // The throttle only suppresses repeated firing notifications; it must never
+                // swallow a pending resolved transition.
+                if (!hasResolvedAlert
+                        && cache.getLastRepeatTime() > 0
+                        && now - cache.getLastRepeatTime() < repeatInterval) {
+                    return;
+                }
+            }
+
+            GroupAlert groupAlert = GroupAlert.builder()
+                    .workspaceId(cache.getWorkspaceId())
+                    .groupKey(cache.getGroupKey())
+                    .groupLabels(cache.getGroupLabels())
+                    .commonLabels(extractCommonLabels(snapshot.values()))
+                    .commonAnnotations(extractCommonAnnotations(snapshot.values()))
+                    .alerts(new ArrayList<>(snapshot.values()))
+                    .status(status)
+                    .build();
+
+            if (!alarmInhibitReduce.inhibitAlarm(groupAlert)) {
+                return;
+            }
+            // The resolved members have now been emitted, so drop them from the group. Firing
+            // members are retained until they recover, keeping the group firing while any member
+            // is still active instead of flushing the whole cache after every send.
+            if (hasResolvedAlert) {
+                snapshot.forEach((fingerprint, alert) -> {
+                    if (CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
+                        cache.getAlertFingerprints().remove(fingerprint, alert);
+                    }
+                });
+            }
+            cache.setLastSendTime(now);
+            if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
+                cache.setLastRepeatTime(now);
+            }
         }
     }
-    
+
     private boolean shouldSendGroup(GroupAlertCache cache, long now) {
         AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
         long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() * MS_PER_SECOND : DEFAULT_GROUP_WAIT;
         long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() * MS_PER_SECOND : DEFAULT_GROUP_INTERVAL;
-        
+
         // First wait time reached
-        if (cache.getLastSendTime() == 0 
+        if (cache.getLastSendTime() == 0
             && now - cache.getCreateTime() >= groupWait) {
             return true;
         }
         // Group interval time reached
-        return cache.getLastSendTime() > 0 
+        return cache.getLastSendTime() > 0
             && now - cache.getLastSendTime() >= groupInterval;
     }
-    
+
     private boolean shouldSendGroupImmediately(GroupAlertCache cache) {
         // Check if all alerts are resolved
         return cache.getAlertFingerprints().values().stream()
                 .allMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
     }
-    
+
     private void sendSingleAlert(SingleAlert alert) {
         // Wrap single alert as group alert
         String groupKey = generateGroupKey(alert.getLabels());
         GroupAlert groupAlert = GroupAlert.builder()
+                .workspaceId(requireWorkspace(alert.getWorkspaceId()))
                 .groupKey(groupKey)
                 .groupLabels(alert.getLabels())
                 .commonLabels(alert.getLabels())
@@ -362,14 +422,32 @@ public class AlarmGroupReduce implements DisposableBean {
 
         alarmInhibitReduce.inhibitAlarm(groupAlert);
     }
-    
+
     private String generateGroupKey(Map<String, String> labels) {
         return labels.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> e.getKey() + ":" + e.getValue())
                 .collect(Collectors.joining(","));
     }
-    
+
+    private static String requireCommonWorkspace(List<SingleAlert> alerts) {
+        if (alerts == null || alerts.isEmpty() || alerts.getFirst() == null) {
+            throw new IllegalArgumentException("alerts_required");
+        }
+        String workspaceId = requireWorkspace(alerts.getFirst().getWorkspaceId());
+        if (alerts.stream().anyMatch(alert -> alert == null || !workspaceId.equals(alert.getWorkspaceId()))) {
+            throw new IllegalArgumentException("alert_workspace_mismatch");
+        }
+        return workspaceId;
+    }
+
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
+    }
+
     private Map<String, String> extractCommonLabels(Collection<SingleAlert> alerts) {
         // Extract common labels from all alerts
         if (alerts.isEmpty()) {
@@ -377,13 +455,13 @@ public class AlarmGroupReduce implements DisposableBean {
         }
         Map<String, String> common = new HashMap<>(alerts.stream().findFirst().get().getLabels());
         alerts.forEach(alert -> {
-            common.keySet().removeIf(key -> 
-                !alert.getLabels().containsKey(key) 
+            common.keySet().removeIf(key ->
+                !alert.getLabels().containsKey(key)
                 || !common.get(key).equals(alert.getLabels().get(key)));
         });
         return common;
     }
-    
+
     private Map<String, String> extractCommonAnnotations(Collection<SingleAlert> alerts) {
         // Extract common annotations from all alerts
         if (alerts.isEmpty()) {
@@ -391,22 +469,23 @@ public class AlarmGroupReduce implements DisposableBean {
         }
         Map<String, String> common = new HashMap<>(alerts.stream().findFirst().get().getAnnotations());
         alerts.forEach(alert -> {
-            common.keySet().removeIf(key -> 
-                !alert.getAnnotations().containsKey(key) 
+            common.keySet().removeIf(key ->
+                !alert.getAnnotations().containsKey(key)
                 || !common.get(key).equals(alert.getAnnotations().get(key)));
         });
         return common;
     }
-    
+
     private String determineGroupStatus(Collection<SingleAlert> alerts) {
         // If any alert is firing, group is firing
         return alerts.stream()
-                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) 
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus()))
                 ? CommonConstants.ALERT_STATUS_FIRING : CommonConstants.ALERT_STATUS_RESOLVED;
     }
-    
+
     @Data
     private static class GroupAlertCache {
+        private String workspaceId;
         private String groupDefineName;
         private String groupKey;
         private Map<String, String> groupLabels;
@@ -426,6 +505,12 @@ public class AlarmGroupReduce implements DisposableBean {
 
         private int pendingRuns;
 
+        private boolean cancelled;
+
+        private boolean paused;
+
+        private boolean missedWhilePaused;
+
         private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
             this.executor = executor;
             this.task = task;
@@ -434,6 +519,13 @@ public class AlarmGroupReduce implements DisposableBean {
         private void dispatch() {
             boolean shouldSchedule;
             synchronized (this) {
+                if (cancelled) {
+                    return;
+                }
+                if (paused) {
+                    missedWhilePaused = true;
+                    return;
+                }
                 pendingRuns++;
                 shouldSchedule = !running;
                 if (shouldSchedule) {
@@ -464,14 +556,69 @@ public class AlarmGroupReduce implements DisposableBean {
         private void scheduleNextIfNeeded() {
             boolean shouldSchedule;
             synchronized (this) {
+                if (cancelled) {
+                    pendingRuns = 0;
+                    running = false;
+                    notifyAll();
+                    return;
+                }
                 pendingRuns = Math.max(0, pendingRuns - 1);
                 shouldSchedule = pendingRuns > 0;
                 if (!shouldSchedule) {
                     running = false;
+                    notifyAll();
                     return;
                 }
             }
             scheduleRun();
+        }
+
+        private synchronized void cancel() {
+            cancelled = true;
+            pendingRuns = 0;
+            missedWhilePaused = false;
+            notifyAll();
+        }
+
+        private synchronized void pauseAdmission() {
+            paused = true;
+            missedWhilePaused |= pendingRuns > 1;
+            pendingRuns = running ? 1 : 0;
+        }
+
+        private synchronized void awaitDrained(long timeoutNanos)
+                throws InterruptedException, TimeoutException {
+            long remainingNanos = timeoutNanos;
+            long startedNanos = System.nanoTime();
+            while (running) {
+                if (remainingNanos <= 0) {
+                    throw new TimeoutException();
+                }
+                TimeUnit.NANOSECONDS.timedWait(this, remainingNanos);
+                long elapsedNanos = System.nanoTime() - startedNanos;
+                if (elapsedNanos <= 0) {
+                    remainingNanos = timeoutNanos;
+                } else if (elapsedNanos >= timeoutNanos) {
+                    remainingNanos = 0;
+                } else {
+                    remainingNanos = timeoutNanos - elapsedNanos;
+                }
+            }
+        }
+
+        private void resumeAdmission() {
+            boolean dispatchMissed;
+            synchronized (this) {
+                if (!paused) {
+                    return;
+                }
+                paused = false;
+                dispatchMissed = missedWhilePaused && !cancelled;
+                missedWhilePaused = false;
+            }
+            if (dispatchMissed) {
+                dispatch();
+            }
         }
     }
 }

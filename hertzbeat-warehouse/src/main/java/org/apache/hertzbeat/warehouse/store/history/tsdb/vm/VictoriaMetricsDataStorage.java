@@ -55,6 +55,7 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.TimerTask;
@@ -81,6 +82,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @Primary
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics", name = "enabled", havingValue = "true")
 @Slf4j
 public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
@@ -349,6 +351,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
@@ -356,6 +364,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
                 + (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -370,8 +379,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + EXPORT_PATH)
                 .queryParam("match[]", "{" + timeSeriesSelector + "}")
-                .queryParam("start", "now-" + history)
-                .queryParam("end", "now")
+                .queryParam("start", queryWindow.exportStart())
+                .queryParam("end", queryWindow.exportEnd())
                 .build()
                 .encode()
                 .toUri();
@@ -421,6 +430,13 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String history) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
         if (!serverAvailable) {
             log.error("""
 
@@ -430,22 +446,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                     """);
             return Collections.emptyMap();
         }
-        long endTime = ZonedDateTime.now().toEpochSecond();
-        long startTime;
-        try {
-            if (NumberUtils.isParsable(history)) {
-                startTime = NumberUtils.toLong(history);
-                startTime = (ZonedDateTime.now().toEpochSecond() - startTime);
-            } else {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                startTime = dateTime.toEpochSecond();
-            }
-        } catch (Exception e) {
-            log.error("history time error: {}. use default: 6h", e.getMessage());
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
-            startTime = dateTime.toEpochSecond();
-        }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        long startTime = queryWindow.startSeconds();
+        long endTime = queryWindow.endSeconds();
+        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
@@ -468,7 +472,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                 .queryParam("query", "{" + timeSeriesSelector + "}")
-                .queryParam("step", "4h")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -478,36 +482,14 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from victoria-metrics success. {}", uri);
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
-                            for (Object[] valueArr : content.getValues()) {
-                                long timestamp = Long.parseLong(String.valueOf(valueArr[0]));
-                                String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                // read timestamp here is s unit
-                                valueList.add(new Value(value, timestamp * 1000));
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendValues(responseEntity.getBody(), instanceValuesMap);
             } else {
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
             uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                .queryParam("query", "max_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "max_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -516,36 +498,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             responseEntity = restTemplate.exchange(uri,
                 HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String maxValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMax(maxValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMax);
             }
             // min
             uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                .queryParam("query", "min_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "min_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -554,36 +512,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             responseEntity = restTemplate.exchange(uri,
                 HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String minValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMin(minValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMin);
             }
             // avg
             uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -592,36 +526,51 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             responseEntity = restTemplate.exchange(uri,
                 HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMean(avgValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMean);
             }
         } catch (Exception e) {
             log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);
         }
         return instanceValuesMap;
+    }
+
+    private QueryWindow resolveQueryWindow(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            long startSeconds = start / 1000L;
+            long endSeconds = end / 1000L;
+            return new QueryWindow(startSeconds, endSeconds, String.valueOf(startSeconds), String.valueOf(endSeconds));
+        }
+        long endSeconds = ZonedDateTime.now().toEpochSecond();
+        long startSeconds;
+        String queryHistory = StringUtils.hasText(history) ? history : "6h";
+        try {
+            if (NumberUtils.isParsable(queryHistory)) {
+                startSeconds = endSeconds - NumberUtils.toLong(queryHistory);
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(queryHistory);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                startSeconds = dateTime.toEpochSecond();
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            startSeconds = endSeconds - Duration.ofHours(6).getSeconds();
+            queryHistory = "6h";
+        }
+        return new QueryWindow(startSeconds, endSeconds, "now-" + queryHistory, "now");
+    }
+
+    private String getTimeStep(long start, long end) {
+        long seconds = end - start;
+        if (seconds < Duration.ofDays(7).getSeconds() && seconds > Duration.ofDays(1).getSeconds()) {
+            return "1h";
+        }
+        if (seconds >= Duration.ofDays(7).getSeconds()) {
+            return "4h";
+        }
+        return "60s";
+    }
+
+    private record QueryWindow(long startSeconds, long endSeconds, String exportStart, String exportEnd) {
     }
 
     /**

@@ -72,11 +72,14 @@ public class MetricsRealTimeAlertCalculator {
     private static final String DOWN = "down";
     private static final String KEY_ROW = "__row__";
 
-    private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
-    private static final Pattern AVAILABLE_PATTERN = Pattern.compile("equals\\(__available__,\"([^\"]+)\"\\)");
+    private static final Pattern APP_PATTERN =
+            Pattern.compile("equals\\(\\s*__app__\\s*,\\s*\"([^\"]+)\"\\s*\\)");
+    private static final Pattern AVAILABLE_PATTERN =
+            Pattern.compile("equals\\(\\s*__available__\\s*,\\s*\"([^\"]+)\"\\s*\\)");
     private static final Pattern LABEL_PATTERN = Pattern.compile("contains\\(__labels__,\\s*\"([^\"]+)\"\\)");
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s*\"(\\d+)\"\\)");
-    private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
+    private static final Pattern METRICS_PATTERN =
+            Pattern.compile("equals\\(\\s*__metrics__\\s*,\\s*\"([^\"]+)\"\\s*\\)");
 
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
@@ -134,8 +137,10 @@ public class MetricsRealTimeAlertCalculator {
                         continue;
                     }
                     backoff.reset();
-                    calculate(metricsData);
+                    // The telemetry handoff precedes alert reduction so maintenance backpressure cannot
+                    // occupy every calculator before later samples reach storage.
                     dataQueue.sendMetricsDataToStorage(metricsData);
+                    calculate(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
@@ -214,6 +219,8 @@ public class MetricsRealTimeAlertCalculator {
             if (labels != null) {
                 commonFingerPrints.putAll(labels);
             }
+            // This source-backed identity is written last so rule or metric labels cannot replace it.
+            commonFingerPrints.put(CommonConstants.LABEL_MONITOR_ID, instance);
             {
                 // trigger the expr before the metrics data, due the available up down or others
                 try {

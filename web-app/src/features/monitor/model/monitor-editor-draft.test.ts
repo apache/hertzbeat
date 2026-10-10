@@ -1,0 +1,186 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import type { MonitorParamDefine } from './monitor-contract';
+import {
+  buildMonitorParams,
+  createMonitorEditorDraft,
+  groupMonitorParamDefines,
+  isMonitorParamVisible,
+  transitionMonitorEditorDraft,
+  transitionMonitorEditorParam
+} from './monitor-editor-draft';
+import { MonitorParamDraftError } from './monitor-editor-model';
+import { createReadableMonitorName } from './monitor-name';
+
+const define = (patch: Partial<MonitorParamDefine> & Pick<MonitorParamDefine, 'field'>): MonitorParamDefine => ({
+  id: null,
+  app: 'website',
+  name: { 'en-US': patch.field },
+  type: 'text',
+  required: false,
+  defaultValue: null,
+  placeholder: null,
+  range: null,
+  limit: null,
+  options: null,
+  keyAlias: null,
+  valueAlias: null,
+  depend: null,
+  hide: false,
+  ...patch
+});
+
+describe('Monitor editor draft', () => {
+  it('builds typed defaults from backend definitions', () => {
+    expect(
+      buildMonitorParams([
+        define({ field: 'host', type: 'host', required: true }),
+        define({ field: 'port', type: 'number', defaultValue: '8080' }),
+        define({ field: 'ssl', type: 'boolean', defaultValue: 'true' })
+      ])
+    ).toEqual([
+      { field: 'host', type: 1, paramValue: null },
+      { field: 'port', type: 0, paramValue: 8080 },
+      { field: 'ssl', type: 1, paramValue: true }
+    ]);
+  });
+
+  it('defaults a new boolean to false but rejects ambiguous existing null evidence', () => {
+    const enabled = define({ field: 'enableSshTunnel', type: 'boolean', required: true });
+    expect(buildMonitorParams([enabled])).toEqual([{ field: 'enableSshTunnel', type: 1, paramValue: false }]);
+    expect(() => buildMonitorParams([enabled], [{ field: 'enableSshTunnel', type: 1, paramValue: null }])).toThrow(
+      MonitorParamDraftError
+    );
+  });
+
+  it('rejects corrupt existing values and unsupported definition types before rendering', () => {
+    expect(() =>
+      buildMonitorParams(
+        [define({ field: 'retries', type: 'number' })],
+        [{ field: 'retries', type: 0, paramValue: 'abc' }]
+      )
+    ).toThrow(MonitorParamDraftError);
+    expect(() =>
+      buildMonitorParams(
+        [define({ field: 'headers', type: 'key-value' })],
+        [{ field: 'headers', type: 3, paramValue: '{bad json}' }]
+      )
+    ).toThrow(MonitorParamDraftError);
+    expect(() =>
+      createMonitorEditorDraft(undefined, 'website', 'static', [define({ field: 'mystery', type: 'unknown' })])
+    ).toThrow(MonitorParamDraftError);
+  });
+
+  it('groups definitions and evaluates scalar dependencies', () => {
+    const auth = define({ field: 'auth' });
+    const dependent = define({
+      field: 'token',
+      type: 'password',
+      required: true,
+      hide: true,
+      depend: { auth: ['basic'] }
+    });
+    expect(groupMonitorParamDefines([auth, dependent])).toEqual({ basic: [auth], advanced: [dependent] });
+    expect(isMonitorParamVisible(dependent, [{ field: 'auth', type: 1, paramValue: 'basic' }])).toBe(true);
+    expect(isMonitorParamVisible(dependent, [{ field: 'auth', type: 1, paramValue: 'none' }])).toBe(false);
+  });
+
+  it.each([
+    ['api', 'ssl', false, null, 80],
+    ['api', 'ssl', true, null, 443],
+    ['api', 'ssl', false, 443, 80],
+    ['api', 'ssl', true, 80, 443],
+    ['ftp', 'ssl', false, null, 21],
+    ['ftp', 'ssl', true, null, 22],
+    ['ftp', 'ssl', false, 22, 21],
+    ['ftp', 'ssl', true, 21, 22],
+    ['api', 'ssl', true, 8080, 8080],
+    ['ftp', 'ssl', true, 2121, 2121],
+    ['website', 'ssl', true, 80, 80],
+    ['api', 'verifySsl', true, 80, 80]
+  ] as const)('transitions %s %s=%s from port %s to %s', (app, field, value, port, expectedPort) => {
+    const draft = createMonitorEditorDraft(undefined, app, 'static', [
+      define({ app, field: 'port', type: 'number' }),
+      define({ app, field, type: 'boolean' })
+    ]);
+    draft.params = draft.params.map(param => (param.field === 'port' ? { ...param, paramValue: port } : param));
+
+    const result = transitionMonitorEditorParam(draft, field, value);
+
+    expect(result.params.find(param => param.field === field)?.paramValue).toBe(value);
+    expect(result.params.find(param => param.field === 'port')?.paramValue).toBe(expectedPort);
+  });
+
+  it('transitions service-discovery params without carrying old credentials or instance', () => {
+    const main = define({ field: 'port', type: 'number', defaultValue: '80' });
+    const http = { ...define({ field: 'token', type: 'password' }), app: 'http_sd' };
+    const dns = { ...define({ field: 'server', type: 'text' }), app: 'dns_sd' };
+    const draft = createMonitorEditorDraft(undefined, 'website', 'http_sd', [main, http]);
+    draft.monitor.instance = 'old.example';
+    draft.params = draft.params.map(param => (param.field === 'token' ? { ...param, paramValue: 'secret' } : param));
+    const next = transitionMonitorEditorDraft(draft, [main, http], [main, dns], 'dns_sd');
+    expect(next.monitor).toMatchObject({ scrape: 'dns_sd', instance: 'unknow' });
+    expect(next.params.find(param => param.field === 'port')?.paramValue).toBe(80);
+    expect(next.params.some(param => param.field === 'token')).toBe(false);
+    expect(next.params.find(param => param.field === 'server')?.paramValue).toBeNull();
+    draft.monitor.id = 7;
+    expect(transitionMonitorEditorDraft(draft, [main, http], [main, dns], 'dns_sd').monitor.instance).toBe('unknow');
+  });
+
+  it('normalizes missing detail schedule values to the form defaults', () => {
+    const normalized = createMonitorEditorDraft(
+      {
+        monitor: {
+          id: 7,
+          app: 'website',
+          name: 'home',
+          instance: 'home',
+          status: 0,
+          intervals: null,
+          scheduleType: null
+        },
+        params: [],
+        collector: null,
+        grafanaDashboard: null,
+        metrics: []
+      },
+      'website',
+      'static',
+      []
+    );
+    expect(normalized.monitor).toMatchObject({ scheduleType: 'interval', intervals: 60 });
+  });
+
+  it('generates the established readable task name only for a blank new static host', () => {
+    expect(createReadableMonitorName(() => 0)).toBe('Quick_Fox_22AA');
+    const host = define({ field: 'host', type: 'host', required: true });
+    const draft = createMonitorEditorDraft(undefined, 'website', 'static', [host]);
+    const generated = transitionMonitorEditorParam(draft, 'host', 'example.org', () => 'Quick_Fox_22AA');
+    expect(generated.monitor.name).toBe('Quick_Fox_22AA');
+
+    const named = { ...draft, monitor: { ...draft.monitor, name: 'Production website' } };
+    expect(transitionMonitorEditorParam(named, 'host', 'example.org', () => 'unused').monitor.name).toBe(
+      'Production website'
+    );
+
+    const existing = { ...draft, monitor: { ...draft.monitor, id: 7 } };
+    expect(transitionMonitorEditorParam(existing, 'host', 'example.org', () => 'unused').monitor.name).toBe('');
+  });
+});

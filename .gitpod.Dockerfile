@@ -1,7 +1,4 @@
+# Retained for historical workspace references; .gitpod.yml does not select this image.
+# No hosted Gitpod build or application launch is validated for HertzBeat 2.0 alpha.
+# Use docs/alpha-preview.md for the current source toolchain and local setup.
 FROM gitpod/workspace-full
-
-USER gitpod
-
-RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh && \
-    sdk install java 21.0.2-tem && \
-    sdk default java 21.0.2-tem"

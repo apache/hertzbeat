@@ -18,84 +18,87 @@
 package org.apache.hertzbeat.manager.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
-import org.apache.hertzbeat.common.support.SseEmitterRegistry;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * Test case for {@link ManagerSseManager}.
- *
- * <p>Note: how a subscription is bounded and cleaned up is covered by
- * {@code SseEmitterRegistryTest}; what is left here is what makes this stream the manager one.
- */
 class ManagerSseManagerTest {
 
-    private ManagerSseManager managerSseManager;
+    @Test
+    void closesActiveEmittersBeforeApplicationShutdown() throws Exception {
+        ManagerSseManager manager = new ManagerSseManager();
+        SseEmitter emitter = mock(SseEmitter.class);
+        Map<Long, SseEmitter> emitters = emitters(manager);
+        emitters.put(1L, emitter);
 
-    @BeforeEach
-    void setUp() {
-        managerSseManager = new ManagerSseManager();
+        manager.onApplicationEvent(new ContextClosedEvent(mock(ConfigurableApplicationContext.class)));
+        manager.createEmitter(2L);
+
+        verify(emitter).complete();
+        assertFalse(emitters.containsKey(1L));
+        assertFalse(emitters.containsKey(2L), "Shutdown must not retain a concurrent late subscriber");
     }
 
-    /**
-     * The ui subscribes by event name, so import progress delivered under any other name
-     * reaches nobody even though the connection is up.
-     */
     @Test
-    void testImportProgressIsDeliveredUnderTheImportTaskEventName() throws Exception {
-        managerSseManager.createEmitter(1L);
-        final SseEmitter subscriber = mock(SseEmitter.class);
-        emitters().put(1L, subscriber);
+    void streamStartsWithRetryableCanonicalRereadContract() throws Exception {
+        ManagerSseManager manager = new ManagerSseManager();
 
-        managerSseManager.broadcastImportTaskSuccess("my-task");
+        assertNotNull(manager.createEmitter(1L));
+        assertEquals("manager-ready", ManagerSseManager.READY_EVENT);
+        assertEquals(3_000L, ManagerSseManager.RECONNECT_MILLIS);
 
-        final ArgumentCaptor<SseEmitter.SseEventBuilder> event =
-                ArgumentCaptor.forClass(SseEmitter.SseEventBuilder.class);
-        verify(subscriber).send(event.capture());
-        final String rendered = event.getValue().build().stream()
-                .map(part -> String.valueOf(part.getData()))
-                .collect(Collectors.joining());
-        assertTrue(rendered.contains("event:" + ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue()),
-                "import progress must be delivered as IMPORT_TASK_EVENT, was " + rendered);
-        assertTrue(rendered.contains("my-task"), "the task name must reach the subscriber, was " + rendered);
+        String source = Files.readString(Path.of(
+                "src/main/java/org/apache/hertzbeat/manager/config/ManagerSseManager.java"));
+        assertTrue(source.contains(".id(nextEventId())"));
+        assertTrue(source.contains(".reconnectTime(RECONNECT_MILLIS)"));
+        assertTrue(source.contains("CANONICAL_REREAD"));
+        assertFalse(source.contains("Last-Event-ID"));
     }
 
-    /**
-     * The manager has to hand its subscriptions to a registry rather than hold them itself,
-     * otherwise none of the bounds that registry enforces apply to this stream.
-     */
     @Test
-    void testSubscriptionsAreBoundedByTheRegistry() {
-        managerSseManager.setMaxEmitters(1);
+    void taskEventContainsNoTaskOrWorkspaceIdentifier() {
+        CapturingManager manager = new CapturingManager();
 
-        assertNotNull(managerSseManager.createEmitter(1L));
-        final ResponseStatusException thrown =
-                assertThrows(ResponseStatusException.class, () -> managerSseManager.createEmitter(2L));
+        manager.broadcastImportTaskChanged();
 
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, thrown.getStatusCode());
-        assertEquals(1, managerSseManager.subscriptionCount());
+        assertEquals(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), manager.eventName);
+        assertEquals("{\"schemaVersion\":1,\"delivery\":\"CANONICAL_REREAD\"}", manager.data);
+        assertFalse(manager.data.contains("taskId"));
+        assertFalse(manager.data.contains("workspace"));
+        assertFalse(manager.data.contains("filename"));
+        assertFalse(manager.data.contains("fileName"));
+        assertFalse(manager.data.contains("error"));
+        assertFalse(manager.data.contains("errMsg"));
+        assertFalse(manager.data.contains("taskName"));
     }
 
     @SuppressWarnings("unchecked")
-    private Map<Long, SseEmitter> emitters() throws Exception {
-        final Field registryField = ManagerSseManager.class.getDeclaredField("registry");
-        registryField.setAccessible(true);
-        final Object registry = registryField.get(managerSseManager);
-        final Field emittersField = SseEmitterRegistry.class.getDeclaredField("emitters");
+    private Map<Long, SseEmitter> emitters(ManagerSseManager manager) throws Exception {
+        Field emittersField = ManagerSseManager.class.getDeclaredField("emitters");
         emittersField.setAccessible(true);
-        return (Map<Long, SseEmitter>) emittersField.get(registry);
+        return (Map<Long, SseEmitter>) emittersField.get(manager);
+    }
+
+    private static final class CapturingManager extends ManagerSseManager {
+        private String eventName;
+        private String data;
+
+        @Override
+        public void broadcast(String capturedEventName, String capturedData) {
+            eventName = capturedEventName;
+            data = capturedData;
+        }
     }
 }

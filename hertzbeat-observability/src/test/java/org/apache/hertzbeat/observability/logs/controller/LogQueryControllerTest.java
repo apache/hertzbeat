@@ -1,0 +1,1876 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.observability.logs.controller;
+
+import static org.hamcrest.Matchers.aMapWithSize;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.dto.investigation.InvestigationReason;
+import org.apache.hertzbeat.common.observability.dto.investigation.InvestigationWindow;
+import org.apache.hertzbeat.common.observability.dto.investigation.LogInvestigationView;
+import org.apache.hertzbeat.common.observability.dto.log.LogTrendBucket;
+import org.apache.hertzbeat.common.observability.dto.log.LogCalculated;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
+import org.apache.hertzbeat.observability.logs.service.impl.LogQueryServiceImpl;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+/**
+ * Unit test for {@link LogQueryController}
+ */
+@ExtendWith(MockitoExtension.class)
+class LogQueryControllerTest {
+
+    @Test
+    void subqueryBindsTrustedScopeWithoutPuttingMainSearchInChildScope() {
+        String request = """
+                {"version":1,"parameters":{"start":"1","end":"59999","searchSyntax":"structured-v1",
+                 "search":"service:api"},"subquery":{"version":1,"mainField":"builtin:serviceName",
+                 "operator":"not_in","child":{"field":"builtin:serviceName",
+                 "searchSyntax":"structured-v1","search":"service:worker"},"rank":{
+                 "direction":"bottom","limit":2,"measure":{"function":"count_all"}}},
+                 "operation":{"kind":"page","pageIndex":0,"pageSize":10,
+                 "sort":{"field":"timestamp","direction":"desc"}}}
+                """;
+        when(historyDataReader.calculatedPage(any())).thenReturn(new LogCalculated.PageResult(0, List.of()));
+        var response = logQueryController.subquery(request);
+        assertEquals(0L, response.getBody().getData().result().get("totalElements"));
+        var captured = org.mockito.ArgumentCaptor.forClass(LogCalculated.Query.class);
+        verify(historyDataReader).calculatedPage(captured.capture());
+        assertEquals("default", captured.getValue().scope().workspaceId());
+        assertEquals("service:worker", captured.getValue().subquery().descriptor().child().search());
+        verify(admissionService).execute(eq("logs"), any());
+        when(historyDataReader.calculatedPage(any())).thenThrow(new org.apache.hertzbeat.observability.logs.query
+                .LogFilterQueryException(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.Reason
+                .FULL_TEXT_UNSUPPORTED));
+        var invalid = assertThrows(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.class,
+                () -> logQueryController.subquery(request));
+        assertEquals("full_text_unsupported", invalid.detail().reason());
+        org.mockito.Mockito.doThrow(new org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException())
+                .when(historyDataReader).calculatedPage(any());
+        assertThrows(org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException.class,
+                () -> logQueryController.subquery(request));
+        org.mockito.Mockito.doReturn(new LogCalculated.PageResult(0, List.of()))
+                .when(historyDataReader).calculatedPage(any());
+        assertEquals(0L, logQueryController.subquery(request).getBody().getData().result().get("totalElements"));
+    }
+
+    @Test
+    void formulaRegexValidationUsesNativePatternAndSharedAdmissionWithoutPreview() throws Exception {
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"formula","name":"matches",
+                   "expression":"regexp_like(@message,\\"[z-a]\\")"}
+                ]}}
+                """;
+        doThrow(new org.apache.hertzbeat.common.observability.query.LogCalculatedFormula.ValidationException(
+                "invalid_pattern", "calculatedFields"))
+                .when(historyDataReader).calculatedPattern("[z-a]");
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(false))
+                .andExpect(jsonPath("$.data.errors[0].code").value("invalid_pattern"))
+                .andExpect(jsonPath("$.data.errors[0].path").value("fields[0].expression"));
+        verify(historyDataReader).calculatedPattern("[z-a]");
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void calculatedValidationPreviewUsesTheHistoryReadersNativeSamplePath() throws Exception {
+        when(historyDataReader.calculatedPreview(any(), eq("GET 12.5")))
+                .thenReturn(new LogCalculated.Preview("c1", Map.of("token", "GET", "latency", "12.5")));
+        when(historyDataReader.calculatedPreview(any(), eq("")))
+                .thenReturn(new LogCalculated.Preview("c2", Map.of("word", "")));
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"extraction","engine":"regex","source":"builtin:body",
+                   "pattern":"(?<token>[A-Za-z]+) (?<latency>[0-9.]+)",
+                   "captures":[{"name":"token"},{"name":"latency"}]},
+                  {"id":"c2","kind":"extraction","engine":"regex","source":"builtin:body",
+                   "pattern":"(?<word>[A-Za-z]+)","captures":[{"name":"word"}]}
+                ]},"preview":{"definitionId":"c1","sourceText":"GET 12.5"}}
+                """;
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(true))
+                .andExpect(jsonPath("$.data.preview.values.token").value("GET"));
+        verify(historyDataReader).calculatedPreview(any(), eq("GET 12.5"));
+        verify(historyDataReader).calculatedPreview(any(), eq(""));
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void calculatedValidationChecksNativePatternWithoutPreview() throws Exception {
+        when(historyDataReader.calculatedPreview(any(), eq("")))
+                .thenThrow(new org.apache.hertzbeat.common.observability.query.LogCalculatedFormula.ValidationException(
+                        "invalid_pattern", "calculatedFields"));
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"extraction","engine":"regex","source":"builtin:body",
+                   "pattern":"(?<token>[z-a])","captures":[{"name":"token"}]}
+                ]}}
+                """;
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(false))
+                .andExpect(jsonPath("$.data.errors[0].code").value("invalid_pattern"))
+                .andExpect(jsonPath("$.data.errors[0].path").value("fields[0].pattern"));
+        verify(historyDataReader).calculatedPreview(any(), eq(""));
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void formulaOnlyValidationDoesNotUseQueryAdmissionOrStorage() throws Exception {
+        String request = """
+                {"version":2,"calculatedFields":{"version":2,"fields":[
+                  {"id":"c1","kind":"formula","name":"seconds","expression":"@duration_ms/1000"}
+                ]}}
+                """;
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/logs/calculated/validate")
+                        .contentType("application/json").content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.valid").value(true));
+        verify(admissionService, never()).execute(eq("logs"), any());
+        verifyNoInteractions(historyDataReader);
+    }
+
+    @Test
+    void calculatedQueryPreservesTheBoundedAdmissionError() {
+        when(historyDataReader.calculatedPage(any()))
+                .thenThrow(new org.apache.hertzbeat.common.observability.query.LogCalculatedFormula.ValidationException(
+                        "budget_exceeded", "calculatedFields"));
+        String request = """
+                {"version":2,"parameters":{"start":"1","end":"59999"},
+                 "calculatedFields":{"version":2,"fields":[
+                   {"id":"c1","kind":"formula","name":"label","expression":"lower(@attempt)"}
+                 ]},"operation":{"kind":"page","pageIndex":0,"pageSize":10,
+                  "sort":{"field":"timestamp","direction":"desc"}}}
+                """;
+        var failure = assertThrows(org.apache.hertzbeat.observability.logs.query.LogFilterQueryException.class,
+                () -> logQueryController.calculated(request));
+        assertEquals("calculated_budget_exceeded", failure.detail().reason());
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    private MockMvc mockMvc;
+
+    @Mock
+    private HistoryDataReader historyDataReader;
+
+    @Mock
+    private HistoryDataReader secondaryHistoryDataReader;
+
+    @Mock
+    private org.apache.hertzbeat.observability.investigation.service.LogInvestigationReadModelService
+            investigationReadModelService;
+
+    private LogQueryController logQueryController;
+    private ObservabilityQueryAdmissionService admissionService;
+
+    @BeforeEach
+    void setUp() {
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        admissionService = org.mockito.Mockito.spy(queryAdmissionService());
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader))),
+                admissionService, investigationReadModelService);
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+    }
+
+    private static HistoryDataReader workspaceCompatibleReader(HistoryDataReader delegate) {
+        return (HistoryDataReader) Proxy.newProxyInstance(
+                HistoryDataReader.class.getClassLoader(), new Class<?>[]{HistoryDataReader.class},
+                (proxy, method, arguments) -> invokeWorkspaceCompatible(delegate, method, arguments));
+    }
+
+    private static Object invokeWorkspaceCompatible(HistoryDataReader delegate, Method method, Object[] arguments)
+            throws Throwable {
+        if (method.getDeclaringClass() == Object.class) {
+            return method.invoke(delegate, arguments);
+        }
+        int parameterCount = method.getParameterCount();
+        if (hasStub(delegate, method.getName(), parameterCount)) {
+            return invoke(delegate, method, arguments);
+        }
+        int legacyParameterCount = org.mockito.Mockito.mockingDetails(delegate).getStubbings().stream()
+                .filter(stubbing -> stubbing.getInvocation().getMethod().getName().equals(method.getName()))
+                .mapToInt(stubbing -> stubbing.getInvocation().getMethod().getParameterCount())
+                .filter(candidate -> candidate < parameterCount)
+                .max()
+                .orElse(-1);
+        if (legacyParameterCount > 0) {
+            Method legacyMethod = Arrays.stream(HistoryDataReader.class.getMethods())
+                    .filter(candidate -> candidate.getName().equals(method.getName()))
+                    .filter(candidate -> candidate.getParameterCount() == legacyParameterCount)
+                    .findFirst()
+                    .orElseThrow();
+            return invoke(delegate, legacyMethod, Arrays.copyOf(arguments, legacyParameterCount));
+        }
+        throw new UnsupportedOperationException("workspace history query is not stubbed");
+    }
+
+    private static boolean hasStub(HistoryDataReader delegate, String methodName, int parameterCount) {
+        return org.mockito.Mockito.mockingDetails(delegate).getStubbings().stream()
+                .anyMatch(stubbing -> stubbing.getInvocation().getMethod().getName().equals(methodName)
+                        && stubbing.getInvocation().getMethod().getParameterCount() == parameterCount);
+    }
+
+    private static Object invoke(HistoryDataReader delegate, Method method, Object[] arguments) throws Throwable {
+        try {
+            return method.invoke(delegate, arguments);
+        } catch (InvocationTargetException exception) {
+            throw exception.getCause();
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
+    }
+
+    @Test
+    void unsupportedCategoryStorageFiltersAllRowsBeforePaginationAndOverview() throws Exception {
+        var category = org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory.ERROR;
+        List<LogEntry> logs = java.util.stream.IntStream.rangeClosed(16, 21).mapToObj(number -> LogEntry.builder()
+                .timeUnixNano(1_000_001_000_000L).severityNumber(number).severityText("SEVERE")
+                .body("failure " + number).resource(Map.of("service.name", "checkout"))
+                .attributes(Map.of("log.record.uid", "event-" + number)).build()).toList();
+        when(historyDataReader.queryLogsByMultipleConditions(
+                any(), any(), any(), any(), any(), any(), any())).thenReturn(logs);
+        when(historyDataReader.queryLogsByMultipleConditions(
+                any(), any(), any(), any(), any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(),
+                any(), any(), any(), any(), any(), any(), eq(category)))
+                .thenThrow(new UnsupportedOperationException("category unavailable"));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("severityCategory", "ERROR").param("start", "1000000").param("end", "1060000")
+                        .param("pageSize", "2").param("pageIndex", "1"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.totalElements").value(4))
+                .andExpect(jsonPath("$.data.content.length()").value(2))
+                .andExpect(jsonPath("$.data.content[0].severityNumber").value(18))
+                .andExpect(jsonPath("$.data.content[1].severityNumber").value(17));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("severityCategory", "ERROR").param("start", "1000000").param("end", "1060000"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.totalCount").value(4))
+                .andExpect(jsonPath("$.data.errorCount").value(4));
+    }
+
+    @Test
+    void testListLogsWithAllFilters() throws Exception {
+        // Mock data
+        LogEntry logEntry1 = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("Test log message 1")
+                .traceId("trace123")
+                .spanId("span456")
+                .attributes(new HashMap<>(Map.of("log.record.uid", "event-1")))
+                .build();
+
+        LogEntry logEntry2 = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("Test log message 2")
+                .traceId("trace123")
+                .spanId("span789")
+                .attributes(new HashMap<>())
+                .build();
+
+        List<LogEntry> mockLogs = Arrays.asList(logEntry1, logEntry2);
+
+        when(historyDataReader.countLogsByMultipleConditions(anyLong(), anyLong(), any(),
+                any(), any(), any(), any())).thenReturn(2L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(anyLong(), anyLong(),
+                any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/list")
+                        .param("start", "1734005477000")
+                        .param("end", "1734005478000")
+                        .param("traceId", "trace123")
+                        .param("spanId", "span456")
+                        .param("severityNumber", "9")
+                        .param("severityText", "INFO")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "20")
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(2))
+                .andExpect(jsonPath("$.data.content[0].logRecordUid").value("event-1"))
+                .andExpect(jsonPath("$.data.content[0].timeUnixNano").value("1734005477630000000"))
+                .andExpect(jsonPath("$.data.content[0].observedTimeUnixNano").doesNotExist())
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.pageIndex").value(0))
+                .andExpect(jsonPath("$.data.pageSize").value(20))
+                .andExpect(jsonPath("$.data", aMapWithSize(4)))
+                .andExpect(jsonPath("$.data.pageable").doesNotExist())
+                .andExpect(jsonPath("$.data.sort").doesNotExist())
+                .andExpect(jsonPath("$.data.number").doesNotExist())
+                .andExpect(jsonPath("$.data.size").doesNotExist());
+    }
+
+    @Test
+    void rejectsMalformedInvestigationUidBeforeQuery() {
+        assertThrows(Exception.class, () -> mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/context")
+                .param("logRecordUid", "not valid")
+                .param("start", "1000")
+                .param("end", "2000")));
+
+        verifyNoInteractions(investigationReadModelService);
+    }
+
+    @Test
+    void queriesDirectInvestigationWithTrustedWorkspaceAndOneAdmission() throws Exception {
+        LogInvestigationView view = new LogInvestigationView("event-7", new InvestigationWindow(1000, 2000),
+                LogInvestigationView.SelectedLogBlock.empty(),
+                LogInvestigationView.TraceBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE),
+                LogInvestigationView.MetricsBlock.unavailable(InvestigationReason.QUERY_STRATEGY_UNAVAILABLE),
+                LogInvestigationView.NearbyLogsBlock.unavailable(InvestigationReason.UPSTREAM_UNAVAILABLE));
+        when(investigationReadModelService.query("default", "event-7", 1000, 2000)).thenReturn(view);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/context")
+                        .param("logRecordUid", "event-7")
+                        .param("start", "1000")
+                        .param("end", "2000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.logRecordUid").value("event-7"))
+                .andExpect(jsonPath("$.data.window.start").value(1000))
+                .andExpect(jsonPath("$.data.window.end").value(2000))
+                .andExpect(jsonPath("$.data.selectedLog.state").value("empty"))
+                .andExpect(jsonPath("$.data.trace.state").value("unavailable"));
+
+        verify(investigationReadModelService).query("default", "event-7", 1000, 2000);
+        verify(admissionService).execute(eq("logs"), any());
+    }
+
+    @Test
+    void testListLogsWithoutFilters() throws Exception {
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder()
+                        .timeUnixNano(1734005477630000000L)
+                        .severityNumber(9)
+                        .severityText("INFO")
+                        .body("Test log message")
+                        .attributes(new HashMap<>())
+                        .build()
+        );
+
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), eq(0), eq(20)))
+                .thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/list")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(1));
+    }
+
+    @Test
+    void testListLogsCapsOversizedPageSize() throws Exception {
+        List<LogEntry> mockLogs = List.of(
+                LogEntry.builder()
+                        .timeUnixNano(1734005477630000000L)
+                        .severityNumber(9)
+                        .severityText("INFO")
+                        .body("bounded export page")
+                        .attributes(new HashMap<>())
+                        .build()
+        );
+
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(50_000L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), eq(0), eq(1000)))
+                .thenReturn(mockLogs);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "50000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.pageSize").value(1000))
+                .andExpect(jsonPath("$.data.totalElements").value(50000));
+
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), eq(0), eq(1000));
+    }
+
+    @Test
+    void testListLogsNormalizesInvalidPagination() throws Exception {
+        List<LogEntry> mockLogs = List.of(
+                LogEntry.builder()
+                        .timeUnixNano(1734005477630000000L)
+                        .severityNumber(9)
+                        .severityText("INFO")
+                        .body("normalized page")
+                        .attributes(new HashMap<>())
+                        .build()
+        );
+
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), eq(0), eq(20)))
+                .thenReturn(mockLogs);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("pageIndex", "-3")
+                        .param("pageSize", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.pageIndex").value(0))
+                .andExpect(jsonPath("$.data.pageSize").value(20));
+
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), eq(0), eq(20));
+    }
+
+    @Test
+    void testListLogsFiltersByServiceAndEnvironment() throws Exception {
+        LogEntry checkoutProdLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("checkout prod log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "prod")))
+                .build();
+        LogEntry paymentStagingLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("INFO")
+                .body("payment staging log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "payment",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "staging")))
+                .build();
+
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any()))
+                .thenReturn(List.of(checkoutProdLog, paymentStagingLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "payments")
+                        .param("environment", "prod"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("checkout prod log"));
+    }
+
+    @Test
+    void testListLogsPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
+        ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
+                        Optional.of(workspaceQueryGateway)), queryAdmissionService(), investigationService());
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+        EntityIdentity serviceName = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .primaryIdentity(true)
+                .priority(90)
+                .build();
+        EntityIdentity serviceNamespace = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.namespace")
+                .identityValue("payments")
+                .priority(30)
+                .build();
+        EntityIdentity environment = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("deployment.environment.name")
+                .identityValue("prod")
+                .priority(20)
+                .build();
+        when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
+                .id(42L)
+                .type("service")
+                .name("checkout")
+                .namespace("payments")
+                .environment("prod")
+                .build()));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("default", 42L))
+                .thenReturn(List.of(serviceName, serviceNamespace, environment));
+        LogEntry checkoutProdLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("checkout prod log")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "prod",
+                        "hertzbeat.entity_id", "42")))
+                .build();
+        LogEntry billingStagingLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("INFO")
+                .body("billing staging log")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "billing",
+                        "service.namespace", "wrong-namespace",
+                        "deployment.environment.name", "staging")))
+                .build();
+        Map<String, String> expectedResourceFilters = Map.of("hertzbeat.entity_id", "42");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(Map.of())))
+                .thenReturn(2L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(Map.of())))
+                .thenReturn(List.of(checkoutProdLog, billingStagingLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("entityId", "42")
+                        .param("serviceName", "billing")
+                        .param("serviceNamespace", "wrong-namespace")
+                        .param("environment", "staging"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("checkout prod log"));
+    }
+
+    @Test
+    void testLogStatsPreferEntityIdentityOverConflictingRouteContext() throws Exception {
+        ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(workspaceCompatibleReader(historyDataReader)),
+                        Optional.of(workspaceQueryGateway)), queryAdmissionService(), investigationService());
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+        when(workspaceQueryGateway.findEntityById("default", 42L)).thenReturn(Optional.of(ObserveEntity.builder()
+                .id(42L)
+                .type("service")
+                .name("checkout")
+                .namespace("payments")
+                .environment("prod")
+                .build()));
+        when(workspaceQueryGateway.findIdentitiesByEntityId("default", 42L)).thenReturn(List.of(
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("service.name")
+                        .identityValue("checkout")
+                        .primaryIdentity(true)
+                        .priority(90)
+                        .build(),
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("service.namespace")
+                        .identityValue("payments")
+                        .priority(30)
+                        .build(),
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("deployment.environment.name")
+                        .identityValue("prod")
+                        .priority(20)
+                        .build()
+        ));
+        Map<String, String> expectedResourceFilters = Map.of(
+                "service.version", "1.2.3",
+                "hertzbeat.entity_id", "42");
+        Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
+        when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(expectedAttributeFilters)))
+                .thenReturn(Map.of(
+                        "totalCount", 3L,
+                        "infoCount", 2L,
+                        "errorCount", 1L,
+                        "fatalCount", 0L,
+                        "warnCount", 0L,
+                        "debugCount", 0L,
+                        "traceCount", 0L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("entityId", "42")
+                        .param("serviceName", "billing")
+                        .param("serviceNamespace", "wrong-namespace")
+                        .param("environment", "staging")
+                        .param("resourceFilter", "service.name=billing,deployment.environment.name=staging,service.version=1.2.3")
+                        .param("attributeFilter", "http.route:/checkout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(3))
+                .andExpect(jsonPath("$.data.infoCount").value(2))
+                .andExpect(jsonPath("$.data.errorCount").value(1));
+
+        verify(historyDataReader).countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(expectedAttributeFilters));
+    }
+
+    @Test
+    void testOverviewStatsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        LogEntry infoLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("stable checkout info")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry errorLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("stable checkout error")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("canary checkout error")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityNumber(13)
+                .severityText("WARN")
+                .body("cart checkout warn")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(infoLog, errorLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(2))
+                .andExpect(jsonPath("$.data.infoCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.warnCount").value(0));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
+    }
+
+    @Test
+    void testOverviewStatsAppliesContainsAndNotContainsFiltersWithRowFallback() throws Exception {
+        LogEntry infoLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("stable checkout info")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/api/checkout")))
+                .build();
+        LogEntry errorLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("stable checkout error")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/api/checkout/payment")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("canary checkout error")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3-canary",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/api/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityNumber(13)
+                .severityText("WARN")
+                .body("cart warn")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/api/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(infoLog, errorLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("resourceFilter", "service.version CONTAINS '1.2' "
+                                + "and host.name NOT CONTAINS 'canary'")
+                        .param("attributeFilter", "http.route CONTAINS 'checkout'"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(2))
+                .andExpect(jsonPath("$.data.infoCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.warnCount").value(0));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
+    }
+
+    @Test
+    void testOverviewStatsAppliesExistsAndNotExistsFiltersWithRowFallback() throws Exception {
+        LogEntry matchingLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("checkout error with typed failure")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3")))
+                .attributes(new HashMap<>(Map.of("error.type", "payment.failure")))
+                .build();
+        LogEntry missingErrorTypeLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("checkout info without error type")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4")))
+                .attributes(new HashMap<>(Map.of("http.route", "/api/checkout")))
+                .build();
+        LogEntry environmentLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("checkout error with environment")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.5",
+                        "deployment.environment.name", "prod")))
+                .attributes(new HashMap<>(Map.of("error.type", "payment.failure")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(matchingLog, missingErrorTypeLog, environmentLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("resourceFilter", "deployment.environment.name NOT EXISTS")
+                        .param("attributeFilter", "error.type EXISTS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.infoCount").value(0));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
+    }
+
+    @Test
+    void testListLogsHideInternalFiltersCollectorNoise() throws Exception {
+        LogEntry internalLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("collector internal log")
+                .resource(new HashMap<>(java.util.Map.of("service.name", "otelcol-contrib")))
+                .build();
+        LogEntry businessLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("checkout log")
+                .traceId("0123456789abcdef0123456789abcdef")
+                .spanId("0123456789abcdef")
+                .resource(new HashMap<>(java.util.Map.of("service.name", "checkout")))
+                .build();
+
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any(), anySet(), eq(true))).thenReturn(2L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(),
+                any(), any(), any(), any(), eq(0), eq(20), anySet(), eq(true)))
+                .thenReturn(Arrays.asList(internalLog, businessLog));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/logs/list")
+                                .param("hideInternal", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].traceId")
+                        .value("0123456789abcdef0123456789abcdef"))
+                .andExpect(jsonPath("$.data.content[0].spanId").value("0123456789abcdef"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsHideNoiseFiltersInfrastructureServices() throws Exception {
+        LogEntry collectorLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("collector internal log")
+                .resource(new HashMap<>(java.util.Map.of("service.name", "otelcol-contrib")))
+                .build();
+        LogEntry kafkaLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("kafka broker log")
+                .resource(new HashMap<>(java.util.Map.of("service.name", "kafka")))
+                .build();
+        LogEntry businessLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("checkout log")
+                .traceId("0123456789abcdef0123456789abcdef")
+                .spanId("0123456789abcdef")
+                .resource(new HashMap<>(java.util.Map.of("service.name", "checkout")))
+                .build();
+
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any(), anySet(), eq(true))).thenReturn(3L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(),
+                any(), any(), any(), any(), eq(0), eq(20), anySet(), eq(true)))
+                .thenReturn(Arrays.asList(collectorLog, kafkaLog, businessLog));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/logs/list")
+                                .param("hideNoise", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].resource['service.name']").value("checkout"))
+                .andExpect(jsonPath("$.data.content[0].traceId")
+                        .value("0123456789abcdef0123456789abcdef"))
+                .andExpect(jsonPath("$.data.content[0].spanId").value("0123456789abcdef"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsUsesRequestWorkspaceContext() throws Exception {
+        LogEntry teamAlphaLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "hertzbeat.workspace_id", "team-a")))
+                .build();
+        LogEntry teamBetaLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("ERROR")
+                .body("team-b payment log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "payment",
+                        "hertzbeat.workspace_id", "team-b")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any()))
+                .thenReturn(List.of(teamAlphaLog, teamBetaLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+        verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsPushesWorkspacePaginationIntoStorageWhenSupported() throws Exception {
+        LogEntry teamAlphaLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "hertzbeat.workspace_id", "team-a")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"))).thenReturn(41L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(40), eq(20), anySet(), eq(false), eq("team-a")))
+                .thenReturn(List.of(teamAlphaLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("pageIndex", "2")
+                        .param("pageSize", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(41))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+
+        verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(40), eq(20), anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsPushesResourceAndAttributeFiltersIntoStorageWhenSupported() throws Exception {
+        LogEntry filteredLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "hertzbeat.entity_id", "42",
+                        "hertzbeat.entity_type", "service",
+                        "hertzbeat.collector.id", "collector-a",
+                        "service.instance.id", "checkout-7d9",
+                        "hertzbeat.workspace_id", "team-a")))
+                .attributes(new HashMap<>(java.util.Map.of(
+                        "error.type", "Timeout",
+                        "http.route", "/checkout")))
+                .build();
+
+        Map<String, String> expectedResourceFilters = Map.of(
+                "service.version", "1.2.3",
+                "hertzbeat.entity_type", "service",
+                "hertzbeat.collector.id", "collector-a",
+                "service.instance.id", "checkout-7d9"
+        );
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("team-a"),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any()))
+                .thenReturn(List.of(filteredLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("entityType", "service")
+                        .param("collectorId", "collector-a")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout")
+                        .param("resourceFilter", "service.version=1.2.3")
+                        .param("attributeFilter", "error.type=Timeout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+
+        verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"), eq(expectedResourceFilters),
+                eq(Map.of("error.type", "Timeout", "http.route", "/checkout")));
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("team-a"),
+                eq(expectedResourceFilters), eq(Map.of("error.type", "Timeout", "http.route", "/checkout")));
+    }
+
+    @Test
+    void testListLogsKeepsEndpointMatchesCorrelatedByTraceInStorage() throws Exception {
+        LogEntry correlatedLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .traceId("trace-checkout")
+                .severityText("INFO")
+                .body("checkout completed")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.instance.id", "checkout-7d9",
+                        "hertzbeat.workspace_id", "default")))
+                .attributes(new HashMap<>())
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("default"),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any()))
+                .thenReturn(List.of(correlatedLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("checkout completed"));
+
+        verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), eq(Map.of("service.instance.id", "checkout-7d9")),
+                eq(Map.of("http.route", "/checkout")));
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(
+                any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20),
+                anySet(), eq(false), eq("default"), eq(Map.of("service.instance.id", "checkout-7d9")),
+                eq(Map.of("http.route", "/checkout")));
+    }
+
+    @Test
+    void testListLogsPushesResourceAndAttributeExcludeFiltersIntoStorageWhenSupported() throws Exception {
+        LogEntry filteredLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "hertzbeat.workspace_id", "team-a")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/cart")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("team-a"),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any()))
+                .thenReturn(List.of(filteredLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("resourceFilter", "service.version!=1.2.3")
+                        .param("attributeFilter", "http.route!=/checkout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+
+        verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"), eq(Map.of("service.version", "!1.2.3")),
+                eq(Map.of("http.route", "!/checkout")));
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("team-a"),
+                eq(Map.of("service.version", "!1.2.3")), eq(Map.of("http.route", "!/checkout")));
+    }
+
+    @Test
+    void testListLogsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        LogEntry stableLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("stable checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("INFO")
+                .body("canary checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityText("INFO")
+                .body("cart checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/cart")))
+                .build();
+        LogEntry otherVersionLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityText("INFO")
+                .body("other checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "2.0.0",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(stableLog, canaryLog, cartLog, otherVersionLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("resourceFilter", "service.version IN (\"1.2.3\", '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("stable checkout log"))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void testListLogsDoesNotLeakUnscopedTotalWhenWorkspacePageAlreadyMatches() throws Exception {
+        LogEntry teamAlphaLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "hertzbeat.workspace_id", "team-a")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any()))
+                .thenReturn(List.of(teamAlphaLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+        verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testOverviewStatsPushesWorkspaceAggregateIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"))).thenReturn(java.util.Map.of(
+                        "totalCount", 3L,
+                        "infoCount", 2L,
+                        "errorCount", 1L,
+                        "fatalCount", 0L,
+                        "warnCount", 0L,
+                        "debugCount", 0L,
+                        "traceCount", 0L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(3))
+                .andExpect(jsonPath("$.data.infoCount").value(2))
+                .andExpect(jsonPath("$.data.errorCount").value(1));
+
+        verify(historyDataReader).countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testOverviewStatsUsesRequestWorkspaceContext() throws Exception {
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder()
+                        .severityNumber(9)
+                        .resource(new HashMap<>(java.util.Map.of("hertzbeat.workspace_id", "team-a")))
+                        .build(),
+                LogEntry.builder()
+                        .severityNumber(17)
+                        .resource(new HashMap<>(java.util.Map.of("hertzbeat.workspace_id", "team-b")))
+                        .build()
+        );
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(1))
+                .andExpect(jsonPath("$.data.infoCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(0));
+
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
+    }
+
+    @Test
+    void testOverviewStatsWithMixedSeverityLogs() throws Exception {
+        // Create logs with different severity levels according to OpenTelemetry standard
+        List<LogEntry> mockLogs = Arrays.asList(
+                // TRACE (1-4)
+                LogEntry.builder().severityNumber(2).build(),
+                // DEBUG (5-8)
+                LogEntry.builder().severityNumber(6).build(),
+                // INFO (9-12)
+                LogEntry.builder().severityNumber(9).build(),
+                LogEntry.builder().severityNumber(10).build(),
+                // WARN (13-16)
+                LogEntry.builder().severityNumber(14).build(),
+                // ERROR (17-20)
+                LogEntry.builder().severityNumber(17).build(),
+                LogEntry.builder().severityNumber(18).build(),
+                // FATAL (21-24)
+                LogEntry.builder().severityNumber(21).build()
+        );
+
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/overview")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(8))
+                .andExpect(jsonPath("$.data.traceCount").value(1))
+                .andExpect(jsonPath("$.data.debugCount").value(1))
+                .andExpect(jsonPath("$.data.infoCount").value(2))
+                .andExpect(jsonPath("$.data.warnCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(2))
+                .andExpect(jsonPath("$.data.fatalCount").value(1));
+    }
+
+    @Test
+    void testOverviewStatsWithTimeRange() throws Exception {
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder().severityNumber(9).build(),
+                LogEntry.builder().severityNumber(17).build()
+        );
+
+        when(historyDataReader.queryLogsByMultipleConditions(eq(1734005477000L), eq(1734005478000L),
+                any(), any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/overview")
+                        .param("start", "1734005477000")
+                        .param("end", "1734005478000")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(2));
+    }
+
+    @Test
+    void testOverviewStatsUsesStorageAggregateWhenAvailable() throws Exception {
+        when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false)))
+                .thenReturn(java.util.Map.ofEntries(
+                        java.util.Map.entry("totalCount", 42L),
+                        java.util.Map.entry("fatalCount", 1L),
+                        java.util.Map.entry("errorCount", 2L),
+                        java.util.Map.entry("warnCount", 3L),
+                        java.util.Map.entry("infoCount", 36L),
+                        java.util.Map.entry("debugCount", 0L),
+                        java.util.Map.entry("traceCount", 0L),
+                        java.util.Map.entry("withTrace", 30L),
+                        java.util.Map.entry("withoutTrace", 12L),
+                        java.util.Map.entry("withSpan", 25L),
+                        java.util.Map.entry("withBothTraceAndSpan", 20L)
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(42))
+                .andExpect(jsonPath("$.data.errorCount").value(2))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(30))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(20));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsFallsBackWhenPrimaryReaderHasNoData() throws Exception {
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("fallback log")
+                .attributes(new HashMap<>())
+                .build();
+        MockMvc fallbackMockMvc = MockMvcBuilders
+                .standaloneSetup(new LogQueryController(new LogQueryServiceImpl(List.of(
+                        workspaceCompatibleReader(historyDataReader),
+                        workspaceCompatibleReader(secondaryHistoryDataReader))), queryAdmissionService(),
+                        investigationService()))
+                .build();
+
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default")))
+                .thenThrow(new UnsupportedOperationException());
+        when(secondaryHistoryDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(1L);
+        when(secondaryHistoryDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
+                .thenReturn(List.of(logEntry));
+
+        fallbackMockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+
+        verify(secondaryHistoryDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void testTraceCoverageStats() throws Exception {
+        List<LogEntry> mockLogs = Arrays.asList(
+                // With both trace and span
+                LogEntry.builder().traceId("trace1").spanId("span1").build(),
+                LogEntry.builder().traceId("trace2").spanId("span2").build(),
+                // With trace only
+                LogEntry.builder().traceId("trace3").spanId("").build(),
+                // With span only
+                LogEntry.builder().traceId("").spanId("span4").build(),
+                // Without trace info
+                LogEntry.builder().traceId("").spanId("").build(),
+                LogEntry.builder().build() // null values
+        );
+
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/trace-coverage")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(3))
+                .andExpect(jsonPath("$.data.traceCoverage.withoutTrace").value(3))
+                .andExpect(jsonPath("$.data.traceCoverage.withSpan").value(3))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(2));
+    }
+
+    @Test
+    void testTraceCoverageStatsHideInternalIgnoresCollectorLogs() throws Exception {
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder()
+                        .traceId("trace-internal")
+                        .spanId("span-internal")
+                        .resource(new HashMap<>(java.util.Map.of("service.name", "otelcol-contrib")))
+                        .build(),
+                LogEntry.builder()
+                        .traceId("trace-business")
+                        .spanId("span-business")
+                        .resource(new HashMap<>(java.util.Map.of("service.name", "checkout")))
+                        .build()
+        );
+
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any(), anySet(), eq(true))).thenReturn(mockLogs);
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/logs/stats/trace-coverage")
+                                .param("hideInternal", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(1))
+                .andExpect(jsonPath("$.data.traceCoverage.withSpan").value(1))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(1));
+    }
+
+    @Test
+    void testTraceCoverageStatsUsesStorageAggregateWhenAvailable() throws Exception {
+        when(historyDataReader.countLogTraceCoverage(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false)))
+                .thenReturn(java.util.Map.of(
+                        "withTrace", 10L,
+                        "withoutTrace", 90L,
+                        "withSpan", 8L,
+                        "withBothTraceAndSpan", 8L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trace-coverage"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(10))
+                .andExpect(jsonPath("$.data.traceCoverage.withoutTrace").value(90));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testTraceCoverageStatsPushesWorkspaceAggregateIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogTraceCoverage(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"))).thenReturn(java.util.Map.of(
+                        "withTrace", 5L,
+                        "withoutTrace", 2L,
+                        "withSpan", 4L,
+                        "withBothTraceAndSpan", 3L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trace-coverage"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(5))
+                .andExpect(jsonPath("$.data.traceCoverage.withoutTrace").value(2))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(3));
+
+        verify(historyDataReader).countLogTraceCoverage(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testTraceCoverageStatsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        LogEntry tracedLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("traced checkout coverage")
+                .traceId("trace-checkout")
+                .spanId("span-checkout")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry untracedLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("ERROR")
+                .body("untraced checkout coverage")
+                .traceId("")
+                .spanId("")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityText("WARN")
+                .body("canary checkout coverage")
+                .traceId("trace-canary")
+                .spanId("span-canary")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityText("INFO")
+                .body("cart checkout coverage")
+                .traceId("trace-cart")
+                .spanId("span-cart")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(tracedLog, untracedLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trace-coverage")
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(1))
+                .andExpect(jsonPath("$.data.traceCoverage.withoutTrace").value(1))
+                .andExpect(jsonPath("$.data.traceCoverage.withSpan").value(1))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(1));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogTraceCoverage(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), any(), any(), any(), any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any());
+    }
+
+    @Test
+    void testTrendStatsUsesTheSmallestAdaptiveIntervalWithinSixtyBuckets() throws Exception {
+        long start = 1_734_005_460_000L;
+        long end = start + 30 * 60_000L;
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder().timeUnixNano((start + 17_000L) * 1_000_000L).build(),
+                LogEntry.builder().timeUnixNano((start + 47_000L) * 1_000_000L).build(),
+                LogEntry.builder().timeUnixNano((start + 77_000L) * 1_000_000L).build()
+        );
+
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/trend")
+                        .param("start", String.valueOf(start))
+                        .param("end", String.valueOf(end))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.start").value(start))
+                .andExpect(jsonPath("$.data.end").value(end))
+                .andExpect(jsonPath("$.data.intervalMs").value(60_000L))
+                .andExpect(jsonPath("$.data.buckets.length()").value(2))
+                .andExpect(jsonPath("$.data.buckets[0].start").value(start))
+                .andExpect(jsonPath("$.data.buckets[0].count").value(2))
+                .andExpect(jsonPath("$.data.buckets[1].start").value(start + 60_000L))
+                .andExpect(jsonPath("$.data.buckets[1].count").value(1));
+    }
+
+    @Test
+    void testTrendStatsWithNullTimestamp() throws Exception {
+        long currentBucket = Math.floorDiv(System.currentTimeMillis(), 60_000L) * 60_000L;
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder().timeUnixNano(currentBucket * 1_000_000L).build(),
+                LogEntry.builder().timeUnixNano(null).build() // This should be filtered out
+        );
+
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/trend")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.intervalMs").value(60_000L))
+                .andExpect(jsonPath("$.data.buckets.length()").value(1));
+    }
+
+    @Test
+    void testTrendStatsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        long bucketTimeUnixNano = 1734005477630000000L;
+        long timestampMs = bucketTimeUnixNano / 1_000_000L;
+        long bucketStart = Math.floorDiv(timestampMs, 60_000L) * 60_000L;
+        LogEntry stableLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano)
+                .severityText("INFO")
+                .body("stable checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry secondStableLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano + 1_000_000L)
+                .severityText("ERROR")
+                .body("second checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano + 2_000_000L)
+                .severityText("WARN")
+                .body("canary checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano + 3_000_000L)
+                .severityText("INFO")
+                .body("cart checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(stableLog, secondStableLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trend")
+                        .param("start", String.valueOf(bucketStart))
+                        .param("end", String.valueOf(bucketStart + 30 * 60_000L))
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.intervalMs").value(60_000L))
+                .andExpect(jsonPath("$.data.buckets.length()").value(1))
+                .andExpect(jsonPath("$.data.buckets[0].start").value(bucketStart))
+                .andExpect(jsonPath("$.data.buckets[0].count").value(2));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsByInterval(any(), any(), anyLong(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), any(), any(), any(), any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any());
+    }
+
+    @Test
+    void testTrendStatsUsesStorageAggregateWhenAvailable() throws Exception {
+        long currentBucket = Math.floorDiv(System.currentTimeMillis(), 60_000L) * 60_000L;
+        when(historyDataReader.countLogsByInterval(any(), any(), anyLong(), any(), any(), any(), any(),
+                any(), anySet(), eq(false)))
+                .thenReturn(List.of(new LogTrendBucket(currentBucket, 12L)));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.buckets[0].start").value(currentBucket))
+                .andExpect(jsonPath("$.data.buckets[0].count").value(12));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testTrendStatsRejectsWindowBeyondSupportedSixtyBuckets() throws Exception {
+        long start = 1_728_000_000_000L;
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trend")
+                        .param("start", String.valueOf(start))
+                        .param("end", String.valueOf(start + 60 * 86_400_000L)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(historyDataReader);
+    }
+
+    @Test
+    void testTrendStatsPushesWorkspaceAggregateIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        long currentBucket = Math.floorDiv(System.currentTimeMillis(), 60_000L) * 60_000L;
+        when(historyDataReader.countLogsByInterval(any(), any(), anyLong(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a")))
+                .thenReturn(List.of(new LogTrendBucket(currentBucket, 12L)));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.buckets[0].start").value(currentBucket))
+                .andExpect(jsonPath("$.data.buckets[0].count").value(12));
+
+        verify(historyDataReader).countLogsByInterval(any(), any(), anyLong(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testGroupByStatsPushesWorkspaceAndAttributeFiltersIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsByGroup(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"), eq("checkout"), any(), any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(), eq("resource:service.version")))
+                .thenReturn(java.util.Map.of("1.2.3", 7L, "2.0.0", 4L));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/group-by")
+                        .param("serviceName", "checkout")
+                        .param("resourceFilter", "service.version=1.2.3")
+                        .param("attributeFilter", "http.route:/checkout")
+                        .param("groupBy", "resource:service.version")
+                        .param("limit", "1")
+                        .param("orderBy", "count-asc")
+                        .param("minCount", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groupBy").value("resource:service.version"))
+                .andExpect(jsonPath("$.data.groups[0].value").value("1.2.3"))
+                .andExpect(jsonPath("$.data.groups[0].count").value(7))
+                .andExpect(jsonPath("$.data.groups.length()").value(1));
+
+        verify(historyDataReader).countLogsByGroup(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"), eq("checkout"), any(), any(),
+                eq(Map.of("service.version", "1.2.3")), eq(Map.of("http.route", "/checkout")),
+                eq("resource:service.version"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testGroupByStatsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        LogEntry stableLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("stable checkout group")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry secondStableLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("ERROR")
+                .body("second checkout group")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityText("WARN")
+                .body("canary checkout group")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityText("INFO")
+                .body("cart checkout group")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(stableLog, secondStableLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/group-by")
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')")
+                        .param("groupBy", "resource:service.version")
+                        .param("orderBy", "count-asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groupBy").value("resource:service.version"))
+                .andExpect(jsonPath("$.data.groups.length()").value(2))
+                .andExpect(jsonPath("$.data.groups[0].value").value("1.2.3"))
+                .andExpect(jsonPath("$.data.groups[0].count").value(1))
+                .andExpect(jsonPath("$.data.groups[1].value").value("1.2.4"))
+                .andExpect(jsonPath("$.data.groups[1].count").value(1));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsByGroup(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), any(), any(), any(), any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(), eq("resource:service.version"));
+    }
+
+    private ObservabilityQueryAdmissionService queryAdmissionService() {
+        return new ObservabilityQueryAdmissionService(8, 8, 8, 4, 8, Duration.ofMillis(100));
+    }
+
+    private static org.apache.hertzbeat.observability.investigation.service.LogInvestigationReadModelService
+            investigationService() {
+        return org.mockito.Mockito.mock(
+                org.apache.hertzbeat.observability.investigation.service.LogInvestigationReadModelService.class);
+    }
+}

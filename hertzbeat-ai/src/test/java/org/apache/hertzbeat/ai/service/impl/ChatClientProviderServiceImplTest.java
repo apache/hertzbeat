@@ -48,21 +48,61 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
+import org.springframework.context.ApplicationContext;
 
-/**
- * Verifies that the provider configuration cache reacts to enable and disable events.
- */
 class ChatClientProviderServiceImplTest {
+
+    @Test
+    void isConfiguredReturnsFalseWhenProviderConfigIsMissing() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(null);
+
+        ChatClientProviderServiceImpl service = newService(generalConfigDao);
+
+        assertFalse(service.isConfigured());
+    }
+
+    @Test
+    void isConfiguredReturnsFalseWhenApiKeyIsBlank() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(providerConfig(" "));
+
+        ChatClientProviderServiceImpl service = newService(generalConfigDao);
+
+        assertFalse(service.isConfigured());
+    }
+
+    @Test
+    void isConfiguredReturnsFalseWhenProviderContentIsInvalid() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(GeneralConfig.builder()
+                .type("provider")
+                .content("{")
+                .build());
+
+        ChatClientProviderServiceImpl service = newService(generalConfigDao);
+
+        assertFalse(service.isConfigured());
+    }
+
+    @Test
+    void isConfiguredReturnsTrueWhenApiKeyIsPresent() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(providerConfig("sk-test"));
+
+        ChatClientProviderServiceImpl service = newService(generalConfigDao);
+
+        assertTrue(service.isConfigured());
+    }
 
     @Test
     void configurationChangeShouldRefreshConfiguredState() {
         AtomicReference<GeneralConfig> currentConfig = new AtomicReference<>();
-        GeneralConfigDao configDao = configDao(currentConfig);
+        GeneralConfigDao configDao = proxyConfigDao(currentConfig);
         ChatClientProviderServiceImpl service = new ChatClientProviderServiceImpl(null, configDao, null);
 
         assertFalse(service.isConfigured());
@@ -87,7 +127,7 @@ class ChatClientProviderServiceImplTest {
         ToolCallback delegate = mock(ToolCallback.class);
         SubjectSum subject = mock(SubjectSum.class);
         ChatClientProviderServiceImpl service = new ChatClientProviderServiceImpl(
-                applicationContext, configDao(new AtomicReference<>()), skillRegistry);
+                applicationContext, proxyConfigDao(new AtomicReference<>()), skillRegistry);
 
         when(applicationContext.getBean("openAiChatClient", ChatClient.class)).thenReturn(chatClient);
         when(chatClient.prompt()).thenReturn(requestSpec);
@@ -119,23 +159,31 @@ class ChatClientProviderServiceImplTest {
                 contextCaptor.getValue())));
     }
 
-    private GeneralConfigDao configDao(AtomicReference<GeneralConfig> currentConfig) {
+    private static GeneralConfigDao proxyConfigDao(AtomicReference<GeneralConfig> currentConfig) {
         return (GeneralConfigDao) Proxy.newProxyInstance(
                 GeneralConfigDao.class.getClassLoader(),
                 new Class<?>[]{GeneralConfigDao.class},
                 (proxy, method, args) -> "findByType".equals(method.getName()) ? currentConfig.get() : null);
     }
 
-    private GeneralConfig providerConfig(String apiKey) {
-        ModelProviderConfig modelConfig = new ModelProviderConfig();
-        modelConfig.setApiKey(apiKey);
-        return GeneralConfig.builder()
-                .type("provider")
-                .content(JsonUtil.toJson(modelConfig))
-                .build();
+    private static AiProviderConfigChangeEvent changeEvent() {
+        return new AiProviderConfigChangeEvent(new StaticApplicationContext());
     }
 
-    private AiProviderConfigChangeEvent changeEvent() {
-        return new AiProviderConfigChangeEvent(new StaticApplicationContext());
+    private static ChatClientProviderServiceImpl newService(GeneralConfigDao generalConfigDao) {
+        return new ChatClientProviderServiceImpl(
+                mock(ApplicationContext.class),
+                generalConfigDao,
+                mock(SkillRegistry.class));
+    }
+
+    private static GeneralConfig providerConfig(String apiKey) {
+        ModelProviderConfig providerConfig = new ModelProviderConfig();
+        providerConfig.setCode("openai");
+        providerConfig.setApiKey(apiKey);
+        return GeneralConfig.builder()
+                .type("provider")
+                .content(JsonUtil.toJson(providerConfig))
+                .build();
     }
 }

@@ -1,0 +1,117 @@
+{
+  "rows": [
+    {
+      "id": "small",
+      "value": 1e-08
+    },
+    {
+      "id": "large",
+      "value": 1e+20
+    },
+    {
+      "id": "smalltext",
+      "value": "1e-8"
+    },
+    {
+      "id": "largetext",
+      "value": "1e20"
+    },
+    {
+      "id": "floattext",
+      "value": "0.00000001"
+    },
+    {
+      "id": "boolean",
+      "value": true
+    },
+    {
+      "id": "booltext",
+      "value": "true"
+    },
+    {
+      "id": "empty",
+      "value": ""
+    },
+    {
+      "id": "nul",
+      "value": "\u0000"
+    },
+    {
+      "id": "tab",
+      "value": "\t"
+    },
+    {
+      "id": "newline",
+      "value": "\n"
+    },
+    {
+      "id": "escaped",
+      "value": "\"\\"
+    },
+    {
+      "id": "unicode",
+      "value": "\ud83d\ude00"
+    },
+    {
+      "id": "null",
+      "value": null
+    },
+    {
+      "id": "array",
+      "value": []
+    },
+    {
+      "id": "object",
+      "value": {}
+    }
+  ],
+  "cases": [
+    {
+      "operator": "EQUALS",
+      "value": "1e-8",
+      "expected": [
+        "small",
+        "smalltext"
+      ]
+    },
+    {
+      "operator": "EQUALS",
+      "value": "1e20",
+      "expected": [
+        "large",
+        "largetext"
+      ]
+    },
+    {
+      "operator": "EQUALS",
+      "value": "true",
+      "expected": [
+        "boolean",
+        "booltext"
+      ]
+    },
+    {
+      "operator": "EQUALS",
+      "value": "",
+      "expected": [
+        "empty"
+      ]
+    },
+    {
+      "operator": "GLOB",
+      "value": "*",
+      "expected": [
+        "booltext",
+        "empty",
+        "escaped",
+        "floattext",
+        "largetext",
+        "newline",
+        "nul",
+        "smalltext",
+        "tab",
+        "unicode"
+      ]
+    }
+  ]
+}

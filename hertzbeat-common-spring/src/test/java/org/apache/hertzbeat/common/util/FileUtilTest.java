@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +69,25 @@ class FileUtilTest {
         assertEquals(ExportFileConstants.ExcelFile.TYPE, FileUtil.getFileType(excelFile));
         assertEquals(ExportFileConstants.YamlFile.TYPE, FileUtil.getFileType(yamlFile));
         assertEquals("", FileUtil.getFileType(emptyFile));
+    }
+
+    @Test
+    void getFileTypeSupportsYamlAliasAndCaseInsensitiveKnownExtensions() {
+        assertEquals(ExportFileConstants.YamlFile.TYPE, FileUtil.getFileType(file("test.yml")));
+        assertEquals(ExportFileConstants.YamlFile.TYPE, FileUtil.getFileType(file("test.YAML")));
+        assertEquals(ExportFileConstants.JsonFile.TYPE, FileUtil.getFileType(file("test.JSON")));
+        assertEquals(ExportFileConstants.ExcelFile.TYPE, FileUtil.getFileType(file("test.XLSX")));
+    }
+
+    @Test
+    void getFileTypeRejectsUnknownOrDisguisedExtensions() {
+        assertNull(FileUtil.getFileType(file("test.xls")));
+        assertNull(FileUtil.getFileType(file("test.yaml.txt")));
+        assertEquals("", FileUtil.getFileType(file("test")));
+    }
+
+    private static MockMultipartFile file(String originalFilename) {
+        return new MockMultipartFile("file", originalFilename, null, new byte[0]);
     }
 
 }

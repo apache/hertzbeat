@@ -53,10 +53,10 @@ public class AlarmEvaluator implements DisposableBean {
     private static final String WINDOW_START_TIME = "window_start_time";
     private static final String WINDOW_END_TIME = "window_end_time";
     private static final String MATCHING_LOGS_COUNT = "matching_logs_count";
-    
+
     private final AlarmCommonReduce alarmCommonReduce;
     private final ManagedExecutor workerExecutor;
-    
+
     public AlarmEvaluator(AlarmCommonReduce alarmCommonReduce) {
         this(alarmCommonReduce, VirtualThreadProperties.defaults());
     }
@@ -95,7 +95,7 @@ public class AlarmEvaluator implements DisposableBean {
     public void sendAndProcessWindowData(WindowAggregator.WindowData windowData) {
         workerExecutor.execute(processWindowData(windowData));
     }
-    
+
     private Runnable processWindowData(WindowAggregator.WindowData windowData) {
         return () -> {
             AlertDefine alertDefine = windowData.getAlertDefine();
@@ -135,7 +135,7 @@ public class AlarmEvaluator implements DisposableBean {
             }
         };
     }
-    
+
     private void generateIndividualAlert(MatchingLogEvent matchingLog, long currentTime) {
         AlertDefine define = matchingLog.getAlertDefine();
         LogEntry logEntry = matchingLog.getLogEntry();
@@ -160,21 +160,21 @@ public class AlarmEvaluator implements DisposableBean {
                 .startAt(currentTime)
                 .activeAt(currentTime)
                 .build();
-        
+
         alarmCommonReduce.reduceAndSendAlarm(alert.clone());
-        
+
         log.debug("Generated individual alert for define: {}", define.getName());
     }
-    
-    private void generateGroupAlert(WindowAggregator.WindowData windowData, 
+
+    private void generateGroupAlert(WindowAggregator.WindowData windowData,
                                    List<MatchingLogEvent> matchingLogs, long currentTime) {
 
         List<SingleAlert> alerts = new ArrayList<>(matchingLogs.size());
         AlertDefine define = windowData.getAlertDefine();
-        
+
         // Create fingerprints for group alert
         Map<String, String> commonFingerPrints = createCommonFingerprints(define);
-        
+
         // Add window information to fingerprints
         commonFingerPrints.put(WINDOW_START_TIME, String.valueOf(windowData.getStartTime()));
         commonFingerPrints.put(WINDOW_END_TIME, String.valueOf(windowData.getEndTime()));
@@ -205,11 +205,11 @@ public class AlarmEvaluator implements DisposableBean {
             alerts.add(alert.clone());
         }
         alarmCommonReduce.reduceAndSendAlarmGroup(commonFingerPrints, alerts);
-        
-        log.debug("Generated group alert for define: {} with {} matching logs", 
+
+        log.debug("Generated group alert for define: {} with {} matching logs",
                  define.getName(), matchingLogs.size());
     }
-    
+
     private String getAlertMode(AlertDefine alertDefine) {
         String mode = null;
         if (alertDefine.getLabels() != null) {
@@ -221,40 +221,40 @@ public class AlarmEvaluator implements DisposableBean {
             return mode;
         }
     }
-    
+
     private Map<String, String> createCommonFingerprints(AlertDefine define) {
         Map<String, String> fingerprints = new HashMap<>(8);
         fingerprints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
         fingerprints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
-        
+
         if (define.getLabels() != null) {
             fingerprints.putAll(define.getLabels());
         }
-        
+
         return fingerprints;
     }
 
     private Map<String, Object> createFieldValueMap(LogEntry logEntry, AlertDefine define) {
         Map<String, Object> fieldValueMap = new HashMap<>(8);
         fieldValueMap.put("log", logEntry);
-        
+
         if (define.getLabels() != null) {
             fieldValueMap.putAll(define.getLabels());
         }
-        
+
         return fieldValueMap;
     }
-    
+
     private Map<String, String> createAlertAnnotations(AlertDefine define, Map<String, Object> fieldValueMap) {
         Map<String, String> annotations = new HashMap<>(8);
-        
+
         if (define.getAnnotations() != null) {
             for (Map.Entry<String, String> entry : define.getAnnotations().entrySet()) {
-                annotations.put(entry.getKey(), 
+                annotations.put(entry.getKey(),
                                AlertTemplateUtil.render(entry.getValue(), fieldValueMap));
             }
         }
-        
+
         return annotations;
     }
 

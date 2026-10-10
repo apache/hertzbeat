@@ -1,0 +1,94 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.layoutInlineControl,
+.layoutEditInline,
+.layoutEditActions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+
+.layoutInlineControl {
+  padding-inline-start: var(--hb-space-2);
+  border-inline-start: 1px solid var(--hb-border-subtle);
+}
+
+.layoutReadWarning,
+.layoutEditHint {
+  color: var(--hb-text-muted);
+  font-size: 11px;
+}
+
+.layoutEditInline {
+  justify-content: flex-end;
+  padding-inline-start: var(--hb-space-2);
+  border-inline-start: 1px solid var(--hb-border-subtle);
+}
+
+.realtimeLayoutHost {
+  width: 100%;
+  min-width: 0;
+}
+
+.realtimeLayoutItem,
+.realtimeLayoutItemEditing {
+  min-width: 0;
+}
+
+.realtimeLayoutItem > :global([data-monitor-group]),
+.realtimeLayoutItemEditing > :global([data-monitor-group]) {
+  height: 100%;
+  overflow: hidden;
+}
+
+.realtimeLayoutItemEditing {
+  border-radius: var(--hb-radius-control);
+  outline: 1px dashed color-mix(in srgb, var(--hb-brand-accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+.realtimeLayoutItemEditing :global([data-layout-panel-header]) {
+  cursor: grab;
+  user-select: none;
+}
+
+.realtimeLayoutItemEditing :global([data-layout-panel-header]) :global(.ant-btn) {
+  cursor: default;
+}
+
+.realtimeLayoutHost :global(.react-grid-item > .react-resizable-handle::after) {
+  width: 8px;
+  height: 8px;
+  border-color: var(--hb-brand-accent);
+}
+
+@container monitor-workbench (max-width: 860px) {
+  .layoutInlineControl,
+  .layoutEditInline {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .realtimeLayoutItemEditing :global([data-layout-panel-header]) {
+    min-height: 70px;
+    align-items: flex-end;
+    padding-inline-end: 8px;
+  }
+}

@@ -17,13 +17,21 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Query all enabled notification policies
  */
 public interface NoticeTemplateDao extends JpaRepository<NoticeTemplate, Long>, JpaSpecificationExecutor<NoticeTemplate> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select template from NoticeTemplate template where template.id = :id")
+    Optional<NoticeTemplate> findByIdForUpdate(@Param("id") Long id);
 }

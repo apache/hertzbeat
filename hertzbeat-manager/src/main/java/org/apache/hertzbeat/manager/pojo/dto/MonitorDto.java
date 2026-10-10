@@ -26,10 +26,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Objects;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import java.util.Objects;
+import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
 
 /**
  * Monitoring Information External Interaction Entities

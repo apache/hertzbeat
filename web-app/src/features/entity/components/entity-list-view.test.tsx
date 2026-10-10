@@ -1,0 +1,169 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
+import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { defaultEntityQuery } from '../model/entity-view-model';
+import { EntityListView, type EntityListViewProps } from './entity-list-view';
+
+describe('EntityListView', () => {
+  beforeAll(async () => {
+    await initializeI18n();
+    await loadLocale('en-US');
+  });
+  afterEach(cleanup);
+
+  it.each(['loading', 'empty', 'permission', 'unavailable', 'error'] as const)(
+    'keeps %s distinct from ready rows',
+    kind => {
+      renderView({ evidence: { kind } });
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      expect(document.querySelector('[data-hb-operational-page]')).toBeInTheDocument();
+      expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+      expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    }
+  );
+
+  it('uses familiar resource-catalog language instead of exposing the internal domain model', () => {
+    renderView({ evidence: { kind: 'empty' } });
+    expect(screen.getByRole('heading', { name: 'Resource catalog' })).toBeInTheDocument();
+    expect(screen.getByText(/automatically unified/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search resources')).toBeInTheDocument();
+    expect(screen.getByRole('search')).toBeInTheDocument();
+    expect(screen.getByText('No resources match the current filters.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Discover resources' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import definitions' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add resource' })).toBeInTheDocument();
+  });
+
+  it('keeps discovery readable but hides write entry points without write permission', () => {
+    renderView({ evidence: { kind: 'empty' }, canWrite: false });
+
+    expect(screen.getByRole('button', { name: 'Discover resources' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Import definitions' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add resource' })).not.toBeInTheDocument();
+  });
+
+  it('keeps secondary filters collapsed by default and preserves their values across disclosure', () => {
+    renderView({ query: { ...defaultEntityQuery, owner: 'sre', source: 'manual', tier: 'tier1' } });
+    expect(screen.queryByLabelText(i18n.t('entity.filters.owner'))).not.toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.filters.showAdvanced') }));
+    expect(screen.getByLabelText(i18n.t('entity.filters.owner'))).toHaveValue('sre');
+    expect(screen.getByLabelText(i18n.t('entity.filters.source'))).toHaveValue('manual');
+    expect(screen.getByLabelText(i18n.t('entity.filters.tier'))).toHaveValue('tier1');
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.filters.hideAdvanced') }));
+    expect(screen.queryByLabelText(i18n.t('entity.filters.owner'))).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.filters.showAdvanced') }));
+    expect(screen.getByLabelText(i18n.t('entity.filters.owner'))).toHaveValue('sre');
+  });
+
+  it('opens the selected row from the dense inventory table', () => {
+    const open = vi.fn();
+    renderView(
+      {
+        evidence: {
+          kind: 'ready',
+          records: [
+            {
+              id: 7,
+              type: 'service',
+              name: 'checkout',
+              environment: 'prod',
+              owner: 'sre',
+              status: 'degraded',
+              identityCount: 1,
+              monitorCount: 2,
+              relationCount: 1,
+              activeAlertCount: 1
+            }
+          ],
+          total: 1
+        }
+      },
+      { open }
+    );
+    fireEvent.click(screen.getByText('checkout'));
+    expect(open).toHaveBeenCalledWith(7);
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('Degraded')).toBeInTheDocument();
+    expect(screen.queryByText('service')).not.toBeInTheDocument();
+    expect(screen.queryByText('degraded')).not.toBeInTheDocument();
+  });
+
+  it('keeps unknown backend display codes inspectable without fabricating a translation', () => {
+    renderView({
+      evidence: {
+        kind: 'ready',
+        records: [
+          {
+            id: 9,
+            type: 'vendor_resource',
+            name: 'custom',
+            status: 'vendor_state',
+            identityCount: 0,
+            monitorCount: 0,
+            relationCount: 0,
+            activeAlertCount: 0
+          }
+        ],
+        total: 1
+      }
+    });
+    expect(screen.getByText('vendor_resource')).toBeInTheDocument();
+    expect(screen.getByText('vendor_state')).toBeInTheDocument();
+  });
+});
+
+function renderView(
+  statePatch: Partial<EntityListViewProps['state']>,
+  actionsPatch: Partial<EntityListViewProps['actions']> = {}
+) {
+  const actions: EntityListViewProps['actions'] = {
+    updateDraft: () => undefined,
+    submit: () => undefined,
+    changeFilter: () => undefined,
+    changeSort: () => undefined,
+    changePage: () => undefined,
+    refresh: () => undefined,
+    discover: () => undefined,
+    importDefinitions: () => undefined,
+    create: () => undefined,
+    open: () => undefined,
+    ...actionsPatch
+  };
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <EntityListView
+        state={{
+          query: defaultEntityQuery,
+          draft: '',
+          evidence: { kind: 'loading' },
+          refreshing: false,
+          canWrite: true,
+          ...statePatch
+        }}
+        actions={actions}
+      />
+    </I18nextProvider>
+  );
+}

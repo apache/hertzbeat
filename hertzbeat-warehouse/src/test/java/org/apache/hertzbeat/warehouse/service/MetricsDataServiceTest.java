@@ -33,6 +33,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.service.impl.MetricsDataServiceImpl;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.WarehouseStorageProbeException;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,14 +66,22 @@ public class MetricsDataServiceTest {
 
     @Test
     public void testGetWarehouseStorageServerStatus() {
-        when(historyDataReader.isServerAvailable()).thenReturn(false);
+        when(historyDataReader.getServerAvailability())
+                .thenReturn(HistoryDataReader.ServerAvailability.UNAVAILABLE);
         assertFalse(metricsDataService.getWarehouseStorageServerStatus());
 
-        when(historyDataReader.isServerAvailable()).thenReturn(true);
+        when(historyDataReader.getServerAvailability())
+                .thenReturn(HistoryDataReader.ServerAvailability.AVAILABLE);
+        assertTrue(metricsDataService.getWarehouseStorageServerStatus());
+
         when(historyDataReader.getDroppedMetricCount()).thenReturn(7L);
         when(historyDataReader.getPendingMetricCount()).thenReturn(3);
-        assertTrue(metricsDataService.getWarehouseStorageServerStatus());
         assertEquals(new WarehouseStorageStatus(true, 7, 3), metricsDataService.getWarehouseStorageStatus());
+
+        when(historyDataReader.getServerAvailability())
+                .thenThrow(new WarehouseStorageProbeException());
+        assertThrows(WarehouseStorageProbeException.class,
+                metricsDataService::getWarehouseStorageServerStatus);
     }
 
     @Test
@@ -115,5 +124,31 @@ public class MetricsDataServiceTest {
         when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
         assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, intervalTrue));
         verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history));
+    }
+
+    @Test
+    public void testGetMetricHistoryDataWithAbsoluteRangeAndStep() {
+        String instance = "127.0.0.1:8080";
+        String app = "linux";
+        String metrics = "disk";
+        String metric = "used";
+        String history = "6h";
+        Long start = 1712730000000L;
+        Long end = 1712733600000L;
+        String step = "60s";
+
+        when(historyDataReader.getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history),
+                eq(start), eq(end), eq(step))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, false,
+                start, end, step));
+        verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric),
+                eq(history), eq(start), eq(end), eq(step));
+
+        when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric),
+                eq(history), eq(start), eq(end), eq(step))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, true,
+                start, end, step));
+        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics),
+                eq(metric), eq(history), eq(start), eq(end), eq(step));
     }
 }

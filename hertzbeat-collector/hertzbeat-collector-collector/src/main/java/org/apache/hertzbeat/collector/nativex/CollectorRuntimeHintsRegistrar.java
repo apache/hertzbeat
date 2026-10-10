@@ -32,6 +32,8 @@ import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.arrow.vector.types.pojo.Schema;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.springframework.aot.hint.BindingReflectionHintsRegistrar;
 import org.springframework.aot.hint.MemberCategory;
@@ -40,7 +42,6 @@ import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.TypeFilter;
-import org.springframework.lang.NonNull;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -53,12 +54,14 @@ public class CollectorRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
     private static final String JOB_PROTOCOL_PACKAGE = "org.apache.hertzbeat.common.entity.job.protocol";
 
     @Override
-    public void registerHints(@NonNull RuntimeHints hints, ClassLoader classLoader) {
+    public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
         BindingReflectionHintsRegistrar bindingRegistrar = new BindingReflectionHintsRegistrar();
         registerType(bindingRegistrar, hints, ServerInfo.class);
+        registerType(bindingRegistrar, hints, ManagedOtelRuntimeConfig.class);
+        registerType(bindingRegistrar, hints, ManagedOtelRuntimeStatus.class);
         scanBindingPackage(classLoader, bindingRegistrar, hints, JOB_PACKAGE);
         scanBindingPackage(classLoader, bindingRegistrar, hints, JOB_PROTOCOL_PACKAGE);
-        hints.reflection().registerType(NettyAllocationManager.class, MemberCategory.DECLARED_FIELDS);
+        hints.reflection().registerType(NettyAllocationManager.class, MemberCategory.ACCESS_DECLARED_FIELDS);
         registerType(bindingRegistrar, hints, Schema.class);
         registerType(bindingRegistrar, hints, Field.class);
         registerType(bindingRegistrar, hints, FieldType.class);

@@ -30,7 +30,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <dependencySets>
         <dependencySet>
             <!--Use artifacts in the project, third-party packages packaged into the lib directory of the tar.gz file-->
-            <useProjectArtifact>true</useProjectArtifact>
+            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>
@@ -46,11 +46,19 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <fileMode>0755</fileMode>
         </fileSet>
 
+        <!-- External configuration contains only imports and explicit operator overrides. -->
+        <fileSet>
+            <directory>../script/assembly/server/config</directory>
+            <includes>
+                <include>application.yml</include>
+            </includes>
+            <outputDirectory>${file.separator}config</outputDirectory>
+        </fileSet>
+
         <!-- Configuration files under the src/main/resources directory are packaged to the config directory-->
         <fileSet>
             <directory>src/main/resources</directory>
             <includes>
-                <include>application.yml</include>
                 <include>logback-spring.xml</include>
                 <include>sureness.yml</include>
             </includes>
@@ -74,11 +82,11 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <directory>target</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>*.jar</include>
+                <include>${project.build.finalName}.jar</include>
             </includes>
         </fileSet>
 
-        <!-- Pack the static resources of the web app into the directory-->
+        <!-- Pack the static resources of the web app into the dist directory-->
         <fileSet>
             <directory>../web-app/dist</directory>
             <outputDirectory>dist</outputDirectory>

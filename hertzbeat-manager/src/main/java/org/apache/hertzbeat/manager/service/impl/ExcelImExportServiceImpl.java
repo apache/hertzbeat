@@ -176,16 +176,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         };
     }
 
-    private boolean getCellValueAsBoolean(Cell cell) {
-        if (cell == null) {
-            return false;
-        }
-        if (Objects.requireNonNull(cell.getCellType()) == CellType.BOOLEAN) {
-            return cell.getBooleanCellValue();
-        }
-        return false;
-    }
-
     private Integer getCellValueAsInteger(Cell cell) {
         if (cell == null) {
             return null;

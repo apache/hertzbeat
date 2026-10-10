@@ -65,7 +65,8 @@ public class AlertDefine {
     @NotNull
     private String name;
 
-    @Schema(title = "Rule Type: realtime_metric, periodic_metric, realtime_log, periodic_log", example = "realtime_metric")
+    @Schema(title = "Rule Type: realtime_metric, periodic_metric, realtime_log, periodic_log, periodic_trace",
+            example = "realtime_metric")
     private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
@@ -75,11 +76,11 @@ public class AlertDefine {
 
     @Schema(title = "Execution Period/ Window Size (seconds) - For periodic rules/ For log realtime", example = "300")
     private Integer period;
-    
+
     @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
             example = "3", accessMode = READ_WRITE)
     private Integer times;
-    
+
     @Schema(description = "labels(status:success,env:prod,priority:critical)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)

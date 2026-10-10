@@ -23,7 +23,9 @@ import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
 import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.reduce.AlarmGroupReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -42,9 +44,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,10 +81,67 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
 
     private MetricsRealTimeAlertCalculator metricsRealTimeAlertCalculator;
 
+    @Test
+    void positiveCapacityMaintenanceBufferKeepsTelemetryLoopForwardingLaterSamples() throws Exception {
+        int sampleCount = 8;
+        CountDownLatch stored = new CountDownLatch(sampleCount);
+        InMemoryCommonDataQueue queue = new InMemoryCommonDataQueue() {
+            @Override
+            public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
+                super.sendMetricsDataToStorage(metricsData);
+                stored.countDown();
+            }
+        };
+        AlarmCommonReduce reduce = new AlarmCommonReduce(
+                org.mockito.Mockito.mock(AlarmGroupReduce.class), positiveReduceCapacityProperties());
+        AlerterWorkerPool loopPool = new AlerterWorkerPool();
+        MetricsRealTimeAlertCalculator calculator = new MetricsRealTimeAlertCalculator(
+                loopPool, queue, alertDefineService, singleAlertDao, reduce, alarmCacheManager,
+                new JexlExprCalculator(), false) {
+            @Override
+            protected void calculate(CollectRep.MetricsData metricsData) {
+                reduce.reduceAndSendAlarm(org.apache.hertzbeat.common.entity.alerter.SingleAlert.builder()
+                        .labels(Map.of("sample", Long.toString(metricsData.getId())))
+                        .build());
+            }
+        };
+        reduce.pauseAdmission();
+        calculator.startCalculate();
+        for (int index = 0; index < sampleCount; index++) {
+            queue.sendMetricsData(CollectRep.MetricsData.newBuilder().setId(index + 1L).build());
+        }
+
+        assertTrue(stored.await(2, TimeUnit.SECONDS));
+        for (int index = 0; index < sampleCount; index++) {
+            assertNotNull(queue.pollMetricsDataToStorage());
+        }
+
+        reduce.destroy();
+        loopPool.destroy();
+    }
+
+    private static VirtualThreadProperties positiveReduceCapacityProperties() {
+        return new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        new VirtualThreadProperties.QueueProperties(1, 1),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
+    }
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(singleAlertDao.querySingleAlertsByStatus(any())).thenReturn(new ArrayList<>());
+        when(singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(eq("default"), any()))
+                .thenReturn(new ArrayList<>());
         metricsRealTimeAlertCalculator = new MetricsRealTimeAlertCalculator(
                 workerPool,
                 dataQueue,
@@ -111,6 +175,17 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         assertEquals(1, filtered.size());
         assertEquals("equals(__app__,\"redis\") && equals(__instance__, \"501045327364864\")",
                 filtered.get(0).getExpr());
+    }
+
+    @Test
+    void filtersWhitespaceFormattedAvailabilityRuleFromNonAvailabilityMetrics() {
+        AlertDefine availabilityDefine = new AlertDefine();
+        availabilityDefine.setExpr("equals(__app__,\"springboot3\") && equals( __available__ , \"down\" )");
+
+        List<AlertDefine> filtered = metricsRealTimeAlertCalculator.filterThresholdsByAppAndMetrics(
+                List.of(availabilityDefine), "springboot3", "response_time", Map.of(), "1", 1);
+
+        assertEquals(0, filtered.size());
     }
 
     @Test
@@ -161,6 +236,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         verify(alarmCacheManager, times(1)).getPending(any(), any());
         verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+        verify(dataQueue, times(1)).sendMetricsDataToStorage(metricsData);
     }
 
     @Test
@@ -258,6 +334,41 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
     }
 
     @Test
+    void calculatesOrdinaryMonitorAlertWithWhitespaceFormattedEqualsArguments() {
+        CollectRep.MetricsData.Builder metricsBuilder = CollectRep.MetricsData.newBuilder();
+        metricsBuilder.setId(518679137103104L)
+                .setApp("springboot3")
+                .setMetrics("available")
+                .setPriority(0)
+                .setCode(CollectRep.Code.SUCCESS);
+        metricsBuilder.addMetadataAll(Map.of(
+                MetricDataConstants.INSTANCE_NAME, "ordinary-monitor",
+                MetricDataConstants.INSTANCE, "127.0.0.1"));
+        metricsBuilder.addAllFields(List.of(CollectRep.Field.newBuilder()
+                        .setName("responseTime")
+                        .setType(CommonConstants.TYPE_NUMBER)
+                        .build()));
+        metricsBuilder.addValueRow(CollectRep.ValueRow.newBuilder().addColumn("18").build());
+        CollectRep.MetricsData metricsData = metricsBuilder.build();
+        AlertDefine alertDefine = new AlertDefine();
+        alertDefine.setId(1L);
+        alertDefine.setName("ordinary-monitor-latency");
+        alertDefine.setExpr("equals( __app__ , \"springboot3\" )"
+                + " && equals( __metrics__ , \"available\" ) && responseTime > 10");
+        alertDefine.setTemplate("Response time ${responseTime}ms");
+        alertDefine.setTimes(1);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(alertDefine));
+
+        metricsRealTimeAlertCalculator.calculate(metricsData);
+
+        verify(alarmCacheManager).putFiring(any(), any(), any());
+        ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
+        verify(alarmCommonReduce).reduceAndSendAlarm(alertCaptor.capture());
+        assertEquals("518679137103104",
+                alertCaptor.getValue().getLabels().get(CommonConstants.LABEL_MONITOR_ID));
+    }
+
+    @Test
     void testEmptyStringFieldStillTriggersAlert() throws InterruptedException {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         builder.setId(518679137103104L)
@@ -339,7 +450,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
 
         // unparseable number is defined as null: exists() short-circuits to false, no alarm and no abort
         verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
-        verify(alarmCacheManager, times(1)).removeFiring(any(), any());
+        verify(alarmCacheManager, times(1)).removeFiring(any(Long.class), any());
     }
 
 }

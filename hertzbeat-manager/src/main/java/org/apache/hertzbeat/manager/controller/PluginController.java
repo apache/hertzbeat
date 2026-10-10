@@ -17,23 +17,32 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterSaveRequest;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
+import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
 import org.springframework.data.domain.Page;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,7 +59,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PluginController {
 
+    private static final String OPERATION_FAILED = "plugin_operation_failed";
+    private static final String FORBIDDEN = "plugin_forbidden";
+    private static final String INVALID_REQUEST = "plugin_invalid_request";
+    private static final String NOT_FOUND = "plugin_not_found";
+    private static final String CONFLICT = "plugin_conflict";
+    private static final String STORAGE_UNAVAILABLE = "plugin_storage_unavailable";
+
     private final PluginService pluginService;
+
+    private final PluginParameterService pluginParameterService;
+
+    @ModelAttribute
+    public void requireAdmin() {
+        SubjectSum subject = SurenessContextHolder.getBindSubject();
+        if (subject == null || !subject.hasRole("admin")) {
+            throw new SecurityException("Plugin management requires admin");
+        }
+    }
 
     @PostMapping
     @Operation(summary = "upload plugin", description = "upload plugin")
@@ -74,9 +100,10 @@ public class PluginController {
     @Operation(summary = "Delete plugins based on ID", description = "Delete plugins based on ID")
     public ResponseEntity<Message<Void>> deletePlugins(
         @Parameter(description = "Plugin IDs ", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            pluginService.deletePlugins(new HashSet<>(ids));
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalArgumentException("Plugin ids are required");
         }
+        pluginService.deletePlugins(new HashSet<>(ids));
         return ResponseEntity.ok(Message.success("Delete success"));
     }
 
@@ -91,15 +118,45 @@ public class PluginController {
     @GetMapping("/params/define")
     @Operation(summary = "get param define", description = "get param define by jar path")
     public ResponseEntity<Message<PluginParametersVO>> getParamDefine(@RequestParam Long pluginMetadataId) {
-        PluginParametersVO plugins = pluginService.getParamDefine(pluginMetadataId);
+        PluginParametersVO plugins = pluginParameterService.getParameters(pluginMetadataId);
         return ResponseEntity.ok(Message.success(plugins));
     }
 
     @PostMapping("/params")
     @Operation(summary = "get param define", description = "get param define by jar path")
-    public ResponseEntity<Message<Boolean>> saveParams(@RequestBody List<PluginParam> pluginParams) {
-        pluginService.savePluginParam(pluginParams);
+    public ResponseEntity<Message<Boolean>> saveParams(@RequestBody PluginParameterSaveRequest request) {
+        pluginParameterService.save(request);
         return ResponseEntity.ok(Message.success(true));
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Message<Void>> forbidden() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, FORBIDDEN));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Message<Void>> invalidRequest() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, INVALID_REQUEST));
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Message<Void>> notFound() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, NOT_FOUND));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Message<Void>> conflict() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, CONFLICT));
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Message<Void>> storageUnavailable() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, STORAGE_UNAVAILABLE));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Message<Void>> operationFailed() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, OPERATION_FAILED));
     }
 
 }

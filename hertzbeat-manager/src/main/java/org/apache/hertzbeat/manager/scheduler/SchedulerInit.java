@@ -30,12 +30,14 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.manager.config.PrometheusProxyConfig;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.service.AppService;
+import org.apache.hertzbeat.manager.service.helper.MonitorJobScheduleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -47,38 +49,39 @@ import org.springframework.util.StringUtils;
  * scheduler init
  */
 @Configuration
+@ConditionalOnNormalBusinessRuntime
 @Order(value = Ordered.LOWEST_PRECEDENCE - 1)
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {
 
     @Autowired
     private CollectorScheduling collectorScheduling;
-    
+
     @Autowired
     private CollectJobScheduling collectJobScheduling;
-   
+
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
     private static final String DEFAULT_COLLECTOR_VERSION = "DEBUG";
     public static final String PARAM_FIELD_PORT = "port";
 
     @Autowired
     private AppService appService;
-    
+
     @Autowired
     private MonitorDao monitorDao;
-    
+
     @Autowired
     private ParamDao paramDao;
-    
+
     @Autowired
     private CollectorDao collectorDao;
-    
+
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
 
     @Autowired
     private PrometheusProxyConfig prometheusProxyConfig;
-    
+
     @Override
     public void run(String... args) throws Exception {
         // init pre collector status
@@ -115,11 +118,9 @@ public class SchedulerInit implements CommandLineRunner {
                 }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setDefaultInterval(monitor.getIntervals());
+                MonitorJobScheduleMapper.apply(monitor, appDefine);
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
-                appDefine.setScheduleType(monitor.getScheduleType());
-                appDefine.setCronExpression(monitor.getCronExpression());
 
                 String instance = monitor.getInstance();
 

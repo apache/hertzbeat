@@ -86,8 +86,7 @@ public class Metrics {
     private String name;
     /**
      * metrics name's i18n value
-     * zh-CN: CPU信息
-     * en-US: CPU Info
+     * Example: {"en-US": "CPU Info"}
      */
     private Map<String, String> i18n;
     /**
@@ -305,6 +304,9 @@ public class Metrics {
      * collector use - Temporarily store subTask running num
      */
     @JsonIgnore
+    private final transient Object subTaskLock = new Object();
+
+    @JsonIgnore
     private transient AtomicInteger subTaskNum;
 
     /**
@@ -329,7 +331,7 @@ public class Metrics {
      * @return is last task?
      */
     public boolean consumeSubTaskResponse(CollectRep.MetricsData metricsData) {
-        synchronized (subTaskNum) {
+        synchronized (subTaskLock) {
             int index = subTaskNum.decrementAndGet();
             if (subTaskDataRef.get() == null) {
                 subTaskDataRef.set(CollectRep.MetricsData.newBuilder(metricsData));

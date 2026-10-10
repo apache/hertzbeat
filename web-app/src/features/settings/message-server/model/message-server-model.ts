@@ -1,0 +1,204 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  smsProviderFieldContracts,
+  type EmailSecret,
+  type EmailServerConfig,
+  type EmailServerEvidence,
+  type EmailServerPayload,
+  type SmsServerConfig,
+  type SmsServerEvidence,
+  type SmsServerPayload
+} from './message-server-contract';
+import { activeSmsProviderValues, type SmsServerDraft } from './sms-provider-draft';
+
+export type { SmsProviderType } from './message-server-contract';
+export {
+  activeSmsProviderValues,
+  selectSmsProvider,
+  setSmsSecretCleared,
+  smsProviderDefinition,
+  smsProviderDefinitions,
+  updateSmsProviderField,
+  type SmsServerDraft
+} from './sms-provider-draft';
+
+export type EmailServerDraft = Omit<EmailServerPayload, 'emailPassword' | 'clearSecrets'> & {
+  emailPassword: string;
+  configuredSecrets: EmailSecret[];
+  clearSecrets: EmailSecret[];
+};
+
+export function createEmailServerDraft(evidence?: EmailServerEvidence): EmailServerDraft {
+  return createEmailServerDraftFromConfig(evidence?.status === 'configured' ? evidence.config : undefined);
+}
+
+export function createEmailServerDraftFromConfig(config?: EmailServerConfig): EmailServerDraft {
+  if (!config) {
+    return {
+      type: 0,
+      emailHost: '',
+      emailPort: 465,
+      emailUsername: '',
+      emailPassword: '',
+      emailSsl: true,
+      emailStarttls: false,
+      enable: false,
+      configuredSecrets: [],
+      clearSecrets: []
+    };
+  }
+  return {
+    type: config.type,
+    emailHost: config.emailHost,
+    emailPort: config.emailPort,
+    emailUsername: config.emailUsername,
+    emailPassword: '',
+    emailSsl: config.emailSsl,
+    emailStarttls: config.emailStarttls,
+    enable: config.enable,
+    configuredSecrets: config.configuredSecrets,
+    clearSecrets: []
+  };
+}
+
+export function createSmsServerDraft(evidence?: SmsServerEvidence): SmsServerDraft {
+  return createSmsServerDraftFromConfig(evidence?.status === 'configured' ? evidence.config : undefined);
+}
+
+export function createSmsServerDraftFromConfig(config?: SmsServerConfig): SmsServerDraft {
+  const draft: SmsServerDraft = {
+    enable: config?.enable ?? false,
+    type: config?.type ?? 'tencent',
+    configuredSecrets: config?.configuredSecrets ?? [],
+    clearSecrets: [],
+    tencent: { secretId: '', secretKey: '', appId: '', signName: '', templateId: '' },
+    alibaba: { accessKeyId: '', accessKeySecret: '', signName: '', templateCode: '' },
+    smslocal: { apiKey: '' },
+    aws: { accessKeyId: '', accessKeySecret: '', region: '' },
+    twilio: { accountSid: '', authToken: '', twilioPhoneNumber: '' }
+  };
+  if (!config) return draft;
+  return { ...draft, [config.type]: { ...draft[config.type], ...config.options } };
+}
+
+export function buildEmailServerPayload(draft: EmailServerDraft): EmailServerPayload {
+  const password = draft.emailPassword.trim();
+  const payload: EmailServerPayload = {
+    type: draft.type,
+    emailHost: draft.emailHost.trim(),
+    emailUsername: draft.emailUsername.trim(),
+    emailPort: draft.emailPort,
+    emailSsl: draft.emailSsl,
+    emailStarttls: draft.emailStarttls,
+    enable: draft.enable
+  };
+  if (password) payload.emailPassword = password;
+  else if (draft.clearSecrets.includes('emailPassword')) payload.clearSecrets = ['emailPassword'];
+  return payload;
+}
+
+export function buildSmsServerPayload(draft: SmsServerDraft): SmsServerPayload {
+  const fields = smsProviderFieldContracts[draft.type];
+  const values = activeSmsProviderValues(draft);
+  const options = Object.fromEntries(
+    fields.flatMap(field => {
+      const value = String(values[field.key] ?? '').trim();
+      return field.secret && !value ? [] : [[field.key, value]];
+    })
+  );
+  const replacedSecrets = fields
+    .filter(field => field.secret && String(values[field.key] ?? '').trim())
+    .map(field => field.key);
+  const clearSecrets = draft.clearSecrets.filter(
+    key => fields.some(field => field.secret && field.key === key) && !replacedSecrets.includes(key)
+  );
+  return {
+    enable: draft.enable,
+    type: draft.type,
+    options,
+    ...(clearSecrets.length > 0 ? { clearSecrets } : {})
+  };
+}
+
+export function validateEmailServerDraft(draft: EmailServerDraft) {
+  const invalid: string[] = [];
+  const username = draft.emailUsername.trim();
+  if (!draft.emailHost.trim()) invalid.push('emailHost');
+  if (!username || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) invalid.push('emailUsername');
+  if (
+    !emailSecretSatisfied(draft) ||
+    (draft.enable && draft.clearSecrets.includes('emailPassword') && !draft.emailPassword.trim())
+  ) {
+    invalid.push('emailPassword');
+  }
+  if (!Number.isInteger(draft.emailPort) || draft.emailPort < 1 || draft.emailPort > 65_535) {
+    invalid.push('emailPort');
+  }
+  return invalid;
+}
+
+export function validateSmsServerDraft(draft: SmsServerDraft) {
+  const fields = smsProviderFieldContracts[draft.type];
+  const values = activeSmsProviderValues(draft);
+  return fields
+    .filter(field => {
+      const value = String(values[field.key] ?? '').trim();
+      if (!field.secret) return !value;
+      if (draft.enable && field.secret && draft.clearSecrets.includes(field.key) && !value) return true;
+      return (
+        !value &&
+        (!field.secret || !draft.configuredSecrets.includes(field.key)) &&
+        (!field.secret || !draft.clearSecrets.includes(field.key))
+      );
+    })
+    .map(field => field.key);
+}
+
+export function setEmailSecretCleared(draft: EmailServerDraft, cleared: boolean): EmailServerDraft {
+  return {
+    ...draft,
+    emailPassword: cleared ? '' : draft.emailPassword,
+    clearSecrets: cleared ? ['emailPassword'] : []
+  };
+}
+
+export function updateEmailServerDraft(
+  draft: EmailServerDraft | null,
+  patch: Partial<EmailServerDraft>
+): EmailServerDraft | null {
+  if (!draft) return null;
+  return {
+    ...draft,
+    ...patch,
+    ...(patch.emailPassword?.trim() ? { clearSecrets: [] } : {})
+  };
+}
+
+export function messageServerStatus(enable: boolean, invalidFields: string[]) {
+  if (invalidFields.length > 0) return 'unconfigured' as const;
+  return enable ? ('enabled' as const) : ('disabled' as const);
+}
+
+function emailSecretSatisfied(draft: EmailServerDraft) {
+  return (
+    Boolean(draft.emailPassword.trim()) ||
+    draft.configuredSecrets.includes('emailPassword') ||
+    draft.clearSecrets.includes('emailPassword')
+  );
+}

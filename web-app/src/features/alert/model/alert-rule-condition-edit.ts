@@ -1,0 +1,211 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  metricAlertConditionLimits,
+  metricAlertOperatorsForType,
+  resolveMetricAlertField,
+  type MetricAlertCondition,
+  type MetricAlertConditionGroup,
+  type MetricAlertConditionOperator,
+  type MetricAlertField
+} from './alert-rule-condition';
+import { isMetricAlertAttribute } from './alert-rule-condition-field';
+import { AlertRuleContractError } from './alert-rule-types';
+
+type ConditionPath = number[];
+
+export function addMetricAlertCondition(
+  root: MetricAlertConditionGroup,
+  groupPath: ConditionPath,
+  fields: MetricAlertField[]
+) {
+  const condition = newCondition(fields);
+  return updateGroup(root, groupPath, group => appendItem(group, condition));
+}
+
+export function addMetricAlertConditionGroup(root: MetricAlertConditionGroup, groupPath: ConditionPath) {
+  if (groupPath.length + 2 > metricAlertConditionLimits.maximumDepth) {
+    throw contract('condition group is too deep');
+  }
+  const group: MetricAlertConditionGroup = {
+    kind: 'group',
+    join: 'and',
+    items: []
+  };
+  return updateGroup(root, groupPath, parent => appendItem(parent, group));
+}
+
+export function updateMetricAlertConditionGroupJoin(
+  root: MetricAlertConditionGroup,
+  groupPath: ConditionPath,
+  join: MetricAlertConditionGroup['join']
+) {
+  if (join !== 'and' && join !== 'or') throw contract('condition group join is invalid');
+  return updateGroup(root, groupPath, group => ({ ...group, join }));
+}
+
+export function removeMetricAlertConditionItem(root: MetricAlertConditionGroup, itemPath: ConditionPath) {
+  const [parentPath, itemIndex] = splitItemPath(itemPath);
+  return updateGroup(root, parentPath, group => {
+    if (!group.items[itemIndex]) throw contract('condition item path is invalid');
+    return { ...group, items: group.items.filter((_, index) => index !== itemIndex) };
+  });
+}
+
+export function changeMetricAlertConditionField(
+  root: MetricAlertConditionGroup,
+  itemPath: ConditionPath,
+  fieldValue: string,
+  fields: MetricAlertField[]
+) {
+  const field = requiredField(fields, fieldValue);
+  const operator = firstOperator(field);
+  return updateCondition(root, itemPath, () => ({
+    kind: 'condition',
+    field: field.value,
+    operator,
+    value: initialValue(operator)
+  }));
+}
+
+export function changeMetricAlertConditionOperator(
+  root: MetricAlertConditionGroup,
+  itemPath: ConditionPath,
+  operator: MetricAlertConditionOperator,
+  fields: MetricAlertField[]
+) {
+  return updateCondition(root, itemPath, current => {
+    const field = requiredField(fields, current.field);
+    if (!metricAlertOperatorsForType(field.type).includes(operator)) {
+      throw contract('condition operator is invalid');
+    }
+    return { ...current, operator, value: initialValue(operator) };
+  });
+}
+
+export function updateMetricAlertConditionValue(
+  root: MetricAlertConditionGroup,
+  itemPath: ConditionPath,
+  value: string | number | null
+) {
+  return updateCondition(root, itemPath, current => ({
+    ...current,
+    value: normalizeValue(current.operator, value)
+  }));
+}
+
+export function updateMetricAlertConditionAttribute(
+  root: MetricAlertConditionGroup,
+  itemPath: ConditionPath,
+  attribute: string,
+  fields: MetricAlertField[]
+) {
+  return updateCondition(root, itemPath, current => {
+    const resolved = resolveMetricAlertField(fields, current.field);
+    if (!resolved?.field.acceptsAttribute) throw contract('condition field does not accept an attribute');
+    if (attribute && !isMetricAlertAttribute(attribute)) throw contract('condition field attribute is invalid');
+    return { ...current, field: attribute ? `${resolved.field.value}.${attribute}` : resolved.field.value };
+  });
+}
+
+function updateCondition(
+  root: MetricAlertConditionGroup,
+  itemPath: ConditionPath,
+  update: (condition: MetricAlertCondition) => MetricAlertCondition
+) {
+  const [parentPath, itemIndex] = splitItemPath(itemPath);
+  return updateGroup(root, parentPath, group => {
+    const item = group.items[itemIndex];
+    if (!item || item.kind !== 'condition') throw contract('condition item path is invalid');
+    return {
+      ...group,
+      items: group.items.map((current, index) => (index === itemIndex ? update(item) : current))
+    };
+  });
+}
+
+function updateGroup(
+  root: MetricAlertConditionGroup,
+  groupPath: ConditionPath,
+  update: (group: MetricAlertConditionGroup) => MetricAlertConditionGroup
+): MetricAlertConditionGroup {
+  if (groupPath.length === 0) return update(root);
+  const [index, ...rest] = groupPath;
+  const item = index === undefined ? undefined : root.items[index];
+  if (!item || item.kind !== 'group') throw contract('condition group path is invalid');
+  return {
+    ...root,
+    items: root.items.map((current, currentIndex) =>
+      currentIndex === index ? updateGroup(item, rest, update) : current
+    )
+  };
+}
+
+function appendItem(group: MetricAlertConditionGroup, item: MetricAlertCondition | MetricAlertConditionGroup) {
+  if (group.items.length >= metricAlertConditionLimits.maximumItemsPerGroup) {
+    throw contract('condition group item count is invalid');
+  }
+  return { ...group, items: [...group.items, item] };
+}
+
+function newCondition(fields: MetricAlertField[]): MetricAlertCondition {
+  const field = fields[0];
+  if (!field) throw contract('metric field catalog is empty');
+  const operator = firstOperator(field);
+  return { kind: 'condition', field: field.value, operator, value: initialValue(operator) };
+}
+
+function firstOperator(field: MetricAlertField) {
+  const operator = metricAlertOperatorsForType(field.type)[0];
+  if (!operator) throw contract('metric field has no operators');
+  return operator;
+}
+
+function requiredField(fields: MetricAlertField[], value: string) {
+  const resolved = resolveMetricAlertField(fields, value);
+  if (!resolved) throw contract('metric field is invalid');
+  return resolved.field;
+}
+
+function initialValue(operator: MetricAlertConditionOperator) {
+  if (operator === 'exists' || operator === '!exists') return null;
+  return ['>', '<', '==', '!=', '<=', '>='].includes(operator) ? null : '';
+}
+
+function normalizeValue(operator: MetricAlertConditionOperator, value: string | number | null) {
+  if (operator === 'exists' || operator === '!exists') return null;
+  if (['>', '<', '==', '!=', '<=', '>='].includes(operator)) {
+    if (value === null) return null;
+    if (typeof value !== 'number' || !Number.isFinite(value)) throw contract('numeric condition value is invalid');
+    return value;
+  }
+  if (typeof value !== 'string') throw contract('string condition value is invalid');
+  return value;
+}
+
+function splitItemPath(path: ConditionPath): [ConditionPath, number] {
+  const itemIndex = path[path.length - 1];
+  if (itemIndex === undefined || !Number.isSafeInteger(itemIndex) || itemIndex < 0) {
+    throw contract('condition item path is invalid');
+  }
+  return [path.slice(0, -1), itemIndex];
+}
+
+function contract(message: string) {
+  return new AlertRuleContractError(message);
+}

@@ -1,0 +1,118 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.apache.hertzbeat.warehouse.repository;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
+import org.apache.hertzbeat.warehouse.db.QueryExecutor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class PromqlMetricQueryRepositoryTest {
+
+    @Mock
+    private QueryExecutor promqlQueryExecutor;
+
+    @Test
+    void preservesOnlyTheStructuredInvalidQueryMarker() {
+        when(promqlQueryExecutor.support("promql")).thenReturn(true);
+        when(promqlQueryExecutor.getDatasource()).thenReturn("Greptime-promql");
+        when(promqlQueryExecutor.query(any(DatasourceQuery.class)))
+                .thenReturn(new DatasourceQueryData("ref", 400, "promql_query_invalid", null))
+                .thenReturn(new DatasourceQueryData("ref", 400, "private failure", null));
+        var repository = new PromqlMetricQueryRepository(List.of(promqlQueryExecutor));
+        assertEquals(MetricQueryRepository.PROMQL_QUERY_INVALID,
+                repository.queryPromqlRange("ref", "metric", 1000, 2000, "10s").errorMessage());
+        assertEquals(MetricQueryRepository.PROMQL_QUERY_FAILED,
+                repository.queryPromqlRange("ref", "metric", 1000, 2000, "10s").errorMessage());
+    }
+
+    @Test
+    void hasPromqlExecutorReturnsFalseWhenNoSupportedExecutorPresent() {
+        MetricQueryRepository repository = new PromqlMetricQueryRepository(List.of());
+
+        assertFalse(repository.hasPromqlExecutor());
+        assertEquals(
+                "promql_executor_unavailable",
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s").errorMessage());
+    }
+
+    @Test
+    void queryPromqlRangeUsesSupportedExecutor() {
+        DatasourceQueryData queryData = new DatasourceQueryData("ref", 200, null, List.of());
+        when(promqlQueryExecutor.support("promql")).thenReturn(true);
+        when(promqlQueryExecutor.getDatasource()).thenReturn("Greptime-promql");
+        when(promqlQueryExecutor.query(any(DatasourceQuery.class))).thenReturn(queryData);
+
+        MetricQueryRepository repository = new PromqlMetricQueryRepository(List.of(promqlQueryExecutor));
+
+        MetricQueryRepository.PromqlRangeQueryResult result =
+                repository.queryPromqlRange("ref", "sum(rate(test_total[5m]))", 1000L, 2000L, "30s", 32);
+
+        assertTrue(repository.hasPromqlExecutor());
+        assertNotNull(result);
+        assertEquals("Greptime-promql", result.datasource());
+        assertEquals(queryData, result.results());
+        assertEquals(null, result.errorMessage());
+        ArgumentCaptor<DatasourceQuery> queryCaptor = ArgumentCaptor.forClass(DatasourceQuery.class);
+        verify(promqlQueryExecutor).query(queryCaptor.capture());
+        assertEquals(32, queryCaptor.getValue().getLimit());
+    }
+
+    @Test
+    void mapsNullNonSuccessAndExceptionsToStableSafeErrorCodes() {
+        when(promqlQueryExecutor.support("promql")).thenReturn(true);
+        when(promqlQueryExecutor.getDatasource()).thenReturn("Greptime-promql");
+        when(promqlQueryExecutor.query(any(DatasourceQuery.class)))
+                .thenReturn(new DatasourceQueryData(
+                        "ref", 503, "SELECT secret FROM metrics WHERE endpoint='/private'", List.of()))
+                .thenReturn(null)
+                .thenThrow(new IllegalStateException("connection failed for collector-secret"));
+        MetricQueryRepository repository = new PromqlMetricQueryRepository(List.of(promqlQueryExecutor));
+
+        MetricQueryRepository.PromqlRangeQueryResult nonSuccess =
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s");
+        MetricQueryRepository.PromqlRangeQueryResult nullResult =
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s");
+        MetricQueryRepository.PromqlRangeQueryResult exception =
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s");
+
+        assertNull(nonSuccess.results());
+        assertEquals("promql_query_failed", nonSuccess.errorMessage());
+        assertNull(nullResult.results());
+        assertEquals("promql_query_failed", nullResult.errorMessage());
+        assertNull(exception.results());
+        assertEquals("promql_query_failed", exception.errorMessage());
+    }
+}

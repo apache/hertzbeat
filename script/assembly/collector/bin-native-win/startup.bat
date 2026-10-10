@@ -24,6 +24,7 @@ set BINARY_NAME=${native.executable.packageName}
 cd /d %~dp0
 cd ..
 set DEPLOY_DIR=%CD%
+if not defined HERTZBEAT_HOME set "HERTZBEAT_HOME=%DEPLOY_DIR%"
 set CONF_DIR=%DEPLOY_DIR%\config
 set LOGS_DIR=%DEPLOY_DIR%\logs
 set PID_FILE=%LOGS_DIR%\%SERVER_NAME%.pid

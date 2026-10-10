@@ -63,13 +63,13 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
                 if (entity.getBody().getCode() == null || entity.getBody().getCode() == 0) {
-                    log.debug("Send feiShu webHook: {} Success", webHookUrl);
+                    log.debug("Send FeiShu webhook success");
                 } else {
-                    log.warn("Send feiShu webHook: {} Failed: {}", webHookUrl, entity.getBody().getMsg());
+                    log.warn("Send FeiShu webhook failed with code {}", entity.getBody().getCode());
                     throw new AlertNoticeException(entity.getBody().getMsg());
                 }
             } else {
-                log.warn("Send feiShu webHook: {} Failed: {}", webHookUrl, entity.getBody());
+                log.warn("Send FeiShu webhook failed with status {}", entity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {
@@ -137,9 +137,9 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                                                   "tag": "button",
                                                   "text": {
                                                       "tag": "plain_text",
-                                                      "content": "登入控制台",
+                                                      "content": "%s",
                                                       "i18n_content": {
-                                                          "en_us": "Login In"
+                                                          "en_us": "%s"
                                                       }
                                                   },
                                                   "type": "default",
@@ -170,9 +170,9 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                       "header": {
                           "title": {
                               "tag": "plain_text",
-                              "content": "HertzBeat 告警",
+                              "content": "%s",
                               "i18n_content": {
-                                  "en_us": "HertzBeat Alarm"
+                                  "en_us": "%s"
                               }
                           },
                           "subtitle": {
@@ -200,7 +200,12 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
 
         return String.format(larkCardMessage,
                 notificationContent.replace("\"", "\\\"") + atUserElement,
-                alerterProperties.getConsoleUrl(), TITLE_COLOR[priority]);
+                bundle.getString("alerter.notify.console"),
+                bundle.getString("alerter.notify.console"),
+                alerterProperties.getConsoleUrl(),
+                bundle.getString("alerter.notify.title"),
+                bundle.getString("alerter.notify.title"),
+                TITLE_COLOR[priority]);
     }
 
     @Override

@@ -1,0 +1,124 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.page {
+  min-height: 100dvh;
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  background: var(--hb-bg-canvas);
+}
+
+.onboardingHeader {
+  position: relative;
+  min-width: 0;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--hb-border);
+  padding: 8px 24px;
+  background: var(--hb-bg-chrome);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.brand img {
+  object-fit: contain;
+}
+
+.backAction {
+  justify-self: start;
+}
+
+.startOver {
+  justify-self: end;
+}
+
+.onboardingBody {
+  width: min(100%, 1440px);
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  margin: 0 auto;
+}
+
+.flowRail {
+  min-width: 0;
+  border-right: 1px solid var(--hb-border);
+  padding: 34px 22px;
+  background: var(--hb-bg-chrome);
+}
+
+.onboardingContent {
+  min-width: 0;
+  padding: 34px 40px 28px;
+}
+
+.sourceStage {
+  min-width: 0;
+  min-height: calc(100dvh - 185px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 24px;
+}
+
+.sourceContinue {
+  justify-self: start;
+}
+
+@media (max-width: 760px) {
+  .onboardingHeader {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .brand {
+    justify-self: center;
+  }
+
+  .startOver {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .onboardingBody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .flowRail {
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--hb-border);
+    padding: 16px;
+  }
+
+  .onboardingContent {
+    padding: 20px 16px;
+  }
+}

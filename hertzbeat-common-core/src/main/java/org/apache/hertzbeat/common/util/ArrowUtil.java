@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
@@ -88,12 +89,11 @@ public final class ArrowUtil {
      * @return List of deserialized VectorSchemaRoot objects
      * @throws RuntimeException if deserialization fails
      */
-    public static List<VectorSchemaRoot> deserializeMultipleRoots(byte[] data) {
+    public static List<VectorSchemaRoot> deserializeMultipleRoots(byte[] data, BufferAllocator allocator) {
         List<VectorSchemaRoot> roots = new ArrayList<>();
         ByteBuffer buffer = ByteBuffer.wrap(data);
         try {
             int rootCount = buffer.getInt();
-            RootAllocator allocator = new RootAllocator();
 
             for (int i = 0; i < rootCount; i++) {
                 int length = buffer.getInt();
@@ -102,6 +102,8 @@ public final class ArrowUtil {
                 ByteArrayInputStream rootIn = new ByteArrayInputStream(data, buffer.position(), length);
                 buffer.position(buffer.position() + length);
 
+                // Note: reader lifecycle is tied to the returned VectorSchemaRoot —
+                // closing the reader would invalidate the root's vectors.
                 ArrowStreamReader reader = new ArrowStreamReader(
                         Channels.newChannel(rootIn),
                         allocator);
@@ -131,17 +133,34 @@ public final class ArrowUtil {
         if (data == null || data.length == 0) {
             return new ArrayList<>();
         }
-        List<VectorSchemaRoot> roots = deserializeMultipleRoots(data);
-        List<CollectRep.MetricsData> metricsDataList = new ArrayList<>(roots.size());
+        List<CollectRep.MetricsData> metricsDataList = new ArrayList<>();
+        ByteBuffer buffer = ByteBuffer.wrap(data);
         try {
-            for (VectorSchemaRoot root : roots) {
-                if (root != null) {
-                    CollectRep.MetricsData metricsData = new CollectRep.MetricsData(root);
-                    metricsDataList.add(metricsData);
+            int rootCount = buffer.getInt();
+            for (int i = 0; i < rootCount; i++) {
+                int length = buffer.getInt();
+                ByteArrayInputStream rootIn = new ByteArrayInputStream(data, buffer.position(), length);
+                buffer.position(buffer.position() + length);
+                // Each MetricsData gets its own allocator so they can be closed independently.
+                // The reader is intentionally not closed here — its lifecycle is tied to the root,
+                // and closing it would invalidate the root's vectors. The allocator.close() in
+                // MetricsData.close() will reclaim all memory allocated by both the reader and root.
+                RootAllocator allocator = new RootAllocator();
+                ArrowStreamReader reader = new ArrowStreamReader(Channels.newChannel(rootIn), allocator);
+                VectorSchemaRoot root = reader.getVectorSchemaRoot();
+                reader.loadNextBatch();
+                metricsDataList.add(new CollectRep.MetricsData(root, allocator));
+            }
+        } catch (IOException e) {
+            // Clean up any MetricsData objects created before the failure to prevent memory leaks
+            for (CollectRep.MetricsData metricsData : metricsDataList) {
+                try {
+                    metricsData.close();
+                } catch (Exception closeEx) {
+                    log.warn("Failed to close MetricsData during error cleanup: {}", closeEx.getMessage());
                 }
             }
-        } finally {
-            roots.forEach(VectorSchemaRoot::close);
+            throw new RuntimeException("Failed to deserialize metrics data", e);
         }
         return metricsDataList;
     }

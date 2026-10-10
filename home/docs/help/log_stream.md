@@ -5,6 +5,8 @@ sidebar_label: Log Stream (Beta)
 keywords: [open source monitoring, log stream, real-time logs, log filtering]
 ---
 
+For the 2.0 alpha React workbench, use [Explore and saved queries](./explore_saved_queries.md). Its history/live controls, field inspector, query grammar and gap behavior are documented there. The screenshots and navigation below describe the earlier interface.
+
 > HertzBeat's log stream feature provides real-time log viewing and filtering capabilities, including real-time log monitoring, multi-dimensional filtering, and log detail viewing. Users can monitor system logs in real-time and perform precise filtering based on different conditions to quickly locate issues and analyze system status.
 
 :::warning
