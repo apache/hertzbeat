@@ -92,7 +92,11 @@
               [ngModel]="selectedChartGroups"
               (ngModelChange)="onChartGroupsChanged($event)"
             >
-              <nz-option *ngFor="let group of chartMetricGroups" [nzValue]="group.name" [nzLabel]="getChartGroupLabel(group.name)"></nz-option>
+              <nz-option
+                *ngFor="let group of chartMetricGroups"
+                [nzValue]="group.name"
+                [nzLabel]="getChartGroupLabel(group.name)"
+              ></nz-option>
             </nz-select>
             <button nz-button [disabled]="selectedChartGroups.length === 0" (click)="setChartGroupsExpanded(true)">
               {{ 'monitor.detail.history.expand-all' | i18n }}
