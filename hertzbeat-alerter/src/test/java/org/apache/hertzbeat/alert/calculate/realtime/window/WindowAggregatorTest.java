@@ -246,7 +246,7 @@ class WindowAggregatorTest {
         verify(alarmEvaluator, timeout(1000).times(2)).sendAndProcessWindowData(any(WindowAggregator.WindowData.class));
     }
 
-    @Test
+    @org.junit.jupiter.api.RepeatedTest(10)
     void stopInterruptsBlockedWorkerWithoutTimeoutWarning() throws InterruptedException {
         Set<Thread> existingAggregatorThreads = currentAggregatorThreads();
         Logger logger = (Logger) LoggerFactory.getLogger(WindowAggregator.class);
@@ -260,6 +260,12 @@ class WindowAggregatorTest {
 
             long startNanos = System.nanoTime();
             windowAggregator.stop();
+            // Executor termination precedes the worker thread's final cleanup. Observe actual
+            // thread death within the same total shutdown budget instead of racing that cleanup.
+            long remainingNanos = TimeUnit.SECONDS.toNanos(2) - (System.nanoTime() - startNanos);
+            if (remainingNanos > 0) {
+                TimeUnit.NANOSECONDS.timedJoin(worker, remainingNanos);
+            }
             long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
 
             assertTrue(elapsedMillis < 2_000, () -> "stop took " + elapsedMillis + " ms");

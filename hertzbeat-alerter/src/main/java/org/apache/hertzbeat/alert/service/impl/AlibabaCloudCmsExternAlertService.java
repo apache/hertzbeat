@@ -50,9 +50,9 @@ public class AlibabaCloudCmsExternAlertService implements ExternAlertService {
 
     @Override
     public void addExternAlert(String workspaceId, String content) {
-        AlibabaCloudCmsExternAlert externAlert = JsonUtil.fromJson(content, AlibabaCloudCmsExternAlert.class);
+        AlibabaCloudCmsExternAlert externAlert = JsonUtil.fromJsonQuietly(content, AlibabaCloudCmsExternAlert.class);
         if (externAlert == null || StringUtils.isBlank(externAlert.getStatus())) {
-            log.warn("Failed to parse Alibaba Cloud Monitor external alert content: {}", content);
+            log.warn("Failed to parse Alibaba Cloud Monitor external alert content");
             return;
         }
         alarmCommonReduce.reduceAndSendAlarm(workspaceId, convert(externAlert));
@@ -92,7 +92,7 @@ public class AlibabaCloudCmsExternAlertService implements ExternAlertService {
             try {
                 return Instant.parse(externAlert.getTime()).toEpochMilli();
             } catch (DateTimeParseException e) {
-                log.warn("Failed to parse Alibaba Cloud Monitor event time: {}", externAlert.getTime());
+                log.warn("Failed to parse Alibaba Cloud Monitor event time");
             }
         }
         return Instant.now().toEpochMilli();

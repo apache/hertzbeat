@@ -19,11 +19,16 @@ package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import java.time.Instant;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.impl.AlibabaCloudCmsExternAlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -51,6 +56,24 @@ class AlibabaCloudCmsExternAlertServiceTest {
     @BeforeEach
     void setUp() {
         externAlertService = new AlibabaCloudCmsExternAlertService(alarmCommonReduce);
+    }
+
+    @Test
+    void malformedIngressDoesNotLeakPayloadToLogs() {
+        Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            externAlertService.addExternAlert("team-a", "{private-payload-marker invalid json");
+            verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(), any());
+            assertTrue(appender.list.stream().noneMatch(event ->
+                    event.getFormattedMessage().contains("private-payload-marker")
+                            || event.getThrowableProxy() != null));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 
     @Test

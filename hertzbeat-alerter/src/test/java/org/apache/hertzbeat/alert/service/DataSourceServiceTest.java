@@ -132,6 +132,33 @@ class DataSourceServiceTest {
     }
 
     @Test
+    void queryPreviewRejectsUserSubqueriesBeforeServerWrapping() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.queryPreview("sql",
+                        "SELECT * FROM (SELECT * FROM hertzbeat_logs) AS input", LOG_ALERT_THRESHOLD_TYPE_PERIODIC));
+        verify(mockExecutor, never()).executePreview(anyString());
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void queryPreviewEnforcesRowBudgetWithoutFallingBackToRegularExecution() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        when(mockExecutor.executePreview(anyString())).thenReturn(
+                java.util.Collections.nCopies(1001, Map.of("__value__", 1)));
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.queryPreview("promql", "metric_name", null));
+        verify(mockExecutor).executePreview("metric_name");
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
     void queryLeavesRegularSqlUnwrapped() {
         QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         when(mockExecutor.support("sql")).thenReturn(true);

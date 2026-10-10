@@ -22,6 +22,8 @@ import org.apache.hertzbeat.collector.timer.WheelTimerTask;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,12 +32,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -79,15 +87,14 @@ class CommonDispatcherTest {
         @Override
         public org.apache.hertzbeat.common.timer.TimerTask task() {
             WheelTimerTask task = mock(WheelTimerTask.class);
-            Job job = Job.builder()
-                    .id(JOB_ID)
-                    .monitorId(JOB_ID)
-                    .tenantId(0L)
-                    .app("test-app")
-                    .labels(Collections.emptyMap())
-                    .annotations(Collections.emptyMap())
-                    .metadata(Collections.emptyMap())
-                    .build();
+            Job job = mock(Job.class);
+            when(job.getId()).thenReturn(JOB_ID);
+            when(job.getMonitorId()).thenReturn(JOB_ID);
+            when(job.getApp()).thenReturn("test-app");
+            when(job.getLabels()).thenReturn(Collections.emptyMap());
+            when(job.getAnnotations()).thenReturn(Collections.emptyMap());
+            when(job.getMetadata()).thenReturn(Collections.emptyMap());
+            when(job.isCyclic()).thenReturn(true);
             when(task.getJob()).thenReturn(job);
             return task;
         }
@@ -177,6 +184,68 @@ class CommonDispatcherTest {
         assertFalse(monitorMap.isEmpty(), "Non-expired entry must remain in the map");
     }
 
+    @Test
+    void timeoutAndCallbackRace_dispatchesExactlyOnce() throws Exception {
+        Metrics metrics = Metrics.builder().name("availability").priority((byte) 0).build();
+        Map<String, CommonDispatcher.MetricsTime> monitorMap = new ConcurrentHashMap<>();
+        monitorMap.put(JOB_ID + "-availability",
+                new CommonDispatcher.MetricsTime(System.currentTimeMillis() - 300_000L, metrics, timeout));
+        AtomicInteger dispatchCount = new AtomicInteger();
+        CommonDispatcher dispatcher = buildDispatcher(monitorMap, dispatchCount);
+        CountDownLatch start = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var scan = executor.submit(() -> {
+                start.await();
+                invokeMonitorCollectTaskTimeout(dispatcher);
+                return null;
+            });
+            var callback = executor.submit(() -> {
+                start.await();
+                dispatcher.dispatchCollectData(timeout, metrics,
+                        CollectRep.MetricsData.newBuilder().setCode(CollectRep.Code.SUCCESS).build());
+                return null;
+            });
+            start.countDown();
+            scan.get(5, TimeUnit.SECONDS);
+            callback.get(5, TimeUnit.SECONDS);
+        }
+        assertEquals(1, dispatchCount.get());
+        assertTrue(monitorMap.isEmpty());
+    }
+
+    @Test
+    void lateCallback_doesNotConsumeNextCycleEntry() throws Exception {
+        Metrics metrics = Metrics.builder().name("availability").priority((byte) 0).build();
+        Map<String, CommonDispatcher.MetricsTime> monitorMap = new ConcurrentHashMap<>();
+        monitorMap.put(JOB_ID + "-availability",
+                new CommonDispatcher.MetricsTime(System.currentTimeMillis() - 300_000L, metrics, timeout));
+        AtomicInteger dispatchCount = new AtomicInteger();
+        CommonDispatcher dispatcher = buildDispatcher(monitorMap, dispatchCount);
+        invokeMonitorCollectTaskTimeout(dispatcher);
+        CommonDispatcher.MetricsTime next =
+                new CommonDispatcher.MetricsTime(System.currentTimeMillis(), metrics, new CancellableTimeout());
+        monitorMap.put(JOB_ID + "-availability", next);
+        dispatcher.dispatchCollectData(timeout, metrics,
+                CollectRep.MetricsData.newBuilder().setCode(CollectRep.Code.SUCCESS).build());
+        assertEquals(1, dispatchCount.get());
+        assertSame(next, monitorMap.get(JOB_ID + "-availability"));
+    }
+
+    @Test
+    void callbackBeforeTimeoutScan_isNotDispatchedAgain() throws Exception {
+        Metrics metrics = Metrics.builder().name("availability").priority((byte) 0).build();
+        Map<String, CommonDispatcher.MetricsTime> monitorMap = new ConcurrentHashMap<>();
+        monitorMap.put(JOB_ID + "-availability",
+                new CommonDispatcher.MetricsTime(System.currentTimeMillis() - 300_000L, metrics, timeout));
+        AtomicInteger dispatchCount = new AtomicInteger();
+        CommonDispatcher dispatcher = buildDispatcher(monitorMap, dispatchCount);
+        dispatcher.dispatchCollectData(timeout, metrics,
+                CollectRep.MetricsData.newBuilder().setCode(CollectRep.Code.SUCCESS).build());
+        invokeMonitorCollectTaskTimeout(dispatcher);
+        assertEquals(1, dispatchCount.get());
+        assertFalse(timeout.isCancelled());
+    }
+
     private CommonDispatcher buildDispatcher(
             Map<String, CommonDispatcher.MetricsTime> monitorMap,
             AtomicInteger dispatchCount) throws Exception {
@@ -185,21 +254,15 @@ class CommonDispatcherTest {
         when(jobService.getCollectorIdentity()).thenReturn("test-collector");
         WorkerPool workerPool = mock(WorkerPool.class);
 
+        CommonDataQueue dataQueue = mock(CommonDataQueue.class);
+        doAnswer(invocation -> {
+            dispatchCount.incrementAndGet();
+            return null;
+        }).when(dataQueue).sendMetricsData(any(CollectRep.MetricsData.class));
         CommonDispatcher dispatcher = new CommonDispatcher(
-                null, null, null, workerPool, jobService, null) {
-
+                null, mock(TimerDispatch.class), dataQueue, workerPool, jobService, null) {
             @Override
             public void start() {
-            }
-
-            @Override
-            public void dispatchCollectData(Timeout t, Metrics m, CollectRep.MetricsData data) {
-                WheelTimerTask task = (WheelTimerTask) t.task();
-                String key = task.getJob().getId() + "-" + m.getName();
-                if (monitorMap.remove(key) == null) {
-                    return;
-                }
-                dispatchCount.incrementAndGet();
             }
         };
 

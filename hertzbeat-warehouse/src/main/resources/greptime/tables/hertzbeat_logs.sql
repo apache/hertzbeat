@@ -17,16 +17,19 @@
 -- greptime/pipelines/hertzbeat_otlp_log_v1.yaml, which GreptimeDB would
 -- otherwise use to auto-create this table on first ingestion.
 CREATE TABLE IF NOT EXISTS hertzbeat_logs (
-  "time_unix_nano" TIMESTAMP(9) TIME INDEX,
-  "observed_time_unix_nano" TIMESTAMP(9) NULL,
+  "timestamp" TIMESTAMP(9) TIME INDEX,
   "trace_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
   "span_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
-  "trace_flags" INT NULL,
+  "hertzbeat_event_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
+  "log_record_uid" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
+  "hertzbeat_ingest_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
+  "hertzbeat_entity_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
+  "hertzbeat_workspace_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
   "severity_text" STRING NULL,
   "severity_number" INT NULL,
-  "body" STRING NULL,
-  "attributes" JSON NULL,
-  "resource" JSON NULL,
-  "instrumentation_scope" JSON NULL,
-  "dropped_attributes_count" INT NULL
+  "body" STRING NULL FULLTEXT INDEX,
+  "log_attributes" JSON NULL,
+  "resource_attributes" JSON NULL,
+  "service_name" STRING NULL,
+  PRIMARY KEY ("service_name")
 ) WITH ('append_mode' = 'true');

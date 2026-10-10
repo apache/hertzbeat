@@ -76,7 +76,21 @@ class LogComparisonParserTest {
                     "{\"version\":1,\"parameters\":{},\"queries\":[" + query + ",{\"id\":\"b\"}]}"));
         }
         assertThrows(LogFilterQueryException.class, () -> LogComparisonParser.parse("""
-                {"version":1,"parameters":{},"queries":[{"id":"a"},{"id":"b","searchSyntax":"structured-v1","search":"*:secret"}]}
+                {"version":1,"parameters":{},"queries":[{"id":"a"},{"id":"b","searchSyntax":"structured-v1","search":"*:>2"}]}
+                """));
+    }
+
+    @Test
+    void permitsFullTextSourcesButRejectsWorkspaceOverrides() {
+        var parsed = LogComparisonParser.parse("""
+                {"version":1,"parameters":{},"queries":[{"id":"a","searchSyntax":"structured-v1","search":"*:needle"},
+                {"id":"b","searchSyntax":"structured-v1","search":"*:*timeout*"}]}
+                """);
+        assertEquals("*:needle", parsed.queries().getFirst().search());
+        assertEquals("*:*timeout*", parsed.queries().getLast().search());
+        assertThrows(LogFilterQueryException.class, () -> LogComparisonParser.parse("""
+                {"version":1,"parameters":{},"queries":[{"id":"a"},
+                {"id":"b","searchSyntax":"structured-v1","search":"resource.hertzbeat.workspace_id:other"}]}
                 """));
     }
 

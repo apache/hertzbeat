@@ -32,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
-import org.apache.hertzbeat.observability.logs.service.LogSseService;
+import org.apache.hertzbeat.observability.logs.service.impl.LogSseServiceImpl;
+import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -75,7 +76,11 @@ class LogGroupSelectionControllerTest {
 
     @Test
     void livePreflightAndSubscribeRejectSelectionWithSameSafeReason() throws Exception {
-        var service = mock(LogSseService.class);
+        var emitterManager = mock(LogSseManager.class);
+        // Selection support is reader-dependent; validate through the real service.
+        var service = new LogSseServiceImpl(emitterManager, List.of(),
+                new org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService(8, 8, 8, 4, 8,
+                        java.time.Duration.ofMillis(100)));
         var mvc = MockMvcBuilders.standaloneSetup(new LogSseController(service)).build();
         AuthTokenRequestContext.bindAuthenticatedWorkspaceId("default");
         for (String path : List.of("validate", "subscribe")) {
@@ -91,6 +96,6 @@ class LogGroupSelectionControllerTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.msg").value("observability_log_filter_invalid"));
         }
-        verifyNoInteractions(service);
+        verifyNoInteractions(emitterManager);
     }
 }

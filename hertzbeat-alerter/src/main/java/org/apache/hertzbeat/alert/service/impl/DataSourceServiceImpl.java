@@ -173,9 +173,11 @@ public class DataSourceServiceImpl implements DataSourceService {
         }
 
         try {
-            QueryExecutor guardedExecutor = guardSql(new AlertQueryBudgetExecutor(executor), sqlSecurityValidator(alertType));
-            String executableExpression = strict && isSqlDatasource(datasource) ? limitPreviewSql(expr) : expr;
-            return strict ? guardedExecutor.executePreview(executableExpression) : guardedExecutor.execute(executableExpression);
+            QueryExecutor budgetExecutor = new AlertQueryBudgetExecutor(executor);
+            QueryExecutor guardedExecutor = strict && executor.support(WarehouseConstants.SQL)
+                    ? new SqlValidatingQueryExecutor(budgetExecutor, sqlSecurityValidator(alertType), this::limitPreviewSql)
+                    : guardSql(budgetExecutor, sqlSecurityValidator(alertType));
+            return strict ? guardedExecutor.executePreview(expr) : guardedExecutor.execute(expr);
         } catch (AlertExpressionException ae) {
             // A statement the policy rejected, whose message names the part it broke.
             throw ae;
