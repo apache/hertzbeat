@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
 import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
@@ -140,6 +141,9 @@ class UiSessionJwtSecurityChainHttpTest {
         assertThat(jwtProcessor()).isInstanceOf(VersionedJwtProcessor.class);
         mvc = MockMvcBuilders.webAppContextSetup(context)
                 .addFilters(registrations.stream().map(FilterRegistrationBean::getFilter).toArray(Filter[]::new)).build();
+        var tokenValidation = context.getBean(ApiTokenValidationFilter.class);
+        verify(tokenValidation).setSelfTelemetryProperties(context.getBean(SelfTelemetryProperties.class));
+        clearInvocations(tokenValidation);
     }
 
     @AfterEach
@@ -458,7 +462,7 @@ class UiSessionJwtSecurityChainHttpTest {
     @Configuration(proxyBeanMethods = false)
     @EnableWebMvc
     @Import({DatabaseIdentityProcessorConfiguration.class, SurenessSpring7CompatibilityConfiguration.class,
-            UiSessionSecurityConfiguration.class, ApiTokenValidationConfiguration.class})
+            UiSessionSecurityConfiguration.class, ApiTokenValidationConfiguration.class, SelfTelemetryProperties.class})
     static class TestConfiguration {
         @Bean
         SurenessProperties properties() {

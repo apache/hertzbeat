@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.manager.controller.SignalSavedViewController;
 import org.apache.hertzbeat.manager.service.AccountService;
@@ -236,7 +237,7 @@ class SignalSecurityChainHttpTest {
     @Configuration(proxyBeanMethods = false)
     @EnableWebMvc
     @Import({SurenessSpring7CompatibilityConfiguration.class,
-            UiSessionSecurityConfiguration.class, ApiTokenValidationConfiguration.class})
+            UiSessionSecurityConfiguration.class, ApiTokenValidationConfiguration.class, SelfTelemetryProperties.class})
     static class TestConfiguration {
 
         @Bean
