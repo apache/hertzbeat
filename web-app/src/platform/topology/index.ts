@@ -15,5 +15,5 @@
  * limitations under the License.
  */
 
-export { comparisonFacetContext, querySetTimelineContext } from '../controller/explore-log-facet-context';
-export { facetAction } from '../controller/explore-log-facet-actions';
+export { Graph, NodeEvent, EdgeEvent, CanvasEvent, GraphEvent } from './topology-g6-module';
+export type { GraphOptions, GraphData, NodeData } from '@antv/g6/esm/spec';
