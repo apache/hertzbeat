@@ -84,7 +84,6 @@ springdoc:
 sureness:
   container: jakarta_servlet
   auths:
-    - digest
     - basic
     - jwt
   jwt:

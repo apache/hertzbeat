@@ -62,6 +62,26 @@ assert_non_hertzbeat_bindings() {
     "$config_file" > /dev/null
 }
 
+assert_default_auths() {
+  application_file=$1
+  actual_auths=$(awk '
+    /^sureness:$/ { in_sureness = 1; next }
+    in_sureness && /^  auths:$/ { in_auths = 1; next }
+    in_auths && /^    - / { sub(/^    - /, ""); print; next }
+    in_auths { exit }
+  ' "$application_file")
+
+  if [ "$actual_auths" != "basic
+jwt" ]; then
+    echo "Unexpected default sureness.auths in ${application_file}:" >&2
+    echo "$actual_auths" >&2
+    return 1
+  fi
+}
+
+assert_default_auths "${repository_root}/hertzbeat-startup/src/main/resources/application.yml"
+assert_default_auths "${repository_root}/script/application.yml"
+
 for variant in \
   hertzbeat-mysql-iotdb \
   hertzbeat-mysql-tdengine \
@@ -70,6 +90,7 @@ for variant in \
   hertzbeat-postgresql-victoria-metrics
 do
   compose_file="${repository_root}/script/docker-compose/${variant}/docker-compose.yaml"
+  assert_default_auths "${repository_root}/script/docker-compose/${variant}/conf/application.yml"
   default_config="${temporary_directory}/${variant}-default.json"
   override_config="${temporary_directory}/${variant}-override.json"
 
@@ -89,4 +110,4 @@ do
   assert_non_hertzbeat_bindings "$override_config" 127.0.0.1
 done
 
-echo "Quick-start Compose listener bindings are valid."
+echo "Quick-start Compose listener bindings and authentication defaults are valid."

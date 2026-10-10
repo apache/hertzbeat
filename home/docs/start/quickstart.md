@@ -37,7 +37,7 @@ HertzBeat provides multiple installation options:
 
     ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
+2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`. The default image enables Basic and JWT authentication; the Web UI uses JWT. Digest authentication is opt-in because its browser challenge can open a native username/password dialog. See [Install HertzBeat via Docker](docker-deploy#authentication-modes) for configuration details.
 
 3. Deploy collector clusters(Optional)
 
