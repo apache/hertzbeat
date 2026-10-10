@@ -46,6 +46,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.observability.ingestion.forwarder.GreptimeSqlScript;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -219,10 +220,8 @@ class GreptimeTraceApmFlowProofE2eTest {
         try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName)) {
             assertThat(input).as(resourceName).isNotNull();
             String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            for (String statement : sql.split(";")) {
-                if (!statement.isBlank()) {
-                    executeSql(statement.strip());
-                }
+            for (String statement : GreptimeSqlScript.statements(sql)) {
+                executeSql(statement);
             }
         }
     }

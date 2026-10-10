@@ -19,7 +19,6 @@ package org.apache.hertzbeat.observability.ingestion.forwarder;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -136,10 +135,7 @@ public class GreptimeApmFlowInitializer {
     private List<String> readFlowStatements() throws IOException {
         ClassPathResource resource = new ClassPathResource(APM_FLOW_RESOURCE);
         String sql = resource.getContentAsString(StandardCharsets.UTF_8);
-        return Arrays.stream(sql.split(";"))
-                .map(String::strip)
-                .filter(StringUtils::isNotBlank)
-                .toList();
+        return GreptimeSqlScript.statements(sql);
     }
 
     private void addAuthenticationHeader(HttpHeaders headers, GreptimeProperties greptimeProperties) {
