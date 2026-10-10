@@ -1301,5 +1301,20 @@
       "scope": "Amostra retornada",
       "sampleSemantics": "Cada série usa apenas os pontos finitos válidos retornados nesta consulta. O valor mais recente usa o maior timestamp válido. A média não é ponderada pelo tempo; a soma adiciona valores amostrados, não é integral temporal nem aumento de contador. Pontos ausentes não são zero."
     }
+  },
+  "exploreSource": {
+    "label": "Origem da telemetria",
+    "external": "Externa",
+    "self": "Automonitoramento HertzBeat",
+    "selfHint": "Automonitoramento · Dados internos visíveis",
+    "loading": "Verificando a disponibilidade do automonitoramento…",
+    "unavailable": "A disponibilidade do automonitoramento está indisponível.",
+    "forbidden": "O automonitoramento exige acesso de administrador e um espaço de trabalho explicitamente autorizado.",
+    "unconfigured": "O automonitoramento não está configurado. Configure seu banco de dados e espaço de trabalho.",
+    "unready": "O armazenamento do automonitoramento não está pronto.",
+    "metricsUnavailable": "A exportação de métricas internas não está pronta. Verifique o registro interno e o exportador.",
+    "invalid": "Escolha Externa ou Automonitoramento HertzBeat. Esta origem não é suportada.",
+    "hideConflict": "O automonitoramento não pode ocultar dados internos. Desative o filtro ou escolha Externa.",
+    "selfDetails": "Ocultar dados internos está desativado. Agente, topologia e painéis estão indisponíveis para esta origem."
   }
 }

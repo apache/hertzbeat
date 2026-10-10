@@ -1301,5 +1301,20 @@
       "scope": "Returned sample",
       "sampleSemantics": "Calculations use only valid finite points returned by this query, separately for each series. Latest uses the newest valid timestamp. Average is unweighted; sum adds sample values, not a time integral or counter increase. Missing points are not zero."
     }
+  },
+  "exploreSource": {
+    "label": "Telemetry source",
+    "external": "External",
+    "self": "HertzBeat self",
+    "selfHint": "Self · Internal data visible",
+    "loading": "Checking self telemetry availability…",
+    "unavailable": "Self telemetry availability is unavailable.",
+    "forbidden": "Self telemetry requires admin access and an explicitly authorized workspace.",
+    "unconfigured": "Self telemetry is not configured. Configure its database and workspace first.",
+    "unready": "Self telemetry storage is not ready.",
+    "metricsUnavailable": "Self metrics export is not ready. Check the internal metrics registry and exporter status.",
+    "invalid": "Choose External or HertzBeat self. This telemetry source is unsupported.",
+    "hideConflict": "Self telemetry cannot hide internal data. Turn off Hide internal data or switch to External.",
+    "selfDetails": "Hide internal data is disabled for self. Agent, topology and dashboard handoffs are unavailable."
   }
 }
