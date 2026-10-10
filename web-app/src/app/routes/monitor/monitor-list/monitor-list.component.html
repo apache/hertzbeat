@@ -139,6 +139,10 @@
   </ng-template>
 </app-toolbar>
 
+<div class="monitor-list-selection" *ngIf="monitors?.length">
+  <ng-container *ngTemplateOutlet="currentPageSelection"></ng-container>
+</div>
+
 <div class="monitor-card-list">
   <nz-spin [nzSpinning]="tableLoading">
     <div class="monitor-card-list-content">
@@ -282,17 +286,7 @@
   </nz-spin>
 
   <div class="monitor-list-footer" *ngIf="monitors?.length">
-    <div class="monitor-footer-actions">
-      <ng-container *ngIf="checkedMonitorIds.size > 0">
-        <label nz-checkbox [ngModel]="checkedAll" (ngModelChange)="onAllChecked($event)">
-          {{ 'monitor.select-current-page' | i18n }}
-        </label>
-        <span class="monitor-selected-count">{{ 'monitor.selected-count' | i18n : { count: checkedMonitorIds.size } }}</span>
-        <button nz-button nzType="link" nzSize="small" (click)="clearSelection()">
-          {{ 'monitor.clear-selection' | i18n }}
-        </button>
-      </ng-container>
-    </div>
+    <ng-container *ngTemplateOutlet="currentPageSelection"></ng-container>
     <nz-pagination
       [(nzPageIndex)]="pageIndex"
       [nzPageSize]="pageSize"
@@ -305,6 +299,20 @@
     ></nz-pagination>
   </div>
 </div>
+
+<ng-template #currentPageSelection>
+  <div class="monitor-selection-actions">
+    <label nz-checkbox [ngModel]="checkedAll" (ngModelChange)="onAllChecked($event)">
+      {{ 'monitor.select-current-page' | i18n }}
+    </label>
+    <ng-container *ngIf="checkedMonitorIds.size > 0">
+      <span class="monitor-selected-count">{{ 'monitor.selected-count' | i18n : { count: checkedMonitorIds.size } }}</span>
+      <button nz-button nzType="link" nzSize="small" (click)="clearSelection()">
+        {{ 'monitor.clear-selection' | i18n }}
+      </button>
+    </ng-container>
+  </div>
+</ng-template>
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 

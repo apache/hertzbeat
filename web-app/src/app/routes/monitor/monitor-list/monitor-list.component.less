@@ -91,6 +91,13 @@
   font-size: 12px;
 }
 
+.monitor-list-selection {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
 .monitor-list-footer {
   display: flex;
   justify-content: space-between;
@@ -101,7 +108,7 @@
   gap: 8px;
 }
 
-.monitor-footer-actions {
+.monitor-selection-actions {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -337,11 +344,10 @@
   }
 }
 
-
 .monitor-unavailable {
   opacity: 0.6;
   transition: opacity 0.3s ease;
-  
+
   .monitor-card-content {
     filter: grayscale(50%);
   }
@@ -363,7 +369,7 @@
     opacity: 0.3;
     cursor: not-allowed;
   }
-  
+
   button[disabled] {
     opacity: 0.4;
     cursor: not-allowed;
