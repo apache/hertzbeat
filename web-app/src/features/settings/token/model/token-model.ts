@@ -29,6 +29,7 @@ import {
 } from '@/shared/access-token/access-token-generation-model';
 
 export const tokenResourceName = 'tokens';
+export const tokenListPageSize = 10;
 
 export type TokenScope = AccessTokenScope;
 export type TokenDraft = AccessTokenGenerationDraft;

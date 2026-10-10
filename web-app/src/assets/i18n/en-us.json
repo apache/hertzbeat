@@ -2519,7 +2519,8 @@
       "days90": "90 days",
       "days180": "180 days",
       "days365": "365 days"
-    }
+    },
+    "total": "Total {{count}}"
   },
   "alertGroups": {
     "title": "Alert grouping",

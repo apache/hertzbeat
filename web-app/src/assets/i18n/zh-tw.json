@@ -2519,7 +2519,8 @@
       "days90": "90 天",
       "days180": "180 天",
       "days365": "365 天"
-    }
+    },
+    "total": "共 {{count}} 個"
   },
   "alertGroups": {
     "title": "警報分組",
