@@ -268,13 +268,15 @@ public class SshCollectImpl extends AbstractCollect {
             log.error("ssh response data only has header: {}", result);
             return;
         }
-        String[] fields = lines[0].split(" ");
+        // split columns on any whitespace run; each line is trimmed first so leading or trailing
+        // padding cannot shift the first column out of alignment with the header
+        String[] fields = lines[0].trim().split("\\s+");
         Map<String, Integer> fieldMapping = new HashMap<>(fields.length);
         for (int i = 0; i < fields.length; i++) {
             fieldMapping.put(fields[i].trim().toLowerCase(), i);
         }
         for (int i = 1; i < lines.length; i++) {
-            String[] values = lines[i].split(" ");
+            String[] values = lines[i].trim().split("\\s+");
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
