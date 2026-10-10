@@ -56,11 +56,10 @@ jobs:
         with:
           go-version-file: hertzbeat-otel-runtime/go.mod
           cache-dependency-path: hertzbeat-otel-runtime/go.mod
-      - uses: graalvm/setup-graalvm@186d0493a2df5eb62df5ecc498883d18fd58c303  # v1.6.2
+      - uses: actions/setup-java@v4
         with:
           java-version: 25
           distribution: graalvm
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: maven
       - name: Verify source and dependency contracts
         run: |
@@ -103,11 +102,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: graalvm/setup-graalvm@186d0493a2df5eb62df5ecc498883d18fd58c303  # v1.6.2
+      - uses: actions/setup-java@v4
         with:
           java-version: 25
           distribution: graalvm
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: maven
       - name: Verify cross-platform source policy
         shell: bash
@@ -140,11 +138,11 @@ jobs:
         with:
           go-version-file: hertzbeat-otel-runtime/go.mod
           cache-dependency-path: hertzbeat-otel-runtime/go.mod
-      - uses: graalvm/setup-graalvm@186d0493a2df5eb62df5ecc498883d18fd58c303  # v1.6.2
+      - uses: actions/setup-java@v4
         with:
-          java-version: 25
+          # Preserve setup-graalvm's final Oracle GraalVM release for macOS Intel.
+          java-version: ${{ matrix.platform == 'macos-amd64' && '25.0.1' || '25' }}
           distribution: graalvm
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: maven
       - name: Install make on Windows
         if: runner.os == 'Windows'
