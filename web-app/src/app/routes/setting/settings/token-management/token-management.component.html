@@ -27,7 +27,15 @@
       </button>
     </div>
 
-    <nz-table #tokenTable [nzData]="tokens" [nzShowPagination]="false" [nzBordered]="true" nzSize="middle">
+    <nz-table
+      #tokenTable
+      [nzData]="tokens"
+      [nzBordered]="true"
+      nzSize="middle"
+      [nzHideOnSinglePage]="true"
+      [nzShowTotal]="rangeTemplate"
+      [nzNoResult]="emptyTemplate"
+    >
       <thead>
         <tr>
           <th>{{ 'settings.token.name' | i18n }}</th>
@@ -68,10 +76,12 @@
         </tr>
       </tbody>
     </nz-table>
-
-    <div *ngIf="tokens.length === 0 && !loading" class="empty-state">
-      <nz-empty [nzNotFoundContent]="'settings.token.empty' | i18n"></nz-empty>
-    </div>
+    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ tokens.length }} </ng-template>
+    <ng-template #emptyTemplate>
+      <div class="empty-state">
+        <nz-empty [nzNotFoundContent]="'settings.token.empty' | i18n"></nz-empty>
+      </div>
+    </ng-template>
   </div>
 </nz-spin>
 
