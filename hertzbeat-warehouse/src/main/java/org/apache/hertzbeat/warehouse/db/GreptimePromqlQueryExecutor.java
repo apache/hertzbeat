@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -76,8 +77,9 @@ public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
     @Override
     protected UriComponentsBuilder queryUri(String path) {
         UriComponentsBuilder builder = super.queryUri(path);
-        if (StringUtils.isNotBlank(greptimeProperties.database())) {
-            builder.queryParam("db", greptimeProperties.database());
+        String database = TelemetrySourceContext.database(greptimeProperties.database());
+        if (StringUtils.isNotBlank(database)) {
+            builder.queryParam("db", database);
         }
         return builder;
     }

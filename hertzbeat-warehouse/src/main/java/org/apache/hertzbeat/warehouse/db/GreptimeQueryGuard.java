@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.warehouse.db;
 
 import jakarta.annotation.PreDestroy;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -72,12 +73,13 @@ public class GreptimeQueryGuard implements AutoCloseable {
      * @return query result
      */
     public <T> T execute(Callable<T> query) {
+        TelemetrySourceContext.Route route = TelemetrySourceContext.capture();
         acquirePermit();
         Future<T> future;
         try {
             future = queryExecutor.submit(() -> {
                 try {
-                    return query.call();
+                    return TelemetrySourceContext.call(route, query);
                 } finally {
                     permits.release();
                 }

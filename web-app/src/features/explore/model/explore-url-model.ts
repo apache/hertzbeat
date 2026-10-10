@@ -27,6 +27,7 @@ import {
   aliasedValue,
   setValue
 } from './explore-url-values';
+import { readTelemetrySource } from './explore-source';
 import { appendSignalParams } from './explore-url-append';
 import { migrateVisibleLegacyLogFilters } from './explore-log-search-migration';
 import { canonicalServicesReturnPath } from '@/shared/navigation/services-path';
@@ -112,6 +113,7 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
 
 function readLogJoinParams(params: URLSearchParams) {
   return {
+    source: readTelemetrySource(params),
     logSubquery: readOpaqueRouteValue(params, 'logSubquery'),
     logReferenceJoin: readOpaqueRouteValue(params, 'logReferenceJoin')
   };
@@ -120,6 +122,7 @@ function readLogJoinParams(params: URLSearchParams) {
 export function buildExplorePath(query: ExploreQuery) {
   const normalized = normalizeExploreQuery(query);
   const params = new URLSearchParams({ signal: normalized.signal, timeRange: normalized.timeRange });
+  if (normalized.source !== undefined && normalized.source !== 'external') params.set('source', normalized.source);
   setValue(params, 'savedView', normalized.savedView);
   setValue(params, 'query', normalized.query);
   appendSignalParams(params, normalized);
@@ -138,6 +141,7 @@ export function normalizeExploreQuery(
   query: ExploreQueryPatch & { signal: ExploreSignal; timeRange: ExploreTimeRange }
 ): ExploreQuery {
   const shared = {
+    ...(query.source === undefined || query.source === 'external' ? {} : { source: query.source }),
     timeRange: query.timeRange,
     entityId: query.entityId,
     monitorId: query.monitorId,

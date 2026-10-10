@@ -19,6 +19,7 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -66,6 +67,7 @@ public class LogSseManager {
     private final AtomicLong broadcastSequence = new AtomicLong(0);
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicReference<PendingGap> pendingGap = new AtomicReference<>();
+    private final AtomicReference<PendingGap> pendingSelfGap = new AtomicReference<>();
 
     synchronized void start() {
         if (scheduler != null) {
@@ -113,6 +115,7 @@ public class LogSseManager {
             logQueue.clear();
             queueSize.set(0);
             pendingGap.set(null);
+            pendingSelfGap.set(null);
         }
         scheduler = null;
     }
@@ -128,15 +131,21 @@ public class LogSseManager {
         if (filters == null) {
             throw new IllegalArgumentException("Workspace-bound log filters are required");
         }
-        return registerEmitter(clientId, filters.compile(), emitter);
+        return registerEmitter(clientId, filters.compile(), emitter,
+                TelemetrySourceContext.isSelf());
     }
 
     /** Register only a server-prepared immutable matcher, after all native preparation has completed. */
     public SseEmitter createPreparedEmitter(Long clientId, Predicate<LogEntry> matcher) {
-        return registerEmitter(clientId, java.util.Objects.requireNonNull(matcher), new SseEmitter(Long.MAX_VALUE));
+        return createPreparedEmitter(clientId, matcher, false);
     }
 
-    private SseEmitter registerEmitter(Long clientId, Predicate<LogEntry> matcher, SseEmitter emitter) {
+    /** Capture the authorized source before asynchronous delivery begins. */
+    public SseEmitter createPreparedEmitter(Long clientId, Predicate<LogEntry> matcher, boolean self) {
+        return registerEmitter(clientId, java.util.Objects.requireNonNull(matcher), new SseEmitter(Long.MAX_VALUE), self);
+    }
+
+    private SseEmitter registerEmitter(Long clientId, Predicate<LogEntry> matcher, SseEmitter emitter, boolean self) {
         ExecutorService sender = new ThreadPoolExecutor(
                 1,
                 1,
@@ -152,7 +161,7 @@ public class LogSseManager {
         SseSubscriber subscriber;
         SseSubscriber replaced;
         synchronized (queueLock) {
-            subscriber = new SseSubscriber(emitter, matcher, broadcastSequence.get(), sender);
+            subscriber = new SseSubscriber(emitter, matcher, broadcastSequence.get(), sender, self);
             emitter.onCompletion(() -> removeEmitter(clientId, subscriber));
             emitter.onTimeout(() -> removeEmitter(clientId, subscriber));
             emitter.onError((ex) -> removeEmitter(clientId, subscriber));
@@ -187,6 +196,15 @@ public class LogSseManager {
      * Queue log entry for batch processing
      */
     public void broadcast(LogEntry logEntry) {
+        broadcast(logEntry, false);
+    }
+
+    /** Trusted in-process SDK path; external payload attributes never choose a stream. */
+    public void broadcastSelf(LogEntry logEntry) {
+        broadcast(logEntry, true);
+    }
+
+    private void broadcast(LogEntry logEntry, boolean self) {
         if (logEntry == null || closed.get() || emitters.isEmpty()) {
             return;
         }
@@ -196,21 +214,21 @@ public class LogSseManager {
             }
             long sequence = broadcastSequence.incrementAndGet();
             if (queueSize.get() >= MAX_QUEUE_SIZE) {
-                recordDroppedSequence(sequence);
+                recordDroppedSequence(sequence, self);
                 return;
             }
-            if (logQueue.offer(new QueuedLog(sequence, logEntry))) {
+            if (logQueue.offer(new QueuedLog(sequence, logEntry, self))) {
                 queueSize.incrementAndGet();
             } else {
-                recordDroppedSequence(sequence);
+                recordDroppedSequence(sequence, self);
                 log.warn("Failed to enqueue SSE log entry.");
             }
         }
     }
 
-    private void recordDroppedSequence(long sequence) {
+    private void recordDroppedSequence(long sequence, boolean self) {
         long observedAt = System.currentTimeMillis();
-        pendingGap.updateAndGet(existing -> existing == null
+        (self ? pendingSelfGap : pendingGap).updateAndGet(existing -> existing == null
                 ? new PendingGap(sequence, sequence, observedAt)
                 : new PendingGap(existing.firstDroppedSequence, sequence, observedAt));
     }
@@ -220,7 +238,7 @@ public class LogSseManager {
      */
     private void flushBatch() {
         try {
-            if (logQueue.isEmpty() && pendingGap.get() == null) {
+            if (logQueue.isEmpty() && pendingGap.get() == null && pendingSelfGap.get() == null) {
                 return;
             }
 
@@ -240,6 +258,11 @@ public class LogSseManager {
                 if (loss != null) {
                     logQueue.offer(new QueuedGap(
                             loss.firstDroppedSequence, loss.lastDroppedSequence, loss.observedAt));
+                }
+                PendingGap selfLoss = pendingSelfGap.getAndSet(null);
+                if (selfLoss != null) {
+                    logQueue.offer(new QueuedGap(
+                            selfLoss.firstDroppedSequence, selfLoss.lastDroppedSequence, selfLoss.observedAt, true));
                 }
             }
 
@@ -308,14 +331,16 @@ public class LogSseManager {
                 continue;
             }
             if (item instanceof QueuedGap queuedGap) {
+                if (subscriber.self != queuedGap.self) { continue; }
                 long firstVisibleSequence = queuedGap.firstDroppedSequence;
                 if (firstVisibleSequence <= subscriber.subscribedAfterSequence) {
                     // item.sequence() already proved that the watermark is below Long.MAX_VALUE.
                     firstVisibleSequence = subscriber.subscribedAfterSequence + 1;
                 }
                 filtered.add(new QueuedGap(
-                        firstVisibleSequence, queuedGap.lastDroppedSequence, queuedGap.observedAt));
-            } else if (item instanceof QueuedLog queuedLog && subscriber.matcher.test(queuedLog.entry)) {
+                        firstVisibleSequence, queuedGap.lastDroppedSequence, queuedGap.observedAt, queuedGap.self));
+            } else if (item instanceof QueuedLog queuedLog && subscriber.self == queuedLog.self
+                    && subscriber.matcher.test(queuedLog.entry)) {
                 filtered.add(item);
             }
         }
@@ -380,14 +405,16 @@ public class LogSseManager {
     private static final class SseSubscriber {
         private final SseEmitter emitter;
         private final Predicate<LogEntry> matcher;
+        private final boolean self;
         private final long subscribedAfterSequence;
         private final ExecutorService sender;
         private final AtomicBoolean retired = new AtomicBoolean(false);
 
         private SseSubscriber(SseEmitter emitter, Predicate<LogEntry> matcher,
-                              long subscribedAfterSequence, ExecutorService sender) {
+                              long subscribedAfterSequence, ExecutorService sender, boolean self) {
             this.emitter = emitter;
             this.matcher = matcher;
+            this.self = self;
             this.subscribedAfterSequence = subscribedAfterSequence;
             this.sender = sender;
         }
@@ -414,10 +441,13 @@ public class LogSseManager {
         long sequence();
     }
 
-    record QueuedLog(long sequence, LogEntry entry) implements QueuedItem {
+    record QueuedLog(long sequence, LogEntry entry, boolean self) implements QueuedItem {
     }
 
-    record QueuedGap(long firstDroppedSequence, long lastDroppedSequence, long observedAt) implements QueuedItem {
+    record QueuedGap(long firstDroppedSequence, long lastDroppedSequence, long observedAt, boolean self) implements QueuedItem {
+        QueuedGap(long firstDroppedSequence, long lastDroppedSequence, long observedAt) {
+            this(firstDroppedSequence, lastDroppedSequence, observedAt, false);
+        }
 
         @Override
         public long sequence() {

@@ -126,6 +126,7 @@ export function VisibilityFilters({
     >
       <Checkbox
         checked={draft.hideInternal}
+        disabled={draft.source === 'self'}
         onChange={event => updateField({ field: 'hideInternal', value: event.target.checked })}
       >
         {t('exploreLog.hideInternal')}

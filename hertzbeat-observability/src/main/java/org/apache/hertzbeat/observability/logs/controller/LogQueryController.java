@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.logs.controller;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.observability.logs.service.impl.LogTrendIntervalPlanner;
 import org.apache.hertzbeat.common.observability.dto.log.LogAnalysis;
 import org.apache.hertzbeat.common.observability.dto.log.LogSort;
@@ -371,7 +372,12 @@ public class LogQueryController {
         if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
             throw new ObservabilityQueryRequestException();
         }
-        return Boolean.parseBoolean(value);
+        boolean enabled = Boolean.parseBoolean(value);
+        if (enabled && "hideInternal".equals(key)
+                && TelemetrySourceContext.isSelf()) {
+            throw new ObservabilityQueryRequestException();
+        }
+        return enabled;
     }
 
     @GetMapping("/list")

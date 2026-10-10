@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.observability.logs.service.LogManagementService;
@@ -55,11 +56,22 @@ public class LogManagerController {
     public ResponseEntity<Message<String>> batchDelete(
             @Parameter(description = "List of Unix nanosecond timestamps for logs to delete", example = "1640995200000000000")
             @RequestParam(required = false) List<Long> timeUnixNanos) {
-        boolean result = logManagementService.batchDelete(timeUnixNanos);
-        if (result) {
-            return ResponseEntity.ok(Message.success("Logs deleted successfully"));
-        } else {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Failed to delete logs"));
+        if (AuthTokenRequestContext.currentAuthenticatedWorkspaceId() == null) {
+            return ResponseEntity.status(403).body(Message.fail(FAIL_CODE, "Authenticated workspace is required"));
+        }
+        if (timeUnixNanos == null || timeUnixNanos.isEmpty()
+                || timeUnixNanos.stream().anyMatch(timestamp -> timestamp == null || timestamp < 0)) {
+            return ResponseEntity.badRequest().body(Message.fail(FAIL_CODE, "Log timestamps are required"));
+        }
+        try {
+            if (logManagementService.batchDelete(timeUnixNanos)) {
+                return ResponseEntity.ok(Message.success("Logs deleted successfully"));
+            }
+            return ResponseEntity.status(503).body(Message.fail(FAIL_CODE, "Log deletion storage is unavailable"));
+        } catch (UnsupportedOperationException unsupported) {
+            return ResponseEntity.status(409).body(Message.fail(FAIL_CODE, "Log deletion is unsupported by this storage"));
+        } catch (RuntimeException failure) {
+            return ResponseEntity.status(503).body(Message.fail(FAIL_CODE, "Log deletion storage is unavailable"));
         }
     }
 }

@@ -58,11 +58,6 @@
     },
     {
       "rule": "feature-module-size",
-      "path": "features/alert/pages/alert-rule-editor-page.tsx",
-      "allowedMax": 192
-    },
-    {
-      "rule": "feature-module-size",
       "path": "features/settings/collector/components/collector-details-drawer.module.css",
       "allowedMax": 221
     },
@@ -115,21 +110,6 @@
       "rule": "feature-module-size",
       "path": "features/status/public/components/public-status.module.css",
       "allowedMax": 484
-    },
-    {
-      "rule": "feature-module-size",
-      "path": "features/explore/api/explore-api.ts",
-      "allowedMax": 260
-    },
-    {
-      "rule": "feature-module-size",
-      "path": "features/explore/model/explore-query.ts",
-      "allowedMax": 290
-    },
-    {
-      "rule": "feature-module-size",
-      "path": "features/explore/model/explore-submission-model.ts",
-      "allowedMax": 259
     },
     {
       "rule": "feature-module-size",

@@ -30,6 +30,9 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.observability.logs.service.impl.LogManagementServiceImpl;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import static org.mockito.ArgumentMatchers.eq;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -53,13 +56,35 @@ class LogManagerControllerTest {
 
     @BeforeEach
     void setUp() {
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId("default");
         this.logManagerController = new LogManagerController(new LogManagementServiceImpl(List.of(historyDataWriter)));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logManagerController).build();
     }
 
+    @AfterEach
+    void clear() { AuthTokenRequestContext.clear(); }
+
+    @Test
+    void unsupportedAppendOnlyStorageIsConflictAndCannotReportSuccess() throws Exception {
+        when(historyDataWriter.batchDeleteLogs(eq("default"), anyList()))
+                .thenThrow(new UnsupportedOperationException("append-only table"));
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/logs").param("timeUnixNanos", "77"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.msg").value("Log deletion is unsupported by this storage"));
+    }
+
+    @Test
+    void actualStorageFailureIsUnavailableWithoutLeakingDatabaseDetails() throws Exception {
+        when(historyDataWriter.batchDeleteLogs(eq("default"), anyList()))
+                .thenThrow(new IllegalStateException("secret database endpoint and credentials"));
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/logs").param("timeUnixNanos", "77"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.msg").value("Log deletion storage is unavailable"));
+    }
+
     @Test
     void testBatchDeleteLogsSuccess() throws Exception {
-        when(historyDataWriter.batchDeleteLogs(anyList())).thenReturn(true);
+        when(historyDataWriter.batchDeleteLogs(eq("default"), anyList())).thenReturn(true);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -75,21 +100,21 @@ class LogManagerControllerTest {
 
     @Test
     void testBatchDeleteLogsFailure() throws Exception {
-        when(historyDataWriter.batchDeleteLogs(anyList())).thenReturn(false);
+        when(historyDataWriter.batchDeleteLogs(eq("default"), anyList())).thenReturn(false);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .delete("/api/logs")
                         .param("timeUnixNanos", "1734005477630000000", "1734005477640000000")
         )
-                .andExpect(status().isOk())
+                .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("Failed to delete logs"));
+                .andExpect(jsonPath("$.msg").value("Log deletion storage is unavailable"));
     }
 
     @Test
     void testBatchDeleteLogsWithSingleTimestamp() throws Exception {
-        when(historyDataWriter.batchDeleteLogs(Arrays.asList(1734005477630000000L))).thenReturn(true);
+        when(historyDataWriter.batchDeleteLogs("default", Arrays.asList(1734005477630000000L))).thenReturn(true);
 
         mockMvc.perform(
                 MockMvcRequestBuilders

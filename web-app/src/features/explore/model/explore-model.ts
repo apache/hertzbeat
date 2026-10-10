@@ -29,6 +29,7 @@ import { normalizeInvestigationTimeZone, type ExactTimeWindow, type QueryContext
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { buildExplorePath, normalizeExploreQuery, parseExploreQuery } from './explore-url-model';
 import { mergeExploreContextChanges } from './explore-context-model';
+import { sourceSelectionChanges } from './explore-source';
 
 export { exploreQueryContext, mergeExploreContextChanges } from './explore-context-model';
 export {
@@ -67,7 +68,9 @@ export function exploreEvidenceScopeKey(query: ExploreQuery) {
 }
 
 export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatch): ExploreQuery {
-  const cleaned = dependentFilterCleanup(query, changes);
+  const sourceChanged =
+    Object.hasOwn(changes, 'source') && (changes.source ?? 'external') !== (query.source ?? 'external');
+  const cleaned = dependentFilterCleanup(query, sourceChanged ? sourceSelectionChanges(changes) : changes);
   return normalizeExploreQuery({
     ...query,
     ...cleaned,

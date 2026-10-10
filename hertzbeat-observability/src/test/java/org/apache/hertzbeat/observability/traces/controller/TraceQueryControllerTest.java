@@ -79,6 +79,31 @@ class TraceQueryControllerTest {
     @AfterEach
     void tearDown() {
         AuthTokenRequestContext.clear();
+        org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.clear();
+    }
+
+    @Test
+    void selfSourceStructuralQueryReachesTheAuthorizedRoute() throws Exception {
+        org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.bind(
+                new org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.Route(
+                        org.apache.hertzbeat.common.observability.gateway.TelemetrySource.SELF, "ci_self", "team-a"));
+        var query = new TraceStructureQuery(1000L, 2000L,
+                new TraceStructureQuery.Clause("HertzBeat", null, null),
+                new TraceStructureQuery.Clause("warehouse", null, null), TraceStructureQuery.Relation.DIRECT, 0, 20);
+        when(entityTraceQueryService.queryTraceStructure("team-a", query)).thenAnswer(invocation -> {
+            org.junit.jupiter.api.Assertions.assertTrue(
+                    org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.isSelf());
+            return new TraceListPageDto(List.of(), PageRequest.of(0, 20), 0,
+                    new TraceListPageDto.Query("newest", "bounded", 1500, false));
+        });
+        mockMvc.perform(get("/api/traces/structure").param("start", "1000").param("end", "2000")
+                        .param("aServiceName", "HertzBeat").param("bServiceName", "warehouse")
+                        .param("relation", "direct").param("source", "self"))
+                .andExpect(status().isOk());
+        verify(entityTraceQueryService).queryTraceStructure("team-a", query);
+        assertThrows(Exception.class, () -> mockMvc.perform(get("/api/traces/structure").param("start", "1000")
+                .param("end", "2000").param("aServiceName", "HertzBeat").param("bServiceName", "warehouse")
+                .param("relation", "direct").param("source", "all")));
     }
 
     @Test

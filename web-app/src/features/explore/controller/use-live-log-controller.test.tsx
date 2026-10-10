@@ -1,12 +1,18 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
+ * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import { act, renderHook } from '@testing-library/react';
@@ -42,6 +48,23 @@ describe('Live Log controller', () => {
     api.openLogStream.mockImplementation((_path: string, handlers: FakeHandlers) => new FakeSource(handlers));
   });
   afterEach(() => vi.useRealTimers());
+
+  it('closes the old stream and drops late rows when switching telemetry source', () => {
+    api.buildLogStreamPath.mockImplementation(
+      (query: LogExploreQuery) => `/stream?source=${query.source ?? 'external'}`
+    );
+    const view = renderLive(query());
+    const old = FakeSource.instances[0]!;
+    act(() => old.event(logRow('external')));
+    expect(view.result.current.rows).toHaveLength(1);
+    view.rerender({ query: query('errors', { source: 'self' }) });
+    expect(old.close).toHaveBeenCalledOnce();
+    expect(view.result.current.rows).toEqual([]);
+    act(() => old.event(logRow('late external')));
+    expect(view.result.current.rows).toEqual([]);
+    act(() => FakeSource.instances[1]!.event(logRow('self')));
+    expect(view.result.current.rows.map(row => row.body)).toEqual(['self']);
+  });
 
   it('exposes a Live preflight diagnostic only for its owning connection generation', () => {
     type Handlers = Parameters<typeof import('../api/explore-api').openLogStream>[1];

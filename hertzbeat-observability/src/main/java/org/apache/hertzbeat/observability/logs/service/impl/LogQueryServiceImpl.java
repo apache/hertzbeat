@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.logs.service.impl;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.common.observability.query.ArithmeticFormulaValidator;
 import org.apache.hertzbeat.observability.logs.query.LogComparisonParser;
 import org.apache.hertzbeat.common.observability.dto.log.LogComparison;
@@ -2430,11 +2431,12 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private boolean matchesWorkspace(LogEntry logEntry, String workspaceId) {
         if (!StringUtils.hasText(workspaceId)) {
-            return true;
+            return !TelemetrySourceContext.isSelf();
         }
         String logWorkspaceId = resolveWorkspaceId(logEntry);
         if (!StringUtils.hasText(logWorkspaceId)) {
-            return AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(workspaceId);
+            return !TelemetrySourceContext.isSelf()
+                    && AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(workspaceId);
         }
         return workspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(logWorkspaceId));
     }

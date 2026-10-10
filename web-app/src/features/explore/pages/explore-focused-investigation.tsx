@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { ExploreSourceControl } from './explore-source-control';
 import type { SpanFilterControls } from '../model/explore-span-filter';
 import { buildTraceLogsPath } from '../model/explore-trace-log-return';
 /* Licensed to the Apache Software Foundation (ASF) under one or more
@@ -52,7 +70,8 @@ export function ExploreFocusedTracePage({
   const investigation = useTraceInvestigationController(query);
   const state = investigation.state;
   const metricsPath = state.kind === 'ready' ? buildTraceInvestigationMetricsPath(query, state.snapshot) : undefined;
-  const topologyPath = state.kind === 'ready' ? buildTraceInvestigationTopologyPath(state.snapshot) : undefined;
+  const topologyPath =
+    state.kind === 'ready' && query.source !== 'self' ? buildTraceInvestigationTopologyPath(state.snapshot) : undefined;
   return (
     <>
       {!common.embedded && <ExploreWorkbench {...common} query={query} />}
@@ -95,13 +114,15 @@ export function ExploreFocusedLogPage({
   const investigation = useLogInvestigationController(query);
   const state = investigation.state;
   const metricsPath = state.kind === 'ready' ? buildLogInvestigationMetricsPath(query, state.snapshot) : undefined;
-  const topologyPath = state.kind === 'ready' ? buildLogInvestigationTopologyPath(state.snapshot) : undefined;
+  const topologyPath =
+    state.kind === 'ready' && query.source !== 'self' ? buildLogInvestigationTopologyPath(state.snapshot) : undefined;
   return (
     <>
       <div className={logWorkspaceStyles.workspace} data-explore-workspace="true">
         <ExploreWorkbench
           {...common}
           query={query}
+          sourceControl={<ExploreSourceControl query={query} updateQuery={common.updateQuery} />}
           actions={savedQueries ? <ExploreLogsViewTrigger model={savedQueries} /> : common.actions}
         />
         <div className={logWorkspaceStyles.workArea}>

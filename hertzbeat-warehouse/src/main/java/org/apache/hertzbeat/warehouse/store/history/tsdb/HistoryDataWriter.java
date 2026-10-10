@@ -55,6 +55,16 @@ public interface HistoryDataWriter {
         throw new UnsupportedOperationException("batch delete logs is not supported");
     }
 
+    /** Whether this writer honors the authorized self telemetry route. */
+    default boolean supportsSelfTelemetry() {
+        return false;
+    }
+
+    /** Delete only rows authorized in the selected workspace and trusted source. */
+    default boolean batchDeleteLogs(String workspaceId, List<Long> timeUnixNanos) {
+        throw new UnsupportedOperationException("workspace-scoped log deletion is not supported");
+    }
+
     /**
      * Batch save log data
      * @param logEntries list of log entries

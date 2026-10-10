@@ -133,6 +133,7 @@ function TraceScopeFilters({ draft, t, updateField }: Props) {
       </ExploreQueryField>
       <Checkbox
         checked={draft.hideInternal}
+        disabled={draft.source === 'self'}
         onChange={event => updateField({ field: 'hideInternal', value: event.target.checked })}
       >
         {t('exploreTrace.hideInternal')}

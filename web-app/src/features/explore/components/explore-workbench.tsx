@@ -31,12 +31,13 @@ type Props = {
   query: ExploreQuery;
   actions?: ReactNode;
   timeToolbar?: ReactNode;
+  sourceControl?: ReactNode;
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
   openPath?: ((path: string) => void) | undefined;
 };
 
-export function ExploreWorkbench({ query, t, openPath, actions, timeToolbar }: Props) {
+export function ExploreWorkbench({ query, t, openPath, actions, timeToolbar, sourceControl }: Props) {
   const traceReturn = validatedTraceReturn(query);
   return (
     <>
@@ -65,6 +66,7 @@ export function ExploreWorkbench({ query, t, openPath, actions, timeToolbar }: P
           <div className={styles.viewSlot} data-signal-view-slot>
             {actions}
           </div>
+          {sourceControl}
           {timeToolbar}
         </div>
       </header>

@@ -19,12 +19,25 @@ package org.apache.hertzbeat.observability.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.sdk.autoconfigure.spi.AutoConfigurationCustomizer;
+import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
+import io.opentelemetry.sdk.resources.Resource;
 
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
+import org.mockito.ArgumentCaptor;
 import org.apache.hertzbeat.observability.ingestion.forwarder.GreptimeOtlpForwarder;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
@@ -37,7 +50,7 @@ class OpenTelemetryConfigTest {
         OpenTelemetryConfig config = new OpenTelemetryConfig();
         Method method = OpenTelemetryConfig.class.getDeclaredMethod(
                 "buildGreptimeOtlpLogHeaders",
-                GreptimeProperties.class
+                GreptimeProperties.class, SelfTelemetryProperties.class
         );
         method.setAccessible(true);
 
@@ -45,7 +58,7 @@ class OpenTelemetryConfigTest {
         Map<String, String> headers = (Map<String, String>) method.invoke(
                 config,
                 new GreptimeProperties(true, "127.0.0.1:4001", "http://127.0.0.1:4000",
-                        "public", "greptime", "greptime", "1d")
+                        "public", "greptime", "greptime", "1d"), new SelfTelemetryProperties()
         );
 
         assertEquals(WarehouseConstants.LOG_TABLE_NAME, headers.get("X-Greptime-Log-Table-Name"));
@@ -122,11 +135,82 @@ class OpenTelemetryConfigTest {
         assertEquals("greptime_trace_v1", headers.get("X-Greptime-Pipeline-Name"));
     }
 
+    @Test
+    void enabledSelfUsesDistinctDatabaseAndExplicitWorkspaceResource() throws Exception {
+        GreptimeProperties greptime = new GreptimeProperties(true, "127.0.0.1:4001",
+                "http://127.0.0.1:4000", " external ", " user ", " secret ", "1d");
+        SelfTelemetryProperties self = configuredSelf();
+        self.markReady();
+        String expectedAuthorization = "Basic "
+                + Base64.getEncoder().encodeToString("user:secret".getBytes(StandardCharsets.UTF_8));
+        for (String method : new String[]{"buildGreptimeOtlpLogHeaders", "buildGreptimeOtlpTraceHeaders"}) {
+            Map<String, String> headers = greptimeHeaders(method, greptime, self);
+            assertEquals("hertzbeat_self", headers.get("X-Greptime-DB-Name"));
+            assertEquals(expectedAuthorization, headers.get("Authorization"));
+        }
+        AutoConfigurationCustomizer customizer = mock(AutoConfigurationCustomizer.class, org.mockito.Answers.RETURNS_SELF);
+        new OpenTelemetryConfig().greptimeOtelCustomizer(greptime, new OtelTraceIngressProperties(),
+                null, null, self, null).customize(customizer);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<BiFunction<Resource, ConfigProperties, Resource>> resourceCustomizer =
+                ArgumentCaptor.forClass(BiFunction.class);
+        verify(customizer).addResourceCustomizer(resourceCustomizer.capture());
+        Resource resource = resourceCustomizer.getValue().apply(Resource.empty(), null);
+        assertEquals("workspace-one", resource.getAttribute(AttributeKey.stringKey("hertzbeat.workspace_id")));
+    }
+
+    @Test
+    void unreadySelfDisablesExportersWithoutInstallingExternalFallback() {
+        assertNoFallback(configuredSelf(), new OtelTraceIngressProperties());
+    }
+
+    @Test
+    void selfIngressConflictIsUnavailableWithoutInstallingExternalFallback() {
+        SelfTelemetryProperties self = configuredSelf();
+        self.markReady();
+        OtelTraceIngressProperties ingress = new OtelTraceIngressProperties();
+        ingress.setEnabled(true);
+        assertNoFallback(self, ingress);
+        assertFalse(self.isReady());
+        assertEquals("TRACE_INGRESS_CONFLICT", self.getStatusReason());
+    }
+
+    private void assertNoFallback(SelfTelemetryProperties self, OtelTraceIngressProperties ingress) {
+        AutoConfigurationCustomizer customizer = mock(AutoConfigurationCustomizer.class, org.mockito.Answers.RETURNS_SELF);
+        GreptimeProperties greptime = new GreptimeProperties(true, "127.0.0.1:4001",
+                "http://127.0.0.1:4000", "external", null, null, "1d");
+        new OpenTelemetryConfig().greptimeOtelCustomizer(greptime, ingress, null, null, self, null).customize(customizer);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Function<ConfigProperties, Map<String, String>>> propertiesCustomizer =
+                ArgumentCaptor.forClass(Function.class);
+        verify(customizer).addPropertiesCustomizer(propertiesCustomizer.capture());
+        assertEquals(Map.of("otel.traces.exporter", "none", "otel.logs.exporter", "none"),
+                propertiesCustomizer.getValue().apply(null));
+        verify(customizer, never()).addSpanExporterCustomizer(any());
+        verify(customizer, never()).addLoggerProviderCustomizer(any());
+        verify(customizer, never()).addResourceCustomizer(any());
+    }
+
+    private SelfTelemetryProperties configuredSelf() {
+        SelfTelemetryProperties self = new SelfTelemetryProperties();
+        self.setEnabled(true);
+        self.setDatabase("hertzbeat_self");
+        self.setWorkspaceId("workspace-one");
+        return self;
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, String> greptimeHeaders(String methodName, GreptimeProperties properties) throws Exception {
-        Method method = OpenTelemetryConfig.class.getDeclaredMethod(methodName, GreptimeProperties.class);
+        return greptimeHeaders(methodName, properties, new SelfTelemetryProperties());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, String> greptimeHeaders(String methodName, GreptimeProperties properties,
+            SelfTelemetryProperties self) throws Exception {
+        Method method = OpenTelemetryConfig.class.getDeclaredMethod(methodName, GreptimeProperties.class,
+                SelfTelemetryProperties.class);
         method.setAccessible(true);
-        return (Map<String, String>) method.invoke(new OpenTelemetryConfig(), properties);
+        return (Map<String, String>) method.invoke(new OpenTelemetryConfig(), properties, self);
     }
 
     private String greptimeEndpoint(GreptimeProperties properties, String path) throws Exception {
@@ -151,8 +235,8 @@ class OpenTelemetryConfigTest {
     private Map<String, String> traceHeaders(OpenTelemetryConfig config, GreptimeProperties greptime,
                                              OtelTraceIngressProperties ingress) throws Exception {
         Method method = OpenTelemetryConfig.class.getDeclaredMethod(
-                "traceHeaders", GreptimeProperties.class, OtelTraceIngressProperties.class);
+                "traceHeaders", GreptimeProperties.class, OtelTraceIngressProperties.class, SelfTelemetryProperties.class);
         method.setAccessible(true);
-        return (Map<String, String>) method.invoke(config, greptime, ingress);
+        return (Map<String, String>) method.invoke(config, greptime, ingress, new SelfTelemetryProperties());
     }
 }

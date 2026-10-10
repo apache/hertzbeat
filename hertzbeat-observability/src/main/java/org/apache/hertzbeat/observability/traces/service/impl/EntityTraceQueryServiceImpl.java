@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.traces.service.impl;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceAnalytics;
 import org.apache.hertzbeat.observability.shared.util.SignalFilterScanner;
 
@@ -1166,12 +1167,13 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
 
     private boolean matchesRequestWorkspace(String workspaceId, TraceSpanNodeDto span) {
         if (!StringUtils.hasText(workspaceId)) {
-            return true;
+            return !TelemetrySourceContext.isSelf();
         }
         String spanWorkspaceId = resolveWorkspaceId(span);
         String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         if (!StringUtils.hasText(spanWorkspaceId)) {
-            return AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedWorkspaceId);
+            return !TelemetrySourceContext.isSelf()
+                    && AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedWorkspaceId);
         }
         return normalizedWorkspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(spanWorkspaceId));
     }

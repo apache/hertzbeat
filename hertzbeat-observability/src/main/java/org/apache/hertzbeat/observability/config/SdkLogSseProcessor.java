@@ -40,8 +40,14 @@ final class SdkLogSseProcessor implements LogRecordProcessor {
 
     private final LogSseManager sseManager;
     private final OtlpIngestionRedactionService redaction;
+    private final boolean self;
 
     SdkLogSseProcessor(LogSseManager sseManager, OtlpIngestionRedactionService redaction) {
+        this(sseManager, redaction, false);
+    }
+
+    SdkLogSseProcessor(LogSseManager sseManager, OtlpIngestionRedactionService redaction, boolean self) {
+        this.self = self;
         this.sseManager = sseManager;
         this.redaction = redaction;
     }
@@ -61,7 +67,8 @@ final class SdkLogSseProcessor implements LogRecordProcessor {
                 .attributes(redaction.redactObjectMap(attributes(data.getInstrumentationScopeInfo().getAttributes())))
                 .build();
         LogEntry entry = LogEntry.builder()
-                .timeUnixNano(data.getTimestampEpochNanos())
+                .timeUnixNano(data.getTimestampEpochNanos() > 0
+                        ? data.getTimestampEpochNanos() : data.getObservedTimestampEpochNanos())
                 .observedTimeUnixNano(data.getObservedTimestampEpochNanos())
                 .severityNumber(data.getSeverity().getSeverityNumber())
                 .severityText(data.getSeverityText())
@@ -77,7 +84,11 @@ final class SdkLogSseProcessor implements LogRecordProcessor {
                 .instrumentationScope(scope)
                 .scopeSchemaUrl(data.getInstrumentationScopeInfo().getSchemaUrl())
                 .build();
-        sseManager.broadcast(entry);
+        if (self) {
+            sseManager.broadcastSelf(entry);
+        } else {
+            sseManager.broadcast(entry);
+        }
     }
 
     @Override

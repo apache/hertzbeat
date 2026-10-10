@@ -29,6 +29,8 @@ import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import com.usthe.sureness.util.JsonWebTokenUtil;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.manager.service.AccountService;
@@ -106,7 +108,9 @@ class ApiTokenRejectionContextTest {
 
     private static MockHttpServletRequest request() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/logs/list");
-        request.addHeader("Authorization", "Bearer synthetic-token-reference");
+        JsonWebTokenUtil.setDefaultSecretKey("round-seven-test-secret-is-only-for-local-jwt-fixtures-012345678901234567890123456789");
+        String token = JsonWebTokenUtil.issueJwt("synthetic-owner", 3600L, List.of("user"), new java.util.HashMap<>(Map.of("managed", true)));
+        request.addHeader("Authorization", "Bearer " + token);
         return request;
     }
 

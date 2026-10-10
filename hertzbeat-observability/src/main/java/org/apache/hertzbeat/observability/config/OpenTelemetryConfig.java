@@ -22,11 +22,9 @@ import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 import io.opentelemetry.exporter.otlp.http.logs.OtlpHttpLogRecordExporter;
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter;
-import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporterBuilder;
 import io.opentelemetry.sdk.autoconfigure.spi.AutoConfigurationCustomizerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
-import io.opentelemetry.sdk.trace.export.SpanExporter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -35,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
 import org.apache.hertzbeat.observability.ingestion.forwarder.GreptimeOtlpForwarder;
 import org.apache.hertzbeat.observability.ingestion.redaction.OtlpIngestionRedactionService;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
@@ -54,7 +53,6 @@ import org.springframework.context.annotation.Configuration;
 public class OpenTelemetryConfig {
 
     private static final String HERTZBEAT_SERVICE_NAME = "HertzBeat";
-    private static final String DEFAULT_GREPTIME_DB_NAME = "public";
     private static final String DEFAULT_TRACES_TABLE_NAME = "hzb_traces";
     private static final String GREPTIME_DB_NAME_HEADER = "X-Greptime-DB-Name";
     private static final String GREPTIME_LOG_TABLE_NAME_HEADER = "X-Greptime-Log-Table-Name";
@@ -78,18 +76,20 @@ public class OpenTelemetryConfig {
         }
     }
 
-    private Map<String, String> buildGreptimeOtlpLogHeaders(GreptimeProperties greptimeProps) {
+    private Map<String, String> buildGreptimeOtlpLogHeaders(GreptimeProperties greptimeProps, SelfTelemetryProperties self) {
         Map<String, String> headers = new HashMap<>();
-        headers.put(GREPTIME_DB_NAME_HEADER, database(greptimeProps));
+        headers.put(GREPTIME_DB_NAME_HEADER, self.isEnabled() ? self.getDatabase()
+                : StringUtils.defaultIfBlank(greptimeProps == null ? null : StringUtils.trim(greptimeProps.database()), "public"));
         headers.put(GREPTIME_LOG_TABLE_NAME_HEADER, WarehouseConstants.LOG_TABLE_NAME);
         headers.put(GREPTIME_LOG_PIPELINE_NAME_HEADER, GreptimeOtlpForwarder.LOG_PIPELINE_NAME);
         addAuthenticationHeaders(headers, greptimeProps);
         return Collections.unmodifiableMap(headers);
     }
 
-    private Map<String, String> buildGreptimeOtlpTraceHeaders(GreptimeProperties greptimeProps) {
+    private Map<String, String> buildGreptimeOtlpTraceHeaders(GreptimeProperties greptimeProps, SelfTelemetryProperties self) {
         Map<String, String> headers = new HashMap<>();
-        headers.put(GREPTIME_DB_NAME_HEADER, database(greptimeProps));
+        headers.put(GREPTIME_DB_NAME_HEADER, self.isEnabled() ? self.getDatabase()
+                : StringUtils.defaultIfBlank(greptimeProps == null ? null : StringUtils.trim(greptimeProps.database()), "public"));
         headers.put(GREPTIME_TRACE_TABLE_NAME_HEADER, DEFAULT_TRACES_TABLE_NAME);
         headers.put(CONTENT_TYPE, "application/x-protobuf");
         headers.put(GREPTIME_PIPELINE_NAME_HEADER, "greptime_trace_v1");
@@ -97,31 +97,20 @@ public class OpenTelemetryConfig {
         return Collections.unmodifiableMap(headers);
     }
 
-    private String database(GreptimeProperties greptimeProps) {
-        return greptimeProps == null
-                ? DEFAULT_GREPTIME_DB_NAME
-                : StringUtils.defaultIfBlank(StringUtils.trim(greptimeProps.database()), DEFAULT_GREPTIME_DB_NAME);
-    }
-
     private String greptimeOtlpEndpoint(GreptimeProperties greptimeProps, String path) {
         String endpoint = greptimeProps == null ? null : greptimeProps.httpEndpoint();
         return StringUtils.stripEnd(StringUtils.trimToEmpty(endpoint), "/") + path;
     }
 
-    private String traceEndpoint(GreptimeProperties greptimeProps,
-                                 OtelTraceIngressProperties traceIngressProperties) {
-        if (traceIngressProperties.isEnabled()) {
-            return traceIngressProperties.validatedEndpoint().toString();
-        }
-        return greptimeOtlpEndpoint(greptimeProps, GREPTIME_TRACES_PATH);
+    private String traceEndpoint(GreptimeProperties greptimeProps, OtelTraceIngressProperties ingress) {
+        return ingress.isEnabled() ? ingress.validatedEndpoint().toString()
+                : greptimeOtlpEndpoint(greptimeProps, GREPTIME_TRACES_PATH);
     }
 
     private Map<String, String> traceHeaders(GreptimeProperties greptimeProps,
-                                             OtelTraceIngressProperties traceIngressProperties) {
-        if (traceIngressProperties.isEnabled()) {
-            return Map.of("Authorization", traceIngressProperties.authorizationHeader());
-        }
-        return buildGreptimeOtlpTraceHeaders(greptimeProps);
+            OtelTraceIngressProperties ingress, SelfTelemetryProperties self) {
+        return ingress.isEnabled() ? Map.of("Authorization", ingress.authorizationHeader())
+                : buildGreptimeOtlpTraceHeaders(greptimeProps, self);
     }
 
     @Bean
@@ -146,47 +135,34 @@ public class OpenTelemetryConfig {
     @ConditionalOnProperty(name = "warehouse.store.greptime.enabled", havingValue = "true")
     public AutoConfigurationCustomizerProvider greptimeOtelCustomizer(
             GreptimeProperties greptimeProperties, OtelTraceIngressProperties traceIngressProperties,
-            LogSseManager logSseManager, OtlpIngestionRedactionService redactionService) {
-        log.info("GreptimeDB is enabled. Applying OpenTelemetry customizations for GreptimeDB logs & traces.");
+            LogSseManager logSseManager, OtlpIngestionRedactionService redactionService,
+            SelfTelemetryProperties self, SelfTelemetryInitializer initializer) {
+        if (self.isEnabled() && traceIngressProperties.isEnabled()) {
+            self.markUnavailable("TRACE_INGRESS_CONFLICT");
+        }
+        if (self.isEnabled() && !self.isReady()) {
+            return customizer -> customizer.addPropertiesCustomizer(properties -> Map.of(
+                    "otel.traces.exporter", "none", "otel.logs.exporter", "none"));
+        }
         return providerCustomizer -> providerCustomizer
-                .addPropertiesCustomizer(sdkConfigProperties -> {
-                    Map<String, String> newProperties = new HashMap<>();
-                    newProperties.put("otel.traces.exporter", "otlp");
-                    return newProperties;
+                .addPropertiesCustomizer(properties -> Map.of("otel.traces.exporter", "otlp"))
+                .addResourceCustomizer((resource, properties) -> self.isEnabled()
+                        ? resource.merge(Resource.builder().put("hertzbeat.workspace_id", self.getWorkspaceId()).build())
+                        : resource)
+                .addSpanExporterCustomizer((original, properties) -> {
+                    var exporter = OtlpHttpSpanExporter.builder()
+                        .setEndpoint(traceEndpoint(greptimeProperties, traceIngressProperties))
+                        .setHeaders(() -> traceHeaders(greptimeProperties, traceIngressProperties, self))
+                        .setTimeout(10000, TimeUnit.MILLISECONDS).build();
+                    return traceIngressProperties.isEnabled() ? new OtlpIngressFilteringSpanExporter(exporter) : exporter;
                 })
-                .addSpanExporterCustomizer((originalSpanExporter, configProperties) -> {
-                    String traceEndpoint = traceEndpoint(greptimeProperties, traceIngressProperties);
-                    if (traceIngressProperties.isEnabled()) {
-                        log.info("Configuring OtlpHttpSpanExporter for authenticated local ingress. Endpoint: {}",
-                                traceEndpoint);
-                    } else {
-                        log.info("Configuring OtlpHttpSpanExporter for GreptimeDB. Endpoint: {}", traceEndpoint);
-                    }
-                    OtlpHttpSpanExporterBuilder httpExporterBuilder = OtlpHttpSpanExporter.builder()
-                            .setEndpoint(traceEndpoint)
-                            .setHeaders(() -> traceHeaders(greptimeProperties, traceIngressProperties))
-                            .setTimeout(10000, TimeUnit.MILLISECONDS);
-                    SpanExporter exporter = httpExporterBuilder.build();
-                    return traceIngressProperties.isEnabled()
-                            ? new OtlpIngressFilteringSpanExporter(exporter)
-                            : exporter;
-                })
-                .addLoggerProviderCustomizer((sdkLoggerProviderBuilder, configProperties) -> {
-                    log.info("Customizing SdkLoggerProviderBuilder for GreptimeDB logs.");
-                    OtlpHttpLogRecordExporter logExporter = OtlpHttpLogRecordExporter.builder()
-                            .setEndpoint(greptimeOtlpEndpoint(greptimeProperties, GREPTIME_LOGS_PATH))
-                            .setHeaders(() -> buildGreptimeOtlpLogHeaders(greptimeProperties))
-                            .setTimeout(10000, TimeUnit.MILLISECONDS)
-                            .build();
-
-                    BatchLogRecordProcessor batchLogProcessor = BatchLogRecordProcessor.builder(logExporter)
-                            .setScheduleDelay(1000, TimeUnit.MILLISECONDS)
-                            .setMaxExportBatchSize(512)
-                            .build();
-
-                    return sdkLoggerProviderBuilder
-                            .addLogRecordProcessor(batchLogProcessor)
-                            .addLogRecordProcessor(new SdkLogSseProcessor(logSseManager, redactionService));
-                });
+                .addLoggerProviderCustomizer((builder, properties) -> builder
+                        .addLogRecordProcessor(BatchLogRecordProcessor.builder(OtlpHttpLogRecordExporter.builder()
+                                .setEndpoint(greptimeOtlpEndpoint(greptimeProperties, GREPTIME_LOGS_PATH))
+                                .setHeaders(() -> buildGreptimeOtlpLogHeaders(greptimeProperties, self))
+                                .setTimeout(10000, TimeUnit.MILLISECONDS).build())
+                                .setScheduleDelay(1000, TimeUnit.MILLISECONDS)
+                                .setMaxExportBatchSize(512).build())
+                        .addLogRecordProcessor(new SdkLogSseProcessor(logSseManager, redactionService, self.isEnabled())));
     }
 }

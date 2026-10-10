@@ -66,6 +66,10 @@ export async function loadLocale(locale: SupportedLocale, options: { signal?: Ab
       {
         ...messages,
         ...shellMessages,
+        exploreSource: {
+          ...messageGroup(messages.exploreSource),
+          ...messageGroup(exploreMessages.exploreSource)
+        },
         exploreTrace: {
           ...messageGroup(messages.exploreTrace),
           ...messageGroup(exploreMessages.exploreTrace)

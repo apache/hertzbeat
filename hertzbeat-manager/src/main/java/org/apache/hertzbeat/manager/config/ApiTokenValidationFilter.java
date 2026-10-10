@@ -46,8 +46,12 @@ import org.apache.hertzbeat.manager.service.AccountService;
 import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySource;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 /**
  * Interceptor to validate that managed API tokens have not been revoked (deleted).
@@ -68,7 +72,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 @Component
 @Slf4j
-public class ApiTokenValidationFilter implements HandlerInterceptor {
+public class ApiTokenValidationFilter implements AsyncHandlerInterceptor {
 
     private static final String ROLES_CLAIM = "roles";
     private static final String TOKEN_VALIDATION_UNAVAILABLE = "Token validation unavailable";
@@ -77,6 +81,12 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     private static final String TOKEN_PARAM = "token";
 
     private final AccountService accountService;
+    private SelfTelemetryProperties selfTelemetry = new SelfTelemetryProperties();
+
+    @Autowired
+    public void setSelfTelemetryProperties(SelfTelemetryProperties properties) {
+        this.selfTelemetry = properties;
+    }
 
     public ApiTokenValidationFilter(AccountService accountService) {
         this.accountService = accountService;
@@ -85,13 +95,16 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
         throws IOException {
+        TelemetrySourceContext.clear();
         AuthTokenRequestContext.clear();
         SubjectSum subject = SurenessContextHolder.getBindSubject();
         bindAuthenticatedWorkspace(subject);
         String authenticatedWorkspaceId = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
         if (subject == null || !isManagedToken(subject)) {
-            return bindAuthorizedWorkspace(request, authenticatedWorkspaceId)
-                    || writeWorkspaceError(response);
+            if (!bindAuthorizedWorkspace(request, authenticatedWorkspaceId)) {
+                return writeWorkspaceError(response);
+            }
+            return bindTelemetrySource(request, response, subject);
         }
         // Sureness reads a jwt from the Authorization header and from the token query parameter,
         // so every managed token the request carries is validated, and a managed subject whose
@@ -120,13 +133,66 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
             return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
         }
         managedTokens.forEach(this::touchTokenLastUsedTime);
-        return true;
+        return bindTelemetrySource(request, response, subject);
     }
 
     @Override
     public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
                                 @NonNull Object handler, Exception ex) {
         AuthTokenRequestContext.clear();
+        TelemetrySourceContext.clear();
+    }
+
+    @Override
+    public void afterConcurrentHandlingStarted(@NonNull HttpServletRequest request,
+                                               @NonNull HttpServletResponse response, @NonNull Object handler) {
+        AuthTokenRequestContext.clear();
+        TelemetrySourceContext.clear();
+    }
+
+    private boolean bindTelemetrySource(HttpServletRequest request, HttpServletResponse response, SubjectSum subject)
+            throws IOException {
+        String uri = request.getRequestURI();
+        if (uri != null && !(uri.equals("/api/logs") || uri.startsWith("/api/logs/")
+                || uri.equals("/api/traces") || uri.startsWith("/api/traces/")
+                || uri.startsWith("/api/ingestion/otlp/") || uri.startsWith("/api/otlp/")
+                || uri.equals("/api/warehouse/query") || uri.equals("/api/telemetry/sources"))) {
+            return true;
+        }
+        TelemetrySource source;
+        try {
+            String[] values = request.getParameterValues("source");
+            if (values != null && values.length != 1) {
+                return writeError(response, HttpStatus.BAD_REQUEST, "Supply exactly one source");
+            }
+            source = TelemetrySource.parse(request.getParameter("source"));
+        } catch (IllegalArgumentException invalid) {
+            return writeError(response, HttpStatus.BAD_REQUEST, invalid.getMessage());
+        }
+        if (source == TelemetrySource.EXTERNAL) { return true; }
+        if (uri == null || uri.startsWith("/api/otlp/") || uri.startsWith("/api/logs/otlp")) {
+            return writeError(response, HttpStatus.BAD_REQUEST, "External ingestion cannot select self source");
+        }
+        if (!(uri.equals("/api/logs") || uri.startsWith("/api/logs/")
+                || uri.equals("/api/traces") || uri.startsWith("/api/traces/")
+                || uri.startsWith("/api/ingestion/otlp/metrics/"))) {
+            return writeError(response, HttpStatus.BAD_REQUEST, "Self source is unsupported for this route");
+        }
+        if (subject == null || !extractClaimedRoles(subject).contains("admin")
+                || resolveSubjectWorkspaceId(subject) == null
+                || !java.util.Objects.equals(AuthTokenRequestContext.currentAuthenticatedWorkspaceId(),
+                        selfTelemetry.getWorkspaceId())) {
+            return writeError(response, HttpStatus.FORBIDDEN, "Self telemetry requires admin and an explicitly authorized workspace");
+        }
+        if (!selfTelemetry.isEnabled() || !selfTelemetry.isReady()) {
+            return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, "Self telemetry storage is not configured or ready");
+        }
+        if ("true".equalsIgnoreCase(request.getParameter("hideInternal"))) {
+            return writeError(response, HttpStatus.BAD_REQUEST, "Disable hideInternal when selecting self telemetry");
+        }
+        TelemetrySourceContext.bind(new TelemetrySourceContext.Route(
+                source, selfTelemetry.getDatabase(), selfTelemetry.getWorkspaceId()));
+        return true;
     }
 
     private List<String> resolveManagedTokens(HttpServletRequest request) {
@@ -339,6 +405,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         } finally {
             // Rejected preHandle calls do not receive this interceptor's afterCompletion callback.
             AuthTokenRequestContext.clear();
+            TelemetrySourceContext.clear();
         }
         return false;
     }

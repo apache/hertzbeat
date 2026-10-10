@@ -20,6 +20,7 @@
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
+  - /api/telemetry/sources===get===[admin,user,guest]
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/monitor-definitions/v1/validate===post===[admin]
   - /api/monitor-definitions/v1===post===[admin]
@@ -66,7 +67,7 @@ resourceRole:
   - /api/monitors===delete===[admin]
   - /api/monitors/manage===delete===[admin]
   - /api/monitors/**===delete===[admin]
-  - /api/alert/define/preview/**===get===[admin,user]
+  - /api/alert/define/preview/**===get===[admin]
   - /api/alert/**===get===[admin,user,guest]
   - /api/alert/**===post===[admin,user]
   - /api/alert/**===put===[admin,user]
@@ -203,6 +204,8 @@ resourceRole:
 # config the resource restful api that need bypass auth protection
 # rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
+  - /api/logs===delete===[admin]
+
 excludedResource:
   - /api/account/auth/**===*
   - /api/ui/session===get

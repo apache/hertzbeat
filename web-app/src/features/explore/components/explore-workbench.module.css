@@ -58,6 +58,7 @@
 }
 .toolbarRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--hb-space-2);
   min-width: 0;

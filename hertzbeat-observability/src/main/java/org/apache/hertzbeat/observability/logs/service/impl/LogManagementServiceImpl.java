@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.observability.logs.service.impl;
 
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -41,13 +43,23 @@ public class LogManagementServiceImpl implements LogManagementService {
 
     @Override
     public boolean batchDelete(List<Long> timeUnixNanos) {
+        String workspace = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
+        if (workspace == null || workspace.isBlank()) { return false; }
         List<Long> timestamps = timeUnixNanos == null ? Collections.emptyList() : timeUnixNanos;
+        boolean self = TelemetrySourceContext.isSelf();
+        boolean unsupported = self;
         for (HistoryDataWriter historyDataWriter : historyDataWriters) {
+            if (self && !historyDataWriter.supportsSelfTelemetry()) { continue; }
             try {
-                return historyDataWriter.batchDeleteLogs(timestamps);
+                return historyDataWriter.batchDeleteLogs(workspace, timestamps);
             } catch (UnsupportedOperationException ex) {
-                // Try the next writer. Not every metrics backend supports log deletion.
+                if (self) { throw ex; }
+                unsupported = true;
+                // Try only explicitly workspace-capable writers.
             }
+        }
+        if (unsupported) {
+            throw new UnsupportedOperationException("Workspace-scoped log deletion is unsupported");
         }
         return false;
     }

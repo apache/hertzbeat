@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySource;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -77,6 +79,24 @@ class GreptimeQueryGuardTest {
             releaseQuery.countDown();
             assertEquals("first", get(first));
             assertEquals("third", guard.execute(() -> "third"));
+        }
+    }
+
+    @Test
+    void capturesRouteAcrossVirtualThreadsAndClearsOnSuccessAndFailure() throws Exception {
+        var route = new TelemetrySourceContext.Route(TelemetrySource.SELF, "hertzbeat_self", "operations");
+        try (GreptimeQueryGuard guard = new GreptimeQueryGuard(1, Duration.ofSeconds(1), Duration.ZERO)) {
+            TelemetrySourceContext.bind(route);
+            assertEquals(route, guard.execute(TelemetrySourceContext::capture));
+            assertThrows(IllegalStateException.class, () -> guard.execute(() -> {
+                assertEquals(route, TelemetrySourceContext.capture());
+                throw new IllegalStateException("query failed");
+            }));
+            assertEquals(route, TelemetrySourceContext.capture());
+            TelemetrySourceContext.clear();
+            assertEquals(null, guard.execute(TelemetrySourceContext::capture));
+        } finally {
+            TelemetrySourceContext.clear();
         }
     }
 

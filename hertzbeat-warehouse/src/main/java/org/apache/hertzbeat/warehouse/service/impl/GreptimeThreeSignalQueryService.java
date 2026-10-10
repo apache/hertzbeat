@@ -44,6 +44,7 @@ import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.service.ThreeSignalQueryService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -96,7 +97,7 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
                 groupBy, aggregation, operationName);
         URI uri = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint())
                 .path("/v1/prometheus/api/v1/query_range")
-                .queryParam("db", greptimeProperties.database())
+                .queryParam("db", TelemetrySourceContext.database(greptimeProperties.database()))
                 .queryParam("query", effectiveQuery)
                 .queryParam("start", effectiveStart / 1000.0)
                 .queryParam("end", effectiveEnd / 1000.0)
@@ -113,7 +114,7 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
         int effectiveLimit = Math.max(1, Math.min(limit == null ? 100 : limit, 500));
         URI uri = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint())
                 .path("/v1/prometheus/api/v1/label/__name__/values")
-                .queryParam("db", greptimeProperties.database())
+                .queryParam("db", TelemetrySourceContext.database(greptimeProperties.database()))
                 .build().encode().toUri();
         Map<?, ?> response = getPrometheus(uri);
         Object rawData = response == null ? null : response.get("data");
@@ -248,6 +249,9 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
                                String filter, String groupBy, String aggregation, String operationName) {
         String metric = StringUtils.hasText(query) ? query.trim() : "up";
         if (!SAFE_IDENTIFIER.matcher(metric).matches()) {
+            if (TelemetrySourceContext.isSelf()) {
+                throw new IllegalArgumentException("Self telemetry supports bounded metric names only");
+            }
             return metric;
         }
         Map<String, String> labels = new LinkedHashMap<>();
@@ -256,6 +260,9 @@ public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService 
         putIfText(labels, "deployment_environment_name", environment);
         putIfText(labels, "http_route", operationName);
         parseFriendlyFilter(filter, labels);
+        if (TelemetrySourceContext.isSelf()) {
+            labels.put("hertzbeat_workspace_id", TelemetrySourceContext.capture().workspaceId());
+        }
         String selector = metric + labels.entrySet().stream()
                 .map(entry -> entry.getKey() + "=\"" + escapePromql(entry.getValue()) + "\"")
                 .collect(java.util.stream.Collectors.joining(",", "{", "}"));

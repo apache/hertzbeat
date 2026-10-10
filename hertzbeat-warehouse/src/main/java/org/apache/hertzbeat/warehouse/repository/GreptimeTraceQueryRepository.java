@@ -40,6 +40,7 @@ import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailable
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +87,8 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     private final RestTemplate restTemplate;
     private final LongSupplier monotonicNanos;
     private final long dynamicAttributeSchemaRefreshNanos;
-    private volatile DynamicAttributeSchemaSnapshot dynamicAttributeSchemaSnapshot;
+    private final java.util.concurrent.ConcurrentMap<String, DynamicAttributeSchemaSnapshot> dynamicAttributeSchemaSnapshots =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     @Autowired
     public GreptimeTraceQueryRepository(
@@ -1084,8 +1086,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             String endpoint = greptimeProperties.httpEndpoint();
             String url = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
             url += GREPTIME_QUERY_PATH;
-            if (StringUtils.hasText(greptimeProperties.database())) {
-                url += "?db=" + UriUtils.encodeQueryParam(greptimeProperties.database(), StandardCharsets.UTF_8);
+            String database = TelemetrySourceContext.database(greptimeProperties.database());
+            if (StringUtils.hasText(database)) {
+                url += "?db=" + UriUtils.encodeQueryParam(database, StandardCharsets.UTF_8);
             }
 
             HttpHeaders headers = new HttpHeaders();
@@ -1554,7 +1557,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
      * allowing concurrent or repeated user queries to issue an unbounded number of DESC requests.
      */
     private boolean dynamicAttributeColumnExists(String column) {
-        DynamicAttributeSchemaSnapshot snapshot = dynamicAttributeSchemaSnapshot;
+        DynamicAttributeSchemaSnapshot snapshot = dynamicAttributeSchemaSnapshots.get(schemaDatabase());
         if (snapshot != null && snapshot.columns().contains(column)) {
             return true;
         }
@@ -1573,12 +1576,12 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     private DynamicAttributeSchemaSnapshot refreshDynamicAttributeColumns(long requestedAtNanos) {
-        DynamicAttributeSchemaSnapshot cached = dynamicAttributeSchemaSnapshot;
+        DynamicAttributeSchemaSnapshot cached = dynamicAttributeSchemaSnapshots.get(schemaDatabase());
         if (cached != null && !refreshDue(cached, requestedAtNanos)) {
             return cached;
         }
         synchronized (this) {
-            cached = dynamicAttributeSchemaSnapshot;
+            cached = dynamicAttributeSchemaSnapshots.get(schemaDatabase());
             long refreshedAtNanos = monotonicNanos.getAsLong();
             if (cached != null && !refreshDue(cached, refreshedAtNanos)) {
                 return cached;
@@ -1597,15 +1600,20 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                 }
                 cached = new DynamicAttributeSchemaSnapshot(
                         Collections.unmodifiableSet(discovered), refreshedAtNanos, true);
-                dynamicAttributeSchemaSnapshot = cached;
+                dynamicAttributeSchemaSnapshots.put(schemaDatabase(), cached);
                 return cached;
             } catch (TelemetryStorageUnavailableException ex) {
                 Set<String> staleColumns = cached == null ? Collections.emptySet() : cached.columns();
-                dynamicAttributeSchemaSnapshot = new DynamicAttributeSchemaSnapshot(
-                        staleColumns, refreshedAtNanos, false);
+                dynamicAttributeSchemaSnapshots.put(schemaDatabase(), new DynamicAttributeSchemaSnapshot(
+                        staleColumns, refreshedAtNanos, false));
                 throw ex;
             }
         }
+    }
+
+    private String schemaDatabase() {
+        String database = TelemetrySourceContext.database(greptimeProperties == null ? null : greptimeProperties.database());
+        return database == null ? "public" : database;
     }
 
     private String discoveredColumnName(Map<String, Object> row) {

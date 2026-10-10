@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.ingestion.service.impl;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService.LabelsRequest;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
 import org.apache.hertzbeat.observability.shared.util.SignalFilterScanner;
@@ -1422,6 +1423,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private TelemetryIdentitySnapshot resolveRecentExternalSignalContext(String workspaceId,
                                                                         String serviceName, String serviceNamespace,
                                                                         String environment) {
+        if (TelemetrySourceContext.isSelf()) { return null; }
         String requiredServiceName = trimToNull(serviceName);
         String requiredServiceNamespace = trimToNull(serviceNamespace);
         String requiredEnvironment = trimToNull(environment);
@@ -1522,6 +1524,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private boolean isWorkspaceNoiseService(String serviceName) {
+        if (TelemetrySourceContext.isSelf()) { return false; }
         String normalized = normalizeValue(serviceName);
         return StringUtils.hasText(normalized) && WORKSPACE_INFRA_SERVICE_NAMES.contains(normalized);
     }
@@ -1802,7 +1805,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         OtlpMetricsConsoleDto.Context context = new OtlpMetricsConsoleDto.Context(
                 entityId, entityType, entityName, resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment,
                 null, null, start, end);
-        if (!inferRecentContext) {
+        if (!inferRecentContext || TelemetrySourceContext.isSelf()) {
             return context;
         }
         TelemetryIdentitySnapshot recentMetricContext = observabilitySignalIntakeGateway.resolveRecentOtlpMetricContext(
@@ -1875,7 +1878,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         List<OtlpMetricsConsoleDto.Context> candidateContexts = new ArrayList<>();
         addCandidateMetricsContext(candidateContexts, initialContext, resolvedStart, resolvedEnd);
-        if (!explicitContextRequested) {
+        if (!explicitContextRequested && !TelemetrySourceContext.isSelf()) {
             observabilitySignalIntakeGateway.collectRecentOtlpMetricContexts(
                             initialContext.getWorkspaceId(), DEFAULT_RECENT_SERVICE_LIMIT).stream()
                     .map(snapshot -> {
@@ -2023,6 +2026,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         if (context == null || !StringUtils.hasText(context.getServiceName())) {
             return List.of();
         }
+        if (TelemetrySourceContext.isSelf()) { return List.of(); }
         List<String> candidates = new ArrayList<>(contextServiceExperienceMetricNames(context));
         candidates.addAll(observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
                 context.getWorkspaceId(),
@@ -2035,6 +2039,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private List<String> globalRecentMetricCandidateNames(String workspaceId) {
+        if (TelemetrySourceContext.isSelf()) { return List.of(); }
         return normalizeCandidateMetricNames(observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
                 workspaceId,
                 null,
@@ -2623,6 +2628,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         if (!StringUtils.hasText(normalized)) {
             return true;
         }
+        if (TelemetrySourceContext.isSelf()) { return false; }
         String lower = normalized.toLowerCase(Locale.ROOT);
         return lower.startsWith("otelcol_")
                 || lower.startsWith("process_")

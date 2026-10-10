@@ -21,7 +21,6 @@ import { logModeError, logFilterError } from './explore-log-submission-validatio
 
 import { readValue as normalizedValue } from './explore-url-values';
 import { sharedSubmissionPatch } from './explore-submission-shared';
-import type { ExploreQuery } from './explore-model';
 import {
   isOrderedTraceDurationRange,
   parseMetricAggregation,
@@ -39,7 +38,6 @@ export { EXPLORE_METRIC_AGGREGATIONS } from './explore-field-contract';
 
 export type * from './explore-submission-types';
 import type {
-  SharedExploreSubmissionDraft,
   ExploreSubmissionError,
   MetricExploreSubmissionDraft,
   LogExploreSubmissionDraft,
@@ -48,84 +46,12 @@ import type {
   ExploreSubmissionResult
 } from './explore-submission-types';
 
-export function draftFromQuery(query: ExploreQuery): ExploreSubmissionDraft {
-  if (query.signal === 'metrics') return metricDraftFromQuery(query);
-  if (query.signal === 'logs') return logDraftFromQuery(query);
-  return traceDraftFromQuery(query);
-}
+export { draftFromQuery } from './explore-submission-draft';
 
 export function buildSubmissionPatch(draft: ExploreSubmissionDraft): ExploreSubmissionResult {
   if (draft.signal === 'metrics') return buildMetricSubmissionPatch(draft);
   if (draft.signal === 'logs') return buildLogSubmissionPatch(draft);
   return buildTraceSubmissionPatch(draft);
-}
-
-function metricDraftFromQuery(query: Extract<ExploreQuery, { signal: 'metrics' }>): MetricExploreSubmissionDraft {
-  return {
-    ...sharedDraftFromQuery(query),
-    signal: 'metrics',
-    metricPlan: query.metricPlan ?? '',
-    metricFilter: query.metricFilter ?? '',
-    groupBy: query.groupBy ?? '',
-    aggregation: query.aggregation ?? '',
-    temporalAggregation: query.temporalAggregation ?? '',
-    stepSeconds: query.step ?? ''
-  };
-}
-
-function logDraftFromQuery(query: Extract<ExploreQuery, { signal: 'logs' }>): LogExploreSubmissionDraft {
-  return {
-    ...sharedDraftFromQuery(query),
-    signal: 'logs',
-    sort: query.sort ?? 'newest',
-    logSort: query.logSort,
-    logAnalysis: query.logAnalysis,
-    logAggregation: query.logAggregation,
-    logTransactions: query.logTransactions,
-    logCalculated: query.logCalculated,
-    logCalculatedV2: query.logCalculatedV2,
-    logSubquery: query.logSubquery,
-    logReferenceJoin: query.logReferenceJoin,
-    logGroupSelection: query.logGroupSelection,
-    logNumericRange: query.logNumericRange,
-    searchSyntax: query.searchSyntax ?? '',
-    severityText: query.severityText ?? '',
-    severityCategory: query.severityCategory ?? '',
-    traceId: query.traceId ?? '',
-    spanId: query.spanId ?? '',
-    resourceFilter: query.resourceFilter ?? '',
-    attributeFilter: query.attributeFilter ?? '',
-    hideInternal: Boolean(query.hideInternal),
-    hideNoise: Boolean(query.hideNoise)
-  };
-}
-
-function traceDraftFromQuery(query: Extract<ExploreQuery, { signal: 'traces' }>): TraceExploreSubmissionDraft {
-  return {
-    ...sharedDraftFromQuery(query),
-    signal: 'traces',
-    traceStructure: query.traceStructure,
-    sort: traceSortValue(query.sort),
-    traceId: query.traceId ?? '',
-    resourceFilter: query.resourceFilter ?? '',
-    attributeFilter: query.attributeFilter ?? '',
-    minDurationMs: query.minDurationMs == null ? '' : String(query.minDurationMs),
-    maxDurationMs: query.maxDurationMs == null ? '' : String(query.maxDurationMs),
-    errorOnly: Boolean(query.errorOnly),
-    spanScope: query.spanScope ?? '',
-    hideInternal: Boolean(query.hideInternal)
-  };
-}
-
-function sharedDraftFromQuery(query: ExploreQuery): SharedExploreSubmissionDraft {
-  return {
-    serviceName: query.serviceName ?? '',
-    serviceNamespace: query.serviceNamespace ?? '',
-    environment: query.environment ?? '',
-    instance: query.instance ?? '',
-    endpoint: query.endpoint ?? '',
-    query: query.query ?? ''
-  };
 }
 
 function buildMetricSubmissionPatch(draft: MetricExploreSubmissionDraft): ExploreSubmissionResult {

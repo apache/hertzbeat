@@ -148,9 +148,10 @@ public class TraceQueryController {
         TraceStructureQuery query;
         try {
             if (!java.util.Set.of("start", "end", "aServiceName", "aOperationName", "aStatus", "bServiceName",
-                    "bOperationName", "bStatus", "relation", "pageIndex", "pageSize").containsAll(params.keySet())) {
+                    "bOperationName", "bStatus", "relation", "pageIndex", "pageSize", "source").containsAll(params.keySet())) {
                 throw new IllegalArgumentException("Unknown structural query parameter");
             }
+            org.apache.hertzbeat.common.observability.gateway.TelemetrySource.parse(params.get("source"));
             query = new TraceStructureQuery(Long.parseLong(params.get("start")), Long.parseLong(params.get("end")),
                     new TraceStructureQuery.Clause(params.get("aServiceName"), params.get("aOperationName"),
                             params.get("aStatus")),

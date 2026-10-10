@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.apache.hertzbeat.common.observability.dto.log.LogGroupSelection;
 import org.apache.hertzbeat.common.observability.dto.log.PreparedLogGroupSelection;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -160,7 +161,7 @@ final class GreptimeLogSelectionPreparation {
         checkDeadline();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        String database = StringUtils.trimWhitespace(properties.database());
+        String database = StringUtils.trimWhitespace(TelemetrySourceContext.database(properties.database()));
         headers.set("X-Greptime-DB-Name", StringUtils.hasText(database) ? database : "public");
         String username = StringUtils.trimWhitespace(properties.username());
         String password = StringUtils.trimWhitespace(properties.password());

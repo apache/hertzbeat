@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.logs.service.impl;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import java.util.List;
 import java.util.function.Predicate;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -57,6 +58,9 @@ public class LogSseServiceImpl implements LogSseService {
     @Override
     public SseEmitter subscribe(LogSseFilterCriteria criteria) {
         Predicate<LogEntry> matcher = prepare(criteria);
+        if (TelemetrySourceContext.isSelf()) {
+            return emitterManager.createPreparedEmitter(SnowFlakeIdGenerator.generateId(), matcher, true);
+        }
         return emitterManager.createPreparedEmitter(SnowFlakeIdGenerator.generateId(), matcher);
     }
 

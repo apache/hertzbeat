@@ -221,6 +221,12 @@ warehouse:
       database: public
       username: greptime
       password: greptime
+      # Optional trusted self telemetry. Provision a distinct DB and permissions first.
+      # hertzbeat_self is a suggested DB name; HertzBeat never creates the DB or grants access.
+      self:
+        enabled: false
+        database: ""
+        workspace-id: ""
       query:
         max-concurrency: 8
         timeout: 5s

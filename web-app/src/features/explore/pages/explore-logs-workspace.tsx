@@ -1,7 +1,24 @@
-/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 
+import { ExploreSourceControl } from './explore-source-control';
 import { OperationalPage } from '@/shared/operational-page';
 import { useLogSearchSuggestions } from '../controller/use-log-search-suggestions';
 import { useRecentLogSearches } from '../controller/use-recent-log-searches';
@@ -47,17 +64,7 @@ export function ExploreLogsWorkspace({
   const searchSuggestions = useLogSearchSuggestions(query, controller.result);
   const command = useExploreQueryCommand({ submission, editor, history });
   if (query.signal !== 'logs' || submission.draft.signal !== 'logs') return null;
-  const draftAnalysis = readLogAnalysisDraft(submission.draft.logAnalysis);
-  const calculatedAddMounted = !query.live && !query.logRecordUid && submission.draft.logAggregation !== 'calculated';
-  const calculatedFieldEnabled =
-    calculatedAddMounted &&
-    (submission.draft.logAnalysis === undefined || Boolean(draftAnalysis)) &&
-    !calculatedDisabled(
-      draftAnalysis?.querySet,
-      draftAnalysis?.comparison,
-      submission.draft.logCalculatedV2,
-      calculatedAddMounted
-    );
+  const calculatedFieldEnabled = canAddCalculatedField(query, submission.draft);
   return (
     <OperationalPage mode="workspace" inset="compact">
       <LogCalculatedFromFieldProvider enabled={calculatedFieldEnabled} identity={exploreEvidenceScopeKey(query)}>
@@ -107,6 +114,7 @@ export function ExploreLogsHeader({
       query={query}
       t={t}
       actions={savedQueries ? <ExploreLogsViewTrigger model={savedQueries} /> : undefined}
+      sourceControl={<ExploreSourceControl query={controller.query} updateQuery={controller.updateQuery} />}
       updateQuery={controller.updateQuery}
       openPath={controller.openPath}
       timeToolbar={
@@ -121,5 +129,18 @@ export function ExploreLogsHeader({
         />
       }
     />
+  );
+}
+
+function canAddCalculatedField(
+  query: Extract<Props['controller']['query'], { signal: 'logs' }>,
+  draft: Extract<Props['controller']['submission']['draft'], { signal: 'logs' }>
+) {
+  const draftAnalysis = readLogAnalysisDraft(draft.logAnalysis);
+  const calculatedAddMounted = !query.live && !query.logRecordUid && draft.logAggregation !== 'calculated';
+  return (
+    calculatedAddMounted &&
+    (draft.logAnalysis === undefined || Boolean(draftAnalysis)) &&
+    !calculatedDisabled(draftAnalysis?.querySet, draftAnalysis?.comparison, draft.logCalculatedV2, calculatedAddMounted)
   );
 }

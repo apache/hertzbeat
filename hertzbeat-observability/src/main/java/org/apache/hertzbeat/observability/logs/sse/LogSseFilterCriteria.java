@@ -19,6 +19,7 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
@@ -160,6 +161,9 @@ public class LogSseFilterCriteria {
     public record Snapshot(org.apache.hertzbeat.common.observability.dto.log.LogGroupSelection selection, Predicate<LogEntry> matcher) { }
 
     public Snapshot snapshot() {
+        if (hideInternal && TelemetrySourceContext.isSelf()) {
+            throw new IllegalArgumentException("hideInternal cannot be enabled for self telemetry");
+        }
         if (logSort != null) { throw new LogFilterQueryException(); }
         LogSearchParser.validateSyntax(searchSyntax);
         if (!StringUtils.hasText(workspaceId)) { throw new IllegalArgumentException("Workspace boundary is required"); }
@@ -196,6 +200,7 @@ public class LogSseFilterCriteria {
                 instance,
                 endpoint,
                 AuthTokenScopes.normalizeWorkspaceId(workspaceId),
+                TelemetrySourceContext.isSelf(),
                 LogSseAttributeFilter.parse(resourceFilter),
                 LogSseAttributeFilter.parse(attributeFilter),
                 new LogVisibilityFilter(hideInternal, hideNoise));
@@ -235,10 +240,10 @@ public class LogSseFilterCriteria {
         return StringUtils.hasText(actualValue) && expectedValue.trim().equalsIgnoreCase(actualValue);
     }
 
-    private static boolean matchesWorkspace(LogEntry log, String normalizedWorkspaceId) {
+    private static boolean matchesWorkspace(LogEntry log, String normalizedWorkspaceId, boolean strictWorkspace) {
         String logWorkspaceId = resolveWorkspaceId(log.getResource());
         if (!StringUtils.hasText(logWorkspaceId)) {
-            return AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedWorkspaceId);
+            return !strictWorkspace && AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedWorkspaceId);
         }
         return normalizedWorkspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(logWorkspaceId));
     }
@@ -301,13 +306,14 @@ public class LogSseFilterCriteria {
             String instance,
             String endpoint,
             String workspaceId,
+            boolean strictWorkspace,
             LogSseAttributeFilter resourceAttributes,
             LogSseAttributeFilter logAttributes,
             LogVisibilityFilter visibilityFilter) implements Predicate<LogEntry> {
 
         @Override
         public boolean test(LogEntry log) {
-            if (log == null || !matchesWorkspace(log, workspaceId)) {
+            if (log == null || !matchesWorkspace(log, workspaceId, strictWorkspace)) {
                 return false;
             }
             if (StringUtils.hasText(severityText) && !severityText.equals(log.getSeverityText())) {

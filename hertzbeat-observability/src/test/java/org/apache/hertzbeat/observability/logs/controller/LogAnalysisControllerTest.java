@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.observability.logs.controller;
 
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySource;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -36,7 +38,10 @@ import org.junit.jupiter.api.Test;
 
 class LogAnalysisControllerTest {
     @AfterEach
-    void clear() { AuthTokenRequestContext.clear(); }
+    void clear() {
+        AuthTokenRequestContext.clear();
+        TelemetrySourceContext.clear();
+    }
 
     @Test
     void throughputAndSumDispatchTogetherAndInvalidViewFailsBeforeAdmission() {
@@ -57,6 +62,24 @@ class LogAnalysisControllerTest {
         org.mockito.Mockito.verify(service).analysis(org.mockito.ArgumentMatchers.any(), captured.capture());
         org.junit.jupiter.api.Assertions.assertEquals("sum", captured.getValue().measure().function());
         org.junit.jupiter.api.Assertions.assertEquals("throughput", captured.getValue().transform());
+    }
+
+    @Test
+    void selfVisibilityConflictInPostEnvelopeFailsBeforeAdmission() {
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        TelemetrySourceContext.bind(
+                new TelemetrySourceContext.Route(
+                        TelemetrySource.SELF, "ci_self", "default"));
+        var service = mock(LogQueryService.class);
+        var admission = mock(ObservabilityQueryAdmissionService.class);
+        var controller = new LogQueryController(service, admission, null);
+        assertThrows(ObservabilityQueryRequestException.class, () -> controller.compare("""
+                {"version":1,"parameters":{"start":"1000","end":"2000","hideInternal":"true"},
+                "queries":[{"id":"a"},{"id":"b"}]}
+                """));
+        assertThrows(ObservabilityQueryRequestException.class, () -> controller.analysis(
+                Map.of("start", "1000", "end", "2000", "hideInternal", "true")));
+        verifyNoInteractions(service, admission);
     }
 
     @Test

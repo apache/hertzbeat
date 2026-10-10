@@ -47,7 +47,7 @@ class SdkLogSseProcessorTest {
 
     private final LogSseManager sseManager = mock(LogSseManager.class);
     private final SdkLogSseProcessor processor = new SdkLogSseProcessor(
-            sseManager, new OtlpIngestionRedactionService());
+            sseManager, new OtlpIngestionRedactionService(), true);
 
     @Test
     void mapsAndRedactsSdkLogBeforeBroadcast() {
@@ -58,7 +58,7 @@ class SdkLogSseProcessorTest {
         processor.onEmit(null, record);
 
         var captor = org.mockito.ArgumentCaptor.forClass(LogEntry.class);
-        verify(sseManager).broadcast(captor.capture());
+        verify(sseManager).broadcastSelf(captor.capture());
         LogEntry entry = captor.getValue();
         assertEquals(123L, entry.getTimeUnixNano());
         assertEquals("ERROR", entry.getSeverityText());
@@ -76,7 +76,7 @@ class SdkLogSseProcessorTest {
 
         processor.onEmit(null, record);
 
-        verify(sseManager, never()).broadcast(org.mockito.ArgumentMatchers.any());
+        verify(sseManager, never()).broadcastSelf(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -95,12 +95,35 @@ class SdkLogSseProcessorTest {
                     .emit();
         }
         var captor = org.mockito.ArgumentCaptor.forClass(LogEntry.class);
-        verify(sseManager).broadcast(captor.capture());
+        verify(sseManager).broadcastSelf(captor.capture());
         LogEntry entry = captor.getValue();
         assertEquals(Map.of("api_key", "[REDACTED]", "items", java.util.Arrays.asList(42L, true, null)), entry.getBody());
         assertEquals(span.getTraceId(), entry.getTraceId());
         assertEquals(span.getSpanId(), entry.getSpanId());
         assertEquals(1, entry.getTraceFlags());
+    }
+
+    @Test
+    void disabledSelfRetainsLegacyExternalBroadcast() {
+        SdkLogSseProcessor legacy = new SdkLogSseProcessor(sseManager, new OtlpIngestionRedactionService());
+        ReadWriteLogRecord record = mock(ReadWriteLogRecord.class);
+        LogRecordData data = logRecord("collector", "legacy");
+        when(record.toLogRecordData()).thenReturn(data);
+        legacy.onEmit(null, record);
+        verify(sseManager).broadcast(org.mockito.ArgumentMatchers.any());
+        verify(sseManager, never()).broadcastSelf(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void realSdkWithoutExplicitTimestampUsesObservedTimeForLiveFiltering() {
+        try (var provider = SdkLoggerProvider.builder().addLogRecordProcessor(processor).build()) {
+            provider.get("internal-service").logRecordBuilder().setBody("observed timestamp sample").emit();
+        }
+        var captor = org.mockito.ArgumentCaptor.forClass(LogEntry.class);
+        verify(sseManager).broadcastSelf(captor.capture());
+        LogEntry entry = captor.getValue();
+        org.junit.jupiter.api.Assertions.assertTrue(entry.getTimeUnixNano() > 0);
+        assertEquals(entry.getObservedTimeUnixNano(), entry.getTimeUnixNano());
     }
 
     private LogRecordData logRecord(String scopeName, String body) {
