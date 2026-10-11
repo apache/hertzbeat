@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
 import org.apache.hertzbeat.observability.config.OpenTelemetryConfig;
-import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -150,25 +150,36 @@ class EntityFreeObservabilityTransitionContractTest {
 
     @Test
     void productAndSelfTelemetryShouldUseSeparateSignalTables() throws Exception {
-        Map<String, String> logs = sdkHeaders("buildGreptimeOtlpLogHeaders");
-        Map<String, String> traces = sdkHeaders("buildGreptimeOtlpTraceHeaders");
+        SelfTelemetryProperties self = new SelfTelemetryProperties();
+        self.setEnabled(true);
+        self.setDatabase("hertzbeat_self");
+        Map<String, String> logs = sdkHeaders("buildGreptimeOtlpLogHeaders", self);
+        Map<String, String> traces = sdkHeaders("buildGreptimeOtlpTraceHeaders", self);
+        Map<String, String> externalLogs =
+                sdkHeaders("buildGreptimeOtlpLogHeaders", new SelfTelemetryProperties());
+        Map<String, String> externalTraces =
+                sdkHeaders("buildGreptimeOtlpTraceHeaders", new SelfTelemetryProperties());
         String nativeTraceSchema = source(OBSERVABILITY + "resources/greptime/tables/hzb_traces.sql");
         assertTrue(nativeTraceSchema.contains("CREATE TABLE IF NOT EXISTS hzb_traces"));
-        assertAll("retain the documented external/self telemetry table isolation",
-                () -> assertNotEquals(WarehouseConstants.LOG_TABLE_NAME,
-                        logs.get("X-Greptime-Log-Table-Name"), "SDK logs must not share the external log table"),
-                () -> assertNotEquals("hzb_traces", traces.get("X-Greptime-Trace-Table-Name"),
-                        "SDK traces must not share the native external trace table"));
+        assertAll("retain the documented external/self telemetry database isolation",
+                () -> assertNotEquals(externalLogs.get("X-Greptime-DB-Name"),
+                        logs.get("X-Greptime-DB-Name"),
+                        "SDK logs must not share the external log database"),
+                () -> assertNotEquals(externalTraces.get("X-Greptime-DB-Name"),
+                        traces.get("X-Greptime-DB-Name"),
+                        "SDK traces must not share the native external trace database"));
     }
 
     @Test
     void currentReactClientsAndProbesShouldUseImplementedObservabilityRoutes() throws IOException {
-        String api = source("web-app/src/features/explore/api/explore-api.ts");
+        String api = source("web-app/src/features/explore/api/explore-signal-paths.ts");
         for (String route : List.of("/api/logs/list", "/api/traces/list", "/api/ingestion/otlp/metrics/console",
                 "/api/logs/sse/subscribe")) {
             assertTrue(api.contains(route), route);
         }
         assertFalse(api.contains("/api/observability/"), "do not call removed Angular-only query paths");
+        assertFalse(source("web-app/src/features/explore/api/explore-api.ts").contains("/api/observability/"),
+                "do not call removed Angular-only query paths");
         assertTrue(source("web-app/src/features/explore/api/explore-log-stream.ts")
                 .contains("/api/logs/sse/validate"));
         assertTrue(source(JAVA + "logs/controller/LogQueryController.java").contains("path = \"/api/logs\""));
@@ -181,10 +192,11 @@ class EntityFreeObservabilityTransitionContractTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, String> sdkHeaders(String name) throws Exception {
-        Method method = OpenTelemetryConfig.class.getDeclaredMethod(name, GreptimeProperties.class);
+    private static Map<String, String> sdkHeaders(String name, SelfTelemetryProperties self) throws Exception {
+        Method method = OpenTelemetryConfig.class.getDeclaredMethod(
+                name, GreptimeProperties.class, SelfTelemetryProperties.class);
         method.setAccessible(true);
-        return (Map<String, String>) method.invoke(new OpenTelemetryConfig(), (GreptimeProperties) null);
+        return (Map<String, String>) method.invoke(new OpenTelemetryConfig(), null, self);
     }
 
     @SuppressWarnings("unchecked")

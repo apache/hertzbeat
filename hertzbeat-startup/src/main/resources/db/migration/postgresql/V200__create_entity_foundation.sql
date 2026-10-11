@@ -15,7 +15,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 
-CREATE TABLE hzb_entity (
+CREATE TABLE IF NOT EXISTS hzb_entity (
     id BIGINT PRIMARY KEY,
     entity_type VARCHAR(32) NOT NULL,
     name VARCHAR(128) NOT NULL,
@@ -53,13 +53,13 @@ CREATE TABLE hzb_entity (
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_hzb_entity_type ON hzb_entity(entity_type);
-CREATE INDEX idx_hzb_entity_status ON hzb_entity(status);
-CREATE INDEX idx_hzb_entity_name ON hzb_entity(name);
-CREATE INDEX idx_hzb_entity_owner ON hzb_entity(owner);
-CREATE INDEX idx_hzb_entity_workspace ON hzb_entity(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_type ON hzb_entity(entity_type);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_status ON hzb_entity(status);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_name ON hzb_entity(name);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_owner ON hzb_entity(owner);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_workspace ON hzb_entity(workspace_id);
 
-CREATE TABLE hzb_entity_identity (
+CREATE TABLE IF NOT EXISTS hzb_entity_identity (
     id BIGSERIAL PRIMARY KEY,
     entity_id BIGINT NOT NULL,
     identity_type VARCHAR(32) NOT NULL,
@@ -74,11 +74,11 @@ CREATE TABLE hzb_entity_identity (
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_entity_identity ON hzb_entity_identity(entity_id, identity_key, normalized_value);
-CREATE INDEX idx_hzb_entity_identity_lookup ON hzb_entity_identity(identity_key, normalized_value);
-CREATE INDEX idx_hzb_entity_identity_entity ON hzb_entity_identity(entity_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_entity_identity ON hzb_entity_identity(entity_id, identity_key, normalized_value);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_identity_lookup ON hzb_entity_identity(identity_key, normalized_value);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_identity_entity ON hzb_entity_identity(entity_id);
 
-CREATE TABLE hzb_entity_monitor_bind (
+CREATE TABLE IF NOT EXISTS hzb_entity_monitor_bind (
     id BIGSERIAL PRIMARY KEY,
     entity_id BIGINT NOT NULL,
     monitor_id BIGINT NOT NULL,
@@ -93,11 +93,11 @@ CREATE TABLE hzb_entity_monitor_bind (
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_entity_monitor_bind ON hzb_entity_monitor_bind(entity_id, monitor_id);
-CREATE INDEX idx_hzb_entity_monitor_bind_entity ON hzb_entity_monitor_bind(entity_id);
-CREATE INDEX idx_hzb_entity_monitor_bind_monitor ON hzb_entity_monitor_bind(monitor_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_entity_monitor_bind ON hzb_entity_monitor_bind(entity_id, monitor_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_monitor_bind_entity ON hzb_entity_monitor_bind(entity_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_monitor_bind_monitor ON hzb_entity_monitor_bind(monitor_id);
 
-CREATE TABLE hzb_entity_relation (
+CREATE TABLE IF NOT EXISTS hzb_entity_relation (
     id BIGSERIAL PRIMARY KEY,
     source_entity_id BIGINT NOT NULL,
     target_entity_id BIGINT,
@@ -114,12 +114,12 @@ CREATE TABLE hzb_entity_relation (
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_entity_relation ON hzb_entity_relation(source_entity_id, target_entity_id, relation_type);
-CREATE INDEX idx_hzb_entity_relation_source ON hzb_entity_relation(source_entity_id);
-CREATE INDEX idx_hzb_entity_relation_target ON hzb_entity_relation(target_entity_id);
-CREATE INDEX idx_hzb_entity_relation_target_ref ON hzb_entity_relation(target_ref);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_entity_relation ON hzb_entity_relation(source_entity_id, target_entity_id, relation_type);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_relation_source ON hzb_entity_relation(source_entity_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_relation_target ON hzb_entity_relation(target_entity_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_relation_target_ref ON hzb_entity_relation(target_ref);
 
-CREATE TABLE hzb_entity_definition_activity (
+CREATE TABLE IF NOT EXISTS hzb_entity_definition_activity (
     id BIGSERIAL PRIMARY KEY,
     entity_id BIGINT NOT NULL,
     workspace_id VARCHAR(64) NOT NULL DEFAULT 'default',
@@ -132,16 +132,16 @@ CREATE TABLE hzb_entity_definition_activity (
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_hzb_entity_definition_activity_entity
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_definition_activity_entity
     ON hzb_entity_definition_activity(entity_id);
 
-CREATE INDEX idx_hzb_entity_definition_activity_workspace_time
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_definition_activity_workspace_time
     ON hzb_entity_definition_activity(workspace_id, gmt_create);
 
-CREATE INDEX idx_hzb_entity_definition_activity_time
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_definition_activity_time
     ON hzb_entity_definition_activity(gmt_create);
 
-CREATE TABLE hzb_entity_governance_state (
+CREATE TABLE IF NOT EXISTS hzb_entity_governance_state (
     id BIGSERIAL PRIMARY KEY,
     state_scope VARCHAR(32) NOT NULL,
     state_kind VARCHAR(32) NOT NULL,
@@ -155,22 +155,22 @@ CREATE TABLE hzb_entity_governance_state (
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_entity_governance_state_scope_kind_workspace_key
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_entity_governance_state_scope_kind_workspace_key
     ON hzb_entity_governance_state(state_scope, state_kind, workspace_id, state_key);
 
-CREATE INDEX idx_hzb_entity_governance_state_scope_kind
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_governance_state_scope_kind
     ON hzb_entity_governance_state(state_scope, state_kind);
 
-CREATE INDEX idx_hzb_entity_governance_state_scope_kind_workspace
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_governance_state_scope_kind_workspace
     ON hzb_entity_governance_state(state_scope, state_kind, workspace_id);
 
-CREATE INDEX idx_hzb_entity_governance_state_update
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_governance_state_update
     ON hzb_entity_governance_state(gmt_update);
 
-CREATE INDEX idx_hzb_entity_governance_state_creator
+CREATE INDEX IF NOT EXISTS idx_hzb_entity_governance_state_creator
     ON hzb_entity_governance_state(creator);
 
-CREATE TABLE hzb_auth_token (
+CREATE TABLE IF NOT EXISTS hzb_auth_token (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255),
     token_hash VARCHAR(128) NOT NULL,
@@ -186,15 +186,15 @@ CREATE TABLE hzb_auth_token (
     revoked_by VARCHAR(64)
 );
 
-CREATE UNIQUE INDEX uk_hzb_auth_token_hash ON hzb_auth_token(token_hash);
-CREATE INDEX idx_hzb_auth_token_creator ON hzb_auth_token(creator);
-CREATE INDEX idx_hzb_auth_token_scope ON hzb_auth_token(token_scope);
-CREATE INDEX idx_hzb_auth_token_workspace ON hzb_auth_token(workspace_id);
-CREATE INDEX idx_hzb_auth_token_scope_workspace ON hzb_auth_token(token_scope, workspace_id);
-CREATE INDEX idx_hzb_auth_token_status ON hzb_auth_token(status);
-CREATE INDEX idx_hzb_auth_token_revoked_by ON hzb_auth_token(revoked_by);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_auth_token_hash ON hzb_auth_token(token_hash);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_creator ON hzb_auth_token(creator);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_scope ON hzb_auth_token(token_scope);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_workspace ON hzb_auth_token(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_scope_workspace ON hzb_auth_token(token_scope, workspace_id);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_status ON hzb_auth_token(status);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_revoked_by ON hzb_auth_token(revoked_by);
 
-CREATE TABLE hzb_signal_saved_view (
+CREATE TABLE IF NOT EXISTS hzb_signal_saved_view (
     id BIGSERIAL PRIMARY KEY,
     revision BIGINT NOT NULL DEFAULT 0,
     creator VARCHAR(255) NOT NULL,
@@ -209,16 +209,16 @@ CREATE TABLE hzb_signal_saved_view (
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_signal_saved_view_signal_key
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_signal_saved_view_signal_key
     ON hzb_signal_saved_view(signal, view_key);
 
-CREATE INDEX idx_hzb_signal_saved_view_signal
+CREATE INDEX IF NOT EXISTS idx_hzb_signal_saved_view_signal
     ON hzb_signal_saved_view(signal);
 
-CREATE INDEX idx_hzb_signal_saved_view_update
+CREATE INDEX IF NOT EXISTS idx_hzb_signal_saved_view_update
     ON hzb_signal_saved_view(update_time);
 
-CREATE TABLE hzb_signal_dashboard_panel_draft (
+CREATE TABLE IF NOT EXISTS hzb_signal_dashboard_panel_draft (
     id BIGSERIAL PRIMARY KEY,
     creator VARCHAR(255) NOT NULL,
     signal VARCHAR(32) NOT NULL,
@@ -233,16 +233,16 @@ CREATE TABLE hzb_signal_dashboard_panel_draft (
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_signal_dashboard_panel_draft_creator_signal_key
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_signal_dashboard_panel_draft_creator_signal_key
     ON hzb_signal_dashboard_panel_draft(creator, signal, draft_key);
 
-CREATE INDEX idx_hzb_signal_dashboard_panel_draft_creator_signal
+CREATE INDEX IF NOT EXISTS idx_hzb_signal_dashboard_panel_draft_creator_signal
     ON hzb_signal_dashboard_panel_draft(creator, signal);
 
-CREATE INDEX idx_hzb_signal_dashboard_panel_draft_update
+CREATE INDEX IF NOT EXISTS idx_hzb_signal_dashboard_panel_draft_update
     ON hzb_signal_dashboard_panel_draft(update_time);
 
-CREATE TABLE hzb_signal_dashboard (
+CREATE TABLE IF NOT EXISTS hzb_signal_dashboard (
     id BIGSERIAL PRIMARY KEY,
     creator VARCHAR(255) NOT NULL,
     dashboard_key VARCHAR(128) NOT NULL,
@@ -260,28 +260,28 @@ CREATE TABLE hzb_signal_dashboard (
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_signal_dashboard_key
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_signal_dashboard_key
     ON hzb_signal_dashboard(dashboard_key);
 
-CREATE INDEX idx_hzb_signal_dashboard_update
+CREATE INDEX IF NOT EXISTS idx_hzb_signal_dashboard_update
     ON hzb_signal_dashboard(update_time);
 
 -- HertzBeat 2.0.0 baseline additions.
 
 -- Add the collector intake token boundary.
-ALTER TABLE hzb_auth_token ADD COLUMN token_audience VARCHAR(32);
-ALTER TABLE hzb_auth_token ADD COLUMN collector_id VARCHAR(128);
-ALTER TABLE hzb_auth_token ADD COLUMN allowed_signals VARCHAR(64);
-CREATE INDEX idx_hzb_auth_token_collector ON hzb_auth_token(collector_id);
+ALTER TABLE hzb_auth_token ADD COLUMN IF NOT EXISTS token_audience VARCHAR(32);
+ALTER TABLE hzb_auth_token ADD COLUMN IF NOT EXISTS collector_id VARCHAR(128);
+ALTER TABLE hzb_auth_token ADD COLUMN IF NOT EXISTS allowed_signals VARCHAR(64);
+CREATE INDEX IF NOT EXISTS idx_hzb_auth_token_collector ON hzb_auth_token(collector_id);
 
 -- Add collector runtime configuration.
-ALTER TABLE hzb_collector ADD COLUMN runtime_config TEXT;
+ALTER TABLE hzb_collector ADD COLUMN IF NOT EXISTS runtime_config TEXT;
 
 -- Add collector instrumentation intake.
-ALTER TABLE hzb_collector ADD COLUMN instrumentation_intake TEXT;
+ALTER TABLE hzb_collector ADD COLUMN IF NOT EXISTS instrumentation_intake TEXT;
 
 -- Add managed configuration revision tracking.
-ALTER TABLE hzb_config ADD COLUMN config_revision VARCHAR(36);
+ALTER TABLE hzb_config ADD COLUMN IF NOT EXISTS config_revision VARCHAR(36);
 UPDATE hzb_config SET config_revision = gen_random_uuid()::text WHERE config_revision IS NULL;
 ALTER TABLE hzb_config ALTER COLUMN config_revision SET NOT NULL;
 
@@ -301,20 +301,22 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_monitor_metric_layout_creator_app
     ON hzb_monitor_metric_layout(creator, application);
 
 -- Scope persisted alerts by workspace.
-ALTER TABLE hzb_alert_single ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
-ALTER TABLE hzb_alert_single DROP CONSTRAINT unique_fingerprint;
-ALTER TABLE hzb_alert_single
-    ADD CONSTRAINT unique_fingerprint UNIQUE (workspace_id, fingerprint);
-CREATE INDEX idx_alert_single_workspace ON hzb_alert_single(workspace_id);
+ALTER TABLE hzb_alert_single ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+ALTER TABLE hzb_alert_single DROP CONSTRAINT IF EXISTS unique_fingerprint;
+DROP INDEX IF EXISTS unique_fingerprint;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_fingerprint
+    ON hzb_alert_single(workspace_id, fingerprint);
+CREATE INDEX IF NOT EXISTS idx_alert_single_workspace ON hzb_alert_single(workspace_id);
 
-ALTER TABLE hzb_alert_group ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
-ALTER TABLE hzb_alert_group DROP CONSTRAINT unique_group_key;
-ALTER TABLE hzb_alert_group
-    ADD CONSTRAINT unique_group_key UNIQUE (workspace_id, group_key);
-CREATE INDEX idx_alert_group_workspace ON hzb_alert_group(workspace_id);
+ALTER TABLE hzb_alert_group ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+ALTER TABLE hzb_alert_group DROP CONSTRAINT IF EXISTS unique_group_key;
+DROP INDEX IF EXISTS unique_group_key;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_group_key
+    ON hzb_alert_group(workspace_id, group_key);
+CREATE INDEX IF NOT EXISTS idx_alert_group_workspace ON hzb_alert_group(workspace_id);
 
 -- Add the agent gateway persistence model.
-CREATE TABLE hzb_agent_session (
+CREATE TABLE IF NOT EXISTS hzb_agent_session (
     id BIGSERIAL PRIMARY KEY,
     session_uid VARCHAR(64) NOT NULL,
     session_key VARCHAR(128) NOT NULL,
@@ -326,11 +328,11 @@ CREATE TABLE hzb_agent_session (
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX uk_agent_session_uid ON hzb_agent_session(session_uid);
-CREATE UNIQUE INDEX uk_agent_session_key ON hzb_agent_session(session_key);
-CREATE INDEX idx_agent_session_owner ON hzb_agent_session(workspace_id, channel, actor_type, actor_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_session_uid ON hzb_agent_session(session_uid);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_session_key ON hzb_agent_session(session_key);
+CREATE INDEX IF NOT EXISTS idx_agent_session_owner ON hzb_agent_session(workspace_id, channel, actor_type, actor_id);
 
-CREATE TABLE hzb_agent_run (
+CREATE TABLE IF NOT EXISTS hzb_agent_run (
     id BIGSERIAL PRIMARY KEY,
     run_uid VARCHAR(64) NOT NULL, session_id BIGINT NOT NULL, message_id VARCHAR(128) NOT NULL,
     entry_type VARCHAR(32) NOT NULL,
@@ -340,12 +342,12 @@ CREATE TABLE hzb_agent_run (
     started_at TIMESTAMP, completed_at TIMESTAMP,
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX uk_agent_run_uid ON hzb_agent_run(run_uid);
-CREATE UNIQUE INDEX uk_agent_run_session_message ON hzb_agent_run(session_id, message_id);
-CREATE INDEX idx_agent_run_session ON hzb_agent_run(session_id);
-CREATE INDEX idx_agent_run_target ON hzb_agent_run(target_monitor_id, target_alert_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_run_uid ON hzb_agent_run(run_uid);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_run_session_message ON hzb_agent_run(session_id, message_id);
+CREATE INDEX IF NOT EXISTS idx_agent_run_session ON hzb_agent_run(session_id);
+CREATE INDEX IF NOT EXISTS idx_agent_run_target ON hzb_agent_run(target_monitor_id, target_alert_id);
 
-CREATE TABLE hzb_agent_tool_call (
+CREATE TABLE IF NOT EXISTS hzb_agent_tool_call (
     id BIGSERIAL PRIMARY KEY,
     tool_call_id VARCHAR(128) NOT NULL, run_id BIGINT NOT NULL,
     session_id BIGINT, run_uid VARCHAR(64), session_uid VARCHAR(64),
@@ -357,27 +359,27 @@ CREATE TABLE hzb_agent_tool_call (
     result_output TEXT, elapsed_ms BIGINT, error_message VARCHAR(1024),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX uk_agent_tool_call_run_call ON hzb_agent_tool_call(run_id, tool_call_id);
-CREATE UNIQUE INDEX uk_agent_tool_call_approval_id ON hzb_agent_tool_call(approval_id);
-CREATE INDEX idx_agent_tool_call_run ON hzb_agent_tool_call(run_id);
-CREATE INDEX idx_agent_tool_call_session ON hzb_agent_tool_call(session_id);
-CREATE INDEX idx_agent_tool_call_name ON hzb_agent_tool_call(tool_name);
-CREATE INDEX idx_agent_tool_call_status ON hzb_agent_tool_call(status);
-CREATE INDEX idx_agent_tool_call_approval_status ON hzb_agent_tool_call(approval_status);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_tool_call_run_call ON hzb_agent_tool_call(run_id, tool_call_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_tool_call_approval_id ON hzb_agent_tool_call(approval_id);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_call_run ON hzb_agent_tool_call(run_id);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_call_session ON hzb_agent_tool_call(session_id);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_call_name ON hzb_agent_tool_call(tool_name);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_call_status ON hzb_agent_tool_call(status);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_call_approval_status ON hzb_agent_tool_call(approval_status);
 
-CREATE TABLE hzb_agent_transcript_entry (
+CREATE TABLE IF NOT EXISTS hzb_agent_transcript_entry (
     id BIGSERIAL PRIMARY KEY,
     session_id BIGINT NOT NULL, run_id BIGINT, session_sequence BIGINT NOT NULL,
     payload_json TEXT NOT NULL, message_role VARCHAR(32) NOT NULL,
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX uk_agent_transcript_session_sequence
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_transcript_session_sequence
     ON hzb_agent_transcript_entry(session_id, session_sequence);
-CREATE INDEX idx_agent_transcript_run ON hzb_agent_transcript_entry(run_id, session_sequence);
-CREATE INDEX idx_agent_transcript_checkpoint
+CREATE INDEX IF NOT EXISTS idx_agent_transcript_run ON hzb_agent_transcript_entry(run_id, session_sequence);
+CREATE INDEX IF NOT EXISTS idx_agent_transcript_checkpoint
     ON hzb_agent_transcript_entry(session_id, message_role, session_sequence);
 
-CREATE TABLE hzb_agent_schedule (
+CREATE TABLE IF NOT EXISTS hzb_agent_schedule (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(128) NOT NULL, instruction VARCHAR(4096) NOT NULL,
     cron_expression VARCHAR(64) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -386,10 +388,10 @@ CREATE TABLE hzb_agent_schedule (
     creator VARCHAR(64), modifier VARCHAR(64),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_agent_schedule_due ON hzb_agent_schedule(enabled, next_trigger_at);
-CREATE INDEX idx_agent_schedule_session ON hzb_agent_schedule(session_id);
+CREATE INDEX IF NOT EXISTS idx_agent_schedule_due ON hzb_agent_schedule(enabled, next_trigger_at);
+CREATE INDEX IF NOT EXISTS idx_agent_schedule_session ON hzb_agent_schedule(session_id);
 
-CREATE TABLE hzb_alert_analysis_policy (
+CREATE TABLE IF NOT EXISTS hzb_alert_analysis_policy (
     id BIGSERIAL PRIMARY KEY,
     workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     name VARCHAR(128) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -398,7 +400,9 @@ CREATE TABLE hzb_alert_analysis_policy (
     cooldown_seconds BIGINT NOT NULL,
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_alert_analysis_workspace_enabled
+ALTER TABLE hzb_alert_analysis_policy
+    ADD COLUMN IF NOT EXISTS workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+CREATE INDEX IF NOT EXISTS idx_alert_analysis_workspace_enabled
     ON hzb_alert_analysis_policy(workspace_id, enabled);
 
 ALTER TABLE hzb_config ALTER COLUMN content TYPE TEXT;
@@ -421,11 +425,18 @@ CREATE TABLE IF NOT EXISTS hzb_installation (
     complete BOOLEAN NOT NULL
 );
 
-ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled DROP DEFAULT;
-ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled TYPE BOOLEAN USING enabled <> 0;
-ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled SET DEFAULT TRUE;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'hzb_sop_schedule' AND column_name = 'enabled'
+                     AND data_type <> 'boolean') THEN
+        ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled DROP DEFAULT;
+        ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled TYPE BOOLEAN USING enabled <> 0;
+        ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled SET DEFAULT TRUE;
+    END IF;
+END $$;
 
-CREATE TABLE hzb_alert_integration_verification (
+CREATE TABLE IF NOT EXISTS hzb_alert_integration_verification (
     workspace_id VARCHAR(128) NOT NULL,
     source VARCHAR(64) NOT NULL,
     status VARCHAR(16) NOT NULL,

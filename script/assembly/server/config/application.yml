@@ -21,3 +21,13 @@ spring:
 ---
 # Add explicit operator overrides below this document separator.
 # These values override both UI-managed settings and bundled defaults.
+
+# The generated OpenAPI document is a map of every route, HTTP method, parameter
+# and model, so it is not served by default. A deployment that wants the Swagger
+# UI opts in by turning both switches on; the document endpoints stay scoped to
+# the admin role in sureness.yml either way.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

@@ -61,7 +61,7 @@ class StartupRuntimeBoundaryContextTest {
             "otlpGrpcServerConfig", "serviceDiscoveryWorker",
             "openTelemetryLogbackAppenderInstaller", "windowedLogRealTimeAlertCalculator", "timeService",
             "windowAggregator", "grafanaInit", "sopScheduleExecutor", "greptimeApmFlowInitializer",
-            "greptimeLogPipelineInitializer", "greptimeTraceTableInitializer",
+            "greptimeLogPipelineInitializer", "greptimeTraceTableInitializer", "greptimeSignalInitializer",
             "greptimeTtlApplicationReadyListener", "calculateStatusLifecycle", "alarmReduceLifecycle",
             "legacyLogSseManagerLifecycle", "observabilityLogSseManagerLifecycle",
             "managerBusinessRuntimeInitializer", "llmConfigInitializer", "dorisDataStorage",

@@ -15,7 +15,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 
-CREATE TABLE hzb_entity (
+CREATE TABLE IF NOT EXISTS hzb_entity (
     id BIGINT PRIMARY KEY COMMENT 'Entity ID',
     entity_type VARCHAR(32) NOT NULL COMMENT 'Entity type',
     name VARCHAR(128) NOT NULL COMMENT 'Entity name',
@@ -58,7 +58,7 @@ CREATE TABLE hzb_entity (
     INDEX idx_hzb_entity_workspace (workspace_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_entity_identity (
+CREATE TABLE IF NOT EXISTS hzb_entity_identity (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     entity_id BIGINT NOT NULL COMMENT 'Entity ID',
     identity_type VARCHAR(32) NOT NULL COMMENT 'Identity source type',
@@ -76,7 +76,7 @@ CREATE TABLE hzb_entity_identity (
     INDEX idx_hzb_entity_identity_entity (entity_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_entity_monitor_bind (
+CREATE TABLE IF NOT EXISTS hzb_entity_monitor_bind (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     entity_id BIGINT NOT NULL COMMENT 'Entity ID',
     monitor_id BIGINT NOT NULL COMMENT 'Monitor ID',
@@ -94,7 +94,7 @@ CREATE TABLE hzb_entity_monitor_bind (
     INDEX idx_hzb_entity_monitor_bind_monitor (monitor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_entity_relation (
+CREATE TABLE IF NOT EXISTS hzb_entity_relation (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     source_entity_id BIGINT NOT NULL COMMENT 'Source entity ID',
     target_entity_id BIGINT NULL COMMENT 'Target entity ID',
@@ -115,7 +115,7 @@ CREATE TABLE hzb_entity_relation (
     INDEX idx_hzb_entity_relation_target_ref (target_ref)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_entity_definition_activity (
+CREATE TABLE IF NOT EXISTS hzb_entity_definition_activity (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     entity_id BIGINT NOT NULL COMMENT 'Entity ID',
     workspace_id VARCHAR(64) NOT NULL DEFAULT 'default' COMMENT 'Workspace ID',
@@ -131,7 +131,7 @@ CREATE TABLE hzb_entity_definition_activity (
     INDEX idx_hzb_entity_definition_activity_time (gmt_create)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_entity_governance_state (
+CREATE TABLE IF NOT EXISTS hzb_entity_governance_state (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     state_scope VARCHAR(32) NOT NULL COMMENT 'Governance scope, such as discovery',
     state_kind VARCHAR(32) NOT NULL COMMENT 'State kind, such as preset or activity',
@@ -150,7 +150,7 @@ CREATE TABLE hzb_entity_governance_state (
     INDEX idx_hzb_entity_governance_state_creator (creator)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_auth_token (
+CREATE TABLE IF NOT EXISTS hzb_auth_token (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) COMMENT 'API token name',
     token_hash VARCHAR(128) NOT NULL COMMENT 'SHA-256 hash of token value',
@@ -173,7 +173,7 @@ CREATE TABLE hzb_auth_token (
     INDEX idx_hzb_auth_token_revoked_by (revoked_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_signal_saved_view (
+CREATE TABLE IF NOT EXISTS hzb_signal_saved_view (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     revision BIGINT NOT NULL DEFAULT 0,
     creator VARCHAR(255) NOT NULL COMMENT 'Saved view creator',
@@ -191,7 +191,7 @@ CREATE TABLE hzb_signal_saved_view (
     INDEX idx_hzb_signal_saved_view_update (update_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_signal_dashboard_panel_draft (
+CREATE TABLE IF NOT EXISTS hzb_signal_dashboard_panel_draft (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     creator VARCHAR(255) NOT NULL COMMENT 'Panel draft creator',
     `signal` VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
@@ -209,7 +209,7 @@ CREATE TABLE hzb_signal_dashboard_panel_draft (
     INDEX idx_hzb_signal_dashboard_panel_draft_update (update_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_signal_dashboard (
+CREATE TABLE IF NOT EXISTS hzb_signal_dashboard (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     creator VARCHAR(255) NOT NULL COMMENT 'Dashboard creator',
     dashboard_key VARCHAR(128) NOT NULL COMMENT 'Stable dashboard key',
@@ -230,24 +230,135 @@ CREATE TABLE hzb_signal_dashboard (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- HertzBeat 2.0.0 baseline additions.
+-- Column and index alterations are applied only where the object is missing or
+-- still present, so the script stays safe to run against databases Hibernate
+-- already updated. The routine is invoked after the plain statements below.
+DROP PROCEDURE IF EXISTS ApplyV200Alterations;
 
--- Add the collector intake token boundary.
-ALTER TABLE hzb_auth_token
-    ADD COLUMN token_audience VARCHAR(32) NULL,
-    ADD COLUMN collector_id VARCHAR(128) NULL,
-    ADD COLUMN allowed_signals VARCHAR(64) NULL,
-    ADD INDEX idx_hzb_auth_token_collector (collector_id);
+DELIMITER //
 
--- Add collector runtime configuration.
-ALTER TABLE hzb_collector ADD COLUMN runtime_config TEXT NULL;
+CREATE PROCEDURE ApplyV200Alterations()
+BEGIN
 
--- Add collector instrumentation intake.
-ALTER TABLE hzb_collector ADD COLUMN instrumentation_intake TEXT NULL;
+    -- Add the collector intake token boundary.
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_auth_token'
+                         AND COLUMN_NAME = 'token_audience') THEN
+        ALTER TABLE hzb_auth_token ADD COLUMN token_audience VARCHAR(32) NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_auth_token'
+                         AND COLUMN_NAME = 'collector_id') THEN
+        ALTER TABLE hzb_auth_token ADD COLUMN collector_id VARCHAR(128) NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_auth_token'
+                         AND COLUMN_NAME = 'allowed_signals') THEN
+        ALTER TABLE hzb_auth_token ADD COLUMN allowed_signals VARCHAR(64) NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_auth_token'
+                         AND INDEX_NAME = 'idx_hzb_auth_token_collector') THEN
+        ALTER TABLE hzb_auth_token ADD INDEX idx_hzb_auth_token_collector (collector_id);
+    END IF;
 
--- Add managed configuration revision tracking.
-ALTER TABLE hzb_config ADD COLUMN config_revision VARCHAR(36) NULL;
-UPDATE hzb_config SET config_revision = UUID() WHERE config_revision IS NULL;
-ALTER TABLE hzb_config MODIFY COLUMN config_revision VARCHAR(36) NOT NULL;
+    -- Add collector runtime configuration and instrumentation intake.
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_collector'
+                         AND COLUMN_NAME = 'runtime_config') THEN
+        ALTER TABLE hzb_collector ADD COLUMN runtime_config TEXT NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_collector'
+                         AND COLUMN_NAME = 'instrumentation_intake') THEN
+        ALTER TABLE hzb_collector ADD COLUMN instrumentation_intake TEXT NULL;
+    END IF;
+
+    -- Add managed configuration revision tracking.
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_config'
+                         AND COLUMN_NAME = 'config_revision') THEN
+        ALTER TABLE hzb_config ADD COLUMN config_revision VARCHAR(36) NULL;
+    END IF;
+    UPDATE hzb_config SET config_revision = UUID() WHERE config_revision IS NULL;
+    ALTER TABLE hzb_config MODIFY COLUMN config_revision VARCHAR(36) NOT NULL;
+    ALTER TABLE hzb_config MODIFY COLUMN content TEXT;
+
+    -- Scope persisted alerts by workspace. The fingerprint keys stay ASCII, as
+    -- pinned by the B200 baseline, so the composite indexes fit the 3072 byte limit.
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_single'
+                         AND COLUMN_NAME = 'workspace_id') THEN
+        ALTER TABLE hzb_alert_single ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+    END IF;
+    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_single'
+                     AND COLUMN_NAME = 'fingerprint' AND CHARACTER_SET_NAME <> 'ascii') THEN
+        ALTER TABLE hzb_alert_single MODIFY COLUMN fingerprint VARCHAR(2048) CHARACTER SET ascii;
+    END IF;
+    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_single'
+                     AND INDEX_NAME = 'unique_fingerprint') THEN
+        ALTER TABLE hzb_alert_single DROP INDEX unique_fingerprint;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_single'
+                         AND INDEX_NAME = 'unique_fingerprint') THEN
+        ALTER TABLE hzb_alert_single
+            ADD CONSTRAINT unique_fingerprint UNIQUE (workspace_id, fingerprint);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_single'
+                         AND INDEX_NAME = 'idx_alert_single_workspace') THEN
+        ALTER TABLE hzb_alert_single ADD INDEX idx_alert_single_workspace (workspace_id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_group'
+                         AND COLUMN_NAME = 'workspace_id') THEN
+        ALTER TABLE hzb_alert_group ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+    END IF;
+    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_group'
+                     AND COLUMN_NAME = 'group_key' AND CHARACTER_SET_NAME <> 'ascii') THEN
+        ALTER TABLE hzb_alert_group MODIFY COLUMN group_key VARCHAR(2048) CHARACTER SET ascii;
+    END IF;
+    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_group'
+                     AND INDEX_NAME = 'unique_group_key') THEN
+        ALTER TABLE hzb_alert_group DROP INDEX unique_group_key;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_group'
+                         AND INDEX_NAME = 'unique_group_key') THEN
+        ALTER TABLE hzb_alert_group
+            ADD CONSTRAINT unique_group_key UNIQUE (workspace_id, group_key);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_group'
+                         AND INDEX_NAME = 'idx_alert_group_workspace') THEN
+        ALTER TABLE hzb_alert_group ADD INDEX idx_alert_group_workspace (workspace_id);
+    END IF;
+
+    -- Keep the alert analysis policy workspace boundary complete on tables
+    -- Hibernate already created.
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_analysis_policy'
+                         AND COLUMN_NAME = 'workspace_id') THEN
+        ALTER TABLE hzb_alert_analysis_policy
+            ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_analysis_policy'
+                         AND INDEX_NAME = 'idx_alert_analysis_workspace_enabled') THEN
+        ALTER TABLE hzb_alert_analysis_policy
+            ADD INDEX idx_alert_analysis_workspace_enabled (workspace_id, enabled);
+    END IF;
+
+END //
+
+DELIMITER ;
+
 
 -- Add persisted monitor metric layouts.
 CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
@@ -262,21 +373,8 @@ CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
     UNIQUE KEY uk_hzb_monitor_metric_layout_creator_app (creator, application)
 );
 
--- Scope persisted alerts by workspace.
-ALTER TABLE hzb_alert_single
-    ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
-    DROP INDEX unique_fingerprint,
-    ADD CONSTRAINT unique_fingerprint UNIQUE (workspace_id, fingerprint),
-    ADD INDEX idx_alert_single_workspace (workspace_id);
-
-ALTER TABLE hzb_alert_group
-    ADD COLUMN workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
-    DROP INDEX unique_group_key,
-    ADD CONSTRAINT unique_group_key UNIQUE (workspace_id, group_key),
-    ADD INDEX idx_alert_group_workspace (workspace_id);
-
 -- Add the agent gateway persistence model.
-CREATE TABLE hzb_agent_session (
+CREATE TABLE IF NOT EXISTS hzb_agent_session (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     session_uid VARCHAR(64) NOT NULL,
     session_key VARCHAR(128) NOT NULL,
@@ -292,7 +390,7 @@ CREATE TABLE hzb_agent_session (
     KEY idx_agent_session_owner (workspace_id, channel, actor_type, actor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_agent_run (
+CREATE TABLE IF NOT EXISTS hzb_agent_run (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     run_uid VARCHAR(64) NOT NULL,
     session_id BIGINT NOT NULL,
@@ -310,7 +408,7 @@ CREATE TABLE hzb_agent_run (
     KEY idx_agent_run_target (target_monitor_id, target_alert_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_agent_tool_call (
+CREATE TABLE IF NOT EXISTS hzb_agent_tool_call (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tool_call_id VARCHAR(128) NOT NULL,
     run_id BIGINT NOT NULL,
@@ -330,7 +428,7 @@ CREATE TABLE hzb_agent_tool_call (
     KEY idx_agent_tool_call_approval_status (approval_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_agent_transcript_entry (
+CREATE TABLE IF NOT EXISTS hzb_agent_transcript_entry (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     session_id BIGINT NOT NULL, run_id BIGINT, session_sequence BIGINT NOT NULL,
     payload_json TEXT NOT NULL, message_role VARCHAR(32) NOT NULL,
@@ -340,7 +438,7 @@ CREATE TABLE hzb_agent_transcript_entry (
     KEY idx_agent_transcript_checkpoint (session_id, message_role, session_sequence)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_agent_schedule (
+CREATE TABLE IF NOT EXISTS hzb_agent_schedule (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(128) NOT NULL, instruction VARCHAR(4096) NOT NULL,
     cron_expression VARCHAR(64) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -353,7 +451,7 @@ CREATE TABLE hzb_agent_schedule (
     KEY idx_agent_schedule_session (session_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE hzb_alert_analysis_policy (
+CREATE TABLE IF NOT EXISTS hzb_alert_analysis_policy (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     workspace_id VARCHAR(128) NOT NULL DEFAULT 'default',
     name VARCHAR(128) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -364,8 +462,6 @@ CREATE TABLE hzb_alert_analysis_policy (
     gmt_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_alert_analysis_workspace_enabled (workspace_id, enabled)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-ALTER TABLE hzb_config MODIFY COLUMN content TEXT;
 
 CREATE TABLE IF NOT EXISTS hzb_account (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -385,7 +481,7 @@ CREATE TABLE IF NOT EXISTS hzb_installation (
     complete BOOLEAN NOT NULL
 );
 
-CREATE TABLE hzb_alert_integration_verification (
+CREATE TABLE IF NOT EXISTS hzb_alert_integration_verification (
     workspace_id VARCHAR(128) NOT NULL,
     source VARCHAR(64) NOT NULL,
     status VARCHAR(16) NOT NULL,
@@ -393,3 +489,7 @@ CREATE TABLE hzb_alert_integration_verification (
     verified_at BIGINT,
     PRIMARY KEY (workspace_id, source)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CALL ApplyV200Alterations();
+
+DROP PROCEDURE IF EXISTS ApplyV200Alterations;
