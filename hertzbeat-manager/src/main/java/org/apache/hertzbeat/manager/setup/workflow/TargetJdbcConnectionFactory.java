@@ -25,14 +25,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 
 /** Owns one bounded target JDBC acquisition worker and any failed cleanup handle. */
 final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConnectionAttemptOwner {
-
-    private static final long AVAILABILITY_POLL_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
     private final ThreadPoolExecutor worker;
     private final TargetJdbcCleanupLane cleanupLane;
@@ -40,6 +37,7 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
     private final TargetJdbcConnectionVerifier verifier;
     private final TargetJdbcResultWaiter resultWaiter;
     private TargetJdbcConnectionAttempt active;
+    private boolean previousAttemptFinished;
     private Error lateFailure;
     private boolean closed;
 
@@ -87,59 +85,43 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
         TargetJdbcConnectionAttempt attempt = new TargetJdbcConnectionAttempt(
                 this, connector, verifier, target, settings.username(),
                 attemptPassword, deadline, resultWaiter);
+        boolean handoffExpected;
         try {
-            claim(attempt);
+            handoffExpected = claim(attempt);
         } catch (RuntimeException | Error claimFailure) {
             Arrays.fill(attemptPassword, '\0');
             throw claimFailure;
         }
+        boolean submitted;
         try {
-            submitWhenAvailable(attempt, deadline);
+            submitted = submit(attempt, deadline, handoffExpected);
+        } catch (InterruptedException interrupted) {
+            Arrays.fill(attemptPassword, '\0');
+            releaseUnsubmitted(attempt, handoffExpected);
+            Thread.currentThread().interrupt();
+            throw failure(TargetJdbcConnectionErrorCode.TIMEOUT);
         } catch (RejectedExecutionException rejected) {
             Arrays.fill(attemptPassword, '\0');
             poison(null);
-            finished(attempt);
+            releaseUnsubmitted(attempt, false);
             throw failure(TargetJdbcConnectionErrorCode.FACTORY_CLOSED);
         } catch (RuntimeException submitFailure) {
             Arrays.fill(attemptPassword, '\0');
             poison(null);
-            finished(attempt);
+            releaseUnsubmitted(attempt, false);
             throw failure(TargetJdbcConnectionErrorCode.FACTORY_CLOSED);
         } catch (Error fatalSubmission) {
             Arrays.fill(attemptPassword, '\0');
             lateFatal(fatalSubmission, null);
-            finished(attempt);
+            releaseUnsubmitted(attempt, false);
             throw fatalSubmission;
         }
-        return attempt.await();
-    }
-
-    private void submitWhenAvailable(
-            TargetJdbcConnectionAttempt attempt,
-            JdbcMetadataMigrationDeadline deadline) {
-        boolean interrupted = false;
-        try {
-            while (true) {
-                try {
-                    worker.execute(attempt);
-                    return;
-                } catch (RejectedExecutionException transientRejection) {
-                    // the zero-queue worker may still be unwinding the previous attempt
-                    if (worker.isShutdown() || deadline.remainingNanos() <= 0) {
-                        throw transientRejection;
-                    }
-                    LockSupport.parkNanos(AVAILABILITY_POLL_NANOS);
-                    if (Thread.interrupted()) {
-                        interrupted = true;
-                        throw transientRejection;
-                    }
-                }
-            }
-        } finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
+        if (!submitted) {
+            Arrays.fill(attemptPassword, '\0');
+            releaseUnsubmitted(attempt, handoffExpected);
+            throw failure(TargetJdbcConnectionErrorCode.TIMEOUT);
         }
+        return attempt.await();
     }
 
     void retryCleanup(JdbcMetadataMigrationDeadline deadline) {
@@ -171,6 +153,7 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
     @Override
     public synchronized void close() {
         closed = true;
+        notifyAll();
         if (active != null) {
             active.abandon(TargetJdbcConnectionErrorCode.FACTORY_CLOSED);
         } else {
@@ -200,6 +183,7 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
     @Override
     public synchronized void finished(TargetJdbcConnectionAttempt attempt) {
         if (active == attempt) {
+            previousAttemptFinished = true;
             active = null;
             notifyAll();
             if (closed) {
@@ -230,7 +214,7 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
         }
     }
 
-    private synchronized void claim(TargetJdbcConnectionAttempt attempt) {
+    private synchronized boolean claim(TargetJdbcConnectionAttempt attempt) {
         if (lateFailure != null) {
             throw lateFailure;
         }
@@ -245,6 +229,67 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
             throw failure(TargetJdbcConnectionErrorCode.OPERATION_CONFLICT);
         }
         active = attempt;
+        boolean handoffExpected = previousAttemptFinished;
+        previousAttemptFinished = false;
+        return handoffExpected;
+    }
+
+    /**
+     * A finished attempt releases the logical slot before its executor worker becomes idle.
+     * The admitted successor owns that slot while submitting with its original acquisition budget.
+     * Always submit through execute: shutdownNow can drain even a SynchronousQueue timed offer.
+     */
+    private boolean submit(TargetJdbcConnectionAttempt attempt,
+                           JdbcMetadataMigrationDeadline deadline, boolean handoffExpected) throws InterruptedException {
+        try {
+            worker.execute(attempt);
+            return true;
+        } catch (RejectedExecutionException rejection) {
+            if (!handoffExpected || worker.isShutdown()
+                    || !(worker.getQueue() instanceof SynchronousQueue<?>)) {
+                throw rejection;
+            }
+        }
+        while (true) {
+            synchronized (this) {
+                if (closed || worker.isShutdown()) {
+                    throw new RejectedExecutionException();
+                }
+                long remaining = deadline.remainingNanos();
+                if (remaining <= 0) {
+                    return false;
+                }
+                // close notifies this condition; executor readiness is retried within the same budget.
+                TimeUnit.NANOSECONDS.timedWait(this,
+                        Math.min(remaining, TimeUnit.MILLISECONDS.toNanos(10)));
+                if (closed || worker.isShutdown()) {
+                    throw new RejectedExecutionException();
+                }
+                if (deadline.remainingNanos() <= 0) {
+                    return false;
+                }
+            }
+            try {
+                worker.execute(attempt);
+                return true;
+            } catch (RejectedExecutionException rejection) {
+                if (worker.isShutdown()) {
+                    throw rejection;
+                }
+            }
+        }
+    }
+
+    private synchronized void releaseUnsubmitted(
+            TargetJdbcConnectionAttempt attempt, boolean handoffExpected) {
+        if (active == attempt) {
+            previousAttemptFinished = handoffExpected;
+            active = null;
+            notifyAll();
+            if (closed) {
+                cleanupLane.close();
+            }
+        }
     }
 
     private static TargetJdbcConnectionException failure(TargetJdbcConnectionErrorCode code) {
