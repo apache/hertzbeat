@@ -105,6 +105,7 @@ resourceRole:
   - /api/config/oss===get===[admin,user,guest]
   - /api/config/oss===post===[admin]
   - /api/config/mute===get===[admin,user,guest]
+  - /api/config/mute===post===[admin]
   - /api/config/template===get===[admin,user,guest]
   - /api/config/template===post===[admin]
   - /api/config/template/*===put===[admin]
@@ -136,8 +137,6 @@ resourceRole:
   # credentials, so it stays admin only and is additionally refused by the controller
   - /api/config/secret===get===[admin]
   - /api/config/secret===post===[admin]
-  # the mute toggle sits in the notification widget every signed in user sees
-  - /api/config/mute===post===[admin,user,guest]
   - /api/config/**===get===[admin,user,guest]
   - /api/config/**===post===[admin]
   - /api/config/**===put===[admin]

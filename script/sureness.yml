@@ -143,8 +143,6 @@ resourceRole:
   # credentials, so it stays admin only and is additionally refused by the controller
   - /api/config/secret===get===[admin]
   - /api/config/secret===post===[admin]
-  # the mute toggle sits in the notification widget every signed in user sees
-  - /api/config/mute===post===[admin,user,guest]
   - /api/config/**===get===[admin,user,guest]
   - /api/config/**===post===[admin]
   - /api/config/**===put===[admin]
