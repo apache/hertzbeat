@@ -25,11 +25,14 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 
 /** Owns one bounded target JDBC acquisition worker and any failed cleanup handle. */
 final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConnectionAttemptOwner {
+
+    private static final long AVAILABILITY_POLL_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
     private final ThreadPoolExecutor worker;
     private final TargetJdbcCleanupLane cleanupLane;
@@ -91,7 +94,7 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
             throw claimFailure;
         }
         try {
-            worker.execute(attempt);
+            submitWhenAvailable(attempt, deadline);
         } catch (RejectedExecutionException rejected) {
             Arrays.fill(attemptPassword, '\0');
             poison(null);
@@ -109,6 +112,34 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
             throw fatalSubmission;
         }
         return attempt.await();
+    }
+
+    private void submitWhenAvailable(
+            TargetJdbcConnectionAttempt attempt,
+            JdbcMetadataMigrationDeadline deadline) {
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    worker.execute(attempt);
+                    return;
+                } catch (RejectedExecutionException transientRejection) {
+                    // the zero-queue worker may still be unwinding the previous attempt
+                    if (worker.isShutdown() || deadline.remainingNanos() <= 0) {
+                        throw transientRejection;
+                    }
+                    LockSupport.parkNanos(AVAILABILITY_POLL_NANOS);
+                    if (Thread.interrupted()) {
+                        interrupted = true;
+                        throw transientRejection;
+                    }
+                }
+            }
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     void retryCleanup(JdbcMetadataMigrationDeadline deadline) {

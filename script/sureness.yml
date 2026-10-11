@@ -31,8 +31,6 @@ resourceRole:
   - /api/plugin===post===[admin]
   - /api/plugin===put===[admin]
   - /api/plugin===delete===[admin]
-  - /api/plugin/**===get===[admin]
-  - /api/plugin/**===post===[admin]
   - /api/apps/**===get===[admin,user,guest]
   # the define yml routes persist the global collection templates
   # post can only add a new type, put overwrites an existing one and immediately
@@ -56,6 +54,9 @@ resourceRole:
   - /api/monitor/**===put===[admin,user]
   - /api/monitor===delete===[admin]
   - /api/monitor/**===delete===[admin]
+  - /api/metrics/layout/**===get===[admin,user,guest]
+  - /api/metrics/layout/**===put===[admin,user]
+  - /api/metrics/layout/**===delete===[admin,user]
   - /api/monitors===get===[admin,user,guest]
   - /api/monitors/export===get===[admin]
   - /api/monitors/export/all===get===[admin]
@@ -74,13 +75,11 @@ resourceRole:
   - /api/alert/defines/**===get===[admin,user]
   - /api/alert/defines/**===post===[admin]
   - /api/alert/**===get===[admin,user,guest]
-  - /api/alert/sse/**===get===[admin,user,guest]
   - /api/alert/**===post===[admin,user]
   - /api/alert/**===put===[admin,user]
   - /api/alert/**===delete===[admin]
   - /api/alerts/**===get===[admin,user,guest]
   - /api/alerts/**===post===[admin,user]
-  - /api/v2/alerts===post===[admin,user]
   - /api/alerts/**===put===[admin,user]
   - /api/alerts/**===delete===[admin]
   - /api/notice/**===get===[admin,user,guest]
@@ -110,13 +109,12 @@ resourceRole:
   - /api/config/template===get===[admin,user,guest]
   - /api/config/template===post===[admin]
   - /api/config/template/*===put===[admin]
+  # the secret config holds the jwt signing key and the aes key protecting stored
+  # credentials, so it stays admin only and is additionally refused by the controller
   - /api/config/secret===get===[admin]
   - /api/config/secret===post===[admin]
   - /api/config/provider===get===[admin]
   - /api/config/provider===post===[admin]
-  - /api/account/token===get===[admin]
-  - /api/account/token/**===post===[admin]
-  - /api/account/token/**===delete===[admin]
   - /api/label===get===[admin,user,guest]
   - /api/label===post===[admin,user]
   - /api/label===put===[admin,user]
@@ -139,24 +137,12 @@ resourceRole:
   - /api/plugin/**===post===[admin]
   - /api/plugin/**===put===[admin]
   - /api/plugin/**===delete===[admin]
-  # the secret config holds the jwt signing key and the aes key protecting stored
-  # credentials, so it stays admin only and is additionally refused by the controller
-  - /api/config/secret===get===[admin]
-  - /api/config/secret===post===[admin]
-  - /api/config/**===get===[admin,user,guest]
-  - /api/config/**===post===[admin]
-  - /api/config/**===put===[admin]
-  - /api/config/**===delete===[admin]
   # queue depth of the hertzbeat process itself, operational data
   - /api/metrics===get===[admin]
   # per account metric favourites rendered on the monitor pages
   - /api/metrics/**===get===[admin,user,guest]
   - /api/metrics/**===post===[admin,user,guest]
   - /api/metrics/**===delete===[admin,user,guest]
-  - /api/label/**===get===[admin,user,guest]
-  - /api/label/**===post===[admin,user]
-  - /api/label/**===put===[admin,user]
-  - /api/label/**===delete===[admin]
   # the storage availability probe is read by every monitor page, while the query
   # route forwards a raw promql expression straight to the time series database
   - /api/warehouse/**===get===[admin,user,guest]
@@ -175,15 +161,23 @@ resourceRole:
   - /api/instrumentation/render===post===[admin,user]
   - /api/instrumentation/detect===post===[admin,user]
   - /api/ui/runtime-status===get===[admin,user,guest]
+  - /api/ingestion/otlp/**===get===[admin,user,guest]
   - /api/ingestion/otlp/metrics/console===get===[admin,user,guest]
   - /api/otlp/**===post===[admin,user]
-  - /api/logs/otlp/**===post===[admin,user]
   - /api/logs/**===get===[admin,user,guest]
   - /api/logs/analysis/compare===post===[admin,user,guest]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
   - /api/manager/import-tasks/**===get===[admin,user]
-  - /api/manager/sse/**===get===[admin,user,guest]
+  - /api/signal/saved-view/**===get===[admin,user,guest]
+  - /api/signal/saved-view===put===[admin,user]
+  - /api/signal/saved-view/**===delete===[admin,user]
+  - /api/signal/dashboard===get===[admin,user,guest]
+  - /api/signal/dashboard===put===[admin,user]
+  - /api/signal/dashboard/**===delete===[admin,user]
+  - /api/signal/dashboard-panel-draft/**===get===[admin,user]
+  - /api/signal/dashboard-panel-draft===put===[admin,user]
+  - /api/signal/dashboard-panel-draft/**===delete===[admin,user]
   - /api/bulletin/**===get===[admin,user,guest]
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
@@ -243,10 +237,13 @@ resourceRole:
 # config the resource restful api that need bypass auth protection
 # rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
-  - /api/ingestion/otlp/**===get===[admin,user,guest]
   - /api/logs===delete===[admin]
 
 excludedResource:
+  # Setup has its own runtime gate, remote-unlock proof, and permanent completion closure.
+  - /api/setup/**===*
+  - /setup===get
+  - /setup===head
   - /api/account/auth/**===*
   - /api/ui/session===get
   - /api/ui/session===post
@@ -257,21 +254,27 @@ excludedResource:
   - /api/push/**===*
   - /api/status/page/public/**===*
   # web ui resource
-  - /setup===get
-  - /setup===head
   - /===get
   - /ai===get
   - /ai/schedules===get
   - /assets/**===get
+  - /alerts/**===get
+  - /bulletin/**===get
   - /dashboard/**===get
+  - /entities/**===get
+  - /explore/**===get
+  - /ingestion/**===get
   - /monitors/**===get
+  - /observability/**===get
+  - /overview/**===get
+  - /settings/**===get
+  - /topology/**===get
   - /alert/**===get
   - /account/**===get
   - /setting/**===get
   - /passport/**===get
   - /status/**===get
   - /log/**===get
-  - /observability/**===get
   - /metrics/**===get
   - /trace/**===get
   - /**/*.html===get
