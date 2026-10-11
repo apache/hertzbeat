@@ -291,13 +291,30 @@ public class PeriodicAlertRuleScheduler {
                 runTask(permit);
                 return;
             }
+            synchronized (this) {
+                if (cancelled) {
+                    running = false;
+                    permit.close();
+                    return;
+                }
+            }
+            Future<?> future;
             try {
-                runningFuture = taskExecutor.submit(() -> runTask(permit));
+                future = taskExecutor.submit(() -> runTask(permit));
             } catch (RuntimeException e) {
-                running = false;
+                synchronized (this) {
+                    running = false;
+                }
                 permit.close();
                 throw e;
             }
+            synchronized (this) {
+                runningFuture = future;
+                if (!cancelled) {
+                    return;
+                }
+            }
+            future.cancel(true);
         }
 
         private void runTask(WorkAdmissionGate.Permit permit) {
@@ -307,7 +324,7 @@ public class PeriodicAlertRuleScheduler {
                     taskPermits.acquire();
                     concurrencyPermitAcquired = true;
                 }
-                if (!Thread.currentThread().isInterrupted()) {
+                if (!Thread.currentThread().isInterrupted() && !isCancelled()) {
                     executeRuleWithPermit(rule, permit);
                     permit = null;
                 }
@@ -341,6 +358,10 @@ public class PeriodicAlertRuleScheduler {
             WorkAdmissionGate.Permit nextPermit = pendingPermit;
             pendingPermit = null;
             submit(nextPermit);
+        }
+
+        private synchronized boolean isCancelled() {
+            return cancelled;
         }
 
         private synchronized void markMissed() {
