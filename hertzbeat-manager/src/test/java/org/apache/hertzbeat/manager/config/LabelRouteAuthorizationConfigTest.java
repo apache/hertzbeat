@@ -26,7 +26,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.function.Executable;
 
 /**
@@ -63,8 +66,33 @@ class LabelRouteAuthorizationConfigTest {
         List<String> actualRules = Files.readAllLines(repoRoot().resolve(config)).stream()
                 .filter(line -> line.startsWith("  - /api/label") || line.startsWith("  - /api/tag/"))
                 .toList();
-        assertEquals(LABEL_RULES, actualRules,
-                () -> config + " must contain only the reviewed Label route policy");
+        List<String> expected = new ArrayList<>(LABEL_RULES);
+        if (SurenessPolicyTestSupport.releaseProfile(config)) {
+            expected.addAll(List.of("  - /api/label/**===get===[admin,user,guest]",
+                    "  - /api/label/**===post===[admin,user]", "  - /api/label/**===put===[admin,user]",
+                    "  - /api/label/**===delete===[admin]"));
+        }
+        assertEquals(expected, actualRules, () -> config + " must preserve exact roots and its fallback profile");
+    }
+
+    @ParameterizedTest
+    @MethodSource("configurations")
+    void realMatcherKeepsRootRolesAndAuthenticatedChildFallback(String config) throws Exception {
+        var matcher = SurenessPolicyTestSupport.matcher(config);
+        for (String method : List.of("get", "post", "put", "delete")) {
+            String roles = switch (method) {
+                case "get" -> "[admin,user,guest]";
+                case "post", "put" -> "[admin,user]";
+                default -> "[admin]";
+            };
+            SurenessPolicyTestSupport.assertPolicy(matcher, config, "/api/label", method, roles);
+            SurenessPolicyTestSupport.assertPolicy(matcher, config, "/api/label/child", method,
+                    SurenessPolicyTestSupport.releaseProfile(config) ? roles : null);
+        }
+    }
+
+    private static Stream<String> configurations() {
+        return SURENESS_CONFIGS.stream();
     }
 
     private static Path repoRoot() {

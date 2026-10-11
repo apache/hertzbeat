@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.config;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,10 +28,14 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.controller.GeneralConfigController;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -78,7 +81,7 @@ class GeneralConfigRouteAuthorizationConfigTest {
     }
 
     @Test
-    void shippedConfigsGiveEverySupportedTypeExactRolesAndStayInSync() throws IOException {
+    void shippedConfigsKeepEffectiveTypeRolesInSyncAndPreserveReleaseFallbacks() throws IOException {
         List<String> referenceRules = generalConfigRules(SURENESS_CONFIGS.get(0));
         for (String config : SURENESS_CONFIGS) {
             List<String> lines = Files.readAllLines(repoRoot().resolve(config));
@@ -88,26 +91,57 @@ class GeneralConfigRouteAuthorizationConfigTest {
                 String path = policy.getKey() == GeneralConfigTypeEnum.public_access
                         ? "/api/config/public-access"
                         : "/api/config/" + policy.getKey().name();
-                assertExactRule(config, lines, path, "get", policy.getValue().getRoles());
-                assertExactRule(config, lines, path, "post", policy.getValue().postRoles());
+                assertOnlyExpectedRoles(config, lines, path, "get", policy.getValue().getRoles());
+                assertOnlyExpectedRoles(config, lines, path, "post", policy.getValue().postRoles());
             }
-            assertExactRule(config, lines, "/api/config/template/*", "put", ADMIN_ROLE);
-            assertFalse(lines.stream().anyMatch(line -> line.startsWith("  - /api/config/**===")),
-                    () -> config + " must not use a broad general config wildcard");
+            assertOnlyExpectedRoles(config, lines, "/api/config/template/*", "put", ADMIN_ROLE);
+            List<String> fallbacks = lines.stream().filter(line -> line.startsWith("  - /api/config/**==="))
+                    .sorted().toList();
+            List<String> expectedFallbacks = SurenessPolicyTestSupport.releaseProfile(config) ? List.of(
+                    "  - /api/config/**===delete===[admin]", "  - /api/config/**===get===[admin,user,guest]",
+                    "  - /api/config/**===post===[admin]", "  - /api/config/**===put===[admin]") : List.of();
+            assertEquals(expectedFallbacks, fallbacks, () -> config + " must preserve its fallback profile");
         }
     }
 
-    private static void assertExactRule(
+    private static void assertOnlyExpectedRoles(
             String config, List<String> lines, String path, String method, String roles) {
         String expected = "  - " + path + "===" + method + "===" + roles;
-        long count = lines.stream().filter(expected::equals).count();
-        assertEquals(1, count, () -> config + " must contain exactly one " + expected);
+        Set<String> matchingRules = lines.stream().filter(line -> line.startsWith("  - " + path + "===" + method + "==="))
+                .collect(java.util.stream.Collectors.toSet());
+        // Identical duplicates have the same effective role policy; conflicting or missing rules do not.
+        assertEquals(Set.of(expected), matchingRules, () -> config + " must require only " + expected);
     }
 
     private static List<String> generalConfigRules(String config) throws IOException {
         return Files.readAllLines(repoRoot().resolve(config)).stream()
-                .filter(line -> line.startsWith("  - /api/config/"))
-                .toList();
+                .filter(line -> line.startsWith("  - /api/config/") && !line.startsWith("  - /api/config/**==="))
+                .distinct().sorted().toList();
+    }
+
+    @ParameterizedTest
+    @MethodSource("configurations")
+    void realMatcherEnforcesExactTypeRolesBeforeFallbackAndKeepsUnmatchedSemantics(String config) throws Exception {
+        var matcher = SurenessPolicyTestSupport.matcher(config);
+        for (Map.Entry<GeneralConfigTypeEnum, RolePolicy> policy : ROLE_POLICIES.entrySet()) {
+            String path = policy.getKey() == GeneralConfigTypeEnum.public_access
+                    ? "/api/config/public-access" : "/api/config/" + policy.getKey().name();
+            SurenessPolicyTestSupport.assertPolicy(matcher, config, path, "get", policy.getValue().getRoles());
+            SurenessPolicyTestSupport.assertPolicy(matcher, config, path, "post", policy.getValue().postRoles());
+        }
+        SurenessPolicyTestSupport.assertPolicy(matcher, config, "/api/config/template/linux", "put", ADMIN_ROLE);
+        SurenessPolicyTestSupport.assertPolicy(matcher, config, "/api/config/timezones", "get", ALL_ROLES);
+        boolean release = SurenessPolicyTestSupport.releaseProfile(config);
+        SurenessPolicyTestSupport.assertPolicy(matcher, config, "/api/config/unlisted", "get", release ? ALL_ROLES : null);
+        for (String method : List.of("post", "put", "delete")) {
+            SurenessPolicyTestSupport.assertPolicy(matcher, config, "/api/config/unlisted", method, release ? ADMIN_ROLE : null);
+        }
+        // Null means no role requirement, not deny-all; retain this warning for genuinely unmatched paths.
+        SurenessPolicyTestSupport.assertPolicy(matcher, config, "/audit/unmatched", "post", null);
+    }
+
+    private static Stream<String> configurations() {
+        return SURENESS_CONFIGS.stream();
     }
 
     private static Map<GeneralConfigTypeEnum, RolePolicy> rolePolicies() {
