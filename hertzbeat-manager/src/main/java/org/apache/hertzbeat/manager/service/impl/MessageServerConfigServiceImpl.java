@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import java.util.UUID;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
@@ -48,12 +50,14 @@ public class MessageServerConfigServiceImpl implements MessageServerConfigServic
     private final ConfigService configService;
     private final MessageServerConfigMapper mapper;
     private final GeneralConfigDao generalConfigDao;
+    private final EntityManager entityManager;
 
     public MessageServerConfigServiceImpl(ConfigService configService, MessageServerConfigMapper mapper,
-                                          GeneralConfigDao generalConfigDao) {
+                                          GeneralConfigDao generalConfigDao, EntityManager entityManager) {
         this.configService = configService;
         this.mapper = mapper;
         this.generalConfigDao = generalConfigDao;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -129,8 +133,9 @@ public class MessageServerConfigServiceImpl implements MessageServerConfigServic
                 .revision(revision)
                 .build();
         try {
-            generalConfigDao.saveAndFlush(entity);
-        } catch (DataIntegrityViolationException exception) {
+            entityManager.persist(entity);
+            entityManager.flush();
+        } catch (PersistenceException | DataIntegrityViolationException exception) {
             throw new MessageServerConfigConflictException();
         }
         return revision;

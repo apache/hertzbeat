@@ -21,9 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
@@ -33,7 +37,6 @@ import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigRequest;
 import org.apache.hertzbeat.manager.service.impl.MessageServerConfigServiceImpl;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,11 +52,13 @@ class MessageServerConfigServiceTest {
     private MessageServerConfigMapper mapper;
     @Mock
     private GeneralConfigDao generalConfigDao;
+    @Mock
+    private EntityManager entityManager;
     private MessageServerConfigServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new MessageServerConfigServiceImpl(configService, mapper, generalConfigDao);
+        service = new MessageServerConfigServiceImpl(configService, mapper, generalConfigDao, entityManager);
     }
 
     @Test
@@ -115,8 +120,7 @@ class MessageServerConfigServiceTest {
         MailServerConfig merged = new MailServerConfig();
         when(generalConfigDao.findByType("email")).thenReturn(null);
         when(mapper.toEmailConfig(request, null)).thenReturn(merged);
-        when(generalConfigDao.saveAndFlush(any()))
-                .thenThrow(new DataIntegrityViolationException("secret-db-exception"));
+        doThrow(new PersistenceException("secret-db-exception")).when(entityManager).flush();
 
         MessageServerConfigConflictException conflict = assertThrows(
                 MessageServerConfigConflictException.class, () -> service.saveEmailConfig(request));
