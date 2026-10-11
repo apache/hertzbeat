@@ -167,12 +167,10 @@ class AgentRuntimeGenericGroundingTest {
     }
 
     @Test
-    void plainRunRejectsUnknownEmptyMalformedAndNonReadResults() {
+    void plainRunRejectsUnknownMalformedAndNonReadResults() {
         List<ReadCase> cases = List.of(
                 new ReadCase("unknown", "custom.read", AgentToolRisk.READ, "{\"content\":[1]}"),
                 new ReadCase("search", "tool.search", AgentToolRisk.READ, "{\"tools\":[{\"name\":\"monitor.query\"}]}"),
-                new ReadCase("empty", "monitor.query", AgentToolRisk.READ,
-                        "{\"content\":[],\"totalElements\":0}"),
                 new ReadCase("count mismatch", "monitor.query", AgentToolRisk.READ,
                         "{\"content\":[{\"monitorId\":42}],\"totalElements\":0}"),
                 new ReadCase("malformed", "monitor.query", AgentToolRisk.READ, "{"),

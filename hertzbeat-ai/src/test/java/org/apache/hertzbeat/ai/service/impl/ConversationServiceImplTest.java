@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
@@ -31,12 +33,26 @@ import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 
 class ConversationServiceImplTest {
+
+    @BeforeEach
+    void bindSubject() {
+        SubjectSum subject = mock(SubjectSum.class);
+        when(subject.getPrincipal()).thenReturn("alice");
+        SurenessContextHolder.bindSubject(subject);
+    }
+
+    @AfterEach
+    void clearSubject() {
+        SurenessContextHolder.clear();
+    }
 
     @Test
     void followUpPreservesTheLatestPriorAssistantReply() {
@@ -54,7 +70,7 @@ class ConversationServiceImplTest {
         ChatMessage answer = ChatMessage.builder().id(2L).role("assistant").content("Previous answer").build();
         List<ChatMessage> prior = List.of(question, answer);
         when(provider.isConfigured()).thenReturn(true);
-        when(conversations.findById(7L)).thenReturn(Optional.of(conversation));
+        when(conversations.findByIdAndCreator(7L, "alice")).thenReturn(Optional.of(conversation));
         when(messages.findByConversationIdOrderByGmtCreateAsc(7L)).thenReturn(prior);
         when(messages.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(provider.streamChat(any())).thenReturn(Flux.just("Follow-up answer"));

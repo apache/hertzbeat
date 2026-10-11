@@ -246,7 +246,7 @@ public class AgentMonitorToolService {
                 .build();
         MonitorDto monitorDto = new MonitorDto();
         monitorDto.setMonitor(monitor);
-        monitorDto.setParams(monitorParams);
+        monitorDto.setParams(monitorParams, false);
         monitorService.validate(monitorDto, false);
         Monitor validatedMonitor = monitorDto.getMonitor();
         List<Param> validatedParams = monitorDto.getParams();

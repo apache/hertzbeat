@@ -75,7 +75,7 @@ class AgentMonitorToolServiceTest {
             dto.setMonitor(validatedMonitor);
             List<Param> validatedParams = dto.getParams();
             validatedParams.get(0).setParamValue("encrypted-password");
-            dto.setParams(validatedParams);
+            dto.setParams(validatedParams, false);
             return null;
         }).when(monitorService).validate(org.mockito.ArgumentMatchers.any(MonitorDto.class),
                 org.mockito.ArgumentMatchers.eq(false));
