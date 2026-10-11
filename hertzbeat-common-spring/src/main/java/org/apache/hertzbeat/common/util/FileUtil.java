@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.util;
 
+import java.util.Locale;
 import java.util.Map;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.springframework.util.StringUtils;
@@ -37,6 +38,7 @@ public final class FileUtil {
         fileTypes = Map.of(
                 ExportFileConstants.JsonFile.FILE_SUFFIX, ExportFileConstants.JsonFile.TYPE,
                 ExportFileConstants.YamlFile.FILE_SUFFIX, ExportFileConstants.YamlFile.TYPE,
+                ExportFileConstants.YamlFile.FILE_SHORT_SUFFIX, ExportFileConstants.YamlFile.TYPE,
                 ExportFileConstants.ExcelFile.FILE_SUFFIX, ExportFileConstants.ExcelFile.TYPE
         );
     }
@@ -72,7 +74,7 @@ public final class FileUtil {
         if (dotIndex == -1 || dotIndex == fileName.length() - 1) {
             return "";
         }
-        var fileNameExtension = fileName.substring(dotIndex);
+        var fileNameExtension = fileName.substring(dotIndex).toLowerCase(Locale.ROOT);
 
         return fileTypes.get(fileNameExtension);
     }

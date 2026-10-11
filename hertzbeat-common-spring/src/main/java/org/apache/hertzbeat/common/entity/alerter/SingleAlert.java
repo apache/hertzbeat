@@ -19,6 +19,8 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -36,6 +38,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -46,7 +49,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * Single Alert Content Entity
  */
 @Entity
-@Table(name = "hzb_alert_single", indexes = {@Index(name = "unique_fingerprint", columnList = "fingerprint", unique = true)})
+@Table(name = "hzb_alert_single", indexes = {
+        @Index(name = "unique_fingerprint", columnList = "workspace_id,fingerprint", unique = true),
+        @Index(name = "idx_alert_single_workspace", columnList = "workspace_id")})
 @Data
 @Builder
 @AllArgsConstructor
@@ -54,6 +59,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Schema(description = "Single Alarm Content Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class SingleAlert {
+
+    @JsonIgnore
+    @Builder.Default
+    @Column(name = "workspace_id", nullable = false, length = 128)
+    private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,11 +77,13 @@ public class SingleAlert {
     @Schema(title = "Labels", example = "{\"alertname\": \"HighCPUUsage\", \"priority\": \"critical\", \"instance\": \"343483943\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> labels;
 
     @Schema(title = "Annotations", example = "{\"summary\": \"High CPU usage detected\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 4096)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> annotations;
 
     @Schema(title = "Content", example = "CPU usage is above 80% for the last 5 minutes on instance server1.example.com.")
@@ -111,9 +123,17 @@ public class SingleAlert {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime gmtUpdate;
 
+    /**
+     * Event published after a source alert has been persisted with its workspace and identifier.
+     */
+    public record CreatedEvent(SingleAlert alert) {
+    }
+
     @Override
     public SingleAlert clone() {
         // deep clone
-        return JsonUtil.fromJson(JsonUtil.toJson(this), SingleAlert.class);
+        SingleAlert copy = JsonUtil.fromJson(JsonUtil.toJson(this), SingleAlert.class);
+        copy.setWorkspaceId(workspaceId);
+        return copy;
     }
 }

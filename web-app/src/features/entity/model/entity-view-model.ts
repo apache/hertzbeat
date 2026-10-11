@@ -1,0 +1,196 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  alertRoutePaths,
+  applicationRoutePaths,
+  buildEntityEditPath,
+  entityRoutePaths,
+  normalizeAlertCenterReturnTo
+} from '@/shared/navigation/app-paths';
+import { safeTopologyReturnTo } from '@/features/topology/navigation';
+import { compactTablePageSizes } from '@/shared/pagination';
+import type {
+  EntityDetail,
+  EntityMonitor,
+  EntityMonitorQuery,
+  EntityQuery,
+  EntityRecord,
+  EntitySummary
+} from './entity-contract';
+import {
+  buildEntityDiscoveryPath,
+  defaultEntityDiscoveryQuery,
+  safeEntityDiscoveryPath
+} from './entity-discovery-model';
+import { safeEntityListPath, writeEntityQuery } from './entity-query';
+import { buildEntityImportPath } from './entity-import-model';
+import { buildEntityDefinitionRoute } from './entity-definition-model';
+
+export const defaultEntityQuery: EntityQuery = {
+  search: '',
+  type: '',
+  status: '',
+  owner: '',
+  source: '',
+  environment: '',
+  lifecycle: '',
+  tier: '',
+  system: '',
+  sort: 'gmtUpdate',
+  order: 'desc',
+  pageIndex: 0,
+  pageSize: 10
+};
+
+export type EntityListEvidence =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: EntitySummary[]; total: number };
+export type EntityDetailEvidence =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'degraded'; entity: EntityRecord; unavailable: 'telemetry' }
+  | { kind: 'ready'; detail: EntityDetail };
+export type EntityMonitorEvidence =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: EntityMonitor[]; total: number };
+export type EntityMonitorViewState = {
+  query: EntityMonitorQuery;
+  evidence: EntityMonitorEvidence;
+  refreshing: boolean;
+};
+export type EntityNoiseControlType = 'silence' | 'inhibit';
+
+export type EntityListViewState = {
+  query: EntityQuery;
+  navigation?: { key: string; type: 'POP' | 'PUSH' | 'REPLACE' };
+  draft: string;
+  evidence: EntityListEvidence;
+  refreshing: boolean;
+  canWrite: boolean;
+};
+export type EntityListViewActions = {
+  updateDraft: (value: string) => void;
+  submit: () => void;
+  changeFilter: (key: EntityFilterKey, value: string) => void;
+  changeSort: (sort: EntityQuery['sort'], order: EntityQuery['order']) => void;
+  changePage: (page: number, pageSize: number) => void;
+  refresh: () => void;
+  discover: () => void;
+  importDefinitions: () => void;
+  create: () => void;
+  open: (id: number) => void;
+};
+export type EntityFilterKey = Exclude<keyof EntityQuery, 'search' | 'sort' | 'order' | 'pageIndex' | 'pageSize'>;
+
+export function buildEntityDetailPath(id: number, query: EntityQuery) {
+  const returnTo = `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+  const detail = entityRoutePaths.detail.replace(':entityId', String(id));
+  return `${detail}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
+export function safeEntityReturnTo(value: string | null) {
+  const alertReturnTo = normalizeAlertCenterReturnTo(value);
+  if (alertReturnTo) return alertReturnTo;
+  if (value?.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
+  if (value?.startsWith('/')) {
+    const url = new URL(value, 'https://hertzbeat.local');
+    if (url.pathname === applicationRoutePaths.topology) return safeTopologyReturnTo(value);
+  }
+  return safeEntityListPath(value);
+}
+
+export function buildEntityDiscoveryRoute(query: EntityQuery) {
+  return buildEntityDiscoveryPath(defaultEntityDiscoveryQuery, entityListPath(query));
+}
+
+export function buildEntityImportRoute(query: EntityQuery) {
+  return buildEntityImportPath(entityListPath(query));
+}
+
+export function buildEntityCreatePath(query: EntityQuery) {
+  return withReturnTo(entityRoutePaths.create, entityListPath(query));
+}
+
+export function buildEntityEditRoute(id: number, listReturnTo: string | null) {
+  const detailReturnTo = withReturnTo(
+    entityRoutePaths.detail.replace(':entityId', String(id)),
+    safeEntityReturnTo(listReturnTo)
+  );
+  return withReturnTo(buildEntityEditPath(id), detailReturnTo);
+}
+
+export { buildEntityDefinitionRoute };
+
+export function safeEntityEditorReturnTo(value: string | null, id?: number) {
+  if (value?.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);
+  if (value?.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
+  if (!value?.startsWith('/') || id === undefined) return entityRoutePaths.list;
+  const url = new URL(value, 'https://hertzbeat.local');
+  const detail = entityRoutePaths.detail.replace(':entityId', String(id));
+  if (url.pathname !== detail) return entityRoutePaths.list;
+  return withReturnTo(detail, safeEntityReturnTo(url.searchParams.get('returnTo')));
+}
+
+export function entityEditorListReturnTo(value: string) {
+  if (value.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);
+  if (value.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
+  const url = new URL(value, 'https://hertzbeat.local');
+  return safeEntityReturnTo(url.searchParams.get('returnTo'));
+}
+
+export function buildEntitySavedDetailPath(id: number, listReturnTo: string) {
+  return withReturnTo(entityRoutePaths.detail.replace(':entityId', String(id)), safeEntityReturnTo(listReturnTo));
+}
+
+export function buildEntityNoiseControlPath(detail: EntityDetail, ruleType: EntityNoiseControlType) {
+  const params = new URLSearchParams({
+    pageIndex: '0',
+    pageSize: String(compactTablePageSizes[0]),
+    entityId: String(detail.entity.id),
+    entityName: detail.entity.displayName || detail.entity.name,
+    returnTo: entityRoutePaths.detail.replace(':entityId', String(detail.entity.id)),
+    matchMode: 'entity-noise-controls',
+    matchingRuleType: ruleType
+  });
+  const rules = ruleType === 'silence' ? detail.noiseControls?.activeSilences : detail.noiseControls?.matchingInhibits;
+  // Summary counts can exceed these bounded backend previews. Carry only the
+  // exact rule identities returned as evidence; never synthesize the remainder.
+  const ids = rules?.map(rule => rule.id) ?? [];
+  if (ids.length > 0) params.set('matchingRuleIds', ids.join(','));
+  const path = ruleType === 'silence' ? alertRoutePaths.silences : alertRoutePaths.inhibits;
+  return `${path}?${params.toString()}`;
+}
+
+function entityListPath(query: EntityQuery) {
+  return `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+}
+
+function withReturnTo(path: string, returnTo: string) {
+  return `${path}?returnTo=${encodeURIComponent(returnTo)}`;
+}

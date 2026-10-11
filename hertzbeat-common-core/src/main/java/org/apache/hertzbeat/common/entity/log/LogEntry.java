@@ -26,7 +26,7 @@ import java.util.Map;
 
 /**
  * OpenTelemetry Log Entry entity based on OpenTelemetry log data model specification.
- * 
+ *
  * @see <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md">OpenTelemetry Log Data Model</a>
  */
 @Data
@@ -105,10 +105,20 @@ public class LogEntry {
     private Map<String, Object> resource;
 
     /**
+     * Resource schema url from OTLP ResourceLogs.
+     */
+    private String resourceSchemaUrl;
+
+    /**
      * Instrumentation Scope information.
      * Information about the instrumentation scope that emitted the log.
      */
     private InstrumentationScope instrumentationScope;
+
+    /**
+     * Scope schema url from OTLP ScopeLogs.
+     */
+    private String scopeSchemaUrl;
 
     /**
      * Instrumentation Scope information for logs.
@@ -118,7 +128,7 @@ public class LogEntry {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class InstrumentationScope {
-        
+
         /**
          * The name of the instrumentation scope.
          * This should be the fully-qualified name of the instrumentation library.

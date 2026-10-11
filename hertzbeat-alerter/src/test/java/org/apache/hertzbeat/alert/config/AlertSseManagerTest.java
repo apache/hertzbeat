@@ -18,82 +18,233 @@
 package org.apache.hertzbeat.alert.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.apache.hertzbeat.common.support.SseEmitterRegistry;
-import org.junit.jupiter.api.BeforeEach;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
- * Test case for {@link AlertSseManager}.
- *
- * <p>Note: how a subscription is bounded and cleaned up is covered by
- * {@code SseEmitterRegistryTest}; what is left here is what makes this stream the alert one.
+ * Alert SSE delivery and reconnection contract tests.
  */
 class AlertSseManagerTest {
+    private static final String WORKSPACE_ID = "default";
 
-    private AlertSseManager alertSseManager;
-
-    @BeforeEach
-    void setUp() {
-        alertSseManager = new AlertSseManager();
-    }
-
-    /**
-     * The ui subscribes by event name, so an alert delivered under any other name reaches
-     * nobody even though the connection is up.
-     */
     @Test
-    void testAlertsAreDeliveredUnderTheAlertEventName() throws Exception {
-        alertSseManager.createEmitter(1L);
-        final SseEmitter subscriber = mock(SseEmitter.class);
-        emitters().put(1L, subscriber);
+    void newSubscriberReceivesImmediateReconnectContract() {
+        RecordingSseEmitter emitter = new RecordingSseEmitter();
+        AlertSseManager manager = new AlertSseManager(() -> emitter);
 
-        alertSseManager.broadcast("{\"id\":1}");
-
-        final ArgumentCaptor<SseEmitter.SseEventBuilder> event =
-                ArgumentCaptor.forClass(SseEmitter.SseEventBuilder.class);
-        verify(subscriber).send(event.capture());
-        final String rendered = event.getValue().build().stream()
-                .map(part -> String.valueOf(part.getData()))
-                .collect(Collectors.joining());
-        assertTrue(rendered.contains("event:ALERT_EVENT"), "alerts must be delivered as ALERT_EVENT, was " + rendered);
-        assertTrue(rendered.contains("{\"id\":1}"), "the alert payload must be delivered as is, was " + rendered);
+        assertEquals(emitter, manager.createEmitter(WORKSPACE_ID, 1L));
+        assertEquals(1, emitter.events.size());
+        String event = eventText(emitter.events.get(0));
+        assertTrue(event.contains("event:ALERT_STREAM_READY"));
+        assertTrue(event.contains("retry:3000"));
+        assertTrue(event.contains("data:{}"));
     }
 
-    /**
-     * The manager has to hand its subscriptions to a registry rather than hold them itself,
-     * otherwise none of the bounds that registry enforces apply to this stream.
-     */
     @Test
-    void testSubscriptionsAreBoundedByTheRegistry() {
-        alertSseManager.setMaxEmitters(1);
+    void broadcastDeliversNamedEventsWithDistinctIds() {
+        RecordingSseEmitter emitter = new RecordingSseEmitter();
+        AlertSseManager manager = new AlertSseManager(() -> emitter);
+        manager.createEmitter(WORKSPACE_ID, 1L);
 
-        assertNotNull(alertSseManager.createEmitter(1L));
-        final ResponseStatusException thrown =
-                assertThrows(ResponseStatusException.class, () -> alertSseManager.createEmitter(2L));
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"firing\"}");
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"acknowledged\"}");
 
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, thrown.getStatusCode());
-        assertEquals(1, alertSseManager.subscriptionCount());
+        assertEquals(3, emitter.events.size());
+        String first = eventText(emitter.events.get(1));
+        String second = eventText(emitter.events.get(2));
+        assertTrue(first.contains("event:ALERT_EVENT"));
+        assertTrue(first.contains("{\"id\":7,\"status\":\"firing\"}"));
+        assertTrue(second.contains("event:ALERT_EVENT"));
+        assertTrue(second.contains("{\"id\":7,\"status\":\"acknowledged\"}"));
+        assertNotEquals(eventId(first), eventId(second));
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<Long, SseEmitter> emitters() throws Exception {
-        final Field registryField = AlertSseManager.class.getDeclaredField("registry");
-        registryField.setAccessible(true);
-        final Object registry = registryField.get(alertSseManager);
-        final Field emittersField = SseEmitterRegistry.class.getDeclaredField("emitters");
-        emittersField.setAccessible(true);
-        return (Map<Long, SseEmitter>) emittersField.get(registry);
+    @Test
+    void groupMutationUsesExplicitEventNameAndSharedLogicalEventId() {
+        RecordingSseEmitter firstEmitter = new RecordingSseEmitter();
+        RecordingSseEmitter secondEmitter = new RecordingSseEmitter();
+        Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(firstEmitter, secondEmitter));
+        AlertSseManager manager = new AlertSseManager(emitters::remove);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        manager.createEmitter(WORKSPACE_ID, 2L);
+
+        manager.broadcastGroupMutation(WORKSPACE_ID, "{\"id\":7,\"mutation\":\"GROUP_DELETED\"}");
+
+        String first = eventText(firstEmitter.events.get(1));
+        String second = eventText(secondEmitter.events.get(1));
+        assertTrue(first.contains("event:ALERT_GROUP_MUTATION"));
+        assertTrue(second.contains("event:ALERT_GROUP_MUTATION"));
+        assertEquals(eventId(first), eventId(second));
+    }
+
+    @Test
+    void broadcastsOnlyToSubscribersInTheSameWorkspace() {
+        RecordingSseEmitter teamA = new RecordingSseEmitter();
+        RecordingSseEmitter teamB = new RecordingSseEmitter();
+        Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(teamA, teamB));
+        AlertSseManager manager = new AlertSseManager(emitters::remove);
+        manager.createEmitter("team-a", 1L);
+        manager.createEmitter("team-b", 1L);
+
+        manager.broadcast("team-a", "{\"id\":7,\"status\":\"firing\"}");
+
+        assertEquals(2, teamA.events.size());
+        assertTrue(eventText(teamA.events.get(1)).contains("\"id\":7"));
+        assertEquals(1, teamB.events.size());
+    }
+
+    @Test
+    void failedConnectionCanReconnectAndReceiveLaterAlerts() {
+        RecordingSseEmitter failedEmitter = new RecordingSseEmitter();
+        RecordingSseEmitter reconnectedEmitter = new RecordingSseEmitter();
+        AtomicReference<RecordingSseEmitter> current = new AtomicReference<>(failedEmitter);
+        AlertSseManager manager = new AlertSseManager(current::get);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        failedEmitter.failSends = true;
+
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"firing\"}");
+
+        assertTrue(failedEmitter.completed);
+        current.set(reconnectedEmitter);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"resolved\"}");
+
+        assertEquals(2, reconnectedEmitter.events.size());
+        assertTrue(eventText(reconnectedEmitter.events.get(1)).contains("\"status\":\"resolved\""));
+    }
+
+    @Test
+    void replacedConnectionCannotRemoveNewSameClientOwner() {
+        RecordingSseEmitter oldEmitter = new RecordingSseEmitter();
+        RecordingSseEmitter newEmitter = new RecordingSseEmitter();
+        Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(oldEmitter, newEmitter));
+        AlertSseManager manager = new AlertSseManager(emitters::remove);
+
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+        oldEmitter.signalCompletion();
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"resolved\"}");
+
+        assertTrue(oldEmitter.completed);
+        assertEquals(2, newEmitter.events.size());
+        assertTrue(eventText(newEmitter.events.get(1)).contains("\"status\":\"resolved\""));
+    }
+
+    @Test
+    void unexpectedSendFailureDoesNotLogExceptionOrAlertBody() {
+        String privateDetail = "private-exception-and-alert-body";
+        RecordingSseEmitter emitter = new RecordingSseEmitter();
+        AlertSseManager manager = new AlertSseManager(() -> emitter);
+        Logger logger = (Logger) LoggerFactory.getLogger(AlertSseManager.class);
+        Level originalLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            manager.createEmitter(WORKSPACE_ID, 1L);
+            emitter.runtimeFailure = new UnsupportedOperationException(privateDetail);
+            emitter.completeFailure = new IllegalArgumentException(privateDetail);
+
+            manager.broadcast(WORKSPACE_ID, "{\"content\":\"" + privateDetail + "\"}");
+
+            String logs = appender.list.stream()
+                    .map(ILoggingEvent::getFormattedMessage)
+                    .reduce("", String::concat);
+            assertFalse(logs.contains(privateDetail));
+            assertTrue(logs.contains(UnsupportedOperationException.class.getSimpleName()));
+            assertTrue(logs.contains(IllegalArgumentException.class.getSimpleName()));
+        } finally {
+            logger.setLevel(originalLevel);
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void closesActiveEmittersAndRejectsLateSubscribersDuringShutdown() {
+        RecordingSseEmitter activeEmitter = new RecordingSseEmitter();
+        RecordingSseEmitter lateEmitter = new RecordingSseEmitter();
+        Queue<RecordingSseEmitter> emitters = new ArrayDeque<>(List.of(activeEmitter, lateEmitter));
+        AlertSseManager manager = new AlertSseManager(emitters::remove);
+        manager.createEmitter(WORKSPACE_ID, 1L);
+
+        manager.onApplicationEvent(new ContextClosedEvent(mock(ConfigurableApplicationContext.class)));
+        manager.createEmitter(WORKSPACE_ID, 2L);
+        manager.broadcast(WORKSPACE_ID, "{\"id\":7,\"status\":\"resolved\"}");
+
+        assertTrue(activeEmitter.completed);
+        assertTrue(lateEmitter.completed);
+        assertEquals(1, activeEmitter.events.size());
+        assertTrue(lateEmitter.events.isEmpty());
+    }
+
+    private static String eventText(SseEmitter.SseEventBuilder event) {
+        StringBuilder text = new StringBuilder();
+        event.build().forEach(part -> text.append(part.getData()));
+        return text.toString();
+    }
+
+    private static String eventId(String event) {
+        return event.lines()
+                .filter(line -> line.startsWith("id:"))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static final class RecordingSseEmitter extends SseEmitter {
+
+        private final List<SseEventBuilder> events = new ArrayList<>();
+        private boolean failSends;
+        private boolean completed;
+        private RuntimeException runtimeFailure;
+        private RuntimeException completeFailure;
+        private Runnable completionCallback;
+
+        @Override
+        public void send(SseEventBuilder builder) throws IOException {
+            if (runtimeFailure != null) {
+                throw runtimeFailure;
+            }
+            if (failSends) {
+                throw new IOException("private alert payload");
+            }
+            events.add(builder);
+        }
+
+        @Override
+        public void complete() {
+            if (completeFailure != null) {
+                throw completeFailure;
+            }
+            completed = true;
+        }
+
+        @Override
+        public void onCompletion(Runnable callback) {
+            completionCallback = callback;
+        }
+
+        private void signalCompletion() {
+            completionCallback.run();
+        }
     }
 }

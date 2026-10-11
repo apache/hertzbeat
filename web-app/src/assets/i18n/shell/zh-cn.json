@@ -1,0 +1,125 @@
+{
+  "shell": {
+    "navigation": {
+      "basicMonitoring": "基础监控",
+      "applicationObservability": "应用可观测",
+      "resources": "资源",
+      "alerting": "告警",
+      "administration": "管理",
+      "collapse": "收起导航",
+      "expand": "展开导航",
+      "toggleGroup": "展开或收起{{label}}"
+    },
+    "permission": {
+      "roleRequired": "需要管理员权限。"
+    },
+    "status": {
+      "summary": "运行状态",
+      "server": "服务端",
+      "greptime": "GreptimeDB",
+      "collector": "采集器",
+      "unknown": "未知",
+      "unavailable": "不可用",
+      "state": {
+        "loading": "加载中",
+        "available": "可用",
+        "degraded": "需要关注",
+        "unavailable": "不可用",
+        "unknown": "未知"
+      },
+      "currentStatusObservedAt": "当前状态 · {{time}}",
+      "collectorLastReportedAt": "最后上报于 {{time}}",
+      "collectorCounts": "{{online}}/{{total}} 在线 · {{runtimeHealthy}} 个运行时正常",
+      "collectorOnlineCount": "在线采集器：{{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "运行时正常：{{count}} 个",
+      "collectorOfflineCount": "未在线采集器：{{count}} 个",
+      "collectorNotReported": "暂无运行时上报",
+      "notObserved": "尚未观测",
+      "details": "{{label}}状态详情",
+      "openManagement": "进入管理页",
+      "request": {
+        "permission": "无权查看运行状态",
+        "unavailable": "运行状态请求不可用",
+        "contract": "运行状态响应无效",
+        "error": "无法加载运行状态"
+      },
+      "reason": {
+        "server_unavailable": "服务端不可用",
+        "storage_unavailable": "存储不可用",
+        "storage_query_failed": "存储查询失败",
+        "collector_status_unavailable": "采集器状态不可用"
+      }
+    },
+    "time": {
+      "global": "全局时间",
+      "route_owned": "页面时间",
+      "none": "无共享时间",
+      "unknown": "时间策略未知",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "关闭",
+      "remaining": "{{seconds}} 秒",
+      "rangeOption": "范围 {{range}}",
+      "autoRefreshOff": "关闭自动刷新",
+      "autoRefreshSeconds": "每 {{seconds}} 秒自动刷新"
+    },
+    "actions": {
+      "refresh": "刷新当前数据",
+      "alerts": "打开告警",
+      "investigate": "调查当前页面",
+      "alertsWithCount": "打开告警，当前 {{count}} 条",
+      "useLightTheme": "使用浅色主题",
+      "useDarkTheme": "使用深色主题",
+      "fullscreenEnter": "进入全屏",
+      "fullscreenExit": "退出全屏",
+      "fullscreenFailed": "无法进入全屏",
+      "language": "切换语言",
+      "user": "用户操作"
+    },
+    "account": {
+      "settings": "系统设置",
+      "lock": "锁定会话",
+      "about": "关于 HertzBeat",
+      "logout": "退出登录"
+    },
+    "about": {
+      "title": "关于 HertzBeat",
+      "version": "版本 {{version}}",
+      "description": "Apache HertzBeat 是一款开源的实时监控系统。",
+      "website": "官方网站",
+      "documentation": "文档",
+      "repository": "源代码",
+      "issues": "反馈问题"
+    },
+    "alerts": {
+      "title": "活动告警",
+      "loading": "正在加载最近告警",
+      "empty": "当前没有活动告警",
+      "unavailable": "最近告警暂不可用",
+      "error": "无法读取最近告警",
+      "openCenter": "进入告警中心",
+      "soundLoading": "正在加载告警声音设置",
+      "soundUnavailable": "告警声音设置暂不可用",
+      "soundError": "无法读取告警声音设置",
+      "soundReadOnly": "只有管理员可以修改全局告警声音设置",
+      "soundSaving": "正在更新告警声音设置",
+      "soundSaveFailed": "无法更新告警声音设置",
+      "soundMuted": "告警声音已静音",
+      "soundEnabled": "告警声音已开启",
+      "soundEnabledBrowserDenied": "告警声音已开启；浏览器通知被阻止",
+      "soundEnabledBrowserUnsupported": "告警声音已开启；浏览器不支持系统通知",
+      "browserTitle": "HertzBeat 告警",
+      "browserBody": "有新的活动告警需要处理。"
+    },
+    "importTasks": {
+      "title": "监控导入",
+      "progress": "导入进度：{{progress}}%",
+      "success": "监控导入已完成。",
+      "failure": "无法导入监控配置。"
+    },
+    "capability": {
+      "supported": "可用",
+      "unknown": "能力未知",
+      "unsupported": "不支持"
+    }
+  }
+}

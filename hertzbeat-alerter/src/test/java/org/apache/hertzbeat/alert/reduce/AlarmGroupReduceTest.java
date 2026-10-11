@@ -21,13 +21,19 @@ package org.apache.hertzbeat.alert.reduce;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,14 +41,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.lang.reflect.Field;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,21 +62,38 @@ import org.mockito.MockitoAnnotations;
  */
 class AlarmGroupReduceTest {
 
+    @Test
+    void constructorIsPassiveAndLifecycleIsIdempotent() {
+        clearInvocations(alertGroupConvergeDao);
+        AlarmGroupReduce inactive = new AlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
+                new VirtualThreadProperties());
+
+        verifyNoInteractions(alertGroupConvergeDao);
+
+        inactive.start();
+        inactive.start();
+        verify(alertGroupConvergeDao, times(1)).findAlertGroupConvergesByEnableIsTrue();
+        inactive.destroy();
+        inactive.destroy();
+    }
+
     @Mock
     private AlarmInhibitReduce alarmInhibitReduce;
-    
+
     @Mock
     private AlertGroupConvergeDao alertGroupConvergeDao;
-    
+
     private AlarmGroupReduce alarmGroupReduce;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(alarmInhibitReduce.inhibitAlarm(any())).thenReturn(true);
         when(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue())
             .thenReturn(Collections.emptyList());
         alarmGroupReduce = new AlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
-                new VirtualThreadProperties(), false);
+                new VirtualThreadProperties());
+        alarmGroupReduce.start();
     }
 
     @AfterEach
@@ -82,14 +106,15 @@ class AlarmGroupReduceTest {
     @Test
     void whenNoGroupRules_shouldSendSingleAlert() {
         SingleAlert alert = SingleAlert.builder()
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .fingerprint("fp1")
                 .status("firing")
                 .labels(createLabels("severity", "critical"))
                 .build();
-                
+
         alarmGroupReduce.processGroupAlert(alert);
-        
-        verify(alarmInhibitReduce).inhibitAlarm(argThat(group -> 
+
+        verify(alarmInhibitReduce).inhibitAlarm(argThat(group ->
             group.getAlerts().size() == 1 && group.getAlerts().get(0).getFingerprint().equals("fp1")));
     }
 
@@ -102,15 +127,16 @@ class AlarmGroupReduceTest {
         when(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue())
             .thenReturn(Collections.singletonList(rule));
         alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
-        
+
         SingleAlert alert = SingleAlert.builder()
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .fingerprint("fp1")
                 .status("firing")
                 .labels(createLabels("severity", "critical", "instance", "host1"))
                 .build();
-                
+
         alarmGroupReduce.processGroupAlert(alert);
-        
+
         // Verify group is created and cached (implicitly tested through internal state)
         verify(alarmInhibitReduce, never()).inhibitAlarm(any());  // Should not send immediately due to group wait
     }
@@ -122,11 +148,19 @@ class AlarmGroupReduceTest {
         alarmGroupReduce.destroy();
         alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
                 new VirtualThreadProperties(), latch, virtualThread, null, null, null, null, null);
+        alarmGroupReduce.start();
 
         alarmGroupReduce.dispatchCheckAndSendGroups();
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void dispatchAfterDestroyIsSafeNoOp() {
+        alarmGroupReduce.destroy();
+
+        alarmGroupReduce.dispatchCheckAndSendGroups();
     }
 
     @Test
@@ -139,6 +173,7 @@ class AlarmGroupReduceTest {
         alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
                 new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, secondStarted,
                 maxConcurrent, new AtomicInteger());
+        alarmGroupReduce.start();
 
         alarmGroupReduce.dispatchCheckAndSendGroups();
         assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
@@ -151,33 +186,142 @@ class AlarmGroupReduceTest {
         assertEquals(1, maxConcurrent.get());
     }
 
+    @Test
+    void destroyWhileCheckIsRunningDropsPendingDispatch() throws Exception {
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        alarmGroupReduce.destroy();
+        alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
+                new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, secondStarted,
+                new AtomicInteger(), invocations);
+        alarmGroupReduce.start();
+
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+
+        alarmGroupReduce.destroy();
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+
+        assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
+    }
+
+    @Test
+    void pauseDrainsRunningGroupPassAndCoalescesOneMissedPass() throws Exception {
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch resumedStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        alarmGroupReduce.destroy();
+        alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
+                new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, resumedStarted,
+                new AtomicInteger(), invocations);
+        alarmGroupReduce.start();
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+
+        alarmGroupReduce.pauseAdmission();
+        assertThrows(TimeoutException.class, () -> alarmGroupReduce.awaitDrained(0));
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        releaseFirst.countDown();
+        alarmGroupReduce.awaitDrained(TimeUnit.SECONDS.toNanos(1));
+
+        alarmGroupReduce.resumeAdmission();
+        assertTrue(resumedStarted.await(5, TimeUnit.SECONDS));
+        assertEquals(2, invocations.get());
+    }
+
+    @Test
+    void failedGroupStoreRetainsSnapshotForOneRetry() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        when(alarmInhibitReduce.inhibitAlarm(any())).thenReturn(false, true);
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+
+        dispatchAndDrain();
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    @Test
+    void repeatSkipRetainsFiringUntilResolvedSnapshotIsStored() throws Exception {
+        AlertGroupConverge rule = groupRule(600);
+        alarmGroupReduce.refreshGroupDefines(List.of(rule));
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+        dispatchAndDrain();
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+        dispatchAndDrain();
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "resolved"));
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    @Test
+    void concurrentInsertIsNotClearedWithSuccessfulSnapshot() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        AtomicBoolean inserted = new AtomicBoolean();
+        doAnswer(invocation -> {
+            if (inserted.compareAndSet(false, true)) {
+                alarmGroupReduce.processGroupAlert(groupAlert("fp-2", "firing"));
+            }
+            return true;
+        }).when(alarmInhibitReduce).inhibitAlarm(any());
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+
+        dispatchAndDrain();
+        dispatchAndDrain();
+
+        ArgumentCaptor<GroupAlert> captor = ArgumentCaptor.forClass(GroupAlert.class);
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(captor.capture());
+        assertTrue(captor.getAllValues().stream().anyMatch(group ->
+                group.getAlerts().stream().anyMatch(a -> "fp-2".equals(a.getFingerprint()))),
+                "concurrently inserted alert was dropped with the emitted snapshot");
+    }
+
+    @Test
+    void sameGroupLabelsNeverMergeAcrossWorkspaces() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        alarmGroupReduce.processGroupAlert(groupAlert("team-a", "same-a", "firing"));
+        alarmGroupReduce.processGroupAlert(groupAlert("team-b", "same-b", "firing"));
+
+        dispatchAndDrain();
+
+        ArgumentCaptor<org.apache.hertzbeat.common.entity.alerter.GroupAlert> groups =
+                ArgumentCaptor.forClass(org.apache.hertzbeat.common.entity.alerter.GroupAlert.class);
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(groups.capture());
+        assertEquals(java.util.Set.of("team-a", "team-b"), groups.getAllValues().stream()
+                .map(org.apache.hertzbeat.common.entity.alerter.GroupAlert::getWorkspaceId)
+                .collect(java.util.stream.Collectors.toSet()));
+        assertTrue(groups.getAllValues().stream().allMatch(group -> group.getAlerts().size() == 1
+                && group.getWorkspaceId().equals(group.getAlerts().getFirst().getWorkspaceId())));
+    }
+
     /**
      * Regression for issue #4160 (Bug 1): while one member of a group is still firing, the
      * recovery of another member must not flip the whole group to resolved. The group has to
      * stay firing until every member has actually cleared.
      */
     @Test
-    void whenOneMemberRecoversButAnotherStillFiring_groupMustNotResolve() {
-        AlertGroupConverge rule = groupRule();
-        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
+    void whenOneMemberRecoversButAnotherStillFiring_groupMustNotResolve() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
 
-        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
-        alarmGroupReduce.processGroupAlert(alert("mem", "firing", "host1"));
-        // First group send: both members firing.
-        alarmGroupReduce.runCheckAndSendGroups();
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("mem", "firing", "host1"));
+        dispatchAndDrain();
 
-        // CPU recovers, memory is still firing.
-        alarmGroupReduce.processGroupAlert(alert("cpu", "resolved", "host1"));
-        alarmGroupReduce.runCheckAndSendGroups();
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        dispatchAndDrain();
 
         ArgumentCaptor<GroupAlert> captor = ArgumentCaptor.forClass(GroupAlert.class);
         verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(captor.capture());
         List<GroupAlert> groups = captor.getAllValues();
 
-        // Memory never recovered, so no group push may ever carry a resolved group status.
         assertTrue(groups.stream().noneMatch(g -> "resolved".equals(g.getStatus())),
                 "group wrongly resolved while a member alert was still firing");
-        // The CPU recovery is still communicated, inside a group that stays firing.
         assertTrue(groups.stream().anyMatch(g -> "firing".equals(g.getStatus())
                         && g.getAlerts().stream().anyMatch(
                                 a -> "cpu".equals(a.getFingerprint()) && "resolved".equals(a.getStatus()))),
@@ -190,19 +334,16 @@ class AlarmGroupReduceTest {
      * throttle may only suppress repeated firing notifications, never a pending recovery.
      */
     @Test
-    void whenMemberRecoversInsideRepeatInterval_recoveryMustStillBeEmitted() {
-        AlertGroupConverge rule = groupRule();
-        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
+    void whenMemberRecoversInsideRepeatInterval_recoveryMustStillBeEmitted() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
 
-        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
-        alarmGroupReduce.processGroupAlert(alert("mem", "firing", "host1"));
-        // First send arms the firing repeat-interval throttle.
-        alarmGroupReduce.runCheckAndSendGroups();
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("mem", "firing", "host1"));
+        dispatchAndDrain();
 
-        // CPU keeps firing, memory recovers within the repeat interval.
-        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
-        alarmGroupReduce.processGroupAlert(alert("mem", "resolved", "host1"));
-        alarmGroupReduce.runCheckAndSendGroups();
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("mem", "resolved", "host1"));
+        dispatchAndDrain();
 
         ArgumentCaptor<GroupAlert> captor = ArgumentCaptor.forClass(GroupAlert.class);
         verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(captor.capture());
@@ -221,14 +362,12 @@ class AlarmGroupReduceTest {
      */
     @Test
     void whenRuleDeleted_firingGroupCacheMustStillBeDispatched() throws Exception {
-        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(groupRule()));
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
 
-        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
 
-        // The rule is deleted or disabled; refresh loads only enabled rules, orphaning the cache.
         alarmGroupReduce.refreshGroupDefines(Collections.emptyList());
 
-        // Age the cache past the default group wait so the periodic check picks the group up.
         Field cachesField = AlarmGroupReduce.class.getDeclaredField("groupCacheMap");
         cachesField.setAccessible(true);
         Map<?, ?> caches = (Map<?, ?>) cachesField.get(alarmGroupReduce);
@@ -238,28 +377,60 @@ class AlarmGroupReduceTest {
             createTimeField.setLong(cache, System.currentTimeMillis() - 60_000);
         }
 
-        alarmGroupReduce.runCheckAndSendGroups();
+        dispatchAndDrain();
 
         verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(argThat(group ->
                 group.getAlerts().stream().anyMatch(a -> "cpu".equals(a.getFingerprint()))));
     }
 
-    private AlertGroupConverge groupRule() {
+    private void dispatchAndDrain() throws Exception {
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        alarmGroupReduce.pauseAdmission();
+        alarmGroupReduce.awaitDrained(TimeUnit.SECONDS.toNanos(1));
+        alarmGroupReduce.resumeAdmission();
+    }
+
+    private AlertGroupConverge groupRule(long repeatInterval) {
         AlertGroupConverge rule = new AlertGroupConverge();
         rule.setName("test-rule");
-        rule.setGroupLabels(Collections.singletonList("instance"));
+        rule.setGroupLabels(List.of("severity"));
         rule.setGroupWait(0L);
         rule.setGroupInterval(0L);
-        rule.setRepeatInterval(3600L);
+        rule.setRepeatInterval(repeatInterval);
         return rule;
     }
 
-    private SingleAlert alert(String fingerprint, String status, String instance) {
+    private AlertGroupConverge instanceRule(long repeatInterval) {
+        AlertGroupConverge rule = new AlertGroupConverge();
+        rule.setName("instance-rule");
+        rule.setGroupLabels(Collections.singletonList("instance"));
+        rule.setGroupWait(0L);
+        rule.setGroupInterval(0L);
+        rule.setRepeatInterval(repeatInterval);
+        return rule;
+    }
+
+    private SingleAlert instanceAlert(String fingerprint, String status, String instance) {
         return SingleAlert.builder()
+                .workspaceId(AuthTokenScopes.DEFAULT_WORKSPACE_ID)
                 .fingerprint(fingerprint)
                 .status(status)
                 .labels(createLabels("instance", instance))
                 .annotations(new HashMap<>())
+                .build();
+    }
+
+    private SingleAlert groupAlert(String fingerprint, String status) {
+        return groupAlert(AuthTokenScopes.DEFAULT_WORKSPACE_ID, fingerprint, status);
+    }
+
+    private SingleAlert groupAlert(String workspaceId, String fingerprint, String status) {
+        return SingleAlert.builder()
+                .workspaceId(workspaceId)
+                .fingerprint(fingerprint)
+                .status(status)
+                .labels(createLabels("severity", "critical"))
+                .annotations(Map.of())
                 .build();
     }
 
@@ -294,7 +465,7 @@ class AlarmGroupReduceTest {
                                      AtomicBoolean virtualThread, CountDownLatch firstStarted,
                                      CountDownLatch releaseFirst, CountDownLatch secondStarted,
                                      AtomicInteger maxConcurrent, AtomicInteger invocations) {
-            super(alarmInhibitReduce, alertGroupConvergeDao, properties, false);
+            super(alarmInhibitReduce, alertGroupConvergeDao, properties);
             this.virtualThreadLatch = virtualThreadLatch;
             this.virtualThread = virtualThread;
             this.firstStarted = firstStarted;

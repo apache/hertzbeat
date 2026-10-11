@@ -1,0 +1,188 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { loadMonitorDefinitionDetail, MonitorDefinitionRequestError } from '../api/monitor-definition-api';
+import {
+  buildUpdateDraft,
+  monitorDefinitionDraftRequiredFailure,
+  type MonitorDefinitionDetail,
+  type MonitorDefinitionDraft,
+  type MonitorDefinitionFailureKind,
+  type MonitorDefinitionValidation,
+  type MonitorDefinitionWorkspace
+} from '../model/monitor-definition-model';
+import {
+  monitorDefinitionWriteNeedsCatalogProof,
+  proveOwnedMonitorDefinitionCatalog,
+  type MonitorDefinitionCatalogProof
+} from './monitor-definition-catalog-proof';
+import { performMonitorDefinitionEditorCommand } from './monitor-definition-editor-command';
+import type { MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
+
+type Pending = 'load' | 'validate' | 'save' | 'refresh' | 'proof' | null;
+type EditorCommandOptions = {
+  canWriteRef: { current: boolean };
+  catalogProof: MonitorDefinitionCatalogProof;
+  language: string;
+};
+type EditorCommandResult =
+  | MonitorDefinitionDetail
+  | MonitorDefinitionValidation
+  | MonitorDefinitionDraft
+  | {
+      kind: 'canonical-write';
+      detail: MonitorDefinitionDetail;
+      catalog: Awaited<ReturnType<MonitorDefinitionCatalogProof['load']>>;
+    };
+
+export async function loadMonitorDefinitionWorkspace(
+  mode: 'view' | 'edit',
+  app: string,
+  language: string,
+  owner: MonitorDefinitionOperationOwner,
+  publish: (value: MonitorDefinitionWorkspace) => void
+) {
+  const operation = owner.begin('detail-load');
+  publish({ kind: 'loading', mode, app });
+  try {
+    const detail = await loadMonitorDefinitionDetail(app, language, operation.abort.signal);
+    if (!owner.owns(operation)) return;
+    if (mode === 'edit' && !detail.editable) {
+      publish({ kind: 'error', mode, app: detail.app, failure: 'immutable' });
+    } else {
+      publish(
+        mode === 'view' ? { kind: 'view', detail } : editMonitorDefinitionWorkspace(buildUpdateDraft(detail), detail)
+      );
+    }
+  } catch (error) {
+    if (!owner.owns(operation)) return;
+    publish({ kind: 'error', mode, app, failure: monitorDefinitionFailureKind(error) });
+  } finally {
+    owner.complete(operation);
+  }
+}
+
+export async function runMonitorDefinitionEditorCommand(
+  operation: Exclude<Pending, 'load' | 'proof' | null>,
+  workspace: MonitorDefinitionWorkspace | null,
+  actionEpoch: number,
+  workspaceRef: { current: MonitorDefinitionWorkspace | null },
+  options: EditorCommandOptions,
+  owner: MonitorDefinitionOperationOwner,
+  publish: (value: MonitorDefinitionWorkspace) => void
+) {
+  if (!editorCommandAllowed(workspace, actionEpoch, workspaceRef, options.canWriteRef, owner)) return;
+  const requiredFailure = operation === 'refresh' ? null : monitorDefinitionDraftRequiredFailure(workspace.draft);
+  if (requiredFailure) return publish({ ...workspace, failure: requiredFailure, pending: null, validation: null });
+  const command = owner.begin('exclusive-command');
+  publish({ ...workspace, pending: operation, failure: null });
+  try {
+    const next = await performMonitorDefinitionEditorCommand(
+      operation,
+      workspace.draft,
+      options.language,
+      options.catalogProof,
+      command
+    );
+    if (!owner.owns(command)) return;
+    publishEditorCommandResult(next, workspace, options.catalogProof, publish);
+  } catch (error) {
+    if (!owner.owns(command)) return;
+    const failure = monitorDefinitionFailureKind(error);
+    const writeUncertain = operation === 'save' && monitorDefinitionWriteNeedsCatalogProof(error);
+    if (writeUncertain) {
+      owner.markCatalogProof(command);
+      publish({ ...workspace, pending: 'proof', failure, writeRecovery: 'uncertain' });
+      await proveOwnedMonitorDefinitionCatalog(options.catalogProof, command, owner);
+    }
+    if (!owner.owns(command)) return;
+    publish({ ...workspace, pending: null, failure, writeRecovery: writeUncertain ? 'uncertain' : null });
+  } finally {
+    owner.complete(command);
+  }
+}
+
+export function editMonitorDefinitionWorkspace(
+  draft: MonitorDefinitionDraft,
+  authority: MonitorDefinitionDetail | null = null,
+  failure: MonitorDefinitionFailureKind | null = null
+): MonitorDefinitionWorkspace {
+  return { kind: 'edit', authority, draft, failure, pending: null, validation: null, writeRecovery: null };
+}
+
+export function monitorDefinitionWorkspaceRequiresWrite(workspace: MonitorDefinitionWorkspace | null) {
+  return (
+    workspace?.kind === 'edit' ||
+    ((workspace?.kind === 'loading' || workspace?.kind === 'error') && workspace.mode === 'edit')
+  );
+}
+
+function editorCommandAllowed(
+  workspace: MonitorDefinitionWorkspace | null,
+  actionEpoch: number,
+  workspaceRef: { current: MonitorDefinitionWorkspace | null },
+  canWriteRef: { current: boolean },
+  owner: MonitorDefinitionOperationOwner
+): workspace is Extract<MonitorDefinitionWorkspace, { kind: 'edit' }> {
+  return (
+    canWriteRef.current &&
+    owner.matches(actionEpoch) &&
+    workspaceRef.current === workspace &&
+    workspace?.kind === 'edit' &&
+    !workspace.pending &&
+    workspace.writeRecovery === null &&
+    !owner.busy()
+  );
+}
+
+function publishEditorResult(
+  next: MonitorDefinitionDetail | MonitorDefinitionValidation | MonitorDefinitionDraft,
+  workspace: Extract<MonitorDefinitionWorkspace, { kind: 'edit' }>,
+  publish: (value: MonitorDefinitionWorkspace) => void
+) {
+  if ('schemaVersion' in next && 'definition' in next) {
+    publish(editMonitorDefinitionWorkspace(buildUpdateDraft(next), next));
+  } else if ('schemaVersion' in next) publish({ ...workspace, pending: null, validation: next });
+  else if (workspace.draft.mode === 'update' && next.mode === 'update') {
+    const authority = { ...workspace.authority!, definition: next.definition, revision: next.revision };
+    publish(editMonitorDefinitionWorkspace(next, authority));
+  } else publish(editMonitorDefinitionWorkspace(next));
+}
+
+function publishEditorCommandResult(
+  next: EditorCommandResult,
+  workspace: Extract<MonitorDefinitionWorkspace, { kind: 'edit' }>,
+  catalogProof: MonitorDefinitionCatalogProof,
+  publish: (value: MonitorDefinitionWorkspace) => void
+) {
+  if (isCanonicalEditorWrite(next)) {
+    catalogProof.publish(next.catalog);
+    publishEditorResult(next.detail, workspace, publish);
+    return;
+  }
+  publishEditorResult(next, workspace, publish);
+}
+
+function isCanonicalEditorWrite(
+  next: EditorCommandResult
+): next is Extract<EditorCommandResult, { kind: 'canonical-write' }> {
+  return 'kind' in next && next.kind === 'canonical-write';
+}
+
+function monitorDefinitionFailureKind(error: unknown): MonitorDefinitionFailureKind {
+  return error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
+}

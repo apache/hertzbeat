@@ -7,7 +7,7 @@
     "start": "docusaurus start",
     "start-en": "docusaurus start --locale en",
     "start-zh-cn": "docusaurus start --locale zh-cn",
-    "build": "docusaurus build",
+    "build": "pnpm docs:check && docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "serve": "docusaurus serve",
@@ -16,7 +16,9 @@
     "write-heading-ids": "docusaurus write-heading-ids",
     "md-lint": "markdownlint-cli2 --config ../.markdownlint-cli2.jsonc \"README.md\" \"blog/**/*.md\" \"docs/**/*.md\" \"i18n/zh-cn/docusaurus-plugin-content-blog/**/*.md\" \"i18n/zh-cn/docusaurus-plugin-content-docs/current/**/*.md\" \"#node_modules\"",
     "md-lint-fix": "pnpm md-lint --fix",
-    "github-avatar": "node github-avatar.js"
+    "github-avatar": "node github-avatar.js",
+    "docs:check": "node scripts/verify-roadmap-docs.mjs",
+    "test:docs-contract": "node --test scripts/verify-roadmap-docs.test.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.9.2",
@@ -28,7 +30,6 @@
     "@docusaurus/theme-common": "3.9.2",
     "@docusaurus/theme-live-codeblock": "3.9.2",
     "@docusaurus/theme-search-algolia": "3.9.2",
-    "@douyinfe/semi-ui": "2.24.1",
     "@mdx-js/react": "^3.1.0",
     "@svgr/webpack": "^8.1.0",
     "aos": "^2.3.4",
@@ -40,8 +41,6 @@
     "prism-react-renderer": "^2.3.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-slick": "0.29.0",
-    "slick-carousel": "1.8.1",
     "swiper": "^7.4.1",
     "url-loader": "^4.1.1",
     "workbox-routing": "^7.3.0",

@@ -33,10 +33,10 @@ public class PluginParametersVO {
     /**
      * Stencil rendering
      */
-    private List<ParamDefineInfo> paramDefines;
+    private List<PluginParameterDefinition> paramDefines;
 
     /**
      * specific parameter
      */
-    private List<PluginParam> pluginParams;
+    private List<PluginParameterValue> pluginParams;
 }

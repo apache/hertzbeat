@@ -1,0 +1,90 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.activity {
+  min-width: 0;
+}
+.toolbar,
+.signals {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-4);
+  min-height: 48px;
+}
+.entry {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) max-content;
+  align-items: center;
+  gap: var(--hb-space-5);
+  min-height: 92px;
+  padding-block: var(--hb-space-4);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.entry h3 {
+  margin: 0 0 var(--hb-space-1);
+  font-size: var(--hb-section-title-size);
+}
+.evidence {
+  font-variant-numeric: tabular-nums;
+}
+.signals {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.intake {
+  border-top: 1px solid var(--hb-border-subtle);
+  padding-top: var(--hb-space-3);
+}
+.intake summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: var(--hb-space-2);
+}
+.intake summary:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+@media (max-width: 800px) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: var(--hb-space-2);
+  }
+  .evidence {
+    grid-column: 1;
+  }
+  .entry > a {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .toolbar,
+  .signals {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding-block: var(--hb-space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .entry > a {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+}

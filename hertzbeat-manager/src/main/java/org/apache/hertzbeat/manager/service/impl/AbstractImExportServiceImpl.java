@@ -27,13 +27,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.ImExportTaskConstant;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
+import org.apache.hertzbeat.base.service.LabelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,10 +59,13 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     private MonitorService monitorService;
 
     @Resource
-    private ManagerSseManager managerSseManager;
+    private LabelService tagService;
+
+    @Resource
+    private ImportTaskService importTaskService;
 
     @Override
-    public void importConfig(String taskName, InputStream is) {
+    public void importConfig(String taskId, InputStream is) {
         var formList = parseImport(is).stream().map(this::convert).toList();
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
@@ -69,11 +75,11 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 MonitorDto monitorDto = formList.get(i);
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
                 if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
-                    managerSseManager.broadcastImportTaskInProgress(taskName, (int) ((i + 1) * 100.0 / totalElements));
+                    importTaskService.updateProgress(taskId, (int) ((i + 1) * 100.0 / totalElements));
                 }
             }
-            managerSseManager.broadcastImportTaskSuccess(taskName);
         }
+        importTaskService.complete(taskId);
     }
 
     /**
@@ -126,6 +132,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var exportMonitor = new ExportMonitorDTO();
         var monitor = new MonitorDTO();
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
+        monitor.setHost(dto.getMonitor().getInstance());
         exportMonitor.setMonitor(monitor);
         exportMonitor.setParams(dto.getParams().stream().map(it -> {
             var param = new ParamDTO();
@@ -161,6 +168,9 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 }
             }
         }
+        if (!StringUtils.hasText(monitor.getInstance())) {
+            monitor.setInstance(resolveImportedInstance(exportMonitor));
+        }
         monitorDto.setMonitor(monitor);
         if (exportMonitor.getMonitor() != null) {
             monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
@@ -177,6 +187,30 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
             monitorDto.setParams(Collections.emptyList());
         }
         return monitorDto;
+    }
+
+    private static String resolveImportedInstance(ExportMonitorDTO exportMonitor) {
+        if (exportMonitor.getMonitor() != null && StringUtils.hasText(exportMonitor.getMonitor().getHost())) {
+            return exportMonitor.getMonitor().getHost().trim();
+        }
+        if (exportMonitor.getParams() == null) {
+            return null;
+        }
+        String host = exportMonitor.getParams().stream()
+                .filter(param -> "host".equals(param.getField()))
+                .map(ParamDTO::getValue)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
+        String port = exportMonitor.getParams().stream()
+                .filter(param -> "port".equals(param.getField()))
+                .map(ParamDTO::getValue)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
+        return host == null ? null : MonitorInstanceCanonicalizer.canonicalize(true, host, port);
     }
 
     protected String fileNamePrefix() {

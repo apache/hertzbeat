@@ -1,0 +1,91 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Space, Tag, Typography } from 'antd';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import type { CollectorRuntimeReport, CollectorRuntimeSourceReport } from '../model/collector-runtime-report-model';
+
+import styles from './collector-runtime-report-facts.module.css';
+
+export function CollectorRuntimeReportFacts({ report }: { report: CollectorRuntimeReport | null }) {
+  const { t } = useTranslation();
+  if (!report) return <Tag>{t('collectors.runtime.report.notReported')}</Tag>;
+  const sourceCounts = countSources(report.sources);
+  return (
+    <Space direction="vertical" size={0}>
+      <Tag>{t(`collectors.runtime.report.state.${report.state}`)}</Tag>
+      <Typography.Text type="secondary">
+        {t('collectors.runtime.report.revisions', {
+          desiredRevision: report.desiredRevision,
+          activeRevision: report.activeRevision
+        })}
+      </Typography.Text>
+      <Typography.Text type="secondary">
+        {t('collectors.runtime.report.reportedAt', { time: formatReportTime(report.reportedAt) })}
+      </Typography.Text>
+      {report.failureCode !== 'NONE' && (
+        <Typography.Text type="secondary">
+          {t('collectors.runtime.report.failure', { failureCode: report.failureCode })}
+        </Typography.Text>
+      )}
+      {report.sources.length > 0 && (
+        <>
+          <Typography.Text type="secondary">
+            {t('collectors.runtime.report.sourceSummary', {
+              count: report.sources.length,
+              active: sourceCounts.ACTIVE,
+              desired: sourceCounts.DESIRED,
+              rejected: sourceCounts.REJECTED
+            })}
+          </Typography.Text>
+          <Typography.Text type="secondary">{t('collectors.runtime.report.sourceStateNote')}</Typography.Text>
+          <details className={styles.sourceDisclosure}>
+            <summary>{t('collectors.runtime.report.viewSources', { count: report.sources.length })}</summary>
+            <div className={styles.sourceList} role="list" aria-label={t('collectors.runtime.report.sourceListLabel')}>
+              {report.sources.map(source => (
+                <div className={styles.sourceListItem} key={`${source.type}:${source.name}`} role="listitem">
+                  <Typography.Text type="secondary">{sourceFact(source, t)}</Typography.Text>
+                </div>
+              ))}
+            </div>
+          </details>
+        </>
+      )}
+    </Space>
+  );
+}
+
+function countSources(sources: CollectorRuntimeSourceReport[]) {
+  const counts: Record<CollectorRuntimeSourceReport['state'], number> = { ACTIVE: 0, DESIRED: 0, REJECTED: 0 };
+  for (const source of sources) counts[source.state] += 1;
+  return counts;
+}
+
+function sourceFact(source: CollectorRuntimeSourceReport, t: TFunction) {
+  return t('collectors.runtime.report.source', {
+    type: t(`collectors.runtime.report.sourceType.${source.type}`),
+    name: source.name,
+    state: t(`collectors.runtime.report.sourceState.${source.state}`),
+    revision: source.revision
+  });
+}
+
+function formatReportTime(value: string) {
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(Date.parse(value));
+}

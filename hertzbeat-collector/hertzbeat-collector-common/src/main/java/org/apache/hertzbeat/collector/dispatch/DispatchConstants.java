@@ -104,6 +104,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_ROCKETMQ = "rocketmq";
     /**
+     * protocol push
+     */
+    String PROTOCOL_PUSH = "push";
+    /**
      * protocol prometheus
      */
     String PROTOCOL_PROMETHEUS = "prometheus";

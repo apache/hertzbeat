@@ -1,0 +1,49 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  --ai-divider: color-mix(in srgb, var(--hb-border-subtle) 28%, transparent);
+  --ai-divider-muted: color-mix(in srgb, var(--hb-border-subtle) 18%, transparent);
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  min-width: 0;
+  height: calc(100vh - 116px);
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--hb-bg-chrome);
+}
+
+.workspace[data-context-open='true'] {
+  grid-template-columns: 252px minmax(420px, 1fr) minmax(272px, 320px);
+}
+
+@media (max-width: 1000px) {
+  .workspace,
+  .workspace[data-context-open='true'] {
+    position: relative;
+    grid-template-columns: 216px minmax(360px, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .workspace,
+  .workspace[data-context-open='true'] {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100vh - 96px);
+  }
+}

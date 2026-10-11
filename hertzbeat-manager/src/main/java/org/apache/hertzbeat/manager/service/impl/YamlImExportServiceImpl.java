@@ -23,16 +23,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.common.util.export.YamlExportUtils;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.error.YAMLException;
-import org.yaml.snakeyaml.nodes.Tag;
+import org.apache.hertzbeat.manager.service.helper.MonitorYamlImportParser;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 
 /**
  * Configure the import and export Yaml format
@@ -40,9 +36,6 @@ import org.yaml.snakeyaml.nodes.Tag;
 @Slf4j
 @Service
 public class YamlImExportServiceImpl extends AbstractImExportServiceImpl {
-
-    private static final Set<Tag> LEGACY_TAGS = Set.of(
-            new Tag(ExportMonitorDTO.class), new Tag(MonitorDTO.class), new Tag(ParamDTO.class));
 
     /**
      * Export file type
@@ -69,27 +62,17 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl {
      */
     @Override
     public List<ExportMonitorDTO> parseImport(InputStream is) {
-        LoaderOptions options = new LoaderOptions();
-        options.setTagInspector(LEGACY_TAGS::contains);
-        Object data;
-        try {
-            data = new Yaml(new MonitorYamlConstructor(options)).load(is);
-        } catch (YAMLException e) {
-            throw new IllegalArgumentException("Invalid YAML monitor configuration", e);
+        return MonitorYamlImportParser.parse(is).stream()
+                .map(YamlImExportServiceImpl::toExportMonitor)
+                .toList();
+    }
+
+    private static ExportMonitorDTO toExportMonitor(Object record) {
+        ExportMonitorDTO monitor = JsonUtil.convertValueQuietly(record, ExportMonitorDTO.class);
+        if (monitor == null || monitor.getMonitor() == null) {
+            throw InvalidImportContentException.forYaml();
         }
-        if (!(data instanceof List<?> entries) || entries.isEmpty()) {
-            throw new IllegalArgumentException("YAML monitor configuration must be a non-empty list");
-        }
-        return entries.stream().map(entry -> {
-            if (!(entry instanceof Map<?, ?>)) {
-                throw new IllegalArgumentException("Each YAML monitor entry must be a mapping");
-            }
-            ExportMonitorDTO monitor = JsonUtil.convertValue(entry, ExportMonitorDTO.class);
-            if (monitor == null || monitor.getMonitor() == null) {
-                throw new IllegalArgumentException("Each YAML monitor entry must contain a valid monitor");
-            }
-            return monitor;
-        }).toList();
+        return monitor;
     }
 
     /**
@@ -105,12 +88,4 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl {
                 .map(monitor -> JsonUtil.convertValue(monitor, Map.class)).toList(), os);
     }
 
-    private static final class MonitorYamlConstructor extends SafeConstructor {
-
-        private MonitorYamlConstructor(LoaderOptions options) {
-            super(options);
-            // Older exports contain DTO tags. Read only these tags as maps, never as Java objects.
-            LEGACY_TAGS.forEach(tag -> yamlConstructors.put(tag, new ConstructYamlMap()));
-        }
-    }
 }
