@@ -29,6 +29,8 @@ import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponse
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.timer.Timeout;
+import org.apache.hertzbeat.common.timer.Timer;
+import org.apache.hertzbeat.common.timer.TimerTask;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -298,6 +300,160 @@ public class TimerDispatcherTest {
 
         assertTrue(t0.isCancelled(), "T0 orphaned: overwritten by cyclicJob but never cancelled");
         assertTrue(t1.isCancelled(), "T1 orphaned: overwritten by cyclicJob but never cancelled");
+    }
+
+    /**
+     * Scheduling-level regression: the delay and TimeUnit given to cyclicJob must be
+     * the same arguments that reach Timer.newTimeout. Checking getNextExecutionInterval
+     * alone would still pass if cyclicJob ignored timeUnit and scheduled 29700 seconds.
+     */
+    @Test
+    void testCyclicJobHonorsSuppliedTimeUnitOnTimer() throws Exception {
+        TimerDispatcher dispatcher = new TimerDispatcher();
+        try {
+            Job cyclicJob = cyclicIntervalJob(11L, 30L);
+            dispatcher.addJob(cyclicJob, null);
+            RecordingTimer recordingTimer = replaceWheelTimer(dispatcher);
+
+            WheelTimerTask timerTask = new WheelTimerTask(cyclicJob, (MetricsTaskDispatch) timeout -> {
+            });
+            dispatcher.cyclicJob(timerTask, 29_700L, TimeUnit.MILLISECONDS);
+
+            assertEquals(29_700L, recordingTimer.lastDelay,
+                    "fractional-second delay must reach the timer unchanged");
+            assertEquals(TimeUnit.MILLISECONDS, recordingTimer.lastUnit,
+                    "supplied timeUnit must be honored instead of hardcoded SECONDS");
+        } finally {
+            dispatcher.destroy();
+        }
+    }
+
+    /**
+     * A 30s interval with a 300ms collection must reschedule ~29.7s in milliseconds,
+     * including the remainder that whole-second truncation would drop.
+     */
+    @Test
+    void testCyclicRescheduleDeliversMillisecondRemainderToTimer() throws Exception {
+        TimerDispatcher dispatcher = new TimerDispatcher();
+        try {
+            Job cyclicJob = cyclicIntervalJob(12L, 30L);
+            cyclicJob.setDispatchTime(System.currentTimeMillis() - 300L);
+            dispatcher.addJob(cyclicJob, null);
+            RecordingTimer recordingTimer = replaceWheelTimer(dispatcher);
+
+            WheelTimerTask timerTask = new WheelTimerTask(cyclicJob, (MetricsTaskDispatch) timeout -> {
+            });
+            dispatcher.cyclicJob(timerTask);
+
+            assertEquals(TimeUnit.MILLISECONDS, recordingTimer.lastUnit,
+                    "cyclic reschedule must schedule with MILLISECONDS");
+            assertTrue(recordingTimer.lastDelay >= 29_600L && recordingTimer.lastDelay <= 29_800L,
+                    "expected ~29700ms remaining delay on the timer, got " + recordingTimer.lastDelay);
+            assertTrue(recordingTimer.lastDelay % 1000L != 0,
+                    "fractional-second remainder must reach the timer, got " + recordingTimer.lastDelay);
+        } finally {
+            dispatcher.destroy();
+        }
+    }
+
+    /**
+     * Initial dispatch of an already-executed interval job must also put the
+     * millisecond remainder on the wheel, not a truncated second delay.
+     */
+    @Test
+    void testInitialDispatchDeliversMillisecondRemainderToTimer() throws Exception {
+        TimerDispatcher dispatcher = new TimerDispatcher();
+        try {
+            Job cyclicJob = cyclicIntervalJob(13L, 30L);
+            cyclicJob.setDispatchTime(System.currentTimeMillis() - 300L);
+            RecordingTimer recordingTimer = replaceWheelTimer(dispatcher);
+            dispatcher.addJob(cyclicJob, null);
+
+            assertEquals(TimeUnit.MILLISECONDS, recordingTimer.lastUnit,
+                    "initial cyclic dispatch must schedule with MILLISECONDS");
+            assertTrue(recordingTimer.lastDelay >= 29_600L && recordingTimer.lastDelay <= 29_800L,
+                    "expected ~29700ms remaining delay on the timer, got " + recordingTimer.lastDelay);
+            assertTrue(recordingTimer.lastDelay % 1000L != 0,
+                    "fractional-second remainder must reach the timer, got " + recordingTimer.lastDelay);
+        } finally {
+            dispatcher.destroy();
+        }
+    }
+
+    private static Job cyclicIntervalJob(long id, long intervalSeconds) {
+        return Job.builder()
+                .id(id)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(intervalSeconds).build()))
+                .build();
+    }
+
+    private static RecordingTimer replaceWheelTimer(TimerDispatcher dispatcher) {
+        try {
+            Field field = TimerDispatcher.class.getDeclaredField("wheelTimer");
+            field.setAccessible(true);
+            Timer previous = (Timer) field.get(dispatcher);
+            if (previous != null && !previous.isStop()) {
+                previous.stop();
+            }
+            RecordingTimer recordingTimer = new RecordingTimer();
+            field.set(dispatcher, recordingTimer);
+            return recordingTimer;
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static final class RecordingTimer implements Timer {
+        private long lastDelay;
+        private TimeUnit lastUnit;
+
+        @Override
+        public Timeout newTimeout(TimerTask task, long delay, TimeUnit unit) {
+            this.lastDelay = delay;
+            this.lastUnit = unit;
+            return new Timeout() {
+                private boolean cancelled;
+
+                @Override
+                public Timer timer() {
+                    return RecordingTimer.this;
+                }
+
+                @Override
+                public TimerTask task() {
+                    return task;
+                }
+
+                @Override
+                public boolean isExpired() {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return cancelled;
+                }
+
+                @Override
+                public boolean cancel() {
+                    cancelled = true;
+                    return true;
+                }
+            };
+        }
+
+        @Override
+        public Set<Timeout> stop() {
+            return Set.of();
+        }
+
+        @Override
+        public boolean isStop() {
+            return false;
+        }
     }
 
     @SuppressWarnings("unchecked")
