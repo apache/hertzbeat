@@ -19,60 +19,24 @@ package org.apache.hertzbeat.alert.service;
 
 import java.util.List;
 import java.util.Set;
-import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
-import org.springframework.data.domain.Page;
+import org.apache.hertzbeat.alert.dto.AlertInhibitDeleteResponse;
+import org.apache.hertzbeat.alert.dto.AlertInhibitPageResponse;
+import org.apache.hertzbeat.alert.dto.AlertInhibitRequest;
+import org.apache.hertzbeat.alert.dto.AlertInhibitResponse;
 
 /**
  * management interface service for alert inhibit
  */
 public interface AlertInhibitService {
-    /**
-     * Verify the correctness of the request data parameters
-     * @param alertInhibit AlertInhibit
-     * @param isModify     whether modify
-     * @throws IllegalArgumentException A checksum parameter error is thrown
-     */
-    void validate(AlertInhibit alertInhibit, boolean isModify) throws IllegalArgumentException;
 
-    /**
-     * New AlertInhibit
-     * @param alertInhibit AlertInhibit Entity
-     * @throws RuntimeException Added procedure exception throwing
-     */
-    void addAlertInhibit(AlertInhibit alertInhibit) throws RuntimeException;
+    AlertInhibitResponse create(AlertInhibitRequest request);
 
-    /**
-     * Modifying an AlertInhibit
-     * @param alertInhibit Alarm definition Entity
-     * @throws RuntimeException Exception thrown during modification
-     */
-    void modifyAlertInhibit(AlertInhibit alertInhibit) throws RuntimeException;
+    AlertInhibitResponse update(AlertInhibitRequest request);
 
-    /**
-     * Obtain AlertInhibit information
-     * @param inhibitId AlertInhibit ID
-     * @return AlertInhibit
-     * @throws RuntimeException An exception was thrown during the query
-     */
-    AlertInhibit getAlertInhibit(long inhibitId) throws RuntimeException;
+    AlertInhibitResponse get(long inhibitId);
 
+    AlertInhibitDeleteResponse delete(Set<Long> inhibitIds);
 
-    /**
-     * Delete AlertInhibit in batches
-     * @param inhibitIds AlertInhibit IDs
-     * @throws RuntimeException Exception thrown during deletion
-     */
-    void deleteAlertInhibits(Set<Long> inhibitIds) throws RuntimeException;
-
-    /**
-     * Dynamic conditional query
-     * @param inhibitIds    Alarm Silence ID
-     * @param search        Search Name
-     * @param sort          Sort field
-     * @param order         Sort mode: asc: ascending, desc: descending
-     * @param pageIndex     List current page
-     * @param pageSize      Number of list pages
-     * @return The query results
-     */
-    Page<AlertInhibit> getAlertInhibits(List<Long> inhibitIds, String search, String sort, String order, int pageIndex, int pageSize);
+    AlertInhibitPageResponse list(List<Long> inhibitIds, String search, String sort, String order,
+                                  int pageIndex, int pageSize);
 }

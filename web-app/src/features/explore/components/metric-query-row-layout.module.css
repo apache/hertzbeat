@@ -1,0 +1,82 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: start;
+  gap: var(--hb-space-2);
+  min-width: 0;
+}
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.1fr) 72px minmax(144px, 0.8fr) 58px;
+  align-items: center;
+  gap: var(--hb-space-1) var(--hb-space-2);
+  min-width: 0;
+}
+.fields > label {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-1);
+  min-width: 0;
+}
+.metric {
+  min-width: 0;
+}
+.metric > :global(.ant-input) {
+  min-width: 0;
+}
+.aggregation {
+  flex: 0 0 72px;
+}
+.groupBy {
+  min-width: 0;
+}
+.groupBy > span {
+  color: var(--hb-text-secondary);
+  font-size: var(--ant-font-size-sm);
+  white-space: nowrap;
+}
+.fields > label > :global(.ant-select) {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 1000px) {
+  .fields {
+    grid-template-columns: 72px minmax(0, 1fr) 58px;
+  }
+  .metric,
+  .fields > :nth-child(2) {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 575px) {
+  .fields {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .row {
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+    gap: var(--hb-space-1);
+  }
+  .metric {
+    min-width: 0;
+  }
+  .groupBy {
+    min-width: 0;
+  }
+}

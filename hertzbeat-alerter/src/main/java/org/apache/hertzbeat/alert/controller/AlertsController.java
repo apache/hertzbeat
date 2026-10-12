@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,11 +25,24 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
-import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceRequestException;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceService;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
+import org.apache.hertzbeat.alert.service.AlertInvestigationNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertInvestigationReadModelService;
+import org.apache.hertzbeat.alert.service.AlertInvestigationRequestException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.PageResponse;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.dto.investigation.AlertInvestigationView;
+import org.apache.hertzbeat.common.observability.dto.investigation.InvestigationWindow;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -48,8 +62,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/api/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
 
+    private static final String ALERT_GROUP_NOT_FOUND_MESSAGE = "Alert group was not found.";
+    private static final String ALERT_GROUP_DELETE_FAILED_MESSAGE = "Alert group delete failed.";
+    private static final String ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE = "Alert group status is not supported.";
+    private static final String ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE = "Alert group status update failed.";
+    private static final String INVALID_ALERT_GROUP_EVIDENCE_REQUEST_MESSAGE =
+            "Invalid alert group evidence request.";
+    private static final String ALERT_GROUP_EVIDENCE_QUERY_FAILED_MESSAGE =
+            "Alert group evidence query failed.";
+    private static final String ALERT_INVESTIGATION_NOT_FOUND_MESSAGE = "Alert was not found.";
+    private static final String INVALID_ALERT_INVESTIGATION_REQUEST_MESSAGE =
+            "Invalid alert investigation request.";
+
     @Autowired
     private AlertService alertService;
+
+    @Autowired
+    private AlertGroupEvidenceService alertGroupEvidenceService;
+
+    @Autowired
+    private AlertInvestigationReadModelService alertInvestigationReadModelService;
+
+    @Autowired
+    private ObservabilityQueryAdmissionService queryAdmissionService;
 
     @GetMapping
     @Operation(summary = "Query Alarms")
@@ -60,8 +95,36 @@ public class AlertsController {
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<SingleAlert> alertPage = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
+        Page<SingleAlert> alertPage = alertService.getSingleAlerts(AuthTokenRequestContext.currentWorkspaceId(),
+                status, search, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertPage));
+    }
+
+    @GetMapping("/{alertId}/investigation")
+    @Operation(summary = "Query one bounded alert investigation")
+    public ResponseEntity<Message<AlertInvestigationView>> getAlertInvestigation(
+            @PathVariable("alertId") long alertId,
+            @RequestParam("start") long start,
+            @RequestParam("end") long end) {
+        try {
+            validateInvestigationSelection(alertId, start, end);
+            String workspaceId = AuthTokenScopes.normalizeWorkspaceId(
+                    AuthTokenRequestContext.currentWorkspaceId());
+            AlertInvestigationView view = queryAdmissionService.execute("topology",
+                    () -> alertInvestigationReadModelService.query(workspaceId, alertId, start, end));
+            return ResponseEntity.ok(Message.success(view));
+        } catch (AlertInvestigationNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_INVESTIGATION_NOT_FOUND_MESSAGE));
+        } catch (AlertInvestigationRequestException | IllegalArgumentException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, INVALID_ALERT_INVESTIGATION_REQUEST_MESSAGE));
+        }
+    }
+
+    private static void validateInvestigationSelection(long alertId, long start, long end) {
+        if (alertId <= 0L) {
+            throw new AlertInvestigationRequestException();
+        }
+        new InvestigationWindow(start, end);
     }
 
     @GetMapping("/export")
@@ -72,51 +135,90 @@ public class AlertsController {
             @Parameter(description = "Sort field, default activeAt", example = "activeAt") @RequestParam(defaultValue = "activeAt") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             HttpServletResponse response) {
-        alertService.exportSingleAlerts(status, search, sort, order, response);
+        alertService.exportSingleAlerts(AuthTokenRequestContext.currentWorkspaceId(), status, search, sort, order, response);
     }
 
     @GetMapping("/group")
     @Operation(summary = "Query Group Alarms")
-    public ResponseEntity<Message<Page<GroupAlert>>> getGroupAlerts(
+    public ResponseEntity<Message<PageResponse<GroupAlert>>> getGroupAlerts(
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
+            @Parameter(description = "Alarm severity", example = "critical") @RequestParam(required = false) String severity,
+            @Parameter(description = "OTLP service.name label", example = "checkout") @RequestParam(required = false) String serviceName,
+            @Parameter(description = "OTLP service.namespace label", example = "payments") @RequestParam(required = false) String serviceNamespace,
+            @Parameter(description = "OTLP deployment.environment.name label", example = "prod") @RequestParam(required = false) String environment,
             @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "gmtUpdate") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(alertPage));
+        Page<GroupAlert> alertPage = alertService.getGroupAlerts(AuthTokenRequestContext.currentWorkspaceId(),
+                status, search, severity, serviceName,
+                serviceNamespace, environment, sort, order, pageIndex, pageSize);
+        return ResponseEntity.ok(Message.success(PageResponse.from(alertPage)));
+    }
+
+    @GetMapping("/group/evidence")
+    @Operation(summary = "Query canonical alert group evidence by ID")
+    public ResponseEntity<Message<AlertGroupEvidence>> getGroupAlertEvidence(
+            @Parameter(description = "Alert group ID list", example = "6565463543")
+            @RequestParam(required = false) List<String> ids) {
+        try {
+            return ResponseEntity.ok(Message.success(alertGroupEvidenceService.getEvidence(
+                    AuthTokenRequestContext.currentWorkspaceId(), ids)));
+        } catch (AlertGroupEvidenceRequestException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, INVALID_ALERT_GROUP_EVIDENCE_REQUEST_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_EVIDENCE_QUERY_FAILED_MESSAGE));
+        }
     }
 
     @DeleteMapping("/group")
     @Operation(summary = "Delete group alarms in batches", description = "according to the alarm ID list to delete the alarm information in batches")
     public ResponseEntity<Message<Void>> deleteAlerts(
             @Parameter(description = "Alarm List ID", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            alertService.deleteGroupAlerts(new HashSet<>(ids));
+        try {
+            if (ids != null && !ids.isEmpty()) {
+                alertService.deleteGroupAlerts(AuthTokenRequestContext.currentWorkspaceId(), new HashSet<>(ids));
+            }
+            return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_DELETE_FAILED_MESSAGE));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
     }
 
     @PutMapping(path = "/group/status/{status}")
-    @Operation(summary = "Batch modify alarm status, set firing or resolved", description = "Batch modify alarm status, set firing or resolved")
+    @Operation(summary = "Batch modify alarm status, set firing, acknowledged or resolved",
+            description = "Batch modify alarm status, set firing, acknowledged or resolved")
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
-            @Parameter(description = "Alarm status value", example = "resolved") @PathVariable String status,
+            @Parameter(description = "Alarm status value", example = "acknowledged") @PathVariable String status,
+            @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
+        try {
+            if (ids != null && status != null && !ids.isEmpty()) {
+                alertService.editGroupAlertStatus(AuthTokenRequestContext.currentWorkspaceId(), status, ids);
+            }
+            return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupStatusNotSupportedException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE));
+        } catch (AlertGroupNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE));
+        }
+    }
+
+    @PutMapping(path = "/status/{status}")
+    @Operation(summary = "Batch modify single alert status, set firing, acknowledged or resolved",
+            description = "Batch modify single alert status, set firing, acknowledged or resolved")
+    public ResponseEntity<Message<Void>> applySingleAlertStatus(
+            @Parameter(description = "Alarm status value", example = "acknowledged") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && status != null && !ids.isEmpty()) {
-            alertService.editGroupAlertStatus(status, ids);
+            alertService.editSingleAlertStatus(AuthTokenRequestContext.currentWorkspaceId(), status, ids);
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
-    @GetMapping(path = "/summary")
-    @Operation(summary = "Get alarm statistics", description = "Get alarm statistics information")
-    public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
-        AlertSummary alertSummary = alertService.getAlertsSummary();
-        Message<AlertSummary> message = Message.success(alertSummary);
-        return ResponseEntity.ok(message);
-    }
-    
 }

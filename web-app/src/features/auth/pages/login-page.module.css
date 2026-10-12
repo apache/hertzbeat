@@ -1,0 +1,333 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.page {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 40px clamp(24px, 5vw, 72px);
+  overflow-x: hidden;
+  background: var(--hb-bg-canvas);
+  background-image: url('/assets/bg.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.shell {
+  display: flex;
+  width: min(1240px, 100%);
+  min-height: calc(100svh - 80px);
+  margin: 0 auto;
+  flex-direction: column;
+}
+
+.brandHeader {
+  display: flex;
+  width: min(520px, 100%);
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  text-align: center;
+}
+
+.brandFull {
+  position: relative;
+  width: 220px;
+  height: 55px;
+}
+
+.brandLogoFull {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 220px;
+  height: 55px;
+  filter: none;
+}
+
+.content {
+  display: grid;
+  width: 100%;
+  flex: 1;
+  grid-template-columns: minmax(0, 10fr) minmax(368px, 12fr);
+  align-items: center;
+  gap: clamp(48px, 8vw, 112px);
+  padding: 56px 0 32px;
+}
+
+.introduction {
+  max-width: 540px;
+  color: var(--hb-text-primary);
+}
+
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.introductionHeading {
+  font-size: clamp(32px, 3.4vw, 48px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+  text-wrap: balance;
+}
+
+.introductionBrand {
+  display: block;
+  width: 300px;
+  height: 75px;
+  margin-bottom: 12px;
+}
+
+.introductionPositioning {
+  display: block;
+  max-width: 540px;
+  margin-bottom: clamp(44px, 4vw, 56px);
+  font-size: clamp(16px, 1.45vw, 20px);
+  font-weight: 520;
+  letter-spacing: -0.01em;
+  line-height: 1.45;
+}
+
+.introductionPhraseStage {
+  position: relative;
+  display: block;
+  width: 100%;
+  block-size: 1.55em;
+  overflow: hidden;
+  font-size: 36px;
+  line-height: 1.18;
+}
+
+.introductionTypingLine {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  will-change: opacity, transform;
+}
+
+.introductionPhrase {
+  display: inline;
+}
+
+.introductionCursor {
+  display: inline-block;
+  width: 0.075em;
+  height: 0.95em;
+  margin-left: 0.08em;
+  vertical-align: -0.08em;
+  background: currentColor;
+  animation: passportIntroductionCursor 860ms steps(1, end) infinite;
+}
+
+.introductionMeasure {
+  position: absolute;
+  visibility: hidden;
+  font-size: 36px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.introductionRollOut {
+  animation: passportIntroductionRollOut 460ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.introductionRollIn {
+  animation: passportIntroductionRollIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes passportIntroductionRollOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-115%);
+  }
+}
+
+@keyframes passportIntroductionRollIn {
+  from {
+    opacity: 0.28;
+    transform: translateY(115%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes passportIntroductionCursor {
+  0%,
+  46% {
+    opacity: 1;
+  }
+
+  47%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.formRegion {
+  width: min(368px, 100%);
+  justify-self: center;
+}
+
+.panel {
+  width: 100%;
+  padding: 30px;
+  border: 1px solid color-mix(in srgb, var(--hb-bg-raised) 72%, transparent);
+  border-radius: var(--hb-radius-surface);
+  background: color-mix(in srgb, var(--hb-bg-raised) 58%, transparent);
+  box-shadow: var(--hb-shadow-surface);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.brandLogo {
+  display: block;
+  width: 32px;
+  height: 31px;
+}
+
+.brandName {
+  color: var(--hb-text-primary);
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.panel > [data-state] {
+  margin-bottom: 20px;
+}
+
+.panel > :global(h2.ant-typography) {
+  margin-bottom: 4px;
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -0.018em;
+}
+
+.actions,
+.actions > :global(.ant-space-item) {
+  width: 100%;
+}
+
+@media (min-width: 960px) {
+  .brandHeader {
+    display: none;
+  }
+
+  .page {
+    background-attachment: fixed;
+  }
+
+  .introduction {
+    color: var(--hb-text-on-image);
+    text-shadow: var(--hb-shadow-on-image);
+  }
+
+  .panel {
+    padding: 36px;
+  }
+
+  .panel > :global(h2.ant-typography) {
+    margin-bottom: 22px;
+  }
+
+  .panel :global(.ant-input),
+  .panel :global(.ant-input-affix-wrapper),
+  .panel :global(.ant-btn) {
+    min-height: 42px;
+  }
+
+  .panel :global(.ant-input-affix-wrapper .ant-input) {
+    min-height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .introductionCursor,
+  .introductionRollOut,
+  .introductionRollIn {
+    animation: none;
+  }
+}
+
+@media (max-width: 959px) {
+  .page {
+    display: grid;
+    place-items: center;
+  }
+
+  .shell {
+    min-height: auto;
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 40px;
+  }
+
+  .introduction {
+    display: none;
+  }
+
+  :global(body:has([data-passport-page='true'])) {
+    min-width: 0;
+    overflow-x: clip;
+  }
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 24px 18px;
+  }
+
+  .brandHeader {
+    gap: 0;
+  }
+
+  .content {
+    padding-top: 28px;
+  }
+
+  .panel {
+    padding: 24px;
+  }
+}

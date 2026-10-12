@@ -22,6 +22,8 @@ import com.google.protobuf.ByteString;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeConfigApplier;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectCyclicDataProcessor;
@@ -35,6 +37,7 @@ import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
@@ -49,6 +52,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -85,13 +89,17 @@ public class CollectServer implements CommandLineRunner {
 
     private final Runnable closeApplicationAction;
 
+    private final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider;
+
+    private final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier;
+
     public CollectServer(final CollectJobService collectJobService,
                          final TimerDispatch timerDispatch,
                          final DispatchProperties properties,
                          final BackgroundTaskExecutor threadPool,
                          final CollectorInfoProperties infoProperties) {
         this(collectJobService, timerDispatch, properties, threadPool, infoProperties, null,
-                VirtualThreadProperties.defaults());
+                VirtualThreadProperties.defaults(), Optional.empty(), Optional.empty());
     }
 
     public CollectServer(final CollectJobService collectJobService,
@@ -100,7 +108,19 @@ public class CollectServer implements CommandLineRunner {
                          final BackgroundTaskExecutor threadPool,
                          final CollectorInfoProperties infoProperties,
                          final VirtualThreadProperties virtualThreadProperties) {
-        this(collectJobService, timerDispatch, properties, threadPool, infoProperties, null, virtualThreadProperties);
+        this(collectJobService, timerDispatch, properties, threadPool, infoProperties, null,
+                virtualThreadProperties, Optional.empty(), Optional.empty());
+    }
+
+    public CollectServer(final CollectJobService collectJobService,
+                         final TimerDispatch timerDispatch,
+                         final DispatchProperties properties,
+                         final BackgroundTaskExecutor threadPool,
+                         final CollectorInfoProperties infoProperties,
+                         final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider,
+                         final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier) {
+        this(collectJobService, timerDispatch, properties, threadPool, infoProperties, null,
+                VirtualThreadProperties.defaults(), runtimeStatusProvider, runtimeConfigApplier);
     }
 
     @Autowired
@@ -110,7 +130,9 @@ public class CollectServer implements CommandLineRunner {
                          final BackgroundTaskExecutor threadPool,
                          final CollectorInfoProperties infoProperties,
                          final ConfigurableApplicationContext applicationContext,
-                         final VirtualThreadProperties virtualThreadProperties) {
+                         final VirtualThreadProperties virtualThreadProperties,
+                         final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider,
+                         final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
@@ -125,6 +147,8 @@ public class CollectServer implements CommandLineRunner {
         this.infoProperties = infoProperties;
         this.heartbeatExecutor = createHeartbeatExecutor(virtualThreadProperties);
         this.closeApplicationAction = createCloseApplicationAction(applicationContext);
+        this.runtimeStatusProvider = runtimeStatusProvider;
+        this.runtimeConfigApplier = runtimeConfigApplier;
         this.init(properties, threadPool);
     }
 
@@ -135,7 +159,8 @@ public class CollectServer implements CommandLineRunner {
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor());
+        this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT,
+                new HeartbeatProcessor(runtimeConfigApplier));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK, new CollectCyclicDataProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.DELETE_CYCLIC_TASK, new DeleteCyclicTaskProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));
@@ -283,13 +308,33 @@ public class CollectServer implements CommandLineRunner {
         }
     }
 
+    ClusterMsg.Message createHeartbeatMessage(String identity) {
+        ClusterMsg.Message.Builder heartbeat = ClusterMsg.Message.newBuilder()
+                .setIdentity(identity)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.HEARTBEAT);
+        ManagedOtelRuntimeStatus status = runtimeStatus();
+        if (status != null) {
+            String encodedStatus = JsonUtil.toJson(status);
+            if (encodedStatus != null) {
+                heartbeat.setMsg(ByteString.copyFromUtf8(encodedStatus));
+            }
+        }
+        return heartbeat.build();
+    }
+
+    private ManagedOtelRuntimeStatus runtimeStatus() {
+        try {
+            return runtimeStatusProvider.map(CollectorRuntimeStatusProvider::status).orElse(null);
+        } catch (Exception e) {
+            log.warn("collect runtime status failed, send heartbeat without status. {}", e.getMessage());
+            return null;
+        }
+    }
+
     private void sendHeartbeat(String identity) {
         try {
-            ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                    .setIdentity(identity)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setType(ClusterMsg.MessageType.HEARTBEAT)
-                    .build();
+            ClusterMsg.Message heartbeat = createHeartbeatMessage(identity);
             CollectServer.this.sendMsg(heartbeat);
             log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
         } catch (Exception e) {

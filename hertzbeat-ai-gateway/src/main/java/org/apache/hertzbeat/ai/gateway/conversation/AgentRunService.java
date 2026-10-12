@@ -1,0 +1,233 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.ai.gateway.conversation;
+
+import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.ai.gateway.text.GatewayText;
+import org.apache.hertzbeat.common.entity.agent.AgentRun;
+import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+/**
+ * Default run ledger service for Agent Gateway.
+ */
+@Service
+public class AgentRunService {
+
+    private final AgentRunDao runDao;
+    private final AgentSessionDao sessionDao;
+    private final EntityManager entityManager;
+
+    public AgentRunService(AgentRunDao runDao, AgentSessionDao sessionDao, EntityManager entityManager) {
+        this.runDao = runDao;
+        this.sessionDao = sessionDao;
+        this.entityManager = entityManager;
+    }
+
+    public AgentRun createOrResumeRun(AgentSession session, UserInput userInput,
+                                      AgentRuntimeEntryType entryType) {
+        String messageId = userInput.getMessageId();
+        Optional<AgentRun> existingRun = runDao.findBySessionIdAndMessageId(session.getId(), messageId);
+        if (existingRun.isPresent()) {
+            return existingRun.get();
+        }
+        AgentRun run = buildRun(session, userInput, messageId, entryType);
+        try {
+            return runDao.saveAndFlush(run);
+        } catch (DataIntegrityViolationException e) {
+            entityManager.clear();
+            return runDao.findBySessionIdAndMessageId(session.getId(), messageId)
+                .orElseThrow(() -> e);
+        }
+    }
+
+    @Transactional
+    public AgentRun markRunning(AgentRun run) {
+        LocalDateTime transitionAt = LocalDateTime.now();
+        run.setStatus(AgentRunStatus.RUNNING.name());
+        run.setStartedAt(transitionAt);
+        run.setCompletedAt(null);
+        run.setErrorMessage(null);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
+    }
+
+    @Transactional
+    public AgentRun markSucceeded(AgentRun run, String resultSummary) {
+        LocalDateTime transitionAt = LocalDateTime.now();
+        run.setStatus(AgentRunStatus.SUCCEEDED.name());
+        run.setResultSummary(GatewayText.redactSecrets(resultSummary));
+        run.setCompletedAt(transitionAt);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
+    }
+
+    @Transactional
+    public AgentRun markFailed(AgentRun run, String errorMessage) {
+        LocalDateTime transitionAt = LocalDateTime.now();
+        run.setStatus(AgentRunStatus.FAILED.name());
+        run.setErrorMessage(GatewayText.safeSummary(errorMessage, 1024));
+        run.setCompletedAt(transitionAt);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
+    }
+
+    @Transactional
+    public AgentRun markCancelled(AgentRun run, String reason) {
+        LocalDateTime transitionAt = LocalDateTime.now();
+        String safeReason = GatewayText.safeSummary(reason, 1024);
+        int updated = runDao.cancelIfActive(run.getId(),
+                List.of(AgentRunStatus.CREATED.name(), AgentRunStatus.RUNNING.name()),
+                AgentRunStatus.CANCELLED.name(), safeReason, transitionAt);
+        if (updated == 1) {
+            touchSession(run, transitionAt);
+        }
+        return runDao.findById(run.getId()).orElseThrow(
+                () -> new IllegalStateException("Agent run disappeared during cancellation"));
+    }
+
+    @Transactional
+    public AgentRun markRecoveryRequired(AgentRun run, String reason) {
+        LocalDateTime transitionAt = LocalDateTime.now();
+        run.setStatus(AgentRunStatus.RECOVERY_REQUIRED.name());
+        run.setErrorMessage(GatewayText.safeSummary(reason, 1024));
+        run.setCompletedAt(transitionAt);
+        AgentRun saved = runDao.save(run);
+        touchSession(run, transitionAt);
+        return saved;
+    }
+
+    public Optional<AgentRun> findRun(String runUid) {
+        // External run lookup values may contain surrounding whitespace; normalize before the persistence query.
+        String normalized = GatewayText.normalize(runUid);
+        if (normalized == null) {
+            return Optional.empty();
+        }
+        return runDao.findByRunUid(normalized);
+    }
+
+    public Optional<AgentRun> findLatestRun(Long sessionId) {
+        return sessionId == null ? Optional.empty() : runDao.findTopBySessionIdOrderByIdDesc(sessionId);
+    }
+
+    public Map<Long, AgentRunListProjection> findLatestRunProjections(Collection<Long> sessionIds) {
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, AgentRunListProjection> projections = new LinkedHashMap<>();
+        for (AgentRun run : runDao.findLatestBySessionIds(sessionIds)) {
+            if (run.getSessionId() != null && StringUtils.hasText(run.getStatus())) {
+                projections.put(run.getSessionId(), AgentRunListProjection.from(run));
+            }
+        }
+        return Map.copyOf(projections);
+    }
+
+    /**
+     * Restore the complete target snapshot recorded for a run, with a legacy-column fallback.
+     */
+    public static AgentTargetRef targetFromRun(AgentRun run) {
+        if (run == null) {
+            return null;
+        }
+        if (StringUtils.hasText(run.getTargetContextJson())) {
+            AgentTargetRef target = JsonUtil.fromJson(run.getTargetContextJson(), AgentTargetRef.class);
+            if (target == null) {
+                throw new IllegalStateException("Agent run target context cannot be decoded");
+            }
+            return target;
+        }
+        if (run.getTargetMonitorId() == null
+            && run.getTargetAlertId() == null
+            && !StringUtils.hasText(run.getTargetCollector())) {
+            return null;
+        }
+        return AgentTargetRef.builder()
+            .monitorId(run.getTargetMonitorId())
+            .alertId(run.getTargetAlertId())
+            .collector(run.getTargetCollector())
+            .build();
+    }
+
+    public Optional<AgentRun> findCreatedRun(Long sessionId) {
+        return runDao.findFirstBySessionIdAndStatusOrderByGmtCreateAsc(
+                sessionId, AgentRunStatus.CREATED.name());
+    }
+
+    public Optional<AgentRun> findRunningRun(Long sessionId) {
+        return runDao.findFirstBySessionIdAndStatusOrderByGmtCreateAsc(
+                sessionId, AgentRunStatus.RUNNING.name());
+    }
+
+    public boolean hasActiveRun(Long sessionId) {
+        return runDao.existsBySessionIdAndStatusIn(sessionId,
+                List.of(AgentRunStatus.CREATED.name(), AgentRunStatus.RUNNING.name()));
+    }
+
+    private void touchSession(AgentRun run, LocalDateTime transitionAt) {
+        if (sessionDao.advanceGmtUpdate(run.getSessionId(), transitionAt) != 1) {
+            throw new IllegalStateException("Agent run session does not exist");
+        }
+    }
+
+    private AgentRun buildRun(AgentSession session, UserInput userInput, String messageId,
+                              AgentRuntimeEntryType entryType) {
+        AgentTargetRef target = userInput.getTarget();
+        return AgentRun.builder()
+            .runUid("run_" + SnowFlakeIdGenerator.generateId())
+            .sessionId(session.getId())
+            .messageId(messageId)
+            .entryType(entryType.name())
+            .targetMonitorId(target == null ? null : target.getMonitorId())
+            .targetAlertId(target == null ? null : target.getAlertId())
+            .targetCollector(target == null ? null : target.getCollector())
+            .targetContextJson(targetJson(target))
+            .status(AgentRunStatus.CREATED.name())
+            .build();
+    }
+
+    private static String targetJson(AgentTargetRef target) {
+        if (target == null) {
+            return null;
+        }
+        String json = JsonUtil.toJson(target);
+        if (!StringUtils.hasText(json)) {
+            throw new IllegalArgumentException("Agent run target context cannot be serialized");
+        }
+        return GatewayText.redactSecrets(json);
+    }
+}

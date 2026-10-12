@@ -1,0 +1,221 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  deleteAlertInhibit,
+  deleteAlertInhibits,
+  saveAlertInhibit,
+  updateAlertInhibitEnabled
+} from '../api/alert-inhibit-api';
+import {
+  AlertInhibitContractError,
+  alertInhibitFailureKind,
+  alertInhibitWriteOutcome,
+  buildAlertInhibitPayload,
+  normalizeAlertInhibitIds,
+  validateAlertInhibitDraft,
+  type AlertInhibit,
+  type AlertInhibitPage
+} from '../model/alert-inhibit-model';
+import {
+  identifyCreatedAlertInhibit as identifyCreated,
+  loadExactAlertInhibit,
+  proveAlertInhibitsMissing,
+  requireAlertInhibitsAbsent,
+  requireAlertInhibitConvergence
+} from '../api/alert-inhibit-write-proof';
+import type { AlertInhibitReceipt } from '../model/alert-inhibit-state';
+import { prepareAlertInhibitReceipt } from './alert-inhibit-receipt-preparation';
+import type { AlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
+import type {
+  AlertInhibitOperationController,
+  AlertInhibitOperationOwner
+} from './use-alert-inhibit-operation-controller';
+
+type Notifications = {
+  validation: () => void;
+  saveSuccess: () => void;
+  saveFailure: (kind: 'unavailable' | 'error') => void;
+  operationSuccess: () => void;
+  operationFailure: (kind: 'unavailable' | 'error') => void;
+};
+
+export type AlertInhibitWriteContext = {
+  editor: AlertInhibitEditorController;
+  operation: AlertInhibitOperationController;
+  notify: Notifications;
+  reread: () => Promise<AlertInhibitPage>;
+};
+
+export async function submitAlertInhibit(context: AlertInhibitWriteContext) {
+  const draft = context.editor.controls.getDraft();
+  if (!draft || validateAlertInhibitDraft(draft).length > 0) return context.notify.validation();
+  const owner = context.operation.begin('saving');
+  if (!owner) return;
+  const receipt: AlertInhibitReceipt = {
+    kind: 'save',
+    phase: draft.id === undefined ? 'prepare' : 'write',
+    draft,
+    ...(draft.id === undefined ? {} : { id: draft.id })
+  };
+  beginReceipt(context, owner, receipt);
+  await runReceipt(context, owner, receipt);
+}
+
+export async function toggleAlertInhibit(context: AlertInhibitWriteContext, record: AlertInhibit, enable: boolean) {
+  const owner = context.operation.begin('operating');
+  if (!owner) return;
+  const receipt: AlertInhibitReceipt = { kind: 'toggle', phase: 'prepare', record, enable };
+  beginReceipt(context, owner, receipt);
+  await runReceipt(context, owner, receipt);
+}
+
+export async function removeAlertInhibit(context: AlertInhibitWriteContext, id: number) {
+  return removeAlertInhibits(context, [id]);
+}
+
+export async function removeAlertInhibits(context: AlertInhibitWriteContext, ids: number[]) {
+  const commandIds = normalizeAlertInhibitIds(ids);
+  const owner = context.operation.begin('operating');
+  if (!owner) return;
+  const receipt: AlertInhibitReceipt = { kind: 'delete', phase: 'write', ids: commandIds };
+  beginReceipt(context, owner, receipt);
+  await runReceipt(context, owner, receipt);
+}
+
+export async function retryAlertInhibit(context: AlertInhibitWriteContext) {
+  const resumed = context.operation.resume();
+  if (!resumed) return;
+  if (resumed.receipt.kind === 'save') context.editor.controls.setEditorFailure(undefined);
+  await runReceipt(context, resumed.owner, resumed.receipt);
+}
+
+function beginReceipt(
+  context: AlertInhibitWriteContext,
+  owner: AlertInhibitOperationOwner,
+  receipt: AlertInhibitReceipt
+) {
+  context.operation.retain(owner, receipt);
+  context.editor.controls.invalidateDetail();
+  context.editor.controls.setEditorFailure(undefined);
+}
+
+async function runReceipt(
+  context: AlertInhibitWriteContext,
+  owner: AlertInhibitOperationOwner,
+  receipt: AlertInhibitReceipt
+) {
+  try {
+    if (!(await advanceReceipt(context, owner, receipt)) || !context.operation.isCurrent(owner)) return;
+    completeReceipt(context, owner, receipt);
+  } catch (reason) {
+    if (!context.operation.isCurrent(owner)) return;
+    recoverOrReject(context, owner, receipt, reason);
+    context.operation.markRecovery(owner);
+    notifyFailure(context, receipt, reason);
+  } finally {
+    context.operation.end(owner);
+  }
+}
+
+async function advanceReceipt(
+  context: AlertInhibitWriteContext,
+  owner: AlertInhibitOperationOwner,
+  receipt: AlertInhibitReceipt
+) {
+  // A retained receipt moves forward only; Retry never repeats a write whose outcome may be committed.
+  if (receipt.phase === 'prepare') {
+    if (!(await prepareAlertInhibitReceipt(context.operation, owner, receipt))) return false;
+    if (!context.operation.isCurrent(owner)) return false;
+  }
+  if (receipt.phase === 'write') {
+    await mutate(receipt);
+    if (!context.operation.isCurrent(owner)) return false;
+    receipt.phase = 'proof';
+  }
+  if (receipt.phase === 'proof') {
+    await prove(receipt);
+    if (!context.operation.isCurrent(owner)) return false;
+    receipt.phase = 'projection';
+  }
+  const page = await context.reread();
+  if (!context.operation.isCurrent(owner)) return false;
+  if (receipt.kind === 'delete') requireAlertInhibitsAbsent(page, receipt.ids);
+  return true;
+}
+
+async function mutate(receipt: AlertInhibitReceipt) {
+  if (receipt.kind === 'save') return saveAlertInhibit(receipt.draft);
+  if (receipt.kind === 'delete') {
+    return receipt.ids.length === 1 ? deleteAlertInhibit(receipt.ids[0]!) : deleteAlertInhibits(receipt.ids);
+  }
+  return updateAlertInhibitEnabled(receipt.record, receipt.enable);
+}
+
+async function prove(receipt: AlertInhibitReceipt) {
+  if (receipt.kind === 'delete') return proveAlertInhibitsMissing(receipt.ids);
+  if (receipt.kind === 'toggle') {
+    if (!receipt.expected) throw new AlertInhibitContractError('toggle proof is missing expected fields');
+    return requireAlertInhibitConvergence(await loadExactAlertInhibit(receipt.record.id), receipt.expected);
+  }
+  if (receipt.id === undefined) receipt.id = await identifyCreated(receipt.previousIds, receipt.draft);
+  return requireAlertInhibitConvergence(await loadExactAlertInhibit(receipt.id), {
+    ...buildAlertInhibitPayload(receipt.draft),
+    id: receipt.id
+  });
+}
+
+function recoverOrReject(
+  context: AlertInhibitWriteContext,
+  owner: AlertInhibitOperationOwner,
+  receipt: AlertInhibitReceipt,
+  reason: unknown
+) {
+  if (receipt.phase === 'prepare' || (receipt.phase === 'write' && alertInhibitWriteOutcome(reason) === 'rejected')) {
+    context.operation.clear(owner);
+    return;
+  }
+  if (receipt.phase !== 'write') return;
+  receipt.phase = 'proof';
+}
+
+function completeReceipt(
+  context: AlertInhibitWriteContext,
+  owner: AlertInhibitOperationOwner,
+  receipt: AlertInhibitReceipt
+) {
+  context.operation.clear(owner);
+  if (receipt.kind === 'save') {
+    context.editor.controls.setDraft(null);
+    context.notify.saveSuccess();
+    return;
+  }
+  context.notify.operationSuccess();
+}
+
+function notifyFailure(context: AlertInhibitWriteContext, receipt: AlertInhibitReceipt, reason: unknown) {
+  // Once a receipt is retained, the write outcome can no longer be stated as a definite failure.
+  const hasRetainedReceipt = context.operation.getRecovery() !== undefined;
+  const isUnavailable = alertInhibitFailureKind(reason) === 'unavailable';
+  const kind = hasRetainedReceipt || isUnavailable ? 'unavailable' : 'error';
+  if (receipt.kind === 'save') {
+    context.editor.controls.setEditorFailure(kind);
+    context.notify.saveFailure(kind);
+    return;
+  }
+  context.notify.operationFailure(kind);
+}

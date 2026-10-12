@@ -31,7 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ExcelImExportServiceImpl;
@@ -57,7 +57,7 @@ class ExcelImExportServiceTest {
     private MonitorService monitorService;
 
     @Mock
-    private ManagerSseManager managerSseManager;
+    private ImportTaskService importTaskService;
 
     @BeforeEach
     public void setUp() {
@@ -130,7 +130,7 @@ class ExcelImExportServiceTest {
         excelImExportService.importConfig("task", is);
         verify(monitorService, times(2)).validate(any(MonitorDto.class), eq(false));
         verify(monitorService, times(2)).addMonitor(any(), any(), any(), any());
-        verify(managerSseManager).broadcastImportTaskSuccess("task");
+        verify(importTaskService).complete("task");
     }
 
     @Test
@@ -138,7 +138,7 @@ class ExcelImExportServiceTest {
         ByteArrayInputStream is = buildImportStream(List.of("DupMonitor", "DupMonitor"));
         assertThrows(IllegalArgumentException.class, () -> excelImExportService.importConfig("task", is));
         verify(monitorService, never()).addMonitor(any(), any(), any(), any());
-        verify(managerSseManager, never()).broadcastImportTaskSuccess(any());
+        verify(importTaskService, never()).complete(any());
     }
 
     @Test
@@ -148,7 +148,7 @@ class ExcelImExportServiceTest {
         ByteArrayInputStream is = buildImportStream(List.of("Monitor1", "Monitor2"));
         assertThrows(IllegalArgumentException.class, () -> excelImExportService.importConfig("task", is));
         verify(monitorService, never()).addMonitor(any(), any(), any(), any());
-        verify(managerSseManager, never()).broadcastImportTaskSuccess(any());
+        verify(importTaskService, never()).complete(any());
     }
 
     private ByteArrayInputStream buildImportStream(List<String> names) throws IOException {

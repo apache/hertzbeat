@@ -20,16 +20,26 @@ package org.apache.hertzbeat.warehouse.store.history.tsdb.duckdb;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
+import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 /**
  * Test case for {@link DuckdbDatabaseDataStorage}.
@@ -83,8 +93,74 @@ class DuckdbDatabaseDataStorageTest {
         assertEquals(1, maxConcurrent.get());
     }
 
+    @Test
+    void getHistoryMetricDataUsesAbsoluteRange() {
+        dataStorage = new TestDuckdbDatabaseDataStorage(properties(), null, null,
+                null, null, null, null, null, null);
+        long now = System.currentTimeMillis();
+        long start = now - TimeUnit.MINUTES.toMillis(10);
+        long end = now - TimeUnit.MINUTES.toMillis(5);
+
+        dataStorage.saveData(metricAt(now - TimeUnit.MINUTES.toMillis(11), "1"));
+        dataStorage.saveData(metricAt(now - TimeUnit.MINUTES.toMillis(7), "2"));
+        dataStorage.saveData(metricAt(now - TimeUnit.MINUTES.toMillis(3), "3"));
+
+        Map<String, List<Value>> result = dataStorage.getHistoryMetricData("example.com:443", "website",
+                "summary", "responseTime", "6h", start, end, "60s");
+
+        List<Value> values = result.values().iterator().next();
+        assertEquals(1, values.size());
+        assertEquals("2", values.get(0).getOrigin());
+    }
+
+    @Test
+    void getHistoryIntervalMetricDataUsesAbsoluteRange() {
+        dataStorage = new TestDuckdbDatabaseDataStorage(properties(), null, null,
+                null, null, null, null, null, null);
+        long now = System.currentTimeMillis();
+        long start = now - TimeUnit.MINUTES.toMillis(10);
+        long end = now - TimeUnit.MINUTES.toMillis(5);
+
+        dataStorage.saveData(metricAt(now - TimeUnit.MINUTES.toMillis(11), "1"));
+        dataStorage.saveData(metricAt(now - TimeUnit.MINUTES.toMillis(7), "2"));
+        dataStorage.saveData(metricAt(now - TimeUnit.MINUTES.toMillis(3), "3"));
+
+        Map<String, List<Value>> result = dataStorage.getHistoryIntervalMetricData("example.com:443", "website",
+                "summary", "responseTime", "6h", start, end, "60s");
+
+        List<Value> values = result.values().iterator().next();
+        assertEquals(1, values.size());
+        assertEquals("2", values.get(0).getOrigin());
+    }
+
     private DuckdbProperties properties() {
         return new DuckdbProperties(true, "1d", tempDir.resolve("history.duckdb").toString());
+    }
+
+    private CollectRep.MetricsData metricAt(long time, String value) {
+        CollectRep.MetricsData metricsData = Mockito.mock(CollectRep.MetricsData.class);
+        when(metricsData.getCode()).thenReturn(CollectRep.Code.SUCCESS);
+        when(metricsData.getValues()).thenReturn(List.of(Mockito.mock(CollectRep.ValueRow.class)));
+        when(metricsData.getApp()).thenReturn("website");
+        when(metricsData.getMetrics()).thenReturn("summary");
+        when(metricsData.getInstance()).thenReturn("example.com:443");
+        when(metricsData.getTime()).thenReturn(time);
+
+        org.apache.arrow.vector.types.pojo.Field field =
+                Mockito.mock(org.apache.arrow.vector.types.pojo.Field.class);
+        when(field.getName()).thenReturn("responseTime");
+        ArrowCell cell = Mockito.mock(ArrowCell.class);
+        when(cell.getField()).thenReturn(field);
+        when(cell.getValue()).thenReturn(value);
+        when(cell.getMetadataAsBoolean(MetricDataConstants.LABEL)).thenReturn(false);
+        when(cell.getMetadataAsInteger(MetricDataConstants.TYPE)).thenReturn((int) CommonConstants.TYPE_NUMBER);
+
+        RowWrapper rowWrapper = Mockito.mock(RowWrapper.class);
+        when(rowWrapper.hasNextRow()).thenReturn(true).thenReturn(false);
+        when(rowWrapper.nextRow()).thenReturn(rowWrapper);
+        when(rowWrapper.cellStream()).thenAnswer(invocation -> List.of(cell).stream());
+        when(metricsData.readRow()).thenReturn(rowWrapper);
+        return metricsData;
     }
 
     private static final class TestDuckdbDatabaseDataStorage extends DuckdbDatabaseDataStorage {

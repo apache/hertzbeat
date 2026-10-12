@@ -1,0 +1,446 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Navigate, type RouteObject } from 'react-router-dom';
+
+import { AuthGate } from '@/core/auth/auth-gate';
+import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
+import { SetupRouteRuntime } from '@/features/setup/route/setup-route-runtime';
+import { BasicLayout } from '@/layout/basic/basic-layout';
+import { RouteLoadingState } from '@/shared/route-state/route-state';
+
+import {
+  AdministrativeDeploymentMigrationRoutePage,
+  AdministrativeDeploymentRoutePage,
+  AdministrativePluginRoutePage,
+  AdministrativeTokenRoutePage
+} from './administrative-route-pages';
+import { AuthenticatedRouteFailure } from './authenticated-route-failure';
+import { RefineRuntime } from './refine/refine-runtime';
+import { ResourceRouteAccess } from './resource-route-access';
+import { LegacyRouteRedirect } from './legacy-route-redirect';
+import { applicationRootPath, getAppRoute, getAppRouteIdentity, legacyRouteCatalog } from './route-registry';
+
+// Static route metadata is exported so architecture tests can inspect the data-router boundary.
+export const appRoutes: RouteObject[] = [
+  {
+    id: 'application',
+    path: applicationRootPath,
+    element: (
+      <SetupRouteRuntime
+        paths={{ setup: getAppRoute('setup').path, login: getAppRoute('login').path }}
+        product={<RefineRuntime />}
+      />
+    ),
+    errorElement: <RouteErrorBoundary />,
+    hydrateFallbackElement: <RouteLoadingState placement="viewport" />,
+    children: [
+      { index: true, element: <Navigate replace to={getAppRoute('dashboard').path} /> },
+      {
+        ...getAppRouteIdentity('setup'),
+        lazy: async () => {
+          const { SetupPage } = await import('@/features/setup');
+          return { Component: SetupPage };
+        }
+      },
+      {
+        ...getAppRouteIdentity('login'),
+        lazy: async () => {
+          const { LoginPage } = await import('@/features/auth');
+          return { Component: LoginPage };
+        }
+      },
+      {
+        ...getAppRouteIdentity('lock'),
+        lazy: async () => {
+          const { SessionLockPage } = await import('@/features/auth');
+          return { Component: SessionLockPage };
+        }
+      },
+      {
+        ...getAppRouteIdentity('status'),
+        lazy: async () => {
+          const { PublicStatusPage } = await import('@/features/status');
+          return { Component: PublicStatusPage };
+        }
+      },
+      {
+        ...getAppRouteIdentity('not-found'),
+        lazy: async () => {
+          const { NotFoundPage } = await import('@/features/errors/not-found-page');
+          return { Component: NotFoundPage };
+        }
+      },
+      {
+        id: 'authenticated',
+        element: (
+          <AuthGate
+            loadingState={<RouteLoadingState placement="viewport" />}
+            failureState={AuthenticatedRouteFailure}
+          />
+        ),
+        children: [
+          {
+            ...getAppRouteIdentity('instrumentation'),
+            element: <ResourceRouteAccess routeId="instrumentation" />,
+            children: [
+              {
+                index: true,
+                lazy: async () => {
+                  const { InstrumentationPage } = await import('@/features/instrumentation');
+                  return { Component: InstrumentationPage };
+                }
+              }
+            ]
+          },
+          ...legacyRedirectRoutes('blank'),
+          {
+            id: 'basic-layout',
+            element: <BasicLayout />,
+            children: [
+              {
+                ...getAppRouteIdentity('dashboard'),
+                lazy: async () => {
+                  const { DashboardPage } = await import('@/features/dashboard');
+                  return { Component: DashboardPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('ai-workspace'),
+                element: <ResourceRouteAccess routeId="ai-workspace" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => {
+                      const { AgentWorkspacePage } = await import('@/features/ai-workspace');
+                      return { Component: AgentWorkspacePage };
+                    }
+                  }
+                ]
+              },
+              {
+                ...getAppRouteIdentity('ai-schedules'),
+                element: <ResourceRouteAccess routeId="ai-schedules" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => {
+                      const { AgentSchedulePage } = await import('@/features/ai-workspace');
+                      return { Component: AgentSchedulePage };
+                    }
+                  }
+                ]
+              },
+              {
+                ...getAppRouteIdentity('monitors'),
+                lazy: async () => {
+                  const { MonitorListPage } = await import('@/features/monitor');
+                  return { Component: MonitorListPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entities'),
+                lazy: async () => {
+                  const { EntityListPage } = await import('@/features/entity');
+                  return { Component: EntityListPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-discovery'),
+                lazy: async () => {
+                  const { EntityDiscoveryPage } = await import('@/features/entity');
+                  return { Component: EntityDiscoveryPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-import'),
+                lazy: async () => {
+                  const { EntityImportPage } = await import('@/features/entity');
+                  return { Component: EntityImportPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-new'),
+                lazy: async () => {
+                  const { EntityEditorPage } = await import('@/features/entity');
+                  return { Component: () => <EntityEditorPage mode="new" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-edit'),
+                lazy: async () => {
+                  const { EntityEditorPage } = await import('@/features/entity');
+                  return { Component: () => <EntityEditorPage mode="edit" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-definition'),
+                lazy: async () => {
+                  const { EntityDefinitionPage } = await import('@/features/entity');
+                  return { Component: EntityDefinitionPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-detail'),
+                lazy: async () => {
+                  const { EntityDetailPage } = await import('@/features/entity');
+                  return { Component: EntityDetailPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('topology'),
+                lazy: async () => {
+                  const { TopologyPage } = await import('@/features/topology');
+                  return { Component: TopologyPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('services'),
+                lazy: async () => {
+                  const { ServicesPage } = await import('@/features/services');
+                  return { Component: ServicesPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('explore'),
+                lazy: async () => {
+                  const { ExplorePage } = await import('@/features/explore');
+                  return { Component: ExplorePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('signal-dashboards'),
+                lazy: async () => {
+                  const { SignalDashboardsPage } = await import('@/features/signal-dashboard');
+                  return { Component: SignalDashboardsPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('monitor-new'),
+                lazy: async () => {
+                  const { MonitorEditorPage } = await import('@/features/monitor');
+                  return { Component: () => <MonitorEditorPage mode="new" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('monitor-edit'),
+                lazy: async () => {
+                  const { MonitorEditorPage } = await import('@/features/monitor');
+                  return { Component: () => <MonitorEditorPage mode="edit" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('monitor-detail'),
+                lazy: async () => {
+                  const { MonitorDetailPage } = await import('@/features/monitor');
+                  return { Component: MonitorDetailPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alerts'),
+                lazy: async () => {
+                  const { AlertCenterPage } = await import('@/features/alert/pages/alert-center-page');
+                  return { Component: AlertCenterPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-investigation'),
+                lazy: async () => {
+                  const { AlertInvestigationPage } = await import('@/features/alert/pages/alert-investigation-page');
+                  return { Component: AlertInvestigationPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-rules'),
+                lazy: async () => {
+                  const { AlertRuleListPage } = await import('@/features/alert/pages/alert-rule-list-page');
+                  return { Component: AlertRuleListPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-rule-new'),
+                lazy: async () => {
+                  const { AlertRuleEditorPage } = await import('@/features/alert/pages/alert-rule-editor-page');
+                  return { Component: () => <AlertRuleEditorPage mode="new" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-rule-edit'),
+                lazy: async () => {
+                  const { AlertRuleEditorPage } = await import('@/features/alert/pages/alert-rule-editor-page');
+                  return { Component: () => <AlertRuleEditorPage mode="edit" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-groups'),
+                lazy: async () => {
+                  const { AlertGroupPage } = await import('@/features/alert/pages/alert-group-page');
+                  return { Component: AlertGroupPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-inhibits'),
+                lazy: async () => {
+                  const { AlertInhibitPage } = await import('@/features/alert/pages/alert-inhibit-page');
+                  return { Component: AlertInhibitPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-silences'),
+                lazy: async () => {
+                  const { AlertSilencePage } = await import('@/features/alert/pages/alert-silence-page');
+                  return { Component: AlertSilencePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('alert-integrations'),
+                lazy: async () => {
+                  const { AlertIntegrationPage } = await import('@/features/alert/integration');
+                  return { Component: AlertIntegrationPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('notice-receivers'),
+                lazy: async () => {
+                  const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver');
+                  return { Component: NoticeReceiverPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('notice-templates'),
+                lazy: async () => {
+                  const { NoticeTemplatePage } = await import('@/features/alert/pages/notice-template-page');
+                  return { Component: NoticeTemplatePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('notice-rules'),
+                lazy: async () => {
+                  const { NoticeRulePage } = await import('@/features/alert/notice-rule');
+                  return { Component: NoticeRulePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('message-server'),
+                lazy: async () => {
+                  const { MessageServerPage } = await import('@/features/settings/message-server');
+                  return { Component: MessageServerPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('tokens'),
+                element: (
+                  <ResourceRouteAccess routeId="tokens">
+                    <AdministrativeTokenRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('collectors'),
+                lazy: async () => {
+                  const { CollectorPage } = await import('@/features/settings/collector');
+                  return { Component: CollectorPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('plugins'),
+                element: (
+                  <ResourceRouteAccess routeId="plugins">
+                    <AdministrativePluginRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('monitor-definitions'),
+                lazy: async () => {
+                  const { MonitorDefinitionPage } = await import('@/features/settings/monitor-definition');
+                  return { Component: MonitorDefinitionPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('deployment-settings'),
+                element: (
+                  <ResourceRouteAccess routeId="deployment-settings">
+                    <AdministrativeDeploymentRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('deployment-migration'),
+                element: (
+                  <ResourceRouteAccess routeId="deployment-settings">
+                    <AdministrativeDeploymentMigrationRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('system-settings'),
+                lazy: async () => {
+                  const { SystemConfigPage } = await import('@/features/settings/system-config');
+                  return { Component: SystemConfigPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('labels'),
+                lazy: async () => {
+                  const { LabelPage } = await import('@/features/settings/label');
+                  return { Component: LabelPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('object-store'),
+                lazy: async () => {
+                  const { ObjectStorePage } = await import('@/features/settings/object-store');
+                  return { Component: ObjectStorePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('status-management'),
+                lazy: async () => {
+                  const { StatusManagementPage } = await import('@/features/status');
+                  return { Component: StatusManagementPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('settings'),
+                element: <Navigate replace to={getAppRoute('system-settings').path} />
+              },
+              ...legacyRedirectRoutes('basic'),
+              {
+                ...getAppRouteIdentity('bulletin'),
+                lazy: async () => {
+                  const { BulletinPage } = await import('@/features/bulletin');
+                  return { Component: BulletinPage };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+
+function legacyRedirectRoutes(layout: 'basic' | 'blank'): RouteObject[] {
+  return legacyRouteCatalog
+    .filter(definition => getAppRoute(definition.targetRouteId).layout === layout)
+    .map(definition => ({
+      id: definition.id,
+      path: definition.path,
+      element: <LegacyRouteRedirect definition={definition} />
+    }));
+}

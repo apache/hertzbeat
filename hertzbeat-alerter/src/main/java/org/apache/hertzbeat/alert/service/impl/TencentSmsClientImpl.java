@@ -79,22 +79,14 @@ public class TencentSmsClientImpl implements SmsClient {
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         // todo limit the number of words
-        String instance = null;
-        String priority = null;
-        String content = null;
-        if (alert.getCommonLabels() != null) {
-            instance = alert.getCommonLabels().get("instance");
-            priority = alert.getCommonLabels().get("priority");
-            content = alert.getCommonAnnotations().get("summary");
-            content = content == null ? alert.getCommonAnnotations().get("description") : content;
-            if (content == null) {
-                content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
-            }
-        }
+        SmsAlertFields fields = SmsAlertFields.from(alert);
+        String instance = fields.instance();
+        String priority = fields.priority();
+        String content = fields.content();
 
         String[] templateValues = new String[3];
-        templateValues[0] = instance == null ? alert.getGroupKey() : instance;
-        templateValues[1] = priority == null ? "unknown" : priority;
+        templateValues[0] = instance;
+        templateValues[1] = priority;
         templateValues[2] = content;
 
         String[] phones = new String[1];

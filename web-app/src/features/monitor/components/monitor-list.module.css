@@ -1,0 +1,103 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.filterFields {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 200px) minmax(140px, 160px) minmax(180px, 1fr);
+  gap: 8px;
+}
+.filterActions,
+.managementActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filterActions {
+  flex-wrap: nowrap;
+}
+.managementActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.name {
+  min-width: 0;
+}
+.name > strong,
+.name > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bulk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding-block: 8px;
+}
+.name > span {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+.endpoint,
+.appFilter {
+  height: auto;
+  padding: 0;
+}
+.endpoint {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowLabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.rowLabels :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+.disappearedRow {
+  opacity: 0.55;
+}
+@media (max-width: 1100px) {
+  .filterActions {
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 800px) {
+  .filterFields {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filterActions,
+  .managementActions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 520px) {
+  .filterFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

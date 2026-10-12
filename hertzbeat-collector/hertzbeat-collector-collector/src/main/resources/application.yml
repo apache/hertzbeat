@@ -27,6 +27,9 @@ spring:
     timeout-per-shutdown-phase: 10s
   jackson:
     default-property-inclusion: ALWAYS
+  # The standalone collector does not own a database.
+  autoconfigure:
+    exclude: org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration, org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
 management:
   endpoints:
     web:
@@ -52,8 +55,36 @@ spring:
 
 collector:
   info:
-    version: ${COLLECTOR_VERSION:1.9.0}
+    version: ${COLLECTOR_VERSION:2.0.0}
     ip: ${COLLECTOR_IP:}
+  otel-runtime:
+    enabled: ${HERTZBEAT_OTEL_RUNTIME_ENABLED:false}
+    home: ${HERTZBEAT_HOME:.}
+    binary: ${HERTZBEAT_OTEL_RUNTIME_BINARY:}
+    collector-id: ${IDENTITY:}
+    workspace-id: ${HERTZBEAT_WORKSPACE_ID:default}
+    config-schema: ${HERTZBEAT_OTEL_CONFIG_SCHEMA:3}
+    config-revision: ${HERTZBEAT_OTEL_CONFIG_REVISION:1}
+    host-metrics-enabled: ${HERTZBEAT_OTEL_HOST_METRICS_ENABLED:true}
+    host-metrics-interval: ${HERTZBEAT_OTEL_HOST_METRICS_INTERVAL:10s}
+    file-storage-directory: ${HERTZBEAT_OTEL_FILE_STORAGE_DIRECTORY:data/otel-runtime}
+    export-endpoint: ${HERTZBEAT_OTLP_HTTP_ENDPOINT:http://127.0.0.1:1157/api/otlp}
+    otlp-http-exporter-timeout: ${HERTZBEAT_OTLP_HTTP_EXPORTER_TIMEOUT:5s}
+    token: ${HERTZBEAT_OTLP_TOKEN:}
+    otlp-grpc-endpoint: ${HERTZBEAT_OTLP_GRPC_LISTEN_ENDPOINT:127.0.0.1:4317}
+    otlp-http-endpoint: ${HERTZBEAT_OTLP_HTTP_LISTEN_ENDPOINT:127.0.0.1:4318}
+    otlp-max-request-mi-b: ${HERTZBEAT_OTLP_MAX_REQUEST_MIB:4}
+    otlp-read-timeout: ${HERTZBEAT_OTLP_READ_TIMEOUT:15s}
+    otlp-write-timeout: ${HERTZBEAT_OTLP_WRITE_TIMEOUT:15s}
+    otlp-idle-timeout: ${HERTZBEAT_OTLP_IDLE_TIMEOUT:30s}
+    otlp-gateway-enabled: ${HERTZBEAT_OTLP_GATEWAY_ENABLED:false}
+    otlp-gateway-allow-plaintext: ${HERTZBEAT_OTLP_GATEWAY_ALLOW_PLAINTEXT:false}
+    otlp-gateway-bearer-token: ${HERTZBEAT_OTLP_GATEWAY_TOKEN:}
+    runtime-memory-limit-mi-b: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_LIMIT_MIB:256}
+    runtime-memory-spike-limit-mi-b: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_SPIKE_LIMIT_MIB:64}
+    runtime-memory-check-interval: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_CHECK_INTERVAL:1s}
+    internal-telemetry-port: ${HERTZBEAT_OTEL_INTERNAL_TELEMETRY_PORT:8888}
+    internal-telemetry-timeout: ${HERTZBEAT_OTEL_INTERNAL_TELEMETRY_TIMEOUT:500ms}
   dispatch:
     entrance:
       netty:
@@ -72,19 +103,3 @@ push:
 common:
   queue:
     type: netty
-
-hertzbeat:
-  collector:
-    mysql:
-      # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.
-      # auto  : prefer JDBC only when mysql-connector-j is available from ext-lib, otherwise use the built-in query engine
-      # jdbc  : always use JDBC
-      # r2dbc : always use the built-in query engine
-      query-engine: ${HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE:auto}
-  # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
-  vthreads:
-    enabled: true
-    common:
-      mode: UNBOUNDED_VT
-    collector:
-      mode: LIMIT_AND_REJECT

@@ -39,7 +39,8 @@ public class CollectorOfflineProcessor implements NettyRemotingProcessor {
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go offline.", collector);
-        this.manageServer.getCollectorAndJobScheduler().collectorGoOffline(collector);
+        this.manageServer.getRuntimeStatusRegistry().remove(collector);
+        this.manageServer.collectorOffline(collector, false);
         return null;
     }
 }

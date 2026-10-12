@@ -46,6 +46,18 @@ nbdist/
 node_modules
 .docusaurus
 
+# codex / browser / screenshot noise
+.codex-artifacts/
+.playwright-mcp/
+progress.md
+test-results/
+playwright-report/
+reports/
+screenshots/
+
+# local temp runtime data
+.tmp/
+
 # h2 data
 *.mv.db
 *.trace.db
@@ -56,7 +68,7 @@ application-mysql.yml
 application-pg.yml
 /package.json
 /yarn.lock
+.omx/
 
-# Local Codex workspace files
-.codex/
-AGENTS.md
+# legacy frontend build output
+/web-app/dist/

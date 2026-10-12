@@ -26,6 +26,7 @@ import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.ai.tool.annotation.Tool;
@@ -44,26 +45,26 @@ public class AlertToolsImpl implements AlertTools {
     @Override
     @Tool(name = "query_alerts", description = """
             HertzBeat: Query alerts with comprehensive filtering and pagination options.
-            
+
             ALERT TYPES:
             - Pass alertType='single' for individual alert instances
             - Pass alertType='group' for grouped/aggregated alerts
             - Pass alertType='both' to get both types (separate sections)
-            
+
             STATUS FILTERING:
             - 'firing': Currently active alerts requiring attention
             - 'resolved': Previously active alerts that have been cleared
             - 'all': Both firing and resolved alerts (default)
-            
+
             SEARCH & FILTERING:
             - search: Search in alert content, labels, or descriptions
             - sort: Order by 'startAt' (trigger time), 'triggerTimes' (frequency), 'status'
             - order: 'asc' (oldest first) or 'desc' (newest first, default)
-            
+
             PAGINATION:
             - pageIndex: Page number starting from 0
             - pageSize: Number of alerts per page (default: 10, max recommended: 50)
-            
+
             EXAMPLE AND COMMON USE CASES:
             - Recent active alerts: alertType='single', status='firing', sort='startAt', order='desc'
             - Historical analysis: alertType='single', status='resolved', pageSize=50
@@ -87,6 +88,7 @@ public class AlertToolsImpl implements AlertTools {
             log.info("Querying alerts: alertType={}, status={}, search={}, sort={}, order={}", alertType, status, search, sort, order);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in query_alerts tool: {}", subjectSum);
+            String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
 
             // Set defaults
             if (alertType == null || alertType.trim().isEmpty()) {
@@ -114,8 +116,9 @@ public class AlertToolsImpl implements AlertTools {
 
             // Handle different alert types
             if ("single".equalsIgnoreCase(alertType) || "both".equalsIgnoreCase(alertType)) {
-                Page<SingleAlert> singleResult = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
-                
+                Page<SingleAlert> singleResult = alertService.getSingleAlerts(
+                        workspaceId, status, search, sort, order, pageIndex, pageSize);
+
                 response.append("SINGLE ALERTS:\n");
                 response.append("Found ").append(singleResult.getContent().size()).append(" single alerts (Total: ").append(singleResult.getTotalElements()).append("):\n\n");
 
@@ -124,7 +127,7 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("Status: ").append(alert.getStatus()).append("\n");
                     response.append("Content: ").append(alert.getContent() != null ? alert.getContent() : "No content").append("\n");
                     response.append("Trigger Times: ").append(alert.getTriggerTimes()).append("\n");
-                    
+
                     if (alert.getStartAt() != null) {
                         response.append("Started At: ").append(UtilityClass.formatTimestamp(alert.getStartAt())).append("\n");
                     }
@@ -134,7 +137,7 @@ public class AlertToolsImpl implements AlertTools {
                     if (alert.getEndAt() != null) {
                         response.append("Ended At: ").append(UtilityClass.formatTimestamp(alert.getEndAt())).append("\n");
                     }
-                    
+
                     if (alert.getLabels() != null && !alert.getLabels().isEmpty()) {
                         response.append("Labels: ").append(alert.getLabels()).append("\n");
                     }
@@ -151,9 +154,10 @@ public class AlertToolsImpl implements AlertTools {
                 if ("both".equalsIgnoreCase(alertType)) {
                     response.append("\n");
                 }
-                
-                Page<GroupAlert> groupResult = alertService.getGroupAlerts(status, search, sort, order, pageIndex, pageSize);
-                
+
+                Page<GroupAlert> groupResult = alertService.getGroupAlerts(workspaceId, status, search, null, null,
+                        null, null, sort, order, pageIndex, pageSize);
+
                 response.append("GROUP ALERTS:\n");
                 response.append("Found ").append(groupResult.getContent().size()).append(" group alerts (Total: ").append(groupResult.getTotalElements()).append("):\n\n");
 
@@ -161,14 +165,14 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("Group Alert ID: ").append(alert.getId()).append("\n");
                     response.append("Status: ").append(alert.getStatus()).append("\n");
                     response.append("Group Key: ").append(alert.getGroupKey() != null ? alert.getGroupKey() : "No group key").append("\n");
-                    
+
                     if (alert.getGmtCreate() != null) {
                         response.append("Created At: ").append(alert.getGmtCreate()).append("\n");
                     }
                     if (alert.getGmtUpdate() != null) {
                         response.append("Updated At: ").append(alert.getGmtUpdate()).append("\n");
                     }
-                    
+
                     if (alert.getCommonLabels() != null && !alert.getCommonLabels().isEmpty()) {
                         response.append("Common Labels: ").append(alert.getCommonLabels()).append("\n");
                     }
@@ -202,7 +206,7 @@ public class AlertToolsImpl implements AlertTools {
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in get_alerts_summary tool: {}", subjectSum);
 
-            AlertSummary summary = alertService.getAlertsSummary();
+            AlertSummary summary = alertService.getAlertsSummary(AuthTokenRequestContext.currentWorkspaceId());
 
             StringBuilder response = new StringBuilder();
             response.append("ALERTS SUMMARY\n");

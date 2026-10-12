@@ -1,0 +1,196 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.observability.ingestion.controller;
+
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricLabelsDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedSummaryDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
+import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
+import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
+import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+
+/**
+ * OTLP ingestion workspace controller.
+ */
+@RestController
+@RequestMapping(path = "/api/ingestion/otlp", produces = "application/json")
+@Tag(name = "OTLP Ingestion Controller")
+@RequiredArgsConstructor
+public class OtlpIngestionController {
+
+    private final OtlpIngestionWorkspaceService otlpIngestionWorkspaceService;
+    private final OtlpIngestionRedSummaryService otlpIngestionRedSummaryService;
+    private final CollectorScopedMetricsQueryService collectorScopedMetricsQueryService;
+    private final ObservabilityQueryAdmissionService queryAdmissionService;
+
+    @GetMapping("/overview")
+    @Operation(summary = "Unified OTLP ingestion overview")
+    public ResponseEntity<Message<OtlpIngestionOverviewDto>> overview() {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getOverview(workspaceId)));
+    }
+
+    @GetMapping("/guide")
+    @Operation(summary = "Unified OTLP ingestion guide")
+    public ResponseEntity<Message<OtlpIngestionGuideDto>> guide(HttpServletRequest request) {
+        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getGuide(request)));
+    }
+
+    @GetMapping("/bindings")
+    @Operation(summary = "Canonical identity and entity binding summary")
+    public ResponseEntity<Message<OtlpEntityBindingSummaryDto>> bindings() {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getBindingSummary(workspaceId)));
+    }
+
+    @GetMapping("/intake/red")
+    @Operation(summary = "Recent OTLP ingest request, error, and duration summary")
+    public ResponseEntity<Message<OtlpIngestionRedSummaryDto>> intakeRedSummary(
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end) {
+        return ResponseEntity.ok(Message.success(otlpIngestionRedSummaryService.getSummary(start, end)));
+    }
+
+    @GetMapping("/metrics/console")
+    @Operation(summary = "OTLP metrics console query workspace")
+    public ResponseEntity<Message<OtlpMetricsConsoleDto>> metricsConsole(
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
+            @RequestParam("start") Long start,
+            @RequestParam("end") Long end,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
+            @RequestParam("query") String query,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "groupBy", required = false) String groupBy,
+            @RequestParam(value = "aggregation", required = false) String aggregation,
+            @RequestParam(value = "temporalAggregation", required = false) String temporalAggregation,
+            @RequestParam(value = "step", required = false) String step,
+            @RequestParam(value = "limit", required = false) String limit,
+            @RequestParam(value = "operationName", required = false) String operationName) {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> collectorScopedMetricsQueryService.query(
+                        new CollectorScopedMetricsQueryService.Request(
+                                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
+                                environment, collectorId, instance, endpoint, query, filter, groupBy, aggregation,
+                                temporalAggregation, step, limit, operationName)))));
+    }
+
+    @GetMapping("/metrics/inventory")
+    @Operation(summary = "OTLP metrics inventory for a service or entity context")
+    public ResponseEntity<Message<OtlpMetricsInventoryDto>> metricsInventory(
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "limit", required = false) String limit) {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> collectorScopedMetricsQueryService.inventory(
+                        new CollectorScopedMetricsQueryService.InventoryRequest(
+                                workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace,
+                                environment, collectorId, instance, endpoint, search, limit)))));
+    }
+
+    @GetMapping("/metrics/labels")
+    @Operation(summary = "Bounded metric label suggestions in the submitted scope")
+    public ResponseEntity<Message<OtlpMetricLabelsDto>> metricLabels(
+            @RequestParam(value = "entityId", required = false) String entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
+            @RequestParam(value = "start", required = false) String start,
+            @RequestParam(value = "end", required = false) String end,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "label", required = false) String label,
+            @RequestParam(value = "limit", required = false) String limit,
+            @RequestParam(value = "operationName", required = false) String operationName) {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> collectorScopedMetricsQueryService.labels(new CollectorScopedMetricsQueryService.LabelsRequest(
+                        workspaceId, labelEpoch(entityId), entityType, labelEpoch(start), labelEpoch(end), serviceName, serviceNamespace, environment,
+                        collectorId, instance, endpoint, query, filter, label, limit, operationName)))));
+    }
+
+    private Long labelEpoch(String value) {
+        try {
+            return value == null ? null : Long.valueOf(value);
+        } catch (NumberFormatException exception) {
+            throw new org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException();
+        }
+    }
+
+    @GetMapping("/metrics/related")
+    @Operation(summary = "OTLP related metrics discovery for a signal context")
+    public ResponseEntity<Message<OtlpRelatedMetricsDto>> relatedMetrics(
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "operationName", required = false) String operationName,
+            @RequestParam(value = "limit", required = false) String limit) {
+        String workspaceId = currentWorkspaceId();
+        return ResponseEntity.ok(Message.success(queryAdmissionService.execute("metrics",
+                () -> otlpIngestionWorkspaceService.getRelatedMetrics(
+                        workspaceId, entityId, entityType, start, end, serviceName, serviceNamespace, environment,
+                        filter, operationName, limit))));
+    }
+
+    private String currentWorkspaceId() {
+        return StringUtils.trimWhitespace(AuthTokenRequestContext.currentWorkspaceId());
+    }
+}
