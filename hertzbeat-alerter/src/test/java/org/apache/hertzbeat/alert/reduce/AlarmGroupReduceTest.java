@@ -260,6 +260,42 @@ class AlarmGroupReduceTest {
         verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
     }
 
+    /**
+     * Regression for issue #4446: Prometheus keeps reposting the same resolved alert every
+     * resend interval. Once the recovery has been emitted and the member evicted from the
+     * group cache, a reposted resolved alert must not look new and trigger another recovery
+     * notification.
+     */
+    @Test
+    void repostedResolvedAlertMustNotTriggerAnotherRecoveryNotification() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "firing", "host1"));
+        dispatchAndDrain();
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        dispatchAndDrain();
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    /**
+     * A resolved alert whose firing phase was never seen (e.g. after a restart) is still
+     * emitted once, but reposts of it are deduplicated.
+     */
+    @Test
+    void unseenResolvedAlertIsEmittedOnce() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
+
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        alarmGroupReduce.processGroupAlert(instanceAlert("cpu", "resolved", "host1"));
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(1)).inhibitAlarm(any());
+    }
+
     @Test
     void concurrentInsertIsNotClearedWithSuccessfulSnapshot() throws Exception {
         alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
