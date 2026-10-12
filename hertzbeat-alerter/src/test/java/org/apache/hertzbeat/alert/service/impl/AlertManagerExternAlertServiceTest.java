@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -91,13 +92,13 @@ public class AlertManagerExternAlertServiceTest {
 
         final SingleAlert[] capturedAlert = new SingleAlert[1];
         doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
+            capturedAlert[0] = invocation.getArgument(1);
             return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+        }).when(alarmCommonReduce).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alertManagerAlert));
 
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
         assertNotNull(capturedAlert[0]);
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, capturedAlert[0].getStatus());
@@ -132,13 +133,13 @@ public class AlertManagerExternAlertServiceTest {
 
         final SingleAlert[] capturedAlert = new SingleAlert[1];
         doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
+            capturedAlert[0] = invocation.getArgument(1);
             return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+        }).when(alarmCommonReduce).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alertManagerAlert));
 
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
         assertNotNull(capturedAlert[0]);
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, capturedAlert[0].getStatus());
@@ -166,13 +167,13 @@ public class AlertManagerExternAlertServiceTest {
 
         final SingleAlert[] capturedAlert = new SingleAlert[1];
         doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
+            capturedAlert[0] = invocation.getArgument(1);
             return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+        }).when(alarmCommonReduce).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alertManagerAlert));
 
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
         assertNotNull(capturedAlert[0]);
         assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, capturedAlert[0].getStatus());
@@ -183,8 +184,8 @@ public class AlertManagerExternAlertServiceTest {
     @Test
     void testAddExternAlertWithInvalidContent() {
         String invalidContent = "invalid json content";
-        externAlertService.addExternAlert(invalidContent);
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.addExternAlert("default", invalidContent));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -193,8 +194,9 @@ public class AlertManagerExternAlertServiceTest {
             .groupKey("test-group-key")
             .alerts(List.of()) // Empty alerts list
             .build();
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        String content = JsonUtil.toJson(alertManagerAlert);
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.addExternAlert("default", content));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -211,19 +213,9 @@ public class AlertManagerExternAlertServiceTest {
             .alerts(List.of(prometheusAlert))
             .build();
 
-        final SingleAlert[] capturedAlert = new SingleAlert[1];
-        doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
-            return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
-
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
-
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
-
-        assertNotNull(capturedAlert[0]);
-        assertNotNull(capturedAlert[0].getLabels());
-        assertEquals("alertmanager", capturedAlert[0].getLabels().get("__source__"));
+        String content = JsonUtil.toJson(alertManagerAlert);
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.addExternAlert("default", content));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -245,13 +237,13 @@ public class AlertManagerExternAlertServiceTest {
 
         final SingleAlert[] capturedAlert = new SingleAlert[1];
         doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
+            capturedAlert[0] = invocation.getArgument(1);
             return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+        }).when(alarmCommonReduce).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alertManagerAlert));
 
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
         assertNotNull(capturedAlert[0]);
         assertEquals("", capturedAlert[0].getContent());
@@ -273,13 +265,13 @@ public class AlertManagerExternAlertServiceTest {
 
         final SingleAlert[] capturedAlert = new SingleAlert[1];
         doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
+            capturedAlert[0] = invocation.getArgument(1);
             return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+        }).when(alarmCommonReduce).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alertManagerAlert));
 
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
 
         assertNotNull(capturedAlert[0]);
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, capturedAlert[0].getStatus());

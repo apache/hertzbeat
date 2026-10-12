@@ -15,8 +15,42 @@
 # specific language governing permissions and limitations
 # under the License.
 
-version: '3.8'
 services:
+  # Disposable CI credentials, explicitly provisioned through the native Setup workflow.
+  setup-inputs:
+    image: alpine:3.22
+    volumes:
+      - setup-inputs:/run/hertzbeat-e2e
+    depends_on:
+      greptime:
+        condition: service_started
+    command:
+      - sh
+      - -ec
+      - |
+        rm -f /run/hertzbeat-e2e/ready
+        apk add --no-cache curl >/dev/null
+        umask 077
+        chmod 700 /run/hertzbeat-e2e
+        printf '%s' 'e2e-metadata-only' > /run/hertzbeat-e2e/metadata-password
+        printf '%s' 'hertzbeat' > /run/hertzbeat-e2e/administrator-password
+        for attempt in $(seq 1 60); do
+          if curl --fail --silent --max-time 2 http://greptime:4000/health >/dev/null; then
+            touch /run/hertzbeat-e2e/ready
+            exec tail -f /dev/null
+          fi
+          sleep 1
+        done
+        echo 'Greptime did not become ready for disposable E2E setup' >&2
+        exit 1
+    healthcheck:
+      test: ["CMD", "test", "-f", "/run/hertzbeat-e2e/ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 90
+  greptime:
+    image: greptime/greptimedb:v1.1.4
+    command: standalone start --http-addr 0.0.0.0:4000 --rpc-bind-addr 0.0.0.0:4001
   testing:
     image: ghcr.io/linuxsuren/api-testing:v0.0.19
     environment:
@@ -34,7 +68,7 @@ services:
       - hertzbeat
       - checker
   checker:
-    image: alpine:latest
+    image: alpine:3.22
     container_name: e2e-checker
     command: sh -c "apk add --update curl && tail -f /dev/null"
     healthcheck:
@@ -43,14 +77,32 @@ services:
       ]
       interval: 3s
       timeout: 60s
-      retries: 10
+      retries: 60
       start_period: 10s
   hertzbeat:
     image: apache/hertzbeat:test
+    # These files create this test account; the product has no default login.
+    environment:
+      HERTZBEAT_SETUP_UNATTENDED_ENABLED: "true"
+      HERTZBEAT_SETUP_METADATA_KIND: h2
+      HERTZBEAT_SETUP_METADATA_JDBC_URL: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+      HERTZBEAT_SETUP_METADATA_USERNAME: sa
+      HERTZBEAT_SETUP_METADATA_PASSWORD_FILE: /run/hertzbeat-e2e/metadata-password
+      HERTZBEAT_SETUP_TELEMETRY_GRPC_ENDPOINTS: greptime:4001
+      HERTZBEAT_SETUP_TELEMETRY_HTTP_ENDPOINT: http://greptime:4000
+      HERTZBEAT_SETUP_TELEMETRY_DATABASE: public
+      HERTZBEAT_SETUP_ADMINISTRATOR_USERNAME: admin
+      HERTZBEAT_SETUP_ADMINISTRATOR_PASSWORD_FILE: /run/hertzbeat-e2e/administrator-password
+      HERTZBEAT_SETUP_UNATTENDED_ACKNOWLEDGED_WARNINGS: h2_non_production
+    depends_on:
+      setup-inputs:
+        condition: service_healthy
     container_name: e2e-hertzbeat
     volumes:
       - ./logs/:/opt/hertzbeat/logs/
+      - setup-inputs:/run/hertzbeat-e2e:ro
     ports:
-      - "1157:1157"
-    environment:
-      ALLOW_NONE_AUTHENTICATION: "yes"
+      - "127.0.0.1:1157:1157"
+
+volumes:
+  setup-inputs:

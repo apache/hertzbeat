@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -37,7 +38,9 @@ import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
 import org.apache.hertzbeat.warehouse.service.WarehouseStorageStatus;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -46,6 +49,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class MetricsDataServiceImpl implements MetricsDataService {
+
+    private static final String DEFAULT_HISTORY = "6h";
+
+    private static final String STEP_PATTERN = "^[1-9][0-9]*(ms|s|m|h|d)$";
 
     /**
      * The history range is interpolated straight into the time predicate of the generated
@@ -81,26 +88,31 @@ public class MetricsDataServiceImpl implements MetricsDataService {
 
     private final RealTimeDataReader realTimeDataReader;
 
-    private final Optional<HistoryDataReader> historyDataReader;
+    private final List<HistoryDataReader> historyDataReaders;
+
+    @Autowired
+    public MetricsDataServiceImpl(RealTimeDataReader realTimeDataReader, List<HistoryDataReader> historyDataReaders) {
+        this.realTimeDataReader = realTimeDataReader;
+        this.historyDataReaders = historyDataReaders == null ? List.of()
+                : historyDataReaders.stream().filter(Objects::nonNull).toList();
+    }
 
     public MetricsDataServiceImpl(RealTimeDataReader realTimeDataReader, Optional<HistoryDataReader> historyDataReader) {
-        this.realTimeDataReader = realTimeDataReader;
-        this.historyDataReader = historyDataReader;
+        this(realTimeDataReader, historyDataReader == null ? List.of() : historyDataReader.stream().toList());
     }
 
     @Override
     public Boolean getWarehouseStorageServerStatus() {
-        return getWarehouseStorageStatus().available();
+        return historyDataReaders.stream()
+                .anyMatch(reader -> reader.getServerAvailability() == ServerAvailability.AVAILABLE);
     }
 
     @Override
     public WarehouseStorageStatus getWarehouseStorageStatus() {
-        return historyDataReader
-            .map(reader -> new WarehouseStorageStatus(
-                reader.isServerAvailable(),
-                reader.getDroppedMetricCount(),
-                reader.getPendingMetricCount()))
-            .orElseGet(() -> new WarehouseStorageStatus(false, 0, 0));
+        return new WarehouseStorageStatus(
+                getWarehouseStorageServerStatus(),
+                historyDataReaders.stream().mapToLong(HistoryDataReader::getDroppedMetricCount).sum(),
+                historyDataReaders.stream().mapToInt(HistoryDataReader::getPendingMetricCount).sum());
     }
 
     @Override
@@ -151,20 +163,40 @@ public class MetricsDataServiceImpl implements MetricsDataService {
     }
 
     @Override
-    public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String history, Boolean interval) {
+    public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric,
+                                                   String history, Boolean interval, Long start, Long end,
+                                                   String step) {
         if (history == null) {
-            history = "6h";
+            history = DEFAULT_HISTORY;
         }
         validateHistoryRange(history);
         validateIdentifier(app, "app");
         validateIdentifier(metrics, "metrics");
         validateIdentifier(metric, "metric");
         validateInstance(instance);
+        HistoryDataReader historyDataReader = resolveHistoryDataReader();
+        if (historyDataReader == null) {
+            throw new CommonException("history store not available");
+        }
+        Long effectiveStart = isValidAbsoluteRange(start, end) ? start : null;
+        Long effectiveEnd = isValidAbsoluteRange(start, end) ? end : null;
+        String effectiveStep = normalizeStep(step);
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, history);
+            if (effectiveStart == null && effectiveEnd == null && effectiveStep == null) {
+                instanceValuesMap = historyDataReader.getHistoryMetricData(instance, app, metrics, metric, history);
+            } else {
+                instanceValuesMap = historyDataReader.getHistoryMetricData(instance, app, metrics, metric, history,
+                        effectiveStart, effectiveEnd, effectiveStep);
+            }
         } else {
-            instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(instance, app, metrics, metric, history);
+            if (effectiveStart == null && effectiveEnd == null && effectiveStep == null) {
+                instanceValuesMap = historyDataReader.getHistoryIntervalMetricData(instance, app, metrics, metric,
+                        history);
+            } else {
+                instanceValuesMap = historyDataReader.getHistoryIntervalMetricData(instance, app, metrics, metric,
+                        history, effectiveStart, effectiveEnd, effectiveStep);
+            }
         }
         if (instanceValuesMap.containsKey("{}")) {
             instanceValuesMap.put("", instanceValuesMap.get("{}"));
@@ -174,6 +206,25 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                 .instance(instance).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
+    }
+
+    private HistoryDataReader resolveHistoryDataReader() {
+        return historyDataReaders.stream()
+                .filter(HistoryDataReader::isServerAvailable)
+                .findFirst()
+                .or(() -> historyDataReaders.stream().findFirst())
+                .orElse(null);
+    }
+
+    private boolean isValidAbsoluteRange(Long start, Long end) {
+        return start != null && end != null && start > 0 && end > 0 && start < end;
+    }
+
+    private String normalizeStep(String step) {
+        if (step == null || !step.matches(STEP_PATTERN)) {
+            return null;
+        }
+        return step;
     }
 
     private static void validateHistoryRange(String history) {

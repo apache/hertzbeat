@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -57,8 +58,16 @@ public class AlibabaCloudSlsExternAlertServiceTest {
     @Test
     void testAddExternAlertWithInvalidContent() {
         String invalidContent = "invalid json";
-        externAlertService.addExternAlert(invalidContent);
-        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", invalidContent));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
+    }
+
+    @Test
+    void rejectsEmptyOfficialBatchShapeInsteadOfReturningFalseSuccess() {
+        assertThrows(IllegalArgumentException.class,
+                () -> externAlertService.addExternAlert("default", "[]"));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -83,9 +92,9 @@ public class AlibabaCloudSlsExternAlertServiceTest {
         annotations.put("annotations-k", "annotations-v");
         externAlert.setAnnotations(annotations);
 
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(externAlert));
 
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -99,8 +108,8 @@ public class AlibabaCloudSlsExternAlertServiceTest {
         alert.setStatus("firing");
         alert.setSeverity(AlibabaCloudSlsExternAlert.Severity.HIGH.getStatus());
         alert.setSigninUrl("https://example.com");
-        externAlertService.addExternAlert(JsonUtil.toJson(alert));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alert));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -114,10 +123,10 @@ public class AlibabaCloudSlsExternAlertServiceTest {
             alert.setProject("test-project");
             alert.setStatus("firing");
             alert.setSeverity(severity.getStatus());
-            externAlertService.addExternAlert(JsonUtil.toJson(alert));
+            externAlertService.addExternAlert("default", JsonUtil.toJson(alert));
         }
         verify(alarmCommonReduce, times(AlibabaCloudSlsExternAlert.Severity.values().length))
-                .reduceAndSendAlarm(any(SingleAlert.class));
+                .reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -132,8 +141,8 @@ public class AlibabaCloudSlsExternAlertServiceTest {
         alert.setSeverity(AlibabaCloudSlsExternAlert.Severity.HIGH.getStatus());
         alert.setLabels(new HashMap<>());
         alert.setAnnotations(new HashMap<>());
-        externAlertService.addExternAlert(JsonUtil.toJson(alert));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alert));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -146,8 +155,8 @@ public class AlibabaCloudSlsExternAlertServiceTest {
         alert.setProject("test-project");
         alert.setStatus("firing");
         alert.setSeverity(-99);
-        externAlertService.addExternAlert(JsonUtil.toJson(alert));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(alert));
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
     @Test
@@ -178,8 +187,8 @@ public class AlibabaCloudSlsExternAlertServiceTest {
         List<AlibabaCloudSlsExternAlert> externAlerts = new ArrayList<>();
         externAlerts.add(externAlert);
         externAlerts.add(externAlert1);
-        externAlertService.addExternAlert(JsonUtil.toJson(externAlerts));
-        verify(alarmCommonReduce, times(2)).reduceAndSendAlarm(any(SingleAlert.class));
+        externAlertService.addExternAlert("default", JsonUtil.toJson(externAlerts));
+        verify(alarmCommonReduce, times(2)).reduceAndSendAlarm(org.mockito.ArgumentMatchers.eq("default"), any(SingleAlert.class));
     }
 
 }

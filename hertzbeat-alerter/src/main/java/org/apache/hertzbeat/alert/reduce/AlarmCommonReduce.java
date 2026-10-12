@@ -18,13 +18,20 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.util.AlertWorkspaceLabelKeys;
 import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
 import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
+import org.apache.hertzbeat.common.concurrent.WorkAdmissionGate;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +43,18 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class AlarmCommonReduce implements DisposableBean {
-    
+
     private final AlarmGroupReduce alarmGroupReduce;
 
     private final ManagedExecutor workerExecutor;
+
+    private final WorkAdmissionGate maintenanceGate = new WorkAdmissionGate();
+
+    private final ReentrantLock maintenanceLock = new ReentrantLock(true);
+
+    private final Deque<Runnable> deferredTasks = new ArrayDeque<>();
+
+    private boolean stopped;
 
     public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce) {
         this(alarmGroupReduce, VirtualThreadProperties.defaults());
@@ -51,6 +66,11 @@ public class AlarmCommonReduce implements DisposableBean {
         VirtualThreadProperties properties =
                 virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
         this.workerExecutor = initWorkExecutor(properties);
+    }
+
+    AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce, ManagedExecutor workerExecutor) {
+        this.alarmGroupReduce = alarmGroupReduce;
+        this.workerExecutor = workerExecutor;
     }
 
     private ManagedExecutor initWorkExecutor(VirtualThreadProperties properties) {
@@ -78,14 +98,47 @@ public class AlarmCommonReduce implements DisposableBean {
 
 
     public void reduceAndSendAlarm(SingleAlert alert) {
-        workerExecutor.execute(reduceAlarmTask(alert));
+        reduceAndSendSystemAlarm(alert);
+    }
+
+    public void reduceAndSendSystemAlarm(SingleAlert alert) {
+        reduceAndSendAlarm(AuthTokenScopes.DEFAULT_WORKSPACE_ID, alert);
+    }
+
+    public void reduceAndSendAlarm(String workspaceId, SingleAlert alert) {
+        requireWorkspace(workspaceId);
+        if (alert == null) {
+            throw new IllegalArgumentException("alert_required");
+        }
+        alert.setWorkspaceId(workspaceId);
+        submitOrDefer(reduceAlarmTask(alert));
     }
 
     public void reduceAndSendAlarmGroup(Map<String, String> groupLabels, List<SingleAlert> alerts) {
-        workerExecutor.execute(() -> {
+        reduceAndSendSystemAlarmGroup(groupLabels, alerts);
+    }
+
+    public void reduceAndSendSystemAlarmGroup(Map<String, String> groupLabels, List<SingleAlert> alerts) {
+        reduceAndSendAlarmGroup(AuthTokenScopes.DEFAULT_WORKSPACE_ID, groupLabels, alerts);
+    }
+
+    public void reduceAndSendAlarmGroup(String workspaceId, Map<String, String> groupLabels,
+                                        List<SingleAlert> alerts) {
+        requireWorkspace(workspaceId);
+        if (alerts == null || alerts.isEmpty()) {
+            throw new IllegalArgumentException("alerts_required");
+        }
+        alerts.forEach(alert -> {
+            if (alert == null) {
+                throw new IllegalArgumentException("alert_required");
+            }
+            alert.setWorkspaceId(workspaceId);
+        });
+        submitOrDefer(() -> {
             try {
                 // Generate alert fingerprint
                 for (SingleAlert alert : alerts) {
+                    stripReservedWorkspaceLabels(alert);
                     String fingerprint = generateAlertFingerprint(alert.getLabels());
                     alert.setFingerprint(fingerprint);
                 }
@@ -96,11 +149,99 @@ public class AlarmCommonReduce implements DisposableBean {
             }
         });
     }
-    
+
+    private static void requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+    }
+
+    public void pauseAdmission() {
+        maintenanceLock.lock();
+        try {
+            maintenanceGate.pauseAdmission();
+        } finally {
+            maintenanceLock.unlock();
+        }
+    }
+
+    public void awaitDrained(long timeoutNanos) throws InterruptedException, TimeoutException {
+        maintenanceGate.awaitDrained(timeoutNanos);
+    }
+
+    public void resumeAdmission() {
+        maintenanceLock.lock();
+        try {
+            if (stopped) {
+                return;
+            }
+            while (!deferredTasks.isEmpty()) {
+                Runnable deferred = deferredTasks.peekFirst();
+                WorkAdmissionGate.Permit permit = maintenanceGate.reserveReplay();
+                if (permit == null) {
+                    return;
+                }
+                submitAdmitted(deferred, permit);
+                deferredTasks.removeFirst();
+            }
+            maintenanceGate.resumeAdmission();
+        } finally {
+            maintenanceLock.unlock();
+        }
+    }
+
+    private void submitOrDefer(Runnable task) {
+        maintenanceLock.lock();
+        try {
+            if (stopped) {
+                return;
+            }
+            WorkAdmissionGate.Permit permit = maintenanceGate.tryAcquire();
+            if (permit != null) {
+                beforeAdmittedSubmission();
+                submitAdmitted(task, permit);
+                return;
+            }
+            deferredTasks.addLast(task);
+        } finally {
+            maintenanceLock.unlock();
+        }
+    }
+
+    void beforeAdmittedSubmission() {
+    }
+
+    boolean hasQueuedMaintenanceThread(Thread thread) {
+        return maintenanceLock.hasQueuedThread(thread);
+    }
+
+    int deferredTaskCount() {
+        maintenanceLock.lock();
+        try {
+            return deferredTasks.size();
+        } finally {
+            maintenanceLock.unlock();
+        }
+    }
+
+    private void submitAdmitted(Runnable task, WorkAdmissionGate.Permit permit) {
+        try {
+            workerExecutor.execute(() -> {
+                try (permit) {
+                    task.run();
+                }
+            });
+        } catch (RuntimeException exception) {
+            permit.close();
+            throw exception;
+        }
+    }
+
     Runnable reduceAlarmTask(SingleAlert alert) {
         return () -> {
             try {
                 // Generate alert fingerprint
+                stripReservedWorkspaceLabels(alert);
                 String fingerprint = generateAlertFingerprint(alert.getLabels());
                 alert.setFingerprint(fingerprint);
                 alarmGroupReduce.processGroupAlert(alert);
@@ -125,8 +266,25 @@ public class AlarmCommonReduce implements DisposableBean {
                 .collect(Collectors.joining(","));
     }
 
+    private void stripReservedWorkspaceLabels(SingleAlert alert) {
+        if (alert.getLabels() == null || alert.getLabels().isEmpty()) {
+            return;
+        }
+        Map<String, String> labels = new java.util.HashMap<>(alert.getLabels());
+        labels.keySet().removeIf(AlertWorkspaceLabelKeys::isReserved);
+        alert.setLabels(labels);
+    }
+
     @Override
     public void destroy() {
+        maintenanceLock.lock();
+        try {
+            maintenanceGate.stop();
+            deferredTasks.clear();
+            stopped = true;
+        } finally {
+            maintenanceLock.unlock();
+        }
         workerExecutor.close();
     }
 }

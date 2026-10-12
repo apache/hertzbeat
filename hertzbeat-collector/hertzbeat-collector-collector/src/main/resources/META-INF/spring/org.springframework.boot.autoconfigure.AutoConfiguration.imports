@@ -14,3 +14,4 @@
 # limitations under the License.
 
 org.apache.hertzbeat.collector.config.CollectorAutoConfiguration
+org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeConfiguration

@@ -1,0 +1,107 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.form {
+  display: grid;
+  gap: 20px;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 12fr) minmax(0, 5fr);
+  align-items: start;
+}
+
+.fieldLabel {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-inline-end: 8px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.requiredMark,
+.fieldError {
+  color: var(--ant-color-error);
+}
+
+.fieldControl {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.fieldControl > :global(.ant-select),
+.fieldControl > :global(.ant-input-number) {
+  width: 100%;
+}
+
+.fieldError {
+  font-size: 12px;
+}
+
+.test {
+  justify-self: start;
+  margin-left: calc(100% * 7 / 24);
+}
+
+.secretState {
+  display: grid;
+  gap: 5px;
+}
+
+.modal :global(.ant-modal-body) {
+  padding-block: 24px 12px;
+}
+
+.modal :global(.ant-modal-footer) {
+  margin: 24px -24px -20px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+@media (max-width: 800px) {
+  .modal :global(.ant-modal) {
+    width: calc(100vw - 32px) !important;
+  }
+
+  .form {
+    gap: 16px;
+  }
+
+  .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .fieldLabel {
+    justify-content: flex-start;
+    padding: 0;
+    text-align: left;
+  }
+
+  .fieldRow > :last-child {
+    display: none;
+  }
+
+  .test {
+    margin-left: 0;
+  }
+}

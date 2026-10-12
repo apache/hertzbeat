@@ -48,6 +48,11 @@ public enum GeneralConfigTypeEnum {
     system,
 
     /**
+     * operator-advertised public access addresses
+     */
+    public_access,
+
+    /**
      * mail general config
      */
     email,

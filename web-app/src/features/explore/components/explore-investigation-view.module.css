@@ -1,0 +1,177 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  display: grid;
+  max-width: 100%;
+  min-width: 0;
+  gap: var(--hb-space-4);
+}
+
+.contextBand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-3) var(--hb-space-4);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-md);
+  background: var(--hb-surface-container);
+}
+
+.contextBand > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--hb-space-3);
+}
+
+.contextBand span,
+.contextBand time {
+  color: var(--hb-text-secondary);
+}
+
+.contextActions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--hb-space-2);
+}
+
+.contextBand time {
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.availability,
+.signalSection {
+  min-width: 0;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-md);
+  background: var(--hb-surface-container);
+}
+
+.capabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.capabilityGrid[data-count='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.capabilityGrid[data-count='5'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.capability {
+  display: flex;
+  min-width: 0;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-3);
+  border-right: 1px solid var(--hb-border-subtle);
+}
+
+.capability:last-child {
+  border-right: 0;
+}
+
+.stateTag {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-2) var(--hb-space-4);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.compactState {
+  min-height: 56px;
+  padding: var(--hb-space-4);
+  color: var(--hb-text-secondary);
+}
+
+.fact {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.fact:last-child {
+  border-bottom: 0;
+}
+
+.fact dt {
+  color: var(--hb-text-secondary);
+}
+
+.fact dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  :global(body:has([data-explore-investigation='true']) [data-testid='shell-time-policy']),
+  :global(body:has([data-explore-investigation='true']) [data-testid='shell-status-greptime']),
+  :global(body:has([data-explore-investigation='true']) [data-testid='shell-status-collector']) {
+    display: none;
+  }
+
+  .contextBand,
+  .contextBand > div,
+  .sectionHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .contextActions {
+    flex-wrap: wrap;
+  }
+
+  .capabilityGrid,
+  .capabilityGrid[data-count='3'],
+  .capabilityGrid[data-count='5'] {
+    grid-template-columns: 1fr;
+  }
+
+  .capability {
+    border-right: 0;
+    border-bottom: 1px solid var(--hb-border-subtle);
+  }
+
+  .capability:last-child {
+    border-bottom: 0;
+  }
+}

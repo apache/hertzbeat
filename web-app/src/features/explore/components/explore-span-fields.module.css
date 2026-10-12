@@ -1,0 +1,69 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.fields {
+  container-type: inline-size;
+  min-width: 0;
+}
+.tools {
+  display: flex;
+  gap: var(--hb-space-2);
+  position: sticky;
+  top: 0;
+  background: var(--hb-bg-raised);
+}
+.fields dl {
+  margin: var(--hb-space-2) 0;
+}
+.fields dl > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.4fr) minmax(0, 1fr);
+  gap: var(--hb-space-2);
+  align-items: start;
+  padding-block: var(--hb-space-1);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.fields dt {
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+  overflow-wrap: anywhere;
+}
+.fields dd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.fields pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: inline-flex;
+  gap: var(--hb-space-1);
+  margin-inline-start: var(--hb-space-2);
+  flex-wrap: wrap;
+}
+
+@container (max-width: 520px) {
+  .fields dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-1);
+  }
+}

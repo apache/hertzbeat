@@ -1,0 +1,237 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.guidedProgress {
+  position: sticky;
+  top: 24px;
+}
+
+.guidedProgress :global(.ant-steps-item-title) {
+  color: var(--hb-text-secondary) !important;
+  font-size: 13px;
+}
+
+.guidedProgress :global(.ant-steps-item-active .ant-steps-item-title) {
+  color: var(--hb-text-primary) !important;
+  font-weight: 600;
+}
+
+.guidedProgress :global(.ant-steps-item-description) {
+  display: none;
+}
+
+.section h4 {
+  margin: 0;
+}
+
+.section {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.sourceIntro {
+  display: grid;
+  gap: 4px;
+}
+
+.sourceIntro h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.sourceSearch {
+  width: 100%;
+}
+
+.sourceList {
+  display: grid;
+  gap: 30px;
+}
+
+.selectedSource {
+  width: min(100%, 520px);
+}
+
+.sourceTile {
+  min-width: max-content;
+  min-height: 36px;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: var(--ant-line-width) solid var(--hb-border);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--ant-motion-duration-mid),
+    background-color var(--ant-motion-duration-mid);
+}
+
+.sourceTile:hover:not(:disabled),
+.sourceTile:focus-visible {
+  border-color: var(--ant-color-border-secondary);
+  background: var(--hb-bg-hover);
+}
+
+.sourceTile:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: var(--ant-line-width);
+}
+
+.sourceTileSelected,
+.sourceTileSelected:hover:not(:disabled),
+.sourceTileSelected:focus-visible {
+  border-color: var(--hb-brand-accent);
+  background: var(--hb-bg-selected);
+}
+
+.sourceTile:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.sourceName {
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.sourceIcon {
+  width: var(--ant-font-size);
+  height: var(--ant-font-size);
+  flex: 0 0 auto;
+  object-fit: contain;
+  font-size: var(--ant-font-size);
+  color: var(--hb-brand-accent);
+}
+
+.choiceIcon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  font-size: 18px;
+  color: var(--hb-brand-accent);
+}
+
+.directory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: start;
+  gap: 40px;
+  margin-top: 8px;
+}
+
+.sourceGroup {
+  display: grid;
+  gap: 12px;
+}
+
+.sourceGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.categoryRail {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 4px;
+  border-left: 1px solid var(--hb-border);
+  padding-left: 14px;
+}
+
+.categoryAction {
+  min-height: 36px;
+  display: flex;
+  justify-content: space-between;
+  border-radius: var(--hb-radius-control);
+  padding-inline: 12px;
+  color: var(--hb-text-secondary);
+  text-align: left;
+}
+
+.categoryAction:hover {
+  color: var(--hb-text-primary) !important;
+  background: var(--hb-bg-hover) !important;
+}
+
+.categoryActionSelected,
+.categoryActionSelected:hover {
+  border-radius: 0;
+  color: var(--hb-text-primary) !important;
+  background: transparent !important;
+  box-shadow: inset 2px 0 0 var(--hb-brand-accent);
+}
+
+.categoryAction span {
+  color: var(--hb-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceStatus {
+  margin-left: auto;
+  color: var(--ant-color-text-tertiary);
+  font-size: var(--ant-font-size-sm);
+  white-space: nowrap;
+}
+
+.sourceStatus[data-support='preview'] {
+  color: var(--hb-status-degraded);
+}
+
+@media (max-width: 760px) {
+  .guidedProgress {
+    position: static;
+    min-width: 0;
+  }
+}
+
+.sourceAssistiveText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .directory {
+    grid-template-columns: 1fr;
+  }
+
+  .categoryRail {
+    position: static;
+    grid-row: 1;
+  }
+
+  .sourceGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

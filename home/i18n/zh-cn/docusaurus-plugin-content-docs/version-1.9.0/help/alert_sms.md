@@ -101,7 +101,7 @@ alerter:
 
 ### uni-sms配置
 
-uni-sms是一个聚合短信服务平台，您可以参考[UniSMS合一短信文档](https://unisms.apistd.com/docs/tutorials)进行配置。
+> UniSMS 已于 2026 年 9 月 15 日停止运营，API 与控制台均不可用，详情见[官方停运公告](https://unisms.apistd.com/)。以下配置和操作步骤仅保留为历史参考，不适用于新的短信服务配置。
 
 在`application.yml`新增/填写如下uni-sms短信服务配置(参数需替换为您的短信服务器配置)
 
@@ -124,7 +124,7 @@ alerter:
    - 访问[uni-sms官网](https://unisms.apistd.com/)
 
 2. 创建短信签名（signature）
-   - 登录[uni-sms控制台](https://unisms.apistd.com/console/)
+   - 登录uni-sms 控制台（已停用）
    - 进入"短信报备-签名管理"页面
    - 点击"添加签名"
    - 填写签名信息并提交审核
@@ -142,7 +142,7 @@ alerter:
    - 提交模板等待审核
 
 4. 获取`access-key-id`和`access-key-secret`
-   - 登录[uni-sms控制台](https://unisms.apistd.com/console/)
+   - 登录uni-sms 控制台（已停用）
    - 进入"凭证管理"页面
    - 获取AccessKey ID和AccessKey Secret
    - 安全保存AccessKey ID和AccessKey Secret
@@ -199,7 +199,7 @@ alerter:
 
 ### smslocal短信配置
 
-smslocal是一款面向企业的一体化短信服务平台，具备诸如多种发送方式、强大的安全性以及全天候支持等特性。你可以参考 smslocal 的[开发者文档](https://www.smslocal.com/developer/)来进行配置。
+smslocal是一款面向企业的一体化短信服务平台，具备诸如多种发送方式、强大的安全性以及全天候支持等特性。你可以参考 smslocal 的[开发者文档](https://www.smslocal.com/resources/docs/)来进行配置。
 
 在 `application.yml` 中添加/填写以下 smslocal 配置内容（请用你自己的短信服务器配置参数替换相关参数）：
 

@@ -1,0 +1,130 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { FilterOutlined } from '@ant-design/icons';
+import { Button, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { TopologyPageActions } from '../model/topology-page-contract';
+import { topologyDepthValues, type TopologyQuery, type TopologyScopePatch } from '../model/topology-model';
+import styles from './topology-page.module.css';
+
+type Props = {
+  query: TopologyQuery;
+  changeScope: TopologyPageActions['changeScope'];
+};
+
+export function TopologyToolbar({ query, changeScope }: Props) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <section className={styles.canvasFilter}>
+      <Button
+        icon={<FilterOutlined />}
+        aria-label={t('topology.toolbar.filter')}
+        aria-expanded={expanded}
+        aria-controls="topology-filter-surface"
+        onClick={() => setExpanded(value => !value)}
+      >
+        {t('topology.toolbar.filter')}
+      </Button>
+      {expanded ? <TopologyScopeFields query={query} changeScope={changeScope} /> : null}
+    </section>
+  );
+}
+
+function TopologyScopeFields({ query, changeScope }: Pick<Props, 'query' | 'changeScope'>) {
+  const { t } = useTranslation();
+  return (
+    <div id="topology-filter-surface" className={styles.canvasFilterFields}>
+      <InputNumber<number>
+        min={1}
+        max={Number.MAX_SAFE_INTEGER}
+        precision={0}
+        step={1}
+        value={query.focusEntityId ?? null}
+        aria-label={t('topology.toolbar.focusEntity')}
+        placeholder={t('topology.toolbar.focusEntity')}
+        onChange={value => changeScope({ focusEntityId: normalizeFocusEntityId(value) })}
+      />
+      <Select
+        value={query.depth}
+        aria-label={t('topology.toolbar.depth')}
+        options={topologyDepthValues.map(value => ({
+          value,
+          label: `${t('topology.toolbar.depth')} ${value}`
+        }))}
+        onChange={depth => changeScope({ depth })}
+      />
+      <ScopeInput
+        key={`environment:${query.environment ?? ''}`}
+        field="environment"
+        value={query.environment}
+        changeScope={changeScope}
+      />
+      <ScopeInput
+        key={`sourceKind:${query.sourceKind ?? ''}`}
+        field="sourceKind"
+        value={query.sourceKind}
+        changeScope={changeScope}
+      />
+      <ScopeInput
+        key={`relationType:${query.relationType ?? ''}`}
+        field="relationType"
+        value={query.relationType}
+        changeScope={changeScope}
+      />
+      <Space size={6}>
+        <Switch
+          checked={query.hideInternal ?? false}
+          aria-label={t('topology.toolbar.hideInternal')}
+          onChange={hideInternal => changeScope({ hideInternal })}
+        />
+        <Typography.Text>{t('topology.toolbar.hideInternal')}</Typography.Text>
+      </Space>
+    </div>
+  );
+}
+
+function normalizeFocusEntityId(value: number | null) {
+  if (typeof value !== 'number') return undefined;
+  const normalized = Math.trunc(value);
+  return Number.isSafeInteger(normalized) && normalized > 0 ? normalized : undefined;
+}
+
+function ScopeInput({
+  field,
+  value,
+  changeScope
+}: {
+  field: 'environment' | 'sourceKind' | 'relationType';
+  value: string | undefined;
+  changeScope: (patch: TopologyScopePatch) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Input
+      allowClear
+      defaultValue={value}
+      aria-label={t(`topology.toolbar.${field}`)}
+      placeholder={t(`topology.toolbar.${field}`)}
+      onBlur={event => changeScope({ [field]: event.target.value.trim() || undefined })}
+      onPressEnter={event => event.currentTarget.blur()}
+    />
+  );
+}

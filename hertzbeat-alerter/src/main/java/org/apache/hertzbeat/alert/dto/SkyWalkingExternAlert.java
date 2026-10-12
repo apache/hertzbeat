@@ -41,6 +41,8 @@ public class SkyWalkingExternAlert {
 
     private String name;
 
+    private String uuid;
+
     private String id0;
 
     private String id1;
@@ -50,6 +52,8 @@ public class SkyWalkingExternAlert {
     private String alarmMessage;
 
     private Long startTime;
+
+    private Long recoveryTime;
 
     private List<Tag> tags;
 

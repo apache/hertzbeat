@@ -1,0 +1,131 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.table {
+  min-width: 0;
+}
+.tokenMask {
+  white-space: nowrap;
+}
+.emptyState {
+  display: flex;
+  max-width: 660px;
+  margin: 36px auto 0;
+  padding: 36px 40px 34px;
+  align-items: center;
+  border-radius: 14px;
+  background: var(--ant-color-bg-container);
+  box-shadow: var(--hb-shadow-raised);
+  flex-direction: column;
+  text-align: center;
+}
+.emptyIcon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 18px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--ant-color-primary-bg);
+  color: var(--ant-color-primary);
+  font-size: 21px;
+}
+.emptyTitle {
+  margin: 0 0 8px !important;
+  font-size: 21px !important;
+  line-height: 1.35 !important;
+}
+.emptyDescription {
+  max-width: 460px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.emptyGuidance {
+  display: grid;
+  width: 100%;
+  margin: 28px 0 24px;
+  padding: 0;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  text-align: left;
+}
+.emptyGuidance li {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.guidanceIcon {
+  margin: 1px 8px 0 0;
+  color: var(--ant-color-primary);
+  font-size: 14px;
+}
+.oneTimeNotice {
+  display: flex;
+  margin-bottom: 24px;
+  align-items: center;
+  gap: 8px;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+.oneTimeNotice :global(.anticon) {
+  color: var(--ant-color-warning);
+}
+.form {
+  display: grid;
+  gap: 18px;
+}
+.field {
+  display: grid;
+  gap: 8px;
+}
+.label {
+  font-weight: 600;
+}
+.required::before {
+  content: '*';
+  margin-inline-end: 4px;
+  color: var(--ant-color-error);
+}
+.tokenResult {
+  display: grid;
+  gap: 14px;
+}
+.tokenValue {
+  max-height: 180px;
+  margin: 0;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-fill-quaternary);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .emptyState {
+    margin-top: 20px;
+    padding: 30px 24px;
+  }
+  .emptyGuidance {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

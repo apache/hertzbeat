@@ -53,13 +53,13 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Upgrade regression for the 1.9.0 migration chain, run once per supported dialect.
+ * Upgrade regression for the 2.0.0 migration chain, run once per supported dialect.
  *
- * <p>The scenario mirrors a production start: Hibernate {@code ddl-auto} builds the schema
- * from the entity model first, then Flyway runs, exactly as {@code FlywayConfiguration}
- * orders them with {@code @DependsOn("entityManagerFactory")}. The database is first taken
- * to the last officially released state (V180) and only then is V190 applied, so the test
- * covers the upgrade path a 1.8.0 user actually takes.
+ * <p>The database is first taken to the last officially released state (V190) and only
+ * then is V200 applied, so the test covers the upgrade path a 1.9.x user actually takes.
+ * Building the schema with Hibernate {@code ddl-auto} first models the hardest version of
+ * that upgrade, where the database may already hold tables the migration also creates -
+ * every V200 statement therefore has to be safe to run against a pre-populated schema.
  */
 abstract class AbstractMigrationUpgradeTest {
 
@@ -67,9 +67,9 @@ abstract class AbstractMigrationUpgradeTest {
 
     protected static final String ALERT_DEFINE_TABLE = "hzb_alert_define";
 
-    private static final String LAST_RELEASED_VERSION = "180";
+    private static final String LAST_RELEASED_VERSION = "190";
 
-    private static final String CURRENT_VERSION = "190";
+    private static final String CURRENT_VERSION = "200";
 
     private static final List<String> WITHDRAWN_VERSIONS = List.of("181", "182", "183");
 
@@ -132,17 +132,21 @@ abstract class AbstractMigrationUpgradeTest {
     protected abstract List<String> storedRoutines() throws SQLException;
 
     @Test
-    @DisplayName("V190 upgrades a V180 database whose schedule table Hibernate owns")
+    @DisplayName("V200 upgrades a V190 database whose schedule table Hibernate owns")
     void upgradesDatabaseWhoseScheduleTableHibernateOwns() throws SQLException {
         startFromLastReleasedState();
         seedSchedules();
         seedAlertDefine();
+        // V190 has already run on the released database, so its owner scoping cleanup
+        // has already converged the seeded rows before V200 sees them.
+        execute("UPDATE " + SOP_SCHEDULE_TABLE
+                + " SET enabled = FALSE WHERE creator IS NULL OR TRIM(creator) = ''");
 
         Flyway flyway = flyway();
         assertPendingVersions(flyway, List.of(CURRENT_VERSION));
 
         MigrateResult result = flyway.migrate();
-        assertEquals(1, result.migrationsExecuted, "V190 must be the only migration left to apply");
+        assertEquals(1, result.migrationsExecuted, "V200 must be the only migration left to apply");
         assertEquals(CURRENT_VERSION, result.targetSchemaVersion);
 
         assertScheduleRowsScopedToOwner();
@@ -162,17 +166,20 @@ abstract class AbstractMigrationUpgradeTest {
     }
 
     @Test
-    @DisplayName("V190 upgrades a V180 database whose schedule table the migration has to create")
+    @DisplayName("V200 upgrades a V190 database whose schedule table the migration has to create")
     void upgradesDatabaseWhoseScheduleTableTheMigrationCreates() throws SQLException {
-        startFromLastReleasedState();
+        createSchemaWithHibernate();
         // Model the ordering where Flyway sees the table first: the migration, not Hibernate,
         // has to create hzb_sop_schedule. This is the path that made PostgreSQL declare the
         // column SMALLINT, after which the script's own "SET enabled = FALSE" failed with 42804.
         execute("DROP TABLE " + SOP_SCHEDULE_TABLE);
+        MigrateResult released = flyway(LAST_RELEASED_VERSION).migrate();
+        assertEquals(LAST_RELEASED_VERSION, released.targetSchemaVersion,
+                "the released baseline must stop at V" + LAST_RELEASED_VERSION);
 
         Flyway flyway = flyway();
         MigrateResult result = flyway.migrate();
-        assertEquals(1, result.migrationsExecuted, "V190 must be the only migration left to apply");
+        assertEquals(1, result.migrationsExecuted, "V200 must be the only migration left to apply");
 
         assertBooleanColumn();
         assertEquals(expectedEnlargedTextType(), declaredType(ALERT_DEFINE_TABLE, "expr"));

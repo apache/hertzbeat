@@ -21,7 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Field;
@@ -29,17 +32,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
-import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
+import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link JsonImExportServiceImpl}
@@ -53,7 +58,7 @@ class JsonImExportServiceTest {
     private MonitorService monitorService;
 
     @Mock
-    private ManagerSseManager managerSseManager;
+    private ImportTaskService importTaskService;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -61,9 +66,9 @@ class JsonImExportServiceTest {
         Field monitorServiceField = jsonImExportService.getClass().getSuperclass().getDeclaredField("monitorService");
         monitorServiceField.setAccessible(true);
         monitorServiceField.set(jsonImExportService, monitorService);
-        Field sseField = jsonImExportService.getClass().getSuperclass().getDeclaredField("managerSseManager");
-        sseField.setAccessible(true);
-        sseField.set(jsonImExportService, managerSseManager);
+        Field taskField = jsonImExportService.getClass().getSuperclass().getDeclaredField("importTaskService");
+        taskField.setAccessible(true);
+        taskField.set(jsonImExportService, importTaskService);
     }
 
     @Test
@@ -83,7 +88,16 @@ class JsonImExportServiceTest {
         String invalidJson = "invalid json";
         ByteArrayInputStream bis = new ByteArrayInputStream(invalidJson.getBytes(StandardCharsets.UTF_8));
 
-        assertThrows(RuntimeException.class, () -> jsonImExportService.parseImport(bis));
+        IllegalArgumentException exception = assertThrows(
+                InvalidImportContentException.class, () -> jsonImExportService.parseImport(bis));
+        assertEquals(InvalidImportContentException.MESSAGE, exception.getMessage());
+    }
+
+    @Test
+    void testParseImportRejectsMissingMonitorShape() {
+        ByteArrayInputStream input = new ByteArrayInputStream("[{}]".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(InvalidImportContentException.class, () -> jsonImExportService.parseImport(input));
     }
 
     @Test
@@ -110,6 +124,69 @@ class JsonImExportServiceTest {
     @Test
     void testType() {
         assertEquals("JSON", jsonImExportService.type());
+    }
+
+    @Test
+    void importConfigRestoresInstanceFromLegacyHostParam() {
+        MonitorService monitorService = org.mockito.Mockito.mock(MonitorService.class);
+        ImportTaskService importTaskService = org.mockito.Mockito.mock(ImportTaskService.class);
+        ReflectionTestUtils.setField(jsonImExportService, "monitorService", monitorService);
+        ReflectionTestUtils.setField(jsonImExportService, "importTaskService", importTaskService);
+        String json = """
+                [{
+                  "monitor": {
+                    "name": "Codex import monitor",
+                    "app": "website",
+                    "intervals": 60,
+                    "status": 1
+                  },
+                  "params": [
+                    {"field": "host", "type": 1, "value": "127.0.0.1"},
+                    {"field": "port", "type": 0, "value": "4223"}
+                  ]
+                }]
+                """;
+
+        jsonImExportService.importConfig("legacy-export.json", new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+
+        ArgumentCaptor<MonitorDto> validateCaptor = ArgumentCaptor.forClass(MonitorDto.class);
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(monitorService).validate(validateCaptor.capture(), org.mockito.Mockito.eq(false));
+        verify(monitorService).addMonitor(monitorCaptor.capture(), paramsCaptor.capture(), any(), any());
+        assertEquals("127.0.0.1:4223", validateCaptor.getValue().getMonitor().getInstance());
+        assertEquals("127.0.0.1:4223", monitorCaptor.getValue().getInstance());
+        assertEquals("4223", paramsCaptor.getValue().stream()
+                .filter(param -> "port".equals(param.getField()))
+                .findFirst()
+                .orElseThrow()
+                .getParamValue());
+    }
+
+    @Test
+    void exportConfigPreservesMonitorInstanceAsHost() {
+        MonitorService monitorService = org.mockito.Mockito.mock(MonitorService.class);
+        ReflectionTestUtils.setField(jsonImExportService, "monitorService", monitorService);
+        Monitor monitor = Monitor.builder()
+                .id(42L)
+                .name("Codex export monitor")
+                .app("website")
+                .instance("127.0.0.1:4223")
+                .intervals(60)
+                .status((byte) 1)
+                .build();
+        MonitorDto monitorDto = new MonitorDto();
+        monitorDto.setMonitor(monitor);
+        monitorDto.setParams(List.of(Param.builder().field("host").type((byte) 1).paramValue("127.0.0.1").build()));
+        when(monitorService.getMonitorDtoForExport(42L)).thenReturn(monitorDto);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        jsonImExportService.exportConfig(bos, List.of(42L));
+
+        String result = bos.toString(StandardCharsets.UTF_8);
+        assertTrue(result.contains("\"host\":\"127.0.0.1:4223\""));
+        assertTrue(result.contains("\"name\":\"Codex export monitor\""));
     }
 
     @Test

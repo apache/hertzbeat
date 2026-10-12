@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat monitors the banner and hello response related metrics of the SMTP service.<br>You can click "<i>New SMTP Email Server</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: HertzBeat對SMTP服務的（Banner，helo響應）相關名額進行監測。<br>您可以點擊 “<i>新建 SMTP邮件服务器</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
   ja-JP: HertzBeat は SMTPメールサーバーの一般的なメトリクスを監視します。<br>「<i>新規 SMTPメールサーバー</i>」をクリックしてパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/smtp
+  en-US: https://hertzbeat.apache.org/docs/help/smtp
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

@@ -1,0 +1,125 @@
+{
+  "shell": {
+    "navigation": {
+      "basicMonitoring": "Monitoramento básico",
+      "applicationObservability": "Observabilidade de aplicações",
+      "resources": "Recursos",
+      "alerting": "Alertas",
+      "administration": "Administração",
+      "collapse": "Recolher navegação",
+      "expand": "Expandir navegação",
+      "toggleGroup": "Alternar {{label}}"
+    },
+    "permission": {
+      "roleRequired": "É necessário acesso de administrador."
+    },
+    "status": {
+      "summary": "Status de execução",
+      "server": "Servidor",
+      "greptime": "GreptimeDB",
+      "collector": "Coletor",
+      "unknown": "Desconhecido",
+      "unavailable": "Indisponível",
+      "state": {
+        "loading": "Carregando",
+        "available": "Disponível",
+        "degraded": "Requer atenção",
+        "unavailable": "Indisponível",
+        "unknown": "Desconhecido"
+      },
+      "currentStatusObservedAt": "Status atual · {{time}}",
+      "collectorLastReportedAt": "Último relato às {{time}}",
+      "collectorCounts": "{{online}}/{{total}} online · {{runtimeHealthy}} com runtime saudável",
+      "collectorOnlineCount": "Coletores online: {{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "Runtimes saudáveis: {{count}}",
+      "collectorOfflineCount": "Coletores offline: {{count}}",
+      "collectorNotReported": "Sem relato de runtime",
+      "notObserved": "Não observado",
+      "details": "Detalhes do status de {{label}}",
+      "openManagement": "Abrir gerenciamento",
+      "request": {
+        "permission": "Permissão para status de execução negada",
+        "unavailable": "Solicitação de status de execução indisponível",
+        "contract": "Resposta de status de execução inválida",
+        "error": "Não foi possível carregar o status de execução"
+      },
+      "reason": {
+        "server_unavailable": "Servidor indisponível",
+        "storage_unavailable": "Armazenamento indisponível",
+        "storage_query_failed": "Falha na consulta ao armazenamento",
+        "collector_status_unavailable": "Status do coletor indisponível"
+      }
+    },
+    "time": {
+      "global": "Tempo global",
+      "route_owned": "Tempo da página",
+      "none": "Sem tempo compartilhado",
+      "unknown": "Política de tempo desconhecida",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "Desligado",
+      "remaining": "{{seconds}}s",
+      "rangeOption": "Intervalo {{range}}",
+      "autoRefreshOff": "Atualização automática desligada",
+      "autoRefreshSeconds": "Atualização automática a cada {{seconds}}s"
+    },
+    "actions": {
+      "refresh": "Atualizar dados ativos",
+      "alerts": "Abrir alertas",
+      "investigate": "Investigar esta tela",
+      "alertsWithCount": "Abrir alertas, {{count}} ativos",
+      "useLightTheme": "Usar tema claro",
+      "useDarkTheme": "Usar tema escuro",
+      "fullscreenEnter": "Entrar em tela cheia",
+      "fullscreenExit": "Sair da tela cheia",
+      "fullscreenFailed": "Não foi possível abrir a tela cheia",
+      "language": "Alternar idioma",
+      "user": "Ações do usuário"
+    },
+    "account": {
+      "settings": "Configurações do sistema",
+      "lock": "Bloquear sessão",
+      "about": "Sobre o HertzBeat",
+      "logout": "Sair"
+    },
+    "about": {
+      "title": "Sobre o HertzBeat",
+      "version": "Versão {{version}}",
+      "description": "O Apache HertzBeat é um sistema de monitoramento em tempo real de código aberto.",
+      "website": "Site",
+      "documentation": "Documentação",
+      "repository": "Código-fonte",
+      "issues": "Relatar um problema"
+    },
+    "alerts": {
+      "title": "Alertas ativos",
+      "loading": "Carregando alertas recentes",
+      "empty": "Nenhum alerta ativo",
+      "unavailable": "Alertas recentes estão indisponíveis",
+      "error": "Não foi possível ler os alertas recentes",
+      "openCenter": "Abrir a Central de Alertas",
+      "soundLoading": "Carregando a configuração de som dos alertas",
+      "soundUnavailable": "A configuração de som dos alertas está indisponível",
+      "soundError": "Não foi possível ler a configuração de som dos alertas",
+      "soundReadOnly": "Somente administradores podem alterar a configuração global de som dos alertas",
+      "soundSaving": "Atualizando a configuração de som dos alertas",
+      "soundSaveFailed": "Não foi possível atualizar a configuração de som dos alertas",
+      "soundMuted": "O som dos alertas está silenciado",
+      "soundEnabled": "O som dos alertas está ativado",
+      "soundEnabledBrowserDenied": "O som dos alertas está ativado; as notificações do navegador estão bloqueadas",
+      "soundEnabledBrowserUnsupported": "O som dos alertas está ativado; as notificações do navegador não são compatíveis",
+      "browserTitle": "Alerta do HertzBeat",
+      "browserBody": "Um novo alerta ativo precisa de atenção."
+    },
+    "importTasks": {
+      "title": "Importação de monitoramento",
+      "progress": "Progresso da importação: {{progress}}%",
+      "success": "Importação de monitores concluída.",
+      "failure": "Não foi possível importar a configuração de monitor."
+    },
+    "capability": {
+      "supported": "Disponível",
+      "unknown": "Capacidade desconhecida",
+      "unsupported": "Não suportado"
+    }
+  }
+}

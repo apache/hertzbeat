@@ -83,7 +83,7 @@ class GreptimeEntityFreeSignalStorageE2eTest {
 
         GreptimeOtlpSignalStorage storage = new GreptimeOtlpSignalStorage(
                 new GreptimeProperties(true, GREPTIME.getHost() + ':' + GREPTIME.getMappedPort(GREPTIME_GRPC_PORT),
-                        endpoint(), "public", "", ""),
+                        endpoint(), "public", "", "", ""),
                 new RestTemplate());
 
         storage.writeProtobuf("logs", request().toByteArray());
