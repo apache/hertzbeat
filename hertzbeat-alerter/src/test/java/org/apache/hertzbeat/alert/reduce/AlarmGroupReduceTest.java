@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.lang.reflect.Field;
@@ -251,6 +252,44 @@ class AlarmGroupReduceTest {
                 group.getAlerts().stream().anyMatch(a -> "cpu".equals(a.getFingerprint()))));
         verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(argThat(group ->
                 group.getAlerts().stream().anyMatch(a -> "memory".equals(a.getFingerprint()))));
+    }
+
+    /**
+     * Regression for issue #4446: Prometheus keeps reposting the same resolved alert every
+     * resend interval. Once the recovery has been emitted and the member evicted from the
+     * group cache, a reposted resolved alert must not look new and trigger another recovery
+     * notification.
+     */
+    @Test
+    void repostedResolvedAlertMustNotTriggerAnotherRecoveryNotification() {
+        AlertGroupConverge rule = groupRule();
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
+
+        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
+        alarmGroupReduce.runCheckAndSendGroups();
+        alarmGroupReduce.processGroupAlert(alert("cpu", "resolved", "host1"));
+        alarmGroupReduce.runCheckAndSendGroups();
+        alarmGroupReduce.processGroupAlert(alert("cpu", "resolved", "host1"));
+        alarmGroupReduce.processGroupAlert(alert("cpu", "resolved", "host1"));
+        alarmGroupReduce.runCheckAndSendGroups();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    /**
+     * A resolved alert whose firing phase was never seen (e.g. after a restart) is still
+     * emitted once, but reposts of it are deduplicated.
+     */
+    @Test
+    void unseenResolvedAlertIsEmittedOnce() {
+        AlertGroupConverge rule = groupRule();
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
+
+        alarmGroupReduce.processGroupAlert(alert("cpu", "resolved", "host1"));
+        alarmGroupReduce.processGroupAlert(alert("cpu", "resolved", "host1"));
+        alarmGroupReduce.runCheckAndSendGroups();
+
+        verify(alarmInhibitReduce, times(1)).inhibitAlarm(any());
     }
 
     private AlertGroupConverge groupRule() {
