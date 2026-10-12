@@ -24,8 +24,10 @@ import java.net.http.HttpClient;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.InterceptingClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 class RestTemplateConfigTest {
 
@@ -40,5 +42,21 @@ class RestTemplateConfigTest {
         HttpClient httpClient = (HttpClient) ReflectionTestUtils.getField(jdkFactory, "httpClient");
         assertEquals(NetworkConstants.HttpClientConstants.GREPTIME_QUERY_CONNECT_TIMEOUT,
                 httpClient.connectTimeout().orElseThrow());
+    }
+
+    @Test
+    void notificationRestTemplateNeverFollowsRedirects() {
+        RestTemplate template = new RestTemplateConfig().notificationRestTemplate();
+
+        // Interceptors wrap the request factory; unwrap to reach the JDK factory
+        Object rawFactory = template.getRequestFactory();
+        Object jdkFactory = rawFactory instanceof InterceptingClientHttpRequestFactory
+                ? ReflectionTestUtils.getField(rawFactory, "requestFactory")
+                : rawFactory;
+
+        JdkClientHttpRequestFactory jdk =
+                assertInstanceOf(JdkClientHttpRequestFactory.class, jdkFactory);
+        HttpClient httpClient = (HttpClient) ReflectionTestUtils.getField(jdk, "httpClient");
+        assertEquals(HttpClient.Redirect.NEVER, httpClient.followRedirects());
     }
 }

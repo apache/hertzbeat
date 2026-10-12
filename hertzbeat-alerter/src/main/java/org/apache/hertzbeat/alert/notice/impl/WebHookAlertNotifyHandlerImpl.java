@@ -28,7 +28,6 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -88,7 +87,10 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
 
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
             ResponseEntity<String> entity = notificationRestTemplate.postForEntity(hookUri, alertHttpEntity, String.class);
-            if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
+            // Only 2xx counts as delivered. Redirects (3xx) are never followed by the
+            // notification client, so a 3xx response means the request did not reach its
+            // destination and must be reported as a failure.
+            if (entity.getStatusCode().is2xxSuccessful()) {
                 log.debug("Send WebHook: {} Success", hookUrl);
             } else {
                 log.warn("Send WebHook: {} Failed: {}", hookUrl, entity.getBody());
