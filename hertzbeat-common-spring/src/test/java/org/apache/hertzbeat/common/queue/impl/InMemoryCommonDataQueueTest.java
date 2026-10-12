@@ -41,6 +41,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.IntVector;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
@@ -199,6 +205,44 @@ class InMemoryCommonDataQueueTest {
                 queue::sendLogEntry, queue::pollLogEntry, "logEntryQueue");
         assertBoundedFifo(logSequence("storage-"), logEntry("storage-rejected"),
                 queue::sendLogEntryToStorage, queue::pollLogEntryToStorage, "logEntryToStorageQueue");
+    }
+
+    @Test
+    void testServiceDiscoveryOverflowReleasesRejectedBuffers() throws Exception {
+        try (RootAllocator allocator = new RootAllocator()) {
+            List<CollectRep.MetricsData> entries = new ArrayList<>();
+            Schema schema = new Schema(List.of(Field.nullable("value", new ArrowType.Int(32, true))));
+            try {
+                long acceptedBytes = 0;
+                for (int i = 0; i <= CAPACITY; i++) {
+                    try (VectorSchemaRoot root = VectorSchemaRoot.create(schema, allocator)) {
+                        IntVector vector = (IntVector) root.getVector("value");
+                        vector.allocateNew(1);
+                        vector.set(0, i);
+                        root.setRowCount(1);
+                        CollectRep.MetricsData entry = new CollectRep.MetricsData(root);
+                        entries.add(entry);
+                        if (i == CAPACITY) {
+                            assertTrue(allocator.getAllocatedMemory() > acceptedBytes);
+                        }
+                        queue.sendServiceDiscoveryData(entry);
+                        if (i < CAPACITY) {
+                            acceptedBytes = allocator.getAllocatedMemory();
+                        }
+                    }
+                }
+                assertEquals(acceptedBytes, allocator.getAllocatedMemory());
+                List<CollectRep.MetricsData> polled = drain(queue::pollServiceDiscoveryData, CAPACITY);
+                for (int i = 0; i < CAPACITY; i++) {
+                    CollectRep.MetricsData accepted = polled.get(i);
+                    assertSame(entries.get(i), accepted);
+                    assertEquals(i, ((IntVector) accepted.getTable().getVector("value")).get(0));
+                }
+            } finally {
+                entries.forEach(CollectRep.MetricsData::close);
+            }
+            assertEquals(0, allocator.getAllocatedMemory());
+        }
     }
 
     @Test

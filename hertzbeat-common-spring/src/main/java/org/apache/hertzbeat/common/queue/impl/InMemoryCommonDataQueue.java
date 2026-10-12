@@ -48,6 +48,10 @@ import org.springframework.context.annotation.Primary;
  * Installations that need durable buffering should use an external queue.
  * Overflow logs at most one warning per queue per minute, and that warning names
  * the queue without the metric or log payload.
+ *
+ * <p>Sending MetricsData transfers ownership to this queue. On overflow, the queue
+ * closes the rejected entry; accepted entries remain open for consumers.
+ * Callers must not use the entry after a send call.
  */
 @Configuration
 @ConditionalOnProperty(
@@ -209,6 +213,13 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     private <T> void offerEntry(LinkedBlockingQueue<T> dataQueue, T entry, String queueName, OverflowWarning overflow) {
         if (!dataQueue.offer(entry)) {
             overflow.record(queueName);
+            if (entry instanceof CollectRep.MetricsData metricsData) {
+                try {
+                    metricsData.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close discarded metrics data for queue={}", queueName, e);
+                }
+            }
         }
     }
 
