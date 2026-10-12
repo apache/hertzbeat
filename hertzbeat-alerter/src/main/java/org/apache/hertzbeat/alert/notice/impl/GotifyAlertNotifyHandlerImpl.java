@@ -85,9 +85,9 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             ResponseEntity<CommonRobotNotifyResp> responseEntity = notificationRestTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
-                log.debug("Send Gotify webHook: {} Success", webHookUrl);
+                log.debug("Send Gotify webhook success");
             } else {
-                log.warn("Send Gotify webHook: {} Failed: {}", webHookUrl, responseEntity.getBody());
+                log.warn("Send Gotify webhook failed with status {}", responseEntity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + responseEntity.getStatusCode());
             }
         } catch (Exception e) {

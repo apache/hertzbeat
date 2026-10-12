@@ -1,0 +1,431 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { App } from 'antd';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { MonitorParamDefine } from '../model/monitor-contract';
+import { createMonitorEditorDraft } from '../model/monitor-editor-draft';
+import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
+import { MonitorEditorFormView } from './monitor-editor-form-view';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: { message?: string }) => (values?.message ? `${key}:${values.message}` : key),
+    i18n: { language: 'en-US' }
+  })
+}));
+
+afterEach(cleanup);
+
+const headers: MonitorParamDefine = {
+  id: null,
+  app: 'website',
+  field: 'headers',
+  name: { 'en-US': 'Headers' },
+  type: 'key-value',
+  required: true,
+  defaultValue: null,
+  placeholder: null,
+  range: null,
+  limit: null,
+  options: null,
+  keyAlias: null,
+  valueAlias: null,
+  depend: null,
+  hide: false
+};
+
+describe('MonitorEditorFormView validation evidence', () => {
+  it('offers navigation instead of a dead retry for invalid canonical data', () => {
+    const controller = editorController([]);
+    const invalidController = {
+      ...controller,
+      state: { ...controller.state, evidence: { kind: 'invalid' as const } }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={invalidController} />);
+
+    expect(screen.getByRole('button', { name: 'common.back' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-state="empty"]')).toBeInTheDocument();
+  });
+
+  it('reuses the catalog dialog instead of rendering the legacy inline application select', async () => {
+    const controller = editorController([]);
+    const pickerController = {
+      ...controller,
+      state: { ...controller.state, draft: undefined }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={pickerController} />);
+
+    expect(await screen.findByRole('dialog')).toHaveTextContent('monitor.appPicker.title');
+    expect(screen.getByRole('searchbox', { name: 'monitor.appPicker.search' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'monitor.application' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Website' }));
+    expect(controller.actions.changeSource).toHaveBeenCalledWith({ app: 'website', scrape: 'static' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(controller.actions.cancel).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the catalog dialog cancellable when no monitor type is available', async () => {
+    const controller = editorController([]);
+    const emptyController = {
+      ...controller,
+      state: { ...controller.state, draft: undefined, apps: [] }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={emptyController} />);
+
+    expect(await screen.findByRole('dialog')).toHaveTextContent('monitor.appPicker.empty');
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(controller.actions.cancel).toHaveBeenCalledOnce();
+  });
+
+  it('keeps optional metadata progressive for a new empty monitor', () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.queryByRole('group', { name: 'monitor.editor.labels' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'monitor.editor.showMetadata' }));
+    expect(screen.getByRole('group', { name: 'monitor.editor.labels' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'monitor.editor.hideMetadata' })).toBeInTheDocument();
+  });
+
+  it('reopens the catalog when a new monitor changes application type', async () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.queryByRole('combobox', { name: 'monitor.application' })).not.toBeInTheDocument();
+    expect(screen.getByText('Website')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'monitor.appPicker.change' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('monitor.appPicker.title');
+    fireEvent.click(screen.getByRole('button', { name: 'MySQL' }));
+    expect(controller.actions.changeSource).toHaveBeenCalledWith({ app: 'mysql', scrape: 'static' });
+  });
+
+  it('keeps the application type immutable while editing an existing monitor', () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="edit" controller={controller} />);
+
+    expect(screen.getByText('Website')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'monitor.appPicker.change' })).not.toBeInTheDocument();
+  });
+
+  it('keeps dynamic parameters before collection and schedule controls', () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    const parameter = screen.getByRole('group', { name: 'Headers' });
+    const collector = screen.getByText('monitor.editor.collector');
+    const schedule = screen.getByText('monitor.editor.schedule');
+    expect(parameter.compareDocumentPosition(collector) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(collector.compareDocumentPosition(schedule) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('places a static host before the name and leaves discovery endpoints to their own definition', () => {
+    const host: MonitorParamDefine = { ...headers, field: 'host', type: 'host', name: { 'en-US': 'Host' } };
+    const controller = editorController([]);
+    controller.state.defines = [host, headers];
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'static', [host, headers]);
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    const hostInput = screen.getByLabelText('Host');
+    const nameInput = screen.getByLabelText('monitor.name');
+    expect(hostInput.compareDocumentPosition(nameInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'http_sd', [host, headers]);
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.queryByLabelText('Host')).not.toBeInTheDocument();
+  });
+
+  it('keeps service-discovery configuration before the monitor name and its credentials out of application advanced fields', () => {
+    const discoveryUrl: MonitorParamDefine = {
+      ...headers,
+      app: 'http_sd',
+      field: '__sd_url__',
+      type: 'text',
+      name: { 'en-US': 'Discovery URL' }
+    };
+    const discoveryAuth: MonitorParamDefine = {
+      ...headers,
+      app: 'http_sd',
+      field: '__sd_authType__',
+      type: 'radio',
+      name: { 'en-US': 'Discovery authentication' },
+      options: [{ label: 'Basic Auth', value: 'Basic Auth' }]
+    };
+    const discoveryUsername: MonitorParamDefine = {
+      ...headers,
+      app: 'http_sd',
+      field: '__sd_username__',
+      type: 'text',
+      name: { 'en-US': 'Discovery username' },
+      depend: { __sd_authType__: ['Basic Auth'] },
+      hide: true
+    };
+    const applicationAdvanced: MonitorParamDefine = {
+      ...headers,
+      field: 'timeout',
+      type: 'number',
+      name: { 'en-US': 'Application timeout' },
+      hide: true
+    };
+    const defines = [discoveryUrl, discoveryAuth, discoveryUsername, headers, applicationAdvanced];
+    const controller = editorController([]);
+    controller.state.defines = defines;
+    controller.state.sourceKey = 'new:website:http_sd';
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'http_sd', defines);
+    controller.state.draft.params = controller.state.draft.params.map(param =>
+      param.field === '__sd_authType__' ? { ...param, paramValue: 'Basic Auth' } : param
+    );
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    const discoveryInput = screen.getByLabelText('Discovery URL');
+    const nameInput = screen.getByLabelText('monitor.name');
+    expect(discoveryInput.compareDocumentPosition(nameInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByLabelText('Discovery username')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Application timeout')).not.toBeInTheDocument();
+  });
+
+  it('renders dependent parameters only while their controlling value matches', () => {
+    const auth: MonitorParamDefine = { ...headers, field: 'auth', type: 'text', name: { 'en-US': 'Auth' } };
+    const token: MonitorParamDefine = {
+      ...headers,
+      field: 'token',
+      type: 'password',
+      name: { 'en-US': 'Token' },
+      depend: { auth: ['basic'] }
+    };
+    const controller = editorController([]);
+    controller.state.defines = [auth, token];
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'static', [auth, token]);
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.queryByLabelText('Token')).not.toBeInTheDocument();
+
+    controller.state.draft.params = controller.state.draft.params.map(param =>
+      param.field === 'auth' ? { ...param, paramValue: 'basic' } : param
+    );
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByLabelText('Token')).toHaveAttribute('type', 'password');
+  });
+
+  it('shows concrete field errors and removes them when controller issues converge', () => {
+    const controller = editorController(['name', 'intervals', 'param:headers']);
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByText('monitor.editor.validation')).toBeInTheDocument();
+    const summary = screen.getByText('monitor.editor.validation').closest<HTMLElement>('[role="alert"]');
+    expect(summary).not.toBeNull();
+    expect(within(summary!).getByText('Headers')).toBeInTheDocument();
+    expect(screen.getAllByText('monitor.editor.invalidField')).toHaveLength(3);
+    expect(screen.getByLabelText('monitor.name')).toHaveClass('ant-input-status-error');
+    expect(screen.getByRole('spinbutton')).toHaveClass('ant-input-number-input');
+    expect(rendered.container.querySelector('[aria-invalid="true"]')).not.toBeNull();
+
+    controller.state.validationIssues = [];
+    controller.state.draft.monitor.name = 'home';
+    controller.state.draft.monitor.intervals = 10;
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.queryByText('monitor.editor.validation')).not.toBeInTheDocument();
+    expect(rendered.container.querySelector('[aria-invalid="true"]')).toBeNull();
+  });
+
+  it('marks an invalid cron expression instead of showing an interval error', () => {
+    const controller = editorController(['cronExpression']);
+    controller.state.draft.monitor.scheduleType = 'cron';
+    controller.state.draft.monitor.cronExpression = '* * *';
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByLabelText('monitor.editor.cronExpression')).toHaveClass('ant-input-status-error');
+  });
+
+  it('retires local structured rows when the editor source changes', () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.labels = { region: 'east' };
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+    const labels = within(screen.getByRole('group', { name: 'monitor.editor.labels' }));
+    fireEvent.change(labels.getByLabelText('monitor.editor.map.key'), { target: { value: '' } });
+
+    controller.state.sourceKey = 'edit:42:website:static';
+    controller.state.draft = createMonitorEditorDraft(
+      { monitor: { ...controller.state.draft.monitor, id: 42, labels: { region: 'west' } } },
+      'website',
+      'static',
+      [headers]
+    );
+    rendered.rerender(<MonitorEditorFormView mode="edit" controller={controller} />);
+
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.labels' })).getByLabelText('monitor.editor.map.key')
+    ).toHaveValue('region');
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.labels' })).getByLabelText('monitor.editor.map.value')
+    ).toHaveValue('west');
+  });
+
+  it('offers canonical label suggestions without turning annotations into constrained fields', () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.labels = { env: 'prod' };
+    controller.state.draft.monitor.annotations = { owner: 'ops' };
+    controller.state.labelSuggestions = {
+      keys: ['env', 'region'],
+      valuesByKey: { env: ['prod', 'staging'], region: ['east', 'west'] }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.labels' })).getByRole('combobox', {
+        name: 'monitor.editor.map.key'
+      })
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.annotations' })).getByRole('textbox', {
+        name: 'monitor.editor.map.key'
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('disables editable fields while a command owns the draft snapshot', () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.labels = { env: 'prod' };
+    controller.state.busy = true;
+    controller.state.command = 'detecting';
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.getByLabelText('monitor.name')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'monitor.editor.detect' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.labels' })).getByRole('button', {
+        name: 'monitor.editor.map.add'
+      })
+    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).not.toBeDisabled();
+    expect(document.querySelector('[data-hb-operational-form-actions]')).toBeInTheDocument();
+  });
+
+  it('keeps the latest command result in the form instead of relying on a transient toast', () => {
+    const controller = editorController([]);
+    controller.state.feedback = 'detect-success';
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.detectSuccess');
+
+    controller.state.feedback = { kind: 'failure', action: 'detect', failure: 'permission' };
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.detectFailed');
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.failure.permission');
+    expect(screen.getByRole('status')).not.toHaveTextContent('private backend');
+
+    controller.state.feedback = {
+      kind: 'failure',
+      action: 'detect',
+      failure: 'validation',
+      diagnostic: 'Public Key Retrieval is not allowed'
+    };
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.backendDiagnostic');
+    expect(screen.getByRole('alert')).toHaveTextContent('Public Key Retrieval is not allowed');
+    expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.failure.validation');
+
+    controller.state.feedback = 'save-unknown';
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.saveUnknown');
+  });
+
+  it('imports a Grafana dashboard template from an in-memory JSON file', async () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.app = 'prometheus';
+    controller.state.draft.grafanaDashboard.enabled = true;
+    const rendered = render(
+      <App>
+        <MonitorEditorFormView mode="new" controller={controller} />
+      </App>
+    );
+    const file = new File(['ignored by the test double'], 'dashboard.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue('{"title":"Operations"}') });
+
+    fireEvent.change(rendered.container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(controller.actions.updateGrafana).toHaveBeenCalledWith({ template: '{"title":"Operations"}' })
+    );
+  });
+
+  it('contains a Grafana template file read failure without changing the draft', async () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.app = 'prometheus';
+    controller.state.draft.grafanaDashboard.enabled = true;
+    const rendered = render(
+      <App>
+        <MonitorEditorFormView mode="new" controller={controller} />
+      </App>
+    );
+    const file = new File(['unreadable'], 'dashboard.json', { type: 'application/json' });
+    const readFile = vi.fn().mockRejectedValue(new Error('private file failure'));
+    Object.defineProperty(file, 'text', { value: readFile });
+
+    fireEvent.change(rendered.container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+
+    await waitFor(() => expect(readFile).toHaveBeenCalled());
+    expect(controller.actions.updateGrafana).not.toHaveBeenCalled();
+  });
+});
+
+function editorController(validationIssues: string[]) {
+  const draft = createMonitorEditorDraft(undefined, 'website', 'static', [headers]);
+  return {
+    state: {
+      evidence: { kind: 'ready' as const },
+      draft,
+      defines: [headers],
+      apps: [
+        { category: 'service', value: 'website', label: 'Website' },
+        { category: 'db', value: 'mysql', label: 'MySQL' }
+      ],
+      collectors: [],
+      busy: false,
+      command: 'idle' as 'idle' | 'detecting' | 'saving',
+      feedback: null as MonitorEditorCommandFeedback | null,
+      validationIssues,
+      returnTo: '/monitors',
+      scrapeValues: ['static'] as const,
+      sourceKey: 'new:website:static',
+      labelSuggestions: undefined as { keys: string[]; valuesByKey: Record<string, string[]> } | undefined
+    },
+    actions: {
+      updateMonitor: vi.fn(),
+      updateCollector: vi.fn(),
+      updateGrafana: vi.fn(),
+      updateParam: vi.fn(),
+      setParamValid: vi.fn(),
+      changeSource: vi.fn(),
+      detect: vi.fn(),
+      save: vi.fn(),
+      cancel: vi.fn(),
+      retry: vi.fn()
+    }
+  };
+}

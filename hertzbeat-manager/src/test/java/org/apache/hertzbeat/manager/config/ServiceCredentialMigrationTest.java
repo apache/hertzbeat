@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,7 +65,8 @@ class ServiceCredentialMigrationTest {
         jdbcTemplate.execute("""
                 CREATE TABLE hzb_config (
                     type VARCHAR(100) PRIMARY KEY,
-                    content VARCHAR(8192)
+                    content VARCHAR(8192),
+                    config_revision VARCHAR(36) NOT NULL
                 )
                 """);
     }
@@ -141,5 +143,8 @@ class ServiceCredentialMigrationTest {
         assertEquals(1, jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
                 Integer.class));
+        assertFalse(jdbcTemplate.queryForObject(
+                "SELECT config_revision FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
+                String.class).isBlank());
     }
 }

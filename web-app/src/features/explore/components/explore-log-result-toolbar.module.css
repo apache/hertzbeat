@@ -1,0 +1,157 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+  font-size: 13px;
+}
+
+.toolbar :global(.ant-btn) {
+  height: 32px;
+  font-size: 13px;
+}
+
+.facetToggle {
+  display: inline-flex;
+  min-height: 32px;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 0 7px 0 11px;
+  border: 1px solid transparent;
+  border-radius: var(--hb-radius-control);
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.facetToggle:hover {
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-primary);
+}
+.facetToggle:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 1px;
+}
+
+.status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--hb-space-3);
+  margin: 0;
+}
+
+.status div {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: baseline;
+  gap: var(--hb-space-1);
+}
+
+.status dt,
+.status dd {
+  margin: 0;
+  font-size: 12px;
+}
+
+.status dt {
+  color: var(--hb-text-muted);
+}
+
+.status dd {
+  color: var(--hb-text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.details {
+  display: grid;
+  max-width: min(320px, calc(100vw - 64px));
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.details div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+}
+.details dt {
+  color: var(--hb-text-muted);
+}
+.details dd {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: var(--hb-text-primary);
+}
+
+.detailsButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+}
+
+.detailsButton:hover {
+  background: var(--hb-bg-hover);
+}
+.detailsButton:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+}
+
+@media (width <= 700px) {
+  .toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-content: stretch;
+  }
+
+  .detailsButton {
+    grid-column: 2;
+    grid-row: 1;
+    width: 36px;
+    height: 36px;
+    justify-self: end;
+  }
+
+  .status {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .toolbar > nav {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+}

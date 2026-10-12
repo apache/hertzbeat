@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.grafana.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.grafana.service.DatasourceService;
 import org.apache.hertzbeat.grafana.service.ServiceAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
  * grafana init
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @Slf4j
 public class GrafanaInit implements CommandLineRunner {
     @Autowired

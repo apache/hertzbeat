@@ -91,9 +91,9 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             // notification client, so a 3xx response means the request did not reach its
             // destination and must be reported as a failure.
             if (entity.getStatusCode().is2xxSuccessful()) {
-                log.debug("Send WebHook: {} Success", hookUrl);
+                log.debug("Send webhook success");
             } else {
-                log.warn("Send WebHook: {} Failed: {}", hookUrl, entity.getBody());
+                log.warn("Send webhook failed with status {}", entity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {

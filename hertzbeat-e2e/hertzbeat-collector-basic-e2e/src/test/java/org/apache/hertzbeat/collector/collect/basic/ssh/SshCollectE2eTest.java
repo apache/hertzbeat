@@ -34,8 +34,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startables;
-import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -51,8 +51,9 @@ import java.util.stream.Stream;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 public class SshCollectE2eTest extends AbstractCollectE2eTest {
-    private static final String UBUNTU_IMAGE = "rastasheep/ubuntu-sshd:18.04";
-    private static final String HOST = "127.0.0.1";
+    private static final ImageFromDockerfile UBUNTU_IMAGE =
+            new ImageFromDockerfile("hertzbeat/ubuntu-sshd-e2e:24.04", false)
+                    .withFileFromClasspath("Dockerfile", "docker/ssh/Dockerfile");
     private static final String ROOT_USER = "root";
     private static final int SSH_PORT = 22;
     private static final int PASSWORD_LENGTH = 12;
@@ -111,7 +112,7 @@ public class SshCollectE2eTest extends AbstractCollectE2eTest {
     @Override
     protected Protocol buildProtocol(Metrics metricsDef) {
         SshProtocol sshProtocol = new SshProtocol();
-        sshProtocol.setHost(HOST);
+        sshProtocol.setHost(linuxContainer.getHost());
         sshProtocol.setPort(mappedPort.toString());
         sshProtocol.setUsername(ROOT_USER);
         sshProtocol.setPassword(password);
@@ -122,7 +123,7 @@ public class SshCollectE2eTest extends AbstractCollectE2eTest {
 
     private void setupAndStartContainer() {
         Network network = Network.builder().build();
-        linuxContainer = new GenericContainer<>(DockerImageName.parse(UBUNTU_IMAGE))
+        linuxContainer = new GenericContainer<>(UBUNTU_IMAGE)
                 .withExposedPorts(SSH_PORT)
                 .withNetwork(network)
                 .withNetworkAliases("ubuntu")

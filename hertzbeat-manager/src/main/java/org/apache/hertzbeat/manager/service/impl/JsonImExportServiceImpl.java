@@ -21,8 +21,12 @@ import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.TYPE;
 
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,13 +40,22 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
 
+    private static final ObjectMapper IMPORT_MAPPER = JsonMapper.builder().build();
+
     @Override
     public List<ExportMonitorDTO> parseImport(InputStream is) {
-        List<ExportMonitorDTO> result = JsonUtil.fromJson(is, new TypeReference<List<ExportMonitorDTO>>(){});
-        if (result == null) {
-            throw new RuntimeException("Parse JSON failed");
+        try {
+            List<ExportMonitorDTO> result = IMPORT_MAPPER.readValue(
+                    is, new TypeReference<List<ExportMonitorDTO>>() { });
+            if (result == null || result.stream().anyMatch(
+                    record -> record == null || record.getMonitor() == null)) {
+                throw new InvalidImportContentException();
+            }
+            return result;
+        } catch (JacksonException exception) {
+            // Do not retain the parser cause because its message may echo uploaded content.
+            throw new InvalidImportContentException();
         }
-        return result;
     }
 
     @Override

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -169,6 +170,12 @@ public class Job {
     private Map<String, Configmap> envConfigmaps;
 
     /**
+     * Collector-local UUID shared by HTTP payloads within one collection cycle.
+     */
+    @JsonIgnore
+    private transient String collectionUuid;
+
+    /**
      * collector use - timestamp when the task was scheduled by the time wheel.
      */
     @JsonIgnore
@@ -238,6 +245,7 @@ public class Job {
             return Byte.MAX_VALUE;
         }));
         envConfigmaps = new HashMap<>(8);
+        collectionUuid = UUID.randomUUID().toString();
     }
 
     /**

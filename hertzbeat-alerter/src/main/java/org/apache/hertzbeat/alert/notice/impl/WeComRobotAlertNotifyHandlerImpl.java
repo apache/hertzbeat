@@ -67,7 +67,7 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
                 if (entity.getBody().getErrCode() == 0) {
-                    log.debug("Send WeWork webHook: {} Success", webHookUrl);
+                    log.debug("Send WeWork webhook success");
                     WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver, alert);
                     if (!Objects.isNull(weWorkWebHookTextDto)) {
                         HttpEntity<WeWorkWebHookDto> httpEntityText = new HttpEntity<>(weWorkWebHookTextDto, headers);
@@ -75,11 +75,11 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                     }
 
                 } else {
-                    log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
+                    log.warn("Send WeWork webhook failed with code {}", entity.getBody().getErrCode());
                     throw new AlertNoticeException(entity.getBody().getErrMsg());
                 }
             } else {
-                log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
+                log.warn("Send WeWork webhook failed with status {}", entity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {

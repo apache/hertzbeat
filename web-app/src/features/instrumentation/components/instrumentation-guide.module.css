@@ -1,0 +1,194 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.guide,
+.detection {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.workspace {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.workspaceBody {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 24px;
+}
+
+.statusRail {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  border-left: 1px solid var(--hb-border);
+  padding: 12px;
+}
+
+.summary {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  border-block: 1px solid var(--hb-border);
+  padding-block: 14px;
+}
+
+.statusRail {
+  position: sticky;
+  top: 16px;
+}
+
+.railHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summary .railHeading {
+  min-width: 150px;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  min-width: 120px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.statusRail code {
+  overflow-wrap: anywhere;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+
+.endpoint {
+  display: grid;
+  gap: 2px;
+}
+
+.statusRail .signalRow {
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'header action'
+    'evidence evidence';
+}
+
+.statusRail .signalRow > :first-child {
+  grid-area: header;
+}
+
+.statusRail .signalRow > :nth-child(2) {
+  grid-area: evidence;
+}
+
+.statusRail .signalRow > :last-child {
+  grid-area: action;
+}
+
+.guide h4,
+.detection h4 {
+  margin: 0;
+}
+
+.component {
+  min-width: 0;
+  border-block: 1px solid var(--hb-border);
+  padding-block: 12px;
+}
+
+.blocks {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.block {
+  min-width: 0;
+  border: 1px solid var(--hb-border);
+  border-radius: var(--hb-radius-control);
+  overflow: hidden;
+}
+
+.blockHeader {
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.blockHeader > div {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.block pre {
+  margin: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 12px;
+  background: var(--hb-bg-canvas);
+}
+
+.signalRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(160px, 2fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--hb-border);
+}
+
+@media (max-width: 1100px) {
+  .workspaceBody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .statusRail {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .statusRail .signalRow {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'header' 'evidence' 'action';
+    overflow-wrap: anywhere;
+  }
+
+  .statusRail .signalRow > :last-child {
+    justify-self: start;
+  }
+
+  .signalRow :global(.ant-space) {
+    flex-wrap: wrap;
+  }
+}

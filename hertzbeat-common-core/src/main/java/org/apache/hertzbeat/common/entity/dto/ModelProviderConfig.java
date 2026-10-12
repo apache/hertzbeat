@@ -18,10 +18,10 @@
 package org.apache.hertzbeat.common.entity.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Model Provider Configuration
@@ -32,10 +32,13 @@ import lombok.NoArgsConstructor;
 @Schema(description = "LLM Model Provider configuration")
 public class ModelProviderConfig {
 
-    @Schema(title = "Model type, text-generate, vision")
+    @Schema(title = "Stable identifier of a saved provider configuration")
+    private String uid;
+
+    @Schema(title = "Spring AI provider type, like openai-compatible, anthropic, ollama")
     private String type;
 
-    @Schema(title = "Model Provider code, like openai, zai, bigmodel")
+    @Schema(title = "Provider preset code, like openai, zai, bigmodel")
     private String code;
 
     @Schema(title = "custom the provider server base url")
@@ -45,10 +48,9 @@ public class ModelProviderConfig {
     private String model;
 
     @Schema(title = "API Key", description = "API key", example = "sk-...")
-    @NotBlank(message = "API Key cannot be empty when enabled")
+    @ToString.Exclude
     private String apiKey;
 
     @Schema(title = "Participation Model", description = "model for participation", example = "PROTECTED")
-    @NotBlank(message = "API Key cannot be empty when enabled")
     private String participationModel;
 }

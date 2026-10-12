@@ -21,6 +21,7 @@ package org.apache.hertzbeat.warehouse.db;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
@@ -30,6 +31,7 @@ import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.INSTANT;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.RANGE;
+
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -57,6 +59,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     private static final String QUERY_RANGE_PATH = "/api/v1/query_range";
     private static final String QUERY_PATH = "/api/v1/query";
     protected static final String HTTP_QUERY_PARAM = "query";
+    protected static final String HTTP_LIMIT_PARAM = "limit";
     protected static final String HTTP_TIME_PARAM = "time";
     protected static final String HTTP_START_PARAM = "start";
     protected static final String HTTP_END_PARAM = "end";
@@ -73,6 +76,10 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         this.httpPromqlProperties = httpPromqlProperties;
     }
 
+    protected UriComponentsBuilder queryUri(String path) {
+        return UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + path);
+    }
+
     /**
      * record class for promql http connection
      */
@@ -85,50 +92,69 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
 
     @Override
     public List<Map<String, Object>> execute(String queryString) {
-        List<Map<String, Object>> results = new LinkedList<>();
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(httpPromqlProperties.username())
-                    && StringUtils.hasText(httpPromqlProperties.password())) {
-                String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
-                String encodedAuth = Base64Util.encode(authStr);
-                headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
-            }
-            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-
-            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + QUERY_PATH);
-            uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
-            URI uri = uriComponentsBuilder.build().toUri();
-            ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
-            if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        Map<String, Object> queryResult = new HashMap<>(8);
-                        queryResult.putAll(labels);
-                        if (content.getValue() != null && content.getValue().length == 2) {
-                            queryResult.put("__timestamp__", content.getValue()[0]);
-                            queryResult.put("__value__", content.getValue()[1]);
-                        } else if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Object> values = new LinkedList<>();
-                            for (Object[] valueArr : content.getValues()) {
-                                values.add(valueArr[1]);
-                            }
-                            queryResult.put("__value__", values);
-                        }
-                        results.add(queryResult);
-                    }
-                }
-            } else {
-                log.error("query metrics data from greptime failed. {}", responseEntity);
-            }
+            return execute(queryString, false);
         } catch (Exception e) {
             log.error(e.toString(), e);
+            return new LinkedList<>();
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> executeStrict(String queryString) {
+        return execute(queryString, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> executePreview(String queryString) {
+        return execute(queryString, true);
+    }
+
+    private List<Map<String, Object>> execute(String queryString, boolean limitResult) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (StringUtils.hasText(httpPromqlProperties.username())
+                && StringUtils.hasText(httpPromqlProperties.password())) {
+            String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
+            String encodedAuth = Base64Util.encode(authStr);
+            headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+        }
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+
+        UriComponentsBuilder uriComponentsBuilder = queryUri(QUERY_PATH);
+        uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
+        if (limitResult) {
+            uriComponentsBuilder.queryParam(HTTP_LIMIT_PARAM, CommonConstants.ALERT_PREVIEW_RESULT_LIMIT);
+        }
+        URI uri = uriComponentsBuilder.build().toUri();
+        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("PromQL query failed with status " + responseEntity.getStatusCode().value());
+        }
+        PromQlQueryContent body = responseEntity.getBody();
+        if (body == null || body.getData() == null || body.getData().getResult() == null) {
+            throw new IllegalStateException("PromQL query returned an invalid response");
+        }
+        List<Map<String, Object>> results = new LinkedList<>();
+        for (PromQlQueryContent.ContentData.Content content : body.getData().getResult()) {
+            Map<String, String> labels = content.getMetric();
+            Map<String, Object> queryResult = new HashMap<>(8);
+            if (labels != null) {
+                queryResult.putAll(labels);
+            }
+            if (content.getValue() != null && content.getValue().length == 2) {
+                queryResult.put("__timestamp__", content.getValue()[0]);
+                queryResult.put("__value__", content.getValue()[1]);
+            } else if (content.getValues() != null && !content.getValues().isEmpty()) {
+                List<Object> values = new LinkedList<>();
+                for (Object[] valueArr : content.getValues()) {
+                    values.add(valueArr[1]);
+                }
+                queryResult.put("__value__", values);
+            }
+            results.add(queryResult);
         }
         return results;
     }
@@ -148,21 +174,23 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                 headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri;
+            UriComponentsBuilder uriComponentsBuilder;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
-                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_RANGE_PATH)
+                uriComponentsBuilder = queryUri(QUERY_RANGE_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
-                        .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
-                        .queryParam(HTTP_END_PARAM, datasourceQuery.getEnd())
-                        .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
-                        .build().toUri();
+                        .queryParam(HTTP_START_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getStart()))
+                        .queryParam(HTTP_END_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getEnd()))
+                        .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep());
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
-                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_PATH)
-                        .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
-                        .build().toUri();
+                uriComponentsBuilder = queryUri(QUERY_PATH)
+                        .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr());
             } else {
                 throw new IllegalArgumentException(String.format("no such time type for query id %s.", datasourceQuery.getRefId()));
             }
+            if (datasourceQuery.getLimit() != null && datasourceQuery.getLimit() > 0) {
+                uriComponentsBuilder.queryParam(HTTP_LIMIT_PARAM, datasourceQuery.getLimit());
+            }
+            URI uri = uriComponentsBuilder.build().toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
                     PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -202,13 +230,27 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                 queryDataBuilder.status(responseEntity.getStatusCode().value());
             }
         } catch (Exception e) {
+            if (isInvalidQueryResponse(e)) {
+                return queryDataBuilder.status(400).msg(
+                        org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL_QUERY_INVALID).build();
+            }
             log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);
             queryDataBuilder.msg("query metrics data from victoria-metrics error: " + e.getMessage());
             queryDataBuilder.status(400);
         }
         return queryDataBuilder.build();
     }
-    
+
+    private boolean isInvalidQueryResponse(Exception error) {
+        if (!(error instanceof org.springframework.web.client.RestClientResponseException response)
+                || (response.getStatusCode().value() != 400 && response.getStatusCode().value() != 422)) {
+            return false;
+        }
+        var body = org.apache.hertzbeat.common.util.JsonUtil.fromJsonQuietly(response.getResponseBodyAsString());
+        return body != null && "error".equals(body.path("status").asText())
+                && List.of("InvalidArguments", "bad_data").contains(body.path("errorType").asText());
+    }
+
     @Override
     public boolean support(String queryLanguage) {
         return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);
