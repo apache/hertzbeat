@@ -67,8 +67,9 @@ class ArrowUtilTest {
 
         // Serialize
         byte[] data = ArrowUtil.serializeMultipleRoots(roots);
-        // Deserialize
-        List<VectorSchemaRoot> deserializedRoots = ArrowUtil.deserializeMultipleRoots(data);
+        // Deserialize — pass a fresh allocator for deserialization
+        RootAllocator deserializeAllocator = new RootAllocator();
+        List<VectorSchemaRoot> deserializedRoots = ArrowUtil.deserializeMultipleRoots(data, deserializeAllocator);
 
         Assertions.assertEquals(2, deserializedRoots.size());
         VectorSchemaRoot resultRoot1 = deserializedRoots.get(0);
@@ -81,6 +82,7 @@ class ArrowUtilTest {
         // Cleanup
         roots.forEach(VectorSchemaRoot::close);
         deserializedRoots.forEach(VectorSchemaRoot::close);
+        deserializeAllocator.close();
         allocator.close();
     }
 

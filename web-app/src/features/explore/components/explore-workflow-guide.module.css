@@ -1,0 +1,53 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.guide {
+  min-width: 0;
+  color: var(--hb-text-secondary);
+}
+
+.guide summary {
+  width: fit-content;
+  max-width: 100%;
+  line-height: var(--hb-workbench-control-height);
+  cursor: pointer;
+}
+
+.guide summary:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hb-space-6);
+  margin: var(--hb-space-1) 0 var(--hb-space-2);
+  padding-inline-start: var(--hb-space-5);
+  overflow-wrap: anywhere;
+}
+
+.states {
+  margin: var(--hb-space-2) 0 var(--hb-space-3);
+}
+
+@media (max-width: 768px) {
+  .steps {
+    grid-template-columns: 1fr;
+    gap: var(--hb-space-2);
+  }
+}

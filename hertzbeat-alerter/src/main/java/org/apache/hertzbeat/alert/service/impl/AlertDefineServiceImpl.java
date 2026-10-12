@@ -23,6 +23,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.alert.calculate.periodic.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
@@ -35,10 +36,13 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.Label;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -83,11 +88,17 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Resource
     private LabelDao labelDao;
 
+    @Autowired(required = false)
+    private List<HistoryDataReader> historyDataReaders = Collections.emptyList();
+
     private final DataSourceService dataSourceService;
 
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
     private static final String CONTENT_TYPE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
+    private static final long REALTIME_LOG_PREVIEW_WINDOW_MS = 15 * 60 * 1000L;
+    private static final int REALTIME_LOG_PREVIEW_CANDIDATE_LIMIT = 50;
+    private static final int REALTIME_LOG_PREVIEW_MATCH_LIMIT = 3;
 
     private static final Set<String> SYSTEM_BUILT_IN_LABELS = Set.of(
             CommonConstants.LABEL_INSTANCE,
@@ -188,7 +199,14 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         if (StringUtils.hasText(search)) {
             searchList = JsonUtil.fromJson(URLDecoder.decode(search, StandardCharsets.UTF_8), new TypeReference<>() {});
         }
-        List<String> finalSearchList = searchList;
+        return getAlertDefines(defineIds, searchList, null, null, sort, order, pageIndex, pageSize);
+    }
+
+    @Override
+    public Page<AlertDefine> getAlertDefines(List<Long> defineIds, List<String> searchTerms, String monitorType,
+                                             Boolean enabled, String sort, String order,
+                                             int pageIndex, int pageSize) {
+        List<String> finalSearchList = searchTerms == null ? List.of() : List.copyOf(searchTerms);
         // build search condition
         Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
@@ -214,6 +232,13 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 }
                 // all search keywords are connected with or
                 andList.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
+            }
+            if (enabled != null) {
+                andList.add(criteriaBuilder.equal(root.get("enable"), enabled));
+            }
+            if (StringUtils.hasText(monitorType)) {
+                String appExpression = "%equals(__app__,\"" + monitorType.toLowerCase(Locale.ROOT) + "\")%";
+                andList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("expr")), appExpression));
             }
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));
@@ -274,15 +299,121 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         if (!StringUtils.hasText(expr) || !StringUtils.hasText(datasource) || !StringUtils.hasText(type)) {
             return Collections.emptyList();
         }
+        List<Map<String, Object>> preview;
         switch (type) {
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
-                return dataSourceService.calculate(datasource, expr);
+                preview = dataSourceService.calculatePreview(datasource, expr);
+                break;
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
                 // todo support alert expr preview
-                return dataSourceService.query(datasource, expr);
+                preview = dataSourceService.queryPreview(datasource, expr, type);
+                break;
+            case CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC:
+                List<Map<String, Object>> tracePreview = dataSourceService.queryPreview(datasource, expr, type);
+                validateTracePreview(tracePreview);
+                preview = tracePreview;
+                break;
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
+                preview = validateRealtimeExpressionPreview(type, expr);
+                break;
             default:
                 log.error("Get define preview unsupported type: {}", type);
-                return Collections.emptyList();
+                preview = Collections.emptyList();
+                break;
+        }
+        if (preview == null || preview.size() <= CommonConstants.ALERT_PREVIEW_RESULT_LIMIT) {
+            return preview == null ? Collections.emptyList() : preview;
+        }
+        return List.copyOf(preview.subList(0, CommonConstants.ALERT_PREVIEW_RESULT_LIMIT));
+    }
+
+    private List<Map<String, Object>> validateRealtimeExpressionPreview(String type, String expr) {
+        JexlExpression expression;
+        try {
+            expression = JexlExpressionRunner.compile(expr);
+        } catch (Exception e) {
+            throw new AlertExpressionException("Realtime alert expression is invalid: " + e.getMessage());
+        }
+        if (!CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME.equals(type)) {
+            return validationPreviewRow(type);
+        }
+        return previewRealtimeLogSamples(type, expression);
+    }
+
+    private List<Map<String, Object>> previewRealtimeLogSamples(String type, JexlExpression expression) {
+        long endTime = System.currentTimeMillis();
+        long startTime = endTime - REALTIME_LOG_PREVIEW_WINDOW_MS;
+        List<Map<String, Object>> rows = new ArrayList<>(REALTIME_LOG_PREVIEW_MATCH_LIMIT);
+        for (HistoryDataReader historyDataReader : historyDataReaders) {
+            try {
+                List<LogEntry> candidates = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                        startTime, endTime, null, null, null, null, null,
+                        0, REALTIME_LOG_PREVIEW_CANDIDATE_LIMIT);
+                for (LogEntry candidate : candidates == null ? Collections.<LogEntry>emptyList() : candidates) {
+                    if (matchesRealtimeLogExpression(expression, candidate)) {
+                        rows.add(toRealtimeLogPreviewRow(type, candidate));
+                        if (rows.size() >= REALTIME_LOG_PREVIEW_MATCH_LIMIT) {
+                            return rows;
+                        }
+                    }
+                }
+            } catch (UnsupportedOperationException ex) {
+                // Try the next reader. Not every history store supports log preview queries.
+            }
+        }
+        return rows;
+    }
+
+    private boolean matchesRealtimeLogExpression(JexlExpression expression, LogEntry logEntry) {
+        if (logEntry == null) {
+            return false;
+        }
+        try {
+            Object result = JexlExpressionRunner.evaluate(expression, Map.of("log", logEntry));
+            return Boolean.TRUE.equals(result);
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    private Map<String, Object> toRealtimeLogPreviewRow(String type, LogEntry logEntry) {
+        Map<String, Object> row = new HashMap<>();
+        row.put("preview_mode", "log_sample");
+        row.put("type", type);
+        if (logEntry.getTimeUnixNano() != null) {
+            row.put("timeUnixNano", logEntry.getTimeUnixNano());
+        }
+        if (logEntry.getSeverityText() != null) {
+            row.put("severityText", logEntry.getSeverityText());
+        }
+        if (logEntry.getBody() != null) {
+            row.put("body", String.valueOf(logEntry.getBody()));
+        }
+        if (logEntry.getTraceId() != null) {
+            row.put("traceId", logEntry.getTraceId());
+        }
+        if (logEntry.getSpanId() != null) {
+            row.put("spanId", logEntry.getSpanId());
+        }
+        return row;
+    }
+
+    private List<Map<String, Object>> validationPreviewRow(String type) {
+        return List.of(Map.of(
+                "preview_mode", "expression_validation",
+                "type", type,
+                "status", "valid"
+        ));
+    }
+
+    private void validateTracePreview(List<Map<String, Object>> tracePreview) {
+        if (tracePreview == null || tracePreview.isEmpty()) {
+            return;
+        }
+        boolean hasMissingValueColumn = tracePreview.stream()
+                .anyMatch(row -> !row.containsKey("__value__"));
+        if (hasMissingValueColumn) {
+            throw new AlertExpressionException("Trace alert preview SQL must return __value__ column");
         }
     }
 
@@ -297,6 +428,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC:
                 // Valid type, proceed with query
                 break;
             default:

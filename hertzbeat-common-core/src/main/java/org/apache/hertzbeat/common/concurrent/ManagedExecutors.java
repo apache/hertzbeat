@@ -228,7 +228,6 @@ public final class ManagedExecutors {
         private final ExecutorService dispatcher;
         private final BlockingDeque<Runnable> queue;
         private final Semaphore permits;
-        private final Semaphore permitSignals;
         private final AtomicBoolean closed;
 
         private QueuedVirtualManagedExecutor(String name, String threadNamePrefix, int maxConcurrentTasks,
@@ -241,7 +240,6 @@ public final class ManagedExecutors {
             this.delegate = Executors.newThreadPerTaskExecutor(virtualFactory);
             this.queue = queueCapacity > 0 ? new LinkedBlockingDeque<>(queueCapacity) : new LinkedBlockingDeque<>();
             this.permits = new Semaphore(maxConcurrentTasks);
-            this.permitSignals = new Semaphore(0);
             this.closed = new AtomicBoolean(false);
             ThreadFactory dispatcherFactory = Thread.ofPlatform()
                     .daemon(true)
@@ -281,11 +279,13 @@ public final class ManagedExecutors {
         private void dispatchLoop() {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    Runnable command = queue.takeFirst();
-                    if (!permits.tryAcquire()) {
-                        queue.putFirst(command);
-                        permitSignals.acquire();
-                        continue;
+                    permits.acquire();
+                    Runnable command;
+                    try {
+                        command = queue.takeFirst();
+                    } catch (InterruptedException exception) {
+                        permits.release();
+                        throw exception;
                     }
                     submit(command);
                 }
@@ -302,14 +302,12 @@ public final class ManagedExecutors {
                         command.run();
                     } finally {
                         permits.release();
-                        permitSignals.release();
                     }
                 });
                 submitted = true;
             } finally {
                 if (!submitted) {
                     permits.release();
-                    permitSignals.release();
                 }
             }
         }

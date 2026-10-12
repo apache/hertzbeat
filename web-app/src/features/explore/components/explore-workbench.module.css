@@ -1,0 +1,240 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  composes: workspace from './explore-metrics-workspace.module.css';
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  scrollbar-gutter: stable;
+  height: calc(100dvh - var(--hb-shell-header-height, 52px) - 16px);
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent;
+  padding-inline: var(--hb-space-4);
+}
+
+.pageHeader {
+  flex: none;
+  min-width: 0;
+  padding-block: var(--hb-space-2);
+}
+.headingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-3);
+  min-height: 42px;
+}
+.headingRow h2 {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--hb-page-title-size);
+  font-weight: 600;
+  line-height: 1.4;
+}
+.headingRow > details {
+  margin-left: auto;
+}
+.scopeNavigation {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  flex-wrap: wrap;
+}
+.toolbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+  min-height: 40px;
+  align-items: flex-start;
+}
+.viewSlot {
+  width: max-content;
+  min-width: 144px;
+  flex: none;
+}
+.viewSlot :global(.ant-btn) {
+  height: 32px;
+}
+@media (width <= 1300px) {
+  .toolbarRow {
+    flex-wrap: wrap;
+  }
+  .toolbarRow > :last-child {
+    flex-basis: 100%;
+  }
+}
+
+.signalPanel {
+  composes: signalPanel from './explore-metrics-workspace.module.css';
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.signalPanel > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.signalPanel :global([data-hb-operational-result-region]) {
+  gap: 0;
+}
+
+.queryRegion {
+  flex: none;
+  min-width: 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.resultRegion {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.resultRegion > * {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.resultRegion:has(> [data-result-layout='fill']) {
+  overflow: hidden;
+}
+
+.resultRegion > [data-result-layout='fill'] {
+  flex-shrink: 1;
+}
+
+.metricWorkspace {
+  composes: metricWorkspace from './explore-metrics-workspace.module.css';
+}
+.metricResult {
+  composes: metricResult from './explore-metrics-workspace.module.css';
+}
+.draftNotice {
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--hb-text-muted);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.draftNotice[aria-hidden='true'] {
+  visibility: hidden;
+}
+
+.resultRegion:has(> [data-explore-log-region]) {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.navigationRow {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+}
+
+.signalNavigation {
+  display: flex;
+  align-items: stretch;
+  gap: 26px;
+}
+
+.signal,
+.activeSignal {
+  position: relative;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--hb-text-muted);
+  font: inherit;
+  font-weight: 550;
+  background: transparent;
+  cursor: pointer;
+}
+
+.signal:hover,
+.activeSignal {
+  color: var(--hb-text-primary);
+}
+
+.signal:focus-visible,
+.activeSignal:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+
+.activeSignal::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--hb-brand-accent);
+  content: '';
+}
+
+@media (max-width: 768px) {
+  .metricWorkspace {
+    flex-direction: column;
+  }
+  .metricResult {
+    overflow: visible;
+  }
+  :global(body:has([data-explore-workspace='true']) [data-testid='shell-time-policy']),
+  :global(body:has([data-explore-workspace='true']) [data-testid='shell-status-greptime']),
+  :global(body:has([data-explore-workspace='true']) [data-testid='shell-status-collector']) {
+    display: none;
+  }
+
+  .workspace {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding-inline: var(--hb-space-2);
+  }
+
+  .signalNavigation {
+    gap: 12px;
+  }
+
+  .headingRow {
+    flex-wrap: wrap;
+    gap: var(--hb-space-2);
+  }
+
+  .resultRegion {
+    overflow: visible;
+  }
+}
+
+.splitQueryRegion {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}

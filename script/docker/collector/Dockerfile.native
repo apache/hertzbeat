@@ -1,0 +1,62 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818 AS archive-verifier
+
+ARG TARGETARCH
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && apt-get install --no-install-recommends -y python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+COPY script/ci/verify-hybrid-collector-native-package.sh script/ci/verify-hybrid-collector-release-content.py \
+    /workspace/script/ci/
+COPY collector-native-linux-${TARGETARCH}.tar.gz /input/collector-native-linux-${TARGETARCH}.tar.gz
+
+RUN sh ./script/ci/verify-hybrid-collector-native-package.sh \
+        /input/collector-native-linux-${TARGETARCH}.tar.gz linux-${TARGETARCH} \
+    && mkdir -p /verified \
+    && tar -xzf /input/collector-native-linux-${TARGETARCH}.tar.gz -C /verified \
+    && package_dir="$(find /verified -mindepth 1 -maxdepth 1 -type d -name 'apache-hertzbeat-collector-native-*-linux-*-bin' -print -quit)" \
+    && test -n "$package_dir" \
+    && mv "$package_dir" /verified/hertzbeat-collector
+
+FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && apt-get install --no-install-recommends -y ca-certificates libstdc++6 tzdata zlib1g \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system hertzbeat \
+    && useradd --system --gid hertzbeat --home-dir /opt/hertzbeat-collector hertzbeat
+
+COPY --from=archive-verifier --chown=hertzbeat:hertzbeat \
+    /verified/hertzbeat-collector /opt/hertzbeat-collector
+
+RUN mkdir -p /opt/hertzbeat-collector/data /opt/hertzbeat-collector/logs \
+    && chown -R hertzbeat:hertzbeat /opt/hertzbeat-collector
+
+ENV LANG=C.UTF-8
+ENV TZ=UTC
+
+WORKDIR /opt/hertzbeat-collector
+USER hertzbeat
+
+EXPOSE 1159
+STOPSIGNAL SIGTERM
+
+ENTRYPOINT ["./bin/foreground.sh"]

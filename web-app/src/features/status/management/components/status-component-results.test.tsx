@@ -1,0 +1,121 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { StatusComponent } from '../model/status-management-contract';
+
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
+import { ComponentResults } from './status-component-results';
+
+const component: StatusComponent = {
+  id: 4,
+  orgId: 1,
+  name: 'API',
+  method: 0,
+  configState: 0,
+  state: 0
+};
+
+describe('Status management results', () => {
+  afterEach(cleanup);
+
+  it('uses compact loading evidence without exposing an empty table', () => {
+    render(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'loading' }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('statusManagement.loadingComponents').closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'loading'
+    );
+    expect(document.querySelector('.ant-table')).not.toBeInTheDocument();
+  });
+
+  it('disables row actions and an already-open delete confirmation while a command runs', () => {
+    const onDelete = vi.fn();
+    const view = render(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'ready', records: [component] }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'statusManagement.delete' }));
+    const confirm = screen.getByRole('button', { name: 'OK' });
+    expect(confirm).toBeEnabled();
+
+    view.rerender(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'ready', records: [component] }}
+        commandLocked
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'statusManagement.delete' })).toBeDisabled();
+    expect(confirm).toBeDisabled();
+    fireEvent.click(confirm);
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it('keeps unknown component health neutral instead of presenting it as a failure', () => {
+    const view = render(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'ready', records: [{ ...component, state: 2 }] }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    const tag = screen.getByText('statusManagement.unknown').closest('.ant-tag');
+    expect(tag).toHaveAttribute('data-component-state', 'unknown');
+    expect(tag).not.toHaveClass('ant-tag-error');
+
+    view.rerender(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'ready', records: [{ ...component, state: 1 }] }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(screen.getByText('status.abnormal').closest('.ant-tag')).toHaveAttribute('data-component-state', 'abnormal');
+    expect(screen.getByText('status.abnormal').closest('.ant-tag')).toHaveClass('ant-tag-error');
+  });
+});

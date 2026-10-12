@@ -36,10 +36,9 @@ public class JsonParamValidator implements ParamValidator {
 
     @Override
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
-        if (JsonUtil.fromJson(param.getParamValue(), new TypeReference<>() {
+        if (JsonUtil.fromJsonQuietly(param.getParamValue(), new TypeReference<>() {
         }) == null) {
-            throw new IllegalArgumentException("Params field " + paramDefine.getField() + " value "
-                    + param.getParamValue() + " is invalid key-value value");
+            throw ParamValidator.invalidParameter();
         }
     }
 }

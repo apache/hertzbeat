@@ -1,0 +1,82 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
+
+import {
+  objectStoreMigrationConflictCode,
+  ObjectStoreRequestFailure,
+  type ObjectStoreFailureKind
+} from '../model/object-store-failure';
+import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
+
+export type ObjectStoreRequestPhase = 'read' | 'write';
+
+/** Normalizes transport and contract failures before they leave the Object Store API. */
+export function normalizeObjectStoreApiFailure(reason: unknown, phase: ObjectStoreRequestPhase) {
+  if (reason instanceof ObjectStoreRequestFailure) return reason;
+  if (reason instanceof ObjectStoreDraftContractError) {
+    return new ObjectStoreRequestFailure('invalid', phase === 'write' ? 'rejected' : 'uncertain', {
+      code: 'OBJECT_STORE_VARIABLES_INVALID'
+    });
+  }
+  if (reason instanceof ObjectStoreResourceContractError) {
+    return new ObjectStoreRequestFailure('invalid', 'uncertain', { code: 'OBJECT_STORE_RESPONSE_INVALID' });
+  }
+  if (!(reason instanceof ApiMessageError)) return new ObjectStoreRequestFailure('error', 'uncertain');
+  const code = failureCode(reason);
+  return new ObjectStoreRequestFailure(
+    failureKind(reason),
+    writeOutcome(reason, phase),
+    code === undefined ? {} : { code }
+  );
+}
+
+export async function objectStoreApiRequest<T>(
+  phase: ObjectStoreRequestPhase,
+  operation: () => Promise<T>
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (reason) {
+    throw normalizeObjectStoreApiFailure(reason, phase);
+  }
+}
+
+function failureKind(reason: ApiMessageError): ObjectStoreFailureKind {
+  if (reason.cause !== undefined || reason.status === undefined || reason.status === 0 || reason.status >= 500) {
+    return 'unavailable';
+  }
+  if (reason.status === 401 || reason.status === 403) return 'permission';
+  if (reason.message === 'Object store storage unavailable') return 'unavailable';
+  if (reason.message === objectStoreMigrationConflictCode) return 'invalid';
+  if (reason.message === 'Invalid object store config') return 'invalid';
+  return 'error';
+}
+
+function writeOutcome(reason: ApiMessageError, phase: ObjectStoreRequestPhase) {
+  // A read-side response cannot establish whether an earlier write committed.
+  if (phase === 'read') return 'uncertain';
+  if (reason.message === 'Invalid object store config') return 'rejected';
+  if (reason.message === objectStoreMigrationConflictCode) return 'rejected';
+  return apiMessageWriteOutcome(reason);
+}
+
+function failureCode(reason: ApiMessageError) {
+  return reason.message === objectStoreMigrationConflictCode ? objectStoreMigrationConflictCode : undefined;
+}

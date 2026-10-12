@@ -1,0 +1,58 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
+
+import {
+  isExplicitLabelTransportRejection,
+  LabelTransportFailure,
+  normalizeLabelTransportFailure
+} from './label-api-failure';
+
+describe('Label API failure evidence', () => {
+  it.each([
+    ['timeout response', new ApiMessageError('private timeout', { status: 408 })],
+    [
+      'cause-bearing client response',
+      new ApiMessageError('private client failure', { status: 409, cause: new Error('private cause') })
+    ],
+    ['business envelope', new ApiMessageError('private business failure', { status: 200, code: 20 })]
+  ])('keeps %s write evidence uncertain and redacted', (_label, reason) => {
+    const failure = normalizeLabelTransportFailure(reason);
+
+    expect(failure).toBeInstanceOf(LabelTransportFailure);
+    expect(isExplicitLabelTransportRejection(failure)).toBe(false);
+    expect(JSON.stringify(failure)).not.toContain('private');
+  });
+
+  it.each([400, 404, 409, 422])('accepts source HTTP %s as an explicit prewrite rejection', status => {
+    const failure = normalizeLabelTransportFailure(new ApiMessageError('private rejection', { status }));
+
+    expect(failure).toMatchObject({ kind: 'rejected', status });
+    expect(isExplicitLabelTransportRejection(failure)).toBe(true);
+  });
+
+  it.each([401, 403])('keeps HTTP %s permission evidence distinct and redacted', status => {
+    const failure = normalizeLabelTransportFailure(new ApiMessageError('private permission detail', { status }));
+
+    expect(failure).toMatchObject({ kind: 'permission', status, message: 'Label request failed' });
+    expect(isExplicitLabelTransportRejection(failure)).toBe(true);
+    expect(JSON.stringify(failure)).not.toContain('private');
+  });
+});

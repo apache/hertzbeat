@@ -23,11 +23,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
+import org.apache.hertzbeat.alert.dto.AlertInhibitDeleteResponse;
+import org.apache.hertzbeat.alert.dto.AlertInhibitPageResponse;
 import org.apache.hertzbeat.alert.service.AlertInhibitService;
-import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,28 +49,25 @@ public class AlertInhibitsController {
     @GetMapping
     @Operation(summary = "Query the alarm inhibit list",
             description = "You can obtain the list of alarm inhibit by querying filter items")
-    public ResponseEntity<Message<Page<AlertInhibit>>> getAlertInhibits(
+    public ResponseEntity<Message<AlertInhibitPageResponse>> getAlertInhibits(
             @Parameter(description = "Alarm Inhibit ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
             @Parameter(description = "Search Name", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<AlertInhibit> alertInhibitPage = alertInhibitService.getAlertInhibits(ids, search, sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(alertInhibitPage));
+        return ResponseEntity.ok(Message.success(
+                alertInhibitService.list(ids, search, sort, order, pageIndex, pageSize)));
     }
 
     @DeleteMapping
     @Operation(summary = "Delete alarm inhibit in batches",
             description = "Delete alarm inhibit in batches based on the alarm inhibit ID list")
-    public ResponseEntity<Message<Void>> deleteAlertDefines(
+    public ResponseEntity<Message<AlertInhibitDeleteResponse>> deleteAlertDefines(
             @Parameter(description = "Alarm Inhibit IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
-        if (ids != null && !ids.isEmpty()) {
-            alertInhibitService.deleteAlertInhibits(new HashSet<>(ids));
-        }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success(
+                alertInhibitService.delete(ids == null ? null : new HashSet<>(ids))));
     }
 
 }

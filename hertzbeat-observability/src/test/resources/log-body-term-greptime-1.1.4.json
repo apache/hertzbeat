@@ -1,0 +1,327 @@
+[
+  {
+    "body": "error",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "ERROR",
+    "term": "error",
+    "matched": false
+  },
+  {
+    "body": "error",
+    "term": "ERROR",
+    "matched": false
+  },
+  {
+    "body": "terror",
+    "term": "error",
+    "matched": false
+  },
+  {
+    "body": "error2",
+    "term": "error",
+    "matched": false
+  },
+  {
+    "body": "_error_",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "\u00e9error\u00e9",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "\u4e2derror\u4e2d",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "\u03b1error\u03b2",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "\u00e9",
+    "term": "\u00e9",
+    "matched": true
+  },
+  {
+    "body": "\u00c9",
+    "term": "\u00e9",
+    "matched": false
+  },
+  {
+    "body": "caf\u00e9",
+    "term": "caf\u00e9",
+    "matched": true
+  },
+  {
+    "body": "caf\u00e9s",
+    "term": "caf\u00e9",
+    "matched": false
+  },
+  {
+    "body": "\u4e2d\u9519\u8bef\u4e2d",
+    "term": "\u9519\u8bef",
+    "matched": true
+  },
+  {
+    "body": "\u9519\u8bef",
+    "term": "\u9519\u8bef",
+    "matched": true
+  },
+  {
+    "body": "\ud83d\ude00error\ud83d\ude00",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "e\u0301error",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "error\u0301",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "/app/start",
+    "term": "/start",
+    "matched": true
+  },
+  {
+    "body": "start/stop",
+    "term": "/start",
+    "matched": false
+  },
+  {
+    "body": "x/error",
+    "term": "/error",
+    "matched": true
+  },
+  {
+    "body": "a+b",
+    "term": "+",
+    "matched": true
+  },
+  {
+    "body": "a+b",
+    "term": "a+b",
+    "matched": true
+  },
+  {
+    "body": "word word",
+    "term": "word word",
+    "matched": true
+  },
+  {
+    "body": "word  word",
+    "term": "word word",
+    "matched": false
+  },
+  {
+    "body": " word ",
+    "term": " word ",
+    "matched": true
+  },
+  {
+    "body": "x word y",
+    "term": " word ",
+    "matched": true
+  },
+  {
+    "body": "word\tword",
+    "term": "word word",
+    "matched": false
+  },
+  {
+    "body": "word\nword",
+    "term": "word\nword",
+    "matched": true
+  },
+  {
+    "body": "anything",
+    "term": "",
+    "matched": false
+  },
+  {
+    "body": "",
+    "term": "",
+    "matched": true
+  },
+  {
+    "body": "",
+    "term": "x",
+    "matched": false
+  },
+  {
+    "body": null,
+    "term": "x",
+    "matched": null
+  },
+  {
+    "body": "x",
+    "term": null,
+    "matched": null
+  },
+  {
+    "body": "abc",
+    "term": " ",
+    "matched": false
+  },
+  {
+    "body": " ",
+    "term": " ",
+    "matched": true
+  },
+  {
+    "body": "a\u00e9a",
+    "term": "\u00e9",
+    "matched": false
+  },
+  {
+    "body": "acaf\u00e9x",
+    "term": "caf\u00e9",
+    "matched": false
+  },
+  {
+    "body": "xcaf\u00e9",
+    "term": "caf\u00e9",
+    "matched": false
+  },
+  {
+    "body": "xcaf\u00e9x",
+    "term": "caf\u00e9",
+    "matched": false
+  },
+  {
+    "body": "a/b",
+    "term": "/b",
+    "matched": true
+  },
+  {
+    "body": "xa/",
+    "term": "a/",
+    "matched": false
+  },
+  {
+    "body": "xab",
+    "term": "a",
+    "matched": false
+  },
+  {
+    "body": "xab ab",
+    "term": "ab",
+    "matched": true
+  },
+  {
+    "body": "abx ab",
+    "term": "ab",
+    "matched": true
+  },
+  {
+    "body": "x+z",
+    "term": "+",
+    "matched": true
+  },
+  {
+    "body": "x-\u00e9-y",
+    "term": "\u00e9",
+    "matched": true
+  },
+  {
+    "body": "a_",
+    "term": "a_",
+    "matched": true
+  },
+  {
+    "body": "xa_",
+    "term": "a_",
+    "matched": false
+  },
+  {
+    "body": "_ax",
+    "term": "_a",
+    "matched": false
+  },
+  {
+    "body": "x_a",
+    "term": "_a",
+    "matched": true
+  },
+  {
+    "body": " a ",
+    "term": "a ",
+    "matched": true
+  },
+  {
+    "body": "xa ",
+    "term": "a ",
+    "matched": false
+  },
+  {
+    "body": "a x",
+    "term": "a ",
+    "matched": true
+  },
+  {
+    "body": "a\tb",
+    "term": "\t",
+    "matched": true
+  },
+  {
+    "body": "a\nb",
+    "term": "\n",
+    "matched": true
+  },
+  {
+    "body": " ",
+    "term": "",
+    "matched": false
+  },
+  {
+    "body": "\u4e2dcaf\u00e9",
+    "term": "caf\u00e9",
+    "matched": false
+  },
+  {
+    "body": "caf\u00e9\u4e2d",
+    "term": "caf\u00e9",
+    "matched": false
+  },
+  {
+    "body": "a\u9519\u8befb",
+    "term": "\u9519\u8bef",
+    "matched": true
+  },
+  {
+    "body": "\u2167error",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "a\u2167b",
+    "term": "\u2167",
+    "matched": false
+  },
+  {
+    "body": "\u00b2error",
+    "term": "error",
+    "matched": true
+  },
+  {
+    "body": "a\u00b2b",
+    "term": "\u00b2",
+    "matched": false
+  },
+  {
+    "body": "a\ud840\udc00b",
+    "term": "\ud840\udc00",
+    "matched": true
+  }
+]

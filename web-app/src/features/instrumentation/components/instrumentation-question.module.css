@@ -1,0 +1,71 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.questionSection {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.questionSection h3 {
+  margin: 0;
+}
+
+.questionGroup {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.questionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 240px));
+  gap: 10px;
+}
+
+.questionTile {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--hb-border);
+  border-radius: var(--hb-radius-surface);
+  padding: 10px 12px;
+  background: var(--hb-bg-raised);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.questionTile:hover,
+.questionTileSelected {
+  border-color: var(--hb-brand-accent);
+  background: var(--hb-bg-selected);
+}
+
+.questionChoice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+@media (max-width: 760px) {
+  .questionGrid {
+    grid-template-columns: 1fr;
+  }
+}
