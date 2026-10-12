@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.entity.manager;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -67,7 +68,8 @@ public class PluginMetadata {
     @Schema(title = "Plugin activation status", example = "true", accessMode = READ_WRITE)
     private Boolean enableStatus;
 
-    @Schema(title = "Jar file path", example = "true", accessMode = READ_WRITE)
+    @Schema(hidden = true)
+    @JsonIgnore
     private String jarFilePath;
 
     @Override

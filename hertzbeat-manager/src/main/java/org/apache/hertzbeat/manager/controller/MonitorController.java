@@ -24,7 +24,10 @@ import jakarta.validation.Valid;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorSignalView;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.entity.MonitorInvestigationReadModelService;
+import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,10 +37,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -48,8 +53,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/api/monitor", produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {
 
+    private static final String COPY_SOURCE_NOT_FOUND_MESSAGE = "Source monitor was not found.";
+    private static final String COPY_FAILED_MESSAGE = "Copy monitor failed.";
+
     @Autowired
     private MonitorService monitorService;
+
+    @Autowired
+    private MonitorInvestigationReadModelService monitorInvestigationReadModelService;
 
     @PostMapping
     @Operation(summary = "Add a monitoring application", description = "Add a monitoring application")
@@ -60,7 +71,7 @@ public class MonitorController {
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
-    @PutMapping
+    @PutMapping(params = "!id")
     @Operation(summary = "Modify an existing monitoring application", description = "Modify an existing monitoring application")
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data
@@ -69,11 +80,46 @@ public class MonitorController {
         return ResponseEntity.ok(Message.success("Modify success"));
     }
 
+    @PutMapping(params = "id")
+    @Operation(summary = "Modify an existing monitoring application", description = "Modify an existing monitoring application")
+    public ResponseEntity<Message<Void>> modifyMonitorByQueryId(
+            @Parameter(description = "Legacy monitoring task ID", example = "6565463543") @RequestParam("id") final long id,
+            @RequestBody MonitorDto monitorDto) {
+        return modifyMonitorWithId(id, monitorDto);
+    }
+
+    @PutMapping(path = "/{id}")
+    @Operation(summary = "Modify an existing monitoring application", description = "Modify an existing monitoring application")
+    public ResponseEntity<Message<Void>> modifyMonitorByPathId(
+            @Parameter(description = "Monitoring task ID", example = "6565463543") @PathVariable("id") final long id,
+            @RequestBody MonitorDto monitorDto) {
+        return modifyMonitorWithId(id, monitorDto);
+    }
+
+    private ResponseEntity<Message<Void>> modifyMonitorWithId(final long id, MonitorDto monitorDto) {
+        Monitor monitor = monitorDto.getMonitor();
+        if (monitor != null) {
+            monitor.setId(id);
+            monitorDto.setMonitor(monitor);
+        }
+        return modifyMonitor(monitorDto);
+    }
+
     @GetMapping(path = "/{id}")
     @Operation(summary = "Obtain monitoring information based on monitoring ID", description = "Obtain monitoring information based on monitoring ID")
     public ResponseEntity<Message<MonitorDto>> getMonitor(
             @Parameter(description = "Monitoring task ID", example = "6565463543") @PathVariable("id") final long id) {
-        // Get monitoring information
+        return getMonitorById(id);
+    }
+
+    @GetMapping
+    @Operation(summary = "Obtain monitoring information based on monitoring ID", description = "Obtain monitoring information based on monitoring ID")
+    public ResponseEntity<Message<MonitorDto>> getMonitorByQueryId(
+            @Parameter(description = "Legacy monitoring task ID", example = "6565463543") @RequestParam("id") final long id) {
+        return getMonitorById(id);
+    }
+
+    private ResponseEntity<Message<MonitorDto>> getMonitorById(final long id) {
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
         if (monitorDto == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "Monitor not exist."));
@@ -82,11 +128,39 @@ public class MonitorController {
         }
     }
 
+    @GetMapping(path = "/{id}/investigation")
+    @Operation(summary = "Get the bounded signal investigation view for a Monitor",
+            description = "Get collection, current alert, and exact workspace-visible Entity binding evidence")
+    public ResponseEntity<Message<MonitorSignalView>> getMonitorInvestigation(
+            @Parameter(description = "Monitoring task ID", example = "6565463543")
+            @PathVariable("id") final long id,
+            @Parameter(required = true) @RequestParam(value = "start", required = false) final Long start,
+            @Parameter(required = true) @RequestParam(value = "end", required = false) final Long end) {
+        if (start == null || end == null) {
+            return ResponseEntity.ok(Message.fail(PARAM_INVALID_CODE, "monitor_signal_window_invalid"));
+        }
+        Monitor monitor = monitorService.getMonitor(id);
+        if (monitor == null) {
+            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "Monitor not exist."));
+        }
+        return ResponseEntity.ok(Message.success(monitorInvestigationReadModelService.query(monitor, start, end)));
+    }
+
     @DeleteMapping(path = "/{id}")
     @Operation(summary = "Delete monitoring application based on monitoring ID", description = "Delete monitoring application based on monitoring ID")
     public ResponseEntity<Message<Void>> deleteMonitor(
             @Parameter(description = "en: Monitor ID", example = "6565463543") @PathVariable("id") final long id) {
-        // delete monitor
+        return deleteMonitorById(id);
+    }
+
+    @DeleteMapping
+    @Operation(summary = "Delete monitoring application based on monitoring ID", description = "Delete monitoring application based on monitoring ID")
+    public ResponseEntity<Message<Void>> deleteMonitorByQueryId(
+            @Parameter(description = "en: Legacy monitor ID", example = "6565463543") @RequestParam("id") final long id) {
+        return deleteMonitorById(id);
+    }
+
+    private ResponseEntity<Message<Void>> deleteMonitorById(final long id) {
         Monitor monitor = monitorService.getMonitor(id);
         if (monitor == null) {
             return ResponseEntity.ok(Message.success("The specified monitoring was not queried, please check whether the parameters are correct"));
@@ -107,11 +181,23 @@ public class MonitorController {
     @PostMapping("/copy/{id}")
     @Operation(summary = "Copy Monitor", description = "Copy an existing monitor")
     public ResponseEntity<Message<Void>> copyMonitor(@PathVariable("id") final Long id) {
+        return copyMonitorById(id);
+    }
+
+    @PostMapping("/copy")
+    @Operation(summary = "Copy Monitor", description = "Copy an existing monitor")
+    public ResponseEntity<Message<Void>> copyMonitorByQueryId(@RequestParam("id") final Long id) {
+        return copyMonitorById(id);
+    }
+
+    private ResponseEntity<Message<Void>> copyMonitorById(final Long id) {
         try {
             monitorService.copyMonitor(id);
             return ResponseEntity.ok(Message.success("Copy monitor success"));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Copy monitor failed: " + e.getMessage()));
+        } catch (MonitorCopySourceNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, COPY_SOURCE_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, COPY_FAILED_MESSAGE));
         }
     }
 }

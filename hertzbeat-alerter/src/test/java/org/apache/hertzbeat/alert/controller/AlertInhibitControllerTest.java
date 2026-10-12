@@ -1,10 +1,10 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -18,116 +18,118 @@
 package org.apache.hertzbeat.alert.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
+import java.util.List;
+import java.util.Map;
+import org.apache.hertzbeat.alert.dto.AlertInhibitRequest;
+import org.apache.hertzbeat.alert.dto.AlertInhibitResponse;
+import org.apache.hertzbeat.alert.service.AlertInhibitNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertInhibitOperationException;
 import org.apache.hertzbeat.alert.service.AlertInhibitService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.HashMap;
-
-/**
- * test case for {@link AlertInhibitControllerTest}
- */
 @ExtendWith(MockitoExtension.class)
-public class AlertInhibitControllerTest {
+class AlertInhibitControllerTest {
 
     private MockMvc mockMvc;
-
     @Mock
-    private AlertInhibitService alertInhibitService;
-
+    private AlertInhibitService service;
     @InjectMocks
-    private AlertInhibitController alertInhibitController;
-
-    private AlertInhibit alertInhibit;
+    private AlertInhibitController controller;
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = standaloneSetup(alertInhibitController).build();
-
-        HashMap<String, String> sourceLabels = new HashMap<>();
-        HashMap<String, String> targetLabels = new HashMap<>();
-
-        alertInhibit = AlertInhibit.builder()
-                .id(1L)
-                .name("test")
-                .sourceLabels(sourceLabels)
-                .targetLabels(targetLabels)
-                .creator("test")
-                .build();
+        mockMvc = standaloneSetup(controller).setControllerAdvice(new AlertInhibitControllerAdvice()).build();
     }
 
     @Test
-    void testAddNewAlertInhibit() throws Exception {
+    void createAndUpdateReturnAuthoritativeExplicitRecords() throws Exception {
+        AlertInhibitResponse response = response();
+        when(service.create(any(AlertInhibitRequest.class))).thenReturn(response);
+        when(service.update(any(AlertInhibitRequest.class))).thenReturn(response);
 
-        doNothing().when(alertInhibitService).validate(any(AlertInhibit.class), eq(false));
-        doNothing().when(alertInhibitService).addAlertInhibit(any(AlertInhibit.class));
+        mockMvc.perform(post("/api/alert/inhibit").contentType(MediaType.APPLICATION_JSON).content(createBody()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.id").value(7));
+        mockMvc.perform(put("/api/alert/inhibit").contentType(MediaType.APPLICATION_JSON)
+                        .content(createBody().replaceFirst("\\{", "{\"id\":7,")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.name").value("Host suppression"));
+    }
 
-        mockMvc.perform(post("/api/alert/inhibit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(alertInhibit)))
-                .andExpect(status().isOk())
+    @Test
+    void createRejectsAuditFieldsWithoutReflectingValues() throws Exception {
+        String body = """
+                {"name":"Host suppression","enable":true,
+                 "sourceLabels":{"severity":"critical"},"targetLabels":{"severity":"warning"},
+                 "equalLabels":["instance"],"creator":"attacker"}
+                """;
+        mockMvc.perform(post("/api/alert/inhibit").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("attacker"))));
+    }
+
+    @Test
+    void detailDistinguishesMissingUnavailableAndErrorWithoutReflectingMessages() throws Exception {
+        when(service.get(1L)).thenThrow(new AlertInhibitNotFoundException());
+        when(service.get(2L)).thenThrow(new DataAccessResourceFailureException("matcher-sentinel"));
+        when(service.get(3L)).thenThrow(new IllegalStateException("body-sentinel"));
+        when(service.get(7L)).thenReturn(response());
+
+        mockMvc.perform(get("/api/alert/inhibit/7")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Add success"));
-
-    }
-
-    @Test
-    void testModifyAlertInhibit() throws Exception {
-
-        doNothing().when(alertInhibitService).validate(any(AlertInhibit.class), eq(true));
-        doNothing().when(alertInhibitService).modifyAlertInhibit(any(AlertInhibit.class));
-
-        mockMvc.perform(put("/api/alert/inhibit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(alertInhibit)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Modify success"));
-
-
-    }
-
-    @Test
-    void testGetAlertInhibitExists() throws Exception {
-
-        when(alertInhibitService.getAlertInhibit(1L)).thenReturn(alertInhibit);
-
-        mockMvc.perform(get("/api/alert/inhibit/{id}", 1L)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(alertInhibit.getId()));
-    }
-
-    @Test
-    void testGetAlertInhibitNotExists() throws Exception {
-
-        when(alertInhibitService.getAlertInhibit(1L)).thenReturn(null);
-
-        mockMvc.perform(get("/api/alert/inhibit/{id}", 1L)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(7));
+        mockMvc.perform(get("/api/alert/inhibit/1")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_NOT_EXIST_CODE))
                 .andExpect(jsonPath("$.msg").value("AlertInhibit not exist."));
+        mockMvc.perform(get("/api/alert/inhibit/2")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Alert inhibit storage unavailable"));
+        mockMvc.perform(get("/api/alert/inhibit/3")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Alert inhibit operation error"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("body-sentinel"))));
     }
 
+    @Test
+    void uncertainCreateReturnsSafeNonValidationOutcome() throws Exception {
+        when(service.create(any(AlertInhibitRequest.class)))
+                .thenThrow(new AlertInhibitOperationException("write-sentinel"));
 
+        mockMvc.perform(post("/api/alert/inhibit").contentType(MediaType.APPLICATION_JSON).content(createBody()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert inhibit operation error"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("write-sentinel"))));
+    }
+
+    private String createBody() {
+        return """
+                {"name":"Host suppression","enable":true,
+                 "sourceLabels":{"severity":"critical"},"targetLabels":{"severity":"warning"},
+                 "equalLabels":["instance"]}
+                """;
+    }
+
+    private AlertInhibitResponse response() {
+        return new AlertInhibitResponse(7L, "Host suppression", Map.of("severity", "critical"),
+                Map.of("severity", "warning"), List.of("instance"), true, null, null, null, null);
+    }
 }

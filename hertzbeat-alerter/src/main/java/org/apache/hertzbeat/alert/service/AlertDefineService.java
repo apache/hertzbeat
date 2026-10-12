@@ -91,6 +91,22 @@ public interface AlertDefineService {
     Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, String sort, String order, int pageIndex, int pageSize);
 
     /**
+     * Query alert definitions with structured filters before pagination.
+     *
+     * @param defineIds rule identifiers
+     * @param searchTerms rule search terms
+     * @param monitorType monitor application type
+     * @param enabled enabled state
+     * @param sort sort field
+     * @param order sort direction
+     * @param pageIndex page index
+     * @param pageSize page size
+     * @return filtered page
+     */
+    Page<AlertDefine> getAlertDefines(List<Long> defineIds, List<String> searchTerms, String monitorType,
+                                      Boolean enabled, String sort, String order, int pageIndex, int pageSize);
+
+    /**
      * Export file configuration of specified type based on ID list and export file type
      * @param ids AlertDefine ID
      * @param type File Type

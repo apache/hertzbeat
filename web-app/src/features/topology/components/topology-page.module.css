@@ -1,0 +1,185 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.contextFacts {
+  display: flex;
+  min-width: 0;
+}
+
+.contextFact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 96px;
+  padding-inline: 14px;
+  border-left: 1px solid var(--ant-color-border-secondary);
+}
+
+.contextFact:last-child {
+  min-width: 190px;
+}
+
+.canvasFilter {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.canvasFilter > * {
+  pointer-events: auto;
+}
+
+.canvasFilterFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: center;
+  width: min(760px, 100%);
+  max-height: min(360px, calc(100vh - 180px));
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+  box-shadow: var(--ant-box-shadow-tertiary);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+}
+
+.workspaceCompact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.graphColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.canvasFrame {
+  position: relative;
+  height: clamp(560px, calc(100vh - 240px), 760px);
+  overflow: hidden;
+  background: var(--ant-color-bg-container);
+}
+
+.canvasControls {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  box-shadow: var(--ant-box-shadow-tertiary);
+}
+
+.canvasScale {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 0 8px;
+  border-top: 1px solid var(--ant-color-border);
+  border-bottom: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  font-variant-numeric: tabular-nums;
+}
+
+.canvasLegend {
+  position: absolute;
+  z-index: 2;
+  bottom: 12px;
+  left: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+  box-shadow: var(--ant-box-shadow-tertiary);
+}
+
+.evidenceSection {
+  border-top: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+}
+
+.evidenceHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 0 12px 0 16px;
+}
+
+.evidenceBody {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.topologyRowActive > td {
+  background: var(--ant-control-item-bg-active) !important;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 10px 12px;
+}
+
+@media (max-width: 720px) {
+  .contextFacts {
+    width: 100%;
+  }
+
+  .contextFact {
+    flex: 1;
+    border-left: 0;
+    border-right: 1px solid var(--ant-color-border-secondary);
+  }
+
+  .contextFact:last-child {
+    border-right: 0;
+  }
+
+  .contextFact,
+  .contextFact:last-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .canvasFilterFields {
+    grid-template-columns: 1fr;
+  }
+
+  .canvasFrame {
+    height: 520px;
+  }
+}

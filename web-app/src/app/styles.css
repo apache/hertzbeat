@@ -1,0 +1,233 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:root {
+  --hb-brand-accent: #9b5bb3;
+  --hb-bg-canvas: #0d0f14;
+  --hb-bg-chrome: #101218;
+  --hb-bg-navigation: #101218;
+  --hb-bg-raised: #14171e;
+  --hb-bg-hover: #181b22;
+  --hb-bg-selected: #211a26;
+  --hb-border-subtle: #282d38;
+  --hb-text-primary: #eceef3;
+  --hb-text-secondary: #b8bec9;
+  --hb-text-muted: #929aaa;
+  --hb-text-disabled: #626a78;
+  --hb-text-on-accent: #ffffff;
+  --hb-text-on-image: #ffffff;
+  --hb-bg-image-scrim: rgb(13 15 20 / 88%);
+  --hb-shadow-on-image: 0 1px 10px rgb(72 25 52 / 26%);
+  --hb-shadow-surface: 0 18px 50px rgb(0 0 0 / 12%);
+  --hb-shadow-control: 0 3px 8px rgb(0 0 0 / 10%);
+  --hb-shadow-control-compact: 0 2px 6px rgb(0 0 0 / 10%);
+  --hb-shadow-dialog: 0 24px 72px rgb(24 30 42 / 22%);
+  --hb-shadow-overlay: 0 18px 50px rgb(15 23 42 / 16%), 0 2px 8px rgb(15 23 42 / 8%);
+  --hb-shadow-inset-top: 0 -10px 28px rgb(15 23 42 / 6%);
+  --hb-shadow-xs: 0 2px 8px rgb(15 23 42 / 6%);
+  --hb-shadow-sm: 0 4px 12px rgb(15 23 42 / 7%);
+  --hb-shadow-raised: 0 20px 46px rgb(15 23 42 / 9%), 0 2px 8px rgb(15 23 42 / 5%);
+  --hb-shadow-modal: 0 28px 80px rgb(15 23 42 / 22%), 0 6px 18px rgb(15 23 42 / 12%);
+  --hb-shadow-card: 0 4px 14px rgb(15 23 42 / 5%);
+  --hb-shadow-floating: 0 12px 28px rgb(15 23 42 / 9%);
+  --hb-border-overlay: rgb(15 23 42 / 10%);
+  --hb-bg-overlay: rgb(255 255 255 / 96%);
+  --hb-public-status-surface: #fff;
+  --hb-public-status-text: #202124;
+  --hb-public-status-text-secondary: #5f6368;
+  --hb-public-status-text-tertiary: #697078;
+  --hb-public-status-text-table: #555c64;
+  --hb-public-status-text-table-heading: #707780;
+  --hb-public-status-icon-muted: #81868d;
+  --hb-public-status-border: #d9dde2;
+  --hb-public-status-border-banner: #d9dedb;
+  --hb-public-status-border-subtle: #eceef1;
+  --hb-public-status-divider: #e6e9ec;
+  --hb-public-status-timeline-border: #d7dce1;
+  --hb-public-status-fill-subtle: #fafbfc;
+  --hb-public-status-fill-tag: #f3f4f6;
+  --hb-public-status-healthy: #19713d;
+  --hb-public-status-healthy-icon: #1f8f4e;
+  --hb-public-status-healthy-marker: #27a85f;
+  --hb-public-status-healthy-fill: #f3f8f5;
+  --hb-public-status-degraded: #9a6200;
+  --hb-public-status-degraded-fill: #fff8e8;
+  --hb-public-status-incident: #b3261e;
+  --hb-public-status-incident-icon: #c23b32;
+  --hb-public-status-incident-marker: #de5047;
+  --hb-public-status-incident-fill: #fff2f0;
+  --hb-public-status-warning-marker: #d88632;
+  --hb-public-status-resolved-marker: #39a565;
+  --hb-public-status-unknown: #60656d;
+  --hb-public-status-unknown-icon: #7a8088;
+  --hb-public-status-unknown-marker: #9ba1a8;
+  --hb-public-status-unknown-history: #dfe3e7;
+  --hb-public-status-unknown-fill: #f5f6f7;
+  --hb-public-status-shadow-subtle: 0 1px 2px rgb(18 23 20 / 4%);
+  --hb-nav-text: #adb4c0;
+  --hb-nav-selected: var(--hb-bg-selected);
+  --hb-nav-hover: #181b22;
+  --hb-focus-ring: #bd7bd0;
+  --hb-status-loading: var(--hb-status-unknown);
+  --hb-status-available: #49aa19;
+  --hb-status-degraded: #d89614;
+  --hb-status-unavailable: #e84749;
+  --hb-status-unknown: #7d8593;
+  --hb-scrollbar-thumb: #3b414e;
+  --hb-scrollbar-thumb-hover: #596170;
+  --hb-syntax-property: #82aaff;
+  --hb-syntax-string: #c3e88d;
+  --hb-syntax-number: #f78c6c;
+  --hb-syntax-atom: #c792ea;
+  --hb-syntax-punctuation: #b8bec9;
+  --hb-syntax-comment: #929aaa;
+  --hb-radius-control: 5px;
+  --hb-radius-surface: 6px;
+  --hb-font-family-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --hb-font-family-mono: 'DejaVu Sans Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --hb-space-1: 4px;
+  --hb-space-2: 8px;
+  --hb-space-3: 12px;
+  --hb-space-4: 16px;
+  --hb-space-5: 20px;
+  --hb-space-6: 24px;
+  --hb-space-7: 32px;
+  --hb-page-title-size: 24px;
+  --hb-page-title-line-height: 1.25;
+  --hb-section-title-size: 14px;
+  --hb-workbench-control-height: 32px;
+  --hb-workbench-header-height: 36px;
+  --hb-page-bg: var(--hb-bg-canvas);
+  --hb-content-bg: var(--hb-bg-canvas);
+  --hb-chrome-bg: var(--hb-bg-chrome);
+  --hb-sider-bg: var(--hb-bg-navigation);
+  --hb-border: var(--hb-border-subtle);
+  --hb-text: var(--hb-text-primary);
+  --hb-muted: var(--hb-text-muted);
+  --hb-nav-indicator: var(--hb-brand-accent);
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-canvas);
+  font-family: var(--hb-font-family-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='default'],
+[data-theme-scope='default'] {
+  --hb-bg-canvas: #f5f6f8;
+  --hb-bg-chrome: #ffffff;
+  --hb-bg-navigation: #ffffff;
+  --hb-bg-raised: #ffffff;
+  --hb-bg-hover: #f1f2f5;
+  --hb-bg-selected: #f7f0f8;
+  --hb-border-subtle: #dfe3e8;
+  --hb-text-primary: #20242c;
+  --hb-text-secondary: #4d5563;
+  --hb-text-muted: #697180;
+  --hb-text-disabled: #9ca3af;
+  --hb-nav-text: #4d5563;
+  --hb-nav-hover: #f1f2f5;
+  --hb-focus-ring: #71357f;
+  --hb-status-available: #389e0d;
+  --hb-status-degraded: #d48806;
+  --hb-status-unavailable: #cf1322;
+  --hb-status-unknown: #7a8290;
+  --hb-scrollbar-thumb: #c7ccd4;
+  --hb-scrollbar-thumb-hover: #aeb5c0;
+  --hb-syntax-property: #315fbe;
+  --hb-syntax-string: #3d6f2a;
+  --hb-syntax-number: #9a4d00;
+  --hb-syntax-atom: #7a3e9d;
+  --hb-syntax-punctuation: #4d5563;
+  --hb-syntax-comment: #697180;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hb-scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--hb-scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--hb-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 0;
+  font-size: 13px;
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-table-cell {
+  padding-block: var(--hb-space-3);
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-empty {
+  margin-block: 0;
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-empty-image {
+  display: none;
+}
+
+.ant-table-wrapper .ant-table-placeholder .ant-empty-description {
+  color: var(--hb-text-secondary);
+}
+
+:where(a, button, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

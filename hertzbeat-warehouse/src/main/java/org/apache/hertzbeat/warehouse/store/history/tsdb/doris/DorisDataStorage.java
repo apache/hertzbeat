@@ -27,6 +27,8 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
@@ -56,6 +58,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -70,6 +73,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * - stream: HTTP Stream Load API (high throughput, suitable for large scale)
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.doris", name = "enabled", havingValue = "true")
 @Slf4j
 public class DorisDataStorage extends AbstractHistoryDataStorage {
@@ -78,6 +82,12 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private static final String DATABASE_NAME = "hertzbeat";
     private static final String TABLE_NAME = "hzb_history";
     private static final String LOG_TABLE_NAME = "hzb_log";
+    private static final String WORKSPACE_RESOURCE_SELECTOR = "COALESCE("
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"hertzbeat.workspace_id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"hertzbeat_workspace_id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"workspace.id\"')), ''), "
+            + "NULLIF(TRIM(GET_JSON_STRING(resource, '$.\"workspace_id\"')), ''), "
+            + "'default') = ?";
     private static final String WRITE_MODE_JDBC = "jdbc";
     private static final String WRITE_MODE_STREAM = "stream";
 
@@ -984,15 +994,31 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                         String spanId, Integer severityNumber,
                                                         String severityText, String searchContent) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, Collections.emptySet(), false, null, null, null, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment) {
         StringBuilder sql = new StringBuilder("""
                 SELECT time_unix_nano, observed_time_unix_nano, severity_number, severity_text, body,
                        trace_id, span_id, trace_flags, attributes, resource, instrumentation_scope, dropped_attributes_count
                 FROM %s.%s
                 """.formatted(DATABASE_NAME, LOG_TABLE_NAME));
         List<Object> params = new ArrayList<>();
-        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                serviceName, serviceNamespace, environment);
         sql.append(" ORDER BY time_unix_nano DESC");
-        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditions");
+        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditions", workspaceId);
     }
 
     @Override
@@ -1000,13 +1026,30 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                                                                       String spanId, Integer severityNumber,
                                                                       String severityText, String searchContent,
                                                                       Integer offset, Integer limit) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, Collections.emptySet(), false, null, null, null, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment) {
         StringBuilder sql = new StringBuilder("""
                 SELECT time_unix_nano, observed_time_unix_nano, severity_number, severity_text, body,
                        trace_id, span_id, trace_flags, attributes, resource, instrumentation_scope, dropped_attributes_count
                 FROM %s.%s
                 """.formatted(DATABASE_NAME, LOG_TABLE_NAME));
         List<Object> params = new ArrayList<>();
-        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                serviceName, serviceNamespace, environment);
         sql.append(" ORDER BY time_unix_nano DESC");
         if (limit != null && limit > 0) {
             sql.append(" LIMIT ?");
@@ -1016,28 +1059,54 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                 params.add(offset);
             }
         }
-        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditionsWithPagination");
+        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditionsWithPagination", workspaceId);
     }
 
     @Override
     public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                               String spanId, Integer severityNumber,
                                               String severityText, String searchContent) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, Collections.emptySet(), false, null, null, null, null);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                              String spanId, Integer severityNumber,
+                                              String severityText, String searchContent,
+                                              Set<String> excludedServiceNames,
+                                              boolean requireServiceName,
+                                              String workspaceId,
+                                              String serviceName,
+                                              String serviceNamespace,
+                                              String environment) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS count FROM %s.%s"
             .formatted(DATABASE_NAME, LOG_TABLE_NAME));
         List<Object> params = new ArrayList<>();
-        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                serviceName, serviceNamespace, environment);
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             bindParameters(pstmt, params);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getLong("count");
+                    long count = rs.getLong("count");
+                    if (StringUtils.hasText(workspaceId) && (rs.wasNull() || count < 0 || rs.next())) {
+                        throw new TelemetryStorageUnavailableException();
+                    }
+                    return count;
+                }
+                if (StringUtils.hasText(workspaceId)) {
+                    throw new TelemetryStorageUnavailableException();
                 }
                 return 0;
             }
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[Doris] countLogsByMultipleConditions error: {}", e.getMessage(), e);
             return 0;
         }
@@ -1077,6 +1146,21 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                                       String traceId, String spanId,
                                       Integer severityNumber, String severityText,
                                       String searchContent) {
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, Collections.emptySet(), false, null, null, null, null);
+    }
+
+    private void appendLogWhereClause(StringBuilder sql, List<Object> params,
+                                      Long startTime, Long endTime,
+                                      String traceId, String spanId,
+                                      Integer severityNumber, String severityText,
+                                      String searchContent,
+                                      Set<String> excludedServiceNames,
+                                      boolean requireServiceName,
+                                      String workspaceId,
+                                      String serviceName,
+                                      String serviceNamespace,
+                                      String environment) {
         List<String> conditions = new ArrayList<>();
         if (startTime != null) {
             conditions.add("time_unix_nano >= ?");
@@ -1103,12 +1187,49 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             params.add(severityText);
         }
         if (StringUtils.hasText(searchContent)) {
-            conditions.add("body LIKE ?");
+            conditions.add("(body LIKE ? OR attributes LIKE ? OR resource LIKE ?)");
             params.add("%" + searchContent + "%");
+            params.add("%" + searchContent + "%");
+            params.add("%" + searchContent + "%");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            appendResourceContainsCondition(conditions, params, "service.name", serviceName);
+        }
+        if (StringUtils.hasText(serviceNamespace)) {
+            appendResourceContainsCondition(conditions, params, "service.namespace", serviceNamespace);
+        }
+        if (StringUtils.hasText(environment)) {
+            appendResourceContainsCondition(conditions, params, "deployment.environment.name", environment);
+        }
+        if (requireServiceName) {
+            conditions.add("resource LIKE ?");
+            params.add("%service.name%");
+        }
+        if (excludedServiceNames != null && !excludedServiceNames.isEmpty()) {
+            for (String excludedServiceName : excludedServiceNames) {
+                if (StringUtils.hasText(excludedServiceName)) {
+                    conditions.add("resource NOT LIKE ?");
+                    params.add("%\"service.name\":\"" + excludedServiceName.trim() + "\"%");
+                }
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            conditions.add(workspaceCondition(params, workspaceId.trim()));
         }
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", conditions));
         }
+    }
+
+    private void appendResourceContainsCondition(List<String> conditions, List<Object> params,
+                                                 String resourceKey, String value) {
+        conditions.add("resource LIKE ?");
+        params.add("%\"" + resourceKey + "\":\"" + value.trim() + "\"%");
+    }
+
+    private String workspaceCondition(List<Object> params, String workspaceId) {
+        params.add(workspaceId);
+        return WORKSPACE_RESOURCE_SELECTOR;
     }
 
     private void bindParameters(PreparedStatement pstmt, List<Object> params) throws SQLException {
@@ -1117,7 +1238,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
-    private List<LogEntry> executeLogQuery(String sql, List<Object> params, String queryName) {
+    private List<LogEntry> executeLogQuery(String sql, List<Object> params, String queryName, String workspaceId) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             bindParameters(pstmt, params);
@@ -1125,6 +1246,9 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                 return mapRowsToLogEntries(rs);
             }
         } catch (Exception e) {
+            if (StringUtils.hasText(workspaceId)) {
+                throw new TelemetryStorageUnavailableException();
+            }
             log.error("[Doris] {} error: {}", queryName, e.getMessage(), e);
             return List.of();
         }

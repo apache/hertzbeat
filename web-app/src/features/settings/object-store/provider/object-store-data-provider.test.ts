@@ -1,0 +1,236 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+
+import type * as ObjectStoreApi from '../api/object-store-api';
+import { ObjectStoreRequestFailure } from '../model/object-store-failure';
+import {
+  ObjectStoreResourceContractError,
+  type ObjectStoreDraft,
+  type ObjectStoreReadModel
+} from '../model/object-store-model';
+
+const canonical = vi.hoisted(() => ({ endpoint: '/canonical-object-store-endpoint' }));
+const objectStoreApi = vi.hoisted(() => ({
+  loadObjectStore: vi.fn<typeof ObjectStoreApi.loadObjectStore>(),
+  saveObjectStore: vi.fn<typeof ObjectStoreApi.saveObjectStore>()
+}));
+vi.mock('../api/object-store-api', async importOriginal => ({
+  ...(await importOriginal<typeof ObjectStoreApi>()),
+  ...objectStoreApi,
+  objectStoreEndpoint: canonical.endpoint
+}));
+
+import { objectStoreDataProvider } from './object-store-data-provider';
+
+const configuredRead: ObjectStoreReadModel = {
+  type: 'OBS',
+  config: {
+    bucketName: 'bucket',
+    endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+    savePath: 'hertzbeat'
+  },
+  configuredSecrets: ['accessKey', 'secretKey']
+};
+
+const configuredDraft: ObjectStoreDraft = {
+  type: 'OBS',
+  configuredSecrets: ['accessKey', 'secretKey'],
+  config: {
+    accessKey: 'ak',
+    secretKey: 'sk',
+    bucketName: 'bucket',
+    endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+    savePath: 'hertzbeat'
+  }
+};
+
+describe('Object Store Refine data provider', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('uses the endpoint owned by the Object Store API', () => {
+    expect(objectStoreDataProvider.getApiUrl()).toBe(canonical.endpoint);
+  });
+
+  it('reads the named singleton into the model-owned stable record', async () => {
+    objectStoreApi.loadObjectStore.mockResolvedValue(configuredRead);
+
+    const result = await objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' });
+
+    expect(result).toEqual({ data: { id: 'current', ...configuredRead } });
+    expect(result.data.config).not.toHaveProperty('accessKey');
+    expect(result.data.config).not.toHaveProperty('secretKey');
+  });
+
+  it('sends plaintext only in the write and returns cache-safe canonical evidence', async () => {
+    const plaintext = 'runtime-only-provider-secret';
+    const write = { ...configuredDraft, config: { ...configuredDraft.config, secretKey: plaintext } };
+    objectStoreApi.saveObjectStore.mockResolvedValue(configuredRead);
+
+    const result = await objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: write });
+
+    expect(result).toEqual({ data: { id: 'current', ...configuredRead } });
+    expect(JSON.stringify(result)).not.toContain(plaintext);
+    expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(write);
+    expect(objectStoreApi.loadObjectStore).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed mutation variables before transport through the schema boundary', async () => {
+    await expect(
+      objectStoreDataProvider.update({
+        resource: 'object-store',
+        id: 'current',
+        variables: { type: 'OBS', config: new Date() }
+      })
+    ).rejects.toMatchObject({
+      code: 'OBJECT_STORE_VARIABLES_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
+    expect(objectStoreApi.saveObjectStore).not.toHaveBeenCalled();
+  });
+
+  it('keeps missing GET evidence distinct without inventing a default provider', async () => {
+    objectStoreApi.loadObjectStore.mockResolvedValue(null);
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_CONFIG_MISSING',
+      kind: 'missing',
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('sanitizes malformed backend records at the model-owned resource boundary', async () => {
+    objectStoreApi.loadObjectStore.mockRejectedValue(new ObjectStoreResourceContractError());
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_RESPONSE_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('rejects unsupported resources, ids, and actions before transport', async () => {
+    await expect(objectStoreDataProvider.getOne({ resource: 'labels', id: 'current' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_RESOURCE_UNSUPPORTED',
+      writeOutcome: 'uncertain'
+    });
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'other' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_ID_INVALID',
+      writeOutcome: 'uncertain'
+    });
+    await expect(objectStoreDataProvider.getList({ resource: 'object-store' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_LIST_UNSUPPORTED',
+      writeOutcome: 'uncertain'
+    });
+    await expect(
+      objectStoreDataProvider.create({ resource: 'object-store', variables: configuredDraft })
+    ).rejects.toMatchObject({ code: 'OBJECT_STORE_CREATE_UNSUPPORTED', writeOutcome: 'rejected' });
+    await expect(objectStoreDataProvider.deleteOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_DELETE_UNSUPPORTED',
+      writeOutcome: 'rejected'
+    });
+    expect(objectStoreApi.loadObjectStore).not.toHaveBeenCalled();
+    expect(objectStoreApi.saveObjectStore).not.toHaveBeenCalled();
+  });
+
+  it('treats an HTTP 200 business envelope as an uncertain write outcome', async () => {
+    objectStoreApi.saveObjectStore.mockRejectedValue(
+      new ApiMessageError('private-business', { code: 20, status: 200 })
+    );
+
+    await expect(
+      objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: configuredDraft })
+    ).rejects.toMatchObject({ kind: 'error', writeOutcome: 'uncertain' });
+  });
+
+  it.each([
+    ['HTTP source 4xx', createRefineHttpError('private', 400, undefined, 'http', 422), 'error', 'rejected'],
+    ['HTTP source permission', createRefineHttpError('private', 403, undefined, 'http', 403), 'permission', 'rejected'],
+    ['HTTP source timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'error', 'uncertain'],
+    [
+      'HTTP source status zero',
+      createRefineHttpError('private', 400, undefined, 'http', 0),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing HTTP 4xx',
+      Object.assign(createRefineHttpError('private', 400, undefined, 'http', 422), {
+        cause: new Error('private-cause')
+      }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing HTTP 4xx with a domain display code',
+      Object.assign(createRefineHttpError('private', 400, 'OBJECT_STORE_RESPONSE_INVALID', 'http', 422), {
+        cause: new Error('private-cause')
+      }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'network-bearing 4xx',
+      createRefineHttpError('private', 400, undefined, 'network', 422),
+      'unavailable',
+      'uncertain'
+    ],
+    ['display-only 4xx', createRefineHttpError('private', 400, 20, 'envelope', 200), 'error', 'uncertain'],
+    [
+      'contract',
+      createRefineHttpError('private', 400, 'OBJECT_STORE_RESPONSE_INVALID', 'contract'),
+      'invalid',
+      'uncertain'
+    ],
+    [
+      'unexpected',
+      createRefineHttpError('private', 500, 'REFINE_UNEXPECTED_ERROR', 'unexpected'),
+      'error',
+      'uncertain'
+    ],
+    ['network', createRefineHttpError('private', 0, 'NETWORK_REQUEST_FAILED', 'network'), 'unavailable', 'uncertain']
+  ] as const)('uses source evidence for %s write classification', async (_label, failure, kind, writeOutcome) => {
+    objectStoreApi.saveObjectStore.mockRejectedValueOnce(failure);
+
+    await expect(
+      objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: configuredDraft })
+    ).rejects.toMatchObject({ kind, writeOutcome });
+  });
+
+  it('never presents a read failure as proof that a write was rejected', async () => {
+    objectStoreApi.loadObjectStore.mockRejectedValueOnce(
+      createRefineHttpError('private-read-rejection', 422, undefined, 'http', 422)
+    );
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('preserves typed failure identity without copying secret evidence', async () => {
+    const failure = new ObjectStoreRequestFailure('unavailable', 'uncertain');
+    objectStoreApi.loadObjectStore.mockRejectedValueOnce(failure);
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toBe(failure);
+  });
+});

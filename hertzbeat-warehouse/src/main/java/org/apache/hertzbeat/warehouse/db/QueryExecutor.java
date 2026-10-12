@@ -29,6 +29,27 @@ import java.util.Map;
 public interface QueryExecutor {
 
     List<Map<String, Object>> execute(String query);
+
+    /**
+     * Execute a query without converting execution failures into an empty result.
+     * Implementations that already propagate failures can use the default behavior.
+     * @param query query expression
+     * @return query rows
+     */
+    default List<Map<String, Object>> executeStrict(String query) {
+        return execute(query);
+    }
+
+    /**
+     * Execute a bounded alert preview while preserving execution failures.
+     * Implementations without a datasource-specific preview bound can retain
+     * strict failure behavior through the default implementation.
+     * @param query query expression
+     * @return preview rows
+     */
+    default List<Map<String, Object>> executePreview(String query) {
+        return executeStrict(query);
+    }
     
     DatasourceQueryData query(DatasourceQuery datasourceQuery);
 

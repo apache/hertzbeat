@@ -21,6 +21,7 @@ package org.apache.hertzbeat.alert.controller;
 
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 import org.apache.hertzbeat.alert.config.AlertSseManager;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +44,6 @@ public class AlertSseController {
     @GetMapping(path = "/subscribe")
     public SseEmitter subscribe() {
         Long clientId = SnowFlakeIdGenerator.generateId();
-        return emitterManager.createEmitter(clientId);
+        return emitterManager.createEmitter(AuthTokenRequestContext.currentWorkspaceId(), clientId);
     }
 }

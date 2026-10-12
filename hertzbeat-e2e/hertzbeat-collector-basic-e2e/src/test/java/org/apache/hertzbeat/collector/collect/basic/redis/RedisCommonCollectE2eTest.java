@@ -51,7 +51,6 @@ import java.util.stream.Stream;
 @ExtendWith(MockitoExtension.class)
 public class RedisCommonCollectE2eTest extends AbstractCollectE2eTest {
     private static final String REDIS_IMAGE = "redis:7.4.2";
-    private static final String HOST = "127.0.0.1";
     private static final int REDIS_PORT = 6379;
     private static final String REDIS_PATTERN = "1";
     private static final List<String> ALLOW_EMPTY_WHITE_LIST = Arrays.asList("server", "errorstats", "commandstats", "keyspace");
@@ -106,7 +105,7 @@ public class RedisCommonCollectE2eTest extends AbstractCollectE2eTest {
     @Override
     protected Protocol buildProtocol(Metrics metricsDef) {
         RedisProtocol redisProtocol = new RedisProtocol();
-        redisProtocol.setHost(HOST);
+        redisProtocol.setHost(redisContainer.getHost());
         redisProtocol.setPort(mappedPort.toString());
         redisProtocol.setPattern(REDIS_PATTERN);
         return redisProtocol;

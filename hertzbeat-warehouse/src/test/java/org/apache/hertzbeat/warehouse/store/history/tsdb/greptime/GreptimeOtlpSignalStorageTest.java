@@ -53,7 +53,7 @@ class GreptimeOtlpSignalStorageTest {
     void setUp() {
         storage = new GreptimeOtlpSignalStorage(
                 new GreptimeProperties(true, "127.0.0.1:4001", "http://127.0.0.1:4000/",
-                        "public", "greptime", "secret"),
+                        "public", "greptime", "secret", "90d"),
                 restTemplate);
     }
 

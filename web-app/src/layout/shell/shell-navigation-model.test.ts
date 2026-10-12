@@ -1,0 +1,230 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import {
+  activeNavigationTrail,
+  buildShellNavigation,
+  readShellResourceMeta,
+  resolveShellTimePolicy
+} from './shell-navigation-model';
+
+describe('shell navigation model', () => {
+  const resources = [
+    resource('workspace', undefined, undefined, 10),
+    resource('monitors', '/monitors', 'workspace', 10),
+    resource('alerts', '/alerts', 'workspace', 20),
+    resource('alert-rules', '/alerts/rules', 'alerts', 10),
+    resource('unknown-capability', '/unknown', 'workspace', 30, 'unknown')
+  ];
+
+  it('builds ordered parent and child navigation from Refine resource metadata', () => {
+    const tree = buildShellNavigation(resources);
+
+    expect(tree.map(item => item.name)).toEqual(['workspace']);
+    expect(tree[0]?.children.map(item => item.name)).toEqual(['monitors', 'alerts', 'unknown-capability']);
+    expect(tree[0]?.children[1]?.children.map(item => item.name)).toEqual(['alert-rules']);
+  });
+
+  it('uses the longest registered route for deep-link selection', () => {
+    const tree = buildShellNavigation(resources);
+
+    expect(activeNavigationTrail(tree, '/alerts/rules/42/edit')).toEqual(['workspace', 'alerts', 'alert-rules']);
+  });
+
+  it('keeps a resource active across dynamic child paths while preserving its concrete navigation target', () => {
+    const tree = buildShellNavigation([
+      resource('alerts', '/alerts', 'workspace', 20),
+      resource(
+        'alert-integrations',
+        '/alerts/integrations/webhook',
+        'alerts',
+        60,
+        'supported',
+        undefined,
+        '/alerts/integrations/:source'
+      )
+    ]);
+
+    expect(activeNavigationTrail(tree, '/alerts/integrations/alertmanager')).toEqual(['alerts', 'alert-integrations']);
+    expect(tree[0]?.children[0]?.route).toBe('/alerts/integrations/webhook');
+  });
+
+  it('selects a dynamic monitor application only when its canonical query matches', () => {
+    const tree = buildShellNavigation([
+      ...resources,
+      resource('monitor-category:db', undefined, 'monitors', 100),
+      resource('monitor-app:mysql', '/monitors?app=mysql', 'monitor-category:db', 1_000)
+    ]);
+
+    expect(activeNavigationTrail(tree, '/monitors?app=mysql')).toEqual([
+      'workspace',
+      'monitors',
+      'monitor-category:db',
+      'monitor-app:mysql'
+    ]);
+    expect(activeNavigationTrail(tree, '/monitors?app=redis')).toEqual(['workspace', 'monitors']);
+  });
+
+  it('keeps unknown capability entries visible but explicitly disabled', () => {
+    const tree = buildShellNavigation(resources);
+    const unknown = tree[0]?.children.find(item => item.name === 'unknown-capability');
+
+    expect(unknown).toMatchObject({ capability: 'unknown', disabled: true });
+  });
+
+  it('omits role-denied routes from navigation while retaining admitted siblings', () => {
+    const tree = buildShellNavigation(
+      [
+        resource('administration', undefined, undefined, 10),
+        resource('settings', '/settings', 'administration', 10),
+        resource('tokens', '/settings/tokens', 'administration', 20, 'supported', ['ADMIN'])
+      ],
+      ['USER']
+    );
+
+    expect(tree[0]?.children.map(item => item.name)).toEqual(['settings']);
+  });
+
+  it('keeps a backend-owned application label as display data rather than an i18n key', () => {
+    const [item] = buildShellNavigation([
+      {
+        ...resource('monitor-app:mysql', '/monitors?app=mysql'),
+        meta: {
+          shell: {
+            capability: 'supported',
+            label: 'MySQL',
+            labelKey: 'monitor.apps.mysql',
+            navigation: true,
+            order: 1,
+            timePolicy: 'none'
+          }
+        }
+      }
+    ]);
+
+    expect(item).toMatchObject({ label: 'MySQL', labelKey: 'monitor.apps.mysql' });
+  });
+
+  it('omits registered contextual resources from the global tree', () => {
+    const tree = buildShellNavigation([
+      resource('alerts', '/alerts'),
+      hiddenResource('alert-rules', '/alerts/rules', 'alerts'),
+      hiddenResource('monitor-app:mysql', '/monitors?app=mysql')
+    ]);
+
+    expect(tree.map(item => item.name)).toEqual(['alerts']);
+    expect(activeNavigationTrail(tree, '/alerts/rules')).toEqual(['alerts']);
+    expect(activeNavigationTrail(tree, '/monitors?app=mysql')).toEqual([]);
+  });
+
+  it('uses typed action overrides and falls back to the resource policy for every other action', () => {
+    const shell = {
+      capability: 'supported' as const,
+      labelKey: 'menu.monitors',
+      navigation: true,
+      order: 20,
+      timePolicy: 'none' as const,
+      actionTimePolicies: { show: 'global' as const }
+    };
+
+    expect(resolveShellTimePolicy(shell, 'show')).toBe('global');
+    expect(resolveShellTimePolicy(shell, 'list')).toBe('none');
+    expect(resolveShellTimePolicy(shell, 'create')).toBe('none');
+    expect(resolveShellTimePolicy(shell, 'edit')).toBe('none');
+    expect(resolveShellTimePolicy(shell, undefined)).toBe('none');
+    expect(resolveShellTimePolicy(undefined, undefined)).toBe('unknown');
+  });
+
+  it('rejects malformed values from the untyped Refine metadata boundary', () => {
+    expect(readShellResourceMeta({ capability: 'supported' })).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        labelKey: 'menu.monitors',
+        navigation: true,
+        order: 20,
+        timePolicy: 'none',
+        actionTimePolicies: { show: 'invalid' }
+      })
+    ).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        labelKey: 'menu.monitors',
+        navigation: true,
+        order: 20,
+        timePolicy: 'none',
+        actionTimePolicies: { typo: 'global' }
+      })
+    ).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        label: 7,
+        labelKey: 'monitor.apps.mysql',
+        navigation: true,
+        order: 20,
+        timePolicy: 'none'
+      })
+    ).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        labelKey: 'menu.tokens',
+        navigation: true,
+        order: 20,
+        requiredRole: ['ADMIN'],
+        timePolicy: 'none'
+      })
+    ).toBeUndefined();
+  });
+});
+
+function resource(
+  name: string,
+  list?: string,
+  parent?: string,
+  order = 0,
+  capability: 'supported' | 'unknown' | 'unsupported' = 'supported',
+  requiredRoles?: string[],
+  activePath?: string
+) {
+  return {
+    name,
+    meta: {
+      shell: {
+        capability,
+        labelKey: `shell.navigation.${name}`,
+        navigation: true,
+        order,
+        timePolicy: list ? ('unknown' as const) : ('none' as const),
+        ...(requiredRoles ? { requiredRoles } : {}),
+        ...(activePath ? { activePath } : {})
+      },
+      ...(parent ? { parent } : {})
+    },
+    ...(list ? { list } : {})
+  };
+}
+
+function hiddenResource(name: string, list: string, parent?: string) {
+  const value = resource(name, list, parent);
+  value.meta.shell.navigation = false;
+  return value;
+}

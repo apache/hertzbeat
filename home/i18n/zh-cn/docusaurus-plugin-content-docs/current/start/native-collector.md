@@ -1,116 +1,45 @@
 ---
 id: native-collector
-title: Native 采集器指南
-sidebar_label: Native 采集器
-description: 说明 HertzBeat Native 采集器安装包适合什么场景、优缺点、限制和部署建议。
+title: 原生 Hybrid Collector
+sidebar_label: 原生 Hybrid Collector
 ---
 
-## 什么场景适合使用 Native 采集器？
+原生 Hybrid Collector 是针对特定平台构建的 Collector 可执行文件，并携带其托管 OTel runtime 资产。它与 HertzBeat Server 归档、OTel Java Agent 等语言 Agent 相互独立。存在原生包不代表所有 JVM 采集协议或原生平台都已验证。
 
-当你的监控任务不依赖从 `ext-lib` 动态加载外部 JDBC 驱动时，优先考虑 Native 采集器安装包。
+## 选择并核实制品
 
-比较适合 Native 采集器的场景包括：
+使用由目标源码版本为准确的操作系统/架构生成的 Collector 原生归档，并记录摘要及声明平台。源码装配文件为 `script/assembly/collector/assembly-native.xml`，包含可执行文件、启动器、配置、许可证、平台 runtime、清单及 SBOM/校验文件。文件名本身不是来源证明。
 
-- HTTP、HTTPS、网站可用性、API 检查
-- 端口可用性、Ping、SSL 证书等网络探测
-- 不依赖运行时 `ext-lib` JDBC 加载的 MySQL、MariaDB、OceanBase
-- SQL 查询指标不依赖运行时 `ext-lib` JDBC 加载的 TiDB
-- Redis、Zookeeper、Kafka 等非 JDBC 监控类型
+在源码检出目录，可使用现有包契约检查指定归档：
 
-## 为什么选择它？
+```shell
+sh script/ci/verify-hybrid-collector-native-package.sh "$COLLECTOR_ARCHIVE" "$COLLECTOR_PLATFORM"
+```
 
-相较 JVM 采集器安装包，Native 采集器安装包通常更适合以下诉求：
+将两个变量设置为实际制品和平台名（例如 `linux-arm64`）。这只检查包内容，不运行或认证目标部署。构建原生代码需要仓库要求的 Java 25/GraalVM 及原生构建依赖；运行已验证的原生可执行文件不要求目标机器安装 JVM。不要复用其他架构的二进制。
 
-- 启动更快
-- 常驻内存更低
-- 运行时更轻，不需要额外准备 bundled 或预装 JDK
+## 明确配置后再启动
 
-## 它的缺点和限制是什么？
+从包内 `config/application.yml` 开始，设置唯一的 `IDENTITY`、准确的 `MANAGER_HOST` 及管理端集群端口（`MANAGER_PORT`，通常为 `1158`）。Server 的公共 HTTP 接口与 Collector 集群接口用途不同。Agentless 目标必须能从该采集器访问。
 
-Native 采集器并不是所有 JVM 采集器场景的无损替代。
+托管 OTel runtime 需主动启用（`HERTZBEAT_OTEL_RUNTIME_ENABLED` 默认 false）。端点、令牌和采集器身份应遵循匹配的 Collector 接入配置及生成说明。保留数据目录中的身份、队列和偏移。语言 Agent/SDK 需另外配置，包内不附带它们。
 
-- Native 安装包是平台相关的，必须选择与你操作系统和 CPU 架构匹配的包。
-- Native 采集器不支持在运行时从 `ext-lib` 目录动态加载外部 JDBC 驱动 JAR。
-- 如果你的部署依赖 JVM 风格的运行时 classpath 扩展能力，仍然应该使用 JVM 采集器安装包。
+在 Unix 系统中，首次启动可在解压目录以前台方式检查：
 
-## 运行环境要求
+```shell
+./bin/foreground.sh
+```
 
-Native 采集器是提前编译好的原生可执行文件，运行环境的要求比 JVM 采集器**严格得多**。JVM 采集器由 JIT 在
-启动时探测 CPU 特性并自动适配，而 native 包在构建时就把指令集固化进了二进制，没有回退机制。
+该启动器直接执行包内原生文件，并转发额外的应用参数。请检查日志、注册状态和真实当前样本。`bin/startup.sh` 是后台辅助脚本：存在 `lsof` 时，仅在所启动 PID 监听脚本固定端口 `1159` 后报告监听成功；没有 `lsof` 时，只报告进程已启动且**就绪状态未验证**。进程存活或 TCP 监听都不能证明遥测已进入存储。
 
-| 平台 | 要求 |
-| --- | --- |
-| Linux / Windows（x86-64） | CPU 必须支持 **AVX2**：Intel Haswell（2013）及以后、AMD Zen（2017）及以后 |
-| Linux（两种架构） | **glibc ≥ 2.34** |
-| Linux（arm64） | ARMv8-A 基线即可，无额外指令集要求 |
-| Windows | Windows 10 / Server 2016 及以上，并安装 **Microsoft Visual C++ 2015-2022 可再发行组件包** |
+## Linux 服务生命周期与状态
 
-常见发行版对照（glibc ≥ 2.34 这条线）：
+Linux 原生包包含 `service/install-systemd.sh` 和 `service/README-systemd.md`。安装或升级时，应遵循该版本包内说明。目录布局将 `/opt/hertzbeat-collector` 下的发行内容、`/etc/hertzbeat` 下的受保护配置、`/var/lib/hertzbeat-collector` 下的持久状态，以及 `/var/log/hertzbeat-collector` 下的日志分离。凭据应放在受保护的配置/环境文件中，而不是命令参数中。
 
-| 可用 | 不可用 |
-| --- | --- |
-| Ubuntu 22.04 / 24.04、Debian 12、RHEL / Rocky / AlmaLinux 9、Amazon Linux 2023 | Ubuntu 20.04、Debian 11、RHEL / Rocky / AlmaLinux 8、CentOS 7、Amazon Linux 2 |
+安装器提供 `install`、`upgrade`、`uninstall` 和显式的 `purge` 操作。卸载保留状态；purge 会删除状态。升级前备份配置和状态，并验证恢复后的身份及样本连续性，不要仅凭脚本退出码认定回滚成功。
 
-不支持 AVX2 的环境还包括：部分 Atom 血统的低端芯片（如 J4125、N4020、N5105）、Apple Silicon 上的
-Rosetta 2、以及未更新到 Prism 新版模拟器的 Windows on ARM。
+## 验收边界
 
-:::caution 不满足要求时的表现很具有迷惑性
+2.0 alpha 本地发行证明实际覆盖了 H2/MySQL/PostgreSQL 上的 Server、Agentless MySQL 和官方 OTel Java Agent，没有建立完整的原生 Collector 操作系统/协议矩阵、群组规模能力或 SLO。将其视为已验证来源前，请用真实信号验证所选平台、托管 runtime 生命周期、认证失败、停止上报和恢复。Windows 包使用随附的批处理启动器；Unix/systemd 结果不能证明 Windows 等价。
 
-- **CPU 不支持 AVX2**：进程**瞬间退出，没有任何输出、也没有日志文件**（Linux 上报 `Illegal instruction`，
-  Windows 上退出码为 `-1073741795`）
-- **glibc 版本过低**：报 `version 'GLIBC_2.34' not found`
-- **Windows 缺少 VC++ 运行库**：报缺少 `VCRUNTIME140_1.dll`
-
-第一种最容易被误判为"安装包损坏"。遇到"双击没反应"或"启动了什么都没打印"时，请先核对 CPU 是否支持 AVX2。
-
-**任何一项不满足，都可以改用 JVM 采集器安装包** `apache-hertzbeat-collector-{version}-bin.tar.gz`，
-它只要求 JDK 25，没有上述限制。
-:::
-
-## 哪些场景应该继续使用 JVM 采集器？
-
-如果你的监控依赖外部 JDBC 驱动，请继续使用 JVM 采集器安装包，尤其包括：
-
-- Oracle，需要 `ojdbc8`，部分场景还需要 `orai18n`
-- DB2，需要 `jcc`
-- 任何明确把 `mysql-connector-j` 放进 `ext-lib` 并希望继续走 JDBC 的 MySQL、MariaDB、OceanBase 场景
-
-## 安装包命名规则
-
-JVM 采集器安装包仍然保持跨平台：
-
-- `apache-hertzbeat-collector-{version}-bin.tar.gz`
-
-Native 采集器安装包按平台区分：
-
-- Linux 或 macOS：`apache-hertzbeat-collector-native-{version}-{platform}-bin.tar.gz`
-- Windows：`apache-hertzbeat-collector-native-{version}-windows-amd64-bin.zip`
-
-例如：
-
-- `apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.9.0-macos-arm64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip`
-
-## 配置文件是否和 JVM 采集器一致？
-
-Native 采集器安装包和 JVM 采集器安装包使用同一套 `config/application.yml` 结构。
-
-这意味着：
-
-- 采集器连接参数仍然在同一个位置修改
-- 虚拟线程相关配置仍然在同一个位置修改
-- Native 专用的启动调整通过代码在运行时生效，而不是长期维护第二份 `application.yml`
-
-## 推荐选择
-
-- 想要更低内存、更快启动，并且监控类型不依赖 JDBC 驱动时，优先选择 Native 采集器安装包；MySQL、MariaDB、OceanBase 在不使用 `ext-lib` 时适合直接选择 Native 采集器安装包，TiDB 的 SQL 查询指标在不使用 `ext-lib` 时也可以走内置 MySQL 兼容查询引擎。
-- 需要 `ext-lib`、外置 JDBC 驱动，或者依赖 JVM 风格运行时扩展能力时，使用 JVM 采集器安装包。
-- 对 MySQL 兼容监控来说，`auto` 只检查 `ext-lib`。如果你想手动指定链路，可以配置 `hertzbeat.collector.mysql.query-engine=jdbc`、`r2dbc` 或 `auto`。
-
-## 官方多平台安装包是怎么构建的？
-
-- `mvn clean package -pl hertzbeat-collector-collector -am -Pnative` 只会为当前宿主机构建一个 Native 采集器安装包。
-- 官方发布使用的 Linux、macOS、Windows Native 安装包，会在发布准备阶段手动触发 `Collector Native Release` GitHub Actions 工作流来生成，而不是在每次 push 或 pull request 时自动构建。
-
-具体安装步骤可参考 [通过安装包安装 HertzBeat](package-deploy)。
+独立的 Server 配置见 [Server 安装](./package-deploy.md)，未来群组工作见[采集器治理提案](../roadmap/future-collector-fleet-governance.md)。

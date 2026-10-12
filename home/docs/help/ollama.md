@@ -1,69 +1,31 @@
 ---
 id: ollama
-title: Monitoring Ollama Local LLM Service
-sidebar_label: Ollama
-keywords: [ Open Source Monitoring System, Open Source LLM Monitoring, Ollama Monitoring ]
+title: Ollama monitoring
+sidebar_label: Ollama monitoring
 ---
 
-> HertzBeat monitors Ollama local LLM service including version info, installed models and running models.
+This is the existing **Agentless Ollama monitor**. It reads service/model metadata and is separate from OTel application instrumentation or AI Gateway provider configuration.
 
-## Preparation
+## Configure the monitor
 
-Ensure that Ollama is running and the API is accessible. By default, Ollama listens on port `11434`.
+Choose Ollama in the monitor creation catalog. Set a host reachable from the selected collector, the port (template default `11434`) and the matching TLS setting. If your endpoint or access proxy requires a Bearer credential, the optional **API Key** field supplies it. This field does not create authentication in an otherwise unauthenticated service.
 
-If Ollama is running on a remote server, you may need to set the `OLLAMA_HOST` environment variable to `0.0.0.0` to
-allow external access.
+Run detection before saving, then inspect a fresh current sample after a configured collection interval. A collector container cannot reach another container through its own loopback address. Limit network access according to your deployment and keep keys out of public diagnostics.
 
-### Configuration Parameters
+## Source-backed collection contract
 
-| Parameter Name      | Parameter Description                                                                                              |
-|---------------------|--------------------------------------------------------------------------------------------------------------------|
-| Monitoring Host     | The target IPV4, IPV6 or domain name of the Ollama service. Note: without protocol header (eg: https://, http://). |
-| Task Name           | The name that identifies this monitoring task, which must be unique.                                               |
-| Port                | The port Ollama service is listening on, default is 11434.                                                         |
-| SSL                 | Whether to use HTTPS to connect to the Ollama service.                                                             |
-| API Key             | To directly access the API key of ollama.com.                                                                      |
-| Collector           | Configure which collector is used to schedule data collection for this monitoring.                                 |
-| Monitoring Interval | The interval for periodically collecting data, in seconds. The minimum interval that can be set is 30 seconds.     |
-| Bound Tags          | Tags for categorizing and managing monitoring resources.                                                           |
-| Description/Remarks | Additional remarks to identify and describe this monitoring. Users can add notes here.                             |
+The template `hertzbeat-manager/src/main/resources/define/app-ollama.yml` issues three GET requests:
 
-### Credential upgrade behavior
+| Metric group | Endpoint | Evidence |
+|---|---|---|
+| `version_info` | `/api/version` | Service version; priority-zero availability check |
+| `models` | `/api/tags` | Installed model names, sizes and descriptive metadata |
+| `running_models` | `/api/ps` | Currently loaded model rows, size/VRAM fields and expiry |
 
-The API key is encrypted before it is stored and is returned by the monitor API
-as `******`. Submitting that mask while editing an existing monitor keeps the
-stored key unchanged. If the host, port, or SSL setting changes, the key must
-be re-entered so that a stored credential cannot be replayed to a new endpoint.
+The model-list and running-model contracts are described in the official [tags](https://docs.ollama.com/api/tags) and [ps](https://docs.ollama.com/api/ps) references. HertzBeat reads those rows; it does not load or download a model. Template size fields are converted from bytes to MB. Empty running-model rows do not imply a failed service, and missing fields are not measured zeroes.
 
-On the first startup after upgrading, HertzBeat encrypts API keys created by
-older versions before scheduling collection jobs. The migration is idempotent
-and does not change an already encrypted value.
+## Diagnose missing results
 
-### Collection Metrics
+Version collection must succeed before later metric groups run. Distinguish connection/TLS failures, authentication failures, incompatible response shapes and a valid empty model list. Compare returned fields with the template for your server version. These groups do not measure inference error rate, request latency, model quality or complete memory utilization.
 
-#### Metric Set: Version Info
-
-| Metric Name | Metric Unit | Metric Description                 |
-|-------------|-------------|------------------------------------|
-| Version     | None        | The version of the Ollama service. |
-
-#### Metric Set: Installed Models
-
-| Metric Name        | Metric Unit | Metric Description                                      |
-|--------------------|-------------|---------------------------------------------------------|
-| Model Name         | None        | The name of the installed model.                        |
-| Model Size         | MB          | The size of the model file.                             |
-| Parameter Size     | None        | The parameter scale of the model (e.g., 7B, 13B).       |
-| Quantization Level | None        | The quantization level of the model (e.g., Q4_0, Q8_0). |
-| Model Family       | None        | The model family (e.g., llama, qwen).                   |
-| Format             | None        | The model format (e.g., gguf).                          |
-| Modified At        | None        | The last modified time of the model.                    |
-
-#### Metric Set: Running Models
-
-| Metric Name | Metric Unit | Metric Description                                    |
-|-------------|-------------|-------------------------------------------------------|
-| Model Name  | None        | The name of the running model.                        |
-| Model Size  | MB          | The size of the model in memory.                      |
-| VRAM Size   | MB          | The VRAM occupied by the model.                       |
-| Expires At  | None        | The time when the model will be unloaded from memory. |
+A real Ollama deployment was not part of this alpha's MySQL/Java intake acceptance. This guide records the implemented template and expected upstream shape, not a verified-version matrix. Record actual detection/current samples for your deployment. Use the separate [AI Gateway guide](./ai_agent.md) if you want to configure a model provider.
