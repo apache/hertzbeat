@@ -310,9 +310,48 @@ public final class AgentRuntimeHistoryWindow {
             .content(content)
             .build();
         if (repairedAssistant.toolCalls().size() != assistant.toolCalls().size()) {
-            repairedAssistant.setProviderState(Map.of());
+            // The saved replay items must stay consistent with the tool calls that survive the
+            // repair, but dropping the state wholesale also discards the reasoning items that
+            // stateless providers require on replay. Keep those and only remove the dropped calls.
+            repairedAssistant.setProviderState(withoutDroppedToolCalls(
+                assistant.getProviderState(), retainedToolCallKeys));
         }
         return new ToolPairRepair(repairedAssistant, matchedResults);
+    }
+
+    /**
+     * Removes replay items for tool calls that the repair dropped, leaving reasoning and other
+     * provider items untouched. An unrecognized state shape is returned unchanged rather than
+     * discarded, because a missing replay state fails the next request.
+     */
+    private static Map<String, Object> withoutDroppedToolCalls(Map<String, Object> providerState,
+                                                                Set<String> retainedToolCallKeys) {
+        if (providerState == null || providerState.isEmpty()) {
+            return providerState;
+        }
+        Object rawItems = providerState.get("items");
+        if (!(rawItems instanceof List<?> items)) {
+            return providerState;
+        }
+        List<Object> kept = new ArrayList<>(items.size());
+        for (Object item : items) {
+            if (!(item instanceof Map<?, ?> block) || !droppedToolCall(block, retainedToolCallKeys)) {
+                kept.add(item);
+            }
+        }
+        if (kept.size() == items.size()) {
+            return providerState;
+        }
+        Map<String, Object> repaired = new LinkedHashMap<>(providerState);
+        repaired.put("items", kept);
+        return repaired;
+    }
+
+    private static boolean droppedToolCall(Map<?, ?> block, Set<String> retainedToolCallKeys) {
+        String type = String.valueOf(block.get("type"));
+        Object id = "function_call".equals(type) ? block.get("call_id") : block.get("id");
+        return ("function_call".equals(type) || "tool_use".equals(type))
+            && !retainedToolCallKeys.contains(String.valueOf(id));
     }
 
     private static boolean isAssistantToolCall(TranscriptMessage message) {

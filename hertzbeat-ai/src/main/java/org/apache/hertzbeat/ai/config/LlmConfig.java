@@ -93,6 +93,10 @@ public class LlmConfig {
     private ChatClient createConfiguredChatClient() {
         var resolver =
                 effectiveResolver == null
+                        // Tests and partial contexts construct LlmConfig without the provider
+                        // module's resolver bean. This fallback reads the same store directly, so
+                        // it has to name the manager implementation; the resolver bean itself no
+                        // longer depends on the manager module.
                         ? new org.apache.hertzbeat.ai.provider.EffectiveModelProviderResolver(
                                 new org.apache.hertzbeat.manager.service.impl
                                         .ModelProviderConfigServiceImpl(generalConfigDao),

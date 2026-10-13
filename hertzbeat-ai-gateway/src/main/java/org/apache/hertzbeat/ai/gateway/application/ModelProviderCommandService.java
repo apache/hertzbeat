@@ -87,10 +87,17 @@ public class ModelProviderCommandService {
         } else {
             config.getHeaders()
                     .replaceAll(
-                            (name, value) ->
-                                    !StringUtils.hasText(value) && existing.getHeaders() != null
-                                            ? existing.getHeaders().get(name)
-                                            : value);
+                            (name, value) -> {
+                                if (StringUtils.hasText(value) || existing.getHeaders() == null) {
+                                    return value;
+                                }
+                                // A blank value keeps the saved secret only when that header
+                                // already exists. A new blank entry has nothing to preserve, and
+                                // substituting null makes the following validation reject the
+                                // whole update.
+                                String preserved = existing.getHeaders().get(name);
+                                return preserved == null ? value : preserved;
+                            });
         }
         providerRegistry.createModel(config);
         ModelProviderConfigState state = configurationService.updateConfiguration(

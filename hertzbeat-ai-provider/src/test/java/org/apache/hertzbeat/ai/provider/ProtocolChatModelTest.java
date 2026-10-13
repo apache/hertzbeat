@@ -258,6 +258,25 @@ class ProtocolChatModelTest {
         assertTrue(bodies.getLast().toString().contains("found"));
     }
 
+    @Test
+    void internalToolTurnsAreSeparatedInTheBlockingAnswer() {
+        fixture = event("{\"choices\":[{\"delta\":{\"content\":\"checking\"}}]}")
+                + event("{\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call1\",\"function\":"
+                        + "{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},\"finish_reason\":\"tool_calls\"}]}");
+        ToolCallback callback = new ToolCallback() {
+            public ToolDefinition getToolDefinition() { return tool().getToolDefinition(); }
+
+            public String call(String input) {
+                fixture = event("{\"choices\":[{\"delta\":{\"content\":\"done\"},\"finish_reason\":\"stop\"}]}");
+                return "done";
+            }
+        };
+        var options = ToolCallingChatOptions.builder().toolCallbacks(callback).build();
+        var response = new ProtocolChatModelFactory().create(config("openai-chat"), true)
+                .call(new Prompt(List.of(new UserMessage("lookup")), options));
+        assertEquals("checking\ndone", response.getResult().getOutput().getText());
+    }
+
     private ModelProviderConfig config(String protocol) {
         ModelProviderConfig config = new ModelProviderConfig();
         config.setName("test");

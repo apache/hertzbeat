@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.ai.provider;
 
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
-import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
+import org.apache.hertzbeat.common.support.ModelProviderConfigurationService;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;

@@ -22,7 +22,7 @@
     <artifactId>hertzbeat-ai-provider</artifactId>
     <properties><spring-ai.version>2.0.1</spring-ai.version></properties>
     <dependencies>
-        <dependency><groupId>org.apache.hertzbeat</groupId><artifactId>hertzbeat-manager</artifactId></dependency>
+        <dependency><groupId>org.apache.hertzbeat</groupId><artifactId>hertzbeat-common-spring</artifactId></dependency>
         <dependency><groupId>org.springframework.ai</groupId><artifactId>spring-ai-model</artifactId><version>${spring-ai.version}</version></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webflux</artifactId><scope>provided</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>

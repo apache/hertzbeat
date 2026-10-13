@@ -67,9 +67,16 @@ public class ProtocolChatModel implements ChatModel {
         StringBuilder text = new StringBuilder();
         ChatResponse last = null;
         for (ChatResponse response : responses) {
+            if (response.getResult() == null) continue;
+            String chunk = response.getResult().getOutput().getText();
+            // A chunk emitted after the text so far closes a tool turn. With internal tool
+            // execution each turn streams its own narration, and joining them verbatim glues the
+            // preamble of one turn onto the answer of the next.
+            if (chunk != null && !chunk.isEmpty()) {
+                if (!text.isEmpty()) text.append('\n');
+                text.append(chunk);
+            }
             last = response;
-            if (response.getResult() != null)
-                text.append(response.getResult().getOutput().getText());
         }
         if (last == null) throw new ModelProviderException("Provider returned no response", true);
         AssistantMessage assistant =

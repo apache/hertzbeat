@@ -96,6 +96,20 @@ class ModelProviderDiscoveryServiceTest {
     }
 
     @Test
+    void newBlankHeaderKeepsItsSubmittedValue() {
+        ModelProviderConfig draft = draft();
+        draft.setProtocol("openai-chat");
+        draft.setAuthMode("default");
+        draft.setBaseUrl(saved.getBaseUrl() + "/chat/completions/");
+        draft.setHeaders(new java.util.LinkedHashMap<>(java.util.Map.of("X-Project", "", "X-New", "")));
+        new ModelProviderDiscoveryService(configurations, catalog).discover(draft);
+        java.util.Map<String, String> headers = request().getHeaders();
+        assertEquals("saved-test-header", headers.get("X-Project"));
+        assertEquals("", headers.get("X-New"));
+        assertNull(headers.get("X-Absent"));
+    }
+
+    @Test
     void explicitlyEnteredReplacementCredentialTakesPrecedence() {
         ModelProviderConfig draft = draft();
         draft.setApiKey("replacement-test-key");

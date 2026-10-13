@@ -163,6 +163,21 @@ class ModelProviderConfigServiceImplTest {
         assertTrue(service.getConfiguration(uid).getHeaders().isEmpty());
     }
 
+    @Test
+    void newBlankHeaderIsNotPersistedAsNull() {
+        ModelProviderConfig config = provider(API_KEY);
+        config.setHeaders(
+                new java.util.LinkedHashMap<>(java.util.Map.of("X-Token", "header-secret")));
+        String uid = service.createConfiguration(config).getProviders().getFirst().getUid();
+        config.setHeaders(new java.util.LinkedHashMap<>(
+                java.util.Map.of("X-Token", "", "X-New", "")));
+        service.updateConfiguration(uid, config);
+        java.util.Map<String, String> headers = service.getConfiguration(uid).getHeaders();
+        assertEquals("header-secret", headers.get("X-Token"));
+        assertEquals("", headers.get("X-New"));
+        assertFalse(headers.containsValue(null));
+    }
+
     private ModelProviderConfig provider(String apiKey) {
         ModelProviderConfig config = new ModelProviderConfig();
         config.setType("openai-compatible");

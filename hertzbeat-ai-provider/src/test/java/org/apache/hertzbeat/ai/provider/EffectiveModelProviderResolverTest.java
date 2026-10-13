@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
-import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
+import org.apache.hertzbeat.common.support.ModelProviderConfigurationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;

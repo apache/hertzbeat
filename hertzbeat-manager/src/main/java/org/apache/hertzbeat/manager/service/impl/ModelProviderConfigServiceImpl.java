@@ -111,10 +111,16 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
             replacement
                     .getHeaders()
                     .replaceAll(
-                            (name, value) ->
-                                    !StringUtils.hasText(value) && previous.getHeaders() != null
-                                            ? previous.getHeaders().get(name)
-                                            : value);
+                            (name, value) -> {
+                                if (StringUtils.hasText(value) || previous.getHeaders() == null) {
+                                    return value;
+                                }
+                                // A blank value keeps the saved secret only when that header
+                                // already exists. A new blank entry has nothing to preserve, so
+                                // keep the submitted value instead of substituting null.
+                                String preserved = previous.getHeaders().get(name);
+                                return preserved == null ? value : preserved;
+                            });
         }
         int index = state.getProviders().indexOf(previous);
         state.getProviders().set(index, replacement);

@@ -150,7 +150,7 @@ class ReloadableAgentRuntimeModelClientTest {
     }
 
     @Test
-    void invalidSavedSelectionDisablesPreviousModel() {
+    void failedReloadKeepsTheModelAlreadyServingTraffic() {
         ModelProviderConfigurationService configurations =
                 mock(ModelProviderConfigurationService.class);
         AgentProviderProperties properties = new AgentProviderProperties();
@@ -163,9 +163,9 @@ class ReloadableAgentRuntimeModelClientTest {
                         new AgentModelProviderRegistry(List.of(new TestAgentModelProvider())));
         assertTrue(client.isAgentClientConfigured());
         when(configurations.getActiveConfiguration())
-                .thenThrow(new IllegalStateException("invalid selection"));
+                .thenThrow(new IllegalStateException("configuration store unavailable"));
         client.refreshConfiguration();
-        assertFalse(client.isAgentClientConfigured());
+        assertTrue(client.isAgentClientConfigured());
     }
 
     private static final class TestAgentModelProvider implements AgentModelProvider {

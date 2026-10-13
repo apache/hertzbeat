@@ -48,11 +48,18 @@ public class ModelProviderDiscoveryService {
                 else
                     draft.getHeaders()
                             .replaceAll(
-                                    (name, value) ->
-                                            !StringUtils.hasText(value)
-                                                            && saved.getHeaders() != null
-                                                    ? saved.getHeaders().get(name)
-                                                    : value);
+                                    (name, value) -> {
+                                        if (StringUtils.hasText(value)
+                                                || saved.getHeaders() == null) {
+                                            return value;
+                                        }
+                                        // A blank value keeps the saved secret only when that
+                                        // header already exists. A new blank entry has nothing to
+                                        // preserve, so keep the submitted value instead of
+                                        // substituting null.
+                                        String preserved = saved.getHeaders().get(name);
+                                        return preserved == null ? value : preserved;
+                                    });
             }
         }
         return catalog.list(draft);

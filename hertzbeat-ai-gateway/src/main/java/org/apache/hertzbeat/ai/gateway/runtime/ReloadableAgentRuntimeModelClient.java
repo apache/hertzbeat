@@ -122,8 +122,11 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
         try {
             reload();
         } catch (RuntimeException exception) {
-            model.set(null);
-            log.error("Failed to reload Agent Gateway model provider; runtime disabled");
+            // A failed reload must not drop the model that is already serving traffic: the next
+            // reload only happens on a configuration change, so clearing here would leave the
+            // runtime disabled until someone re-saves the configuration.
+            log.error("Failed to reload Agent Gateway model provider; keeping the previous provider",
+                    exception);
         }
     }
 
