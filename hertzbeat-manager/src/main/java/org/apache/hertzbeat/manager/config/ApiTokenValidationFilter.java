@@ -35,15 +35,23 @@ import java.util.Map;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.hertzbeat.common.observability.gateway.SelfTelemetryProperties;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySource;
+import org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 /**
  * Interceptor to validate that managed API tokens have not been revoked (deleted).
@@ -64,14 +72,21 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 @Component
 @Slf4j
-public class ApiTokenValidationFilter implements HandlerInterceptor {
+public class ApiTokenValidationFilter implements AsyncHandlerInterceptor {
 
     private static final String ROLES_CLAIM = "roles";
     private static final String TOKEN_VALIDATION_UNAVAILABLE = "Token validation unavailable";
+    private static final String WORKSPACE_ACCESS_DENIED = "Workspace access denied";
     private static final String TOKEN_NOT_RESOLVED = "Token could not be resolved";
     private static final String TOKEN_PARAM = "token";
 
     private final AccountService accountService;
+    private SelfTelemetryProperties selfTelemetry = new SelfTelemetryProperties();
+
+    @Autowired
+    public void setSelfTelemetryProperties(SelfTelemetryProperties properties) {
+        this.selfTelemetry = properties;
+    }
 
     public ApiTokenValidationFilter(AccountService accountService) {
         this.accountService = accountService;
@@ -80,9 +95,16 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
         throws IOException {
+        TelemetrySourceContext.clear();
+        AuthTokenRequestContext.clear();
         SubjectSum subject = SurenessContextHolder.getBindSubject();
+        bindAuthenticatedWorkspace(subject);
+        String authenticatedWorkspaceId = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
         if (subject == null || !isManagedToken(subject)) {
-            return true;
+            if (!bindAuthorizedWorkspace(request, authenticatedWorkspaceId)) {
+                return writeWorkspaceError(response);
+            }
+            return bindTelemetrySource(request, response, subject);
         }
         // Sureness reads a jwt from the Authorization header and from the token query parameter,
         // so every managed token the request carries is validated, and a managed subject whose
@@ -93,7 +115,8 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         }
         try {
             for (String token : managedTokens) {
-                String rejectReason = checkManagedToken(subject, token);
+                String rejectReason = checkManagedToken(
+                        subject, token, resolveRequiredScope(request), authenticatedWorkspaceId);
                 if (rejectReason != null) {
                     return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
                 }
@@ -102,6 +125,73 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
             log.warn("Managed token validation failed", e);
             return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
         }
+        if (!bindAuthorizedWorkspace(request, authenticatedWorkspaceId)) {
+            return writeWorkspaceError(response);
+        }
+        String rejectReason = bindManagedCollectorBoundary(request, subject);
+        if (rejectReason != null) {
+            return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
+        }
+        managedTokens.forEach(this::touchTokenLastUsedTime);
+        return bindTelemetrySource(request, response, subject);
+    }
+
+    @Override
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+                                @NonNull Object handler, Exception ex) {
+        AuthTokenRequestContext.clear();
+        TelemetrySourceContext.clear();
+    }
+
+    @Override
+    public void afterConcurrentHandlingStarted(@NonNull HttpServletRequest request,
+                                               @NonNull HttpServletResponse response, @NonNull Object handler) {
+        AuthTokenRequestContext.clear();
+        TelemetrySourceContext.clear();
+    }
+
+    private boolean bindTelemetrySource(HttpServletRequest request, HttpServletResponse response, SubjectSum subject)
+            throws IOException {
+        String uri = request.getRequestURI();
+        if (uri != null && !(uri.equals("/api/logs") || uri.startsWith("/api/logs/")
+                || uri.equals("/api/traces") || uri.startsWith("/api/traces/")
+                || uri.startsWith("/api/ingestion/otlp/") || uri.startsWith("/api/otlp/")
+                || uri.equals("/api/warehouse/query") || uri.equals("/api/telemetry/sources"))) {
+            return true;
+        }
+        TelemetrySource source;
+        try {
+            String[] values = request.getParameterValues("source");
+            if (values != null && values.length != 1) {
+                return writeError(response, HttpStatus.BAD_REQUEST, "Supply exactly one source");
+            }
+            source = TelemetrySource.parse(request.getParameter("source"));
+        } catch (IllegalArgumentException invalid) {
+            return writeError(response, HttpStatus.BAD_REQUEST, invalid.getMessage());
+        }
+        if (source == TelemetrySource.EXTERNAL) { return true; }
+        if (uri == null || uri.startsWith("/api/otlp/") || uri.startsWith("/api/logs/otlp")) {
+            return writeError(response, HttpStatus.BAD_REQUEST, "External ingestion cannot select self source");
+        }
+        if (!(uri.equals("/api/logs") || uri.startsWith("/api/logs/")
+                || uri.equals("/api/traces") || uri.startsWith("/api/traces/")
+                || uri.startsWith("/api/ingestion/otlp/metrics/"))) {
+            return writeError(response, HttpStatus.BAD_REQUEST, "Self source is unsupported for this route");
+        }
+        if (subject == null || !extractClaimedRoles(subject).contains("admin")
+                || resolveSubjectWorkspaceId(subject) == null
+                || !java.util.Objects.equals(AuthTokenRequestContext.currentAuthenticatedWorkspaceId(),
+                        selfTelemetry.getWorkspaceId())) {
+            return writeError(response, HttpStatus.FORBIDDEN, "Self telemetry requires admin and an explicitly authorized workspace");
+        }
+        if (!selfTelemetry.isEnabled() || !selfTelemetry.isReady()) {
+            return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, "Self telemetry storage is not configured or ready");
+        }
+        if ("true".equalsIgnoreCase(request.getParameter("hideInternal"))) {
+            return writeError(response, HttpStatus.BAD_REQUEST, "Disable hideInternal when selecting self telemetry");
+        }
+        TelemetrySourceContext.bind(new TelemetrySourceContext.Route(
+                source, selfTelemetry.getDatabase(), selfTelemetry.getWorkspaceId()));
         return true;
     }
 
@@ -142,24 +232,29 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
      * 1. Only managed tokens (with "managed" claim) are validated — legacy tokens pass through
      * 2. Token must exist and be active in the database (not deleted/revoked)
      * 3. Token owner must still exist, remain active, and still own the claimed roles
-     * If the token is valid, updates the last used time.
      * </p>
      */
-    private String checkManagedToken(SubjectSum subject, String token) {
-        String rejectReason = accountService.checkTokenStatus(token);
+    private String checkManagedToken(SubjectSum subject, String token, String requiredScope, String workspaceId) {
+        String rejectReason = StringUtils.isBlank(workspaceId)
+                ? accountService.checkTokenStatus(token, requiredScope)
+                : accountService.checkTokenStatus(token, requiredScope, workspaceId);
         if (rejectReason != null) {
             return rejectReason;
         }
-        rejectReason = accountService.checkManagedTokenAccess(getCurrentUserId(subject), extractClaimedRoles(subject));
+        rejectReason = accountService.checkManagedTokenAccess(
+                getCurrentUserId(subject), extractClaimedRoles(subject), extractCredentialVersion(subject));
         if (rejectReason != null) {
             return rejectReason;
         }
+        return null;
+    }
+
+    private void touchTokenLastUsedTime(String token) {
         try {
             accountService.touchTokenLastUsedTime(token);
         } catch (RuntimeException e) {
-            log.debug("Failed to update token last used time", e);
+            log.debug("Failed to update token last used time");
         }
-        return null;
     }
 
     private boolean isManagedToken(SubjectSum subject) {
@@ -167,7 +262,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         if (principalMap == null) {
             return false;
         }
-        Object managed = principalMap.getPrincipal(AccountServiceImpl.CLAIM_MANAGED);
+        Object managed = principalMap.getPrincipal(ObservabilityAccessTokenGateway.CLAIM_MANAGED);
         return managed instanceof Boolean ? (Boolean) managed : Boolean.parseBoolean(String.valueOf(managed));
     }
 
@@ -193,12 +288,124 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         return principal == null ? null : String.valueOf(principal);
     }
 
+    private Long extractCredentialVersion(SubjectSum subject) {
+        PrincipalMap principalMap = subject.getPrincipalMap();
+        if (principalMap == null) {
+            return null;
+        }
+        Object claimedVersion = principalMap.getPrincipal(
+                ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION);
+        return claimedVersion instanceof Number number ? number.longValue() : null;
+    }
+
+    private String bindManagedCollectorBoundary(HttpServletRequest request, SubjectSum subject) {
+        PrincipalMap principalMap = subject.getPrincipalMap();
+        if (principalMap == null || !AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE.equals(
+                principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))) {
+            return null;
+        }
+        Object collectorIdClaim = principalMap.getPrincipal(AuthTokenScopes.CLAIM_COLLECTOR_ID);
+        String collectorId = collectorIdClaim == null
+                ? null
+                : StringUtils.trimToNull(String.valueOf(collectorIdClaim));
+        if (collectorId == null) {
+            return "Collector intake token has no Collector identity";
+        }
+        String signal = resolveOtlpSignal(request.getRequestURI());
+        Object allowedSignals = principalMap.getPrincipal(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS);
+        if (signal == null || !(allowedSignals instanceof List<?> signals) || !signals.contains(signal)) {
+            return "Collector intake token does not allow this signal";
+        }
+        AuthTokenRequestContext.bindCollectorId(collectorId);
+        return null;
+    }
+
+    private String resolveOtlpSignal(String requestUri) {
+        if (requestUri == null) {
+            return null;
+        }
+        if (requestUri.startsWith("/api/logs/otlp") || requestUri.endsWith("/logs")) {
+            return "logs";
+        }
+        if (requestUri.endsWith("/metrics")) {
+            return "metrics";
+        }
+        if (requestUri.endsWith("/traces")) {
+            return "traces";
+        }
+        return null;
+    }
+
+    private String resolveRequiredScope(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        if (requestUri != null
+            && (requestUri.startsWith("/api/otlp/") || requestUri.startsWith("/api/logs/otlp"))) {
+            return AuthTokenScopes.OTLP_INGEST;
+        }
+        String method = request.getMethod();
+        if ("POST".equalsIgnoreCase(method) && "/api/logs/analysis/compare".equals(requestUri)) {
+            return AuthTokenScopes.READONLY_QUERY;
+        }
+        if ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method) || "OPTIONS".equalsIgnoreCase(method)) {
+            return AuthTokenScopes.READONLY_QUERY;
+        }
+        return AuthTokenScopes.API_ADMIN;
+    }
+
+    private boolean bindAuthorizedWorkspace(HttpServletRequest request, String authenticatedWorkspaceId) {
+        String[] requestedWorkspaceIds = {
+                request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER),
+                request.getParameter("workspaceId"),
+                request.getParameter("workspace_id")
+        };
+        for (String requestedWorkspaceId : requestedWorkspaceIds) {
+            String requested = StringUtils.trimToNull(requestedWorkspaceId);
+            if (requested != null && (authenticatedWorkspaceId == null
+                    || !authenticatedWorkspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(requested)))) {
+                return false;
+            }
+        }
+        if (authenticatedWorkspaceId != null) {
+            AuthTokenRequestContext.bindWorkspaceId(authenticatedWorkspaceId);
+        }
+        return true;
+    }
+
+    private void bindAuthenticatedWorkspace(SubjectSum subject) {
+        if (subject == null) {
+            return;
+        }
+        String workspaceId = resolveSubjectWorkspaceId(subject);
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId(
+                workspaceId == null ? AuthTokenScopes.DEFAULT_WORKSPACE_ID : workspaceId);
+    }
+
+    private String resolveSubjectWorkspaceId(SubjectSum subject) {
+        if (subject == null || subject.getPrincipalMap() == null) {
+            return null;
+        }
+        Object workspaceId = subject.getPrincipalMap().getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID);
+        return workspaceId == null ? null : StringUtils.trimToNull(String.valueOf(workspaceId));
+    }
+
+    private boolean writeWorkspaceError(HttpServletResponse response) throws IOException {
+        try {
+            return writeError(response, HttpStatus.FORBIDDEN, WORKSPACE_ACCESS_DENIED);
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
+    }
+
     private boolean writeError(HttpServletResponse response, HttpStatus status, String message) throws IOException {
         response.setStatus(status.value());
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
         try (PrintWriter writer = response.getWriter()) {
             writer.write(JsonUtil.toJson(Map.of("code", status.value(), "msg", message)));
+        } finally {
+            // Rejected preHandle calls do not receive this interceptor's afterCompletion callback.
+            AuthTokenRequestContext.clear();
+            TelemetrySourceContext.clear();
         }
         return false;
     }

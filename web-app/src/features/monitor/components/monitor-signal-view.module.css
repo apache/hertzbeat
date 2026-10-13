@@ -1,0 +1,245 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  display: grid;
+  gap: var(--hb-space-4);
+  min-width: 0;
+}
+
+.availability,
+.signalSection {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-md);
+  background: var(--hb-surface-container);
+}
+
+.windowEvidence {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.capabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.capability {
+  display: grid;
+  min-height: 72px;
+  align-content: center;
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border-inline-end: 1px solid var(--hb-border-subtle);
+}
+
+.capability:last-child {
+  border-inline-end: 0;
+}
+
+.stateTag {
+  width: fit-content;
+  margin: 0;
+}
+
+.evidenceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-4);
+}
+
+.sectionHeader {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  padding: var(--hb-space-2) var(--hb-space-4);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.scopeNote,
+.source {
+  display: block;
+  margin: 0;
+  color: var(--hb-text-secondary);
+}
+
+.scopeNote {
+  padding: var(--hb-space-3) var(--hb-space-4) 0;
+}
+
+.source {
+  padding: var(--hb-space-3) var(--hb-space-4);
+  border-top: 1px solid var(--hb-border-subtle);
+  font-family: var(--ant-font-family-code);
+  font-size: 11px;
+}
+
+.compactState {
+  min-height: 72px;
+  padding: var(--hb-space-4);
+  color: var(--hb-text-secondary);
+}
+
+.readyBody,
+.entityBody {
+  display: grid;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-4);
+}
+
+.total {
+  font-size: 18px;
+}
+
+.alertList {
+  display: grid;
+  gap: var(--hb-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alertList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--hb-space-1) var(--hb-space-3);
+  padding: var(--hb-space-3);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-sm);
+}
+
+.alertList small {
+  grid-column: 1 / -1;
+  color: var(--hb-text-secondary);
+}
+
+.alertIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+
+.alertIdentity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collectionFacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--hb-space-2);
+  margin: 0;
+  padding: var(--hb-space-4);
+}
+
+.entityFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-2);
+  margin: 0;
+}
+
+.fact {
+  min-width: 0;
+  padding: var(--hb-space-3);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-sm);
+}
+
+.fact dt {
+  margin-bottom: var(--hb-space-1);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.otelRows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-4);
+}
+
+@media (max-width: 1100px) {
+  .capabilityGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .capability:nth-child(3) {
+    border-inline-end: 0;
+  }
+
+  .capability:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--hb-border-subtle);
+  }
+}
+
+@media (max-width: 900px) {
+  .evidenceGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .collectionFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .workspace {
+    inline-size: calc(100vw - var(--hb-shell-sidebar-width, 220px) - 56px);
+    max-inline-size: 100%;
+  }
+
+  .capabilityGrid,
+  .entityFacts,
+  .otelRows {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .capability {
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--hb-border-subtle);
+  }
+
+  .capability:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .collectionFacts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

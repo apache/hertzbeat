@@ -1,0 +1,125 @@
+{
+  "shell": {
+    "navigation": {
+      "basicMonitoring": "基本監視",
+      "applicationObservability": "アプリケーション可観測性",
+      "resources": "リソース",
+      "alerting": "アラート",
+      "administration": "管理",
+      "collapse": "ナビゲーションを折りたたむ",
+      "expand": "ナビゲーションを展開",
+      "toggleGroup": "{{label}}を展開または折りたたむ"
+    },
+    "permission": {
+      "roleRequired": "管理者権限が必要です。"
+    },
+    "status": {
+      "summary": "実行状態",
+      "server": "サーバー",
+      "greptime": "GreptimeDB",
+      "collector": "コレクター",
+      "unknown": "不明",
+      "unavailable": "利用不可",
+      "state": {
+        "loading": "読み込み中",
+        "available": "利用可能",
+        "degraded": "要確認",
+        "unavailable": "利用不可",
+        "unknown": "不明"
+      },
+      "currentStatusObservedAt": "現在の状態 · {{time}}",
+      "collectorLastReportedAt": "最終報告 {{time}}",
+      "collectorCounts": "{{online}}/{{total}} オンライン · ランタイム正常 {{runtimeHealthy}}",
+      "collectorOnlineCount": "オンラインのコレクター: {{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "正常なランタイム: {{count}}",
+      "collectorOfflineCount": "オフラインのコレクター: {{count}}",
+      "collectorNotReported": "ランタイム報告なし",
+      "notObserved": "未観測",
+      "details": "{{label}}のステータス詳細",
+      "openManagement": "管理画面を開く",
+      "request": {
+        "permission": "実行状態を表示する権限がありません",
+        "unavailable": "実行状態のリクエストを利用できません",
+        "contract": "実行状態の応答が無効です",
+        "error": "実行状態を読み込めませんでした"
+      },
+      "reason": {
+        "server_unavailable": "サーバーを利用できません",
+        "storage_unavailable": "ストレージを利用できません",
+        "storage_query_failed": "ストレージのクエリに失敗しました",
+        "collector_status_unavailable": "コレクターの状態を取得できません"
+      }
+    },
+    "time": {
+      "global": "グローバル時間",
+      "route_owned": "ページ時間",
+      "none": "共有時間なし",
+      "unknown": "時間ポリシー不明",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "オフ",
+      "remaining": "{{seconds}}秒",
+      "rangeOption": "範囲 {{range}}",
+      "autoRefreshOff": "自動更新オフ",
+      "autoRefreshSeconds": "{{seconds}}秒ごとに自動更新"
+    },
+    "actions": {
+      "refresh": "現在のデータを更新",
+      "alerts": "アラートを開く",
+      "investigate": "この画面を調査",
+      "alertsWithCount": "アラートを開く、アクティブ {{count}} 件",
+      "useLightTheme": "ライトテーマを使用",
+      "useDarkTheme": "ダークテーマを使用",
+      "fullscreenEnter": "全画面表示にする",
+      "fullscreenExit": "全画面表示を終了",
+      "fullscreenFailed": "全画面表示を開けませんでした",
+      "language": "言語を切り替える",
+      "user": "ユーザー操作"
+    },
+    "account": {
+      "settings": "システム設定",
+      "lock": "セッションをロック",
+      "about": "HertzBeat について",
+      "logout": "ログアウト"
+    },
+    "about": {
+      "title": "HertzBeat について",
+      "version": "バージョン {{version}}",
+      "description": "Apache HertzBeat はオープンソースのリアルタイム監視システムです。",
+      "website": "ウェブサイト",
+      "documentation": "ドキュメント",
+      "repository": "ソースコード",
+      "issues": "問題を報告"
+    },
+    "alerts": {
+      "title": "アクティブアラート",
+      "loading": "最近のアラートを読み込み中",
+      "empty": "アクティブなアラートはありません",
+      "unavailable": "最近のアラートを利用できません",
+      "error": "最近のアラートを読み取れませんでした",
+      "openCenter": "アラートセンターを開く",
+      "soundLoading": "アラート音の設定を読み込み中",
+      "soundUnavailable": "アラート音の設定を利用できません",
+      "soundError": "アラート音の設定を読み取れませんでした",
+      "soundReadOnly": "グローバルアラート音の設定を変更できるのは管理者のみです",
+      "soundSaving": "アラート音の設定を更新中",
+      "soundSaveFailed": "アラート音の設定を更新できませんでした",
+      "soundMuted": "アラート音はミュートされています",
+      "soundEnabled": "アラート音は有効です",
+      "soundEnabledBrowserDenied": "アラート音は有効ですが、ブラウザー通知はブロックされています",
+      "soundEnabledBrowserUnsupported": "アラート音は有効ですが、ブラウザー通知には対応していません",
+      "browserTitle": "HertzBeat アラート",
+      "browserBody": "対応が必要な新しいアクティブアラートがあります。"
+    },
+    "importTasks": {
+      "title": "監視設定のインポート",
+      "progress": "インポート進捗：{{progress}}%",
+      "success": "監視設定のインポートが完了しました。",
+      "failure": "監視設定をインポートできませんでした。"
+    },
+    "capability": {
+      "supported": "利用可能",
+      "unknown": "機能不明",
+      "unsupported": "未対応"
+    }
+  }
+}

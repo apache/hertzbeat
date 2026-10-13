@@ -105,7 +105,34 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>io.opentelemetry.proto</groupId>
+            <artifactId>opentelemetry-proto</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>1.65.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>1.65.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>1.65.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -127,7 +154,6 @@
             <artifactId>mssql-jdbc</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -209,6 +235,30 @@
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven-jar-plugin.version}</version>
+                        <configuration>
+                            <classesDirectory>target/classes/</classesDirectory>
+                            <archive>
+                                <!--Generated JAR does not include Maven descriptor-related files-->
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <!--Project startup class-->
+                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
+                                    <useUniqueVersions>false</useUniqueVersions>
+                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
+                                    <addClasspath>true</addClasspath>
+                                    <!--Location of external dependency JARs-->
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                </manifest>
+                                <manifestEntries>
+                                    <Class-Path>. config</Class-Path>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
                         <version>${maven-assembly-plugin.version}</version>
                         <executions>
@@ -255,6 +305,30 @@
                         <configuration>
                             <source>${java.version}</source>
                             <target>${java.version}</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven-jar-plugin.version}</version>
+                        <configuration>
+                            <classesDirectory>target/classes/</classesDirectory>
+                            <archive>
+                                <!--Generated JAR does not include Maven descriptor-related files-->
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <!--Project startup class-->
+                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
+                                    <useUniqueVersions>false</useUniqueVersions>
+                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
+                                    <addClasspath>true</addClasspath>
+                                    <!--Location of external dependency JARs-->
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                </manifest>
+                                <manifestEntries>
+                                    <Class-Path>. config</Class-Path>
+                                </manifestEntries>
+                            </archive>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -363,6 +437,10 @@
                 <native.image.name>hertzbeat-collector-collector</native.image.name>
                 <native.binary.extension></native.binary.extension>
                 <native.launcher.dir>../../script/assembly/collector/bin-native</native.launcher.dir>
+                <native.service.dir>../../script/assembly/collector/systemd</native.service.dir>
+                <native.service.include>__none__</native.service.include>
+                <native.service.installer.include>__none__</native.service.installer.include>
+                <native.service.readme.include>__none__</native.service.readme.include>
                 <native.package.format>tar.gz</native.package.format>
                 <native.target.platform>unsupported</native.target.platform>
                 <native.package.id>${native.target.platform}-bin</native.package.id>
@@ -372,6 +450,17 @@
             </properties>
             <build>
                 <finalName>apache-hertzbeat-collector-native-${hzb.version}</finalName>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <excludes>
+                            <exclude>META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect</exclude>
+                        </excludes>
+                    </resource>
+                    <resource>
+                        <directory>src/native/resources</directory>
+                    </resource>
+                </resources>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -465,6 +554,9 @@
             </activation>
             <properties>
                 <native.target.platform>linux-amd64</native.target.platform>
+                <native.service.include>hertzbeat-collector.service</native.service.include>
+                <native.service.installer.include>install-systemd.sh</native.service.installer.include>
+                <native.service.readme.include>README-systemd.md</native.service.readme.include>
             </properties>
         </profile>
         <profile>
@@ -477,6 +569,9 @@
             </activation>
             <properties>
                 <native.target.platform>linux-amd64</native.target.platform>
+                <native.service.include>hertzbeat-collector.service</native.service.include>
+                <native.service.installer.include>install-systemd.sh</native.service.installer.include>
+                <native.service.readme.include>README-systemd.md</native.service.readme.include>
             </properties>
         </profile>
         <profile>
@@ -489,6 +584,9 @@
             </activation>
             <properties>
                 <native.target.platform>linux-arm64</native.target.platform>
+                <native.service.include>hertzbeat-collector.service</native.service.include>
+                <native.service.installer.include>install-systemd.sh</native.service.installer.include>
+                <native.service.readme.include>README-systemd.md</native.service.readme.include>
             </properties>
         </profile>
         <profile>

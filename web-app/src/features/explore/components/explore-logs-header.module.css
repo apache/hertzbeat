@@ -1,0 +1,128 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.pageHeader {
+  background: var(--hb-bg-raised);
+  font-size: 14px;
+}
+.productRow,
+.viewRow {
+  display: flex;
+  align-items: center;
+}
+.productRow {
+  min-height: 42px;
+  gap: 12px;
+  padding-inline: 16px;
+}
+.viewRow {
+  min-height: 38px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-inline: 16px;
+}
+.heading {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1;
+}
+.heading :global(.anticon) {
+  color: var(--hb-text-secondary);
+  font-size: 17px;
+}
+.viewSelector {
+  display: flex;
+  min-width: 0;
+  max-width: min(260px, 100%);
+  flex: 0 0 auto;
+  align-items: stretch;
+}
+.contextReturns {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.navigationGuide,
+.headingCopy {
+  min-width: 0;
+}
+.logScope {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  margin-left: auto;
+  align-items: center;
+  gap: var(--hb-log-command-gap, 8px);
+}
+.pageHeader :global(.ant-btn),
+.pageHeader :global(.ant-radio-button-wrapper),
+.pageHeader :global(button[aria-haspopup='dialog']) {
+  font-size: 13px;
+}
+.logScope :global([data-log-command-slot='mode']) {
+  width: var(--hb-log-mode-width, 112px);
+  flex: none;
+}
+.logScope :global([data-log-command-slot='mode'] .ant-radio-group) {
+  display: flex;
+  width: 100%;
+}
+.logScope :global([data-log-command-slot='mode'] .ant-radio-button-wrapper) {
+  flex: 1;
+  padding-inline: 5px;
+  text-align: center;
+}
+.logScope :global([data-log-command-slot='mode'] > span) {
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  .viewRow {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .viewSelector {
+    max-width: 100%;
+  }
+
+  .logScope {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--hb-log-command-gap, 8px);
+    margin-left: 0;
+  }
+
+  .logScope > :first-child:not(:global([data-log-command-slot='mode'])) {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .logScope > :global([data-log-command-slot='mode']) {
+    min-width: 0;
+    justify-self: end;
+  }
+}

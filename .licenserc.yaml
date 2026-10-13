@@ -68,6 +68,16 @@ header:
     - 'karma.conf.js'
     - 'proxy.conf.js'
     - 'pnpm-lock.yaml'
+    # nvm reads a version token; this format cannot contain a license comment.
+    - 'web-app/.nvmrc'
+    # pnpm verifies these exact upstream diff payloads by their lockfile hashes.
+    # Keep the patches intact; their package sources retain upstream licensing.
+    - 'web-app/patches/@perses-dev__components@0.54.0.patch'
+    - 'web-app/patches/@perses-dev__logs-table-plugin@0.3.0.patch'
+    - 'web-app/patches/@perses-dev__plugin-system@0.54.0.patch'
+    - 'web-app/patches/@perses-dev__timeseries-chart-plugin@0.13.0.patch'
+    - 'web-app/patches/@perses-dev__trace-table-plugin@0.11.0.patch'
+    - 'web-app/patches/@perses-dev__tracing-gantt-chart-plugin@0.13.0.patch'
     - '.helmignore'
     - 'script/helm/**'
     - 'web-app/src/app/core/**'

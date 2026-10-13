@@ -43,7 +43,7 @@ class ResourceBundleUtf8ControlTest {
 
         bundle = control.newBundle(baseName, Locale.ROOT, "java.properties", loader, false);
         assertNotNull(bundle);
-        assertEquals("你好", bundle.getString("hello"));
+        assertEquals("Ola, Mundo!", bundle.getString("hello"));
     }
 
     @Test

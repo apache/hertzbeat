@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Login registered account information transfer body username phone email
@@ -58,6 +59,7 @@ public class LoginDto {
     @Schema(description = "Secret key", example = "1", accessMode = READ_ONLY)
     @NotBlank(message = "Credential can not null")
     @Size(max = 512, message = "credential max length 512")
+    @ToString.Exclude
     private String credential;
 
 }

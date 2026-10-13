@@ -1,0 +1,153 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.statistics {
+  min-width: 0;
+}
+.statistics p {
+  margin-block: 8px;
+}
+.explanation {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  margin-block: var(--hb-space-2);
+}
+.controls > :first-child {
+  flex: 1 1 240px;
+}
+.controls input,
+.controls select {
+  min-height: var(--hb-workbench-control-height);
+}
+.controls select {
+  background: var(--hb-bg-surface);
+  color: var(--hb-text-primary);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 4px;
+}
+.tableScroll {
+  overflow-x: auto;
+}
+.statistics table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+.statistics th,
+.statistics td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.statistics th:nth-child(1) {
+  width: 17%;
+}
+.statistics th:nth-child(2) {
+  width: 31%;
+}
+.statistics th:nth-child(3) {
+  width: 8%;
+}
+.operation {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  color: var(--hb-text-primary);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.operation:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+.operation[aria-expanded='true'] {
+  color: var(--hb-color-primary);
+}
+.literal {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.drilldown {
+  border-top: 1px solid var(--hb-border-subtle);
+  margin-top: var(--hb-space-3);
+  padding-top: var(--hb-space-2);
+}
+.drilldown h3 {
+  font-size: 13px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.drilldown ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.drilldown li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  padding-block: 6px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.drilldown code {
+  overflow-wrap: anywhere;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  margin-top: var(--hb-space-2);
+}
+@media (max-width: 720px) {
+  .statistics table {
+    min-width: 620px;
+  }
+}
+
+.sampleScope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--hb-space-2);
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+.sampleScope details {
+  flex: 1 1 auto;
+}
+.sampleScope details > summary {
+  cursor: pointer;
+}
+.sampleScope details[open] {
+  flex-basis: 100%;
+}
+.sampleScope summary:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+}

@@ -1,0 +1,137 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  canonicalCheckbox,
+  canonicalCheckboxValues,
+  canonicalRadio,
+  decodeParamValue,
+  encodeParamValue,
+  PluginParamCodecError,
+  pluginNumberRange,
+  validOptions
+} from './plugin-params-codec';
+import type {
+  PasswordDraft,
+  PluginParam,
+  PluginParamDefine,
+  PluginParamDraft,
+  PluginParamWrite
+} from './plugin-params-contract';
+
+export * from './plugin-params-contract';
+export { decodeParamValue, encodeParamValue, PluginParamCodecError, pluginNumberRange } from './plugin-params-codec';
+export { invalidPluginParamFields } from './plugin-params-validation';
+
+export function buildPluginParamDraft(
+  pluginMetadataId: number,
+  defines: readonly PluginParamDefine[],
+  params: readonly PluginParam[]
+): PluginParamDraft {
+  const current = new Map(params.map(param => [param.field, param]));
+  const values: Record<string, unknown> = {};
+  const passwords: Record<string, PasswordDraft> = {};
+  defines.forEach(define => initializeDraftField(define, current.get(define.field), values, passwords));
+  return { pluginMetadataId, defines, values, passwords };
+}
+
+function initializeDraftField(
+  define: PluginParamDefine,
+  param: PluginParam | undefined,
+  values: Record<string, unknown>,
+  passwords: Record<string, PasswordDraft>
+) {
+  if (define.type === 'password') {
+    passwords[define.field] = passwordDraft(define, param);
+    return;
+  }
+  const wireValue = param?.value ?? define.defaultValue;
+  const decoded = decodeParamValue(define.type, wireValue);
+  if (wireValue !== undefined && isChoice(define) && !validOptions(define, decoded)) throw new PluginParamCodecError();
+  values[define.field] = canonicalValue(define, decoded, wireValue !== undefined);
+  if (define.type === 'number' && define.range) pluginNumberRange(define.range);
+}
+
+function passwordDraft(define: PluginParamDefine, param?: PluginParam): PasswordDraft {
+  return {
+    intent: param?.configured ? 'KEEP' : define.required ? 'REPLACE' : 'CLEAR',
+    value: '',
+    canKeep: Boolean(param?.configured)
+  };
+}
+function isChoice(define: PluginParamDefine) {
+  return define.type === 'radio' || define.type === 'checkbox';
+}
+function canonicalValue(define: PluginParamDefine, value: unknown, configured: boolean) {
+  if (!configured) return value;
+  if (define.type === 'radio') return canonicalRadio(define, value);
+  if (define.type === 'checkbox') return canonicalCheckboxValues(define, value);
+  return value;
+}
+
+export function isPluginParamVisible(define: PluginParamDefine, values: Record<string, unknown>) {
+  if (define.hide) return false;
+  return Object.entries(define.depend).every(([field, allowed]) => allowed.includes(values[field]));
+}
+
+export function buildPluginParamPayload(draft: PluginParamDraft) {
+  // Angular submitted every defined field even while a dependency hid it. Preserve that backend contract;
+  // visibility must never silently clear or discard a stored value.
+  const params = draft.defines.flatMap<PluginParamWrite>(define => {
+    if (define.type !== 'password') {
+      const value =
+        define.type === 'checkbox'
+          ? canonicalCheckbox(define, draft.values[define.field])
+          : encodeParamValue(define.type, draft.values[define.field]);
+      return [{ field: define.field, value }];
+    }
+    const password = draft.passwords[define.field] ?? { intent: 'CLEAR' as const, value: '', canKeep: false };
+    return [
+      password.intent === 'REPLACE'
+        ? { field: define.field, intent: 'REPLACE', value: password.value }
+        : { field: define.field, intent: password.intent }
+    ];
+  });
+  return { pluginMetadataId: draft.pluginMetadataId, params };
+}
+
+/**
+ * A redacted backend read can prove ordinary values and KEEP/CLEAR password
+ * intent. It can never prove which plaintext was accepted for REPLACE.
+ */
+export function canProvePluginParamWrite(draft: PluginParamDraft) {
+  return buildPluginParamPayload(draft).params.every(param => !('intent' in param) || param.intent !== 'REPLACE');
+}
+
+export function pluginParamWriteConverged(draft: PluginParamDraft, params: readonly PluginParam[]) {
+  if (!canProvePluginParamWrite(draft)) return false;
+  const current = new Map(params.map(param => [param.field, param]));
+  return buildPluginParamPayload(draft).params.every(expected => {
+    const actual = current.get(expected.field);
+    if (!actual) return false;
+    if ('intent' in expected) return expected.intent === 'KEEP' ? actual.configured : !actual.configured;
+    const configured = expected.value.trim().length > 0;
+    return (
+      actual.configured === configured && (configured ? actual.value === expected.value : actual.value === undefined)
+    );
+  });
+}
+
+export function localizedPluginParamName(define: PluginParamDefine, locale: string) {
+  const exact = Object.entries(define.name).find(([key]) => key.toLowerCase() === locale.toLowerCase())?.[1];
+  return exact ?? define.name['en-US'] ?? Object.values(define.name)[0] ?? define.field;
+}

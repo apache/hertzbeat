@@ -20,22 +20,21 @@
 
 name: Backend CI
 
+permissions:
+  contents: read
+
 on:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, action*, '2.*' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
-      - 'web-app/**'
-      - 'script/**'
       - 'material/**'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, '2.*' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
-      - 'web-app/**'
-      - 'script/**'
       - 'material/**'
 
 concurrency:
@@ -45,12 +44,50 @@ concurrency:
 jobs:
   backend-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: ./script/ci/github-actions/setup-deps
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.9.0 --activate
+
+      - name: Resolve pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('web-app/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Verify server release layout
+        run: |
+          ./script/ci/verify-server-release-layout.sh
+          python3 -m unittest script.ci.test_verify_server_release_package
+
+      - name: Build frontend release assets
+        working-directory: web-app
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - name: Build with Maven
         run: mvnd clean -B package -pl '!hertzbeat-e2e' -Prelease -Dmaven.test.skip=false --file pom.xml
+
+      - name: Verify server release package
+        run: |
+          release_version=$(sed -n 's:.*<hzb.version>\([^<][^<]*\)</hzb.version>.*:\1:p' pom.xml | head -1)
+          server_archive="dist/apache-hertzbeat-${release_version}-bin.tar.gz"
+          test -f "$server_archive"
+          python3 script/ci/verify-server-release-package.py "$server_archive"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1

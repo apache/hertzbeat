@@ -1,0 +1,115 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { AlertSilenceQuery } from './alert-silence-types';
+import { compactTablePageSizes } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
+import { AlertSilenceContractError } from './alert-silence-write-model';
+
+import {
+  readAlertNoiseControlManagementContext,
+  writeAlertNoiseControlManagementContext,
+  type AlertNoiseControlManagementContext
+} from '../shared/alert-noise-control-management';
+
+export const alertSilencePageSizes = compactTablePageSizes;
+
+export type AlertSilenceFailure = 'missing' | 'unavailable' | 'error';
+export type AlertSilenceWriteOutcome = 'rejected' | 'uncertain';
+export type AlertSilenceManagementContext = AlertNoiseControlManagementContext;
+
+export type {
+  AlertSilence,
+  AlertSilenceDraft,
+  AlertSilenceDeleteReceipt,
+  AlertSilencePage,
+  AlertSilenceQuery,
+  AlertSilenceType
+} from './alert-silence-types';
+
+export class AlertSilenceMissingError extends Error {
+  constructor() {
+    super('Alert Silence detail is missing');
+    this.name = 'AlertSilenceMissingError';
+  }
+}
+
+/**
+ * Stable request evidence exposed by the Alert Silence API boundary. HTTP
+ * status, backend messages, and network causes remain private to that boundary.
+ */
+export class AlertSilenceRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertSilenceFailure,
+    readonly writeOutcome: AlertSilenceWriteOutcome
+  ) {
+    super('Alert Silence request failed');
+    this.name = 'AlertSilenceRequestFailure';
+  }
+}
+
+/** Maps domain failures to the read state understood by Alert Silence screens. */
+export function alertSilenceFailureKind(error: unknown): AlertSilenceFailure {
+  if (error instanceof AlertSilenceMissingError) return 'missing';
+  return error instanceof AlertSilenceRequestFailure ? error.kind : 'error';
+}
+
+/** Only an explicit HTTP 4xx proves that a write was rejected before commit. */
+export function alertSilenceWriteOutcome(error: unknown): AlertSilenceWriteOutcome {
+  return error instanceof AlertSilenceRequestFailure ? error.writeOutcome : 'uncertain';
+}
+
+/** Canonicalizes singular and batch commands before they reach transport. */
+export function normalizeAlertSilenceIds(ids: readonly number[]) {
+  const values = [...new Set(ids)].sort((left, right) => left - right);
+  if (values.length === 0 || values.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertSilenceContractError('Alert Silence ids must be positive safe integers');
+  }
+  return values;
+}
+
+export function readAlertSilenceQuery(params: URLSearchParams): AlertSilenceQuery {
+  return {
+    search: params.get('search')?.trim() ?? '',
+    ...readZeroBasedPage(params, alertSilencePageSizes, 8)
+  };
+}
+
+export function writeAlertSilenceQuery(query: AlertSilenceQuery) {
+  const params = writeZeroBasedPage(query.pageIndex, query.pageSize);
+  if (query.search) params.set('search', query.search);
+  return params;
+}
+
+export function readAlertSilenceManagementContext(params: URLSearchParams): AlertSilenceManagementContext | null {
+  return readAlertNoiseControlManagementContext(params, 'silence');
+}
+
+export function writeAlertSilenceRoute(query: AlertSilenceQuery, context: AlertSilenceManagementContext | null) {
+  return writeAlertNoiseControlManagementContext(writeAlertSilenceQuery(query), context, 'silence');
+}
+
+export {
+  AlertSilenceContractError,
+  alertSilenceDraftFromDetail,
+  buildAlertSilencePayload,
+  buildAlertSilenceTogglePayload,
+  changeAlertSilenceType,
+  createAlertSilenceDraft,
+  validateAlertSilenceDraft
+} from './alert-silence-write-model';
+export type { AlertSilenceInvalidDraftField } from './alert-silence-write-model';

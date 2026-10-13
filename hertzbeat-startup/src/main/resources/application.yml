@@ -19,10 +19,16 @@ spring:
     name: ${HOSTNAME:@hertzbeat@}${PID}
   profiles:
     active: prod
+    group:
+      local:
+        - prod
   ai:
+    model:
+      chat: none
     mcp:
       server:
-        enabled: true
+        enabled: false
+        tool-callback-converter: false
         stdio: false
         protocol: streamable
         streamable-http:
@@ -80,6 +86,11 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+otel:
+  instrumentation:
+    logback-appender:
+      enabled: false
 
 sureness:
   container: jakarta_servlet
@@ -210,6 +221,16 @@ warehouse:
       database: public
       username: greptime
       password: greptime
+      # Optional trusted self telemetry. Provision a distinct DB and permissions first.
+      # hertzbeat_self is a suggested DB name; HertzBeat never creates the DB or grants access.
+      self:
+        enabled: false
+        database: ""
+        workspace-id: ""
+      query:
+        max-concurrency: 8
+        timeout: 5s
+        admission-wait: 100ms
     questdb:
       enabled: false
       url: localhost:9000
@@ -348,6 +369,11 @@ hertzbeat:
       enabled: ${HERTZBEAT_OTLP_GRPC_ENABLED:true}
       host: ${HERTZBEAT_OTLP_GRPC_HOST:0.0.0.0}
       port: ${HERTZBEAT_OTLP_GRPC_PORT:14317}
+    ingestion:
+      admission:
+        max-concurrent-requests: ${HERTZBEAT_OTLP_MAX_CONCURRENT_REQUESTS:32}
+        queue-capacity: ${HERTZBEAT_OTLP_QUEUE_CAPACITY:32}
+        max-queue-wait: ${HERTZBEAT_OTLP_MAX_QUEUE_WAIT:100ms}
   collector:
     mysql:
       # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.
@@ -355,6 +381,19 @@ hertzbeat:
       # jdbc  : always use JDBC
       # r2dbc : always use the built-in query engine
       query-engine: ${HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE:auto}
+  observability:
+    query:
+      admission:
+        metrics:
+          max-concurrent-requests: ${HERTZBEAT_METRICS_QUERY_MAX_CONCURRENT_REQUESTS:8}
+        logs:
+          max-concurrent-requests: ${HERTZBEAT_LOGS_QUERY_MAX_CONCURRENT_REQUESTS:8}
+        traces:
+          max-concurrent-requests: ${HERTZBEAT_TRACES_QUERY_MAX_CONCURRENT_REQUESTS:8}
+        topology:
+          max-concurrent-requests: ${HERTZBEAT_TOPOLOGY_QUERY_MAX_CONCURRENT_REQUESTS:4}
+        queue-capacity: ${HERTZBEAT_QUERY_QUEUE_CAPACITY:8}
+        max-queue-wait: ${HERTZBEAT_QUERY_MAX_QUEUE_WAIT:100ms}
   # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
   vthreads:
     enabled: true
