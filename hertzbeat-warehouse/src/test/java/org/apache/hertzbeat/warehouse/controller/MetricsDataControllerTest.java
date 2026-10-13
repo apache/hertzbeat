@@ -20,6 +20,7 @@ package org.apache.hertzbeat.warehouse.controller;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -136,6 +137,7 @@ class MetricsDataControllerTest {
         final Long start = 1712730000000L;
         final Long end = 1712733600000L;
         final String step = "60s";
+        final Long monitorId = 343254354L;
         final String getUrl = "/api/monitor/" + instance + "/metric/" + metricFull;
         final String getUrlFail = "/api/monitor/" + instance + "/metric/" + metricFullFail;
 
@@ -147,6 +149,7 @@ class MetricsDataControllerTest {
         params.add("start", String.valueOf(start));
         params.add("end", String.valueOf(end));
         params.add("step", step);
+        params.add("monitorId", String.valueOf(monitorId));
 
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(false);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
@@ -170,8 +173,8 @@ class MetricsDataControllerTest {
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric),
-                        eq(history), eq(interval), eq(start), eq(end), eq(step)))
+        lenient().when(metricsDataService.getMetricHistoryData(eq(monitorId), eq(instance), eq(app), eq(metrics),
+                        eq(metric), eq(history), eq(interval), eq(start), eq(end), eq(step)))
                 .thenReturn(metricsHistoryData);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
@@ -182,8 +185,8 @@ class MetricsDataControllerTest {
                 .andExpect(jsonPath("$.data.field.type").value(String.valueOf(CommonConstants.TYPE_NUMBER)))
                 .andExpect(jsonPath("$.msg").isEmpty())
                 .andReturn();
-        verify(metricsDataService).getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history),
-                eq(interval), eq(start), eq(end), eq(step));
+        verify(metricsDataService).getMetricHistoryData(eq(monitorId), eq(instance), eq(app), eq(metrics),
+                eq(metric), eq(history), eq(interval), eq(start), eq(end), eq(step));
     }
 
     @Test
@@ -201,8 +204,8 @@ class MetricsDataControllerTest {
                 .build();
 
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        when(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval,
-                null, null, null)).thenReturn(historyData);
+        when(metricsDataService.getMetricHistoryData(isNull(), eq(instance), eq(app), eq(metrics), eq(metric),
+                eq(history), eq(interval), isNull(), isNull(), isNull())).thenReturn(historyData);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor/{instance}/metric", instance)
                         .param("app", app)
@@ -216,7 +219,36 @@ class MetricsDataControllerTest {
                 .andExpect(jsonPath("$.data.metrics").value(metrics))
                 .andExpect(jsonPath("$.data.field.name").value(metric));
 
-        verify(metricsDataService).getMetricHistoryData(instance, app, metrics, metric, history, interval,
-                null, null, null);
+        verify(metricsDataService).getMetricHistoryData(isNull(), eq(instance), eq(app), eq(metrics), eq(metric),
+                eq(history), eq(interval), isNull(), isNull(), isNull());
+    }
+
+    @Test
+    void getMetricHistoryDataWithStructuredIdentityPassesMonitorId() throws Exception {
+        final String instance = "127.0.0.1:9090";
+        final Long monitorId = 599733946907392L;
+        MetricsHistoryData historyData = MetricsHistoryData.builder()
+                .instance(instance)
+                .metrics("cpu")
+                .field(Field.builder().name("usage").type(CommonConstants.TYPE_NUMBER).build())
+                .build();
+
+        when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
+        when(metricsDataService.getMetricHistoryData(eq(monitorId), eq(instance), eq("linux"), eq("cpu"),
+                eq("usage"), eq("6h"), eq(true), isNull(), isNull(), isNull())).thenReturn(historyData);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor/{instance}/metric", instance)
+                        .param("app", "linux")
+                        .param("metrics", "cpu")
+                        .param("metric", "usage")
+                        .param("history", "6h")
+                        .param("interval", "true")
+                        .param("monitorId", String.valueOf(monitorId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.metrics").value("cpu"));
+
+        verify(metricsDataService).getMetricHistoryData(eq(monitorId), eq(instance), eq("linux"), eq("cpu"),
+                eq("usage"), eq("6h"), eq(true), isNull(), isNull(), isNull());
     }
 }

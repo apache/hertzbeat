@@ -246,6 +246,59 @@ class VictoriaMetricsDataStorageTest {
     }
 
     @Test
+    void testGetHistoryMetricDataQueriesByMonitorId() {
+        ResponseEntity<String> exportResponse = new ResponseEntity<>(createVictoriaMetricsExportBody(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(exportResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryMetricData(599733946907392L, "hdp-hadoop2:10003", "linux", "summary",
+                "responseTime", "6h", null, null, null);
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        String query = uriCaptor.getValue().getQuery();
+        assertThat(query).contains("__monitor_id__=\"599733946907392\"");
+        assertThat(query).doesNotContain("instance=");
+    }
+
+    @Test
+    void testGetHistoryMetricDataWithoutMonitorIdQueriesByInstance() {
+        ResponseEntity<String> exportResponse = new ResponseEntity<>(createVictoriaMetricsExportBody(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(exportResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryMetricData(null, "hdp-hadoop2:10003", "linux", "summary",
+                "responseTime", "6h", null, null, null);
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        String query = uriCaptor.getValue().getQuery();
+        assertThat(query).contains("instance=\"hdp-hadoop2:10003\"");
+        assertThat(query).doesNotContain("__monitor_id__");
+    }
+
+    @Test
+    void testGetHistoryIntervalMetricDataQueriesByMonitorId() {
+        ResponseEntity<PromQlQueryContent> rangeResponse = new ResponseEntity<>(createPromQlQueryContent(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class))).thenReturn(rangeResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryIntervalMetricData(599733946907392L, "hdp-hadoop2:10003", "linux",
+                "summary", "responseTime", "6h", null, null, null);
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate, times(4)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class));
+        for (URI uri : uriCaptor.getAllValues()) {
+            assertThat(uri.getQuery()).contains("__monitor_id__=\"599733946907392\"");
+            assertThat(uri.getQuery()).doesNotContain("instance=");
+        }
+    }
+
+    @Test
     void failedSingleNodeFlushRetainsTheBatchAndRetriesQuickly() {
         when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
                 10, 1, new VictoriaMetricsProperties.Compression(false)));

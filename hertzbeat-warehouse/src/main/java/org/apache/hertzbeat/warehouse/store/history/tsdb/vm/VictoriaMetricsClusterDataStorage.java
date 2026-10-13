@@ -340,13 +340,22 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String history, Long start, Long end, String step) {
+        return getHistoryMetricData(null, instance, app, metrics, metric, history, start, end, step);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String instance, String app, String metrics,
+                                                         String metric, String history, Long start, Long end,
+                                                         String step) {
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
         }
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
-                LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
+                monitorId == null
+                        ? LABEL_KEY_INSTANCE + "=\"" + instance + "\""
+                        : LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\"",
                 app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
         QueryWindow queryWindow = resolveQueryWindow(history, start, end);
@@ -424,6 +433,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String history, Long start, Long end,
                                                                  String step) {
+        return getHistoryIntervalMetricData(null, instance, app, metrics, metric, history, start, end, step);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String instance, String app,
+                                                                 String metrics, String metric, String history,
+                                                                 Long start, Long end, String step) {
         if (!serverAvailable) {
             log.error("""
 
@@ -443,7 +459,9 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
-                LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
+                monitorId == null
+                        ? LABEL_KEY_INSTANCE + "=\"" + instance + "\""
+                        : LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\"",
                 app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);

@@ -143,6 +143,25 @@ class MetricsDataServiceImplTest {
                 anyString(), anyString());
     }
 
+    @Test
+    void testMonitorIdIsPassedToTheHistoryReader() {
+        Map<String, List<Value>> values = Map.of("", List.of(new Value("1", 1L)));
+        when(historyDataReader.getHistoryMetricData(7L, "127.0.0.1", "linux", "cpu", "usage", "6h",
+                null, null, null)).thenReturn(values);
+        when(historyDataReader.getHistoryIntervalMetricData(7L, "127.0.0.1", "linux", "cpu", "usage", "1D",
+                null, null, null)).thenReturn(values);
+
+        metricsDataService.getMetricHistoryData(7L, "127.0.0.1", "linux", "cpu", "usage", null, false,
+                null, null, null);
+        metricsDataService.getMetricHistoryData(7L, "127.0.0.1", "linux", "cpu", "usage", "1D", true,
+                null, null, null);
+
+        verify(historyDataReader).getHistoryMetricData(7L, "127.0.0.1", "linux", "cpu", "usage", "6h",
+                null, null, null);
+        verify(historyDataReader).getHistoryIntervalMetricData(7L, "127.0.0.1", "linux", "cpu", "usage", "1D",
+                null, null, null);
+    }
+
     private void assertRejected(String history) {
         assertThrows(IllegalArgumentException.class, () -> metricsDataService.getMetricHistoryData(
                 "127.0.0.1", "linux", "cpu", "usage", history, false), "expected rejection of: " + history);
