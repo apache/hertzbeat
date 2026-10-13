@@ -141,16 +141,16 @@ function useImportLifecycle(canImport: boolean, reset: () => void) {
     currentCanImport.current = canImport;
     if (!canImport) retire();
   }, [canImport, retire]);
-  useLayoutEffect(
-    () => () => {
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
       const owner = active.current;
       active.current = null;
       generation.current += 1;
       owner?.controller.abort();
-    },
-    []
-  );
+    };
+  }, []);
   const owns = (owner: MonitorImportExecutionOwner) =>
     mounted.current && currentCanImport.current && active.current === owner && generation.current === owner.generation;
   return {
