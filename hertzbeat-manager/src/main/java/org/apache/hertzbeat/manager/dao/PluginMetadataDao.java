@@ -18,14 +18,34 @@
 package org.apache.hertzbeat.manager.dao;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import jakarta.persistence.LockModeType;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * plugin metadata repository
  */
 public interface PluginMetadataDao extends JpaRepository<PluginMetadata, Long>, JpaSpecificationExecutor<PluginMetadata> {
+
+    /**
+     * Lock one exact plugin mutation target.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT plugin FROM PluginMetadata plugin WHERE plugin.id = :id")
+    Optional<PluginMetadata> findByIdForUpdate(@Param("id") Long id);
+
+    /**
+     * Lock every plugin in one batch mutation.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT DISTINCT plugin FROM PluginMetadata plugin WHERE plugin.id IN :ids")
+    List<PluginMetadata> findAllByIdForUpdate(@Param("ids") Set<Long> ids);
 
     /**
      * count by name

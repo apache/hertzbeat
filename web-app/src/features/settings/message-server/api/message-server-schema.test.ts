@@ -1,0 +1,149 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { MessageServerContractError, parseEmailEvidenceWire, parseSmsEvidenceWire } from './message-server-schema';
+
+describe('message server wire schemas', () => {
+  it('parses exact configured and missing email evidence', () => {
+    expect(parseEmailEvidenceWire({ status: 'missing', revision: 'missing', config: null })).toEqual({
+      status: 'missing',
+      revision: 'missing',
+      config: null
+    });
+    expect(
+      parseEmailEvidenceWire({
+        status: 'configured',
+        revision: 'email-r1',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: ['emailPassword']
+        }
+      })
+    ).toMatchObject({ status: 'configured', revision: 'email-r1', config: { emailPort: 587 } });
+  });
+
+  it('rejects invalid revisions, secret echoes, blank identities, and invalid ports', () => {
+    const config = {
+      type: 0,
+      emailHost: 'smtp.example.test',
+      emailUsername: 'ops@example.test',
+      emailPort: 587,
+      emailSsl: false,
+      emailStarttls: true,
+      enable: true,
+      configuredSecrets: ['emailPassword']
+    };
+    expect(() =>
+      parseEmailEvidenceWire({
+        status: 'configured',
+        revision: 'email-r1',
+        config: { ...config, emailPassword: 'echoed-secret' }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() =>
+      parseEmailEvidenceWire({
+        status: 'configured',
+        revision: 'email-r1',
+        config: { ...config, emailHost: '   ' }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() =>
+      parseEmailEvidenceWire({
+        status: 'configured',
+        revision: 'email-r1',
+        config: { ...config, emailPort: 65_536 }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() => parseEmailEvidenceWire({ status: 'missing', revision: 'wrong-create-token', config: null })).toThrow(
+      MessageServerContractError
+    );
+    expect(() => parseEmailEvidenceWire({ status: 'configured', revision: '  ', config })).toThrow(
+      MessageServerContractError
+    );
+  });
+
+  it('validates the SMS envelope before provider-specific mapping', () => {
+    expect(
+      parseSmsEvidenceWire({
+        status: 'configured',
+        revision: 'sms-r1',
+        config: { enable: true, type: 'twilio', options: backendSmsOptions(), configuredSecrets: [] }
+      })
+    ).toMatchObject({ status: 'configured', config: { type: 'twilio' } });
+    expect(() =>
+      parseSmsEvidenceWire({
+        status: 'configured',
+        revision: 'sms-r1',
+        config: { enable: true, type: 'unknown', options: {}, configuredSecrets: [] }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() =>
+      parseSmsEvidenceWire({ status: 'missing', revision: 'missing', config: null, token: 'echoed-secret' })
+    ).toThrow(MessageServerContractError);
+  });
+
+  it('requires the exact read-safe backend SMS options DTO instead of a compact legacy provider shape', () => {
+    expect(
+      parseSmsEvidenceWire({
+        status: 'configured',
+        revision: 'sms-r1',
+        config: {
+          enable: true,
+          type: 'twilio',
+          options: backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
+          configuredSecrets: ['authToken']
+        }
+      })
+    ).toMatchObject({ status: 'configured', config: { options: { accountSid: 'account' } } });
+    expect(() =>
+      parseSmsEvidenceWire({
+        status: 'configured',
+        revision: 'sms-r1',
+        config: {
+          enable: true,
+          type: 'twilio',
+          options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+          configuredSecrets: ['authToken']
+        }
+      })
+    ).toThrow(MessageServerContractError);
+  });
+});
+
+function backendSmsOptions(patch: Record<string, string | null> = {}) {
+  return {
+    appId: null,
+    signName: null,
+    templateId: null,
+    accessKeyId: null,
+    templateCode: null,
+    signature: null,
+    authMode: null,
+    region: null,
+    accountSid: null,
+    twilioPhoneNumber: null,
+    ...patch
+  };
+}

@@ -1,0 +1,66 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Structured rows share the editor's control rail instead of imposing fixed
+ * input widths that overflow or collapse when the form becomes narrower. */
+.stack {
+  width: 100%;
+}
+
+.stack > :global(.ant-space-item) {
+  width: 100%;
+}
+
+.row,
+.metricRow {
+  display: grid !important;
+  width: 100%;
+}
+
+.row {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) max-content;
+}
+
+.metricRow {
+  grid-template-columns: minmax(0, 1.2fr) minmax(64px, 0.7fr) minmax(88px, 0.8fr) max-content;
+}
+
+.row > :global(.ant-space-item),
+.metricRow > :global(.ant-space-item) {
+  min-width: 0;
+}
+
+.input,
+.row :global(.ant-input),
+.row :global(.ant-select),
+.metricRow :global(.ant-input),
+.metricRow :global(.ant-select) {
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .row,
+  .metricRow {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .row > :global(.ant-space-item):nth-child(2),
+  .metricRow > :global(.ant-space-item):nth-child(2),
+  .metricRow > :global(.ant-space-item):nth-child(3) {
+    grid-column: 1;
+  }
+}

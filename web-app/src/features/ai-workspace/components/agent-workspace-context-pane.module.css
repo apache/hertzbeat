@@ -1,0 +1,93 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.context {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border-left: 1px solid var(--ai-divider);
+  background: var(--hb-bg-chrome);
+}
+.contextHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: var(--hb-space-3) var(--hb-space-4);
+  border-bottom: 1px solid var(--ai-divider-muted);
+}
+.contextSection {
+  padding: var(--hb-space-3) var(--hb-space-4);
+}
+.contextSection + .contextSection {
+  border-top: 1px solid var(--ai-divider-muted);
+}
+.contextBody,
+.activity,
+.approval,
+.inputRequest {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+.contextBody {
+  margin-top: var(--hb-space-2);
+}
+.activity {
+  gap: var(--hb-space-1);
+}
+.activitySummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+}
+.activity code,
+.approval code {
+  overflow-wrap: anywhere;
+}
+.approvalActions {
+  display: flex;
+  gap: var(--hb-space-2);
+}
+.inputField {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.activityError {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+@media (max-width: 1000px) {
+  .context {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, calc(100% - 216px));
+    border-left: 1px solid var(--ai-divider);
+    box-shadow: var(--hb-shadow-surface);
+  }
+}
+@media (max-width: 700px) {
+  .context {
+    width: 100%;
+  }
+}

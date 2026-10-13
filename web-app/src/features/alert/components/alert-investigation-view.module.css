@@ -1,0 +1,221 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  display: grid;
+  max-width: 100%;
+  min-width: 0;
+  gap: var(--hb-space-4);
+}
+
+.contextBand {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-3) var(--hb-space-4);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-md);
+  background: var(--hb-surface-container);
+}
+
+.headerCopy {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-2);
+}
+
+.headerCopy h1,
+.headerCopy p {
+  margin: 0;
+}
+
+.headerCopy h1 {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.headerMeta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--hb-space-2);
+  color: var(--hb-text-secondary);
+  flex-wrap: wrap;
+}
+
+.headerMeta time,
+.identifier {
+  font-variant-numeric: tabular-nums;
+}
+
+.anchorMarker {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-2) var(--hb-space-4);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  color: var(--hb-text-secondary);
+  text-align: center;
+}
+
+.anchorMarker::before,
+.anchorMarker::after {
+  height: 1px;
+  background: var(--hb-border-strong);
+  content: '';
+}
+
+.metricGrid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-3);
+}
+
+.signalBody {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.logFocusList {
+  display: grid;
+  margin: 0;
+  padding: var(--hb-space-2) var(--hb-space-3);
+  list-style: none;
+}
+
+.logFocusList li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-2) 0;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.logFocusList code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.evidenceTable {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.evidenceTable th,
+.evidenceTable td {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.identifier {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.factGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--hb-space-3);
+  margin: 0;
+  padding: var(--hb-space-3);
+}
+
+.fact {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-1);
+  padding: var(--hb-space-3);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-sm);
+}
+
+.fact dt {
+  color: var(--hb-text-secondary);
+}
+
+.fact dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .metricGrid,
+  .factGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  :global(body:has([data-alert-investigation='true'])) {
+    min-width: 0;
+  }
+
+  :global(body:has([data-alert-investigation='true']) [data-testid='shell-time-policy']),
+  :global(body:has([data-alert-investigation='true']) [data-testid='shell-status-greptime']),
+  :global(body:has([data-alert-investigation='true']) [data-testid='shell-status-collector']) {
+    display: none;
+  }
+
+  .contextBand,
+  .headerMeta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metricGrid,
+  .factGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .anchorMarker {
+    grid-template-columns: 1fr;
+  }
+
+  .anchorMarker::before,
+  .anchorMarker::after {
+    display: none;
+  }
+
+  .logFocusList li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .logFocusList time {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

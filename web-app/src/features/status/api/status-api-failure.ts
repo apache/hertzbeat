@@ -1,0 +1,78 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
+
+import { StatusOrgNotFoundError, StatusRequestFailure } from '../shared/status-error-model';
+
+const statusOrgNotFoundCode = 15;
+const statusOrgNotFoundMessage = 'Status Page Organization Not Found';
+
+export type StatusApiFailureContext = { resource?: 'organization' };
+
+export function createStatusRequestCancellation() {
+  return new DOMException('Request aborted', 'AbortError');
+}
+
+/** Converts transport/envelope evidence into a value safe for feature layers. */
+export function normalizeStatusApiFailure(error: unknown, context: StatusApiFailureContext = {}) {
+  if (!(error instanceof ApiMessageError)) return error;
+  if (isAbortError(error.cause)) return createStatusRequestCancellation();
+  if (context.resource === 'organization' && isExactStatusOrgNotFound(error)) {
+    return new StatusOrgNotFoundError();
+  }
+
+  return new StatusRequestFailure(readFailureKind(error), apiMessageWriteOutcome(error));
+}
+
+function isAbortError(error: unknown): error is { name: 'AbortError' } {
+  return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
+}
+
+export async function statusApiRequest<T>(
+  operation: () => Promise<T>,
+  context: StatusApiFailureContext = {}
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    throw normalizeStatusApiFailure(error, context);
+  }
+}
+
+function isExactStatusOrgNotFound(error: ApiMessageError) {
+  return (
+    error.cause === undefined &&
+    error.code === statusOrgNotFoundCode &&
+    error.status === 200 &&
+    error.message === statusOrgNotFoundMessage
+  );
+}
+
+function readFailureKind(error: ApiMessageError) {
+  if (error.cause !== undefined || error.status === undefined || error.status === 0 || error.status >= 500) {
+    return 'unavailable' as const;
+  }
+  if (error.status === 404 || (error.status === 200 && error.code === statusOrgNotFoundCode)) {
+    return 'missing' as const;
+  }
+  if (error.status === 401 || error.status === 403) {
+    return 'permission' as const;
+  }
+  return 'error' as const;
+}

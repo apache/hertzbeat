@@ -1,0 +1,170 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Button, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel, OperationalTableEmptyState } from '@/shared/operational-page';
+
+import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
+import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
+import { noticeReceiverPageSizes, receiverTypeDefinitions, type NoticeReceiver } from '../model/notice-receiver-model';
+import { noticeReceiverSettingSummary } from '../model/notice-receiver-summary';
+
+export function NoticeReceiverResults({
+  actionPolicy,
+  state,
+  busy,
+  pageIndex,
+  pageSize,
+  edit,
+  remove,
+  retry,
+  onPageChange
+}: {
+  actionPolicy: NoticeActionCapabilities;
+  state: NoticeReceiverListState;
+  busy: boolean;
+  pageIndex: number;
+  pageSize: number;
+  edit: (id: number) => void;
+  remove: (record: NoticeReceiver) => void;
+  retry: () => void;
+  onPageChange: (page: number, pageSize: number) => void;
+}) {
+  const { t } = useTranslation();
+  if (state.kind === 'loading') {
+    return <OperationalStatePanel kind="loading" title={t('noticeReceivers.loading')} />;
+  }
+  if (state.kind === 'invalid' || state.kind === 'unavailable' || state.kind === 'error') {
+    return (
+      <OperationalStatePanel
+        kind={state.kind === 'unavailable' ? 'unavailable' : 'error'}
+        title={t(`noticeReceivers.read.${state.kind}`)}
+        action={
+          <Button size="small" disabled={busy} onClick={retry}>
+            {t('common.retry')}
+          </Button>
+        }
+      />
+    );
+  }
+  return (
+    <Table<NoticeReceiver>
+      rowKey="id"
+      size="small"
+      dataSource={state.records}
+      columns={receiverColumns({ t, actionPolicy, busy, edit, remove })}
+      scroll={{ x: 1060 }}
+      locale={{ emptyText: <OperationalTableEmptyState title={t('noticeReceivers.empty')} /> }}
+      pagination={{
+        current: pageIndex + 1,
+        pageSize,
+        pageSizeOptions: [...noticeReceiverPageSizes],
+        showSizeChanger: true,
+        disabled: busy,
+        total: state.total,
+        onChange: onPageChange
+      }}
+    />
+  );
+}
+
+type ReceiverColumnOptions = {
+  t: TFunction;
+  actionPolicy: NoticeActionCapabilities;
+  busy: boolean;
+  edit: (id: number) => void;
+  remove: (record: NoticeReceiver) => void;
+};
+
+function receiverColumns({ t, actionPolicy, busy, edit, remove }: ReceiverColumnOptions): ColumnsType<NoticeReceiver> {
+  const columns: ColumnsType<NoticeReceiver> = [
+    { title: t('noticeReceivers.name'), dataIndex: 'name', width: 240 },
+    {
+      title: t('noticeReceivers.type'),
+      width: 180,
+      render: (_value, receiver) => <Tag>{receiverTypeLabel(t, receiver)}</Tag>
+    },
+    {
+      title: t('noticeReceivers.setting'),
+      width: 300,
+      render: (_value, receiver) => {
+        const summary = noticeReceiverSettingSummary(receiver);
+        return summary.kind === 'configured' ? (
+          <Tag>{t('noticeReceivers.configured')}</Tag>
+        ) : (
+          <Typography.Text>{summary.value}</Typography.Text>
+        );
+      }
+    },
+    { title: t('noticeReceivers.updated'), width: 190, render: (_value, receiver) => formatReceiverTime(receiver) }
+  ];
+  if (!hasNoticeReceiverRowActions(actionPolicy)) return columns;
+  return [
+    ...columns,
+    {
+      title: t('common.actions'),
+      fixed: 'right',
+      width: 150,
+      render: (_value, receiver) => (
+        <Space>
+          {actionPolicy.canEdit ? (
+            <Button type="link" disabled={busy} onClick={() => edit(receiver.id)}>
+              {t('common.edit')}
+            </Button>
+          ) : null}
+          {actionPolicy.canDelete ? (
+            <Popconfirm
+              disabled={busy}
+              title={t('noticeReceivers.deleteConfirm')}
+              okButtonProps={{ disabled: busy }}
+              onConfirm={() => {
+                if (!busy) remove(receiver);
+              }}
+            >
+              <Button type="link" danger disabled={busy}>
+                {t('noticeReceivers.delete')}
+              </Button>
+            </Popconfirm>
+          ) : null}
+        </Space>
+      )
+    }
+  ];
+}
+
+function receiverTypeLabel(t: TFunction, receiver: NoticeReceiver) {
+  return t(
+    receiverTypeDefinitions.find(definition => definition.type === receiver.type)?.labelKey ??
+      'noticeReceivers.types.unknown'
+  );
+}
+
+function formatReceiverTime(receiver: NoticeReceiver) {
+  const value = receiver.gmtUpdate ?? receiver.gmtCreate;
+  if (!value) return '—';
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return '—';
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp);
+}
+
+function hasNoticeReceiverRowActions(capabilities: NoticeActionCapabilities) {
+  return capabilities.canEdit || capabilities.canDelete;
+}

@@ -45,7 +45,7 @@ class AlarmSilenceReduceTest {
 
     @Mock
     private AlertSilenceDao alertSilenceDao;
-    
+
     @Mock
     private AlertNoticeDispatch alertNoticeDispatch;
 
@@ -84,11 +84,11 @@ class AlarmSilenceReduceTest {
 
         when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
         when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(silenceRule);
-        
+
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
-        
+
         alarmSilenceReduce.silenceAlarm(alert);
-        
+
         verify(alertNoticeDispatch, never()).dispatchAlarm(alert);
         verify(alertSilenceDao).save(silenceRule);
     }
@@ -102,8 +102,8 @@ class AlarmSilenceReduceTest {
                 .matchAll(false)
                 .type((byte) 1) // cyclic
                 .labels(createLabels("service", "web"))
-                .periodStart(now.minusMinutes(30).atZone(ZoneId.systemDefault())) 
-                .periodEnd(now.plusMinutes(30).atZone(ZoneId.systemDefault())) 
+                .periodStart(now.minusMinutes(30).atZone(ZoneId.systemDefault()))
+                .periodEnd(now.plusMinutes(30).atZone(ZoneId.systemDefault()))
                 .days(Collections.singletonList((byte) now.getDayOfWeek().getValue()))
                 .times(0)
                 .build();
@@ -112,9 +112,9 @@ class AlarmSilenceReduceTest {
         when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(silenceRule);
 
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
-        
+
         alarmSilenceReduce.silenceAlarm(alert);
-        
+
         verify(alertNoticeDispatch, never()).dispatchAlarm(alert);
         verify(alertSilenceDao).save(silenceRule);
     }
@@ -214,11 +214,11 @@ class AlarmSilenceReduceTest {
                 .build();
 
         when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
-        
+
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
-        
+
         alarmSilenceReduce.silenceAlarm(alert);
-        
+
         verify(alertNoticeDispatch).dispatchAlarm(alert);
         verify(alertSilenceDao, never()).save(any());
     }

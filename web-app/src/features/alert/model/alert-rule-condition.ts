@@ -1,0 +1,148 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { AlertRuleContractError } from './alert-rule-types';
+import { parseMetricAlertConditionSource } from './alert-rule-condition-parser';
+import {
+  serializeMetricAlertConditionAuthoringSource,
+  serializeMetricAlertConditionSource
+} from './alert-rule-condition-serializer';
+import type {
+  MetricAlertConditionGroup,
+  MetricAlertConditionOperator,
+  MetricAlertField,
+  MetricAlertNumericOperator,
+  MetricAlertStringOperator
+} from './alert-rule-condition-contract';
+import { isMetricAlertAttribute, resolveMetricAlertFieldSource } from './alert-rule-condition-field';
+
+export { isMetricAlertAttribute };
+
+export type {
+  MetricAlertCondition,
+  MetricAlertConditionGroup,
+  MetricAlertConditionOperator,
+  MetricAlertField
+} from './alert-rule-condition-contract';
+
+const numericOperators: readonly MetricAlertNumericOperator[] = ['>', '<', '==', '!=', '<=', '>='];
+const stringOperators: readonly MetricAlertStringOperator[] = [
+  'equals',
+  '!equals',
+  'contains',
+  '!contains',
+  'matches',
+  '!matches'
+];
+const existenceOperators = ['exists', '!exists'] as const;
+/** Stable numeric codes emitted by the Java monitoring hierarchy contract. */
+export const metricAlertFieldTypes = {
+  number: 0,
+  string: 1,
+  object: 2,
+  time: 3
+} as const;
+const supportedFieldTypes = new Set<number>(Object.values(metricAlertFieldTypes));
+const safeFieldPattern = /^[A-Za-z_][A-Za-z0-9_.]*$/;
+export const metricAlertConditionLimits = {
+  maximumDepth: 3,
+  maximumItemsPerGroup: 5
+} as const;
+
+export function isMetricAlertFieldIdentifier(value: string) {
+  return safeFieldPattern.test(value);
+}
+
+export function metricAlertOperatorsForType(type: number): readonly MetricAlertConditionOperator[] {
+  if (type === metricAlertFieldTypes.number || type === metricAlertFieldTypes.time)
+    return [...numericOperators, ...existenceOperators];
+  if (type === metricAlertFieldTypes.string) return [...stringOperators, ...existenceOperators];
+  if (type === metricAlertFieldTypes.object) return [...numericOperators, ...stringOperators, ...existenceOperators];
+  return [];
+}
+
+export function metricAlertFieldTypeKey(type: number): 'number' | 'string' | 'object' | 'time' {
+  if (type === metricAlertFieldTypes.number) return 'number';
+  if (type === metricAlertFieldTypes.string) return 'string';
+  if (type === metricAlertFieldTypes.object) return 'object';
+  if (type === metricAlertFieldTypes.time) return 'time';
+  throw contract('metric field type is invalid');
+}
+
+export function resolveMetricAlertField(fields: MetricAlertField[], source: string) {
+  return resolveMetricAlertFieldSource(metricFieldMap(fields), source);
+}
+
+/** Serializes only the condition subset represented by the structured editor. */
+export function serializeMetricAlertCondition(group: MetricAlertConditionGroup, fields: MetricAlertField[]) {
+  const fieldMap = metricFieldMap(fields);
+  return serializeMetricAlertConditionSource(
+    group,
+    fieldMap,
+    metricAlertOperatorsForType,
+    metricAlertConditionLimits.maximumDepth,
+    metricAlertConditionLimits.maximumItemsPerGroup
+  );
+}
+
+/** Serializes the source-visible draft, including Angular-compatible incomplete values. */
+export function serializeMetricAlertConditionAuthoring(group: MetricAlertConditionGroup, fields: MetricAlertField[]) {
+  return serializeMetricAlertConditionAuthoringSource(
+    group,
+    metricFieldMap(fields),
+    metricAlertOperatorsForType,
+    metricAlertConditionLimits.maximumDepth,
+    metricAlertConditionLimits.maximumItemsPerGroup
+  );
+}
+
+/**
+ * Parses the structured subset conservatively. Unsupported or ambiguous input
+ * returns null so callers can retain the source in expert mode.
+ */
+export function parseMetricAlertCondition(
+  expression: string,
+  fields: MetricAlertField[]
+): MetricAlertConditionGroup | null {
+  try {
+    const source = expression.trim();
+    if (!source) return null;
+    return parseMetricAlertConditionSource(
+      source,
+      metricFieldMap(fields),
+      metricAlertOperatorsForType,
+      metricAlertConditionLimits.maximumDepth,
+      metricAlertConditionLimits.maximumItemsPerGroup
+    );
+  } catch {
+    return null;
+  }
+}
+
+function metricFieldMap(fields: MetricAlertField[]) {
+  const result = new Map<string, MetricAlertField>();
+  for (const field of fields) {
+    if (!isMetricAlertFieldIdentifier(field.value) || !supportedFieldTypes.has(field.type) || result.has(field.value))
+      throw contract('metric field catalog is invalid');
+    result.set(field.value, field);
+  }
+  return result;
+}
+
+function contract(message: string) {
+  return new AlertRuleContractError(message);
+}

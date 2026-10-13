@@ -71,6 +71,8 @@ sidebar_label: Docker Compose方式安装
 
    快速启动方案默认将所有宿主机端口绑定到 `127.0.0.1`，因此 Web 页面只能在运行 Docker 的本机访问。如需从其他主机访问，请在 `.env` 中把 `HERTZBEAT_BIND_ADDRESS` 设置为其他主机可达的地址（建议通过 TLS 反向代理开放，而不是直接使用 `0.0.0.0` 这类通配地址），然后执行 `docker compose config` 检查最终端口映射，再重新执行 `docker compose up -d`。该变量同时会开放 `1158` 供远程 Collector 连接；`14317`（OTLP/gRPC）由独立的 `HERTZBEAT_OTLP_BIND_ADDRESS` 控制。详见部署方案目录下的 `README.md`。
 
+   随附的 `conf/application.yml` 默认启用 Basic 和 JWT 认证，Web UI 使用 JWT；Digest 需要显式开启。如果在 `sureness.auths` 中加入 `digest`，未认证请求访问受保护接口时会收到 `WWW-Authenticate: Digest` 质询，浏览器可能弹出原生用户名密码框。修改配置后需要重启 HertzBeat 容器。示例和 TLS 建议参见 [认证方式](docker-deploy#认证方式)。
+
    :::
 
 **HAVE FUN**

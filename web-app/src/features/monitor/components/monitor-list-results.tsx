@@ -1,0 +1,203 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Table, Tag, type TableProps } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { SortOrder, TableRowSelection } from 'antd/es/table/interface';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
+import { pageSelectionLabels, pageSelectionTitleCheckboxProps } from '@/shared/table-selection';
+
+import { isMonitorSortField, monitorStatusCodes, type MonitorAction } from '../model/monitor-contract';
+import type { MonitorListEvidence } from '../model/monitor-list-model';
+import {
+  monitorPageSizes,
+  monitorStatusColor,
+  monitorStatusKey,
+  parseMonitorTimestamp,
+  type MonitorQuery
+} from '../model/monitor-model';
+import { isMonitorRowDisappeared, type MonitorListRow } from '../model/monitor-list-snapshot';
+
+import { MonitorRowActions } from './monitor-list-actions';
+import { monitorIdentityColumns } from './monitor-list-identity-columns';
+import styles from './monitor-list.module.css';
+
+const disappearedRowClassName = styles.disappearedRow ?? '';
+
+type MonitorResultActions = {
+  changePage: (page: number, pageSize: number) => void;
+  changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
+  selectIds: (ids: number[]) => void;
+  changeApp: (app: string) => void;
+  copyInstance: (instance: string) => Promise<boolean>;
+  open: (id: number, mode: 'view' | 'edit') => void;
+  run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
+};
+
+export function MonitorListResults({
+  evidence,
+  query,
+  selectedIds,
+  operating,
+  canWrite,
+  canDelete,
+  canSelect,
+  actions
+}: {
+  evidence: MonitorListEvidence;
+  query: MonitorQuery;
+  selectedIds: number[];
+  operating: boolean;
+  canWrite: boolean;
+  canDelete: boolean;
+  canSelect: boolean;
+  actions: MonitorResultActions;
+}) {
+  const { t } = useTranslation();
+  if (evidence.kind === 'loading')
+    return <OperationalStatePanel kind="loading" title={t('monitor.loading')} description={t('monitor.description')} />;
+  if (evidence.kind === 'empty')
+    return <OperationalStatePanel kind="no-match" title={t('monitor.empty')} description={t('monitor.description')} />;
+  if (evidence.kind === 'unavailable')
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (evidence.kind === 'error')
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
+  const rowSelection = monitorRowSelection(t, evidence.records, selectedIds, operating, actions.selectIds);
+  const selectionProps = canSelect ? { rowSelection } : {};
+  return (
+    <Table<MonitorListRow>
+      {...selectionProps}
+      rowKey="id"
+      size="small"
+      dataSource={evidence.records}
+      columns={columns(t, query, actions, operating, canWrite, canDelete)}
+      rowClassName={row => (isMonitorRowDisappeared(row) ? disappearedRowClassName : '')}
+      onChange={monitorTableChange(actions.changeSort)}
+      pagination={{
+        current: query.pageIndex + 1,
+        pageSize: query.pageSize,
+        pageSizeOptions: [...monitorPageSizes],
+        showSizeChanger: true,
+        total: evidence.total,
+        onChange: actions.changePage
+      }}
+    />
+  );
+}
+
+function monitorRowSelection(
+  t: TFunction,
+  records: readonly MonitorListRow[],
+  selectedIds: number[],
+  operating: boolean,
+  selectIds: MonitorResultActions['selectIds']
+): TableRowSelection<MonitorListRow> {
+  return {
+    selectedRowKeys: selectedIds,
+    getTitleCheckboxProps: () =>
+      pageSelectionTitleCheckboxProps(
+        selectedIds,
+        records.filter(record => !isMonitorRowDisappeared(record)).map(record => record.id),
+        pageSelectionLabels(t)
+      ),
+    getCheckboxProps: row => ({
+      'aria-label': t('monitorActions.selectOne', { name: row.name }),
+      disabled: operating || isMonitorRowDisappeared(row)
+    }),
+    onChange: keys => selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
+  };
+}
+
+function monitorTableChange(
+  changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void
+): NonNullable<TableProps<MonitorListRow>['onChange']> {
+  return (_pagination, _filters, sorter, extra) => {
+    if (extra.action !== 'sort') return;
+    const active = Array.isArray(sorter) ? sorter.find(candidate => candidate.order) : sorter;
+    const sort = isMonitorSortField(active?.field) ? active.field : null;
+    const order = monitorQueryOrder(active?.order);
+    if (sort && order) changeSort(sort, order);
+    else changeSort(null, null);
+  };
+}
+
+function columns(
+  t: TFunction,
+  query: MonitorQuery,
+  actions: MonitorResultActions,
+  operating: boolean,
+  canWrite: boolean,
+  canDelete: boolean
+): ColumnsType<MonitorListRow> {
+  return [
+    ...monitorIdentityColumns(t, monitorTableSortOrder(query, 'name'), actions, operating),
+    {
+      title: t('monitor.status.label'),
+      dataIndex: 'status',
+      sorter: true,
+      sortOrder: monitorTableSortOrder(query, 'status'),
+      render: (value: number, row) => {
+        const status = isMonitorRowDisappeared(row) ? monitorStatusCodes.unavailable : value;
+        return <Tag color={monitorStatusColor(status)}>{t(monitorStatusKey(status))}</Tag>;
+      }
+    },
+    {
+      title: t('monitor.updated'),
+      dataIndex: 'gmtUpdate',
+      sorter: true,
+      sortOrder: monitorTableSortOrder(query, 'gmtUpdate'),
+      render: (value: number | string | null | undefined, row) => formatMonitorTime(value ?? row.gmtCreate)
+    },
+    {
+      title: t('common.actions'),
+      width: 370,
+      render: (_value: unknown, row) => (
+        <MonitorRowActions
+          monitor={row}
+          open={actions.open}
+          run={actions.run}
+          disabled={operating || isMonitorRowDisappeared(row)}
+          canWrite={canWrite}
+          canDelete={canDelete}
+        />
+      )
+    }
+  ];
+}
+
+function monitorTableSortOrder(query: MonitorQuery, field: NonNullable<MonitorQuery['sort']>): SortOrder {
+  if (query.sort !== field) return null;
+  if (query.order === 'asc') return 'ascend';
+  if (query.order === 'desc') return 'descend';
+  return null;
+}
+
+function monitorQueryOrder(order: SortOrder | undefined): MonitorQuery['order'] {
+  if (order === 'ascend') return 'asc';
+  if (order === 'descend') return 'desc';
+  return null;
+}
+
+function formatMonitorTime(value?: number | string | null) {
+  const timestamp = parseMonitorTimestamp(value);
+  return timestamp === undefined
+    ? '—'
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp);
+}

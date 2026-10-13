@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.config;
 
 import java.util.List;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.AesUtil;
@@ -64,8 +65,8 @@ public class ServiceCredentialMigration implements CommandLineRunner {
             return;
         }
         int migrated = migrateStoredCredentials();
-        jdbcTemplate.update("INSERT INTO hzb_config(type, content) VALUES (?, ?)",
-                MIGRATION_MARKER, "complete");
+        jdbcTemplate.update("INSERT INTO hzb_config(type, content, config_revision) VALUES (?, ?, ?)",
+                MIGRATION_MARKER, "complete", UUID.randomUUID().toString());
         if (migrated > 0) {
             log.info("Migrated {} stored service credential parameters", migrated);
         }
