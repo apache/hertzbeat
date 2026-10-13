@@ -1,0 +1,130 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { App } from 'antd';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import { monitorScrapeValues, type MonitorEditorMode } from '../model/monitor-contract';
+import { monitorEditorReturnTo } from '../model/monitor-model';
+import { createMonitorEditorActions } from './monitor-editor-actions';
+import type { MonitorEditorCommandText } from './monitor-editor-command-model';
+import { useMonitorEditorCommands } from './use-monitor-editor-commands';
+import { useMonitorEditorDraft } from './use-monitor-editor-draft';
+import { useMonitorEditorUnsavedNavigation } from './use-monitor-editor-unsaved-navigation';
+import { useMonitorEditorResources } from './use-monitor-editor-resources';
+import { useCanonicalMonitorEditorUrl, useMonitorEditorRoute } from './use-monitor-editor-route';
+
+export function useMonitorEditorController(mode: MonitorEditorMode) {
+  const { t } = useTranslation();
+  const { message } = App.useApp();
+  const { route, resources, draftState } = useMonitorEditorSession(mode);
+  const navigation = useMonitorEditorUnsavedNavigation(draftState.dirty, resources.source, draftState.draft);
+  const commands = useMonitorEditorCommands({
+    saved: navigation.allow,
+    mode,
+    id: route.id,
+    source: resources.source,
+    draft: draftState.draft,
+    defines: resources.defines,
+    returnTo: monitorEditorReturnTo(route.returnTo, mode === 'edit' ? resources.app : undefined),
+    navigate: route.navigate,
+    message,
+    text: monitorEditorCommandText(t)
+  });
+  const actions = createMonitorEditorActions({
+    mode,
+    id: route.id,
+    app: resources.app,
+    draft: draftState.draft,
+    searchParams: route.searchParams,
+    pathname: route.pathname,
+    navigate: route.navigate,
+    updateDraft: draftState.update,
+    prepareTransition: draftState.prepareTransition,
+    detect: commands.detect,
+    save: commands.save,
+    cancel: () => {
+      navigation.allow();
+      commands.cancel();
+    },
+    retry: resources.retry,
+    isLocked: commands.isLocked,
+    clearFeedback: commands.clearFeedback
+  });
+  return {
+    state: {
+      evidence: resources.evidence,
+      draft: draftState.draft,
+      defines: resources.defines,
+      apps: resources.apps,
+      collectors: resources.collectors,
+      labelSuggestions: resources.labelSuggestions,
+      busy: commands.command !== 'idle',
+      command: commands.command,
+      feedback: commands.feedback,
+      helpUrl: resources.helpUrl,
+      validationIssues: commands.validationIssues,
+      scrapeValues: monitorScrapeValues,
+      sourceKey: resources.source
+    },
+    actions
+  };
+}
+
+function useMonitorEditorSession(mode: MonitorEditorMode) {
+  const route = useMonitorEditorRoute(mode);
+  const resources = useMonitorEditorResources({
+    mode,
+    id: route.id,
+    validRoute: route.validRoute,
+    requestedApp: route.requestedApp,
+    requestedScrape: route.requestedScrape,
+    rawScrape: route.rawScrape
+  });
+  const draftState = useMonitorEditorDraft(
+    resources.source,
+    resources.canonicalDraft,
+    resources.defines,
+    resources.scrape
+  );
+  useCanonicalMonitorEditorUrl({
+    validRoute: route.validRoute,
+    apps: resources.appEvidence,
+    mode,
+    requestedApp: route.requestedApp,
+    rawScrape: route.rawScrape,
+    detail: resources.detail,
+    carrySource: draftState.carrySource,
+    source: resources.source,
+    searchParams: route.searchParams,
+    pathname: route.pathname,
+    navigate: route.navigate
+  });
+  return { route, resources, draftState };
+}
+
+function monitorEditorCommandText(t: TFunction): MonitorEditorCommandText {
+  return {
+    validation: t('monitor.editor.validation'),
+    detectSuccess: t('monitor.editor.detectSuccess'),
+    detectFailed: t('monitor.editor.detectFailed'),
+    saveSuccess: t('monitor.editor.saveSuccess'),
+    saveFailed: t('monitor.editor.saveFailed'),
+    saveUnknown: t('monitor.editor.saveUnknown')
+  };
+}

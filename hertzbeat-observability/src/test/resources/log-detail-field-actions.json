@@ -1,0 +1,57 @@
+[
+  {
+    "scope": "attribute",
+    "key": "http.route",
+    "value": "café 😀 \"quote\" \\ (AND OR)",
+    "children": [],
+    "valueKind": "string",
+    "collection": false,
+    "include": "@http.route:\"café 😀 \\\"quote\\\" \\\\ (AND OR)\"",
+    "exclude": "-@http.route:\"café 😀 \\\"quote\\\" \\\\ (AND OR)\"",
+    "remaining": "(service:api OR status:WARN)"
+  },
+  {
+    "scope": "resource",
+    "key": "host.name",
+    "value": "(node) AND OR \\ \"west\"",
+    "children": [],
+    "valueKind": "string",
+    "collection": false,
+    "include": "resource.host.name:\"(node) AND OR \\\\ \\\"west\\\"\"",
+    "exclude": "-resource.host.name:\"(node) AND OR \\\\ \\\"west\\\"\"",
+    "remaining": "(service:api OR status:WARN)"
+  },
+  {
+    "scope": "attribute",
+    "key": "proof:kind",
+    "value": "AND OR",
+    "children": [],
+    "valueKind": "string",
+    "collection": false,
+    "include": "@proof\\:kind:\"AND OR\"",
+    "exclude": "-@proof\\:kind:\"AND OR\"",
+    "remaining": "(service:api OR status:WARN)"
+  },
+  {
+    "scope": "attribute",
+    "key": "users",
+    "value": "café \"x\" \\ (AND OR)",
+    "children": ["codes.v"],
+    "valueKind": "string",
+    "collection": true,
+    "include": "@users[][\"codes.v\"][]:\"café \\\"x\\\" \\\\ (AND OR)\"",
+    "exclude": "NOT @users[][\"codes.v\"][]:\"café \\\"x\\\" \\\\ (AND OR)\"",
+    "remaining": "(service:api OR status:WARN)"
+  },
+  {
+    "scope": "attribute",
+    "key": "users",
+    "value": "4",
+    "children": ["codes.v"],
+    "valueKind": "number",
+    "collection": true,
+    "include": "@users[][\"codes.v\"][]:4",
+    "exclude": "NOT @users[][\"codes.v\"][]:4",
+    "remaining": "(service:api OR status:WARN)"
+  }
+]

@@ -69,9 +69,9 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
-                log.debug("Send ServerChan webHook: {} Success", webHookUrl);
+                log.debug("Send ServerChan webhook success");
             } else {
-                log.warn("Send ServerChan webHook: {} Failed: {}", webHookUrl, responseEntity.getBody());
+                log.warn("Send ServerChan webhook failed with status {}", responseEntity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + responseEntity.getStatusCode());
             }
         } catch (Exception e) {

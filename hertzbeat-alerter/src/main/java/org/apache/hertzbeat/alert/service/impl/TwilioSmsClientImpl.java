@@ -70,20 +70,10 @@ public class TwilioSmsClientImpl implements SmsClient {
 
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
-        String instance = null;
-        String priority = null;
-        String content = null;
-        if (alert.getCommonLabels() != null) {
-            instance = alert.getCommonLabels().get("instance") == null ? alert.getGroupKey()
-                    : alert.getCommonLabels().get("instance");
-            priority = alert.getCommonLabels().get("priority") == null ? "unknown"
-                    : alert.getCommonLabels().get("priority");
-            content = alert.getCommonAnnotations().get("summary");
-            content = content == null ? alert.getCommonAnnotations().get("description") : content;
-            if (content == null) {
-                content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
-            }
-        }
+        SmsAlertFields fields = SmsAlertFields.from(alert);
+        String instance = fields.instance();
+        String priority = fields.priority();
+        String content = fields.content();
         this.send(receiver.getPhone(), createMessage(instance, priority, content));
     }
 

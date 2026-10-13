@@ -1,0 +1,223 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.ai.gateway.conversation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Table;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Optional;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
+import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
+import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.common.entity.agent.AgentRun;
+import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
+
+/**
+ * Agent run service tests.
+ */
+@ExtendWith(MockitoExtension.class)
+class AgentRunServiceTest {
+
+    @Mock
+    private AgentRunDao runDao;
+
+    @Mock
+    private AgentSessionDao sessionDao;
+
+    @Mock
+    private EntityManager entityManager;
+
+    @Test
+    void createOrResumeRunShouldCreateRunInRunTableShape() throws NoSuchFieldException {
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
+        UserInput userInput = UserInput.builder()
+            .messageId("msg_1")
+            .conversationId("conversation-1")
+            .message(Message.builder().text(" diagnose mysql ").build())
+            .build();
+        when(runDao.findBySessionIdAndMessageId(1L, "msg_1")).thenReturn(Optional.empty());
+        AgentRun persisted = AgentRun.builder().id(2L).runUid("run_saved").build();
+        when(runDao.saveAndFlush(any(AgentRun.class))).thenReturn(persisted);
+
+        AgentRun result = service.createOrResumeRun(
+            session, userInput, AgentRuntimeEntryType.USER_INPUT);
+
+        ArgumentCaptor<AgentRun> captor = ArgumentCaptor.forClass(AgentRun.class);
+        verify(runDao).saveAndFlush(captor.capture());
+        AgentRun saved = captor.getValue();
+        assertEquals("hzb_agent_run", AgentRun.class.getAnnotation(Table.class).name());
+        assertEquals("run_uid", AgentRun.class.getDeclaredField("runUid").getAnnotation(Column.class).name());
+        assertEquals("TEXT", AgentRun.class.getDeclaredField("resultSummary")
+            .getAnnotation(Column.class).columnDefinition());
+        assertFalse(Arrays.stream(AgentRun.class.getDeclaredFields()).anyMatch(this::isRunRiskField));
+        assertFalse(Arrays.stream(AgentRun.class.getDeclaredFields())
+            .anyMatch(field -> "phase".equals(field.getName()) || "errorCode".equals(field.getName())));
+        assertTrue(saved.getRunUid().startsWith("run_"));
+        assertSame(persisted, result);
+        assertEquals(AgentRunStatus.CREATED.name(), saved.getStatus());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT.name(), saved.getEntryType());
+        assertEquals("msg_1", saved.getMessageId());
+    }
+
+    @Test
+    void createOrResumeRunShouldResumeExistingRunBySessionMessage() {
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
+        UserInput userInput = UserInput.builder()
+            .messageId("msg_1")
+            .conversationId("conversation-1")
+            .message(Message.builder().text("diagnose mysql").build())
+            .build();
+        AgentRun existed = AgentRun.builder().id(2L).runUid("run_1").messageId("msg_1").build();
+        when(runDao.findBySessionIdAndMessageId(1L, "msg_1")).thenReturn(Optional.of(existed));
+
+        AgentRun result = service.createOrResumeRun(
+            session, userInput, AgentRuntimeEntryType.ALERT_TRIGGER);
+
+        assertSame(existed, result);
+        verify(runDao, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createRunShouldPersistTheCompleteInvestigationTarget() {
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
+        AgentTargetRef target = AgentTargetRef.builder()
+            .entityId(300L)
+            .signal(AgentSignalRef.builder()
+                .type("logs")
+                .query("service.name=checkout")
+                .timeRange("last-30m")
+                .start(1_000L)
+                .end(2_000L)
+                .build())
+            .topology(AgentTopologyRef.builder()
+                .rootEntityId(300L)
+                .nodeId("300")
+                .edgeId("edge-300-301")
+                .depth(2)
+                .build())
+            .build();
+        UserInput userInput = UserInput.builder()
+            .messageId("msg_context")
+            .conversationId("conversation-1")
+            .target(target)
+            .message(Message.builder().text("investigate checkout").build())
+            .build();
+        when(runDao.findBySessionIdAndMessageId(1L, "msg_context")).thenReturn(Optional.empty());
+        when(runDao.saveAndFlush(any(AgentRun.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AgentRun saved = service.createOrResumeRun(session, userInput, AgentRuntimeEntryType.USER_INPUT);
+
+        AgentTargetRef persisted = service.targetFromRun(saved);
+        assertEquals(300L, persisted.getEntityId());
+        assertEquals("logs", persisted.getSignal().getType());
+        assertEquals("last-30m", persisted.getSignal().getTimeRange());
+        assertEquals("edge-300-301", persisted.getTopology().getEdgeId());
+        assertFalse(saved.getTargetContextJson().contains("password"));
+    }
+
+    @Test
+    void createOrResumeRunShouldRecoverExistingRunAfterSessionMessageUniqueConflict() {
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
+        UserInput userInput = UserInput.builder()
+            .messageId("msg_1")
+            .conversationId("conversation-1")
+            .message(Message.builder().text("diagnose mysql").build())
+            .build();
+        AgentRun existed = AgentRun.builder().id(2L).runUid("run_1").messageId("msg_1").build();
+        when(runDao.findBySessionIdAndMessageId(1L, "msg_1")).thenReturn(Optional.empty(), Optional.of(existed));
+        when(runDao.saveAndFlush(any(AgentRun.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        AgentRun result = service.createOrResumeRun(
+            session, userInput, AgentRuntimeEntryType.SCHEDULE_TRIGGER);
+
+        assertSame(existed, result);
+        verify(entityManager).clear();
+    }
+
+    @Test
+    void findMethodsShouldDelegateToRunDao() {
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
+        AgentRun run = AgentRun.builder().id(1L).runUid("run_1").build();
+        when(runDao.findByRunUid("run_1")).thenReturn(Optional.of(run));
+
+        assertSame(run, service.findRun("run_1").orElseThrow());
+    }
+
+    @Test
+    void lifecycleUpdatesShouldKeepNonSecretResultDetailAndSanitizeAllStoredOutcomes() {
+        AgentRunService service = new AgentRunService(runDao, sessionDao, entityManager);
+        when(runDao.save(any(AgentRun.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(sessionDao.advanceGmtUpdate(org.mockito.ArgumentMatchers.eq(1L), any(java.time.LocalDateTime.class)))
+                .thenReturn(1);
+        String finalAnswer = "ok password=hunter2 token=tok-secret " + "detail ".repeat(3000);
+
+        AgentRun succeeded = service.markSucceeded(
+            AgentRun.builder().id(1L).runUid("run_1").sessionId(1L).build(), finalAnswer);
+        AgentRun failed = service.markFailed(
+            AgentRun.builder().id(2L).runUid("run_2").sessionId(1L).build(),
+            "failed authorization=Bearer auth-secret");
+
+        assertTrue(succeeded.getResultSummary().contains("detail ".repeat(100)));
+        assertNoRawSecret(succeeded.getResultSummary());
+        assertNoRawSecret(failed.getErrorMessage());
+        verify(sessionDao, org.mockito.Mockito.times(2))
+                .advanceGmtUpdate(org.mockito.ArgumentMatchers.eq(1L), any(java.time.LocalDateTime.class));
+    }
+
+    private void assertNoRawSecret(String text) {
+        assertFalse(text.contains("hunter2"));
+        assertFalse(text.contains("tok-secret"));
+        assertFalse(text.contains("api-secret"));
+        assertFalse(text.contains("auth-secret"));
+        assertFalse(text.contains("denied-secret"));
+        assertFalse(text.contains("approval-secret"));
+    }
+
+    private boolean isRunRiskField(Field field) {
+        Column column = field.getAnnotation(Column.class);
+        return field.getName().toLowerCase(Locale.ROOT).contains("risk")
+            || (column != null && "risk".equalsIgnoreCase(column.name()));
+    }
+}

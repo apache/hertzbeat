@@ -1,0 +1,175 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { App } from 'antd';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { loadMonitorImportTask, MonitorImportTaskReadError } from '../api/monitor-import-api';
+import type { MonitorCapabilities } from '../model/monitor-capability-model';
+import {
+  type MonitorImportDraft,
+  type MonitorImportFailureKind,
+  type MonitorImportInvalidKind,
+  type MonitorImportState,
+  type MonitorImportTask,
+  type MonitorImportTaskEvidence
+} from '../model/monitor-import-model';
+import type { MonitorImportExecutionOwner } from './monitor-import-execution';
+import { createMonitorImportActions } from './monitor-import-actions';
+import { monitorQueryKeys } from './monitor-query-keys';
+
+export function useMonitorImport(
+  reread: () => Promise<unknown>,
+  capabilities: Pick<MonitorCapabilities, 'canWrite'>,
+  onImported: () => void = () => undefined
+) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<MonitorImportDraft | null>(null);
+  const [invalid, setInvalid] = useState<MonitorImportInvalidKind | null>(null);
+  const [failure, setFailure] = useState<MonitorImportFailureKind | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const lifecycle = useImportLifecycle(capabilities.canWrite, () => {
+    setOpen(false);
+    setDraft(null);
+    setInvalid(null);
+    setFailure(null);
+    setBusy(false);
+    setActiveTaskId(null);
+  });
+  const taskQuery = useQuery({
+    queryKey: monitorQueryKeys.importTask(activeTaskId),
+    queryFn: activeTaskId ? ({ signal }) => loadMonitorImportTask(activeTaskId, signal) : skipToken,
+    retry: false,
+    staleTime: Infinity
+  });
+  const task = resolveImportTaskEvidence(activeTaskId, taskQuery);
+  useCompletedImportConvergence(task, reread, onImported, lifecycle.mounted);
+  const actions = createMonitorImportActions({
+    lifecycle,
+    queryClient,
+    open,
+    draft,
+    activeTaskId,
+    setOpen,
+    setDraft,
+    setInvalid,
+    setFailure,
+    setBusy,
+    setActiveTaskId
+  });
+  const state: MonitorImportState = {
+    canImport: capabilities.canWrite,
+    open,
+    draft,
+    invalid,
+    failure,
+    busy,
+    task
+  };
+  return { state, actions };
+}
+
+function resolveImportTaskEvidence(
+  activeTaskId: string | null,
+  query: ReturnType<typeof useQuery<MonitorImportTask>>
+): MonitorImportTaskEvidence {
+  if (!activeTaskId) return { kind: 'idle' };
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) {
+    return query.error instanceof MonitorImportTaskReadError ? { kind: query.error.kind } : { kind: 'error' };
+  }
+  return { kind: 'ready', task: query.data, refreshing: query.isFetching };
+}
+
+function useCompletedImportConvergence(
+  evidence: MonitorImportTaskEvidence,
+  reread: () => Promise<unknown>,
+  onImported: () => void,
+  mounted: React.RefObject<boolean>
+) {
+  const { message } = App.useApp();
+  const { t } = useTranslation();
+  const converged = useRef(new Set<string>());
+  useEffect(() => {
+    if (evidence.kind !== 'ready' || evidence.task.status !== 'COMPLETED') return;
+    const taskId = evidence.task.taskId;
+    if (converged.current.has(taskId)) return;
+    converged.current.add(taskId);
+    onImported();
+    void reread().catch(() => {
+      if (mounted.current) void message.warning(t('monitor.import.refreshFailure'));
+    });
+  }, [evidence, message, mounted, onImported, reread, t]);
+}
+
+function useImportLifecycle(canImport: boolean, reset: () => void) {
+  const active = useRef<MonitorImportExecutionOwner | null>(null);
+  const generation = useRef(0);
+  const mounted = useRef(true);
+  const currentCanImport = useRef(canImport);
+  const resetRef = useRef(reset);
+  // Refresh the callback before the permission-loss layout effect can retire the current draft.
+  useLayoutEffect(() => {
+    resetRef.current = reset;
+  }, [reset]);
+  const retire = useCallback(() => {
+    const owner = active.current;
+    active.current = null;
+    generation.current += 1;
+    if (mounted.current) resetRef.current();
+    owner?.controller.abort();
+  }, []);
+  useLayoutEffect(() => {
+    currentCanImport.current = canImport;
+    if (!canImport) retire();
+  }, [canImport, retire]);
+  useLayoutEffect(
+    () => () => {
+      mounted.current = false;
+      const owner = active.current;
+      active.current = null;
+      generation.current += 1;
+      owner?.controller.abort();
+    },
+    []
+  );
+  const owns = (owner: MonitorImportExecutionOwner) =>
+    mounted.current && currentCanImport.current && active.current === owner && generation.current === owner.generation;
+  return {
+    mounted,
+    retire,
+    canStart: () => mounted.current && currentCanImport.current && active.current === null,
+    begin: () => {
+      if (!mounted.current || !currentCanImport.current || active.current) return null;
+      const owner = { generation: generation.current + 1, controller: new AbortController() };
+      generation.current = owner.generation;
+      active.current = owner;
+      return owner;
+    },
+    owns,
+    finish: (owner: MonitorImportExecutionOwner) => {
+      if (!owns(owner)) return false;
+      active.current = null;
+      generation.current += 1;
+      return true;
+    }
+  };
+}

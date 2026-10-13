@@ -1,0 +1,164 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
+import { useCanonicalQuerySearch, useQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
+import { useAuthoritativePageSelection } from '@/shared/table-selection';
+
+import { canRetryAlertCenterRecovery } from '../model/alert-capability-model';
+import {
+  alertFailureKind,
+  readAlertQuery,
+  writeAlertQuery,
+  type AlertFailureKind,
+  type AlertGroup,
+  type AlertPage,
+  type AlertQuery,
+  type AlertSummary
+} from '../model/alert-model';
+import type {
+  AlertCenterState,
+  AlertDraftField,
+  AlertFilterDraft,
+  AlertListState,
+  AlertSummaryState
+} from '../model/alert-center-view-model';
+import { createAlertCenterActionCommands } from './alert-center-action-admission';
+import { useAlertCapabilities } from './use-alert-capabilities';
+import { useAlertCenterData } from './use-alert-center-data';
+import { useAlertCenterOperationController } from './use-alert-center-operation-controller';
+import { useAlertCenterPageCorrection } from './use-alert-center-page-correction';
+
+export function useAlertCenterController() {
+  const capabilities = useAlertCapabilities();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const locationSearch = params.toString();
+  const query = readAlertQuery(params);
+  const source = writeAlertQuery(query).toString();
+  useCanonicalQuerySearch(locationSearch, source, setParams);
+  const draft = useAlertFilterDraft(query);
+
+  const data = useAlertCenterData(query);
+  const { list: listQuery, summary: summaryQuery, refetchList, refetchSummary, refresh } = data;
+  useAlertCenterPageCorrection(query, listQuery.data, setParams);
+  const list = resolveListState(listQuery);
+  const { selectedIds, selectIds } = useAuthoritativePageSelection<AlertGroup, AlertFailureKind>(source, list);
+  const operation = useAlertCenterOperationController(refetchList, refetchSummary);
+
+  useEffect(() => {
+    if (!capabilities.canSelect) selectIds([]);
+  }, [capabilities.canSelect, selectIds]);
+  const { recovery, retireRecovery } = operation;
+  const canRetryRecovery = canRetryAlertCenterRecovery(capabilities, recovery);
+  useEffect(() => {
+    if (recovery && !canRetryRecovery) {
+      retireRecovery();
+    }
+  }, [canRetryRecovery, recovery, retireRecovery]);
+
+  const updateQuery = (patch: Partial<AlertQuery>) => {
+    setParams(writeAlertQuery({ ...query, ...patch }));
+  };
+  const setDraft = (field: AlertDraftField, value: string) => {
+    draft.setValue({ ...draft.value, [field]: value });
+  };
+  const submitFilters = () => submitAlertFilters(draft.value, updateQuery, draft.setValue);
+  const commands = createAlertCenterActionCommands(capabilities, operation, list, selectedIds, selectIds);
+
+  const state: AlertCenterState = {
+    capabilities,
+    command: operation.command,
+    draft: draft.value,
+    list,
+    query,
+    refreshing: summaryQuery.isFetching || listQuery.isFetching,
+    recovery: operation.recovery,
+    selectedIds: capabilities.canSelect ? selectedIds : [],
+    summary: resolveSummaryState(summaryQuery)
+  };
+
+  return {
+    state,
+    setDraft,
+    submitFilters,
+    changePage: (page: number, pageSize: number) => updateQuery(zeroBasedPageChange(page, pageSize, query.pageSize)),
+    retryList: refetchList,
+    retrySummary: refetchSummary,
+    ...commands,
+    refresh,
+    manageRules: () => void navigate(alertRoutePaths.rules)
+  };
+}
+
+function submitAlertFilters(
+  draft: AlertFilterDraft,
+  updateQuery: (patch: Partial<AlertQuery>) => void,
+  setDraft: (draft: AlertFilterDraft) => void
+) {
+  const submitted = {
+    ...draft,
+    search: draft.search.trim(),
+    serviceName: draft.serviceName.trim(),
+    serviceNamespace: draft.serviceNamespace.trim(),
+    environment: draft.environment.trim()
+  };
+  setDraft(submitted);
+  updateQuery({ ...submitted, pageIndex: 0 });
+}
+
+function useAlertFilterDraft(query: AlertQuery) {
+  const canonicalDraft = useMemo<AlertFilterDraft>(
+    () => ({
+      search: query.search,
+      serviceName: query.serviceName,
+      serviceNamespace: query.serviceNamespace,
+      environment: query.environment,
+      status: query.status,
+      severity: query.severity
+    }),
+    [query.environment, query.search, query.serviceName, query.serviceNamespace, query.severity, query.status]
+  );
+  return useQueryDraft(JSON.stringify(canonicalDraft), canonicalDraft);
+}
+
+function resolveListState(query: {
+  data: AlertPage | undefined;
+  error: Error | null;
+  isError: boolean;
+  isPending: boolean;
+}): AlertListState {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: alertFailureKind(query.error) };
+  if (!query.data) return { kind: 'error' };
+  if (query.data.totalElements === 0) return { kind: 'empty' };
+  return { kind: 'ready', records: query.data.content, total: query.data.totalElements };
+}
+
+function resolveSummaryState(query: {
+  data: AlertSummary | undefined;
+  error: Error | null;
+  isError: boolean;
+  isPending: boolean;
+}): AlertSummaryState {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: alertFailureKind(query.error) };
+  return query.data ? { kind: 'ready', summary: query.data } : { kind: 'error' };
+}

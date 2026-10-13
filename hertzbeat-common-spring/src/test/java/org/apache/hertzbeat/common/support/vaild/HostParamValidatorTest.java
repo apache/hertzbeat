@@ -76,8 +76,16 @@ class HostParamValidatorTest {
         result = hostParamValidator.isValid("https://www.baidu.com", context);
         assertTrue(result);
 
+        result = hostParamValidator.isValid("[::1]", context);
+        assertTrue(result);
+
+        result = hostParamValidator.isValid("[::1]:443", context);
+        assertTrue(result);
+
+        result = hostParamValidator.isValid("https://example.com/path", context);
+        assertTrue(result);
+
         result = hostParamValidator.isValid("ht!tp://www.example.com", context);
         assertFalse(result);
     }
 }
-

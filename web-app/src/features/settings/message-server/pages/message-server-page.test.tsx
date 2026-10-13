@@ -1,0 +1,202 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { requireDomElement } from '@/test/dom-element';
+import { settingsPaths } from '@/shared/settings/settings-routes';
+
+const controller = vi.hoisted<{ value: unknown }>(() => ({ value: undefined }));
+vi.mock('../controller/use-message-server-controller', () => ({ useMessageServerController: () => controller.value }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
+import { MessageServerPage } from './message-server-page';
+import { createEmailServerDraft } from '../model/message-server-model';
+
+describe('MessageServerPage', () => {
+  afterEach(cleanup);
+
+  it('owns title and description in a shared header without management actions', () => {
+    controller.value = state({ kind: 'missing' }, { kind: 'missing' });
+    renderPage();
+
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'messageServer.title' }));
+    expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    const workspace = screen.getByRole('navigation', { name: 'notificationWorkspace.label' });
+    const results = requireDomElement(
+      document.querySelector('[data-hb-operational-result-region]'),
+      'Operational result region'
+    );
+    expect(workspace).toHaveAttribute('data-active-step', 'channels');
+    expect(header.nextElementSibling).toBe(workspace);
+    expect(workspace.nextElementSibling).toBe(results);
+    expect(screen.getByRole('link', { name: /notificationWorkspace\.steps\.rules/ })).toHaveAttribute(
+      'href',
+      settingsPaths.rules
+    );
+  });
+
+  it('uses compact channel loading evidence instead of skeleton rows', () => {
+    controller.value = state({ kind: 'loading' }, { kind: 'loading' });
+    renderPage();
+
+    expect(document.querySelectorAll('[data-state="loading"]')).toHaveLength(2);
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('keeps invalid email evidence distinct while the missing SMS channel remains usable', () => {
+    controller.value = state({ kind: 'invalid' }, { kind: 'missing' });
+    renderPage();
+
+    expect(document.querySelector('[data-state="error"]')).toHaveTextContent('messageServer.read.invalid');
+    expect(screen.queryByText('messageServer.read.unavailable')).not.toBeInTheDocument();
+    expect(screen.getByText('messageServer.notConfigured')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'messageServer.configure' })).toBeEnabled();
+  });
+
+  it('does not present an enabled record with a cleared required secret as healthy', () => {
+    controller.value = state(
+      {
+        kind: 'configured',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: []
+        }
+      },
+      { kind: 'missing' }
+    );
+    renderPage();
+
+    expect(screen.getAllByText('messageServer.status.unconfigured')).toHaveLength(2);
+    expect(screen.queryByText('messageServer.status.enabled')).not.toBeInTheDocument();
+  });
+
+  it('wires proof recovery into the open editor and disables retry while proof is active', () => {
+    const current = state({ kind: 'missing' }, { kind: 'missing' });
+    controller.value = {
+      ...current,
+      emailDraft: createEmailServerDraft(),
+      emailLocked: true,
+      emailSaveRecovery: 'messageServer.read.unavailable',
+      emailSaveRecoveryRetryable: true,
+      provingEmail: true
+    };
+    renderPage();
+
+    expect(screen.getByLabelText('messageServer.email.host')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /common\.retry/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /common\.retry/ }));
+    expect(current.actions.retryEmailSave).not.toHaveBeenCalled();
+  });
+
+  it('keeps guest read evidence and refresh while hiding every write and retained proof control', () => {
+    const current = state(
+      {
+        kind: 'configured',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: ['emailPassword']
+        }
+      },
+      { kind: 'unavailable' }
+    );
+    controller.value = {
+      ...current,
+      capabilities: { canConfigure: false },
+      emailDraft: createEmailServerDraft(),
+      emailSaveRecovery: 'messageServer.read.unavailable',
+      emailSaveRecoveryRetryable: true
+    };
+    renderPage();
+
+    expect(screen.getByText('smtp.example.test:587 · ops@example.test')).toBeInTheDocument();
+    expect(screen.getByTitle('smtp.example.test:587 · ops@example.test')).toHaveTextContent(
+      'smtp.example.test:587 · ops@example.test'
+    );
+    expect(screen.getAllByText('messageServer.read.unavailable').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'messageServer.configure' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('messageServer.readOnly')).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(current.actions.retrySms).toHaveBeenCalledOnce();
+    expect(current.actions.retryEmailSave).not.toHaveBeenCalled();
+  });
+});
+
+function state(email: unknown, sms: unknown) {
+  return {
+    capabilities: { canConfigure: true },
+    email,
+    sms,
+    emailDraft: null,
+    smsDraft: null,
+    savingEmail: false,
+    savingSms: false,
+    emailLocked: false,
+    smsLocked: false,
+    emailSaveRecovery: null,
+    smsSaveRecovery: null,
+    emailSaveRecoveryRetryable: false,
+    smsSaveRecoveryRetryable: false,
+    provingEmail: false,
+    provingSms: false,
+    actions: {
+      openEmail: vi.fn(),
+      openSms: vi.fn(),
+      closeEmail: vi.fn(),
+      closeSms: vi.fn(),
+      updateEmail: vi.fn(),
+      setEmailSecretCleared: vi.fn(),
+      replaceSms: vi.fn(),
+      retryEmail: vi.fn(),
+      retrySms: vi.fn(),
+      retryEmailSave: vi.fn(),
+      retrySmsSave: vi.fn(),
+      submitEmail: vi.fn(),
+      submitSms: vi.fn()
+    }
+  };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <MessageServerPage />
+    </MemoryRouter>
+  );
+}

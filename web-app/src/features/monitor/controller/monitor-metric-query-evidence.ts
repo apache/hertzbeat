@@ -1,0 +1,99 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { classifyMonitorMetricReadError } from '../api/monitor-api';
+import type { MonitorDetailMetric, MonitorMetricOption } from '../model/monitor-contract';
+import {
+  monitorMetricOptions,
+  type MonitorMetricCatalogEvidence,
+  type MonitorMetricFavoriteCollectionEvidence,
+  type MonitorMetricFavoriteEvidence,
+  type MonitorMetricRowsEvidence
+} from '../model/monitor-detail-model';
+
+type QueryEvidence<T> = {
+  isPending: boolean;
+  isError: boolean;
+  error: unknown;
+  data: T | undefined;
+};
+
+export function catalogEvidence(
+  query: QueryEvidence<{ metrics: MonitorDetailMetric[] }>,
+  embedded: MonitorDetailMetric[]
+): MonitorMetricCatalogEvidence {
+  if (query.isPending) return { kind: 'loading', options: [] };
+  if (query.isError) {
+    const references = embedded.map(item => item.name);
+    return references.length > 0
+      ? { kind: 'fallback', options: [], references }
+      : { kind: classifyMonitorMetricReadError(query.error), options: [] };
+  }
+  if (!query.data) return { kind: 'error', options: [] };
+  const options = monitorMetricOptions(query.data.metrics);
+  return options.length > 0 ? { kind: 'ready', options } : { kind: 'empty', options: [] };
+}
+
+export function favoriteEvidence(
+  query: QueryEvidence<string[]>,
+  metric: MonitorMetricOption | undefined
+): MonitorMetricFavoriteEvidence {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
+  if (!query.data) return { kind: 'error' };
+  if (!metric) return { kind: 'ready', value: false };
+  const token = query.data.includes(metric.group) ? metric.group : undefined;
+  return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
+}
+
+export function realtimeGroupFavoriteEvidence(
+  query: QueryEvidence<string[]>,
+  group: string
+): MonitorMetricFavoriteEvidence {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
+  if (!query.data) return { kind: 'error' };
+  const token = query.data.find(candidate => candidate === group);
+  return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
+}
+
+export function favoriteCollectionEvidence(
+  query: QueryEvidence<string[]>,
+  options: MonitorMetricOption[]
+): MonitorMetricFavoriteCollectionEvidence {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
+  if (!query.data) return { kind: 'error' };
+  const items = resolveFavoriteItems(query.data, options);
+  return items.length > 0 ? { kind: 'ready', items } : { kind: 'empty', items: [] };
+}
+
+function resolveFavoriteItems(tokens: string[], options: MonitorMetricOption[]) {
+  const groups = new Set(options.map(option => option.group));
+  return [...new Set(tokens)].map(token => ({ key: token, available: groups.has(token) }));
+}
+
+export function metricEvidence<T, Row>(
+  query: QueryEvidence<T>,
+  rows: (data: T) => Row[]
+): MonitorMetricRowsEvidence<Row> {
+  if (query.isPending) return { kind: 'loading', rows: [] };
+  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error), rows: [] };
+  if (query.data === undefined) return { kind: 'error', rows: [] };
+  const result = rows(query.data);
+  return result.length > 0 ? { kind: 'ready', rows: result } : { kind: 'empty', rows: [] };
+}

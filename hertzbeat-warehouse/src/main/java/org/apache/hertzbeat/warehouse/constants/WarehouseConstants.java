@@ -62,6 +62,8 @@ public interface WarehouseConstants {
         String MEMORY = "memory";
     }
 
+    String PROMQL_QUERY_INVALID = "promql_query_invalid";
+
     String PROMQL = "promql";
 
     String SQL = "sql";
