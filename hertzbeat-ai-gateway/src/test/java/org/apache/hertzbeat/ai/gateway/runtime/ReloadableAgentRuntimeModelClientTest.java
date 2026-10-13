@@ -26,8 +26,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProvider;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderOption;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
@@ -36,6 +34,9 @@ import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.core.Ordered;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test case for {@link ReloadableAgentRuntimeModelClient}.
@@ -146,6 +147,25 @@ class ReloadableAgentRuntimeModelClientTest {
         client.refreshConfiguration();
 
         assertEquals("property-model", modelProvider.lastCreatedModel().model);
+    }
+
+    @Test
+    void invalidSavedSelectionDisablesPreviousModel() {
+        ModelProviderConfigurationService configurations =
+                mock(ModelProviderConfigurationService.class);
+        AgentProviderProperties properties = new AgentProviderProperties();
+        properties.setType("test-provider");
+        properties.setModel("initial");
+        ReloadableAgentRuntimeModelClient client =
+                new ReloadableAgentRuntimeModelClient(
+                        configurations,
+                        properties,
+                        new AgentModelProviderRegistry(List.of(new TestAgentModelProvider())));
+        assertTrue(client.isAgentClientConfigured());
+        when(configurations.getActiveConfiguration())
+                .thenThrow(new IllegalStateException("invalid selection"));
+        client.refreshConfiguration();
+        assertFalse(client.isAgentClientConfigured());
     }
 
     private static final class TestAgentModelProvider implements AgentModelProvider {

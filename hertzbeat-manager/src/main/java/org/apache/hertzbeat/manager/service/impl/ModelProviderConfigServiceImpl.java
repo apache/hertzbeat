@@ -17,32 +17,40 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfigState;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import tools.jackson.core.type.TypeReference;
 
-/**
- * Persists saved LLM provider configurations and their active selection.
- */
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+
+/** Persists saved LLM provider configurations and their active selection. */
 @Service
 public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ModelProviderConfigState>
         implements ModelProviderConfigurationService {
+
+    @Autowired(required = false)
+    private ApplicationContext applicationContext;
 
     public ModelProviderConfigServiceImpl(GeneralConfigDao generalConfigDao) {
         super(generalConfigDao);
@@ -97,6 +105,17 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         if (!StringUtils.hasText(replacement.getApiKey()) && sameProvider) {
             replacement.setApiKey(previous.getApiKey());
         }
+        if (replacement.getHeaders() == null) {
+            replacement.setHeaders(previous.getHeaders());
+        } else {
+            replacement
+                    .getHeaders()
+                    .replaceAll(
+                            (name, value) ->
+                                    !StringUtils.hasText(value) && previous.getHeaders() != null
+                                            ? previous.getHeaders().get(name)
+                                            : value);
+        }
         int index = state.getProviders().indexOf(previous);
         state.getProviders().set(index, replacement);
         saveConfig(state);
@@ -135,6 +154,23 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
     @Transactional(rollbackFor = Exception.class)
     public void saveConfig(ModelProviderConfigState state) {
         super.saveConfig(encryptedState(state));
+        if (applicationContext != null) {
+            Runnable publish =
+                    () ->
+                            applicationContext.publishEvent(
+                                    new AiProviderConfigChangeEvent(applicationContext));
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                publish.run();
+                            }
+                        });
+            } else {
+                publish.run();
+            }
+        }
     }
 
     @Override
@@ -142,6 +178,19 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         GeneralConfig generalConfig = generalConfigDao.findByType(type());
         if (generalConfig == null || !StringUtils.hasText(generalConfig.getContent())) {
             return emptyState();
+        }
+        Map<?, ?> json = JsonUtil.fromJson(generalConfig.getContent(), Map.class);
+        if (json == null) {
+            throw new IllegalStateException("Invalid model provider configuration state");
+        }
+        if (!json.containsKey("providers") && !json.containsKey("activeProviderUid")) {
+            ModelProviderConfig legacy =
+                    JsonUtil.fromJson(generalConfig.getContent(), ModelProviderConfig.class);
+            legacy.setUid("legacy-provider");
+            if (!StringUtils.hasText(legacy.getType())) {
+                legacy.setType("openai-compatible");
+            }
+            return new ModelProviderConfigState(legacy.getUid(), new ArrayList<>(List.of(legacy)));
         }
         return normalizeState(JsonUtil.fromJson(generalConfig.getContent(), getTypeReference()));
     }
@@ -162,9 +211,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         }
         List<ModelProviderConfig> persistedProviders = state.getProviders();
         if (persistedProviders == null) {
-            state.setProviders(new ArrayList<>());
-            state.setActiveProviderUid(null);
-            return state;
+            persistedProviders = List.of();
         }
         Set<String> providerUids = new HashSet<>();
         for (ModelProviderConfig provider : persistedProviders) {
@@ -180,7 +227,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         }
         if (StringUtils.hasText(state.getActiveProviderUid())
                 && !providerUids.contains(state.getActiveProviderUid())) {
-            state.setActiveProviderUid(null);
+            throw new IllegalStateException("Active model provider configuration is missing");
         }
         state.setProviders(new ArrayList<>(persistedProviders));
         return state;
@@ -199,6 +246,9 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         for (ModelProviderConfig provider : providers) {
             ModelProviderConfig encrypted = copyConfiguration(provider);
             encrypted.setApiKey(encryptSecret(encrypted.getApiKey()));
+            if (encrypted.getHeaders() != null) {
+                encrypted.getHeaders().replaceAll((name, value) -> encryptSecret(value));
+            }
             encryptedProviders.add(encrypted);
         }
         return new ModelProviderConfigState(state.getActiveProviderUid(), encryptedProviders);
@@ -224,18 +274,25 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
 
     private ModelProviderConfig decryptedConfiguration(ModelProviderConfig persisted) {
         ModelProviderConfig copy = copyConfiguration(persisted);
-        if (StringUtils.hasText(copy.getApiKey()) && AesUtil.isEncryptedPayload(copy.getApiKey())) {
-            String ciphertext = copy.getApiKey();
-            if (!AesUtil.isCiphertext(ciphertext)) {
-                throw new IllegalStateException("Model provider secret cannot be decrypted with the configured AES key");
-            }
-            String plaintext = AesUtil.aesDecode(ciphertext);
-            if (Objects.equals(ciphertext, plaintext)) {
-                throw new IllegalStateException("Model provider secret decryption failed");
-            }
-            copy.setApiKey(plaintext);
+        copy.setApiKey(decryptSecret(copy.getApiKey()));
+        if (copy.getHeaders() != null) {
+            copy.getHeaders().replaceAll((name, value) -> decryptSecret(value));
         }
         return copy;
+    }
+
+    private String decryptSecret(String ciphertext) {
+        if (!StringUtils.hasText(ciphertext) || !AesUtil.isEncryptedPayload(ciphertext)) {
+            return ciphertext;
+        }
+        if (!AesUtil.isCiphertext(ciphertext)) {
+            throw new IllegalStateException("Model provider secret cannot be decrypted with the configured AES key");
+        }
+        String plaintext = AesUtil.aesDecode(ciphertext);
+        if (Objects.equals(ciphertext, plaintext)) {
+            throw new IllegalStateException("Model provider secret decryption failed");
+        }
+        return plaintext;
     }
 
     private ModelProviderConfig findConfiguration(ModelProviderConfigState state, String uid) {
@@ -257,13 +314,6 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
     }
 
     private ModelProviderConfig copyConfiguration(ModelProviderConfig source) {
-        ModelProviderConfig copy = new ModelProviderConfig();
-        copy.setUid(source.getUid());
-        copy.setType(source.getType());
-        copy.setCode(source.getCode());
-        copy.setBaseUrl(source.getBaseUrl());
-        copy.setModel(source.getModel());
-        copy.setApiKey(source.getApiKey());
-        return copy;
+        return source.copy();
     }
 }

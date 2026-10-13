@@ -21,7 +21,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CreateModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.DeleteModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderConfigurationsCommand;
@@ -49,13 +48,41 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Agent model provider discovery and configuration API.
- */
+import java.util.List;
+
+/** Agent model provider discovery and configuration API. */
 @Tag(name = "Agent Model Provider API")
 @RestController
 @RequestMapping(path = "/api/agent/model-providers", produces = {APPLICATION_JSON_VALUE})
 public class ModelProviderConfigController {
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.apache.hertzbeat.ai.gateway.application.ModelProviderDiscoveryService discovery;
+
+    @PostMapping("/models")
+    @Operation(summary = "Discover model IDs using a draft without saving or activating it")
+    public ResponseEntity<Message<org.apache.hertzbeat.ai.provider.ModelCatalogService.Result>>
+            discoverModels(@RequestBody ModelProviderConfig draft) {
+        ActorSupport.requireCurrentAdminSurenessActor();
+        return ResponseEntity.ok(Message.success(discovery.discover(draft)));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.apache.hertzbeat.manager.service.ModelProviderConfigurationService configurations;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.apache.hertzbeat.ai.provider.ModelConnectionProbe probe;
+
+    @PostMapping("/configurations/{providerUid}/test")
+    @Operation(
+            summary =
+                    "Test text, streaming and custom tool calling without activating the"
+                        + " connection")
+    public ResponseEntity<Message<org.apache.hertzbeat.ai.provider.ModelConnectionProbe.Result>>
+            testConnection(@PathVariable String providerUid) {
+        ActorSupport.requireCurrentAdminSurenessActor();
+        return ResponseEntity.ok(
+                Message.success(probe.test(configurations.getConfiguration(providerUid))));
+    }
 
     private final GatewayCommandRouter commandRouter;
 

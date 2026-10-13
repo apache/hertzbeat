@@ -44,6 +44,9 @@ public class AgentRuntimeModelResponse {
 
     String errorMessage;
 
+    @lombok.With
+    java.util.Map<String, Object> providerState;
+
     public static AgentRuntimeModelResponse finalAnswer(String finalAnswer,
                                                         Usage usage) {
         // Factory methods enforce the normalized response contract before the runtime loop branches on type.
@@ -56,7 +59,8 @@ public class AgentRuntimeModelResponse {
                 null,
                 List.of(),
                 usage,
-                null);
+                null,
+                java.util.Map.of());
     }
 
     public static AgentRuntimeModelResponse toolCalls(String assistantText,
@@ -74,7 +78,8 @@ public class AgentRuntimeModelResponse {
                 assistantText,
                 safeToolCalls,
                 usage,
-                null);
+                null,
+                java.util.Map.of());
     }
 
     public static AgentRuntimeModelResponse invalidResponse(String errorMessage,
@@ -89,7 +94,8 @@ public class AgentRuntimeModelResponse {
                 null,
                 List.of(),
                 usage,
-                errorMessage);
+                errorMessage,
+                java.util.Map.of());
     }
 
     /**

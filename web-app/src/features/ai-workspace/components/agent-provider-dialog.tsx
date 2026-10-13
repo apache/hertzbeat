@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import type { AgentProviderConfiguration } from '../model/agent-workspace-contract';
 import type { AgentProviderViewModel } from '../model/agent-workspace-view-model';
 import { AgentProviderEditor } from './agent-provider-editor';
+import { AgentProviderTestResultView } from './agent-provider-test-result-view';
 import styles from './agent-provider-dialog.module.css';
 
 type ProviderEditor = AgentProviderConfiguration | null | undefined;
@@ -36,8 +37,12 @@ export function AgentProviderDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const close = () => {
+    controller.actions.clearModels?.();
+    onClose();
+  };
   return (
-    <Modal width={760} footer={null} open={open} title={t('aiWorkspace.providers.title')} onCancel={onClose}>
+    <Modal width={760} footer={null} open={open} title={t('aiWorkspace.providers.title')} onCancel={close}>
       <Typography.Paragraph type="secondary">{t('aiWorkspace.providers.description')}</Typography.Paragraph>
       <AgentProviderContent controller={controller} />
     </Modal>
@@ -53,13 +58,17 @@ function AgentProviderContent({ controller }: { controller: AgentProviderViewMod
   return (
     <>
       {controller.phase === 'error' ? <ProviderFailure reload={controller.actions.reload} /> : null}
+      <AgentProviderTestResultView controller={controller} />
       {controller.view ? <ProviderList controller={controller} edit={setEditor} /> : null}
       {editor !== undefined ? (
         <AgentProviderEditor
           key={editor?.uid ?? 'new'}
           controller={controller}
           provider={editor}
-          close={() => setEditor(undefined)}
+          close={() => {
+            controller.actions.clearModels?.();
+            setEditor(undefined);
+          }}
         />
       ) : null}
     </>
@@ -94,27 +103,39 @@ function ProviderList({
       {view.providers.map(provider => (
         <div className={styles.providerRow} key={provider.uid}>
           <div className={styles.providerCopy}>
-            <Typography.Text strong>{provider.code}</Typography.Text>
+            <Typography.Text strong>{provider.name || provider.code}</Typography.Text>
             <Typography.Text>{provider.model || provider.baseUrl || provider.type}</Typography.Text>
-            <Typography.Text type="secondary">
-              {t(
-                provider.apiKeyConfigured ? 'aiWorkspace.providers.configured' : 'aiWorkspace.providers.notConfigured'
-              )}
-            </Typography.Text>
+            <Typography.Text type="secondary">{provider.protocol || provider.type}</Typography.Text>
+            <Typography.Text type="secondary">{provider.endpoint || provider.baseUrl}</Typography.Text>
+            <ProviderCredentials provider={provider} />
           </div>
           <ProviderActions controller={controller} provider={provider} edit={edit} />
         </div>
       ))}
-      <Button onClick={() => edit(null)}>{t('aiWorkspace.providers.add')}</Button>
+      <Button
+        onClick={() => {
+          controller.actions.clearModels?.();
+          edit(null);
+        }}
+      >
+        {t('aiWorkspace.providers.add')}
+      </Button>
     </div>
   );
 }
 
 function ProviderDefault({ controller }: { controller: AgentProviderViewModel }) {
   const { t } = useTranslation();
+  const effective = controller.view?.effectiveProvider;
+  const yaml = effective?.uid === 'yaml-default' ? effective : undefined;
   return (
     <div className={styles.providerRow}>
-      <Typography.Text strong>{t('aiWorkspace.providers.default')}</Typography.Text>
+      <div className={styles.providerCopy}>
+        <Typography.Text strong>{t('aiWorkspace.providers.default')}</Typography.Text>
+        <Typography.Text type="secondary">{yaml ? `${yaml.protocol} · ${yaml.model}` : ''}</Typography.Text>
+        <Typography.Text type="secondary">{yaml?.endpoint}</Typography.Text>
+        {yaml ? <ProviderCredentials provider={yaml} /> : null}
+      </div>
       {controller.view?.activeProviderUid === null ? (
         <ActiveTag />
       ) : (
@@ -128,6 +149,19 @@ function ProviderDefault({ controller }: { controller: AgentProviderViewModel })
       )}
     </div>
   );
+}
+
+function ProviderCredentials({ provider }: { provider: AgentProviderConfiguration }) {
+  const { t } = useTranslation();
+  const key =
+    provider.authMode === 'none'
+      ? 'authentication.none'
+      : provider.authMode === 'custom-header'
+        ? 'authentication.custom-header'
+        : provider.apiKeyConfigured
+          ? 'configured'
+          : 'notConfigured';
+  return <Typography.Text type="secondary">{t(`aiWorkspace.providers.${key}`)}</Typography.Text>;
 }
 
 function ProviderActions({
@@ -153,7 +187,23 @@ function ProviderActions({
           {t('aiWorkspace.providers.activate')}
         </Button>
       )}
-      <Button size="small" onClick={() => edit(provider)}>
+      {controller.actions.test ? (
+        <Button
+          size="small"
+          loading={controller.testingUid === provider.uid}
+          disabled={Boolean(controller.testingUid)}
+          onClick={() => void controller.actions.test?.(provider.uid)}
+        >
+          {t('aiWorkspace.providers.test')}
+        </Button>
+      ) : null}
+      <Button
+        size="small"
+        onClick={() => {
+          controller.actions.clearModels?.();
+          edit(provider);
+        }}
+      >
         {t('aiWorkspace.providers.edit')}
       </Button>
       <Popconfirm

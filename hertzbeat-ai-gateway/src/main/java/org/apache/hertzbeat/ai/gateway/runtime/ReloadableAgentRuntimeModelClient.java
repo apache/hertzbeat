@@ -17,9 +17,6 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
 import org.apache.hertzbeat.alert.service.AgentClientAvailability;
@@ -30,9 +27,11 @@ import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/**
- * Runtime model client that atomically follows HertzBeat provider configuration changes.
- */
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
+/** Runtime model client that atomically follows HertzBeat provider configuration changes. */
 @Slf4j
 @Component
 public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClient, AgentClientAvailability, SmartLifecycle {
@@ -46,6 +45,16 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
     private final ModelProviderConfigurationService configurationService;
     private final AgentProviderProperties providerProperties;
     private final AgentModelProviderRegistry providerRegistry;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.apache.hertzbeat.ai.provider.EffectiveModelProviderResolver effectiveResolver;
+
+    @org.springframework.context.event.EventListener(
+            org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent.class)
+    public void onProviderChanged() {
+        refreshConfiguration();
+    }
+
     private final AtomicReference<HertzBeatModel> model = new AtomicReference<>();
     private final AtomicBoolean running = new AtomicBoolean();
 
@@ -77,9 +86,7 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
         return model.get() != null;
     }
 
-    /**
-     * Refresh the runtime after the configuration service has committed a state change.
-     */
+    /** Refresh the runtime after the configuration service has committed a state change. */
     public void refreshConfiguration() {
         reloadQuietly();
     }
@@ -115,13 +122,15 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
         try {
             reload();
         } catch (RuntimeException exception) {
-            log.error("Failed to reload Agent Gateway model provider; keeping the previous provider", exception);
+            model.set(null);
+            log.error("Failed to reload Agent Gateway model provider; runtime disabled");
         }
     }
 
     void reload() {
-        ModelProviderConfig provider = databaseProvider();
-        if (provider == null) {
+        ModelProviderConfig provider =
+                effectiveResolver == null ? databaseProvider() : effectiveResolver.resolve();
+        if (provider == null && effectiveResolver == null) {
             provider = propertyProvider();
         }
         if (provider == null) {

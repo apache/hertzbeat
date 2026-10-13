@@ -92,6 +92,7 @@
         <module>hertzbeat-grafana</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
+        <module>hertzbeat-ai-provider</module>
         <module>hertzbeat-ai</module>
         <module>hertzbeat-ai-gateway</module>
     </modules>
@@ -222,6 +223,11 @@
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- ai -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-ai-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-ai</artifactId>

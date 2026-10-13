@@ -4336,7 +4336,7 @@
     "providers": {
       "action": "模型提供方",
       "title": "模型提供方",
-      "description": "設定 HertzBeat AI 運行時可用的模型連線。",
+      "description": "Add model connections with a protocol, URL and authentication. The active connection is shared by the AI workspace and Chat/SOP.",
       "loading": "正在載入模型提供方…",
       "unavailable": "模型提供方設定暫不可用。",
       "default": "YAML 預設設定",
@@ -4347,13 +4347,57 @@
       "add": "新增提供方",
       "edit": "編輯",
       "delete": "刪除",
-      "type": "提供方類型",
+      "type": "連線類型",
+      "genericProtocols": "通用協定",
+      "vendorPresets": "廠商預設",
+      "advanced": "進階設定",
+      "fetchModels": "取得模型",
+      "modelHint": "選擇或輸入模型 ID",
       "code": "提供方代碼",
       "baseUrl": "基礎 URL",
+      "baseUrlHint": "請填寫完整的 API 基礎位址，包含服務要求的路徑前綴，例如 https://example.com/v1。",
       "model": "模型",
       "apiKey": "API 金鑰",
-      "apiKeyHint": "留空可保留現有金鑰。",
-      "save": "儲存提供方"
+      "apiKeyHint": "留空保留已儲存金鑰；變更位址、協定或認證方式後，取得模型需要重新填寫金鑰。",
+      "save": "儲存提供方",
+      "name": "Connection name",
+      "protocol": "Protocol",
+      "endpoint": "Request URL",
+      "authMode": "Authentication",
+      "headers": "Custom headers (JSON)",
+      "headersHint": "Values are encrypted. Blank values preserve saved values; remove an entry to delete it.",
+      "headersInvalid": "Enter a JSON object with string header names and values.",
+      "test": "Test connection",
+      "protocols": {
+        "openai-chat": "OpenAI Chat Completions",
+        "openai-responses": "OpenAI Responses",
+        "anthropic-messages": "Anthropic Messages"
+      },
+      "authentication": {
+        "default": "Default API key",
+        "custom-header": "Custom header authentication",
+        "none": "No authentication"
+      },
+      "capabilities": {
+        "text": "Text",
+        "streaming": "Streaming",
+        "toolCalling": "Tool calling"
+      },
+      "modelDiscovery": {
+        "ready": "已取得 {{count}} 個模型，也可以手動輸入模型 ID。",
+        "unsupported": "此介面不支援模型列表，請手動填寫模型 ID。",
+        "authentication-failed": "認證失敗，請檢查金鑰與認證方式。",
+        "unavailable": "無法取得模型，請檢查位址與網路，或手動填寫模型 ID。",
+        "invalid-input": "請完成位址與認證資訊；變更請求位址後需要重新填寫認證資訊。",
+        "invalid-response": "介面回傳的模型列表格式不正確，可以手動填寫模型 ID。",
+        "empty": "介面未回傳模型，可以手動填寫模型 ID。",
+        "truncated": "最多顯示前 1,000 個模型或 10 頁，其他模型 ID 可以手動填寫。"
+      },
+      "testStatuses": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "not-observed": "Not observed"
+      }
     }
   },
   "alertInvestigation": {

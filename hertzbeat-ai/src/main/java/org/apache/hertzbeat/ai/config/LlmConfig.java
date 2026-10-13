@@ -15,39 +15,25 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.config;
 
-import com.openai.client.OpenAIClient;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.observation.ObservationRegistry;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
-import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
-import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.setup.OpenAiSetup;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
-import org.springframework.util.StringUtils;
 
-/**
- * Configuration class for Large Language Model (LLM) settings.
- */
-
+/** Configuration class for Large Language Model (LLM) settings. */
 @Configuration
 @Slf4j
 public class LlmConfig {
@@ -91,94 +77,39 @@ public class LlmConfig {
         return createChatClient();
     }
 
-    /**
-     * Create ChatClient with all necessary components
-     */
+    /** Create ChatClient with all necessary components */
     private ChatClient createChatClient() {
         try {
             return createConfiguredChatClient();
         } catch (RuntimeException | LinkageError e) {
-            log.warn("LLM Provider configuration cannot create ChatClient, ChatClient bean will not be created", e);
+            log.warn("LLM provider configuration cannot create ChatClient; client disabled");
             return null;
         }
     }
 
+    @Autowired(required = false)
+    private org.apache.hertzbeat.ai.provider.EffectiveModelProviderResolver effectiveResolver;
+
     private ChatClient createConfiguredChatClient() {
-
-        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-        if (providerConfig == null || providerConfig.getContent() == null) {
-            log.warn("LLM Provider is not set, ChatClient bean will not be created");
+        var resolver =
+                effectiveResolver == null
+                        ? new org.apache.hertzbeat.ai.provider.EffectiveModelProviderResolver(
+                                new org.apache.hertzbeat.manager.service.impl
+                                        .ModelProviderConfigServiceImpl(generalConfigDao),
+                                applicationContext.getEnvironment())
+                        : effectiveResolver;
+        ModelProviderConfig config = resolver.resolve();
+        if (config == null) {
             return null;
         }
-        ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-
-        if (modelProviderConfig == null || !StringUtils.hasText(modelProviderConfig.getApiKey())) {
-            log.warn("LLM Provider configuration is incomplete, ChatClient bean will not be created");
-            return null;
-        }
-
-        if (!StringUtils.hasText(modelProviderConfig.getBaseUrl())) {
-            if ("openai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
-            } else if ("zhipu".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setBaseUrl("https://open.bigmodel.cn/api/paas/v4");
-            } else if ("zai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setBaseUrl("https://api.z.ai/api/paas/v4");
-            } else {
-                modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
-            }
-        }
-
-        if (!StringUtils.hasText(modelProviderConfig.getModel())) {
-            if ("openai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setModel("gpt-5");
-            } else if ("zhipu".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setModel("glm-4.6");
-            } else if ("zai".equals(modelProviderConfig.getCode())) {
-                modelProviderConfig.setModel("glm-4.6");
-            } else {
-                modelProviderConfig.setModel("gpt-5");
-            }
-        }
-
-        OpenAIClient openAiClient = OpenAiSetup.setupSyncClient(
-                modelProviderConfig.getBaseUrl(),
-                modelProviderConfig.getApiKey(),
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                null,
-                Duration.ofSeconds(60),
-                10,
-                null,
-                Map.of(),
-                observationRegistry,
-                meterRegistry,
-                List.of());
-
-        // Create Chat Options
-        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
-                .model(modelProviderConfig.getModel())
-                .temperature(0.3)
-                .apiKey(modelProviderConfig.getApiKey())
-                .build();
-
-        // Create Chat Model
-        OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-                .openAiClient(openAiClient)
-                .options(openAiChatOptions)
-                .build();
-
-        // Create and return ChatClient
-        return ChatClient.create(openAiChatModel);
+        return ChatClient.create(
+                new org.apache.hertzbeat.ai.provider.ProtocolChatModelFactory()
+                        .create(config, true));
     }
 
     /**
-     * AI configuration change event listener
-     * Uses ApplicationContext to unregister and re-register the ChatClient bean
+     * AI configuration change event listener Uses ApplicationContext to unregister and re-register
+     * the ChatClient bean
      */
     @EventListener(AiProviderConfigChangeEvent.class)
     public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
@@ -201,7 +132,9 @@ public class LlmConfig {
             // Create new ChatClient with updated configuration
             ChatClient newChatClient = createChatClient();
             if (newChatClient == null) {
-                log.info("ChatClient bean refresh skipped because AI provider configuration is incomplete");
+                log.info(
+                        "ChatClient bean refresh skipped because AI provider configuration is"
+                            + " incomplete");
                 return;
             }
 

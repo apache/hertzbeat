@@ -18,50 +18,48 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
 import org.apache.hertzbeat.ai.config.SecurityContextToolCallback;
+import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
+import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.sop.model.SopDefinition;
 import org.apache.hertzbeat.ai.sop.model.SopParameter;
 import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
-import org.apache.hertzbeat.ai.service.ChatClientProviderService;
-import org.apache.hertzbeat.base.dao.GeneralConfigDao;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.ai.chat.prompt.SystemPromptTemplate;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
-import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * Implementation of the {@link ChatClientProviderService}. Provides functionality to interact with the ChatClient for
- * handling chat messages.
+ * Implementation of the {@link ChatClientProviderService}. Provides functionality to interact with
+ * the ChatClient for handling chat messages.
  */
 @Slf4j
 @Service
@@ -73,6 +71,9 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private final ApplicationContext applicationContext;
 
     private final GeneralConfigDao generalConfigDao;
+
+    @Autowired(required = false)
+    private org.apache.hertzbeat.ai.provider.EffectiveModelProviderResolver effectiveResolver;
 
     private volatile ModelProviderConfig modelProviderConfig;
 
@@ -149,9 +150,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         }
     }
 
-    /**
-     * Build the system prompt with dynamically injected skills list and conversation ID.
-     */
+    /** Build the system prompt with dynamically injected skills list and conversation ID. */
     private String buildSystemPrompt(Long conversationId) {
         try {
             String template = systemResource.getContentAsString(StandardCharsets.UTF_8);
@@ -178,10 +177,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         }
     }
 
-
-    /**
-     * Generate a formatted list of available skills for the system prompt.
-     */
+    /** Generate a formatted list of available skills for the system prompt. */
     private String generateSkillsList() {
         List<SopDefinition> skills = skillRegistry.getAllSkills();
 
@@ -226,20 +222,39 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
                 }
             }
         }
+        refreshProviderConfiguration();
         return configured;
     }
 
     /**
-     * Atomically refreshes the configuration snapshot after enabling, disabling, or switching providers.
+     * Atomically refreshes the configuration snapshot after enabling, disabling, or switching
+     * providers.
      */
     private synchronized void refreshProviderConfiguration() {
-        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-        ModelProviderConfig refreshedConfig = null;
-        if (providerConfig != null && StringUtils.hasText(providerConfig.getContent())) {
-            refreshedConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+        try {
+            modelProviderConfig =
+                    effectiveResolver == null
+                            ? new org.apache.hertzbeat.manager.service.impl
+                                            .ModelProviderConfigServiceImpl(generalConfigDao)
+                                    .getActiveConfiguration()
+                            : effectiveResolver.resolve();
+            configured =
+                    modelProviderConfig != null
+                            && (effectiveResolver == null
+                                    ? StringUtils.hasText(modelProviderConfig.getApiKey())
+                                    : applicationContext.containsBean("openAiChatClient"));
+        } catch (org.springframework.beans.factory.NoSuchBeanDefinitionException exception) {
+            modelProviderConfig =
+                    new org.apache.hertzbeat.manager.service.impl.ModelProviderConfigServiceImpl(
+                                    generalConfigDao)
+                            .getActiveConfiguration();
+            configured =
+                    modelProviderConfig != null
+                            && StringUtils.hasText(modelProviderConfig.getApiKey());
+        } catch (RuntimeException exception) {
+            modelProviderConfig = null;
+            configured = false;
         }
-        modelProviderConfig = refreshedConfig;
-        configured = refreshedConfig != null && StringUtils.hasText(refreshedConfig.getApiKey());
         configurationLoaded = true;
     }
 }

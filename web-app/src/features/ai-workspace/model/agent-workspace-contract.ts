@@ -226,34 +226,9 @@ export type AgentTranscriptMessage = {
   createdAt: string | null;
 };
 
-export type AgentProviderOption = {
-  type: string;
-  code: string;
-  label: string;
-  defaultBaseUrl: string | null;
-  defaultModel: string | null;
-  requiredFields: string[];
-};
-
-export type AgentProviderConfiguration = {
-  uid: string;
-  type: string;
-  code: string;
-  baseUrl: string | null;
-  model: string | null;
-  apiKeyConfigured: boolean;
-};
-
-export type AgentProviderConfigurationView = {
-  activeProviderUid: string | null;
-  providers: AgentProviderConfiguration[];
-};
-
-export type AgentProviderInput = {
-  uid?: string;
-  type: string;
-  code: string;
-  baseUrl: string;
-  model: string;
-  apiKey?: string;
-};
+export type {
+  AgentProviderOption,
+  AgentProviderConfiguration,
+  AgentProviderConfigurationView,
+  AgentProviderInput
+} from './agent-provider-contract';

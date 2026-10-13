@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -83,5 +84,20 @@ class TranscriptMessageTest {
     private TranscriptMessage assistantToolCall(String id, String name) {
         return TranscriptMessage.assistantToolCalls("", List.of(
                 TranscriptContent.toolCall(id, name, Map.of())), null);
+    }
+
+    @Test
+    void signedProviderStateShouldSurvivePersistenceWithoutExposingOrRedactingItsContents() {
+        Map<String, Object> state = Map.of("protocol", "anthropic-messages", "model", "model-1",
+                "items", List.of(Map.of("type", "thinking", "thinking", "password=private-reasoning",
+                        "signature", "signature-must-stay-exact")));
+        TranscriptMessage message = assistantToolCall("call-1", "monitor.get");
+        message.setProviderState(state);
+        String serialized = JsonUtil.toJson(message);
+        assertFalse(serialized.contains("private-reasoning"));
+        assertFalse(serialized.contains("signature-must-stay-exact"));
+        Map<String, Object> payload = JsonUtil.fromJson(serialized, Map.class);
+        String persisted = JsonUtil.toJson(GatewaySecretRedactor.redactMap(payload));
+        assertEquals(state, JsonUtil.fromJson(persisted, TranscriptMessage.class).getProviderState());
     }
 }

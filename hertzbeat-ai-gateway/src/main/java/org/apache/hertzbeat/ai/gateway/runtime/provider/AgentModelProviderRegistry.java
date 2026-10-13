@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -71,11 +72,13 @@ public class AgentModelProviderRegistry {
             throw new IllegalArgumentException("At least one Agent model provider is required");
         }
         this.providers = Map.copyOf(registered);
-        this.options = List.copyOf(registeredOptions);
+        this.options = registeredOptions.stream()
+                .sorted(Comparator.comparingInt(option -> "protocol".equals(option.type()) ? 0 : 1))
+                .toList();
     }
 
     /**
-     * List configuration presets contributed by all registered providers.
+     * List configuration presets with generic protocols before vendor presets.
      *
      * @return immutable provider option list
      */

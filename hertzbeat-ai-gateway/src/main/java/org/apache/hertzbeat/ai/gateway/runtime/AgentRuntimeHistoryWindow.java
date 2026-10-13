@@ -309,6 +309,9 @@ public final class AgentRuntimeHistoryWindow {
         TranscriptMessage repairedAssistant = assistant.toBuilder()
             .content(content)
             .build();
+        if (repairedAssistant.toolCalls().size() != assistant.toolCalls().size()) {
+            repairedAssistant.setProviderState(Map.of());
+        }
         return new ToolPairRepair(repairedAssistant, matchedResults);
     }
 

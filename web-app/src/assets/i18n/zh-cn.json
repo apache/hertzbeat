@@ -4336,7 +4336,7 @@
     "providers": {
       "action": "模型提供方",
       "title": "模型提供方",
-      "description": "配置 HertzBeat AI 运行时可用的模型连接。",
+      "description": "添加模型连接，选择协议、地址与认证方式。激活后用于 AI 工作台和 Chat/SOP。",
       "loading": "正在加载模型提供方…",
       "unavailable": "模型提供方设置暂不可用。",
       "default": "YAML 默认配置",
@@ -4347,13 +4347,57 @@
       "add": "添加提供方",
       "edit": "编辑",
       "delete": "删除",
-      "type": "提供方类型",
+      "type": "连接类型",
+      "genericProtocols": "通用协议",
+      "vendorPresets": "厂商预设",
+      "advanced": "高级设置",
+      "fetchModels": "拉取模型",
+      "modelHint": "选择或输入模型 ID",
       "code": "提供方代码",
       "baseUrl": "基础 URL",
+      "baseUrlHint": "请填写完整的 API 基础地址，包含服务要求的路径前缀，例如 https://example.com/v1。",
       "model": "模型",
       "apiKey": "API 密钥",
-      "apiKeyHint": "留空可保留现有密钥。",
-      "save": "保存提供方"
+      "apiKeyHint": "留空保留已保存密钥；更改地址、协议或认证方式后，拉取模型需要重新填写密钥。",
+      "save": "保存提供方",
+      "name": "连接名称",
+      "protocol": "协议",
+      "endpoint": "最终请求地址",
+      "authMode": "认证方式",
+      "headers": "自定义请求头（JSON）",
+      "headersHint": "值会加密保存，编辑时空值保留原值；删除字段可移除请求头。",
+      "headersInvalid": "请输入名称和值均为字符串的 JSON 对象。",
+      "test": "测试连接",
+      "protocols": {
+        "openai-chat": "OpenAI Chat Completions",
+        "openai-responses": "OpenAI Responses",
+        "anthropic-messages": "Anthropic Messages"
+      },
+      "authentication": {
+        "default": "默认 API Key",
+        "custom-header": "自定义请求头认证",
+        "none": "无需认证"
+      },
+      "capabilities": {
+        "text": "文本",
+        "streaming": "流式",
+        "toolCalling": "工具调用"
+      },
+      "modelDiscovery": {
+        "ready": "已获取 {{count}} 个模型，也可以手动输入模型 ID。",
+        "unsupported": "此接口不支持模型列表，请手动填写模型 ID。",
+        "authentication-failed": "认证失败，请检查密钥和认证方式。",
+        "unavailable": "无法拉取模型，请检查地址和网络，或手动填写模型 ID。",
+        "invalid-input": "请完善地址和认证信息；更换请求地址后需要重新填写认证信息。",
+        "invalid-response": "接口返回的模型列表格式不正确，可以手动填写模型 ID。",
+        "empty": "接口未返回模型，可以手动填写模型 ID。",
+        "truncated": "最多显示前 1,000 个模型或 10 页，其他模型 ID 可以手动填写。"
+      },
+      "testStatuses": {
+        "passed": "通过",
+        "failed": "失败",
+        "not-observed": "未观察到"
+      }
     }
   },
   "alertInvestigation": {

@@ -4336,7 +4336,7 @@
     "providers": {
       "action": "Provedores de modelo",
       "title": "Provedores de modelo",
-      "description": "Configure as conexões de modelo disponíveis para o runtime de IA do HertzBeat.",
+      "description": "Add model connections with a protocol, URL and authentication. The active connection is shared by the AI workspace and Chat/SOP.",
       "loading": "Carregando provedores…",
       "unavailable": "As configurações do provedor estão indisponíveis.",
       "default": "Padrão do YAML",
@@ -4347,13 +4347,57 @@
       "add": "Adicionar provedor",
       "edit": "Editar",
       "delete": "Excluir",
-      "type": "Tipo de provedor",
+      "type": "Tipo de conexão",
+      "genericProtocols": "Protocolos genéricos",
+      "vendorPresets": "Predefinições de provedores",
+      "advanced": "Configurações avançadas",
+      "fetchModels": "Buscar modelos",
+      "modelHint": "Selecione ou digite o ID do modelo",
       "code": "Código do provedor",
       "baseUrl": "URL base",
+      "baseUrlHint": "Insira a URL base completa da API, incluindo o prefixo de caminho exigido pelo serviço, por exemplo https://example.com/v1.",
       "model": "Modelo",
       "apiKey": "Chave da API",
-      "apiKeyHint": "Deixe em branco para manter a chave existente.",
-      "save": "Salvar provedor"
+      "apiKeyHint": "Deixe em branco para manter a chave salva. Após mudar URL, protocolo ou autenticação, digite a chave novamente para buscar modelos.",
+      "save": "Salvar provedor",
+      "name": "Connection name",
+      "protocol": "Protocol",
+      "endpoint": "Request URL",
+      "authMode": "Authentication",
+      "headers": "Custom headers (JSON)",
+      "headersHint": "Values are encrypted. Blank values preserve saved values; remove an entry to delete it.",
+      "headersInvalid": "Enter a JSON object with string header names and values.",
+      "test": "Test connection",
+      "protocols": {
+        "openai-chat": "OpenAI Chat Completions",
+        "openai-responses": "OpenAI Responses",
+        "anthropic-messages": "Anthropic Messages"
+      },
+      "authentication": {
+        "default": "Default API key",
+        "custom-header": "Custom header authentication",
+        "none": "No authentication"
+      },
+      "capabilities": {
+        "text": "Text",
+        "streaming": "Streaming",
+        "toolCalling": "Tool calling"
+      },
+      "modelDiscovery": {
+        "ready": "{{count}} modelos encontrados. Você também pode digitar um ID.",
+        "unsupported": "Este endpoint não oferece uma lista de modelos. Digite o ID manualmente.",
+        "authentication-failed": "Falha de autenticação. Verifique a chave e a autenticação.",
+        "unavailable": "Não foi possível buscar modelos. Verifique a URL e a conexão ou digite o ID manualmente.",
+        "invalid-input": "Preencha a URL e a autenticação. Um destino diferente exige que as credenciais sejam digitadas novamente.",
+        "invalid-response": "O endpoint retornou uma lista inválida. Você pode digitar o ID manualmente.",
+        "empty": "O endpoint não retornou modelos. Você pode digitar o ID manualmente.",
+        "truncated": "São exibidos até 1.000 modelos ou 10 páginas. Outros IDs podem ser digitados manualmente."
+      },
+      "testStatuses": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "not-observed": "Not observed"
+      }
     }
   },
   "alertInvestigation": {
