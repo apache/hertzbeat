@@ -30,7 +30,8 @@ RUN localedef -c -f UTF-8 -i en_US en_US.UTF-8
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-ADD apache-hertzbeat-1.*-docker-bin.tar.gz /opt/
+ARG HERTZBEAT_VERSION=2.0.0
+ADD apache-hertzbeat-${HERTZBEAT_VERSION}-docker-bin.tar.gz /opt/
 
 EXPOSE 1157 1158 14317 22
 

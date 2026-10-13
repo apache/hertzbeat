@@ -19,6 +19,8 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -38,6 +40,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonStringListAttributeConverter;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -48,7 +51,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * Group Alert Content Entity
  */
 @Entity
-@Table(name = "hzb_alert_group", indexes = {@Index(name = "unique_group_key", columnList = "group_key", unique = true)})
+@Table(name = "hzb_alert_group", indexes = {
+        @Index(name = "unique_group_key", columnList = "workspace_id,group_key", unique = true),
+        @Index(name = "idx_alert_group_workspace", columnList = "workspace_id")})
 @Data
 @Builder
 @AllArgsConstructor
@@ -56,6 +61,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Schema(description = "Group Alarm Content Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class GroupAlert {
+
+    @JsonIgnore
+    @Builder.Default
+    @Column(name = "workspace_id", nullable = false, length = 128)
+    private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,16 +82,19 @@ public class GroupAlert {
     @Schema(title = "Group Labels", example = "{\"alertname\": \"HighCPUUsage\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> groupLabels;
 
     @Schema(title = "Common Labels", example = "{\"alertname\": \"HighCPUUsage\", \"instance\": \"server1\", \"severity\": \"critical\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> commonLabels;
 
     @Schema(title = "Common Annotations", example = "{\"summary\": \"High CPU usage detected\", \"description\": \"CPU usage is back to normal for server1\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(columnDefinition = "TEXT")
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> commonAnnotations;
     
     @Schema(title = "Alert Fingerprints", example = "[\"dxsdfdsf\"]")

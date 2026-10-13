@@ -17,21 +17,27 @@
 
 FROM eclipse-temurin:25-jdk
 
-LABEL maintainer="Apache HertzBeat <dev@hertzbeat.apache.org>"
+LABEL org.opencontainers.image.authors="Apache HertzBeat <dev@hertzbeat.apache.org>"
+
+ARG TARGETARCH
 
 # Install SSH
 RUN  sed -i 's#http://#https://#g' /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && apt-get install -y openssh-server
 RUN mkdir -p /var/run/sshd
 
-ADD apache-hertzbeat-collector-[0-9]*-bin.tar.gz /opt/
+ADD apache-hertzbeat-collector-*-bin-linux_${TARGETARCH}.tar.gz /opt/collector-package/
 
-RUN mv /opt/apache-hertzbeat-collector-[0-9]*-bin /opt/hertzbeat-collector
+RUN package_dir="$(find /opt/collector-package -mindepth 1 -maxdepth 1 -type d \
+        -name 'apache-hertzbeat-collector-*' -print -quit)" \
+    && test -n "$package_dir" \
+    && mv "$package_dir" /opt/hertzbeat-collector \
+    && rmdir /opt/collector-package
 
-ENV JAVA_OPTS ""
+ENV JAVA_OPTS=""
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-WORKDIR /opt/hertzbeat-collector/
+WORKDIR /opt/hertzbeat-collector
 
 ENTRYPOINT ["./bin/entrypoint.sh"]

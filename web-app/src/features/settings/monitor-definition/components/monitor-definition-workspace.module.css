@@ -1,0 +1,84 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  width: 100%;
+}
+
+.guidance {
+  display: grid;
+  min-height: 420px;
+  place-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h4,
+.workspace h4 {
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.headerActions :global(.ant-tag) {
+  margin: 0;
+}
+
+.editorPane {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.editorLabel {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.editorLabels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.readOnly {
+  width: 100%;
+  height: clamp(320px, calc(100dvh - var(--hb-shell-header-height, 46px) - 280px), 620px);
+  min-height: 0;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-canvas);
+  color: var(--hb-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre;
+}

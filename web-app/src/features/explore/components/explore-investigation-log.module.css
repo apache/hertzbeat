@@ -1,0 +1,107 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.logWorkspace {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-3);
+}
+
+.selectedLog {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-3);
+  border-left: 1px solid var(--hb-border-subtle);
+  padding-left: var(--hb-space-3);
+}
+
+.selectedLog header,
+.nearbyLogs header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+}
+
+.selectedLog h3,
+.nearbyLogs h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.logBody {
+  margin: 0;
+  padding: var(--hb-space-3);
+  border-left: 3px solid var(--hb-color-primary);
+  background: var(--hb-surface-muted);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.nearbyLogs {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.nearbyLogs header {
+  margin-bottom: var(--hb-space-3);
+}
+
+.nearbyLogs header p {
+  margin: 0;
+  color: var(--hb-text-secondary);
+  text-align: right;
+}
+
+@media (min-width: 1180px) {
+  .logWorkspace {
+    grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+  }
+
+  .nearbyLogs {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .selectedLog {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .selectedLog {
+    border-top: 1px solid var(--hb-border-subtle);
+    border-left: 0;
+    padding-top: var(--hb-space-3);
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .selectedLog header,
+  .nearbyLogs header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .nearbyLogs header p {
+    text-align: left;
+  }
+}

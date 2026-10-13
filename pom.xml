@@ -80,6 +80,7 @@
     <modules>
         <module>hertzbeat-startup</module>
         <module>hertzbeat-manager</module>
+        <module>hertzbeat-observability</module>
         <module>hertzbeat-alerter</module>
         <module>hertzbeat-common-core</module>
         <module>hertzbeat-common-spring</module>
@@ -89,15 +90,14 @@
         <module>hertzbeat-push</module>
         <module>hertzbeat-plugin</module>
         <module>hertzbeat-grafana</module>
-        <module>hertzbeat-otel</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
-        <module>hertzbeat-observability</module>
         <module>hertzbeat-ai</module>
+        <module>hertzbeat-ai-gateway</module>
     </modules>
 
     <properties>
-        <hzb.version>1.9.0</hzb.version>
+        <hzb.version>2.0.0</hzb.version>
 
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -213,10 +213,21 @@
                 <artifactId>hertzbeat-manager</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
+            <!-- observability -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-observability</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
             <!-- ai -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-ai</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-ai-gateway</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- data warehouse -->
@@ -259,18 +270,6 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-grafana</artifactId>
-                <version>${hertzbeat.version}</version>
-            </dependency>
-            <!-- log otel -->
-            <dependency>
-                <groupId>org.apache.hertzbeat</groupId>
-                <artifactId>hertzbeat-otel</artifactId>
-                <version>${hertzbeat.version}</version>
-            </dependency>
-            <!-- log -->
-            <dependency>
-                <groupId>org.apache.hertzbeat</groupId>
-                <artifactId>hertzbeat-observability</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector-basic -->
@@ -625,8 +624,13 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <!-- JDK 23+ no longer auto-runs classpath annotation processors. -->
-                    <proc>full</proc>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>

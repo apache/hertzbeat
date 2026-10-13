@@ -19,6 +19,8 @@ package org.apache.hertzbeat.ai.sop.executor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.sop.model.SopStep;
 import org.apache.hertzbeat.ai.sop.registry.ToolRegistry;
@@ -33,6 +35,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class ToolExecutor implements SopExecutor {
+
+    private static final Pattern FULL_PLACEHOLDER = Pattern.compile("^\\$\\{([^{}]+)}$");
+    private static final Pattern INLINE_PLACEHOLDER = Pattern.compile("\\$\\{([^{}]+)}");
 
     private final ToolRegistry toolRegistry;
 
@@ -73,18 +78,33 @@ public class ToolExecutor implements SopExecutor {
         for (Map.Entry<String, Object> entry : args.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof String) {
-                String strValue = (String) value;
-                for (Map.Entry<String, Object> ctxEntry : context.entrySet()) {
-                    String placeholder = "${" + ctxEntry.getKey() + "}";
-                    if (strValue.contains(placeholder)) {
-                        strValue = strValue.replace(placeholder, String.valueOf(ctxEntry.getValue()));
-                    }
-                }
-                resolved.put(entry.getKey(), strValue);
+                resolved.put(entry.getKey(), resolveStringArg((String) value, context));
             } else {
                 resolved.put(entry.getKey(), value);
             }
         }
         return resolved;
+    }
+
+    private Object resolveStringArg(String value, Map<String, Object> context) {
+        Matcher fullPlaceholder = FULL_PLACEHOLDER.matcher(value);
+        if (fullPlaceholder.matches()) {
+            return context.get(fullPlaceholder.group(1));
+        }
+
+        Matcher inlinePlaceholder = INLINE_PLACEHOLDER.matcher(value);
+        if (!inlinePlaceholder.find()) {
+            return value;
+        }
+
+        StringBuffer resolved = new StringBuffer();
+        do {
+            String key = inlinePlaceholder.group(1);
+            Object replacement = context.get(key);
+            String replacementText = replacement == null ? "" : String.valueOf(replacement);
+            inlinePlaceholder.appendReplacement(resolved, Matcher.quoteReplacement(replacementText));
+        } while (inlinePlaceholder.find());
+        inlinePlaceholder.appendTail(resolved);
+        return resolved.toString();
     }
 }
