@@ -293,9 +293,9 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                                                   "tag": "button",
                                                   "text": {
                                                       "tag": "plain_text",
-                                                      "content": "登入控制台",
+                                                      "content": "%s",
                                                       "i18n_content": {
-                                                          "en_us": "Login In"
+                                                          "en_us": "%s"
                                                       }
                                                   },
                                                   "type": "default",
@@ -326,9 +326,9 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                       "header": {
                           "title": {
                               "tag": "plain_text",
-                              "content": "HertzBeat 告警",
+                              "content": "%s",
                               "i18n_content": {
-                                  "en_us": "HertzBeat Alarm"
+                                  "en_us": "%s"
                               }
                           },
                           "subtitle": {
@@ -355,7 +355,11 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         }
         String jsonStr = String.format(larkCardMessage,
                 notificationContent.replace("\"", "\\\"") + atUserElement,
-                alerterProperties.getConsoleUrl());
+                bundle.getString("alerter.notify.console"),
+                bundle.getString("alerter.notify.console"),
+                alerterProperties.getConsoleUrl(),
+                bundle.getString("alerter.notify.title"),
+                bundle.getString("alerter.notify.title"));
         return JsonUtil.fromJson(jsonStr);
     }
 

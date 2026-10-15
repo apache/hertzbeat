@@ -1,0 +1,209 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.editorForm {
+  display: grid;
+  gap: var(--hb-space-4);
+}
+
+.editorFields {
+  width: 100%;
+  max-width: var(--hb-form-rail-width);
+  margin-inline: auto;
+}
+
+.editorFields :global(.ant-form-item) {
+  margin-bottom: 14px;
+}
+
+.editorFields :global(.ant-form-item-row) {
+  width: var(--hb-form-row-width);
+  flex-wrap: nowrap;
+}
+
+.editorFields :global(.ant-form-item-label) {
+  flex: 0 0 var(--hb-form-control-offset);
+  max-width: var(--hb-form-control-offset);
+  padding: 0 var(--hb-form-column-gap) 0 0;
+  text-align: right;
+}
+
+.editorFields :global(.ant-form-item-label > label) {
+  width: 100%;
+  min-height: var(--ant-control-height);
+  justify-content: flex-end;
+}
+
+.editorFields :global(.ant-form-item-control) {
+  flex: 0 0 var(--hb-form-control-width);
+  max-width: var(--hb-form-control-width);
+  min-width: 0;
+}
+
+.editorFields :global(.ant-input),
+.editorFields :global(.ant-select),
+.editorFields :global(.ant-select-selector) {
+  width: 100%;
+}
+
+.disclosureRow {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: var(--hb-form-rail-width);
+  margin-top: calc(var(--hb-space-2) * -1);
+  margin-inline: auto;
+  padding-left: var(--hb-form-control-offset);
+}
+
+.disclosureRow :global(.ant-btn) {
+  padding-inline: 0;
+}
+
+.editorForm > :global([data-hb-operational-form-actions]) {
+  width: var(--hb-form-row-width);
+  margin-inline: auto;
+  padding-left: var(--hb-form-control-offset);
+  justify-content: center;
+}
+.filterStack {
+  display: grid;
+  gap: 8px;
+  container-type: inline-size;
+}
+.discoverySearch {
+  width: min(480px, 100%);
+}
+.filters {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+  grid-template-columns: minmax(240px, 2fr) repeat(3, minmax(130px, 1fr)) minmax(220px, auto);
+}
+.advancedFilters {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+}
+.filterField {
+  display: grid;
+  gap: var(--hb-space-1);
+  min-width: 0;
+}
+.filterField > label {
+  color: var(--hb-text-secondary);
+  line-height: var(--hb-space-5);
+}
+.filterField :global(.ant-select) {
+  width: 100%;
+}
+.advancedToggle {
+  margin-top: var(--hb-space-6);
+}
+.rowLink {
+  height: auto;
+  padding: 0;
+}
+
+.definitionEditor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.metadataGrid :global(.ant-descriptions-item-label),
+.evidenceGrid :global(.ant-descriptions-item-label) {
+  color: var(--hb-text-secondary);
+}
+
+.metadataGrid :global(.ant-descriptions-row:not(:last-child) > td),
+.evidenceGrid :global(.ant-descriptions-row:not(:last-child) > td) {
+  padding-bottom: var(--hb-space-3);
+}
+.evidenceSourceTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.evidenceSourceTable th,
+.evidenceSourceTable td {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  text-align: left;
+}
+@media (max-width: 1100px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container (max-width: 900px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 480px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .advancedToggle {
+    margin-top: 0;
+  }
+  .editorFields,
+  .disclosureRow {
+    max-width: none;
+  }
+
+  .editorFields :global(.ant-form-item-row) {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .editorFields :global(.ant-form-item-label),
+  .editorFields :global(.ant-form-item-control) {
+    flex: 0 0 auto;
+    max-width: none;
+    width: 100%;
+  }
+
+  .editorFields :global(.ant-form-item-label) {
+    padding: 0 0 7px;
+    text-align: left;
+  }
+
+  .editorFields :global(.ant-form-item-label > label) {
+    min-height: auto;
+    justify-content: flex-start;
+  }
+
+  .disclosureRow,
+  .editorForm > :global([data-hb-operational-form-actions]) {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 0;
+  }
+}

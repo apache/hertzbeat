@@ -1,0 +1,112 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.manager.service.entity;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+/**
+ * Query boundary for raw persisted entity identity rows, counts, and match lookups.
+ */
+@Service
+public class EntityIdentityQueryService {
+
+    private final EntityIdentityDao entityIdentityDao;
+
+    public EntityIdentityQueryService(EntityIdentityDao entityIdentityDao) {
+        this.entityIdentityDao = entityIdentityDao;
+    }
+
+    public List<EntityIdentity> findIdentities(long entityId) {
+        return entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(entityId);
+    }
+
+    public List<EntityIdentity> findIdentities(String workspaceId, long entityId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndEntityId(workspaceId, entityId);
+    }
+
+    public List<EntityIdentity> findIdentities(String workspaceId, Set<Long> entityIds) {
+        if (!StringUtils.hasText(workspaceId) || CollectionUtils.isEmpty(entityIds)) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndEntityIdIn(workspaceId, entityIds);
+    }
+
+    public List<EntityIdentity> findMatchingIdentities(Set<String> identityKeys, Set<String> normalizedValues) {
+        return entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
+    }
+
+    public List<EntityIdentity> findMatchingIdentities(
+            String workspaceId, Set<String> identityKeys, Set<String> normalizedValues) {
+        if (!StringUtils.hasText(workspaceId)
+                || CollectionUtils.isEmpty(identityKeys) || CollectionUtils.isEmpty(normalizedValues)) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
+                workspaceId, identityKeys, normalizedValues);
+    }
+
+    public List<EntityIdentity> findMatchingIdentities(
+            String workspaceId, Set<String> identityKeys, Set<String> normalizedValues, int maximumResults) {
+        if (!StringUtils.hasText(workspaceId)
+                || CollectionUtils.isEmpty(identityKeys) || CollectionUtils.isEmpty(normalizedValues)
+                || maximumResults < 1) {
+            return List.of();
+        }
+        return entityIdentityDao.findAllOwnedByWorkspaceIdAndIdentityKeyInAndNormalizedValueIn(
+                workspaceId, identityKeys, normalizedValues, PageRequest.of(0, maximumResults));
+    }
+
+    public long countDistinctEntityIdsByIdentityKeys(Set<String> identityKeys) {
+        return entityIdentityDao.countDistinctEntityIdsByIdentityKeyIn(identityKeys);
+    }
+
+    public long countDistinctEntityIdsByIdentityKeys(String workspaceId, Set<String> identityKeys) {
+        if (!StringUtils.hasText(workspaceId) || CollectionUtils.isEmpty(identityKeys)) {
+            return 0;
+        }
+        return entityIdentityDao.countDistinctOwnedEntityIdsByWorkspaceIdAndIdentityKeyIn(workspaceId, identityKeys);
+    }
+
+    public long countIdentities(long entityId) {
+        return entityIdentityDao.countByEntityId(entityId);
+    }
+
+    public Map<Long, Long> countIdentitiesByEntityIds(List<Long> entityIds) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Map.of();
+        }
+        return entityIdentityDao.countByEntityIdInGroupByEntityId(entityIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Number) row[1]).longValue()
+                ));
+    }
+}

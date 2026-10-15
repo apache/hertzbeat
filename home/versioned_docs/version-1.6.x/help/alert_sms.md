@@ -102,7 +102,7 @@ Now you can configure this information in your hertzbeat application.
 
 ### UniSMS Configuration
 
-UniSMS is an aggregated SMS service platform. You can refer to [UniSMS Documentation](https://unisms.apistd.com/docs/tutorials) for configuration.
+> UniSMS ceased operations on September 15, 2026. Its API and console are unavailable; see the [official closure notice](https://unisms.apistd.com/). The configuration and steps below are retained as historical reference and must not be used to configure a new SMS service.
 
 Add/Fill in the following UniSMS configuration to `application.yml` (replace parameters with your own SMS server configuration):
 
@@ -125,7 +125,7 @@ alerter:
    - Visit [UniSMS website](https://unisms.apistd.com/)
 
 2. Create signature
-   - Log in to [UniSMS Console](https://unisms.apistd.com/console/)
+   - Log in to UniSMS Console (discontinued)
    - Go to "SMS Filing - Signature Management" page
    - Click "Add Signature"
    - Fill in signature information and submit for review
@@ -143,7 +143,7 @@ alerter:
    - Submit the template for review
 
 4. Obtain `access-key-id` and `access-key-secret`
-   - Log in to [UniSMS Console](https://unisms.apistd.com/console/)
+   - Log in to UniSMS Console (discontinued)
    - Go to "Credential Management" page
    - Get AccessKey ID and AccessKey Secret
    - Securely save the AccessKey ID and AccessKey Secret
@@ -158,7 +158,7 @@ Now you can configure this information in your hertzbeat application.
 
 ### Smslocal SMS Configuration
 
-SMSLocal is an all-in-one SMS service for businesses, with features like multi-way sending, strong security, and 24/7 support. You can refer to smslocal's [Developer Documentation](https://www.smslocal.com/developer/) for configuration.
+SMSLocal is an all-in-one SMS service for businesses, with features like multi-way sending, strong security, and 24/7 support. You can refer to smslocal's [Developer Documentation](https://www.smslocal.com/resources/docs/) for configuration.
 
 Add/Fill in the following Smslocal configuration to `application.yml` (replace parameters with your own SMS server configuration):
 

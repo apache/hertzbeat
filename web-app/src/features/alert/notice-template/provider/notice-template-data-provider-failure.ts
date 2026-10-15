@@ -1,0 +1,94 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { isRefineHttpError, type RefineHttpError } from '@/shared/refine/refine-http-error';
+import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
+
+import {
+  NOTICE_TEMPLATE_MISSING_API_CODE,
+  normalizeNoticeTemplateApiFailure,
+  type NoticeTemplateRequestPhase
+} from '../../api/notice-template-api-failure';
+import {
+  NoticeTemplateRequestFailure,
+  type NoticeTemplateFailureKind,
+  type NoticeTemplateWriteOutcome
+} from '../../model/notice-template-failure';
+import { NoticeTemplateContractError } from '../../model/notice-template-model';
+
+export function normalizeNoticeTemplateProviderFailure(reason: unknown, phase: NoticeTemplateRequestPhase) {
+  if (reason instanceof NoticeTemplateRequestFailure) return normalizeNoticeTemplateApiFailure(reason, phase);
+  if (reason instanceof NoticeTemplateContractError) return contractFailure('NOTICE_TEMPLATE_RESPONSE_INVALID');
+  if (isRefineHttpError(reason)) return adaptRefineFailure(reason, phase);
+  return normalizeNoticeTemplateApiFailure(reason, phase);
+}
+
+/** Converts only locally parsed write input failures into safe rejection evidence. */
+export function readNoticeTemplateWriteInput<T>(read: () => T): T {
+  try {
+    return read();
+  } catch (reason) {
+    if (isRefineHttpError(reason) && !hasTransportCause(reason)) {
+      const code = stableTemplateCode(reason.code);
+      if (reason.kind === 'contract' && code !== undefined) {
+        throw new NoticeTemplateRequestFailure('invalid', 'rejected', { code });
+      }
+    }
+    throw reason;
+  }
+}
+
+function adaptRefineFailure(reason: RefineHttpError, phase: NoticeTemplateRequestPhase) {
+  const kind = refineFailureKind(reason, phase);
+  const outcome = refineWriteOutcome(reason, phase);
+  const code = stableTemplateCode(reason.code);
+  return code === undefined
+    ? new NoticeTemplateRequestFailure(kind, outcome)
+    : new NoticeTemplateRequestFailure(kind, outcome, { code });
+}
+
+function refineFailureKind(reason: RefineHttpError, phase: NoticeTemplateRequestPhase): NoticeTemplateFailureKind {
+  if (isRefineSourceUnavailable(reason)) return 'unavailable';
+  if (isExactMissingDetail(reason, phase)) return 'missing';
+  if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_TEMPLATE_')) return 'invalid';
+  return 'error';
+}
+
+function isExactMissingDetail(reason: RefineHttpError, phase: NoticeTemplateRequestPhase) {
+  if (phase !== 'detail') return false;
+  if (reason.kind === 'http') return reason.httpStatus === 404;
+  return reason.kind === 'envelope' && reason.httpStatus === 200 && reason.code === NOTICE_TEMPLATE_MISSING_API_CODE;
+}
+
+function refineWriteOutcome(reason: RefineHttpError, phase: NoticeTemplateRequestPhase): NoticeTemplateWriteOutcome {
+  // `statusCode` is presentation metadata. Only a source HTTP status from the
+  // write request can prove rejection, and a timeout remains commit-uncertain.
+  if (phase !== 'write') return 'uncertain';
+  return isDefiniteRefineWriteRejection(reason) ? 'rejected' : 'uncertain';
+}
+
+function hasTransportCause(reason: RefineHttpError) {
+  return reason.cause !== undefined;
+}
+
+function stableTemplateCode(code: string | number | undefined) {
+  return typeof code === 'string' && code.startsWith('NOTICE_TEMPLATE_') ? code : undefined;
+}
+
+function contractFailure(code: string) {
+  return new NoticeTemplateRequestFailure('invalid', 'uncertain', { code });
+}

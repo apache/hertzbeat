@@ -43,8 +43,8 @@ for /f "tokens=1-5" %%i in ('netstat -ano^|findstr "0.0.0.0:%SERVER_PORT%"') do 
 )
 set MAIN_CLASS=org.apache.hertzbeat.startup.HertzBeatApplication
 set LOGS_DIR=%DEPLOY_DIR%\logs
-set EXT_LIB_PATH=%DEPLOY_DIR%\ext-lib
 set LIB_PATH=%DEPLOY_DIR%\lib
+set EXT_LIB_PATH=%DEPLOY_DIR%\ext-lib
 set CLASSPATH=%DEPLOY_DIR%\%JAR_NAME%;%LIB_PATH%\*;%EXT_LIB_PATH%\*
 
 if not exist %LOGS_DIR% (

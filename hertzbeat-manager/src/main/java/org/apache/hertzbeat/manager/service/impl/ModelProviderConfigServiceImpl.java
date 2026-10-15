@@ -17,26 +17,35 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import tools.jackson.core.type.TypeReference;
 import java.lang.reflect.Type;
-import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
-import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
-import org.springframework.context.ApplicationContext;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfigState;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import tools.jackson.core.type.TypeReference;
 
 /**
- * llm model provider config service impl
+ * Persists saved LLM provider configurations and their active selection.
  */
 @Service
-public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ModelProviderConfig> {
+public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ModelProviderConfigState>
+        implements ModelProviderConfigurationService {
 
-    private final ApplicationContext applicationContext;
-
-    public ModelProviderConfigServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
+    public ModelProviderConfigServiceImpl(GeneralConfigDao generalConfigDao) {
         super(generalConfigDao);
-        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -45,17 +54,216 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
     }
 
     @Override
-    public void handler(ModelProviderConfig config) {
-        applicationContext.publishEvent(new AiProviderConfigChangeEvent(applicationContext));
+    public ModelProviderConfigState getState() {
+        return copyState(getConfig());
     }
 
     @Override
-    public TypeReference<ModelProviderConfig> getTypeReference() {
+    public ModelProviderConfig getConfiguration(String uid) {
+        return decryptedConfiguration(findConfiguration(getConfig(), uid));
+    }
+
+    @Override
+    public ModelProviderConfig getActiveConfiguration() {
+        ModelProviderConfig activeConfiguration = activeConfiguration(getConfig());
+        return activeConfiguration == null ? null : decryptedConfiguration(activeConfiguration);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ModelProviderConfigState createConfiguration(ModelProviderConfig config) {
+        Objects.requireNonNull(config, "model provider config is required");
+        ModelProviderConfigState state = getConfig();
+        ModelProviderConfig savedConfig = copyConfiguration(config);
+        savedConfig.setUid(UUID.randomUUID().toString());
+        state.getProviders().add(savedConfig);
+        saveConfig(state);
+        return getState();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ModelProviderConfigState updateConfiguration(String uid, ModelProviderConfig config) {
+        if (!StringUtils.hasText(uid)) {
+            throw new IllegalArgumentException("Model provider configuration UID is required");
+        }
+        Objects.requireNonNull(config, "model provider config is required");
+        ModelProviderConfigState state = getConfig();
+        ModelProviderConfig previous = findConfiguration(state, uid);
+        ModelProviderConfig replacement = copyConfiguration(config);
+        replacement.setUid(uid);
+        boolean sameProvider = Objects.equals(previous.getCode(), replacement.getCode())
+                && Objects.equals(previous.getType(), replacement.getType());
+        if (!StringUtils.hasText(replacement.getApiKey()) && sameProvider) {
+            replacement.setApiKey(previous.getApiKey());
+        }
+        int index = state.getProviders().indexOf(previous);
+        state.getProviders().set(index, replacement);
+        saveConfig(state);
+        return getState();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ModelProviderConfigState deleteConfiguration(String uid) {
+        ModelProviderConfigState state = getConfig();
+        ModelProviderConfig config = findConfiguration(state, uid);
+        state.getProviders().remove(config);
+        if (Objects.equals(uid, state.getActiveProviderUid())) {
+            state.setActiveProviderUid(null);
+        }
+        saveConfig(state);
+        return getState();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ModelProviderConfigState switchActiveConfiguration(String uid) {
+        ModelProviderConfigState state = getConfig();
+        if (StringUtils.hasText(uid)) {
+            findConfiguration(state, uid);
+        }
+        if (Objects.equals(state.getActiveProviderUid(), uid)) {
+            return state;
+        }
+        state.setActiveProviderUid(uid);
+        saveConfig(state);
+        return getState();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveConfig(ModelProviderConfigState state) {
+        super.saveConfig(encryptedState(state));
+    }
+
+    @Override
+    public ModelProviderConfigState getConfig() {
+        GeneralConfig generalConfig = generalConfigDao.findByType(type());
+        if (generalConfig == null || !StringUtils.hasText(generalConfig.getContent())) {
+            return emptyState();
+        }
+        return normalizeState(JsonUtil.fromJson(generalConfig.getContent(), getTypeReference()));
+    }
+
+    @Override
+    protected TypeReference<ModelProviderConfigState> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {
-                return ModelProviderConfig.class;
+                return ModelProviderConfigState.class;
             }
         };
+    }
+
+    private ModelProviderConfigState normalizeState(ModelProviderConfigState state) {
+        if (state == null) {
+            throw new IllegalStateException("Invalid model provider configuration state");
+        }
+        List<ModelProviderConfig> persistedProviders = state.getProviders();
+        if (persistedProviders == null) {
+            state.setProviders(new ArrayList<>());
+            state.setActiveProviderUid(null);
+            return state;
+        }
+        Set<String> providerUids = new HashSet<>();
+        for (ModelProviderConfig provider : persistedProviders) {
+            if (provider == null) {
+                throw new IllegalStateException("Model provider configuration must not be null");
+            }
+            if (!StringUtils.hasText(provider.getUid())) {
+                throw new IllegalStateException("Model provider configuration UID must not be blank");
+            }
+            if (!providerUids.add(provider.getUid())) {
+                throw new IllegalStateException("Duplicate model provider configuration UID: " + provider.getUid());
+            }
+        }
+        if (StringUtils.hasText(state.getActiveProviderUid())
+                && !providerUids.contains(state.getActiveProviderUid())) {
+            state.setActiveProviderUid(null);
+        }
+        state.setProviders(new ArrayList<>(persistedProviders));
+        return state;
+    }
+
+    private ModelProviderConfigState emptyState() {
+        return new ModelProviderConfigState(null, new ArrayList<>());
+    }
+
+    private ModelProviderConfigState encryptedState(ModelProviderConfigState state) {
+        Objects.requireNonNull(state, "model provider configuration state is required");
+        List<ModelProviderConfig> providers = state.getProviders() == null
+                ? List.of()
+                : state.getProviders();
+        List<ModelProviderConfig> encryptedProviders = new ArrayList<>(providers.size());
+        for (ModelProviderConfig provider : providers) {
+            ModelProviderConfig encrypted = copyConfiguration(provider);
+            encrypted.setApiKey(encryptSecret(encrypted.getApiKey()));
+            encryptedProviders.add(encrypted);
+        }
+        return new ModelProviderConfigState(state.getActiveProviderUid(), encryptedProviders);
+    }
+
+    private ModelProviderConfigState copyState(ModelProviderConfigState state) {
+        List<ModelProviderConfig> providers = state.getProviders().stream()
+                .map(this::copyConfiguration)
+                .toList();
+        return new ModelProviderConfigState(state.getActiveProviderUid(), new ArrayList<>(providers));
+    }
+
+    private String encryptSecret(String secret) {
+        if (!StringUtils.hasText(secret) || AesUtil.isCiphertext(secret) || AesUtil.isEncryptedPayload(secret)) {
+            return secret;
+        }
+        String encrypted = AesUtil.aesEncode(secret);
+        if (!AesUtil.isCiphertext(encrypted)) {
+            throw new IllegalStateException("Model provider secret encryption failed");
+        }
+        return encrypted;
+    }
+
+    private ModelProviderConfig decryptedConfiguration(ModelProviderConfig persisted) {
+        ModelProviderConfig copy = copyConfiguration(persisted);
+        if (StringUtils.hasText(copy.getApiKey()) && AesUtil.isEncryptedPayload(copy.getApiKey())) {
+            String ciphertext = copy.getApiKey();
+            if (!AesUtil.isCiphertext(ciphertext)) {
+                throw new IllegalStateException("Model provider secret cannot be decrypted with the configured AES key");
+            }
+            String plaintext = AesUtil.aesDecode(ciphertext);
+            if (Objects.equals(ciphertext, plaintext)) {
+                throw new IllegalStateException("Model provider secret decryption failed");
+            }
+            copy.setApiKey(plaintext);
+        }
+        return copy;
+    }
+
+    private ModelProviderConfig findConfiguration(ModelProviderConfigState state, String uid) {
+        if (!StringUtils.hasText(uid)) {
+            throw new IllegalArgumentException("Model provider configuration UID is required");
+        }
+        return state.getProviders().stream()
+                .filter(config -> uid.equals(config.getUid()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Model provider configuration does not exist: " + uid));
+    }
+
+    private ModelProviderConfig activeConfiguration(ModelProviderConfigState state) {
+        if (state == null || !StringUtils.hasText(state.getActiveProviderUid())) {
+            return null;
+        }
+        return findConfiguration(state, state.getActiveProviderUid());
+    }
+
+    private ModelProviderConfig copyConfiguration(ModelProviderConfig source) {
+        ModelProviderConfig copy = new ModelProviderConfig();
+        copy.setUid(source.getUid());
+        copy.setType(source.getType());
+        copy.setCode(source.getCode());
+        copy.setBaseUrl(source.getBaseUrl());
+        copy.setModel(source.getModel());
+        copy.setApiKey(source.getApiKey());
+        return copy;
     }
 }

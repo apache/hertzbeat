@@ -17,38 +17,41 @@
 
 package org.apache.hertzbeat.alert.notice;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.config.AlertSseManager;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
-import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
-import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Test case for Alert Notice Dispatch
@@ -74,6 +77,9 @@ class AlertNoticeDispatchTest {
     @Mock
     private AlertSseManager emitterManager;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private AlertNoticeDispatch alertNoticeDispatch;
 
     private static final int DISPATCH_THREADS = 3;
@@ -84,7 +90,7 @@ class AlertNoticeDispatchTest {
     @BeforeEach
     void setUp() {
         when(alertNotifyHandler.type()).thenReturn((byte) 1);
-        
+
         List<AlertNotifyHandler> alertNotifyHandlerList = List.of(alertNotifyHandler);
         alertNoticeDispatch = new AlertNoticeDispatch(
                 workerPool,
@@ -92,19 +98,23 @@ class AlertNoticeDispatchTest {
                 alertStoreHandler,
                 alertNotifyHandlerList,
                 pluginRunner,
-                emitterManager
+                emitterManager,
+                eventPublisher
         );
-        
+
         receiver = NoticeReceiver.builder()
                 .id(1L)
                 .name("test-receiver")
                 .type((byte) 1)
                 .build();
-        
+
         alert = GroupAlert.builder()
                 .id(1L)
+                .workspaceId("default")
                 .status("firing")
                 .alerts(Collections.singletonList(SingleAlert.builder()
+                        .id(2L)
+                        .workspaceId("default")
                         .content("test-content")
                         .build()))
                 .build();
@@ -117,7 +127,7 @@ class AlertNoticeDispatchTest {
         template.setName("default-template");
         when(noticeConfigService.getDefaultNoticeTemplateByType((byte) 1)).thenReturn(template);
         doNothing().when(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
-        
+
         assertTrue(alertNoticeDispatch.sendNoticeMsg(receiver, null, alert));
         verify(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
     }
@@ -127,7 +137,7 @@ class AlertNoticeDispatchTest {
         GroupAlert alert = new GroupAlert();
         alert.setId(1L);
         alert.setStatus("firing");
-        
+
         boolean result = alertNoticeDispatch.sendNoticeMsg(null, null, alert);
         assertFalse(result);
     }
@@ -137,7 +147,7 @@ class AlertNoticeDispatchTest {
         NoticeReceiver receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        
+
         GroupAlert alert = new GroupAlert();
         alert.setId(1L);
         alert.setStatus("firing");
@@ -152,7 +162,7 @@ class AlertNoticeDispatchTest {
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setType((byte) 2);
-        
+
         GroupAlert alert = new GroupAlert();
         alert.setId(1L);
         alert.setStatus("firing");
@@ -185,157 +195,78 @@ class AlertNoticeDispatchTest {
 
         verify(workerPool).executeNotify(eq((byte) 1), any(Runnable.class));
         verify(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
-        verify(emitterManager).broadcast(any(String.class));
+        verify(emitterManager).broadcast(eq("default"), any(String.class));
+        ArgumentCaptor<SingleAlert.CreatedEvent> createdEvent =
+                ArgumentCaptor.forClass(SingleAlert.CreatedEvent.class);
+        verify(eventPublisher).publishEvent(createdEvent.capture());
+        org.junit.jupiter.api.Assertions.assertEquals(2L, createdEvent.getValue().alert().getId());
+        org.junit.jupiter.api.Assertions.assertEquals("default", createdEvent.getValue().alert().getWorkspaceId());
     }
 
     @Test
-    void testDispatchAlarmRecomputesNoticeFromAlertsMatchingRuleLabels() {
-        LocalDateTime matchingCreated = LocalDateTime.of(2026, 7, 30, 10, 0);
-        LocalDateTime matchingUpdated = LocalDateTime.of(2026, 7, 30, 10, 5);
-        SingleAlert matchingAlert = SingleAlert.builder()
-                .fingerprint("matching")
-                .labels(Map.of("department", "algorithm", "service", "checkout", "severity", "warning"))
-                .annotations(Map.of("summary", "algorithm summary", "runbook", "shared runbook"))
-                .content("matching-content")
-                .status("resolved")
-                .gmtCreate(matchingCreated)
-                .gmtUpdate(matchingUpdated)
-                .build();
-        SingleAlert unrelatedAlert = SingleAlert.builder()
-                .fingerprint("unrelated")
-                .labels(Map.of("department", "infra", "service", "checkout", "severity", "critical"))
-                .annotations(Map.of("summary", "infra summary", "runbook", "shared runbook"))
-                .content("unrelated-content")
-                .status("firing")
-                .gmtCreate(matchingCreated.minusHours(1))
-                .gmtUpdate(matchingUpdated.plusHours(1))
-                .build();
-        GroupAlert groupedAlert = GroupAlert.builder()
-                .id(2L)
-                .groupKey("department:infra,service:checkout")
-                .status("firing")
-                .groupLabels(Map.of("department", "infra", "service", "checkout"))
-                .commonLabels(Map.of("service", "checkout"))
-                .commonAnnotations(Map.of("runbook", "shared runbook"))
-                .alertFingerprints(List.of("matching", "unrelated"))
-                .gmtCreate(matchingCreated.minusHours(1))
-                .gmtUpdate(matchingUpdated.plusHours(1))
-                .alerts(List.of(matchingAlert, unrelatedAlert))
-                .build();
-        NoticeTemplate template = NoticeTemplate.builder().id(1L).build();
-        NoticeRule rule = NoticeRule.builder()
-                .filterAll(false)
-                .labels(Map.of("department", "algorithm"))
-                .receiverId(List.of(1L))
-                .templateId(1L)
-                .build();
+    void postStoreFailureDoesNotChangeMetadataSuccessOutcome() {
+        when(alertStoreHandler.store(alert)).thenReturn(alert);
+        when(noticeConfigService.getReceiverFilterRule(alert))
+                .thenThrow(new IllegalStateException("notice unavailable"));
+        doThrow(new IllegalStateException("broadcast unavailable"))
+                .when(emitterManager).broadcast(eq("default"), any(String.class));
 
-        when(alertStoreHandler.store(groupedAlert)).thenReturn(groupedAlert);
-        when(noticeConfigService.getReceiverFilterRule(groupedAlert)).thenReturn(List.of(rule));
-        when(noticeConfigService.getReceiverById(1L)).thenReturn(receiver);
-        when(noticeConfigService.getOneTemplateById(1L)).thenReturn(template);
-        doAnswer(invocation -> {
-            Runnable task = invocation.getArgument(1);
-            task.run();
-            return null;
-        }).when(workerPool).executeNotify(anyByte(), any(Runnable.class));
+        assertTrue(alertNoticeDispatch.dispatchAlarm(alert));
 
-        alertNoticeDispatch.dispatchAlarm(groupedAlert);
-
-        ArgumentCaptor<GroupAlert> noticeAlert = ArgumentCaptor.forClass(GroupAlert.class);
-        verify(alertNotifyHandler).send(eq(receiver), eq(template), noticeAlert.capture());
-        GroupAlert scopedAlert = noticeAlert.getValue();
-        assertAll(
-                () -> assertEquals(List.of(matchingAlert), scopedAlert.getAlerts()),
-                () -> assertEquals(List.of("matching"), scopedAlert.getAlertFingerprints()),
-                () -> assertEquals("resolved", scopedAlert.getStatus()),
-                () -> assertEquals(
-                        Map.of("department", "algorithm", "service", "checkout"),
-                        scopedAlert.getGroupLabels()),
-                () -> assertEquals(
-                        Map.of("department", "algorithm", "service", "checkout", "severity", "warning"),
-                        scopedAlert.getCommonLabels()),
-                () -> assertEquals(
-                        Map.of("summary", "algorithm summary", "runbook", "shared runbook"),
-                        scopedAlert.getCommonAnnotations()),
-                () -> assertEquals("department:algorithm,service:checkout", scopedAlert.getGroupKey()),
-                () -> assertEquals(matchingCreated, scopedAlert.getGmtCreate()),
-                () -> assertEquals(matchingUpdated, scopedAlert.getGmtUpdate()),
-                () -> assertEquals(2, groupedAlert.getAlerts().size()),
-                () -> assertEquals("firing", groupedAlert.getStatus()),
-                () -> assertEquals(Map.of("service", "checkout"), groupedAlert.getCommonLabels()));
+        verify(alertStoreHandler, times(1)).store(alert);
+        verify(emitterManager).broadcast(eq("default"), any(String.class));
     }
 
     @Test
-    void testDispatchAlarmScopesMultipleRulesForTheSameReceiverIndependently() {
-        SingleAlert algorithmAlert = SingleAlert.builder()
-                .fingerprint("algorithm")
-                .labels(Map.of("department", "algorithm", "service", "checkout"))
-                .annotations(Map.of("summary", "algorithm firing", "runbook", "algorithm runbook"))
-                .status("firing")
-                .build();
-        SingleAlert algorithmResolvedAlert = SingleAlert.builder()
-                .fingerprint("algorithm-resolved")
-                .labels(Map.of("department", "algorithm", "service", "checkout"))
-                .annotations(Map.of("summary", "algorithm resolved", "runbook", "algorithm runbook"))
-                .status("resolved")
-                .build();
-        SingleAlert infrastructureAlert = SingleAlert.builder()
-                .fingerprint("infra")
-                .labels(Map.of("department", "infra", "service", "checkout"))
-                .annotations(Map.of("summary", "infra summary"))
-                .status("resolved")
-                .build();
-        GroupAlert groupedAlert = GroupAlert.builder()
-                .status("firing")
-                .groupLabels(Map.of("service", "checkout"))
-                .alerts(List.of(algorithmAlert, algorithmResolvedAlert, infrastructureAlert))
-                .build();
-        NoticeTemplate algorithmTemplate = NoticeTemplate.builder().id(1L).build();
-        NoticeTemplate infrastructureTemplate = NoticeTemplate.builder().id(2L).build();
-        NoticeRule algorithmRule = NoticeRule.builder()
-                .filterAll(false)
-                .labels(Map.of("department", "algorithm"))
-                .receiverId(List.of(1L))
-                .templateId(1L)
-                .build();
-        NoticeRule infrastructureRule = NoticeRule.builder()
-                .filterAll(false)
-                .labels(Map.of("department", "infra"))
-                .receiverId(List.of(1L))
-                .templateId(2L)
-                .build();
+    void storeFailureDoesNotPublishCreatedEvent() {
+        when(alertStoreHandler.store(alert)).thenThrow(new IllegalStateException("store failed"));
 
-        when(alertStoreHandler.store(groupedAlert)).thenReturn(groupedAlert);
-        when(noticeConfigService.getReceiverFilterRule(groupedAlert))
-                .thenReturn(List.of(algorithmRule, infrastructureRule));
-        when(noticeConfigService.getReceiverById(1L)).thenReturn(receiver);
-        when(noticeConfigService.getOneTemplateById(1L)).thenReturn(algorithmTemplate);
-        when(noticeConfigService.getOneTemplateById(2L)).thenReturn(infrastructureTemplate);
-        doAnswer(invocation -> {
-            Runnable task = invocation.getArgument(1);
-            task.run();
-            return null;
-        }).when(workerPool).executeNotify(anyByte(), any(Runnable.class));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> alertNoticeDispatch.dispatchAlarm(alert));
 
-        alertNoticeDispatch.dispatchAlarm(groupedAlert);
+        verify(eventPublisher, never()).publishEvent(any());
+    }
 
-        ArgumentCaptor<NoticeTemplate> templates = ArgumentCaptor.forClass(NoticeTemplate.class);
-        ArgumentCaptor<GroupAlert> alerts = ArgumentCaptor.forClass(GroupAlert.class);
-        verify(alertNotifyHandler, times(2)).send(eq(receiver), templates.capture(), alerts.capture());
-        assertAll(
-                () -> assertEquals(List.of(algorithmTemplate, infrastructureTemplate), templates.getAllValues()),
-                () -> assertEquals(
-                        List.of("algorithm", "algorithm-resolved"),
-                        alerts.getAllValues().get(0).getAlertFingerprints()),
-                () -> assertEquals(List.of("infra"), alerts.getAllValues().get(1).getAlertFingerprints()),
-                () -> assertEquals("firing", alerts.getAllValues().get(0).getStatus()),
-                () -> assertEquals("resolved", alerts.getAllValues().get(1).getStatus()),
-                () -> assertEquals(
-                        Map.of("runbook", "algorithm runbook"),
-                        alerts.getAllValues().get(0).getCommonAnnotations()),
-                () -> assertEquals(
-                        Map.of("summary", "infra summary"),
-                        alerts.getAllValues().get(1).getCommonAnnotations()));
+    @Test
+    void outerRollbackDoesNotPublishAnyPostStoreSideEffect() {
+        when(alertStoreHandler.store(alert)).thenReturn(alert);
+        TransactionTemplate transaction = new TransactionTemplate(new RecordingTransactionManager());
+
+        transaction.executeWithoutResult(status -> {
+            assertTrue(alertNoticeDispatch.dispatchAlarm(alert));
+            verify(eventPublisher, never()).publishEvent(any());
+            verify(noticeConfigService, never()).getReceiverFilterRule(any());
+            verifyNoInteractions(pluginRunner);
+            verify(emitterManager, never()).broadcast(any(), any());
+            status.setRollbackOnly();
+        });
+
+        verify(eventPublisher, never()).publishEvent(any());
+        verify(noticeConfigService, never()).getReceiverFilterRule(any());
+        verifyNoInteractions(pluginRunner);
+        verify(emitterManager, never()).broadcast(any(), any());
+    }
+
+    private static final class RecordingTransactionManager extends AbstractPlatformTransactionManager {
+
+        @Override
+        protected Object doGetTransaction() {
+            return new Object();
+        }
+
+        @Override
+        protected void doBegin(Object transaction, TransactionDefinition definition) {
+            // Synchronization callbacks are the contract under test.
+        }
+
+        @Override
+        protected void doCommit(DefaultTransactionStatus status) {
+            // No external resource is needed.
+        }
+
+        @Override
+        protected void doRollback(DefaultTransactionStatus status) {
+            // No external resource is needed.
+        }
     }
 }

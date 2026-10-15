@@ -50,7 +50,7 @@ import lombok.AllArgsConstructor;
 @Component
 @Slf4j
 public class AlarmInhibitReduce implements DisposableBean {
-    
+
     /**
      * Interval for checking and cleaning up expired source alerts
      */
@@ -65,42 +65,39 @@ public class AlarmInhibitReduce implements DisposableBean {
      * rule cache
      */
     private final Map<Long, AlertInhibit> inhibitRules;
-    
+
     /**
      * Cache for source alerts
      * key: ruleId
      * value: map of source alerts with their fingerprints
      */
-    private final Map<Long, Map<String, SourceAlertEntry>> sourceAlertCache;
+    private final Map<WorkspaceRuleKey, Map<String, SourceAlertEntry>> sourceAlertCache;
 
     /**
      * Default TTL for source alerts (4 hours)
      */
     private final long sourceAlertTtl;
 
-    private final ScheduledExecutorService cleanupScheduler;
+    private final AlertInhibitDao alertInhibitDao;
+    private final VirtualThreadProperties virtualThreadProperties;
+    private ScheduledExecutorService cleanupScheduler;
 
-    private final ExecutorService cleanupExecutor;
+    private ExecutorService cleanupExecutor;
 
-    private final ScheduledDispatchTask cleanupTask;
-    
+    private ScheduledDispatchTask cleanupTask;
+
     public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao
             , AlerterProperties alerterProperties) {
-        this(alarmSilenceReduce, alertInhibitDao, alerterProperties, VirtualThreadProperties.defaults(), true);
+        this(alarmSilenceReduce, alertInhibitDao, alerterProperties, VirtualThreadProperties.defaults());
     }
 
     @Autowired
     public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao,
                               AlerterProperties alerterProperties, VirtualThreadProperties virtualThreadProperties) {
-        this(alarmSilenceReduce, alertInhibitDao, alerterProperties, virtualThreadProperties, true);
-    }
-
-    AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao,
-                       AlerterProperties alerterProperties, VirtualThreadProperties virtualThreadProperties,
-                       boolean autoStart) {
         this.alarmSilenceReduce = alarmSilenceReduce;
-        VirtualThreadProperties properties =
-                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.alertInhibitDao = alertInhibitDao;
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
         if (alerterProperties.getInhibit() != null && alerterProperties.getInhibit().getTtl() > 0) {
             this.sourceAlertTtl = alerterProperties.getInhibit().getTtl();
         } else {
@@ -108,34 +105,49 @@ public class AlarmInhibitReduce implements DisposableBean {
         }
         inhibitRules = new ConcurrentHashMap<>(8);
         sourceAlertCache = new ConcurrentHashMap<>(8);
-        this.cleanupScheduler = createCleanupScheduler();
-        this.cleanupExecutor = createCleanupExecutor(properties);
-        this.cleanupTask = new ScheduledDispatchTask(cleanupExecutor, this::runCleanupCache);
-        List<AlertInhibit> inhibits = alertInhibitDao.findAlertInhibitsByEnableIsTrue();
-        refreshInhibitRules(inhibits);
-        if (autoStart) {
-            startScheduledCleanupCache();
-        }
     }
 
-    private void startScheduledCleanupCache() {
-        cleanupScheduler.scheduleAtFixedRate(this::dispatchCleanupCache, CHECK_INTERVAL, CHECK_INTERVAL,
+    synchronized void start() {
+        if (cleanupScheduler != null) {
+            return;
+        }
+        cleanupScheduler = createCleanupScheduler();
+        cleanupExecutor = createCleanupExecutor(virtualThreadProperties);
+        ScheduledDispatchTask currentCleanupTask =
+                new ScheduledDispatchTask(cleanupExecutor, this::runCleanupCache);
+        cleanupTask = currentCleanupTask;
+        refreshInhibitRules(alertInhibitDao.findAlertInhibitsByEnableIsTrue());
+        startScheduledCleanupCache(currentCleanupTask);
+    }
+
+    private void startScheduledCleanupCache(ScheduledDispatchTask currentCleanupTask) {
+        cleanupScheduler.scheduleAtFixedRate(currentCleanupTask::dispatch, CHECK_INTERVAL, CHECK_INTERVAL,
                 TimeUnit.MILLISECONDS);
     }
 
-    void dispatchCleanupCache() {
-        cleanupTask.dispatch();
+    synchronized void dispatchCleanupCache() {
+        if (cleanupTask != null) {
+            cleanupTask.dispatch();
+        }
     }
 
     void beforeCleanupCacheRun() {
     }
 
     @Override
-    public void destroy() {
-        cleanupScheduler.shutdownNow();
+    public synchronized void destroy() {
+        if (cleanupTask != null) {
+            cleanupTask.cancel();
+        }
+        if (cleanupScheduler != null) {
+            cleanupScheduler.shutdownNow();
+            cleanupScheduler = null;
+        }
         if (cleanupExecutor != null) {
             cleanupExecutor.shutdownNow();
+            cleanupExecutor = null;
         }
+        cleanupTask = null;
     }
 
     private ScheduledExecutorService createCleanupScheduler() {
@@ -191,35 +203,36 @@ public class AlarmInhibitReduce implements DisposableBean {
      * If alert is inhibited, it will not be forwarded
      * @param groupAlert Grouped and pending alerts to be processed
      */
-    public void inhibitAlarm(GroupAlert groupAlert) {
+    public boolean inhibitAlarm(GroupAlert groupAlert) {
         if (groupAlert == null) {
             log.warn("Received null GroupAlert. Skipping processing.");
-            return;
+            return false;
         }
         try {
             if (inhibitRules.isEmpty()) {
-                alarmSilenceReduce.silenceAlarm(groupAlert);
-                return;
+                return alarmSilenceReduce.silenceAlarm(groupAlert);
             }
 
             // Process each individual alert
             for (var alert : groupAlert.getAlerts()) {
                 for (AlertInhibit rule : inhibitRules.values()) {
                     if (isSourceAlert(alert, rule)) {
-                        cacheSourceAlert(alert, rule);
+                        cacheSourceAlert(groupAlert.getWorkspaceId(), alert, rule);
                     }
                 }
             }
 
             // Filter out inhibited alerts
-            groupAlert.getAlerts().removeIf(this::shouldInhibit);
+            groupAlert.getAlerts().removeIf(alert -> shouldInhibit(groupAlert.getWorkspaceId(), alert));
 
             // Continue processing if there are remaining alerts
             if (!groupAlert.getAlerts().isEmpty()) {
-                alarmSilenceReduce.silenceAlarm(groupAlert);
+                return alarmSilenceReduce.silenceAlarm(groupAlert);
             }
+            return true;
         } catch (Exception e) {
-            log.error("Error inhibiting alarm for {}", groupAlert, e);
+            log.error("Alarm inhibit metadata processing failed");
+            return false;
         }
     }
 
@@ -243,7 +256,7 @@ public class AlarmInhibitReduce implements DisposableBean {
      * Check if alert should be inhibited by any active source alerts
      * @param alert Single alert to be processed
      */
-    private boolean shouldInhibit(SingleAlert alert) {
+    private boolean shouldInhibit(String workspaceId, SingleAlert alert) {
         if (alert == null) {
             log.warn("Received null alert in shouldInhibit");
             return false;
@@ -257,7 +270,7 @@ public class AlarmInhibitReduce implements DisposableBean {
                 continue;
             }
 
-            List<SingleAlert> sourceAlerts = getActiveSourceAlerts(rule);
+            List<SingleAlert> sourceAlerts = getActiveSourceAlerts(workspaceId, rule);
             if (sourceAlerts.isEmpty()) {
                 continue;
             }
@@ -314,16 +327,16 @@ public class AlarmInhibitReduce implements DisposableBean {
      * @param alert Single alert to be processed
      * @param rule The rule of inhibition
      */
-    private void cacheSourceAlert(SingleAlert alert, AlertInhibit rule) {
+    private void cacheSourceAlert(String workspaceId, SingleAlert alert, AlertInhibit rule) {
         if (alert == null || rule == null) {
             log.warn("Received null alert or rule in cacheSourceAlert");
             return;
         }
         Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.computeIfAbsent(
-                rule.getId(),
+                new WorkspaceRuleKey(requireWorkspace(workspaceId), rule.getId()),
                 k -> new ConcurrentHashMap<>()
         );
-        
+
         SourceAlertEntry entry = new SourceAlertEntry(
                 alert,
                 System.currentTimeMillis(),
@@ -338,12 +351,13 @@ public class AlarmInhibitReduce implements DisposableBean {
      * @param rule The rule of inhibition
      * @return List of active source alerts
      */
-    private List<SingleAlert> getActiveSourceAlerts(AlertInhibit rule) {
+    private List<SingleAlert> getActiveSourceAlerts(String workspaceId, AlertInhibit rule) {
         if (rule == null) {
             log.warn("Received null rule in getActiveSourceAlerts");
             return Collections.emptyList();
         }
-        Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(rule.getId());
+        Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(
+                new WorkspaceRuleKey(requireWorkspace(workspaceId), rule.getId()));
         if (ruleCache == null || ruleCache.isEmpty()) {
             return Collections.emptyList();
         }
@@ -368,6 +382,16 @@ public class AlarmInhibitReduce implements DisposableBean {
         cache.entrySet().removeIf(entry -> entry.getValue().getExpiryTime() <= now);
     }
 
+    private static String requireWorkspace(String workspaceId) {
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("workspace_required");
+        }
+        return workspaceId;
+    }
+
+    private record WorkspaceRuleKey(String workspaceId, Long ruleId) {
+    }
+
     /**
      * Source alert cache entry
      */
@@ -389,6 +413,8 @@ public class AlarmInhibitReduce implements DisposableBean {
 
         private int pendingRuns;
 
+        private boolean cancelled;
+
         private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
             this.executor = executor;
             this.task = task;
@@ -397,6 +423,9 @@ public class AlarmInhibitReduce implements DisposableBean {
         private void dispatch() {
             boolean shouldSchedule;
             synchronized (this) {
+                if (cancelled) {
+                    return;
+                }
                 pendingRuns++;
                 shouldSchedule = !running;
                 if (shouldSchedule) {
@@ -427,6 +456,11 @@ public class AlarmInhibitReduce implements DisposableBean {
         private void scheduleNextIfNeeded() {
             boolean shouldSchedule;
             synchronized (this) {
+                if (cancelled) {
+                    pendingRuns = 0;
+                    running = false;
+                    return;
+                }
                 pendingRuns = Math.max(0, pendingRuns - 1);
                 shouldSchedule = pendingRuns > 0;
                 if (!shouldSchedule) {
@@ -435,6 +469,11 @@ public class AlarmInhibitReduce implements DisposableBean {
                 }
             }
             scheduleRun();
+        }
+
+        private synchronized void cancel() {
+            cancelled = true;
+            pendingRuns = 0;
         }
     }
 }

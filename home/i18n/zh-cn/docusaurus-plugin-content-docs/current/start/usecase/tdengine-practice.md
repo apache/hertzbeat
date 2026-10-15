@@ -31,7 +31,7 @@ Apache HertzBeat™ 一个拥有强大自定义监控能力，无需Agent的实�
 ## 启用 TDengine 监控
 
 :::tip
-TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进行汇总，taosKeeper 是 TDengine TSDB 3.0 版本监控指标的导出工具，通过简单的几项配置即可获取 TDengine TSDB 的运行状态，参考：[https://docs.taosdata.com/3.4.1/reference/components/taoskeeper/](https://docs.taosdata.com/3.4.1/reference/components/taoskeeper/)
+TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进行汇总，taosKeeper 是 TDengine TSDB 3.0 版本监控指标的导出工具，通过简单的几项配置即可获取 TDengine TSDB 的运行状态，参考：[https://docs.tdengine.com/reference/components/taoskeeper/](https://docs.tdengine.com/reference/components/taoskeeper/)
 :::
 
 ## 监控 TDengine(PromQL)

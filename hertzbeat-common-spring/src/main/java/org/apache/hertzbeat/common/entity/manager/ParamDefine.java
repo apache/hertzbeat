@@ -73,7 +73,7 @@ public class ParamDefine {
      * Parameter field external display name
      * Port
      */
-    @Schema(description = "The parameter field displays the internationalized name", example = "{zh-CN: '端口'}",
+    @Schema(description = "The parameter field displays the internationalized name", example = "{\"en-US\":\"Port\"}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")

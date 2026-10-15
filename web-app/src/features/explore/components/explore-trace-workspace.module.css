@@ -1,0 +1,142 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  gap: 4px;
+}
+.contextStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.contextStrip > header {
+  flex: 1 1 auto;
+}
+.availability {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+.availability > span {
+  line-height: 24px;
+  white-space: nowrap;
+}
+.availability > p {
+  flex-basis: 100%;
+  margin: 0;
+  line-height: 1.4;
+}
+.workspace :global([data-investigation-section]):has([data-trace-waterfall]) > header {
+  display: none;
+}
+.selectionStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.pendingEvidence {
+  position: relative;
+}
+.pendingEvidence[aria-busy='true'] > :not(.pendingLabel) {
+  opacity: 0.45;
+}
+.pendingLabel {
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  z-index: 1;
+  font-size: 12px;
+  background: var(--hb-bg-raised);
+}
+.workspace :global([data-investigation-context]),
+.workspace :global([data-investigation-availability]),
+.workspace :global([data-investigation-section]) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.workspace :global([data-investigation-context]) {
+  padding: 4px 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workspace :global([data-investigation-context]) > div {
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+.workspace :global([data-investigation-context]) > div:first-child > strong,
+.workspace :global([data-investigation-context]) > div:first-child > span {
+  display: none;
+}
+.workspace :global([data-investigation-context]) time {
+  font-size: 12px;
+}
+.workspace :global([data-investigation-availability]) > div {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.workspace :global([data-investigation-availability]) > div > div {
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  font-size: 12px;
+  gap: 4px;
+}
+.workspace :global([data-investigation-section]) > header {
+  min-height: 32px;
+  padding: 4px 0;
+  flex-direction: row;
+}
+.workspace :global([data-investigation-section]) > header h2 {
+  font-size: 14px;
+}
+.workspace :global([data-investigation-section]) {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+.workspace > p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+
+.supportingEvidence {
+  border-top: 1px solid var(--hb-border-subtle);
+  padding-block: var(--hb-space-2);
+}
+.supportingActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+}
+.supportingEvidence summary {
+  width: fit-content;
+  line-height: var(--hb-workbench-control-height);
+  cursor: pointer;
+}
+.supportingEvidence summary:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
