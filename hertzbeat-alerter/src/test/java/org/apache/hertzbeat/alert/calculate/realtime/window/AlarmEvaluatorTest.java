@@ -100,7 +100,7 @@ class AlarmEvaluatorTest {
                 .build();
 
         // Create window data
-        WindowAggregator.WindowKey windowKey = new WindowAggregator.WindowKey(1L, 
+        WindowAggregator.WindowKey windowKey = new WindowAggregator.WindowKey(1L,
             System.currentTimeMillis() - 60000, System.currentTimeMillis());
         windowData = new WindowAggregator.WindowData(windowKey, alertDefine);
         windowData.addMatchingLog(matchingEvent);
@@ -117,10 +117,10 @@ class AlarmEvaluatorTest {
     void testProcessWindowDataWithIndividualMode() throws InterruptedException {
         // Given - alert define with individual mode
         alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
-        
+
         // Wait for async processing
         Thread.sleep(2000);
 
@@ -133,10 +133,10 @@ class AlarmEvaluatorTest {
     void testProcessWindowDataWithGroupMode() throws InterruptedException {
         // Given - alert define with group mode
         alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP));
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
-        
+
         // Wait for async processing
         Thread.sleep(2000);
 
@@ -148,13 +148,13 @@ class AlarmEvaluatorTest {
     @Test
     void testProcessWindowDataWithEmptyLogs() throws InterruptedException {
         // Given - window data with no matching logs
-        WindowAggregator.WindowKey emptyWindowKey = new WindowAggregator.WindowKey(1L, 
+        WindowAggregator.WindowKey emptyWindowKey = new WindowAggregator.WindowKey(1L,
             System.currentTimeMillis() - 60000, System.currentTimeMillis());
         WindowAggregator.WindowData emptyWindowData = new WindowAggregator.WindowData(emptyWindowKey, alertDefine);
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(emptyWindowData);
-        
+
         // Wait for async processing
         Thread.sleep(2000);
 
@@ -167,10 +167,10 @@ class AlarmEvaluatorTest {
     void testProcessWindowDataWithInsufficientTimes() throws InterruptedException {
         // Given - alert define requiring 3 times but only 1 matching log
         alertDefine.setTimes(3);
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
-        
+
         // Wait for async processing
         Thread.sleep(2000);
 
@@ -184,17 +184,17 @@ class AlarmEvaluatorTest {
         // Given
         alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL, CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
         alertDefine.setAnnotations(Map.of("summary", "Test summary", "description", "Test description"));
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
-        
+
         // Wait for async processing
         Thread.sleep(2000);
 
         // Then
         ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
         verify(alarmCommonReduce).reduceAndSendAlarm(alertCaptor.capture());
-        
+
         SingleAlert capturedAlert = alertCaptor.getValue();
         assertAll(
             () -> assertNotNull(capturedAlert),
@@ -206,7 +206,7 @@ class AlarmEvaluatorTest {
             () -> assertTrue(capturedAlert.getStartAt() > 0),
             () -> assertTrue(capturedAlert.getActiveAt() > 0)
         );
-        
+
         // Verify labels contain alert define info and log entry data
         Map<String, String> labels = capturedAlert.getLabels();
         assertTrue(labels.containsKey(CommonConstants.LABEL_ALERT_SEVERITY));
@@ -218,24 +218,24 @@ class AlarmEvaluatorTest {
     void testGroupAlertGeneration() throws InterruptedException {
         // Given
         alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP, CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING));
-        
+
         // Add more matching logs to test group functionality
         MatchingLogEvent secondEvent = MatchingLogEvent.builder()
                 .logEntry(LogEntry.builder()
                     .timeUnixNano((System.currentTimeMillis() + 1000) * 1_000_000L)
-                    .severityText("ERROR") 
+                    .severityText("ERROR")
                     .body("Second error message")
                     .build())
                 .alertDefine(alertDefine)
                 .eventTimestamp(System.currentTimeMillis() + 1000)
                 .workerTimestamp(System.currentTimeMillis() + 1000)
                 .build();
-        
+
         windowData.addMatchingLog(secondEvent);
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
-        
+
         // Wait for async processing
         Thread.sleep(2000);
 
@@ -245,10 +245,10 @@ class AlarmEvaluatorTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<SingleAlert>> alertsCaptor = ArgumentCaptor.forClass(List.class);
         verify(alarmCommonReduce).reduceAndSendAlarmGroup(labelsCaptor.capture(), alertsCaptor.capture());
-        
+
         Map<String, String> groupLabels = labelsCaptor.getValue();
         List<SingleAlert> alerts = alertsCaptor.getValue();
-        
+
         assertAll(
             () -> assertNotNull(groupLabels),
             () -> assertNotNull(alerts),
@@ -259,7 +259,7 @@ class AlarmEvaluatorTest {
             () -> assertEquals(CommonConstants.ALERT_MODE_GROUP, groupLabels.get(CommonConstants.ALERT_MODE_LABEL)),
             () -> assertEquals("2", groupLabels.get("matching_logs_count"))
         );
-        
+
         // Verify each alert in the group
         for (SingleAlert alert : alerts) {
             assertEquals(CommonConstants.ALERT_STATUS_FIRING, alert.getStatus());
@@ -296,7 +296,7 @@ class AlarmEvaluatorTest {
         detailedWindowData.addMatchingLog(detailedEvent);
 
         alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(detailedWindowData);
         Thread.sleep(2000);
@@ -304,10 +304,10 @@ class AlarmEvaluatorTest {
         // Then
         ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
         verify(alarmCommonReduce).reduceAndSendAlarm(alertCaptor.capture());
-        
+
         SingleAlert alert = alertCaptor.getValue();
         Map<String, String> labels = alert.getLabels();
-        
+
         // Verify log entry fields are mapped to labels
         assertAll(
             () -> assertEquals("17", labels.get("severityNumber")),
@@ -329,7 +329,7 @@ class AlarmEvaluatorTest {
         // Given - multiple matching logs in the same window
         alertDefine.setTimes(2); // Require at least 2 occurrences
         alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP));
-        
+
         // Add second matching log
         MatchingLogEvent secondEvent = MatchingLogEvent.builder()
                 .logEntry(LogEntry.builder()
@@ -340,20 +340,20 @@ class AlarmEvaluatorTest {
                 .eventTimestamp(System.currentTimeMillis() + 5000)
                 .workerTimestamp(System.currentTimeMillis() + 5000)
                 .build();
-        
+
         windowData.addMatchingLog(secondEvent);
-        
+
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
         Thread.sleep(2000);
 
         // Then - should trigger group alert since threshold is met
         verify(alarmCommonReduce).reduceAndSendAlarmGroup(anyMap(), anyList());
-        
+
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<SingleAlert>> alertsCaptor = ArgumentCaptor.forClass(List.class);
         verify(alarmCommonReduce).reduceAndSendAlarmGroup(anyMap(), alertsCaptor.capture());
-        
+
         List<SingleAlert> alerts = alertsCaptor.getValue();
         assertEquals(2, alerts.size());
         assertEquals(2, alerts.get(0).getTriggerTimes()); // Each alert should have trigger times = total count

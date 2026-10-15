@@ -44,8 +44,8 @@ import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
-import org.apache.hertzbeat.observability.controller.OtlpSignalController;
-import org.apache.hertzbeat.observability.controller.ThreeSignalQueryController;
+import org.apache.hertzbeat.warehouse.service.impl.GreptimeThreeSignalQueryService;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeDbDataStorage;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.iotdb.IotDbDataStorage;
@@ -112,8 +112,8 @@ class ContextTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(MetricsDataController.class));
 
         // Greptime-only signal controllers must not break the default application context.
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(OtlpSignalController.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(ThreeSignalQueryController.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(GreptimeThreeSignalQueryService.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(GreptimeDbDataStorage.class));
     }
 
     @Test

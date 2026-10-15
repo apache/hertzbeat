@@ -28,6 +28,7 @@ import org.apache.hertzbeat.collector.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -132,6 +133,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
+        this.metrics = CollectUtil.replaceUuidInHttpPayload(metrics, job.getCollectionUuid());
         this.id = job.getMonitorId();
         this.tenantId = job.getTenantId();
         this.app = job.getApp();
@@ -158,6 +160,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
         response.setApp(app).setId(id).setTenantId(tenantId)
                 .setLabels(labels).setAnnotations(annotations).addMetadataAll(metadata);
+        addExecutionContext(response, startTime, collectorIdentity);
         // for prometheus auto or proxy mode
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData;
@@ -227,6 +230,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         calculateFields(metrics, response);
         CollectRep.MetricsData metricsData = validateResponse(response);
         collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
+    }
+
+    static void addExecutionContext(
+            CollectRep.MetricsData.Builder response, long startedAt, String collectorIdentity) {
+        response.addMetadata(MetricDataConstants.COLLECTION_STARTED_AT, String.valueOf(startedAt));
+        if (collectorIdentity != null && !collectorIdentity.isBlank()) {
+            response.addMetadata(MetricDataConstants.COLLECTOR_ID, collectorIdentity);
+        }
     }
 
     /**

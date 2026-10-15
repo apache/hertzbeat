@@ -111,7 +111,16 @@ final class AlertQueryBudgetExecutor implements QueryExecutor {
     @Override
     public List<Map<String, Object>> execute(String query) {
         validateInput(query);
-        List<Map<String, Object>> rows = delegate.execute(query);
+        return validateResult(delegate.execute(query));
+    }
+
+    @Override
+    public List<Map<String, Object>> executePreview(String query) {
+        validateInput(query);
+        return validateResult(delegate.executePreview(query));
+    }
+
+    private List<Map<String, Object>> validateResult(List<Map<String, Object>> rows) {
         if (rows != null && rows.size() > MAX_RESULT_ROWS) {
             throw new AlertExpressionException("Alert query returned more than 1000 rows.");
         }

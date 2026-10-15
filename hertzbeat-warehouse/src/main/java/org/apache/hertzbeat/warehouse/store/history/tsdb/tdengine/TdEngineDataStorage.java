@@ -46,6 +46,7 @@ import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.StrBuffer;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
@@ -59,6 +60,7 @@ import org.springframework.stereotype.Component;
  */
 @Primary
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.td-engine",
         name = "enabled", havingValue = "true")
 @Slf4j
@@ -296,8 +298,8 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     fieldSqlBuilder.append(")");
                     String createTableSql = String.format(CREATE_SUPER_TABLE_SQL, superTable, fieldSqlBuilder);
                     try {
-                        assert statement != null;
-
+                        // statement is guaranteed non-null here because we entered this
+                        // catch block only after statement.execute() threw at line 272
                         if (log.isInfoEnabled()) {
                             log.info("[tdengine-data]: create {} use sql: {}.", superTable, createTableSql);
                         }
@@ -315,12 +317,13 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
             } finally {
-                try {
-                    assert connection != null;
-                    connection.close();
-                } catch (Exception e) {
-                    if (log.isErrorEnabled()) {
-                        log.error(e.getMessage());
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (Exception e) {
+                        if (log.isErrorEnabled()) {
+                            log.error(e.getMessage());
+                        }
                     }
                 }
             }
@@ -446,12 +449,13 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 log.error(e.getMessage());
             }
         } finally {
-            try {
-                assert connection != null;
-                connection.close();
-            } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage());
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (Exception e) {
+                    if (log.isErrorEnabled()) {
+                        log.error(e.getMessage());
+                    }
                 }
             }
         }
@@ -496,12 +500,13 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     log.error(e.getMessage(), e);
                 }
             } finally {
-                try {
-                    assert conn != null;
-                    conn.close();
-                } catch (Exception e) {
-                    if (log.isErrorEnabled()) {
-                        log.error(e.getMessage());
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (Exception e) {
+                        if (log.isErrorEnabled()) {
+                            log.error(e.getMessage());
+                        }
                     }
                 }
             }

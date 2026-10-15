@@ -1,0 +1,209 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { SessionContext } from '@/core/auth/session-context';
+import { ApiMessageError } from '@/core/http/api-message';
+
+const api = vi.hoisted(() => ({ loadEntityDiscovery: vi.fn() }));
+vi.mock('../api/entity-discovery-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/entity-discovery-api')>()),
+  ...api
+}));
+
+import { useEntityDiscoveryController } from './use-entity-discovery-controller';
+
+const page = {
+  schemaVersion: 1 as const,
+  pageIndex: 0,
+  pageSize: 8,
+  totalElements: 1,
+  totalPages: 1,
+  content: [{ monitor: { id: 3, name: 'mysql', app: 'mysql', instance: 'db:3306', status: 1 }, candidates: [] }]
+};
+
+describe('useEntityDiscoveryController', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.loadEntityDiscovery.mockResolvedValue(page);
+  });
+  afterEach(cleanup);
+
+  it('preserves unsent search on paging and converges changed committed searches on history', async () => {
+    const v = renderController('/entities/discovery?search=old');
+    await waitFor(() => expect(v.current().state.evidence.kind).toBe('ready'));
+    act(() => v.current().actions.updateDraft('pending'));
+    act(() => v.current().actions.changePage(2, 8));
+    expect(v.current().state.draft).toBe('pending');
+    expect(v.current().state.query.search).toBe('old');
+    await act(() => v.navigate(-1));
+    expect(v.current().state.draft).toBe('pending');
+    await act(() => v.navigate(1));
+    expect(v.current().state.draft).toBe('pending');
+    act(() => v.current().actions.updateDraft('  next  '));
+    act(() => v.current().actions.submit());
+    expect(v.current().state.draft).toBe('next');
+    await act(() => v.navigate(-1));
+    expect(v.current().state.draft).toBe('old');
+    await act(() => v.navigate(1));
+    expect(v.current().state.draft).toBe('next');
+    act(() => v.current().actions.updateDraft('  next  '));
+    act(() => v.current().actions.submit());
+    expect(v.current().state.draft).toBe('next');
+    v.unmount();
+    const remount = renderController('/entities/discovery?search=next');
+    expect(remount.current().state.draft).toBe('next');
+  });
+
+  it('reads only safe URL state and submits a trimmed search at page zero', async () => {
+    const routed = renderController('/entities/discovery?search=%20mysql%20&pageIndex=0&pageSize=8&token=private');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    expect(api.loadEntityDiscovery).toHaveBeenCalledWith(
+      { search: 'mysql', pageIndex: 0, pageSize: 8 },
+      expect.any(AbortSignal)
+    );
+    expect(routed.location()).not.toContain('token');
+    act(() => routed.current().actions.updateDraft('  postgres  '));
+    act(() => routed.current().actions.submit());
+    await waitFor(() => expect(routed.location()).toContain('search=postgres'));
+    expect(routed.location()).toContain('pageIndex=0');
+  });
+
+  it('uses canonical safe return targets for candidate, create, and back navigation', async () => {
+    const routed = renderController('/entities/discovery?search=mysql&pageIndex=0&pageSize=8');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.openCandidate(7));
+    expect(routed.location()).toContain('/entities/7?returnTo=');
+    expect(routed.location()).not.toContain('token');
+
+    const create = renderController('/entities/discovery?search=mysql&pageIndex=0&pageSize=8');
+    await waitFor(() => expect(create.current().state.evidence.kind).toBe('ready'));
+    act(() => create.current().actions.create(page.content[0]!.monitor));
+    const createUrl = new URL(create.location(), 'http://localhost');
+    expect(createUrl.pathname).toBe('/entities/new');
+    expect(createUrl.searchParams.get('returnTo')).toContain('/entities/discovery?');
+    expect(createUrl.searchParams.get('sourceMonitorId')).toBe('3');
+    expect(createUrl.searchParams.get('sourceMonitorName')).toBe('mysql');
+
+    const back = renderController(
+      '/entities/discovery?returnTo=%2Fentities%3Fsearch%3Dmysql%26type%3Ddatabase%26token%3Dprivate'
+    );
+    await waitFor(() => expect(back.current().state.evidence.kind).toBe('ready'));
+    act(() => back.current().actions.back());
+    expect(back.location()).toContain('/entities?');
+    expect(back.location()).toContain('search=mysql');
+    expect(back.location()).toContain('type=database');
+    expect(back.location()).not.toContain('token');
+
+    const unsafe = renderController(
+      '/entities/discovery?returnTo=https%3A%2F%2Fevil.example%2Fentities%3Fsearch%3Dprivate'
+    );
+    await waitFor(() => expect(unsafe.current().state.evidence.kind).toBe('ready'));
+    act(() => unsafe.current().actions.back());
+    expect(unsafe.location()).toBe('/entities');
+  });
+
+  it('keeps discovery reads available to GUEST but rejects its create handoff', async () => {
+    const routed = renderController('/entities/discovery?search=mysql', 'GUEST');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    expect(api.loadEntityDiscovery).toHaveBeenCalled();
+    expect(routed.current().state.canWrite).toBe(false);
+    act(() => routed.current().actions.create(page.content[0]!.monitor));
+    expect(routed.location()).toContain('/entities/discovery');
+  });
+
+  it.each([
+    [new ApiMessageError('missing route', { status: 404 }), 'not-found'],
+    [new ApiMessageError('unsupported method', { status: 405 }), 'unsupported'],
+    [new ApiMessageError('offline', { status: 503 }), 'unavailable']
+  ] as const)('keeps %s distinct from a successful empty discovery page', async (failure, kind) => {
+    api.loadEntityDiscovery.mockRejectedValueOnce(failure);
+    const routed = renderController('/entities/discovery');
+
+    await waitFor(() => expect(routed.current().state.evidence).toEqual({ kind }));
+
+    expect(routed.current().state.evidence.kind).not.toBe('empty');
+  });
+
+  it('publishes empty only from a successful exact zero-total page', async () => {
+    api.loadEntityDiscovery.mockResolvedValueOnce({
+      schemaVersion: 1,
+      pageIndex: 0,
+      pageSize: 8,
+      totalElements: 0,
+      totalPages: 0,
+      content: []
+    });
+    const routed = renderController('/entities/discovery');
+
+    await waitFor(() => expect(routed.current().state.evidence).toEqual({ kind: 'empty' }));
+  });
+});
+
+function renderController(entry: string, role = 'ADMIN') {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let location = '';
+  let navigate!: ReturnType<typeof useNavigate>;
+  let controller: ReturnType<typeof useEntityDiscoveryController> | undefined;
+  function ControllerProbe() {
+    controller = useEntityDiscoveryController();
+    navigate = useNavigate();
+    return null;
+  }
+  function LocationProbe() {
+    const current = useLocation();
+    location = `${current.pathname}${current.search}`;
+    return null;
+  }
+  const view = render(
+    <SessionContext.Provider value={sessionState(role)}>
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[entry]}>
+          <ControllerProbe />
+          <LocationProbe />
+        </MemoryRouter>
+      </QueryClientProvider>
+    </SessionContext.Provider>
+  );
+  return {
+    current: () => {
+      if (!controller) throw new Error('controller not mounted');
+      return controller;
+    },
+    location: () => location,
+    navigate: (...args: Parameters<typeof navigate>) => navigate(...args),
+    unmount: view.unmount
+  };
+}
+
+function sessionState(role: string) {
+  return {
+    loading: false,
+    retry: vi.fn(),
+    session: {
+      authenticated: true,
+      username: 'operator',
+      roles: [role],
+      workspaceId: 'default',
+      expiresAt: null
+    }
+  };
+}

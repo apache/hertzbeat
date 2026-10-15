@@ -1,0 +1,254 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { requireDomElement } from '@/test/dom-element';
+import { settingsPaths } from '@/shared/settings/settings-routes';
+
+const controller = vi.hoisted(() => ({ useNoticeRuleController: vi.fn() }));
+vi.mock('../controller/notice-rule-controller', () => controller);
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
+import { NoticeRulePage } from './notice-rule-page';
+import type { NoticeRuleDetailState } from '../model/notice-rule-failure';
+
+describe('notice rule page', () => {
+  afterEach(cleanup);
+  beforeEach(() => controller.useNoticeRuleController.mockReturnValue(view('invalid', 'ready')));
+
+  it('uses the shared operational page header for title copy and create', () => {
+    renderPage();
+
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'noticeRules.title' }));
+    expect(header.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+      screen.getByRole('button', { name: 'noticeRules.new' })
+    );
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    const workspace = screen.getByRole('navigation', { name: 'notificationWorkspace.label' });
+    const command = requireDomElement(
+      document.querySelector('[data-hb-operational-command-bar]'),
+      'Operational command bar'
+    );
+    expect(workspace).toHaveAttribute('data-active-step', 'rules');
+    expect(header.nextElementSibling).toBe(workspace);
+    expect(workspace.nextElementSibling).toBe(command);
+  });
+
+  it('renders invalid list evidence instead of a fake empty table', () => {
+    renderPage();
+    expect(document.querySelector('[data-state="error"]')).toHaveTextContent('noticeRules.read.invalid');
+    expect(screen.queryByText('noticeRules.empty')).not.toBeInTheDocument();
+  });
+
+  it('distinguishes a valid empty receiver dependency from storage failure', () => {
+    controller.useNoticeRuleController.mockReturnValue(view('empty', 'empty'));
+    renderPage();
+    expect(screen.getByText('noticeRules.options.empty')).toBeInTheDocument();
+    expect(screen.getByText('noticeRules.empty')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'noticeRules.options.action.receivers' })).toHaveAttribute(
+      'href',
+      settingsPaths.receivers
+    );
+  });
+
+  it.each(['empty', 'invalid', 'unavailable', 'error'] as const)(
+    'renders the %s option state distinctly and disables create',
+    kind => {
+      controller.useNoticeRuleController.mockReturnValue(view('empty', kind));
+      renderPage();
+      expect(screen.getByText(`noticeRules.options.${kind}`)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeDisabled();
+    }
+  );
+
+  it('keeps invalid option evidence retry-oriented without inventing a missing prerequisite', () => {
+    const invalid = view('empty', 'invalid');
+    controller.useNoticeRuleController.mockReturnValue(invalid);
+    renderPage();
+
+    expect(screen.queryByRole('link', { name: 'noticeRules.options.action.receivers' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'noticeRules.options.action.templates' })).not.toBeInTheDocument();
+  });
+
+  it('dispatches the next checked state from the list switch', () => {
+    const ready = view('empty', 'ready');
+    ready.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
+    controller.useNoticeRuleController.mockReturnValue(ready);
+    renderPage();
+    expect(screen.getByRole('columnheader', { name: 'noticeRules.enabled' })).toHaveClass('ant-table-cell-fix-right');
+    expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
+    fireEvent.click(screen.getByRole('switch'));
+    expect(ready.actions.toggle).toHaveBeenCalledWith(rule, false);
+  });
+
+  it('disables create and row commands while any write command is busy', () => {
+    const busy = view('empty', 'ready');
+    busy.state.command = 'deleting';
+    busy.state.list = { kind: 'ready', records: [rule], total: 9 } as never;
+    controller.useNoticeRuleController.mockReturnValue(busy);
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeRules.delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(document.querySelector('.ant-pagination')).toHaveClass('ant-pagination-disabled');
+  });
+
+  it('uses compact shared states for initial loading and empty results', () => {
+    const loading = view('empty', 'ready');
+    loading.state.list = { kind: 'loading' } as never;
+    controller.useNoticeRuleController.mockReturnValue(loading);
+    const page = renderPage();
+
+    expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeRules.loading');
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(document.querySelector('table')).not.toBeInTheDocument();
+
+    loading.state.list = { kind: 'empty' } as never;
+    page.rerender(pageElement());
+    expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('noticeRules.empty');
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
+  it('shows refresh progress without allowing overlapping query commands', () => {
+    const refreshing = view('empty', 'ready');
+    refreshing.state.refreshing = true;
+    controller.useNoticeRuleController.mockReturnValue(refreshing);
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /common\.refresh/ })).toHaveClass('ant-btn-loading');
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+  });
+
+  it('disables option-dependent row commands but keeps delete available when dependencies fail', () => {
+    const unavailable = view('empty', 'unavailable');
+    unavailable.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
+    controller.useNoticeRuleController.mockReturnValue(unavailable);
+    renderPage();
+
+    expect(screen.getByText('noticeRules.options.unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeRules.delete' })).toBeEnabled();
+  });
+
+  it('renders persistent detail loading evidence while no editor draft is available', () => {
+    const loading = view('empty', 'ready', { kind: 'loading', id: 31 });
+    controller.useNoticeRuleController.mockReturnValue(loading);
+
+    renderPage();
+
+    expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeRules.loading');
+  });
+
+  it.each(['missing', 'invalid', 'unavailable', 'error'] as const)(
+    'renders persistent %s detail evidence and retries that identity',
+    kind => {
+      const failed = view('empty', 'ready', { kind, id: 31 });
+      controller.useNoticeRuleController.mockReturnValue(failed);
+
+      renderPage();
+
+      expect(screen.getByText(`noticeRules.read.${kind}`)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+      expect(failed.actions.retryDetail).toHaveBeenCalledOnce();
+    }
+  );
+});
+
+const rule = {
+  id: 31,
+  name: 'Proof',
+  receiverId: [11],
+  receiverName: ['Email'],
+  templateId: null,
+  templateName: null,
+  enable: true,
+  filterAll: true,
+  labels: {},
+  days: [1, 2, 3, 4, 5, 6, 7],
+  periodStart: null,
+  periodEnd: null
+};
+
+function view(
+  list: 'invalid' | 'empty',
+  options: 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error',
+  detail: NoticeRuleDetailState = { kind: 'idle' }
+) {
+  return {
+    state: {
+      capabilities: { canCreate: true, canEdit: true, canToggle: true, canDelete: true },
+      canRetryOperation: true,
+      canSubmitDraft: false,
+      command: 'idle',
+      detail,
+      draft: null,
+      list: { kind: list },
+      name: '',
+      options: { kind: options, missingPrerequisite: options === 'empty' ? ('receivers' as const) : null },
+      recovery: undefined,
+      query: { name: '', pageIndex: 0, pageSize: 8 },
+      receivers: [],
+      refreshing: false,
+      saving: false,
+      templates: [],
+      togglingRuleId: null
+    },
+    actions: {
+      changePage: vi.fn(),
+      close: vi.fn(),
+      create: vi.fn(),
+      edit: vi.fn(),
+      refresh: vi.fn(),
+      remove: vi.fn(),
+      retry: vi.fn(),
+      retryDetail: vi.fn(),
+      search: vi.fn(),
+      setName: vi.fn(),
+      submit: vi.fn(),
+      toggle: vi.fn(),
+      updateDraft: vi.fn()
+    }
+  };
+}
+
+function renderPage() {
+  return render(pageElement());
+}
+
+function pageElement() {
+  return (
+    <MemoryRouter>
+      <NoticeRulePage />
+    </MemoryRouter>
+  );
+}
