@@ -41,7 +41,6 @@ export function DashboardTracePreview({ signals }: { signals: DashboardTraceSign
         <h3 id="start-traces-title">
           <NodeIndexOutlined aria-hidden="true" /> {t('dashboard.workspace.signals.traces.title')}
         </h3>
-        <span className={styles.cardTime}>{t('dashboard.v2.last15m')}</span>
         <Link to={target} aria-label={t('dashboard.v3.openExplore')} title={t('dashboard.v3.openExplore')}>
           <FullscreenOutlined aria-hidden="true" />
         </Link>
@@ -67,15 +66,6 @@ function TraceEvidence({ signals }: { signals: DashboardTraceSignals }) {
             <div>
               <span>{t('dashboard.v2.errorTraces')}</span>
               <strong data-error={data.errorCount > 0}>{data.errorCount.toLocaleString()}</strong>
-            </div>
-            <div>
-              <span>
-                {t(evidence.coverage.mode === 'window' ? 'dashboard.v2.fullWindow' : 'dashboard.v2.tracePopulation')}
-              </span>
-              <small title={t('dashboard.v2.tracePopulation')}>
-                {new Date(evidence.window.start).toLocaleTimeString()}–
-                {new Date(evidence.window.end).toLocaleTimeString()}
-              </small>
             </div>
           </div>
           <TraceDetails evidence={evidence} data={data} signals={signals} />

@@ -28,7 +28,7 @@ export function monitorDistribution(total: number, counts: number[]) {
 export function savedContinueItems(records: SavedQueryRecord[], favoriteKeys: string[], recentKeys: string[]) {
   const byKey = new Map(records.map(record => [record.viewKey, record]));
   const favorites = new Set(favoriteKeys);
-  return [...new Set([...favoriteKeys, ...recentKeys])]
+  return [...new Set(recentKeys)]
     .flatMap(key => {
       const record = byKey.get(key);
       if (!record) return [];
@@ -48,7 +48,7 @@ export function savedContinueItems(records: SavedQueryRecord[], favoriteKeys: st
           ]
         : [];
     })
-    .slice(0, 4);
+    .slice(0, 3);
 }
 
 export type DashboardOverview = {

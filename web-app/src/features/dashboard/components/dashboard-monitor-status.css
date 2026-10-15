@@ -16,80 +16,63 @@
  */
 
 .monitorStatus {
-  display: flex;
-  align-items: center;
-  gap: var(--hb-space-4);
+  display: grid;
+  align-content: start;
+  gap: var(--hb-space-3);
   min-width: 0;
-  align-self: stretch;
 }
 .monitorTotal {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--hb-space-1);
-  min-width: 0;
+  align-items: baseline;
+  gap: var(--hb-space-2);
+  width: max-content;
+  max-width: 100%;
+  color: var(--hb-text-primary);
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
   border-radius: 4px;
-  color: var(--hb-text-secondary);
+}
+.monitorTotal span {
   font-size: 12px;
-  line-height: 18px;
+  color: var(--hb-text-secondary);
+  font-weight: 400;
 }
-.monitorRingWrap {
-  position: relative;
-  display: block;
-  width: 112px;
-  height: 112px;
-}
-.monitorRing {
-  display: block;
+.monitorBar {
+  display: flex;
   width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--hb-border-subtle);
+}
+.monitorBar > span {
   height: 100%;
-  fill: none;
-}
-.monitorRing circle {
-  stroke-width: 7px;
-}
-.monitorRingTrack {
-  stroke: var(--hb-border-subtle);
-}
-.monitorArc {
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-  stroke-linecap: butt;
+  flex: none;
   opacity: 0.82;
 }
-.monitorArc.available {
-  stroke: var(--hb-status-available);
+.monitorBar > .available {
+  background: var(--hb-status-available);
 }
-.monitorArc.unavailable {
-  stroke: var(--hb-status-unavailable);
+.monitorBar > .unavailable {
+  background: var(--hb-status-unavailable);
 }
-.monitorArc.paused {
-  stroke: var(--hb-text-muted);
-}
-.monitorRingTotal {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--hb-text-primary);
-  font-size: 13px;
-  font-weight: 400;
-  pointer-events: none;
+.monitorBar > .paused {
+  background: var(--hb-text-muted);
 }
 .statusCounts {
   display: grid;
   gap: var(--hb-space-1);
   min-width: 0;
-  flex: 1;
 }
-.statusCounts a {
+.statusCounts a,
+.otherStatus {
   display: grid;
-  grid-template-columns: 6px minmax(0, 1fr) auto auto;
+  grid-template-columns: 6px minmax(0, 1fr) 28px 40px;
   align-items: center;
   gap: var(--hb-space-2);
   min-width: 0;
-  padding: var(--hb-space-1);
+  padding: 2px 4px;
   color: var(--hb-text-secondary);
   font-size: 12px;
   line-height: 20px;
@@ -98,15 +81,16 @@
 .statusCounts a > span {
   white-space: nowrap;
 }
-.statusCounts a > span:nth-of-type(2) {
+.statusCounts a > span:nth-of-type(2),
+.otherStatus > span:nth-of-type(2) {
   color: var(--hb-text-primary);
   font-weight: 400;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 .statusCounts small {
-  color: var(--hb-text-muted);
-  font-size: 11px;
-  min-width: 26px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
   text-align: end;
 }
 .statusCounts i {
@@ -133,25 +117,13 @@
   outline: 2px solid var(--hb-focus-ring);
   outline-offset: 2px;
 }
-@media (max-width: 1200px) and (min-width: 801px) {
-  .monitorStatus {
-    gap: var(--hb-space-2);
-  }
-  .monitorRingWrap {
-    width: 96px;
-    height: 96px;
-  }
-  .statusCounts a {
-    gap: var(--hb-space-1);
-  }
-}
-@media (max-width: 800px) {
-  .monitorStatus {
-    width: max-content;
-    max-width: 100%;
-    gap: var(--hb-space-4);
-  }
-  .statusCounts {
-    min-width: 120px;
+
+@media (min-width: 801px) {
+  .monitorTotal {
+    position: absolute;
+    inset-inline-start: 0;
+    top: calc(-32px - var(--hb-space-4));
+    min-height: 32px;
+    align-items: center;
   }
 }

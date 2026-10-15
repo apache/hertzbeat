@@ -1564,7 +1564,7 @@
       "continue": "Continuar trabalhando",
       "favorite": "Favorito",
       "recent": "Aberto recentemente",
-      "noContinue": "Nenhuma consulta favorita ou recente",
+      "noContinue": "Nenhuma consulta aberta recentemente",
       "signals": "Sinais",
       "last15m": "Últimos 15 minutos",
       "service": "Serviço",
@@ -1610,6 +1610,9 @@
       "environmentEmpty": "Nenhum ambiente"
     },
     "v3": {
+      "otherStatus": "Outros estados",
+      "firingGroups": "{{count}} grupos de alertas ativos",
+      "unavailableMonitors": "{{count}} monitores indisponíveis",
       "monitorDistribution": "Distribuição do estado dos monitores",
       "monitorRemainder": "{{count}} outros monitores estão fora destas três categorias e permanecem neutros",
       "monitorUnit": "itens",

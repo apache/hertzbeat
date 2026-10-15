@@ -1564,7 +1564,7 @@
       "continue": "继续工作",
       "favorite": "收藏",
       "recent": "最近打开",
-      "noContinue": "还没有收藏或最近打开的查询",
+      "noContinue": "还没有最近打开的查询",
       "signals": "信号",
       "last15m": "最近 15 分钟",
       "service": "服务",
@@ -1610,6 +1610,9 @@
       "environmentEmpty": "暂无环境"
     },
     "v3": {
+      "otherStatus": "其他状态",
+      "firingGroups": "{{count}}组触发告警",
+      "unavailableMonitors": "{{count}}个不可用监控",
       "monitorDistribution": "监控状态分布",
       "monitorRemainder": "其余{{count}}个监控未计入当前三类，保留为中性区段",
       "monitorUnit": "个",

@@ -83,6 +83,18 @@ describe('honest trace anomaly states', () => {
     await i18n.changeLanguage('zh-CN');
   });
   afterEach(cleanup);
+  it('omits redundant card time and coverage captions while preserving the exact destination window', () => {
+    view(signals(0));
+    expect(screen.queryByText(i18n.t('dashboard.v2.last15m'))).not.toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('dashboard.v2.fullWindow'))).not.toBeInTheDocument();
+    expect(screen.queryByTitle(i18n.t('dashboard.v2.tracePopulation'))).not.toBeInTheDocument();
+    const target = new URL(
+      screen.getByRole('link', { name: i18n.t('dashboard.v3.openExplore') }).getAttribute('href')!,
+      'http://local'
+    );
+    expect(target.searchParams.get('start')).toBe('1750000000000');
+    expect(target.searchParams.get('end')).toBe('1750000900000');
+  });
   it('only claims no anomalies after a successful zero in full-window evidence', () => {
     view(signals(0, pending));
     expect(screen.getByText(i18n.t('dashboard.v3.noErrorTraces'))).toBeVisible();

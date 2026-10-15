@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { monitorRoutePaths } from '@/shared/navigation/app-paths';
@@ -29,6 +28,8 @@ export function DashboardMonitorStatus({ overview }: { overview: DashboardOvervi
   const value = distribution
     ? distribution.total
     : t(`dashboard.workspace.states.${overview.monitorState === 'ready' ? 'error' : overview.monitorState}`);
+  const { segments, remainder } = monitorDistributionSegments(distribution);
+  const description = remainder ? t('dashboard.v3.monitorRemainder', { count: remainder }) : undefined;
   return (
     <section
       className={styles.monitorStatus}
@@ -40,64 +41,60 @@ export function DashboardMonitorStatus({ overview }: { overview: DashboardOvervi
         to={monitorRoutePaths.list}
         aria-label={`${t('dashboard.daily.monitors.title')} ${value}`}
       >
-        <span>{t('dashboard.daily.monitors.title')}</span>
-        <span className={styles.monitorRingWrap}>
-          <MonitorRing distribution={distribution} />
-          <span className={styles.monitorRingTotal}>
-            {value}
-            {distribution && t('dashboard.v3.monitorUnit')}
-          </span>
+        {t('dashboard.daily.monitors.title')}{' '}
+        <span>
+          {value}
+          {distribution && t('dashboard.v3.monitorUnit')}
         </span>
       </Link>
-      <div className={styles.statusCounts}>
-        {monitorStatusOrder.map(({ status, index }) => (
-          <Link
-            key={status}
-            to={`${monitorRoutePaths.list}?${new URLSearchParams({ status: String(index) })}`}
-            className={styles[status]}
-          >
-            <i aria-hidden="true" />
-            <span>{t(`monitor.status.${status}`)}</span>
-            <span>{distribution ? distribution.counts[index] : '—'}</span>
-            {distribution && distribution.total > 0 && (
-              <small>{Math.round((distribution.counts[index]! / distribution.total) * 100)}%</small>
-            )}
-          </Link>
+      <div
+        className={styles.monitorBar}
+        role="img"
+        aria-label={t('dashboard.v3.monitorDistribution')}
+        title={description}
+      >
+        {segments.map(segment => (
+          <span
+            key={segment.status}
+            data-status={segment.status}
+            className={styles[segment.status]}
+            style={{ width: `${segment.share}%` }}
+          />
         ))}
       </div>
+      <MonitorLegend distribution={distribution} />
     </section>
   );
 }
-function MonitorRing({ distribution }: { distribution: DashboardOverview['distribution'] }) {
+
+function MonitorLegend({ distribution }: { distribution: DashboardOverview['distribution'] }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const { segments, remainder } = monitorDistributionSegments(distribution);
+  const { remainder } = monitorDistributionSegments(distribution);
+  const description = remainder ? t('dashboard.v3.monitorRemainder', { count: remainder }) : undefined;
   return (
-    <svg
-      className={styles.monitorRing}
-      viewBox="0 0 112 112"
-      role="img"
-      aria-label={t('dashboard.v3.monitorDistribution')}
-      aria-describedby={titleId}
-    >
-      <title id={titleId}>
-        {remainder !== undefined && remainder > 0
-          ? t('dashboard.v3.monitorRemainder', { count: remainder })
-          : t('dashboard.v3.monitorDistribution')}
-      </title>
-      <circle className={styles.monitorRingTrack} cx="56" cy="56" r="46" />
-      {segments.map(segment => (
-        <circle
-          key={segment.status}
-          className={`${styles.monitorArc} ${styles[segment.status]}`}
-          cx="56"
-          cy="56"
-          r="46"
-          pathLength="100"
-          strokeDasharray={`${segment.share} ${100 - segment.share}`}
-          strokeDashoffset={-segment.offset}
-        />
+    <div className={styles.statusCounts}>
+      {monitorStatusOrder.map(({ status, index }) => (
+        <Link
+          key={status}
+          to={`${monitorRoutePaths.list}?${new URLSearchParams({ status: String(index) })}`}
+          className={styles[status]}
+        >
+          <i aria-hidden="true" />
+          <span>{t(`monitor.status.${status}`)}</span>
+          <span>{distribution ? distribution.counts[index] : '—'}</span>
+          {distribution && distribution.total > 0 && (
+            <small>{Math.round((distribution.counts[index]! / distribution.total) * 100)}%</small>
+          )}
+        </Link>
       ))}
-    </svg>
+      {!!remainder && (
+        <div className={styles.otherStatus} title={description}>
+          <i aria-hidden="true" />
+          <span>{t('dashboard.v3.otherStatus')}</span>
+          <span>{remainder}</span>
+          <small>{Math.round((remainder / distribution!.total) * 100)}%</small>
+        </div>
+      )}
+    </div>
   );
 }

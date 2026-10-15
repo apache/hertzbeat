@@ -333,7 +333,7 @@ describe('V2 start page', () => {
       within(region).getByRole('link', { name: `${i18n.t('dashboard.daily.monitors.title')} 10` })
     ).toHaveAttribute('href', '/monitors');
     expect(within(region).getByText('50%')).toBeVisible();
-    expect(within(region).getByText('20%')).toBeVisible();
+    expect(within(region).getAllByText('20%')).toHaveLength(2);
     expect(within(region).getByText('10%')).toBeVisible();
     for (const [index, name] of ['paused', 'available', 'unavailable'].entries()) {
       expect(within(region).getByRole('link', { name: new RegExp(i18n.t(`monitor.status.${name}`)) })).toHaveAttribute(
@@ -359,25 +359,30 @@ describe('V2 start page', () => {
     expect(within(region).queryByRole('link', { name: '0' })).not.toBeInTheDocument();
     expect(screen.queryByText(i18n.t('dashboard.v2.noContinue'))).not.toBeInTheDocument();
   });
-  it('hides pause without runnable rank evidence and labels empty scope choices', () => {
+  it('omits redundant time captions from log and trace headers', () => {
     renderPage();
-    expect(screen.queryByRole('button', { name: i18n.t('dashboard.v2.pause') })).not.toBeInTheDocument();
-    for (const scope of ['service', 'environment']) {
-      expect(screen.getByRole('combobox', { name: i18n.t(`dashboard.v2.${scope}`) })).toBeDisabled();
-      expect(screen.getByText(i18n.t(`dashboard.v2.${scope}Empty`))).toBeVisible();
+    for (const signal of ['logs', 'traces']) {
+      const region = screen.getByRole('region', { name: i18n.t(`dashboard.workspace.signals.${signal}.title`) });
+      expect(within(region).queryByText(i18n.t('dashboard.v2.last15m'))).not.toBeInTheDocument();
     }
   });
-  it.each(['loading', 'error'])('distinguishes %s scope choices from empty catalogs', state => {
-    const start = controller();
-    hooks.useDashboardStartController.mockReturnValue({
-      ...start,
-      signals: { ...start.signals, catalogState: state }
-    });
+  it('keeps the overview free of service and environment selectors', () => {
     renderPage();
-    for (const scope of ['service', 'environment']) {
-      const suffix = state === 'loading' ? 'Loading' : 'Unavailable';
-      expect(screen.getByText(i18n.t(`dashboard.v2.${scope}${suffix}`))).toBeVisible();
-    }
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('dashboard.v2.pause') })).not.toBeInTheDocument();
+  });
+  it('uses actual horizontal shares and distinguishes alert groups from unavailable monitors', () => {
+    const start = controller();
+    hooks.useDashboardStartController.mockReturnValue({ ...start, overview: { ...start.overview, alertTotal: 4 } });
+    renderPage();
+    const bar = screen.getByRole('img', { name: i18n.t('dashboard.v3.monitorDistribution') });
+    expect(bar.tagName).toBe('DIV');
+    expect(bar.querySelector('[data-status="available"]')).toHaveStyle({ width: '50%' });
+    expect(bar.querySelector('[data-status="unavailable"]')).toHaveStyle({ width: '20%' });
+    expect(bar.querySelector('[data-status="paused"]')).toHaveStyle({ width: '10%' });
+    expect(screen.getByText(i18n.t('dashboard.v3.otherStatus'))).toBeVisible();
+    expect(screen.getByText(i18n.t('dashboard.v3.firingGroups', { count: 4 }))).toBeVisible();
+    expect(screen.getByText(i18n.t('dashboard.v3.unavailableMonitors', { count: 2 }))).toBeVisible();
   });
   it('carries the preview window and scope into every signal destination', () => {
     const start = controller();

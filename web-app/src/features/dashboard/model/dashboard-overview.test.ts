@@ -64,3 +64,23 @@ describe('start overview evidence', () => {
     ).toEqual([]);
   });
 });
+
+it('continues only real recently opened queries in recent order, excluding favorite-only items', () => {
+  const records = ['favorite-only', 'recent-two', 'recent-one'].map(key => ({
+    signal: 'metrics' as const,
+    viewKey: key,
+    label: key,
+    route: '/explore?signal=metrics',
+    payload: JSON.stringify({ version: 1, query: { signal: 'metrics', timeRange: 'last-15m' } })
+  }));
+  expect(
+    savedContinueItems(
+      records,
+      ['favorite-only', 'recent-one'],
+      ['recent-one', 'missing', 'recent-two', 'recent-one']
+    ).map(item => [item.record.viewKey, item.favorite])
+  ).toEqual([
+    ['recent-one', true],
+    ['recent-two', false]
+  ]);
+});

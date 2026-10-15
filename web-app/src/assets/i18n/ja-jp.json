@@ -1564,7 +1564,7 @@
       "continue": "作業を続ける",
       "favorite": "お気に入り",
       "recent": "最近開いた項目",
-      "noContinue": "お気に入りや最近開いたクエリはありません",
+      "noContinue": "最近開いたクエリはありません",
       "signals": "シグナル",
       "last15m": "直近15分",
       "service": "サービス",
@@ -1610,6 +1610,9 @@
       "environmentEmpty": "環境なし"
     },
     "v3": {
+      "otherStatus": "その他の状態",
+      "firingGroups": "発火中のアラートグループ {{count}}件",
+      "unavailableMonitors": "利用不可の監視 {{count}}件",
       "monitorDistribution": "監視ステータスの分布",
       "monitorRemainder": "残り{{count}}件はこの3分類に含まれず、中立の区間として表示されます",
       "monitorUnit": "件",

@@ -1564,7 +1564,7 @@
       "continue": "Continue working",
       "favorite": "Favorite",
       "recent": "Recently opened",
-      "noContinue": "No favorite or recently opened queries yet",
+      "noContinue": "No recently opened queries yet",
       "signals": "Signals",
       "last15m": "Last 15 minutes",
       "service": "Service",
@@ -1610,6 +1610,9 @@
       "environmentEmpty": "No environments"
     },
     "v3": {
+      "otherStatus": "Other statuses",
+      "firingGroups": "{{count}} firing alert groups",
+      "unavailableMonitors": "{{count}} unavailable monitors",
       "monitorDistribution": "Monitor status distribution",
       "monitorRemainder": "{{count}} other monitors are outside these three categories and remain neutral",
       "monitorUnit": "items",

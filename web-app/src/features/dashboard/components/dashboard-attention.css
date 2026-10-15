@@ -177,3 +177,17 @@
     animation: none;
   }
 }
+
+.attentionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--hb-space-1) var(--hb-space-3);
+  margin: 0 auto 0 0;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--hb-text-secondary);
+}
+.attentionSummary span {
+  white-space: nowrap;
+}

@@ -138,7 +138,6 @@ function MetricEvidence({ signals }: Props) {
                 <strong title={`${signals.active?.label ?? ''} · ${series.name}`}>
                   {signals.active?.label || series.name}
                 </strong>
-                <span>{t('dashboard.v2.last15m')}</span>
               </div>
               <div className={styles.metricValue}>
                 <span>{t('dashboard.v3.latest')}</span>

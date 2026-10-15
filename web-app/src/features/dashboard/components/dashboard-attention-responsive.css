@@ -45,10 +45,6 @@
   }
 }
 
-.attentionActions {
-  margin-inline-start: auto;
-  min-width: 0;
-}
 @media (max-width: 1200px) {
   .eventTitle {
     display: grid;
@@ -77,9 +73,11 @@
   }
 }
 @media (max-width: 540px) {
-  .attentionActions {
+}
+
+@media (max-width: 540px) {
+  .attentionSummary {
     flex-basis: 100%;
-    order: -1;
   }
   .attentionTools > a {
     margin-inline-start: auto;

@@ -45,7 +45,6 @@ export function DashboardLogPreview({ signals }: Props) {
         <h3 id="start-logs-title">
           <FileTextOutlined aria-hidden="true" /> {t('dashboard.workspace.signals.logs.title')}
         </h3>
-        <span className={styles.cardTime}>{t('dashboard.v2.last15m')}</span>
         <Link to={target} aria-label={t('dashboard.v3.openExplore')} title={t('dashboard.v3.openExplore')}>
           <FullscreenOutlined aria-hidden="true" />
         </Link>

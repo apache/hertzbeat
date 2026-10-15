@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
@@ -25,8 +24,8 @@ import { DashboardAlertRows, DashboardDownRows } from './dashboard-attention-row
 import { DashboardRotationControls } from './dashboard-rotation-controls';
 import styles from './dashboard-overview.module.css';
 
-type Props = { overview: DashboardOverview; rotation: DashboardRotation; actions?: ReactNode };
-export function DashboardAttention({ overview, rotation, actions }: Props) {
+type Props = { overview: DashboardOverview; rotation: DashboardRotation };
+export function DashboardAttention({ overview, rotation }: Props) {
   const { t } = useTranslation();
   const offset = rotation.activeIndex * 2;
   const alerts = overview.alerts.slice(offset, offset + 2);
@@ -37,7 +36,6 @@ export function DashboardAttention({ overview, rotation, actions }: Props) {
   if (isEmptyAttention(overview))
     return (
       <section className={styles.quietAttention} aria-label={t('dashboard.v2.attention')}>
-        <div className={styles.attentionActions}>{actions}</div>
         <p>{t('dashboard.v2.noAttention')}</p>
         <Link to={`${alertRoutePaths.center}?status=firing`}>{t('dashboard.v3.allAlerts')}</Link>
       </section>
@@ -54,9 +52,9 @@ export function DashboardAttention({ overview, rotation, actions }: Props) {
       }}
     >
       <div className={styles.attentionTools}>
+        <AttentionSummary overview={overview} />
         {rotation.metricCount > 1 && <DashboardRotationControls signals={rotation} />}
         <Link to={`${alertRoutePaths.center}?status=firing`}>{t('dashboard.v3.allAlerts')}</Link>
-        <div className={styles.attentionActions}>{actions}</div>
       </div>
       <div className={styles.attentionList}>
         {overview.alertState !== 'ready' && <StateLine state={overview.alertState} />}
@@ -85,6 +83,20 @@ function StateLine({ state }: { state: string }) {
   return (
     <p className={styles.empty} role="status">
       {t(`dashboard.workspace.states.${state}`)}
+    </p>
+  );
+}
+
+function AttentionSummary({ overview }: { overview: DashboardOverview }) {
+  const { t } = useTranslation();
+  return (
+    <p className={styles.attentionSummary}>
+      {overview.alertState === 'ready' && overview.alertTotal !== undefined && (
+        <span>{t('dashboard.v3.firingGroups', { count: overview.alertTotal })}</span>
+      )}
+      {overview.downState === 'ready' && overview.distribution && (
+        <span>{t('dashboard.v3.unavailableMonitors', { count: overview.distribution.counts[2] })}</span>
+      )}
     </p>
   );
 }

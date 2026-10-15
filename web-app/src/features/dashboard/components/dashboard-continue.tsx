@@ -66,8 +66,7 @@ export function DashboardContinue({ overview, directoryTarget }: Props) {
                     {item.record.label}
                   </strong>
                   <small>
-                    {t(`dashboard.workspace.signals.${item.record.signal}.title`)} ·{' '}
-                    {t(item.favorite ? 'dashboard.v2.favorite' : 'dashboard.v2.recent')}
+                    {t(`dashboard.workspace.signals.${item.record.signal}.title`)} · {t('dashboard.v2.recent')}
                   </small>
                 </span>
                 {item.favorite && <StarFilled className={styles.queryFavorite} aria-hidden="true" />}

@@ -30,30 +30,16 @@
   gap: var(--hb-space-4);
 }
 .summary {
+  position: relative;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.4fr);
   gap: var(--hb-space-6);
   min-width: 0;
   align-items: stretch;
+  margin-bottom: var(--hb-space-2);
 }
 .signalSection {
   min-width: 0;
-}
-.scopeHeader {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--hb-space-2) var(--hb-space-6);
-  min-height: 32px;
-  margin-bottom: var(--hb-space-3);
-}
-.scopeControls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hb-space-2);
-}
-.scopeControls :global(.ant-select) {
-  min-width: 160px;
 }
 .signalGrid {
   display: grid;
@@ -74,22 +60,12 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-@media (max-width: 480px) {
-  .scopeControls {
-    width: 100%;
-  }
-  .scopeControls :global(.ant-select) {
-    min-width: 0;
-    flex: 1;
-  }
-}
-
 .pageActions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--hb-space-2);
-  margin-inline-start: auto;
+  min-height: 32px;
 }
 
 @media (max-width: 1200px) and (min-width: 801px) {
