@@ -15,40 +15,102 @@
  * limitations under the License.
  */
 
+import { Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
-
-import { DashboardStart } from '../components/dashboard-start';
-import { DashboardActivity } from '../components/dashboard-activity';
-import styles from '../components/dashboard-activity.module.css';
+import { OperationalPage } from '@/shared/operational-page';
+import { DashboardMonitorStatus, DashboardAttention, DashboardContinue } from '../components/dashboard-overview';
+import { DashboardSetupActions } from '../components/dashboard-setup-actions';
+import { DashboardMetricPreview } from '../components/dashboard-metric-preview';
+import { DashboardLogPreview } from '../components/dashboard-log-preview';
+import { DashboardTracePreview } from '../components/dashboard-trace-preview';
+import styles from '../components/dashboard-start.module.css';
 import { useDashboardStartController } from '../controller/use-dashboard-start-controller';
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const start = useDashboardStartController();
+  const signals = start.signals;
   return (
-    <OperationalPage>
-      <OperationalPageHeader
-        title={t(start.activity.firstUse ? 'dashboard.start.title' : 'dashboard.daily.title')}
-        description={t(start.activity.firstUse ? 'dashboard.start.description' : 'dashboard.daily.description')}
-        actions={<Link to={start.savedQueriesTarget}>{t('exploreSaved.directory')}</Link>}
-      />
-      {start.activity.firstUse ? (
-        <>
-          <Link to={start.activity.targets.signals}>{t('dashboard.daily.openSignals')}</Link>
-          <DashboardStart {...start} />
-        </>
-      ) : (
-        <>
-          <DashboardActivity activity={start.activity} />
-          <details className={styles.intake}>
-            <summary>{t('dashboard.daily.addData')}</summary>
-            <DashboardStart {...start} />
-          </details>
-        </>
-      )}
-    </OperationalPage>
+    <div className={styles.page}>
+      <OperationalPage mode="workspace">
+        <div className={styles.summary}>
+          <DashboardMonitorStatus overview={start.overview} />
+          <DashboardAttention
+            overview={start.overview}
+            rotation={start.attentionRotation}
+            actions={
+              <div className={styles.pageActions}>
+                <DashboardSetupActions
+                  canCreateMonitor={start.canCreateMonitor}
+                  createMonitorTarget={start.createMonitorTarget}
+                  telemetryTarget={start.telemetryTarget}
+                />
+              </div>
+            }
+          />
+        </div>
+        <section aria-label={t('dashboard.v3.signalOverview')} className={styles.signalSection}>
+          <DashboardScopeHeader signals={signals} />
+          <div className={styles.signalGrid}>
+            <DashboardMetricPreview signals={signals} />
+            <DashboardLogPreview signals={signals} />
+            <DashboardTracePreview signals={signals} />
+          </div>
+        </section>
+        <DashboardContinue overview={start.overview} directoryTarget={start.savedQueriesTarget} />
+      </OperationalPage>
+    </div>
+  );
+}
+
+function DashboardScopeHeader({ signals }: { signals: ReturnType<typeof useDashboardStartController>['signals'] }) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.scopeHeader}>
+      <div className={styles.scopeControls}>
+        <Select
+          aria-label={t('dashboard.v2.service')}
+          placeholder={scopePlaceholder(signals, 'service', t)}
+          disabled={!signals.serviceName && (signals.catalogState !== 'ready' || signals.options.length === 0)}
+          allowClear
+          showSearch
+          value={signals.serviceName || undefined}
+          onChange={value => signals.setService(value ?? '')}
+          options={[...new Set(signals.options.map(entity => entity.name))].map(name => ({
+            value: name,
+            label: name
+          }))}
+        />
+        <Select
+          aria-label={t('dashboard.v2.environment')}
+          placeholder={scopePlaceholder(signals, 'environment', t)}
+          disabled={
+            !signals.environment &&
+            (signals.catalogState !== 'ready' || !signals.options.some(entity => entity.environment))
+          }
+          allowClear
+          showSearch
+          value={signals.environment || undefined}
+          onChange={value => signals.setEnvironment(value ?? '')}
+          options={[
+            ...new Set(signals.options.flatMap(entity => (entity.environment ? [entity.environment] : [])))
+          ].map(name => ({ value: name, label: name }))}
+        />
+      </div>
+    </div>
+  );
+}
+
+function scopePlaceholder(
+  signals: ReturnType<typeof useDashboardStartController>['signals'],
+  scope: 'service' | 'environment',
+  t: (key: string) => string
+) {
+  if (signals.catalogState === 'loading') return t(`dashboard.v2.${scope}Loading`);
+  if (signals.catalogState === 'error') return t(`dashboard.v2.${scope}Unavailable`);
+  const available =
+    scope === 'service' ? signals.options.length > 0 : signals.options.some(entity => entity.environment);
+  return t(
+    available ? `dashboard.v2.${scope === 'service' ? 'allServices' : 'allEnvironments'}` : `dashboard.v2.${scope}Empty`
   );
 }
