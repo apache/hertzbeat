@@ -97,10 +97,12 @@ public class MonitorsController {
 
     @DeleteMapping("manage")
     @Operation(summary = "Unmanaged monitoring items in batches according to the monitoring ID list",
-            description = "Unmanaged monitoring items in batches according to the monitoring ID list")
+            description = "Pause monitors in batches. Send the monitoring ID list as a JSON array request body "
+                    + "(Content-Type: application/json), since large selections do not fit in the URL. The ids query "
+                    + "parameter is still accepted for existing clients and takes precedence when present.")
     public ResponseEntity<Message<Void>> cancelManageMonitors(
-            @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids,
-            @Parameter(description = "Monitoring ID List in request body", example = "[6565463543]") @RequestBody(required = false) List<Long> bodyIds
+            @Parameter(description = "Monitoring ID List, still accepted for existing clients", example = "6565463543") @RequestParam(required = false) List<Long> ids,
+            @Parameter(description = "Monitoring ID List as a JSON array", example = "[6565463543]") @RequestBody(required = false) List<Long> bodyIds
     ) {
         List<Long> monitorIds = ids != null && !ids.isEmpty() ? ids : bodyIds;
         if (monitorIds != null && !monitorIds.isEmpty()) {
