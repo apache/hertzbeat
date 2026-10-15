@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,13 +31,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverMutationResponse;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverOptionResponse;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverRequest;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverResponse;
+import org.apache.hertzbeat.alert.service.NoticeReceiverContractMapper;
+import org.apache.hertzbeat.alert.service.NoticeReceiverContractService;
+import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
-import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
@@ -42,9 +53,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -66,7 +79,10 @@ class NoticeConfigControllerTest {
     private NoticeConfigServiceImpl noticeConfigService;
 
     @Mock
-    private AlerterProperties alerterProperties;
+    private NoticeReceiverContractService noticeReceiverService;
+
+    @Mock
+    private org.apache.hertzbeat.alert.AlerterProperties alerterProperties;
 
     @InjectMocks
     private NoticeConfigController noticeConfigController;
@@ -91,7 +107,7 @@ class NoticeConfigControllerTest {
         NoticeReceiver noticeReceiver = new NoticeReceiver();
         noticeReceiver.setName("tom");
         noticeReceiver.setId(5L);
-        noticeReceiver.setAccessToken("c03a568a306f8fd84dab51ff03cf6af6ba676a3be940c904e1df2de34853739d");
+        noticeReceiver.setAccessToken("raw-secret-access-token");
         noticeReceiver.setEmail("2762242004@qq.com");
         noticeReceiver.setHookUrl("https://www.tancloud.cn");
         noticeReceiver.setType((byte) 5);
@@ -126,50 +142,76 @@ class NoticeConfigControllerTest {
     @Test
     void addNewNoticeReceiver() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
-        System.out.println(noticeReceiver);
+        NoticeReceiverResponse response = safeResponse(noticeReceiver);
+        when(noticeReceiverService.create(any(NoticeReceiverRequest.class)))
+                .thenReturn(new NoticeReceiverMutationResponse(5L, "created", response));
         this.mockMvc.perform(post("/api/notice/receiver")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Add success"))
+                .andExpect(jsonPath("$.data.status").value("created"))
                 .andReturn();
+    }
+
+    @Test
+    void addReceiverAcceptsStructuredOptions() throws Exception {
+        NoticeReceiver persisted = NoticeReceiver.builder()
+                .id(6L)
+                .name("mail")
+                .type((byte) 1)
+                .email("ops@example.com")
+                .build();
+        when(noticeReceiverService.create(any(NoticeReceiverRequest.class)))
+                .thenReturn(new NoticeReceiverMutationResponse(6L, "created", safeResponse(persisted)));
+
+        this.mockMvc.perform(post("/api/notice/receiver")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"mail","type":1,"options":{"email":"ops@example.com"}}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("created"));
+
+        ArgumentCaptor<NoticeReceiverRequest> captor = ArgumentCaptor.forClass(NoticeReceiverRequest.class);
+        verify(noticeReceiverService).create(captor.capture());
+        assertEquals("ops@example.com", captor.getValue().getOptions().getEmail());
     }
 
     @Test
     void editNoticeReceiver() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
-        System.out.println(noticeReceiver);
+        NoticeReceiverResponse response = safeResponse(noticeReceiver);
+        when(noticeReceiverService.update(any(NoticeReceiverRequest.class)))
+                .thenReturn(new NoticeReceiverMutationResponse(5L, "updated", response));
         this.mockMvc.perform(put("/api/notice/receiver")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Edit success"))
+                .andExpect(jsonPath("$.data.status").value("updated"))
                 .andReturn();
 
     }
 
     @Test
     void deleteNoticeReceiver() throws Exception {
-        NoticeReceiver noticeReceiver = getNoticeReceiver();
-
-        when(noticeConfigService.getReceiverById(7565463543L))
-                .thenReturn(noticeReceiver);
-        when(noticeConfigService.getReceiverById(6565463543L))
-                .thenReturn(null);
+        when(noticeReceiverService.delete(7565463543L))
+                .thenReturn(new NoticeReceiverMutationResponse(7565463543L, "deleted", null));
+        when(noticeReceiverService.delete(6565463543L))
+                .thenReturn(NoticeReceiverMutationResponse.missing(6565463543L));
 
 
         this.mockMvc.perform(delete("/api/notice/receiver/{id}", 6565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("The relevant information of the recipient could not be found, please check whether the parameters are correct"))
+                .andExpect(jsonPath("$.data.status").value("missing"))
                 .andReturn();
 
         this.mockMvc.perform(delete("/api/notice/receiver/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Delete success"))
+                .andExpect(jsonPath("$.data.status").value("deleted"))
                 .andReturn();
 
     }
@@ -179,19 +221,20 @@ class NoticeConfigControllerTest {
         NoticeReceiver receiver1 = new NoticeReceiver();
         receiver1.setId(1L);
         receiver1.setName("Receiver1");
-        receiver1.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
+        receiver1.setType((byte) 3);
 
         NoticeReceiver receiver2 = new NoticeReceiver();
         receiver2.setId(2L);
         receiver2.setName("Receiver2");
+        receiver2.setType((byte) 3);
 
-        Page<NoticeReceiver> receiverPage = new PageImpl<>(
-                Arrays.asList(receiver1, receiver2),
+        Page<NoticeReceiverResponse> receiverPage = new PageImpl<>(
+                Arrays.asList(safeResponse(receiver1), safeResponse(receiver2)),
                 PageRequest.of(0, 8, Sort.by("id").descending()),
                 2
         );
 
-        when(noticeConfigService.getNoticeReceivers("Receiver", 0, 8)).thenReturn(receiverPage);
+        when(noticeReceiverService.page("Receiver", 0, 8)).thenReturn(receiverPage);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers")
                         .param("name", "Receiver")
@@ -203,7 +246,6 @@ class NoticeConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].id").value(1))
                 .andExpect(jsonPath("$.data.content[0].name").value("Receiver1"))
-                .andExpect(jsonPath("$.data.content[0].tgBotToken").value(NoticeReceiverMaskUtil.SECRET_MASK + "voJM"))
                 .andExpect(jsonPath("$.data.content[1].id").value(2))
                 .andExpect(jsonPath("$.data.content[1].name").value("Receiver2"))
                 .andExpect(jsonPath("$.data.totalElements").value(2))
@@ -215,23 +257,36 @@ class NoticeConfigControllerTest {
     @Test
     void getReceiverById() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
-        when(noticeConfigService.getReceiverById(7565463543L))
-                .thenReturn(noticeReceiver);
-        when(noticeConfigService.getReceiverById(6565463543L))
+        when(noticeReceiverService.get(7565463543L))
+                .thenReturn(safeResponse(noticeReceiver));
+        when(noticeReceiverService.get(6565463543L))
                 .thenReturn(null);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 6565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("The relevant information of the recipient could not be found, please check whether the parameters are correct or refresh the page"))
+                .andExpect(jsonPath("$.msg").value("Receiver missing"))
                 .andReturn();
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data.accessToken").value(NoticeReceiverMaskUtil.SECRET_MASK + "739d"))
-                .andExpect(jsonPath("$.data.email").value("2762242004@qq.com"))
+                .andExpect(jsonPath("$.data.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.data.options.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.data.configuredSecrets", hasItem("accessToken")))
+                .andExpect(content().string(not(containsString("raw-secret-access-token"))))
                 .andReturn();
+    }
+
+    @Test
+    void getReceiverReportsStorageUnavailableWithoutLeakingCause() throws Exception {
+        when(noticeReceiverService.get(5L))
+                .thenThrow(new DataAccessResourceFailureException("password=do-not-return"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 5L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Receiver storage unavailable"));
     }
 
     @Test
@@ -341,7 +396,7 @@ class NoticeConfigControllerTest {
     @Test
     void sendTestMsg() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
-        when(noticeConfigService.sendTestMsg(noticeReceiver))
+        when(noticeReceiverService.sendTest(any(NoticeReceiverRequest.class)))
                 .thenReturn(false);
 
         this.mockMvc.perform(post("/api/notice/receiver/send-test-msg")
@@ -353,7 +408,7 @@ class NoticeConfigControllerTest {
                 .andReturn();
 
 
-        when(noticeConfigService.sendTestMsg(noticeReceiver))
+        when(noticeReceiverService.sendTest(any(NoticeReceiverRequest.class)))
                 .thenReturn(true);
 
         this.mockMvc.perform(post("/api/notice/receiver/send-test-msg")
@@ -381,6 +436,24 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void addNewNoticeTemplateReturnsStableSafeInvalidRequestFailure() throws Exception {
+        NoticeTemplate noticeTemplate = getNoticeTemplate();
+        noticeTemplate.setName("private-template-payload");
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.INVALID_REQUEST))
+                .when(noticeConfigService).addNoticeTemplate(noticeTemplate);
+
+        this.mockMvc.perform(post("/api/notice/template")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template request is invalid."))
+                .andExpect(content().string(not(containsString("private-template-payload"))))
+                .andExpect(content().string(not(containsString("87584674384"))));
+    }
+
+    @Test
     void editNoticeTemplate() throws Exception {
         NoticeTemplate noticeTemplate = getNoticeTemplate();
         doNothing().when(noticeConfigService).editNoticeTemplate(noticeTemplate);
@@ -397,9 +470,25 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void editNoticeTemplateReturnsStableSafeNotFoundFailure() throws Exception {
+        NoticeTemplate noticeTemplate = getNoticeTemplate();
+        noticeTemplate.setId(87584674384L);
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.NOT_FOUND))
+                .when(noticeConfigService).editNoticeTemplate(noticeTemplate);
+
+        this.mockMvc.perform(put("/api/notice/template")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template was not found."))
+                .andExpect(content().string(not(containsString("87584674384"))));
+    }
+
+    @Test
     void deleteNoticeTemplate_Success() throws Exception {
         Long templateId = 1L;
-        when(noticeConfigService.getNoticeTemplatesById(templateId)).thenReturn(Optional.of(new NoticeTemplate()));
 
         mockMvc.perform(delete("/api/notice/template/{id}", templateId))
                 .andExpect(status().isOk())
@@ -412,14 +501,30 @@ class NoticeConfigControllerTest {
     @Test
     void deleteNoticeTemplate_NotFound() throws Exception {
         Long templateId = 1L;
-        when(noticeConfigService.getNoticeTemplatesById(templateId)).thenReturn(Optional.empty());
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.NOT_FOUND))
+                .when(noticeConfigService).deleteNoticeTemplate(templateId);
 
         mockMvc.perform(delete("/api/notice/template/{id}", templateId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("The specified notification template could not be queried, please check whether the parameters are correct"));
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template was not found."));
 
-        Mockito.verify(noticeConfigService, Mockito.never()).deleteNoticeTemplate(templateId);
+        Mockito.verify(noticeConfigService).deleteNoticeTemplate(templateId);
+    }
+
+    @Test
+    void deleteNoticeTemplateReturnsStableSafeReadOnlyFailure() throws Exception {
+        long templateId = 87584674384L;
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.READ_ONLY))
+                .when(noticeConfigService).deleteNoticeTemplate(templateId);
+
+        mockMvc.perform(delete("/api/notice/template/{id}", templateId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Preset notice templates are read-only."))
+                .andExpect(content().string(not(containsString("87584674384"))));
     }
 
     @Test
@@ -460,6 +565,18 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void getTemplatesReturnsStableSafeStorageFailure() throws Exception {
+        when(noticeConfigService.getNoticeTemplates(null, true, 0, 8))
+                .thenThrow(new DataAccessResourceFailureException("private-storage-token"));
+
+        this.mockMvc.perform(get("/api/notice/templates"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template storage is unavailable."))
+                .andExpect(content().string(not(containsString("private-storage-token"))));
+    }
+
+    @Test
     void testGetTemplatesById() throws Exception {
         // Mock the service response
         NoticeTemplate template = new NoticeTemplate();
@@ -474,13 +591,13 @@ class NoticeConfigControllerTest {
         this.mockMvc.perform(get("/api/notice/template/{id}", 25857585858L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("The specified notification template could not be queried, please check whether the parameters are correct or refresh the page"));
+                .andExpect(jsonPath("$.msg").value("Notice template was not found."));
     }
 
     @Test
     void sendTestMsg_Failure() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
-        when(noticeConfigService.sendTestMsg(noticeReceiver)).thenReturn(false);
+        when(noticeReceiverService.sendTest(any(NoticeReceiverRequest.class))).thenReturn(false);
 
         this.mockMvc.perform(post("/api/notice/receiver/send-test-msg")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -490,7 +607,7 @@ class NoticeConfigControllerTest {
                 .andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
                 .andReturn();
 
-        verify(noticeConfigService, times(1)).sendTestMsg(noticeReceiver);
+        verify(noticeReceiverService, times(1)).sendTest(any(NoticeReceiverRequest.class));
     }
 
     @Test
@@ -506,12 +623,22 @@ class NoticeConfigControllerTest {
 
     @Test
     void getAllReceivers() throws Exception {
-        List<NoticeReceiver> receivers = Arrays.asList(new NoticeReceiver(), new NoticeReceiver());
-        when(noticeConfigService.getAllNoticeReceivers()).thenReturn(receivers);
+        NoticeReceiver receiver = getNoticeReceiver();
+        List<NoticeReceiverOptionResponse> receivers = List.of(
+                new NoticeReceiverOptionResponse(receiver.getId(), receiver.getName(), receiver.getType()));
+        when(noticeReceiverService.options()).thenReturn(receivers);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data[0].accessToken").doesNotExist())
+                .andExpect(jsonPath("$.data[0].options.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.data[0].options").doesNotExist())
+                .andExpect(jsonPath("$.data[0].configuredSecrets").doesNotExist())
+                .andExpect(jsonPath("$.data[0].creator").doesNotExist())
+                .andExpect(jsonPath("$.data[0].id").value(5))
+                .andExpect(jsonPath("$.data[0].name").value("tom"))
+                .andExpect(jsonPath("$.data[0].type").value(5))
                 .andReturn();
     }
 
@@ -533,7 +660,7 @@ class NoticeConfigControllerTest {
                         .content(JsonUtil.toJson(noticeTemplate)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.containsString("HighCPUUsage")))
+                .andExpect(jsonPath("$.data").value(containsString("HighCPUUsage")))
                 .andReturn();
     }
 
@@ -551,5 +678,9 @@ class NoticeConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andReturn();
+    }
+
+    private NoticeReceiverResponse safeResponse(NoticeReceiver receiver) {
+        return new NoticeReceiverContractMapper().toResponse(receiver);
     }
 }

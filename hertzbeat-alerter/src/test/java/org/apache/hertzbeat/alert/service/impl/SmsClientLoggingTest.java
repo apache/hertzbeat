@@ -34,7 +34,6 @@ import org.apache.hertzbeat.common.entity.dto.sms.AwsSmsProperties;
 import org.apache.hertzbeat.common.entity.dto.sms.SmslocalSmsProperties;
 import org.apache.hertzbeat.common.entity.dto.sms.TencentSmsProperties;
 import org.apache.hertzbeat.common.entity.dto.sms.TwilioSmsProperties;
-import org.apache.hertzbeat.common.entity.dto.sms.UniSmsProperties;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -78,11 +77,6 @@ class SmsClientLoggingTest {
         withSuccessfulResponse("{\"Code\":\"OK\"}",
             () -> new AlibabaSmsClientImpl(alibabaProperties).sendMessage(receiver, null, alert));
 
-        UniSmsProperties uniProperties =
-            new UniSmsProperties(ACCESS_KEY, "unisms-secret", "sign", "template", "hmac");
-        withSuccessfulResponse("{\"code\":\"0\"}",
-            () -> new UniSmsClientImpl(uniProperties).sendMessage(receiver, null, alert));
-
         withSuccessfulResponse("{\"sid\":\"message-id\"}",
             () -> new TwilioSmsClientImpl(twilioProperties()).sendMessage(receiver, null, alert));
 
@@ -108,8 +102,6 @@ class SmsClientLoggingTest {
                 () -> new AwsSmsClientImpl(awsProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException alibabaFailure = withResponse(502, body,
                 () -> new AlibabaSmsClientImpl(alibabaProperties()).sendMessage(receiver(), null, alert()));
-        SendMessageException uniFailure = withResponse(429, body,
-                () -> new UniSmsClientImpl(uniProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException twilioFailure = withResponse(429, body,
                 () -> new TwilioSmsClientImpl(twilioProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException tencentFailure = withResponse(429, body,
@@ -119,14 +111,12 @@ class SmsClientLoggingTest {
 
         assertEquals("AWS SMS request failed with HTTP status 503", awsFailure.getMessage());
         assertEquals("Alibaba Cloud SMS request failed with HTTP status 502", alibabaFailure.getMessage());
-        assertEquals("UniSMS request failed with HTTP status 429", uniFailure.getMessage());
         assertEquals("Twilio SMS request failed with HTTP status 429", twilioFailure.getMessage());
         assertEquals("Tencent Cloud SMS request failed with HTTP status 429", tencentFailure.getMessage());
         assertEquals("SMSLocal request failed with HTTP status 429", smslocalFailure.getMessage());
         assertNoSensitiveSentinels(output.getAll()
                 + awsFailure.getMessage()
                 + alibabaFailure.getMessage()
-                + uniFailure.getMessage()
                 + twilioFailure.getMessage()
                 + tencentFailure.getMessage()
                 + smslocalFailure.getMessage());
@@ -138,10 +128,6 @@ class SmsClientLoggingTest {
                 200,
                 "{\"Code\":\"THROTTLED\",\"Message\":\"" + PROVIDER_BODY + "\"}",
                 () -> new AlibabaSmsClientImpl(alibabaProperties()).sendMessage(receiver(), null, alert()));
-        SendMessageException uniFailure = withResponse(
-                200,
-                "{\"code\":\"RATE_LIMITED\",\"message\":\"" + PROVIDER_BODY + "\"}",
-                () -> new UniSmsClientImpl(uniProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException awsFailure = withResponse(
                 200,
                 "{\"message\":\"" + PROVIDER_BODY + "\"}",
@@ -161,14 +147,12 @@ class SmsClientLoggingTest {
                 () -> new SmsLocalSmsClientImpl(smslocalProperties()).sendMessage(receiver(), null, alert()));
 
         assertEquals("Alibaba Cloud SMS request failed (code: THROTTLED)", alibabaFailure.getMessage());
-        assertEquals("UniSMS request failed (code: RATE_LIMITED)", uniFailure.getMessage());
         assertEquals("AWS SMS provider returned an invalid response", awsFailure.getMessage());
         assertEquals("Twilio SMS request failed (code: 21608)", twilioFailure.getMessage());
         assertEquals("Tencent Cloud SMS request failed (code: THROTTLED)", tencentFailure.getMessage());
         assertEquals("SMSLocal request failed (code: RATE_LIMITED)", smslocalFailure.getMessage());
         assertNoSensitiveSentinels(output.getAll()
                 + alibabaFailure.getMessage()
-                + uniFailure.getMessage()
                 + awsFailure.getMessage()
                 + twilioFailure.getMessage()
                 + tencentFailure.getMessage()
@@ -181,8 +165,6 @@ class SmsClientLoggingTest {
                 () -> new AwsSmsClientImpl(awsProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException alibabaFailure = withNetworkFailure(
                 () -> new AlibabaSmsClientImpl(alibabaProperties()).sendMessage(receiver(), null, alert()));
-        SendMessageException uniFailure = withNetworkFailure(
-                () -> new UniSmsClientImpl(uniProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException twilioFailure = withNetworkFailure(
                 () -> new TwilioSmsClientImpl(twilioProperties()).sendMessage(receiver(), null, alert()));
         SendMessageException tencentFailure = withNetworkFailure(
@@ -192,14 +174,12 @@ class SmsClientLoggingTest {
 
         assertEquals("AWS SMS request failed", awsFailure.getMessage());
         assertEquals("Alibaba Cloud SMS request failed", alibabaFailure.getMessage());
-        assertEquals("UniSMS request failed", uniFailure.getMessage());
         assertEquals("Twilio SMS request failed", twilioFailure.getMessage());
         assertEquals("Tencent Cloud SMS request failed", tencentFailure.getMessage());
         assertEquals("SMSLocal request failed", smslocalFailure.getMessage());
         assertNoSensitiveSentinels(output.getAll()
                 + awsFailure.getMessage()
                 + alibabaFailure.getMessage()
-                + uniFailure.getMessage()
                 + twilioFailure.getMessage()
                 + tencentFailure.getMessage()
                 + smslocalFailure.getMessage());
@@ -271,10 +251,6 @@ class SmsClientLoggingTest {
 
     private AlibabaSmsProperties alibabaProperties() {
         return new AlibabaSmsProperties(ACCESS_KEY, "alibaba-secret", "sign", "template");
-    }
-
-    private UniSmsProperties uniProperties() {
-        return new UniSmsProperties(ACCESS_KEY, "unisms-secret", "sign", "template", "hmac");
     }
 
     private TwilioSmsProperties twilioProperties() {

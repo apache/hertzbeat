@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat supports Memcached service monitoring by using commands such as stats, stats settings, and stats sizes to monitor indicators such as server process ID, server running seconds, version, current number of threads, item size, number of items, and current byte storage usage.
   zh-TW: HertzBeat支持Memcached服務監控，通過（stats、stats settings、stats sizes）命令對（服務器行程ID、服務器已運行秒數、版本、當前線程數、item的大小、item的數量、當前存儲佔用的位元組數）等名額進行監測。
   ja-JP: HertzBeat は Memcached サービスの一般的なメトリクスを監視します。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/memcached
+  en-US: https://hertzbeat.apache.org/docs/help/memcached
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

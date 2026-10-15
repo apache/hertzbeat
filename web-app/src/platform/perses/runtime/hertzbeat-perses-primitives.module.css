@@ -1,0 +1,296 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.primitive {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 388px;
+  grid-template-rows: 360px auto;
+}
+
+.runtime {
+  width: 100%;
+  min-width: 0;
+  height: 360px;
+  min-height: 360px;
+  overflow: hidden;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.runtime:has(> :global([data-perses-primitive='logs-table'])) {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  border-top: 0;
+}
+
+.primitive[data-log-density] .runtime :global([data-log-index]) {
+  box-sizing: border-box;
+  margin-bottom: 0;
+  border-radius: 0;
+  font-family: var(--hb-font-family-mono);
+  box-shadow: none;
+  transition: background-color 140ms ease;
+}
+
+.primitive[data-log-density='compact'] .runtime :global([data-log-index] > div:first-child) {
+  min-height: 30px;
+  box-sizing: border-box;
+  align-items: center;
+  padding-block: 2px;
+}
+
+.primitive[data-log-density='comfortable'] .runtime :global([data-log-index] > div:first-child) {
+  min-height: 36px;
+  box-sizing: border-box;
+  align-items: center;
+  padding-block: 4px;
+}
+
+.primitive[data-log-show-time='true'] .runtime :global([data-log-index] > div:first-child) {
+  grid-template-columns: 184px 72px minmax(0, 1fr) !important;
+}
+
+.primitive[data-log-show-time='false'] .runtime :global([data-log-index] > div:first-child) {
+  grid-template-columns: 72px minmax(0, 1fr) !important;
+}
+
+.primitive[data-log-show-time='false'] .runtime :global([data-log-index] time) {
+  display: none !important;
+}
+
+.primitive[data-log-density] .runtime :global([data-log-index] time) {
+  min-width: 0 !important;
+  max-width: 184px;
+  overflow: hidden;
+  font-family: var(--ant-font-family-code);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+}
+
+.primitive[data-log-density] .runtime :global([data-log-index] > div:first-child > div:last-of-type) {
+  min-width: 0 !important;
+  margin-left: 0 !important;
+}
+
+.primitive[data-log-density] .runtime :global([data-log-index] > div:first-child > div:last-of-type button) {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  box-sizing: border-box;
+  padding: 4px;
+}
+
+.primitive[data-log-density]
+  .runtime
+  :global([data-log-index] > div:first-child > div:last-of-type button:focus-visible) {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.primitive[data-log-show-time='true'] .runtime :global([data-log-index] > div:first-child > div:last-of-type) {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.primitive[data-log-show-time='false'] .runtime :global([data-log-index] > div:first-child > div:last-of-type) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.primitive[data-log-show-time='false'] .runtime :global([data-hertzbeat-log-severity-text]) {
+  grid-column: 1;
+}
+
+.primitive[data-log-density] .runtime :global([data-log-index]) {
+  border-left-color: transparent;
+}
+
+.primitive[data-log-density] .runtime :global([data-log-index] > div:first-child) {
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.primitive[data-log-wrap='false'] .runtime :global([data-log-index] p) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primitive[data-variant='fill'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.primitive[data-variant='fill'] .runtime {
+  height: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.primitive[data-metric-panel='StatChart'] .runtime :global(.MuiCardContent-root .MuiTypography-body1) {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (width <= 700px) {
+  .primitive[data-variant='fill']:not([data-metric-panel]) {
+    height: 480px;
+    flex: none;
+  }
+
+  .primitive[data-variant='fill'][data-metric-panel] {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primitive[data-log-density] .runtime :global([data-log-index]) {
+    transition: none;
+  }
+}
+
+.state {
+  display: grid;
+  min-height: 360px;
+  place-items: center;
+  color: var(--hb-text-secondary);
+}
+
+.primitive[data-variant='compact'] {
+  min-height: var(--hb-perses-compact-height, 84px);
+  grid-template-rows: var(--hb-perses-compact-height, 84px) auto;
+}
+
+.primitive[data-variant='compact'] .runtime,
+.primitive[data-variant='compact'] .state {
+  height: var(--hb-perses-compact-height, 84px);
+  min-height: var(--hb-perses-compact-height, 84px);
+}
+
+.completeness {
+  display: flex;
+  box-sizing: border-box;
+  height: 28px;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.primitive[data-log-show-time='true']
+  .runtime
+  :global([data-log-index] > div:first-child[data-hertzbeat-log-service-column='true']) {
+  grid-template-columns: 150px 70px 120px minmax(0, 1fr) !important;
+}
+.primitive[data-log-show-time='false']
+  .runtime
+  :global([data-log-index] > div:first-child[data-hertzbeat-log-service-column='true']) {
+  grid-template-columns: 70px 120px minmax(0, 1fr) !important;
+}
+.primitive[data-log-show-time='true']
+  .runtime
+  :global([data-log-index] > div:first-child[data-hertzbeat-log-service-column='true'] > div:last-of-type) {
+  grid-column: 4;
+}
+.primitive[data-log-show-time='false']
+  .runtime
+  :global([data-log-index] > div:first-child[data-hertzbeat-log-service-column='true'] > div:last-of-type) {
+  grid-column: 3;
+}
+
+@media (width <= 420px) {
+  .primitive[data-log-density] .runtime :global([data-log-index] > div:first-child) {
+    min-height: 52px;
+    grid-template-rows: auto auto;
+    grid-template-columns: minmax(0, 1fr) max-content !important;
+    align-items: center;
+    gap: 2px 8px;
+    padding: 5px 8px;
+  }
+
+  .primitive[data-log-density] .runtime :global([data-hertzbeat-log-severity-text]) {
+    display: block;
+    max-width: 12ch;
+    overflow: hidden;
+    grid-row: 1;
+    grid-column: 2;
+    color: var(--hb-text-muted);
+    font-family: var(--hb-font-family-mono);
+    font-size: 11px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .primitive[data-log-density] .runtime :global([data-log-index] time) {
+    grid-row: 1;
+    grid-column: 1;
+    max-width: 100%;
+  }
+
+  .primitive[data-log-density] .runtime :global([data-log-index] > div:first-child > div:last-of-type) {
+    min-width: 0;
+    grid-row: 2;
+    grid-column: 1 / -1 !important;
+    gap: 6px;
+  }
+
+  .primitive[data-log-density] .runtime :global([data-log-index] > div:first-child > div:last-of-type p) {
+    min-width: 0;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: pre-wrap;
+  }
+
+  .primitive[data-log-density] .runtime :global([data-log-index] > div:first-child > div:last-of-type button) {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 8px;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .primitive[data-log-show-time='false'] .runtime :global([data-hertzbeat-log-severity-text]) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (width <= 420px) {
+  .primitive[data-log-density]
+    .runtime
+    :global([data-log-index] > div:first-child[data-hertzbeat-log-service-column='true']) {
+    grid-template-columns: minmax(0, 1fr) max-content !important;
+    grid-template-rows: auto auto auto;
+  }
+  .primitive[data-log-density]
+    .runtime
+    :global([data-log-index] > div:first-child[data-hertzbeat-log-service-column='true'] > div:last-of-type) {
+    grid-row: 3;
+  }
+  .primitive[data-log-density] .runtime :global([data-hertzbeat-log-service]) {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+}

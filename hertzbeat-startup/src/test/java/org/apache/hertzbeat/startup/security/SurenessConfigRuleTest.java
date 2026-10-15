@@ -79,13 +79,10 @@ class SurenessConfigRuleTest {
         assertEquals("[admin]", rolesFor("/api/config/template/linux", "put"));
     }
 
-    /**
-     * The notification widget in the top bar lets every signed in user flip the mute flag,
-     * so this one write has to stay reachable by all roles.
-     */
+    /** Mute writes require an administrator; authenticated readers retain their existing access. */
     @Test
-    void togglingMuteStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/config/mute", "post"));
+    void writingMuteRequiresAdminWhileReadingStaysOpenToEveryRole() {
+        assertEquals("[admin]", rolesFor("/api/config/mute", "post"));
         assertEquals("[admin,user,guest]", rolesFor("/api/config/mute", "get"));
     }
 

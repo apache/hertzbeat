@@ -3,11 +3,7 @@
   "projectOwner": "apache",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "files": [
-    "README.md",
-    "README_CN.md",
-    "README_JP.md"
-  ],
+  "files": [],
   "imageSize": 100,
   "commit": true,
   "commitConvention": "none",

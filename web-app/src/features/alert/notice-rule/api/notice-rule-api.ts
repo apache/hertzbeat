@@ -1,0 +1,125 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+
+import { loadAllNoticeReceiverOptions } from '../../notice-receiver/api/notice-receiver-api';
+import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
+import {
+  buildNoticeRulePayload,
+  maximumNoticeRuleScanPages,
+  noticeRuleScanPageSize,
+  writeNoticeRuleQuery,
+  type NoticeRuleDraft,
+  type NoticeRuleQuery
+} from '../model/notice-rule-model';
+import { NoticeRuleContractError } from '../model/notice-rule-failure';
+import { noticeRuleEndpoint, noticeRulesEndpoint, noticeTemplatesEndpoint } from '../../api/notice-api-endpoints';
+import { noticeRuleApiRequest } from './notice-rule-api-failure';
+import { parseNoticeRule, parseNoticeRulePage, parseNoticeTemplates } from './notice-rule-schema';
+
+export async function loadNoticeRules(query: NoticeRuleQuery) {
+  return noticeRuleApiRequest(
+    async () =>
+      parseNoticeRulePage(
+        await apiMessageGet(`${noticeRulesEndpoint}?${writeNoticeRuleQuery(query).toString()}`),
+        query
+      ),
+    'collection'
+  );
+}
+
+export async function loadNoticeRule(id: number) {
+  return noticeRuleApiRequest(
+    async () => parseNoticeRule(await apiMessageGet(noticeRuleDetailEndpoint(id)), id),
+    'detail'
+  );
+}
+
+export async function loadAllNoticeReceivers(signal?: AbortSignal) {
+  return noticeRuleApiRequest(
+    async () => {
+      const receivers = await loadAllNoticeReceiverOptions(signal);
+      if (receivers.some(item => item.id < 1) || new Set(receivers.map(item => item.id)).size !== receivers.length) {
+        throw new NoticeRuleContractError('NOTICE_RULE_RECEIVER_OPTIONS_INVALID');
+      }
+      return receivers;
+    },
+    'collection',
+    signal
+  );
+}
+
+export async function loadAllNoticeTemplates(signal?: AbortSignal) {
+  return noticeRuleApiRequest(
+    async () => {
+      const templates = parseNoticeTemplates(
+        await (signal
+          ? apiMessageGet(`${noticeTemplatesEndpoint}/all`, { signal })
+          : apiMessageGet(`${noticeTemplatesEndpoint}/all`))
+      );
+      const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
+      if (templates.length === 0 || new Set(ids).size !== ids.length) {
+        throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
+      }
+      return templates;
+    },
+    'collection',
+    signal
+  );
+}
+
+export async function loadAllNoticeRulesByName(name: string) {
+  const first = await loadNoticeRules({ name, pageIndex: 0, pageSize: noticeRuleScanPageSize });
+  if (first.totalPages > maximumNoticeRuleScanPages) {
+    throw new NoticeRuleContractError('NOTICE_RULE_PAGE_COUNT_INVALID');
+  }
+  const pages = [first];
+  for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
+    const page = await loadNoticeRules({ name, pageIndex, pageSize: noticeRuleScanPageSize });
+    if (page.totalElements !== first.totalElements || page.totalPages !== first.totalPages) {
+      throw new NoticeRuleContractError('NOTICE_RULE_PAGE_SET_CHANGED');
+    }
+    pages.push(page);
+  }
+  const records = pages.flatMap(page => page.content);
+  if (records.length !== first.totalElements || new Set(records.map(rule => rule.id)).size !== records.length) {
+    throw new NoticeRuleContractError('NOTICE_RULE_FULL_SCAN_INVALID');
+  }
+  return records;
+}
+
+export async function saveNoticeRule(
+  draft: NoticeRuleDraft,
+  receivers: NoticeReceiverOption[],
+  templates: NoticeTemplate[]
+) {
+  const payload = buildNoticeRulePayload(draft, receivers, templates);
+  return noticeRuleApiRequest(
+    () => (draft.id ? apiMessagePut(noticeRuleEndpoint, payload) : apiMessagePost(noticeRuleEndpoint, payload)),
+    'write'
+  );
+}
+
+export function deleteNoticeRule(id: number) {
+  return noticeRuleApiRequest(() => apiMessageDelete(noticeRuleDetailEndpoint(id)), 'write');
+}
+
+function noticeRuleDetailEndpoint(id: number) {
+  return `${noticeRuleEndpoint}/${id}`;
+}

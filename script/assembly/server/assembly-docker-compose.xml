@@ -36,6 +36,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>*.yaml</include>
                 <include>*.md</include>
                 <include>ext-lib/README</include>
+                <include>.env.example</include>
             </includes>
             <outputDirectory>hertzbeat-mysql-iotdb</outputDirectory>
         </fileSet>
@@ -47,6 +48,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>*.yaml</include>
                 <include>*.md</include>
                 <include>ext-lib/README</include>
+                <include>.env.example</include>
             </includes>
             <outputDirectory>hertzbeat-mysql-tdengine</outputDirectory>
         </fileSet>
@@ -58,6 +60,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>*.yaml</include>
                 <include>*.md</include>
                 <include>ext-lib/README</include>
+                <include>.env.example</include>
             </includes>
             <outputDirectory>hertzbeat-mysql-victoria-metrics</outputDirectory>
         </fileSet>
@@ -69,6 +72,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>*.yaml</include>
                 <include>*.md</include>
                 <include>ext-lib/README</include>
+                <include>.env.example</include>
             </includes>
             <outputDirectory>hertzbeat-postgresql-victoria-metrics</outputDirectory>
         </fileSet>
@@ -80,6 +84,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>*.yaml</include>
                 <include>*.md</include>
                 <include>ext-lib/README</include>
+                <include>.env.example</include>
             </includes>
             <outputDirectory>hertzbeat-postgresql-greptimedb</outputDirectory>
         </fileSet>

@@ -1,0 +1,170 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
+
+export const alertGroupPageSizes = compactTablePageSizes;
+
+export type AlertGroupQuery = { search: string; pageIndex: number; pageSize: number };
+export type AlertGroupFailure = 'missing' | 'unavailable' | 'error';
+export type AlertGroupWriteOutcome = 'rejected' | 'uncertain';
+
+export type AlertGroupDraft = {
+  id?: number;
+  name: string;
+  groupLabels: string[];
+  groupWait: number;
+  groupInterval: number;
+  repeatInterval: number;
+  enable: boolean;
+};
+
+export type AlertGroupConverge = {
+  id: number;
+  name: string;
+  groupLabels: string[] | null;
+  groupWait: number | null;
+  groupInterval: number | null;
+  repeatInterval: number | null;
+  enable: boolean | null;
+  creator?: string | null;
+  modifier?: string | null;
+  gmtCreate?: string | null;
+  gmtUpdate?: string | null;
+};
+
+export type AlertGroupPage = PagedCollection<AlertGroupConverge>;
+
+export class AlertGroupContractError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'AlertGroupContractError';
+  }
+}
+
+export class AlertGroupMissingError extends Error {
+  constructor() {
+    super('Alert Group detail is missing');
+    this.name = 'AlertGroupMissingError';
+  }
+}
+
+/**
+ * Stable request evidence exposed by the Alert Group API boundary. Transport
+ * details stay private so controllers cannot depend on HTTP implementation.
+ */
+export class AlertGroupRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertGroupFailure,
+    readonly writeOutcome: AlertGroupWriteOutcome
+  ) {
+    super('Alert Group request failed');
+    this.name = 'AlertGroupRequestFailure';
+  }
+}
+
+/** Maps domain failures to the read state understood by Alert Group screens. */
+export function alertGroupFailureKind(error: unknown): AlertGroupFailure {
+  if (error instanceof AlertGroupMissingError) return 'missing';
+  return error instanceof AlertGroupRequestFailure ? error.kind : 'error';
+}
+
+/**
+ * Returns rejected only when retrying the write is known to be safe. Unknown
+ * outcomes remain uncertain and must proceed through canonical read proof.
+ */
+export function alertGroupWriteOutcome(error: unknown): AlertGroupWriteOutcome {
+  if (error instanceof AlertGroupContractError) return 'rejected';
+  return error instanceof AlertGroupRequestFailure ? error.writeOutcome : 'uncertain';
+}
+
+export function readAlertGroupQuery(params: URLSearchParams): AlertGroupQuery {
+  return {
+    search: params.get('search')?.trim() ?? '',
+    ...readZeroBasedPage(params, alertGroupPageSizes, 8)
+  };
+}
+
+export function writeAlertGroupQuery(query: AlertGroupQuery) {
+  const params = writeZeroBasedPage(query.pageIndex, query.pageSize);
+  if (query.search) params.set('search', query.search);
+  return params;
+}
+
+export function createAlertGroupDraft(): AlertGroupDraft {
+  return {
+    name: '',
+    groupLabels: [],
+    groupWait: 30,
+    groupInterval: 300,
+    repeatInterval: 14400,
+    enable: true
+  };
+}
+
+export function buildAlertGroupPayload(draft: AlertGroupDraft) {
+  const groupLabels = [...new Set(draft.groupLabels.map(label => label.trim()).filter(Boolean))];
+  return {
+    ...(draft.id ? { id: draft.id } : {}),
+    name: draft.name.trim(),
+    groupLabels,
+    groupWait: draft.groupWait,
+    groupInterval: draft.groupInterval,
+    repeatInterval: draft.repeatInterval,
+    enable: draft.enable
+  };
+}
+
+export function buildAlertGroupTogglePayload(group: AlertGroupConverge, enable: boolean) {
+  return {
+    id: group.id,
+    name: group.name,
+    groupLabels: group.groupLabels,
+    groupWait: group.groupWait,
+    groupInterval: group.groupInterval,
+    repeatInterval: group.repeatInterval,
+    enable
+  };
+}
+
+export function validateAlertGroupDraft(draft: AlertGroupDraft) {
+  const invalid: Array<'name' | 'groupLabels'> = [];
+  if (!draft.name.trim()) invalid.push('name');
+  if (draft.groupLabels.map(label => label.trim()).filter(Boolean).length === 0) invalid.push('groupLabels');
+  return invalid;
+}
+
+export function alertGroupDraftFromDetail(group: AlertGroupConverge): AlertGroupDraft {
+  return {
+    id: group.id,
+    name: group.name ?? '',
+    groupLabels: group.groupLabels ?? [],
+    groupWait: group.groupWait ?? 30,
+    groupInterval: group.groupInterval ?? 300,
+    repeatInterval: group.repeatInterval ?? 14400,
+    enable: group.enable ?? true
+  };
+}
+
+/** Canonicalizes selected ids before they become batch-write evidence. */
+export function normalizeAlertGroupIds(ids: readonly number[]) {
+  if (ids.length === 0 || ids.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertGroupContractError('Alert Group ids are invalid');
+  }
+  return [...new Set(ids)].sort((left, right) => left - right);
+}

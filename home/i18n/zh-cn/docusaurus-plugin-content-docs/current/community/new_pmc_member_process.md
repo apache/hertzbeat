@@ -307,3 +307,23 @@ A PMC member helps manage and guide the direction of the project.
 Thanks,
 On behalf of the Apache HertzBeat PMC
 ```
+
+## 订阅私有邮件列表
+
+1. 发送邮件至 [private-subscribe@hertzbeat.apache.org](mailto:private-subscribe@hertzbeat.apache.org)。
+2. 查收主题为 "confirm subscribe to `private@hertzbeat.apache.org`" 的确认邮件。
+3. 按照邮件提示回复确认信息，等待审核即可。
+
+若收到主题为 "WELCOME XXXX" 的邮件，即表示订阅成功。
+
+PMC 成员必须订阅 `private@hertzbeat.apache.org` 私有邮件列表，该列表用于非公开敏感内容的保密讨论，例如安全漏洞，此要求遵循 [ASF《安全处理指南》](https://www.apache.org/security/)。
+
+## 阅读 PMC 成员指南
+
+请阅读 [PMC 指南](https://www.apache.org/dev/pmc.html)，了解项目管理委员会（PMC）成员在管理我们的项目方面的一般责任以及日常维护的常见操作程序。
+
+## 注意
+
+如果上述订阅不成功，可以尝试使用网页端工具：[subscribe](https://whimsy.apache.org/committers/subscribe.cgi)
+
+<img width="1038" height="225" alt="subscribe" src="https://github.com/user-attachments/assets/fc0c064b-759b-4101-978b-bbf98fce8bfe" />

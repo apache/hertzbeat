@@ -1,0 +1,125 @@
+{
+  "shell": {
+    "navigation": {
+      "basicMonitoring": "Basic monitoring",
+      "applicationObservability": "Application observability",
+      "resources": "Resources",
+      "alerting": "Alerting",
+      "administration": "Administration",
+      "collapse": "Collapse navigation",
+      "expand": "Expand navigation",
+      "toggleGroup": "Toggle {{label}}"
+    },
+    "permission": {
+      "roleRequired": "Administrator access is required."
+    },
+    "status": {
+      "summary": "Runtime status",
+      "server": "Server",
+      "greptime": "GreptimeDB",
+      "collector": "Collector",
+      "unknown": "Unknown",
+      "unavailable": "Unavailable",
+      "state": {
+        "loading": "Loading",
+        "available": "Available",
+        "degraded": "Needs attention",
+        "unavailable": "Unavailable",
+        "unknown": "Unknown"
+      },
+      "currentStatusObservedAt": "Current status · {{time}}",
+      "collectorLastReportedAt": "Last report {{time}}",
+      "collectorCounts": "{{online}}/{{total}} online · {{runtimeHealthy}} runtime healthy",
+      "collectorOnlineCount": "Collectors online: {{online}}/{{total}}",
+      "collectorRuntimeHealthyCount": "Runtimes healthy: {{count}}",
+      "collectorOfflineCount": "Collectors offline: {{count}}",
+      "collectorNotReported": "No runtime report",
+      "notObserved": "Not observed",
+      "details": "{{label}} status details",
+      "openManagement": "Open management",
+      "request": {
+        "permission": "Runtime status permission denied",
+        "unavailable": "Runtime status request unavailable",
+        "contract": "Runtime status response invalid",
+        "error": "Runtime status could not be loaded"
+      },
+      "reason": {
+        "server_unavailable": "Server unavailable",
+        "storage_unavailable": "Storage unavailable",
+        "storage_query_failed": "Storage query failed",
+        "collector_status_unavailable": "Collector status unavailable"
+      }
+    },
+    "time": {
+      "global": "Global time",
+      "route_owned": "Page time",
+      "none": "No shared time",
+      "unknown": "Time policy unknown",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "Off",
+      "remaining": "{{seconds}}s",
+      "rangeOption": "Range {{range}}",
+      "autoRefreshOff": "Auto refresh off",
+      "autoRefreshSeconds": "Auto refresh {{seconds}}s"
+    },
+    "actions": {
+      "refresh": "Refresh active data",
+      "alerts": "Open alerts",
+      "investigate": "Investigate this view",
+      "alertsWithCount": "Open alerts, {{count}} active",
+      "useLightTheme": "Use light theme",
+      "useDarkTheme": "Use dark theme",
+      "fullscreenEnter": "Enter full screen",
+      "fullscreenExit": "Exit full screen",
+      "fullscreenFailed": "Full screen could not be opened",
+      "language": "Switch language",
+      "user": "User actions"
+    },
+    "account": {
+      "settings": "System settings",
+      "lock": "Lock session",
+      "about": "About HertzBeat",
+      "logout": "Sign out"
+    },
+    "about": {
+      "title": "About HertzBeat",
+      "version": "Version {{version}}",
+      "description": "Apache HertzBeat is an open-source real-time monitoring system.",
+      "website": "Website",
+      "documentation": "Documentation",
+      "repository": "Source code",
+      "issues": "Report an issue"
+    },
+    "alerts": {
+      "title": "Active alerts",
+      "loading": "Loading recent alerts",
+      "empty": "No active alerts",
+      "unavailable": "Recent alerts are unavailable",
+      "error": "Recent alerts could not be read",
+      "openCenter": "Open Alert Center",
+      "soundLoading": "Loading alert sound setting",
+      "soundUnavailable": "Alert sound setting is unavailable",
+      "soundError": "Alert sound setting could not be read",
+      "soundReadOnly": "Only administrators can change the global alert sound setting",
+      "soundSaving": "Updating alert sound setting",
+      "soundSaveFailed": "Alert sound setting could not be updated",
+      "soundMuted": "Alert sound is muted",
+      "soundEnabled": "Alert sound is enabled",
+      "soundEnabledBrowserDenied": "Alert sound is enabled; browser notifications are blocked",
+      "soundEnabledBrowserUnsupported": "Alert sound is enabled; browser notifications are unsupported",
+      "browserTitle": "HertzBeat alert",
+      "browserBody": "A new active alert needs attention."
+    },
+    "importTasks": {
+      "title": "Monitor import",
+      "progress": "Import progress: {{progress}}%",
+      "success": "Monitor import completed.",
+      "failure": "Monitor configuration could not be imported."
+    },
+    "capability": {
+      "supported": "Available",
+      "unknown": "Capability unknown",
+      "unsupported": "Unsupported"
+    }
+  }
+}

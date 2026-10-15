@@ -1,0 +1,329 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { useState } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
+import type { ExactTimeWindow } from '@/shared/query-context';
+import type { TopologyGraph } from '../model/topology-contract';
+import { topologyQueryKeys } from './topology-query-keys';
+
+const api = vi.hoisted(() => ({ loadTopologyGraph: vi.fn() }));
+vi.mock('../api/topology-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/topology-api')>()),
+  loadTopologyGraph: api.loadTopologyGraph
+}));
+
+import { useTopologyPageController } from './use-topology-page-controller';
+
+describe('topology page controller refresh and interaction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.loadTopologyGraph.mockResolvedValue(topologyGraph(['1', '2']));
+  });
+  afterEach(cleanup);
+
+  it('keeps the same-key canvas during refetch and clears selection missing from refreshed evidence', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+
+    const pending = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockReturnValueOnce(pending.promise);
+    act(() => view.current().actions.refresh());
+    await waitFor(() => expect(view.current().state.refreshing).toBe(true));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    act(() => pending.resolve(topologyGraph(['1'])));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(false));
+    await waitFor(() => expect(view.current().state.interaction.selected).toEqual({ kind: 'none' }));
+  });
+
+  it('clears old graph and interaction before a changed query scope resolves', async () => {
+    const second = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockImplementation(query =>
+      query.depth === 2 ? second.promise : Promise.resolve(topologyGraph(['1']))
+    );
+    const view = renderController('/topology?depth=1');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('1'));
+    view.client.setQueryData(topologyQueryKeys.graph({ depth: 2 }), topologyGraph(['3']));
+
+    await act(async () => view.router.navigate('/topology?depth=2'));
+    expect(view.current().state.evidence.kind).toBe('loading');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+    act(() => second.resolve(topologyGraph(['2'])));
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+  });
+
+  it('keeps the canvas and a still-visible selection while the next edge page resolves', async () => {
+    const secondPage = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockImplementation(query =>
+      query.pageIndex === 1 ? secondPage.promise : Promise.resolve(topologyGraph(['1', '2']))
+    );
+    const view = renderController('/topology?pageIndex=0&pageSize=25');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+
+    act(() => view.current().actions.changePage(1, 25));
+
+    await waitFor(() => expect(view.router.state.location.search).toContain('pageIndex=1'));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    expect(view.current().state.refreshing).toBe(true);
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    act(() => secondPage.resolve(topologyGraph(['2', '3'])));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(false));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+  });
+});
+
+describe('topology page refresh revision and failure', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.loadTopologyGraph.mockResolvedValue(topologyGraph(['1', '2']));
+  });
+  afterEach(cleanup);
+
+  it('keeps canvas and selection when only refreshRevision changes', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+    const pending = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockReturnValueOnce(pending.promise);
+
+    act(() => view.setRevision(1));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(true));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    act(() => pending.resolve(topologyGraph(['1', '2'])));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(false));
+  });
+
+  it('keeps canvas and selection when a shared refresh slides the same-duration window', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+    const pending = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockReturnValueOnce(pending.promise);
+
+    act(() => view.setSharedTime({ window: { from: 2_000, to: 3_000 }, revision: 1 }));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(true));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    act(() => pending.resolve(topologyGraph(['1', '2'])));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(false));
+  });
+
+  it('clears stale graph and interaction when the inherited window duration changes', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+    const pending = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockReturnValueOnce(pending.promise);
+
+    act(() => view.setSharedTime({ window: { from: 2_000, to: 4_000 }, revision: 1 }));
+    expect(view.current().state.evidence.kind).toBe('loading');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+    act(() => pending.resolve(topologyGraph(['1'])));
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+  });
+
+  it('keeps the ready graph and exposes only a safe failure kind when same-scope refresh fails', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('1'));
+    api.loadTopologyGraph.mockRejectedValueOnce(new ApiMessageError('private backend message', { status: 503 }));
+
+    act(() => view.current().actions.refresh());
+    await waitFor(() => expect(view.current().state.refreshFailure).toEqual({ kind: 'unavailable' }));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '1' });
+    expect(view.current().state).not.toHaveProperty('error');
+  });
+});
+
+describe('topology page route-owned inspector selection', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.loadTopologyGraph.mockResolvedValue(topologyGraph(['1', '2']));
+  });
+  afterEach(cleanup);
+
+  it('writes row drilldown to the URL while keeping hover local', async () => {
+    const view = renderController('/topology?depth=1');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    const evidence = view.current().state.evidence;
+    if (evidence.kind !== 'ready') throw new Error('expected ready evidence');
+    const nodeRow = evidence.presentation.metricRows.find(row => row.kind === 'node' && row.id === '1');
+    if (!nodeRow) throw new Error('expected node row');
+    act(() => view.current().actions.drilldown(nodeRow));
+    act(() => view.current().actions.hoverEdge('edge-missing'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '1' });
+    expect(view.current().state.interaction.hover).toEqual({ kind: 'none' });
+    expect(view.router.state.location.search).toBe('?depth=1&nodeId=1');
+  });
+
+  it('restores node selection from a shared URL and clears it when the inspector closes', async () => {
+    const view = renderController('/topology?depth=1&nodeId=2');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    const requestCount = api.loadTopologyGraph.mock.calls.length;
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    expect(api.loadTopologyGraph).toHaveBeenLastCalledWith(
+      expect.objectContaining({ depth: 1 }),
+      expect.any(AbortSignal)
+    );
+    expect(api.loadTopologyGraph.mock.calls.at(-1)?.[0]).not.toHaveProperty('nodeId');
+
+    act(() => view.current().actions.clearSelection());
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+    expect(api.loadTopologyGraph).toHaveBeenCalledTimes(requestCount);
+  });
+
+  it('restores an edge selection without changing the graph query or viewport identity', async () => {
+    api.loadTopologyGraph.mockResolvedValue(topologyGraphWithEdge());
+    const view = renderController('/topology?depth=1&edgeId=edge-1');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'edge', edgeId: 'edge-1' });
+    expect(api.loadTopologyGraph.mock.calls.at(-1)?.[0]).not.toHaveProperty('edgeId');
+  });
+
+  it('honestly removes a stale URL selection after graph evidence settles', async () => {
+    const view = renderController('/topology?depth=1&nodeId=missing');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+  });
+
+  it('removes an invalid mixed selection without failing the graph request', async () => {
+    const view = renderController('/topology?depth=1&nodeId=1&edgeId=edge-1');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+  });
+});
+
+function renderController(entry: string) {
+  let controller: ReturnType<typeof useTopologyPageController> | undefined;
+  let setRevision: (revision: number) => void = () => undefined;
+  let setSharedTime: (value: { window: ExactTimeWindow; revision: number }) => void = () => undefined;
+  function Probe() {
+    const [time, updateTime] = useState({ window: { from: 1_000, to: 2_000 }, revision: 0 });
+    setRevision = revision => updateTime(value => ({ ...value, revision }));
+    setSharedTime = updateTime;
+    controller = useTopologyPageController({ effectiveWindow: time.window, refreshRevision: time.revision });
+    return null;
+  }
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const router = createMemoryRouter([{ path: '*', element: <Probe /> }], { initialEntries: [entry] });
+  render(
+    <QueryClientProvider client={client}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
+  return {
+    client,
+    router,
+    setRevision,
+    setSharedTime,
+    current: () => {
+      if (!controller) throw new Error('controller not mounted');
+      return controller;
+    }
+  };
+}
+
+function topologyGraph(nodeIds: string[]): TopologyGraph {
+  return {
+    apiBacked: true,
+    focusEntityId: nodeIds[0] ? Number(nodeIds[0]) : null,
+    depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: { pageIndex: 0, pageSize: 25, totalElements: 0, hasNext: false },
+    sourceKinds: [],
+    nodes: nodeIds.map(id => ({
+      id,
+      entityId: Number(id),
+      entityName: `service-${id}`,
+      entityType: 'service',
+      namespace: 'default',
+      environment: 'prod',
+      health: 'healthy',
+      focus: id === '1',
+      evidenceBadges: [],
+      redMetrics: {
+        requestRatePerSecond: null,
+        requestCount: null,
+        errorRate: null,
+        errorCount: null,
+        latencyP95Ms: null,
+        latencyAvgMs: null
+      }
+    })),
+    edges: [],
+    impactTimeline: []
+  };
+}
+
+function topologyGraphWithEdge(): TopologyGraph {
+  const graph = topologyGraph(['1', '2']);
+  return {
+    ...graph,
+    edgePage: { ...graph.edgePage, totalElements: 1 },
+    edges: [
+      {
+        id: 'edge-1',
+        relationId: 1,
+        sourceNodeId: '1',
+        targetNodeId: '2',
+        sourceEntityId: 1,
+        targetEntityId: 2,
+        targetRef: null,
+        sampleTraceId: null,
+        sampleSpanId: null,
+        firstSeen: null,
+        lastSeen: null,
+        relationType: 'calls',
+        relationSource: 'otel',
+        status: 'healthy',
+        score: null,
+        evidenceBadges: [],
+        redMetrics: {
+          requestRatePerSecond: null,
+          requestCount: null,
+          errorRate: null,
+          errorCount: null,
+          latencyP95Ms: null,
+          latencyAvgMs: null
+        }
+      }
+    ]
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(next => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}

@@ -1,0 +1,98 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { objectStoreMigrationConflictCode, ObjectStoreRequestFailure } from '../model/object-store-failure';
+import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
+import { normalizeObjectStoreApiFailure } from './object-store-api-failure';
+
+describe('Object Store API failure boundary', () => {
+  it.each([
+    [
+      'network',
+      new ApiMessageError('private', { cause: new Error('private-cause') }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    ['server failure', new ApiMessageError('private', { status: 503 }), 'write', 'unavailable', 'uncertain'],
+    ['timeout response', new ApiMessageError('private', { status: 408 }), 'write', 'error', 'uncertain'],
+    [
+      'cause-bearing client response',
+      new ApiMessageError('private', { status: 422, cause: new Error('private-cause') }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    ['status zero', new ApiMessageError('private', { status: 0 }), 'write', 'unavailable', 'uncertain'],
+    ['HTTP rejection', new ApiMessageError('private', { status: 422 }), 'write', 'error', 'rejected'],
+    ['permission rejection', new ApiMessageError('private', { status: 403 }), 'write', 'permission', 'rejected'],
+    [
+      'invalid config envelope',
+      new ApiMessageError('Invalid object store config', { code: 20, status: 200 }),
+      'write',
+      'invalid',
+      'rejected'
+    ],
+    [
+      'storage envelope',
+      new ApiMessageError('Object store storage unavailable', { code: 20, status: 200 }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'generic envelope',
+      new ApiMessageError('Object store config error', { code: 20, status: 200 }),
+      'write',
+      'error',
+      'uncertain'
+    ],
+    ['read HTTP failure', new ApiMessageError('private', { status: 422 }), 'read', 'error', 'uncertain'],
+    ['business envelope', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'uncertain'],
+    ['read contract', new ObjectStoreResourceContractError(), 'read', 'invalid', 'uncertain'],
+    ['write response contract', new ObjectStoreResourceContractError(), 'write', 'invalid', 'uncertain'],
+    ['draft contract', new ObjectStoreDraftContractError(), 'write', 'invalid', 'rejected'],
+    ['read draft contract', new ObjectStoreDraftContractError(), 'read', 'invalid', 'uncertain'],
+    ['unknown', { statusCode: 503, secretKey: 'private-secret' }, 'write', 'error', 'uncertain']
+  ] as const)('normalizes %s', (_label, reason, phase, kind, writeOutcome) => {
+    const failure = normalizeObjectStoreApiFailure(reason, phase);
+    expect(failure).toMatchObject({ kind, writeOutcome, message: 'Object Store request failed' });
+    expect(JSON.stringify(failure)).not.toContain('private');
+  });
+
+  it('preserves domain failure identity', () => {
+    const failure = new ObjectStoreRequestFailure('unavailable', 'uncertain');
+    expect(normalizeObjectStoreApiFailure(failure, 'read')).toBe(failure);
+  });
+
+  it('classifies a migration conflict as a safe, definite rejection', () => {
+    const failure = normalizeObjectStoreApiFailure(
+      new ApiMessageError(objectStoreMigrationConflictCode, { code: 20, status: 200 }),
+      'write'
+    );
+
+    expect(failure).toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'rejected',
+      code: objectStoreMigrationConflictCode
+    });
+  });
+});

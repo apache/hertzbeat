@@ -306,3 +306,23 @@ A PMC member helps manage and guide the direction of the project.
 Thanks,
 On behalf of the Apache HertzBeat PMC
 ```
+
+## Subscribe to the private mailing list
+
+1. Send an email to [private-subscribe@hertzbeat.apache.org](mailto:private-subscribe@hertzbeat.apache.org).
+2. Check your inbox for the confirmation email with the subject "confirm subscribe to `private@hertzbeat.apache.org`".
+3. Reply to the confirmation email as instructed and wait for moderator approval.
+
+Once you receive an email with the subject "WELCOME XXXX", the subscription is successful.
+
+PMC members must subscribe to the `private@hertzbeat.apache.org` mailing list. This list is used for confidential discussions of non-public, sensitive matters, such as security vulnerabilities, in accordance with the [ASF Security Guidelines](https://www.apache.org/security/).
+
+## Read the PMC member guide
+
+Please read the [PMC Guide](https://www.apache.org/dev/pmc.html) to learn about the general responsibilities of Project Management Committee (PMC) members in managing our project, as well as the common procedures for day-to-day maintenance.
+
+## Note
+
+If the subscription above does not succeed, you can try the web tool instead: [subscribe](https://whimsy.apache.org/committers/subscribe.cgi)
+
+<img width="1038" height="225" alt="subscribe" src="https://github.com/user-attachments/assets/fc0c064b-759b-4101-978b-bbf98fce8bfe" />

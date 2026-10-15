@@ -27,7 +27,9 @@ help:
   zh-CN: 通过http接口监控大华设备状态，获取设备健康数据。
   en-US: Monitor Dahua devices through http interface to collect health data.
   ja-JP: Hertzbeat は HTTPインターフェースを呼び出してDahuaデバイスの健全データを収集します。
-
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dahua
+  en-US: https://hertzbeat.apache.org/docs/help/dahua
 # Input params define for monitoring(render web ui by the definition)
 params:
   - field: host

@@ -52,11 +52,6 @@ public class SmsConfig {
     private AlibabaSmsProperties alibaba;
 
     /**
-     * UniSMS configuration
-     */
-    private UniSmsProperties unisms;
-
-    /**
      * Aws configuration
      */
     private AwsSmsProperties aws;
