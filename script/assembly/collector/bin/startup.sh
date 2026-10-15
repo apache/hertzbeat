@@ -72,8 +72,8 @@ if [ -n "$SERVER_PORT" ]; then
     fi
 fi
 MAIN_CLASS="org.apache.hertzbeat.collector.Collector"
-EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
 LIB_PATH="$DEPLOY_DIR/lib"
+EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
 CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"
 # log dir
 LOGS_DIR=$DEPLOY_DIR/logs
@@ -104,7 +104,7 @@ if [ -f "./java/bin/java" ]; then
 else
     JAVA_EXIST=`which java | grep bin | wc -l`
     if [ $JAVA_EXIST -le 0 ]; then
-      echo -e "ERROR: there is no java${java.version}+ environment, please config java environment."
+      echo -e "ERROR: there is no java21+ environment, please config java environment."
       exit 1
     fi
     echo -e "Use the system environment jdk to start"

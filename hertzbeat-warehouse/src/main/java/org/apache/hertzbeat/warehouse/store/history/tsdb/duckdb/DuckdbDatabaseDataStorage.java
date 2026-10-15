@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
@@ -47,6 +48,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,6 +61,7 @@ import java.util.regex.Pattern;
  * data storage by duckdb
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.duckdb", name = "enabled", havingValue = "true")
 @Slf4j
 public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
@@ -245,6 +248,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;
@@ -263,16 +272,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             AND metric = ?
             """);
 
-        long timeBefore = 0;
-        if (history != null) {
-            try {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                timeBefore = dateTime.toEpochSecond() * 1000L;
-                sqlBuilder.append(" AND record_time >= ?");
-            } catch (Exception e) {
-                log.error("parse history time error: {}", e.getMessage());
-            }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        if (queryWindow.startMillis() > 0) {
+            sqlBuilder.append(" AND record_time >= ?");
+        }
+        if (queryWindow.hasEnd()) {
+            sqlBuilder.append(" AND record_time <= ?");
         }
         sqlBuilder.append(" ORDER BY record_time DESC LIMIT 20000"); // Add safety limit for raw data
 
@@ -283,8 +288,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             preparedStatement.setString(2, app);
             preparedStatement.setString(3, metrics);
             preparedStatement.setString(4, metric);
-            if (timeBefore > 0) {
-                preparedStatement.setLong(5, timeBefore);
+            int parameterIndex = 5;
+            if (queryWindow.startMillis() > 0) {
+                preparedStatement.setLong(parameterIndex++, queryWindow.startMillis());
+            }
+            if (queryWindow.hasEnd()) {
+                preparedStatement.setLong(parameterIndex, queryWindow.endMillis());
             }
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -306,33 +315,20 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;
         }
 
-        long timeBefore = 0;
-        long endTime = System.currentTimeMillis();
-        long interval = 0;
-
-        if (history != null) {
-            try {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                timeBefore = dateTime.toEpochSecond() * 1000L;
-                // Calculate bucket interval based on desired target points (e.g. 800 points on chart)
-                interval = (endTime - timeBefore) / TARGET_CHART_POINTS;
-                // Minimum interval 1 minute
-                if (interval < 60000) {
-                    interval = 60000;
-                }
-            } catch (Exception e) {
-                log.error("parse history time error: {}", e.getMessage());
-                // Fallback defaults
-                timeBefore = System.currentTimeMillis() - 24 * 60 * 60 * 1000L;
-                interval = 60 * 1000L;
-            }
-        }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        long interval = resolveIntervalMillis(queryWindow, step);
 
         // DuckDB Aggregation Query: Group by time bucket
         // We use casting to integer division for bucketing: (time / interval) * interval
@@ -345,7 +341,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                 FIRST(str_value) AS str_val,
                 metric_type, labels
                 FROM hzb_history
-                WHERE instance = ? AND app = ? AND metrics = ? AND metric = ? AND record_time >= ?
+                WHERE instance = ? AND app = ? AND metrics = ? AND metric = ? AND record_time >= ? AND record_time <= ?
                 GROUP BY ts_bucket, metric_type, labels
                 ORDER BY ts_bucket""";
 
@@ -358,7 +354,8 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             preparedStatement.setString(4, app);
             preparedStatement.setString(5, metrics);
             preparedStatement.setString(6, metric);
-            preparedStatement.setLong(7, timeBefore);
+            preparedStatement.setLong(7, queryWindow.startMillis());
+            preparedStatement.setLong(8, queryWindow.endMillis());
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
@@ -396,6 +393,65 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             log.error("[duckdb] query interval data error: {}", e.getMessage(), e);
         }
         return instanceValuesMap;
+    }
+
+    private QueryWindow resolveQueryWindow(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            return new QueryWindow(start, end);
+        }
+        long endMillis = System.currentTimeMillis();
+        long startMillis;
+        try {
+            if (NumberUtils.isParsable(history)) {
+                startMillis = (ZonedDateTime.now().toEpochSecond() - NumberUtils.toLong(history)) * 1000L;
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                startMillis = dateTime.toEpochSecond() * 1000L;
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            startMillis = endMillis - Duration.ofHours(6).toMillis();
+        }
+        return new QueryWindow(startMillis, endMillis);
+    }
+
+    private long resolveIntervalMillis(QueryWindow queryWindow, String step) {
+        Long parsedStep = parseStepMillis(step);
+        if (parsedStep != null && parsedStep > 0) {
+            return parsedStep;
+        }
+        long interval = (queryWindow.endMillis() - queryWindow.startMillis()) / TARGET_CHART_POINTS;
+        return Math.max(interval, Duration.ofMinutes(1).toMillis());
+    }
+
+    private Long parseStepMillis(String step) {
+        if (step == null || step.isBlank()) {
+            return null;
+        }
+        try {
+            String normalized = step.trim().toLowerCase(Locale.ROOT);
+            if (normalized.endsWith("ms")) {
+                return Long.parseLong(normalized.substring(0, normalized.length() - 2));
+            }
+            long value = Long.parseLong(normalized.substring(0, normalized.length() - 1));
+            String unit = normalized.substring(normalized.length() - 1);
+            return switch (unit) {
+                case "s" -> Duration.ofSeconds(value).toMillis();
+                case "m" -> Duration.ofMinutes(value).toMillis();
+                case "h" -> Duration.ofHours(value).toMillis();
+                case "d" -> Duration.ofDays(value).toMillis();
+                default -> null;
+            };
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private record QueryWindow(long startMillis, long endMillis) {
+        boolean hasEnd() {
+            return endMillis > 0;
+        }
     }
 
     private String formatValue(int type, ResultSet resultSet) throws SQLException {

@@ -25,6 +25,9 @@ import org.apache.hertzbeat.base.dao.LabelDao;
 import org.apache.hertzbeat.base.service.LabelService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,10 +51,12 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_TH
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
@@ -178,7 +183,7 @@ class AlertDefineServiceTest {
                 put("status", "200");
             }
         };
-        when(dataSourceService.calculate(eq("promql"), eq(expr))).thenReturn(Lists.newArrayList(countValue1));
+        when(dataSourceService.calculatePreview(eq("promql"), eq(expr))).thenReturn(Lists.newArrayList(countValue1));
         List<Map<String, Object>> result = alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
         assertNotNull(result);
         assertEquals(1307, result.get(0).get("__value__"));
@@ -188,6 +193,117 @@ class AlertDefineServiceTest {
 
         result = alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_REALTIME, null);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    void getDefinePreviewPreservesDatasourceExecutionFailure() {
+        String expr = "up > 0";
+        when(dataSourceService.calculatePreview("promql", expr))
+                .thenThrow(new AlertExpressionException("Preview query execution failed"));
+
+        assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_PERIODIC, expr));
+    }
+
+    @Test
+    void getDefinePreviewCapsReturnedTelemetryRows() {
+        String expr = "up > 0";
+        List<Map<String, Object>> rows = java.util.stream.IntStream.range(0, 101)
+                .mapToObj(index -> Map.<String, Object>of("__value__", index))
+                .toList();
+        when(dataSourceService.calculatePreview("promql", expr)).thenReturn(rows);
+
+        List<Map<String, Object>> result =
+                alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
+
+        assertEquals(100, result.size());
+    }
+
+    @Test
+    void getDefinePreviewSupportsPeriodicTraceSql() {
+        String expr = "SELECT service_name, 0.2 AS __value__ FROM hertzbeat_apm_red_1m";
+        Map<String, Object> row = Map.of("service_name", "checkout", "__value__", 0.2D);
+        when(dataSourceService.queryPreview(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
+                .thenReturn(List.of(row));
+
+        List<Map<String, Object>> result =
+                alertDefineService.getDefinePreview("sql", TRACE_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
+
+        assertEquals(1, result.size());
+        assertEquals(0.2D, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void getDefinePreviewPreservesPeriodicLogAndTraceExecutionFailures() {
+        String logExpr = "SELECT * FROM hertzbeat_logs";
+        String traceExpr = "SELECT __value__ FROM hertzbeat_apm_red_1m";
+        AlertExpressionException safeFailure = new AlertExpressionException("Preview query execution failed");
+        when(dataSourceService.queryPreview("sql", logExpr, LOG_ALERT_THRESHOLD_TYPE_PERIODIC))
+                .thenThrow(safeFailure);
+        when(dataSourceService.queryPreview("sql", traceExpr, TRACE_ALERT_THRESHOLD_TYPE_PERIODIC))
+                .thenThrow(safeFailure);
+
+        assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("sql", LOG_ALERT_THRESHOLD_TYPE_PERIODIC, logExpr));
+        assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("sql", TRACE_ALERT_THRESHOLD_TYPE_PERIODIC, traceExpr));
+    }
+
+    @Test
+    void getDefinePreviewValidatesRealtimeLogExpression() {
+        HistoryDataReader historyDataReader = Mockito.mock(HistoryDataReader.class);
+        ReflectionTestUtils.setField(this.alertDefineService, "historyDataReaders", List.of(historyDataReader));
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                any(), any(), any(), any(), any(), any(), any(), eq(0), eq(50)))
+                .thenReturn(List.of(
+                        LogEntry.builder()
+                                .timeUnixNano(1710000000000000000L)
+                                .severityText("INFO")
+                                .body("checkout started")
+                                .build(),
+                        LogEntry.builder()
+                                .timeUnixNano(1710000001000000000L)
+                                .severityText("ERROR")
+                                .body("checkout timeout")
+                                .traceId("trace-1")
+                                .spanId("span-1")
+                                .build()
+                ));
+
+        List<Map<String, Object>> result = alertDefineService.getDefinePreview(
+                "jexl",
+                LOG_ALERT_THRESHOLD_TYPE_REALTIME,
+                "log.severityText == 'ERROR' && contains(log.body, 'timeout')");
+
+        assertEquals(1, result.size());
+        assertEquals("log_sample", result.get(0).get("preview_mode"));
+        assertEquals(LOG_ALERT_THRESHOLD_TYPE_REALTIME, result.get(0).get("type"));
+        assertEquals("ERROR", result.get(0).get("severityText"));
+        assertEquals("checkout timeout", result.get(0).get("body"));
+        assertEquals("trace-1", result.get(0).get("traceId"));
+    }
+
+    @Test
+    void getDefinePreviewRejectsInvalidRealtimeLogExpression() {
+        AlertExpressionException exception = assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview(
+                        "jexl",
+                        LOG_ALERT_THRESHOLD_TYPE_REALTIME,
+                        "log.severityText =="));
+
+        assertTrue(exception.getMessage().startsWith("Realtime alert expression is invalid:"));
+    }
+
+    @Test
+    void getDefinePreviewRejectsPeriodicTraceSqlWithoutValueColumn() {
+        String expr = "SELECT service_name FROM hertzbeat_apm_red_1m";
+        when(dataSourceService.queryPreview(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
+                .thenReturn(List.of(Map.of("service_name", "checkout")));
+
+        AlertExpressionException exception = assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("sql", TRACE_ALERT_THRESHOLD_TYPE_PERIODIC, expr));
+
+        assertEquals("Trace alert preview SQL must return __value__ column", exception.getMessage());
     }
 
     @Test
@@ -335,6 +451,17 @@ class AlertDefineServiceTest {
         assertNotNull(result);
         assertEquals(0, result.size());
         verify(alertDefineDao, times(1)).findAlertDefinesByTypeAndEnableTrue(LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        // Test valid trace periodic alert type
+        reset(alertDefineDao);
+        when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC))
+                .thenReturn(Lists.newArrayList());
+
+        result = alertDefineService.getAlertDefinesByType(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        verify(alertDefineDao, times(1)).findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
 
         // Test empty string type
         assertThrows(IllegalArgumentException.class, () -> alertDefineService.getAlertDefinesByType(""));

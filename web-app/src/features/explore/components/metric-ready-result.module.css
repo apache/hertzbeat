@@ -1,0 +1,209 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.result {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.result > section {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.result > section > header,
+.disclosure {
+  flex: none;
+}
+.chart[data-variant='fill'] {
+  min-height: 300px;
+  height: 300px;
+  flex: none;
+}
+.toolbar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-3);
+}
+.count {
+  color: var(--hb-text-muted);
+  font-size: 12px;
+}
+.display {
+  display: inline-flex;
+  gap: var(--hb-space-1);
+}
+.display button,
+.queryActions button {
+  min-height: 32px;
+  padding: 0 var(--hb-space-2);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--hb-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.display button[aria-pressed='true'] {
+  background: var(--hb-bg-hover);
+  border-color: var(--hb-border-subtle);
+}
+.display button:hover,
+.queryActions button:hover {
+  background: var(--hb-bg-hover);
+}
+.display button:focus-visible,
+.queryActions button:focus-visible,
+.disclosure summary:focus-visible,
+.disclosure pre:focus-visible,
+.seriesLabels:focus-visible,
+.tableViewport:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: -2px;
+}
+.sampleNotice {
+  margin: 0;
+  padding-block: var(--hb-space-2);
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.tableViewport {
+  max-height: 360px;
+  overflow: auto;
+}
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.table th,
+.table td {
+  height: 36px;
+  padding: var(--hb-space-1) var(--hb-space-2);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  text-align: left;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+.table th:last-child,
+.table td:last-child {
+  text-align: right;
+}
+.table tbody tr:hover {
+  background: var(--hb-bg-hover);
+}
+.numericValue {
+  white-space: nowrap;
+}
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--hb-bg-canvas);
+  color: var(--hb-text-secondary);
+  font-weight: 600;
+}
+.table th:first-child {
+  width: 184px;
+}
+.table th:nth-child(2) {
+  width: 72px;
+}
+.table td {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--hb-font-family-mono);
+}
+.seriesLabels {
+  display: grid;
+  max-height: 120px;
+  overflow: auto;
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-2);
+  font-size: 12px;
+}
+.seriesLabels > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.seriesLabels strong {
+  font-weight: 600;
+}
+.seriesLabels span {
+  color: var(--hb-text-secondary);
+}
+.disclosure {
+  font-size: 12px;
+}
+.disclosure summary {
+  min-height: 32px;
+  align-content: center;
+  cursor: pointer;
+  color: var(--hb-text-secondary);
+}
+.disclosure pre {
+  margin: 0;
+  padding-block: var(--hb-space-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.queryActions {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  gap: var(--hb-space-2);
+  color: var(--hb-text-secondary);
+}
+@media (width <= 700px) {
+  .result > section > header {
+    gap: var(--hb-space-1);
+    padding-block: var(--hb-space-1);
+  }
+  .chart[data-variant='fill'] {
+    height: 320px;
+  }
+  .display button,
+  .queryActions button,
+  .disclosure summary {
+    min-height: 36px;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .table th:first-child {
+    width: 50%;
+  }
+  .table th:nth-child(2) {
+    width: 56px;
+  }
+  .numericValue {
+    font-size: 11px;
+  }
+}
+
+.unitNotice {
+  composes: unitNotice from './metric-output-status.module.css';
+}

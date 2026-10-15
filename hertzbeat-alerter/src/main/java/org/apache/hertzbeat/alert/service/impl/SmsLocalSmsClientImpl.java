@@ -66,11 +66,8 @@ public class SmsLocalSmsClientImpl implements SmsClient {
         }
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            String content = alert.getCommonAnnotations().get("summary");
-            if (Objects.isNull(content) || Objects.isNull(alert.getCommonAnnotations().get("description"))) {
-                content = alert.getAlerts().get(0).getContent();
-            }
-            SmsMessage smsMessage = new SmsMessage(FROM, receiver.getPhone(), content);
+            SmsAlertFields fields = SmsAlertFields.from(alert);
+            SmsMessage smsMessage = new SmsMessage(FROM, receiver.getPhone(), fields.content());
 
             String payload = JsonUtil.toJson(smsMessage);
 

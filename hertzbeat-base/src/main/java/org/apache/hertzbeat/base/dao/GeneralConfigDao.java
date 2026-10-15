@@ -17,9 +17,14 @@
 
 package org.apache.hertzbeat.base.dao;
 
+import jakarta.persistence.LockModeType;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,7 +33,7 @@ import org.springframework.stereotype.Component;
  * <p>This interface inherits the two interfaces JpaRepository and JpaSpecificationExecutor, providing basic CRUD operations and specification query capabilities.</p>
  */
 @Component
-public interface GeneralConfigDao extends JpaRepository<GeneralConfig, Long>, JpaSpecificationExecutor<GeneralConfig> {
+public interface GeneralConfigDao extends JpaRepository<GeneralConfig, String>, JpaSpecificationExecutor<GeneralConfig> {
     
     /**
      * Query by type
@@ -36,4 +41,22 @@ public interface GeneralConfigDao extends JpaRepository<GeneralConfig, Long>, Jp
      * @return Return the queried configuration information
      */
     GeneralConfig findByType(String type);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select config from GeneralConfig config where config.type = :type")
+    GeneralConfig findByTypeForUpdate(@Param("type") String type);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update GeneralConfig config
+               set config.content = :content,
+                   config.revision = :nextRevision,
+                   config.gmtUpdate = CURRENT_TIMESTAMP
+             where config.type = :type
+               and config.revision = :expectedRevision
+            """)
+    int updateContentIfRevision(@Param("type") String type,
+                                @Param("content") String content,
+                                @Param("nextRevision") String nextRevision,
+                                @Param("expectedRevision") String expectedRevision);
 }

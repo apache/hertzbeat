@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Component;
  * IoTDB data storage
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.iot-db", name = "enabled", havingValue = "true")
 @Slf4j
 public class IotDbDataStorage extends AbstractHistoryDataStorage {

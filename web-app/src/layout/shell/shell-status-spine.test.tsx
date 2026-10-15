@@ -1,0 +1,277 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import type { TFunction } from 'i18next';
+import { afterEach, describe, expect, it } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+
+import { ShellStatusSpine } from './shell-status-spine';
+
+const t = ((key: string, options?: Record<string, unknown>) =>
+  options ? `${key}:${Object.values(options).join('|')}` : key) as TFunction;
+
+describe('ShellStatusSpine', () => {
+  afterEach(cleanup);
+
+  it('keeps the current state visible and moves detailed evidence into the accessible description', () => {
+    render(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{
+          state: 'ready',
+          snapshot: {
+            observedAt: '2026-07-22T01:02:03Z',
+            server: { status: 'available', errorCode: null },
+            storage: { kind: 'greptime', status: 'degraded', errorCode: 'storage_query_failed' },
+            collectors: {
+              status: 'available',
+              total: 3,
+              online: 3,
+              runtimeHealthy: 1,
+              lastReportedAt: '2026-07-22T01:02:00Z',
+              errorCode: null
+            }
+          }
+        }}
+      />
+    );
+
+    const server = screen.getByTestId('shell-status-server');
+    const greptime = screen.getByTestId('shell-status-greptime');
+    const collector = screen.getByTestId('shell-status-collector');
+    expect(server).toHaveAttribute('data-status', 'available');
+    expect(greptime).toHaveAttribute('data-status', 'degraded');
+    expect(greptime).toHaveTextContent('shell.status.state.degraded');
+    expect(greptime).not.toHaveTextContent('shell.status.reason.storage_query_failed');
+    expect(greptime).toHaveAttribute('aria-label', expect.stringContaining('shell.status.reason.storage_query_failed'));
+    expect(greptime).toHaveAttribute('title', expect.stringContaining('shell.status.currentStatusObservedAt:'));
+    expect(server).not.toHaveAttribute('title', expect.stringContaining('shell.status.collectorLastReportedAt:'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorLastReportedAt:'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorOnlineCount:3|3'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorRuntimeHealthyCount:1'));
+  });
+
+  it.each([
+    ['server', '/settings/system'],
+    ['greptime', '/settings/deployment'],
+    ['collector', '/settings/collectors']
+  ])('opens truthful %s evidence with its management entry point', async (statusId, managementPath) => {
+    render(
+      <MemoryRouter>
+        <ShellStatusSpine
+          locale="en-US"
+          t={t}
+          runtime={{
+            state: 'ready',
+            snapshot: {
+              observedAt: '2026-07-22T01:02:03Z',
+              server: { status: 'available', errorCode: null },
+              storage: { kind: 'greptime', status: 'degraded', errorCode: 'storage_query_failed' },
+              collectors: {
+                status: 'degraded',
+                total: 3,
+                online: 2,
+                runtimeHealthy: 1,
+                lastReportedAt: '2026-07-22T01:02:00Z',
+                errorCode: 'collector_status_unavailable'
+              }
+            }
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    const trigger = screen.getByTestId(`shell-status-${statusId}`);
+    expect(trigger).toHaveRole('button');
+    fireEvent.click(trigger);
+
+    const details = await screen.findByRole('dialog', { name: `shell.status.details:shell.status.${statusId}` });
+    expect(details).toHaveTextContent('shell.status.currentStatusObservedAt:');
+    expect(details).toHaveTextContent(`shell.status.state.${statusId === 'server' ? 'available' : 'degraded'}`);
+    expect(within(details).getByRole('link', { name: 'shell.status.openManagement' })).toHaveAttribute(
+      'href',
+      managementPath
+    );
+  });
+
+  it('shows a request failure without inventing backend evidence or counts', () => {
+    render(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{ state: 'request-failed', snapshot: null, failure: 'permission' }}
+      />
+    );
+
+    expect(screen.getByTestId('shell-status-server')).not.toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-greptime')).not.toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.request.permission')
+    );
+    expect(screen.queryByText(/shell\.status\.reason\./)).not.toBeInTheDocument();
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveTextContent('shell.status.collectorNotReported');
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('exposes loading and authoritative unknown as distinct states', () => {
+    const { rerender } = render(
+      <ShellStatusSpine locale="en-US" t={t} runtime={{ state: 'loading', snapshot: null }} />
+    );
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'loading');
+
+    rerender(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{
+          state: 'ready',
+          snapshot: {
+            observedAt: '2026-07-22T01:02:03Z',
+            server: { status: 'unknown', errorCode: null },
+            storage: { kind: 'greptime', status: 'unknown', errorCode: null },
+            collectors: {
+              status: 'unknown',
+              total: null,
+              online: null,
+              runtimeHealthy: null,
+              lastReportedAt: null,
+              errorCode: null
+            }
+          }
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'unknown');
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveTextContent('shell.status.collectorNotReported');
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveTextContent('shell.status.collectorCounts:');
+  });
+
+  it('labels a missing report only when Collector counts were observed', () => {
+    render(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{
+          state: 'ready',
+          snapshot: {
+            observedAt: '2026-07-22T01:02:03Z',
+            server: { status: 'available', errorCode: null },
+            storage: { kind: 'greptime', status: 'available', errorCode: null },
+            collectors: {
+              status: 'degraded',
+              total: 0,
+              online: 0,
+              runtimeHealthy: 0,
+              lastReportedAt: null,
+              errorCode: 'collector_status_unavailable'
+            }
+          }
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('shell-status-collector')).toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.collectorNotReported')
+    );
+  });
+
+  it('scopes a partial Collector outage to the offline count instead of implying total failure', () => {
+    render(
+      <MemoryRouter>
+        <ShellStatusSpine
+          locale="en-US"
+          t={t}
+          runtime={{
+            state: 'ready',
+            snapshot: {
+              observedAt: '2026-07-22T01:02:03Z',
+              server: { status: 'available', errorCode: null },
+              storage: { kind: 'greptime', status: 'available', errorCode: null },
+              collectors: {
+                status: 'degraded',
+                total: 2,
+                online: 1,
+                runtimeHealthy: 1,
+                lastReportedAt: null,
+                errorCode: 'collector_status_unavailable'
+              }
+            }
+          }}
+        />
+      </MemoryRouter>
+    );
+
+    const collector = screen.getByTestId('shell-status-collector');
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorOnlineCount:2|1'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorRuntimeHealthyCount:1'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorOfflineCount:1'));
+    expect(collector).not.toHaveAttribute('title', expect.stringContaining('shell.status.collectorNotReported'));
+    expect(collector).not.toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.reason.collector_status_unavailable')
+    );
+
+    fireEvent.click(collector);
+    const details = screen.getByRole('dialog', { name: 'shell.status.details:shell.status.collector' });
+    expect(
+      within(details)
+        .getAllByRole('listitem')
+        .map(item => item.textContent)
+    ).toEqual([
+      expect.stringContaining('shell.status.currentStatusObservedAt:'),
+      'shell.status.collectorOnlineCount:2|1',
+      'shell.status.collectorRuntimeHealthyCount:1',
+      'shell.status.collectorOfflineCount:1'
+    ]);
+  });
+
+  it('does not warn about a missing report when every observed Collector runtime is healthy', () => {
+    render(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{
+          state: 'ready',
+          snapshot: {
+            observedAt: '2026-07-22T01:02:03Z',
+            server: { status: 'available', errorCode: null },
+            storage: { kind: 'greptime', status: 'available', errorCode: null },
+            collectors: {
+              status: 'available',
+              total: 1,
+              online: 1,
+              runtimeHealthy: 1,
+              lastReportedAt: null,
+              errorCode: null
+            }
+          }
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.collectorNotReported')
+    );
+  });
+});

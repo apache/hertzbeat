@@ -50,6 +50,10 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
         <!-- alerter -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
@@ -86,12 +90,7 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-grafana</artifactId>
         </dependency>
-        <!-- log otel -->
-        <dependency>
-            <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-otel</artifactId>
-        </dependency>
-        <!-- observability -->
+        <!-- log -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-observability</artifactId>
@@ -156,6 +155,11 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- email -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -175,6 +179,10 @@
         <dependency>
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot3-starter-sureness</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
         </dependency>
         <!-- okhttp -->
         <dependency>
@@ -215,6 +223,21 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>1.65.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>1.65.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>1.65.1</version>
         </dependency>
     </dependencies>
 

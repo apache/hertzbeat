@@ -36,8 +36,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Guards the shape of the Flyway migration chain shipped by the startup module.
- * The chain is part of the release contract: 1.8.0 ended at V180 and 1.9.0 adds
- * exactly one migration per dialect, V190.
+ * The chain is part of the release contract: 1.9.0 ended at V190 and 2.0.0 adds
+ * exactly one versioned migration per dialect, V200, alongside the B200 baseline
+ * that provisions fresh installations.
  */
 class MigrationInventoryTest {
 
@@ -45,14 +46,16 @@ class MigrationInventoryTest {
 
     private static final Pattern VERSIONED_SCRIPT = Pattern.compile("^V(\\d+)__.+\\.sql$");
 
-    private static final int LAST_RELEASED_VERSION = 180;
+    private static final Pattern BASELINE_SCRIPT = Pattern.compile("^B(\\d+)__.+\\.sql$");
 
-    private static final int CURRENT_VERSION = 190;
+    private static final int LAST_RELEASED_VERSION = 190;
+
+    private static final int CURRENT_VERSION = 200;
 
     private static final List<Integer> WITHDRAWN_VERSIONS = List.of(181, 182, 183);
 
     @Test
-    @DisplayName("every dialect ends the chain with V180 followed by V190")
+    @DisplayName("every dialect ends the chain with V190 followed by V200")
     void chainEndsWithLastReleasedVersionThenCurrentVersion() throws URISyntaxException {
         for (String vendor : VENDORS) {
             List<Integer> versions = versionsOf(vendor);
@@ -134,7 +137,8 @@ class MigrationInventoryTest {
 
             List<String> unexpected = Arrays.stream(files)
                     .map(File::getName)
-                    .filter(name -> !VERSIONED_SCRIPT.matcher(name).matches())
+                    .filter(name -> !VERSIONED_SCRIPT.matcher(name).matches()
+                            && !BASELINE_SCRIPT.matcher(name).matches())
                     .toList();
             assertTrue(unexpected.isEmpty(),
                     () -> "db/migration/" + vendor + " holds non-migration files: " + unexpected);

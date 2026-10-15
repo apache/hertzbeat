@@ -1,0 +1,1049 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, render, renderHook, waitFor } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
+import { createMemoryRouter, MemoryRouter, Route, Routes, RouterProvider } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  AlertRuleContractError,
+  AlertRuleMissingError,
+  AlertRuleRequestFailure,
+  AlertRuleWriteRequestFailure,
+  type AlertRule,
+  periodicLogStarterExpression,
+  type AlertRuleQuery
+} from '../model/alert-rule-model';
+import { useAlertRuleEditorController } from './use-alert-rule-editor-controller';
+
+const api = vi.hoisted(() => ({
+  loadAlertRuleDatasourceStatus: vi.fn(),
+  loadAlertRule: vi.fn(),
+  loadAlertRules: vi.fn(),
+  previewAlertRule: vi.fn(),
+  saveAlertRule: vi.fn()
+}));
+const monitor = vi.hoisted(() => ({
+  loadMonitorAppHierarchy: vi.fn(),
+  loadMonitorAppHierarchyCatalog: vi.fn(),
+  loadMonitorNavigationApps: vi.fn()
+}));
+const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const session = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
+vi.mock('../api/alert-rule-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-rule-api')>()),
+  ...api
+}));
+vi.mock('@/features/monitor', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/monitor')>()),
+  loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy,
+  loadMonitorAppHierarchyCatalog: monitor.loadMonitorAppHierarchyCatalog,
+  loadMonitorNavigationApps: monitor.loadMonitorNavigationApps
+}));
+vi.mock('antd', async importOriginal => ({
+  ...(await importOriginal<typeof import('antd')>()),
+  App: { useApp: () => ({ message: notify }) }
+}));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: 'en-US', resolvedLanguage: 'en-US' }
+  })
+}));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({
+    session: { roles: session.roles },
+    loading: false,
+    retry: vi.fn()
+  })
+}));
+
+const persisted: AlertRule = {
+  id: 7,
+  name: 'CPU',
+  type: 'realtime_metric',
+  datasource: 'promql',
+  expr: 'usage > 90',
+  period: null,
+  times: null,
+  labels: { severity: 'critical' },
+  annotations: { summary: 'CPU' },
+  template: null,
+  enable: true
+};
+
+describe('Alert Rule editor controller', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    session.roles = ['ADMIN'];
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({ hasPromqlExecutor: true, hasSqlExecutor: true });
+    api.loadAlertRule.mockResolvedValue(persisted);
+    api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
+    api.previewAlertRule.mockResolvedValue(previewEvidence(0));
+    api.saveAlertRule.mockResolvedValue(undefined);
+    monitor.loadMonitorNavigationApps.mockResolvedValue([]);
+    monitor.loadMonitorAppHierarchy.mockResolvedValue({
+      category: null,
+      value: 'springboot3',
+      label: 'Spring Boot 3',
+      isLeaf: false,
+      hide: false,
+      type: null,
+      unit: null,
+      children: []
+    });
+    monitor.loadMonitorAppHierarchyCatalog.mockResolvedValue([
+      {
+        category: null,
+        value: 'springboot3',
+        label: 'Spring Boot 3',
+        isLeaf: false,
+        hide: false,
+        type: null,
+        unit: null,
+        children: []
+      }
+    ]);
+  });
+
+  it('selects a combined metric target atomically from the complete hierarchy catalog', async () => {
+    const { result } = renderController('new', '/alerts/rules/new?kind=realtime');
+    await waitFor(() => expect(result.current.state.metricTarget.catalog?.kind).toBe('ready'));
+
+    act(() => result.current.changeMetricTarget({ kind: 'availability', app: 'springboot3' }));
+
+    expect(result.current.state.draft).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__available__,"down")',
+      metricEditor: {
+        kind: 'targeted',
+        app: 'springboot3',
+        target: { kind: 'availability', app: 'springboot3' }
+      }
+    });
+  });
+
+  it('hydrates the new-rule strategy selected by the list modal', async () => {
+    const realtime = renderController('new', '/alerts/rules/new?kind=realtime');
+    expect(realtime.result.current.state.requestedKind).toBe('realtime');
+    expect(realtime.result.current.state.draft?.kind).toBe('realtime');
+    realtime.unmount();
+
+    const periodic = renderController('new', '/alerts/rules/new?kind=periodic');
+    await waitFor(() => expect(periodic.result.current.state.datasource.kind).toBe('ready'));
+    expect(periodic.result.current.state.requestedKind).toBe('periodic');
+    expect(periodic.result.current.state.draft?.kind).toBe('periodic');
+  });
+
+  it('blocks an incomplete new rule without transport or a global validation toast', async () => {
+    const view = renderController('new', '/alerts/rules/new?kind=realtime');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+
+    await act(async () => view.result.current.save());
+
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
+    expect(notify.warning).not.toHaveBeenCalledWith('alertRules.validation');
+  });
+
+  it('forwards TanStack cancellation and aborts the detail read on unmount', async () => {
+    let detailSignal: AbortSignal | undefined;
+    api.loadAlertRule.mockImplementation((_id: number, signal: AbortSignal) => {
+      detailSignal = signal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+      });
+    });
+    const { unmount } = renderController('edit');
+    await waitFor(() => expect(detailSignal).toBeInstanceOf(AbortSignal));
+
+    unmount();
+
+    expect(detailSignal?.aborted).toBe(true);
+  });
+
+  it('fails closed before create or edit write transport for a guest session', async () => {
+    session.roles = ['GUEST'];
+    const create = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(create.result.current.state.detail.kind).toBe('ready'));
+    act(() => create.result.current.updateDraft(validDraft()));
+    await act(async () => create.result.current.save());
+    create.unmount();
+
+    const edit = renderController('edit');
+    await waitFor(() => expect(edit.result.current.state.detail.kind).toBe('ready'));
+    await act(async () => edit.result.current.save());
+
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
+  });
+
+  it('aborts the datasource capability read when the editor unmounts', async () => {
+    let datasourceSignal: AbortSignal | undefined;
+    api.loadAlertRuleDatasourceStatus.mockImplementation((signal: AbortSignal) => {
+      datasourceSignal = signal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+      });
+    });
+    const { unmount } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(datasourceSignal).toBeInstanceOf(AbortSignal));
+
+    unmount();
+
+    expect(datasourceSignal?.aborted).toBe(true);
+  });
+
+  it('exposes metric target evidence only while realtime metric authoring owns the editor', async () => {
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.metricTarget.apps.kind).toBe('ready'));
+
+    expect(result.current.state.metricTarget.hierarchy).toEqual({ kind: 'idle' });
+    act(() => result.current.changeDataType('log'));
+
+    expect(result.current.state.metricTarget.apps).toEqual({ kind: 'idle' });
+    expect(monitor.loadMonitorNavigationApps).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts only loaded applications and targets from the current hierarchy', async () => {
+    monitor.loadMonitorNavigationApps.mockResolvedValue([
+      { category: 'application', value: 'springboot3', label: 'Spring Boot 3', hide: false }
+    ]);
+    monitor.loadMonitorAppHierarchy.mockResolvedValue({
+      category: 'application',
+      value: 'springboot3',
+      label: 'Spring Boot 3',
+      isLeaf: false,
+      hide: false,
+      type: null,
+      unit: null,
+      children: [
+        {
+          category: null,
+          value: 'summary',
+          label: 'Summary',
+          isLeaf: false,
+          hide: false,
+          type: null,
+          unit: null,
+          children: []
+        }
+      ]
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.metricTarget.apps.kind).toBe('ready'));
+
+    act(() => result.current.changeMetricApplication('missing'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({ kind: 'targeted', app: '' });
+
+    act(() => result.current.changeMetricApplication('springboot3'));
+    await waitFor(() => expect(result.current.state.metricTarget.hierarchy.kind).toBe('ready'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({
+      kind: 'targeted',
+      app: 'springboot3',
+      target: null
+    });
+
+    act(() => result.current.changeMetricTarget({ kind: 'metric', app: 'springboot3', metric: 'missing' }));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({ target: null });
+
+    act(() => result.current.changeMetricTarget({ kind: 'availability', app: 'springboot3' }));
+    expect(result.current.state.draft).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__available__,"down")',
+      metricEditor: { target: { kind: 'availability', app: 'springboot3' } }
+    });
+  });
+
+  it('owns structured and expert metric thresholds through the selected field catalog', async () => {
+    monitor.loadMonitorNavigationApps.mockResolvedValue([
+      { category: 'application', value: 'springboot3', label: 'Spring Boot 3', hide: false }
+    ]);
+    monitor.loadMonitorAppHierarchy.mockResolvedValue({
+      category: 'application',
+      value: 'springboot3',
+      label: 'Spring Boot 3',
+      isLeaf: false,
+      hide: false,
+      type: null,
+      unit: null,
+      children: [
+        {
+          category: null,
+          value: 'summary',
+          label: 'Summary',
+          isLeaf: false,
+          hide: false,
+          type: null,
+          unit: null,
+          children: []
+        }
+      ]
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.metricTarget.apps.kind).toBe('ready'));
+    act(() => result.current.changeMetricApplication('springboot3'));
+    await waitFor(() => expect(result.current.state.metricTarget.hierarchy.kind).toBe('ready'));
+    act(() => result.current.changeMetricTarget({ kind: 'metric', app: 'springboot3', metric: 'summary' }));
+
+    act(() =>
+      result.current.changeMetricStructuredCondition({
+        kind: 'group',
+        join: 'and',
+        items: [{ kind: 'condition', field: '__row__', operator: '>', value: 1 }]
+      })
+    );
+    expect(result.current.state.draft).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__metrics__,"summary") && __row__ > 1',
+      metricEditor: { authoring: { mode: 'structured' } }
+    });
+
+    act(() => result.current.changeMetricAuthoringMode('expert'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({
+      authoring: { mode: 'expert', condition: '__row__ > 1' }
+    });
+    act(() => result.current.changeMetricExpertCondition('__row__ > 2'));
+    expect(result.current.state.draft?.expr).toContain('__row__ > 2');
+    act(() => result.current.changeMetricAuthoringMode('structured'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({
+      authoring: { mode: 'structured', condition: { items: [{ value: 2 }] } }
+    });
+  });
+
+  it.each([' 7', '1e2', '+1', '0'])('rejects invalid route id %s without a request', async ruleId => {
+    const { result } = renderController('edit', `/alerts/rules/${encodeURIComponent(ruleId)}/edit`);
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('error'));
+    await act(async () => result.current.retryDetail());
+    expect(api.loadAlertRule).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [new AlertRuleMissingError(), 'missing'],
+    [new AlertRuleRequestFailure('unavailable', 'uncertain'), 'unavailable'],
+    [new AlertRuleContractError('bad'), 'error']
+  ])('keeps detail failure %s distinct and retryable', async (reason, kind) => {
+    api.loadAlertRule.mockRejectedValueOnce(reason).mockResolvedValueOnce(persisted);
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe(kind));
+    await act(async () => result.current.retryDetail());
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    expect(result.current.state.draft).toMatchObject({ id: 7, name: 'CPU' });
+  });
+
+  it('disables periodic authoring when no periodic executor is available', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({
+      hasPromqlExecutor: false,
+      hasSqlExecutor: false
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+
+    act(() => result.current.changeKind('periodic'));
+
+    expect(result.current.state.draft).toMatchObject({ kind: 'realtime', dataType: 'metric' });
+  });
+
+  it('selects and preserves only periodic signals supported by the current executors', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({
+      hasPromqlExecutor: false,
+      hasSqlExecutor: true
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+
+    act(() => result.current.changeKind('periodic'));
+    expect(result.current.state.draft).toMatchObject({
+      kind: 'periodic',
+      dataType: 'log',
+      expr: periodicLogStarterExpression
+    });
+
+    act(() => result.current.updateDraft({ expr: 'SELECT count(*) FROM custom_logs' }));
+    act(() => result.current.changeDataType('metric'));
+    expect(result.current.state.draft?.dataType).toBe('log');
+    act(() => result.current.changeDataType('trace'));
+    expect(result.current.state.draft).toMatchObject({ dataType: 'trace', expr: '' });
+  });
+
+  it('keeps datasource read failure distinct and retries only that read', async () => {
+    api.loadAlertRuleDatasourceStatus
+      .mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'))
+      .mockResolvedValueOnce({ hasPromqlExecutor: true, hasSqlExecutor: false });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('unavailable'));
+
+    await act(async () => result.current.retryDatasource());
+
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+    expect(api.loadAlertRuleDatasourceStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not rewrite a persisted periodic strategy when its executor is currently unavailable', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({
+      hasPromqlExecutor: false,
+      hasSqlExecutor: false
+    });
+    api.loadAlertRule.mockResolvedValue({
+      ...persisted,
+      type: 'periodic_metric',
+      datasource: 'promql'
+    });
+    const { result } = renderController('edit');
+
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+
+    expect(result.current.state.draft).toMatchObject({ kind: 'periodic', dataType: 'metric' });
+  });
+
+  it('resets a local draft when route history changes', async () => {
+    api.loadAlertRule.mockImplementation((id: number) => Promise.resolve({ ...persisted, id, name: `Rule ${id}` }));
+    const routed = renderRouted(['/alerts/rules/7/edit', '/alerts/rules/8/edit']);
+    await waitFor(() => expect(routed.current().state.draft?.name).toBe('Rule 7'));
+    act(() => routed.current().updateDraft({ name: 'local' }));
+    await act(async () => routed.router.navigate(1));
+    await waitFor(() => expect(routed.current().state.draft?.name).toBe('Rule 8'));
+    await act(async () => routed.router.navigate(-1));
+    await waitFor(() => expect(routed.current().state.draft?.name).toBe('Rule 7'));
+  });
+
+  it.each([
+    [previewEvidence(0), 'empty'],
+    [previewEvidence(1), 'ready'],
+    [new AlertRuleRequestFailure('permission', 'rejected'), 'permission'],
+    [new AlertRuleRequestFailure('unavailable', 'uncertain'), 'unavailable'],
+    [new AlertRuleContractError('bad'), 'invalid']
+  ])('keeps preview evidence distinct as %s', async (evidence, kind) => {
+    if (evidence instanceof Error) api.previewAlertRule.mockRejectedValue(evidence);
+    else api.previewAlertRule.mockResolvedValue(evidence);
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'usage > 90' }));
+    await act(async () => result.current.preview());
+    expect(result.current.state.preview.kind).toBe(kind);
+  });
+
+  it('tracks changed and reverted new and persisted drafts', async () => {
+    const fresh = renderController('new', '/alerts/rules/new?kind=periodic');
+    await waitFor(() => expect(fresh.result.current.state.datasource.kind).toBe('ready'));
+    expect(fresh.result.current.state.dirty).toBe(false);
+    act(() => fresh.result.current.updateDraft({ name: 'Audit unsaved draft' }));
+    expect(fresh.result.current.state.dirty).toBe(true);
+    act(() => fresh.result.current.updateDraft({ name: '' }));
+    expect(fresh.result.current.state.dirty).toBe(false);
+    fresh.unmount();
+    const edit = renderController('edit');
+    await waitFor(() => expect(edit.result.current.state.detail.kind).toBe('ready'));
+    const original = edit.result.current.state.draft!.name;
+    expect(edit.result.current.state.dirty).toBe(false);
+    act(() => edit.result.current.updateDraft({ name: 'Changed' }));
+    expect(edit.result.current.state.dirty).toBe(true);
+    act(() => edit.result.current.updateDraft({ name: original }));
+    expect(edit.result.current.state.dirty).toBe(false);
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
+  });
+
+  it('keeps automatic periodic executor fallback pristine', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({ hasPromqlExecutor: false, hasSqlExecutor: true });
+    const { result } = renderController('new', '/alerts/rules/new?kind=periodic');
+    await waitFor(() => expect(result.current.state.draft?.dataType).toBe('log'));
+    expect(result.current.state.dirty).toBe(false);
+    act(() => result.current.updateDraft({ name: 'Changed' }));
+    expect(result.current.state.dirty).toBe(true);
+  });
+
+  it('matches Apache master by silently ignoring a blank preview expression', async () => {
+    const { result } = renderController('new', '/alerts/rules/new?kind=periodic');
+
+    await act(async () => result.current.preview());
+
+    expect(result.current.state.preview).toEqual({ kind: 'idle' });
+    expect(api.previewAlertRule).not.toHaveBeenCalled();
+    expect(notify.warning).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [new AlertRuleRequestFailure('permission', 'rejected'), 'permission'],
+    [new AlertRuleContractError('over-limit preview'), 'invalid']
+  ])('retires preview rows when the next preview becomes %s', async (failure, kind) => {
+    api.previewAlertRule.mockResolvedValueOnce(previewEvidence(1)).mockRejectedValueOnce(failure);
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'usage > 90' }));
+    await act(async () => result.current.preview());
+    expect(result.current.state.preview.kind).toBe('ready');
+
+    await act(async () => result.current.preview());
+
+    expect(result.current.state.preview).toEqual({ kind });
+    expect(JSON.stringify(result.current.state.preview)).not.toContain('"rows"');
+  });
+
+  it('rejects an over-limit preview expression as input before API transport', async () => {
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'x'.repeat(2049) }));
+
+    await act(async () => result.current.preview());
+
+    expect(result.current.state.preview).toEqual({ kind: 'input' });
+    expect(api.previewAlertRule).not.toHaveBeenCalled();
+  });
+
+  it('keeps only the latest same-route preview when completions arrive out of order', async () => {
+    const first = deferred<ReturnType<typeof previewEvidence>>();
+    const second = deferred<ReturnType<typeof previewEvidence>>();
+    api.previewAlertRule.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'usage > 90' }));
+
+    let firstPreview!: Promise<void>;
+    let secondPreview!: Promise<void>;
+    act(() => {
+      firstPreview = result.current.preview();
+      secondPreview = result.current.preview();
+    });
+    act(() => second.resolve(previewEvidence(2)));
+    await act(async () => secondPreview);
+    expect(result.current.state.preview).toEqual({ kind: 'ready', ...previewEvidence(2) });
+
+    act(() => first.resolve(previewEvidence(1)));
+    await act(async () => firstPreview);
+    expect(result.current.state.preview).toEqual({ kind: 'ready', ...previewEvidence(2) });
+  });
+
+  it('does not let a stale preview completion replace current editor state', async () => {
+    const preview = deferred<ReturnType<typeof previewEvidence>>();
+    api.previewAlertRule.mockReturnValue(preview.promise);
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'usage > 90' }));
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.preview();
+    });
+
+    act(() => result.current.updateDraft({ expr: 'usage > 95' }));
+    act(() => preview.resolve(previewEvidence(1)));
+    await act(async () => pending);
+
+    expect(result.current.state.draft?.expr).toBe('usage > 95');
+    expect(result.current.state.preview.kind).toBe('idle');
+  });
+
+  it('retires preview rows and blocks preview transport when write access is lost', async () => {
+    const view = renderController('new', '/alerts/rules/new');
+    act(() => view.result.current.updateDraft({ expr: 'usage > 90' }));
+    api.previewAlertRule.mockResolvedValue(previewEvidence(1));
+    await act(async () => view.result.current.preview());
+    expect(view.result.current.state.preview.kind).toBe('ready');
+
+    session.roles = ['GUEST'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.state.preview.kind).toBe('idle'));
+    await act(async () => view.result.current.preview());
+
+    expect(api.previewAlertRule).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(view.result.current.state)).not.toContain('"rows"');
+  });
+
+  it('keeps an in-flight save owned and unlocks it after write access is lost and restored', async () => {
+    const write = deferred<void>();
+    api.saveAlertRule.mockReturnValue(write.promise);
+    const view = renderController('edit');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+    let save!: Promise<void>;
+    act(() => {
+      save = view.result.current.save();
+    });
+    await waitFor(() => expect(view.result.current.state.command).toBe('saving'));
+
+    session.roles = ['GUEST'];
+    view.rerender();
+    session.roles = ['ADMIN'];
+    view.rerender();
+    act(() => write.resolve());
+    await act(async () => save);
+
+    expect(view.result.current.state.command).toBe('idle');
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retains proof recovery across write-access loss and retries it after access returns', async () => {
+    const view = renderController('edit');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+    await act(async () => view.result.current.save());
+    expect(view.result.current.state.recovery).toEqual({
+      phase: 'proof',
+      failure: 'unavailable',
+      retryable: true
+    });
+
+    session.roles = ['GUEST'];
+    view.rerender();
+    session.roles = ['ADMIN'];
+    view.rerender();
+    await act(async () => view.result.current.retrySave());
+
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+    expect(view.result.current.state.recovery).toBeUndefined();
+  });
+
+  it('saves PUT only after exact-id all-field canonical convergence', async () => {
+    const routed = renderRouted(['/alerts/rules/7/edit']);
+    await waitFor(() => expect(routed.current().state.detail.kind).toBe('ready'));
+    api.loadAlertRule.mockResolvedValue({ ...persisted, labels: { severity: 'critical' } });
+    await act(async () => routed.current().save());
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules');
+    expect(notify.success).toHaveBeenCalled();
+
+    const second = renderController('edit');
+    await waitFor(() => expect(second.result.current.state.detail.kind).toBe('ready'));
+    api.loadAlertRule.mockResolvedValue({ ...persisted, annotations: {} });
+    await act(async () => second.result.current.save());
+    expect(second.result.current.state.draft).not.toBeNull();
+    expect(notify.error).toHaveBeenCalledWith('common.routeError.description');
+  });
+
+  it('proves POST by traversing pages for one exact normalized name and convergence', async () => {
+    const routed = renderRouted(['/alerts/rules/new']);
+    act(() => routed.current().updateDraft(validDraft()));
+    api.loadAlertRules
+      .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [])))
+      .mockImplementationOnce((query: AlertRuleQuery) =>
+        Promise.resolve({ ...page(query, []), totalElements: 26, totalPages: 2 })
+      )
+      .mockImplementationOnce((query: AlertRuleQuery) =>
+        Promise.resolve({
+          ...page(query, [
+            {
+              ...persisted,
+              id: 9,
+              name: 'New Rule',
+              expr: 'usage > 90',
+              period: 300,
+              times: 3,
+              labels: { severity: 'warning' },
+              annotations: {},
+              template: 'Alert'
+            }
+          ]),
+          totalElements: 26,
+          totalPages: 2
+        })
+      );
+    await act(async () => routed.current().save());
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(3);
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules');
+  });
+
+  it('retains an uncertain create receipt and retries only canonical reads', async () => {
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft(validDraft()));
+    api.loadAlertRules
+      .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [])))
+      .mockImplementationOnce((query: AlertRuleQuery) =>
+        Promise.resolve(
+          page(query, [
+            {
+              ...persisted,
+              id: 9,
+              name: 'New Rule',
+              expr: 'usage > 90',
+              period: 300,
+              times: 3,
+              labels: { severity: 'warning' },
+              annotations: {},
+              template: 'Alert'
+            }
+          ])
+        )
+      );
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'unavailable', retryable: true });
+    await act(async () => result.current.save());
+    await waitFor(() => expect(api.saveAlertRule).toHaveBeenCalledTimes(1));
+
+    await act(async () => result.current.retrySave());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retains an uncertain update receipt and retries only its exact-id proof', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'unavailable', retryable: true });
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.retrySave());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retries only proof after an acknowledged update proof read fails', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.loadAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'unavailable', retryable: true });
+    await act(async () => result.current.retrySave());
+
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(3);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('unlocks the editor only after a definite source rejection', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('error', 'rejected'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toBeUndefined();
+    act(() => result.current.updateDraft({ name: 'CPU updated' }));
+    expect(result.current.state.draft?.name).toBe('CPU updated');
+
+    api.loadAlertRule.mockResolvedValueOnce({ ...persisted, name: 'CPU updated' });
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retains the draft and exposes redacted server validation without proof recovery', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleWriteRequestFailure('validation', 'rejected'));
+
+    await act(async () => result.current.save());
+
+    expect(result.current.state.saveFailure).toBe('validation');
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(result.current.state.draft).toEqual(expect.objectContaining({ id: persisted.id, name: persisted.name }));
+    expect(notify.warning).toHaveBeenCalledWith('alertRules.validation');
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the draft and exposes redacted server permission without proof recovery', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('permission', 'rejected'));
+
+    await act(async () => result.current.save());
+
+    expect(result.current.state.saveFailure).toBe('permission');
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(notify.error).toHaveBeenCalledWith('common.permission.roleRequiredDescription');
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not treat an unscoped contract exception as source rejection evidence', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleContractError('write outcome is not known'));
+
+    await act(async () => result.current.save());
+
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'error', retryable: true });
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+  });
+
+  it('captures create baseline before POST and does not accept a pre-existing same-name rule', async () => {
+    const existing = {
+      ...persisted,
+      name: 'New Rule',
+      expr: 'usage > 90',
+      period: 300,
+      times: 3,
+      labels: {},
+      annotations: {},
+      template: 'Alert'
+    };
+    const order: string[] = [];
+    api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => {
+      order.push('read');
+      return Promise.resolve(page(query, [existing]));
+    });
+    api.saveAlertRule.mockImplementation(() => {
+      order.push('write');
+      return Promise.resolve();
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft(validDraft()));
+
+    await act(async () => result.current.save());
+
+    expect(order).toEqual(['read', 'write', 'read']);
+    expect(result.current.state.recovery).toEqual({
+      phase: 'commit-uncertain',
+      failure: 'unavailable',
+      retryable: false
+    });
+    expect(notify.success).not.toHaveBeenCalled();
+    await act(async () => result.current.retrySave());
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(2);
+  });
+
+  it('admits only one same-tick save write', async () => {
+    const write = deferred<void>();
+    api.saveAlertRule.mockReturnValue(write.promise);
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft(validDraft()));
+
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = result.current.save();
+      second = result.current.save();
+    });
+    await waitFor(() => expect(api.saveAlertRule).toHaveBeenCalledTimes(1));
+
+    act(() => write.resolve());
+    await act(async () => Promise.all([first, second]));
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['non-finite', Number.NaN],
+    ['over-limit', 1_000_000]
+  ])('rejects %s create-proof page counts without starting an unbounded scan', async (_label, totalPages) => {
+    const routed = renderRouted(['/alerts/rules/new']);
+    act(() => routed.current().updateDraft(validDraft()));
+    const matching = {
+      ...persisted,
+      id: 9,
+      name: 'New Rule',
+      expr: 'usage > 90',
+      period: 300,
+      times: 3,
+      labels: {},
+      annotations: {},
+      template: 'Alert'
+    };
+    api.loadAlertRules
+      .mockResolvedValueOnce({
+        ...page({ search: 'New Rule', pageIndex: 0, pageSize: 25 }, [matching]),
+        totalElements: 25_000_000,
+        totalPages
+      })
+      .mockRejectedValueOnce(new Error('proof scan escaped its first page'));
+
+    await act(async () => routed.current().save());
+
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules/new');
+    expect(routed.current().state.saveFailure).toBe('error');
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('keeps create draft when canonical name is missing, duplicate, or drifting', async () => {
+    for (const records of [
+      [],
+      [
+        { ...persisted, name: 'New Rule' },
+        { ...persisted, id: 8, name: 'New Rule' }
+      ],
+      [{ ...persisted, name: 'New Rule', annotations: { drift: 'yes' } }]
+    ]) {
+      vi.clearAllMocks();
+      api.saveAlertRule.mockResolvedValue(undefined);
+      api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, records)));
+      const { result } = renderController('new', '/alerts/rules/new');
+      act(() => result.current.updateDraft(validDraft()));
+      await act(async () => result.current.save());
+      expect(result.current.state.draft).not.toBeNull();
+      expect(notify.success).not.toHaveBeenCalled();
+    }
+  });
+
+  it('cancel only navigates and performs no writes', () => {
+    const routed = renderRouted(['/alerts/rules/new']);
+    act(() => routed.current().cancel());
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules');
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
+  });
+
+  it('does not let stale detail overwrite the next route draft', async () => {
+    const oldDetail = deferred<AlertRule>();
+    api.loadAlertRule
+      .mockReturnValueOnce(oldDetail.promise)
+      .mockResolvedValueOnce({ ...persisted, id: 8, name: 'Rule 8' });
+    const routed = renderRouted(['/alerts/rules/7/edit', '/alerts/rules/8/edit']);
+    await act(async () => routed.router.navigate(1));
+    await waitFor(() => expect(routed.current().state.draft?.name).toBe('Rule 8'));
+    act(() => oldDetail.resolve({ ...persisted, name: 'Rule 7' }));
+    await waitFor(() => expect(routed.current().state.draft?.name).toBe('Rule 8'));
+  });
+
+  it('does not let stale preview overwrite a new route', async () => {
+    const oldPreview = deferred<ReturnType<typeof previewEvidence>>();
+    api.previewAlertRule.mockReturnValue(oldPreview.promise);
+    api.loadAlertRule.mockImplementation((id: number) => Promise.resolve({ ...persisted, id }));
+    const routed = renderRouted(['/alerts/rules/new', '/alerts/rules/8/edit']);
+    act(() => routed.current().updateDraft({ expr: 'usage > 90' }));
+    let preview!: Promise<void>;
+    act(() => {
+      preview = routed.current().preview();
+    });
+    await act(async () => routed.router.navigate(1));
+    await waitFor(() => expect(routed.current().state.draft?.id).toBe(8));
+    act(() => oldPreview.resolve(previewEvidence(1)));
+    await act(async () => preview);
+    expect(routed.current().state.preview.kind).toBe('idle');
+  });
+
+  it('does not let a stale save prove success or navigate away from the new route', async () => {
+    const oldSave = deferred<void>();
+    api.saveAlertRule.mockReturnValue(oldSave.promise);
+    const routed = renderRouted(['/alerts/rules/new', '/alerts/rules/8/edit']);
+    act(() => routed.current().updateDraft(validDraft()));
+    let save!: Promise<void>;
+    act(() => {
+      save = routed.current().save();
+    });
+    await waitFor(() => expect(api.saveAlertRule).toHaveBeenCalled());
+    await act(async () => routed.router.navigate(1));
+    act(() => oldSave.resolve());
+    await act(async () => save);
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules/8/edit');
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(routed.current().state.command).toBe('idle');
+  });
+
+  it('invalidates a stale save when its route component unmounts', async () => {
+    const oldSave = deferred<void>();
+    api.saveAlertRule.mockReturnValue(oldSave.promise);
+    const routed = renderRouted(['/alerts/rules/new']);
+    act(() => routed.current().updateDraft(validDraft()));
+    let save!: Promise<void>;
+    act(() => {
+      save = routed.current().save();
+    });
+    await waitFor(() => expect(api.saveAlertRule).toHaveBeenCalled());
+    await act(async () => routed.router.navigate('/alerts/rules'));
+    act(() => oldSave.resolve());
+    await act(async () => save);
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules');
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+});
+
+function validDraft() {
+  return {
+    name: ' New Rule ',
+    expr: 'usage > 90',
+    template: 'Alert',
+    labelsText: 'severity:warning',
+    period: 300,
+    times: 3
+  };
+}
+
+function previewEvidence(rowCount: number) {
+  return {
+    rowCount,
+    rows: Array.from({ length: rowCount }, (_value, index) => ({ value: index + 1 }))
+  };
+}
+
+function renderController(mode: 'new' | 'edit', entry = '/alerts/rules/7/edit') {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={[canonicalEditorEntry(entry)]}>
+        <Routes>
+          <Route path="/alerts/rules/new" element={children} />
+          <Route path="/alerts/rules/:ruleId/edit" element={children} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+  return renderHook(() => useAlertRuleEditorController(mode), { wrapper });
+}
+
+function renderRouted(entries: string[]) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let controller: ReturnType<typeof useAlertRuleEditorController> | undefined;
+  function Probe({ mode }: { mode: 'new' | 'edit' }) {
+    controller = useAlertRuleEditorController(mode);
+    return null;
+  }
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/alerts/rules/new',
+        element: (
+          <QueryClientProvider client={client}>
+            <Probe mode="new" />
+          </QueryClientProvider>
+        )
+      },
+      {
+        path: '/alerts/rules/:ruleId/edit',
+        element: (
+          <QueryClientProvider client={client}>
+            <Probe mode="edit" />
+          </QueryClientProvider>
+        )
+      },
+      { path: '/alerts/rules', element: null }
+    ],
+    {
+      initialEntries: entries.map(canonicalEditorEntry),
+      initialIndex: 0
+    }
+  );
+  render(<RouterProvider router={router} />);
+  return {
+    router,
+    current: () => {
+      if (!controller) throw new Error('not mounted');
+      return controller;
+    }
+  };
+}
+
+function canonicalEditorEntry(entry: string) {
+  return entry === '/alerts/rules/new' ? '/alerts/rules/new?kind=realtime' : entry;
+}
+
+function page(query: AlertRuleQuery, content: AlertRule[]) {
+  return {
+    content,
+    totalElements: content.length,
+    totalPages: Math.ceil(content.length / query.pageSize),
+    number: query.pageIndex,
+    size: query.pageSize
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}

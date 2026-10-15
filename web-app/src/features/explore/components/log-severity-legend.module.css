@@ -1,0 +1,69 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.overview {
+  min-width: 0;
+  margin-left: auto;
+}
+.overviewStats {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--hb-space-3);
+  min-height: 32px;
+  align-items: center;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overviewStats li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+.overviewStats strong {
+  color: var(--hb-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.overviewStats li::before {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--hb-text-muted);
+  content: '';
+}
+.overviewStats li[data-severity]::before {
+  background: var(--ant-color-primary);
+}
+.overviewStats li[data-severity='ERROR']::before,
+.overviewStats li[data-severity='FATAL']::before {
+  background: var(--ant-color-error);
+}
+.overviewStats li[data-severity='WARN']::before {
+  background: var(--ant-color-warning);
+}
+@media (width <= 900px) {
+  .overview {
+    margin-left: 0;
+  }
+}

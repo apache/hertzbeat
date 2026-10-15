@@ -26,15 +26,13 @@ import java.nio.charset.StandardCharsets;
 import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.script.ScriptResponseParser;
 import org.apache.hertzbeat.collector.collect.common.OneRowResponseSupport;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
 import org.apache.hertzbeat.collector.collect.common.ssh.SshHelper;
@@ -129,8 +127,8 @@ public class SshCollectImpl extends AbstractCollect {
             }
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                case OneRowResponseSupport.PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_NETCAT -> ScriptResponseParser.parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
+                case OneRowResponseSupport.PARSE_TYPE_ONE_ROW -> ScriptResponseParser.parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
@@ -231,36 +229,6 @@ public class SshCollectImpl extends AbstractCollect {
         }
     }
 
-    private void parseResponseDataByNetcat(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
-        String[] lines = result.split("\n");
-        if (lines.length + 1 < aliasFields.size()) {
-            log.error("ssh response data not enough: {}", result);
-            return;
-        }
-        boolean contains = lines[0].contains("=");
-        Map<String, String> mapValue = Arrays.stream(lines)
-                .map(item -> {
-                    if (contains) {
-                        return item.split("=");
-                    } else {
-                        return item.split("\t");
-                    }
-                })
-                .filter(item -> item.length == 2)
-                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
-
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (String field : aliasFields) {
-            String fieldValue = mapValue.get(field);
-            valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-        }
-        builder.addValueRow(valueRowBuilder.build());
-    }
-
-    private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
-        OneRowResponseSupport.appendResponseValues(result, aliasFields, builder, responseTime);
-    }
-
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
                                           CollectRep.MetricsData.Builder builder, Long responseTime) {
         String[] lines = result.split("\n");
@@ -268,13 +236,15 @@ public class SshCollectImpl extends AbstractCollect {
             log.error("ssh response data only has header: {}", result);
             return;
         }
-        String[] fields = lines[0].split(" ");
+        // split columns on any whitespace run; each line is trimmed first so leading or trailing
+        // padding cannot shift the first column out of alignment with the header
+        String[] fields = lines[0].trim().split("\\s+");
         Map<String, Integer> fieldMapping = new HashMap<>(fields.length);
         for (int i = 0; i < fields.length; i++) {
             fieldMapping.put(fields[i].trim().toLowerCase(), i);
         }
         for (int i = 1; i < lines.length; i++) {
-            String[] values = lines[i].split(" ");
+            String[] values = lines[i].trim().split("\\s+");
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {

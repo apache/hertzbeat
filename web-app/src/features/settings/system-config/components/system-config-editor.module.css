@@ -1,0 +1,99 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.form {
+  display: grid;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: 0;
+  gap: 18px;
+}
+.section {
+  display: grid;
+  gap: 18px;
+  padding-top: 24px;
+  margin-top: 26px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.sectionHeading {
+  display: grid;
+  gap: 4px;
+}
+.sectionHeading :global(.ant-typography) {
+  margin: 0;
+}
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+}
+.label {
+  padding-top: 0;
+  font-weight: 600;
+}
+.control {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.advanced {
+  min-width: 0;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.advancedSummary {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding-block: 14px 2px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.advancedSummary::-webkit-details-marker {
+  display: none;
+}
+
+.advancedChevron {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+  transition: transform 160ms ease;
+}
+
+.advanced[open] .advancedChevron {
+  transform: rotate(90deg);
+}
+
+.advancedCopy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.advancedTitle {
+  font-weight: 600;
+}
+
+.advancedFields {
+  display: grid;
+  gap: 18px;
+  padding-block: 18px 2px;
+}

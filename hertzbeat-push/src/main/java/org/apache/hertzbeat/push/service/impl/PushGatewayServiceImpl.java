@@ -40,11 +40,14 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.push.dao.PushMonitorDao;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * push gateway service impl
@@ -54,12 +57,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class PushGatewayServiceImpl implements PushGatewayService {
 
-    private static final byte PUSH_MONITOR_TYPE = (byte) 1;
-
     private final CommonDataQueue commonDataQueue;
-    
+
     private final PushMonitorDao pushMonitorDao;
-    
+
     private final Map<JobInstance, Long> jobInstanceMap;
 
     /**
@@ -116,10 +117,24 @@ public class PushGatewayServiceImpl implements PushGatewayService {
         this.maxBodyBytes = maxBodyBytes;
         this.maxSamples = maxSamples;
         jobInstanceMap = new ConcurrentHashMap<>();
-        pushMonitorDao.findMonitorsByType(PUSH_MONITOR_TYPE).forEach(monitor ->
+        pushMonitorDao.findMonitorsByType(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE).forEach(monitor ->
                 jobInstanceMap.put(new JobInstance(monitor.getApp(), monitor.getName()), monitor.getId()));
         monitorCreationMap = new ConcurrentHashMap<>();
         trackedMonitorCount = new AtomicInteger(jobInstanceMap.size());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMonitorDeleted(MonitorDeletedEvent event) {
+        Long monitorId = event.getMonitorId();
+        if (monitorId != null) {
+            jobInstanceMap.entrySet().removeIf(entry -> {
+                if (monitorId.equals(entry.getValue())) {
+                    trackedMonitorCount.decrementAndGet();
+                    return true;
+                }
+                return false;
+            });
+        }
     }
 
     @Override
@@ -303,7 +318,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
                 .app(job)
                 .name(instance)
                 .instance(instance)
-                .type(PUSH_MONITOR_TYPE)
+                .type(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE)
                 .status(CommonConstants.MONITOR_UP_CODE)
                 .build();
         this.pushMonitorDao.save(monitor);
