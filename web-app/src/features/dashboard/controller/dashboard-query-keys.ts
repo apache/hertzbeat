@@ -16,6 +16,7 @@
  */
 
 export const dashboardQueryKeys = {
+  categories: () => ['dashboard', 'categories'] as const,
   monitors: () => ['dashboard', 'monitors'] as const,
   alerts: () => ['dashboard', 'alerts'] as const,
   services: () => ['dashboard', 'services'] as const

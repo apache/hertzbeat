@@ -26,6 +26,9 @@ import type { DashboardCountEvidence } from '../model/dashboard-activity';
 
 const start = vi.hoisted(() => ({ useDashboardStartController: vi.fn() }));
 vi.mock('../controller/use-dashboard-start-controller', () => start);
+vi.mock('../controller/use-dashboard-categories', () => ({
+  useDashboardCategories: () => ({ kind: 'ready', categories: [] })
+}));
 
 import { DashboardPage } from './dashboard-page';
 

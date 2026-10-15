@@ -1375,6 +1375,7 @@
     "defaultPassword": "このアカウントは初期パスワードを使用しています。ログイン後に変更してください。続行するには再度送信します。"
   },
   "dashboard": {
+    "carousel": { "categories": "監視カテゴリ", "previous": "前のカテゴリ", "next": "次のカテゴリ" },
     "title": "ダッシュボード",
     "description": "監視の可用性と現在のアラート状況を確認します。",
     "start": {

@@ -1375,6 +1375,7 @@
     "defaultPassword": "当前账号仍在使用默认密码。登录后请立即修改；再次提交可继续。"
   },
   "dashboard": {
+    "carousel": { "categories": "监控分类", "previous": "上一组分类", "next": "下一组分类" },
     "title": "仪表盘",
     "description": "查看监控可用性与当前告警态势。",
     "start": {

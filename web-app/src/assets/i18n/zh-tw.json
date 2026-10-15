@@ -1375,6 +1375,7 @@
     "defaultPassword": "目前帳號仍使用預設密碼。登入後請立即修改；再次提交可繼續。"
   },
   "dashboard": {
+    "carousel": { "categories": "監控分類", "previous": "上一組分類", "next": "下一組分類" },
     "title": "儀表板",
     "description": "查看監控可用性與目前告警狀態。",
     "start": {

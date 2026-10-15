@@ -1375,6 +1375,7 @@
     "defaultPassword": "This account is using the default password. Change it after signing in. Submit again to continue."
   },
   "dashboard": {
+    "carousel": { "categories": "Monitor categories", "previous": "Previous categories", "next": "Next categories" },
     "title": "Dashboard",
     "description": "Monitor availability and current alert posture.",
     "start": {

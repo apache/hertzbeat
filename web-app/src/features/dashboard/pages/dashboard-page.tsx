@@ -22,12 +22,15 @@ import { OperationalPage, OperationalPageHeader } from '@/shared/operational-pag
 
 import { DashboardStart } from '../components/dashboard-start';
 import { DashboardActivity } from '../components/dashboard-activity';
+import { DashboardCategoryCarousel } from '../components/dashboard-category-carousel';
+import { useDashboardCategories } from '../controller/use-dashboard-categories';
 import styles from '../components/dashboard-activity.module.css';
 import { useDashboardStartController } from '../controller/use-dashboard-start-controller';
 
 export function DashboardPage() {
   const { t } = useTranslation();
   const start = useDashboardStartController();
+  const categories = useDashboardCategories();
   return (
     <OperationalPage>
       <OperationalPageHeader
@@ -35,6 +38,7 @@ export function DashboardPage() {
         description={t(start.activity.firstUse ? 'dashboard.start.description' : 'dashboard.daily.description')}
         actions={<Link to={start.savedQueriesTarget}>{t('exploreSaved.directory')}</Link>}
       />
+      <DashboardCategoryCarousel {...categories} />
       {start.activity.firstUse ? (
         <>
           <Link to={start.activity.targets.signals}>{t('dashboard.daily.openSignals')}</Link>

@@ -1375,6 +1375,11 @@
     "defaultPassword": "Esta conta usa a senha padrão. Altere-a após entrar; envie novamente para continuar."
   },
   "dashboard": {
+    "carousel": {
+      "categories": "Categorias de monitoramento",
+      "previous": "Categorias anteriores",
+      "next": "Próximas categorias"
+    },
     "title": "Painel",
     "description": "Veja a disponibilidade dos monitores e os alertas atuais.",
     "start": {
