@@ -2777,7 +2777,8 @@
       "larkApp": "飛書應用",
       "ntfy": "Ntfy",
       "unknown": "未知",
-      "wpush": "WPUSH"
+      "wpush": "WPUSH",
+      "teams": "Microsoft Teams"
     },
     "larkReceiveTypes": {
       "0": "使用者",
@@ -2820,7 +2821,8 @@
       "ntfyToken": "Ntfy 權杖",
       "wpushToken": "WPUSH API Key",
       "wpushChannel": "WPUSH 渠道",
-      "wpushTopicCode": "WPUSH 主題碼"
+      "wpushTopicCode": "WPUSH 主題碼",
+      "teamsWebHookUrl": "Microsoft Teams Workflows Webhook 地址"
     }
   },
   "noticeTemplates": {

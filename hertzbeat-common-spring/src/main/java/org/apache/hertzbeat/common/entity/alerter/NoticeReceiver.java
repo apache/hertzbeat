@@ -69,12 +69,13 @@ public class NoticeReceiver {
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot "
             + "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message "
-            + "11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy",
+            + "11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy 16-WPUSH 17-Microsoft Teams",
             description = "Notification information method: "
                     + "0-SMS 1-Email 2-webhook 3-WeChat Official Account "
                     + "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot "
                     + "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise "
-                    + "WeChat app message 11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy",
+                    + "WeChat app message 11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message "
+                    + "15-Ntfy 16-WPUSH 17-Microsoft Teams",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull(message = "type can not null")
@@ -299,6 +300,14 @@ public class NoticeReceiver {
     @Size(max = 300)
     @Column(length = 300)
     private String wpushTopicCode;
+
+    @Schema(title = "Microsoft Teams Workflows webhook URL",
+            description = "HTTPS webhook URL created by a Teams Workflows (Power Automate) flow",
+            example = "https://prod-00.westus.logic.azure.com/workflows/xxx/triggers/manual/paths/invoke?sig=abc",
+            accessMode = READ_WRITE)
+    @Size(max = 1000)
+    @Column(length = 1000)
+    private String teamsWebHookUrl;
 
     @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)
