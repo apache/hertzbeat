@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.manager.config.PrometheusProxyConfig;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -74,6 +75,8 @@ public class CollectorJobSchedulerTest {
     private ParamDao paramDao;
     @Mock
     private AppService appService;
+    @Mock
+    private PrometheusProxyConfig prometheusProxyConfig;
 
 
     @BeforeEach
@@ -132,6 +135,7 @@ public class CollectorJobSchedulerTest {
         when(consistentHash.getNode("collector-1")).thenReturn(node);
 
         ManageServer manageServer = mock(ManageServer.class);
+        when(manageServer.sendMsg(anyString(), any(ClusterMsg.Message.class))).thenReturn(true);
         collectorJobScheduler.setManageServer(manageServer);
         // run
         collectorJobScheduler.collectorGoOnline(identity, collectorInfo);
@@ -179,6 +183,7 @@ public class CollectorJobSchedulerTest {
         when(consistentHash.getNode("collector-1")).thenReturn(node);
 
         ManageServer manageServer = mock(ManageServer.class);
+        when(manageServer.sendMsg(anyString(), any(ClusterMsg.Message.class))).thenReturn(true);
         collectorJobScheduler.setManageServer(manageServer);
 
         collectorJobScheduler.collectorGoOnline(identity, collectorInfo);
