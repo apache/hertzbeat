@@ -29,6 +29,8 @@ import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponse
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.timer.Timeout;
+import org.apache.hertzbeat.common.timer.Timer;
+import org.apache.hertzbeat.common.timer.TimerTask;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -59,7 +61,7 @@ public class TimerDispatcherTest {
 
     /**
      * Test getNextExecutionInterval with valid CRON expression
-     * Should return the calculated interval based on cron expression
+     * Should return the calculated interval based on cron expression in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithValidCron() {
@@ -71,14 +73,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Result should be between 0 and 60 seconds
-        // since the cron expression runs every minute
-        assertEquals(true, result >= 0 && result <= 60);
+        // Verify - Result should be between 0 and 60 seconds in milliseconds
+        assertTrue(result >= 0 && result <= 60_000L);
     }
 
     /**
      * Test getNextExecutionInterval with invalid CRON expression
-     * Should fall back to interval scheduling
+     * Should fall back to interval scheduling in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithInvalidCron() {
@@ -90,13 +91,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should fall back to interval value
-        assertEquals(300L, result);
+        // Verify - Should fall back to interval value in milliseconds
+        assertEquals(300_000L, result);
     }
 
     /**
      * Test getNextExecutionInterval with empty CRON expression
-     * Should fall back to interval scheduling
+     * Should fall back to interval scheduling in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithEmptyCron() {
@@ -108,13 +109,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should fall back to interval value
-        assertEquals(120L, result);
+        // Verify - Should fall back to interval value in milliseconds
+        assertEquals(120_000L, result);
     }
 
     /**
      * Test getNextExecutionInterval with INTERVAL schedule type and no dispatchTime
-     * Should return the full interval value
+     * Should return the full interval value in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithIntervalNoDispatchTime() {
@@ -126,13 +127,13 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should return the full interval value
-        assertEquals(600L, result);
+        // Verify - Should return the full interval value in milliseconds
+        assertEquals(600_000L, result);
     }
 
     /**
      * Test getNextExecutionInterval with INTERVAL schedule type and dispatchTime
-     * Should return the remaining interval time
+     * Should return the remaining interval time in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithIntervalAndDispatchTime() {
@@ -150,7 +151,28 @@ public class TimerDispatcherTest {
 
         // Verify - Should return the remaining interval time (approximately 5 minutes)
         // Considering possible time differences during execution, we check a range
-        assertEquals(true, result >= 295 && result <= 305);
+        assertTrue(result >= 295_000L && result <= 305_000L);
+    }
+
+    /**
+     * A short collection must not truncate the remaining delay to whole seconds.
+     * With a 30s interval and a 300ms collection, the next delay should stay near 29.7s.
+     */
+    @Test
+    void testIntervalDispatchPreservesMillisecondRemainder() {
+        long interval = 30L;
+        long spendTime = 300L;
+        long dispatchTime = System.currentTimeMillis() - spendTime;
+
+        when(job.getScheduleType()).thenReturn(ScheduleTypeEnum.INTERVAL.getType());
+        when(job.getDispatchTime()).thenReturn(dispatchTime);
+        when(job.getInterval()).thenReturn(interval);
+
+        Long result = timerDispatcher.getNextExecutionInterval(job);
+
+        assertTrue(result >= 29_600L && result <= 29_800L,
+                "expected ~29700ms remaining delay, got " + result);
+        assertFalse(result == 29_000L, "must not truncate 29700ms to 29 seconds");
     }
 
     /**
@@ -177,7 +199,7 @@ public class TimerDispatcherTest {
 
     /**
      * Test getNextExecutionInterval with CRON schedule type and null cronExpression
-     * Should fall back to interval scheduling
+     * Should fall back to interval scheduling in milliseconds
      */
     @Test
     void testGetNextExecutionIntervalWithCronAndNullExpression() {
@@ -189,8 +211,8 @@ public class TimerDispatcherTest {
         // Execute
         Long result = timerDispatcher.getNextExecutionInterval(job);
 
-        // Verify - Should fall back to interval value
-        assertEquals(180L, result);
+        // Verify - Should fall back to interval value in milliseconds
+        assertEquals(180_000L, result);
     }
 
     @Test
@@ -280,6 +302,160 @@ public class TimerDispatcherTest {
         assertTrue(t1.isCancelled(), "T1 orphaned: overwritten by cyclicJob but never cancelled");
     }
 
+    /**
+     * Scheduling-level regression: the delay and TimeUnit given to cyclicJob must be
+     * the same arguments that reach Timer.newTimeout. Checking getNextExecutionInterval
+     * alone would still pass if cyclicJob ignored timeUnit and scheduled 29700 seconds.
+     */
+    @Test
+    void testCyclicJobHonorsSuppliedTimeUnitOnTimer() throws Exception {
+        TimerDispatcher dispatcher = new TimerDispatcher();
+        try {
+            Job cyclicJob = cyclicIntervalJob(11L, 30L);
+            dispatcher.addJob(cyclicJob, null);
+            RecordingTimer recordingTimer = replaceWheelTimer(dispatcher);
+
+            WheelTimerTask timerTask = new WheelTimerTask(cyclicJob, (MetricsTaskDispatch) timeout -> {
+            });
+            dispatcher.cyclicJob(timerTask, 29_700L, TimeUnit.MILLISECONDS);
+
+            assertEquals(29_700L, recordingTimer.lastDelay,
+                    "fractional-second delay must reach the timer unchanged");
+            assertEquals(TimeUnit.MILLISECONDS, recordingTimer.lastUnit,
+                    "supplied timeUnit must be honored instead of hardcoded SECONDS");
+        } finally {
+            dispatcher.destroy();
+        }
+    }
+
+    /**
+     * A 30s interval with a 300ms collection must reschedule ~29.7s in milliseconds,
+     * including the remainder that whole-second truncation would drop.
+     */
+    @Test
+    void testCyclicRescheduleDeliversMillisecondRemainderToTimer() throws Exception {
+        TimerDispatcher dispatcher = new TimerDispatcher();
+        try {
+            Job cyclicJob = cyclicIntervalJob(12L, 30L);
+            cyclicJob.setDispatchTime(System.currentTimeMillis() - 300L);
+            dispatcher.addJob(cyclicJob, null);
+            RecordingTimer recordingTimer = replaceWheelTimer(dispatcher);
+
+            WheelTimerTask timerTask = new WheelTimerTask(cyclicJob, (MetricsTaskDispatch) timeout -> {
+            });
+            dispatcher.cyclicJob(timerTask);
+
+            assertEquals(TimeUnit.MILLISECONDS, recordingTimer.lastUnit,
+                    "cyclic reschedule must schedule with MILLISECONDS");
+            assertTrue(recordingTimer.lastDelay >= 29_600L && recordingTimer.lastDelay <= 29_800L,
+                    "expected ~29700ms remaining delay on the timer, got " + recordingTimer.lastDelay);
+            assertTrue(recordingTimer.lastDelay % 1000L != 0,
+                    "fractional-second remainder must reach the timer, got " + recordingTimer.lastDelay);
+        } finally {
+            dispatcher.destroy();
+        }
+    }
+
+    /**
+     * Initial dispatch of an already-executed interval job must also put the
+     * millisecond remainder on the wheel, not a truncated second delay.
+     */
+    @Test
+    void testInitialDispatchDeliversMillisecondRemainderToTimer() throws Exception {
+        TimerDispatcher dispatcher = new TimerDispatcher();
+        try {
+            Job cyclicJob = cyclicIntervalJob(13L, 30L);
+            cyclicJob.setDispatchTime(System.currentTimeMillis() - 300L);
+            RecordingTimer recordingTimer = replaceWheelTimer(dispatcher);
+            dispatcher.addJob(cyclicJob, null);
+
+            assertEquals(TimeUnit.MILLISECONDS, recordingTimer.lastUnit,
+                    "initial cyclic dispatch must schedule with MILLISECONDS");
+            assertTrue(recordingTimer.lastDelay >= 29_600L && recordingTimer.lastDelay <= 29_800L,
+                    "expected ~29700ms remaining delay on the timer, got " + recordingTimer.lastDelay);
+            assertTrue(recordingTimer.lastDelay % 1000L != 0,
+                    "fractional-second remainder must reach the timer, got " + recordingTimer.lastDelay);
+        } finally {
+            dispatcher.destroy();
+        }
+    }
+
+    private static Job cyclicIntervalJob(long id, long intervalSeconds) {
+        return Job.builder()
+                .id(id)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(intervalSeconds).build()))
+                .build();
+    }
+
+    private static RecordingTimer replaceWheelTimer(TimerDispatcher dispatcher) {
+        try {
+            Field field = TimerDispatcher.class.getDeclaredField("wheelTimer");
+            field.setAccessible(true);
+            Timer previous = (Timer) field.get(dispatcher);
+            if (previous != null && !previous.isStop()) {
+                previous.stop();
+            }
+            RecordingTimer recordingTimer = new RecordingTimer();
+            field.set(dispatcher, recordingTimer);
+            return recordingTimer;
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static final class RecordingTimer implements Timer {
+        private long lastDelay;
+        private TimeUnit lastUnit;
+
+        @Override
+        public Timeout newTimeout(TimerTask task, long delay, TimeUnit unit) {
+            this.lastDelay = delay;
+            this.lastUnit = unit;
+            return new Timeout() {
+                private boolean cancelled;
+
+                @Override
+                public Timer timer() {
+                    return RecordingTimer.this;
+                }
+
+                @Override
+                public TimerTask task() {
+                    return task;
+                }
+
+                @Override
+                public boolean isExpired() {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return cancelled;
+                }
+
+                @Override
+                public boolean cancel() {
+                    cancelled = true;
+                    return true;
+                }
+            };
+        }
+
+        @Override
+        public Set<Timeout> stop() {
+            return Set.of();
+        }
+
+        @Override
+        public boolean isStop() {
+            return false;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private Map<Long, Timeout> currentCyclicTaskMap() {
         try {
@@ -313,7 +489,7 @@ public class TimerDispatcherTest {
         Set<Long> delays = new HashSet<>();
         for (int i = 0; i < 50; i++) {
             long delay = timerDispatcher.initialCyclicDelay(job);
-            assertTrue(delay >= 1 && delay <= 600, "delay out of interval: " + delay);
+            assertTrue(delay >= 1 && delay <= 600_000L, "delay out of interval: " + delay);
             delays.add(delay);
         }
         assertTrue(delays.size() > 1, "no jitter observed across 50 samples");

@@ -40,8 +40,8 @@ public interface TimerDispatch {
     /**
      * Cyclic job
      * @param timerTask timerTask
-     * @param interval  collect interval
-     * @param timeUnit  time unit
+     * @param interval  delay until the next run
+     * @param timeUnit  time unit of {@code interval}
      */
     void cyclicJob(WheelTimerTask timerTask, long interval, TimeUnit timeUnit);
 
