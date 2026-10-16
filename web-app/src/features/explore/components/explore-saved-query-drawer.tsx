@@ -20,6 +20,7 @@ import { formatShortLocalTime } from '@/shared/time';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SavedQueryFavorite } from './saved-query-favorite';
 import { SavedQueryTimeSummary } from './saved-query-time-summary';
 import { SavedQueryOriginal } from './explore-saved-query-original';
 
@@ -147,6 +148,7 @@ function SavedQueryRow({
         </Typography.Text>
       </div>
       <Space wrap size="small">
+        <SavedQueryFavorite record={record} model={model} />
         <Popconfirm
           disabled={!model.dirty && !model.activeChanged && !model.editor}
           title={t(model.dirty ? 'exploreSaved.discardDraft' : 'common.unsavedChangesConfirm')}
