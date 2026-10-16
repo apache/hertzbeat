@@ -225,6 +225,57 @@ class CollectorJobSchedulerLifecycleTest {
     }
 
     @Test
+    void rejectedPinnedRemoteReplacementRetainsPreviousJobAndAllowsSuccessfulRetry() {
+        assertRemoteReplacementRollback(REMOTE);
+    }
+
+    @Test
+    void rejectedAutomaticRemoteReplacementRetainsPreviousJobAndAllowsSuccessfulRetry() {
+        assertRemoteReplacementRollback(null);
+    }
+
+    @Test
+    void rollbackCancellationFailurePreservesDispatchFailureAndPreviousJobForRetry() {
+        Fixture fixture = new Fixture(null);
+        fixture.online(REMOTE);
+        long previous = fixture.scheduler.addAsyncCollectJob(fixture.job(), REMOTE);
+        Job rejected = fixture.job();
+        fixture.rejectNextRemoteDispatch.set(true);
+        fixture.rejectNextRemoteCancellation.set(true);
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> fixture.scheduler.addAsyncCollectJob(rejected, REMOTE));
+        assertTrue(exception.getMessage().startsWith("Failed to dispatch job "));
+        assertEquals(1, exception.getSuppressed().length);
+        assertEquals("simulated collector cancellation failure", exception.getSuppressed()[0].getMessage());
+        fixture.assertOnlyActive(previous, REMOTE);
+        fixture.assertNotAssigned(rejected.getId());
+        assertFalse(fixture.cancelled.contains(previous));
+        long replacement = fixture.scheduler.addAsyncCollectJob(fixture.job(), REMOTE);
+        fixture.assertOnlyActive(replacement, REMOTE);
+        assertTrue(fixture.cancelled.contains(previous), "rollback must restore the previous monitor index even when cancellation fails");
+    }
+
+    private void assertRemoteReplacementRollback(String collector) {
+        Fixture fixture = new Fixture(null);
+        fixture.online(REMOTE);
+        long previous = fixture.scheduler.addAsyncCollectJob(fixture.job(), collector);
+        Job rejected = fixture.job();
+        rejected.setId(previous);
+        fixture.rejectNextRemoteDispatch.set(true);
+        assertThrows(IllegalStateException.class, () -> fixture.scheduler.updateAsyncCollectJob(rejected, collector));
+        fixture.assertOnlyActive(previous, REMOTE);
+        fixture.assertNotAssigned(rejected.getId());
+        assertFalse(fixture.cancelled.contains(previous));
+        assertEquals(1, fixture.issued.size());
+        fixture.scheduler.reBalanceCollectorAssignJobs();
+        fixture.assertOnlyActive(previous, REMOTE);
+        long replacement = fixture.scheduler.addAsyncCollectJob(fixture.job(), collector);
+        fixture.assertOnlyActive(replacement, REMOTE);
+        assertTrue(fixture.cancelled.contains(previous), "retry must still find and cancel the previous monitor job");
+        assertEquals(2, fixture.issued.size());
+    }
+
+    @Test
     void deletedMonitorCanBeAddedAgainWithoutStaleState() {
         Fixture fixture = new Fixture(null);
         fixture.online(MAIN);
@@ -341,6 +392,8 @@ class CollectorJobSchedulerLifecycleTest {
         private final List<Job> issued = new CopyOnWriteArrayList<>();
         private final Set<Long> cancelled = ConcurrentHashMap.newKeySet();
         private final AtomicBoolean rejectNextLocalDispatch = new AtomicBoolean();
+        private final AtomicBoolean rejectNextRemoteDispatch = new AtomicBoolean();
+        private final AtomicBoolean rejectNextRemoteCancellation = new AtomicBoolean();
         private final Monitor monitor = Monitor.builder().id(MONITOR_ID).jobId(77L)
                 .name("switch").instance("192.0.2.1").app("huawei_switch_S8700")
                 .intervals(60).status((byte) 1).scheduleType("interval")
@@ -404,8 +457,14 @@ class CollectorJobSchedulerLifecycleTest {
                 ClusterMsg.Message message = invocation.getArgument(1);
                 String payload = message.getMsg().toStringUtf8();
                 if (message.getType() == ClusterMsg.MessageType.ISSUE_CYCLIC_TASK) {
+                    if (rejectNextRemoteDispatch.compareAndSet(true, false)) {
+                        return false;
+                    }
                     issue(identity, JsonUtil.fromJson(payload, Job.class));
                 } else if (message.getType() == ClusterMsg.MessageType.DELETE_CYCLIC_TASK) {
+                    if (rejectNextRemoteCancellation.compareAndSet(true, false)) {
+                        throw new IllegalStateException("simulated collector cancellation failure");
+                    }
                     for (Long id : JsonUtil.fromJson(payload, Long[].class)) {
                         active(identity).remove(id);
                         cancelled.add(id);

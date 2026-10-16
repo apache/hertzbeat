@@ -135,6 +135,7 @@ public class CollectorJobSchedulerTest {
         when(consistentHash.getNode("collector-1")).thenReturn(node);
 
         ManageServer manageServer = mock(ManageServer.class);
+        when(manageServer.sendMsg(anyString(), any(ClusterMsg.Message.class))).thenReturn(true);
         collectorJobScheduler.setManageServer(manageServer);
         // run
         collectorJobScheduler.collectorGoOnline(identity, collectorInfo);
@@ -182,6 +183,7 @@ public class CollectorJobSchedulerTest {
         when(consistentHash.getNode("collector-1")).thenReturn(node);
 
         ManageServer manageServer = mock(ManageServer.class);
+        when(manageServer.sendMsg(anyString(), any(ClusterMsg.Message.class))).thenReturn(true);
         collectorJobScheduler.setManageServer(manageServer);
 
         collectorJobScheduler.collectorGoOnline(identity, collectorInfo);

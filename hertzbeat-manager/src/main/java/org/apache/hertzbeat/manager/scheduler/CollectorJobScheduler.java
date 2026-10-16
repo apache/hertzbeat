@@ -415,9 +415,16 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             dispatchAsyncCollectJob(job, collector);
         } catch (RuntimeException e) {
             // A rejected replacement must not stop the previously working task.
-            cancelAsyncCollectJob(jobId);
-            if (previousJobId != null) {
-                monitorJobIds.put(job.getMonitorId(), previousJobId);
+            try {
+                cancelAsyncCollectJob(jobId);
+            } catch (RuntimeException cleanupException) {
+                if (cleanupException != e) {
+                    e.addSuppressed(cleanupException);
+                }
+            } finally {
+                if (previousJobId != null) {
+                    monitorJobIds.put(job.getMonitorId(), previousJobId);
+                }
             }
             throw e;
         }
@@ -454,7 +461,9 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                     .build();
-            this.manageServer.sendMsg(node.getIdentity(), message);
+            if (!this.manageServer.sendMsg(node.getIdentity(), message)) {
+                throw new IllegalStateException("Failed to dispatch job " + jobId + " to collector " + node.getIdentity());
+            }
         }
     }
 
