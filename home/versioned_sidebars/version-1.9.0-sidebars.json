@@ -213,6 +213,8 @@
           "label": "cache",
           "items": [
             "help/redis",
+            "help/redis_sentinel",
+            "help/kvrocks",
             "help/memcached",
             "help/valkey"
           ]
