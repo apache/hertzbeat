@@ -208,12 +208,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         new HashSet<>(metricsSet).forEach(metrics -> {
             MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
                     collectorIdentity, unitConvertList);
+            // Payload preparation may copy the template; claim callbacks using the actual execution object.
             if (metrics.getPrometheus() != null) {
                 metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                        new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
             } else {
                 metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                        new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
             }
             jobRequestQueue.addJob(metricsCollect);
         });
@@ -297,7 +298,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this,
                                 collectorIdentity, unitConvertList);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
-                                new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                                new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
 
                         jobRequestQueue.addJob(metricsCollect);
                         continue;
@@ -319,7 +320,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this,
                                 collectorIdentity, unitConvertList);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
-                                new MetricsTime(System.currentTimeMillis(), metric, timeout));
+                                new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
 
                         jobRequestQueue.addJob(metricsCollect);
                     }
@@ -358,7 +359,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this,
                             collectorIdentity, unitConvertList);
                     metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
-                            new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                            new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
 
                     jobRequestQueue.addJob(metricsCollect);
                 });
