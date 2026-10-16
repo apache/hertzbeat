@@ -61,6 +61,9 @@ class ModelProviderConfigControllerTest {
     @Mock
     private SubjectSum subject;
 
+    @Mock
+    private org.apache.hertzbeat.ai.gateway.application.ModelProviderDiscoveryService discovery;
+
     @Captor
     private ArgumentCaptor<GatewayCommand> commandCaptor;
 
@@ -138,6 +141,19 @@ class ModelProviderConfigControllerTest {
 
         assertThrows(IllegalStateException.class, () -> controller().getConfigurations());
         assertThrows(IllegalStateException.class, () -> controller().createConfiguration(new ModelProviderConfig()));
+        assertThrows(IllegalStateException.class, () -> controller().discoverModels(new ModelProviderConfig()));
+        verifyNoInteractions(commandRouter, discovery);
+    }
+
+    @Test
+    void adminCanDiscoverDraftModelsWithoutRoutingMutation() {
+        bindSubject();
+        ModelProviderConfig draft = new ModelProviderConfig();
+        var result = new org.apache.hertzbeat.ai.provider.ModelCatalogService.Result("unsupported", List.of(), false);
+        when(discovery.discover(draft)).thenReturn(result);
+        ModelProviderConfigController controller = controller();
+        org.springframework.test.util.ReflectionTestUtils.setField(controller, "discovery", discovery);
+        assertSame(result, controller.discoverModels(draft).getBody().getData());
         verifyNoInteractions(commandRouter);
     }
 

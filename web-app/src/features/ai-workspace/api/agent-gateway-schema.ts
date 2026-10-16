@@ -114,21 +114,28 @@ export const agentProviderOptionSchema = z
   })
   .strict();
 
+const agentProviderConfigurationSchema = z
+  .object({
+    uid: z.string().min(1),
+    type: z.string().min(1),
+    code: z.string().min(1),
+    baseUrl: z.string().nullable(),
+    model: z.string().nullable(),
+    apiKeyConfigured: z.boolean(),
+    name: z.string().nullable().optional(),
+    protocol: z.string().optional(),
+    authMode: z.string().optional(),
+    endpoint: z.string().nullable().optional(),
+    headers: z.record(z.string(), z.string()).optional()
+  })
+  .strict();
+
 export const agentProviderConfigurationViewSchema = z
   .object({
     activeProviderUid: z.string().nullable(),
-    providers: z.array(
-      z
-        .object({
-          uid: z.string().min(1),
-          type: z.string().min(1),
-          code: z.string().min(1),
-          baseUrl: z.string().nullable(),
-          model: z.string().nullable(),
-          apiKeyConfigured: z.boolean()
-        })
-        .strict()
-    )
+    providers: z.array(agentProviderConfigurationSchema),
+    effectiveProvider: agentProviderConfigurationSchema.nullable().optional(),
+    effectiveError: z.string().nullable().optional()
   })
   .strict();
 

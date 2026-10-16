@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.ai.gateway.application;
 
-import java.util.List;
-import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CreateModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.DeleteModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderConfigurationsCommand;
@@ -36,11 +34,15 @@ import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-/**
- * Channel-neutral model provider configuration commands.
- */
+import java.util.List;
+import java.util.Objects;
+
+/** Channel-neutral model provider configuration commands. */
 @Service
 public class ModelProviderCommandService {
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.apache.hertzbeat.ai.provider.EffectiveModelProviderResolver effectiveResolver;
 
     private final AgentModelProviderRegistry providerRegistry;
     private final ModelProviderConfigurationService configurationService;
@@ -77,9 +79,25 @@ public class ModelProviderCommandService {
         config.setUid(command.providerUid());
         boolean sameProvider = Objects.equals(existing.getCode(), config.getCode())
                 && Objects.equals(existing.getType(), config.getType());
-        if (!StringUtils.hasText(config.getApiKey())
-                && sameProvider) {
+        if (!StringUtils.hasText(config.getApiKey()) && sameProvider) {
             config.setApiKey(existing.getApiKey());
+        }
+        if (config.getHeaders() == null) {
+            config.setHeaders(existing.getHeaders());
+        } else {
+            config.getHeaders()
+                    .replaceAll(
+                            (name, value) -> {
+                                if (StringUtils.hasText(value) || existing.getHeaders() == null) {
+                                    return value;
+                                }
+                                // A blank value keeps the saved secret only when that header
+                                // already exists. A new blank entry has nothing to preserve, and
+                                // substituting null makes the following validation reject the
+                                // whole update.
+                                String preserved = existing.getHeaders().get(name);
+                                return preserved == null ? value : preserved;
+                            });
         }
         providerRegistry.createModel(config);
         ModelProviderConfigState state = configurationService.updateConfiguration(
@@ -116,16 +134,48 @@ public class ModelProviderCommandService {
     private GatewaySingleResponse stateResponse(String commandId, String message,
                                                 ModelProviderConfigState state) {
         List<Provider> providers = state.getProviders().stream()
-                .map(config -> new Provider(
-                        config.getUid(),
+                .map(this::view).toList();
+        Provider effective = null;
+        String error = null;
+        if (effectiveResolver != null) {
+            try {
+                ModelProviderConfig config = effectiveResolver.resolve();
+                if (config != null)
+                    effective =
+                            view(org.apache.hertzbeat.ai.provider.ModelConnection.validate(config));
+            } catch (RuntimeException exception) {
+                error = "Effective model connection is invalid";
+            }
+        }
+        return response(
+                commandId,
+                message,
+                new ModelProviderConfigurationView(
+                        state.getActiveProviderUid(), providers, effective, error));
+    }
+
+    private Provider view(ModelProviderConfig config) {
+        java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
+        if (config.getHeaders() != null)
+            config.getHeaders().keySet().forEach(name -> headers.put(name, ""));
+        String endpoint;
+        try {
+            endpoint = org.apache.hertzbeat.ai.provider.ModelConnection.endpoint(config);
+        } catch (IllegalArgumentException exception) {
+            endpoint = null;
+        }
+        return new Provider(
+                config.getUid() == null ? "yaml-default" : config.getUid(),
                         config.getType(),
-                        config.getCode(),
+                config.getCode() == null ? "custom" : config.getCode(),
                         config.getBaseUrl(),
                         config.getModel(),
-                        StringUtils.hasText(config.getApiKey())))
-                .toList();
-        return response(commandId, message,
-                new ModelProviderConfigurationView(state.getActiveProviderUid(), providers));
+                        StringUtils.hasText(config.getApiKey()),
+                config.getName(),
+                org.apache.hertzbeat.ai.provider.ModelConnection.protocol(config),
+                org.apache.hertzbeat.ai.provider.ModelConnection.authMode(config),
+                endpoint,
+                headers);
     }
 
     private GatewaySingleResponse response(String commandId, String message, Object body) {
@@ -141,13 +191,6 @@ public class ModelProviderCommandService {
     }
 
     private ModelProviderConfig copyConfiguration(ModelProviderConfig source) {
-        ModelProviderConfig copy = new ModelProviderConfig();
-        copy.setUid(source.getUid());
-        copy.setType(source.getType());
-        copy.setCode(source.getCode());
-        copy.setBaseUrl(source.getBaseUrl());
-        copy.setModel(source.getModel());
-        copy.setApiKey(source.getApiKey());
-        return copy;
+        return source.copy();
     }
 }

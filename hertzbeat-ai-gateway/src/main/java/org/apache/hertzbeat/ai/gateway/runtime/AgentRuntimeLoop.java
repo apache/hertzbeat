@@ -299,6 +299,7 @@ public class AgentRuntimeLoop {
         String content = state.hasSuccessfulReadObservation() ? modelResponse.getAssistantText() : "";
         TranscriptMessage assistantToolCallMessage = TranscriptMessage.assistantToolCalls(
                 content, toolCallBlocks, modelResponse.getUsage());
+        assistantToolCallMessage.setProviderState(modelResponse.getProviderState());
         state.addTurnMessage(assistantToolCallMessage);
         recordTranscriptMessage(run, assistantToolCallMessage);
         return toolExecutions;
@@ -444,6 +445,7 @@ public class AgentRuntimeLoop {
         String response = modelResponse.getFinalAnswer();
         Instant now = Instant.now(clock);
         TranscriptMessage assistantText = TranscriptMessage.assistantText(response, modelResponse.getUsage());
+        assistantText.setProviderState(modelResponse.getProviderState());
         state.addTurnMessage(assistantText);
         recordTranscriptMessage(run, assistantText);
         if (!state.hasCurrentAssistantMessageStarted()) {

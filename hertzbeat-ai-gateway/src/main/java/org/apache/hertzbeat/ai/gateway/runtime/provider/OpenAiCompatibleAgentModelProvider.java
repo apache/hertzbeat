@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
-import java.util.List;
-import java.util.Locale;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeModelRequest;
 import org.apache.hertzbeat.ai.gateway.runtime.HertzBeatModel;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -30,9 +28,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/**
- * Spring AI provider for OpenAI and services exposing an OpenAI-compatible chat API.
- */
+import java.util.List;
+import java.util.Locale;
+
+/** Spring AI provider for OpenAI and services exposing an OpenAI-compatible chat API. */
 @Component
 @ConditionalOnClass(OpenAiChatModel.class)
 public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
@@ -75,15 +74,11 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
 
     @Override
     public HertzBeatModel createModel(ModelProviderConfig config) {
-        completeAndValidate(config);
-        OpenAiChatOptions defaultOptions = OpenAiChatOptions.builder()
-                .baseUrl(config.getBaseUrl())
-                .apiKey(config.getApiKey())
-                .model(config.getModel())
-                .build();
-        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions);
-        return new HertzBeatModel(chatModel,
-                (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks));
+        if (!StringUtils.hasText(config.getProtocol())) completeAndValidate(config);
+        var chatModel =
+                new org.apache.hertzbeat.ai.provider.ProtocolChatModelFactory()
+                        .create(config, false);
+        return new HertzBeatModel(chatModel);
     }
 
     ChatOptions requestOptions(ModelProviderConfig config, AgentRuntimeModelRequest request,
@@ -106,7 +101,8 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
         if (!StringUtils.hasText(config.getApiKey())) {
             throw new IllegalArgumentException("OpenAI-compatible provider API key must not be blank");
         }
-        // Preset codes originate from UI selections and configuration inputs and are case-insensitive identifiers.
+        // Preset codes originate from UI selections and configuration inputs and are
+        // case-insensitive identifiers.
         String code = StringUtils.hasText(config.getCode())
                 ? config.getCode().trim().toLowerCase(Locale.ROOT) : "openai";
         config.setCode(code);

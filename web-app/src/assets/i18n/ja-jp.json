@@ -4450,7 +4450,7 @@
     "providers": {
       "action": "モデルプロバイダー",
       "title": "モデルプロバイダー",
-      "description": "HertzBeat AI ランタイムで利用するモデル接続を設定します。",
+      "description": "Add model connections with a protocol, URL and authentication. The active connection is shared by the AI workspace and Chat/SOP.",
       "loading": "プロバイダーを読み込んでいます…",
       "unavailable": "モデルプロバイダー設定を利用できません。",
       "default": "YAML 既定値",
@@ -4461,13 +4461,57 @@
       "add": "プロバイダーを追加",
       "edit": "編集",
       "delete": "削除",
-      "type": "プロバイダー種別",
+      "type": "接続タイプ",
+      "genericProtocols": "共通プロトコル",
+      "vendorPresets": "プロバイダーのプリセット",
+      "advanced": "詳細設定",
+      "fetchModels": "モデルを取得",
+      "modelHint": "モデル ID を選択または入力",
       "code": "プロバイダーコード",
       "baseUrl": "ベース URL",
+      "baseUrlHint": "サービスで必要なパスの接頭辞を含む完全な API ベース URL を入力してください。例: https://example.com/v1。",
       "model": "モデル",
       "apiKey": "API キー",
-      "apiKeyHint": "空欄にすると既存のキーを維持します。",
-      "save": "プロバイダーを保存"
+      "apiKeyHint": "空欄の場合は保存済みキーを保持します。URL、プロトコル、認証方式を変更してモデルを取得する場合は、キーを再入力してください。",
+      "save": "プロバイダーを保存",
+      "name": "Connection name",
+      "protocol": "Protocol",
+      "endpoint": "Request URL",
+      "authMode": "Authentication",
+      "headers": "Custom headers (JSON)",
+      "headersHint": "Values are encrypted. Blank values preserve saved values; remove an entry to delete it.",
+      "headersInvalid": "Enter a JSON object with string header names and values.",
+      "test": "Test connection",
+      "protocols": {
+        "openai-chat": "OpenAI Chat Completions",
+        "openai-responses": "OpenAI Responses",
+        "anthropic-messages": "Anthropic Messages"
+      },
+      "authentication": {
+        "default": "Default API key",
+        "custom-header": "Custom header authentication",
+        "none": "No authentication"
+      },
+      "capabilities": {
+        "text": "Text",
+        "streaming": "Streaming",
+        "toolCalling": "Tool calling"
+      },
+      "modelDiscovery": {
+        "ready": "{{count}} 個のモデルを取得しました。モデル ID の手動入力も可能です。",
+        "unsupported": "この API はモデル一覧に対応していません。モデル ID を手動入力してください。",
+        "authentication-failed": "認証に失敗しました。キーと認証設定を確認してください。",
+        "unavailable": "モデルを取得できません。URL と接続を確認するか、モデル ID を手動入力してください。",
+        "invalid-input": "URL と認証情報を入力してください。接続先を変更した場合は認証情報の再入力が必要です。",
+        "invalid-response": "モデル一覧の形式が無効です。モデル ID を手動入力できます。",
+        "empty": "モデルが返されませんでした。モデル ID を手動入力できます。",
+        "truncated": "先頭の 1,000 モデルまたは 10 ページまで表示します。他のモデル ID は手動入力できます。"
+      },
+      "testStatuses": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "not-observed": "Not observed"
+      }
     }
   },
   "alertInvestigation": {

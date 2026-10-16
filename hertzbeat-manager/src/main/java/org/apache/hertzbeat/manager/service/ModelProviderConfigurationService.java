@@ -17,25 +17,14 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
-import org.apache.hertzbeat.common.entity.dto.ModelProviderConfigState;
-
 /**
- * Owns saved model provider configurations and their active selection.
+ * Retained so existing callers keep compiling; new code should depend on
+ * {@link org.apache.hertzbeat.common.support.ModelProviderConfigurationService} directly.
+ *
+ * @deprecated moved to {@link org.apache.hertzbeat.common.support.ModelProviderConfigurationService}
+ *     so protocol clients do not depend on the manager module.
  */
-public interface ModelProviderConfigurationService {
-
-    ModelProviderConfigState getState();
-
-    ModelProviderConfig getConfiguration(String uid);
-
-    ModelProviderConfig getActiveConfiguration();
-
-    ModelProviderConfigState createConfiguration(ModelProviderConfig config);
-
-    ModelProviderConfigState updateConfiguration(String uid, ModelProviderConfig config);
-
-    ModelProviderConfigState deleteConfiguration(String uid);
-
-    ModelProviderConfigState switchActiveConfiguration(String uid);
+@Deprecated
+public interface ModelProviderConfigurationService
+        extends org.apache.hertzbeat.common.support.ModelProviderConfigurationService {
 }

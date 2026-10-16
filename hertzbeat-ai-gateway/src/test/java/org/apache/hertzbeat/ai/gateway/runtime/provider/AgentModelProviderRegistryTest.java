@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import org.apache.hertzbeat.ai.gateway.runtime.HertzBeatModel;
+import org.apache.hertzbeat.ai.provider.ProtocolChatModelFactory;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.junit.jupiter.api.Test;
 
@@ -63,6 +64,21 @@ class AgentModelProviderRegistryTest {
 
         assertEquals(List.of("test"), registry.options().stream().map(AgentModelProviderOption::code).toList());
         assertEquals("anthropic", registry.options().get(0).type());
+    }
+
+    @Test
+    void genericProtocolsShouldPrecedeVendorPresetsRegardlessOfRegistrationOrder() {
+        AgentModelProvider protocols = new ProtocolAgentModelProvider(mock(ProtocolChatModelFactory.class));
+        AgentModelProvider vendors = new OpenAiCompatibleAgentModelProvider();
+        List<String> expected = List.of(
+                "openai-chat", "openai-responses", "anthropic-messages",
+                "openai", "openrouter", "siliconflow", "zhipu", "zai", "custom");
+
+        for (List<AgentModelProvider> registrationOrder : List.of(
+                List.of(vendors, protocols), List.of(protocols, vendors))) {
+            AgentModelProviderRegistry registry = new AgentModelProviderRegistry(registrationOrder);
+            assertEquals(expected, registry.options().stream().map(AgentModelProviderOption::code).toList());
+        }
     }
 
     @Test
