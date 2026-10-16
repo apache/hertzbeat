@@ -26,7 +26,7 @@ describe('entity investigation entry', () => {
     expect(parseAgentTargetContextFromLocation(url)).toMatchObject({ kind: 'valid', target });
   });
   it('rejects duplicate, oversized, unbounded or client-asserted authority scope', () => {
-    const path = buildAgentWorkspacePath(entityInvestigationTarget(42, window)!);
+    const path = buildAgentWorkspacePath(entityInvestigationTarget(42, window));
     for (const suffix of ['&entityId=43', '&authority=trusted', '&serviceName=other']) {
       expect(parseAgentTargetContextFromLocation(new URL(path + suffix, 'http://local')).kind).toBe('invalid');
     }

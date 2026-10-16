@@ -35,17 +35,19 @@ export function agentTargetSourcePath(target: AgentTargetRef): string | undefine
     if (!/^[0-9a-f]{32}$/u.test(target.trace.traceId)) return undefined;
     return buildExplorePath({ ...target.trace, signal: 'traces', timeRange: 'last-15m', timeZone: 'UTC' });
   }
-  if ('topology' in target) {
-    const { rootEntityId, ...scope } = target.topology;
-    const params = new URLSearchParams({ focusEntityId: String(rootEntityId) });
-    for (const [key, value] of Object.entries(scope)) if (value !== undefined) params.set(key, String(value));
-    if (scope.start !== undefined) params.set('timeZone', 'UTC');
-    return `${applicationRoutePaths.topology}?${params.toString()}`;
-  }
+  if ('topology' in target) return topologySourcePath(target);
   if ('alertId' in target) return buildAlertInvestigationRoutePath(target.alertId);
   if ('monitorId' in target) return buildMonitorDetailPath(target.monitorId);
   if ('entityId' in target) return buildEntityDetailPath(target.entityId);
   return undefined;
+}
+
+function topologySourcePath(target: Extract<AgentTargetRef, { topology: unknown }>) {
+  const { rootEntityId, ...scope } = target.topology;
+  const params = new URLSearchParams({ focusEntityId: String(rootEntityId) });
+  for (const [key, value] of Object.entries(scope)) if (value !== undefined) params.set(key, String(value));
+  if (scope.start !== undefined) params.set('timeZone', 'UTC');
+  return `${applicationRoutePaths.topology}?${params.toString()}`;
 }
 
 export function agentEvidenceSourcePath(evidence: AgentEvidence): string | undefined {
