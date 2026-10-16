@@ -20,12 +20,10 @@ package org.apache.hertzbeat.manager.component.status;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +66,9 @@ public class CalculateStatus implements DisposableBean {
     private final StatusPageHistoryDao statusPageHistoryDao;
     
     private final MonitorDao monitorDao;
+
+    @Autowired
+    private StatusPageHistoryAggregator historyAggregator;
     
     private final int intervals;
 
@@ -235,58 +236,8 @@ public class CalculateStatus implements DisposableBean {
 
     private void runCombineHistory() {
         try {
-            // combine pre day status history to one record
-            LocalDateTime nowTime = LocalDateTime.now();
-            ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(Instant.now());
-            LocalDateTime midnight = nowTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
-            LocalDateTime preNight = midnight.minusDays(1);
-            long midnightTimestamp = midnight.toInstant(zoneOffset).toEpochMilli();
-            long preNightTimestamp = preNight.toInstant(zoneOffset).toEpochMilli();
-            List<StatusPageHistory> statusPageHistoryList = statusPageHistoryDao
-                    .findStatusPageHistoriesByTimestampBetween(preNightTimestamp, midnightTimestamp);
-            Map<Long, StatusPageHistory> statusPageHistoryMap = new HashMap<>(8);
-            for (StatusPageHistory statusPageHistory : statusPageHistoryList) {
-                statusPageHistory.setNormal(0);
-                statusPageHistory.setAbnormal(0);
-                statusPageHistory.setUnknowing(0);
-                if (statusPageHistoryMap.containsKey(statusPageHistory.getComponentId())) {
-                    StatusPageHistory history = statusPageHistoryMap.get(statusPageHistory.getComponentId());
-                    if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
-                        history.setAbnormal(history.getAbnormal() + intervals);
-                    } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                        history.setUnknowing(history.getUnknowing() + intervals);
-                    } else {
-                        history.setNormal(history.getNormal() + intervals);
-                    }
-                    statusPageHistoryMap.put(statusPageHistory.getComponentId(), history);
-                } else {
-                    if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
-                        statusPageHistory.setAbnormal(intervals);
-                    } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                        statusPageHistory.setUnknowing(intervals);
-                    } else {
-                        statusPageHistory.setNormal(intervals);
-                    }
-                    statusPageHistoryMap.put(statusPageHistory.getComponentId(), statusPageHistory);
-                }
-            }
-            statusPageHistoryDao.deleteAll(statusPageHistoryList);
-            for (StatusPageHistory history : statusPageHistoryMap.values()) {
-                double total = history.getNormal() + history.getAbnormal() + history.getUnknowing();
-                double uptime = 0;
-                if (total > 0) {
-                    uptime = (double) history.getNormal() / total;
-                }
-                history.setUptime(uptime);
-                if (history.getAbnormal() > 0) {
-                    history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
-                } else if (history.getNormal() > 0) {
-                    history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
-                } else {
-                    history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
-                }
-                statusPageHistoryDao.save(history);
-            }
+            ZoneId zone = ZoneId.systemDefault();
+            historyAggregator.combinePreviousDay(LocalDate.now(zone), zone, intervals);
         } catch (Exception e) {
             log.error("status page combine history error: {}", e.getMessage(), e);
         }

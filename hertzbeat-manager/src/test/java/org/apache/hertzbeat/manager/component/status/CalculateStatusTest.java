@@ -20,9 +20,11 @@ package org.apache.hertzbeat.manager.component.status;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.util.Collections;
+import org.springframework.test.util.ReflectionTestUtils;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,12 +60,16 @@ class CalculateStatusTest {
     @Mock
     private MonitorDao monitorDao;
 
+    @Mock
+    private StatusPageHistoryAggregator historyAggregator;
+
     private CalculateStatus calculateStatus;
 
     @BeforeEach
     void setUp() {
         calculateStatus = new CalculateStatus(statusPageOrgDao, statusPageComponentDao, statusProperties(),
                 statusPageHistoryDao, monitorDao, new VirtualThreadProperties(), false);
+        ReflectionTestUtils.setField(calculateStatus, "historyAggregator", historyAggregator);
     }
 
     @AfterEach
@@ -96,8 +102,8 @@ class CalculateStatusTest {
         org.mockito.Mockito.doAnswer(invocation -> {
             virtualThread.set(Thread.currentThread().isVirtual());
             latch.countDown();
-            return Collections.emptyList();
-        }).when(statusPageHistoryDao).findStatusPageHistoriesByTimestampBetween(anyLong(), anyLong());
+            return null;
+        }).when(historyAggregator).combinePreviousDay(any(), any(), eq(300));
 
         calculateStatus.dispatchCombineHistory();
 
