@@ -1642,6 +1642,11 @@
     "failed": "監視操作に失敗しました。"
   },
   "monitorMetrics": {
+    "historyGroupsTitle": "履歴チャートのグループ",
+    "expandAllGroups": "すべて展開",
+    "collapseAllGroups": "すべて折りたたむ",
+    "expandGroup": "{{group}} を展開",
+    "collapseGroup": "{{group}} を折りたたむ",
     "title": "メトリクス確認",
     "description": "監視詳細から現在値と履歴を確認します。",
     "loading": "メトリクスデータを読み込んでいます…",

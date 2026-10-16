@@ -125,6 +125,7 @@ function composeMonitorMetricWorkbench(
     hasMoreRealtimeGroups: context.realtimeSelection.hasMore,
     historyAvailability: context.historySelection.availability,
     historyCharts: context.historyCharts,
+    historyGroupSelection: context.historySelection.groupSelection,
     selectedHistoryChart: context.selectedHistoryChart,
     investigation: context.investigation.state,
     investigationSignals: context.investigation.signals,

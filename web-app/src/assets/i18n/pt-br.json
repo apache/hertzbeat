@@ -1642,6 +1642,11 @@
     "failed": "Falha na operação de monitor."
   },
   "monitorMetrics": {
+    "historyGroupsTitle": "Gráficos históricos por grupo",
+    "expandAllGroups": "Expandir todos os grupos",
+    "collapseAllGroups": "Recolher todos os grupos",
+    "expandGroup": "Expandir {{group}}",
+    "collapseGroup": "Recolher {{group}}",
     "title": "Inspeção de métricas",
     "description": "Consulte valores atuais e históricos no detalhe do monitor.",
     "loading": "Carregando dados de métricas…",

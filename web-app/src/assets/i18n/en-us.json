@@ -1642,6 +1642,11 @@
     "failed": "Monitor operation failed."
   },
   "monitorMetrics": {
+    "historyGroupsTitle": "Grouped history charts",
+    "expandAllGroups": "Expand all groups",
+    "collapseAllGroups": "Collapse all groups",
+    "expandGroup": "Expand {{group}}",
+    "collapseGroup": "Collapse {{group}}",
     "title": "Metric inspection",
     "description": "Inspect current values and stored history without leaving the monitor.",
     "loading": "Loading metric data…",

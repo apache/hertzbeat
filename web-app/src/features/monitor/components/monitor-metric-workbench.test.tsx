@@ -40,6 +40,26 @@ describe('MonitorMetricWorkbench', () => {
     vi.unstubAllGlobals();
   });
 
+  it('opens grouped history on demand and delegates group folds without touching favorites', () => {
+    const value = controller({
+      historyGroupSelection: { sourceKey: 'monitor-7', names: ['summary'], selected: ['summary'], collapsed: [] },
+      historyCharts: [historyChart('summary.value', { kind: 'loading', rows: [] })]
+    });
+    value.actions.setHistoryGroups = vi.fn();
+    value.actions.setHistoryCollapsedGroups = vi.fn();
+    renderWorkbench(value);
+    const details = screen.getByText(i18n.t('monitorMetrics.historyGroupsTitle')).closest('details')!;
+    expect(within(details).queryByRole('article')).not.toBeInTheDocument();
+    details.open = true;
+    fireEvent(details, new Event('toggle'));
+    expect(within(details).getByRole('article', { name: 'summary.value' })).toBeInTheDocument();
+    fireEvent.click(within(details).getByRole('button', { name: i18n.t('monitorMetrics.collapseAllGroups') }));
+    expect(value.actions.setHistoryCollapsedGroups).toHaveBeenCalledWith(['summary']);
+    fireEvent.click(within(details).getByRole('button', { name: i18n.t('monitorMetrics.expandAllGroups') }));
+    expect(value.actions.setHistoryCollapsedGroups).toHaveBeenLastCalledWith([]);
+    expect(value.actions.toggleFavorite).not.toHaveBeenCalled();
+  });
+
   it('renders the selected current-value workspace without detached realtime, history, or favorite tabs', () => {
     const value = controller({
       catalog: {

@@ -1642,6 +1642,11 @@
     "failed": "監控操作失敗。"
   },
   "monitorMetrics": {
+    "historyGroupsTitle": "歷史圖表分組",
+    "expandAllGroups": "展開全部指標組",
+    "collapseAllGroups": "摺疊全部指標組",
+    "expandGroup": "展開 {{group}}",
+    "collapseGroup": "摺疊 {{group}}",
     "title": "指標檢查",
     "description": "無需離開監控詳情即可查看目前值與歷史資料。",
     "loading": "正在載入指標資料…",
