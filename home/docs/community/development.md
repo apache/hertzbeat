@@ -20,33 +20,33 @@ sidebar_label: Development
 
 ### Frontend start
 
-1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
+1. Requires `Node.js 22.x` and `pnpm 10.x` environments
 
 2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install pnpm if not existed `npm install -g pnpm`
+3. Install pnpm: `npm install -g pnpm@10.9.0`
 
 4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. After the local backend is started, start the local frontend in the web-app directory: `pnpm start`
+5. After the local backend is started, start the local frontend in the `web-app` directory: `pnpm dev`
 
-6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
+6. Open localhost:4200 in your browser and complete the initial setup to get started.
 
 ## Build HertzBeat binary package
 
-> Requires `maven3+`, `java25`, `node` and `pnpm` environments.
+> Requires `maven3+`, `java25`, `Node.js 22.x` and `pnpm 10.x` environments.
 
 ### Frontend build
 
-1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
+1. Requires `Node.js 22.x` and `pnpm 10.x` environments
 
 2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install pnpm if not existed `npm install -g pnpm`
+3. Install pnpm: `npm install -g pnpm@10.9.0`
 
 4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. Build web-app: `pnpm package`
+5. Build web-app: `pnpm build`. The build output is generated in `web-app/dist`
 
 ### Backend build
 
