@@ -1521,6 +1521,120 @@
         "count": "Registered service entities: {{count}}",
         "open": "Open services"
       }
+    },
+    "workspace": {
+      "overview": "Overview",
+      "monitors": "Configured monitors",
+      "alerts": "Unresolved alerts",
+      "services": "Registered services",
+      "about": "About {{field}}",
+      "query": "Query and investigate",
+      "intake": "Add data",
+      "activeDescription": "Check servers, databases and endpoints on a schedule.",
+      "telemetryDescription": "Send application metrics, logs and traces via OpenTelemetry.",
+      "signals": {
+        "metrics": {
+          "title": "Metrics",
+          "description": "Inspect measurements and changes over time."
+        },
+        "logs": {
+          "title": "Logs",
+          "description": "Search events and inspect their context."
+        },
+        "traces": {
+          "title": "Traces",
+          "description": "Follow request paths and locate slow spans."
+        }
+      },
+      "states": {
+        "loading": "Loading…",
+        "permission": "No permission",
+        "unavailable": "Unavailable",
+        "error": "Read failed"
+      }
+    },
+    "v2": {
+      "monitorStatus": "Monitor status",
+      "attention": "Alerts",
+      "alertCenter": "Alert center",
+      "firing": "Firing",
+      "alertGroup": "Alert group {{id}}",
+      "updated": "Updated",
+      "noAttention": "No firing alerts or unavailable monitors",
+      "continue": "Continue working",
+      "favorite": "Favorite",
+      "recent": "Recently opened",
+      "noContinue": "No recently opened queries yet",
+      "signals": "Signals",
+      "last15m": "Last 15 minutes",
+      "service": "Service",
+      "allServices": "All services",
+      "environment": "Environment",
+      "allEnvironments": "All environments",
+      "explore": "Explore",
+      "unavailable": "Temporarily unavailable",
+      "loading": "Loading",
+      "unitUnknown": "Unit not provided",
+      "noSamples": "No samples",
+      "noFavoriteMetrics": "No favorite metric queries yet",
+      "chooseMetric": "Choose and favorite a metric query",
+      "previous": "Previous",
+      "next": "Next",
+      "resume": "Resume",
+      "pause": "Pause",
+      "favoriteMetrics": "Favorite metrics",
+      "logEvents": "Log events",
+      "logTrend": "Log event trend",
+      "repeatedErrors": "Repeated ERROR Top3",
+      "lastSeen": "Last seen",
+      "windowUntil": "Window ending",
+      "unsupported": "Unavailable in this environment",
+      "over_budget": "Query budget exceeded",
+      "noRepeatedErrors": "No repeated ERROR events",
+      "exactErrors": "Exact original-message groups · ERROR only",
+      "exactGroupRecords": "Logs in this exact group",
+      "showingRecords": "Showing up to {{count}} matching logs",
+      "selectionMissing": "This error group is no longer available",
+      "matchedTraces": "Matched traces",
+      "traceTrend": "Matched trace trend",
+      "errorTraces": "Error traces",
+      "errorRatio": "Error ratio",
+      "fullWindow": "Full window",
+      "boundedCoverage": "Bounded query: {{count}} spans scanned / limit {{limit}}",
+      "tracePopulation": "Matched trace population",
+      "serviceLoading": "Loading services…",
+      "serviceUnavailable": "Services unavailable",
+      "serviceEmpty": "No services",
+      "environmentLoading": "Loading environments…",
+      "environmentUnavailable": "Environments unavailable",
+      "environmentEmpty": "No environments"
+    },
+    "v3": {
+      "otherStatus": "Other statuses",
+      "firingGroups": "{{count}} firing alert groups",
+      "unavailableMonitors": "{{count}} unavailable monitors",
+      "monitorDistribution": "Monitor status distribution",
+      "monitorRemainder": "{{count}} other monitors are outside these three categories and remain neutral",
+      "monitorUnit": "items",
+      "distribution": "Monitor distribution",
+      "total": "Total",
+      "allAlerts": "View all alerts",
+      "allQueries": "View all queries",
+      "status": "Status",
+      "object": "Object",
+      "description": "Issue",
+      "updated": "Updated",
+      "name": "Name",
+      "type": "Type",
+      "action": "Action",
+      "moreActions": "More actions",
+      "signalOverview": "Signal overview",
+      "latest": "Latest",
+      "noErrorTraces": "No error traces",
+      "reviewErrors": "Review error traces",
+      "savedMetrics": "Favorite metrics",
+      "openExplore": "Open in Explore",
+      "scrollAttention": "Scroll to view attention items"
     }
   },
   "bulletin": {
@@ -4840,5 +4954,11 @@
       "contract": "The evidence could not be rendered because it was incomplete."
     },
     "addTransactionsUnsupported": "Transactions cannot be added to a dashboard yet. Save this query to reopen the investigation."
-  }
+  },
+  "dashboard.v3.rotationCountdown": "Time until automatic rotation",
+  "dashboard.v3.traceSamplesLoading": "Loading anomalous traces",
+  "dashboard.v3.traceSamplesFailed": "Failed to load anomalous traces",
+  "dashboard.v3.traceSamplesUnsupported": "Anomalous trace queries are unsupported by this backend",
+  "dashboard.v3.traceSamplesMissing": "No anomalous samples were retrieved for this window",
+  "dashboard.v3.errorSpans": "Error spans {{count}}"
 }

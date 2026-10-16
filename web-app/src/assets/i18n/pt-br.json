@@ -1521,6 +1521,120 @@
         "count": "Entidades de serviço registradas: {{count}}",
         "open": "Abrir serviços"
       }
+    },
+    "workspace": {
+      "overview": "Visão geral",
+      "monitors": "Monitores configurados",
+      "alerts": "Alertas não resolvidos",
+      "services": "Serviços registrados",
+      "about": "Sobre {{field}}",
+      "query": "Consultar e investigar",
+      "intake": "Adicionar dados",
+      "activeDescription": "Verifique servidores, bancos de dados e endpoints periodicamente.",
+      "telemetryDescription": "Envie métricas, logs e traces da aplicação via OpenTelemetry.",
+      "signals": {
+        "metrics": {
+          "title": "Métricas",
+          "description": "Inspecione medições e mudanças ao longo do tempo."
+        },
+        "logs": {
+          "title": "Logs",
+          "description": "Pesquise eventos e examine seu contexto."
+        },
+        "traces": {
+          "title": "Traces",
+          "description": "Acompanhe requisições e localize spans lentos."
+        }
+      },
+      "states": {
+        "loading": "Carregando…",
+        "permission": "Sem permissão",
+        "unavailable": "Indisponível",
+        "error": "Falha na leitura"
+      }
+    },
+    "v2": {
+      "monitorStatus": "Estado dos monitores",
+      "attention": "Alertas",
+      "alertCenter": "Central de alertas",
+      "firing": "Ativo",
+      "alertGroup": "Grupo de alertas {{id}}",
+      "updated": "Atualizado",
+      "noAttention": "Sem alertas ativos ou monitores indisponíveis",
+      "continue": "Continuar trabalhando",
+      "favorite": "Favorito",
+      "recent": "Aberto recentemente",
+      "noContinue": "Nenhuma consulta aberta recentemente",
+      "signals": "Sinais",
+      "last15m": "Últimos 15 minutos",
+      "service": "Serviço",
+      "allServices": "Todos os serviços",
+      "environment": "Ambiente",
+      "allEnvironments": "Todos os ambientes",
+      "explore": "Explorar",
+      "unavailable": "Temporariamente indisponível",
+      "loading": "Carregando",
+      "unitUnknown": "Unidade não fornecida",
+      "noSamples": "Sem amostras",
+      "noFavoriteMetrics": "Nenhuma consulta de métricas favorita",
+      "chooseMetric": "Escolher e favoritar uma consulta de métricas",
+      "previous": "Anterior",
+      "next": "Próximo",
+      "resume": "Retomar",
+      "pause": "Pausar",
+      "favoriteMetrics": "Métricas favoritas",
+      "logEvents": "Eventos de log",
+      "logTrend": "Tendência de eventos de log",
+      "repeatedErrors": "ERROR repetidos Top3",
+      "lastSeen": "Última ocorrência",
+      "windowUntil": "Janela até",
+      "unsupported": "Indisponível neste ambiente",
+      "over_budget": "Limite da consulta excedido",
+      "noRepeatedErrors": "Sem eventos ERROR repetidos",
+      "exactErrors": "Mensagem original exata · somente ERROR",
+      "exactGroupRecords": "Logs deste grupo exato",
+      "showingRecords": "Mostrando até {{count}} logs correspondentes",
+      "selectionMissing": "Este grupo de erros não está mais disponível",
+      "matchedTraces": "Traces correspondentes",
+      "traceTrend": "Tendência de traces correspondentes",
+      "errorTraces": "Traces com erro",
+      "errorRatio": "Proporção de erros",
+      "fullWindow": "Janela completa",
+      "boundedCoverage": "Consulta limitada: {{count}} spans lidos / limite {{limit}}",
+      "tracePopulation": "População de traces correspondentes",
+      "serviceLoading": "Carregando serviços…",
+      "serviceUnavailable": "Serviços indisponíveis",
+      "serviceEmpty": "Nenhum serviço",
+      "environmentLoading": "Carregando ambientes…",
+      "environmentUnavailable": "Ambientes indisponíveis",
+      "environmentEmpty": "Nenhum ambiente"
+    },
+    "v3": {
+      "otherStatus": "Outros estados",
+      "firingGroups": "{{count}} grupos de alertas ativos",
+      "unavailableMonitors": "{{count}} monitores indisponíveis",
+      "monitorDistribution": "Distribuição do estado dos monitores",
+      "monitorRemainder": "{{count}} outros monitores estão fora destas três categorias e permanecem neutros",
+      "monitorUnit": "itens",
+      "distribution": "Distribuição dos monitores",
+      "total": "Total",
+      "allAlerts": "Ver todos os alertas",
+      "allQueries": "Ver todas as consultas",
+      "status": "Status",
+      "object": "Objeto",
+      "description": "Problema",
+      "updated": "Atualizado",
+      "name": "Nome",
+      "type": "Tipo",
+      "action": "Ação",
+      "moreActions": "Mais ações",
+      "signalOverview": "Visão dos sinais",
+      "latest": "Mais recente",
+      "noErrorTraces": "Sem traces com erro",
+      "reviewErrors": "Ver traces com erro",
+      "savedMetrics": "Métricas favoritas",
+      "openExplore": "Abrir no Explore",
+      "scrollAttention": "Role para ver os itens de atenção"
     }
   },
   "bulletin": {
@@ -4840,5 +4954,11 @@
       "contract": "As evidências estão incompletas e não puderam ser renderizadas."
     },
     "addTransactionsUnsupported": "As transações ainda não podem ser adicionadas a um dashboard. Salve a consulta para reabrir a investigação."
-  }
+  },
+  "dashboard.v3.rotationCountdown": "Tempo até a rotação automática",
+  "dashboard.v3.traceSamplesLoading": "Carregando rastros anômalos",
+  "dashboard.v3.traceSamplesFailed": "Falha ao carregar rastros anômalos",
+  "dashboard.v3.traceSamplesUnsupported": "Este backend não suporta consultas de rastros anômalos",
+  "dashboard.v3.traceSamplesMissing": "Nenhuma amostra anômala foi obtida nesta janela",
+  "dashboard.v3.errorSpans": "Spans com erro {{count}}"
 }

@@ -15,23 +15,13 @@
  * limitations under the License.
  */
 
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+package org.apache.hertzbeat.warehouse.repository;
 
-export function DashboardStartLink(props: { label: string; onNavigate: () => void; target: string }) {
-  return (
-    <Button
-      type="link"
-      href={props.target}
-      aria-label={props.label}
-      icon={<ArrowRightOutlined />}
-      iconPosition="end"
-      onClick={event => {
-        event.preventDefault();
-        props.onNavigate();
-      }}
-    >
-      {props.label}
-    </Button>
-  );
+import org.apache.hertzbeat.common.observability.dto.log.LogRepeatedErrors;
+
+/** Storage-owned exact managed-log population; unsupported stores never fall back to sampled rows. */
+public interface RepeatedErrorRepository {
+    LogRepeatedErrors.Result summary(LogRepeatedErrors.Scope scope);
+
+    LogRepeatedErrors.Records records(LogRepeatedErrors.Scope scope, LogRepeatedErrors.Selection selection);
 }

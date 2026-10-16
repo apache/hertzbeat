@@ -1521,6 +1521,120 @@
         "count": "已註冊服務實體：{{count}}",
         "open": "開啟服務"
       }
+    },
+    "workspace": {
+      "overview": "概覽",
+      "monitors": "已設定監控",
+      "alerts": "未恢復告警",
+      "services": "已註冊服務",
+      "about": "關於{{field}}",
+      "query": "查詢與排查",
+      "intake": "接入資料",
+      "activeDescription": "按計畫檢查伺服器、資料庫與介面。",
+      "telemetryDescription": "透過 OpenTelemetry 上報應用指標、日誌與鏈路。",
+      "signals": {
+        "metrics": {
+          "title": "指標",
+          "description": "查看指標數值與變化趨勢。"
+        },
+        "logs": {
+          "title": "日誌",
+          "description": "搜尋事件並查看上下文。"
+        },
+        "traces": {
+          "title": "鏈路",
+          "description": "追蹤請求路徑，定位慢點。"
+        }
+      },
+      "states": {
+        "loading": "載入中…",
+        "permission": "無讀取權限",
+        "unavailable": "暫不可用",
+        "error": "讀取失敗"
+      }
+    },
+    "v2": {
+      "monitorStatus": "監控狀態",
+      "attention": "告警",
+      "alertCenter": "告警中心",
+      "firing": "觸發中",
+      "alertGroup": "告警群組 {{id}}",
+      "updated": "更新於",
+      "noAttention": "暫無觸發中告警或不可用監控",
+      "continue": "繼續工作",
+      "favorite": "收藏",
+      "recent": "最近開啟",
+      "noContinue": "還沒有最近開啟的查詢",
+      "signals": "訊號",
+      "last15m": "最近 15 分鐘",
+      "service": "服務",
+      "allServices": "所有服務",
+      "environment": "環境",
+      "allEnvironments": "所有環境",
+      "explore": "探索",
+      "unavailable": "暫時無法讀取",
+      "loading": "載入中",
+      "unitUnknown": "未提供單位",
+      "noSamples": "暫無樣本",
+      "noFavoriteMetrics": "尚未收藏指標查詢",
+      "chooseMetric": "選擇並收藏指標查詢",
+      "previous": "上一項",
+      "next": "下一項",
+      "resume": "繼續",
+      "pause": "暫停",
+      "favoriteMetrics": "收藏指標",
+      "logEvents": "日誌事件",
+      "logTrend": "日誌趨勢",
+      "repeatedErrors": "重複 ERROR Top3",
+      "lastSeen": "最後出現",
+      "windowUntil": "統計截至",
+      "unsupported": "目前環境不支援此統計",
+      "over_budget": "查詢超出預算",
+      "noRepeatedErrors": "暫無重複 ERROR",
+      "exactErrors": "原始訊息精確分組 · 僅 ERROR",
+      "exactGroupRecords": "此錯誤群組的日誌",
+      "showingRecords": "最多顯示 {{count}} 筆匹配日誌",
+      "selectionMissing": "此錯誤群組已不可用",
+      "matchedTraces": "匹配鏈路",
+      "traceTrend": "匹配鏈路趨勢",
+      "errorTraces": "錯誤鏈路",
+      "errorRatio": "錯誤佔比",
+      "fullWindow": "完整視窗",
+      "boundedCoverage": "有界查詢：掃描 {{count}} / 上限 {{limit}} 筆 Span",
+      "tracePopulation": "匹配鏈路統計",
+      "serviceLoading": "服務載入中…",
+      "serviceUnavailable": "服務讀取失敗",
+      "serviceEmpty": "暫無服務",
+      "environmentLoading": "環境載入中…",
+      "environmentUnavailable": "環境讀取失敗",
+      "environmentEmpty": "暫無環境"
+    },
+    "v3": {
+      "otherStatus": "其他狀態",
+      "firingGroups": "{{count}}組觸發告警",
+      "unavailableMonitors": "{{count}}個不可用監控",
+      "monitorDistribution": "監控狀態分布",
+      "monitorRemainder": "其餘{{count}}個監控未計入目前三類，保留為中性區段",
+      "monitorUnit": "個",
+      "distribution": "監控狀態分布",
+      "total": "總數",
+      "allAlerts": "查看全部告警",
+      "allQueries": "查看全部查詢",
+      "status": "狀態",
+      "object": "對象",
+      "description": "問題描述",
+      "updated": "更新時間",
+      "name": "名稱",
+      "type": "類型",
+      "action": "操作",
+      "moreActions": "更多操作",
+      "signalOverview": "訊號概覽",
+      "latest": "最新值",
+      "noErrorTraces": "暫無異常鏈路",
+      "reviewErrors": "查看異常鏈路",
+      "savedMetrics": "收藏指標",
+      "openExplore": "在探索頁展開",
+      "scrollAttention": "捲動查看關注項目"
     }
   },
   "bulletin": {
@@ -4840,5 +4954,11 @@
       "contract": "證據不完整，無法呈現。"
     },
     "addTransactionsUnsupported": "目前不支援將交易新增至儀表板。可儲存查詢，以便重新開啟調查。"
-  }
+  },
+  "dashboard.v3.rotationCountdown": "距離自動切換",
+  "dashboard.v3.traceSamplesLoading": "異常樣本載入中",
+  "dashboard.v3.traceSamplesFailed": "異常樣本載入失敗",
+  "dashboard.v3.traceSamplesUnsupported": "目前後端不支援異常樣本查詢",
+  "dashboard.v3.traceSamplesMissing": "目前視窗未取得異常樣本",
+  "dashboard.v3.errorSpans": "錯誤 Span {{count}}"
 }
