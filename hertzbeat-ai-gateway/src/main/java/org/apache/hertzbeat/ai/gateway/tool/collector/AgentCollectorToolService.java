@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolArguments;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
@@ -96,7 +97,7 @@ public class AgentCollectorToolService {
 
     @Tool(name = "collector.detect",
         description = "Validate monitor protocol configuration without mutating state.")
-    @AgentToolPolicy(
+    @AgentToolPolicy(access = AgentToolAccess.USER,
         exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public AgentToolOutput detect(
         @ToolParam(description = "Monitor id.")
@@ -130,7 +131,7 @@ public class AgentCollectorToolService {
     }
 
     @Tool(name = "collector.set_state", description = "Mark registered collectors online or offline.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> setCollectorState(
             @ToolParam(description = "Collector names; at most 50 per request.") List<String> collectors,
@@ -149,7 +150,7 @@ public class AgentCollectorToolService {
 
     @Tool(name = "collector.assign_monitor",
             description = "Assign one monitor to a registered collector and reschedule its collection job.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> assignMonitor(
             @ToolParam(description = "Monitor id.") Long monitorId,
@@ -165,7 +166,7 @@ public class AgentCollectorToolService {
 
     @Tool(name = "collector.unassign_monitor",
             description = "Remove a monitor's pinned collector assignment and return it to automatic dispatch.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> unassignMonitor(@ToolParam(description = "Monitor id.") Long monitorId) {
         MonitorDto monitor = requiredMonitor(monitorId);
@@ -175,7 +176,7 @@ public class AgentCollectorToolService {
     }
 
     @Tool(name = "collector.delete", description = "Permanently delete registered collectors.")
-    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS,
+    @AgentToolPolicy(access = AgentToolAccess.ADMIN, risk = AgentToolRisk.DANGEROUS,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> deleteCollectors(
             @ToolParam(description = "Collector names; at most 50 per request.") List<String> collectors,

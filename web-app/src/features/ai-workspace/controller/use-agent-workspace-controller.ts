@@ -53,7 +53,7 @@ export function useAgentWorkspaceController({
     streaming: runtime.streaming,
     stopping: runtime.stopping,
     ...(runtime.failure ? { failure: runtime.failure } : {}),
-    actions
+    actions: { ...actions, loadOlder: history.loadOlder }
   };
 }
 

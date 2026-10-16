@@ -22,6 +22,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
+import org.apache.hertzbeat.manager.controller.MetricsController;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolArguments;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
@@ -37,6 +39,13 @@ import org.apache.hertzbeat.warehouse.service.MetricsDataService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
+import org.apache.hertzbeat.observability.ingestion.controller.OtlpIngestionController;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
+import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
+import org.apache.hertzbeat.common.util.JsonUtil;
 
 /**
  * Metrics namespace tools.
@@ -53,6 +62,9 @@ public class AgentMetricsToolService {
     private static final long MAX_EXACT_RAW_MILLIS = 6L * 60 * 60 * 1_000;
     private static final String STEP_PATTERN = "^[1-9][0-9]*(ms|s|m|h|d)$";
 
+    private OtlpIngestionController otlpController;
+    private MetricsController metricsController;
+
     private final AppService appService;
     private final MonitorService monitorService;
     private final MetricsDataService metricsDataService;
@@ -62,6 +74,176 @@ public class AgentMetricsToolService {
         this.appService = appService;
         this.monitorService = monitorService;
         this.metricsDataService = metricsDataService;
+    }
+
+    public AgentMetricsToolService(AppService appService, MonitorService monitorService,
+                                   MetricsDataService metricsDataService,
+                                   ObjectProvider<OtlpIngestionController> otlpController) {
+        this(appService, monitorService, metricsDataService);
+        this.otlpController = otlpController.getIfAvailable();
+    }
+
+    @Autowired
+    public AgentMetricsToolService(AppService appService, MonitorService monitorService,
+                                   MetricsDataService metricsDataService,
+                                   ObjectProvider<OtlpIngestionController> otlpController,
+                                   ObjectProvider<MetricsController> metricsController) {
+        this(appService, monitorService, metricsDataService, otlpController);
+        this.metricsController = metricsController.getIfAvailable();
+    }
+
+    @Tool(name = "platform.metrics.get_metrics_info", description = "Read bounded internal HertzBeat queue metrics; admin only.")
+    @AgentToolPolicy(access = AgentToolAccess.ADMIN, exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> platformMetricsInfo() {
+        AgentToolContextSupport.invocation();
+        if (metricsController == null) {
+            throw new IllegalStateException("platform_metrics_unavailable");
+        }
+        return otlpResult(metricsController.getMetricsInfo().getBody());
+    }
+
+    @Tool(name = "telemetry.overview", description = "Read OTLP ingestion overview in the trusted workspace.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpOverview() {
+        requireOtlpController();
+        return otlpResult(otlpController.overview().getBody());
+    }
+
+    @Tool(name = "telemetry.bindings", description = "Read canonical OTLP entity binding summary.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpBindings() {
+        requireOtlpController();
+        return otlpResult(otlpController.bindings().getBody());
+    }
+
+    @Tool(name = "telemetry.guide", description = "Get product OTLP integration examples with host placeholders; does not ingest data or create credentials.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpGuide() {
+        requireOtlpController();
+        return otlpResult(otlpController.guide(null).getBody());
+    }
+
+    @Tool(name = "telemetry.intake_red_summary", description = "Read bounded OTLP intake request, error, and duration audit summary.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpIntakeRedSummary(
+            @ToolParam(description = "Start epoch milliseconds.") long start,
+            @ToolParam(description = "End epoch milliseconds, at most 7 days after start.") long end) {
+        requireOtlpController();
+        if (start < 0 || end <= start || end - start > java.time.Duration.ofDays(7).toMillis()) {
+            throw new IllegalArgumentException("Intake range must be ordered and at most 7 days");
+        }
+        return otlpResult(otlpController.intakeRedSummary(start, end).getBody());
+    }
+
+    @Tool(name = "metrics.otlp_console", description = "Query the OTLP metrics console using the product metrics query grammar.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpConsole(
+            @ToolParam(description = "Bounded product OTLP query parameters; no workspace override.") AgentOtlpMetricQuery q) {
+        requireOtlp(q);
+        q.validateOperation("console");
+        return otlpResult(otlpController.metricsConsole(
+                q.entityId(), q.entityType(), q.start(), q.end(), q.serviceName(), q.serviceNamespace(), q.environment(), q.collectorId(),
+                q.instance(), q.endpoint(), q.query(), q.filter(), q.groupBy(), q.aggregation(), q.temporalAggregation(), q.step(),
+                q.limit(), q.operationName()).getBody());
+    }
+
+    @Tool(name = "metrics.otlp_inventory", description = "Discover OTLP metric names in the submitted workspace scope.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpInventory(
+            @ToolParam(description = "Bounded product OTLP query parameters; no workspace override.") AgentOtlpMetricQuery q) {
+        requireOtlp(q);
+        q.validateOperation("inventory");
+        return otlpResult(otlpController.metricsInventory(
+                q.entityId(), q.entityType(), q.start(), q.end(), q.serviceName(), q.serviceNamespace(), q.environment(), q.collectorId(),
+                q.instance(), q.endpoint(), q.search(), q.limit()).getBody());
+    }
+
+    @Tool(name = "metrics.otlp_labels", description = "Discover bounded OTLP metric labels in the submitted scope.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpLabels(
+            @ToolParam(description = "Bounded product OTLP query parameters; no workspace override.") AgentOtlpMetricQuery q) {
+        requireOtlp(q);
+        q.validateOperation("labels");
+        return otlpResult(otlpController.metricLabels(
+                q.entityId() == null ? null : q.entityId().toString(), q.entityType(), q.start().toString(), q.end().toString(),
+                q.serviceName(), q.serviceNamespace(), q.environment(), q.collectorId(), q.instance(), q.endpoint(), q.query(), q.filter(),
+                q.label(), q.limit(), q.operationName()).getBody());
+    }
+
+    @Tool(name = "metrics.otlp_related", description = "Discover related OTLP metrics; distinct from monitor app hierarchy.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> otlpRelated(
+            @ToolParam(description = "Bounded product OTLP query parameters; no workspace override.") AgentOtlpMetricQuery q) {
+        requireOtlp(q);
+        q.validateOperation("related");
+        return otlpResult(otlpController.relatedMetrics(
+                q.entityId(), q.entityType(), q.start(), q.end(), q.serviceName(), q.serviceNamespace(), q.environment(), q.filter(), q.operationName(), q.limit()).getBody());
+    }
+
+    private void requireOtlp(AgentOtlpMetricQuery query) {
+        if (query == null) {
+            throw new IllegalArgumentException("query is required");
+        }
+        query.validate();
+        requireOtlpController();
+    }
+
+    private void requireOtlpController() {
+        if (AuthTokenRequestContext.currentWorkspaceId() == null
+                || AuthTokenRequestContext.currentWorkspaceId().isBlank()) {
+            throw new IllegalArgumentException("metrics_workspace_unavailable");
+        }
+        String invocationWorkspace = AgentToolContextSupport.invocation().getRequest().getWorkspaceId();
+        if (!invocationWorkspace.equals(org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes
+                .normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId()))) {
+            throw new IllegalArgumentException("metrics_workspace_context_mismatch");
+        }
+        if (otlpController == null) {
+            throw new IllegalStateException("otlp_metrics_service_unavailable");
+        }
+    }
+
+    private Map<String, Object> otlpResult(Object value) {
+        String json = JsonUtil.toJson(value);
+        if (json == null) {
+            throw new IllegalStateException("signal_response_unavailable");
+        }
+        // Preserve structured secret-key detection before text fallback and response truncation.
+        Map<String, Object> envelope = new LinkedHashMap<>();
+        Object parsed = JsonUtil.fromJson(json, Object.class);
+        if (parsed == null) {
+            throw new IllegalStateException("signal_safe_projection_unavailable");
+        }
+        envelope.put("value", parsed);
+        String redactedJson = JsonUtil.toJson(GatewaySecretRedactor.redactMap(envelope).get("value"));
+        if (redactedJson == null) {
+            throw new IllegalStateException("signal_safe_projection_unavailable");
+        }
+        String safe = AgentRuntimeTextSanitizer.redact(redactedJson);
+        boolean truncated = safe.length() > 24000;
+        boolean backendPartial = hasPartial(JsonUtil.fromJson(json));
+        return Map.of("data", truncated ? safe.substring(0, 24000) : safe,
+                "partial", truncated || backendPartial, "projectionTruncated", truncated,
+                "format", "json_text", "maxCharacters", 24000);
+    }
+
+    private boolean hasPartial(tools.jackson.databind.JsonNode node) {
+        if (node == null) { return false; }
+        if (node.isObject() && (node.path("partial").asBoolean(false)
+                || node.path("truncated").asBoolean(false) || node.path("hasMore").asBoolean(false))) {
+            return true;
+        }
+        if (node.isObject() && node.path("content").isArray()
+                && (node.path("totalElements").asLong(0) > node.path("content").size()
+                    || node.path("pageIndex").asInt(0) > 0)) {
+            return true;
+        }
+        if (node.isArray() || node.isObject()) {
+            for (var child : node) {
+                if (hasPartial(child)) { return true; }
+            }
+        }
+        return false;
     }
 
     @Tool(name = "metrics.realtime",

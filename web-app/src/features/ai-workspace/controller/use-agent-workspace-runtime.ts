@@ -126,8 +126,12 @@ async function convergeAgentSession(
   const session = items.find(item => item.sessionUid === confirmed);
   if (session?.conversationId) refs.setConversation(session.conversationId);
   history.selectSession(confirmed);
-  await history.loadSession(confirmed);
-  if (!convergenceCancelled(signal, refs) && !preserveRun) dispatch({ type: 'WORKSPACE_RESET' });
+  const loaded = await history.loadSession(confirmed);
+  if (convergenceCancelled(signal, refs)) return;
+  if (!preserveRun) dispatch({ type: 'WORKSPACE_RESET' });
+  if (loaded?.snapshot) {
+    dispatch({ type: 'RUN_EVIDENCE_LOADED', runUid: loaded.snapshot.runUid, evidence: loaded.snapshot.evidence });
+  }
 }
 
 function convergenceCancelled(signal: AbortSignal | undefined, refs: AgentWorkspaceRefs) {

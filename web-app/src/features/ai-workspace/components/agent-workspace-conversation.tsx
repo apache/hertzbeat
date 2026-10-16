@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import { ConversationComposer, ConversationHeader } from './agent-workspace-conversation-chrome';
+import { EarlierMessages } from './agent-workspace-earlier-messages';
 import styles from './agent-workspace-conversation.module.css';
 import { formatAgentTimestamp, formatElapsed, toolStatusColor } from './agent-workspace-format';
 
@@ -44,6 +45,7 @@ export function AgentWorkspaceConversation({
     <section className={styles.investigation} data-empty={empty} aria-label={t('aiWorkspace.investigation.label')}>
       <ConversationHeader controller={controller} contextOpen={contextOpen} onToggleContext={onToggleContext} />
       <div className={styles.transcript} aria-live="polite">
+        <EarlierMessages controller={controller} />
         {empty ? <EmptyConversation /> : null}
         {messages.map((message, index) => (
           <ConversationMessage key={'id' in message ? message.id : index} message={message} />

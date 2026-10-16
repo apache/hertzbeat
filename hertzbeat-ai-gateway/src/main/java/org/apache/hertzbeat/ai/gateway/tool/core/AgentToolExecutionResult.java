@@ -48,11 +48,13 @@ public class AgentToolExecutionResult {
 
     private final long elapsedMs;
 
+    private final Boolean canDecide;
+
     @Builder(toBuilder = true)
     private AgentToolExecutionResult(String toolCallId, String approvalId, String toolName,
                                      AgentToolStatus status, AgentPolicyDecision decision, AgentToolRisk risk,
                                      AgentApprovalStatus approvalStatus, String output, String errorMessage,
-                                     long elapsedMs) {
+                                     long elapsedMs, Boolean canDecide) {
         // Tool execution results are emitted to runtime and event layers with stable ledger identifiers.
         Objects.requireNonNull(toolCallId, "toolCallId must not be null");
         if (!StringUtils.hasText(toolCallId)) {
@@ -83,5 +85,6 @@ public class AgentToolExecutionResult {
         this.output = output;
         this.errorMessage = errorMessage;
         this.elapsedMs = elapsedMs;
+        this.canDecide = canDecide;
     }
 }

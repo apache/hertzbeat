@@ -40,7 +40,8 @@ class AgentToolDiscoveryServiceTest {
         AgentToolRegistry registry = mock(AgentToolRegistry.class);
         ObjectProvider<AgentToolRegistry> provider = mock(ObjectProvider.class);
         when(provider.getObject()).thenReturn(registry);
-        when(registry.discoverableDescriptors("jdbc", null)).thenReturn(List.of(descriptor()));
+        when(registry.discoverablePage("jdbc", null, 0))
+                .thenReturn(new AgentToolRegistry.DiscoveryPage(List.of(descriptor()), 0, 1, false));
         AgentToolDiscoveryService service = new AgentToolDiscoveryService(provider);
 
         Map<String, Object> result = service.search("jdbc", null, null);
@@ -57,13 +58,38 @@ class AgentToolDiscoveryServiceTest {
         AgentToolRegistry registry = mock(AgentToolRegistry.class);
         ObjectProvider<AgentToolRegistry> provider = mock(ObjectProvider.class);
         when(provider.getObject()).thenReturn(registry);
-        when(registry.discoverableDescriptors("jdbc", null)).thenReturn(List.of(descriptor()));
+        when(registry.discoverablePage("jdbc", null, 0))
+                .thenReturn(new AgentToolRegistry.DiscoveryPage(List.of(descriptor()), 0, 1, false));
         AgentToolDiscoveryService service = new AgentToolDiscoveryService(provider);
 
         Map<String, Object> result = service.search("jdbc", null, true);
 
         Map<String, Object> tool = ((List<Map<String, Object>>) result.get("tools")).getFirst();
         assertEquals("{\"type\":\"object\"}", tool.get("inputSchema"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void exposesBoundedPageMetadataAndTheActualLaterTools() {
+        AgentToolRegistry registry = new AgentToolRegistry();
+        for (int index = 0; index < 12; index++) {
+            AgentToolDescriptor descriptor = AgentToolDescriptor.builder().name("logs.op" + index)
+                    .description("Log operation").namespace("logs").inputSchema("{}")
+                    .risk(AgentToolRisk.READ).exposure(AgentToolExposure.MODEL_ON_DEMAND).build();
+            registry.register(new AgentToolRegistry.RegisteredTool(descriptor, ignored -> null));
+        }
+        ObjectProvider<AgentToolRegistry> provider = mock(ObjectProvider.class);
+        when(provider.getObject()).thenReturn(registry);
+        AgentToolDiscoveryService service = new AgentToolDiscoveryService(provider);
+        Map<String, Object> first = service.search("logs", null, null, 0);
+        assertEquals(true, first.get("hasMore"));
+        assertEquals(10, first.get("nextOffset"));
+        assertEquals(12, first.get("total"));
+        Map<String, Object> last = service.search("logs", null, null, 10);
+        assertEquals(false, last.get("hasMore"));
+        assertEquals(2, last.get("count"));
+        assertEquals("logs.op10", ((List<Map<String, Object>>) last.get("tools")).getFirst().get("name"));
+        assertFalse(((List<Map<String, Object>>) last.get("tools")).getFirst().containsKey("inputSchema"));
     }
 
     private AgentToolDescriptor descriptor() {

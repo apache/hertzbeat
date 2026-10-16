@@ -24,7 +24,8 @@ export function projectAgentSourceTarget(target: SourceTarget) {
   if ('trace' in target) return traceTarget(target);
   if ('log' in target) return logTarget(target);
   if ('alertId' in target) return { alertId: target.alertId, alertType: target.alertType };
-  if ('signal' in target)
+  if ('signal' in target && !('monitorId' in target)) return { entityId: target.entityId, signal: target.signal };
+  if ('monitorId' in target)
     return {
       monitorId: target.monitorId,
       signal: {

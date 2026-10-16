@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { AgentGatewayEvent } from './agent-workspace-contract';
+import type { AgentGatewayEvent, AgentRunSnapshot } from './agent-workspace-contract';
 
 type AgentRunMessage = { id: string; text: string; status: 'streaming' | 'complete' };
 export type AgentToolActivity = {
@@ -25,7 +25,7 @@ export type AgentToolActivity = {
   elapsedMs?: number;
   errorMessage?: string;
 };
-type AgentApproval = { approvalId: string; toolCallId: string; toolName: string; status: string };
+type AgentApproval = { canDecide?: boolean; approvalId: string; toolCallId: string; toolName: string; status: string };
 export type AgentInputRequest = {
   interactionId: string;
   targetTool: string;
@@ -37,6 +37,7 @@ export type AgentInputRequest = {
 
 export type AgentWorkspaceRunState = {
   runUid?: string;
+  evidence?: AgentRunSnapshot['evidence'];
   status: 'idle' | 'running' | 'complete' | 'error';
   messages: AgentRunMessage[];
   tools: AgentToolActivity[];
@@ -58,14 +59,30 @@ export const initialAgentWorkspaceRun: AgentWorkspaceRunState = {
   inputs: []
 };
 
-export type AgentWorkspaceAction = AgentGatewayEvent | { type: 'WORKSPACE_RESET' };
+export type AgentWorkspaceAction =
+  | AgentGatewayEvent
+  | { type: 'WORKSPACE_RESET' }
+  | { type: 'RUN_EVIDENCE_LOADED'; runUid: string; evidence: AgentRunSnapshot['evidence'] };
 
 export function agentWorkspaceReducer(
   state: AgentWorkspaceRunState,
   event: AgentWorkspaceAction
 ): AgentWorkspaceRunState {
   if (event.type === 'WORKSPACE_RESET') return initialAgentWorkspaceRun;
+  if (event.type === 'RUN_EVIDENCE_LOADED') {
+    if (state.runUid && state.runUid !== event.runUid) return state;
+    const next = { ...state, runUid: event.runUid };
+    delete next.evidence;
+    if (event.evidence !== undefined) next.evidence = event.evidence;
+    return next;
+  }
   return reduceLifecycleEvent(state, event) ?? reduceMessageEvent(state, event) ?? reduceInteractionEvent(state, event);
+}
+
+function withoutEvidence(state: AgentWorkspaceRunState) {
+  const next = { ...state };
+  delete next.evidence;
+  return next;
 }
 
 function reduceLifecycleEvent(
@@ -75,7 +92,7 @@ function reduceLifecycleEvent(
   switch (event.type) {
     case 'RUN_STARTED':
       return {
-        ...state,
+        ...withoutEvidence(state),
         status: 'running',
         recoveryAvailable: true,
         retryAvailable: false,
@@ -216,6 +233,7 @@ function upsertApproval(approvals: AgentApproval[], payload: Record<string, unkn
   const approvalId = stringField(payload, 'approvalId');
   const approval: AgentApproval = {
     approvalId,
+    ...(typeof payload.canDecide === 'boolean' ? { canDecide: payload.canDecide } : {}),
     toolCallId: stringField(payload, 'toolCallId'),
     toolName: stringField(payload, 'toolName'),
     status: stringField(payload, 'status')

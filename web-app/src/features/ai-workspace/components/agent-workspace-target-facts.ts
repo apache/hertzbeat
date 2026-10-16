@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { formatAgentScopeWindow } from './agent-workspace-format';
+
 import type { TFunction } from 'i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
@@ -25,6 +27,23 @@ type LogTarget = Extract<NonNullable<AgentWorkspaceViewModel['target']>, { log: 
 
 export function agentWorkspaceTargetFacts(target: AgentWorkspaceViewModel['target'], t: TFunction) {
   if (!target) return [];
+  if ('incident' in target)
+    return [
+      t('aiWorkspace.evidence.incidentScope', { id: target.incident.analysisPolicyId }),
+      ...target.incident.alertIds.map(id => t('aiWorkspace.context.singleAlertTarget', { id })),
+      formatAgentScopeWindow(target.incident.windowStartedAt, target.incident.end)
+    ];
+  if ('signal' in target && !('monitorId' in target))
+    return [
+      t('aiWorkspace.evidence.investigationScope'),
+      t('aiWorkspace.context.entityTarget', { id: target.entityId }),
+      formatAgentScopeWindow(target.signal.start, target.signal.end, target.signal.timezone),
+      ...('service' in target && target.service
+        ? [target.service.name, target.service.namespace, target.service.environment].filter((value): value is string =>
+            Boolean(value)
+          )
+        : [])
+    ];
   if ('alertId' in target) {
     return [
       t('aiWorkspace.context.singleAlertTarget', { id: target.alertId }),
@@ -49,7 +68,7 @@ export function agentWorkspaceTargetFacts(target: AgentWorkspaceViewModel['targe
   const facts = [
     t('aiWorkspace.context.monitorTarget', { id: target.monitorId }),
     target.signal.query,
-    target.signal.timezone
+    formatAgentScopeWindow(target.signal.start, target.signal.end, target.signal.timezone)
   ];
   if ('entityId' in target) {
     facts.splice(
@@ -67,7 +86,7 @@ export function agentWorkspaceTargetFacts(target: AgentWorkspaceViewModel['targe
 
 function logTargetFacts(target: LogTarget, t: TFunction) {
   const log = target.log;
-  const facts = [t('aiWorkspace.context.logTarget'), `${log.start}–${log.end}`];
+  const facts = [t('aiWorkspace.context.logTarget'), formatAgentScopeWindow(log.start, log.end)];
   if (log.traceId) facts.push(log.traceId);
   if (log.spanId) facts.push(log.spanId);
   if (log.severityNumber !== undefined) facts.push(String(log.severityNumber));
@@ -78,14 +97,19 @@ function logTargetFacts(target: LogTarget, t: TFunction) {
   if (log.environment) facts.push(log.environment);
   if (log.resourceFilter) facts.push(log.resourceFilter);
   if (log.attributeFilter) facts.push(log.attributeFilter);
-  facts.push(`pageIndex=${log.pageIndex}`, `pageSize=${log.pageSize}`);
+  facts.push(t('aiWorkspace.context.pageScope', { page: log.pageIndex + 1, size: log.pageSize }));
+  if (log.hideInternal) facts.push(t('aiWorkspace.context.internalHidden'));
+  if (log.hideNoise) facts.push(t('aiWorkspace.context.noiseHidden'));
   if ('version' in target) facts.push(target.version);
   return facts;
 }
 
 function traceTargetFacts(target: TraceTarget, t: TFunction) {
   const trace = target.trace;
-  const facts = [t('aiWorkspace.context.traceTarget', { id: trace.traceId })];
+  const facts = [
+    t('aiWorkspace.context.traceTarget', { id: trace.traceId }),
+    formatAgentScopeWindow(trace.start, trace.end)
+  ];
   if (trace.spanId) facts.push(trace.spanId);
   if (trace.serviceName) facts.push(trace.serviceName);
   if (trace.serviceNamespace) facts.push(trace.serviceNamespace);
@@ -99,6 +123,9 @@ function traceTargetFacts(target: TraceTarget, t: TFunction) {
 function topologyTargetFacts(target: TopologyTarget, t: TFunction) {
   const topology = target.topology;
   const facts = [t('aiWorkspace.context.topologyTarget', { id: topology.rootEntityId })];
+  if (topology.start !== undefined && topology.end !== undefined)
+    facts.push(formatAgentScopeWindow(topology.start, topology.end));
+  if (topology.environment) facts.push(topology.environment);
   if (topology.nodeId) facts.push(topology.nodeId);
   if (topology.edgeId) facts.push(topology.edgeId);
   facts.push(topology.sourceKind);

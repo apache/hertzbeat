@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
+import org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentEntityInvestigationAuthorityService;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
@@ -32,6 +34,7 @@ import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /** Verifies that a durable grounding proof converges with the successful READ ledger row. */
 @Service
@@ -41,21 +44,35 @@ public class AgentGroundingEvidenceVerifier {
 
     private final AgentTranscriptRecorder transcriptRecorder;
     private final AgentToolCallDao toolCallDao;
+    private final AgentIncidentTargetAuthorityService incidentAuthority;
+    private final AgentEntityInvestigationAuthorityService investigationAuthority;
     private final AgentReadGroundingEvaluator readEvaluator = new AgentReadGroundingEvaluator();
     private final AgentTargetGroundingEvaluator targetEvaluator = new AgentTargetGroundingEvaluator();
 
     public AgentGroundingEvidenceVerifier(AgentTranscriptRecorder transcriptRecorder,
                                           AgentToolCallDao toolCallDao) {
+        this(transcriptRecorder, toolCallDao, null, null);
+    }
+
+    @Autowired
+    public AgentGroundingEvidenceVerifier(AgentTranscriptRecorder transcriptRecorder, AgentToolCallDao toolCallDao,
+                                          AgentIncidentTargetAuthorityService incidentAuthority,
+                                          AgentEntityInvestigationAuthorityService investigationAuthority) {
         this.transcriptRecorder = transcriptRecorder;
         this.toolCallDao = toolCallDao;
+        this.incidentAuthority = incidentAuthority;
+        this.investigationAuthority = investigationAuthority;
     }
 
     public boolean hasDurableGrounding(AgentRun run, AgentTargetRef target) {
-        if (run == null || run.getId() == null || GatewayText.isBlank(run.getRunUid())) {
-            return false;
-        }
-        if (!groundingEligible(run)) {
-            return false;
+        return !verifiedProofs(run, target).isEmpty();
+    }
+
+    /** Stable evidence comes only from matching durable transcript and successful READ ledger rows. */
+    public List<AgentGroundingProof> verifiedProofs(AgentRun run, AgentTargetRef target) {
+        if (run == null || run.getId() == null || GatewayText.isBlank(run.getRunUid())
+                || !groundingEligible(run, target)) {
+            return List.of();
         }
         List<TranscriptMessage> candidates = transcriptRecorder.findRunGroundingMessages(run.getId()).stream()
                 .filter(Objects::nonNull)
@@ -64,16 +81,22 @@ public class AgentGroundingEvidenceVerifier {
                 .filter(message -> Objects.equals(run.getRunUid(), message.getGroundingProof().getRunUid()))
                 .filter(this::isTypedProof)
                 .toList();
-        if (candidates.size() != 1) {
-            return false;
+        boolean incident = AgentIncidentTargetAuthorityService.isCanonicalTarget(target)
+                || AgentEntityInvestigationAuthorityService.isCanonicalTarget(target);
+        if (candidates.isEmpty() || !incident && candidates.size() != 1
+                || candidates.stream().map(TranscriptMessage::getToolCallId).distinct().count() != candidates.size()) {
+            return List.of();
         }
-        TranscriptMessage message = candidates.getFirst();
-        List<AgentToolCall> matchingLedger = toolCallDao.findByRunIdOrderByGmtCreateAsc(run.getId()).stream()
-                .filter(Objects::nonNull)
-                .filter(call -> Objects.equals(message.getToolCallId(), call.getToolCallId())
-                        && Objects.equals(message.getToolName(), call.getToolName()))
-                .toList();
-        return matchingLedger.size() == 1 && ledgerMatches(run, target, message, matchingLedger.getFirst());
+        List<AgentToolCall> ledger = toolCallDao.findByRunIdOrderByGmtCreateAsc(run.getId());
+        for (TranscriptMessage message : candidates) {
+            List<AgentToolCall> matching = ledger.stream().filter(Objects::nonNull)
+                    .filter(call -> Objects.equals(message.getToolCallId(), call.getToolCallId())
+                            && Objects.equals(message.getToolName(), call.getToolName())).toList();
+            if (matching.size() != 1 || !ledgerMatches(run, target, message, matching.getFirst())) {
+                return List.of();
+            }
+        }
+        return candidates.stream().map(TranscriptMessage::getGroundingProof).toList();
     }
 
     public List<TranscriptMessage> verifiedHistory(AgentRun run, AgentTargetRef target,
@@ -83,13 +106,29 @@ public class AgentGroundingEvidenceVerifier {
 
     public VerifiedHistory verifyHistory(AgentRun run, AgentTargetRef target,
                                          List<TranscriptMessage> history) {
+        return verifyHistory(run, target, history, null);
+    }
+
+    public VerifiedHistory verifyHistory(AgentRun run, AgentTargetRef target,
+                                         List<TranscriptMessage> history, String workspaceId) {
         List<TranscriptMessage> bounded = history == null ? List.of() : List.copyOf(history);
-        if (hasDurableGrounding(run, target)) {
+        if (hasDurableGrounding(run, target) && currentAuthorityMatches(workspaceId, target)) {
             return new VerifiedHistory(bounded, true);
         }
         return new VerifiedHistory(bounded.stream()
                 .map(message -> clearCurrentRunProof(run, message))
                 .toList(), false);
+    }
+
+    private boolean currentAuthorityMatches(String workspaceId, AgentTargetRef target) {
+        // A historical snapshot proves what was read then. Resuming execution must revalidate the current scope.
+        if (AgentIncidentTargetAuthorityService.isCanonicalTarget(target)) {
+            return incidentAuthority != null && incidentAuthority.verify(workspaceId, target);
+        }
+        if (AgentEntityInvestigationAuthorityService.isCanonicalTarget(target)) {
+            return investigationAuthority != null && investigationAuthority.verify(workspaceId, target);
+        }
+        return true;
     }
 
     private boolean ledgerMatches(AgentRun run, AgentTargetRef target, TranscriptMessage message,
@@ -114,7 +153,10 @@ public class AgentGroundingEvidenceVerifier {
                         message, run.getRunUid(), target, arguments, ledger.getInputHash());
     }
 
-    private boolean groundingEligible(AgentRun run) {
+    private boolean groundingEligible(AgentRun run, AgentTargetRef target) {
+        if (Objects.equals(AgentRuntimeEntryType.ALERT_TRIGGER.name(), run.getEntryType())) {
+            return AgentIncidentTargetAuthorityService.isCanonicalTarget(target);
+        }
         return Objects.equals(AgentRuntimeEntryType.USER_INPUT.name(), run.getEntryType())
                 || Objects.equals(AgentRuntimeEntryType.SCHEDULE_TRIGGER.name(), run.getEntryType());
     }

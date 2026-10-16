@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.conversation;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 
 /**
@@ -34,5 +35,16 @@ public record AgentRunSnapshot(
         boolean replayAvailable,
         LocalDateTime startedAt,
         LocalDateTime completedAt,
-        AgentRetryRequest retryRequest) {
+        AgentRetryRequest retryRequest,
+        List<AgentEvidenceReference> evidence) {
+    public AgentRunSnapshot {
+        evidence = evidence == null ? List.of() : List.copyOf(evidence);
+    }
+
+    public AgentRunSnapshot(String runUid, String sessionUid, String messageId, String status,
+                            AgentTargetRef target, String result, String errorMessage, boolean replayAvailable,
+                            LocalDateTime startedAt, LocalDateTime completedAt, AgentRetryRequest retryRequest) {
+        this(runUid, sessionUid, messageId, status, target, result, errorMessage, replayAvailable,
+                startedAt, completedAt, retryRequest, List.of());
+    }
 }

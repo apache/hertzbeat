@@ -4416,6 +4416,7 @@
       "submit": "Submit"
     },
     "failure": "The investigation stream is unavailable. No action was assumed to have completed.",
+    "loadOlder": "Load earlier messages",
     "sessionLoadIncomplete": "Some saved investigation details could not be loaded. Refresh or select the investigation again.",
     "recoveryRequired": "The tool may have completed, but HertzBeat could not save the result. Check the target before continuing.",
     "targetMismatch": "This investigation target is no longer valid. Return to its source and start a new investigation.",
@@ -4442,10 +4443,15 @@
       "noApprovals": "No pending approvals",
       "inputs": "Requested input",
       "noInputs": "No input requested",
-      "statusUnknown": "Status not recorded"
+      "statusUnknown": "Status not recorded",
+      "viewSource": "View source",
+      "pageScope": "Page {{page}} · {{size}} records per page",
+      "internalHidden": "Internal telemetry excluded",
+      "noiseHidden": "Noise excluded"
     },
     "approval": {
-      "adminRequired": "Administrator approval required"
+      "adminRequired": "Administrator approval required",
+      "decisionUnavailable": "This account cannot decide this approval"
     },
     "providers": {
       "action": "Model providers",
@@ -4468,6 +4474,19 @@
       "apiKey": "API key",
       "apiKeyHint": "Leave blank to keep the existing key.",
       "save": "Save provider"
+    },
+    "evidence": {
+      "title": "Evidence",
+      "collecting": "Waiting for verified evidence…",
+      "unrecorded": "Evidence references were not recorded for this run",
+      "empty": "No verified observations were recorded. This does not mean the system is healthy.",
+      "partial": "Partial evidence",
+      "complete": "No truncation reported",
+      "coverageUnknown": "Coverage not reported",
+      "observations": "{{count}} observations",
+      "incidentScope": "Alert facts only · policy {{id}}",
+      "investigationScope": "Bounded cross-signal investigation",
+      "investigationLimit": "Select a time range of 24 hours or less"
     }
   },
   "alertInvestigation": {

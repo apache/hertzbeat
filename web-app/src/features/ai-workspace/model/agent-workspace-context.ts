@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { appendEntityInvestigation, parseEntityInvestigation } from './agent-entity-investigation-context';
 import { safeRedirectTarget } from '@/core/auth/navigation';
 
 import type { AgentMonitorMetricSourceTarget, AgentSourceTarget } from './agent-workspace-contract';
@@ -144,7 +145,9 @@ function monitorHistoryDurationMs(history: string | null | undefined) {
 export function buildAgentWorkspacePath(target?: AgentSourceTarget, returnTo?: string) {
   if (!target) return '/ai';
   const params = new URLSearchParams();
-  if ('topology' in target) {
+  if ('signal' in target && !('monitorId' in target)) {
+    appendEntityInvestigation(params, target);
+  } else if ('topology' in target) {
     appendTopologyTargetParams(params, target);
   } else if ('trace' in target) {
     appendTraceTargetParams(params, target);
@@ -171,6 +174,7 @@ export function buildAgentWorkspacePath(target?: AgentSourceTarget, returnTo?: s
 }
 
 function explicitTarget(params: URLSearchParams): AgentSourceTarget | undefined {
+  if (params.get('source') === 'entityInvestigation') return parseEntityInvestigation(params);
   if (params.get('source') === 'topology') {
     return explicitTopologyTarget(params);
   }

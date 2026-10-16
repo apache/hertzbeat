@@ -33,7 +33,13 @@ export function AgentWorkspaceView({
   onOpenProviders: () => void;
   onOpenSchedules: () => void;
 }) {
-  const [contextOpen, setContextOpen] = useState(false);
+  const targetKey = controller.target ? JSON.stringify(controller.target) : '';
+  const [contextPreference, setContextPreference] = useState<{ key: string; open: boolean }>();
+  const contextOpen =
+    contextPreference?.key === targetKey
+      ? contextPreference.open
+      : Boolean(targetKey && controller.run.status === 'idle');
+  const setContextOpen = (open: boolean) => setContextPreference({ key: targetKey, open });
   return (
     <div className={styles.workspace} data-context-open={contextOpen}>
       <AgentWorkspaceSessionPane
@@ -45,7 +51,7 @@ export function AgentWorkspaceView({
       <AgentWorkspaceConversation
         contextOpen={contextOpen}
         controller={controller}
-        onToggleContext={() => setContextOpen(current => !current)}
+        onToggleContext={() => setContextOpen(!contextOpen)}
       />
       {contextOpen ? (
         <AgentWorkspaceContextPane controller={controller} isAdmin={isAdmin} onClose={() => setContextOpen(false)} />

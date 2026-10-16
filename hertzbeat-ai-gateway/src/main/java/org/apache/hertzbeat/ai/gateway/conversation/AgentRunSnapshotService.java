@@ -70,7 +70,10 @@ public class AgentRunSnapshotService {
                 replayAvailable,
                 run.getStartedAt(),
                 run.getCompletedAt(),
-                retryRequest(session, run, status));
+                retryRequest(session, run, status),
+                groundingVerifier.verifiedProofs(run, AgentRunService.targetFromRun(run)).stream()
+                        .filter(proof -> proof.getObservationCount() != null && proof.getObservationCount() > 0)
+                        .map(AgentEvidenceReference::from).toList());
     }
 
     private AgentRetryRequest retryRequest(AgentSession session, AgentRun run, AgentRunStatus status) {

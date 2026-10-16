@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillDefinition;
+import org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentEntityInvestigationAuthorityService;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCompletionIndeterminateException;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
@@ -332,6 +334,8 @@ public class AgentRuntimeLoop {
             }
             state.incrementToolCallCount();
             AgentGroundingProof groundingProof = state.hasSuccessfulReadObservation()
+                    && !AgentIncidentTargetAuthorityService.isCanonicalTarget(context.getEffectiveTarget())
+                    && !AgentEntityInvestigationAuthorityService.isCanonicalTarget(context.getEffectiveTarget())
                     ? null : groundingProof(context, toolCall, result);
             Instant completedAt = Instant.now(clock);
             TranscriptMessage toolResultMessage = toolResultMessage(
@@ -341,6 +345,13 @@ public class AgentRuntimeLoop {
                 toolResultMessage.setGroundingProof(null);
             }
             state.addTurnMessage(toolResultMessage);
+            if (groundingProof != null && durableSequence == null
+                    && (AgentIncidentTargetAuthorityService.isCanonicalTarget(context.getEffectiveTarget())
+                    || AgentEntityInvestigationAuthorityService.isCanonicalTarget(context.getEffectiveTarget()))) {
+                publishRunCompleted(run, AgentRuntimeEventType.ERROR,
+                        "Investigation evidence could not be persisted; no replayable conclusion is available.");
+                return true;
+            }
             if (groundingProof != null && durableSequence != null) {
                 state.recordSuccessfulReadObservation();
             }
@@ -373,7 +384,8 @@ public class AgentRuntimeLoop {
 
     private boolean groundingEligible(AgentRuntimeContext context) {
         if (context.getAlertIncident() != null || context.getEntryType() == AgentRuntimeEntryType.ALERT_TRIGGER) {
-            return false;
+            return context.getEntryType() == AgentRuntimeEntryType.ALERT_TRIGGER
+                    && AgentIncidentTargetAuthorityService.isCanonicalTarget(context.getEffectiveTarget());
         }
         return context.getEffectiveTarget() != null
                 || context.getEntryType() == AgentRuntimeEntryType.USER_INPUT
@@ -403,7 +415,7 @@ public class AgentRuntimeLoop {
         Object query = arguments.get("query");
         state.addDiscoveredTools(toolBridge.discoverableTools(
             namespace instanceof String value ? value : null,
-            query instanceof String value ? value : null));
+            query instanceof String value ? value : null, arguments.get("offset")));
     }
 
     private AgentToolBridge.ExecutionListener toolExecutionEventSink(LoopRun run, String itemId) {

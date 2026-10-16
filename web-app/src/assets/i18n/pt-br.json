@@ -4416,6 +4416,7 @@
       "submit": "Enviar"
     },
     "failure": "O fluxo da investigação está indisponível. Nenhuma ação será considerada concluída.",
+    "loadOlder": "Carregar mensagens anteriores",
     "sessionLoadIncomplete": "Não foi possível carregar alguns detalhes salvos da investigação. Atualize ou selecione a investigação novamente.",
     "recoveryRequired": "A ferramenta pode ter sido executada, mas o HertzBeat não conseguiu salvar o resultado. Verifique o destino antes de continuar.",
     "targetMismatch": "Este alvo de investigação não é mais válido. Volte à origem e inicie uma nova investigação.",
@@ -4442,10 +4443,15 @@
       "noApprovals": "Nenhuma aprovação pendente",
       "inputs": "Entrada solicitada",
       "noInputs": "Nenhuma entrada solicitada",
-      "statusUnknown": "Estado não registrado"
+      "statusUnknown": "Estado não registrado",
+      "viewSource": "Ver origem",
+      "pageScope": "Página {{page}} · {{size}} registros por página",
+      "internalHidden": "Telemetria interna excluída",
+      "noiseHidden": "Ruído excluído"
     },
     "approval": {
-      "adminRequired": "Aprovação do administrador necessária"
+      "adminRequired": "Aprovação do administrador necessária",
+      "decisionUnavailable": "Esta conta não pode aprovar esta ação"
     },
     "providers": {
       "action": "Provedores de modelo",
@@ -4468,6 +4474,19 @@
       "apiKey": "Chave da API",
       "apiKeyHint": "Deixe em branco para manter a chave existente.",
       "save": "Salvar provedor"
+    },
+    "evidence": {
+      "title": "Evidências",
+      "collecting": "Aguardando evidências verificadas…",
+      "unrecorded": "Não foram registradas referências de evidências para esta investigação",
+      "empty": "Nenhuma observação verificada foi registrada. Isso não significa que o sistema esteja saudável.",
+      "partial": "Evidência parcial",
+      "complete": "Nenhum truncamento informado",
+      "coverageUnknown": "Cobertura não informada",
+      "observations": "{{count}} observações",
+      "incidentScope": "Somente fatos dos alertas · Política {{id}}",
+      "investigationScope": "Investigação delimitada entre sinais",
+      "investigationLimit": "Selecione um intervalo de até 24 horas"
     }
   },
   "alertInvestigation": {

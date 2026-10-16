@@ -4416,6 +4416,7 @@
       "submit": "提交"
     },
     "failure": "調查連線暫不可用。系統不會假定任何操作已經完成。",
+    "loadOlder": "載入更早的訊息",
     "sessionLoadIncomplete": "部分已儲存的調查資訊未能載入，請重新整理或重新選擇該調查。",
     "recoveryRequired": "工具可能已經執行，但 HertzBeat 未能儲存結果。繼續前請先核對目標狀態。",
     "targetMismatch": "目前調查目標已失效，請返回來源頁面重新發起調查。",
@@ -4442,10 +4443,15 @@
       "noApprovals": "沒有待審批操作",
       "inputs": "需要補充的資訊",
       "noInputs": "無需補充資訊",
-      "statusUnknown": "未記錄執行狀態"
+      "statusUnknown": "未記錄執行狀態",
+      "viewSource": "查看來源",
+      "pageScope": "第 {{page}} 頁 · 每頁 {{size}} 筆",
+      "internalHidden": "已排除內部遙測",
+      "noiseHidden": "已排除雜訊"
     },
     "approval": {
-      "adminRequired": "需要管理員審批"
+      "adminRequired": "需要管理員審批",
+      "decisionUnavailable": "目前帳戶無法確認此操作"
     },
     "providers": {
       "action": "模型提供方",
@@ -4468,6 +4474,19 @@
       "apiKey": "API 金鑰",
       "apiKeyHint": "留空可保留現有金鑰。",
       "save": "儲存提供方"
+    },
+    "evidence": {
+      "title": "證據",
+      "collecting": "等待已驗證證據…",
+      "unrecorded": "此調查未記錄證據引用",
+      "empty": "未記錄已驗證的觀測結果，不代表系統健康。",
+      "partial": "部分證據",
+      "complete": "未報告截斷",
+      "coverageUnknown": "未報告覆蓋範圍",
+      "observations": "{{count}} 筆觀測",
+      "incidentScope": "僅告警事實 · 策略 {{id}}",
+      "investigationScope": "有界跨訊號調查",
+      "investigationLimit": "選擇不超過 24 小時的時間範圍"
     }
   },
   "alertInvestigation": {

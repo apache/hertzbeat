@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -72,6 +72,61 @@ describe('AI workspace durable history through the API adapter', () => {
     expect(within(conversation).getByRole('button', { name: 'logs.query' })).toHaveTextContent(
       i18n.t('aiWorkspace.context.statusUnknown')
     );
+  });
+
+  it('opens the latest messages after 200 entries and retries earlier history without losing the tail', async () => {
+    let failEarlier = true;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = new URL(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+        'http://localhost'
+      );
+      if (url.pathname.endsWith('/transcript')) {
+        const pageIndex = Number(url.searchParams.get('pageIndex'));
+        if (pageIndex === 1 && failEarlier) return Promise.reject(new Error('offline'));
+        const start = pageIndex * 200;
+        const content = Array.from({ length: pageIndex === 2 ? 1 : 200 }, (_, index) => ({
+          id: start + index + 1,
+          sessionSequence: start + index + 1,
+          messageRole: 'user',
+          gmtCreate: null,
+          payloadJson: JSON.stringify({
+            role: 'user',
+            content: [{ type: 'text', text: `Recorded message ${start + index + 1}` }]
+          })
+        }));
+        return Promise.resolve(message({ content, totalElements: 401, totalPages: 3, number: pageIndex, size: 200 }));
+      }
+      if (url.pathname.endsWith('/latest-run')) return Promise.resolve(message(null));
+      return Promise.resolve(message(page([session()])));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<Harness />);
+    fireEvent.click(await screen.findByRole('button', { name: /Recorded log investigation/ }));
+    await screen.findByText('Recorded message 401');
+    expect(screen.queryByText('Recorded message 1')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Load earlier messages' }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url]) =>
+          (typeof url === 'string' ? url : url instanceof URL ? url.href : url.url).includes('pageIndex=1')
+        )
+      ).toBe(true)
+    );
+    await screen.findByRole('button', { name: 'Retry' });
+    expect(screen.getByText('Recorded message 401')).toBeVisible();
+    failEarlier = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await screen.findByText('Recorded message 201');
+    fireEvent.click(screen.getByRole('button', { name: 'Load earlier messages' }));
+    await screen.findByText('Recorded message 1');
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Load earlier messages' })).not.toBeInTheDocument()
+    );
+    const articles = screen.getByRole('region', { name: 'Investigation' }).querySelectorAll('article');
+    expect(articles).toHaveLength(401);
+    expect(articles[0]).toHaveTextContent('Recorded message 1');
+    expect(articles[400]).toHaveTextContent('Recorded message 401');
   });
 
   it('keeps indentation and horizontal padding proportional to the available conversation', () => {
