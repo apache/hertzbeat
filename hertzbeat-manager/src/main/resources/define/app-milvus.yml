@@ -178,7 +178,7 @@ metrics:
       ja-JP: 検索/クエリリクエスト遅延
     priority: 4
     fields:
-      - field: le
+      - field: le_label
         type: 1
         label: true
         i18n:
@@ -192,6 +192,11 @@ metrics:
           zh-CN: 延迟
           en-US: Latency
           ja-JP: 遅延
+    aliasFields:
+      - le
+      - value
+    calculates:
+      - le_label=le
     protocol: http
     http:
       host: ^_^host^_^
@@ -209,7 +214,7 @@ metrics:
       ja-JP: 変更リクエスト遅延
     priority: 5
     fields:
-      - field: le
+      - field: le_label
         type: 1
         label: true
         i18n:
@@ -223,6 +228,11 @@ metrics:
           zh-CN: 延迟
           en-US: Latency
           ja-JP: 遅延
+    aliasFields:
+      - le
+      - value
+    calculates:
+      - le_label=le
     protocol: http
     http:
       host: ^_^host^_^
