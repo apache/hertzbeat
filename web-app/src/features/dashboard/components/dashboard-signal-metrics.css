@@ -1,0 +1,175 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.metricContent {
+  animation: metricEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+  padding: 12px;
+  background: transparent;
+  border-radius: 4px;
+  padding-block: 8px;
+}
+
+.metricExiting {
+  animation: metricExit 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes metricExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+@keyframes metricEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metricSeries {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.rotationControls {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 8px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin: 0;
+}
+
+.position {
+  color: var(--hb-text-muted);
+  white-space: nowrap;
+}
+
+.metricInfo {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.metricName {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.metricName strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.metricName span,
+.metricValue > span {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--hb-text-secondary);
+}
+
+.metricValue {
+  text-align: end;
+  flex: none;
+  display: grid;
+  gap: 4px;
+}
+
+.metricValue strong {
+  color: var(--hb-text-primary);
+  font-size: 26px;
+  line-height: 30px;
+}
+
+.rotationGroup {
+  flex: 1;
+  min-width: 0;
+}
+
+.rotationControls :global(.ant-btn) {
+  border: 1px solid var(--start-border);
+  background: var(--start-surface);
+}
+
+.rotationControls :global(.ant-btn[aria-pressed='false']) {
+  background: var(--start-accent);
+  color: var(--hb-text-on-accent);
+}
+
+.metricCard .sparkline {
+  margin-block: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metricContent,
+  .metricExiting {
+    animation: none;
+    transition: none;
+  }
+}
+
+.rotationControls :global(.ant-btn[aria-pressed='false']:not(:disabled):hover) {
+  background: var(--ant-color-primary-hover, var(--start-accent));
+}
+.rotationControls :global(.ant-btn[aria-pressed='false']:not(:disabled):active) {
+  background: var(--ant-color-primary-active, var(--start-accent));
+}
+.rotationControls :global(.ant-btn:disabled) {
+  color: var(--hb-text-disabled);
+  background: var(--hb-bg-hover);
+}
+
+.rotationControls :global(.ant-btn:not([aria-pressed='false']):not(:disabled):hover) {
+  background: var(--hb-bg-hover);
+  color: var(--hb-text-primary);
+}
+.rotationControls :global(.ant-btn:not([aria-pressed='false']):not(:disabled):active) {
+  background: var(--hb-bg-selected);
+}
+
+.emptyMetrics {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--hb-space-3);
+  text-align: center;
+  padding: var(--hb-space-4);
+  color: var(--hb-text-secondary);
+}
+.emptyMetrics p {
+  margin: 0;
+}
