@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -220,6 +221,46 @@ public class ScriptCollectImplTest {
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
             assertTrue(builder.getMsg().contains("code: 2"));
         });
+    }
+
+    /**
+     * Regression test for https://github.com/apache/hertzbeat/issues/4456.
+     *
+     * The netcat parser previously called {@code item.split("=")} which splits on <em>every</em>
+     * {@code =}, so a line like {@code token=abc==} was turned into
+     * {@code ["token", "abc", "", ""]} (length 4) and then dropped by the
+     * {@code .filter(item -> item.length == 2)} guard.
+     *
+     * After the fix, {@code item.split("=", 2)} is used so the split stops at the first
+     * {@code =} and the complete value is preserved.
+     */
+    @Test
+    void parseResponseDataByNetcatPreservesValuesContainingEquals() throws Exception {
+        // Script output that reproduces the issue:
+        //   control=ok                          → plain value, no extra '='
+        //   token=abc==                         → base64-padded value with trailing '=='
+        //   endpoint=http://localhost/path?mode=read  → URL with a query-string '='
+        String scriptOutput = "control=ok\ntoken=abc==\nendpoint=http://localhost/path?mode=read";
+
+        List<String> aliasFields = List.of("control", "token", "endpoint");
+
+        CollectRep.MetricsData.Builder testBuilder = CollectRep.MetricsData.newBuilder();
+
+        // Invoke the private method via reflection so we can test the parser in isolation
+        // without needing to run an actual shell process.
+        Method method = ScriptCollectImpl.class.getDeclaredMethod(
+                "parseResponseDataByNetcat",
+                String.class, List.class,
+                CollectRep.MetricsData.Builder.class, Long.class);
+        method.setAccessible(true);
+        method.invoke(scriptCollect, scriptOutput, aliasFields, testBuilder, 0L);
+
+        assertEquals(1, testBuilder.getValuesCount(), "Expected exactly one value-row");
+        CollectRep.ValueRow row = testBuilder.getValues(0);
+
+        assertEquals("ok",                              row.getColumns(0), "control should be 'ok'");
+        assertEquals("abc==",                           row.getColumns(1), "token should preserve trailing '=='");
+        assertEquals("http://localhost/path?mode=read", row.getColumns(2), "endpoint should preserve '=' in query string");
     }
 
     @Test

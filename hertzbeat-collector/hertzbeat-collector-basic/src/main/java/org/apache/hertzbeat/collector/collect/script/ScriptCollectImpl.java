@@ -213,13 +213,15 @@ public class ScriptCollectImpl extends AbstractCollect {
         Map<String, String> mapValue = Arrays.stream(lines)
                 .map(item -> {
                     if (contains) {
-                        return item.split("=");
+                        // split on the first '=' only, so values like "token=abc==" or
+                        // "endpoint=http://host/path?a=1" are preserved in full
+                        return item.split("=", 2);
                     } else {
-                        return item.split("\t");
+                        return item.split("\t", 2);
                     }
                 })
                 .filter(item -> item.length == 2)
-                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
+                .collect(Collectors.toMap(x -> x[0].trim(), x -> x[1].trim()));
 
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
