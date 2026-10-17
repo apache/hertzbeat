@@ -97,6 +97,11 @@ function useSelectSession(history: AgentWorkspaceHistory, runtime: Runtime, refs
           Boolean(retryRequest)
         )
       );
+      runtime.dispatch({
+        type: 'RUN_EVIDENCE_LOADED',
+        runUid: loaded.snapshot.runUid,
+        evidence: loaded.snapshot.evidence
+      });
     },
     [history, refs, runtime]
   );

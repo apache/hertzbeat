@@ -41,6 +41,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredTool;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
+import org.apache.hertzbeat.common.support.TrustedAuditActorContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,6 +114,62 @@ class AgentToolRegistryExecutionTest {
         AgentToolDescriptor change = descriptors.get("ops.alert_silence");
         assertNotNull(change);
         assertEquals(AgentToolRisk.CHANGE, change.getRisk());
+    }
+
+    @Test
+    void resourcePermissionDenialPrecedesInteractionApprovalAndHandler() {
+        AgentToolDescriptor protectedRead = AgentToolDescriptor.builder()
+                .name("admin.read").description("Read administrator resource").inputSchema("{}")
+                .namespace("admin").risk(AgentToolRisk.READ).access(AgentToolAccess.ADMIN)
+                .exposure(AgentToolExposure.MODEL_ON_DEMAND).build();
+        AtomicBoolean executed = new AtomicBoolean();
+        registry.register(handler(protectedRead, context -> {
+            executed.set(true);
+            return output(AgentToolStatus.SUCCEEDED, "private");
+        }));
+        AgentToolExecutionRequest request = invocation("admin.read", Map.of()).toBuilder()
+                .actor(AgentActor.builder().type("user").id("reader").roles(List.of("user")).build())
+                .approvalId("approval-cannot-grant-resource-access")
+                .build();
+
+        AgentToolExecutionResult result = orchestrator.execute(request);
+
+        assertEquals(AgentToolStatus.DENIED, result.getStatus());
+        assertFalse(executed.get());
+        verify(interactionInputService, never()).validateReference(any());
+        verify(interactionInputService, never()).mergeAndTake(any());
+        verify(policyService, never()).decide(any(), any());
+        verify(toolCallLedgerService).recordToolDenied(any(), any(), any());
+        verify(toolCallLedgerService, never()).validateToolExecutionApproval(any(), any());
+    }
+
+    @Test
+    void handlerAuditActorComesFromRuntimeAndRestoresOnFailure() {
+        registry.register(handler(descriptor("audit.read", "Read audit attribution", AgentToolRisk.READ), context -> {
+            assertEquals("runtime-user", TrustedAuditActorContext.currentActor().orElseThrow());
+            throw new IllegalStateException("expected failure");
+        }));
+        when(policyService.decide(any(), any()))
+                .thenReturn(policy(AgentPolicyDecision.ALLOW, AgentToolRisk.READ, "allowed"));
+        AgentToolExecutionRequest request = invocation("audit.read", Map.of()).toBuilder()
+                .actor(AgentActor.builder().type("user").id("runtime-user").roles(List.of("user")).build()).build();
+        try (var outer = TrustedAuditActorContext.bind("outer-actor")) {
+            assertEquals(AgentToolStatus.FAILED, orchestrator.execute(request).getStatus());
+            assertEquals("outer-actor", TrustedAuditActorContext.currentActor().orElseThrow());
+        }
+        assertFalse(TrustedAuditActorContext.isBound());
+    }
+
+    @Test
+    void backgroundAuditActorIsExplicitlyNamespaced() {
+        registry.register(handler(descriptor("audit.read", "Read audit attribution", AgentToolRisk.READ), context ->
+                output(AgentToolStatus.SUCCEEDED, TrustedAuditActorContext.currentActor().orElseThrow())));
+        when(policyService.decide(any(), any()))
+                .thenReturn(policy(AgentPolicyDecision.ALLOW, AgentToolRisk.READ, "allowed"));
+        AgentToolExecutionRequest request = invocation("audit.read", Map.of()).toBuilder()
+                .actor(AgentActor.scheduleActor()).build();
+        assertEquals("system:schedule", orchestrator.execute(request).getOutput());
+        assertFalse(TrustedAuditActorContext.isBound());
     }
 
     @Test

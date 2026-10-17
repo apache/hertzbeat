@@ -20,7 +20,14 @@ import type { TFunction } from 'i18next';
 export function formatAgentTimestamp(value: string) {
   const timestamp = new Date(value);
   if (Number.isNaN(timestamp.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(timestamp);
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }).format(timestamp);
 }
 
 export function toolStatusColor(status: string) {
@@ -45,4 +52,23 @@ export function sessionStatusLabel(status: string, t: TFunction) {
   if (normalized === 'RECOVERY_REQUIRED') return t('aiWorkspace.sessions.status.recoveryRequired');
   if (normalized === 'NO_RUN') return t('aiWorkspace.sessions.status.noRun');
   return status;
+}
+
+export function formatAgentScopeWindow(start: number, end: number, timeZone = 'UTC') {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short',
+    timeZone
+  };
+  try {
+    const formatter = new Intl.DateTimeFormat(undefined, options);
+    return `${formatter.format(start)} – ${formatter.format(end)}`;
+  } catch {
+    return '—';
+  }
 }

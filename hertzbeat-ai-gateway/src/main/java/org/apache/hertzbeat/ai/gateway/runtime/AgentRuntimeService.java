@@ -135,7 +135,7 @@ public class AgentRuntimeService {
             context = contextBuilder.build(request, config);
             if (groundingVerifier != null) {
                 AgentGroundingEvidenceVerifier.VerifiedHistory verified = groundingVerifier.verifyHistory(
-                        request.getRun(), context.getEffectiveTarget(), context.getChatHistory());
+                        request.getRun(), context.getEffectiveTarget(), context.getChatHistory(), context.getWorkspaceId());
                 context = context.withVerifiedChatHistory(verified);
             }
             if (modelClient == null) {

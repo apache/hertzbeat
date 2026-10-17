@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.tool.alert;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -45,7 +46,8 @@ class AgentAlertRuleToolServiceTest {
     void setUp() {
         alertDefineService = mock(AlertDefineService.class);
         appService = mock(AppService.class);
-        service = new AgentAlertRuleToolService(alertDefineService, appService);
+        service = new AgentAlertRuleToolService(alertDefineService, appService,
+                jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator());
     }
 
     @Test
@@ -79,5 +81,31 @@ class AgentAlertRuleToolServiceTest {
                         && updated.getExpr().contains("\"2\"")
                         && updated.getExpr().contains("\"3\"")));
         assertEquals(rule.getExpr(), result.get("expression"));
+    }
+
+    @Test
+    void shouldCreateCompleteLogRuleThroughManagerValidation() {
+        Map<String, Object> result = service.createConfigured(new AgentAlertRuleToolService.Configuration(
+                "errors", "periodic_log", "count > 10", 300, 1, Map.of("severity", "warning"),
+                Map.of("summary", "Error count"), "Errors detected", "log", true));
+        verify(alertDefineService).validate(argThat(rule -> "periodic_log".equals(rule.getType())
+                && "count > 10".equals(rule.getExpr())), eq(false));
+        verify(alertDefineService).addAlertDefine(argThat(rule -> "log".equals(rule.getDatasource())));
+        assertEquals("periodic_log", ((Map<?, ?>) result.get("data")).get("type"));
+    }
+
+    @Test
+    void shouldUpdateExpressionTypeAndDatasource() {
+        AlertDefine rule = AlertDefine.builder().id(9L).name("rule").build();
+        when(alertDefineService.getAlertDefine(9L)).thenReturn(rule);
+        service.updateAlertRule(9L, Map.of("expression", "count > 20", "type", "periodic_log", "datasource", "log"));
+        verify(alertDefineService).modifyAlertDefine(argThat(updated -> "count > 20".equals(updated.getExpr())
+                && "periodic_log".equals(updated.getType()) && "log".equals(updated.getDatasource())));
+    }
+
+    @Test
+    void shouldRejectFractionalIntegerConfiguration() {
+        when(alertDefineService.getAlertDefine(9L)).thenReturn(AlertDefine.builder().id(9L).name("rule").build());
+        assertThrows(IllegalArgumentException.class, () -> service.updateAlertRule(9L, Map.of("times", 1.5)));
     }
 }

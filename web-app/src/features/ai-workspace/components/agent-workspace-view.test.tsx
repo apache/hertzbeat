@@ -31,6 +31,61 @@ describe('AgentWorkspaceView', () => {
   });
   afterEach(cleanup);
 
+  it('shows attached source scope by default and respects closing until the source changes', () => {
+    const controller = fixture();
+    controller.run.status = 'idle';
+    controller.target = {
+      entityId: 42,
+      signal: { type: 'investigation', start: 1760000000000, end: 1760000060000, timezone: 'UTC' }
+    };
+    const element = () => (
+      <I18nextProvider i18n={i18n}>
+        <AgentWorkspaceView controller={controller} isAdmin onOpenProviders={vi.fn()} onOpenSchedules={vi.fn()} />
+      </I18nextProvider>
+    );
+    const rendered = render(element());
+    expect(screen.getByRole('complementary', { name: 'Run context' })).toHaveTextContent(
+      'Bounded cross-signal investigation'
+    );
+    expect(screen.getByRole('complementary', { name: 'Run context' })).toHaveTextContent('2025');
+    fireEvent.click(screen.getByRole('button', { name: 'Close run details panel' }));
+    rendered.rerender(element());
+    expect(screen.queryByRole('complementary', { name: 'Run context' })).not.toBeInTheDocument();
+    controller.target = { entityId: 43 };
+    rendered.rerender(element());
+    expect(screen.getByRole('complementary', { name: 'Run context' })).toHaveTextContent('Entity 43');
+  });
+
+  it('uses the server approval capability for an ordinary user', () => {
+    const controller = fixture();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <AgentWorkspaceView
+          controller={controller}
+          isAdmin={false}
+          onOpenProviders={vi.fn()}
+          onOpenSchedules={vi.fn()}
+        />
+      </I18nextProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open run details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    expect(controller.actions.decideApproval).toHaveBeenCalledWith('approval-1', 'approve');
+  });
+
+  it('fails closed when an approval has no server decision capability, even for administrators', () => {
+    const controller = fixture();
+    delete controller.run.approvals[0]!.canDecide;
+    render(
+      <I18nextProvider i18n={i18n}>
+        <AgentWorkspaceView controller={controller} isAdmin onOpenProviders={vi.fn()} onOpenSchedules={vi.fn()} />
+      </I18nextProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open run details' }));
+    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+    expect(screen.getByText('This account cannot decide this approval')).toBeInTheDocument();
+  });
+
   it('keeps assistant text and errors when a message also records a tool call', () => {
     const controller = fixture();
     controller.transcript.items.push(
@@ -559,6 +614,7 @@ function fixture(): AgentWorkspaceViewModel {
       approvals: [
         {
           approvalId: 'approval-1',
+          canDecide: true,
           toolCallId: 'tool-2',
           toolName: 'monitor.disable',
           status: 'PENDING'

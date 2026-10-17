@@ -17,6 +17,7 @@
 
 import { z } from 'zod';
 
+import { agentEvidenceSchema } from './agent-evidence-schema';
 import { agentGatewayEventTypes } from '../model/agent-workspace-contract';
 import { agentRunTargetSchema, agentSourceTargetWireSchema } from './agent-target-schema';
 export { agentSourceTargetSchema } from './agent-target-schema';
@@ -48,6 +49,7 @@ export const agentSessionSchema = z
 
 export const agentRunSnapshotSchema = z
   .object({
+    evidence: z.array(agentEvidenceSchema).optional(),
     runUid: z.string().min(1),
     sessionUid: z.string().min(1),
     messageId: z.string().min(1),

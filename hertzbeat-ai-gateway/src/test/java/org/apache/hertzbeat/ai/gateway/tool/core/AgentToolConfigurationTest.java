@@ -52,6 +52,7 @@ class AgentToolConfigurationTest {
             AgentToolDescriptor first = registry.find("sample.one").orElseThrow().descriptor();
             assertEquals("sample", first.getNamespace());
             assertEquals(AgentToolRisk.READ, first.getRisk());
+            assertEquals(AgentToolAccess.ADMIN, first.getAccess());
             assertTrue(first.getInputSchema().contains("\"monitorId\""));
             assertFalse(first.getInputSchema().contains("agentToolExecutionContext"));
 
@@ -132,7 +133,7 @@ class AgentToolConfigurationTest {
     static class SampleToolService {
 
         @Tool(name = "sample.one", description = "Sample tool one.")
-        @AgentToolPolicy
+        @AgentToolPolicy(access = AgentToolAccess.ADMIN)
         public Map<String, Object> one(
             @ToolParam(description = "Monitor id.")
             Long monitorId) {

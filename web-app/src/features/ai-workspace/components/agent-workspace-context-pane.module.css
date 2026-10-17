@@ -91,3 +91,16 @@
     width: 100%;
   }
 }
+
+.evidence {
+  display: grid;
+  gap: var(--hb-space-1);
+  overflow-wrap: anywhere;
+}
+.evidence + .evidence {
+  border-top: 1px solid var(--ai-divider-muted);
+  padding-top: var(--hb-space-2);
+}
+.contextBody {
+  overflow-wrap: anywhere;
+}

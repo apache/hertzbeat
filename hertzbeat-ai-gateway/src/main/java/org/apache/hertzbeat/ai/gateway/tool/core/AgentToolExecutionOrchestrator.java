@@ -19,6 +19,9 @@ package org.apache.hertzbeat.ai.gateway.tool.core;
 
 import java.util.Objects;
 import java.util.function.Supplier;
+import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
+import org.apache.hertzbeat.common.support.TrustedAuditActorContext;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeStoppedException;
@@ -65,6 +68,12 @@ public class AgentToolExecutionOrchestrator {
 
     private AgentToolExecutionResult executeScoped(AgentToolExecutionRequest request) {
         PreparedToolExecution rawExecution = prepareRawExecution(request);
+        var resourceDenial = AgentToolResourceAuthorizer.denialReason(request.getActor(), rawExecution.descriptor());
+        if (resourceDenial.isPresent()) {
+            AgentPolicyResult denied = AgentPolicyResult.builder().decision(AgentPolicyDecision.DENY)
+                    .risk(rawExecution.descriptor().getRisk()).reason(resourceDenial.get()).build();
+            return denied(rawExecution, denied);
+        }
         var targetDenial = targetToolAuthorizer.denialReason(rawExecution.request(), rawExecution.descriptor());
         if (targetDenial.isPresent()) {
             return targetDenied(rawExecution, targetDenial.get());
@@ -117,9 +126,11 @@ public class AgentToolExecutionOrchestrator {
         if (!StringUtils.hasText(request.getApprovalId())) {
             AgentToolCall waitingCall = toolCallLedgerService.recordToolWaitingApproval(request,
                 execution.descriptor(), policy);
-            return executionResult(waitingCall);
+            return executionResult(waitingCall).toBuilder()
+                    .canDecide(toolCallLedgerService.canDecide(request.getActor(), execution.descriptor())).build();
         }
 
+        toolCallLedgerService.requireCurrentApprovalActor(request.getActor(), execution.descriptor());
         AgentToolCall approvalCall = toolCallLedgerService.validateToolExecutionApproval(request,
             execution.descriptor());
         if (isWaitingApproval(approvalCall)) {
@@ -243,7 +254,7 @@ public class AgentToolExecutionOrchestrator {
         AgentToolExecutionContext context = new AgentToolExecutionContext(execution.request(), toolCall);
         long startedAt = System.currentTimeMillis();
         AgentToolOutput output;
-        try {
+        try (var ignored = TrustedAuditActorContext.bind(auditActor(execution.request().getActor()))) {
             output = execution.handler().execute(context);
         } catch (RuntimeException exception) {
             AgentToolCall failedCall = failAfterHandler(toolCall, exception.getMessage(), startedAt, exception);
@@ -265,6 +276,16 @@ public class AgentToolExecutionOrchestrator {
         AgentToolCall savedCall = persistTerminalOutcome(() -> toolCallLedgerService.completeToolCall(toolCall,
                 output, System.currentTimeMillis() - startedAt));
         return executionResult(savedCall);
+    }
+
+    private String auditActor(AgentActor actor) {
+        if (!ActorSupport.hasIdentity(actor)) {
+            return null;
+        }
+        if (ActorSupport.TYPE_USER.equals(actor.getType())) {
+            return actor.getId();
+        }
+        return ActorSupport.TYPE_SYSTEM.equals(actor.getType()) ? "system:" + actor.getId() : null;
     }
 
     private AgentToolCall persistTerminalOutcome(Supplier<AgentToolCall> persistence) {

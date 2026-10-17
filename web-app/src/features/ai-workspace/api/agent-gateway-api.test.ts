@@ -25,7 +25,7 @@ import {
   getLatestAgentRun,
   listAgentProviderConfigurations,
   listAgentProviderOptions,
-  listAgentTranscript,
+  listAgentTranscriptPage,
   streamAgentChat
 } from './agent-gateway-api';
 
@@ -68,7 +68,7 @@ describe('Agent Gateway browser API', () => {
         })
       )
     );
-    const messages = await listAgentTranscript('session-1');
+    const messages = (await listAgentTranscriptPage('session-1')).items;
     expect(messages[0]).toMatchObject({ text: '', toolCalls: [{ toolCallId: 'call-1', toolName: 'logs.query' }] });
     expect(messages[0]?.toolCalls?.[0]).not.toHaveProperty('input');
     expect(messages[1]).toMatchObject({
@@ -79,6 +79,51 @@ describe('Agent Gateway browser API', () => {
     expect(messages[1]).not.toHaveProperty('elapsedMs');
     expect(messages[1]).not.toHaveProperty('status');
     expect(messages[2]?.toolCalls).toEqual([{ toolCallId: 'transcript:3:call:0', toolName: 'tool.search' }]);
+  });
+
+  it('loads the latest bounded transcript page and allows older pages', async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = new URL(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+        'http://localhost'
+      );
+      const pageIndex = Number(url.searchParams.get('pageIndex'));
+      return Promise.resolve(
+        Response.json({
+          code: 0,
+          data: {
+            content: [
+              {
+                id: pageIndex + 1,
+                sessionSequence: pageIndex * 200 + 1,
+                messageRole: 'assistant',
+                payloadJson: JSON.stringify({
+                  role: 'assistant',
+                  content: [{ type: 'text', text: `Page ${pageIndex}` }]
+                }),
+                gmtCreate: null
+              }
+            ],
+            totalElements: 401,
+            totalPages: 3,
+            number: pageIndex,
+            size: 200
+          }
+        })
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const latest = await listAgentTranscriptPage('session-1');
+    expect(latest).toMatchObject({ pageIndex: 2, items: [{ text: 'Page 2' }] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const older = await listAgentTranscriptPage('session-1', undefined, 1);
+    expect(older).toMatchObject({ pageIndex: 1, items: [{ text: 'Page 1' }] });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      fetchMock.mock.calls.every(([url]) =>
+        (typeof url === 'string' ? url : url instanceof URL ? url.href : url.url).includes('pageSize=200')
+      )
+    ).toBe(true);
   });
 
   it('posts a long-lived authenticated stream and parses events split across chunks', async () => {
@@ -661,7 +706,7 @@ describe('Agent Gateway browser API', () => {
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(listAgentTranscript('session-1')).resolves.toEqual([
+    await expect(listAgentTranscriptPage('session-1').then(page => page.items)).resolves.toEqual([
       expect.objectContaining({ id: 1, role: 'user', text: 'Inspect response time' })
     ]);
     const snapshot = await getLatestAgentRun('session-1');

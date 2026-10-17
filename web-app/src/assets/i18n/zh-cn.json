@@ -4416,6 +4416,7 @@
       "submit": "提交"
     },
     "failure": "调查连接暂不可用。系统不会假定任何操作已经完成。",
+    "loadOlder": "加载更早的消息",
     "sessionLoadIncomplete": "部分已保存的调查信息未能加载，请刷新或重新选择该调查。",
     "recoveryRequired": "工具可能已经执行，但 HertzBeat 未能保存结果。继续前请先核对目标状态。",
     "targetMismatch": "当前调查目标已失效，请返回来源页面重新发起调查。",
@@ -4442,10 +4443,15 @@
       "noApprovals": "没有待审批操作",
       "inputs": "需要补充的信息",
       "noInputs": "无需补充信息",
-      "statusUnknown": "未记录执行状态"
+      "statusUnknown": "未记录执行状态",
+      "viewSource": "查看来源",
+      "pageScope": "第 {{page}} 页 · 每页 {{size}} 条",
+      "internalHidden": "已排除内部遥测",
+      "noiseHidden": "已排除噪声"
     },
     "approval": {
-      "adminRequired": "需要管理员审批"
+      "adminRequired": "需要管理员审批",
+      "decisionUnavailable": "当前账户无法确认此操作"
     },
     "providers": {
       "action": "模型提供方",
@@ -4468,6 +4474,19 @@
       "apiKey": "API 密钥",
       "apiKeyHint": "留空可保留现有密钥。",
       "save": "保存提供方"
+    },
+    "evidence": {
+      "title": "证据",
+      "collecting": "等待已验证证据…",
+      "unrecorded": "此调查未记录证据引用",
+      "empty": "未记录已验证的观测结果，不代表系统健康。",
+      "partial": "部分证据",
+      "complete": "未报告截断",
+      "coverageUnknown": "未报告覆盖范围",
+      "observations": "{{count}} 条观测",
+      "incidentScope": "仅告警事实 · 策略 {{id}}",
+      "investigationScope": "有界跨信号调查",
+      "investigationLimit": "选择不超过 24 小时的时间范围"
     }
   },
   "alertInvestigation": {

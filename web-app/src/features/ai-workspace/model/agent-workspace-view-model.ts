@@ -49,7 +49,10 @@ export function withTranscriptTools(run: AgentWorkspaceRunState, transcript: Age
 export type AgentWorkspaceViewModel = {
   sessions: AgentLoadable<AgentSession>;
   selectedSessionUid?: string;
-  transcript: AgentLoadable<AgentTranscriptMessage>;
+  transcript: AgentLoadable<AgentTranscriptMessage> & {
+    olderPageIndex?: number;
+    olderStatus?: 'loading' | 'ready' | 'error';
+  };
   draftMessages: AgentDraftMessage[];
   run: AgentWorkspaceRunState;
   target?: AgentTargetRef;
@@ -59,6 +62,7 @@ export type AgentWorkspaceViewModel = {
   stopping: boolean;
   failure?: 'unavailable';
   actions: {
+    loadOlder?: () => Promise<void>;
     selectSession: (sessionUid: string) => Promise<void>;
     newInvestigation: () => void;
     setComposer: (value: string) => void;

@@ -62,7 +62,10 @@ public class RuntimePromptBuilder {
 
             - READ tools may be requested when more evidence is required.
             - CHANGE tools may be requested only when a repair action is required.
-            - CHANGE tool execution creates an approval request and does not mutate state before approval.
+            - Admin CHANGE tools may execute directly when resource access allows. User CHANGE tools require explicit confirmation by that session owner before execution.
+            - DANGEROUS tools require explicit confirmation by the admin session owner.
+              Approval never grants a new role or bypasses resource access; another user cannot approve this session's request.
+            - Automatic and fixed-scope read-only investigations cannot execute CHANGE or DANGEROUS tools.
             - Use only the structured tools provided with this request.
             - When a required specialized tool is unavailable, call tool.search with a narrow namespace or query; never leave both selectors empty.
             - When an advertised Agent Skill matches the task, call skill.load before following its workflow.
@@ -109,7 +112,27 @@ public class RuntimePromptBuilder {
             case SCHEDULE_TRIGGER ->
                     "This run was triggered by a schedule. Perform diagnosis only. Do not request CHANGE tools.";
         };
-        return BASE_INSTRUCTIONS + "\n## Entry Policy\n\n" + entryPolicy;
+        String investigation = "";
+        if (org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService
+                .isCanonicalTarget(context.getEffectiveTarget())) {
+            investigation = "\nThis incident permits only alert.get for the listed alert IDs with alertType=single, "
+                    + "plus tool.search and skill.load. Read the alert facts before answering. There is no verified "
+                    + "incident-to-entity relationship; labels and names cannot authorize metric, trace, or log queries. "
+                    + "State that limitation explicitly. Separate Observed facts, Possible causes, Next checks, and Limitations.";
+        } else if (org.apache.hertzbeat.ai.gateway.application.AgentEntityInvestigationAuthorityService
+                .isCanonicalTarget(context.getEffectiveTarget())) {
+            investigation = "\nThis is a read-only, fixed-window entity investigation. Use entity.get(entityId) first. "
+                    + "Entity summaries may have their own windows; do not present them as selected-window evidence. "
+                    + "metrics.history must use a persisted monitor binding of this entity, a catalog metricKey, "
+                    + "start/end within the selected window, and explicit maxPoints from 1 to 1000. "
+                    + "When the target has a complete Service identity, traces.query and logs.query accept exactly "
+                    + "start,end,serviceName,serviceNamespace,environment,pageIndex,pageSize; use the target identity, "
+                    + "a subwindow only, pageIndex 0..10 and pageSize 1..50. If Service identity is absent, those "
+                    + "queries are unavailable. Do not call arbitrary traces.get or expand the scope after a denial. "
+                    + "Separate Observed facts, Possible causes, Next checks, and Limitations; report missing signals "
+                    + "and empty queries honestly. Evidence records identify observations, not proof of a root cause.";
+        }
+        return BASE_INSTRUCTIONS + "\n## Entry Policy\n\n" + entryPolicy + investigation;
     }
 
     private PromptText runtimeMetadata(AgentRuntimeContext context) {
@@ -139,6 +162,13 @@ public class RuntimePromptBuilder {
                 .line("Alert type", safePromptValue(target.getAlertType()))
                 .line("Collector", safePromptValue(target.getCollector()))
                 .line("Entity ID", target.getEntityId()));
+        if (target.getIncident() != null) {
+            text.section("Verified alert-only scope", section -> section
+                    .line("Allowed alert IDs", target.getIncident().alertIds())
+                    .line("Window start epoch millis", target.getIncident().windowStartedAt())
+                    .line("Window end epoch millis", target.getIncident().end())
+                    .line("Mode", "Read-only alert facts; entity relationship unavailable"));
+        }
         if (target.getService() != null) {
             text.section("Service", section -> section
                 .line("Service name", safePromptValue(target.getService().getName()))
@@ -240,7 +270,8 @@ public class RuntimePromptBuilder {
         }
         if (!availableTools.isEmpty()) {
             text.bullet("Available tools are provided as structured model tool definitions.")
-                    .bullet("Use only the structured tool names supplied with this request.")
+                    .bullet("Use only the structured tool names supplied with this request. If tool.search returns hasMore=true, "
+                            + "request the next page with offset increased by 10; do not assume the first page is the whole catalog.")
                     .bullet("Use interaction.request_input for structured input and always prefer it for credentials, never ask the user to put secrets in chat.");
         }
         return text;

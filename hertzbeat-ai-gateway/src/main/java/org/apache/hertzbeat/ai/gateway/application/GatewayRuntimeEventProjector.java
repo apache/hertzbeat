@@ -159,6 +159,8 @@ public class GatewayRuntimeEventProjector {
         }
         return gatewayEvent(event, GatewayEventType.APPROVAL_REQUESTED, conversationId, sessionUid, runUid,
                 ApprovalRequestedPayload.builder()
+                        .canDecide(event.getRequestPayload() != null
+                                && Boolean.TRUE.equals(event.getRequestPayload().get("canDecide")))
                         .traceId(event.getTraceId())
                         .toolName(event.getToolName())
                         .approvalId(event.getApprovalId())

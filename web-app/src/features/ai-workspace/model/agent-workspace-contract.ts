@@ -15,6 +15,13 @@
  * limitations under the License.
  */
 
+import type {
+  AgentEntityInvestigationSource,
+  AgentEntityInvestigationTarget,
+  AgentIncidentTarget
+} from './agent-investigation-target';
+import type { AgentEvidence } from './agent-evidence';
+
 type AgentMonitorMetricSignal = {
   type: 'metrics';
   query: string;
@@ -96,6 +103,7 @@ export type AgentLogRef = {
 export type AgentLogSourceTarget = { log: AgentLogRef };
 
 export type AgentSourceTarget =
+  | AgentEntityInvestigationSource
   | AgentMonitorMetricSourceTarget
   | AgentSingleAlertSourceTarget
   | AgentEntitySourceTarget
@@ -142,7 +150,8 @@ type AgentCanonicalTarget =
   | AgentCanonicalTraceTarget
   | AgentCanonicalLogTarget;
 
-export type AgentTargetRef = AgentSourceTarget | AgentCanonicalTarget;
+export type AgentTargetRef =
+  AgentSourceTarget | AgentCanonicalTarget | AgentEntityInvestigationTarget | AgentIncidentTarget;
 
 export const agentGatewayEventTypes = [
   'RUN_STARTED',
@@ -201,6 +210,7 @@ export type AgentSession = {
 };
 
 export type AgentRunSnapshot = {
+  evidence?: AgentEvidence[] | undefined;
   runUid: string;
   sessionUid: string;
   messageId: string;

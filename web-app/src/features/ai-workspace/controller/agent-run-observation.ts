@@ -57,6 +57,9 @@ export async function observeActiveRun(
   const terminalError =
     snapshot.status !== 'SUCCEEDED' && snapshot.status !== 'RUNNING' && snapshot.status !== 'CREATED';
   publishAgentEvent(runStatusEvent(snapshot, conversationId, observation.expired, false, true), refs, abort, dispatch);
+  if (refs.isMounted() && !abort.signal.aborted) {
+    dispatch({ type: 'RUN_EVIDENCE_LOADED', runUid: snapshot.runUid, evidence: snapshot.evidence });
+  }
   await converge(refs.getStreamedSession(), terminalError || observation.expired, abort.signal);
   if (!terminalError && !observation.expired) refs.setLastRequest();
 }
