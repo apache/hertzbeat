@@ -40,6 +40,7 @@ type TimeSeriesChartSeries = { name: string; points: [number, number][] };
 export type TimeSeriesChartRenderInput = {
   title: string;
   unit?: string | undefined;
+  locale?: string | undefined;
   series: TimeSeriesChartSeries[];
   saveImageTitle?: string | undefined;
   presentation?: 'area' | 'line' | 'soft-area' | 'monitor-history' | undefined;
@@ -116,7 +117,7 @@ export function buildTimeSeriesChartOption(
       containLabel: true
     },
     xAxis: timeAxis(input.series, colors, monitorHistory),
-    yAxis: valueAxis(input.unit, colors, input.presentation, input.series),
+    yAxis: valueAxis(input.unit, colors, input.presentation, input.series, input.locale),
     dataZoom: [
       {
         type: 'inside',
@@ -162,7 +163,8 @@ function valueAxis(
   unit: string | undefined,
   colors: ChartColors,
   presentation: TimeSeriesChartRenderInput['presentation'],
-  series: TimeSeriesChartSeries[]
+  series: TimeSeriesChartSeries[],
+  locale?: string
 ) {
   const monitorHistory = presentation === 'monitor-history';
   const monitorBounds = monitorHistory ? monitorHistoryValueAxisBounds(series) : undefined;
@@ -179,7 +181,7 @@ function valueAxis(
       color: colors.muted,
       fontSize: monitorHistory ? 10 : undefined,
       margin: monitorHistory ? 8 : undefined,
-      formatter: monitorHistory ? formatTimeSeriesValue : undefined
+      formatter: monitorHistory ? (value: number) => formatTimeSeriesValue(value, locale) : undefined
     },
     splitLine: {
       lineStyle: {
@@ -254,6 +256,8 @@ function timeAxis(series: TimeSeriesChartSeries[], colors: ChartColors, monitorH
 }
 
 function chartTop(showLegend: boolean, unit: string | undefined, monitorHistory: boolean) {
+  // The axis name needs its own row below a scroll legend, not the legend's text band.
+  if (showLegend && monitorHistory && unit) return 64;
   if (showLegend) return monitorHistory ? 44 : 52;
   if (monitorHistory) return unit ? 26 : 16;
   return unit ? 38 : 28;
@@ -307,11 +311,12 @@ function monitorHistoryValueAxisBounds(series: TimeSeriesChartSeries[]) {
   return { min: lower, max: upper, interval: (upper - lower) / 2 };
 }
 
-function formatTimeSeriesValue(value: number) {
+function formatTimeSeriesValue(value: number, locale?: string) {
   if (!Number.isFinite(value)) return '';
   const absolute = Math.abs(value);
-  if (absolute < 1000) return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
-  return new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+  if (absolute < 1000)
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 2, useGrouping: false }).format(value);
+  return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
 function isPrimarySeries(name: string) {

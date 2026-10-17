@@ -36,10 +36,10 @@ export function monitorInvestigationSectionState(
   return investigation.kind === 'unavailable' ? 'unavailable' : 'unknown';
 }
 
-export function formatMonitorTimestamp(value: number, timeZone?: string) {
+export function formatMonitorTimestamp(value: number, timeZone?: string, locale?: string) {
   if (!Number.isSafeInteger(value) || Math.abs(value) > 8_640_000_000_000_000) return undefined;
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(locale, {
       dateStyle: 'medium',
       timeStyle: 'medium',
       ...(timeZone ? { timeZone } : {})
@@ -49,6 +49,6 @@ export function formatMonitorTimestamp(value: number, timeZone?: string) {
   }
 }
 
-export function formatMonitorDuration(value: number) {
-  return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value)} ms`;
+export function formatMonitorDuration(value: number, locale?: string) {
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value)} ms`;
 }
