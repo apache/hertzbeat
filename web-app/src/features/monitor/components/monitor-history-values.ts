@@ -27,11 +27,11 @@ export function selectedCurrentValue(state: MonitorMetricWorkbenchController['st
   return { value: row?.value ?? '—', time: row?.collectedAt ?? row?.time ?? null };
 }
 
-export function historyStatistics(chart: MonitorHistoryChart) {
+export function historyStatistics(chart: MonitorHistoryChart, locale?: string) {
   if (chart.result.kind !== 'ready') return undefined;
   const values = chart.result.rows.flatMap(series => series.points.map(([, value]) => value)).filter(Number.isFinite);
   if (values.length === 0) return undefined;
-  const format = (value: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
+  const format = (value: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
   return {
     minimum: format(Math.min(...values)),
     maximum: format(Math.max(...values)),
@@ -40,8 +40,8 @@ export function historyStatistics(chart: MonitorHistoryChart) {
   };
 }
 
-export function formatMetricTime(value: number | null) {
+export function formatMetricTime(value: number | null, locale?: string) {
   return value == null
     ? '—'
-    : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value);
+    : new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'medium' }).format(value);
 }

@@ -43,11 +43,11 @@ export function MonitorSignalAvailability({
   nativeMetrics: MonitorMetricCatalogEvidence;
   state: MonitorInvestigationViewState;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const capabilities = resolveMonitorSignalCapabilities(nativeMetrics, state);
   return (
     <section className={styles.availability} aria-label={t('monitorSignals.availability')}>
-      <div className={styles.windowEvidence}>{windowLabel(state, t)}</div>
+      <div className={styles.windowEvidence}>{windowLabel(state, t, i18n.resolvedLanguage)}</div>
       <div className={styles.capabilityGrid}>
         {capabilityOrder.map(key => (
           <div className={styles.capability} data-state={capabilities[key]} key={key}>
@@ -71,10 +71,10 @@ function capabilityColor(state: MonitorSignalCapabilityState) {
   return 'default';
 }
 
-function windowLabel(state: MonitorInvestigationViewState, t: ReturnType<typeof useTranslation>['t']) {
+function windowLabel(state: MonitorInvestigationViewState, t: ReturnType<typeof useTranslation>['t'], locale?: string) {
   if (state.kind === 'inactive' || state.kind === 'invalid_window') return t('monitorSignals.windowUnavailable');
-  const start = formatMonitorTimestamp(state.window.from, state.window.timeZone);
-  const end = formatMonitorTimestamp(state.window.to, state.window.timeZone);
+  const start = formatMonitorTimestamp(state.window.from, state.window.timeZone, locale);
+  const end = formatMonitorTimestamp(state.window.to, state.window.timeZone, locale);
   if (!start || !end) return t('monitorSignals.windowUnavailable');
   return t('monitorSignals.window', { start, end, timeZone: state.window.timeZone });
 }

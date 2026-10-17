@@ -64,15 +64,18 @@ export function HistoryChartEvidence({ chart }: { chart: MonitorHistoryChart }) 
 }
 
 function HistoryChartCanvas({ chart }: { chart: MonitorHistoryChart }) {
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage;
   const element = useRef<HTMLDivElement>(null);
   const runtime = useRef<MonitorHistoryChartRuntime | undefined>(undefined);
   const input = useMemo<MonitorHistoryChartRenderInput>(
     () => ({
       title: chart.metric.key,
       unit: chart.metric.unit,
+      locale,
       series: chart.result.rows
     }),
-    [chart.metric.key, chart.metric.unit, chart.result.rows]
+    [chart.metric.key, chart.metric.unit, chart.result.rows, locale]
   );
   const latest = useRef(input);
   useEffect(() => {
