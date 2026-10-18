@@ -74,3 +74,37 @@ it('searches literal names and descriptions without writes, and clears a no-matc
   expect(model.refresh).not.toHaveBeenCalled();
   expect(model.remove).not.toHaveBeenCalled();
 });
+
+it('allows a personal metric favorite without changing or opening its saved query', () => {
+  const toggleFavorite = vi.fn();
+  const reopen = vi.fn();
+  const model = {
+    open: true,
+    groups: [
+      {
+        signal: 'metrics',
+        state: 'ready',
+        records: [{ signal: 'metrics', viewKey: 'metric-one', label: 'Start acceptance metric', route: 'invalid' }]
+      }
+    ],
+    canWrite: false,
+    query: { signal: 'metrics', timeRange: 'last-15m' },
+    refresh: vi.fn(),
+    setOpen: vi.fn(),
+    reopen,
+    remove: vi.fn(),
+    toggleFavorite,
+    directoryPreferences: { favoriteKeys: [], recentKeys: [], onlyMine: false, sort: 'default' }
+  } as unknown as SavedQueriesViewModel;
+  render(
+    <I18nextProvider i18n={i18n}>
+      <ExploreSavedQueryDrawer model={model} />
+    </I18nextProvider>
+  );
+  fireEvent.click(
+    screen.getByRole('checkbox', { name: i18n.t('exploreSaved.addFavorite', { view: 'Start acceptance metric' }) })
+  );
+  expect(toggleFavorite).toHaveBeenCalledWith('metric-one');
+  expect(reopen).not.toHaveBeenCalled();
+  expect(model.remove).not.toHaveBeenCalled();
+});
