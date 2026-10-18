@@ -86,12 +86,13 @@ public class DataStorageDispatch {
             ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
-                    if (metricsData == null) {
-                        continue;
+                    try (CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage()) {
+                        if (metricsData == null) {
+                            continue;
+                        }
+                        backoff.reset();
+                        persistMetricsData(metricsData);
                     }
-                    backoff.reset();
-                    persistMetricsData(metricsData);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
