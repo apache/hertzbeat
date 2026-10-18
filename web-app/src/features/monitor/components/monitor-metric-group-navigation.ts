@@ -16,6 +16,7 @@
  */
 
 import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { monitorFieldLabel, monitorGroupLabel, type MonitorMetricLabels } from '../model/monitor-metric-labels';
 import type { MetricView } from './monitor-metric-toolbar';
 
 export function filterRealtimeGroups(
@@ -23,13 +24,16 @@ export function filterRealtimeGroups(
   favoriteGroups: Set<string>,
   view: MetricView,
   search: string,
-  groupFilter: string
+  groupFilter: string,
+  labels?: MonitorMetricLabels
 ) {
   const normalized = search.trim().toLocaleLowerCase();
   return groups.flatMap(group => {
     if (groupFilter && group.group !== groupFilter) return [];
     if (view === 'favorites' && !favoriteGroups.has(group.group)) return [];
-    const groupMatches = group.group.toLocaleLowerCase().includes(normalized);
+    const groupMatches = [group.group, monitorGroupLabel(labels, group.group)].some(value =>
+      value.toLocaleLowerCase().includes(normalized)
+    );
     if (group.result.kind !== 'ready' && group.result.kind !== 'loading') {
       return normalized && !groupMatches ? [] : [group];
     }
@@ -38,8 +42,14 @@ export function filterRealtimeGroups(
         !normalized ||
         groupMatches ||
         row.field.toLocaleLowerCase().includes(normalized) ||
+        `${group.group}.${row.field}`.toLocaleLowerCase().includes(normalized) ||
+        monitorFieldLabel(labels, group.group, row.field).toLocaleLowerCase().includes(normalized) ||
         row.value.toLocaleLowerCase().includes(normalized) ||
-        Object.entries(row.labels).some(([key, value]) => `${key}=${value}`.toLocaleLowerCase().includes(normalized));
+        Object.entries(row.labels).some(([key, value]) =>
+          [`${key}=${value}`, `${monitorFieldLabel(labels, group.group, key)}=${value}`].some(text =>
+            text.toLocaleLowerCase().includes(normalized)
+          )
+        );
       return searchMatches;
     });
     return rows.length === 0 ? [] : [{ ...group, result: { ...group.result, rows } }];

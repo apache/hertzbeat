@@ -38,6 +38,7 @@ import { useMonitorMetricData } from './use-monitor-metric-data';
 import { useMonitorMetricLayoutController } from './use-monitor-metric-layout-controller';
 import { useMonitorMetricSources } from './use-monitor-metric-sources';
 import { useMonitorInvestigation } from './use-monitor-investigation';
+import { useMonitorMetricLabels } from './use-monitor-metric-labels';
 
 type MonitorMetricWorkbenchOptions = {
   notifications?: Notifications;
@@ -80,6 +81,7 @@ function useMonitorMetricContext(
   const historyCharts = buildHistoryChartEvidence(historySelection, queries);
   const selectedHistoryChart = buildSelectedHistoryChart(metric, historySelection, queries);
   const investigation = useMonitorInvestigation(monitor, history);
+  const metricLabels = useMonitorMetricLabels(monitorLayoutApplication(monitor));
   const actions = buildWorkbenchActions({
     monitor,
     metric,
@@ -104,6 +106,7 @@ function useMonitorMetricContext(
     historyCharts,
     selectedHistoryChart,
     investigation,
+    metricLabels,
     actions
   };
 }
@@ -113,6 +116,7 @@ function composeMonitorMetricWorkbench(
   refreshControl: MonitorDetailRefreshControl
 ) {
   return buildMonitorMetricWorkbenchResult({
+    metricLabels: context.metricLabels,
     catalog: context.catalog,
     metricKey: context.metricKey,
     history: context.history,
