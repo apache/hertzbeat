@@ -62,6 +62,20 @@ public class ScriptResponseParserTest {
     }
 
     @Test
+    void keepsExplicitlyEmptyValuesAsEmptyStrings() {
+        // split("=", 2) keeps the trailing empty string, so a line like "key="
+        // is a field the device explicitly reported with an empty value
+        String response = "control=ok\nempty=\n";
+        ScriptResponseParser.parseResponseDataByNetcat(
+                response, List.of("control", "empty", "missing"), builder, 100L);
+        CollectRep.ValueRow row = builder.getValues(0);
+        assertEquals("ok", row.getColumns(0));
+        assertEquals("", row.getColumns(1));
+        // a field the device never reported still renders as no-data
+        assertEquals(CommonConstants.NULL_VALUE, row.getColumns(2));
+    }
+
+    @Test
     void missingFieldsStillReportNullValue() {
         String response = "control=ok\n";
         ScriptResponseParser.parseResponseDataByNetcat(

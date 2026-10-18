@@ -45,8 +45,6 @@ public final class ScriptResponseParser {
         Map<String, String> mapValue = Arrays.stream(lines)
                 .map(item -> {
                     if (contains) {
-                        // split at the first '=' only: the value itself may contain '=' signs
-                        // (for example a base64 token or a URL with query parameters)
                         return item.split("=", 2);
                     } else {
                         return item.split("\t");
