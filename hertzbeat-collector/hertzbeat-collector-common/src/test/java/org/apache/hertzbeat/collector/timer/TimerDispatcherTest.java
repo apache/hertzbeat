@@ -23,13 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
-import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.timer.Timeout;
+import org.apache.hertzbeat.common.timer.Timer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -38,8 +41,11 @@ import org.mockito.MockitoAnnotations;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Test class for TimerDispatcher's getNextExecutionInterval method
@@ -55,6 +61,13 @@ public class TimerDispatcherTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (timerDispatcher != null) {
+            timerDispatcher.destroy();
+        }
     }
 
     /**
@@ -263,8 +276,7 @@ public class TimerDispatcherTest {
         timerDispatcher.addJob(job, null);
         Timeout t0 = currentCyclicTaskMap().get(1L);
 
-        WheelTimerTask timerTask = new WheelTimerTask(job, (MetricsTaskDispatch) timeout -> {
-        });
+        WheelTimerTask timerTask = (WheelTimerTask) t0.task();
 
         timerDispatcher.cyclicJob(timerTask, 60L, TimeUnit.SECONDS);
         Timeout t1 = currentCyclicTaskMap().get(1L);
@@ -278,6 +290,98 @@ public class TimerDispatcherTest {
 
         assertTrue(t0.isCancelled(), "T0 orphaned: overwritten by cyclicJob but never cancelled");
         assertTrue(t1.isCancelled(), "T1 orphaned: overwritten by cyclicJob but never cancelled");
+    }
+
+    @Test
+    void deletedJobCannotBeRescheduled() {
+        Job scheduled = scheduledJob();
+        timerDispatcher.addJob(scheduled, null);
+        WheelTimerTask task = (WheelTimerTask) currentCyclicTaskMap().get(1L).task();
+        timerDispatcher.deleteJob(1L, true);
+        timerDispatcher.cyclicJob(task, 60, TimeUnit.SECONDS);
+        assertTrue(task.isCancelled());
+        assertTrue(currentCyclicTaskMap().isEmpty());
+    }
+
+    @Test
+    void deleteRetiresTaskEvenIfExpiredTimeoutCannotBeCancelled() {
+        timerDispatcher.addJob(scheduledJob(), null);
+        Timeout initial = currentCyclicTaskMap().get(1L);
+        initial.cancel();
+        WheelTimerTask task = (WheelTimerTask) initial.task();
+        Timeout expired = mock(Timeout.class);
+        when(expired.task()).thenReturn(task);
+        when(expired.isExpired()).thenReturn(true);
+        when(expired.cancel()).thenReturn(false);
+        currentCyclicTaskMap().put(1L, expired);
+        timerDispatcher.deleteJob(1L, true);
+        assertTrue(task.isCancelled());
+        assertFalse(expired.isCancelled());
+        assertTrue(currentCyclicTaskMap().isEmpty());
+    }
+
+    @Test
+    void oldJobCannotReplaceReaddedJob() {
+        timerDispatcher.addJob(scheduledJob(), null);
+        WheelTimerTask old = (WheelTimerTask) currentCyclicTaskMap().get(1L).task();
+        timerDispatcher.addJob(scheduledJob(), null);
+        Timeout replacement = currentCyclicTaskMap().get(1L);
+        timerDispatcher.cyclicJob(old, 60, TimeUnit.SECONDS);
+        assertSame(replacement, currentCyclicTaskMap().get(1L));
+        assertTrue(old.isCancelled());
+        assertFalse(((WheelTimerTask) replacement.task()).isCancelled());
+    }
+
+    @Test
+    void offlineRetiresJobAndPreventsReschedulingAfterOnline() {
+        timerDispatcher.addJob(scheduledJob(), null);
+        WheelTimerTask old = (WheelTimerTask) currentCyclicTaskMap().get(1L).task();
+        timerDispatcher.goOffline();
+        timerDispatcher.goOnline();
+        timerDispatcher.addJob(scheduledJob(), null);
+        Timeout replacement = currentCyclicTaskMap().get(1L);
+        timerDispatcher.cyclicJob(old, 60, TimeUnit.SECONDS);
+        assertSame(replacement, currentCyclicTaskMap().get(1L));
+        assertTrue(old.isCancelled());
+    }
+
+    @Test
+    void concurrentDeleteCannotResurrectJob() throws Exception {
+        timerDispatcher.addJob(scheduledJob(), null);
+        Timeout previous = currentCyclicTaskMap().get(1L);
+        WheelTimerTask task = (WheelTimerTask) previous.task();
+        Timer wheel = mock(Timer.class);
+        Timeout next = mock(Timeout.class);
+        when(next.task()).thenReturn(task);
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        when(wheel.newTimeout(task, 60, TimeUnit.SECONDS)).thenAnswer(invocation -> {
+            entered.countDown();
+            assertTrue(release.await(5, TimeUnit.SECONDS));
+            return next;
+        });
+        Field field = TimerDispatcher.class.getDeclaredField("wheelTimer");
+        field.setAccessible(true);
+        Timer original = (Timer) field.get(timerDispatcher);
+        field.set(timerDispatcher, wheel);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var reschedule = executor.submit(() -> timerDispatcher.cyclicJob(task, 60, TimeUnit.SECONDS));
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            var delete = executor.submit(() -> timerDispatcher.deleteJob(1L, true));
+            release.countDown();
+            reschedule.get(5, TimeUnit.SECONDS);
+            delete.get(5, TimeUnit.SECONDS);
+            assertTrue(currentCyclicTaskMap().isEmpty());
+            assertTrue(task.isCancelled());
+            verify(next).cancel();
+        } finally {
+            original.stop();
+        }
+    }
+
+    private Job scheduledJob() {
+        return Job.builder().id(1L).app("test").isCyclic(true).configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build())).build();
     }
 
     @SuppressWarnings("unchecked")
