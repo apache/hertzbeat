@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.calculate.realtime;
 import com.google.common.collect.Lists;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
+import org.apache.hertzbeat.alert.calculate.DeletedMonitorAlertGuard;
 import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
@@ -451,6 +452,76 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         // unparseable number is defined as null: exists() short-circuits to false, no alarm and no abort
         verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
         verify(alarmCacheManager, times(1)).removeFiring(any(Long.class), any());
+    }
+
+    @Test
+    void deletedMonitorDoesNotOpenAnotherFiringAlert() {
+        long monitorId = 518679137103104L;
+        DeletedMonitorAlertGuard guard = new DeletedMonitorAlertGuard();
+        guard.markDeleted(monitorId);
+        MetricsRealTimeAlertCalculator guarded = new MetricsRealTimeAlertCalculator(
+                workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager,
+                new JexlExprCalculator(), false, guard);
+        CollectRep.MetricsData.Builder metricsBuilder = CollectRep.MetricsData.newBuilder();
+        metricsBuilder.setId(monitorId)
+                .setApp("website")
+                .setMetrics("summary")
+                .setPriority(0)
+                .setCode(CollectRep.Code.UN_AVAILABLE);
+        metricsBuilder.addMetadataAll(Map.of(
+                MetricDataConstants.INSTANCE_NAME, "site",
+                MetricDataConstants.INSTANCE, "example.com"));
+        AlertDefine alertDefine = new AlertDefine();
+        alertDefine.setId(1L);
+        alertDefine.setName("availability");
+        alertDefine.setExpr("equals(__app__,\"website\") && equals(__available__,\"down\")");
+        alertDefine.setTemplate("${__instancename__} is down");
+        alertDefine.setTimes(1);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(alertDefine));
+
+        guarded.calculate(metricsBuilder.build());
+
+        verify(alertDefineService, never()).getMetricsRealTimeAlertDefines();
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
+        verify(alarmCacheManager, never()).putFiring(any(), any(), any());
+    }
+
+    @Test
+    void alertOpenedDuringDeletionIsNotPromoted() {
+        long monitorId = 518679137103104L;
+        DeletedMonitorAlertGuard guard = new DeletedMonitorAlertGuard() {
+            private int checks;
+
+            @Override
+            public boolean isDeleted(long id) {
+                checks++;
+                return checks > 1 && id == monitorId;
+            }
+        };
+        MetricsRealTimeAlertCalculator guarded = new MetricsRealTimeAlertCalculator(
+                workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager,
+                new JexlExprCalculator(), false, guard);
+        CollectRep.MetricsData.Builder metricsBuilder = CollectRep.MetricsData.newBuilder();
+        metricsBuilder.setId(monitorId)
+                .setApp("website")
+                .setMetrics("summary")
+                .setPriority(0)
+                .setCode(CollectRep.Code.UN_AVAILABLE);
+        metricsBuilder.addMetadataAll(Map.of(
+                MetricDataConstants.INSTANCE_NAME, "site",
+                MetricDataConstants.INSTANCE, "example.com"));
+        AlertDefine alertDefine = new AlertDefine();
+        alertDefine.setId(1L);
+        alertDefine.setName("availability");
+        alertDefine.setExpr("equals(__app__,\"website\") && equals(__available__,\"down\")");
+        alertDefine.setTemplate("${__instancename__} is down");
+        alertDefine.setTimes(1);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(alertDefine));
+
+        guarded.calculate(metricsBuilder.build());
+
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
+        verify(alarmCacheManager, never()).putFiring(any(), any(), any());
     }
 
 }

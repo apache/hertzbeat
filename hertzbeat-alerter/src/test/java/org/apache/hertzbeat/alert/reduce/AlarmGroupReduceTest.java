@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -396,6 +397,42 @@ class AlarmGroupReduceTest {
      * group has to fall back to the default repeat interval, like shouldSendGroup already does
      * for the group wait/interval.
      */
+    @Test
+    void deletedMonitorMemberIsNotRenotified() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        SingleAlert deleted = groupAlert("deleted", "firing");
+        deleted.getLabels().put(CommonConstants.LABEL_MONITOR_ID, "42");
+        SingleAlert kept = groupAlert("kept", "firing");
+        kept.getLabels().put(CommonConstants.LABEL_MONITOR_ID, "99");
+        alarmGroupReduce.processGroupAlert(deleted);
+        alarmGroupReduce.processGroupAlert(kept);
+
+        dispatchAndDrain();
+        clearInvocations(alarmInhibitReduce);
+
+        assertEquals(1, alarmGroupReduce.dropAlertsForMonitor("42"));
+        assertEquals(0, alarmGroupReduce.dropAlertsForMonitor(" "));
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(1)).inhibitAlarm(argThat(group ->
+                group.getAlerts().size() == 1 && "kept".equals(group.getAlerts().get(0).getFingerprint())));
+    }
+
+    @Test
+    void droppingTheOnlyMemberStopsRepeatNotifications() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        SingleAlert deleted = groupAlert("deleted", "firing");
+        deleted.getLabels().put(CommonConstants.LABEL_MONITOR_ID, "42");
+        alarmGroupReduce.processGroupAlert(deleted);
+        dispatchAndDrain();
+        clearInvocations(alarmInhibitReduce);
+
+        alarmGroupReduce.dropAlertsForMonitor("42");
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, never()).inhibitAlarm(any());
+    }
+
     @Test
     void whenRuleDeleted_firingGroupCacheMustStillBeDispatched() throws Exception {
         alarmGroupReduce.refreshGroupDefines(Collections.singletonList(instanceRule(3600)));
