@@ -16,11 +16,11 @@
  */
 
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorHistoryChart, MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
-import { HistoryAvailabilityBoundary, HistoryChartEvidence } from './monitor-history-chart';
+import { HistoryAvailabilityBoundary, HistoryChartEvidence, type HistoryChartImage } from './monitor-history-chart';
 import styles from './monitor-history-results.module.css';
 import { formatMetricTime, historyStatistics, selectedCurrentValue } from './monitor-history-values';
 import { SelectedHistoryControls } from './monitor-selected-history-controls';
@@ -32,6 +32,7 @@ export function MonitorSelectedHistoryTray({
   const { t } = useTranslation();
   const dock = state.layout.layout.historyDock;
   const resize = useHistoryDockResize(state, actions);
+  const [image, setImage] = useState<HistoryChartImage>();
   const chart = state.selectedHistoryChart;
   if (!chart) return null;
   return (
@@ -43,8 +44,8 @@ export function MonitorSelectedHistoryTray({
       style={{ '--monitor-history-height': `${dock.height * 22}px` } as CSSProperties}
       aria-label={`${t('monitorMetrics.historyTrend')} ${chart.metric.key}`}
     >
-      <SelectedHistoryHeader state={state} actions={actions} chart={chart} />
-      <SelectedHistoryContent state={state} actions={actions} chart={chart} resize={resize} />
+      <SelectedHistoryHeader state={state} actions={actions} chart={chart} image={image} />
+      <SelectedHistoryContent state={state} actions={actions} chart={chart} resize={resize} onImageReady={setImage} />
     </section>
   );
 }
@@ -52,10 +53,12 @@ export function MonitorSelectedHistoryTray({
 function SelectedHistoryContent({
   state,
   chart,
-  resize
+  resize,
+  onImageReady
 }: Pick<MonitorMetricWorkbenchController, 'state' | 'actions'> & {
   chart: MonitorHistoryChart;
   resize: ReturnType<typeof useHistoryDockResize>;
+  onImageReady: (image: HistoryChartImage | undefined) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -72,7 +75,7 @@ function SelectedHistoryContent({
       ) : null}
       <SelectedHistoryStatistics chart={chart} />
       <HistoryAvailabilityBoundary availability={state.historyAvailability}>
-        <HistoryChartEvidence chart={chart} />
+        <HistoryChartEvidence chart={chart} onImageReady={onImageReady} />
       </HistoryAvailabilityBoundary>
     </>
   );
@@ -81,9 +84,11 @@ function SelectedHistoryContent({
 function SelectedHistoryHeader({
   state,
   actions,
-  chart
+  chart,
+  image
 }: Pick<MonitorMetricWorkbenchController, 'state' | 'actions'> & {
   chart: MonitorHistoryChart;
+  image: HistoryChartImage | undefined;
 }) {
   const { t } = useTranslation();
   const current = selectedCurrentValue(state, chart.metric.field);
@@ -98,7 +103,12 @@ function SelectedHistoryHeader({
         </span>
         <time>{formatMetricTime(current.time)}</time>
       </div>
-      <SelectedHistoryControls chart={chart} actions={actions} investigationSignals={state.investigationSignals} />
+      <SelectedHistoryControls
+        chart={chart}
+        actions={actions}
+        investigationSignals={state.investigationSignals}
+        image={['available', 'degraded'].includes(state.historyAvailability.kind) ? image : undefined}
+      />
     </header>
   );
 }

@@ -46,6 +46,7 @@ export type TimeSeriesChartRenderInput = {
 };
 export type TimeSeriesChartRuntime = {
   update: (input: TimeSeriesChartRenderInput) => void;
+  exportPng: () => string;
   dispose: () => void;
 };
 
@@ -74,6 +75,15 @@ export function createTimeSeriesChart(
   update(input);
   return {
     update,
+    exportPng: () => {
+      if (chart.isDisposed()) throw new Error('Chart is no longer available');
+      return chart.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: chartColors(element).background,
+        excludeComponents: ['toolbox']
+      });
+    },
     dispose: () => {
       observer?.disconnect();
       if (!observer) window.removeEventListener('resize', resize);
