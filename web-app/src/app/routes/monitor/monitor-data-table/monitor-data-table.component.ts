@@ -88,7 +88,7 @@ export class MonitorDataTableComponent implements OnInit {
           if (message.code === 0 && message.data) {
             this.time = message.data.time;
             this.fields = message.data.fields;
-            this.valueRows = message.data.valueRows;
+            this.valueRows = message.data.valueRows ?? [];
             this.pageIndex = 1;
             if (this.valueRows.length == 1) {
               this.isTable = false;

@@ -21,8 +21,9 @@
 name: Backend CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, action*, '1.9.x-dev' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
@@ -30,7 +31,7 @@ on:
       - 'script/**'
       - 'material/**'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, '1.9.x-dev' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
