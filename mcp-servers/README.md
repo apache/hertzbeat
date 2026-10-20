@@ -5,10 +5,12 @@ This file has a short description of each mcp server in `mcp-servers` directory
 
 ## mcp-bash-server
 
-This mcp server provide the ability to execute shell command or ASCII text executable
-script in the machine running this server.
+This MCP server provides seven fixed, parameterless system diagnostic tools for
+the machine running the server. General shell command, script, and Python
+execution has been removed and cannot be re-enabled through configuration.
 
-Use a simple Oauth2.0 for authentication.
+Uses OAuth 2.0 for authentication in production. See the server's README for
+Linux dependencies, execution boundaries, and resource-control limitations.
 
 ## mcp-log-server
 

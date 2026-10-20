@@ -71,13 +71,13 @@
             {{ 'monitor.delete-monitor' | i18n }}
           </button>
         </li>
-        <li nz-menu-item>
+        <li nz-menu-item *ngIf="canExportMonitors">
           <button nz-button (click)="onExportMonitors()">
             <i nz-icon nzType="export" nzTheme="outline"></i>
             {{ 'monitor.export' | i18n }}
           </button>
         </li>
-        <li nz-menu-item>
+        <li nz-menu-item *ngIf="canExportMonitors">
           <button nz-button (click)="onExportAllMonitors()">
             <i nz-icon nzType="export" nzTheme="outline"></i>
             {{ 'monitor.export-all' | i18n }}
@@ -309,6 +309,7 @@
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
 <nz-modal
+  *ngIf="canExportMonitors"
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'monitor.export.switch-type' | i18n"
   (nzOnCancel)="isSwitchExportTypeModalVisible = false"

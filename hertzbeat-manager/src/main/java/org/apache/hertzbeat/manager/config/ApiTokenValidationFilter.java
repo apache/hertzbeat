@@ -19,15 +19,20 @@ package org.apache.hertzbeat.manager.config;
 
 import com.usthe.sureness.subject.PrincipalMap;
 import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.SurenessContextHolder;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -77,24 +82,54 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         if (subject == null || !isManagedToken(subject)) {
             return true;
         }
-        String authorization = request.getHeader(NetworkConstants.AUTHORIZATION);
-
-        if (authorization != null && authorization.startsWith(DispatchConstants.BEARER)) {
-            String token = authorization.substring(DispatchConstants.BEARER.length()).trim();
-            if (!token.isEmpty()) {
-                try {
-                    String rejectReason = checkManagedToken(subject, token);
-                    if (rejectReason != null) {
-                        return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
-                    }
-                } catch (RuntimeException e) {
-                    log.warn("Managed token validation failed", e);
-                    return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
+        // Resolve the same existing JWT carriers as Sureness, not a new authentication mechanism.
+        List<String> managedTokens = resolveManagedTokens(request);
+        if (managedTokens.isEmpty()) {
+            return writeError(response, HttpStatus.UNAUTHORIZED, "Token could not be resolved");
+        }
+        try {
+            for (String token : managedTokens) {
+                String rejectReason = checkManagedToken(subject, token);
+                if (rejectReason != null) {
+                    return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
                 }
             }
+        } catch (RuntimeException e) {
+            log.warn("Managed token validation failed", e);
+            return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
         }
+        managedTokens.forEach(this::touchTokenLastUsedTime);
 
         return true;
+    }
+
+    private List<String> resolveManagedTokens(HttpServletRequest request) {
+        Set<String> candidates = new LinkedHashSet<>(2);
+        String authorization = request.getHeader(NetworkConstants.AUTHORIZATION);
+        if (authorization != null && authorization.startsWith(DispatchConstants.BEARER)) {
+            // mirror Sureness JwtSubjectJakartaServletCreator exactly, so the validated token is the one it authenticated
+            candidates.add(authorization.replace(DispatchConstants.BEARER, "").trim());
+        }
+        String queryToken = request.getParameter("token");
+        if (queryToken != null) {
+            candidates.add(queryToken.trim());
+        }
+        List<String> managedTokens = new ArrayList<>(candidates.size());
+        for (String candidate : candidates) {
+            if (!candidate.isEmpty() && isManagedJwt(candidate)) {
+                managedTokens.add(candidate);
+            }
+        }
+        return managedTokens;
+    }
+
+    private boolean isManagedJwt(String token) {
+        try {
+            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            return Boolean.TRUE.equals(claims.get(AccountServiceImpl.CLAIM_MANAGED, Boolean.class));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -105,7 +140,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
      * 1. Only managed tokens (with "managed" claim) are validated — legacy tokens pass through
      * 2. Token must exist and be active in the database (not deleted/revoked)
      * 3. Token owner must still exist, remain active, and still own the claimed roles
-     * If the token is valid, updates the last used time.
+     * Last used time is touched only after all carried managed tokens pass validation.
      * </p>
      */
     private String checkManagedToken(SubjectSum subject, String token) {
@@ -117,12 +152,15 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         if (rejectReason != null) {
             return rejectReason;
         }
+        return null;
+    }
+
+    private void touchTokenLastUsedTime(String token) {
         try {
             accountService.touchTokenLastUsedTime(token);
         } catch (RuntimeException e) {
             log.debug("Failed to update token last used time", e);
         }
-        return null;
     }
 
     private boolean isManagedToken(SubjectSum subject) {

@@ -88,12 +88,13 @@ public final class NoticeReceiverMaskUtil {
     }
 
     /**
-     * Replace every secret field of the incoming receiver that still holds the masked form
-     * of the stored secret with the stored value, so an edit that did not touch a secret keeps it.
-     * A re-entered secret or a cleared field is left untouched.
-     * @param incoming receiver submitted by the ui, modified in place
+     * Restore unchanged masked secrets only after validating all masks and bindings.
+     * Edits and test messages share this entry point so a saved edit cannot rebind a
+     * hidden credential. Validation does not modify either receiver on failure.
+     * @param incoming receiver submitted by the ui, modified only after validation
      * @param existing receiver currently stored in the database
-     * @throws IllegalArgumentException if a submitted mask does not match the stored secret
+     * @throws IllegalArgumentException if a mask is invalid or a changed destination
+     *                                  needs an explicitly re-entered secret
      */
     public static void resolveMask(NoticeReceiver incoming, NoticeReceiver existing) {
         if (incoming == null || existing == null) {
@@ -101,61 +102,91 @@ public final class NoticeReceiverMaskUtil {
         }
         for (SecretField field : SECRET_FIELDS) {
             String submitted = field.getter().apply(incoming);
-            String stored = field.getter().apply(existing);
-            if (isMaskOf(submitted, stored)) {
-                field.setter().accept(incoming, stored);
-            } else if (isMaskValue(submitted)) {
+            if (isMaskValue(submitted) && !isMaskOf(submitted, field.getter().apply(existing))) {
                 throw new IllegalArgumentException(
                         "The submitted secret mask does not match the stored secret.");
+            }
+        }
+        validateStoredSecretDestinations(incoming, existing);
+        for (SecretField field : SECRET_FIELDS) {
+            String stored = field.getter().apply(existing);
+            if (isMaskOf(field.getter().apply(incoming), stored)) {
+                field.setter().accept(incoming, stored);
             }
         }
     }
 
     /**
-     * Resolve masked secrets for a test message while binding them to their persisted destination.
-     * A caller that changes the notification type or a URL receiving authentication data
-     * must submit the new secret explicitly instead of reusing a stored secret mask.
-     * @param incoming receiver submitted for a test message, modified in place
+     * Apply the same stored-credential policy to tests and saved receiver edits.
+     * @param incoming receiver submitted for a test message
      * @param existing receiver currently stored in the database
-     * @throws IllegalArgumentException if a masked secret is combined with a changed destination
      */
     public static void resolveMaskForTest(NoticeReceiver incoming, NoticeReceiver existing) {
-        if (incoming == null || existing == null) {
-            return;
-        }
-
-        boolean containsStoredSecretMask = SECRET_FIELDS.stream()
-                .anyMatch(field -> isMaskOf(field.getter().apply(incoming), field.getter().apply(existing)));
-        if (containsStoredSecretMask && !Objects.equals(incoming.getType(), existing.getType())) {
-            throw new IllegalArgumentException(
-                    "The notification type cannot be changed when reusing a masked secret.");
-        }
-        rejectChangedSecretDestination(
-                incoming.getHookAuthToken(),
-                existing.getHookAuthToken(),
-                incoming.getHookUrl(),
-                existing.getHookUrl(),
-                "webhook URL");
-        rejectChangedSecretDestination(
-                incoming.getNtfyToken(),
-                existing.getNtfyToken(),
-                incoming.getNtfyServerUrl(),
-                existing.getNtfyServerUrl(),
-                "ntfy server URL");
         resolveMask(incoming, existing);
     }
 
-    private static void rejectChangedSecretDestination(
+    private static void validateStoredSecretDestinations(NoticeReceiver incoming, NoticeReceiver existing) {
+        boolean sameType = Objects.equals(incoming.getType(), existing.getType());
+        boolean containsStoredSecretMask = SECRET_FIELDS.stream()
+                .anyMatch(field -> isMaskOf(field.getter().apply(incoming), field.getter().apply(existing)));
+        if (containsStoredSecretMask && !sameType) {
+            throw new IllegalArgumentException(
+                    "The notification type cannot be changed when reusing a masked secret. Re-enter the secret.");
+        }
+        boolean webhook = sameType && Objects.equals(existing.getType(), (byte) 2);
+        boolean telegram = sameType && Objects.equals(existing.getType(), (byte) 7);
+        boolean discord = sameType && Objects.equals(existing.getType(), (byte) 9);
+        boolean ntfy = sameType && Objects.equals(existing.getType(), (byte) 15);
+        requireReenteredSecretForChangedDestination(
+                incoming.getHookAuthToken(), existing.getHookAuthToken(),
+                incoming.getHookUrl(), existing.getHookUrl(), webhook, "webhook URL");
+        // Disabling authentication alone may deliberately remove a credential. Changing
+        // Basic/Bearer interpretation must not silently reuse the previous credential.
+        boolean webhookAuthenticationRequired = webhook
+                && ("Basic".equalsIgnoreCase(incoming.getHookAuthType())
+                    || "Bearer".equalsIgnoreCase(incoming.getHookAuthType()));
+        requireReenteredSecretForChangedDestination(
+                incoming.getHookAuthToken(), existing.getHookAuthToken(),
+                StringUtils.defaultIfBlank(incoming.getHookAuthType(), "None"),
+                StringUtils.defaultIfBlank(existing.getHookAuthType(), "None"),
+                webhookAuthenticationRequired, "webhook authentication type");
+        requireReenteredSecretForChangedDestination(
+                incoming.getNtfyToken(), existing.getNtfyToken(),
+                emptyToNull(incoming.getNtfyServerUrl()), emptyToNull(existing.getNtfyServerUrl()), ntfy, "ntfy server URL");
+        requireReenteredSecretForChangedDestination(
+                incoming.getNtfyToken(), existing.getNtfyToken(),
+                incoming.getNtfyTopic(), existing.getNtfyTopic(), ntfy, "ntfy topic");
+        requireReenteredSecretForChangedDestination(
+                incoming.getTgBotToken(), existing.getTgBotToken(),
+                incoming.getTgUserId(), existing.getTgUserId(), telegram, "Telegram chat");
+        requireReenteredSecretForChangedDestination(
+                incoming.getTgBotToken(), existing.getTgBotToken(),
+                emptyToNull(incoming.getTgMessageThreadId()), emptyToNull(existing.getTgMessageThreadId()),
+                telegram, "Telegram message thread");
+        requireReenteredSecretForChangedDestination(
+                incoming.getDiscordBotToken(), existing.getDiscordBotToken(),
+                incoming.getDiscordChannelId(), existing.getDiscordChannelId(), discord, "Discord channel");
+    }
+
+    private static void requireReenteredSecretForChangedDestination(
             String submittedSecret,
             String storedSecret,
             String submittedDestination,
             String storedDestination,
+            boolean activeCredential,
             String destinationName) {
-        if (isMaskOf(submittedSecret, storedSecret)
-                && !Objects.equals(submittedDestination, storedDestination)) {
+        if (!Objects.equals(submittedDestination, storedDestination)
+                && (isMaskOf(submittedSecret, storedSecret)
+                    || (activeCredential && StringUtils.isNotBlank(storedSecret) && StringUtils.isBlank(submittedSecret)))) {
             throw new IllegalArgumentException(
-                    "The " + destinationName + " cannot be changed when reusing a masked secret.");
+                    "The " + destinationName + " changed. Re-enter the secret before saving or testing this receiver.");
         }
+    }
+
+    private static String emptyToNull(String value) {
+        // Optional form fields may round-trip as either null or an empty string.
+        // Do not normalize nonempty URLs/IDs or resolve their network addresses.
+        return value == null || value.isEmpty() ? null : value;
     }
 
     private static boolean isMaskOf(String submitted, String stored) {

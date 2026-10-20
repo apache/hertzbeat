@@ -118,6 +118,30 @@ class SurenessResourceRuleTest {
     }
 
     @Test
+    void monitorExportsAreRestrictedToAdmin() {
+        assertMonitorExportRoles(roleTree, "packaged sureness.yml");
+    }
+
+    @Test
+    void deploymentAndTestCopiesRestrictMonitorExports() throws IOException {
+        Set<Path> copies = new LinkedHashSet<>(deploymentCopies());
+        copies.add(Path.of("..", "hertzbeat-manager", "src", "test", "resources", "sureness.yml"));
+        copies.add(Path.of("..", "hertzbeat-e2e", "hertzbeat-observability-e2e", "src", "test", "resources", "sureness.yml"));
+        for (Path copy : copies) {
+            TirePathTree copyTree = new TirePathTree();
+            copyTree.buildTree(new LinkedHashSet<>(sectionOf(copy, "resourceRole")));
+            assertMonitorExportRoles(copyTree, copy.toString());
+        }
+    }
+
+    private static void assertMonitorExportRoles(TirePathTree tree, String source) {
+        assertEquals("[admin]", tree.searchPathFilterRoles("/api/monitors/export" + SEPARATOR + "get"), source);
+        assertEquals("[admin]", tree.searchPathFilterRoles("/api/monitors/export/all" + SEPARATOR + "get"), source);
+        assertEquals("[admin,user,guest]", tree.searchPathFilterRoles("/api/monitors" + SEPARATOR + "get"), source);
+        assertEquals("[admin,user]", tree.searchPathFilterRoles("/api/monitors/import" + SEPARATOR + "post"), source);
+    }
+
+    @Test
     void readingAlertDefinitionsExcludesGuest() {
         assertEquals("[admin,user]",
                 roleTree.searchPathFilterRoles("/api/alert/define/1" + SEPARATOR + "get"));

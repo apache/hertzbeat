@@ -21,10 +21,10 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -32,6 +32,9 @@ import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -143,16 +146,54 @@ class MonitorsControllerTest {
                 .andReturn();
     }
 
-    @Test
-    void export() throws Exception {
-        List<Long> ids = Arrays.asList(6565463543L, 6565463544L);
-        String type = "JSON";
+    @ParameterizedTest
+    @ValueSource(strings = {"JSON", "EXCEL", "YAML"})
+    void adminCanExportBothEndpoints(String type) throws Exception {
+        SubjectSum subject = Mockito.mock(SubjectSum.class);
+        when(subject.hasRole("admin")).thenReturn(true);
+        try (var context = Mockito.mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export")
+                            .param("ids", "1,2").param("type", type))
+                    .andExpect(status().isOk());
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export/all").param("type", type))
+                    .andExpect(status().isOk());
+            Mockito.verify(monitorService).export(Mockito.eq(List.of(1L, 2L)), Mockito.eq(type), Mockito.any());
+            Mockito.verify(monitorService).exportAll(Mockito.eq(type), Mockito.any());
+        }
+    }
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export")
-                        .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
-                        .param("type", type))
-                .andExpect(status().isOk())
-                .andReturn();
+    // No security filter is installed in this standalone setup: the controller
+    // must still deny export when an old external resource rule permits the route.
+    @ParameterizedTest
+    @CsvSource({"user,JSON", "user,EXCEL", "user,YAML", "guest,JSON", "guest,EXCEL", "guest,YAML"})
+    void nonAdminCannotExportEvenWithoutRouteAuthorization(String role, String type) throws Exception {
+        SubjectSum subject = Mockito.mock(SubjectSum.class, role);
+        when(subject.hasRole("admin")).thenReturn(false);
+        try (var context = Mockito.mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+            assertExportDenied(type, 403);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"JSON", "EXCEL", "YAML"})
+    void unauthenticatedCannotExport(String type) throws Exception {
+        try (var context = Mockito.mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(null);
+            assertExportDenied(type, 401);
+        }
+    }
+
+    private void assertExportDenied(String type, int statusCode) throws Exception {
+        for (String path : List.of("/api/monitors/export", "/api/monitors/export/all")) {
+            mockMvc.perform(MockMvcRequestBuilders.get(path).param("ids", "1,2").param("type", type))
+                    .andExpect(status().is(statusCode))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                            .header().doesNotExist("Content-Disposition"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        }
+        Mockito.verifyNoInteractions(monitorService);
     }
 
     @Test
@@ -167,19 +208,5 @@ class MonitorsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("0"))
                 .andExpect(jsonPath("$.msg").value("Import success"));
-    }
-
-    @Test
-    void exportAll() throws Exception {
-        String type = "JSON";
-        
-        // Mock the behavior of monitorService.exportAll
-        doNothing().when(monitorService).exportAll(Mockito.anyString(), Mockito.any());
-        
-        // Perform the request and verify the response
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export/all")
-                        .param("type", type))
-                .andExpect(status().isOk())
-                .andReturn();
     }
 }

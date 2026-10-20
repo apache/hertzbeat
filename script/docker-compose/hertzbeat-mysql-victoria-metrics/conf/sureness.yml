@@ -32,6 +32,8 @@ resourceRole:
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
   - /api/monitor/**===delete===[admin]
+  - /api/monitors/export===get===[admin]
+  - /api/monitors/export/all===get===[admin]
   - /api/monitors/**===get===[admin,user,guest]
   - /api/monitors/**===post===[admin,user]
   - /api/monitors/**===put===[admin,user]

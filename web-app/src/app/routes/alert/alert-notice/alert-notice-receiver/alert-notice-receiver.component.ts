@@ -28,6 +28,7 @@ import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../../pojo/NoticeReceiver';
 import { NoticeReceiverService } from '../../../../service/notice-receiver.service';
+import { NoticeReceiverCredentialBinding } from './notice-receiver-credential-binding';
 
 @Component({
   selector: 'app-alert-notice-receiver',
@@ -42,6 +43,8 @@ export class AlertNoticeReceiverComponent implements OnInit {
   isManageReceiverModalOkLoading: boolean = false;
   isSendTestButtonLoading: boolean = false;
   receiver!: NoticeReceiver;
+  credentialBinding = new NoticeReceiverCredentialBinding();
+  private receiverEditRequest = 0;
   name!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -158,17 +161,23 @@ export class AlertNoticeReceiverComponent implements OnInit {
   }
 
   onNewNoticeReceiver() {
+    this.receiverEditRequest++;
     this.receiver = new NoticeReceiver();
     this.receiver.hookAuthType = 'None';
+    this.credentialBinding.capture(this.receiver);
     this.isManageReceiverModalVisible = true;
     this.isManageReceiverModalAdd = true;
   }
 
   onEditOneNoticeReceiver(receiver: NoticeReceiver) {
+    const request = ++this.receiverEditRequest;
+    this.isManageReceiverModalVisible = false;
     this.noticeReceiverSvc.getReceiver(receiver.id).subscribe(
       message => {
+        if (request !== this.receiverEditRequest) return;
         if (message.code === 0) {
-          this.receiver = message.data;
+          this.receiver = { ...message.data };
+          this.credentialBinding.capture(this.receiver);
           this.isManageReceiverModalVisible = true;
           this.isManageReceiverModalAdd = false;
         } else {
@@ -176,12 +185,32 @@ export class AlertNoticeReceiverComponent implements OnInit {
         }
       },
       error => {
+        if (request !== this.receiverEditRequest) return;
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
       }
     );
   }
 
+  onReceiverDestinationChange<K extends keyof NoticeReceiver>(field: K, value: NoticeReceiver[K]) {
+    this.receiver[field] = value;
+    this.credentialBinding.update(this.receiver);
+  }
+
+  get receiverNeedsFreshSecret() {
+    return this.receiver && this.credentialBinding.missingSecrets(this.receiver).length > 0;
+  }
+
+  get receiverRequiresHookAuthToken() {
+    return (
+      this.receiver.type === 2 &&
+      (this.receiver.hookAuthType === 'Basic' ||
+        this.receiver.hookAuthType === 'Bearer' ||
+        this.credentialBinding.requiresFreshSecret(this.receiver, 'hookAuthToken'))
+    );
+  }
+
   onSendAlertTestMsg() {
+    if (!this.validateReceiverForm()) return;
     this.isSendTestButtonLoading = true;
     const sendReq$ = this.noticeReceiverSvc
       .sendAlertMsgToReceiver(this.receiver)
@@ -208,10 +237,18 @@ export class AlertNoticeReceiverComponent implements OnInit {
   }
 
   onManageReceiverModalCancel() {
+    this.receiverEditRequest++;
     this.isManageReceiverModalVisible = false;
+    this.receiver = new NoticeReceiver();
+    this.credentialBinding.capture(this.receiver);
   }
 
-  onManageReceiverModalOk() {
+  private validateReceiverForm() {
+    this.credentialBinding.update(this.receiver);
+    if (this.receiverNeedsFreshSecret) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('alert.notice.receiver.secret-reentry'), '');
+      return false;
+    }
     if (this.receiverForm?.invalid) {
       let isWaring = false;
       Object.values(this.receiverForm.controls).forEach(control => {
@@ -222,9 +259,14 @@ export class AlertNoticeReceiverComponent implements OnInit {
         }
       });
       if (isWaring) {
-        return;
+        return false;
       }
     }
+    return true;
+  }
+
+  onManageReceiverModalOk() {
+    if (!this.validateReceiverForm()) return;
     this.isManageReceiverModalOkLoading = true;
     if (this.isManageReceiverModalAdd) {
       const modalOk$ = this.noticeReceiverSvc

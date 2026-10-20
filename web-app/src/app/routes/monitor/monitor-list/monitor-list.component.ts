@@ -20,7 +20,7 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, MenuService, SettingsService } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -46,6 +46,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     private monitorSvc: MonitorService,
     private storageSvc: MemoryStorageService,
     private menuService: MenuService,
+    private settingsService: SettingsService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -262,7 +263,32 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     });
   }
 
+  // This only controls the UI; both export endpoints enforce the role on the server.
+  get canExportMonitors(): boolean {
+    let roles: unknown = this.settingsService.user?.role;
+    if (typeof roles === 'string') {
+      try {
+        roles = JSON.parse(roles);
+      } catch {
+        return false;
+      }
+    }
+    return Array.isArray(roles) && roles.includes('admin');
+  }
+
+  private checkExportPermission(): boolean {
+    if (this.canExportMonitors) {
+      return true;
+    }
+    this.isSwitchExportTypeModalVisible = false;
+    this.notifySvc.error(this.i18nSvc.fanyi('monitor.export.admin-only'), '');
+    return false;
+  }
+
   onExportMonitors() {
+    if (!this.checkExportPermission()) {
+      return;
+    }
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
       return;
@@ -271,6 +297,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   onExportAllMonitors() {
+    if (!this.checkExportPermission()) {
+      return;
+    }
     this.isSwitchExportTypeModalVisible = true;
   }
 
@@ -330,6 +359,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   exportMonitors(type: string) {
+    if (!this.checkExportPermission()) {
+      return;
+    }
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
       return;
@@ -342,13 +374,12 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         this.exportExcelButtonLoading = true;
         break;
     }
-    const exportMonitors$ = this.monitorSvc
+    this.monitorSvc
       .exportMonitors(this.checkedMonitorIds, type)
       .pipe(
         finalize(() => {
           this.exportExcelButtonLoading = false;
           this.exportJsonButtonLoading = false;
-          exportMonitors$.unsubscribe();
         })
       )
       .subscribe(
@@ -368,12 +399,20 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
+          if (error.status === 403) {
+            this.isSwitchExportTypeModalVisible = false;
+            this.notifySvc.error(this.i18nSvc.fanyi('monitor.export.admin-only'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.message || error.msg || '');
+          }
         }
       );
   }
 
   exportAllMonitors(type: string) {
+    if (!this.checkExportPermission()) {
+      return;
+    }
     switch (type) {
       case 'JSON':
         this.exportJsonButtonLoading = true;
@@ -382,13 +421,12 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         this.exportExcelButtonLoading = true;
         break;
     }
-    const exportAllMonitors$ = this.monitorSvc
+    this.monitorSvc
       .exportAllMonitors(type)
       .pipe(
         finalize(() => {
           this.exportExcelButtonLoading = false;
           this.exportJsonButtonLoading = false;
-          exportAllMonitors$.unsubscribe();
         })
       )
       .subscribe(
@@ -408,7 +446,12 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
+          if (error.status === 403) {
+            this.isSwitchExportTypeModalVisible = false;
+            this.notifySvc.error(this.i18nSvc.fanyi('monitor.export.admin-only'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.message || error.msg || '');
+          }
         }
       );
   }
