@@ -172,6 +172,7 @@ class EmailAlertNotifyHandlerImplTest {
         Properties props = new Properties();
         when(mailSender.getJavaMailProperties()).thenReturn(props);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         return props;
     }
 
