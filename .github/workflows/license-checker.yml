@@ -21,10 +21,11 @@
 name: License Checker
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, action*, '1.9.1' ]
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, '1.9.1' ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
