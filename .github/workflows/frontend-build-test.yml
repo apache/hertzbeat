@@ -23,11 +23,11 @@ name: Frontend CI
 on:
   workflow_dispatch:
   push:
-    branches: [ master, dev, action*, '1.9.1' ]
+    branches: [ master, dev, action*, '1.9.x-dev' ]
     paths:
       - 'web-app/**'
   pull_request:
-    branches: [ master, dev, '1.9.1' ]
+    branches: [ master, dev, '1.9.x-dev' ]
     paths:
       - 'web-app/**'
 
