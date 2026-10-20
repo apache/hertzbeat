@@ -52,14 +52,14 @@ jobs:
           python-version: '3.8'
 
       - name: Check Markdown
-        uses: DavidAnson/markdownlint-cli2-action@8de2aa07cae85fd17c0b35642db70cf5495f1d25  # v24.0.0
-        with:
-          globs: |
-            ./home/README.md
-            ./home/blog/**/*.md
-            ./home/docs/**/*.md
-            ./home/i18n/zh-cn/docusaurus-plugin-content-blog/**/*.md
-            ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/**/*.md
+        # Match the CLI version bundled by markdownlint-cli2-action v24.
+        run: >-
+          npm exec --yes --package=markdownlint-cli2@0.23.0 -- markdownlint-cli2
+          './home/README.md'
+          './home/blog/**/*.md'
+          './home/docs/**/*.md'
+          './home/i18n/zh-cn/docusaurus-plugin-content-blog/**/*.md'
+          './home/i18n/zh-cn/docusaurus-plugin-content-docs/current/**/*.md'
 
       - name: Check filenames
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
