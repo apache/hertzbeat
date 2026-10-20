@@ -28,6 +28,6 @@ keywords: [open source monitoring tool, open source alerter, open source email n
 
 1. HertzBeat deployed on its own intranet cannot receive email notifications
 
-   > HertzBeat needs to configure its own mail server. Please confirm whether you have configured its own mail server in application.yml
+   > HertzBeat needs to configure its own mail server. Configure `spring.mail` in `application.yml`, or enable the system email settings in the UI. `spring.mail` is not required to start HertzBeat if you do not use email notify.
 
 Other issues can be fed back through the communication group ISSUE!

@@ -17,38 +17,40 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.mail.internet.MimeMessage;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
-import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
+import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.alert.notice.AlertNoticeException;
+import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import jakarta.mail.internet.MimeMessage;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -61,6 +63,9 @@ class EmailAlertNotifyHandlerImplTest {
     private JavaMailSenderImpl mailSender;
 
     @Mock
+    private ObjectProvider<JavaMailSender> javaMailSenderProvider;
+
+    @Mock
     private ResourceBundle bundle;
 
     @Mock
@@ -69,7 +74,6 @@ class EmailAlertNotifyHandlerImplTest {
     @Mock
     private MimeMessage mimeMessage;
 
-    @InjectMocks
     private EmailAlertNotifyHandlerImpl emailAlertNotifyHandler;
 
     private NoticeReceiver receiver;
@@ -78,6 +82,15 @@ class EmailAlertNotifyHandlerImplTest {
 
     @BeforeEach
     public void setUp() {
+        when(javaMailSenderProvider.getIfAvailable()).thenReturn(mailSender);
+        emailAlertNotifyHandler = new EmailAlertNotifyHandlerImpl(javaMailSenderProvider, generalConfigDao);
+        ReflectionTestUtils.setField(emailAlertNotifyHandler, "bundle", bundle);
+        ReflectionTestUtils.setField(emailAlertNotifyHandler, "host", "smtp.example.com");
+        ReflectionTestUtils.setField(emailAlertNotifyHandler, "username", "sender@example.com");
+        ReflectionTestUtils.setField(emailAlertNotifyHandler, "password", "password");
+        ReflectionTestUtils.setField(emailAlertNotifyHandler, "port", 587);
+        ReflectionTestUtils.setField(emailAlertNotifyHandler, "fromAddress", "sender@example.com");
+
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
@@ -109,7 +122,7 @@ class EmailAlertNotifyHandlerImplTest {
         GeneralConfig generalConfig = GeneralConfig.builder()
                 .content(JsonUtil.toJson(mailServerConfig))
                 .build();
-        when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
+        lenient().when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
         lenient().when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
     }
 
@@ -178,8 +191,10 @@ class EmailAlertNotifyHandlerImplTest {
                 sent.set(mimeMessage);
             }
         };
+        when(javaMailSenderProvider.getIfAvailable()).thenReturn(sender);
         when(generalConfigDao.findByType(any())).thenReturn(null);
-        EmailAlertNotifyHandlerImpl handler = new EmailAlertNotifyHandlerImpl(sender, generalConfigDao);
+        EmailAlertNotifyHandlerImpl handler =
+                new EmailAlertNotifyHandlerImpl(javaMailSenderProvider, generalConfigDao);
         ReflectionTestUtils.setField(handler, "host", "smtp.example.test");
         ReflectionTestUtils.setField(handler, "port", 465);
         ReflectionTestUtils.setField(handler, "username", "smtp-user@example.test");
@@ -193,5 +208,24 @@ class EmailAlertNotifyHandlerImplTest {
         handler.send(receiver, template, groupAlert);
 
         assertEquals("alerts@example.test", sent.get().getFrom()[0].toString());
+    }
+
+    @Test
+    public void testStartsWithoutJavaMailSenderBean() {
+        when(javaMailSenderProvider.getIfAvailable()).thenReturn(null);
+        assertDoesNotThrow(() -> new EmailAlertNotifyHandlerImpl(javaMailSenderProvider, generalConfigDao));
+    }
+
+    @Test
+    public void testNotifyAlertFailsWhenMailNotConfigured() {
+        when(javaMailSenderProvider.getIfAvailable()).thenReturn(null);
+        EmailAlertNotifyHandlerImpl handler =
+                new EmailAlertNotifyHandlerImpl(javaMailSenderProvider, generalConfigDao);
+        ReflectionTestUtils.setField(handler, "bundle", bundle);
+        when(generalConfigDao.findByType(any())).thenReturn(null);
+
+        AlertNoticeException exception = assertThrows(AlertNoticeException.class,
+                () -> handler.send(receiver, template, groupAlert));
+        assertTrue(exception.getMessage().contains("Mail server is not configured"));
     }
 }
