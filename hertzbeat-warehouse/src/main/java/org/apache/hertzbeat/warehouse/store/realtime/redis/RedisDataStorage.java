@@ -59,20 +59,18 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
         String key = String.valueOf(metricsData.getId());
         String hashKey = metricsData.getMetrics();
-        if (metricsData.getCode() == CollectRep.Code.SUCCESS) {
-            redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> future.thenAccept(response -> {
-                metricsData.close();
-                if (response) {
-                    log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
-                } else {
-                    log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
-                }
-            }));    
-        } else {
-            metricsData.close();
-        }
+        redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> future.thenAccept(response -> {
+            if (response) {
+                log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
+            } else {
+                log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
+            }
+        }));
     }
 
     @Override

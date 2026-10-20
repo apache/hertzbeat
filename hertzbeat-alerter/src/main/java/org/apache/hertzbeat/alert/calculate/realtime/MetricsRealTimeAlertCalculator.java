@@ -137,10 +137,7 @@ public class MetricsRealTimeAlertCalculator {
                         continue;
                     }
                     backoff.reset();
-                    // The telemetry handoff precedes alert reduction so maintenance backpressure cannot
-                    // occupy every calculator before later samples reach storage.
-                    dataQueue.sendMetricsDataToStorage(metricsData);
-                    calculate(metricsData);
+                    handoffAndCalculate(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
@@ -154,6 +151,21 @@ public class MetricsRealTimeAlertCalculator {
         };
         for (int i = 0; i < CALCULATE_THREADS; i++) {
             workerPool.executeJob(runnable);
+        }
+    }
+
+    void handoffAndCalculate(CollectRep.MetricsData metricsData) {
+        CollectRep.MetricsData storageCopy = CollectRep.MetricsData.newBuilder(metricsData).build();
+        boolean handedOff = false;
+        try {
+            dataQueue.sendMetricsDataToStorage(storageCopy);
+            handedOff = true;
+            calculate(metricsData);
+        } finally {
+            if (!handedOff) {
+                storageCopy.close();
+            }
+            metricsData.close();
         }
     }
 
