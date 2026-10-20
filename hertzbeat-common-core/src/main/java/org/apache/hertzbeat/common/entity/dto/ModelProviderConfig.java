@@ -51,4 +51,11 @@ public class ModelProviderConfig {
     @Schema(title = "Participation Model", description = "model for participation", example = "PROTECTED")
     @NotBlank(message = "API Key cannot be empty when enabled")
     private String participationModel;
+
+    @Schema(title = "Temperature",
+            description = "Sampling temperature for the model (0.0 – 2.0). "
+                    + "Higher values produce more random output, lower values are more deterministic. "
+                    + "Defaults to 0.3 when not set.",
+            example = "0.3")
+    private Double temperature;
 }
