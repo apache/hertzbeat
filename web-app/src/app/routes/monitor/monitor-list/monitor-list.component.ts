@@ -263,7 +263,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // This only controls the UI; both export endpoints enforce the role on the server.
+  // This only controls the UI; import and export enforce the role on the server.
   get canExportMonitors(): boolean {
     let roles: unknown = this.settingsService.user?.role;
     if (typeof roles === 'string') {
@@ -303,8 +303,23 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.isSwitchExportTypeModalVisible = true;
   }
 
+  get canImportMonitors(): boolean {
+    return this.canExportMonitors;
+  }
+
+  beforeImportMonitors = (): boolean => {
+    if (this.canImportMonitors) {
+      return true;
+    }
+    this.notifySvc.error(this.i18nSvc.fanyi('monitor.import.admin-only'), '');
+    return false;
+  };
+
   onImportMonitors(info: NzUploadChangeParam): void {
-    console.log(info.type);
+    if (info.type === 'error' && [401, 403].includes(info.file.error?.status)) {
+      this.notifySvc.error(this.i18nSvc.fanyi('monitor.import.admin-only'), '');
+      return;
+    }
     if (info.type === 'start') {
       this.notifySvc.info(
         this.i18nSvc.fanyi('common.notice'),

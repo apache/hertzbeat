@@ -18,19 +18,21 @@ Apache HertzBeat™ uses [Sureness](https://github.com/dromara/sureness) to supp
 
 Use the `sureness.yml` provided by Sureness to configure user accounts, roles, API resources, etc. It is strongly recommended that the initial user modify the account password. For details, refer to [Account Permission Management](../start/account-modify)
 
-HertzBeat 1.9.x retains its existing roles and shared, trusted-operator management model. An authenticated account with the `user` role is a trusted operator and may manage shared resources only within the permissions granted by the existing role rules. Authentication alone does not make every role an administrator or grant access to every operation. Explicit restrictions, including admin-only monitor configuration export below, remain in force.
+HertzBeat 1.9.x retains its existing roles and shared, trusted-operator management model. An authenticated account with the `user` role is a trusted operator and may manage shared resources only within the permissions granted by the existing role rules. Authentication alone does not make every role an administrator or grant access to every operation. Explicit restrictions, including admin-only monitor configuration import and export below, remain in force.
 
 The `creator` field records who created a resource; it is not an ownership-based authorization or isolation boundary. Managing a resource created by another operator is not, by itself, an authorization violation when the applicable role rules permit the operation. This model does not provide per-user ownership, tenant isolation, or per-monitor credential isolation. Users authorized to customize monitoring templates, URLs, scripts, or plugins must still be highly trusted. A future redesign of roles or isolation requires separate review; this clarification describes the existing shared-management design, rather than withdrawing a previously promised resource-isolation boundary, and does not change the 1.9.x permission rules.
 
 These trust assumptions do not excuse authentication bypasses, bypasses of explicit role rules, disclosure of hidden credentials, or anonymous access to non-public data. Those remain security concerns requiring investigation and appropriate fixes; documenting the intended model does not by itself resolve or invalidate a reported issue.
 
-### Monitor Configuration Export (Planned for 1.9.1)
+### Monitor Configuration Import and Export (Planned for 1.9.1)
 
 The following restriction is intended for the upcoming 1.9.1 release. It does not describe the behavior of earlier releases or unpatched deployments.
 
 Only authenticated users with the `admin` role may export monitor configurations through `GET /api/monitors/export` or `GET /api/monitors/export/all`, for every supported export format. The `user` and `guest` roles are denied. A user's permission to configure ordinary monitoring parameters does not grant permission to export these sensitive configurations.
 
-The backend enforces this requirement before generating an export, even if an external `sureness.yml` retains an older, broader monitor-read rule. When upgrading, also merge the two admin-only export rules from the shipped `sureness.yml` into any customized configuration. Mounted or separately maintained configuration files are not automatically replaced. Do not add these endpoints to authentication exclusions.
+Only authenticated users with the `admin` role may also import monitor configurations through `POST /api/monitors/import`. The `user` and `guest` roles are denied for every file format, including JSON, Excel and YAML, and for every entry in a batch. Admin import remains available with the existing format support; this permission check does not add new format support. Read-only monitoring template definitions are separate from importing monitor instances and keep their existing permissions.
+
+The backend checks the role before dispatching an import to its parser or generating an export, even if an external `sureness.yml` retains older, broader monitor rules. The UI hides both import and export entries for non-admin roles. When upgrading, also merge the three admin-only import/export rules from the shipped `sureness.yml` into any customized configuration. Mounted or separately maintained configuration files are not automatically replaced. Do not add these endpoints to authentication exclusions; an excluded request has no authenticated subject and is refused by the controller.
 
 Admin exports retain the existing import/export format and can contain sensitive credentials, including encrypted credential values. Treat exported files as secrets and share them only with authorized administrators. This restriction does not redesign credential encryption or reuse, change ordinary monitoring configuration permissions, or establish complete credential isolation between users.
 

@@ -950,6 +950,7 @@
   "monitor.edit.failed": "修改监控失败",
   "monitor.edit.success": "修改监控成功",
   "monitor.enable": "恢复监控",
+  "monitor.import.admin-only": "只有管理员可以导入监控配置。",
   "monitor.export.admin-only": "只有管理员可以导出监控配置。",
   "monitor.export": "导出所选",
   "monitor.selected-count": "已选 {{count}} 项",

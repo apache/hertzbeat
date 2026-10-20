@@ -127,7 +127,7 @@ public class MonitorsController {
             @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam List<Long> ids,
             @Parameter(description = "Export Type:JSON,EXCEL") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
-        if (!canExportMonitorConfig(res)) {
+        if (!canTransferMonitorConfig(res)) {
             return;
         }
         monitorService.export(ids, type, res);
@@ -138,24 +138,24 @@ public class MonitorsController {
     public void exportAll(
             @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
-        if (!canExportMonitorConfig(res)) {
+        if (!canTransferMonitorConfig(res)) {
             return;
         }
         monitorService.exportAll(type, res);
     }
 
     /**
-     * Enforce sensitive export permissions even when an external sureness.yml still
-     * contains the older, broader monitor read rule.
+     * Enforce sensitive import/export permissions even when an external sureness.yml
+     * still contains older, broader monitor rules.
      */
-    private boolean canExportMonitorConfig(HttpServletResponse response) throws IOException {
+    private boolean canTransferMonitorConfig(HttpServletResponse response) throws IOException {
         SubjectSum subject = SurenessContextHolder.getBindSubject();
         if (subject == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication is required to export monitor configurations");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication is required to import or export monitor configurations");
             return false;
         }
         if (!subject.hasRole("admin")) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only administrators can export monitor configurations");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only administrators can import or export monitor configurations");
             return false;
         }
         return true;
@@ -163,7 +163,10 @@ public class MonitorsController {
 
     @PostMapping("/import")
     @Operation(summary = "import monitor config", description = "import monitor config")
-    public ResponseEntity<Message<Void>> export(MultipartFile file) throws Exception {
+    public ResponseEntity<Message<Void>> importConfig(MultipartFile file, HttpServletResponse res) throws Exception {
+        if (!canTransferMonitorConfig(res)) {
+            return null;
+        }
         monitorService.importConfig(file);
         return ResponseEntity.ok(Message.success("Import success"));
     }

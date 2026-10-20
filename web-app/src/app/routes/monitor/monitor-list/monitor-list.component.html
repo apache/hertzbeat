@@ -83,8 +83,14 @@
             {{ 'monitor.export-all' | i18n }}
           </button>
         </li>
-        <li nz-menu-item>
-          <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
+        <li nz-menu-item *ngIf="canImportMonitors">
+          <nz-upload
+            nzAction="/monitors/import"
+            [nzLimit]="1"
+            [nzShowUploadList]="false"
+            [nzBeforeUpload]="beforeImportMonitors"
+            (nzChange)="onImportMonitors($event)"
+          >
             <button nz-button>
               <i nz-icon nzType="import" nzTheme="outline"></i>
               {{ 'monitor.import' | i18n }}

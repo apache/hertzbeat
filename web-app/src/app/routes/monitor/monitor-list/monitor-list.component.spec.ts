@@ -22,6 +22,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SettingsService } from '@delon/theme';
 import { configureShallowTest } from '@testing';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { throwError } from 'rxjs';
 
 import { MonitorService } from '../../../service/monitor.service';
@@ -51,10 +52,12 @@ describe('MonitorListComponent', () => {
     for (const role of ['["user"]', '["guest"]', '["administrator"]', 'admin', '{"admin":true}', '', undefined]) {
       settings.setUser({ name: 'test-user', role });
       expect(component.canExportMonitors).withContext(String(role)).toBeFalse();
+      expect(component.canImportMonitors).withContext(String(role)).toBeFalse();
     }
     for (const role of ['["admin"]', '["user","admin"]', ['admin']]) {
       settings.setUser({ name: 'test-user', role });
       expect(component.canExportMonitors).withContext(String(role)).toBeTrue();
+      expect(component.canImportMonitors).withContext(String(role)).toBeTrue();
     }
   });
 
@@ -76,6 +79,23 @@ describe('MonitorListComponent', () => {
       expect(notice).toHaveBeenCalledWith('monitor.export.admin-only', '');
     });
   }
+
+  for (const role of ['user', 'guest']) {
+    it(`rejects an upload before sending it for ${role}`, () => {
+      TestBed.inject(SettingsService).setUser({ name: 'test-user', role: JSON.stringify([role]) });
+      const notice = spyOn(TestBed.inject(NzNotificationService), 'error');
+      expect(component.beforeImportMonitors()).toBeFalse();
+      expect(notice).toHaveBeenCalledWith('monitor.import.admin-only', '');
+    });
+  }
+
+  it('allows an admin upload and reports a server permission denial', () => {
+    TestBed.inject(SettingsService).setUser({ name: 'admin', role: '["admin"]' });
+    expect(component.beforeImportMonitors()).toBeTrue();
+    const notice = spyOn(TestBed.inject(NzNotificationService), 'error');
+    component.onImportMonitors({ type: 'error', file: { error: { status: 403 } } } as NzUploadChangeParam);
+    expect(notice).toHaveBeenCalledWith('monitor.import.admin-only', '');
+  });
 
   it('allows an admin to open the export dialog', () => {
     TestBed.inject(SettingsService).setUser({ name: 'admin', role: '["admin"]' });

@@ -950,6 +950,7 @@
   "monitor.edit.failed": "Update Monitor Failed",
   "monitor.edit.success": "Update Monitor Success",
   "monitor.enable": "Enable",
+  "monitor.import.admin-only": "Only administrators can import monitor configurations.",
   "monitor.export.admin-only": "Only administrators can export monitor configurations.",
   "monitor.export": "Export Selected",
   "monitor.selected-count": "{{count}} selected",

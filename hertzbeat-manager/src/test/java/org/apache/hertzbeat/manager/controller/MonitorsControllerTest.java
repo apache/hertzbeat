@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,6 +41,7 @@ import org.springframework.data.domain.PageImpl;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -196,17 +196,51 @@ class MonitorsControllerTest {
         Mockito.verifyNoInteractions(monitorService);
     }
 
-    @Test
-    void export2() throws Exception {
-        // Mock the behavior of monitorService.importConfig
-        doNothing().when(monitorService).importConfig(Mockito.any());
+    @ParameterizedTest
+    @ValueSource(strings = {"json", "xlsx", "xls", "yaml", "yml"})
+    void adminCanImport(String extension) throws Exception {
+        SubjectSum subject = Mockito.mock(SubjectSum.class);
+        when(subject.hasRole("admin")).thenReturn(true);
+        MockMultipartFile file = importFile(extension);
+        try (var context = Mockito.mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+            mockMvc.perform(MockMvcRequestBuilders.multipart("/api/monitors/import").file(file))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.msg").value("Import success"));
+            Mockito.verify(monitorService).importConfig(file);
+        }
+    }
 
-        // Perform the request and verify the response
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitors/import")
-                        .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .param("file", "testFileContent"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("0"))
-                .andExpect(jsonPath("$.msg").value("Import success"));
+    // The filter is deliberately absent: old external rules cannot bypass the controller.
+    @ParameterizedTest
+    @CsvSource({"user,json", "user,xlsx", "user,xls", "user,yaml", "user,yml",
+            "guest,json", "guest,xlsx", "guest,xls", "guest,yaml", "guest,yml"})
+    void nonAdminCannotImportEvenWithoutRouteAuthorization(String role, String extension) throws Exception {
+        SubjectSum subject = Mockito.mock(SubjectSum.class, role);
+        when(subject.hasRole("admin")).thenReturn(false);
+        try (var context = Mockito.mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+            assertImportDenied(extension, 403);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"json", "xlsx", "xls", "yaml", "yml"})
+    void unauthenticatedCannotImport(String extension) throws Exception {
+        try (var context = Mockito.mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(null);
+            assertImportDenied(extension, 401);
+        }
+    }
+
+    private void assertImportDenied(String extension, int statusCode) throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/monitors/import").file(importFile(extension)))
+                .andExpect(status().is(statusCode));
+        Mockito.verifyNoInteractions(monitorService);
+    }
+
+    private MockMultipartFile importFile(String extension) {
+        return new MockMultipartFile("file", "synthetic." + extension,
+                MediaType.APPLICATION_OCTET_STREAM_VALUE, new byte[0]);
     }
 }
