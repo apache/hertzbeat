@@ -212,6 +212,37 @@ class EmailAlertNotifyHandlerImplTest {
     }
 
     @Test
+    void unauthenticatedRelayUsesHostAndFromAddressWithoutUsername() throws Exception {
+        AtomicReference<MimeMessage> sent = new AtomicReference<>();
+        JavaMailSenderImpl sender = new JavaMailSenderImpl() {
+            @Override
+            public void send(MimeMessage mimeMessage) {
+                sent.set(mimeMessage);
+            }
+        };
+        when(javaMailSenderProvider.getIfAvailable()).thenReturn(sender);
+        when(generalConfigDao.findByType(any())).thenReturn(null);
+        EmailAlertNotifyHandlerImpl handler =
+                new EmailAlertNotifyHandlerImpl(javaMailSenderProvider, generalConfigDao);
+        ReflectionTestUtils.setField(handler, "host", "smtp.relay.example");
+        ReflectionTestUtils.setField(handler, "port", 25);
+        ReflectionTestUtils.setField(handler, "username", "");
+        ReflectionTestUtils.setField(handler, "password", "");
+        ReflectionTestUtils.setField(handler, "fromAddress", "alerts@example.test");
+        ReflectionTestUtils.setField(handler, "sslEnable", false);
+        ReflectionTestUtils.setField(handler, "starttlsEnable", false);
+        ReflectionTestUtils.setField(handler, "bundle", bundle);
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+        handler.send(receiver, template, groupAlert);
+
+        assertEquals("alerts@example.test", sent.get().getFrom()[0].toString());
+        assertEquals("smtp.relay.example", sender.getHost());
+        assertNull(sender.getUsername());
+        assertEquals("false", sender.getJavaMailProperties().getProperty("mail.smtp.auth"));
+    }
+
+    @Test
     public void testStartsWithoutJavaMailSenderBean() {
         when(javaMailSenderProvider.getIfAvailable()).thenReturn(null);
         assertDoesNotThrow(() -> new EmailAlertNotifyHandlerImpl(javaMailSenderProvider, generalConfigDao));

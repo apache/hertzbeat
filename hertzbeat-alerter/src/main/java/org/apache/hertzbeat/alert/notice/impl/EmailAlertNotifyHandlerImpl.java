@@ -123,21 +123,30 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                     }
                 }
                 if (!useDatabase) {
-                    if (!StringUtils.hasText(host) || !StringUtils.hasText(username)) {
+                    // Username is optional: an unauthenticated relay can use a host plus
+                    // hertzbeat.mail.from-address with empty credentials and SMTP auth disabled.
+                    if (!StringUtils.hasText(fromUsername)) {
+                        fromUsername = username;
+                    }
+                    if (!StringUtils.hasText(host) || !StringUtils.hasText(fromUsername)) {
                         throw new AlertNoticeException(mailNotConfiguredMessage());
                     }
                     // if the database is not configured, use the yml configuration
                     sender.setHost(host);
                     sender.setPort(port);
-                    sender.setUsername(username);
-                    sender.setPassword(password);
                     Properties props = sender.getJavaMailProperties();
                     props.put("mail.smtp.ssl.enable", sslEnable);
                     props.put("mail.smtp.starttls.enable", starttlsEnable);
-                    applySslCertVerify(props, true);
-                    if (!StringUtils.hasText(fromUsername)) {
-                        fromUsername = username;
+                    if (StringUtils.hasText(username)) {
+                        sender.setUsername(username);
+                        sender.setPassword(password);
+                        props.put("mail.smtp.auth", "true");
+                    } else {
+                        sender.setUsername(null);
+                        sender.setPassword(null);
+                        props.put("mail.smtp.auth", "false");
                     }
+                    applySslCertVerify(props, true);
                 }
             } catch (AlertNoticeException e) {
                 throw e;
