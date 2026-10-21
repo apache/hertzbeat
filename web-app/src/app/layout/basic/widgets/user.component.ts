@@ -40,6 +40,25 @@ import { CONSTANTS } from '../../../shared/constants';
         <div style="text-align: center">
           <img style="height: 33px" src="./assets/brand.svg" alt="" />
         </div>
+        <nz-alert
+          nzType="warning"
+          [nzMessage]="'about.migration.title' | i18n"
+          [nzDescription]="migrationDetails"
+          [nzShowIcon]="true"
+          class="mt-md"
+        ></nz-alert>
+        <ng-template #migrationDetails>
+          <p>{{ 'about.migration.summary' | i18n }}</p>
+          <ol>
+            <li>{{ 'about.migration.step1' | i18n }}</li>
+            <li>{{ 'about.migration.step2' | i18n }}</li>
+            <li>{{ 'about.migration.step3' | i18n }}</li>
+          </ol>
+          <p>{{ 'about.migration.trust' | i18n }}</p>
+          <a href="https://hertzbeat.apache.org/docs/help/admin_only_migration" target="_blank" rel="noopener noreferrer">
+            {{ 'about.migration.guide' | i18n }}
+          </a>
+        </ng-template>
         <div style="margin-top: 10px; font-weight: bolder; font-size: small;">
           {{ 'about.title' | i18n }}
         </div>
@@ -67,6 +86,9 @@ import { CONSTANTS } from '../../../shared/constants';
           Copyright &copy; {{ currentYear }}
           <nz-divider nzType="vertical"></nz-divider>
           <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>
+        </div>
+        <div class="mt-md">
+          <button nz-button nzType="primary" (click)="disAboutModal()">{{ 'about.migration.acknowledge' | i18n }}</button>
         </div>
         <label
           style="margin-top: 16px;color:gray;font-size:13px"
@@ -113,6 +135,7 @@ export class HeaderUserComponent {
   get user(): User {
     return this.settings.user;
   }
+  private readonly lastSeenVersionKey = 'ABOUT_LAST_SEEN_VERSION';
   private readonly notShowAgainKey = 'NOT_SHOW_ABOUT_NEXT_LOGIN';
 
   constructor(private settings: SettingsService, private router: Router, private localStorageSvc: LocalStorageService) {
@@ -120,8 +143,11 @@ export class HeaderUserComponent {
       this.localStorageSvc.getData(this.notShowAgainKey) !== null
         ? JSON.parse(<string>this.localStorageSvc.getData(this.notShowAgainKey))
         : false;
-    // @ts-ignore
-    if (router.getCurrentNavigation()?.previousNavigation?.finalUrl.toString() === '/passport/login' && !this.notShowAgain) {
+    const firstVisitForVersion = this.localStorageSvc.getData(this.lastSeenVersionKey) !== this.version;
+    if (firstVisitForVersion) {
+      this.showAboutModal();
+      this.localStorageSvc.putData(this.lastSeenVersionKey, this.version);
+    } else if (router.getCurrentNavigation()?.previousNavigation?.finalUrl?.toString() === '/passport/login' && !this.notShowAgain) {
       this.showAndCloseAboutModal();
     }
   }

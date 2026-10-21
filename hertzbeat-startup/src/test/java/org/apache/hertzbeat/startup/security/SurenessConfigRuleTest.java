@@ -84,14 +84,14 @@ class SurenessConfigRuleTest {
      * so this one write has to stay reachable by all roles.
      */
     @Test
-    void togglingMuteStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/config/mute", "post"));
-        assertEquals("[admin,user,guest]", rolesFor("/api/config/mute", "get"));
+    void togglingMuteRequiresAdmin() {
+        assertEquals("[admin]", rolesFor("/api/config/mute", "post"));
+        assertEquals("[admin]", rolesFor("/api/config/mute", "get"));
     }
 
     @Test
-    void readingNonSecretConfigStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/config/system", "get"));
-        assertEquals("[admin,user,guest]", rolesFor("/api/config/timezones", "get"));
+    void readingNonSecretConfigRequiresAdmin() {
+        assertEquals("[admin]", rolesFor("/api/config/system", "get"));
+        assertEquals("[admin]", rolesFor("/api/config/timezones", "get"));
     }
 }

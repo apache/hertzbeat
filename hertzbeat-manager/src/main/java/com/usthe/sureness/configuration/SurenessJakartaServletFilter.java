@@ -25,6 +25,9 @@ import com.usthe.sureness.processor.exception.IncorrectCredentialsException;
 import com.usthe.sureness.processor.exception.NeedDigestInfoException;
 import com.usthe.sureness.processor.exception.UnauthorizedException;
 import com.usthe.sureness.processor.exception.UnknownAccountException;
+import com.usthe.sureness.provider.SurenessAccount;
+import com.usthe.sureness.provider.SurenessAccountProvider;
+import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import jakarta.servlet.Filter;
@@ -33,6 +36,7 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +45,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Set;
 
 /**
  * Override the default servlet filter
@@ -49,8 +54,15 @@ public class SurenessJakartaServletFilter implements Filter {
 
     private final SecurityManager securityManager;
 
+    private final SurenessAccountProvider accountProvider;
+
     public SurenessJakartaServletFilter(SecurityManager securityManager) {
+        this(securityManager, new DocumentAccountProvider());
+    }
+
+    SurenessJakartaServletFilter(SecurityManager securityManager, SurenessAccountProvider accountProvider) {
         this.securityManager = securityManager;
+        this.accountProvider = accountProvider;
     }
 
     /** logger **/
@@ -75,8 +87,10 @@ public class SurenessJakartaServletFilter implements Filter {
                          FilterChain filterChain)
         throws IOException, ServletException {
 
+        SurenessContextHolder.clear();
+        SubjectSum subject;
         try {
-            SubjectSum subject = securityManager.checkIn(servletRequest);
+            subject = securityManager.checkIn(servletRequest);
             // You can consider using SurenessContextHolder to bind subject in threadLocal
             // if bind, please remove it when end
             if (subject != null) {
@@ -113,7 +127,10 @@ public class SurenessJakartaServletFilter implements Filter {
         }
 
         try {
-            // if ok, doFilter and add subject in request
+            if (isManagementRequest((HttpServletRequest) servletRequest)
+                    && !authorizeAdministrator(subject, servletResponse)) {
+                return;
+            }
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
             int statusCode = ((HttpServletResponse) servletResponse).getStatus();
@@ -122,6 +139,56 @@ public class SurenessJakartaServletFilter implements Filter {
                 SurenessContextHolder.clear();
             }
         }
+    }
+
+    /** The account source is rechecked for legacy JWTs as well as managed tokens. */
+    private boolean authorizeAdministrator(SubjectSum subject, ServletResponse response) {
+        if (subject == null) {
+            responseWrite(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication is required"), response);
+            return false;
+        }
+        if (subject.hasRole("admin") && subject.getPrincipal() != null) {
+            SurenessAccount account = accountProvider.loadAccount(String.valueOf(subject.getPrincipal()));
+            if (account != null && !account.isDisabledAccount() && !account.isExcessiveAttempts()
+                    && account.getOwnRoles() != null && account.getOwnRoles().contains("admin")) {
+                return true;
+            }
+        }
+        responseWrite(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Management access requires the admin role; manual account migration is required"), response);
+        return false;
+    }
+
+    /** Exceptions retain their existing authentication rules; none grants a new role. */
+    private boolean isManagementRequest(HttpServletRequest request) {
+        String path = request.getServletPath();
+        if (request.getPathInfo() != null) {
+            path += request.getPathInfo();
+        }
+        String method = request.getMethod();
+        if ("GET".equals(method) || "HEAD".equals(method)) {
+            if (Set.of("/api/apps/hierarchy", "/api/status/page/public/org", "/api/status/page/public/component",
+                    "/api/status/page/public/incident", "/actuator/health", "/actuator/health/liveness",
+                    "/actuator/health/readiness", "/actuator/prometheus").contains(path)
+                    || path.matches("/api/i18n/[^/]+")
+                    || path.matches("/api/status/page/public/component/[^/]+")) {
+                return false;
+            }
+        }
+        if ("POST".equals(method)) {
+            if (Set.of("/api/account/auth/form", "/api/account/auth/refresh", "/api/otlp/v1/logs",
+                    "/api/otlp/v1/metrics", "/api/otlp/v1/traces", "/api/logs/otlp/v1/logs",
+                    "/api/v2/alerts").contains(path)
+                    || path.equals("/api/push/prometheus") || path.startsWith("/api/push/prometheus/")
+                    || path.equalsIgnoreCase("/api/logs/ingest/otlp")) {
+                return false;
+            }
+        }
+        return path.equals("/api") || path.startsWith("/api/")
+                || path.equals("/actuator") || path.startsWith("/actuator/")
+                || path.equals("/h2-console") || path.startsWith("/h2-console/")
+                || path.startsWith("/v3/api-docs") || path.startsWith("/v2/api-docs")
+                || path.equals("/swagger-resources") || path.startsWith("/swagger-resources/");
     }
 
     /**
