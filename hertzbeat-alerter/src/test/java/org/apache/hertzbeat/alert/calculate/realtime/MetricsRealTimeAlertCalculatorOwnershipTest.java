@@ -26,10 +26,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
@@ -37,6 +41,8 @@ import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +53,8 @@ class MetricsRealTimeAlertCalculatorOwnershipTest {
 
     private CommonDataQueue dataQueue;
     private AlertDefineService alertDefineService;
+    private AlarmCacheManager alarmCacheManager;
+    private AlarmCommonReduce alarmCommonReduce;
     private MetricsRealTimeAlertCalculator calculator;
 
     @BeforeEach
@@ -55,8 +63,8 @@ class MetricsRealTimeAlertCalculatorOwnershipTest {
         dataQueue = mock(CommonDataQueue.class);
         alertDefineService = mock(AlertDefineService.class);
         SingleAlertDao singleAlertDao = mock(SingleAlertDao.class);
-        AlarmCommonReduce alarmCommonReduce = mock(AlarmCommonReduce.class);
-        AlarmCacheManager alarmCacheManager = mock(AlarmCacheManager.class);
+        alarmCommonReduce = mock(AlarmCommonReduce.class);
+        alarmCacheManager = mock(AlarmCacheManager.class);
 
         when(singleAlertDao.querySingleAlertsByWorkspaceIdAndStatus(org.mockito.ArgumentMatchers.eq("default"),
                 org.mockito.ArgumentMatchers.anyString()))
@@ -69,14 +77,7 @@ class MetricsRealTimeAlertCalculatorOwnershipTest {
 
     @Test
     void handoffSendsIndependentCopyAndClosesPolledInstance() {
-        CollectRep.MetricsData polled = CollectRep.MetricsData.newBuilder()
-                .setId(11L)
-                .setApp("linux")
-                .setMetrics("cpu")
-                .setCode(CollectRep.Code.SUCCESS)
-                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
-                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("9").build())
-                .build();
+        CollectRep.MetricsData polled = sample(11L, "9");
         AtomicReference<CollectRep.MetricsData> sent = new AtomicReference<>();
         doAnswer(invocation -> {
             sent.set(invocation.getArgument(0));
@@ -96,13 +97,7 @@ class MetricsRealTimeAlertCalculatorOwnershipTest {
 
     @Test
     void handoffClosesBothInstancesWhenStorageSendFails() {
-        CollectRep.MetricsData polled = CollectRep.MetricsData.newBuilder()
-                .setId(12L)
-                .setMetrics("cpu")
-                .setCode(CollectRep.Code.SUCCESS)
-                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
-                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("1").build())
-                .build();
+        CollectRep.MetricsData polled = sample(12L, "1");
         ArgumentCaptor<CollectRep.MetricsData> captor = ArgumentCaptor.forClass(CollectRep.MetricsData.class);
         doThrow(new IllegalStateException("queue full")).when(dataQueue).sendMetricsDataToStorage(captor.capture());
 
@@ -112,5 +107,72 @@ class MetricsRealTimeAlertCalculatorOwnershipTest {
         assertTrue(polled.getFields().isEmpty());
         assertTrue(storageCopy.getFields().isEmpty());
         verify(alertDefineService, never()).getMetricsRealTimeAlertDefines();
+    }
+
+    @Test
+    void storageClosingCopyBeforeCalculationStillAllowsMatchingAlertRead() {
+        CollectRep.MetricsData polled = sample(42L, "77");
+        AtomicInteger storageFieldsAfterClose = new AtomicInteger(-1);
+        doAnswer(invocation -> {
+            CollectRep.MetricsData storageCopy = invocation.getArgument(0);
+            storageCopy.close();
+            storageFieldsAfterClose.set(storageCopy.getFieldsCount());
+            return null;
+        }).when(dataQueue).sendMetricsDataToStorage(any());
+
+        AlertDefine define = matchingCpuDefine();
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(define));
+        when(alarmCacheManager.getPending(any(), any())).thenReturn(null);
+
+        calculator.handoffAndCalculate(polled);
+
+        assertEquals(0, storageFieldsAfterClose.get());
+        assertTrue(polled.getFields().isEmpty());
+        verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    @Test
+    void calculationFailureStillClosesPolledAndLeavesHandedOffCopyOpen() {
+        CollectRep.MetricsData polled = sample(13L, "3");
+        AtomicReference<CollectRep.MetricsData> sent = new AtomicReference<>();
+        doAnswer(invocation -> {
+            sent.set(invocation.getArgument(0));
+            return null;
+        }).when(dataQueue).sendMetricsDataToStorage(any());
+        when(alertDefineService.getMetricsRealTimeAlertDefines())
+                .thenThrow(new IllegalStateException("define lookup failed"));
+
+        assertThrows(IllegalStateException.class, () -> calculator.handoffAndCalculate(polled));
+
+        assertTrue(polled.getFields().isEmpty());
+        CollectRep.MetricsData storageCopy = sent.get();
+        assertEquals(1, storageCopy.getFieldsCount());
+        assertEquals("3", storageCopy.getValues().getFirst().getColumns(0));
+        storageCopy.close();
+    }
+
+    private static CollectRep.MetricsData sample(long id, String usage) {
+        return CollectRep.MetricsData.newBuilder()
+                .setId(id)
+                .setApp("linux")
+                .setMetrics("cpu")
+                .setPriority(1)
+                .setCode(CollectRep.Code.SUCCESS)
+                .addField(CollectRep.Field.newBuilder().setName("usage").setType(CommonConstants.TYPE_NUMBER).build())
+                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn(usage).build())
+                .build();
+    }
+
+    private static AlertDefine matchingCpuDefine() {
+        AlertDefine define = new AlertDefine();
+        define.setId(7L);
+        define.setName("cpu-high");
+        define.setExpr("equals(__app__,\"linux\") && equals(__metrics__,\"cpu\") && usage > 50");
+        define.setTemplate("cpu ${usage}");
+        define.setTimes(1);
+        define.setLabels(new HashMap<>());
+        define.setAnnotations(new HashMap<>());
+        return define;
     }
 }

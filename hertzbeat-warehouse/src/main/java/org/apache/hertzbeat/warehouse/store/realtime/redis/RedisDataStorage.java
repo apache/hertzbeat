@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.warehouse.store.realtime.redis;
 
+import io.lettuce.core.RedisFuture;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
@@ -30,7 +32,12 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 /**
- * redis storage collects real-time data
+ * redis storage collects real-time data.
+ *
+ * <p>Ownership: {@link #saveData} must finish Redis codec serialization before returning so
+ * {@code DataStorageDispatch} can close the polled instance afterward. This class does not
+ * close the input; dispatch owns that close. {@link #getCurrentMetricsData} returns decoded
+ * reader-owned snapshots from Redis; callers must close them.
  */
 @Primary
 @Component
@@ -44,6 +51,14 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
         final RedisCommandDelegate delegate = RedisCommandDelegate.getInstance();
         this.serverAvailable = delegate.initRedisClient(redisProperties);
         this.redisCommandDelegate = delegate;
+    }
+
+    /**
+     * Test-visible constructor that injects the Redis command delegate.
+     */
+    RedisDataStorage(RedisCommandDelegate redisCommandDelegate, boolean serverAvailable) {
+        this.redisCommandDelegate = redisCommandDelegate;
+        this.serverAvailable = serverAvailable;
     }
 
     @Override
@@ -64,13 +79,29 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
         }
         String key = String.valueOf(metricsData.getId());
         String hashKey = metricsData.getMetrics();
-        redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> future.thenAccept(response -> {
-            if (response) {
-                log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
-            } else {
-                log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
+        try {
+            AtomicReference<RedisFuture<Boolean>> futureRef = new AtomicReference<>();
+            redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> {
+                futureRef.set(future);
+                future.thenAccept(response -> {
+                    if (Boolean.TRUE.equals(response)) {
+                        log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
+                    } else {
+                        log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
+                    }
+                });
+            });
+            // Block until encode + write finish so dispatch can close metricsData safely.
+            RedisFuture<Boolean> future = futureRef.get();
+            if (future != null) {
+                future.get();
             }
-        }));
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            log.warn("[warehouse] interrupted waiting for redis realtime write {}:{}", key, hashKey);
+        } catch (Exception exception) {
+            log.error("[warehouse] redis realtime write failed {}:{}", key, hashKey, exception);
+        }
     }
 
     @Override

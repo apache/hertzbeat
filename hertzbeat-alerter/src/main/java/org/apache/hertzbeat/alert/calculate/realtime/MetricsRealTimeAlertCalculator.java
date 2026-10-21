@@ -154,6 +154,14 @@ public class MetricsRealTimeAlertCalculator {
         }
     }
 
+    /**
+     * Hand off an independent copy to storage, then calculate alerts on the polled instance.
+     *
+     * <p>Ownership: storage owns {@code storageCopy} after a successful send (dispatch closes it
+     * after persist). This method always closes the polled {@code metricsData}. If send fails,
+     * both instances are closed here. Storage may close its copy before calculation finishes;
+     * calculation must only read {@code metricsData}.
+     */
     void handoffAndCalculate(CollectRep.MetricsData metricsData) {
         CollectRep.MetricsData storageCopy = CollectRep.MetricsData.newBuilder(metricsData).build();
         boolean handedOff = false;

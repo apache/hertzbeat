@@ -19,6 +19,7 @@ package org.apache.hertzbeat.warehouse.store;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -58,10 +59,11 @@ class MemoryDataStorageOwnershipTest {
             dispatch.persistMetricsData(metricsData);
         }
 
-        CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(42L, "cpu");
-        assertNotNull(retained);
-        assertEquals("77", retained.getValues().getFirst().getColumns(0));
-        assertEquals(1, retained.getFieldsCount());
+        try (CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(42L, "cpu")) {
+            assertNotNull(retained);
+            assertEquals("77", retained.getValues().getFirst().getColumns(0));
+            assertEquals(1, retained.getFieldsCount());
+        }
         memoryDataStorage.destroy();
     }
 
@@ -96,9 +98,60 @@ class MemoryDataStorageOwnershipTest {
             dispatch.persistMetricsData(failure);
         }
 
-        CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(42L, "cpu");
-        assertNotNull(retained);
-        assertEquals("10", retained.getValues().getFirst().getColumns(0));
+        try (CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(42L, "cpu")) {
+            assertNotNull(retained);
+            assertEquals("10", retained.getValues().getFirst().getColumns(0));
+        }
+        memoryDataStorage.destroy();
+    }
+
+    /**
+     * Detail readers (MetricsDataServiceImpl) hold the reference from getCurrentMetricsData
+     * while building a response. Replacement must close only the previous cache entry, not
+     * the reader-owned snapshot.
+     */
+    @Test
+    void detailReaderSnapshotSurvivesReplacement() {
+        MemoryProperties properties = mock(MemoryProperties.class);
+        when(properties.initSize()).thenReturn(null);
+        MemoryDataStorage memoryDataStorage = new MemoryDataStorage(properties);
+
+        try (CollectRep.MetricsData first = CollectRep.MetricsData.newBuilder()
+                .setId(42L)
+                .setMetrics("cpu")
+                .setCode(CollectRep.Code.SUCCESS)
+                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
+                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("77").build())
+                .build()) {
+            memoryDataStorage.saveData(first);
+        }
+
+        CollectRep.MetricsData heldByDetailReader = memoryDataStorage.getCurrentMetricsData(42L, "cpu");
+        assertNotNull(heldByDetailReader);
+        assertEquals(1, heldByDetailReader.getFieldsCount());
+        assertEquals("77", heldByDetailReader.getValues().getFirst().getColumns(0));
+
+        try (CollectRep.MetricsData second = CollectRep.MetricsData.newBuilder()
+                .setId(42L)
+                .setMetrics("cpu")
+                .setCode(CollectRep.Code.SUCCESS)
+                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
+                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("88").build())
+                .build()) {
+            memoryDataStorage.saveData(second);
+        }
+
+        try (heldByDetailReader) {
+            assertEquals(1, heldByDetailReader.getFieldsCount(),
+                    "reader-owned snapshot must survive cache replacement");
+            assertEquals("77", heldByDetailReader.getValues().getFirst().getColumns(0));
+        }
+
+        try (CollectRep.MetricsData current = memoryDataStorage.getCurrentMetricsData(42L, "cpu")) {
+            assertNotNull(current);
+            assertNotSame(heldByDetailReader, current);
+            assertEquals("88", current.getValues().getFirst().getColumns(0));
+        }
         memoryDataStorage.destroy();
     }
 }

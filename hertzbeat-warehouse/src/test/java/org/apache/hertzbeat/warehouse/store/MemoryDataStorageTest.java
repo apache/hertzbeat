@@ -63,10 +63,11 @@ class MemoryDataStorageTest {
             memoryDataStorage.saveData(metricsData);
         }
 
-        CollectRep.MetricsData result = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
-        assertNotNull(result);
-        assertEquals(metric, result.getMetrics());
-        assertEquals("42", result.getValues().getFirst().getColumns(0));
+        try (CollectRep.MetricsData result = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+            assertNotNull(result);
+            assertEquals(metric, result.getMetrics());
+            assertEquals("42", result.getValues().getFirst().getColumns(0));
+        }
     }
 
     @Test
@@ -79,10 +80,13 @@ class MemoryDataStorageTest {
         }
 
         List<CollectRep.MetricsData> result = memoryDataStorage.getCurrentMetricsData(monitorId);
-
-        assertEquals(2, result.size());
-        assertTrue(result.stream().anyMatch(data -> "cpuUsage".equals(data.getMetrics())));
-        assertTrue(result.stream().anyMatch(data -> "memoryUsage".equals(data.getMetrics())));
+        try {
+            assertEquals(2, result.size());
+            assertTrue(result.stream().anyMatch(data -> "cpuUsage".equals(data.getMetrics())));
+            assertTrue(result.stream().anyMatch(data -> "memoryUsage".equals(data.getMetrics())));
+        } finally {
+            result.forEach(CollectRep.MetricsData::close);
+        }
     }
 
     @Test
@@ -105,33 +109,41 @@ class MemoryDataStorageTest {
         String metric = "cpu";
         CollectRep.MetricsData input = successData(monitorId, metric, "55.5");
         memoryDataStorage.saveData(input);
-        CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
+        try (CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+            assertNotNull(retained);
+            assertNotSame(input, retained);
+            input.close();
 
-        assertNotNull(retained);
-        assertNotSame(input, retained);
-        input.close();
-
-        CollectRep.MetricsData afterClose = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
-        assertNotNull(afterClose);
-        assertEquals("55.5", afterClose.getValues().getFirst().getColumns(0));
-        assertEquals(1, afterClose.getFieldsCount());
+            try (CollectRep.MetricsData afterClose = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+                assertNotNull(afterClose);
+                assertEquals("55.5", afterClose.getValues().getFirst().getColumns(0));
+                assertEquals(1, afterClose.getFieldsCount());
+            }
+        }
     }
 
     @Test
-    void replaceClosesPreviousRetainedCopy() {
+    void replaceUpdatesCurrentWhileReaderSnapshotStaysValid() {
         Long monitorId = 9L;
         String metric = "cpu";
+        CollectRep.MetricsData heldSnapshot;
         try (CollectRep.MetricsData first = successData(monitorId, metric, "1");
                 CollectRep.MetricsData second = successData(monitorId, metric, "2")) {
             memoryDataStorage.saveData(first);
-            CollectRep.MetricsData retainedFirst = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
-            assertNotNull(retainedFirst);
+            heldSnapshot = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
+            assertNotNull(heldSnapshot);
             memoryDataStorage.saveData(second);
         }
 
-        CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
-        assertNotNull(retained);
-        assertEquals("2", retained.getValues().getFirst().getColumns(0));
+        try (heldSnapshot) {
+            assertEquals(1, heldSnapshot.getFieldsCount());
+            assertEquals("1", heldSnapshot.getValues().getFirst().getColumns(0));
+        }
+
+        try (CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+            assertNotNull(retained);
+            assertEquals("2", retained.getValues().getFirst().getColumns(0));
+        }
         assertNull(memoryDataStorage.getCurrentMetricsData(monitorId, "missing"));
     }
 
