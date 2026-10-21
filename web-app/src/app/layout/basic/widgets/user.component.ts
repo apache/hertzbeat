@@ -49,36 +49,35 @@ import { CONSTANTS } from '../../../shared/constants';
         ></nz-alert>
         <ng-template #migrationDetails>
           <p>{{ 'about.migration.summary' | i18n }}</p>
-          <ol>
-            <li>{{ 'about.migration.step1' | i18n }}</li>
-            <li>{{ 'about.migration.step2' | i18n }}</li>
-            <li>{{ 'about.migration.step3' | i18n }}</li>
-          </ol>
+          <p>{{ 'about.migration.step2' | i18n }}</p>
           <p>{{ 'about.migration.trust' | i18n }}</p>
           <a href="https://hertzbeat.apache.org/docs/help/admin_only_migration" target="_blank" rel="noopener noreferrer">
             {{ 'about.migration.guide' | i18n }}
           </a>
         </ng-template>
-        <div style="margin-top: 10px; font-weight: bolder; font-size: small;">
-          {{ 'about.title' | i18n }}
-        </div>
-        <div style="margin-top: 10px; font-weight: normal; font-size: small;">
-          <nz-badge nzStatus="processing" [nzText]="'about.point.1' | i18n"></nz-badge>
-          <br />
-          <nz-badge nzStatus="processing" [nzText]="'about.point.2' | i18n"></nz-badge>
-          <br />
-          <nz-badge nzStatus="processing" [nzText]="'about.point.3' | i18n"></nz-badge>
-          <br />
-          <nz-badge nzStatus="processing" [nzText]="'about.point.4' | i18n"></nz-badge>
-          <br />
-          <nz-badge nzStatus="processing" [nzText]="'about.point.5' | i18n"></nz-badge>
-          <br />
-          <nz-badge nzStatus="processing" [nzText]="'about.point.6' | i18n"></nz-badge>
-          <br />
-        </div>
-        <div style="margin-top: 10px; font-weight: normal; font-size: small;">
-          {{ 'about.help' | i18n }}
-        </div>
+        <details class="mt-md">
+          <summary>{{ 'about.product-details' | i18n }}</summary>
+          <div style="margin-top: 10px; font-weight: bolder; font-size: small;">
+            {{ 'about.title' | i18n }}
+          </div>
+          <div style="margin-top: 10px; font-weight: normal; font-size: small;">
+            <nz-badge nzStatus="processing" [nzText]="'about.point.1' | i18n"></nz-badge>
+            <br />
+            <nz-badge nzStatus="processing" [nzText]="'about.point.2' | i18n"></nz-badge>
+            <br />
+            <nz-badge nzStatus="processing" [nzText]="'about.point.3' | i18n"></nz-badge>
+            <br />
+            <nz-badge nzStatus="processing" [nzText]="'about.point.4' | i18n"></nz-badge>
+            <br />
+            <nz-badge nzStatus="processing" [nzText]="'about.point.5' | i18n"></nz-badge>
+            <br />
+            <nz-badge nzStatus="processing" [nzText]="'about.point.6' | i18n"></nz-badge>
+            <br />
+          </div>
+          <div style="margin-top: 10px; font-weight: normal; font-size: small;">
+            {{ 'about.help' | i18n }}
+          </div>
+        </details>
         <div style="margin-top: 10px; font-weight: bolder; font-size: medium;">
           <a [href]="'https://github.com/apache/hertzbeat/releases/tag/' + version" target="_blank"> Apache HertzBeat™ {{ version }} </a>
         </div>

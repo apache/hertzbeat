@@ -14,6 +14,10 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 **You need to save and back up the data files of the database and monitoring templates yml files before upgrading**
 
+## Account permission compatibility change in 1.9.1
+
+From 1.9.1, only admin can sign in to management. Existing user and guest configuration no longer grants access. Before upgrading, inventory accounts and automation tokens; administrators must manually edit sureness.yml to assign admin only to trusted accounts, restart and sign in again. Accounts are not automatically promoted or deleted. Test the upgrade first and read the [migration guide](../help/admin_only_migration).
+
 ## Breaking Changes In 1.9.0
 
 ### SFTP monitors require an explicit host-key policy
@@ -47,7 +51,7 @@ See [FTP Monitor](../help/ftp) for fingerprint acquisition and key rotation.
 | `GET /api/logs/stats/overview` | `GET /api/observability/logs/overview` | Removed (`404`) |
 | `GET /api/logs/stats/trace-coverage` | `GET /api/observability/logs/trace-coverage` | Removed (`404`) |
 | `GET /api/logs/stats/trend` | `GET /api/observability/logs/trend` | Removed (`404`) |
-| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | Removed (`404`); the new route requires an authenticated `admin/user/guest` |
+| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | Removed (`404`); the new route requires `admin/user/guest` in 1.9.0 and only `admin` from 1.9.1 |
 | `DELETE /api/logs` | `DELETE /api/observability/logs` | Removed (`404`) |
 
 The `POST /api/otlp/v1/{metrics,traces}` ingestion routes and the `/api/observability/metrics/**` and `/api/observability/traces/**` query routes are **new** in 1.9.0. There is no 1.8.x path for them, so nothing has to be migrated.

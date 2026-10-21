@@ -4,6 +4,8 @@ title: Administrator-only management migration in 1.9.1
 sidebar_label: 1.9.1 Admin Migration
 ---
 
+From 1.9.1, only admin can manage HertzBeat. Existing user and guest accounts cannot sign in even with old configuration. Ask your administrator to manually edit sureness.yml, change only trusted users to admin, restart and sign in again. Admin has all platform management permissions: assign it carefully. No account is automatically promoted or deleted.
+
 ## Intentional compatibility change
 
 HertzBeat 1.9.1 intentionally removes `user`, `guest` and custom non-admin roles from the management plane. The only supported management role is the exact role `admin`. This is a permission compatibility change, including operations that were previously read-only. Old accounts are not deleted or automatically promoted, and stored application data is not migrated to a new owner.
