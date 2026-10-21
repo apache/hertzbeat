@@ -29,6 +29,7 @@ param:
   monitorUDP: "{{randAlpha 6}}"
   monitorWebsite: "{{randAlpha 6}}"
   monitorFTP: "{{randAlpha 6}}"
+  bulkPausePrefix: "e2e-pause-{{randAlpha 6}}"
   apiTokenName: "e2e-token-{{randAlpha 6}}"
   labelName: "{{randAlpha 3}}"
 items:
@@ -297,6 +298,164 @@ items:
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
+
+## Bulk pause, regression test for https://github.com/apache/hertzbeat/issues/4447
+# The web UI used to put every selected id in the URL (ids=<id>&type=JSON per monitor), so large
+# selections overflowed the server's 8 KB request header limit. It now sends the ids as a JSON array
+# body, while the ids query parameter stays supported for existing clients. The 300 "large" monitors
+# make that legacy URL ~9 KB, over the limit whatever the other request headers are.
+- name: importBulkPauseMonitors
+  # Each new monitor is detected synchronously (about 1s apiece), so this request takes ~5 minutes;
+  # docker-compose.yml raises atest's --request-timeout accordingly.
+  request:
+    api: /api/monitors/import
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: multipart/form-data; boundary=hertzbeat-e2e
+    # atest form fields cannot attach a file, so the multipart body is spelled out; {{"\r"}} makes each line end in CRLF
+    body: |
+      --hertzbeat-e2e{{"\r"}}
+      Content-Disposition: form-data; name="file"; filename="monitors.json"{{"\r"}}
+      Content-Type: application/json{{"\r"}}
+      {{"\r"}}
+      [{{range $i := until 306}}{{if $i}},{{end}}{"monitor": {"name": "{{$.param.bulkPausePrefix}}-{{if lt $i 3}}small{{else if lt $i 6}}legacy{{else}}large{{end}}-{{$i}}", "app": "ping", "intervals": 600, "status": 1}, "params": [{"field": "host", "type": 1, "value": "127.0.0.1"}, {"field": "timeout", "type": 0, "value": "6000"}]}{{end}}]{{"\r"}}
+      --hertzbeat-e2e--{{"\r"}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: pauseMonitorsWithEmptyBody
+  request:
+    api: /api/monitors/manage
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    body: "[]"
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: pauseMonitorsWithInvalidBody
+  request:
+    api: /api/monitors/manage
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    body: '["not-a-monitor-id"]'
+  expect:
+    statusCode: 400
+    bodyFieldsExpect:
+      code: "1"
+- name: listBulkPauseMonitors
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}&pageIndex=0&pageSize=400
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 306
+      - none(data.data.content, {.status == 0})
+- name: listSmallPauseMonitors
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}-small-&pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 3
+- name: pauseSmallMonitorsByBody
+  request:
+    api: /api/monitors/manage
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    body: '[{{range $i, $m := .listSmallPauseMonitors.data.content}}{{if $i}},{{end}}{{$m.id | int64}}{{end}}]'
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: verifySmallMonitorsPaused
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}&status=0&pageIndex=0&pageSize=400
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 3
+      - all(data.data.content, {.name contains "-small-"})
+- name: listLargePauseMonitors
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}-large-&pageIndex=0&pageSize=400
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 300
+- name: pauseLargeMonitorsByBody
+  request:
+    api: /api/monitors/manage
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    body: '[{{range $i, $m := .listLargePauseMonitors.data.content}}{{if $i}},{{end}}{{$m.id | int64}}{{end}}]'
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: verifyLargeMonitorsPaused
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}-large-&pageIndex=0&pageSize=400
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 300
+      - all(data.data.content, {.status == 0})
+- name: listLegacyPauseMonitors
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}-legacy-&pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 3
+      - none(data.data.content, {.status == 0})
+- name: pauseLegacyMonitorsByQueryParams
+  request:
+    api: /api/monitors/manage?{{range $i, $m := .listLegacyPauseMonitors.data.content}}{{if $i}}&{{end}}ids={{$m.id | int64}}&type=JSON{{end}}
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: verifyLegacyMonitorsPaused
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}-legacy-&pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 3
+      - all(data.data.content, {.status == 0})
+- name: deleteBulkPauseMonitors
+  request:
+    api: /api/monitors?{{range $i, $m := .listBulkPauseMonitors.data.content}}{{if $i}}&{{end}}ids={{$m.id | int64}}{{end}}
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: verifyBulkPauseMonitorsDeleted
+  request:
+    api: /api/monitors?search={{.param.bulkPausePrefix}}&pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    verify:
+      - data.data.totalElements == 0
 
 - name: listAlertDefines
   request:
