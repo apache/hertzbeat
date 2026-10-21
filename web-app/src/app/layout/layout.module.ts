@@ -39,6 +39,7 @@ const HEADER_COMPONENTS = [
 ];
 
 import { LayoutPassportComponent } from './passport/passport.component';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -68,6 +69,7 @@ const PASSPORT = [LayoutPassportComponent];
     NzBadgeModule,
     NzAvatarModule,
     NzIconModule,
+    NzAlertModule,
     NzButtonModule,
     NzModalModule,
     NzTagModule,

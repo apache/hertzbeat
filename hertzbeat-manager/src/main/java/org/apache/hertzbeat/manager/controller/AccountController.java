@@ -48,13 +48,22 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AccountController {
 
+    private static final String AUTH_FAILED_MESSAGE = "Sign-in failed. Check your credentials or contact your deployment administrator. "
+            + "HertzBeat 1.9.1 requires approved administrators; review the admin-only migration guide.";
+
     @Autowired
     private AccountService accountService;
 
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
-        return ResponseUtil.handle(() -> accountService.authGetToken(loginDto));
+        return ResponseUtil.handle(() -> {
+            try {
+                return accountService.authGetToken(loginDto);
+            } catch (AuthenticationException e) {
+                throw new AuthenticationException(AUTH_FAILED_MESSAGE);
+            }
+        });
     }
 
     @PostMapping("/refresh")
@@ -63,13 +72,13 @@ public class AccountController {
         try {
             return ResponseEntity.ok(Message.success(accountService.refreshToken(tokenDto.getToken())));
         } catch (AuthenticationException e) {
-            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, e.getMessage()));
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, AUTH_FAILED_MESSAGE));
         } catch (ExpiredJwtException expiredJwtException) {
             log.warn("{}", expiredJwtException.getMessage());
-            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Expired"));
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, AUTH_FAILED_MESSAGE));
         } catch (Exception e) {
             log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
-            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Error"));
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, AUTH_FAILED_MESSAGE));
         }
     }
 }

@@ -75,13 +75,13 @@ class SurenessSseRuleTest {
 
     @Test
     void subscribingToAlertsRequiresAnAccount() {
-        assertEquals("[admin,user,guest]",
+        assertEquals("[admin]",
                 roleTree.searchPathFilterRoles("/api/alert/sse/subscribe" + SEPARATOR + "get"));
     }
 
     @Test
     void subscribingToManagerEventsRequiresAnAccount() {
-        assertEquals("[admin,user,guest]",
+        assertEquals("[admin]",
                 roleTree.searchPathFilterRoles("/api/manager/sse/subscribe" + SEPARATOR + "get"));
     }
 
@@ -98,7 +98,7 @@ class SurenessSseRuleTest {
 
     @Test
     void theLogStreamScopingIsUnchanged() {
-        assertEquals("[admin,user,guest]",
+        assertEquals("[admin]",
                 roleTree.searchPathFilterRoles("/api/observability/logs/stream" + SEPARATOR + "get"));
     }
 }
