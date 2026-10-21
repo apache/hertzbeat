@@ -241,7 +241,7 @@ public class SshCollectImpl extends AbstractCollect {
         Map<String, String> mapValue = Arrays.stream(lines)
                 .map(item -> {
                     if (contains) {
-                        return item.split("=");
+                        return item.split("=", 2);
                     } else {
                         return item.split("\t");
                     }
