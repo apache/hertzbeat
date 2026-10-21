@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
 import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
+import org.apache.hertzbeat.warehouse.service.WarehouseStorageStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,14 +52,14 @@ public class MetricsDataController {
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "Query the availability status of the storage service under the warehouse")
-    public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
-        Boolean status = metricsDataService.getWarehouseStorageServerStatus();
-        if (Boolean.TRUE.equals(status)) {
-            return ResponseEntity.ok(Message.success());
+    public ResponseEntity<Message<WarehouseStorageStatus>> getWarehouseStorageServerStatus() {
+        WarehouseStorageStatus status = metricsDataService.getWarehouseStorageStatus();
+        Message<WarehouseStorageStatus> message = Message.success(status);
+        if (!status.available()) {
+            message.setCode(FAIL_CODE);
+            message.setMsg("Service not available!");
         }
-
-        // historyDataReader does not exist or is not available
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Service not available!"));
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
@@ -85,7 +86,13 @@ public class MetricsDataController {
             @Parameter(description = "query historical time period, default 6h-6 hours: s-seconds, M-minutes, h-hours, d-days, w-weeks", example = "6h")
             @RequestParam(required = false) String history,
             @Parameter(description = "aggregate data calc. off by default; 4-hour window, query limit >1 week", example = "false")
-            @RequestParam(required = false) Boolean interval
+            @RequestParam(required = false) Boolean interval,
+            @Parameter(description = "query start time in milliseconds", example = "1712730000000")
+            @RequestParam(required = false) Long start,
+            @Parameter(description = "query end time in milliseconds", example = "1712733600000")
+            @RequestParam(required = false) Long end,
+            @Parameter(description = "query step, for example 60s or 5m", example = "60s")
+            @RequestParam(required = false) String step
     ) {
         if (!metricsDataService.getWarehouseStorageServerStatus()) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
@@ -97,7 +104,44 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval);
+        return queryMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+    }
+
+    @GetMapping("/api/monitor/{instance}/metric")
+    @Operation(summary = "Query metric history by structured identity",
+            description = "Queries historical data without combining application, group, and field names")
+    public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryDataByIdentity(
+            @Parameter(description = "monitor instance", example = "127.0.0.1:8080")
+            @PathVariable String instance,
+            @Parameter(description = "monitor application", example = "linux")
+            @RequestParam String app,
+            @Parameter(description = "metric group", example = "cpu")
+            @RequestParam String metrics,
+            @Parameter(description = "metric field", example = "usage")
+            @RequestParam String metric,
+            @RequestParam(required = false) String history,
+            @RequestParam(required = false) Boolean interval,
+            @RequestParam(required = false) Long start,
+            @RequestParam(required = false) Long end,
+            @RequestParam(required = false) String step) {
+        if (!metricsDataService.getWarehouseStorageServerStatus()) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
+        }
+        return queryMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+    }
+
+    private ResponseEntity<Message<MetricsHistoryData>> queryMetricHistoryData(
+            String instance,
+            String app,
+            String metrics,
+            String metric,
+            String history,
+            Boolean interval,
+            Long start,
+            Long end,
+            String step) {
+        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric,
+                history, interval, start, end, step);
         return ResponseEntity.ok(Message.success(historyData));
     }
 }

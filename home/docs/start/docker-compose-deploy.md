@@ -39,6 +39,15 @@ Run the `docker compose version` command to check if you have a Docker Compose e
    cd hertzbeat-postgresql-victoria-metrics
    ```
 
+   - Create the `.env` file and set the database password
+
+   > `POSTGRES_PASSWORD` is required. `docker compose up` refuses to start without it.
+
+   ```shell
+   cp .env.example .env
+   # Edit .env and set POSTGRES_PASSWORD to a strong password of your own
+   ```
+
    - One-click start
 
    > Run script in `hertzbeat-postgresql-victoria-metrics` directory
@@ -56,7 +65,17 @@ Run the `docker compose version` command to check if you have a Docker Compose e
       ```
 
 3. Start exploring HertzBeat
-   Access [http://ip:1157/](http://ip:1157/) in the browser to start exploring and using it. The default account password is admin/hertzbeat.
+   Access [http://localhost:1157/](http://localhost:1157/) in the browser to start exploring and using it. The default account password is admin/hertzbeat.
+
+   :::note
+
+   The quick-start stack publishes every host port on `127.0.0.1` by default, so the web UI is reachable only from the machine running Docker. To open it to other hosts, set `HERTZBEAT_BIND_ADDRESS` in `.env` to an address those hosts can reach (a TLS reverse proxy is preferred over a wildcard address such as `0.0.0.0`), then run `docker compose config` to inspect the final port bindings and restart with `docker compose up -d`.
+
+   This setting also opens `1158` for remote Collectors; `14317` (OTLP/gRPC) is controlled separately by `HERTZBEAT_OTLP_BIND_ADDRESS`. See the `README.md` of the deployment solution for details.
+
+   The supplied `conf/application.yml` enables Basic and JWT authentication by default, and the Web UI uses JWT. Digest is opt-in. If you add `digest` to `sureness.auths`, unauthenticated protected APIs return a `WWW-Authenticate: Digest` challenge and a browser may display its native username/password dialog. Restart the HertzBeat container after changing the configuration. See [Authentication modes](docker-deploy#authentication-modes) for examples and TLS guidance.
+
+   :::
 
 **HAVE FUN**
 

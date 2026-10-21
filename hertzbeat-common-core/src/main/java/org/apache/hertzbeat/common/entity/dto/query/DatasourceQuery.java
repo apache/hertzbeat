@@ -56,4 +56,7 @@ public class DatasourceQuery {
     
     @Schema(title = "query time step, like 5m or 1h")
     private String step;
+
+    @Schema(title = "maximum number of series returned by the datasource")
+    private Integer limit;
 }

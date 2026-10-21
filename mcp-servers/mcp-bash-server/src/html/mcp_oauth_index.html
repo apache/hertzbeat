@@ -31,7 +31,7 @@
 </head>
 <body>
     <h1>MCP OAuth Server</h1>
-    <p>This is an MCP server with OAuth 2.0 integration to a third-party authorization server.</p>
+    <p>This MCP server uses an OAuth 2.0 authorization-code flow with PKCE.</p>
     
     <h2>Available Endpoints:</h2>
     
@@ -41,10 +41,12 @@
         <p>Parameters:</p>
         <ul>
             <li><code>response_type</code> - Must be "code"</li>
-            <li><code>client_id</code> - Client identifier (e.g., "mcp-client")</li>
-            <li><code>redirect_uri</code> - URI to redirect after authorization</li>
-            <li><code>scope</code> - Optional requested scope</li>
-            <li><code>state</code> - Optional state value for CSRF prevention</li>
+            <li><code>client_id</code> - Dynamically registered client identifier</li>
+            <li><code>redirect_uri</code> - Exact registered redirect URI</li>
+            <li><code>scope</code> - Optional supported scopes</li>
+            <li><code>state</code> - Recommended client transaction state</li>
+            <li><code>code_challenge</code> - PKCE S256 challenge</li>
+            <li><code>code_challenge_method</code> - Must be "S256"</li>
         </ul>
     </div>
     
@@ -53,11 +55,13 @@
         <p><code>POST /token</code></p>
         <p>Parameters:</p>
         <ul>
-            <li><code>grant_type</code> - Must be "authorization_code"</li>
-            <li><code>code</code> - The authorization code</li>
+            <li><code>grant_type</code> - "authorization_code" or "refresh_token"</li>
+            <li><code>code</code> - One-time authorization code</li>
             <li><code>client_id</code> - Client identifier</li>
-            <li><code>client_secret</code> - Client secret</li>
+            <li><code>client_secret</code> - Required only for confidential clients</li>
             <li><code>redirect_uri</code> - Redirect URI used in authorization request</li>
+            <li><code>code_verifier</code> - PKCE verifier for authorization-code exchange</li>
+            <li><code>refresh_token</code> - Rotating token for refresh grants</li>
         </ul>
     </div>
     
@@ -69,13 +73,12 @@
     <div class="flow">
         <h2>OAuth Flow:</h2>
         <ol>
-            <li>MCP Client initiates OAuth flow with this MCP Server</li>
-            <li>MCP Server redirects to Third-Party OAuth Server</li>
-            <li>User authenticates with Third-Party Server</li>
-            <li>Third-Party Server redirects back to MCP Server with auth code</li>
-            <li>MCP Server exchanges the code for a third-party access token</li>
-            <li>MCP Server generates its own token bound to the third-party session</li>
-            <li>MCP Server completes the OAuth flow with the MCP Client</li>
+            <li>The MCP client discovers metadata and dynamically registers.</li>
+            <li>The client starts authorization with an S256 PKCE challenge.</li>
+            <li>The resource owner authenticates and approves the bound transaction.</li>
+            <li>The server returns a short-lived, one-time authorization code.</li>
+            <li>The client exchanges the code and PKCE verifier for expiring tokens.</li>
+            <li>The client sends the bearer access token to the MCP endpoint.</li>
         </ol>
     </div>
 </body>

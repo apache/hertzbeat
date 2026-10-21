@@ -33,9 +33,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,6 +56,7 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.TimerTask;
@@ -69,7 +73,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -81,6 +84,7 @@ import static org.apache.hertzbeat.common.constants.ConfigConstants.FunctionModu
  */
 @Primary
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics.cluster", name = "enabled", havingValue = "true")
 @Slf4j
 public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorage {
@@ -100,16 +104,25 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
     private static final long MAX_WAIT_MS = 500L;
-    private static final int MAX_RETRIES = 3;
+    private static final int MAX_BUFFER_OFFER_ATTEMPTS = 3;
+    private static final int MAX_BATCHES_PER_FLUSH_TASK = 16;
+    private static final long FAILED_FLUSH_RETRY_SECONDS = 1L;
 
     private final VictoriaMetricsClusterProperties vmClusterProps;
     private final VictoriaMetricsInsertProperties vmInsertProps;
     private final VictoriaMetricsSelectProperties vmSelectProps;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
+    private final Object metricsFlushLock = new Object();
+    private final AtomicLong ignoredLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
+    private final AtomicBoolean immediateFlushPending = new AtomicBoolean(false);
+    private final AtomicBoolean flushInFlight = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicLong droppedMetricCount = new AtomicLong();
+    private List<VictoriaMetricsDataStorage.VictoriaMetricsContent> retryBatch = Collections.emptyList();
     private boolean isBatchImportEnabled = false;
 
 
@@ -136,7 +149,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             Thread thread = new Thread(r, "victoria-metrics-flush-timer");
             thread.setDaemon(true);
             return thread;
-        }, 1, TimeUnit.SECONDS, 512);
+        }, 100, TimeUnit.MILLISECONDS, 512);
         metricsFlushtask = new MetricsFlushTask();
         this.metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.SECONDS);
     }
@@ -175,6 +188,10 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
+        if (closed.get()) {
+            log.warn("[Victoria Metrics] Rejecting metrics after storage shutdown");
+            return;
+        }
         if (!isServerAvailable()) {
             serverAvailable = checkVictoriaMetricsDatasourceAvailable();
         }
@@ -186,6 +203,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
+        var managedLabelCollisions =
+                VictoriaMetricsDataStorage.findManagedLabelCollisions(metricsData.getLabels());
+        if (!managedLabelCollisions.isEmpty()) {
+            recordIgnoredLabelCollisions(metricsData.getId(), managedLabelCollisions);
+        }
+        Map<String, String> customizedLabels = VictoriaMetricsDataStorage.withoutManagedLabels(
+                metricsData.getLabels(), managedLabelCollisions);
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto;
@@ -243,10 +267,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 }
                                 labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
-                                var customizedLabels = metricsData.getLabels();
-                                if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                    labels.putAll(customizedLabels);
-                                }
+                                VictoriaMetricsDataStorage.addCustomizedLabels(labels, customizedLabels);
                                 VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
                                     .metric(new HashMap<>(labels))
                                     .values(new Double[]{entry.getValue()})
@@ -276,16 +297,49 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
     }
 
+    private void recordIgnoredLabelCollisions(long monitorId, Set<String> collisions) {
+        long previousCount = ignoredLabelCollisionCount.getAndAdd(collisions.size());
+        long ignoredCount = previousCount + collisions.size();
+        if (previousCount == 0 || previousCount / 100 < ignoredCount / 100) {
+            log.warn("[warehouse victoria-metrics-cluster] ignore custom labels {} from metrics data {} because "
+                            + "the keys are HertzBeat-managed; cumulative ignored labels: {}.",
+                    collisions, monitorId, ignoredCount);
+        }
+    }
+
+    long getIgnoredLabelCollisionCount() {
+        return ignoredLabelCollisionCount.get();
+    }
+
     @Override
     public void destroy() {
+        synchronized (metricsFlushLock) {
+            if (!closed.compareAndSet(false, true)) {
+                return;
+            }
+        }
         if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
             metricsFlushTimer.stop();
+        }
+        immediateFlushPending.set(false);
+        while (hasPendingMetrics()) {
+            if (!flushBufferedMetrics()) {
+                log.error("[Victoria Metrics] Unable to flush {} buffered metrics during shutdown",
+                        getPendingMetricCount());
+                break;
+            }
         }
     }
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String history) {
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
@@ -295,6 +349,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
                 app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -310,8 +365,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             String exportUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), EXPORT_PATH);
             URI uri = UriComponentsBuilder.fromUriString(exportUrl)
                 .queryParam("match[]", "{" + timeSeriesSelector + "}")
-                .queryParam("start", "now-" + history)
-                .queryParam("end", "now")
+                .queryParam("start", queryWindow.exportStart())
+                .queryParam("end", queryWindow.exportEnd())
                 .build()
                 .encode()
                 .toUri();
@@ -362,6 +417,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String history) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
         if (!serverAvailable) {
             log.error("""
 
@@ -371,22 +433,10 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                     """);
             return Collections.emptyMap();
         }
-        long endTime = ZonedDateTime.now().toEpochSecond();
-        long startTime;
-        try {
-            if (NumberUtils.isParsable(history)) {
-                startTime = NumberUtils.toLong(history);
-                startTime = (ZonedDateTime.now().toEpochSecond() - startTime);
-            } else {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                startTime = dateTime.toEpochSecond();
-            }
-        } catch (Exception e) {
-            log.error("history time error: {}. use default: 6h", e.getMessage());
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
-            startTime = dateTime.toEpochSecond();
-        }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        long startTime = queryWindow.startSeconds();
+        long endTime = queryWindow.endSeconds();
+        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
@@ -411,7 +461,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             String rangeUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), QUERY_RANGE_PATH);
             URI uri = UriComponentsBuilder.fromUriString(rangeUrl)
                 .queryParam("query", "{" + timeSeriesSelector + "}")
-                .queryParam("step", "4h")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -421,39 +471,14 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from victoria-metrics success. {}", uri);
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            for (Object[] valueArr : content.getValues()) {
-                                long timestamp = Long.parseLong(String.valueOf(valueArr[0]));
-                                String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                    RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                // read timestamp here is s unit
-                                valueList.add(new Value(value, timestamp * 1000));
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendValues(responseEntity.getBody(), instanceValuesMap);
             } else {
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                .queryParam("query", "max_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "max_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -461,39 +486,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String maxValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                        RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMax(maxValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMax);
             }
             // min
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                .queryParam("query", "min_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "min_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -501,39 +499,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String minValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                        RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMin(minValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMin);
             }
             // avg
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -541,34 +512,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                    && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
-                        .getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        labels.remove(LABEL_KEY_NAME);
-                        labels.remove(LABEL_KEY_JOB);
-                        labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
-                        labels.remove(MONITOR_METRICS_KEY);
-                        labels.remove(MONITOR_METRIC_KEY);
-                        String labelStr = JsonUtil.toJson(labels);
-                        if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr,
-                                k -> new LinkedList<>());
-                            if (valueList.size() == content.getValues().size()) {
-                                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                                    Value value = valueList.get(timestampIndex);
-                                    Object[] valueArr = content.getValues().get(timestampIndex);
-                                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4,
-                                        RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    value.setMean(avgValue);
-                                }
-                            }
-                        }
-                    }
-                }
+                VictoriaMetricsReadResponse.appendAggregate(responseEntity.getBody(), instanceValuesMap, Value::setMean);
             }
         } catch (Exception e) {
             log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);
@@ -576,10 +520,53 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         return instanceValuesMap;
     }
 
+    private QueryWindow resolveQueryWindow(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            long startSeconds = start / 1000L;
+            long endSeconds = end / 1000L;
+            return new QueryWindow(startSeconds, endSeconds, String.valueOf(startSeconds), String.valueOf(endSeconds));
+        }
+        long endSeconds = ZonedDateTime.now().toEpochSecond();
+        long startSeconds;
+        String queryHistory = StringUtils.hasText(history) ? history : "6h";
+        try {
+            if (NumberUtils.isParsable(queryHistory)) {
+                startSeconds = endSeconds - NumberUtils.toLong(queryHistory);
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(queryHistory);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                startSeconds = dateTime.toEpochSecond();
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            startSeconds = endSeconds - Duration.ofHours(6).getSeconds();
+            queryHistory = "6h";
+        }
+        return new QueryWindow(startSeconds, endSeconds, "now-" + queryHistory, "now");
+    }
+
+    private String getTimeStep(long start, long end) {
+        long seconds = end - start;
+        if (seconds < Duration.ofDays(7).getSeconds() && seconds > Duration.ofDays(1).getSeconds()) {
+            return "1h";
+        }
+        if (seconds >= Duration.ofDays(7).getSeconds()) {
+            return "4h";
+        }
+        return "60s";
+    }
+
+    private record QueryWindow(long startSeconds, long endSeconds, String exportStart, String exportEnd) {
+    }
+
     /**
      * Save metric data to victoria-metric via HTTP call
      */
-    public void doSaveData(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList){
+    public void doSaveData(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
+        trySaveData(contentList);
+    }
+
+    private boolean trySaveData(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -599,12 +586,15 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("insert metrics data to victoria-metrics success.");
+                return true;
             } else {
-                log.error("insert metrics data to victoria-metrics failed. {}", responseEntity.getBody());
+                log.error("insert metrics data to victoria-metrics failed with status {}",
+                        responseEntity.getStatusCode());
             }
         } catch (Exception e){
             log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
         }
+        return false;
     }
 
     /**
@@ -612,49 +602,123 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
      * @param contentList victoriaMetricsContent List
      */
     private void sendVictoriaMetrics(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
-        for (VictoriaMetricsDataStorage.VictoriaMetricsContent content : contentList) {
-            boolean offered = false;
-            int retryCount = 0;
-            while (!offered && retryCount < MAX_RETRIES) {
+        for (int index = 0; index < contentList.size(); index++) {
+            VictoriaMetricsDataStorage.VictoriaMetricsContent content = contentList.get(index);
+            boolean offered = metricsBufferQueue.offer(content);
+            for (int attempt = 1; attempt <= MAX_BUFFER_OFFER_ATTEMPTS && !offered; attempt++) {
+                if (closed.get()) {
+                    return;
+                }
+                triggerImmediateFlush();
                 try {
-                    // Attempt to add to the queue for a limited time
                     offered = metricsBufferQueue.offer(content, MAX_WAIT_MS, TimeUnit.MILLISECONDS);
-                    if (!offered) {
-                        // If the queue is still full, trigger an immediate refresh to free up space
-                        if (retryCount == 0) {
-                            log.debug("victoria metrics buffer queue is full, triggering immediate flush");
-                            triggerImmediateFlush();
-                        }
-                        retryCount++;
-                        // The short sleep allows the queue to clear out
-                        if (retryCount < MAX_RETRIES) {
-                            Thread.sleep(100L * retryCount);
-                        }
-                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    log.error("[Victoria Metrics] Interrupted while offering metrics to buffer queue", e);
-                    break;
+                    recordDroppedMetrics(contentList.size() - index, "producer interrupted");
+                    return;
                 }
             }
-            // When the maximum number of retries is reached, if it still cannot be added to the queue, the data is saved directly
             if (!offered) {
-                log.warn("[Victoria Metrics] Failed to add metrics to buffer after {} retries, saving directly", MAX_RETRIES);
-                try {
-                    doSaveData(contentList);
-                } catch (Exception e) {
-                    log.error("[Victoria Metrics] Failed to save metrics directly: {}", e.getMessage(), e);
-                }
+                recordDroppedMetrics(contentList.size() - index, "buffer remained full");
+                return;
             }
-            // Refresh in advance to avoid waiting
             if (metricsBufferQueue.size() >= vmInsertProps.bufferSize() * 0.8) {
                 triggerImmediateFlush();
             }
         }
     }
 
+    private void recordDroppedMetrics(int count, String reason) {
+        long total = droppedMetricCount.addAndGet(count);
+        if (total == count || (total & (total - 1)) == 0 || total % 100 == 0) {
+            log.error("[Victoria Metrics] Dropped {} metrics because {}; cumulative dropped metrics: {}",
+                    count, reason, total);
+        }
+    }
+
+    @Override
+    public long getDroppedMetricCount() {
+        return droppedMetricCount.get();
+    }
+
     private void triggerImmediateFlush() {
-        metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.MILLISECONDS);
+        scheduleImmediateFlush(0, TimeUnit.MILLISECONDS);
+    }
+
+    private void scheduleImmediateFlush(long delay, TimeUnit unit) {
+        if (closed.get() || metricsFlushTimer == null || metricsFlushTimer.isStop()) {
+            return;
+        }
+        if (immediateFlushPending.compareAndSet(false, true)) {
+            try {
+                metricsFlushTimer.newTimeout(new ImmediateMetricsFlushTask(), delay, unit);
+            } catch (RuntimeException e) {
+                immediateFlushPending.set(false);
+                if (!closed.get()) {
+                    log.warn("[Victoria Metrics] Unable to schedule immediate flush: {}", e.getMessage());
+                }
+            }
+        }
+    }
+
+    private boolean flushBufferedMetrics() {
+        if (!flushInFlight.compareAndSet(false, true)) {
+            return false;
+        }
+        try {
+            List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch;
+            synchronized (metricsFlushLock) {
+                if (retryBatch.isEmpty()) {
+                    List<VictoriaMetricsDataStorage.VictoriaMetricsContent> nextBatch =
+                            new ArrayList<>(vmInsertProps.bufferSize());
+                    metricsBufferQueue.drainTo(nextBatch, vmInsertProps.bufferSize());
+                    retryBatch = nextBatch;
+                }
+                batch = retryBatch;
+            }
+            if (batch.isEmpty()) {
+                return true;
+            }
+            if (!trySaveData(batch)) {
+                log.warn("[Victoria Metrics] Retaining {} metrics items for retry", batch.size());
+                return false;
+            }
+            synchronized (metricsFlushLock) {
+                if (retryBatch == batch) {
+                    retryBatch = Collections.emptyList();
+                }
+            }
+            log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
+            return true;
+        } finally {
+            flushInFlight.set(false);
+        }
+    }
+
+    private boolean hasPendingMetrics() {
+        synchronized (metricsFlushLock) {
+            return !retryBatch.isEmpty() || !metricsBufferQueue.isEmpty();
+        }
+    }
+
+    @Override
+    public int getPendingMetricCount() {
+        synchronized (metricsFlushLock) {
+            return retryBatch.size() + metricsBufferQueue.size();
+        }
+    }
+
+    private void schedulePeriodicFlush() {
+        if (closed.get() || metricsFlushTimer == null || metricsFlushTimer.isStop()) {
+            return;
+        }
+        try {
+            metricsFlushTimer.newTimeout(metricsFlushtask, vmInsertProps.flushInterval(), TimeUnit.SECONDS);
+        } catch (RuntimeException e) {
+            if (!closed.get()) {
+                log.warn("[Victoria Metrics] Unable to schedule periodic flush: {}", e.getMessage());
+            }
+        }
     }
 
     /**
@@ -663,18 +727,47 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private class MetricsFlushTask implements TimerTask {
         @Override
         public void run(Timeout timeout) {
+            boolean flushSucceeded = false;
             try {
-                List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(vmInsertProps.bufferSize());
-                metricsBufferQueue.drainTo(batch, vmInsertProps.bufferSize());
-                if (!batch.isEmpty()) {
-                    doSaveData(batch);
-                    log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
-                }
-                if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
-                    metricsFlushTimer.newTimeout(this, vmInsertProps.flushInterval(), TimeUnit.SECONDS);
-                }
+                flushSucceeded = flushBufferedMetrics();
             } catch (Exception e) {
                 log.error("[VictoriaMetrics] flush task error: {}", e.getMessage(), e);
+            } finally {
+                if (!flushSucceeded && hasPendingMetrics() && !closed.get()) {
+                    scheduleImmediateFlush(FAILED_FLUSH_RETRY_SECONDS, TimeUnit.SECONDS);
+                }
+                schedulePeriodicFlush();
+            }
+        }
+    }
+
+    /**
+     * Executes an immediate flush without creating another periodic chain.
+     */
+    private class ImmediateMetricsFlushTask implements TimerTask {
+        @Override
+        public void run(Timeout timeout) {
+            boolean flushSucceeded = false;
+            try {
+                int flushedBatches = 0;
+                do {
+                    flushSucceeded = flushBufferedMetrics();
+                    flushedBatches++;
+                } while (flushSucceeded
+                        && hasPendingMetrics()
+                        && !closed.get()
+                        && flushedBatches < MAX_BATCHES_PER_FLUSH_TASK);
+            } catch (Exception e) {
+                log.error("[VictoriaMetrics] immediate flush task error: {}", e.getMessage(), e);
+            } finally {
+                immediateFlushPending.set(false);
+                if (hasPendingMetrics() && !closed.get()) {
+                    if (flushSucceeded) {
+                        scheduleImmediateFlush(0, TimeUnit.MILLISECONDS);
+                    } else {
+                        scheduleImmediateFlush(FAILED_FLUSH_RETRY_SECONDS, TimeUnit.SECONDS);
+                    }
+                }
             }
         }
     }

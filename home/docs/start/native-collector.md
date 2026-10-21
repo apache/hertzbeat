@@ -1,82 +1,45 @@
 ---
 id: native-collector
-title: Native Collector Guide
-sidebar_label: Native Collector
-description: When to choose the HertzBeat native collector package, its benefits, limitations, and deployment guidance.
+title: Native Hybrid Collector
+sidebar_label: Native Hybrid Collector
 ---
 
-## When should I choose the native collector?
+The native Hybrid Collector is a platform-specific Collector executable with its managed OTel runtime assets. It is separate from the HertzBeat Server archive and from a language agent such as the OTel Java agent. A native package does not imply that every JVM collection protocol or native platform has been validated.
 
-Choose the native collector package when your monitoring workload does not depend on loading external JDBC drivers from `ext-lib`.
+## Choose and verify an artifact
 
-Typical native-friendly workloads include:
+Use a Collector native archive produced from the intended source revision for the exact OS/architecture. Record its digest and declared platform. The source assembly is `script/assembly/collector/assembly-native.xml`; it includes the executable, launchers, configuration, licenses, platform runtime, manifests and SBOM/checksum files. A filename alone is not provenance.
 
-- HTTP, HTTPS, website availability, and API checks
-- Port, ping, SSL certificate, and other network probes
-- MySQL, MariaDB, and OceanBase when you do not rely on runtime `ext-lib` JDBC loading
-- TiDB when you do not rely on runtime `ext-lib` JDBC loading for its SQL query metric set
-- Redis, Zookeeper, Kafka, and other non-JDBC monitoring types
+From the source checkout, the existing package contract can inspect a declared archive:
 
-## Why use it?
+```shell
+sh script/ci/verify-hybrid-collector-native-package.sh "$COLLECTOR_ARCHIVE" "$COLLECTOR_PLATFORM"
+```
 
-Compared with the JVM collector package, the native collector package is usually a better fit when you want:
+Set both variables to your actual artifact and its platform name (for example `linux-arm64`). This checks package contents; it does not run or certify a target deployment. Building native code requires the repository's Java 25/GraalVM and native build prerequisites; running a verified native executable does not require installing a JVM on the target. Do not reuse a binary built for another architecture.
 
-- Faster startup
-- Lower baseline memory usage
-- A simpler runtime without a bundled or preinstalled JDK
+## Configure and launch deliberately
 
-## What are the trade-offs?
+Start from the archive's `config/application.yml`. Set a unique `IDENTITY`, the correct `MANAGER_HOST` and manager cluster port (`MANAGER_PORT`, normally `1158`). The Server public HTTP endpoint and Collector cluster endpoint have different purposes. Agentless targets must be reachable from this collector.
 
-The native collector package is not a drop-in replacement for every JVM collector scenario.
+The managed OTel runtime is opt-in (`HERTZBEAT_OTEL_RUNTIME_ENABLED` defaults to false). Use the matching Collector intake profile and generated instructions for endpoint, token and collector identity. Preserve its data directory for identity, queues and offsets. Language agents/SDKs are provisioned separately; the package does not bundle them.
 
-- Native packages are platform-specific. You must choose the package that matches your OS and CPU architecture.
-- The native collector does not support loading external JDBC driver JARs from `ext-lib` at runtime.
-- If your deployment depends on JVM-style runtime classpath extension, keep using the JVM collector package.
+On Unix, inspect a first launch in the foreground from the extracted archive:
 
-## When should I stay on the JVM collector?
+```shell
+./bin/foreground.sh
+```
 
-Use the JVM collector package if your monitoring depends on external JDBC drivers, especially:
+This launcher executes the packaged native binary and forwards additional application arguments. Inspect logs, registration and actual current samples. `bin/startup.sh` is a background helper: with `lsof`, it only reports listener success for the launched PID on the helper’s fixed port `1159`; without `lsof`, it reports process launch with **readiness unverified**. Neither a live process nor a TCP listener proves that telemetry reached storage.
 
-- Oracle, which requires `ojdbc8` and sometimes `orai18n`
-- DB2, which requires `jcc`
-- Any MySQL, MariaDB, or OceanBase deployment where you explicitly place `mysql-connector-j` in `ext-lib` and want the JDBC path
+## Linux service lifecycle and state
 
-## Package naming
+Linux native archives include `service/install-systemd.sh` and `service/README-systemd.md`. Follow that included version's instructions for installation/upgrade. The layout separates releases under `/opt/hertzbeat-collector`, protected configuration under `/etc/hertzbeat`, persistent state under `/var/lib/hertzbeat-collector` and logs under `/var/log/hertzbeat-collector`. Keep credentials in protected configuration/environment files, not command arguments.
 
-The JVM collector package remains cross-platform:
+The installer provides `install`, `upgrade`, `uninstall` and explicit `purge` operations. Uninstall preserves state; purge is destructive. Back up configuration and state before an upgrade and validate restored identity and sample continuity. Do not infer successful rollback from a script exit alone.
 
-- `apache-hertzbeat-collector-{version}-bin.tar.gz`
+## Acceptance boundary
 
-The native collector package is platform-specific:
+The 2.0 alpha local release proof exercised the Server on H2/MySQL/PostgreSQL, Agentless MySQL and an official OTel Java agent. It did not establish a full native Collector OS/protocol matrix, fleet scale or an SLO. Verify the chosen platform, managed-runtime lifecycle, authentication failure, stopped reporting and recovery with actual signals before using it as a verified source. Windows packages use their included batch launchers; Unix/systemd results do not establish Windows parity.
 
-- Linux or macOS: `apache-hertzbeat-collector-native-{version}-{platform}-bin.tar.gz`
-- Windows: `apache-hertzbeat-collector-native-{version}-windows-amd64-bin.zip`
-
-Examples:
-
-- `apache-hertzbeat-collector-native-1.8.0-linux-amd64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.8.0-macos-arm64-bin.tar.gz`
-- `apache-hertzbeat-collector-native-1.8.0-windows-amd64-bin.zip`
-
-## Configuration consistency
-
-The native collector package uses the same `config/application.yml` layout as the JVM collector package.
-
-That means:
-
-- Collector connection settings are edited in the same place
-- Virtual-thread related configuration is edited in the same place
-- Native-only boot adjustments are applied by code at runtime instead of maintaining a second `application.yml`
-
-## Recommended decision
-
-- Choose the native collector package when you want lower memory usage and faster startup for non-JDBC monitoring, for MySQL, MariaDB, and OceanBase without `ext-lib`, or for TiDB when its SQL query metric set can use the built-in MySQL-compatible query engine.
-- Choose the JVM collector package when you need `ext-lib`, external JDBC drivers, or JVM-style runtime extensibility.
-- For MySQL-compatible monitoring on the JVM collector, `auto` only checks `ext-lib`. If you need to force a path, set `hertzbeat.collector.mysql.query-engine=jdbc`, `r2dbc`, or `auto`.
-
-## How are the official multi-platform packages built?
-
-- `mvn clean package -pl hertzbeat-collector-collector -am -Pnative` builds a native collector package for the current host only.
-- The official Linux, macOS, and Windows native release packages are produced by manually running the `Collector Native Release` GitHub Actions workflow during release preparation, not on every push or pull request.
-
-For package deployment steps, refer to [Install HertzBeat via Package](package-deploy).
+See [Server installation](./package-deploy.md) for the separate Server setup and [collector governance proposal](../roadmap/future-collector-fleet-governance.md) for future fleet work.

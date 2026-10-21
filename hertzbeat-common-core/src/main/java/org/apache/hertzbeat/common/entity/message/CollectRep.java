@@ -125,12 +125,24 @@ public final class CollectRep {
          */
         private ArrowTable table;
 
+        private BufferAllocator allocator;
+
         public MetricsData(ArrowTable table) {
-            this.table = table;
+            this(table, null);
         }
-        
+
+        public MetricsData(ArrowTable table, BufferAllocator allocator) {
+            this.table = table;
+            this.allocator = allocator;
+        }
+
         public MetricsData(VectorSchemaRoot vectorSchemaRoot) {
+            this(vectorSchemaRoot, null);
+        }
+
+        public MetricsData(VectorSchemaRoot vectorSchemaRoot, BufferAllocator allocator) {
             this.table = new ArrowTable(vectorSchemaRoot);
+            this.allocator = allocator;
         }
 
         public static Builder newBuilder() {
@@ -248,6 +260,16 @@ public final class CollectRep {
             return JsonUtil.fromJson(annotationStr, Map.class);
         }
 
+        /**
+         * Read one schema metadata value without exposing the mutable metadata map.
+         *
+         * @param key metadata key
+         * @return metadata value, or {@code null} when absent
+         */
+        public String getMetadataValue(String key) {
+            return key == null ? null : getMetadata().get(key);
+        }
+
         private Map<String, String> getMetadata() {
             return table != null ? table.getSchema().getCustomMetadata() : new HashMap<>();
         }
@@ -313,6 +335,9 @@ public final class CollectRep {
         public void close() {
             if (table != null) {
                 table.close();
+            }
+            if (allocator != null) {
+                allocator.close();
             }
         }
 
@@ -428,7 +453,7 @@ public final class CollectRep {
                     // Create Schema with metadata
                     Schema schema = new Schema(arrowFields, metadata);
                     VectorSchemaRoot root = VectorSchemaRoot.create(schema, allocator);
-                    
+
                     try {
                         root.allocateNew();
                         int rowCount = values.size();
@@ -452,12 +477,13 @@ public final class CollectRep {
                             }
                             vector.setValueCount(rowCount);
                         }
-                        return new MetricsData(new ArrowTable(root));
+                        // ArrowTable takes ownership of root's vectors;
+                        // allocator lifecycle is bound to the returned MetricsData
+                        return new MetricsData(new ArrowTable(root), allocator);
                     } catch (Exception e1) {
                         log.error(e1.getMessage(), e1);
-                        throw e1;
-                    } finally {
                         root.close();
+                        throw e1;
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -46,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for Email Alert Notify
@@ -106,7 +110,7 @@ class EmailAlertNotifyHandlerImplTest {
                 .content(JsonUtil.toJson(mailServerConfig))
                 .build();
         when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
-        when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
+        lenient().when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
     }
 
     @Test
@@ -125,9 +129,69 @@ class EmailAlertNotifyHandlerImplTest {
     }
 
     @Test
+    public void testSkipSslCertVerifyTrustsAllHosts() throws Exception {
+        Properties props = stubMailConfig(false);
+        emailAlertNotifyHandler.send(receiver, template, groupAlert);
+        assertEquals("*", props.get("mail.smtp.ssl.trust"));
+        assertEquals("false", props.get("mail.smtp.ssl.checkserveridentity"));
+    }
+
+    @Test
+    public void testEnableSslCertVerifyClearsStaleTrustProps() throws Exception {
+        Properties props = stubMailConfig(true);
+        props.put("mail.smtp.ssl.trust", "*");
+        props.put("mail.smtp.ssl.checkserveridentity", "false");
+        emailAlertNotifyHandler.send(receiver, template, groupAlert);
+        assertNull(props.get("mail.smtp.ssl.trust"));
+        assertNull(props.get("mail.smtp.ssl.checkserveridentity"));
+    }
+
+    private Properties stubMailConfig(boolean sslCertVerify) {
+        MailServerConfig config = new MailServerConfig();
+        config.setEmailHost("smtp.example.com");
+        config.setEmailPort(465);
+        config.setEmailUsername("sender@example.com");
+        config.setEmailPassword("password");
+        config.setEnable(true);
+        config.setEmailSslCertVerify(sslCertVerify);
+        when(generalConfigDao.findByType(any()))
+                .thenReturn(GeneralConfig.builder().content(JsonUtil.toJson(config)).build());
+        Properties props = new Properties();
+        when(mailSender.getJavaMailProperties()).thenReturn(props);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        return props;
+    }
+
+    @Test
     public void testNotifyAlertFailure() {
         when(mailSender.createMimeMessage()).thenThrow(new RuntimeException("Test Error"));
         assertThrows(AlertNoticeException.class,
                 () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    void configuredFromAddressIsUsedByProductionHandler() throws Exception {
+        AtomicReference<MimeMessage> sent = new AtomicReference<>();
+        JavaMailSenderImpl sender = new JavaMailSenderImpl() {
+            @Override
+            public void send(MimeMessage mimeMessage) {
+                sent.set(mimeMessage);
+            }
+        };
+        when(generalConfigDao.findByType(any())).thenReturn(null);
+        EmailAlertNotifyHandlerImpl handler = new EmailAlertNotifyHandlerImpl(sender, generalConfigDao);
+        ReflectionTestUtils.setField(handler, "host", "smtp.example.test");
+        ReflectionTestUtils.setField(handler, "port", 465);
+        ReflectionTestUtils.setField(handler, "username", "smtp-user@example.test");
+        ReflectionTestUtils.setField(handler, "password", "password");
+        ReflectionTestUtils.setField(handler, "fromAddress", "alerts@example.test");
+        ReflectionTestUtils.setField(handler, "sslEnable", true);
+        ReflectionTestUtils.setField(handler, "starttlsEnable", false);
+        ReflectionTestUtils.setField(handler, "bundle", bundle);
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+        handler.send(receiver, template, groupAlert);
+
+        assertEquals("alerts@example.test", sent.get().getFrom()[0].toString());
     }
 }

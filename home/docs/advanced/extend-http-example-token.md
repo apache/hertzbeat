@@ -8,6 +8,31 @@ Through this tutorial, we will describe step by step how to modify on the basis 
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
+## Dynamic UUID v4 in request bodies
+
+Use `{{v4uuid}}` in an HTTP metric's `payload` to insert a random UUID v4. One UUID is generated at the start of each collection cycle and reused by all HTTP metrics in that cycle, including the authentication metric and later metrics. The next cycle generates a new UUID; different monitoring jobs have independent UUIDs.
+
+For example, add a request ID to the HTTP configuration of a later metric in your custom monitoring template:
+
+```yaml
+http:
+  host: ^_^host^_^
+  port: ^_^port^_^
+  method: POST
+  url: /api/data
+  headers:
+    Content-Type: application/json
+    Authorization: ^o^token^o^
+  payload: |
+    {"requestId":"{{v4uuid}}","correlation":{"id":"{{v4uuid}}"}}
+  parseType: jsonPath
+  parseScript: '$.data'
+```
+
+Adapt the endpoint, response fields and token name to your API. Both UUID placeholders above resolve to the same value. Add `"requestId":"{{v4uuid}}"` to the authentication metric's payload as well if both requests need to share that ID.
+
+The placeholder also works inside a request body supplied through a monitoring parameter, such as `payload: ^_^payload^_^`. Static monitoring parameters and values from earlier metrics, such as `^o^token^o^`, keep their existing behavior. UUID substitution applies only to the HTTP request body; it does not change headers, URLs or metric names. The stored template retains the placeholder for future collection cycles.
+
 ## Request process
 
 【**Authentication information metrics (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an metric**] -> [**Assign accessToken as a variable parameter to other collection index groups**]

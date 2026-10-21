@@ -1,4 +1,4 @@
-## docker-compose deployment HertzBeat+PostgreSQL+IoTDB solution
+## docker-compose deployment HertzBeat+PostgreSQL+VictoriaMetrics solution
 
 > The docker-compose deployment scheme uses PostgreSQL + VictoriaMetrics as the dependent storage service of HertzBeat.  
 > This solution will start three container services PostgreSQL, VictoriaMetrics, HertzBeat
@@ -24,10 +24,54 @@
    If you want HertzBeat to prefer JDBC after restart, place `mysql-connector-j` in `ext-lib`.
    Oracle and DB2 still require external JDBC jars in `ext-lib`.
 
-3. Enter the deployment script docker-compose directory, execute
+3. Enter the deployment script docker-compose directory and create `.env` from `.env.example`
+
+   `POSTGRES_PASSWORD` is required; `docker compose up` refuses to start without it.
+
+   ```shell
+   cp .env.example .env
+   # Edit .env and set POSTGRES_PASSWORD to a strong password of your own
+   ```
+
+4. Execute
 
    `docker compose up -d`
 
+##### Listener scope and remote collectors
+
+The quick-start stack publishes every host port on `127.0.0.1` by default:
+
+- `1157` is the HertzBeat web UI and API.
+- `1158` is the manager/collector transport.
+- `14317` is OTLP/gRPC telemetry ingestion. It uses a separate bind override so
+  enabling a remote Collector does not also expose ingestion.
+- `15432` and `18428` are the PostgreSQL and VictoriaMetrics development
+  endpoints. They remain loopback-only because containers use the internal
+  `hertzbeat` network.
+
+No configuration change is needed for ordinary local use. To connect a
+collector from another host, edit `.env` and set `HERTZBEAT_BIND_ADDRESS` to
+an address that the collector can reach:
+
+```shell
+# Edit HERTZBEAT_BIND_ADDRESS in .env, then render and inspect the final mappings.
+docker compose config
+```
+
+Expose `1158` only to the collector source networks. If remote browser/API
+access is also needed, expose `1157` through a TLS reverse proxy where
+possible. Before setting a wildcard address such as `0.0.0.0`, replace all
+bundled/default credentials, restrict access with a firewall or security
+group, and configure TLS. `HERTZBEAT_BIND_ADDRESS` does not expose the
+OTLP, PostgreSQL, or VictoriaMetrics ports.
+
+For remote OTLP/gRPC senders, set `HERTZBEAT_OTLP_BIND_ADDRESS` separately and
+allow `14317` only from trusted telemetry source networks. Prefer an authenticated
+and TLS-protected collector or gateway before traffic reaches HertzBeat.
+
+Configure a remote collector with the manager's reachable address and port
+`1158`; do not point it at `127.0.0.1` unless the manager runs on the same
+host.
 
 ##### Start exploring HertzBeat
 

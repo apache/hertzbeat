@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat monitors related indicators of the DNS service.
   zh-TW: HertzBeat對DNS服務相關名額進行監測。
   ja-JP: HertzBeatはDNSのメトリクスを監視します。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dns
+  en-US: https://hertzbeat.apache.org/docs/help/dns
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

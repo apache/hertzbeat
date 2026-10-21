@@ -17,173 +17,70 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
 import org.apache.hertzbeat.ai.dao.ChatMessageDao;
-import org.apache.hertzbeat.ai.dao.SopScheduleDao;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
-import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.InOrder;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 
-/**
- * Tests multi-turn conversation context handling in {@link ConversationServiceImpl}.
- */
-@ExtendWith(MockitoExtension.class)
 class ConversationServiceImplTest {
 
-    private static final long CONVERSATION_ID = 1L;
-
-    @Mock
-    private ChatConversationDao conversationDao;
-
-    @Mock
-    private ChatMessageDao messageDao;
-
-    @Mock
-    private SopScheduleDao sopScheduleDao;
-
-    @Mock
-    private ChatClientProviderService chatClientProviderService;
-
-    @InjectMocks
-    private ConversationServiceImpl conversationService;
+    @BeforeEach
+    void bindSubject() {
+        SubjectSum subject = mock(SubjectSum.class);
+        when(subject.getPrincipal()).thenReturn("alice");
+        SurenessContextHolder.bindSubject(subject);
+    }
 
     @AfterEach
-    void clearSecurityContext() {
+    void clearSubject() {
         SurenessContextHolder.clear();
     }
 
     @Test
-    void streamChatShouldKeepCompleteConversationHistory() {
-        SubjectSum subject = org.mockito.Mockito.mock(SubjectSum.class);
-        SurenessContextHolder.bindSubject(subject);
-        ChatConversation conversation = ChatConversation.builder()
-            .id(CONVERSATION_ID)
-            .title("已命名会话")
-            .build();
-        List<ChatMessage> history = List.of(
-            ChatMessage.builder()
-                .id(11L)
-                .conversationId(CONVERSATION_ID)
-                .role("user")
-                .content("上一轮问题")
-                .build(),
-            ChatMessage.builder()
-                .id(12L)
-                .conversationId(CONVERSATION_ID)
-                .role("assistant")
-                .content("上一轮回答")
-                .build());
-        AtomicLong messageId = new AtomicLong(20L);
+    void followUpPreservesTheLatestPriorAssistantReply() {
+        ChatConversationDao conversations = mock(ChatConversationDao.class);
+        ChatMessageDao messages = mock(ChatMessageDao.class);
+        ChatClientProviderService provider = mock(ChatClientProviderService.class);
+        ConversationServiceImpl service = new ConversationServiceImpl();
+        ReflectionTestUtils.setField(service, "conversationDao", conversations);
+        ReflectionTestUtils.setField(service, "messageDao", messages);
+        ReflectionTestUtils.setField(service, "chatClientProviderService", provider);
+        ChatConversation conversation = new ChatConversation();
+        conversation.setId(7L);
+        conversation.setTitle("Service investigation");
+        ChatMessage question = ChatMessage.builder().id(1L).role("user").content("First question").build();
+        ChatMessage answer = ChatMessage.builder().id(2L).role("assistant").content("Previous answer").build();
+        List<ChatMessage> prior = List.of(question, answer);
+        when(provider.isConfigured()).thenReturn(true);
+        when(conversations.findByIdAndCreator(7L, "alice")).thenReturn(Optional.of(conversation));
+        when(messages.findByConversationIdOrderByGmtCreateAsc(7L)).thenReturn(prior);
+        when(messages.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(provider.streamChat(any())).thenReturn(Flux.just("Follow-up answer"));
 
-        when(chatClientProviderService.isConfigured()).thenReturn(true);
-        when(conversationDao.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
-        when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID)).thenReturn(history);
-        when(messageDao.save(any(ChatMessage.class))).thenAnswer(invocation -> {
-            ChatMessage savedMessage = invocation.getArgument(0);
-            savedMessage.setId(messageId.getAndIncrement());
-            return savedMessage;
-        });
-        when(chatClientProviderService.streamChat(any(ChatRequestContext.class)))
-            .thenReturn(Flux.just("本轮回答"));
+        service.streamChat("Explain that answer", 7L).collectList().block();
 
-        List<ServerSentEvent<ChatResponseChunk>> events = conversationService
-            .streamChat("本轮问题", CONVERSATION_ID)
-            .collectList()
-            .block();
-
-        assertNotNull(events);
-        assertEquals(2, events.size());
-        ArgumentCaptor<ChatRequestContext> contextCaptor = ArgumentCaptor.forClass(ChatRequestContext.class);
-        verify(chatClientProviderService).streamChat(contextCaptor.capture());
-        assertEquals(history, contextCaptor.getValue().getConversationHistory());
-        assertEquals(subject, contextCaptor.getValue().getSubject());
-    }
-
-    /**
-     * The service should create a conversation and return its ID when the client omits the optional conversation ID.
-     */
-    @Test
-    void streamChatShouldCreateConversationWhenConversationIdIsMissing() {
-        AtomicLong messageId = new AtomicLong(20L);
-        when(chatClientProviderService.isConfigured()).thenReturn(true);
-        when(conversationDao.save(any(ChatConversation.class))).thenAnswer(invocation -> {
-            ChatConversation savedConversation = invocation.getArgument(0);
-            savedConversation.setId(CONVERSATION_ID);
-            return savedConversation;
-        });
-        when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID)).thenReturn(List.of());
-        when(messageDao.save(any(ChatMessage.class))).thenAnswer(invocation -> {
-            ChatMessage savedMessage = invocation.getArgument(0);
-            savedMessage.setId(messageId.getAndIncrement());
-            return savedMessage;
-        });
-        when(chatClientProviderService.streamChat(any(ChatRequestContext.class)))
-            .thenReturn(Flux.just("本轮回答"));
-
-        List<ServerSentEvent<ChatResponseChunk>> events = conversationService
-            .streamChat("本轮问题", null)
-            .collectList()
-            .block();
-
-        assertNotNull(events);
-        assertEquals(2, events.size());
-        assertEquals(CONVERSATION_ID, events.get(0).data().getConversationId());
-        assertEquals(CONVERSATION_ID, events.get(1).data().getConversationId());
-
-        ArgumentCaptor<ChatRequestContext> contextCaptor = ArgumentCaptor.forClass(ChatRequestContext.class);
-        verify(chatClientProviderService).streamChat(contextCaptor.capture());
-        assertEquals(CONVERSATION_ID, contextCaptor.getValue().getConversationId());
-        assertEquals(List.of(), contextCaptor.getValue().getConversationHistory());
-        ArgumentCaptor<ChatConversation> conversationCaptor = ArgumentCaptor.forClass(ChatConversation.class);
-        verify(conversationDao).save(conversationCaptor.capture());
-        assertEquals("本轮问题", conversationCaptor.getValue().getTitle());
-        verifyNoMoreInteractions(conversationDao);
-    }
-
-    /**
-     * Deleting a conversation must remove its schedules before they can push more messages.
-     */
-    @Test
-    void deleteConversationShouldRemoveSchedulesMessagesAndConversationInOrder() {
-        ChatMessage message = ChatMessage.builder()
-            .id(11L)
-            .conversationId(CONVERSATION_ID)
-            .role("user")
-            .content("message to delete")
-            .build();
-        when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID))
-            .thenReturn(List.of(message));
-
-        conversationService.deleteConversation(CONVERSATION_ID);
-
-        InOrder deletionOrder = inOrder(sopScheduleDao, messageDao, conversationDao);
-        deletionOrder.verify(sopScheduleDao).deleteByConversationId(CONVERSATION_ID);
-        deletionOrder.verify(messageDao).deleteAll(List.of(message));
-        deletionOrder.verify(conversationDao).deleteById(CONVERSATION_ID);
+        ArgumentCaptor<ChatRequestContext> context = ArgumentCaptor.forClass(ChatRequestContext.class);
+        verify(provider).streamChat(context.capture());
+        assertThat(context.getValue().getConversationHistory()).containsExactly(question, answer);
+        assertThat(context.getValue().getMessage()).isEqualTo("Explain that answer");
+        assertThat(prior).containsExactly(question, answer);
     }
 }

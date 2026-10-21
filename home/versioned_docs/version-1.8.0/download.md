@@ -33,4 +33,4 @@ Previous releases of HertzBeat may be affected by security issues, please use th
 
 ## All Archived Releases
 
-For older releases, please check the [archive](https://archive.apache.org/dist/incubator/hertzbeat/).
+For older releases, please check the [archive](https://archive.apache.org/dist/hertzbeat/).

@@ -1,0 +1,81 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.page {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20px;
+  --start-accent: var(--ant-color-primary, var(--hb-brand-accent));
+  --start-link: var(--ant-color-link, var(--hb-brand-accent));
+  --start-border: var(--hb-border-subtle);
+  --start-panel-border: var(--start-border);
+  --start-surface: var(--hb-bg-chrome);
+}
+.page > :global([data-hb-operational-page]) {
+  gap: var(--hb-space-4);
+}
+.summary {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.4fr);
+  gap: var(--hb-space-6);
+  min-width: 0;
+  align-items: stretch;
+  margin-bottom: var(--hb-space-2);
+}
+.signalSection {
+  min-width: 0;
+}
+.signalGrid {
+  display: grid;
+  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--hb-space-3);
+}
+.page a:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+:global(:root[data-theme='default']) .page h3 {
+  color: var(--hb-text-primary);
+  font-weight: 600;
+}
+@media (max-width: 800px) {
+  .signalGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.pageActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+  min-height: 32px;
+}
+
+@media (max-width: 1200px) and (min-width: 801px) {
+  .summary {
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+}
+@media (max-width: 800px) {
+  .summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-3);
+  }
+}

@@ -29,9 +29,24 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
+import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
+import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfig;
+import org.apache.hertzbeat.manager.pojo.dto.PublicAccessConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfigRequest;
 import org.apache.hertzbeat.manager.service.ConfigService;
-import org.springframework.http.HttpStatus;
+import org.apache.hertzbeat.manager.service.MessageServerConfigConflictException;
+import org.apache.hertzbeat.manager.service.MessageServerConfigRevisionRequiredException;
+import org.apache.hertzbeat.manager.service.MessageServerConfigService;
+import org.apache.hertzbeat.manager.service.PublicAccessConfigService;
+import org.apache.hertzbeat.manager.service.SystemConfigService;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,9 +64,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 
 /**
  * Generate Configuration API
@@ -78,6 +95,66 @@ public class GeneralConfigController {
 
     @Resource
     private ConfigService configService;
+
+    @Resource
+    private MessageServerConfigService messageServerConfigService;
+
+    @Resource
+    private SystemConfigService systemConfigService;
+
+    @Resource
+    private PublicAccessConfigService publicAccessConfigService;
+
+    @PostMapping(path = "/system")
+    @Operation(summary = "Save the system config")
+    public ResponseEntity<Message<SystemConfig>> saveSystemConfig(@RequestBody SystemConfigRequest request) {
+        return handleSystemConfig(() -> systemConfigService.saveAndGetConfig(request));
+    }
+
+    @GetMapping(path = "/system")
+    @Operation(summary = "Get the system config")
+    public ResponseEntity<Message<SystemConfig>> getSystemConfig() {
+        return handleSystemConfig(systemConfigService::getConfig);
+    }
+
+    @PostMapping(path = "/public-access")
+    @Operation(summary = "Save the operator-advertised public access addresses")
+    public ResponseEntity<Message<PublicAccessConfig>> savePublicAccessConfig(
+            @RequestBody PublicAccessConfigRequest request) {
+        return handlePublicAccessConfig(() -> publicAccessConfigService.saveAndGetConfig(request));
+    }
+
+    @GetMapping(path = "/public-access")
+    @Operation(summary = "Get the operator-advertised public access addresses")
+    public ResponseEntity<Message<PublicAccessConfig>> getPublicAccessConfig() {
+        return handlePublicAccessConfig(publicAccessConfigService::getConfig);
+    }
+
+    @PostMapping(path = "/email")
+    @Operation(summary = "Save the email server config")
+    public ResponseEntity<Message<MessageServerConfigResult<EmailServerConfigResponse>>> saveEmailConfig(
+            @RequestBody EmailServerConfigRequest request) {
+        return handleMessageServer(() -> messageServerConfigService.saveEmailConfig(request));
+    }
+
+    @GetMapping(path = "/email")
+    @Operation(summary = "Get the email server config")
+    public ResponseEntity<Message<MessageServerConfigResult<EmailServerConfigResponse>>> getEmailConfig() {
+        return handleMessageServer(messageServerConfigService::getEmailConfig);
+    }
+
+    @PostMapping(path = "/sms")
+    @Operation(summary = "Save the SMS server config")
+    public ResponseEntity<Message<MessageServerConfigResult<SmsServerConfigResponse>>> saveSmsConfig(
+            @RequestBody SmsServerConfigRequest request) {
+        return handleMessageServer(() -> messageServerConfigService.saveSmsConfig(request));
+    }
+
+    @GetMapping(path = "/sms")
+    @Operation(summary = "Get the SMS server config")
+    public ResponseEntity<Message<MessageServerConfigResult<SmsServerConfigResponse>>> getSmsConfig() {
+        return handleMessageServer(messageServerConfigService::getSmsConfig);
+    }
 
 
     @PostMapping(path = "/{type}")
@@ -134,5 +211,50 @@ public class GeneralConfigController {
                 .sorted(Comparator.comparing(m -> m.get("zoneId")))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(Message.success(timezones));
+    }
+
+    private <T> ResponseEntity<Message<T>> handleMessageServer(Supplier<T> action) {
+        try {
+            return ResponseEntity.ok(Message.success(action.get()));
+        } catch (MessageServerConfigRevisionRequiredException exception) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED)
+                    .body(Message.fail(FAIL_CODE, MessageServerConfigRevisionRequiredException.ERROR_CODE));
+        } catch (MessageServerConfigConflictException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Message.fail(FAIL_CODE, MessageServerConfigConflictException.ERROR_CODE));
+        } catch (DataAccessException exception) {
+            log.error("Message server storage unavailable: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Message server storage unavailable"));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid message server config"));
+        } catch (Exception exception) {
+            log.error("Message server config error: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Message server config error"));
+        }
+    }
+
+    private <T> ResponseEntity<Message<T>> handleSystemConfig(Supplier<T> action) {
+        try {
+            return ResponseEntity.ok(Message.success(action.get()));
+        } catch (DataAccessException exception) {
+            log.error("System config storage unavailable: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "System config storage unavailable"));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid system config"));
+        } catch (Exception exception) {
+            log.error("System config error: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "System config error"));
+        }
+    }
+
+    private <T> ResponseEntity<Message<T>> handlePublicAccessConfig(Supplier<T> action) {
+        try {
+            return ResponseEntity.ok(Message.success(action.get()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid public access config"));
+        } catch (Exception exception) {
+            log.error("Public access config error: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Public access config unavailable"));
+        }
     }
 }

@@ -1,0 +1,164 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
+
+import {
+  AlertSilenceContractError,
+  AlertSilenceMissingError,
+  AlertSilenceRequestFailure
+} from '../model/alert-silence-model';
+import { normalizeAlertSilenceApiFailure } from './alert-silence-api-failure';
+
+describe('Alert Silence API failure boundary', () => {
+  it.each([
+    {
+      label: 'HTTP missing',
+      error: new ApiMessageError('missing', { status: 404 }),
+      kind: 'missing',
+      writeOutcome: 'rejected'
+    },
+    {
+      label: 'HTTP missing with a transport cause',
+      error: new ApiMessageError('offline', { status: 404, cause: new Error('private cause') }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'backend missing',
+      error: new ApiMessageError('missing', { code: 3, status: 200 }),
+      kind: 'missing',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'backend missing with a transport cause',
+      error: new ApiMessageError('offline', { code: 3, status: 200, cause: new Error('private cause') }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'missing HTTP evidence',
+      error: new ApiMessageError('offline'),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'network cause',
+      error: new ApiMessageError('offline', { cause: new Error('private cause') }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'status zero',
+      error: new ApiMessageError('offline', { status: 0 }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'bad gateway',
+      error: new ApiMessageError('offline', { status: 502 }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'service unavailable',
+      error: new ApiMessageError('offline', { status: 503 }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'gateway timeout',
+      error: new ApiMessageError('offline', { status: 504 }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'malformed success',
+      error: new ApiMessageError('invalid response', { status: 200 }),
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'server response',
+      error: new ApiMessageError('failed', { status: 500 }),
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'business response',
+      error: new ApiMessageError('failed', { code: 15, status: 200 }),
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'explicit client rejection',
+      error: new ApiMessageError('rejected', { status: 400 }),
+      kind: 'error',
+      writeOutcome: 'rejected'
+    },
+    {
+      label: 'client response with a transport cause',
+      error: new ApiMessageError('offline', { status: 400, cause: new Error('private cause') }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'request timeout',
+      error: new ApiMessageError('timeout', { status: 408 }),
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    }
+  ] as const)('maps $label to stable $kind/$writeOutcome domain evidence', ({ error, kind, writeOutcome }) => {
+    expect(normalizeAlertSilenceApiFailure(error)).toMatchObject({ kind, writeOutcome });
+  });
+
+  it('redacts transport, response-contract, and unknown failures while preserving public domain evidence', () => {
+    const normalized = normalizeAlertSilenceApiFailure(
+      new ApiMessageError('private backend response', { status: 503, cause: new Error('private cause') })
+    );
+    expect(normalized).toBeInstanceOf(AlertSilenceRequestFailure);
+    expect((normalized as AlertSilenceRequestFailure).message).toBe('Alert Silence request failed');
+    expect((normalized as AlertSilenceRequestFailure).cause).toBeUndefined();
+
+    const privateUnknown = new Error('private provider failure');
+    expect(normalizeAlertSilenceApiFailure(privateUnknown)).toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain',
+      message: 'Alert Silence request failed'
+    });
+    expect(JSON.stringify(normalizeAlertSilenceApiFailure(privateUnknown))).not.toContain('private provider failure');
+
+    const privateContract = new AlertSilenceContractError('private response contract', {
+      cause: new Error('private response value')
+    });
+    const normalizedContract = normalizeAlertSilenceApiFailure(privateContract);
+    expect(normalizedContract).toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain',
+      message: 'Alert Silence request failed'
+    });
+    expect(normalizedContract.cause).toBeUndefined();
+
+    const domainError = new AlertSilenceRequestFailure('unavailable', 'uncertain');
+    expect(normalizeAlertSilenceApiFailure(domainError)).toBe(domainError);
+
+    const missing = new AlertSilenceMissingError();
+    expect(normalizeAlertSilenceApiFailure(missing)).toBe(missing);
+  });
+});

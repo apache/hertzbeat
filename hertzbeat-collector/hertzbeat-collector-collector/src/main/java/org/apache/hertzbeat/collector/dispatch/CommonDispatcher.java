@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -161,7 +162,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
                     Job job = timerJob.getJob();
 
-                    CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                    CollectRep.MetricsData.Builder metricsDataBuilder = CollectRep.MetricsData.newBuilder()
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
                             .setApp(job.getApp())
@@ -171,21 +172,15 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             .setMetrics(metricsTime.getMetrics().getName())
                             .setPriority(metricsTime.getMetrics().getPriority())
                             .setTime(System.currentTimeMillis())
-                            .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
+                            .setCode(CollectRep.Code.TIMEOUT)
+                            .setMsg("collect timeout");
+                    MetricsCollect.addExecutionContext(
+                            metricsDataBuilder, metricsTime.getStartTime(), collectorIdentity);
+                    CollectRep.MetricsData metricsData = metricsDataBuilder.build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
-                    if (metricsData.getPriority() == 0) {
-                        // dispatchCollectData removes the map entry as a once-wins gate;
-                        // cancel afterwards so cyclicJob() inside it still fires normally.
-                        dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
-                        metricsTime.getTimeout().cancel();
-                    } else {
-                        // remove the stale entry and cancel the in-flight collect so a
-                        // late result does not produce a duplicate dispatch.
-                        MetricsTime removed = metricsTimeoutMonitorMap.remove(entry.getKey());
-                        if (removed != null) {
-                            metricsTime.getTimeout().cancel();
-                        }
-                    }
+                    // Complete every timed-out metric through the same once-only gate as a
+                    // normal result. Cancelling the shared round would strand its siblings.
+                    dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
                 }
             }
         } catch (Exception e) {
@@ -199,19 +194,29 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         // Put each collect task into the thread pool for scheduling
         WheelTimerTask timerTask = (WheelTimerTask) timeout.task();
         Job job = timerTask.getJob();
+        synchronized (job) {
+            if (timeout.isCancelled() || timerTask.isCancelled()) {
+                return;
+            }
+            dispatchMetricsTaskLocked(timeout, job);
+        }
+    }
+
+    private void dispatchMetricsTaskLocked(Timeout timeout, Job job) {
         job.constructPriorMetrics();
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
-        metricsSet.forEach(metrics -> {
+        new HashSet<>(metricsSet).forEach(metrics -> {
             MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
                     collectorIdentity, unitConvertList);
-            jobRequestQueue.addJob(metricsCollect);
+            // Payload preparation may copy the template; claim callbacks using the actual execution object.
             if (metrics.getPrometheus() != null) {
                 metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                        new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
             } else {
                 metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                        new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
             }
+            jobRequestQueue.addJob(metricsCollect);
         });
     }
 
@@ -219,6 +224,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
+        synchronized (job) {
+            dispatchCollectDataLocked(timeout, metrics, metricsData, timerJob, job);
+        }
+    }
+
+    private void dispatchCollectDataLocked(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData,
+                                          WheelTimerTask timerJob, Job job) {
         String monitorKey;
         if (metrics.isHasSubTask()) {
             monitorKey = job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId();
@@ -227,9 +239,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         } else {
             monitorKey = job.getId() + "-" + metrics.getName();
         }
-        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
+        MetricsTime metricsTime = claimResult(monitorKey, timeout, metrics);
+        if (metricsTime == null || timeout.isCancelled() || timerJob.isCancelled()) {
+            return;
+        }
 
-        if (metricsTime != null && metricsCollector != null) {
+        if (metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
             String status;
             if (metricsData.getCode() == CollectRep.Code.SUCCESS) {
@@ -240,10 +255,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 status = "fail";
             }
             metricsCollector.recordCollectMetrics(job, duration, status);
-        }
-        // if the entry was already removed by the timeout monitor, skip the duplicate result.
-        if (metricsTime == null && !metrics.isHasSubTask() && metrics.getPrometheus() == null) {
-            return;
         }
         if (metrics.isHasSubTask()) {
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
@@ -286,9 +297,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     if (cryPlaceholderFields.isEmpty()) {
                         MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this,
                                 collectorIdentity, unitConvertList);
-                        jobRequestQueue.addJob(metricsCollect);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
-                                new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                                new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
+
+                        jobRequestQueue.addJob(metricsCollect);
                         continue;
                     }
                     boolean isSubTask = configmapList.stream().anyMatch(map -> map.keySet().stream().anyMatch(cryPlaceholderFields::contains));
@@ -307,9 +319,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         metric.setSubTaskDataRef(metricsDataReference);
                         MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this,
                                 collectorIdentity, unitConvertList);
-                        jobRequestQueue.addJob(metricsCollect);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
-                                new MetricsTime(System.currentTimeMillis(), metric, timeout));
+                                new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
+
+                        jobRequestQueue.addJob(metricsCollect);
                     }
 
                 }
@@ -345,9 +358,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 metricsSet.forEach(metricItem -> {
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this,
                             collectorIdentity, unitConvertList);
-                    jobRequestQueue.addJob(metricsCollect);
                     metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
-                            new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                            new MetricsTime(System.currentTimeMillis(), metricsCollect.getMetrics(), timeout));
+
+                    jobRequestQueue.addJob(metricsCollect);
                 });
             } else {
                 // The list of metrics task at the current execution level has not been fully executed.
@@ -360,8 +374,18 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
-        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
-        if (metricsTime != null && metricsCollector != null) {
+        synchronized (job) {
+            dispatchCollectDataListLocked(timeout, metrics, metricsDataList, timerJob, job);
+        }
+    }
+
+    private void dispatchCollectDataListLocked(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList,
+                                              WheelTimerTask timerJob, Job job) {
+        MetricsTime metricsTime = claimResult(String.valueOf(job.getId()), timeout, metrics);
+        if (metricsTime == null || timeout.isCancelled() || timerJob.isCancelled()) {
+            return;
+        }
+        if (metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
             // For a list, we consider it a success if at least one item is successful.
             boolean isSuccess = metricsDataList.stream().anyMatch(item -> item.getCode() == CollectRep.Code.SUCCESS);
@@ -381,6 +405,16 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // and the result listener is notified of the combination of all metrics data
             timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
         }
+    }
+
+
+    /** Claim only this execution's result, never a later round with the same metric name. */
+    private MetricsTime claimResult(String key, Timeout timeout, Metrics metrics) {
+        MetricsTime entry = metricsTimeoutMonitorMap.get(key);
+        if (entry == null || entry.getTimeout() != timeout || entry.getMetrics() != metrics) {
+            return null;
+        }
+        return metricsTimeoutMonitorMap.remove(key, entry) ? entry : null;
     }
 
 

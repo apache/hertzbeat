@@ -62,7 +62,7 @@ params:
       en-US: Access Token
       ja-JP: アクセストークン
     # type-param field type(most mapping the html input type)
-    type: text
+    type: password
     # dependent parameter values list
     depend:
       __sd_authType__:

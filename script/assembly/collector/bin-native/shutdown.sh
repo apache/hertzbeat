@@ -28,16 +28,31 @@ LOGS_DIR="$DEPLOY_DIR/logs"
 PID_FILE="$LOGS_DIR/${project.artifactId}.pid"
 APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
 
+# A PID file is only a hint; PID reuse must not target another process.
+is_collector_pid() {
+    local candidate="$1"
+    case "$candidate" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$candidate" -gt 0 ] 2>/dev/null || return 1
+    kill -0 "$candidate" 2>/dev/null || return 1
+    [ "$(ps -p "$candidate" -o args= -ww 2>/dev/null)" = "$APP_PATH --spring.config.location=$CONF_DIR/" ]
+}
+
 find_running_pid() {
+    local candidate
     if [ -f "$PID_FILE" ]; then
-        PID="$(cat "$PID_FILE" 2>/dev/null)"
-        if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
-            echo "$PID"
+        candidate="$(cat "$PID_FILE" 2>/dev/null)"
+        if is_collector_pid "$candidate"; then
+            echo "$candidate"
             return 0
         fi
     fi
 
-    ps -ef | grep "$APP_PATH" | grep "$CONF_DIR" | grep -v grep | awk '{print $2}' | head -n 1
+    ps -axo pid=,args= -ww | while read -r candidate command; do
+        if [ "$command" = "$APP_PATH --spring.config.location=$CONF_DIR/" ] && is_collector_pid "$candidate"; then
+            echo "$candidate"
+            break
+        fi
+    done
 }
 
 PID="$(find_running_pid)"
@@ -47,16 +62,28 @@ if [ -z "$PID" ]; then
     exit 0
 fi
 
-kill "$PID"
-for _ in $(seq 1 30); do
-    if ! kill -0 "$PID" 2>/dev/null; then
+if ! is_collector_pid "$PID"; then
+    echo "ERROR: PID $PID no longer identifies this Collector; no signal sent." >&2
+    exit 1
+fi
+if ! kill "$PID"; then
+    echo "ERROR: Cannot request shutdown of Collector PID $PID." >&2
+    exit 1
+fi
+for ((COUNT = 0; COUNT <= 30; COUNT++)); do
+    if ! is_collector_pid "$PID"; then
+        if kill -0 "$PID" 2>/dev/null; then
+            echo "ERROR: Live PID $PID changed identity after shutdown was requested; inspect it without sending another signal." >&2
+            exit 1
+        fi
         rm -f "$PID_FILE"
         echo "Shutdown Apache HertzBeat ${SERVER_NAME} Success!"
         exit 0
     fi
-    sleep 1
+    if [ "$COUNT" -lt 30 ]; then
+        sleep 1
+    fi
 done
 
-kill -9 "$PID" 2>/dev/null
-rm -f "$PID_FILE"
-echo "Shutdown Apache HertzBeat ${SERVER_NAME} Success!"
+echo "ERROR: Collector PID $PID is still live after the shutdown deadline; PID file retained. Inspect $LOGS_DIR/startup.log" >&2
+exit 1

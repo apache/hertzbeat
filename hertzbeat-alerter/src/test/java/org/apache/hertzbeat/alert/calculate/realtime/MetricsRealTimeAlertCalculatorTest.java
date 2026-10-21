@@ -50,7 +50,7 @@ class MetricsRealTimeAlertCalculatorTest {
         AlarmCommonReduce mockReduce = Mockito.mock(AlarmCommonReduce.class);
         AlarmCacheManager alarmCacheManager = Mockito.mock(AlarmCacheManager.class);
 
-        Mockito.when(mockDao.querySingleAlertsByStatus(Mockito.anyString()))
+        Mockito.when(mockDao.querySingleAlertsByWorkspaceIdAndStatus(Mockito.eq("default"), Mockito.anyString()))
                 .thenReturn(Collections.emptyList());
 
         calculator = new MetricsRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService

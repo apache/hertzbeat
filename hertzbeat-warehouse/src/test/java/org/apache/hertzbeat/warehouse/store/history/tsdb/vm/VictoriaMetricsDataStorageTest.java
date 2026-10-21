@@ -21,6 +21,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +34,7 @@ import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -48,16 +52,30 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link VictoriaMetricsDataStorage}
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 class VictoriaMetricsDataStorageTest {
 
@@ -73,6 +91,7 @@ class VictoriaMetricsDataStorageTest {
     private VictoriaMetricsDataStorage victoriaMetricsDataStorage;
 
     private final AtomicInteger postForEntityCount = new AtomicInteger(0);
+    private final AtomicReference<String> lastPayload = new AtomicReference<>();
 
     @BeforeEach
     void setUp() {
@@ -97,6 +116,10 @@ class VictoriaMetricsDataStorageTest {
                 eq(String.class)
         )).thenAnswer(invocation -> {
             postForEntityCount.incrementAndGet();
+            HttpEntity<?> httpEntity = invocation.getArgument(1);
+            if (httpEntity.getBody() instanceof String payload) {
+                lastPayload.set(payload);
+            }
             return responseEntity;
         });
     }
@@ -184,6 +207,241 @@ class VictoriaMetricsDataStorageTest {
                                 .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
     }
 
+    @Test
+    void testGetHistoryMetricDataUsesAbsoluteRange() {
+        ResponseEntity<String> exportResponse = new ResponseEntity<>(createVictoriaMetricsExportBody(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(exportResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryMetricData("127.0.0.1:8080", "linux", "summary", "responseTime",
+                "6h", 1712730000000L, 1712733600000L, "120s");
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        String uri = uriCaptor.getValue().toString();
+        assertThat(uri).contains("start=1712730000");
+        assertThat(uri).contains("end=1712733600");
+        assertThat(uri).doesNotContain("now-6h");
+    }
+
+    @Test
+    void testGetHistoryIntervalMetricDataUsesAbsoluteRangeAndStep() {
+        ResponseEntity<PromQlQueryContent> rangeResponse = new ResponseEntity<>(createPromQlQueryContent(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class))).thenReturn(rangeResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryIntervalMetricData("127.0.0.1:8080", "linux", "summary",
+                "responseTime", "6h", 1712730000000L, 1712733600000L, "120s");
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate, times(4)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class));
+        for (URI uri : uriCaptor.getAllValues()) {
+            assertThat(uri.toString()).contains("start=1712730000");
+            assertThat(uri.toString()).contains("end=1712733600");
+            assertThat(uri.toString()).contains("step=120s");
+        }
+    }
+
+    @Test
+    void failedSingleNodeFlushRetainsTheBatchAndRetriesQuickly() {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                10, 1, new VictoriaMetricsProperties.Compression(false)));
+        List<String> attemptedBodies = new CopyOnWriteArrayList<>();
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            HttpEntity<String> request = invocation.getArgument(1);
+            attemptedBodies.add(request.getBody());
+            if (writes.getAndIncrement() == 0) {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            }
+            return ResponseEntity.noContent().build();
+        });
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+
+        Awaitility.await()
+                .pollInterval(250, TimeUnit.MILLISECONDS)
+                .atMost(7, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(attemptedBodies).hasSizeGreaterThanOrEqualTo(2));
+        assertThat(attemptedBodies.get(1)).isEqualTo(attemptedBodies.get(0));
+    }
+
+    @Test
+    void singleNodeFlushClaimsTheRetryBatchWhileTheHttpWriteIsInFlight() throws Exception {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                10, 3600, new VictoriaMetricsProperties.Compression(false)));
+        CountDownLatch firstWriteStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstWrite = new CountDownLatch(1);
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            if (writes.incrementAndGet() == 1) {
+                firstWriteStarted.countDown();
+                assertThat(releaseFirstWrite.await(5, TimeUnit.SECONDS)).isTrue();
+            }
+            return ResponseEntity.noContent().build();
+        });
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+        victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+        ExecutorService flushers = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<Boolean> first = flushers.submit(() ->
+                    ReflectionTestUtils.invokeMethod(victoriaMetricsDataStorage, "flushBufferedMetrics"));
+            assertThat(firstWriteStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<Boolean> second = flushers.submit(() ->
+                    ReflectionTestUtils.invokeMethod(victoriaMetricsDataStorage, "flushBufferedMetrics"));
+
+            assertThat(second.get(2, TimeUnit.SECONDS)).isFalse();
+            assertThat(writes).hasValue(1);
+            releaseFirstWrite.countDown();
+            assertThat(first.get(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(writes).hasValue(1);
+        } finally {
+            releaseFirstWrite.countDown();
+            flushers.shutdownNow();
+        }
+    }
+
+    @Test
+    void persistentSingleNodeFailureDoesNotBlockTheWarehouseProducerIndefinitely() throws Exception {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                1, 3600, new VictoriaMetricsProperties.Compression(false)));
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            writes.incrementAndGet();
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        });
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+        ExecutorService producer = Executors.newSingleThreadExecutor();
+        Future<?> pendingWrite = null;
+
+        try {
+            victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+            Awaitility.await().atMost(3, TimeUnit.SECONDS).until(() -> writes.get() > 0);
+            victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+
+            pendingWrite = producer.submit(
+                    () -> victoriaMetricsDataStorage.saveData(generateMockedMetricsData()));
+
+            pendingWrite.get(3, TimeUnit.SECONDS);
+            assertThat(victoriaMetricsDataStorage.getDroppedMetricCount()).isGreaterThanOrEqualTo(1);
+        } finally {
+            if (pendingWrite != null) {
+                pendingWrite.cancel(true);
+            }
+            producer.shutdownNow();
+        }
+    }
+
+    @Test
+    void customLabelsKeepJobButCannotOverrideStorageInstance() {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                1, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
+        CollectRep.MetricsData metricsData = generateMockedMetricsData();
+        when(metricsData.getLabels()).thenReturn(Map.of(
+                "job", "custom-job",
+                "instance", "custom-instance",
+                "region", "west"));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.saveData(metricsData);
+
+        Awaitility.await()
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
+        VictoriaMetricsDataStorage.VictoriaMetricsContent content =
+                JsonUtil.fromJson(lastPayload.get().trim(), VictoriaMetricsDataStorage.VictoriaMetricsContent.class);
+        assertThat(content.getMetric())
+                .containsEntry("job", "custom-job")
+                .containsEntry("instance", "storage-instance")
+                .containsEntry("region", "west");
+        assertThat(victoriaMetricsDataStorage.getIgnoredLabelCollisionCount()).isEqualTo(1);
+    }
+
+    @Test
+    void managedLabelCollisionsAreSkippedWithoutDroppingTheBatch(CapturedOutput output) {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                1, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
+        CollectRep.MetricsData metricsData = generateMockedMetricsData();
+        when(metricsData.getLabels()).thenReturn(Map.of(
+                "__name__", "custom-name",
+                "__monitor_id__", "custom-monitor"));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.saveData(metricsData);
+
+        Awaitility.await()
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
+        VictoriaMetricsDataStorage.VictoriaMetricsContent content =
+                JsonUtil.fromJson(lastPayload.get().trim(), VictoriaMetricsDataStorage.VictoriaMetricsContent.class);
+        assertThat(content.getMetric())
+                .containsEntry("__monitor_id__", "0")
+                .doesNotContainEntry("__name__", "custom-name")
+                .doesNotContainEntry("__monitor_id__", "custom-monitor");
+        assertThat(victoriaMetricsDataStorage.getIgnoredLabelCollisionCount()).isEqualTo(2);
+        assertThat(output.getAll())
+                .contains("__name__")
+                .contains("__monitor_id__")
+                .doesNotContain("custom-name")
+                .doesNotContain("custom-monitor");
+    }
+
+    @Test
+    void clusterWriterUsesTheSameNonDestructiveCollisionPolicy() {
+        when(responseEntity.getStatusCode()).thenReturn(HttpStatus.OK);
+        when(responseEntity.getBody()).thenReturn("{\"status\":\"success\"}");
+        when(restTemplate.postForEntity(
+                startsWith("http://vm-insert"),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenAnswer(invocation -> {
+                    HttpEntity<?> httpEntity = invocation.getArgument(1);
+                    lastPayload.set((String) httpEntity.getBody());
+                    return responseEntity;
+                });
+        VictoriaMetricsClusterProperties clusterProperties = new VictoriaMetricsClusterProperties(
+                true,
+                "0",
+                new VictoriaMetricsInsertProperties("http://vm-insert", null, null, 10, 0),
+                new VictoriaMetricsSelectProperties("http://vm-select", null, null));
+        CollectRep.MetricsData metricsData = generateMockedMetricsData();
+        when(metricsData.getLabels()).thenReturn(Map.of(
+                "instance", "custom-instance",
+                "region", "west"));
+        VictoriaMetricsClusterDataStorage clusterStorage =
+                new VictoriaMetricsClusterDataStorage(clusterProperties, restTemplate);
+
+        try {
+            clusterStorage.saveData(metricsData);
+
+            VictoriaMetricsDataStorage.VictoriaMetricsContent content = JsonUtil.fromJson(
+                    lastPayload.get().trim(), VictoriaMetricsDataStorage.VictoriaMetricsContent.class);
+            assertThat(content.getMetric())
+                    .containsEntry("instance", "storage-instance")
+                    .containsEntry("region", "west");
+            assertThat(clusterStorage.getIgnoredLabelCollisionCount()).isEqualTo(1);
+        } finally {
+            clusterStorage.destroy();
+        }
+    }
+
     @AfterEach
     void stop() {
         if (victoriaMetricsDataStorage != null) {
@@ -200,6 +458,8 @@ class VictoriaMetricsDataStorageTest {
         when(mockMetricsData.getTime()).thenReturn(System.currentTimeMillis());
         when(mockMetricsData.getCode()).thenReturn(CollectRep.Code.SUCCESS);
         when(mockMetricsData.getApp()).thenReturn("app");
+        when(mockMetricsData.getInstance()).thenReturn("storage-instance");
+        when(mockMetricsData.getLabels()).thenReturn(Map.of());
 
         CollectRep.ValueRow mockValueRow = Mockito.mock(CollectRep.ValueRow.class);
         List<String> columnValues = List.of("server-test-01", "68.7");
@@ -242,4 +502,25 @@ class VictoriaMetricsDataStorageTest {
         return mockMetricsData;
     }
 
+    private static String createVictoriaMetricsExportBody() {
+        return """
+                {"metric":{"__name__":"summary_responseTime","instance":"127.0.0.1:8080","__metric__":"responseTime"},"values":[85.5],"timestamps":[1712730000000]}
+                """;
+    }
+
+    private static PromQlQueryContent createPromQlQueryContent() {
+        PromQlQueryContent content = new PromQlQueryContent();
+        PromQlQueryContent.ContentData data = new PromQlQueryContent.ContentData();
+        PromQlQueryContent.ContentData.Content result = new PromQlQueryContent.ContentData.Content();
+        Map<String, String> metric = new HashMap<>();
+        metric.put("__name__", "summary_responseTime");
+        metric.put("instance", "127.0.0.1:8080");
+        result.setMetric(metric);
+        List<Object[]> values = new ArrayList<>();
+        values.add(new Object[]{1712730000L, "85.5"});
+        result.setValues(values);
+        data.setResult(List.of(result));
+        content.setData(data);
+        return content;
+    }
 }

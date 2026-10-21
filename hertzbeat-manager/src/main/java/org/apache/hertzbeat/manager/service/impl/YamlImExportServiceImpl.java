@@ -22,17 +22,20 @@ import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.common.util.export.YamlExportUtils;
-import org.yaml.snakeyaml.Yaml;
+import org.apache.hertzbeat.manager.service.helper.MonitorYamlImportParser;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 
 /**
  * Configure the import and export Yaml format
  */
 @Slf4j
 @Service
-public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
+public class YamlImExportServiceImpl extends AbstractImExportServiceImpl {
 
     /**
      * Export file type
@@ -59,10 +62,17 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     public List<ExportMonitorDTO> parseImport(InputStream is) {
-        // todo now disable this, will enable it in the future.
-        // upgrade to snakeyaml 2.2 and springboot3.x to fix the issue
-        Yaml yaml = new Yaml();
-        return yaml.load(is);
+        return MonitorYamlImportParser.parse(is).stream()
+                .map(YamlImExportServiceImpl::toExportMonitor)
+                .toList();
+    }
+
+    private static ExportMonitorDTO toExportMonitor(Object record) {
+        ExportMonitorDTO monitor = JsonUtil.convertValueQuietly(record, ExportMonitorDTO.class);
+        if (monitor == null || monitor.getMonitor() == null) {
+            throw InvalidImportContentException.forYaml();
+        }
+        return monitor;
     }
 
     /**
@@ -73,7 +83,9 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     @Override
     public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
 
-        YamlExportUtils.exportWriteOs(monitorList, os);
+        // Export plain mappings so the file does not depend on Java class names.
+        YamlExportUtils.exportWriteOs(monitorList.stream()
+                .map(monitor -> JsonUtil.convertValue(monitor, Map.class)).toList(), os);
     }
 
 }

@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat monitors related indicators of REGISTRY.
   zh-TW: HertzBeat對注冊中心相關名額進行監測。
   ja-JP: HertzBeatはレジストリのメトリクスを監視します。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/registry
+  en-US: https://hertzbeat.apache.org/docs/help/registry
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

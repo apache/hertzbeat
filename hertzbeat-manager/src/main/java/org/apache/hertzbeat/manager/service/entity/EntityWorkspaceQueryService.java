@@ -1,0 +1,126 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.manager.service.entity;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+/**
+ * Query boundary for raw persisted entity catalog rows.
+ */
+@Service
+public class EntityWorkspaceQueryService {
+
+    private final ObserveEntityDao observeEntityDao;
+
+    public EntityWorkspaceQueryService(ObserveEntityDao observeEntityDao) {
+        this.observeEntityDao = observeEntityDao;
+    }
+
+    public List<ObserveEntity> findEntitiesByIds(Collection<Long> entityIds) {
+        return observeEntityDao.findAllById(entityIds);
+    }
+
+    public List<ObserveEntity> findEntitiesByIds(String workspaceId, Collection<Long> entityIds) {
+        if (!StringUtils.hasText(workspaceId) || entityIds == null || entityIds.isEmpty()) {
+            return List.of();
+        }
+        return observeEntityDao.findAllByWorkspaceIdAndIdIn(workspaceId, entityIds);
+    }
+
+    public List<ObserveEntity> findEntities(String workspaceId, Sort sort) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findAllByWorkspaceId(workspaceId, sort);
+        }
+        return observeEntityDao.findAll(sort);
+    }
+
+    public List<ObserveEntity> findEntities(String workspaceId, Pageable pageable) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findAllByWorkspaceId(workspaceId, pageable);
+        }
+        return observeEntityDao.findAll(pageable).getContent();
+    }
+
+    public List<ObserveEntity> findEntities(String workspaceId, String environment, Pageable pageable) {
+        if (!StringUtils.hasText(environment)) {
+            return findEntities(workspaceId, pageable);
+        }
+        String normalizedEnvironment = environment.trim().toLowerCase(Locale.ROOT);
+        Specification<ObserveEntity> specification = (root, query, criteriaBuilder) -> {
+            var environmentPredicate = criteriaBuilder.equal(
+                    criteriaBuilder.lower(root.<String>get("environment")), normalizedEnvironment);
+            if (!StringUtils.hasText(workspaceId)) {
+                return environmentPredicate;
+            }
+            var workspacePredicate = criteriaBuilder.equal(root.<String>get("workspaceId"), workspaceId);
+            return criteriaBuilder.and(workspacePredicate, environmentPredicate);
+        };
+        return observeEntityDao.findAll(specification, pageable).getContent();
+    }
+
+    public Page<ObserveEntity> findEntityPage(Specification<ObserveEntity> specification, Pageable pageable) {
+        return observeEntityDao.findAll(specification, pageable);
+    }
+
+    public Optional<ObserveEntity> findEntityById(long entityId) {
+        return observeEntityDao.findById(entityId);
+    }
+
+    public Optional<ObserveEntity> findEntityById(String workspaceId, long entityId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return Optional.empty();
+        }
+        return observeEntityDao.findFirstByWorkspaceIdAndId(workspaceId, entityId);
+    }
+
+    public Optional<ObserveEntity> findEntityByReference(String workspaceId,
+                                                         String type,
+                                                         String namespace,
+                                                         String name) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findFirstByWorkspaceIdAndTypeAndNamespaceAndName(
+                    workspaceId, type, namespace, name);
+        }
+        return observeEntityDao.findFirstByTypeAndNamespaceAndName(type, namespace, name);
+    }
+
+    public Optional<ObserveEntity> findEntityByReference(String workspaceId, String type, String name) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findFirstByWorkspaceIdAndTypeAndName(workspaceId, type, name);
+        }
+        return observeEntityDao.findFirstByTypeAndName(type, name);
+    }
+
+    public Optional<ObserveEntity> findEntityByName(String workspaceId, String name) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findFirstByWorkspaceIdAndName(workspaceId, name);
+        }
+        return observeEntityDao.findFirstByName(name);
+    }
+}

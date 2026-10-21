@@ -28,6 +28,9 @@ help:
   en-US: HertzBeat collects metrics related to maintaining registers and coils for services that support Modbus protocol
   zh-TW: HertzBeat對支持Modbus協定的服務進行（保持寄存器和線圈）相關名額進行採集
   ja-JP: HertzBeatはModbusプロトコルをサポートするサービスのメトリクスを監視します。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/modbus
+  en-US: https://hertzbeat.apache.org/docs/help/modbus
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

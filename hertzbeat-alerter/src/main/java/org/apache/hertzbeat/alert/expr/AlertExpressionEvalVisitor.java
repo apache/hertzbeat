@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -39,11 +40,15 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     private static final String VALUE = "__value__";
     private static final String TIMESTAMP = "__timestamp__";
 
-    private final QueryExecutor executor;
+    private final Function<String, List<Map<String, Object>>> executeQuery;
     private final CommonTokenStream tokens;
 
     public AlertExpressionEvalVisitor(QueryExecutor executor, CommonTokenStream tokens) {
-        this.executor = executor;
+        this(executor, tokens, false);
+    }
+
+    public AlertExpressionEvalVisitor(QueryExecutor executor, CommonTokenStream tokens, boolean preview) {
+        this.executeQuery = preview ? executor::executePreview : executor::execute;
         this.tokens = tokens;
     }
 
@@ -248,13 +253,13 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     @Override
     public List<Map<String, Object>> visitPromqlExpr(AlertExpressionParser.PromqlExprContext ctx) {
         String rawPromql = tokens.getText(ctx.promql());
-        return executor.execute(rawPromql);
+        return executeQuery.apply(rawPromql);
     }
 
     @Override
     public List<Map<String, Object>> visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) {
         String rawSql = tokens.getText(ctx.selectSql());
-        return executor.execute(rawSql);
+        return executeQuery.apply(rawSql);
     }
 
     @Override
@@ -269,7 +274,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
 
     private List<Map<String, Object>> callSqlOrPromql(String text) {
         String script = text.substring(1, text.length() - 1);
-        return executor.execute(script);
+        return executeQuery.apply(script);
     }
 
     /**

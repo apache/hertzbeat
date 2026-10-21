@@ -1,0 +1,149 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Alert } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
+import {
+  NotificationWorkspaceNavigation,
+  notificationListStatus,
+  notificationWorkspacePath
+} from '@/shared/notification-workspace';
+
+import { NoticeRuleDetailEvidence } from '../components/notice-rule-detail-evidence';
+import { NoticeRuleEditor } from '../components/notice-rule-editor';
+import { NoticeRuleTable } from '../components/notice-rule-table';
+import { NoticeRuleHeading, NoticeRuleToolbar } from '../components/notice-rule-toolbar';
+import { NoticeRuleRecovery } from '../components/notice-rule-recovery';
+import { useNoticeRuleController } from '../controller/notice-rule-controller';
+
+type OptionKind = 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
+
+function optionAlert(kind: OptionKind, missingPrerequisite: 'receivers' | null) {
+  if (kind === 'ready' || kind === 'loading') return null;
+  const type = kind === 'empty' ? 'info' : 'warning';
+  return { messageKey: `noticeRules.options.${kind}`, missingPrerequisite, type } as const;
+}
+
+export function NoticeRulePage() {
+  const controller = useNoticeRuleController();
+  const { state, actions } = controller;
+  const busy = state.command !== 'idle';
+  const dependenciesReady = state.options.kind === 'ready';
+  const editorRecovery =
+    state.recovery?.kind === 'create' || state.recovery?.kind === 'update' ? state.recovery : undefined;
+  const routeRecovery = editorRecovery ? undefined : state.recovery;
+  const tableActions = {
+    changePage: actions.changePage,
+    edit: (id: number) => void actions.edit(id),
+    remove: actions.remove,
+    toggle: actions.toggle
+  };
+  return (
+    <OperationalPage>
+      <NoticeRuleHeading
+        canCreate={state.capabilities.canCreate}
+        createDisabled={!dependenciesReady || busy || state.refreshing}
+        onCreate={actions.create}
+      />
+      <NotificationWorkspaceNavigation activeStep="rules" status={notificationListStatus(state.list)} />
+      <NoticeRuleToolbar
+        name={state.name}
+        busy={busy}
+        refreshing={state.refreshing}
+        onNameChange={actions.setName}
+        onQuery={actions.search}
+        onRefresh={() => void actions.refresh()}
+      />
+      <OperationalResultRegion>
+        <NoticeRuleOptionsEvidence kind={state.options.kind} missingPrerequisite={state.options.missingPrerequisite} />
+        <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
+        <NoticeRuleRecovery
+          recovery={routeRecovery}
+          canRetry={state.canRetryOperation}
+          retryBusy={state.command !== 'recovering'}
+          retry={actions.retry}
+        />
+        <NoticeRuleTable
+          actions={tableActions}
+          busy={busy || state.refreshing}
+          capabilities={state.capabilities}
+          dependenciesReady={dependenciesReady}
+          state={state.list}
+          pageIndex={state.query.pageIndex}
+          pageSize={state.query.pageSize}
+          togglingRuleId={state.togglingRuleId}
+        />
+      </OperationalResultRegion>
+      <NoticeRuleEditorBoundary
+        controller={controller}
+        dependenciesReady={dependenciesReady}
+        recovery={editorRecovery}
+      />
+    </OperationalPage>
+  );
+}
+
+function NoticeRuleOptionsEvidence({
+  kind,
+  missingPrerequisite
+}: {
+  kind: OptionKind;
+  missingPrerequisite: 'receivers' | null;
+}) {
+  const { t } = useTranslation();
+  const alert = optionAlert(kind, missingPrerequisite);
+  if (!alert) return null;
+  const action = alert.missingPrerequisite ? (
+    <Link to={notificationWorkspacePath(alert.missingPrerequisite)}>
+      {t(`noticeRules.options.action.${alert.missingPrerequisite}`)}
+    </Link>
+  ) : undefined;
+  return <Alert type={alert.type} showIcon message={t(alert.messageKey)} action={action} />;
+}
+
+function NoticeRuleEditorBoundary({
+  controller,
+  dependenciesReady,
+  recovery
+}: {
+  controller: ReturnType<typeof useNoticeRuleController>;
+  dependenciesReady: boolean;
+  recovery: ReturnType<typeof useNoticeRuleController>['state']['recovery'];
+}) {
+  const { state, actions } = controller;
+  if (!state.draft || !state.canSubmitDraft) return null;
+  return (
+    <NoticeRuleEditor
+      draft={state.draft}
+      receivers={state.receivers}
+      templates={state.templates}
+      saving={state.saving}
+      dependenciesReady={dependenciesReady}
+      selectReceivers={actions.selectReceivers}
+      update={actions.updateDraft}
+      close={actions.close}
+      submit={() => void actions.submit()}
+      recovery={recovery}
+      canRetry={state.canRetryOperation}
+      retryBusy={state.command !== 'recovering'}
+      retry={actions.retry}
+    />
+  );
+}

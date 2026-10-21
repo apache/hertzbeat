@@ -54,6 +54,9 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
     @Value("${spring.mail.username:demo}")
     private String username;
 
+    @Value("${hertzbeat.mail.from-address:${spring.mail.username:demo}}")
+    private String fromAddress;
+
     @Value("${spring.mail.password:demo}")
     private String password;
 
@@ -82,7 +85,7 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
         try {
             // get sender
             JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
-            String fromUsername = username;
+            String fromUsername = fromAddress;
             try {
                 boolean useDatabase = false;
                 GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);
@@ -98,6 +101,7 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                         Properties props = sender.getJavaMailProperties();
                         props.put("mail.smtp.ssl.enable", emailNoticeSenderConfig.isEmailSsl());
                         props.put("mail.smtp.starttls.enable", emailNoticeSenderConfig.isEmailStarttls());
+                        applySslCertVerify(props, emailNoticeSenderConfig.isEmailSslCertVerify());
                         fromUsername = emailNoticeSenderConfig.getEmailUsername();
                         useDatabase = true;
                     }
@@ -111,6 +115,7 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                     Properties props = sender.getJavaMailProperties();
                     props.put("mail.smtp.ssl.enable", sslEnable);
                     props.put("mail.smtp.starttls.enable", starttlsEnable);
+                    applySslCertVerify(props, true);
                 }
             } catch (Exception e) {
                 log.error("Type not found {}", e.getMessage());
@@ -130,6 +135,17 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {
             throw new AlertNoticeException("[Email Notify Error] " + e.getMessage());
+        }
+    }
+
+    // the sender is a singleton, so both branches must set the props to avoid stale state
+    private void applySslCertVerify(Properties props, boolean verify) {
+        if (verify) {
+            props.remove("mail.smtp.ssl.trust");
+            props.remove("mail.smtp.ssl.checkserveridentity");
+        } else {
+            props.put("mail.smtp.ssl.trust", "*");
+            props.put("mail.smtp.ssl.checkserveridentity", "false");
         }
     }
 
