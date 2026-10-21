@@ -115,7 +115,7 @@
   "alert.notice.receiver.edit": "Edit Receiver",
   "alert.notice.receiver.new": "New Receiver",
   "alert.notice.receiver.next": "Please config your [Alert Notice Policy] next step！",
-  "alert.notice.receiver.secret-reentry": "The destination, notification type, or authentication mode changed. Re-enter the credential before saving or testing. To remove authentication, save that change before changing the destination.",
+  "alert.notice.receiver.secret-reentry": "The destination, notification type, or authentication mode changed. Re-enter the credential before saving or testing. For ntfy with a stored token, changing the server or topic while reusing the masked token or leaving it blank is rejected: enter a valid token for the new destination. To remove authentication, save its removal with the destination unchanged first.",
   "alert.notice.receiver.people": "Receiver",
   "alert.notice.receiver.people.name": "Receiver Name",
   "alert.notice.receiver.people.placeholder": "Select a receiver",

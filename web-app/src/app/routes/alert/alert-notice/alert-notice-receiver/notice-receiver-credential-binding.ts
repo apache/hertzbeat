@@ -62,6 +62,8 @@ function hasValue(value: string | undefined) {
   return Boolean(value?.trim());
 }
 
+// Keep mask recognition aligned with NoticeReceiverMaskUtil.isMaskValue in hertzbeat-alerter.
+// If the mask format changes, update both implementations together.
 function isFreshSecret(value: string | undefined) {
   return hasValue(value) && !(value?.startsWith('******') && (value.length === 6 || value.length === 10));
 }

@@ -196,6 +196,8 @@ public final class NoticeReceiverMaskUtil {
         return submitted.equals(maskValue(stored));
     }
 
+    // Keep this aligned with isFreshSecret in the frontend notice-receiver-credential-binding.ts.
+    // If the mask format changes, update both implementations together.
     private static boolean isMaskValue(String value) {
         return value != null
                 && value.startsWith(SECRET_MASK)

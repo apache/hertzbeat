@@ -53,6 +53,12 @@ Webhook 认证令牌、Telegram 机器人令牌、Discord 机器人令牌和 ntf
 
 本绑定规则仅覆盖上述渠道和字段组合。其他通知服务的凭据与收件人语义可能不同。本规则不新增角色限制，不跟踪 DNS/IP 变化，也不改变 HTTP 重定向处理方式。
 
+### SMN 绑定覆盖范围
+
+SMN 的 `smnAk`、`smnSk` 仍受现有掩码与掩码校验保护，但本次目标绑定没有覆盖它们与 `smnProjectId`、`smnRegion`、`smnTopicUrn` 的对应关系。修改这些 SMN 目标字段时，目前不会触发上述渠道所要求的凭据重新输入。
+
+SMN 发送器将项目 ID、AK、SK 传给华为云 SDK，由 `SmnRegion.valueOf` 选择 region 对应的服务端点，并将 topic URN 交给发布请求。这种 SDK 端点选择并不等同于 HertzBeat 的凭据目标绑定，也不表示没有风险。应继续审查获授权操作人员及云端凭据权限；本次仅说明未覆盖边界，不新增 SMN 绑定机制，也不替代其他安全修复。
+
 ## 监控模板安全
 
 Apache HertzBeat™ 提供了监控模板功能，用户可以通过配置自定义监控模板和自定义脚本来定义监控规则。

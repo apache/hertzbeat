@@ -54,6 +54,12 @@ An optional credential remains optional if none was previously configured. Remov
 
 This binding policy covers only the channel/field pairs listed above. Other notification providers may have different credential and recipient semantics. It does not introduce new role restrictions, track DNS/IP changes, or change HTTP redirect handling.
 
+### SMN binding coverage
+
+SMN `smnAk` and `smnSk` retain existing masking and mask validation, but this destination-binding change does not bind them to `smnProjectId`, `smnRegion` or `smnTopicUrn`. Changing those SMN destination fields currently does not require the credential re-entry enforced for the channels above.
+
+The SMN sender passes the project ID, AK and SK to the Huawei Cloud SDK, selects the service endpoint through `SmnRegion.valueOf`, and supplies the topic URN to the publish request. SDK endpoint selection is not equivalent to HertzBeat credential-destination binding and does not establish an absence of risk. Continue reviewing authorized operators and cloud credential permissions. This note records an uncovered boundary; it adds no SMN binding mechanism and does not replace other security fixes.
+
 ## Monitoring Template Security
 
 Apache HertzBeat™ provides a monitoring template feature that allows users to define monitoring rules by configuring custom monitoring templates and custom scripts.

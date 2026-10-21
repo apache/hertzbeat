@@ -17,7 +17,7 @@
 
 # JAXP factories must come from Apache Commons Secure XML (org.apache.commons.xml.secure),
 # see https://commons.apache.org/proper/commons-secure-xml/threat_model.html
-@ignoreUnresolvable
+@ignoreMissingClasses
 
 @defaultMessage Use SecureDocumentBuilderFactory from Apache Commons Secure XML
 javax.xml.parsers.DocumentBuilderFactory#newInstance()
