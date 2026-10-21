@@ -18,24 +18,37 @@
 import { useNavigate } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import { buildExplorePath } from '@/features/explore';
 import { monitorCapabilities } from '@/features/monitor';
 import { applicationRoutePaths, buildMonitorCreatePath, monitorRoutePaths } from '@/shared/navigation/app-paths';
 
-import { useDashboardActivity } from './use-dashboard-activity';
+import { useDashboardMetricRotation } from './use-dashboard-metric-rotation';
+import { useDashboardOverview } from './use-dashboard-overview';
+import { useDashboardSignals } from './use-dashboard-signals';
 
 export function useDashboardStartController() {
   const roles = useSession().session?.roles ?? [];
   const navigate = useNavigate();
-  const activity = useDashboardActivity();
+  const overview = useDashboardOverview();
+  const signals = useDashboardSignals(overview.favoriteMetrics, overview.savedState);
+  const attentionCount = Math.ceil((overview.alerts.length + overview.downMonitors.length) / 2);
+  const attention = useDashboardMetricRotation(attentionCount, signals.clock.hidden, signals.clock.reducedMotion);
   const createMonitorTarget = buildMonitorCreatePath({ returnTo: applicationRoutePaths.dashboard });
   const telemetryTarget = applicationRoutePaths.instrumentation;
   return {
-    activity,
+    overview,
+    signals,
+    attentionRotation: { ...attention, activeIndex: attention.metricIndex, metricCount: attentionCount },
+    signalTargets: {
+      metrics: buildExplorePath({ signal: 'metrics', timeRange: 'last-15m' }),
+      logs: buildExplorePath({ signal: 'logs', timeRange: 'last-15m', searchSyntax: 'structured-v1' }),
+      traces: buildExplorePath({ signal: 'traces', timeRange: 'last-15m' })
+    },
     canCreateMonitor: monitorCapabilities(roles).canWrite,
     createMonitorTarget,
     monitorListTarget: monitorRoutePaths.list,
     telemetryTarget,
-    savedQueriesTarget: `${applicationRoutePaths.explore}?signal=metrics&timeRange=last-30m#saved-queries`,
+    savedQueriesTarget: `${applicationRoutePaths.explore}?signal=metrics&timeRange=last-15m#saved-queries`,
     openCreateMonitor: () => void navigate(createMonitorTarget),
     openMonitors: () => void navigate(monitorRoutePaths.list),
     openTelemetry: () => void navigate(telemetryTarget)
