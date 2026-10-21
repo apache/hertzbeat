@@ -35,6 +35,8 @@ import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -204,8 +206,7 @@ class AccountServiceTest {
                 .build();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
         when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        SubjectSum subjectSum = mock(SubjectSum.class);
-        when(subjectSum.getPrincipal()).thenReturn(identifier);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
@@ -230,8 +231,7 @@ class AccountServiceTest {
                 .setExcessiveAttempts(Boolean.FALSE)
                 .build();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
-        SubjectSum subjectSum = mock(SubjectSum.class);
-        when(subjectSum.getPrincipal()).thenReturn(identifier);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
@@ -408,8 +408,7 @@ class AccountServiceTest {
         SurenessAccount account = buildActiveAccount();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
         when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        SubjectSum subjectSum = mock(SubjectSum.class);
-        when(subjectSum.getPrincipal()).thenReturn(identifier);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
@@ -530,6 +529,45 @@ class AccountServiceTest {
         // Note: the tokenHash in DB differs from sha256(tokenValue), so this tests cache invalidation path
         verify(authTokenDao).findById(1L);
         verify(authTokenDao).deleteById(1L);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"user", "guest", "operator", "administrator"})
+    void nonAdminCannotLoginRefreshOrGenerateManagementToken(String role) throws Exception {
+        SurenessAccount account = DefaultAccount.builder(identifier).setPassword(password)
+                .setOwnRoles(List.of(role)).setDisabledAccount(false).setExcessiveAttempts(false).build();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        LoginDto login = LoginDto.builder().identifier(identifier).credential(password).build();
+        Assertions.assertThrows(AuthenticationException.class, () -> accountService.authGetToken(login));
+        String refresh = JsonWebTokenUtil.issueJwt(identifier, 3600L, Map.of("refresh", true));
+        Assertions.assertThrows(AuthenticationException.class, () -> accountService.refreshToken(refresh));
+        SubjectSum nonAdmin = mockUserSubject(identifier);
+        try (var context = mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(nonAdmin);
+            Assertions.assertThrows(AuthenticationException.class, () -> accountService.generateToken("legacy", null));
+        }
+        org.mockito.Mockito.verifyNoInteractions(authTokenDao);
+        assertEquals(List.of(role), account.getOwnRoles());
+    }
+
+    @Test
+    void migratedAdminIssuesOnlyAdminAndDoesNotRewriteAccountRoles() throws Exception {
+        SurenessAccount account = DefaultAccount.builder(identifier).setPassword(password)
+                .setOwnRoles(List.of("admin", "user", "custom")).setDisabledAccount(false).setExcessiveAttempts(false).build();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        Map<String, String> login = accountService.authGetToken(
+                LoginDto.builder().identifier(identifier).credential(password).build());
+        assertEquals("[\"admin\"]", login.get("role"));
+        assertEquals(List.of("admin"), JsonWebTokenUtil.parseJwt(login.get("token")).get("roles"));
+        RefreshTokenResponse refreshed = accountService.refreshToken(login.get("refreshToken"));
+        assertEquals(List.of("admin"), JsonWebTokenUtil.parseJwt(refreshed.getToken()).get("roles"));
+        when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        SubjectSum admin = mockAdminSubject(identifier);
+        try (var context = mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(admin);
+            assertEquals(List.of("admin"), JsonWebTokenUtil.parseJwt(accountService.generateToken("reviewed", 3600L)).get("roles"));
+        }
+        assertEquals(List.of("admin", "user", "custom"), account.getOwnRoles());
     }
 
     private SurenessAccount buildActiveAccount() {

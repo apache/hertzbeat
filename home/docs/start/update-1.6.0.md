@@ -4,6 +4,8 @@ title: How to update to 1.6.0
 sidebar_label: Update to 1.6.0 guide
 ---
 
+> This historical guide retains the 1.6.0 account examples, which do not apply to 1.9.1. Before upgrading to 1.9.1, follow the [permission migration guide](../help/admin_only_migration) and manually assign admin only to trusted accounts; do not copy old role examples to restore sign-in.
+
 ## HertzBeat 1.6.0 Upgrade Guide
 
 :::note

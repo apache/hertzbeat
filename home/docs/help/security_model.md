@@ -10,15 +10,15 @@ This document will introduce the security model of Apache HertzBeat.
 The security model here mainly involves the security boundaries that users need to pay attention to in the extension process, and how to ensure that user customization will not cause security risks to the system.
 :::
 
-> The users mentioned below refer to authenticated users of the system, regardless of their roles.
+> Management customization below is reserved for approved administrators.
 
 ## User Permission Security
 
-Apache HertzBeat™ uses [Sureness](https://github.com/dromara/sureness) to support system user security.
+For security reasons and given the current permission model, 1.9.1 removes the user and guest roles and keeps only admin. Old user and guest accounts cannot sign in even if they remain in sureness.yml. Administrators must manually edit the deployed sureness.yml, assign `role: [admin]` only to trusted accounts, restart and sign in again. Multiple independent usernames may hold admin. This role has all platform management permissions and must be assigned carefully; accounts are never automatically promoted or deleted.
 
-Use the `sureness.yml` provided by Sureness to configure user accounts, roles, API resources, etc. It is strongly recommended that the initial user modify the account password. For details, refer to [Account Permission Management](../start/account-modify)
+Starting with 1.9.1, the only management role is `admin`. This is an intentional permission compatibility change. Existing user/guest/custom accounts are not automatically promoted. The deployment operator must manually approve trusted administrators; identities that are not granted admin cannot continue using the management plane. See [the required upgrade migration](./admin_only_migration) and [account configuration](../start/account-modify).
 
-Please note that the role permission function is being improved, please do not use roles to control user permissions, all users have management permissions.
+Administrators are trusted to manage the whole instance. Resource and credential isolation between administrators is not promised. Authentication, rejection of unauthorized access, existing secret masking and other explicit security restrictions remain required. This statement does not excuse secret disclosure or invalidate previously reported vulnerabilities. Public and machine-ingestion exceptions retain only their documented existing policies.
 
 ## Monitoring Template Security
 

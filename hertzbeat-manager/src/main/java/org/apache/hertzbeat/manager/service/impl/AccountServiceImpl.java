@@ -134,7 +134,7 @@ public class AccountServiceImpl implements AccountService {
             }
         }
         // Get the roles the user has - rbac
-        List<String> roles = account.getOwnRoles();
+        List<String> roles = requireAdminRoles(account);
         // Issue TOKEN
         String issueToken = issueAccessToken(loginDto.getIdentifier(), roles, PERIOD_TIME);
         String issueRefresh = issueRefreshToken(loginDto.getIdentifier(), PERIOD_TIME << 5);
@@ -161,7 +161,7 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
-        List<String> roles = account.getOwnRoles();
+        List<String> roles = requireAdminRoles(account);
         String issueToken = issueAccessToken(userId, roles, PERIOD_TIME);
         String issueRefresh = issueRefreshToken(userId, PERIOD_TIME << 5);
         return new RefreshTokenResponse(issueToken, issueRefresh);
@@ -178,7 +178,10 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
-        List<String> roles = account.getOwnRoles();
+        if (!subjectSum.hasRole("admin")) {
+            throw new AuthenticationException("Management access requires the admin role");
+        }
+        List<String> roles = requireAdminRoles(account);
         String token = issueApiToken(userId, roles, expireSeconds);
 
         // Persist token metadata for management
@@ -199,6 +202,13 @@ public class AccountServiceImpl implements AccountService {
         authTokenDao.save(authToken);
 
         return token;
+    }
+
+    private List<String> requireAdminRoles(SurenessAccount account) throws AuthenticationException {
+        if (account.getOwnRoles() == null || !account.getOwnRoles().contains("admin")) {
+            throw new AuthenticationException("Management access requires the admin role; manual account migration is required");
+        }
+        return List.of("admin");
     }
 
     private String issueAccessToken(String userId, List<String> roles, long expirationSeconds) {
