@@ -113,9 +113,7 @@ export class NoticeReceiverCredentialBinding {
 
   requiresFreshSecret(receiver: NoticeReceiver, field: SecretField) {
     const authRequired =
-      field === 'hookAuthToken' &&
-      this.authContextInvalidated &&
-      (receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer');
+      field === 'hookAuthToken' && this.authContextInvalidated && (receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer');
     return context(receiver).secret === field && (this.invalidated.has(field) || authRequired);
   }
 

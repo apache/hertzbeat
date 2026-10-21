@@ -289,10 +289,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiverRequiresHookAuthToken">
-        <nz-form-label
-          [nzRequired]="receiverRequiresHookAuthToken"
-          [nzSpan]="7"
-          nzFor="hookAuthToken"
+        <nz-form-label [nzRequired]="receiverRequiresHookAuthToken" [nzSpan]="7" nzFor="hookAuthToken"
           >{{ 'alert.notice.type.webhook-auth-token' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
@@ -599,7 +596,9 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 15">
-        <nz-form-label [nzSpan]="7" nzFor="ntfyToken" [nzRequired]="credentialBinding.requiresFreshSecret(receiver, 'ntfyToken')">{{ 'alert.notice.type.ntfy-token' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="ntfyToken" [nzRequired]="credentialBinding.requiresFreshSecret(receiver, 'ntfyToken')">{{
+          'alert.notice.type.ntfy-token' | i18n
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12">
           <input
             [required]="credentialBinding.requiresFreshSecret(receiver, 'ntfyToken')"

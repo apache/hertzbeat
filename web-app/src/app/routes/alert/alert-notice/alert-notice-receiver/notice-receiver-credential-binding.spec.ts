@@ -74,7 +74,10 @@ describe('NoticeReceiverCredentialBinding', () => {
 
   it('allows auth-only removal but still requires re-entry for a later URL change', () => {
     const receiver = Object.assign(new NoticeReceiver(), {
-      type: 2, hookUrl: 'old', hookAuthType: 'Basic', hookAuthToken: '******'
+      type: 2,
+      hookUrl: 'old',
+      hookAuthType: 'Basic',
+      hookAuthToken: '******'
     });
     const binding = new NoticeReceiverCredentialBinding();
     binding.capture(receiver);
@@ -99,7 +102,10 @@ describe('NoticeReceiverCredentialBinding', () => {
   });
   it('rejects a pasted mask after an authentication-mode-only change', () => {
     const receiver = Object.assign(new NoticeReceiver(), {
-      type: 2, hookUrl: 'old', hookAuthType: 'Basic', hookAuthToken: '******'
+      type: 2,
+      hookUrl: 'old',
+      hookAuthType: 'Basic',
+      hookAuthToken: '******'
     });
     const binding = new NoticeReceiverCredentialBinding();
     binding.capture(receiver);
@@ -110,5 +116,4 @@ describe('NoticeReceiverCredentialBinding', () => {
     receiver.hookAuthToken = 'fresh-token';
     expect(binding.missingSecrets(receiver)).toEqual([]);
   });
-
 });
