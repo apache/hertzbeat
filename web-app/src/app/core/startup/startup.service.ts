@@ -13,6 +13,7 @@ import { ICONS } from '../../../style-icons';
 import { ICONS_AUTO } from '../../../style-icons-auto';
 import { MemoryStorageService } from '../../service/memory-storage.service';
 import { ThemeService } from '../../service/theme.service';
+import { hasAdminRole } from '../guard/admin-role';
 import { I18NService } from '../i18n/i18n.service';
 
 @Injectable({
@@ -37,12 +38,13 @@ export class StartupService {
 
   public loadConfigResourceViaHttp(): Observable<void> {
     const defaultLang = this.i18n.defaultLang;
+    const isAdmin = hasAdminRole(this.settingService.user?.role);
     const headers = new HttpHeaders({ 'Cache-Control': 'no-cache' });
     return zip(
       this.i18n.loadLangData(defaultLang),
       this.httpClient.get('./assets/app-data.json', { headers: headers }),
       this.httpClient.get(`/apps/hierarchy?lang=${defaultLang}`),
-      this.httpClient.get('/observability/capability').pipe(catchError(() => of(null)))
+      isAdmin ? this.httpClient.get('/observability/capability').pipe(catchError(() => of(null))) : of(null)
     ).pipe(
       catchError((res: NzSafeAny) => {
         console.warn(`StartupService.load: Network request failed`, res);
@@ -55,8 +57,8 @@ export class StartupService {
         // Application information: including site name, description, year
         this.settingService.setApp(appData.app);
         // this.settingService.setLayout('collapsed', true);
-        this.aclService.setFull(true);
-        this.menuService.add(appData.menu);
+        this.aclService.setFull(isAdmin);
+        this.menuService.add(isAdmin ? appData.menu : []);
         menuData.data.forEach((item: { category: string; value: string; hide: boolean }) => {
           if (item.hide) {
             return;

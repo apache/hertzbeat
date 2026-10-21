@@ -36,7 +36,7 @@
         {
           "type": "category",
           "label": "setting",
-          "items": ["start/account-modify", "start/custom-config"]
+          "items": ["start/account-modify", "help/admin_only_migration", "start/custom-config"]
         },
         {
           "type": "category",
