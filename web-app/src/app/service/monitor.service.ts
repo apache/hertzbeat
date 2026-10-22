@@ -17,10 +17,11 @@
  * under the License.
  */
 
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { SILENT_HTTP_ERROR } from '../core/interceptor/http-context';
 import { Message } from '../pojo/Message';
 import { Monitor } from '../pojo/Monitor';
 import { Page } from '../pojo/Page';
@@ -70,6 +71,7 @@ export class MonitorService {
     });
     httpParams = httpParams.append('type', type);
     return this.http.get(export_monitors_uri, {
+      context: new HttpContext().set(SILENT_HTTP_ERROR, true),
       params: httpParams,
       observe: 'response',
       responseType: 'blob'
@@ -80,6 +82,7 @@ export class MonitorService {
     let httpParams = new HttpParams();
     httpParams = httpParams.append('type', type);
     return this.http.get(export_all_monitors_uri, {
+      context: new HttpContext().set(SILENT_HTTP_ERROR, true),
       params: httpParams,
       observe: 'response',
       responseType: 'blob'

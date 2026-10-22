@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.apache.hertzbeat.manager.pojo.dto.StatusPageIncidentInfo;
 import org.apache.hertzbeat.manager.pojo.dto.StatusPageOrgInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPagePublicResponse;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -52,42 +53,42 @@ public class StatusPagePublicController {
 
     @GetMapping("/org")
     @Operation(summary = "Query Status Page Organization")
-    public ResponseEntity<Message<StatusPageOrgInfo>> queryStatusPageOrg() {
+    public ResponseEntity<Message<StatusPagePublicResponse.Org>> queryStatusPageOrg() {
         StatusPageOrgInfo statusPageOrg = statusPageService.queryStatusPageOrg();
         if (statusPageOrg == null) {
             return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, "Status Page Organization Not Found"));
         }
-        return ResponseEntity.ok(Message.success(statusPageOrg));
+        return ResponseEntity.ok(Message.success(StatusPagePublicResponse.org(statusPageOrg)));
     }
 
     @GetMapping("/component")
     @Operation(summary = "Query Status Page Components")
-    public ResponseEntity<Message<List<ComponentStatus>>> queryStatusPageComponent(
+    public ResponseEntity<Message<List<StatusPagePublicResponse.ComponentStatusInfo>>> queryStatusPageComponent(
             @Parameter(description = "Number of days of history", example = "30")
             @RequestParam(defaultValue = "30") int days) {
         List<ComponentStatus> componentStatusList = statusPageService.queryComponentsStatus(days);
-        return ResponseEntity.ok(Message.success(componentStatusList));
+        return ResponseEntity.ok(Message.success(StatusPagePublicResponse.componentStatuses(componentStatusList)));
     }
 
     @GetMapping("/component/{id}")
     @Operation(summary = "Query Status Page Component")
-    public ResponseEntity<Message<ComponentStatus>> queryStatusPageComponent(
+    public ResponseEntity<Message<StatusPagePublicResponse.ComponentStatusInfo>> queryStatusPageComponent(
             @PathVariable("id") final long id,
             @Parameter(description = "Number of days of history", example = "30")
             @RequestParam(defaultValue = "30") int days) {
         ComponentStatus componentStatus = statusPageService.queryComponentStatus(id, days);
-        return ResponseEntity.ok(Message.success(componentStatus));
+        return ResponseEntity.ok(Message.success(StatusPagePublicResponse.componentStatus(componentStatus)));
     }
 
     @GetMapping("/incident")
     @Operation(summary = "Query Status Page Incidents")
-    public ResponseEntity<Message<Page<StatusPageIncidentInfo>>> queryStatusPageIncident(
+    public ResponseEntity<Message<Page<StatusPagePublicResponse.Incident>>> queryStatusPageIncident(
             @Parameter(description = "Search-Target", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Start Time", example = "1756384301907") @RequestParam(required = false) Long startTime,
             @Parameter(description = "End Time", example = "1756384301907") @RequestParam(required = false) Long endTime,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "10") @RequestParam(defaultValue = "10") int pageSize) {
         Page<StatusPageIncidentInfo> incidents = statusPageService.queryStatusPageIncidents(search, startTime, endTime, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(incidents));
+        return ResponseEntity.ok(Message.success(incidents == null ? null : incidents.map(StatusPagePublicResponse::incident)));
     }
 }

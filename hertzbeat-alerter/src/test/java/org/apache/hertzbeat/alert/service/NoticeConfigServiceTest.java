@@ -522,4 +522,71 @@ class NoticeConfigServiceTest {
         when(noticeRuleDao.findNoticeRulesByEnableTrue()).thenReturn(Collections.singletonList(rule));
         return noticeConfigService.getReceiverFilterRule(new GroupAlert());
     }
+
+    @Test
+    void destinationChangesRejectMaskedOrMissingCredentialsWithoutSaveOrSend() {
+        record Change(byte type, java.util.function.Consumer<NoticeReceiver> destination,
+                      java.util.function.BiConsumer<NoticeReceiver, String> secret) {
+        }
+
+        List<Change> changes = List.of(
+                new Change((byte) 2, r -> r.setHookUrl("https://changed.example/hook"), NoticeReceiver::setHookAuthToken),
+                new Change((byte) 2, r -> r.setHookAuthType("Basic"), NoticeReceiver::setHookAuthToken),
+                new Change((byte) 7, r -> r.setTgUserId("changed-chat"), NoticeReceiver::setTgBotToken),
+                new Change((byte) 7, r -> r.setTgMessageThreadId("changed-thread"), NoticeReceiver::setTgBotToken),
+                new Change((byte) 9, r -> r.setDiscordChannelId("changed-channel"), NoticeReceiver::setDiscordBotToken),
+                new Change((byte) 15, r -> r.setNtfyServerUrl("https://changed.example"), NoticeReceiver::setNtfyToken),
+                new Change((byte) 15, r -> r.setNtfyTopic("changed-topic"), NoticeReceiver::setNtfyToken));
+        for (Change change : changes) {
+            NoticeReceiver stored = new NoticeReceiver();
+            stored.setId(5L);
+            stored.setType(change.type());
+            stored.setHookUrl("https://original.example/hook");
+            stored.setHookAuthType("Bearer");
+            stored.setTgUserId("original-chat");
+            stored.setTgMessageThreadId("original-thread");
+            stored.setDiscordChannelId("original-channel");
+            stored.setNtfyServerUrl("https://original.example");
+            stored.setNtfyTopic("original-topic");
+            change.secret().accept(stored, "SYNTHETIC_ORIGINAL_SECRET");
+            when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+            for (String submitted : new String[] {"******CRET", null, "", " "}) {
+                NoticeReceiver incomingEdit = NoticeReceiverMaskUtil.mask(stored);
+                change.destination().accept(incomingEdit);
+                change.secret().accept(incomingEdit, submitted);
+                assertThrows(IllegalArgumentException.class, () -> noticeConfigService.editReceiver(incomingEdit));
+                NoticeReceiver incomingTest = NoticeReceiverMaskUtil.mask(stored);
+                change.destination().accept(incomingTest);
+                change.secret().accept(incomingTest, submitted);
+                assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incomingTest));
+            }
+            assertEquals("https://original.example/hook", stored.getHookUrl());
+            assertEquals("original-chat", stored.getTgUserId());
+            assertEquals("original-channel", stored.getDiscordChannelId());
+            assertEquals("original-topic", stored.getNtfyTopic());
+        }
+        verify(noticeReceiverDao, never()).save(any());
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
+    }
+
+    @Test
+    void destinationChangeWithExplicitReentryCanSaveAndTest() {
+        NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setType((byte) 7);
+        stored.setTgUserId("original-chat");
+        stored.setTgBotToken("123456789:SYNTHETIC_ORIGINAL_SECRET");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+        NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(stored);
+        incoming.setTgUserId("changed-chat");
+        incoming.setTgBotToken("123456789:SYNTHETIC_REENTERED_SECRET");
+
+        noticeConfigService.editReceiver(incoming);
+        noticeConfigService.sendTestMsg(incoming);
+
+        verify(noticeReceiverDao).save(incoming);
+        verify(dispatcherAlarm).sendNoticeMsg(eq(incoming), eq(null), any(GroupAlert.class));
+        assertEquals("original-chat", stored.getTgUserId());
+        assertEquals("123456789:SYNTHETIC_ORIGINAL_SECRET", stored.getTgBotToken());
+    }
 }

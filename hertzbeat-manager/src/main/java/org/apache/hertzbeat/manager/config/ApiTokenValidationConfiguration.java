@@ -17,15 +17,15 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.handler.MappedInterceptor;
 
 /**
  * Registers the managed API token validation interceptor after servlet filters.
  */
 @Configuration
-public class ApiTokenValidationConfiguration implements WebMvcConfigurer {
+public class ApiTokenValidationConfiguration {
 
     private final ApiTokenValidationFilter apiTokenValidationFilter;
 
@@ -33,8 +33,13 @@ public class ApiTokenValidationConfiguration implements WebMvcConfigurer {
         this.apiTokenValidationFilter = apiTokenValidationFilter;
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiTokenValidationFilter).addPathPatterns("/api/**");
+    /**
+     * A bean is discovered by independent handler mappings, including Actuator's.
+     * WebMvcConfigurer registration alone only reaches MVC controller mappings.
+     * The validator still skips anonymous requests and legacy authentication.
+     */
+    @Bean
+    public MappedInterceptor managedApiTokenValidationInterceptor() {
+        return new MappedInterceptor(new String[]{"/**"}, apiTokenValidationFilter);
     }
 }

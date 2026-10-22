@@ -304,6 +304,44 @@ class JdbcCommonCollectTest {
         }
     }
 
+    @Test
+    void testCustomJdbcUrlUsesExistingFinalSafetyCheck() {
+        // Only build URL strings: never open a connection or instantiate a factory class.
+        String[] properties = {
+                "socketFactory=example.CustomFactory",
+                "socketFactoryArg=unused",
+                "SOCKETFACTORY=example.CustomFactory",
+                "socket%46actory=example.CustomFactory",
+                "socket%2546actory=example.CustomFactory",
+                "socketFactory=example%2eCustomFactory",
+                "socketFactory=example%252eCustomFactory"
+        };
+        for (String property : properties) {
+            JdbcProtocol protocol = JdbcProtocol.builder().platform("postgresql")
+                    .url("jdbc:postgresql://example.invalid/test?" + property).build();
+            assertThrows(IllegalArgumentException.class,
+                    () -> constructDatabaseUrl(jdbcCommonCollect, protocol, "example.invalid", "5432"));
+        }
+    }
+
+    @Test
+    void testCustomJdbcUrlPreservesExistingTlsAndConnectionOptions() throws Exception {
+        String[] urls = {
+                "jdbc:postgresql://example.invalid/test?ssl=true&sslmode=verify-full&sslrootcert=/etc/postgresql/root.crt",
+                "jdbc:postgresql://example.invalid/test?sslfactory=org.postgresql.ssl.LibPQFactory",
+                "jdbc:postgresql://example.invalid/test?sslfactory=org.postgresql.ssl.jdbc4.LibPQFactory",
+                "jdbc:postgresql://example.invalid/test?sslfactory=org.postgresql.ssl.DefaultJavaSSLFactory",
+                "jdbc:postgresql://example.invalid/test?sslfactory=org.postgresql.ssl.NonValidatingFactory",
+                "jdbc:postgresql://example.invalid:5432,example.test:5433/test?targetServerType=primary",
+                "jdbc:postgresql://example.invalid/test?connectTimeout=10&socketTimeout=30&ApplicationName=hertzbeat",
+                "jdbc:mysql://example.invalid/test?allowPublicKeyRetrieval=true&useSSL=true"
+        };
+        for (String url : urls) {
+            JdbcProtocol protocol = JdbcProtocol.builder().platform("postgresql").url(url).build();
+            assertEquals(url, constructDatabaseUrl(jdbcCommonCollect, protocol, "example.invalid", "5432"));
+        }
+    }
+
     private String constructDatabaseUrl(JdbcCommonCollect jdbcCollect, JdbcProtocol jdbcProtocol,
                                         String host, String port) throws Exception {
         try {
