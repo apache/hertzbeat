@@ -20,6 +20,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorHistoryChart, MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { monitorHistoryLabel } from '../model/monitor-metric-labels';
 import { HistoryAvailabilityBoundary, HistoryChartEvidence } from './monitor-history-chart';
 import styles from './monitor-history-results.module.css';
 import { formatMetricTime, historyStatistics, selectedCurrentValue } from './monitor-history-values';
@@ -41,7 +42,7 @@ export function MonitorSelectedHistoryTray({
       data-history-metric={chart.metric.key}
       data-layout-editing={state.layout.editing}
       style={{ '--monitor-history-height': `${dock.height * 22}px` } as CSSProperties}
-      aria-label={`${t('monitorMetrics.historyTrend')} ${chart.metric.key}`}
+      aria-label={`${t('monitorMetrics.historyTrend')} ${monitorHistoryLabel(state.metricLabels, chart.metric)}`}
     >
       <SelectedHistoryHeader state={state} actions={actions} chart={chart} />
       <SelectedHistoryContent state={state} actions={actions} chart={chart} resize={resize} />
@@ -72,7 +73,7 @@ function SelectedHistoryContent({
       ) : null}
       <SelectedHistoryStatistics chart={chart} />
       <HistoryAvailabilityBoundary availability={state.historyAvailability}>
-        <HistoryChartEvidence chart={chart} />
+        <HistoryChartEvidence chart={chart} title={monitorHistoryLabel(state.metricLabels, chart.metric)} />
       </HistoryAvailabilityBoundary>
     </>
   );
@@ -91,7 +92,7 @@ function SelectedHistoryHeader({
     <header className={styles.selectedHistoryHeader}>
       <div className={styles.selectedHistoryIdentity}>
         <strong>{t('monitorMetrics.historyTrend')}:</strong>
-        <span>{chart.metric.key}</span>
+        <span title={chart.metric.key}>{monitorHistoryLabel(state.metricLabels, chart.metric)}</span>
         <span className={styles.currentMetricValue}>
           {t('monitorMetrics.currentValue')}: {current.value}
           {chart.metric.unit ? ` ${chart.metric.unit}` : ''}

@@ -75,7 +75,7 @@ it('updates the existing chart and collection timestamps when the interface lang
     interval: false,
     result: { kind: 'ready', rows: [{ name: 'pid=4', points: [[to, 1_000_000_000]] }] }
   };
-  render(
+  const view = render(
     <I18nextProvider i18n={i18n}>
       <HistoryChartEvidence chart={chart} />
       <MonitorSignalAvailability nativeMetrics={{ kind: 'ready', options: [] }} state={state} />
@@ -107,5 +107,14 @@ it('updates the existing chart and collection timestamps when the interface lang
       )
     ).toBeVisible();
   }
+  view.rerender(
+    <I18nextProvider i18n={i18n}>
+      <HistoryChartEvidence chart={chart} title="Working set label" />
+    </I18nextProvider>
+  );
+  expect(screen.getByRole('img', { name: 'Working set label' })).toHaveAttribute('title', 'processes.working_set');
+  expect(runtime.update).toHaveBeenLastCalledWith(
+    expect.objectContaining({ title: 'Working set label', locale: 'en-US', series: chart.result.rows })
+  );
   expect(runtime.create).toHaveBeenCalledOnce();
 });
