@@ -28,6 +28,7 @@ import type {
   MonitorGrafanaDashboard
 } from './monitor-contract';
 import type { MonitorHistorySeries } from './monitor-history-model';
+import type { MonitorMetricLabels } from './monitor-metric-labels';
 import type { MonitorMetricLayoutActions, MonitorMetricLayoutState } from './monitor-metric-layout-model';
 import type { MonitorInvestigationViewState } from './monitor-investigation-model';
 
@@ -140,6 +141,7 @@ export type MonitorHistoryChart = {
 };
 export type MonitorMetricWorkbenchController = {
   state: {
+    metricLabels?: MonitorMetricLabels | undefined;
     catalog: MonitorMetricCatalogEvidence;
     metricKey: string;
     history: MonitorMetricHistory;
