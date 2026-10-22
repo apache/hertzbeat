@@ -19,14 +19,25 @@ import { Table, Tag, type TableColumnsType } from 'antd';
 import { useState, type ReactNode } from 'react';
 
 import type { monitorRealtimeRows } from '../model/monitor-detail-model';
+import { monitorFieldLabel, type MonitorMetricLabels } from '../model/monitor-metric-labels';
 import { monitorRealtimeDefaultPageSize, monitorRealtimePageSizes } from '../model/monitor-realtime-pagination';
 import styles from './monitor-realtime-table.module.css';
 
 type RealtimeRow = ReturnType<typeof monitorRealtimeRows>[number];
 type MatrixRow = { key: string } & Record<string, ReactNode>;
 
-export function MatrixRealtimeTable({ rows, pending }: { rows: RealtimeRow[]; pending: boolean }) {
-  const { columns, data } = realtimeMatrix(rows);
+export function MatrixRealtimeTable({
+  rows,
+  pending,
+  group,
+  labels
+}: {
+  rows: RealtimeRow[];
+  pending: boolean;
+  group?: string | undefined;
+  labels?: MonitorMetricLabels | undefined;
+}) {
+  const { columns, data } = realtimeMatrix(rows, group, labels);
   const [pagination, setPagination] = useState({ current: 1, pageSize: monitorRealtimeDefaultPageSize });
   const current = Math.max(1, Math.min(pagination.current, Math.ceil(data.length / pagination.pageSize)));
   // Store the correction so a later refresh cannot revive an out-of-range page.
@@ -58,7 +69,7 @@ export function MatrixRealtimeTable({ rows, pending }: { rows: RealtimeRow[]; pe
   );
 }
 
-function realtimeMatrix(rows: RealtimeRow[]) {
+function realtimeMatrix(rows: RealtimeRow[], group: string | undefined, labels: MonitorMetricLabels | undefined) {
   const labelKeys = unique(rows.flatMap(row => Object.keys(row.labels)));
   const fields = unique(rows.map(row => row.field));
   const units = new Map(rows.map(row => [row.field, row.unit]));
@@ -71,16 +82,19 @@ function realtimeMatrix(rows: RealtimeRow[]) {
     samples.set(key, sample);
   }
   const columns: TableColumnsType<MatrixRow> = [
-    ...labelKeys.map(label => ({ title: label, dataIndex: `label:${label}` })),
-    ...fields.map(field => ({ title: renderField(field, units.get(field)), dataIndex: `field:${field}` }))
+    ...labelKeys.map(label => ({ title: monitorFieldLabel(labels, group, label), dataIndex: `label:${label}` })),
+    ...fields.map(field => ({
+      title: renderField(monitorFieldLabel(labels, group, field), units.get(field), field),
+      dataIndex: `field:${field}`
+    }))
   ];
   return { columns, data: [...samples.values()] };
 }
 
-function renderField(field: string, unit?: string | null) {
+function renderField(field: string, unit?: string | null, identity?: string) {
   return (
     <span className={styles.realtimeField}>
-      <span>{field}</span>
+      <span title={identity}>{field}</span>
       {unit ? <Tag bordered={false}>{unit}</Tag> : null}
     </span>
   );

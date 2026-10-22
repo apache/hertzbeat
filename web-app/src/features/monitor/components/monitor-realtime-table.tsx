@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { MonitorMetricOption } from '../model/monitor-contract';
 import type { monitorRealtimeRows } from '../model/monitor-detail-model';
+import { monitorFieldLabel, type MonitorMetricLabels } from '../model/monitor-metric-labels';
 import { MonitorMetricValue } from './monitor-metric-value';
 import { MatrixRealtimeTable } from './monitor-realtime-matrix-table';
 import styles from './monitor-realtime-table.module.css';
@@ -28,6 +29,7 @@ type RealtimeRow = ReturnType<typeof monitorRealtimeRows>[number];
 type CompactRow = {
   key: string;
   field: string;
+  displayName: string;
   unit: string | null;
   value: string;
   metricKey: string | undefined;
@@ -37,6 +39,7 @@ export function MonitorRealtimeTable({
   rows,
   pending,
   group,
+  labels,
   metricOptions = [],
   selectedMetricKey,
   onSelectMetric
@@ -44,6 +47,7 @@ export function MonitorRealtimeTable({
   rows: RealtimeRow[];
   pending: boolean;
   group?: string | undefined;
+  labels?: MonitorMetricLabels | undefined;
   metricOptions?: MonitorMetricOption[] | undefined;
   selectedMetricKey?: string | undefined;
   onSelectMetric?: ((metricKey: string) => void) | undefined;
@@ -56,12 +60,13 @@ export function MonitorRealtimeTable({
           rows={rows}
           pending={pending}
           group={group}
+          labels={labels}
           metricOptions={metricOptions}
           selectedMetricKey={selectedMetricKey}
           onSelectMetric={onSelectMetric}
         />
       ) : (
-        <MatrixRealtimeTable key={group} rows={rows} pending={pending} />
+        <MatrixRealtimeTable key={group} rows={rows} pending={pending} group={group} labels={labels} />
       )}
     </div>
   );
@@ -71,6 +76,7 @@ function CompactRealtimeTable({
   rows,
   pending,
   group,
+  labels,
   metricOptions,
   selectedMetricKey,
   onSelectMetric
@@ -78,12 +84,13 @@ function CompactRealtimeTable({
   rows: RealtimeRow[];
   pending: boolean;
   group?: string | undefined;
+  labels?: MonitorMetricLabels | undefined;
   metricOptions: MonitorMetricOption[];
   selectedMetricKey?: string | undefined;
   onSelectMetric?: ((metricKey: string) => void) | undefined;
 }) {
   const { t } = useTranslation();
-  const data = compactRows(rows, metricOptions, group);
+  const data = compactRows(rows, metricOptions, group, labels);
   return (
     <Spin spinning={pending}>
       <table className={styles.compactMetricTable}>
@@ -131,10 +138,10 @@ function CompactRealtimeRow({
             aria-label={metricKey}
             onClick={() => onSelectMetric(metricKey)}
           >
-            {renderField(row.field, row.unit)}
+            {renderField(row.displayName, row.unit, row.field)}
           </Button>
         ) : (
-          renderField(row.field, row.unit)
+          renderField(row.displayName, row.unit, row.field)
         )}
       </td>
       <td className={styles.metricValue}>
@@ -147,11 +154,13 @@ function CompactRealtimeRow({
 function compactRows(
   rows: RealtimeRow[],
   metricOptions: MonitorMetricOption[],
-  group: string | undefined
+  group: string | undefined,
+  translations: MonitorMetricLabels | undefined
 ): CompactRow[] {
   const labels: CompactRow[] = Object.entries(rows[0]?.labels ?? {}).map(([field, value]) => ({
     key: `label:${field}`,
     field,
+    displayName: monitorFieldLabel(translations, group, field),
     unit: null,
     value,
     metricKey: undefined
@@ -161,6 +170,7 @@ function compactRows(
     ...rows.map(row => ({
       key: row.key,
       field: row.field,
+      displayName: monitorFieldLabel(translations, group, row.field),
       unit: row.unit,
       value: row.value,
       metricKey: metricOptions.find(option => option.group === group && option.field === row.field)?.key
@@ -168,10 +178,10 @@ function compactRows(
   ];
 }
 
-function renderField(field: string, unit?: string | null) {
+function renderField(field: string, unit?: string | null, identity?: string) {
   return (
     <span className={styles.realtimeField}>
-      <span>{field}</span>
+      <span title={identity}>{field}</span>
       {unit ? <Tag bordered={false}>{unit}</Tag> : null}
     </span>
   );

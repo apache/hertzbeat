@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 public class WheelTimerTask implements TimerTask {
 
     private final Job job;
+    private volatile boolean cancelled;
     private final Supplier<MetricsTaskDispatch> metricsTaskDispatchSupplier;
     private static final Gson GSON = new Gson();
 
@@ -92,8 +93,20 @@ public class WheelTimerTask implements TimerTask {
 
     @Override
     public void run(Timeout timeout) throws Exception {
+        if (cancelled) {
+            return;
+        }
         job.setDispatchTime(System.currentTimeMillis());
         metricsTaskDispatchSupplier.get().dispatchMetricsTask(timeout);
+    }
+
+    /** Retire the job even when the wheel timeout has already expired and cannot be cancelled. */
+    public void cancel() {
+        cancelled = true;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
     }
 
     public Job getJob() {

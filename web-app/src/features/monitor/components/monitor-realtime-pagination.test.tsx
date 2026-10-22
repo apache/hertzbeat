@@ -55,6 +55,34 @@ function samples(count: number, suffix = ''): ReturnType<typeof monitorRealtimeR
 }
 
 describe('monitor realtime sample pagination', () => {
+  it('keeps translated columns and the current sample page when display labels change', () => {
+    const rows = samples(23);
+    const view = render(
+      <MonitorRealtimeTable
+        rows={rows}
+        pending={false}
+        group="processes"
+        labels={{ 'processes.metric.cpu': 'CPU label', 'processes.metric.instance': 'Instance label' }}
+      />
+    );
+    expect(screen.getByRole('columnheader', { name: 'CPU label' })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: 'Instance label' })).toBeVisible();
+    fireEvent.click(screen.getByTitle('2'));
+    view.rerender(
+      <MonitorRealtimeTable
+        rows={rows}
+        pending={false}
+        group="processes"
+        labels={{ 'processes.metric.cpu': 'Updated CPU label' }}
+      />
+    );
+    expect(screen.getByRole('columnheader', { name: 'Updated CPU label' })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: 'instance' })).toBeVisible();
+    expect(screen.getByText('cpu-11')).toBeVisible();
+    expect(screen.queryByText('cpu-1')).not.toBeInTheDocument();
+    expect(screen.getByText('node-11')).toBeVisible();
+  });
+
   it('paginates samples rather than individual metric fields and reaches the last page', () => {
     render(<MonitorRealtimeTable rows={samples(23)} pending={false} group="processes" />);
     expect(screen.getAllByText(/^cpu-\d+$/)).toHaveLength(10);

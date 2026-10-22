@@ -21,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Duration;
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link CalculateStatus}.
@@ -62,12 +64,16 @@ class CalculateStatusTest {
     @Mock
     private MonitorDao monitorDao;
 
+    @Mock
+    private StatusPageHistoryAggregator historyAggregator;
+
     private CalculateStatus calculateStatus;
 
     @BeforeEach
     void setUp() {
         calculateStatus = new CalculateStatus(statusPageOrgDao, statusPageComponentDao, statusProperties(),
                 statusPageHistoryDao, monitorDao, new VirtualThreadProperties());
+        ReflectionTestUtils.setField(calculateStatus, "historyAggregator", historyAggregator);
     }
 
     @Test
@@ -145,8 +151,8 @@ class CalculateStatusTest {
         org.mockito.Mockito.doAnswer(invocation -> {
             virtualThread.set(Thread.currentThread().isVirtual());
             latch.countDown();
-            return Collections.emptyList();
-        }).when(statusPageHistoryDao).findStatusPageHistoriesByTimestampBetween(anyLong(), anyLong());
+            return null;
+        }).when(historyAggregator).combinePreviousDay(any(), any(), eq(300));
 
         calculateStatus.dispatchCombineHistory();
 
@@ -286,8 +292,8 @@ class CalculateStatusTest {
         org.mockito.Mockito.doAnswer(invocation -> {
             invocations.incrementAndGet();
             invoked.countDown();
-            return Collections.emptyList();
-        }).when(statusPageHistoryDao).findStatusPageHistoriesByTimestampBetween(anyLong(), anyLong());
+            return null;
+        }).when(historyAggregator).combinePreviousDay(any(), any(), eq(300));
 
         calculateStatus.dispatchCombineHistory();
         calculateStatus.dispatchCombineHistory();
@@ -313,8 +319,8 @@ class CalculateStatusTest {
             } else {
                 secondEntered.countDown();
             }
-            return Collections.emptyList();
-        }).when(statusPageHistoryDao).findStatusPageHistoriesByTimestampBetween(anyLong(), anyLong());
+            return null;
+        }).when(historyAggregator).combinePreviousDay(any(), any(), eq(300));
 
         calculateStatus.dispatchCombineHistory();
         assertThat(firstEntered.await(1, TimeUnit.SECONDS)).isTrue();
