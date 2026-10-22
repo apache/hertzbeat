@@ -1521,6 +1521,120 @@
         "count": "登録済みサービスエンティティ：{{count}}",
         "open": "サービスを開く"
       }
+    },
+    "workspace": {
+      "overview": "概要",
+      "monitors": "設定済み監視",
+      "alerts": "未解決アラート",
+      "services": "登録済みサービス",
+      "about": "{{field}}について",
+      "query": "クエリと調査",
+      "intake": "データ取り込み",
+      "activeDescription": "サーバー、データベース、エンドポイントを定期的に監視します。",
+      "telemetryDescription": "OpenTelemetry でアプリのメトリクス、ログ、トレースを送信します。",
+      "signals": {
+        "metrics": {
+          "title": "メトリクス",
+          "description": "測定値と時間変化を確認します。"
+        },
+        "logs": {
+          "title": "ログ",
+          "description": "イベントとそのコンテキストを検索します。"
+        },
+        "traces": {
+          "title": "トレース",
+          "description": "リクエスト経路と遅いスパンを調査します。"
+        }
+      },
+      "states": {
+        "loading": "読み込み中…",
+        "permission": "権限なし",
+        "unavailable": "利用不可",
+        "error": "読み取り失敗"
+      }
+    },
+    "v2": {
+      "monitorStatus": "監視状態",
+      "attention": "アラート",
+      "alertCenter": "アラートセンター",
+      "firing": "発報中",
+      "alertGroup": "アラートグループ {{id}}",
+      "updated": "更新",
+      "noAttention": "発報中のアラートや利用不可の監視はありません",
+      "continue": "作業を続ける",
+      "favorite": "お気に入り",
+      "recent": "最近開いた項目",
+      "noContinue": "最近開いたクエリはありません",
+      "signals": "シグナル",
+      "last15m": "直近15分",
+      "service": "サービス",
+      "allServices": "すべてのサービス",
+      "environment": "環境",
+      "allEnvironments": "すべての環境",
+      "explore": "探索",
+      "unavailable": "一時的に利用できません",
+      "loading": "読み込み中",
+      "unitUnknown": "単位なし",
+      "noSamples": "サンプルなし",
+      "noFavoriteMetrics": "お気に入りのメトリクスクエリはありません",
+      "chooseMetric": "メトリクスクエリを選びお気に入りに追加",
+      "previous": "前へ",
+      "next": "次へ",
+      "resume": "再開",
+      "pause": "一時停止",
+      "favoriteMetrics": "お気に入りのメトリクス",
+      "logEvents": "ログイベント",
+      "logTrend": "ログイベントの推移",
+      "repeatedErrors": "反復 ERROR Top3",
+      "lastSeen": "最終発生",
+      "windowUntil": "集計終了",
+      "unsupported": "この環境では利用できません",
+      "over_budget": "クエリ予算を超過",
+      "noRepeatedErrors": "反復 ERROR はありません",
+      "exactErrors": "元のメッセージの完全一致 · ERROR のみ",
+      "exactGroupRecords": "このグループのログ",
+      "showingRecords": "最大 {{count}} 件の一致ログを表示",
+      "selectionMissing": "このエラーグループは利用できません",
+      "matchedTraces": "一致トレース",
+      "traceTrend": "一致トレースの推移",
+      "errorTraces": "エラートレース",
+      "errorRatio": "エラー率",
+      "fullWindow": "全期間",
+      "boundedCoverage": "有界クエリ：{{count}} Span を走査 / 上限 {{limit}}",
+      "tracePopulation": "一致トレースの集計",
+      "serviceLoading": "サービスを読み込み中…",
+      "serviceUnavailable": "サービスを取得できません",
+      "serviceEmpty": "サービスなし",
+      "environmentLoading": "環境を読み込み中…",
+      "environmentUnavailable": "環境を取得できません",
+      "environmentEmpty": "環境なし"
+    },
+    "v3": {
+      "otherStatus": "その他の状態",
+      "firingGroups": "発火中のアラートグループ {{count}}件",
+      "unavailableMonitors": "利用不可の監視 {{count}}件",
+      "monitorDistribution": "監視ステータスの分布",
+      "monitorRemainder": "残り{{count}}件はこの3分類に含まれず、中立の区間として表示されます",
+      "monitorUnit": "件",
+      "distribution": "監視状態の分布",
+      "total": "合計",
+      "allAlerts": "すべてのアラート",
+      "allQueries": "すべてのクエリ",
+      "status": "状態",
+      "object": "対象",
+      "description": "問題",
+      "updated": "更新時刻",
+      "name": "名前",
+      "type": "種類",
+      "action": "操作",
+      "moreActions": "その他の操作",
+      "signalOverview": "シグナル概要",
+      "latest": "最新値",
+      "noErrorTraces": "異常トレースなし",
+      "reviewErrors": "異常トレースを確認",
+      "savedMetrics": "お気に入り指標",
+      "openExplore": "探索画面で開く",
+      "scrollAttention": "スクロールして要確認項目を表示"
     }
   },
   "bulletin": {
@@ -4801,5 +4915,11 @@
       "contract": "証拠が不完全なため表示できません。"
     },
     "addTransactionsUnsupported": "トランザクションはまだダッシュボードに追加できません。調査を再開するにはクエリを保存してください。"
-  }
+  },
+  "dashboard.v3.rotationCountdown": "自動切り替えまで",
+  "dashboard.v3.traceSamplesLoading": "異常トレースを読み込み中",
+  "dashboard.v3.traceSamplesFailed": "異常トレースの読み込みに失敗しました",
+  "dashboard.v3.traceSamplesUnsupported": "このバックエンドは異常トレースの検索に対応していません",
+  "dashboard.v3.traceSamplesMissing": "この時間範囲では異常サンプルを取得できませんでした",
+  "dashboard.v3.errorSpans": "エラースパン {{count}}"
 }

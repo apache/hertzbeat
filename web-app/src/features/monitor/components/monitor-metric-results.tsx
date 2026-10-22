@@ -34,8 +34,8 @@ export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchC
   const [groupFilter, setGroupFilter] = useState('');
   const favoriteGroups = useMemo(() => availableFavoriteGroups(state.favoriteCollection), [state.favoriteCollection]);
   const groups = useMemo(
-    () => filterRealtimeGroups(state.realtimeGroups, favoriteGroups, view, search, groupFilter),
-    [favoriteGroups, groupFilter, search, state.realtimeGroups, view]
+    () => filterRealtimeGroups(state.realtimeGroups, favoriteGroups, view, search, groupFilter, state.metricLabels),
+    [favoriteGroups, groupFilter, search, state.realtimeGroups, state.metricLabels, view]
   );
   useActivateSelectedHistory(state, actions);
   return (

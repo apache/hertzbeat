@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OperationalStatePanel } from '@/shared/operational-page';
 import type { MonitorHistoryChart, MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { monitorFieldLabel, monitorGroupLabel, monitorHistoryLabel } from '../model/monitor-metric-labels';
 import { HistoryAvailabilityBoundary, HistoryChartEvidence } from './monitor-history-chart';
 import { SelectedHistoryControls } from './monitor-selected-history-controls';
 import { useActivateWhenVisible } from './use-activate-when-visible';
@@ -54,8 +55,9 @@ function HistoryGroups({ state, actions }: MonitorMetricWorkbenchController) {
                     <Button
                       aria-expanded={!collapsed}
                       aria-label={t(collapsed ? 'monitorMetrics.expandGroup' : 'monitorMetrics.collapseGroup', {
-                        group
+                        group: monitorGroupLabel(state.metricLabels, group)
                       })}
+                      title={group}
                       onClick={() =>
                         actions.setHistoryCollapsedGroups?.(
                           collapsed
@@ -64,7 +66,7 @@ function HistoryGroups({ state, actions }: MonitorMetricWorkbenchController) {
                         )
                       }
                     >
-                      {group}
+                      {monitorGroupLabel(state.metricLabels, group)}
                     </Button>
                     {!collapsed ? (
                       <div className={styles.charts}>
@@ -98,7 +100,7 @@ function HistoryGroupToolbar({ state, actions }: MonitorMetricWorkbenchControlle
         value={selection.selected}
         aria-label={t('monitorMetrics.groupFilter')}
         className={styles.filter!}
-        options={selection.names.map(value => ({ value, label: value }))}
+        options={selection.names.map(value => ({ value, label: monitorGroupLabel(state.metricLabels, value) }))}
         onChange={values => actions.setHistoryGroups?.(values)}
       />
       <Button onClick={() => actions.setHistoryGroups?.(selection.names)}>{t('monitorMetrics.allGroups')}</Button>
@@ -125,10 +127,12 @@ function GroupedHistoryChart({
   return (
     <article ref={ref} className={styles.chart} aria-label={chart.metric.key}>
       <header>
-        <strong>{chart.metric.field}</strong>
+        <strong title={chart.metric.field}>
+          {monitorFieldLabel(state.metricLabels, chart.metric.group, chart.metric.field)}
+        </strong>
         <SelectedHistoryControls chart={chart} actions={actions} investigationSignals={state.investigationSignals} />
       </header>
-      <HistoryChartEvidence chart={chart} />
+      <HistoryChartEvidence chart={chart} title={monitorHistoryLabel(state.metricLabels, chart.metric)} />
     </article>
   );
 }

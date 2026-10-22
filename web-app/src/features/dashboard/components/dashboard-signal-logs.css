@@ -1,0 +1,156 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.bigNumber {
+  font-size: 30px;
+  line-height: 40px;
+  font-weight: 600;
+}
+
+.bigNumber small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--hb-text-secondary);
+}
+
+.rankHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  margin: 8px 0 4px;
+  margin-top: 4px;
+}
+
+.errorList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  counter-reset: rank;
+}
+
+.errorList button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--hb-space-2);
+  border: 0;
+  padding: var(--hb-space-2) 0;
+  background: transparent;
+  color: var(--hb-text-primary);
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+}
+
+.errorList button:disabled {
+  cursor: default;
+}
+
+.errorList button:hover:not(:disabled) {
+  background: var(--hb-bg-hover);
+}
+
+.errorList button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.errorList button strong {
+  color: var(--hb-status-unavailable);
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.errorList small {
+  display: block;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+
+.rankWindow {
+  display: block;
+  margin-top: 8px;
+}
+
+.recordList {
+  padding-inline-start: var(--hb-space-4);
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.rankWindow,
+.coverage {
+  font-size: 12px;
+  line-height: 18px;
+  margin: 4px 0 0;
+}
+
+.logCard > .bigNumber {
+  font-size: 20px;
+  line-height: 28px;
+  background: transparent;
+  padding: 8px 10px 0;
+  padding-top: 4px;
+}
+
+.logCard > .seriesLabel {
+  background: transparent;
+  padding: 0 10px;
+  height: 18px;
+}
+
+.logCard > .sparkline {
+  background: transparent;
+  height: 90px;
+  margin: 0 0 6px;
+}
+
+.rank {
+  background: transparent;
+  border-radius: 4px;
+  padding: 4px 10px 8px;
+  flex: 1;
+  padding-bottom: 4px;
+}
+
+.errorList li {
+  border-bottom: 1px solid var(--start-border);
+  padding: 2px 0;
+}
+
+.errorList li:last-child {
+  border: 0;
+}
+
+.rankHeading h4 {
+  font-size: 13px;
+}
+
+.rank > .empty {
+  padding-block: 4px;
+}
+
+.logCard > .sparkline {
+  color: var(--start-accent);
+}
+.rank {
+  border-top: 1px solid var(--start-border);
+}

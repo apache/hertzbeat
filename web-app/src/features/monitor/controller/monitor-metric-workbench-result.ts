@@ -25,6 +25,7 @@ import type { SignalKind } from '@/shared/query-context';
 type MetricUrlActions = Pick<MonitorMetricWorkbenchController['actions'], 'setMetric' | 'setHistory'>;
 
 type MonitorMetricWorkbenchResultInput = {
+  metricLabels?: MonitorMetricWorkbenchController['state']['metricLabels'];
   catalog: MonitorMetricWorkbenchController['state']['catalog'];
   metricKey: string;
   history: MonitorMetricHistory;
@@ -71,6 +72,7 @@ export function buildMonitorMetricWorkbenchResult(
 
 function buildWorkbenchState(input: MonitorMetricWorkbenchResultInput): MonitorMetricWorkbenchController['state'] {
   return {
+    metricLabels: input.metricLabels,
     catalog: input.catalog,
     metricKey: input.metricKey,
     history: input.history,
