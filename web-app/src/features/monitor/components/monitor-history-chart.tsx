@@ -55,10 +55,11 @@ export function HistoryAvailabilityBoundary({
 export type HistoryChartImage = { chart: MonitorHistoryChart; exportPng: () => string };
 type HistoryChartProps = {
   chart: MonitorHistoryChart;
+  title?: string;
   onImageReady?: ((image: HistoryChartImage | undefined) => void) | undefined;
 };
 
-export function HistoryChartEvidence({ chart, onImageReady }: HistoryChartProps) {
+export function HistoryChartEvidence({ chart, title = chart.metric.key, onImageReady }: HistoryChartProps) {
   const { t } = useTranslation();
   if (chart.result.kind === 'unavailable') return <ChartState kind="unavailable" title={t('common.unavailable')} />;
   if (chart.result.kind === 'error') return <ChartState kind="error" title={t('common.routeError.description')} />;
@@ -66,19 +67,19 @@ export function HistoryChartEvidence({ chart, onImageReady }: HistoryChartProps)
   if (chart.result.kind === 'unsupported')
     return <ChartState kind="empty" title={t('monitorMetrics.historyUnsupported')} />;
   if (chart.result.kind === 'loading') return <ChartState kind="loading" title={t('monitorMetrics.loading')} />;
-  return <HistoryChartCanvas chart={chart} onImageReady={onImageReady} />;
+  return <HistoryChartCanvas chart={chart} title={title} onImageReady={onImageReady} />;
 }
 
-function HistoryChartCanvas({ chart, onImageReady }: HistoryChartProps) {
+function HistoryChartCanvas({ chart, title, onImageReady }: HistoryChartProps & { title: string }) {
   const element = useRef<HTMLDivElement>(null);
   const runtime = useRef<MonitorHistoryChartRuntime | undefined>(undefined);
   const input = useMemo<MonitorHistoryChartRenderInput>(
     () => ({
-      title: chart.metric.key,
+      title,
       unit: chart.metric.unit,
       series: chart.result.rows
     }),
-    [chart.metric.key, chart.metric.unit, chart.result.rows]
+    [title, chart.metric.unit, chart.result.rows]
   );
   const latest = useRef({ input, chart, onImageReady });
   useLayoutEffect(() => {
@@ -104,7 +105,9 @@ function HistoryChartCanvas({ chart, onImageReady }: HistoryChartProps) {
       runtime.current = undefined;
     };
   }, [chart.metric.key]);
-  return <div ref={element} className={styles.historyChartCanvas} role="img" aria-label={chart.metric.key} />;
+  return (
+    <div ref={element} className={styles.historyChartCanvas} role="img" aria-label={title} title={chart.metric.key} />
+  );
 }
 
 function ChartState({ kind, title }: { kind: 'loading' | 'empty' | 'unavailable' | 'error'; title: string }) {

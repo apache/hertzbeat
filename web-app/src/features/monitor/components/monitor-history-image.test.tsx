@@ -45,12 +45,12 @@ const chart: MonitorHistoryChart = {
   interval: false,
   result: { kind: 'ready', rows: [{ name: 'origin', points: [[1000, 12]] }] }
 };
-function Harness({ value }: { value: MonitorHistoryChart }) {
+function Harness({ value, title = value.metric.key }: { value: MonitorHistoryChart; title?: string }) {
   const [image, setImage] = useState<HistoryChartImage>();
   return (
     <I18nextProvider i18n={i18n}>
       <MonitorHistoryImageButton chart={value} image={image} />
-      <HistoryChartEvidence chart={value} onImageReady={setImage} />
+      <HistoryChartEvidence chart={value} title={title} onImageReady={setImage} />
     </I18nextProvider>
   );
 }
@@ -101,6 +101,23 @@ describe('monitor history image action', () => {
     view.rerender(<Harness value={{ ...next, result: { kind: 'loading', rows: [] } }} />);
     expect(button()).toBeDisabled();
     expect(mocks.dispose).toHaveBeenCalledOnce();
+  });
+  it('updates a translated chart title while retaining the original download identity', async () => {
+    const view = render(<Harness value={chart} title="First response-time label" />);
+    await waitFor(() => expect(button()).toBeEnabled());
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ title: 'First response-time label' })
+    );
+    view.rerender(<Harness value={chart} title="Updated response-time label" />);
+    expect(screen.getByRole('img', { name: 'Updated response-time label' })).toHaveAttribute(
+      'title',
+      'summary.responseTime'
+    );
+    expect(mocks.update).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Updated response-time label' }));
+    fireEvent.click(button());
+    expect(mocks.save).toHaveBeenCalledWith(expect.any(String), chart);
+    expect(mocks.create).toHaveBeenCalledOnce();
   });
   it.each(['loading', 'empty', 'error', 'unavailable', 'unsupported'] as const)('does not export %s evidence', kind => {
     render(<Harness value={{ ...chart, result: { kind, rows: [] } }} />);
