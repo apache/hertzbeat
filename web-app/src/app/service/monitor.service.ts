@@ -90,15 +90,8 @@ export class MonitorService {
   }
 
   public cancelManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {
-    let httpParams = new HttpParams();
-    monitorIds.forEach(monitorId => {
-      // HttpParams is unmodifiable, so we need to save the return value of append/set
-      // Method append can append same key, set will replace the previous value
-      httpParams = httpParams.append('ids', monitorId);
-      httpParams = httpParams.append('type', 'JSON');
-    });
-    const options = { params: httpParams };
-    return this.http.delete<Message<any>>(manage_monitors_uri, options);
+    // Send ids in the body: as query params, large selections exceed the server's request header limit (#4447).
+    return this.http.delete<Message<any>>(manage_monitors_uri, { body: Array.from(monitorIds) });
   }
 
   public enableManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {

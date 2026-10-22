@@ -38,6 +38,16 @@ describe('MonitorService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('sends the monitor ids to pause in the request body instead of the url', () => {
+    const monitorIds = new Set(Array.from({ length: 1000 }, (_, i) => 486837261783808 + i));
+
+    service.cancelManageMonitors(monitorIds).subscribe();
+
+    const request = http.expectOne({ method: 'DELETE', url: '/monitors/manage' });
+    expect(request.request.body).toEqual(Array.from(monitorIds));
+    request.flush({ code: 0, msg: '', data: null });
+    http.verify();
+  });
   afterEach(() => http.verify());
 
   for (const all of [false, true]) {

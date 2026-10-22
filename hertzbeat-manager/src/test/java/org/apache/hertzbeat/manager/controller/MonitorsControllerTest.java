@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -24,6 +25,9 @@ import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -120,10 +124,10 @@ class MonitorsControllerTest {
                 .andReturn();
     }
 
-    @Test
-    void cancelManageMonitors() throws Exception {
-        List<Long> ids = new ArrayList<>();
-        ids.add(6565463543L);
+    @ParameterizedTest
+    @ValueSource(ints = {1, 200, 201, 500, 1000})
+    void cancelManageMonitors(int count) throws Exception {
+        Set<Long> ids = LongStream.rangeClosed(1, count).boxed().collect(Collectors.toSet());
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors/manage")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -131,6 +135,19 @@ class MonitorsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
+
+        verify(monitorService).cancelManageMonitors(ids);
+    }
+
+    @Test
+    void cancelManageMonitorsByQueryParams() throws Exception {
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors/manage")
+                        .param("ids", "6565463543", "6565463544"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+
+        verify(monitorService).cancelManageMonitors(Set.of(6565463543L, 6565463544L));
     }
 
     @Test

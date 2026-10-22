@@ -28,6 +28,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -210,6 +211,46 @@ class AlarmGroupReduceTest {
         assertTrue(groups.stream().anyMatch(g -> g.getAlerts().stream().anyMatch(
                         a -> "mem".equals(a.getFingerprint()) && "resolved".equals(a.getStatus()))),
                 "memory recovery was silently dropped by the firing repeat-interval throttle");
+    }
+
+    /**
+     * Regression: deleting (or renaming/disabling) a converge rule while its group cache still
+     * holds a firing alert must not break the periodic group dispatch with an NPE. The orphaned
+     * group has to fall back to the default repeat interval, like shouldSendGroup already does
+     * for the group wait/interval.
+     */
+    @Test
+    void whenRuleDeleted_firingGroupCacheMustStillBeDispatched() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(groupRule()));
+
+        alarmGroupReduce.processGroupAlert(alert("cpu", "firing", "host1"));
+        alarmGroupReduce.processGroupAlert(alert("memory", "firing", "host2"));
+        org.mockito.Mockito.clearInvocations(alarmInhibitReduce);
+
+        // The rule is deleted or disabled; refresh loads only enabled rules, orphaning the cache.
+        alarmGroupReduce.refreshGroupDefines(Collections.emptyList());
+
+        // Age the cache past the default group wait so the periodic check picks the group up.
+        Field cachesField = AlarmGroupReduce.class.getDeclaredField("groupCacheMap");
+        cachesField.setAccessible(true);
+        Map<?, ?> caches = (Map<?, ?>) cachesField.get(alarmGroupReduce);
+        for (Object cache : caches.values()) {
+            Field createTimeField = cache.getClass().getDeclaredField("createTime");
+            createTimeField.setAccessible(true);
+            createTimeField.setLong(cache, System.currentTimeMillis() - 60_000);
+            for (String field : List.of("lastSendTime", "lastRepeatTime")) {
+                Field time = cache.getClass().getDeclaredField(field);
+                time.setAccessible(true);
+                time.setLong(cache, 0);
+            }
+        }
+
+        alarmGroupReduce.runCheckAndSendGroups();
+
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(argThat(group ->
+                group.getAlerts().stream().anyMatch(a -> "cpu".equals(a.getFingerprint()))));
+        verify(alarmInhibitReduce, atLeastOnce()).inhibitAlarm(argThat(group ->
+                group.getAlerts().stream().anyMatch(a -> "memory".equals(a.getFingerprint()))));
     }
 
     private AlertGroupConverge groupRule() {
