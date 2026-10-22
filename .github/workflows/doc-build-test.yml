@@ -49,7 +49,7 @@ jobs:
           cache-dependency-path: home/pnpm-lock.yaml
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.13'
 
       - name: Check Markdown
         # Match the CLI version bundled by markdownlint-cli2-action v24.
