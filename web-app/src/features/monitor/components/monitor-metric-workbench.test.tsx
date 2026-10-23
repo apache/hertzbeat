@@ -40,6 +40,67 @@ describe('MonitorMetricWorkbench', () => {
     vi.unstubAllGlobals();
   });
 
+  it('shows translated groups, fields and history captions while keeping metric and favorite identities raw', () => {
+    const value = controller({
+      metricLabels: { summary: 'Summary label', 'summary.metric.value': 'Value label' },
+      selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] })
+    });
+    renderWorkbench(value);
+    expect(screen.getByRole('heading', { name: 'Summary label' })).toHaveAttribute('title', 'summary');
+    expect(screen.getByRole('button', { name: 'summary.value' })).toHaveTextContent('Value label');
+    expect(document.querySelector('[data-history-metric="summary.value"]')).toHaveTextContent(
+      'Summary label / Value label'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'summary.value' }));
+    expect(value.actions.setMetric).toHaveBeenCalledWith('summary.value');
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') }));
+    expect(value.actions.toggleRealtimeFavorite).toHaveBeenCalledWith('summary');
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Value label' } });
+    expect(screen.getByRole('button', { name: 'summary.value' })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'value' } });
+    expect(screen.getByRole('button', { name: 'summary.value' })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'summary.value' } });
+    expect(screen.getByRole('button', { name: 'summary.value' })).toBeInTheDocument();
+  });
+
+  it('updates aliases without remapping the table identity when display resources change', () => {
+    const value = controller({ metricLabels: { summary: 'First summary', 'summary.metric.value': 'First value' } });
+    const rendered = renderWorkbench(value);
+    expect(screen.getByRole('heading', { name: 'First summary' })).toBeInTheDocument();
+    rendered.rerender(
+      workbenchNode({
+        ...value,
+        state: { ...value.state, metricLabels: { summary: 'Second summary', 'summary.metric.value': 'Second value' } }
+      })
+    );
+    expect(screen.queryByText('First value')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'summary.value' })).toHaveTextContent('Second value');
+    expect(document.querySelector('[data-monitor-group="summary"]')).toBeInTheDocument();
+  });
+
+  it('translates matrix field and configured label columns without changing sample values', () => {
+    renderWorkbench(
+      controller({
+        metricLabels: { 'summary.metric.host': 'Host label', 'summary.metric.value': 'Value label' },
+        realtimeGroups: [
+          {
+            ...realtimeGroup('summary'),
+            result: {
+              kind: 'ready',
+              rows: [
+                { ...metricRow('value', '1'), labels: { host: 'a' } },
+                { ...metricRow('value', '2'), key: '1:value', labels: { host: 'b' } }
+              ]
+            }
+          }
+        ]
+      })
+    );
+    expect(screen.getByRole('columnheader', { name: 'Host label' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Value label' })).toBeInTheDocument();
+    expect(within(screen.getByText('b').closest('tr')!).getByText('2')).toBeInTheDocument();
+  });
+
   it('renders the selected current-value workspace without detached realtime, history, or favorite tabs', () => {
     const value = controller({
       catalog: {
