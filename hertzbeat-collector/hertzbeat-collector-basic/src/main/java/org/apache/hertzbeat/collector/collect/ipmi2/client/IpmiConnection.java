@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.ipmi2.client;
 
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.handler.IpmiHandler;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionResponse;
@@ -27,6 +28,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 /**
  * IpmiConnection used for sending ipmi request
  */
+@Slf4j
 public class IpmiConnection implements AutoCloseable {
 
     IpmiSession session;
@@ -53,10 +55,20 @@ public class IpmiConnection implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        udpConnection.get(session,  new CloseSessionRequest(session.getSystemSessionId()), CloseSessionResponse.class);
-        udpConnection.close();
-        session = null;
-        active = false;
+        try {
+            if (session != null && active) {
+                udpConnection.get(session, new CloseSessionRequest(session.getSystemSessionId()),
+                        CloseSessionResponse.class);
+            }
+        } catch (IOException e) {
+            // The session is being discarded anyway; a failed close handshake must not mask that
+            // or block the caller after the connection has already been declared unusable.
+            log.debug("Ipmi close session handshake failed: {}", e.getMessage());
+        } finally {
+            udpConnection.close();
+            session = null;
+            active = false;
+        }
     }
 
     public boolean isActive() {

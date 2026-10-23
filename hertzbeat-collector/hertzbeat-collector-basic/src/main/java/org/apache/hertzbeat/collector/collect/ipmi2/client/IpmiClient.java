@@ -26,6 +26,7 @@ import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RakpMe
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RakpMessage4;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RmcpPlusOpenSessionRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RmcpPlusOpenSessionResponse;
+import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
 
 /**
@@ -40,16 +41,23 @@ public class IpmiClient {
     private final String password;
 
     public IpmiClient(String host, Integer port, String username, String password) throws IOException {
+        this(host, port, username, password, UdpConnection.DEFAULT_RECEIVE_TIMEOUT_MILLIS);
+    }
+
+    public IpmiClient(String host, Integer port, String username, String password, int receiveTimeoutMillis)
+            throws IOException {
         this.host = host;
         this.port = port;
         this.username = username;
         this.password = password;
-        connection = new UdpConnection(host, port);
+        connection = new UdpConnection(host, port, receiveTimeoutMillis);
     }
 
     public static IpmiClient create(IpmiProtocol ipmiProtocol) throws IOException {
+        int receiveTimeout = CollectUtil.getTimeout(ipmiProtocol.getTimeout(),
+                UdpConnection.DEFAULT_RECEIVE_TIMEOUT_MILLIS);
         return new IpmiClient(ipmiProtocol.getHost(), Integer.parseInt(ipmiProtocol.getPort()),
-                ipmiProtocol.getUsername(), ipmiProtocol.getPassword());
+                ipmiProtocol.getUsername(), ipmiProtocol.getPassword(), receiveTimeout);
     }
 
     public IpmiConnection connect() throws IOException {
