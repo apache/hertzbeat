@@ -29,7 +29,13 @@ import java.util.List;
 @Schema(description = "Saved LLM provider configurations and active selection")
 public record ModelProviderConfigurationView(
         String activeProviderUid,
-        List<Provider> providers) {
+        List<Provider> providers,
+        Provider effectiveProvider,
+        String effectiveError) {
+
+    public ModelProviderConfigurationView(String activeProviderUid, List<Provider> providers) {
+        this(activeProviderUid, providers, null, null);
+    }
 
     public ModelProviderConfigurationView {
         providers = List.copyOf(providers);
@@ -52,6 +58,10 @@ public record ModelProviderConfigurationView(
             String code,
             String baseUrl,
             String model,
-            boolean apiKeyConfigured) {
-    }
+            boolean apiKeyConfigured,
+            String name,
+            String protocol,
+            String authMode,
+            String endpoint,
+            java.util.Map<String, String> headers) {}
 }

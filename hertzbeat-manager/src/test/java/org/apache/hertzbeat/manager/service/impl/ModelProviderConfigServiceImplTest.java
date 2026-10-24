@@ -26,8 +26,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfigState;
@@ -41,6 +39,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.core.type.TypeReference;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Secret-at-rest contracts for model provider configurations. */
 @ExtendWith(MockitoExtension.class)
@@ -122,6 +122,60 @@ class ModelProviderConfigServiceImplTest {
         service.updateConfiguration(uid, provider(""));
 
         assertEquals(ciphertext, persistedState(stored.get().getContent()).getProviders().getFirst().getApiKey());
+    }
+
+    @Test
+    void legacySingleProviderRemainsActiveAfterMigration() {
+        ModelProviderConfig legacy = provider(API_KEY);
+        legacy.setParticipationModel("PROTECTED");
+        stored.set(
+                GeneralConfig.builder().type("provider").content(JsonUtil.toJson(legacy)).build());
+        ModelProviderConfig active = service.getActiveConfiguration();
+        org.junit.jupiter.api.Assertions.assertNotNull(active);
+        assertEquals(API_KEY, active.getApiKey());
+        assertEquals("PROTECTED", active.getParticipationModel());
+        assertEquals(1, service.getState().getProviders().size());
+    }
+
+    @Test
+    void danglingActiveSelectionFailsInsteadOfSelectingYaml() {
+        stored.set(
+                GeneralConfig.builder()
+                        .type("provider")
+                        .content("{\"activeProviderUid\":\"missing\",\"providers\":[]}")
+                        .build());
+        assertThrows(IllegalStateException.class, service::getActiveConfiguration);
+    }
+
+    @Test
+    void customHeadersAreEncryptedAndBlankEditPreservesThem() {
+        ModelProviderConfig config = provider(API_KEY);
+        config.setHeaders(
+                new java.util.LinkedHashMap<>(java.util.Map.of("X-Token", "header-secret")));
+        String uid = service.createConfiguration(config).getProviders().getFirst().getUid();
+        assertFalse(stored.get().getContent().contains("header-secret"));
+        assertEquals("header-secret", service.getConfiguration(uid).getHeaders().get("X-Token"));
+        config.setHeaders(new java.util.LinkedHashMap<>(java.util.Map.of("X-Token", "")));
+        service.updateConfiguration(uid, config);
+        assertEquals("header-secret", service.getConfiguration(uid).getHeaders().get("X-Token"));
+        config.setHeaders(java.util.Map.of());
+        service.updateConfiguration(uid, config);
+        assertTrue(service.getConfiguration(uid).getHeaders().isEmpty());
+    }
+
+    @Test
+    void newBlankHeaderIsNotPersistedAsNull() {
+        ModelProviderConfig config = provider(API_KEY);
+        config.setHeaders(
+                new java.util.LinkedHashMap<>(java.util.Map.of("X-Token", "header-secret")));
+        String uid = service.createConfiguration(config).getProviders().getFirst().getUid();
+        config.setHeaders(new java.util.LinkedHashMap<>(
+                java.util.Map.of("X-Token", "", "X-New", "")));
+        service.updateConfiguration(uid, config);
+        java.util.Map<String, String> headers = service.getConfiguration(uid).getHeaders();
+        assertEquals("header-secret", headers.get("X-Token"));
+        assertEquals("", headers.get("X-New"));
+        assertFalse(headers.containsValue(null));
     }
 
     private ModelProviderConfig provider(String apiKey) {

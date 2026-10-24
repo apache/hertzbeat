@@ -23,9 +23,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-/**
- * Model Provider Configuration
- */
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/** Model Provider Configuration */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -51,6 +52,34 @@ public class ModelProviderConfig {
     @ToString.Exclude
     private String apiKey;
 
-    @Schema(title = "Participation Model", description = "model for participation", example = "PROTECTED")
+    @Schema(title = "Connection name")
+    private String name;
+
+    @Schema(title = "Protocol: openai-chat, openai-responses, anthropic-messages")
+    private String protocol;
+
+    @Schema(title = "Authentication: default, custom-header, none")
+    private String authMode;
+
+    @ToString.Exclude private Map<String, String> headers;
+
+    @Schema(
+            title = "Participation Model", description = "model for participation", example = "PROTECTED")
     private String participationModel;
+
+    public ModelProviderConfig copy() {
+        ModelProviderConfig copy = new ModelProviderConfig();
+        copy.setUid(uid);
+        copy.setType(type);
+        copy.setCode(code);
+        copy.setBaseUrl(baseUrl);
+        copy.setModel(model);
+        copy.setApiKey(apiKey);
+        copy.setParticipationModel(participationModel);
+        copy.setName(name);
+        copy.setProtocol(protocol);
+        copy.setAuthMode(authMode);
+        copy.setHeaders(headers == null ? null : new LinkedHashMap<>(headers));
+        return copy;
+    }
 }

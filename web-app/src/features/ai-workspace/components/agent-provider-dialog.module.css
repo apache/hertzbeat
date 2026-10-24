@@ -50,6 +50,15 @@
   border-top: 1px solid var(--hb-border-subtle);
 }
 
+.modelPicker {
+  display: flex;
+  gap: var(--hb-space-2);
+}
+.modelInput {
+  flex: 1;
+  min-width: 0;
+}
+
 @media (max-width: 600px) {
   .providerRow {
     grid-template-columns: minmax(0, 1fr);

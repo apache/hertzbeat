@@ -104,6 +104,10 @@ public class HertzBeatModel {
             if (control.isStopRequested()) {
                 control.checkpoint();
             }
+            if (exception instanceof org.apache.hertzbeat.ai.provider.ModelProviderException provider
+                    && !provider.isRetryable()) {
+                throw AgentRuntimeModelException.nonRetryable(provider.getMessage(), provider);
+            }
             // Provider exception messages can include request or credential details and cross into runtime errors.
             String providerMessage = AgentRuntimeTextSanitizer
                     .sanitizeAndLimit(exception.getMessage(), MODEL_ERROR_MESSAGE_LIMIT);
@@ -276,6 +280,9 @@ public class HertzBeatModel {
 
     private Map<String, Object> historyMetadata(TranscriptMessage historyMessage) {
         Map<String, Object> metadata = new LinkedHashMap<>();
+        if (historyMessage.getProviderState() != null && !historyMessage.getProviderState().isEmpty()) {
+            metadata.put("hertzbeatProviderState", historyMessage.getProviderState());
+        }
         if (historyMessage.getRole() != null) {
             metadata.put("runtimeRole", historyMessage.getRole().wireValue());
         }
@@ -419,13 +426,19 @@ public class HertzBeatModel {
         private final StringBuilder text = new StringBuilder();
         private List<AgentRuntimeToolCall> toolCalls = List.of();
         private ChatResponseMetadata metadata;
+        private Map<String, Object> providerState = Map.of();
 
         private ChatResponseAccumulator(Consumer<String> textDeltaConsumer, ToolNameCodec toolNameCodec) {
             this.textDeltaConsumer = textDeltaConsumer;
             this.toolNameCodec = toolNameCodec;
         }
 
+        @SuppressWarnings("unchecked")
         private void accept(ChatResponse response) {
+            if (response.getResult() != null && response.getResult().getOutput().getMetadata()
+                    .get("hertzbeatProviderState") instanceof Map<?, ?> state) {
+                providerState = (Map<String, Object>) state;
+            }
             // Streaming chunks may omit metadata until the final chunk; keep the last provided metadata.
             ChatResponseMetadata responseMetadata = response.getMetadata();
             if (responseMetadata != null) {
@@ -453,7 +466,7 @@ public class HertzBeatModel {
                 throw new AgentRuntimeModelException("Spring AI chat model stream returned no assistant message.",
                         true);
             }
-            return HertzBeatModel.this.toRuntimeResponse(text.toString(), toolCalls, metadata);
+            return HertzBeatModel.this.toRuntimeResponse(text.toString(), toolCalls, metadata).withProviderState(providerState);
         }
     }
 

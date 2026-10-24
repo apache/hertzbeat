@@ -18,11 +18,15 @@
 package org.apache.hertzbeat.ai.gateway.runtime;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
+import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -83,6 +87,32 @@ public class TranscriptMessage {
      * Provider usage for the complete primary model response that produced this assistant message.
      */
     private AgentRuntimeModelResponse.Usage usage;
+
+    @JsonIgnore
+    @Builder.Default
+    private java.util.Map<String, Object> providerState = new java.util.LinkedHashMap<>();
+
+    /** Signed replay blocks must survive transcript redaction without exposing their plaintext. */
+    @JsonProperty("providerStateEncrypted")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String getProviderStateEncrypted() {
+        if (providerState == null || providerState.isEmpty()) return null;
+        String encrypted = AesUtil.aesEncode(JsonUtil.toJson(providerState));
+        if (!AesUtil.isCiphertext(encrypted)) {
+            throw new IllegalStateException("Provider replay state encryption failed");
+        }
+        return encrypted;
+    }
+
+    @JsonProperty("providerStateEncrypted")
+    @SuppressWarnings("unchecked")
+    public void setProviderStateEncrypted(String encrypted) {
+        if (encrypted == null) return;
+        if (!AesUtil.isCiphertext(encrypted)) {
+            throw new IllegalStateException("Provider replay state decryption failed");
+        }
+        providerState = JsonUtil.fromJson(AesUtil.aesDecode(encrypted), java.util.Map.class);
+    }
 
     private boolean pruned;
 

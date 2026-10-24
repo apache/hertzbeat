@@ -72,6 +72,11 @@ export type AgentWorkspaceViewModel = {
 };
 
 export type AgentProviderViewModel = {
+  modelCatalog?: import('./agent-provider-contract').AgentProviderModelCatalog;
+  modelsLoading?: boolean;
+  testResult?: import('./agent-provider-contract').AgentProviderTestResult;
+  testingUid?: string;
+  testFailed?: boolean;
   options: AgentProviderOption[];
   view?: AgentProviderConfigurationView;
   phase: 'loading' | 'ready' | 'saving' | 'error';
@@ -82,5 +87,8 @@ export type AgentProviderViewModel = {
     delete: (providerUid: string) => Promise<void>;
     activate: (providerUid: string) => Promise<void>;
     activateDefault: () => Promise<void>;
+    test?: (uid: string) => Promise<void>;
+    discoverModels?: (input: AgentProviderInput) => Promise<void>;
+    clearModels?: () => void;
   };
 };

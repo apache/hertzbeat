@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -73,6 +75,41 @@ class AgentRuntimeHistoryWindowTest {
         assertEquals(10L, result.checkpoint().summarizedThroughSessionSequence());
         assertEquals(21L, result.checkpoint().firstKeptSessionSequence());
         assertEquals(10L, result.checkpoint().message().compactionSummarizedThroughSessionSequence());
+    }
+
+    @Test
+    void repairingDroppedToolCallKeepsTheSignedItem() {
+        Map<String, Object> state = new LinkedHashMap<>();
+        state.put("protocol", "openai-responses");
+        state.put("model", "test-model");
+        state.put("items", List.of(
+            Map.of("type", "reasoning", "encrypted_content", "signed-reasoning"),
+            Map.of("type", "function_call", "call_id", "kept", "name", "lookup", "arguments", "{}"),
+            Map.of("type", "function_call", "call_id", "dropped", "name", "lookup", "arguments", "{}")));
+        TranscriptMessage assistant = TranscriptMessage.assistantToolCalls(
+            "checking",
+            List.of(
+                TranscriptContent.toolCall("kept", "lookup", Map.of()),
+                TranscriptContent.toolCall("dropped", "lookup", Map.of())),
+            null).toBuilder().providerState(state).build();
+
+        List<TranscriptMessage> window = AgentRuntimeHistoryWindow.replayWindow(List.of(
+            TranscriptMessage.userText("lookup"),
+            assistant,
+            TranscriptMessage.toolResult("kept", "lookup", "found", null)));
+
+        TranscriptMessage repaired = window.get(1);
+        assertEquals(List.of("kept"), repaired.toolCalls().stream().map(TranscriptContent::getId).toList());
+        assertEquals(
+            List.of("reasoning", "function_call"),
+            items(repaired).stream().map(item -> item.get("type")).toList());
+        assertEquals("signed-reasoning", items(repaired).getFirst().get("encrypted_content"));
+        assertEquals("kept", items(repaired).get(1).get("call_id"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> items(TranscriptMessage message) {
+        return (List<Map<String, Object>>) message.getProviderState().get("items");
     }
 
     private TranscriptMessage sequenced(Long sessionSequence, TranscriptMessage message) {

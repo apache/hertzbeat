@@ -485,6 +485,37 @@ describe('Agent Gateway browser API', () => {
     expect(snapshot?.retryRequest?.target).toEqual({ log: sourceLogScope() });
   });
 
+  it('reads named protocol connections and masked custom headers', async () => {
+    const provider = {
+      uid: 'gateway',
+      type: 'protocol',
+      code: 'openai-responses',
+      name: 'Enterprise gateway',
+      protocol: 'openai-responses',
+      authMode: 'custom-header',
+      baseUrl: 'https://gateway.invalid/ai/v1',
+      endpoint: 'https://gateway.invalid/ai/v1/responses',
+      model: 'custom-model',
+      apiKeyConfigured: false,
+      headers: { 'X-Token': '' }
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(
+        message({
+          activeProviderUid: 'gateway',
+          providers: [provider],
+          effectiveProvider: provider,
+          effectiveError: null
+        })
+      )
+    );
+    const view = await listAgentProviderConfigurations();
+    expect(view.providers[0]?.name).toBe('Enterprise gateway');
+    expect(view.effectiveProvider?.endpoint).toBe('https://gateway.invalid/ai/v1/responses');
+    expect(view.providers[0]?.headers).toEqual({ 'X-Token': '' });
+  });
+
   it('uses the exact administrative provider endpoints without returning an API key', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

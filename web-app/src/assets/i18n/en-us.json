@@ -4450,7 +4450,7 @@
     "providers": {
       "action": "Model providers",
       "title": "Model providers",
-      "description": "Configure the model connections available to the HertzBeat AI runtime.",
+      "description": "Add model connections with a protocol, URL and authentication. The active connection is shared by the AI workspace and Chat/SOP.",
       "loading": "Loading providers…",
       "unavailable": "Model provider settings are unavailable.",
       "default": "YAML default",
@@ -4461,13 +4461,57 @@
       "add": "Add provider",
       "edit": "Edit",
       "delete": "Delete",
-      "type": "Provider type",
+      "type": "Connection type",
+      "genericProtocols": "Generic protocols",
+      "vendorPresets": "Provider presets",
+      "advanced": "Advanced settings",
+      "fetchModels": "Fetch models",
+      "modelHint": "Select or enter a model ID",
       "code": "Provider code",
       "baseUrl": "Base URL",
+      "baseUrlHint": "Enter the complete API base URL, including the path prefix required by your service, for example https://example.com/v1.",
       "model": "Model",
       "apiKey": "API key",
-      "apiKeyHint": "Leave blank to keep the existing key.",
-      "save": "Save provider"
+      "apiKeyHint": "Leave blank to keep the saved key. To fetch models after changing the URL, protocol or authentication, enter the key again.",
+      "save": "Save provider",
+      "name": "Connection name",
+      "protocol": "Protocol",
+      "endpoint": "Request URL",
+      "authMode": "Authentication",
+      "headers": "Custom headers (JSON)",
+      "headersHint": "Values are encrypted. Blank values preserve saved values; remove an entry to delete it.",
+      "headersInvalid": "Enter a JSON object with string header names and values.",
+      "test": "Test connection",
+      "protocols": {
+        "openai-chat": "OpenAI Chat Completions",
+        "openai-responses": "OpenAI Responses",
+        "anthropic-messages": "Anthropic Messages"
+      },
+      "authentication": {
+        "default": "Default API key",
+        "custom-header": "Custom header authentication",
+        "none": "No authentication"
+      },
+      "capabilities": {
+        "text": "Text",
+        "streaming": "Streaming",
+        "toolCalling": "Tool calling"
+      },
+      "modelDiscovery": {
+        "ready": "Fetched {{count}} models. You can also enter a model ID.",
+        "unsupported": "This endpoint does not provide a model list. Enter a model ID manually.",
+        "authentication-failed": "Authentication failed. Check the key and authentication settings.",
+        "unavailable": "Could not fetch models. Check the URL and connectivity, or enter a model ID.",
+        "invalid-input": "Complete the URL and authentication. A changed destination requires credentials to be entered again.",
+        "invalid-response": "The endpoint returned an invalid model list. You can enter a model ID manually.",
+        "empty": "The endpoint returned no models. You can enter a model ID manually.",
+        "truncated": "Only the first 1,000 models or 10 pages are shown. Other IDs can be entered manually."
+      },
+      "testStatuses": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "not-observed": "Not observed"
+      }
     }
   },
   "alertInvestigation": {
