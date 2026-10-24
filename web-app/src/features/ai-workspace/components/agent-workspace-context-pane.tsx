@@ -22,12 +22,13 @@ import { useTranslation } from 'react-i18next';
 
 import type { AgentInputRequest, AgentToolActivity } from '../model/agent-workspace-reducer';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
+import { AgentWorkspaceEvidence } from './agent-workspace-evidence';
+import { agentTargetSourcePath } from '../model/agent-source-path';
 import { agentWorkspaceTargetFacts } from './agent-workspace-target-facts';
 import styles from './agent-workspace-context-pane.module.css';
 
 export function AgentWorkspaceContextPane({
   controller,
-  isAdmin,
   onClose
 }: {
   controller: AgentWorkspaceViewModel;
@@ -48,8 +49,9 @@ export function AgentWorkspaceContextPane({
         />
       </header>
       <ContextTarget target={controller.target} />
+      <AgentWorkspaceEvidence evidence={controller.run.evidence} running={controller.run.status === 'running'} />
       <ContextTools tools={controller.run.tools} />
-      <ContextApprovals controller={controller} isAdmin={isAdmin} />
+      <ContextApprovals controller={controller} />
       <ContextInputs controller={controller} />
     </aside>
   );
@@ -58,9 +60,15 @@ export function AgentWorkspaceContextPane({
 function ContextTarget({ target }: { target: AgentWorkspaceViewModel['target'] }) {
   const { t } = useTranslation();
   const facts = useMemo(() => agentWorkspaceTargetFacts(target, t), [t, target]);
+  const source = target ? agentTargetSourcePath(target) : undefined;
   return (
     <ContextSection title={t('aiWorkspace.context.target')}>
-      {facts.length ? facts.map(item => <Tag key={item}>{item}</Tag>) : <Muted value={t('aiWorkspace.context.none')} />}
+      {facts.length ? (
+        facts.map((item, index) => <Typography.Text key={index}>{item}</Typography.Text>)
+      ) : (
+        <Muted value={t('aiWorkspace.context.none')} />
+      )}
+      {source ? <Typography.Link href={source}>{t('aiWorkspace.context.viewSource')}</Typography.Link> : null}
     </ContextSection>
   );
 }
@@ -95,7 +103,7 @@ function ToolActivity({ tool }: { tool: AgentToolActivity }) {
   );
 }
 
-function ContextApprovals({ controller, isAdmin }: { controller: AgentWorkspaceViewModel; isAdmin: boolean }) {
+function ContextApprovals({ controller }: { controller: AgentWorkspaceViewModel }) {
   const { t } = useTranslation();
   const pending = controller.run.approvals.filter(isPending);
   return (
@@ -104,7 +112,7 @@ function ContextApprovals({ controller, isAdmin }: { controller: AgentWorkspaceV
         pending.map(item => (
           <div className={styles.approval} key={item.approvalId}>
             <code>{item.toolName}</code>
-            <ApprovalActions controller={controller} approvalId={item.approvalId} isAdmin={isAdmin} />
+            <ApprovalActions controller={controller} approvalId={item.approvalId} canDecide={item.canDecide === true} />
           </div>
         ))
       ) : (
@@ -117,14 +125,14 @@ function ContextApprovals({ controller, isAdmin }: { controller: AgentWorkspaceV
 function ApprovalActions({
   controller,
   approvalId,
-  isAdmin
+  canDecide
 }: {
   controller: AgentWorkspaceViewModel;
   approvalId: string;
-  isAdmin: boolean;
+  canDecide: boolean;
 }) {
   const { t } = useTranslation();
-  if (!isAdmin) return <Muted value={t('aiWorkspace.approval.adminRequired')} />;
+  if (!canDecide) return <Muted value={t('aiWorkspace.approval.decisionUnavailable')} />;
   return (
     <div className={styles.approvalActions}>
       <Button size="small" type="primary" onClick={() => void controller.actions.decideApproval(approvalId, 'approve')}>

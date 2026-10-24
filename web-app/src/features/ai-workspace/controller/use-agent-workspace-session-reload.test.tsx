@@ -31,7 +31,13 @@ const api = vi.hoisted(() => ({
   submitAgentInteraction: vi.fn()
 }));
 
-vi.mock('../api/agent-gateway-api', () => api);
+vi.mock('../api/agent-gateway-api', () => ({
+  ...api,
+  listAgentTranscriptPage: async (sessionUid: string, signal?: AbortSignal) => ({
+    items: await api.listAgentTranscript(sessionUid, signal),
+    pageIndex: 0
+  })
+}));
 
 describe('AI workspace durable session reload', () => {
   beforeEach(() => {
@@ -39,6 +45,33 @@ describe('AI workspace durable session reload', () => {
     api.listAgentSessions.mockResolvedValue([session()]);
     api.listAgentTranscript.mockResolvedValue([durableUser()]);
     api.getLatestAgentRun.mockResolvedValue(failedSnapshot());
+  });
+
+  it('restores typed evidence from the exact durable snapshot and clears it for a new investigation', async () => {
+    const evidence = [
+      {
+        evidenceId: 'e-1',
+        runUid: 'run-1',
+        toolCallId: 'call-1',
+        toolName: 'logs.query',
+        signalType: 'logs',
+        resourceType: 'entity',
+        resourceId: '7',
+        start: 1000,
+        end: 2000,
+        observationCount: 1,
+        status: 'OBSERVED',
+        summary: 'One matching observation',
+        partial: null
+      }
+    ];
+    api.getLatestAgentRun.mockResolvedValue({ ...failedSnapshot(), evidence });
+    const { result } = renderHook(() => useAgentWorkspaceController());
+    await waitFor(() => expect(result.current.sessions.status).toBe('ready'));
+    await act(async () => result.current.actions.selectSession('session-1'));
+    expect(result.current.run.evidence).toEqual(evidence);
+    act(() => result.current.actions.newInvestigation());
+    expect(result.current.run.evidence).toBeUndefined();
   });
 
   it('keeps a durable USER visible when latest-run loading fails', async () => {

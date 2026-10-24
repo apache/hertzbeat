@@ -4416,6 +4416,7 @@
       "submit": "送信"
     },
     "failure": "調査ストリームを利用できません。操作が完了したとは見なしません。",
+    "loadOlder": "以前のメッセージを読み込む",
     "sessionLoadIncomplete": "保存済みの調査情報の一部を読み込めませんでした。再読み込みするか、調査を選び直してください。",
     "recoveryRequired": "ツールは実行済みの可能性がありますが、HertzBeat は結果を保存できませんでした。続行する前に対象の状態を確認してください。",
     "targetMismatch": "この調査対象は無効です。対象の画面に戻って新しい調査を開始してください。",
@@ -4442,10 +4443,15 @@
       "noApprovals": "保留中の承認はありません",
       "inputs": "要求された入力",
       "noInputs": "入力要求はありません",
-      "statusUnknown": "実行状態は記録されていません"
+      "statusUnknown": "実行状態は記録されていません",
+      "viewSource": "ソースを表示",
+      "pageScope": "{{page}} ページ · 1 ページ {{size}} 件",
+      "internalHidden": "内部テレメトリを除外",
+      "noiseHidden": "ノイズを除外"
     },
     "approval": {
-      "adminRequired": "管理者の承認が必要です"
+      "adminRequired": "管理者の承認が必要です",
+      "decisionUnavailable": "このアカウントでは承認できません"
     },
     "providers": {
       "action": "モデルプロバイダー",
@@ -4468,6 +4474,19 @@
       "apiKey": "API キー",
       "apiKeyHint": "空欄にすると既存のキーを維持します。",
       "save": "プロバイダーを保存"
+    },
+    "evidence": {
+      "title": "証拠",
+      "collecting": "検証済みの証拠を待っています…",
+      "unrecorded": "この調査には証拠の参照が記録されていません",
+      "empty": "検証済みの観測結果は記録されていません。システムが正常であることを意味しません。",
+      "partial": "部分的な証拠",
+      "complete": "切り捨ての報告なし",
+      "coverageUnknown": "網羅性の報告なし",
+      "observations": "観測結果 {{count}} 件",
+      "incidentScope": "アラートの事実のみ · ポリシー {{id}}",
+      "investigationScope": "範囲を限定した横断調査",
+      "investigationLimit": "24 時間以内の時間範囲を選択してください"
     }
   },
   "alertInvestigation": {

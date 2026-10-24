@@ -162,7 +162,8 @@ public record GatewayEvent(
             String toolName,
             String approvalId,
             String toolCallId,
-            String status) implements GatewayEventPayload {
+            String status,
+            Boolean canDecide) implements GatewayEventPayload {
     }
 
     /** Approval completion payload. */

@@ -87,7 +87,9 @@ class AgentToolCallLedgerServiceTest {
 
     @Test
     void recordApprovedToolResumedShouldReuseApprovedPendingToolCall() {
-        AgentToolCallLedgerService service = new AgentToolCallLedgerService(toolCallDao);
+        AgentApprovalActorVerifier verifier = org.mockito.Mockito.mock(AgentApprovalActorVerifier.class);
+        when(verifier.isCurrent(any())).thenReturn(true);
+        AgentToolCallLedgerService service = new AgentToolCallLedgerService(toolCallDao, () -> null, verifier);
         AgentToolExecutionRequest request = request().toBuilder()
             .toolName("restart_monitor")
             .approvalId("agp_pending")
@@ -107,6 +109,7 @@ class AgentToolCallLedgerServiceTest {
             .status(AgentToolStatus.WAITING_APPROVAL.name())
             .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()))
             .approvalStatus(AgentApprovalStatus.APPROVED.name())
+            .approvalActorType(request.getActor().getType()).approvalActorId(request.getActor().getId())
             .build();
         when(toolCallDao.findApprovalForRuntimeResume("agp_pending")).thenReturn(Optional.of(pending));
         when(toolCallDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

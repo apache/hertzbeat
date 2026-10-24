@@ -32,7 +32,13 @@ const api = vi.hoisted(() => ({
   submitAgentInteraction: vi.fn()
 }));
 
-vi.mock('../api/agent-gateway-api', () => api);
+vi.mock('../api/agent-gateway-api', () => ({
+  ...api,
+  listAgentTranscriptPage: async (sessionUid: string, signal?: AbortSignal) => ({
+    items: await api.listAgentTranscript(sessionUid, signal),
+    pageIndex: 0
+  })
+}));
 
 describe('useAgentWorkspaceController', () => {
   beforeEach(() => {

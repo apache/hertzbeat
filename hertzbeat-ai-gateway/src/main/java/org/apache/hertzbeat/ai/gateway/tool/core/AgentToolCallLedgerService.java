@@ -46,9 +46,26 @@ public class AgentToolCallLedgerService {
     private static final String APPROVAL_NOT_FOUND = "Agent tool approval not found";
 
     private final AgentToolCallDao toolCallDao;
+    private final java.util.function.Supplier<AgentToolRegistry> registry;
+    private final AgentApprovalActorVerifier actorVerifier;
 
     public AgentToolCallLedgerService(AgentToolCallDao toolCallDao) {
+        this(toolCallDao, () -> null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AgentToolCallLedgerService(AgentToolCallDao toolCallDao,
+                                      org.springframework.beans.factory.ObjectProvider<AgentToolRegistry> registry,
+                                      AgentApprovalActorVerifier actorVerifier) {
+        this(toolCallDao, registry::getObject, actorVerifier);
+    }
+
+    AgentToolCallLedgerService(AgentToolCallDao toolCallDao,
+                               java.util.function.Supplier<AgentToolRegistry> registry,
+                               AgentApprovalActorVerifier actorVerifier) {
         this.toolCallDao = toolCallDao;
+        this.registry = registry;
+        this.actorVerifier = actorVerifier;
     }
 
     @Transactional
@@ -73,6 +90,7 @@ public class AgentToolCallLedgerService {
     @Transactional
     public AgentToolCall recordApprovedToolResumed(AgentToolExecutionRequest request, AgentToolDescriptor descriptor,
                                                    AgentPolicyResult policy) {
+        requireCurrentApprovalActor(request.getActor(), descriptor);
         AgentToolCall toolCall = approvedPendingToolCall(request, descriptor);
         String canonicalArgs = safeArgumentsJson(request);
         toolCall.setStatus(AgentToolStatus.RUNNING.name());
@@ -130,6 +148,7 @@ public class AgentToolCallLedgerService {
                         approvalId, envelope.getWorkspaceId(), envelope.getChannelId(), approvingActor.getType(),
                         approvingActor.getId(), originEntryType.name())
                 .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        requireApprovalCapability(approvingActor, toolCall);
         return decide(toolCall, approvingActor, decision,
                 decision == AgentApprovalDecision.APPROVED
                         ? AgentApprovalStatus.APPROVED : AgentApprovalStatus.REJECTED,
@@ -248,6 +267,9 @@ public class AgentToolCallLedgerService {
 
     private void verifyApprovedPendingToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor,
                                                AgentToolCall toolCall) {
+        if (isExpired(toolCall, LocalDateTime.now())) {
+            throw new IllegalStateException("Approved tool execution expired before it was resumed");
+        }
         if (!AgentApprovalStatus.APPROVED.name().equals(request.getApprovalStatus())) {
             throw new IllegalStateException("Agent tool call approval has not been validated");
         }
@@ -286,6 +308,12 @@ public class AgentToolCallLedgerService {
 
     private String approvalExecutionMismatch(AgentToolCall toolCall, AgentToolExecutionRequest request,
                                              AgentToolDescriptor descriptor) {
+        if (AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus())
+                && (!ActorSupport.hasIdentity(request.getActor())
+                || !Objects.equals(toolCall.getApprovalActorType(), request.getActor().getType())
+                || !Objects.equals(toolCall.getApprovalActorId(), request.getActor().getId()))) {
+            return "Approval actor does not match the original execution actor";
+        }
         if (!Objects.equals(toolCall.getApprovalId(), request.getApprovalId())) {
             return "Approval ID does not match";
         }
@@ -350,14 +378,41 @@ public class AgentToolCallLedgerService {
         toolCallDao.save(toolCall);
     }
 
-    private void requireChangeCapableActor(AgentActor actor, String operation) {
-        // Approval decisions mutate tool execution state, so this boundary requires an authenticated actor.
-        if (!ActorSupport.hasIdentity(actor)) {
-            throw new IllegalStateException(operation + " requires a trusted actor");
+    public boolean canDecide(AgentActor actor, AgentToolDescriptor descriptor) {
+        if (!ActorSupport.hasIdentity(actor) || !ActorSupport.TYPE_USER.equals(actor.getType())
+                || descriptor == null || actor.getRoles() == null || actorVerifier == null
+                || !actorVerifier.isCurrent(actor)
+                || AgentToolResourceAuthorizer.denialReason(actor, descriptor).isPresent()) {
+            return false;
         }
-        // Only admins may change approval state.
-        if (!actor.getRoles().contains(ActorSupport.ROLE_ADMIN)) {
-            throw new IllegalStateException(operation + " requires a change-capable actor");
+        return descriptor.getRisk() == AgentToolRisk.CHANGE
+                && (actor.getRoles().contains(ActorSupport.ROLE_USER)
+                    || actor.getRoles().contains(ActorSupport.ROLE_ADMIN))
+                || descriptor.getRisk() == AgentToolRisk.DANGEROUS
+                && actor.getRoles().contains(ActorSupport.ROLE_ADMIN);
+    }
+
+    public void requireCurrentApprovalActor(AgentActor actor, AgentToolDescriptor descriptor) {
+        if (!canDecide(actor, descriptor)) {
+            throw new IllegalStateException("Approval requires the current owner role and resource permission");
+        }
+    }
+
+    private void requireApprovalCapability(AgentActor actor, AgentToolCall toolCall) {
+        AgentToolRegistry currentRegistry = registry.get();
+        AgentToolDescriptor descriptor = currentRegistry == null ? null : currentRegistry.find(toolCall.getToolName())
+                .map(AgentToolRegistry.RegisteredTool::descriptor).orElse(null);
+        if (descriptor == null || !descriptor.getRisk().name().equals(toolCall.getRisk())) {
+            throw new IllegalStateException("Approval tool policy is no longer available");
+        }
+        requireCurrentApprovalActor(actor, descriptor);
+    }
+
+    private void requireChangeCapableActor(AgentActor actor, String operation) {
+        if (!ActorSupport.hasIdentity(actor) || !ActorSupport.TYPE_USER.equals(actor.getType())
+                || actor.getRoles() == null || !(actor.getRoles().contains(ActorSupport.ROLE_ADMIN)
+                || actor.getRoles().contains(ActorSupport.ROLE_USER))) {
+            throw new IllegalStateException(operation + " requires a trusted change-capable owner");
         }
     }
 }

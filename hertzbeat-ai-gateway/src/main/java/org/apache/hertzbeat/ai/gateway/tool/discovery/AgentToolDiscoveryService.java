@@ -42,7 +42,7 @@ public class AgentToolDiscoveryService {
 
     @Tool(name = "tool.search",
             description = "Search and load up to 10 registered on-demand tools for direct model invocation. "
-                    + "Provide a narrow namespace or query.")
+                    + "Provide a narrow namespace or query. If hasMore, call again with nextOffset to load the next page.")
     @AgentToolPolicy
     public Map<String, Object> search(
             @ToolParam(required = false,
@@ -54,11 +54,13 @@ public class AgentToolDiscoveryService {
             @ToolParam(required = false,
                     description = "Whether to include each input schema in this search result; default false. "
                             + "Loaded tools receive structured schemas on the next model request.")
-            Boolean includeSchema) {
+            Boolean includeSchema,
+            @ToolParam(required = false, description = "Zero-based offset, 0..10000; default 0. Use nextOffset to continue.")
+            Integer offset) {
         boolean schemas = Boolean.TRUE.equals(includeSchema);
         AgentToolRegistry registry = registryProvider.getObject();
-        List<Map<String, Object>> tools = registry
-            .discoverableDescriptors(namespace, query).stream()
+        AgentToolRegistry.DiscoveryPage page = registry.discoverablePage(namespace, query, offset == null ? 0 : offset);
+        List<Map<String, Object>> tools = page.tools().stream()
             .map(descriptor -> toolRow(descriptor, schemas))
             .toList();
         Map<String, Object> result = new LinkedHashMap<>();
@@ -66,9 +68,17 @@ public class AgentToolDiscoveryService {
         result.put("query", query);
         result.put("tools", tools);
         result.put("count", tools.size());
+        result.put("offset", page.offset());
+        result.put("total", page.total());
+        result.put("hasMore", page.hasMore());
+        result.put("nextOffset", page.hasMore() ? page.offset() + tools.size() : null);
         // Surface the full namespace catalog so a missed query still teaches the model where to look next.
         result.put("availableNamespaces", registry.discoverableNamespaces());
         return result;
+    }
+
+    public Map<String, Object> search(String namespace, String query, Boolean includeSchema) {
+        return search(namespace, query, includeSchema, null);
     }
 
     private Map<String, Object> toolRow(AgentToolDescriptor descriptor, boolean includeSchema) {
@@ -77,6 +87,7 @@ public class AgentToolDiscoveryService {
         row.put("description", descriptor.getDescription());
         row.put("namespace", descriptor.getNamespace());
         row.put("risk", descriptor.getRisk());
+        row.put("access", descriptor.getAccess());
         if (includeSchema) {
             row.put("inputSchema", descriptor.getInputSchema());
         }

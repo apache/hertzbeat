@@ -60,7 +60,11 @@ class AgentToolCallLedgerApprovalTest {
 
     @BeforeEach
     void setUp() {
-        service = new AgentToolCallLedgerService(toolCallDao);
+        AgentToolRegistry registry = new AgentToolRegistry();
+        registry.register(new AgentToolRegistry.RegisteredTool(changeDescriptor(), ignored -> null));
+        AgentApprovalActorVerifier verifier = org.mockito.Mockito.mock(AgentApprovalActorVerifier.class);
+        org.mockito.Mockito.lenient().when(verifier.isCurrent(any())).thenReturn(true);
+        service = new AgentToolCallLedgerService(toolCallDao, () -> registry, verifier);
     }
 
     @Test
@@ -100,8 +104,8 @@ class AgentToolCallLedgerApprovalTest {
     }
 
     @Test
-    void nonAdminActorShouldNotApproveOrRejectAndShouldNotMutate() {
-        AgentActor userOnly = actor("requester", "user");
+    void guestActorShouldNotApproveOrRejectAndShouldNotMutate() {
+        AgentActor userOnly = actor("requester", "guest");
 
         GatewayEnvelope envelope = GatewayEnvelope.builder().channelId("web-ui").receivedAt(1L)
                 .workspaceId("workspace-a").actor(userOnly).build();
@@ -190,6 +194,43 @@ class AgentToolCallLedgerApprovalTest {
         verify(toolCallDao).save(expired);
     }
 
+    @Test
+    void userOwnerCanConfirmChangeWithoutRoleElevation() {
+        AgentToolCall toolCall = pendingToolCall();
+        when(toolCallDao.findOwnedApprovalForUpdate("agp_1", "workspace-a", "web-ui", "user", "requester", "USER_INPUT"))
+                .thenReturn(Optional.of(toolCall));
+        when(toolCallDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        GatewayEnvelope envelope = envelope("requester").toBuilder().actor(actor("requester", "user")).build();
+        assertEquals("APPROVED", service.decideApproval("agp_1", envelope, AgentRuntimeEntryType.USER_INPUT,
+                AgentApprovalDecision.APPROVED).getApprovalStatus());
+        assertEquals(List.of("user"), envelope.getActor().getRoles());
+    }
+
+    @Test
+    void userCannotConfirmDangerousOrAdminResourceAndMissingVerifierFailsClosed() {
+        AgentActor user = actor("requester", "user");
+        AgentToolDescriptor dangerous = AgentToolDescriptor.builder().name("danger").namespace("ops")
+                .description("danger").inputSchema("{}").risk(AgentToolRisk.DANGEROUS)
+                .exposure(AgentToolExposure.MODEL_ON_DEMAND).build();
+        AgentToolDescriptor admin = AgentToolDescriptor.builder().name("admin").namespace("ops")
+                .description("admin").inputSchema("{}").risk(AgentToolRisk.CHANGE).access(AgentToolAccess.ADMIN)
+                .exposure(AgentToolExposure.MODEL_ON_DEMAND).build();
+        assertTrue(!service.canDecide(user, dangerous));
+        assertTrue(!service.canDecide(user, admin));
+        assertTrue(!new AgentToolCallLedgerService(toolCallDao).canDecide(user, changeDescriptor()));
+        assertTrue(service.canDecide(actor("owner", "admin"), dangerous));
+    }
+
+    @Test
+    void approvedDecisionCannotResumeAsAnotherActor() {
+        AgentToolCall toolCall = pendingToolCall();
+        toolCall.setApprovalStatus("APPROVED");
+        toolCall.setApprovalActorId("someone-else");
+        when(toolCallDao.findByApprovalId("agp_1")).thenReturn(Optional.of(toolCall));
+        assertThrows(IllegalStateException.class, () -> service.validateToolExecutionApproval(
+                approvalRequest("agp_1", "agc_1", ARGUMENTS), changeDescriptor()));
+    }
+
     private AgentToolCall pendingToolCall() {
         return AgentToolCall.builder()
             .id(30L)
@@ -205,6 +246,7 @@ class AgentToolCallLedgerApprovalTest {
             .status(AgentToolStatus.WAITING_APPROVAL.name())
             .inputJson("{\"service\":\"nginx\"}")
             .inputHash(INPUT_HASH)
+            .approvalActorType("user").approvalActorId("requester")
             .approvalStatus(AgentApprovalStatus.PENDING.name())
             .approvalExpiresAt(LocalDateTime.now().plusMinutes(10))
             .build();

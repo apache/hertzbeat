@@ -21,6 +21,20 @@ import type { AgentGatewayEvent } from './agent-workspace-contract';
 import { agentWorkspaceReducer, initialAgentWorkspaceRun } from './agent-workspace-reducer';
 
 describe('Agent workspace event projection', () => {
+  it('keeps verified snapshot evidence distinct from missing legacy data and clears it on scope changes', () => {
+    const loaded = agentWorkspaceReducer(initialAgentWorkspaceRun, {
+      type: 'RUN_EVIDENCE_LOADED',
+      runUid: 'run-1',
+      evidence: []
+    });
+    expect(loaded.evidence).toEqual([]);
+    expect(agentWorkspaceReducer(loaded, { type: 'RUN_EVIDENCE_LOADED', runUid: 'stale', evidence: [] })).toBe(loaded);
+    const legacy = agentWorkspaceReducer(loaded, { type: 'RUN_EVIDENCE_LOADED', runUid: 'run-1', evidence: undefined });
+    expect(legacy).not.toHaveProperty('evidence');
+    expect(agentWorkspaceReducer(loaded, event('RUN_STARTED', {}, { runUid: 'run-2' }))).not.toHaveProperty('evidence');
+    expect(agentWorkspaceReducer(loaded, { type: 'WORKSPACE_RESET' })).toEqual(initialAgentWorkspaceRun);
+  });
+
   it('assembles streamed text while keeping tool activity separate from the answer', () => {
     const events = [
       event('RUN_STARTED', { traceId: 'trace-1' }, { runUid: 'run-1' }),
@@ -53,6 +67,20 @@ describe('Agent workspace event projection', () => {
     expect(state.tools).toEqual([
       expect.objectContaining({ toolCallId: 'tool-1', toolName: 'metrics.query', status: 'SUCCEEDED' })
     ]);
+  });
+
+  it('uses only a server boolean for approval capability', () => {
+    const payload = { approvalId: 'a', toolCallId: 't', toolName: 'monitor.create', status: 'PENDING' };
+    const allowed = agentWorkspaceReducer(
+      initialAgentWorkspaceRun,
+      event('APPROVAL_REQUESTED', { ...payload, canDecide: true })
+    );
+    expect(allowed.approvals[0]?.canDecide).toBe(true);
+    const invalid = agentWorkspaceReducer(
+      initialAgentWorkspaceRun,
+      event('APPROVAL_REQUESTED', { ...payload, canDecide: 'true' })
+    );
+    expect(invalid.approvals[0]?.canDecide).toBeUndefined();
   });
 
   it('retains a pending approval until its exact completion event arrives', () => {

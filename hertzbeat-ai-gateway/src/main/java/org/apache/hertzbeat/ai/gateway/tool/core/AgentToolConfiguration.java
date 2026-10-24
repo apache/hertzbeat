@@ -117,6 +117,7 @@ public class AgentToolConfiguration {
             .description(definition.description())
             .inputSchema(definition.inputSchema())
             .risk(policy.risk())
+            .access(policy.access())
             .namespace(namespace(definition.name()))
             .exposure(policy.exposure())
             .build();

@@ -25,8 +25,7 @@ import type {
   AgentProviderInput,
   AgentProviderOption,
   AgentRunSnapshot,
-  AgentSession,
-  AgentTranscriptMessage
+  AgentSession
 } from '../model/agent-workspace-contract';
 import {
   agentGatewayEventSchema,
@@ -35,15 +34,12 @@ import {
   agentProviderOptionSchema,
   agentRunSnapshotSchema,
   agentSessionSchema,
-  agentTranscriptEntrySchema,
-  springPageSchema,
-  transcriptPayloadSchema
+  springPageSchema
 } from './agent-gateway-schema';
 import { projectAgentSourceTarget } from './agent-source-target-projection';
 
 const paths = {
   sessions: '/api/agent/sessions',
-  transcript: (sessionUid: string) => `/api/agent/sessions/${encodeURIComponent(sessionUid)}/transcript`,
   latestRun: (sessionUid: string) => `/api/agent/sessions/${encodeURIComponent(sessionUid)}/latest-run`,
   stream: '/api/agent/webui/chat/stream',
   run: (runUid: string) => `/api/agent/runs/${encodeURIComponent(runUid)}`,
@@ -73,40 +69,7 @@ export async function listAgentSessions(signal?: AbortSignal): Promise<AgentSess
   return parse(springPageSchema(agentSessionSchema), value).content;
 }
 
-export async function listAgentTranscript(sessionUid: string, signal?: AbortSignal): Promise<AgentTranscriptMessage[]> {
-  const value = await apiMessageGet(
-    `${paths.transcript(sessionUid)}?pageIndex=0&pageSize=200`,
-    signal ? { signal } : {}
-  );
-  return parse(springPageSchema(agentTranscriptEntrySchema), value).content.map(entry => {
-    let payload: unknown;
-    try {
-      payload = JSON.parse(entry.payloadJson);
-    } catch {
-      throw new AgentGatewayRequestError('contract');
-    }
-    const message = parse(transcriptPayloadSchema, payload);
-    const toolCalls = message.content.flatMap((block, index) =>
-      block.type === 'toolCall' && block.name
-        ? [{ toolCallId: block.id || `transcript:${entry.id}:call:${index}`, toolName: block.name }]
-        : []
-    );
-    return {
-      id: entry.id,
-      sequence: entry.sessionSequence,
-      role: message.role,
-      text: message.content
-        .filter(block => block.type === 'text' && block.text)
-        .map(block => block.text)
-        .join('\n'),
-      ...(toolCalls.length ? { toolCalls } : {}),
-      ...(message.toolCallId ? { toolCallId: message.toolCallId } : {}),
-      ...(message.toolName ? { toolName: message.toolName } : {}),
-      ...(message.errorMessage ? { errorMessage: message.errorMessage } : {}),
-      createdAt: entry.gmtCreate
-    };
-  });
-}
+export { listAgentTranscriptPage } from './agent-transcript-api';
 
 export async function streamAgentChat(
   request: AgentChatRequest,

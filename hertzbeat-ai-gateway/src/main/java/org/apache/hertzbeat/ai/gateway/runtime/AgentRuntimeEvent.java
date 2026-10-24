@@ -142,7 +142,9 @@ public class AgentRuntimeEvent {
         return builder().type(AgentRuntimeEventType.REQUESTED_ACTION).itemKind(AgentRuntimeItemKind.TOOL_CALL)
                 .itemId(itemId).traceId(traceId).requestId(result.getApprovalId()).requestKind(RequestKind.APPROVAL)
                 .status(EventStatus.WAITING_APPROVAL).toolName(result.getToolName())
-                .toolCallId(result.getToolCallId()).approvalId(result.getApprovalId()).timestamp(timestamp).build();
+                .toolCallId(result.getToolCallId()).approvalId(result.getApprovalId())
+                .requestPayload(java.util.Map.of("canDecide", Boolean.TRUE.equals(result.getCanDecide())))
+                .timestamp(timestamp).build();
     }
 
     public static AgentRuntimeEvent approvalCompleted(String itemId, String traceId,

@@ -62,6 +62,69 @@ class AgentMonitorToolServiceTest {
     }
 
     @Test
+    void unsavedProbeUsesNativeValidationWithoutPersisting() {
+        ParamDefineInfo host = new ParamDefineInfo();
+        host.setField("host");
+        host.setType("text");
+        when(appService.getAppParamDefines("ping")).thenReturn(List.of(host));
+        assertEquals(false, service.detectDraft("PING", Map.of("host", "example.test"), null).get("persisted"));
+        verify(monitorService).validate(org.mockito.ArgumentMatchers.any(), isNull());
+        verify(monitorService).detectMonitor(argThat(monitor -> monitor.getId() == null
+                && "ping".equals(monitor.getApp())), org.mockito.ArgumentMatchers.anyList(), isNull());
+        org.mockito.Mockito.verify(monitorService, org.mockito.Mockito.never()).addMonitor(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void unsavedProbeRejectsKnownCredentialQueryKeysIncludingEncodedNames() {
+        ParamDefineInfo uri = new ParamDefineInfo();
+        uri.setField("uri");
+        uri.setType("text");
+        when(appService.getAppParamDefines("website")).thenReturn(List.of(uri));
+        for (String query : List.of("access_token=secret", "client_secret=secret", "api%5Fkey=secret",
+                "private-key=secret", "X-Amz-Signature=secret")) {
+            assertThrows(IllegalArgumentException.class,
+                    () -> service.detectDraft("website", Map.of("uri", "/health?" + query), null));
+        }
+        org.mockito.Mockito.verifyNoInteractions(monitorService);
+    }
+
+    @Test
+    void unsavedProbeStillAllowsOrdinaryQueryParameters() {
+        ParamDefineInfo uri = new ParamDefineInfo();
+        uri.setField("uri");
+        uri.setType("text");
+        when(appService.getAppParamDefines("website")).thenReturn(List.of(uri));
+        assertEquals(false, service.detectDraft("website", Map.of("uri", "/health?format=json&limit=1"), null)
+                .get("persisted"));
+        verify(monitorService).detectMonitor(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyList(), isNull());
+    }
+
+    @Test
+    void protocolPatchPreservesStoredSecretMarkersAndRejectsSecretChanges() {
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(Monitor.builder().id(7L).app("linux").name("node").instance("host").build());
+        dto.setParams(List.of(Param.builder().field("host").type((byte) 1).paramValue("host").build(),
+                Param.builder().field("password").type((byte) 2).paramValue("encrypted").build()));
+        ParamDefineInfo host = new ParamDefineInfo();
+        host.setField("host");
+        host.setType("text");
+        ParamDefineInfo secret = new ParamDefineInfo();
+        secret.setField("password");
+        secret.setType("password");
+        when(monitorService.getMonitorDto(7L)).thenReturn(dto);
+        when(appService.getAppParamDefines("linux")).thenReturn(List.of(host, secret));
+        assertThrows(IllegalArgumentException.class, () -> service.protocolUpdate(7L, Map.of("password", "secret")));
+        assertThrows(IllegalArgumentException.class, () -> service.protocolUpdate(7L, Map.of("host", "https://u:p@host")));
+        service.protocolUpdate(7L, Map.of("host", "new-host"));
+        verify(monitorService).modifyMonitor(org.mockito.ArgumentMatchers.any(),
+                argThat(params -> params.size() == 2 && params.stream().anyMatch(param ->
+                        "host".equals(param.getField()) && "new-host".equals(param.getParamValue()))), isNull(), isNull());
+    }
+
+    @Test
     void shouldCreateWithValidatedMonitorAndEncryptedParams() {
         ParamDefineInfo passwordDefinition = new ParamDefineInfo();
         passwordDefinition.setField("password");
@@ -162,6 +225,22 @@ class AgentMonitorToolServiceTest {
     void shouldRequireReasonBeforeDeletingMonitors() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.deleteMonitors(List.of(42L), " "));
+    }
+
+    @Test
+    void copyUsesNativeServiceWithoutPretendingToKnowNewId() {
+        Map<String, Object> result = service.copyMonitor(42L);
+        verify(monitorService).copyMonitor(42L);
+        assertEquals(true, result.get("verificationRequired"));
+        assertThrows(IllegalArgumentException.class, () -> service.copyMonitor(0L));
+    }
+
+    @Test
+    void batchPauseReportsActualReadback() {
+        when(monitorService.getMonitor(42L)).thenReturn(Monitor.builder().id(42L).status((byte) 0).build());
+        Map<String, Object> result = service.pauseMonitors(List.of(42L, 43L));
+        assertEquals(List.of(Map.of("monitorId", 42L, "state", "paused", "verified", true),
+                Map.of("monitorId", 43L, "state", "absent", "verified", false)), result.get("outcomes"));
     }
 
     private ParamDefineInfo definition(String field, String type, String defaultValue) {

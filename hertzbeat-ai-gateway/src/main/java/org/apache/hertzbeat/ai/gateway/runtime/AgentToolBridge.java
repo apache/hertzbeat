@@ -260,6 +260,18 @@ public class AgentToolBridge {
         return toolRegistry.discoverableDescriptors(namespace, query);
     }
 
+    public List<AgentToolDescriptor> discoverableTools(String namespace, String query, Object offset) {
+        int pageOffset = 0;
+        if (offset != null) {
+            try {
+                pageOffset = new java.math.BigDecimal(offset.toString()).intValueExact();
+            } catch (ArithmeticException | NumberFormatException invalid) {
+                throw new IllegalArgumentException("tool discovery offset must be an integer");
+            }
+        }
+        return toolRegistry.discoverablePage(namespace, query, pageOffset).tools();
+    }
+
     private boolean isVisibleTool(AgentToolDescriptor descriptor) {
         // Model visibility is catalog metadata only; execution authorization remains in policy and approvals.
         return descriptor.getExposure() == AgentToolExposure.MODEL_VISIBLE;
