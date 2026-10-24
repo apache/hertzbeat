@@ -143,7 +143,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    > Download source [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    > You can modify the configuration yml file according to your needs.
    >
-   > - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`
+   > - `spring.mail` is optional. Omit it if you do not use email notify. If you need email alarms, configure `spring.mail` in `application.yml` (or set the mail server in the UI)
    > - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)
    > - **Recommended** If you need to use the time series database victoria-metrics to store metric data, you need to replace the `warehouse.store.victoria-metrics` parameter in `application.yml` for specific steps, see [Using victoria-metrics to store metrics data](victoria-metrics-init)
 
