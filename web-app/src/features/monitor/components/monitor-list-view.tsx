@@ -27,6 +27,7 @@ import { MonitorImportDialog } from './monitor-import-dialog';
 import { MonitorListManagementActions } from './monitor-list-management-actions';
 import { MonitorListResults } from './monitor-list-results';
 import { MonitorListToolbar } from './monitor-list-toolbar';
+import { MonitorPageSelection } from './monitor-page-selection';
 
 export type MonitorListViewProps = { state: MonitorListViewState; actions: MonitorListViewActions };
 
@@ -57,6 +58,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         actions={actions}
       />
       <OperationalResultRegion>
+        <MonitorPageSelection state={state} actions={actions} position="top" />
         <MonitorBulkActions
           selectedIds={state.selectedIds}
           run={actions.runBulk}
@@ -77,6 +79,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
           canSelect={state.capabilities.canSelect}
           actions={actions}
         />
+        <MonitorPageSelection state={state} actions={actions} position="bottom" />
       </OperationalResultRegion>
       <MonitorListDialogs state={state} actions={actions} />
     </OperationalPage>

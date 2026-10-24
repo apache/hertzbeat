@@ -20,7 +20,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { requireDomElement } from '@/test/dom-element';
+import { requireDomElement, requireHtmlElement } from '@/test/dom-element';
 
 import { MonitorListView, type MonitorListViewProps } from './monitor-list-view';
 
@@ -30,6 +30,69 @@ describe('MonitorListView evidence states', () => {
     await loadLocale('en-US');
   });
   afterEach(cleanup);
+
+  it('offers page selection above and below the table before any row is selected', () => {
+    const selectIds = vi.fn();
+    renderView(
+      {
+        monitors: {
+          kind: 'ready',
+          records: [
+            { id: 7, name: 'first', app: 'website', instance: 'one', status: 1 },
+            { id: 8, name: 'second', app: 'website', instance: 'two', status: 1 },
+            { id: 9, name: 'gone', app: 'website', instance: 'gone', status: 1, displayState: 'disappeared' }
+          ],
+          total: 2
+        }
+      },
+      { selectIds }
+    );
+    for (const position of ['top', 'bottom']) {
+      const region = requireHtmlElement(
+        document.querySelector(`[data-monitor-page-selection="${position}"]`),
+        'Page selection'
+      );
+      fireEvent.click(within(region).getByRole('checkbox'));
+      expect(selectIds).toHaveBeenLastCalledWith([7, 8]);
+    }
+  });
+
+  it('shows matching checked controls and lets the bottom control clear the selection', () => {
+    const selectIds = vi.fn();
+    const clearSelection = vi.fn();
+    renderView(
+      {
+        selectedIds: [7],
+        monitors: {
+          kind: 'ready',
+          records: [{ id: 7, name: 'first', app: 'website', instance: 'one', status: 1 }],
+          total: 1
+        }
+      },
+      { selectIds, clearSelection }
+    );
+    const bottom = requireHtmlElement(
+      document.querySelector('[data-monitor-page-selection="bottom"]'),
+      'Bottom selection'
+    );
+    expect(within(bottom).getByRole('checkbox')).toBeChecked();
+    fireEvent.click(within(bottom).getByRole('checkbox'));
+    expect(selectIds).toHaveBeenCalledWith([]);
+    fireEvent.click(within(bottom).getByRole('button', { name: i18n.t('monitorActions.clearSelection') }));
+    expect(clearSelection).toHaveBeenCalledOnce();
+  });
+
+  it.each(['loading', 'empty', 'unavailable', 'error'] as const)(
+    'disables page selection without %s evidence',
+    kind => {
+      renderView({ monitors: { kind } });
+      const bottom = requireHtmlElement(
+        document.querySelector('[data-monitor-page-selection="bottom"]'),
+        'Bottom selection'
+      );
+      expect(within(bottom).getByRole('checkbox')).toBeDisabled();
+    }
+  );
 
   it('owns management actions in the header and keeps query actions in one filter band', () => {
     const openCreatePicker = vi.fn();
@@ -259,7 +322,7 @@ describe('MonitorListView evidence states', () => {
       }
     });
 
-    expect(screen.getByRole('checkbox', { name: i18n.t('common.tableSelection.selectAll') })).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox', { name: i18n.t('common.tableSelection.selectAll') })).toHaveLength(3);
     expect(
       screen.getByRole('checkbox', { name: i18n.t('monitorActions.selectOne', { name: 'checkout-api' }) })
     ).toBeInTheDocument();
