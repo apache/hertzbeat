@@ -77,7 +77,29 @@ public class IpmiCollectImpl extends AbstractCollect {
             connection.getResource(builder, metrics);
         } catch (IOException e) {
             log.error("Get Ipmi {} detail resource error: {}", metrics.getName(), e.getMessage());
+            // A failed exchange leaves the UDP session unusable (the request may still be in flight),
+            // so report the failure and drop the cached connection to force a fresh one next cycle.
+            invalidateConnection(metrics.getIpmi(), connection);
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(e.getMessage());
         }
+    }
+
+    private void invalidateConnection(IpmiProtocol ipmiProtocol, IpmiConnection connection) {
+        try {
+            connectionCommonCache.removeCache(buildCacheIdentifier(ipmiProtocol));
+        } catch (Exception e) {
+            log.warn("Failed to invalidate Ipmi connection for {}: {}", ipmiProtocol.getHost(), e.getMessage());
+        }
+    }
+
+    private CacheIdentifier buildCacheIdentifier(IpmiProtocol ipmiProtocol) {
+        return CacheIdentifier.builder()
+                .ip(ipmiProtocol.getHost())
+                .port(ipmiProtocol.getPort())
+                .username(ipmiProtocol.getUsername())
+                .password(ipmiProtocol.getPassword())
+                .build();
     }
 
     @Override
@@ -87,12 +109,7 @@ public class IpmiCollectImpl extends AbstractCollect {
 
 
     private IpmiConnection getIpmiConnection(IpmiProtocol ipmiProtocol) throws Exception {
-        CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(ipmiProtocol.getHost())
-                .port(ipmiProtocol.getPort())
-                .username(ipmiProtocol.getUsername())
-                .password(ipmiProtocol.getPassword())
-                .build();
+        CacheIdentifier identifier = buildCacheIdentifier(ipmiProtocol);
         IpmiConnection connection = null;
         Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
