@@ -32,7 +32,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
 /**
  * IpmiClient used to connect to a remote Ipmi server
  */
-public class IpmiClient {
+public class IpmiClient implements AutoCloseable {
 
     UdpConnection connection;
     private final String host;
@@ -63,22 +63,38 @@ public class IpmiClient {
     public IpmiConnection connect() throws IOException {
         IpmiSession session = newSession(username, password);
 
-        RmcpPlusOpenSessionResponse rmcpPlusOpenSessionResponse = connection.get(session, new RmcpPlusOpenSessionRequest(), RmcpPlusOpenSessionResponse.class);
-        session.setSystemSessionId(rmcpPlusOpenSessionResponse.systemSessionId);
+        try {
+            RmcpPlusOpenSessionResponse rmcpPlusOpenSessionResponse = connection.get(session, new RmcpPlusOpenSessionRequest(), RmcpPlusOpenSessionResponse.class);
+            session.setSystemSessionId(rmcpPlusOpenSessionResponse.systemSessionId);
 
-        session.generateConsoleRandomNumber();
-        RakpMessage2 rakpMessage2 = connection.get(session, new RakpMessage1(), RakpMessage2.class);
-        session.setSystemRandomNumber(rakpMessage2.systemRandom);
-        session.setSystemGuid(rakpMessage2.systemGuid);
+            session.generateConsoleRandomNumber();
+            RakpMessage2 rakpMessage2 = connection.get(session, new RakpMessage1(), RakpMessage2.class);
+            session.setSystemRandomNumber(rakpMessage2.systemRandom);
+            session.setSystemGuid(rakpMessage2.systemGuid);
 
 
-        session.generateSik();
-        session.setK1(session.generateK(1));
-        session.setK2(session.generateK(2));
-        connection.get(session, new RakpMessage3(), RakpMessage4.class);
+            session.generateSik();
+            session.setK1(session.generateK(1));
+            session.setK2(session.generateK(2));
+            connection.get(session, new RakpMessage3(), RakpMessage4.class);
 
-        session.setConnected(true);
-        return new IpmiConnection(session, connection);
+            session.setConnected(true);
+            return new IpmiConnection(session, connection);
+        } catch (IOException | RuntimeException e) {
+            // A failed handshake used to leave the UDP channel and its selector open forever,
+            // leaking one file descriptor pair per retry until the collector ran out of handles.
+            try {
+                connection.close();
+            } catch (IOException closeFailure) {
+                e.addSuppressed(closeFailure);
+            }
+            throw e;
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        connection.close();
     }
 
     public IpmiSession newSession(String username, String password) {
