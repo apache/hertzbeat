@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -106,5 +107,41 @@ public class MemcachedCollectImplTest {
     @Test
     void testSupportProtocol() {
         assertEquals("memcached", memcachedCollect.supportProtocol());
+    }
+
+    @Test
+    void testCollectAppliesConfiguredTimeout() throws Exception {
+        Metrics timedMetrics = metricsWithTimeout("1500");
+        try (MockedConstruction<Socket> mocked = Mockito.mockConstruction(Socket.class,
+                (socket, context) -> Mockito.when(socket.isConnected()).thenReturn(false))) {
+            memcachedCollect.collect(builder, timedMetrics);
+            Socket socket = mocked.constructed().getFirst();
+            Mockito.verify(socket).connect(Mockito.any(SocketAddress.class), Mockito.eq(1500));
+            Mockito.verify(socket).setSoTimeout(1500);
+        }
+    }
+
+    @Test
+    void testCollectFallsBackToDefaultTimeout() throws Exception {
+        try (MockedConstruction<Socket> mocked = Mockito.mockConstruction(Socket.class,
+                (socket, context) -> Mockito.when(socket.isConnected()).thenReturn(false))) {
+            memcachedCollect.collect(builder, metrics);
+            Socket socket = mocked.constructed().getFirst();
+            Mockito.verify(socket).connect(Mockito.any(SocketAddress.class), Mockito.eq(10_000));
+            Mockito.verify(socket).setSoTimeout(10_000);
+        }
+    }
+
+    private Metrics metricsWithTimeout(String timeout) {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("0.0.0.0")
+                .port("11211")
+                .timeout(timeout)
+                .build();
+        Metrics timedMetrics = new Metrics();
+        timedMetrics.setName("server_info");
+        timedMetrics.setMemcached(protocol);
+        timedMetrics.setAliasFields(metrics.getAliasFields());
+        return timedMetrics;
     }
 }
