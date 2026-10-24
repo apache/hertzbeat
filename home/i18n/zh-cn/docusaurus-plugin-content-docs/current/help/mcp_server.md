@@ -7,7 +7,7 @@ mcp_availability: unavailable
 mcp_activation_requires: trusted-transport-identity-and-gateway-run-ledger
 ---
 
-### 2.0.0 可用性
+## 2.0.0 可用性
 
 Apache HertzBeat 2.0.0 不提供可调用的 MCP 服务。MCP 服务器及其工具回调转换器默认关闭。
 
