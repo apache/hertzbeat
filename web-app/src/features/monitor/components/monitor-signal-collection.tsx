@@ -52,20 +52,20 @@ export function MonitorSignalCollection({ state }: { state: MonitorInvestigation
 }
 
 function CollectionFacts({ event, timeZone }: { event: MonitorCollectionEvent; timeZone: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const failureFacts = collectionFailureFacts(event, t);
   return (
     <dl className={styles.collectionFacts}>
       <MonitorSignalFact
         label={t('monitorSignals.collection.last')}
-        value={formatMonitorTimestamp(event.observedAt, timeZone) ?? t('common.unavailable')}
+        value={formatMonitorTimestamp(event.observedAt, timeZone, i18n.resolvedLanguage) ?? t('common.unavailable')}
       />
       <MonitorSignalFact
         label={t('monitorSignals.collection.duration')}
         value={
           event.durationMillis < 0
             ? t('monitorSignals.collection.notRecorded')
-            : formatMonitorDuration(event.durationMillis)
+            : formatMonitorDuration(event.durationMillis, i18n.resolvedLanguage)
         }
       />
       <MonitorSignalFact
