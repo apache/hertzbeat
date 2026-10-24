@@ -98,4 +98,48 @@ class WebsocketCollectImplTest {
         socketMockedConstruction.close();
     }
 
+    @Test
+    void testCollectAppliesConfiguredTimeout() throws Exception {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        WebsocketProtocol websocketProtocol = WebsocketProtocol.builder()
+                .host("127.0.0.1")
+                .path("/")
+                .port("80")
+                .timeout("2500")
+                .build();
+        Metrics metrics = new Metrics();
+        metrics.setWebsocket(websocketProtocol);
+        metrics.setAliasFields(List.of("httpVersion"));
+
+        try (MockedConstruction<Socket> mocked = Mockito.mockConstruction(Socket.class,
+                (socket, context) -> Mockito.when(socket.isConnected()).thenReturn(false))) {
+            websocketCollectImpl.collect(builder, metrics);
+            Socket socket = mocked.constructed().getFirst();
+            Mockito.verify(socket).connect(Mockito.any(SocketAddress.class), Mockito.eq(2500));
+            Mockito.verify(socket).setSoTimeout(2500);
+        }
+        assertEquals(CollectRep.Code.UN_CONNECTABLE, builder.getCode());
+    }
+
+    @Test
+    void testCollectFallsBackToDefaultTimeout() throws Exception {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        WebsocketProtocol websocketProtocol = WebsocketProtocol.builder()
+                .host("127.0.0.1")
+                .path("/")
+                .port("80")
+                .build();
+        Metrics metrics = new Metrics();
+        metrics.setWebsocket(websocketProtocol);
+        metrics.setAliasFields(List.of("httpVersion"));
+
+        try (MockedConstruction<Socket> mocked = Mockito.mockConstruction(Socket.class,
+                (socket, context) -> Mockito.when(socket.isConnected()).thenReturn(false))) {
+            websocketCollectImpl.collect(builder, metrics);
+            Socket socket = mocked.constructed().getFirst();
+            Mockito.verify(socket).connect(Mockito.any(SocketAddress.class), Mockito.eq(10_000));
+            Mockito.verify(socket).setSoTimeout(10_000);
+        }
+    }
+
 }
