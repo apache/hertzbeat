@@ -25,16 +25,20 @@ import {
   type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
 import styles from './monitor-history-results.module.css';
+import type { HistoryChartImage } from './monitor-history-chart';
+import { MonitorHistoryImageButton } from './monitor-history-image-button';
 import { MonitorSegmentedSwitch } from './monitor-segmented-switch';
 
 export function SelectedHistoryControls({
   chart,
   actions,
-  investigationSignals
+  investigationSignals,
+  image
 }: {
   chart: MonitorHistoryChart;
   actions: MonitorMetricWorkbenchController['actions'];
   investigationSignals: MonitorMetricWorkbenchController['state']['investigationSignals'];
+  image?: HistoryChartImage | undefined;
 }) {
   const { t } = useTranslation();
   const aggregated = chart.interval;
@@ -64,6 +68,7 @@ export function SelectedHistoryControls({
         aria-label={t('monitorMetrics.refreshHistory')}
         onClick={() => actions.refreshHistoryChart(chart.metric.key)}
       />
+      <MonitorHistoryImageButton chart={chart} image={image} />
       <InvestigationMenu signals={investigationSignals} actions={actions} />
     </div>
   );
