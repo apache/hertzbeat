@@ -137,10 +137,7 @@ public class MetricsRealTimeAlertCalculator {
                         continue;
                     }
                     backoff.reset();
-                    // The telemetry handoff precedes alert reduction so maintenance backpressure cannot
-                    // occupy every calculator before later samples reach storage.
-                    dataQueue.sendMetricsDataToStorage(metricsData);
-                    calculate(metricsData);
+                    handoffAndCalculate(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
@@ -154,6 +151,29 @@ public class MetricsRealTimeAlertCalculator {
         };
         for (int i = 0; i < CALCULATE_THREADS; i++) {
             workerPool.executeJob(runnable);
+        }
+    }
+
+    /**
+     * Hand off an independent copy to storage, then calculate alerts on the polled instance.
+     *
+     * <p>Ownership: storage owns {@code storageCopy} after a successful send (dispatch closes it
+     * after persist). This method always closes the polled {@code metricsData}. If send fails,
+     * both instances are closed here. Storage may close its copy before calculation finishes;
+     * calculation must only read {@code metricsData}.
+     */
+    void handoffAndCalculate(CollectRep.MetricsData metricsData) {
+        CollectRep.MetricsData storageCopy = CollectRep.MetricsData.newBuilder(metricsData).build();
+        boolean handedOff = false;
+        try {
+            dataQueue.sendMetricsDataToStorage(storageCopy);
+            handedOff = true;
+            calculate(metricsData);
+        } finally {
+            if (!handedOff) {
+                storageCopy.close();
+            }
+            metricsData.close();
         }
     }
 

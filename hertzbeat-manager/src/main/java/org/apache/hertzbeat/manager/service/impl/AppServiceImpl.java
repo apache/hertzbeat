@@ -175,22 +175,30 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(monitorId);
         Metrics tmpMetrics = job.getMetrics().get(0);
         List<Metrics> metricsList = new LinkedList<>();
-        for (CollectRep.MetricsData metricsData : metricsDataList) {
-            List<Metrics.Field> fields = metricsData.getFields().stream().map(item ->
-                    Metrics.Field.builder()
-                        .field(item.getName())
-                        .type((byte) item.getType())
-                        .label(item.getLabel())
-                        .unit(item.getUnit())
-                        .build())
-                .collect(Collectors.toList());
-            Metrics metrics = Metrics.builder()
-                .visible(true)
-                .name(metricsData.getMetrics())
-                .fields(fields)
-                .prometheus(tmpMetrics.getPrometheus())
-                .build();
-            metricsList.add(metrics);
+        try {
+            for (CollectRep.MetricsData metricsData : metricsDataList) {
+                List<Metrics.Field> fields = metricsData.getFields().stream().map(item ->
+                        Metrics.Field.builder()
+                            .field(item.getName())
+                            .type((byte) item.getType())
+                            .label(item.getLabel())
+                            .unit(item.getUnit())
+                            .build())
+                    .collect(Collectors.toList());
+                Metrics metrics = Metrics.builder()
+                    .visible(true)
+                    .name(metricsData.getMetrics())
+                    .fields(fields)
+                    .prometheus(tmpMetrics.getPrometheus())
+                    .build();
+                metricsList.add(metrics);
+            }
+        } finally {
+            for (CollectRep.MetricsData metricsData : metricsDataList) {
+                if (metricsData != null) {
+                    metricsData.close();
+                }
+            }
         }
         job.setMetrics(metricsList);
         return job;
@@ -332,22 +340,30 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp());
             for (Monitor monitor : monitors) {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(monitor.getId());
-                for (CollectRep.MetricsData metricsData : metricsDataList) {
-                    var hierarchyMetric = new Hierarchy();
-                    hierarchyMetric.setValue(metricsData.getMetrics());
-                    hierarchyMetric.setLabel(metricsData.getMetrics());
-                    List<Hierarchy> hierarchyFieldList = metricsData.getFields().stream()
-                        .map(item -> {
-                            var hierarchyField = new Hierarchy();
-                            hierarchyField.setValue(item.getName());
-                            hierarchyField.setLabel(item.getName());
-                            hierarchyField.setIsLeaf(true);
-                            hierarchyField.setType((byte) item.getType());
-                            hierarchyField.setUnit(item.getUnit());
-                            return hierarchyField;
-                        }).collect(Collectors.toList());
-                    hierarchyMetric.setChildren(hierarchyFieldList);
-                    combineHierarchyMetrics(hierarchyMetricList, hierarchyMetric);
+                try {
+                    for (CollectRep.MetricsData metricsData : metricsDataList) {
+                        var hierarchyMetric = new Hierarchy();
+                        hierarchyMetric.setValue(metricsData.getMetrics());
+                        hierarchyMetric.setLabel(metricsData.getMetrics());
+                        List<Hierarchy> hierarchyFieldList = metricsData.getFields().stream()
+                            .map(item -> {
+                                var hierarchyField = new Hierarchy();
+                                hierarchyField.setValue(item.getName());
+                                hierarchyField.setLabel(item.getName());
+                                hierarchyField.setIsLeaf(true);
+                                hierarchyField.setType((byte) item.getType());
+                                hierarchyField.setUnit(item.getUnit());
+                                return hierarchyField;
+                            }).collect(Collectors.toList());
+                        hierarchyMetric.setChildren(hierarchyFieldList);
+                        combineHierarchyMetrics(hierarchyMetricList, hierarchyMetric);
+                    }
+                } finally {
+                    for (CollectRep.MetricsData metricsData : metricsDataList) {
+                        if (metricsData != null) {
+                            metricsData.close();
+                        }
+                    }
                 }
             }
             hierarchyApp.setChildren(hierarchyMetricList);
