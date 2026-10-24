@@ -92,7 +92,9 @@ public class MetricsDataController {
             @Parameter(description = "query end time in milliseconds", example = "1712733600000")
             @RequestParam(required = false) Long end,
             @Parameter(description = "query step, for example 60s or 5m", example = "60s")
-            @RequestParam(required = false) String step
+            @RequestParam(required = false) String step,
+            @Parameter(description = "monitor id, used to match the stored series instead of the instance", example = "343254354")
+            @RequestParam(required = false) Long monitorId
     ) {
         if (!metricsDataService.getWarehouseStorageServerStatus()) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
@@ -104,7 +106,8 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        return queryMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+        return queryMetricHistoryData(monitorId, instance, app, metrics, metric, history, interval, start,
+                end, step);
     }
 
     @GetMapping("/api/monitor/{instance}/metric")
@@ -123,14 +126,18 @@ public class MetricsDataController {
             @RequestParam(required = false) Boolean interval,
             @RequestParam(required = false) Long start,
             @RequestParam(required = false) Long end,
-            @RequestParam(required = false) String step) {
+            @RequestParam(required = false) String step,
+            @Parameter(description = "monitor id, used to match the stored series instead of the instance", example = "343254354")
+            @RequestParam(required = false) Long monitorId) {
         if (!metricsDataService.getWarehouseStorageServerStatus()) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
         }
-        return queryMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+        return queryMetricHistoryData(monitorId, instance, app, metrics, metric, history, interval, start,
+                end, step);
     }
 
     private ResponseEntity<Message<MetricsHistoryData>> queryMetricHistoryData(
+            Long monitorId,
             String instance,
             String app,
             String metrics,
@@ -140,8 +147,8 @@ public class MetricsDataController {
             Long start,
             Long end,
             String step) {
-        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric,
-                history, interval, start, end, step);
+        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId, instance, app, metrics,
+                metric, history, interval, start, end, step);
         return ResponseEntity.ok(Message.success(historyData));
     }
 }

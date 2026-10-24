@@ -279,6 +279,27 @@ public interface HistoryDataReader {
     }
 
     /**
+     * query history metrics data for a monitor id when supported by the storage engine,
+     * storages without monitor id support fall back to the instance based query
+     *
+     * @param monitorId monitor id
+     * @param instance  instance e.g. ip:port or ip or domain
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @param history   fallback range
+     * @param start     query start time in milliseconds
+     * @param end       query end time in milliseconds
+     * @param step      query step, for example 60s or 5m
+     * @return metrics data
+     */
+    default Map<String, List<Value>> getHistoryMetricData(Long monitorId, String instance, String app,
+                                                          String metrics, String metric, String history,
+                                                          Long start, Long end, String step) {
+        return getHistoryMetricData(instance, app, metrics, metric, history, start, end, step);
+    }
+
+    /**
      * query history range interval metrics data from tsdb
      * max min mean metrics value
      *
@@ -308,6 +329,27 @@ public interface HistoryDataReader {
                                                                   String metric, String history, Long start,
                                                                   Long end, String step) {
         return getHistoryIntervalMetricData(instance, app, metrics, metric, history);
+    }
+
+    /**
+     * query history interval metrics data for a monitor id when supported by the storage engine,
+     * storages without monitor id support fall back to the instance based query
+     *
+     * @param monitorId monitor id
+     * @param instance  instance e.g. ip:port or ip or domain
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @param history   fallback range
+     * @param start     query start time in milliseconds
+     * @param end       query end time in milliseconds
+     * @param step      query step, for example 60s or 5m
+     * @return metrics data
+     */
+    default Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String instance, String app,
+                                                                  String metrics, String metric, String history,
+                                                                  Long start, Long end, String step) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, start, end, step);
     }
 
     /**

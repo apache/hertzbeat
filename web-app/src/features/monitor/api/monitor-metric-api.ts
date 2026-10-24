@@ -57,7 +57,8 @@ export function buildHistoryMetricPath(
     metrics: metric.group,
     metric: metric.field,
     history,
-    interval: String(interval)
+    interval: String(interval),
+    monitorId: String(monitor.id)
   });
   return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric?${params.toString()}`;
 }
