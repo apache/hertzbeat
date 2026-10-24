@@ -485,9 +485,43 @@ class SshHelperTest {
         }
     }
 
+    /**
+     * Regression test for https://github.com/apache/hertzbeat/issues/4409.
+     *
+     * <p>When both a {@code password} and a {@code privateKey} are configured for an SSH monitor,
+     * the old {@code addIdentity} implementation contained an early {@code return} after calling
+     * {@code addPasswordIdentity}, which silently prevented the private key from ever being loaded.
+     * As a result, connecting to a server that had {@code PasswordAuthentication no} always failed,
+     * even when a perfectly valid private key was supplied alongside the password.
+     *
+     * <p>After the fix both credentials are registered, allowing the Apache MINA SSHD client to
+     * try each method in order and succeed with whichever the server accepts.
+     */
+    @Test
+    void bothPasswordAndPrivateKeyAreRegisteredWhenBothConfigured() throws Exception {
+        ConnectAttempt success = successfulAttempt();
+        KeyPair keyPair = mock(KeyPair.class);
+        when(sshClient.connect("root", host, 22)).thenReturn(success.connectFuture());
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class);
+             MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+            securityUtils.when(() -> SecurityUtils.loadKeyPairIdentities(any(), any(), any(), any()))
+                    .thenReturn(List.of(keyPair));
+
+            assertSame(success.clientSession(), SshHelper.getConnectSession(
+                    host, "22", "root", "my-password", "my-private-key", null, TIMEOUT, false));
+        }
+
+        // Both credentials must be present on the session so the server can choose
+        verify(success.clientSession()).addPasswordIdentity("my-password");
+        verify(success.clientSession()).addPublicKeyIdentity(keyPair);
+    }
+
     private ClientSession connectWithThreadLocalClient(String password) throws Exception {
         return connectWithThreadLocalClient(password, true);
     }
+
 
     private ClientSession connectWithThreadLocalClient(String password, boolean reuseConnection) throws Exception {
         try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
