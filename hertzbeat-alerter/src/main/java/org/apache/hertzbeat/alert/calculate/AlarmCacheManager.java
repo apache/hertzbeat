@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -152,6 +153,44 @@ public class AlarmCacheManager {
         return scopedDefineKey(workspaceId, CUSTOM_FIRING_ROW_KEY + fingerPrint);
     }
 
+
+    /**
+     * Drop pending and firing alerts that belong to a deleted monitor.
+     * Firing alerts are returned so the caller can persist them as resolved.
+     *
+     * @param monitorId {@code hertzbeat.monitor.id} label value
+     * @return firing alerts removed from the cache
+     */
+    public List<SingleAlert> removeAlertsForMonitor(String monitorId) {
+        if (monitorId == null || monitorId.isBlank()) {
+            return List.of();
+        }
+        removeMatching(pendingAlertMap, monitorId);
+        return removeMatching(firingAlertMap, monitorId);
+    }
+
+    private List<SingleAlert> removeMatching(Table<String, String, SingleAlert> alerts, String monitorId) {
+        List<Map.Entry<String, String>> keys = new ArrayList<>();
+        for (Table.Cell<String, String, SingleAlert> cell : alerts.cellSet()) {
+            if (belongsToMonitor(cell.getValue(), monitorId)) {
+                keys.add(Map.entry(cell.getRowKey(), cell.getColumnKey()));
+            }
+        }
+        List<SingleAlert> removed = new ArrayList<>();
+        for (Map.Entry<String, String> key : keys) {
+            SingleAlert alert = alerts.remove(key.getKey(), key.getValue());
+            if (alert != null) {
+                removed.add(alert);
+            }
+        }
+        return removed;
+    }
+
+    private static boolean belongsToMonitor(SingleAlert alert, String monitorId) {
+        return alert != null
+                && alert.getLabels() != null
+                && monitorId.equals(alert.getLabels().get(CommonConstants.LABEL_MONITOR_ID));
+    }
 
     public SingleAlert removeFiring(String fingerPrint) {
         return removeFiring(AuthTokenScopes.DEFAULT_WORKSPACE_ID, fingerPrint);

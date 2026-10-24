@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
+import org.apache.hertzbeat.alert.calculate.DeletedMonitorAlertGuard;
 import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
@@ -87,14 +88,16 @@ public class MetricsRealTimeAlertCalculator {
     private final AlarmCommonReduce alarmCommonReduce;
     private final AlarmCacheManager alarmCacheManager;
     private final JexlExprCalculator jexlExprCalculator;
-
+    private final DeletedMonitorAlertGuard deletedMonitorAlertGuard;
 
     @Autowired
     public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
                                           AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
-                                          JexlExprCalculator jexlExprCalculator) {
-        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator, true);
+                                          JexlExprCalculator jexlExprCalculator,
+                                          DeletedMonitorAlertGuard deletedMonitorAlertGuard) {
+        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager,
+                jexlExprCalculator, true, deletedMonitorAlertGuard);
     }
 
     /**
@@ -113,12 +116,28 @@ public class MetricsRealTimeAlertCalculator {
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
                                           AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
                                           JexlExprCalculator jexlExprCalculator, boolean start) {
+        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager,
+                jexlExprCalculator, start, DeletedMonitorAlertGuard.allowAll());
+    }
+
+    /**
+     * Constructor for tests that need to observe deleted-monitor suppression.
+     *
+     * @param deletedMonitorAlertGuard remembers monitors whose alerts must not be reopened
+     */
+    public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+                                          AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                          JexlExprCalculator jexlExprCalculator, boolean start,
+                                          DeletedMonitorAlertGuard deletedMonitorAlertGuard) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
         this.alarmCacheManager = alarmCacheManager;
         this.jexlExprCalculator = jexlExprCalculator;
+        this.deletedMonitorAlertGuard = deletedMonitorAlertGuard == null
+                ? DeletedMonitorAlertGuard.allowAll() : deletedMonitorAlertGuard;
         if (start) {
             startCalculate();
         }
@@ -158,6 +177,9 @@ public class MetricsRealTimeAlertCalculator {
     }
 
     protected void calculate(CollectRep.MetricsData metricsData) {
+        if (metricsData == null || deletedMonitorAlertGuard.isDeleted(metricsData.getId())) {
+            return;
+        }
         long currentTimeMilli = System.currentTimeMillis();
         String instance = String.valueOf(metricsData.getId());
         String instanceName = metricsData.getInstanceName();
@@ -380,6 +402,9 @@ public class MetricsRealTimeAlertCalculator {
     private void afterThresholdRuleMatch(long defineId, long currentTimeMilli, Map<String, String> fingerPrints,
                                          Map<String, Object> fieldValueMap, AlertDefine define,
                                          Map<String, String> annotations) {
+        if (isDeletedMonitor(fingerPrints)) {
+            return;
+        }
         // fingerprint for the padding cache
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
         SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
@@ -433,6 +458,21 @@ public class MetricsRealTimeAlertCalculator {
                 alarmCacheManager.putFiring(defineId, fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
+        }
+    }
+
+    private boolean isDeletedMonitor(Map<String, String> fingerPrints) {
+        if (fingerPrints == null) {
+            return false;
+        }
+        String monitorId = fingerPrints.get(CommonConstants.LABEL_MONITOR_ID);
+        if (monitorId == null || monitorId.isBlank()) {
+            return false;
+        }
+        try {
+            return deletedMonitorAlertGuard.isDeleted(Long.parseLong(monitorId));
+        } catch (NumberFormatException ignore) {
+            return false;
         }
     }
 
