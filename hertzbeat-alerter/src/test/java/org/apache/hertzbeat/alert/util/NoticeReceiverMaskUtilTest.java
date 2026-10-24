@@ -48,6 +48,7 @@ class NoticeReceiverMaskUtilTest {
         receiver.setGotifyToken("A845h__ZMqDxZlO");
         receiver.setNtfyToken("tk_AgQdq7mVBoFD37zQVN29RhuMzNIz2");
         receiver.setWpushToken("wpush-test-apikey-xxxx");
+        receiver.setTeamsWebHookUrl("https://prod-00.westus.logic.azure.com/workflows/xxx/triggers/manual/paths/invoke?sig=t0k3");
         return receiver;
     }
 
@@ -68,6 +69,7 @@ class NoticeReceiverMaskUtilTest {
         assertEquals(SECRET_MASK + "xZlO", masked.getGotifyToken());
         assertEquals(SECRET_MASK + "NIz2", masked.getNtfyToken());
         assertEquals(SECRET_MASK + "xxxx", masked.getWpushToken());
+        assertEquals(SECRET_MASK + "t0k3", masked.getTeamsWebHookUrl());
 
         assertEquals(receiver.getId(), masked.getId());
         assertEquals(receiver.getName(), masked.getName());
@@ -122,6 +124,8 @@ class NoticeReceiverMaskUtilTest {
         assertEquals("nmSNhUJN9MlpPl8lfCsgdA0KvHCL9JSMSK", incoming.getSmnSk());
         assertEquals("SCT193569TSNm6xIabdjqeZPtOGOWcvU1e", incoming.getServerChanToken());
         assertEquals("wpush-test-apikey-xxxx", incoming.getWpushToken());
+        assertEquals("https://prod-00.westus.logic.azure.com/workflows/xxx/triggers/manual/paths/invoke?sig=t0k3",
+                incoming.getTeamsWebHookUrl());
     }
 
     @Test
