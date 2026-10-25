@@ -16,83 +16,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SERVER_NAME="${project.artifactId}"
-BINARY_NAME="${project.build.finalName}"
-
-cd "$(dirname "$0")"
-BIN_DIR="$(pwd)"
-cd ..
-DEPLOY_DIR="$(pwd)"
-
-CONF_DIR="$DEPLOY_DIR/config"
-LOGS_DIR="$DEPLOY_DIR/logs"
-PID_FILE="$LOGS_DIR/${project.artifactId}.pid"
-APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
+NATIVE=true
 SERVER_PORT=1159
-
-find_running_pid() {
-    if [ -f "$PID_FILE" ]; then
-        PID="$(cat "$PID_FILE" 2>/dev/null)"
-        if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
-            echo "$PID"
-            return 0
-        fi
-    fi
-
-    ps -ef | grep "$APP_PATH" | grep "$CONF_DIR" | grep -v grep | awk '{print $2}' | head -n 1
-}
-
-RUNNING_PID="$(find_running_pid)"
-if [ "$1" = "status" ]; then
-    if [ -n "$RUNNING_PID" ]; then
-        echo "The HertzBeat $SERVER_NAME is running...!"
-        echo "PID: $RUNNING_PID"
-    else
-        echo "The HertzBeat $SERVER_NAME is stopped"
-    fi
+BIN_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)" || exit 1
+DEPLOY_DIR="$(cd -- "$BIN_DIR/.." && pwd -P)" || exit 1
+cd -- "$DEPLOY_DIR" || exit 1
+PID_FILE="$DEPLOY_DIR/logs/${project.artifactId}.pid"
+MAIN_CLASS=org.apache.hertzbeat.startup.HertzBeatApplication
+APP_PATH="$DEPLOY_DIR/${project.build.finalName}"
+STOP_TIMEOUT="${HERTZBEAT_STOP_TIMEOUT:-30}"
+START_TIMEOUT="${HERTZBEAT_START_TIMEOUT:-30}"
+case "$STOP_TIMEOUT:$START_TIMEOUT" in *[!0-9:]*|:*|*:) echo 'ERROR: invalid timeout' >&2; exit 1 ;; esac
+[ "$STOP_TIMEOUT" -gt 0 ] && [ "$START_TIMEOUT" -gt 0 ] || exit 1
+. "$BIN_DIR/lifecycle.sh" || exit 1
+find_pid || exit 1
+if [ "${1:-}" = status ]; then
+    if [ -n "$APP_PID" ]; then echo "Service PID: $APP_PID"; else echo 'Service stopped'; fi
     exit 0
 fi
-
-if [ ! -x "$APP_PATH" ]; then
-    echo "ERROR: native executable not found: $APP_PATH"
-    exit 1
+[ -z "$APP_PID" ] || { echo 'ERROR: already started' >&2; exit 1; }
+choose_readiness_tool || exit 1
+mkdir -p -- "$DEPLOY_DIR/logs" || exit 1
+if [ "$NATIVE" = true ]; then
+    [ -x "$APP_PATH" ] || { echo 'ERROR: native executable missing' >&2; exit 1; }
+    nohup "$APP_PATH" "--spring.config.location=$DEPLOY_DIR/config/" "$@" >"$DEPLOY_DIR/logs/startup.log" 2>&1 &
+else
+    nohup "$BIN_DIR/entrypoint.sh" "$@" >"$DEPLOY_DIR/logs/startup.log" 2>&1 &
 fi
-
-if [ -n "$RUNNING_PID" ]; then
-    echo "ERROR: The HertzBeat $SERVER_NAME already started!"
-    echo "PID: $RUNNING_PID"
-    exit 1
-fi
-
-mkdir -p "$LOGS_DIR"
-
-if command -v lsof >/dev/null 2>&1; then
-    SERVER_PORT_COUNT="$(lsof -nP -iTCP:$SERVER_PORT -sTCP:LISTEN | wc -l)"
-    if [ "$SERVER_PORT_COUNT" -gt 0 ]; then
-        echo "ERROR: The HertzBeat $SERVER_NAME port $SERVER_PORT is already used!"
-        exit 1
-    fi
-fi
-
-echo "You can review logs at hertzbeat/logs"
-echo "Starting the HertzBeat $SERVER_NAME ..."
-nohup "$APP_PATH" --spring.config.location="$CONF_DIR/" >"$LOGS_DIR/startup.log" 2>&1 &
 APP_PID=$!
-echo "$APP_PID" >"$PID_FILE"
-
-COUNT=0
-while [ $COUNT -lt 30 ]; do
+deadline=$((SECONDS + START_TIMEOUT))
+# Give the child time to exec before checking its installation arguments.
+sleep 1
+while ! owned_pid "$APP_PID"; do
+    kill -0 "$APP_PID" 2>/dev/null || { echo 'ERROR: service exited; check logs/startup.log' >&2; exit 1; }
+    [ "$SECONDS" -lt "$deadline" ] || { echo 'ERROR: cannot verify launched process identity' >&2; exit 1; }
     sleep 1
-    if ! kill -0 "$APP_PID" 2>/dev/null; then
-        echo "ERROR: Service start failed, check $LOGS_DIR/startup.log"
-        rm -f "$PID_FILE"
+done
+remember_pid || { echo 'ERROR: cannot record process identity' >&2; exit 1; }
+while true; do
+    if ! still_owned; then
+        if process_gone; then rm -f -- "$PID_FILE"; fi
+        echo 'ERROR: service exited or identity could not be verified; check logs/startup.log' >&2
         exit 1
     fi
-    if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:$SERVER_PORT -sTCP:LISTEN | grep -q "$APP_PID"; then
-        break
+    if listener_ready; then
+        echo "Service Start Success! Service PID: $APP_PID"
+        exit 0
     fi
-    COUNT=$((COUNT + 1))
+    [ "$SECONDS" -lt "$deadline" ] || break
+    sleep 1
 done
-
-echo "Service Start Success!"
-echo "Service PID: $APP_PID"
+echo 'ERROR: readiness timed out' >&2
+if stop_owned; then rm -f -- "$PID_FILE"; fi
+exit 1

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -37,13 +38,12 @@ import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineYamlImExportServiceImpl;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * test case for {@link AlertDefineYamlImExportServiceImpl}
@@ -99,11 +99,8 @@ class AlertDefineYamlImExportServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
 
-        InputStream inputStream = new ByteArrayInputStream(JsonUtil.toJson(alertDefineList)
-                .getBytes(StandardCharsets.UTF_8));
-        Yaml yaml = new Yaml();
-
-        assertEquals(yaml.load(inputStream), result);
+        assertInstanceOf(ExportAlertDefineDTO.class, result.getFirst());
+        assertEquals(alertDefineList, result);
     }
 
     @Test
@@ -116,11 +113,14 @@ class AlertDefineYamlImExportServiceTest {
                     anyInt(), anyInt())
             ).thenThrow(new IOException("Test Exception"));
 
-            RuntimeException exception = assertThrows(
-                    RuntimeException.class,
+            IllegalArgumentException exception = assertThrows(
+                    IllegalArgumentException.class,
                     () -> service.parseImport(faultyInputStream)
             );
-            assertEquals("java.io.IOException: Test Exception", exception.getMessage());
+            assertEquals("Invalid YAML alert definition configuration", exception.getMessage());
+            YAMLException parsingFailure = assertInstanceOf(YAMLException.class, exception.getCause());
+            IOException readFailure = assertInstanceOf(IOException.class, parsingFailure.getCause());
+            assertEquals("Test Exception", readFailure.getMessage());
         } catch (IOException e) {
 
             fail("Mocking IOException failed");

@@ -15,19 +15,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# project name
-APPLICATION="${project.artifactId}"
 
-# jar file name
-APPLICATION_JAR="${project.build.finalName}.jar"
-
-# find the service pid, kill -9 pid
-PID=$(ps -ef | grep java | grep "${APPLICATION_JAR}" | grep -v grep | awk '{ print $2 }')
-if [[ -z "$PID" ]]
-then
-    echo Apache HertzBeat ${APPLICATION} is already stopped
-else
-    echo kill  ${PID}
-    kill -9 ${PID}
-    echo Shutdown Apache HertzBeat ${APPLICATION} Success!
+NATIVE=false
+SERVER_PORT=1157
+BIN_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)" || exit 1
+DEPLOY_DIR="$(cd -- "$BIN_DIR/.." && pwd -P)" || exit 1
+cd -- "$DEPLOY_DIR" || exit 1
+PID_FILE="$DEPLOY_DIR/logs/${project.artifactId}.pid"
+MAIN_CLASS=org.apache.hertzbeat.startup.HertzBeatApplication
+APP_PATH="$DEPLOY_DIR/${project.build.finalName}"
+STOP_TIMEOUT="${HERTZBEAT_STOP_TIMEOUT:-30}"
+START_TIMEOUT="${HERTZBEAT_START_TIMEOUT:-30}"
+case "$STOP_TIMEOUT:$START_TIMEOUT" in *[!0-9:]*|:*|*:) echo 'ERROR: invalid timeout' >&2; exit 1 ;; esac
+[ "$STOP_TIMEOUT" -gt 0 ] && [ "$START_TIMEOUT" -gt 0 ] || exit 1
+. "$BIN_DIR/lifecycle.sh" || exit 1
+find_pid || exit 1
+if [ -z "$APP_PID" ]; then
+    rm -f -- "$PID_FILE"
+    echo 'Service already stopped'
+    exit 0
 fi
+APP_BIRTH="$(process_birth "$APP_PID")"
+[ -n "$APP_BIRTH" ] || { echo 'ERROR: cannot verify process start time' >&2; exit 1; }
+if ! stop_owned; then echo 'ERROR: shutdown failed' >&2; exit 1; fi
+rm -f -- "$PID_FILE"
+echo 'Shutdown Success!'

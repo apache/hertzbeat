@@ -28,7 +28,6 @@ on:
       - '**.md'
       - 'home/**'
       - 'web-app/**'
-      - 'script/**'
       - 'material/**'
   pull_request:
     branches: [ master, dev, '1.9.x-dev' ]
@@ -36,7 +35,6 @@ on:
       - '**.md'
       - 'home/**'
       - 'web-app/**'
-      - 'script/**'
       - 'material/**'
 
 concurrency:

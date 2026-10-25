@@ -66,9 +66,10 @@ public class SmsLocalSmsClientImpl implements SmsClient {
         }
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            String content = alert.getCommonAnnotations().get("summary");
+            String content = alert.getCommonAnnotations() == null ? null : alert.getCommonAnnotations().get("summary");
             if (Objects.isNull(content) || Objects.isNull(alert.getCommonAnnotations().get("description"))) {
-                content = alert.getAlerts().get(0).getContent();
+                content = alert.getAlerts() == null || alert.getAlerts().isEmpty() || alert.getAlerts().get(0) == null
+                        ? null : alert.getAlerts().get(0).getContent();
             }
             SmsMessage smsMessage = new SmsMessage(FROM, receiver.getPhone(), content);
 

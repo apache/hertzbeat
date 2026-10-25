@@ -152,15 +152,25 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void shutdown() {
+        shutdownEventLoopGroup(this.bossGroup);
+        shutdownEventLoopGroup(this.workerGroup);
         try {
-            this.bossGroup.shutdownGracefully();
-
-            this.workerGroup.shutdownGracefully();
-
-            this.threadPool.destroy();
-
+            if (this.threadPool != null) {
+                this.threadPool.destroy();
+            }
         } catch (Exception e) {
             log.error("Netty Server shutdown exception, ", e);
+        }
+    }
+
+    private void shutdownEventLoopGroup(EventLoopGroup group) {
+        if (group == null) {
+            return;
+        }
+        try {
+            group.shutdownGracefully();
+        } catch (Exception e) {
+            log.error("Netty Server event loop shutdown exception, ", e);
         }
     }
 

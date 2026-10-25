@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -16,53 +16,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# project name
-SERVER_NAME="${project.build.finalName}"
-
-# jar name
-JAR_NAME="${project.build.finalName}.jar"
-
-# cd bin
-cd `dirname $0`
-# bin dir
-BIN_DIR=`pwd`
-# return root
-cd ..
-# root path dir
-DEPLOY_DIR=`pwd`
-
-# config dir
-# absolute directory of external configuration files, if it is a directory, it should end with '/'，you can also directly specify a file.
-# if a directory is specified, spring will read all configuration files in the directory
-CONF_DIR=$DEPLOY_DIR/config
-MAIN_CLASS="org.apache.hertzbeat.startup.HertzBeatApplication"
-EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
-LIB_PATH="$DEPLOY_DIR/lib"
-CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"
-# log dir
-LOGS_DIR=$DEPLOY_DIR/logs
-# create logs dir when not exist
-if [ ! -d $LOGS_DIR ]; then
-    mkdir $LOGS_DIR
-fi
-
-# JVM Configuration
-if [ -z "$JAVA_OPTS" ]; then
-  JAVA_OPTS=" -Dfile.encoding=UTF-8 -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
-else
-  JAVA_OPTS="${JAVA_OPTS} -Dfile.encoding=UTF-8 -Doracle.jdbc.timezoneAsRegion=false"
-fi
-
-# JVM Configuration
-JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"
-
-# load logback config
-LOG_IMPL_FILE=logback-spring.xml
-LOGGING_CONFIG=""
-if [ -f "$CONF_DIR/$LOG_IMPL_FILE" ]
-then
-    LOGGING_CONFIG="-Dlogging.config=$CONF_DIR/$LOG_IMPL_FILE"
-fi
-CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
-echo -e "Starting the HertzBeat $SERVER_NAME ..."
-java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -cp $CLASSPATH $MAIN_CLASS --spring.profiles.active=prod
+BIN_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)" || exit 1
+DEPLOY_DIR="$(cd -- "$BIN_DIR/.." && pwd -P)" || exit 1
+cd -- "$DEPLOY_DIR" || exit 1
+mkdir -p -- "$DEPLOY_DIR/logs" || exit 1
+JAVA=java
+[ ! -x "$DEPLOY_DIR/java/bin/java" ] || JAVA="$DEPLOY_DIR/java/bin/java"
+# JAVA_OPTS follows the established whitespace-separated JVM option convention.
+JAVA_OPTS="${JAVA_OPTS:-}"
+read -r -a USER_JAVA_OPTS <<< "${JAVA_OPTS//$'\n'/ }"
+LOGGING_CONFIG=()
+[ ! -f "$DEPLOY_DIR/config/logback-spring.xml" ] || LOGGING_CONFIG=("-Dlogging.config=$DEPLOY_DIR/config/logback-spring.xml")
+exec "$JAVA" "${USER_JAVA_OPTS[@]}" \
+    -Dfile.encoding=UTF-8 -Doracle.jdbc.timezoneAsRegion=false \
+    --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED \
+    -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError \
+    "-XX:HeapDumpPath=$DEPLOY_DIR/logs" "-Dlogging.path=$DEPLOY_DIR/logs" \
+    "${LOGGING_CONFIG[@]}" "-Dspring.config.location=$DEPLOY_DIR/config/" \
+    -cp "$DEPLOY_DIR/${project.build.finalName}.jar:$DEPLOY_DIR/lib/*:$DEPLOY_DIR/ext-lib/*" \
+    org.apache.hertzbeat.startup.HertzBeatApplication --spring.profiles.active=prod "$@"

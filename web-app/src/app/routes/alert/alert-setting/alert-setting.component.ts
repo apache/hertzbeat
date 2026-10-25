@@ -664,6 +664,7 @@ export class AlertSettingComponent implements OnInit {
               this.define.type = 'realtime_metric';
             }
             if (this.define.type == 'realtime_metric') {
+              const originalExpr = this.define.expr;
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
@@ -676,6 +677,9 @@ export class AlertSettingComponent implements OnInit {
                   this.isExpr = false;
                 } else {
                   this.tryParseThresholdExpr(this.userExpr);
+                  // Cascade initialization rebuilds the expression. Unsupported
+                  // authoring source must retain its exact persisted form.
+                  if (this.isExpr) this.define.expr = originalExpr;
                 }
               });
             } else if (this.define.type == 'realtime_log') {
@@ -782,29 +786,38 @@ export class AlertSettingComponent implements OnInit {
     try {
       console.log('Parsing expression:', expr);
 
-      // Helper function: find operator position considering brackets
+      // Split on the lowest-precedence top-level operator, ignoring quoted text.
       const findOperator = (str: string): { operator: string; position: number } | null => {
         let bracketCount = 0;
-        let i = 0;
+        let quote = '';
+        let escaped = false;
+        let andPosition = -1;
+        let orPosition = -1;
 
-        while (i < str.length) {
+        for (let i = 0; i < str.length; i++) {
           const char = str[i];
-
+          if (quote) {
+            if (escaped) escaped = false;
+            else if (char === '\\') escaped = true;
+            else if (char === quote) quote = '';
+            continue;
+          }
+          if (char === '"' || char === "'") {
+            quote = char;
+            continue;
+          }
           if (char === '(') bracketCount++;
           else if (char === ')') bracketCount--;
+          if (bracketCount < 0) return null;
 
-          // Only look for operators at bracket level 0
           if (bracketCount === 0) {
-            if (str.substring(i).startsWith(' and ')) {
-              return { operator: 'and', position: i };
-            }
-            if (str.substring(i).startsWith(' or ')) {
-              return { operator: 'or', position: i };
-            }
+            if (andPosition === -1 && str.substring(i).startsWith(' and ')) andPosition = i;
+            if (orPosition === -1 && str.substring(i).startsWith(' or ')) orPosition = i;
           }
-          i++;
         }
-        return null;
+        if (quote || bracketCount !== 0) return null;
+        if (orPosition !== -1) return { operator: 'or', position: orPosition };
+        return andPosition === -1 ? null : { operator: 'and', position: andPosition };
       };
 
       // Helper function: validate and extract bracket content
@@ -829,7 +842,8 @@ export class AlertSettingComponent implements OnInit {
 
         // Try to parse as a single rule first
         const rule = this.parseExprToRule(str);
-        if (rule) {
+        // Accept only rules the visual editor can serialize without omission.
+        if (rule && this.rule2expr(rule)) {
           console.log('Parsed as rule:', rule);
           return rule;
         }
@@ -851,14 +865,10 @@ export class AlertSettingComponent implements OnInit {
           const leftResult = parseExpr(left);
           const rightResult = parseExpr(right);
 
-          if (leftResult) {
-            console.log('Adding left result:', leftResult);
-            ruleset.rules.push(leftResult);
-          }
-          if (rightResult) {
-            console.log('Adding right result:', rightResult);
-            ruleset.rules.push(rightResult);
-          }
+          // A partial tree would silently discard an unsupported condition when
+          // resetQbData serializes it. Keep the complete source in expression mode.
+          if (!leftResult || !rightResult) return null;
+          ruleset.rules.push(leftResult, rightResult);
 
           return ruleset;
         }
@@ -943,11 +953,26 @@ export class AlertSettingComponent implements OnInit {
       const compareMatch = expr.match(/^([\w.]+)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
       if (compareMatch) {
         const [_, field, operator, value] = compareMatch;
+        const numericValue = Number(value);
+        // Compare decimal values without rounding their coefficients through Number.
+        // The visual serializer may emit exponent notation or strip insignificant zeros.
+        const normalizedDecimal = (literal: string): string => {
+          const [mantissa, exponent = '0'] = literal.toLowerCase().split('e');
+          const [integer, fraction = ''] = mantissa.replace(/^-/, '').split('.');
+          const digits = `${integer}${fraction}`.replace(/^0+/, '');
+          if (!digits) return '0';
+          const coefficient = digits.replace(/0+$/, '');
+          const power = Number(exponent) - fraction.length + digits.length - coefficient.length;
+          return `${mantissa.startsWith('-') ? '-' : ''}${coefficient}e${power}`;
+        };
+        if (!Number.isFinite(numericValue) || normalizedDecimal(value) !== normalizedDecimal(numericValue.toString())) {
+          return null;
+        }
         const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
           field: parsedRule.field,
           operator,
-          value: Number(value),
+          value: numericValue,
           ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
         } as any;
       }

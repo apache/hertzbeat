@@ -78,10 +78,12 @@ public class TwilioSmsClientImpl implements SmsClient {
                     : alert.getCommonLabels().get("instance");
             priority = alert.getCommonLabels().get("priority") == null ? "unknown"
                     : alert.getCommonLabels().get("priority");
-            content = alert.getCommonAnnotations().get("summary");
-            content = content == null ? alert.getCommonAnnotations().get("description") : content;
-            if (content == null) {
-                content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
+            if (alert.getCommonAnnotations() != null) {
+                content = alert.getCommonAnnotations().get("summary");
+                content = content == null ? alert.getCommonAnnotations().get("description") : content;
+                if (content == null) {
+                    content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
+                }
             }
         }
         this.send(receiver.getPhone(), createMessage(instance, priority, content));

@@ -16,119 +16,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# project name
-SERVER_NAME="${project.artifactId}"
-
-# jar file name
-JAR_NAME="${project.build.finalName}.jar"
-
-# cd bin dir
-cd `dirname $0`
-# bin dir
-BIN_DIR=`pwd`
-# return root dir
-cd ..
-# root path dir
-DEPLOY_DIR=`pwd`
-
-# config dir
-# absolute directory of external configuration files, if it is a directory, it should end with '/'，you can also directly specify a file.
-# if a directory is specified, spring will read all configuration files in the directory
-CONF_DIR=$DEPLOY_DIR/config
-# server port
+NATIVE=false
 SERVER_PORT=1157
-
-PIDS=`ps -ef | grep java | grep "$CONF_DIR" | awk '{print $2}'`
-if [ "$1" = "status" ]; then
-    if [ -n "$PIDS" ]; then
-        echo "The HertzBeat $SERVER_NAME is running...!"
-        echo "PID: $PIDS"
-        exit 0
-    else
-        echo "The HertzBeat $SERVER_NAME is stopped"
-        exit 0
-    fi
+BIN_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)" || exit 1
+DEPLOY_DIR="$(cd -- "$BIN_DIR/.." && pwd -P)" || exit 1
+cd -- "$DEPLOY_DIR" || exit 1
+PID_FILE="$DEPLOY_DIR/logs/${project.artifactId}.pid"
+MAIN_CLASS=org.apache.hertzbeat.startup.HertzBeatApplication
+APP_PATH="$DEPLOY_DIR/${project.build.finalName}"
+STOP_TIMEOUT="${HERTZBEAT_STOP_TIMEOUT:-30}"
+# Allow slower database migrations; override per invocation with HERTZBEAT_START_TIMEOUT.
+START_TIMEOUT="${HERTZBEAT_START_TIMEOUT:-120}"
+case "$STOP_TIMEOUT:$START_TIMEOUT" in *[!0-9:]*|:*|*:) echo 'ERROR: invalid timeout' >&2; exit 1 ;; esac
+[ "$STOP_TIMEOUT" -gt 0 ] && [ "$START_TIMEOUT" -gt 0 ] || exit 1
+. "$BIN_DIR/lifecycle.sh" || exit 1
+find_pid || exit 1
+if [ "${1:-}" = status ]; then
+    if [ -n "$APP_PID" ]; then echo "Service PID: $APP_PID"; else echo 'Service stopped'; fi
+    exit 0
 fi
-
-if [ -n "$PIDS" ]; then
-    echo "ERROR: The HertzBeat $SERVER_NAME already started!"
-    echo "PID: $PIDS"
-    exit 1
+[ -z "$APP_PID" ] || { echo 'ERROR: already started' >&2; exit 1; }
+choose_readiness_tool || exit 1
+mkdir -p -- "$DEPLOY_DIR/logs" || exit 1
+if [ "$NATIVE" = true ]; then
+    [ -x "$APP_PATH" ] || { echo 'ERROR: native executable missing' >&2; exit 1; }
+    nohup "$APP_PATH" "--spring.config.location=$DEPLOY_DIR/config/" "$@" >"$DEPLOY_DIR/logs/startup.log" 2>&1 &
+else
+    JAVA_OPTS="-Duser.timezone=Asia/Shanghai ${JAVA_OPTS:-}" nohup "$BIN_DIR/entrypoint.sh" "$@" >"$DEPLOY_DIR/logs/startup.log" 2>&1 &
 fi
-
-if [ -n "$SERVER_PORT" ]; then
-    # linux - find the port whether used
-    SERVER_PORT_COUNT=`netstat -tln | grep :$SERVER_PORT | wc -l`
-    if [ $SERVER_PORT_COUNT -gt 0 ]; then
-        echo "ERROR: netstat the HertzBeat $SERVER_NAME port $SERVER_PORT already used!"
+APP_PID=$!
+deadline=$((SECONDS + START_TIMEOUT))
+# Give the child time to exec before checking its installation arguments.
+sleep 1
+while ! owned_pid "$APP_PID"; do
+    kill -0 "$APP_PID" 2>/dev/null || { echo 'ERROR: service exited; check logs/startup.log' >&2; exit 1; }
+    [ "$SECONDS" -lt "$deadline" ] || { echo 'ERROR: cannot verify launched process identity' >&2; exit 1; }
+    sleep 1
+done
+remember_pid || { echo 'ERROR: cannot record process identity' >&2; exit 1; }
+while true; do
+    if ! still_owned; then
+        if process_gone; then rm -f -- "$PID_FILE"; fi
+        echo 'ERROR: service exited or identity could not be verified; check logs/startup.log' >&2
         exit 1
     fi
-    # mac - find the port whether used
-    LSOF_AVA=`command -v lsof | wc -l`
-    if [ $LSOF_AVA -gt 0 ]; then
-        SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | grep java | wc -l`
-        if [ $SERVER_PORT_COUNT -gt 0 ]; then
-            echo "ERROR: lsof the HertzBeat $SERVER_NAME port $SERVER_PORT already used!"
-            exit 1
-        fi
+    if listener_ready; then
+        echo "Service Start Success! Service PID: $APP_PID"
+        exit 0
     fi
-fi
-MAIN_CLASS="org.apache.hertzbeat.startup.HertzBeatApplication"
-EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
-LIB_PATH="$DEPLOY_DIR/lib"
-CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"
-# log dir
-LOGS_DIR=$DEPLOY_DIR/logs
-# create logs dir when not exist
-if [ ! -d $LOGS_DIR ]; then
-    mkdir $LOGS_DIR
-fi
-
-
-
-# JVM Configuration
-JAVA_OPTS=" -Duser.timezone=Asia/Shanghai -Dfile.encoding=UTF-8 -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
-
-JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"
-
-# load logback config
-LOG_IMPL_FILE=logback-spring.xml
-LOGGING_CONFIG=""
-if [ -f "$CONF_DIR/$LOG_IMPL_FILE" ]
-then
-    LOGGING_CONFIG="-Dlogging.config=$CONF_DIR/$LOG_IMPL_FILE"
-fi
-CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
-echo -e "You can review logs at hertzbeat/logs"
-echo -e "Starting the HertzBeat $SERVER_NAME ..."
-
-if [ -f "./java/bin/java" ]; then
-    echo -e "Use the inner package jdk to start"
-    nohup ./java/bin/java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -cp $CLASSPATH $MAIN_CLASS >logs/startup.log 2>&1 &
-else
-    JAVA_EXIST=`which java | grep bin | wc -l`
-    if [ $JAVA_EXIST -le 0 ]; then
-      echo -e "ERROR: there is no java${java.version}+ environment, please config java environment."
-      exit 1
-    fi
-    echo -e "Use the system environment jdk to start"
-    nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -cp $CLASSPATH $MAIN_CLASS >logs/startup.log 2>&1 &
-fi
-
-COUNT=0
-while [ $COUNT -lt 1 ]; do
-    echo "... "
+    [ "$SECONDS" -lt "$deadline" ] || break
     sleep 1
-    if [ -n "$SERVER_PORT" ]; then
-        COUNT=`netstat -an | grep $SERVER_PORT | wc -l`
-    else
-       COUNT=`ps -f | grep java | grep "$DEPLOY_DIR" | awk '{print $2}' | wc -l`
-    fi
-    if [ $COUNT -gt 0 ]; then
-        break
-    fi
 done
-
-echo "Service Start Success!"
-PIDS=`ps -f | grep java | grep "$DEPLOY_DIR" | awk '{print $2}'`
-echo "Service PID: $PIDS"
+echo 'ERROR: readiness timed out' >&2
+if stop_owned; then rm -f -- "$PID_FILE"; fi
+exit 1
