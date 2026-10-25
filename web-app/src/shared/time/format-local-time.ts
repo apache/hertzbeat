@@ -37,8 +37,12 @@ export function formatShortLocalTimeRange(
   options: { locale?: string; timeZone?: string } = {}
 ) {
   const calendar = new Intl.DateTimeFormat(options.locale, { dateStyle: 'short', timeZone: options.timeZone });
+  const year = new Intl.DateTimeFormat(options.locale, { year: 'numeric', timeZone: options.timeZone });
   const crossesDate = calendar.format(from) !== calendar.format(to);
+  // dateStyle carries the year but the emitted parts do not, so a year-crossing range needs it explicitly
+  const crossesYear = year.format(from) !== year.format(to);
   const timeOptions: Intl.DateTimeFormatOptions = {
+    ...(crossesYear ? ({ year: 'numeric' } as const) : {}),
     ...(crossesDate ? ({ month: '2-digit', day: '2-digit' } as const) : {}),
     hour: '2-digit',
     minute: '2-digit',

@@ -67,4 +67,46 @@ describe('short local evidence window', () => {
       expect(window.to - window.from).toBe(3_600_000);
     }
   );
+
+  it('shows both calendar years when the local range crosses a year boundary', () => {
+    const result = formatShortLocalTimeRange(Date.parse('2025-12-31T23:59:00Z'), Date.parse('2026-01-01T00:05:00Z'), {
+      locale: 'en-US',
+      timeZone: 'UTC'
+    });
+    expect(result).toContain('2025');
+    expect(result).toContain('2026');
+  });
+
+  it('keeps an exact one-year window readable as two boundaries', () => {
+    const result = formatShortLocalTimeRange(Date.parse('2025-03-05T09:35:00Z'), Date.parse('2026-03-05T09:35:00Z'), {
+      locale: 'en-US',
+      timeZone: 'UTC'
+    });
+    const shifted = formatShortLocalTimeRange(Date.parse('2026-03-05T09:35:00Z'), Date.parse('2027-03-05T09:35:00Z'), {
+      locale: 'en-US',
+      timeZone: 'UTC'
+    });
+    expect(result).toContain('2025');
+    expect(result).toContain('2026');
+    expect(result).not.toEqual(shifted);
+  });
+
+  it('shows both years across a daylight-saving overlap that also crosses a year', () => {
+    const result = formatShortLocalTimeRange(Date.parse('2025-11-01T05:30:00Z'), Date.parse('2026-11-01T06:30:00Z'), {
+      locale: 'en-US',
+      timeZone: 'America/New_York'
+    });
+    expect(result).toContain('2025');
+    expect(result).toContain('2026');
+  });
+
+  it('keeps year-less labels for a range inside one calendar year', () => {
+    const result = formatShortLocalTimeRange(Date.parse('2026-09-05T09:35:00Z'), Date.parse('2026-09-06T10:05:00Z'), {
+      locale: 'en-US',
+      timeZone: 'UTC'
+    });
+    expect(result).toContain('09/05');
+    expect(result).toContain('09/06');
+    expect(result).not.toContain('2026');
+  });
 });
