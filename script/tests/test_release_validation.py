@@ -47,6 +47,18 @@ def patterns(block, key):
 
 
 class ReleaseValidation(unittest.TestCase):
+    def test_upgrade_guide_ships_with_server_and_source(self):
+        self.assertTrue((ROOT / 'UPGRADE.md').is_file())
+        self.assertNotIn('/UPGRADE.md export-ignore', (ROOT / '.gitattributes').read_text())
+        for path in sorted((ROOT / 'script/assembly/server').glob('assembly*.xml')):
+            tree = ET.parse(path)
+            ns = {'a': tree.getroot().tag.split('}')[0].lstrip('{')}
+            root_sets = [files for files in tree.findall('./a:fileSets/a:fileSet', ns)
+                         if files.findtext('a:directory', namespaces=ns) == '../'
+                         and files.findtext('a:outputDirectory', namespaces=ns) == '/']
+            self.assertTrue(any('UPGRADE.md' in [item.text for item in files.findall('a:includes/a:include', ns)]
+                                for files in root_sets), path.name)
+
     def test_native_aot_keeps_opt_in_health_types_only_in_native_profile(self):
         pom = ET.parse(ROOT / 'hertzbeat-collector/hertzbeat-collector-collector/pom.xml')
         ns = {'m': 'http://maven.apache.org/POM/4.0.0'}

@@ -105,6 +105,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <includes>
                 <include>LICENSE</include>
                 <include>NOTICE</include>
+                <include>UPGRADE.md</include>
             </includes>
         </fileSet>
     </fileSets>
