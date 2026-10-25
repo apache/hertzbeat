@@ -383,6 +383,12 @@
                     <plugin>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <!-- Keep health endpoint types in the native image so runtime profiles can opt in. -->
+                            <arguments>
+                                <argument>--management.endpoints.web.exposure.include=health,prometheus</argument>
+                            </arguments>
+                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

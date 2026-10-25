@@ -97,7 +97,7 @@
     </modules>
 
     <properties>
-        <hzb.version>1.9.0</hzb.version>
+        <hzb.version>1.9.1</hzb.version>
 
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -154,7 +154,7 @@
         <commons-compress.version>1.27.1</commons-compress.version>
         <commons-secure-xml.version>1.0.0</commons-secure-xml.version>
         <forbiddenapis.version>3.11</forbiddenapis.version>
-        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <spotless.version>2.40.0</spotless.version>
 
         <easy-poi.version>4.3.0</easy-poi.version>
