@@ -26,6 +26,7 @@ import com.usthe.sureness.util.Md5Util;
 import com.usthe.sureness.util.SurenessContextHolder;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.MalformedJwtException;
+import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.AuthTokenDao;
@@ -35,6 +36,8 @@ import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -44,6 +47,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -51,6 +58,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
@@ -204,8 +212,7 @@ class AccountServiceTest {
                 .build();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
         when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        SubjectSum subjectSum = mock(SubjectSum.class);
-        when(subjectSum.getPrincipal()).thenReturn(identifier);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
@@ -230,8 +237,7 @@ class AccountServiceTest {
                 .setExcessiveAttempts(Boolean.FALSE)
                 .build();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
-        SubjectSum subjectSum = mock(SubjectSum.class);
-        when(subjectSum.getPrincipal()).thenReturn(identifier);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
@@ -408,8 +414,7 @@ class AccountServiceTest {
         SurenessAccount account = buildActiveAccount();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
         when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        SubjectSum subjectSum = mock(SubjectSum.class);
-        when(subjectSum.getPrincipal()).thenReturn(identifier);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
@@ -423,25 +428,35 @@ class AccountServiceTest {
         }
     }
 
-    @Test
-    void testCheckTokenStatusRevoked() {
+    @ParameterizedTest
+    @ValueSource(strings = {"revoked-token", "nonexistent-token"})
+    void testCheckTokenStatusRejectsRevokedOrMissingToken(String token) {
         when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(false);
 
-        String result = accountService.checkTokenStatus("some-revoked-token");
+        String result = accountService.checkTokenStatus(token);
 
         assertEquals("Token has been revoked", result);
     }
 
     @Test
-    void testCheckTokenStatusUsesCache() {
-        when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(true);
+    void testCheckTokenStatusReflectsCurrentStoredStatus() {
+        String token = "changing-status-token";
+        when(authTokenDao.existsByTokenHashAndStatus(CryptoUtils.sha256Hex(token), (byte) 0))
+                .thenReturn(true, false, true);
 
-        // First call - hits DB
-        assertNull(accountService.checkTokenStatus("cached-token"));
-        // Second call - should use cache, no additional DB call
-        assertNull(accountService.checkTokenStatus("cached-token"));
+        assertNull(accountService.checkTokenStatus(token));
+        assertEquals("Token has been revoked", accountService.checkTokenStatus(token));
+        assertNull(accountService.checkTokenStatus(token));
+    }
 
-        verify(authTokenDao, times(1)).existsByTokenHashAndStatus(any(String.class), eq((byte) 0));
+    @Test
+    void testCheckTokenStatusPropagatesStorageFailure() {
+        String token = "unavailable-status-token";
+        when(authTokenDao.existsByTokenHashAndStatus(CryptoUtils.sha256Hex(token), (byte) 0))
+                .thenReturn(true).thenThrow(new IllegalStateException("storage unavailable"));
+
+        assertNull(accountService.checkTokenStatus(token));
+        Assertions.assertThrows(IllegalStateException.class, () -> accountService.checkTokenStatus(token));
     }
 
     @Test
@@ -511,25 +526,108 @@ class AccountServiceTest {
     }
 
     @Test
-    void testDeleteTokenCacheInvalidation() throws Exception {
-        // Setup: token is active and cached
+    void testDeleteTokenRejectsPreviouslyAcceptedToken() throws Exception {
         String tokenValue = "token-to-revoke";
-        when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(true);
+        String tokenHash = CryptoUtils.sha256Hex(tokenValue);
+        AtomicBoolean active = new AtomicBoolean(true);
+        when(authTokenDao.existsByTokenHashAndStatus(tokenHash, (byte) 0)).thenAnswer(ignored -> active.get());
+        AuthToken token = AuthToken.builder().id(1L).tokenHash(tokenHash).creator(identifier).build();
+        when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
+        doAnswer(ignored -> {
+            active.set(false);
+            return null;
+        }).when(authTokenDao).deleteById(1L);
         assertNull(accountService.checkTokenStatus(tokenValue));
 
-        // Now revoke it
-        AuthToken authToken = AuthToken.builder().id(1L).tokenHash("some-hash").creator(identifier).build();
-        when(authTokenDao.findById(1L)).thenReturn(Optional.of(authToken));
-        SubjectSum subjectSum = mockAdminSubject(identifier);
-        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
-            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+        SubjectSum subject = mockAdminSubject(identifier);
+        try (var context = mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
             accountService.deleteToken(1L);
         }
 
-        // After revoke, the next check should hit DB again (cache invalidated for that hash)
-        // Note: the tokenHash in DB differs from sha256(tokenValue), so this tests cache invalidation path
-        verify(authTokenDao).findById(1L);
+        assertEquals("Token has been revoked", accountService.checkTokenStatus(tokenValue));
         verify(authTokenDao).deleteById(1L);
+    }
+
+    @Test
+    void testConcurrentStatusCheckCannotRemainAcceptedAfterDeletion() throws Exception {
+        String tokenValue = "concurrently-revoked-token";
+        String tokenHash = CryptoUtils.sha256Hex(tokenValue);
+        AtomicBoolean active = new AtomicBoolean(true);
+        CountDownLatch deletionEntered = new CountDownLatch(1);
+        CountDownLatch allowDeletion = new CountDownLatch(1);
+        when(authTokenDao.existsByTokenHashAndStatus(tokenHash, (byte) 0)).thenAnswer(ignored -> active.get());
+        AuthToken token = AuthToken.builder().id(1L).tokenHash(tokenHash).creator(identifier).build();
+        when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
+        doAnswer(ignored -> {
+            deletionEntered.countDown();
+            assertTrue(allowDeletion.await(5, TimeUnit.SECONDS), "Status check did not release deletion");
+            active.set(false);
+            return null;
+        }).when(authTokenDao).deleteById(1L);
+        SubjectSum subject = mockAdminSubject(identifier);
+        assertNull(accountService.checkTokenStatus(tokenValue));
+
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            var deletion = executor.submit(() -> {
+                SurenessContextHolder.bindSubject(subject);
+                try {
+                    accountService.deleteToken(1L);
+                } finally {
+                    SurenessContextHolder.clear();
+                }
+                return null;
+            });
+            try {
+                assertTrue(deletionEntered.await(5, TimeUnit.SECONDS), "Deletion did not reach the DAO");
+                // This read is allowed while deletion has not completed, but must not keep later reads active.
+                assertNull(accountService.checkTokenStatus(tokenValue));
+            } finally {
+                allowDeletion.countDown();
+            }
+            deletion.get(5, TimeUnit.SECONDS);
+        }
+
+        assertEquals("Token has been revoked", accountService.checkTokenStatus(tokenValue));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"user", "guest", "operator", "administrator"})
+    void nonAdminCannotLoginRefreshOrGenerateManagementToken(String role) throws Exception {
+        SurenessAccount account = DefaultAccount.builder(identifier).setPassword(password)
+                .setOwnRoles(List.of(role)).setDisabledAccount(false).setExcessiveAttempts(false).build();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        LoginDto login = LoginDto.builder().identifier(identifier).credential(password).build();
+        Assertions.assertThrows(AuthenticationException.class, () -> accountService.authGetToken(login));
+        String refresh = JsonWebTokenUtil.issueJwt(identifier, 3600L, Map.of("refresh", true));
+        Assertions.assertThrows(AuthenticationException.class, () -> accountService.refreshToken(refresh));
+        SubjectSum nonAdmin = mockUserSubject(identifier);
+        try (var context = mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(nonAdmin);
+            Assertions.assertThrows(AuthenticationException.class, () -> accountService.generateToken("legacy", null));
+        }
+        org.mockito.Mockito.verifyNoInteractions(authTokenDao);
+        assertEquals(List.of(role), account.getOwnRoles());
+    }
+
+    @Test
+    void migratedAdminIssuesOnlyAdminAndDoesNotRewriteAccountRoles() throws Exception {
+        SurenessAccount account = DefaultAccount.builder(identifier).setPassword(password)
+                .setOwnRoles(List.of("admin", "user", "custom")).setDisabledAccount(false).setExcessiveAttempts(false).build();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        Map<String, String> login = accountService.authGetToken(
+                LoginDto.builder().identifier(identifier).credential(password).build());
+        assertEquals("[\"admin\"]", login.get("role"));
+        assertEquals(List.of("admin"), JsonWebTokenUtil.parseJwt(login.get("token")).get("roles"));
+        RefreshTokenResponse refreshed = accountService.refreshToken(login.get("refreshToken"));
+        assertEquals(List.of("admin"), JsonWebTokenUtil.parseJwt(refreshed.getToken()).get("roles"));
+        when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        SubjectSum admin = mockAdminSubject(identifier);
+        try (var context = mockStatic(SurenessContextHolder.class)) {
+            context.when(SurenessContextHolder::getBindSubject).thenReturn(admin);
+            assertEquals(List.of("admin"), JsonWebTokenUtil.parseJwt(accountService.generateToken("reviewed", 3600L)).get("roles"));
+        }
+        assertEquals(List.of("admin", "user", "custom"), account.getOwnRoles());
     }
 
     private SurenessAccount buildActiveAccount() {

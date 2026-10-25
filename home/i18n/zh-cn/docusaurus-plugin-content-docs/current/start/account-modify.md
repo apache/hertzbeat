@@ -6,143 +6,20 @@ sidebar_label: 更新账户和密钥
 
 ## 更新账户
 
-Apache HertzBeat™ 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
-若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤
-修改位于安装目录下的 `/hertzbeat/config/sureness.yml` 的配置文件，docker环境目录为`opt/hertzbeat/config/sureness.yml`，建议提前挂载映射
-配置文件内容参考如下
+发行包只提供初始 admin 账号，使用前应修改默认密码。从 1.9.1 起，管理 API 和界面仅支持精确的 admin 角色，这是有意的权限兼容性变更。升级前请阅读[必须执行的权限迁移](../help/admin_only_migration)。
+
+先盘点 user/guest/自定义账号和自动化 token，再由部署方仅给确认可信的全实例运维人员手动授予 admin。不愿授予者不得继续访问管理面；升级不会自动提权、删除账号或生产用户数据。可先在测试环境验证。
+
+仅编辑部署 sureness.yml 中经审查的账号，保留实际凭据，并合并发行包路由规则，不要复制旧的完整规则列表。例如：
 
 ```yaml
-
-resourceRole:
-  - /api/account/auth/refresh===post===[admin,user,guest]
-  - /api/apps/**===get===[admin,user,guest]
-  - /api/monitor/**===get===[admin,user,guest]
-  - /api/monitor/**===post===[admin,user]
-  - /api/monitor/**===put===[admin,user]
-  - /api/monitor/**===delete==[admin]
-  - /api/monitors/**===get===[admin,user,guest]
-  - /api/monitors/**===post===[admin,user]
-  - /api/monitors/**===put===[admin,user]
-  - /api/monitors/**===delete===[admin]
-  - /api/alert/**===get===[admin,user,guest]
-  - /api/alert/**===post===[admin,user]
-  - /api/alert/**===put===[admin,user]
-  - /api/alert/**===delete===[admin]
-  - /api/alerts/**===get===[admin,user,guest]
-  - /api/alerts/**===post===[admin,user]
-  - /api/alerts/**===put===[admin,user]
-  - /api/alerts/**===delete===[admin]
-  - /api/notice/**===get===[admin,user,guest]
-  - /api/notice/**===post===[admin,user]
-  - /api/notice/**===put===[admin,user]
-  - /api/notice/**===delete===[admin]
-  - /api/tag/**===get===[admin,user,guest]
-  - /api/tag/**===post===[admin,user]
-  - /api/tag/**===put===[admin,user]
-  - /api/tag/**===delete===[admin]
-  - /api/summary/**===get===[admin,user,guest]
-  - /api/summary/**===post===[admin,user]
-  - /api/summary/**===put===[admin,user]
-  - /api/summary/**===delete===[admin]
-  - /api/collector/**===get===[admin,user,guest]
-  - /api/collector/**===post===[admin,user]
-  - /api/collector/**===put===[admin,user]
-  - /api/collector/**===delete===[admin]
-  - /api/status/page/**===get===[admin,user,guest]
-  - /api/status/page/**===post===[admin,user]
-  - /api/status/page/**===put===[admin,user]
-  - /api/status/page/**===delete===[admin]
-  # OpenAPI 文档包含全部路由、参数与数据模型,等同于一份接口地图,
-  # 因此按普通管理类资源收敛到 admin,不再匿名开放
-  - /v3/api-docs/**===get===[admin]
-  - /v3/api-docs.yaml===get===[admin]
-  - /v3/api-docs.yaml/**===get===[admin]
-  - /v2/api-docs/**===get===[admin]
-  - /swagger-resources/**===get===[admin]
-
-# 需要被过滤保护的资源,不认证鉴权直接访问
-# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
-excludedResource:
-  - /api/account/auth/**===*
-  - /api/i18n/**===get
-  - /api/apps/hierarchy===get
-  - /api/push/**===*
-  - /api/status/page/public/**===*
-  # web ui resource
-  - /===get
-  - /dashboard/**===get
-  - /monitors/**===get
-  - /alert/**===get
-  - /account/**===get
-  - /setting/**===get
-  - /passport/**===get
-  - /status/**===get
-  - /**/*.html===get
-  - /**/*.js===get
-  - /**/*.css===get
-  - /**/*.ico===get
-  - /**/*.ttf===get
-  - /**/*.png===get
-  - /**/*.gif===get
-  - /**/*.jpg===get
-  - /**/*.svg===get
-  - /**/*.json===get
-  - /**/*.woff===get
-  - /**/*.eot===get
-  # h2 database
-  - /h2-console/**===*
-
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin]角色,密码为 hertzbeat 
-# eg: tom 拥有[user],密码为 hertzbeat
-# eg: lili 拥有[guest],明文密码为 hertzbeat, 加盐 123 后密码为 94C6B34E7A199A9F9D4E1F208093B489
 account:
-  - appId: admin
-    credential: hertzbeat
+  - appId: reviewed-operator
+    credential: replace-with-a-strong-password
     role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]
 ```
 
-修改`sureness.yml`的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
-
-```yaml
-
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为 hertzbeat, 加盐 123 后密码为 94C6B34E7A199A9F9D4E1F208093B489
-account:
-  - appId: admin
-    credential: hertzbeat
-    role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]
-```
+不要用此示例覆盖生产账号文件。修改文档账号源后重启。管理面角色与排除配置不能绕过后端 admin 校验。现有机器采集入口保留原认证政策，不要自动把机器凭据转成全实例 admin token。
 
 ## OpenAPI 文档与 Swagger UI
 
@@ -168,7 +45,7 @@ springdoc:
 curl -H "Authorization: Bearer $YOUR_ADMIN_TOKEN" http://localhost:1157/v3/api-docs
 ```
 
-> ⚠️ 不要把 OpenAPI 路径放回 `excludedResource`，否则完整接口文档会再次匿名开放。
+> ⚠️ 不要把 OpenAPI 路径放回 `excludedResource`。1.9.1 的后端管理权限检查仍会拒绝没有已认证 admin 身份的请求，因此这类排除规则会阻断管理员访问，不会开放匿名访问。
 
 ## 更新安全密钥
 

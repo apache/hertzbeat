@@ -21,6 +21,30 @@ run-name: Native collector release build (${{ github.ref_name }})
 
 on:
   workflow_dispatch:
+  push:
+    branches: [1.9.x-dev]
+    paths:
+      - 'hertzbeat-collector/**'
+      - 'hertzbeat-common-core/**'
+      - 'hertzbeat-common-spring/**'
+      - 'hertzbeat-remoting/**'
+      - '**/pom.xml'
+      - 'pom.xml'
+      - 'script/assembly/**'
+      - 'script/tests/**'
+      - '.github/workflows/collector-native-build.yml'
+  pull_request:
+    branches: [1.9.x-dev]
+    paths:
+      - 'hertzbeat-collector/**'
+      - 'hertzbeat-common-core/**'
+      - 'hertzbeat-common-spring/**'
+      - 'hertzbeat-remoting/**'
+      - '**/pom.xml'
+      - 'pom.xml'
+      - 'script/assembly/**'
+      - 'script/tests/**'
+      - '.github/workflows/collector-native-build.yml'
 
 jobs:
   build-native-collector:
@@ -131,6 +155,35 @@ jobs:
           if (-not $alive) { throw "collector process exited (exit code $exitCode)" }
           if (-not $registered) { throw "collector stayed up but never registered its collect strategies" }
           Write-Host "smoke test passed for ${{ matrix.platform }}"
+
+      - name: Install Linux package smoke prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lsof
+
+      - name: Smoke test packaged Linux native runtime
+        if: runner.os == 'Linux'
+        run: >-
+          python3 script/tests/package_smoke.py
+          --archive "${{ steps.package.outputs.archive }}"
+          --kind native
+          --config script/tests/fixtures/collector-smoke
+          --port 18559
+          --ready-pattern "collect strategies"
+          --output-dir "${{ runner.temp }}/native-entrypoint-smoke"
+
+      - name: Upload Linux package smoke log
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-entrypoint-smoke-${{ matrix.platform }}
+          path: |
+            ${{ runner.temp }}/native-entrypoint-smoke/runtime.log
+            ${{ runner.temp }}/native-entrypoint-smoke/http-response.json
+            ${{ runner.temp }}/native-entrypoint-smoke/diagnostics.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload native collector package
         uses: actions/upload-artifact@v4

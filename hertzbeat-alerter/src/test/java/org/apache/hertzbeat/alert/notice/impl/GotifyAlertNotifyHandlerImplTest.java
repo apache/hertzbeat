@@ -70,7 +70,7 @@ class GotifyAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
+        receiver.setGotifyToken("test-token");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();

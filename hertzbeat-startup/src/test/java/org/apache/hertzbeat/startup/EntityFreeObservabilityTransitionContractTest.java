@@ -128,9 +128,9 @@ class EntityFreeObservabilityTransitionContractTest {
                 "/api/logs/otlp/**===post===[admin,user]",
                 "/api/logs/ingest/**===post===[admin,user]",
                 "/api/observability/logs===delete===[admin]",
-                "/api/observability/**===get===[admin,user,guest]",
-                "/api/alert/sse/**===get===[admin,user,guest]",
-                "/api/manager/sse/**===get===[admin,user,guest]"),
+                "/api/observability/**===get===[admin]",
+                "/api/alert/sse/**===get===[admin]",
+                "/api/manager/sse/**===get===[admin]"),
                 baseline.resourceRole());
         assertEquals(Set.of(), baseline.excludedResource());
 

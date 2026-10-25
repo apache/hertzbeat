@@ -17,9 +17,15 @@
  * under the License.
  */
 
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SettingsService } from '@delon/theme';
 import { configureShallowTest } from '@testing';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
+import { throwError } from 'rxjs';
 
+import { MonitorService } from '../../../service/monitor.service';
 import { MonitorListComponent } from './monitor-list.component';
 
 describe('MonitorListComponent', () => {
@@ -33,10 +39,94 @@ describe('MonitorListComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(MonitorListComponent);
     component = fixture.componentInstance;
+    TestBed.inject(SettingsService).setUser({ name: 'test-user', role: '["user"]' });
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('only enables export for an exact admin role', () => {
+    const settings = TestBed.inject(SettingsService);
+    for (const role of ['["user"]', '["guest"]', '["administrator"]', 'admin', '{"admin":true}', '', undefined]) {
+      settings.setUser({ name: 'test-user', role });
+      expect(component.canExportMonitors).withContext(String(role)).toBeFalse();
+      expect(component.canImportMonitors).withContext(String(role)).toBeFalse();
+    }
+    for (const role of ['["admin"]', '["user","admin"]', ['admin']]) {
+      settings.setUser({ name: 'test-user', role });
+      expect(component.canExportMonitors).withContext(String(role)).toBeTrue();
+      expect(component.canImportMonitors).withContext(String(role)).toBeTrue();
+    }
+  });
+
+  for (const role of ['user', 'guest']) {
+    it(`does not open or execute either export for ${role}`, () => {
+      TestBed.inject(SettingsService).setUser({ name: 'test-user', role: JSON.stringify([role]) });
+      const service = TestBed.inject(MonitorService);
+      const selected = spyOn(service, 'exportMonitors');
+      const all = spyOn(service, 'exportAllMonitors');
+      const notice = spyOn(TestBed.inject(NzNotificationService), 'error');
+      component.checkedMonitorIds.add(1);
+      component.onExportMonitors();
+      component.onExportAllMonitors();
+      component.exportMonitors('JSON');
+      component.exportAllMonitors('EXCEL');
+      expect(component.isSwitchExportTypeModalVisible).toBeFalse();
+      expect(selected).not.toHaveBeenCalled();
+      expect(all).not.toHaveBeenCalled();
+      expect(notice).toHaveBeenCalledWith('monitor.export.admin-only', '');
+    });
+  }
+
+  for (const role of ['user', 'guest']) {
+    it(`rejects an upload before sending it for ${role}`, () => {
+      TestBed.inject(SettingsService).setUser({ name: 'test-user', role: JSON.stringify([role]) });
+      const notice = spyOn(TestBed.inject(NzNotificationService), 'error');
+      expect(component.beforeImportMonitors()).toBeFalse();
+      expect(notice).toHaveBeenCalledWith('monitor.import.admin-only', '');
+    });
+  }
+
+  it('allows an admin upload and reports a server permission denial', () => {
+    TestBed.inject(SettingsService).setUser({ name: 'admin', role: '["admin"]' });
+    expect(component.beforeImportMonitors()).toBeTrue();
+    const notice = spyOn(TestBed.inject(NzNotificationService), 'error');
+    component.onImportMonitors({ type: 'error', file: { error: { status: 403 } } } as NzUploadChangeParam);
+    expect(notice).toHaveBeenCalledWith('monitor.import.admin-only', '');
+  });
+
+  it('allows an admin to open the export dialog', () => {
+    TestBed.inject(SettingsService).setUser({ name: 'admin', role: '["admin"]' });
+    component.checkedMonitorIds.add(1);
+    component.onExportMonitors();
+    expect(component.isSwitchExportTypeModalVisible).toBeTrue();
+    component.isSwitchExportTypeModalVisible = false;
+    component.onExportAllMonitors();
+    expect(component.isSwitchExportTypeModalVisible).toBeTrue();
+  });
+
+  for (const all of [false, true]) {
+    it(`shows a clear permission error without downloading ${all ? 'all' : 'selected'} monitors`, () => {
+      TestBed.inject(SettingsService).setUser({ name: 'admin', role: '["admin"]' });
+      const service = TestBed.inject(MonitorService);
+      const denied = throwError(() => new HttpErrorResponse({ status: 403, statusText: 'Forbidden' }));
+      spyOn(service, all ? 'exportAllMonitors' : 'exportMonitors').and.returnValue(denied);
+      const notice = spyOn(TestBed.inject(NzNotificationService), 'error');
+      const download = spyOn(window.URL, 'createObjectURL');
+      component.checkedMonitorIds.add(1);
+      component.isSwitchExportTypeModalVisible = true;
+      if (all) {
+        component.exportAllMonitors('EXCEL');
+      } else {
+        component.exportMonitors('JSON');
+      }
+      expect(notice).toHaveBeenCalledWith('monitor.export.admin-only', '');
+      expect(download).not.toHaveBeenCalled();
+      expect(component.isSwitchExportTypeModalVisible).toBeFalse();
+      expect(component.exportExcelButtonLoading).toBeFalse();
+      expect(component.exportJsonButtonLoading).toBeFalse();
+    });
+  }
 });

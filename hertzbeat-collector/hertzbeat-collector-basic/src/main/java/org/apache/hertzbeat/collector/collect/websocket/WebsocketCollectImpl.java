@@ -72,9 +72,8 @@ public class WebsocketCollectImpl extends AbstractCollect {
         checkParam(websocketProtocol);
         String host = websocketProtocol.getHost();
         String port = websocketProtocol.getPort();
-        Socket socket = null;
-        try {
-            socket = new Socket();
+        CollectRep.ValueRow valueRow = null;
+        try (Socket socket = new Socket()) {
             SocketAddress socketAddress = new InetSocketAddress(host, Integer.parseInt(port));
             socket.connect(socketAddress);
 
@@ -87,17 +86,13 @@ public class WebsocketCollectImpl extends AbstractCollect {
                 Map<String, String> resultMap = readHeaders(in);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
-                // Close the output stream and socket connection
-                in.close();
-                out.close();
-                socket.close();
                 List<String> aliasFields = metrics.getAliasFields();
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String field : aliasFields) {
                     String fieldValue = resultMap.get(field);
                     valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 }
-                builder.addValueRow(valueRowBuilder.build());
+                valueRow = valueRowBuilder.build();
             } else {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed:");
@@ -107,16 +102,22 @@ public class WebsocketCollectImpl extends AbstractCollect {
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("UnknownHost:" + errorMsg);
+            return;
         } catch (SocketTimeoutException socketTimeoutException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(socketTimeoutException);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Socket connect timeout: " + errorMsg);
+            return;
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Connect may fail:" + errorMsg);
+            return;
+        }
+        if (valueRow != null) {
+            builder.addValueRow(valueRow);
         }
     }
 

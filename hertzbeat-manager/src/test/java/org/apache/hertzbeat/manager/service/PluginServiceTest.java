@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -37,7 +40,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +58,7 @@ import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
 import org.apache.hertzbeat.manager.dao.PluginParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +72,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link PluginService}
@@ -88,6 +96,76 @@ class PluginServiceTest {
     @BeforeEach
     void setUp() {
         pluginService = new PluginServiceImpl(metadataDao, itemDao, pluginParamDao);
+    }
+
+    @Test
+    void rejectParameterBatchWithMixedPluginIdsBeforeAnyMutation() {
+        assertInvalidParameterBatch(List.of(parameter(901L, "first", "value", (byte) 1),
+                parameter(902L, "second", "value", (byte) 1)));
+    }
+
+    @Test
+    void rejectParameterBatchWithNullEntryBeforeAnyMutation() {
+        assertInvalidParameterBatch(Arrays.asList(parameter(901L, "first", "value", (byte) 1), null));
+        assertInvalidParameterBatch(Arrays.asList(null, parameter(901L, "second", "value", (byte) 1)));
+    }
+
+    @Test
+    void rejectParameterBatchWithNullPluginIdBeforeAnyMutation() {
+        assertInvalidParameterBatch(List.of(parameter(null, "first", "value", (byte) 1)));
+        assertInvalidParameterBatch(List.of(parameter(901L, "first", "value", (byte) 1),
+                parameter(null, "second", "value", (byte) 1)));
+    }
+
+    @Test
+    void emptyParameterBatchDoesNothing() {
+        Map<Long, Object> cache = parameterCache();
+        Map<Long, Object> before = new HashMap<>(cache);
+        pluginService.savePluginParam(List.of());
+        pluginService.savePluginParam(null);
+        verifyNoInteractions(pluginParamDao);
+        assertEquals(before, cache);
+    }
+
+    @Test
+    void samePluginParameterBatchPreservesValuesAndTypes() {
+        List<PluginParam> params = List.of(parameter(901L, "count", "42", (byte) 0),
+                parameter(901L, "text", "value", (byte) 1),
+                parameter(901L, "password", "********", (byte) 2),
+                parameter(901L, "json", "{\"key\":\"value\"}", (byte) 3));
+        Map<Long, Object> cache = parameterCache();
+        Map<Long, Object> before = new HashMap<>(cache);
+        try {
+            pluginService.savePluginParam(params);
+            verify(pluginParamDao).deletePluginParamsByPluginMetadataId(901L);
+            verify(pluginParamDao).saveAll(params);
+            assertFalse(cache.containsKey(901L), "A successful no-transaction save invalidates cached parameters");
+        } finally {
+            cache.clear();
+            cache.putAll(before);
+        }
+    }
+
+    private void assertInvalidParameterBatch(List<PluginParam> params) {
+        Map<Long, Object> cache = parameterCache();
+        Map<Long, Object> before = new HashMap<>(cache);
+        try {
+            assertAll(() -> assertThrows(IllegalArgumentException.class, () -> pluginService.savePluginParam(params)),
+                    () -> verifyNoInteractions(pluginParamDao),
+                    () -> assertEquals(before, cache));
+        } finally {
+            cache.clear();
+            cache.putAll(before);
+        }
+    }
+
+    private PluginParam parameter(Long pluginId, String field, String value, byte type) {
+        return PluginParam.builder().pluginMetadataId(pluginId).field(field).paramValue(value).type(type).build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, Object> parameterCache() {
+        return (Map<Long, Object>) ReflectionTestUtils.getField(PluginServiceImpl.class, "PARAMS_MAP");
     }
 
     @Test

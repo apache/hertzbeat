@@ -21,6 +21,7 @@
   <form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
     <nz-tabset [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
       <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
+        <nz-alert nzType="info" [nzMessage]="'app.management.login-guidance' | i18n" [nzShowIcon]="true" class="mb-lg"></nz-alert>
         <nz-alert *ngIf="error" [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg"></nz-alert>
         <nz-form-item>
           <nz-form-control [nzErrorTip]="'app.login.message-need-identifier' | i18n">

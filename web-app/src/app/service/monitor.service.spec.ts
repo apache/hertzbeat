@@ -21,14 +21,17 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { configureHttpServiceTest } from '@testing';
 
+import { SILENT_HTTP_ERROR } from '../core/interceptor/http-context';
 import { MonitorService } from './monitor.service';
 
 describe('MonitorService', () => {
   let service: MonitorService;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     configureHttpServiceTest();
     service = TestBed.inject(MonitorService);
+    http = TestBed.inject(HttpTestingController);
   });
 
   it('should be created', () => {
@@ -36,7 +39,6 @@ describe('MonitorService', () => {
   });
 
   it('sends the monitor ids to pause in the request body instead of the url', () => {
-    const http = TestBed.inject(HttpTestingController);
     const monitorIds = new Set(Array.from({ length: 1000 }, (_, i) => 486837261783808 + i));
 
     service.cancelManageMonitors(monitorIds).subscribe();
@@ -46,4 +48,23 @@ describe('MonitorService', () => {
     request.flush({ code: 0, msg: '', data: null });
     http.verify();
   });
+  afterEach(() => http.verify());
+
+  for (const all of [false, true]) {
+    it(`preserves HTTP permission errors for ${all ? 'all' : 'selected'} exports`, () => {
+      const request = all ? service.exportAllMonitors('JSON') : service.exportMonitors(new Set([1]), 'JSON');
+      let status = 0;
+      request.subscribe({ next: () => fail('a denied export must not yield a file'), error: error => (status = error.status) });
+      const pending = http.expectOne(req => req.url === (all ? '/monitors/export/all' : '/monitors/export'));
+      expect(pending.request.method).toBe('GET');
+      expect(pending.request.context.get(SILENT_HTTP_ERROR)).toBeTrue();
+      expect(pending.request.responseType).toBe('blob');
+      expect(pending.request.params.get('type')).toBe('JSON');
+      if (!all) {
+        expect(pending.request.params.get('ids')).toBe('1');
+      }
+      pending.flush(new Blob(), { status: 403, statusText: 'Forbidden' });
+      expect(status).toBe(403);
+    });
+  }
 });

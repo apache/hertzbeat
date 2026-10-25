@@ -560,9 +560,9 @@ public class MonitorServiceImpl implements MonitorService {
         allMonitorIds.addAll(subMonitorIds);
         List<Monitor> monitors = monitorDao.findMonitorsByIdIn(allMonitorIds);
         if (!monitors.isEmpty()) {
-            monitorDao.deleteAll(monitors);
-            paramDao.deleteParamsByMonitorIdIn(ids);
             Set<Long> monitorIds = monitors.stream().map(Monitor::getId).collect(Collectors.toSet());
+            monitorDao.deleteAll(monitors);
+            paramDao.deleteParamsByMonitorIdIn(monitorIds);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             monitorBindDao.deleteMonitorBindByBizIdIn(monitorIds);
             metricsFavoriteService.deleteFavoritesByMonitorIdIn(monitorIds);
@@ -655,48 +655,46 @@ public class MonitorServiceImpl implements MonitorService {
                 Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicateStatus);
             }
-            Predicate[] andPredicates = new Predicate[andList.size()];
-            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
-
-            List<Predicate> orList = new ArrayList<>();
             if (StringUtils.hasText(search)) {
+                List<Predicate> searchPredicates = new ArrayList<>();
                 Predicate predicateHost = criteriaBuilder.like(root.get("instance"), "%" + search + "%");
                 Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
                         "%" + search.toLowerCase() + "%");
                 Long id = Longs.tryParse(search);
                 if (id != null) {
-                    orList.add(criteriaBuilder.equal(root.get("id"), id));
+                    searchPredicates.add(criteriaBuilder.equal(root.get("id"), id));
                 }
-                orList.add(predicateHost);
-                orList.add(predicateName);
+                searchPredicates.add(predicateHost);
+                searchPredicates.add(predicateName);
+                andList.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
             }
             if (StringUtils.hasText(labels)) {
+                List<Predicate> labelPredicates = new ArrayList<>();
                 String[] labelAres = labels.split(",");
                 for (String label : labelAres) {
-                    String[] labelArr = label.split(":");
-                    String labelName = labelArr[0];
-                    String labelValue = labelArr.length == 2 ? labelArr[1] : null;
-                    // create every label condition
+                    String[] labelArr = label.trim().split("[:=]", 2);
+                    String labelName = labelArr[0].trim();
+                    if (!StringUtils.hasText(labelName)) {
+                        continue;
+                    }
+                    String labelValue = labelArr.length == 2 && StringUtils.hasText(labelArr[1])
+                            ? labelArr[1].trim()
+                            : null;
                     if (labelValue == null) {
-                        orList.add(criteriaBuilder.like(root.get("labels"), "%" + labelName + "%"));
+                        labelPredicates.add(criteriaBuilder.like(root.get("labels"), "%" + labelName + "%"));
                     } else {
                         String pattern = String.format("%%\"%s\":\"%s\"%%", labelName, labelValue);
-                        orList.add(criteriaBuilder.like(root.get("labels"), pattern));
+                        labelPredicates.add(criteriaBuilder.like(root.get("labels"), pattern));
                     }
                 }
+                if (!labelPredicates.isEmpty()) {
+                    andList.add(criteriaBuilder.or(labelPredicates.toArray(new Predicate[0])));
+                }
             }
-            Predicate[] orPredicates = new Predicate[orList.size()];
-            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
-
-            if (andPredicates.length == 0 && orPredicates.length == 0) {
+            if (andList.isEmpty()) {
                 return query.where().getRestriction();
-            } else if (andPredicates.length == 0) {
-                return orPredicate;
-            } else if (orPredicates.length == 0) {
-                return andPredicate;
-            } else {
-                return query.where(andPredicate, orPredicate).getRestriction();
             }
+            return criteriaBuilder.and(andList.toArray(new Predicate[0]));
         };
         // Pagination is a must
         // Handle null sort/order parameters with defaults

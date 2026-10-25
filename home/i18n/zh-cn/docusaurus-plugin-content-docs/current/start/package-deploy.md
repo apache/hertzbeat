@@ -40,7 +40,7 @@ Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/
 
 3. 配置账户文件(可选)
 
-   HertzBeat 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
+   从 1.9.1 起，默认仅保留 admin/hertzbeat 账号，首次使用前请修改默认密码。旧配置中的 user、guest 也不能登录；请由管理员仅将可信账号手工迁移为 admin，重启后重新登录。参见[权限迁移指南](../help/admin_only_migration)。
    若需要新增删除修改账户或密码，可以通过修改位于 `config/sureness.yml` 的配置文件实现，具体参考
 
    - [配置修改账户密码](account-modify)

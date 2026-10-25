@@ -41,7 +41,7 @@ The current branch uses `Java 25`, and the standard installation package no long
 
 3. Configure the account file(optional)
 
-   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`
+   From 1.9.1, the only default account is `admin/hertzbeat`; change its password before use. Old `user` and `guest` accounts cannot sign in even if retained in your configuration. Administrators must manually migrate only trusted accounts to `admin`, restart and sign in again. See the [migration guide](../help/admin_only_migration).
    If you need modify account or password, configure `config/sureness.yml`.
    For detail steps, please refer to [Configure Account Password](account-modify)
 

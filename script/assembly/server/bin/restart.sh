@@ -16,14 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# restart start time
-startTime=$(date +%s)
-echo -e "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Now!\033[0m"
-./shutdown.sh
-echo
-sleep 2
-echo
-./startup.sh
-# restart end time
-endTime=$(date +%s)
-echo -e  "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Success！Spend $((endTime - startTime)) seconds \033[0m";
+BIN_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)" || exit 1
+"$BIN_DIR/shutdown.sh" || exit $?
+exec "$BIN_DIR/startup.sh" "$@"

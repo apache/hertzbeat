@@ -40,7 +40,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -49,6 +48,8 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.xml.secure.SecureDocumentBuilderFactory;
+import org.apache.commons.xml.secure.SecureXPathFactory;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
@@ -77,6 +78,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -329,8 +331,10 @@ public class HttpCollectImpl extends AbstractCollect {
         List<String> siteUrls = new LinkedList<>();
         boolean isXmlFormat = true;
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            // see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+            // Apache Commons Secure XML ignores external resources (DTDs, entities, XInclude), see
+            // https://commons.apache.org/proper/commons-secure-xml/threat_model.html
+            DocumentBuilderFactory dbf = SecureDocumentBuilderFactory.newInstance();
+            // Preserve the strict DOCTYPE and XInclude policy of the 1.9.1 branch.
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             dbf.setXIncludeAware(false);
             DocumentBuilder db = dbf.newDocumentBuilder();
@@ -447,6 +451,23 @@ public class HttpCollectImpl extends AbstractCollect {
         log.debug("Xpath expression validation passed: {}", xpathExpression);
     }
 
+    /**
+     * Validate every expression before parsing XML or evaluating any XPath.
+     * Built-in summary fields are not XPath expressions.
+     */
+    private void validateXmlPathExpressions(String xpathExpression, List<String> aliasFields) {
+        validateXpathExpression(xpathExpression);
+        if (CollectionUtils.isEmpty(aliasFields)) {
+            return;
+        }
+        for (String alias : aliasFields) {
+            if (!NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)
+                    && !CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                validateXpathExpression(alias);
+            }
+        }
+    }
+
     private void parseResponseByXmlPath(String resp, Metrics metrics,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         HttpProtocol http = metrics.getHttp();
@@ -471,9 +492,9 @@ public class HttpCollectImpl extends AbstractCollect {
             return;
         }
 
-        // Layer 3: Validate Xpath expression for dangerous patterns
+        // Layer 3: Validate every XPath expression before parsing or evaluation
         try {
-            validateXpathExpression(xpathExpression);
+            validateXmlPathExpressions(xpathExpression, aliasFields);
         } catch (IllegalArgumentException e) {
             log.warn("Xpath expression validation failed: {}", e.getMessage());
             builder.setCode(CollectRep.Code.FAIL);
@@ -484,20 +505,17 @@ public class HttpCollectImpl extends AbstractCollect {
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
 
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-
-            // Layer 4: Enable XML secure processing and XXE protection
-            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            // Layer 4: Apache Commons Secure XML ignores external resources (DTDs, entities, XInclude), see
+            // https://commons.apache.org/proper/commons-secure-xml/threat_model.html
+            DocumentBuilderFactory dbf = SecureDocumentBuilderFactory.newInstance();
+            // Preserve the strict DOCTYPE and XInclude policy of the 1.9.1 branch.
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             dbf.setXIncludeAware(false);
             dbf.setExpandEntityReferences(false);
-
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document document = db.parse(new InputSource(new StringReader(resp)));
 
-            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPathFactory xpathFactory = SecureXPathFactory.newInstance();
             XPath xpath = xpathFactory.newXPath();
 
             NodeList nodeList = (NodeList) xpath.evaluate(xpathExpression, document, XPathConstants.NODESET);
@@ -983,6 +1001,7 @@ public class HttpCollectImpl extends AbstractCollect {
         int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), 0);
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
+                    .setCookieSpec(CookieSpecs.STANDARD)
                     .setConnectTimeout(timeout)
                     .setSocketTimeout(timeout)
                     .setRedirectsEnabled(true)

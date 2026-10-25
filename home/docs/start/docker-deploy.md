@@ -35,7 +35,7 @@ It is necessary to have Docker environment in your environment. If not installed
    - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important, Mount the H2 database file to the local host, to ensure that the data is not lost due to creating or deleting container.
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional) Mount the log file to the local host to facilitate viewing.
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional) Mount the configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
-   - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional) Mount the account configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
+   - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional) Mount the account configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/1.9.x-dev/script/sureness.yml)
    - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib` : (optional) Mount external third-party JAR packages when you need runtime JDBC extension. `mysql-jdbc` is only needed if you explicitly want the JDBC path for MySQL-compatible monitoring; [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) and [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar) are still required for Oracle monitoring.
    - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (optional) Override the MySQL-compatible monitoring query path used by the built-in collector. Supported values: `auto`, `jdbc`, `r2dbc`.
    - `--name hertzbeat` : (optional) Naming container name hertzbeat
@@ -156,8 +156,8 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
 7. What is the purpose of sureness.yml
 
    > This file is the user configuration file of HertzBeat, used to configure user information of HertzBeat, such as account password, etc.  
-   > HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`  
-   > If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.  
+   > From 1.9.1, the only default account is `admin/hertzbeat`; change its password before use. Old `user` and `guest` accounts cannot sign in even if retained in your configuration. Administrators must manually migrate only trusted accounts to `admin`, restart and sign in again. See the [migration guide](../help/admin_only_migration).\
+   > If you need update account or password, configure `sureness.yml`. Review existing account permissions before upgrading.\
    > Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`  
-   > Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)  
+   > Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/1.9.x-dev/script/sureness.yml)\
    > For detail steps, please refer to [Configure Account Password](account-modify)

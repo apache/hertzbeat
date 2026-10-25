@@ -28,6 +28,7 @@ import { User } from '@delon/theme/src/services/settings/types';
 import { NzTabChangeEvent } from 'ng-zorro-antd/tabs';
 import { finalize } from 'rxjs/operators';
 
+import { hasAdminRole } from '../../../core/guard/admin-role';
 import { Message } from '../../../pojo/Message';
 import { LocalStorageService } from '../../../service/local-storage.service';
 
@@ -51,7 +52,8 @@ export class UserLoginComponent implements OnDestroy {
     private startupSrv: StartupService,
     private http: _HttpClient,
     private cdr: ChangeDetectorRef,
-    private storageSvc: LocalStorageService
+    private storageSvc: LocalStorageService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {
     this.form = fb.group({
       userName: [null, [Validators.required]],
@@ -137,7 +139,13 @@ export class UserLoginComponent implements OnDestroy {
       )
       .subscribe(message => {
         if (message.code !== 0) {
-          this.error = message.msg;
+          this.error = this.i18nSvc.fanyi('app.management.login-failed');
+          this.cdr.detectChanges();
+          return;
+        }
+        if (!hasAdminRole(message.data.role)) {
+          this.storageSvc.clearAuthorization();
+          this.error = this.i18nSvc.fanyi('app.management.admin-only');
           this.cdr.detectChanges();
           return;
         }

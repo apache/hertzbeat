@@ -603,6 +603,8 @@ public class JdbcCommonCollect extends AbstractCollect {
                     }
                 }
             }
+            // Custom URLs must pass the same final safety check as assembled URLs.
+            JdbcUrlSafetyUtil.requireSafeJdbcUrl(url);
             return url;
         }
         assert jdbcProtocol.getPlatform() != null;

@@ -26,7 +26,9 @@ import static org.mockito.Mockito.mockStatic;
 
 import com.usthe.sureness.subject.PrincipalMap;
 import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.SurenessContextHolder;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
@@ -34,7 +36,9 @@ import java.io.StringWriter;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.manager.service.AccountService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.MockedStatic;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -47,6 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ApiTokenValidationFilterTest {
 
     private ApiTokenValidationFilter filter;
+    private MockedStatic<JsonWebTokenUtil> jwt;
 
     @Mock
     private AccountService accountService;
@@ -63,29 +68,42 @@ class ApiTokenValidationFilterTest {
     @BeforeEach
     void setUp() {
         filter = new ApiTokenValidationFilter(accountService);
+        jwt = mockStatic(JsonWebTokenUtil.class);
+        Claims claims = org.mockito.Mockito.mock(Claims.class);
+        org.mockito.Mockito.lenient().when(claims.get("managed", Boolean.class)).thenReturn(true);
+        jwt.when(() -> JsonWebTokenUtil.parseJwt(org.mockito.ArgumentMatchers.anyString())).thenReturn(claims);
+    }
+
+    @AfterEach
+    void tearDown() {
+        jwt.close();
     }
 
     @Test
-    void testNoAuthorizationHeaderPassesThrough() throws Exception {
+    void testNoAuthorizationHeaderRejectsUnresolvedManagedSubject() throws Exception {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn(null);
         SubjectSum subject = mockManagedSubject();
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
-            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(401);
         }
     }
 
     @Test
-    void testNonBearerAuthorizationPassesThrough() throws Exception {
+    void testNonBearerAuthorizationRejectsUnresolvedManagedSubject() throws Exception {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Basic dXNlcjpwYXNz");
         SubjectSum subject = mockManagedSubject();
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
-            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(401);
         }
     }
 
@@ -181,14 +199,16 @@ class ApiTokenValidationFilterTest {
     }
 
     @Test
-    void testEmptyBearerTokenPassesThrough() throws Exception {
+    void testEmptyBearerTokenRejectsUnresolvedManagedSubject() throws Exception {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer ");
         SubjectSum subject = mockManagedSubject();
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
-            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(401);
         }
     }
 

@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
@@ -48,7 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of Account service
@@ -84,15 +81,6 @@ public class AccountServiceImpl implements AccountService {
      * Reduces write pressure under high-frequency requests.
      */
     private static final long LAST_USED_UPDATE_INTERVAL_MINUTES = 5;
-
-    /**
-     * Local cache: tokenHash -> isActive.
-     * TTL 60s to reduce DB queries; invalidated on token revocation.
-     */
-    private final Cache<String, Boolean> tokenStatusCache = Caffeine.newBuilder()
-        .maximumSize(1000)
-        .expireAfterWrite(60, TimeUnit.SECONDS)
-        .build();
 
     /**
      * Tracks when each token's lastUsedTime was last written to DB.
@@ -134,7 +122,7 @@ public class AccountServiceImpl implements AccountService {
             }
         }
         // Get the roles the user has - rbac
-        List<String> roles = account.getOwnRoles();
+        List<String> roles = requireAdminRoles(account);
         // Issue TOKEN
         String issueToken = issueAccessToken(loginDto.getIdentifier(), roles, PERIOD_TIME);
         String issueRefresh = issueRefreshToken(loginDto.getIdentifier(), PERIOD_TIME << 5);
@@ -161,7 +149,7 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
-        List<String> roles = account.getOwnRoles();
+        List<String> roles = requireAdminRoles(account);
         String issueToken = issueAccessToken(userId, roles, PERIOD_TIME);
         String issueRefresh = issueRefreshToken(userId, PERIOD_TIME << 5);
         return new RefreshTokenResponse(issueToken, issueRefresh);
@@ -178,7 +166,10 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
-        List<String> roles = account.getOwnRoles();
+        if (!subjectSum.hasRole("admin")) {
+            throw new AuthenticationException("Management access requires the admin role");
+        }
+        List<String> roles = requireAdminRoles(account);
         String token = issueApiToken(userId, roles, expireSeconds);
 
         // Persist token metadata for management
@@ -199,6 +190,13 @@ public class AccountServiceImpl implements AccountService {
         authTokenDao.save(authToken);
 
         return token;
+    }
+
+    private List<String> requireAdminRoles(SurenessAccount account) throws AuthenticationException {
+        if (account.getOwnRoles() == null || !account.getOwnRoles().contains("admin")) {
+            throw new AuthenticationException("Management access requires the admin role; manual account migration is required");
+        }
+        return List.of("admin");
     }
 
     private String issueAccessToken(String userId, List<String> roles, long expirationSeconds) {
@@ -228,7 +226,6 @@ public class AccountServiceImpl implements AccountService {
         if (!subjectSum.hasRole("admin") && !StringUtils.equals(userId, token.getCreator())) {
             throw new AuthenticationException("No permission");
         }
-        tokenStatusCache.invalidate(token.getTokenHash());
         lastUsedWriteTimestamps.remove(token.getTokenHash());
         authTokenDao.deleteById(id);
     }
@@ -236,9 +233,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public String checkTokenStatus(String tokenValue) {
         String tokenHash = CryptoUtils.sha256Hex(tokenValue);
-        Boolean active = tokenStatusCache.get(tokenHash,
-            hash -> authTokenDao.existsByTokenHashAndStatus(hash, TOKEN_STATUS_ACTIVE));
-        if (!Boolean.TRUE.equals(active)) {
+        // Read revocable authorization state on every check so an in-flight read cannot cache a revoked token.
+        if (!authTokenDao.existsByTokenHashAndStatus(tokenHash, TOKEN_STATUS_ACTIVE)) {
             return "Token has been revoked";
         }
         return null;

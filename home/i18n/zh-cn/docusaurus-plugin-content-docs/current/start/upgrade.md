@@ -14,6 +14,10 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 
 **升级前您需要保存备份好数据库的数据文件和监控模板文件**
 
+## 1.9.1 账号权限不兼容变更
+
+1.9.1 起仅 admin 可登录管理平台。旧配置中的 user、guest 也不再生效；请在升级前盘点账号与自动化令牌，由管理员手工修改 sureness.yml，仅将可信账号角色改为 admin，重启后重新登录。不会自动提权或删除账号。请先在测试环境验证，并阅读[权限迁移指南](../help/admin_only_migration)。
+
 ## 1.9.0 不兼容变更
 
 ### SFTP监控必须显式配置主机密钥策略
@@ -44,7 +48,7 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 | `GET /api/logs/stats/overview` | `GET /api/observability/logs/overview` | 已移除（`404`） |
 | `GET /api/logs/stats/trace-coverage` | `GET /api/observability/logs/trace-coverage` | 已移除（`404`） |
 | `GET /api/logs/stats/trend` | `GET /api/observability/logs/trend` | 已移除（`404`） |
-| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | 已移除（`404`）；新路径需要 `admin/user/guest` 登录 |
+| `GET /api/logs/sse/subscribe` | `GET /api/observability/logs/stream` | 已移除（`404`）；新路径在 1.9.0 需要 `admin/user/guest` 登录，1.9.1 起仅允许 `admin` |
 | `DELETE /api/logs` | `DELETE /api/observability/logs` | 已移除（`404`） |
 
 `POST /api/otlp/v1/{metrics,traces}` 接收接口、`/api/observability/metrics/**` 与 `/api/observability/traces/**` 查询接口是 1.9.0 **新增**的，1.8.x 没有对应路径，不涉及迁移。

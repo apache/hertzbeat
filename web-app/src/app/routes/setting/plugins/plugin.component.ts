@@ -280,57 +280,69 @@ export class SettingPluginsComponent implements OnInit {
   }
 
   params: any = {};
-  paramDefines!: ParamDefine[];
+  paramDefines: ParamDefine[] = [];
   isEditPluginParamDefineModalVisible = false;
+  private paramEditGeneration = 0;
 
   onEditPluginParamDefine(pluginId: number) {
-    const getPluginParamDefine$ = this.pluginService
-      .getPluginParamDefine(pluginId)
-      .pipe(
-        finalize(() => {
-          getPluginParamDefine$.unsubscribe();
-        })
-      )
-      .subscribe((message: any) => {
+    this.onEditPluginParamDefineModalCancel();
+    const generation = this.paramEditGeneration;
+    this.pluginService.getPluginParamDefine(pluginId).subscribe({
+      next: (message: any) => {
+        if (generation !== this.paramEditGeneration) return;
         if (message.code === 0) {
-          this.paramDefines = message.data.paramDefines.map((i: any) => {
-            this.params[i.field] = {
+          const params: any = {};
+          const paramDefines = message.data.paramDefines.map((item: any) => {
+            params[item.field] = {
               pluginMetadataId: pluginId,
               // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-              type: i.type === 'number' ? 0 : i.type === 'text' || i.type === 'string' ? 1 : i.type === 'json' ? 3 : 2,
-              field: i.field,
-              paramValue: this.getParamValue(message.data.pluginParams, i.field)
+              type: item.type === 'number' ? 0 : item.type === 'text' || item.type === 'string' ? 1 : item.type === 'json' ? 3 : 2,
+              field: item.field,
+              paramValue: this.getParamValue(message.data.pluginParams, item.field)
             };
-            i.name = i.name[this.lang];
-            return i;
+            return { ...item, name: item.name[this.lang] };
           });
+          this.params = params;
+          this.paramDefines = paramDefines;
           this.isEditPluginParamDefineModalVisible = true;
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
         }
-      });
+      },
+      error: error => {
+        if (generation === this.paramEditGeneration) {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+        }
+      }
+    });
   }
 
   onEditPluginParamDefineModalCancel() {
+    this.paramEditGeneration++;
     this.isEditPluginParamDefineModalVisible = false;
+    this.params = {};
+    this.paramDefines = [];
   }
 
   onEditPluginParamDefineModalOk() {
-    const savePluginParamDefine$ = this.pluginService
-      .savePluginParamDefine(Object.values(this.params))
-      .pipe(
-        finalize(() => {
-          savePluginParamDefine$.unsubscribe();
-        })
-      )
-      .subscribe((message: any) => {
+    if (!this.isEditPluginParamDefineModalVisible) return;
+    const generation = this.paramEditGeneration;
+    this.pluginService.savePluginParamDefine(Object.values(this.params)).subscribe({
+      next: (message: any) => {
+        if (generation !== this.paramEditGeneration) return;
         if (message.code === 0) {
-          this.isEditPluginParamDefineModalVisible = false;
+          this.onEditPluginParamDefineModalCancel();
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
         }
-      });
+      },
+      error: error => {
+        if (generation === this.paramEditGeneration) {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+        }
+      }
+    });
   }
 
   getParamValue(pluginParams: any[], field: string) {

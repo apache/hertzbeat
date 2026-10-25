@@ -1,8 +1,33 @@
 # mcp-bash-server
 
-A HertzBeat MCP server for running scripts with security command blacklist and logging capabilities
+A HertzBeat MCP server exposing seven fixed, parameterless system diagnostic tools.
+
+General shell command, script, and Python execution has been removed. The tools
+`all_execute_via_default_shell`, `execute_script`, and `execute_python` are no
+longer registered. This is not a default-off feature or a configurable switch:
+configuration changes cannot restore them.
 
 ## Dependencies
+
+### Linux diagnostic tools
+
+The diagnostics are designed for Linux. Network and CPU diagnostics require
+`/proc/net/dev`, `/proc/cpuinfo`, and Linux utilities such as `lscpu` and `vmstat`;
+the `unix_` tool-name prefix does not imply support for every Unix-like system.
+The shell-list tool reads `/etc/shells`.
+
+Process-based diagnostics require the trusted executable `/bin/bash`. Their
+fixed scripts use `uname`, `hostname`, `uptime`, `awk`, `sed`, `lscpu`, `vmstat`,
+`xargs`, `cat`, `tail`, `df`, `ps`, `sort`, and `head`, resolved only through
+`/usr/bin:/bin`. Ensure these tools are present in the deployment image or host.
+They commonly come from coreutils, procps, util-linux, findutils, an awk
+implementation, sed, and hostname packages; package names vary by distribution.
+Missing tools or unsupported platforms can make a diagnostic fail. There is no
+fallback to a caller-specified executable or shell.
+
+Keep `/bin/bash`, `/usr/bin`, and `/bin` administrator-managed and non-writable
+by the server account. The server still trusts the host operating system and
+installed diagnostic binaries.
 
 ### Rust
 
@@ -60,7 +85,9 @@ If you encounter any issues while using Inspector, it is recommended to use vers
 
 ### Container Deployment
 
-Using container deployment for this MCP Server is an excellent way to try out the tools provided by the server without polluting your machine, as all MCP Server operations are completed within the container.
+Container deployment runs diagnostics against the container's view of the system.
+It does not automatically expose host diagnostics, and mounting host resources
+can expose additional information. See the execution boundaries below.
 
 Refer to the `Dockerfile` in the code repository and create your own Dockerfile. After creating it, run the following build command:
 
@@ -161,49 +188,12 @@ port = 4000
 host = "127.0.0.1"
 # Usage environment for MCP Server, can be either development or production environment.
 # Set env to "development" or "production"; production uses OAuth 2.0.
-env = "development"
-
-[whitelist]
-# Whitelist of allowed commands (exact match), a string list.
-# Only commands where the complete command string exactly matches an item in this list will be allowed
-commands = [
-    "echo hello",
-    "ls -la", 
-    "pwd",
-    # Add your allowed commands here
-]
-# Whitelist of allowed command regex patterns, a list of regex expression strings
-# Commands where the complete command string matches any of these regex patterns will be allowed
-regex = [
-    '^echo [a-zA-Z0-9 ]+$',
-    '^ls [a-zA-Z0-9 /-]*$',
-    # Add your whitelist regex patterns here
-]
-
-[blacklist]
-# Blacklist of forbidden commands (exact match), a string list
-# Blacklist has higher priority than whitelist. If the complete command string exactly matches an item in this list, the entire command will be blocked, even if it would be allowed by the whitelist
-# Note: Only exact matches are blocked. For example, if "rm" is blacklisted, only the exact command "rm" is blocked, not commands like "rm -rf /tmp/test"
-commands = [
-    # Dangerous file operations
-    "rm -rf /",
-    "shutdown",
-    # Add your forbidden commands here
-]
-# Blacklist of forbidden command regex patterns, a list of regex expression strings  
-# Blacklist has higher priority than whitelist. If the complete command string matches any of these regex patterns, it will be blocked, even if it would be allowed by the whitelist
-regex = [
-    # Block any command with dangerous operators
-    '.*[|&;`$()><].*',
-    # Block commands that try to write to system directories
-    '.*/etc/.*',
-    '.*/root/.*',
-    # Block commands with sudo or su
-    '^sudo .*',
-    '^su .*',
-    # Add your blacklist regex patterns here
-]
+env = "production"
 ```
+
+Only server settings are configurable. Legacy `[whitelist]` and `[blacklist]`
+sections are ignored when reading an existing configuration. They cannot
+re-enable removed tools or alter the fixed diagnostic commands.
 
 ## Testing
 
@@ -211,45 +201,24 @@ regex = [
 
 Run `cargo test` to execute all unit tests.
 
-The unit tests include:
-
 #### Configuration Tests (`config.rs`)
 
-- **Config Parsing**: Tests parsing of TOML configuration files with various settings
+- **Config Parsing**: Tests parsing a settings-only TOML configuration
+- **Legacy Configuration Compatibility**: Tests that old whitelist and blacklist
+  sections are ignored and are not written back when configuration is serialized
 - **Invalid File Handling**: Tests error handling for non-existent configuration files
 - **Invalid TOML Handling**: Tests error handling for malformed TOML syntax
-- **Whitelist Creation**: Tests creation and validation of command whitelists
-- **Blacklist Creation**: Tests creation and validation of command blacklists
+- **Optional Environment**: Tests settings without an explicit environment value
 - **Settings Creation**: Tests creation of server settings with port, host, and environment configurations
 
-#### Validator Tests (`validator.rs`)
+#### Diagnostic Boundary Checks
 
-- **Validator Creation**: Tests creation of command validators with blacklist and whitelist rules (both commands and regex)
-- **Whitelisted Command Validation**: Tests allowing commands that exactly match whitelist entries
-- **Whitelisted Regex Validation**: Tests allowing commands that match whitelist regex patterns
-- **Blacklisted Command Blocking**: Tests blocking of commands that exactly match blacklist entries (complete command string)
-- **Blacklisted Regex Blocking**: Tests blocking of commands matching blacklist regex patterns  
-- **Priority Testing**: Tests that blacklist has higher priority than whitelist
-- **Exact vs Partial Match Testing**: Tests that blacklist only blocks exact command matches, not partial matches
-- **Default Deny Behavior**: Tests that commands not in whitelist are denied by default
-- **Empty Command Handling**: Tests that empty commands are denied by default
-- **Case Sensitivity Testing**: Tests case-sensitive command matching behavior
-- **Invalid Regex Handling**: Tests error handling for invalid regex patterns
-- **Complex Command Testing**: Tests validation of multi-argument commands
-- **Nested Shell Command Testing**: Tests validation of commands within shell invocations
-
-#### Bash Server Tests (`bash_server.rs`)
-
-- **Response Success/Failure**: Tests command execution response handling for both successful and failed commands
-- **Command Stringification**: Tests conversion of Command objects to readable string representations
-- **Command Execution with Timeout**: Tests command execution with timeout protection
-- **Server Creation**: Tests BashServer instantiation with and without configuration
-- **Request/Response Serialization**: Tests JSON serialization and deserialization of command requests and responses
-- **Environment Variable Handling**: Tests setting and using environment variables in commands
-- **Working Directory Handling**: Tests command execution in specific working directories
-- **Debug and Clone Traits**: Tests that BashServer properly implements Debug and Clone traits
-- **Timeout Behavior**: Tests that commands properly timeout when exceeding time limits
-- **Unix script and Python Execution**: Tests tool `execute_script` and `execute_python`
+When changing the server, verify that the tool list contains exactly the seven
+tools below, that they accept no caller-controlled parameters, and that the
+removed tool names are unavailable. Verify the fixed command definitions,
+executable, environment, working directory, and wait timeouts without restoring
+a generic execution helper. Configuration compatibility is not permission to
+restore general execution.
 
 ### Manual Testing with Inspector
 
@@ -280,45 +249,22 @@ After connecting, you can test the various tools provided by the MCP Server in t
 
 ## Tools
 
-The MCP Server currently provides the following tools:
-
-### Command Execution Tools
-
-1. **all_execute_via_default_shell**
-   - Description: Execute commands using the default shell on all types of operating systems
-   - Parameters:
-     - `command`: The bash command or script to execute
-     - `working_dir`: Working directory for the command (optional)
-     - `env_vars`: Environment variables (optional)
-     - `timeout_seconds`: Timeout in seconds (default: 30)
-   - Returns: Execution result with stdout, stderr, exit code, and success status
-
-2. **execute_python**
-   - Description: Execute a Python script
-   - Parameters: Same as above, but command should be Python code
-   - Returns: Python script execution result
-
-3. **execute_script**
-   - Description: Execute a Unix script by writing it to a temporary file
-   - Parameters: Same as above, command should be shell script content
-   - Returns: Script execution result
+The MCP server provides exactly the following seven tools. All are parameterless:
+clients cannot supply commands, scripts, executable paths, arguments, environment
+variables, working directories, or timeout values.
 
 ### System Information Tools
 
-1. **unix_get_system_info_via_default_shell**
-   - Description: Get comprehensive system information including OS, kernel, memory, and disk usage
-   - Parameters: None
-   - Returns: Detailed system information including hostname, OS, kernel, architecture, uptime, memory usage, and disk usage
-
-2. **unix_preset_get_system_info_via_default_shell**
+1. **unix_preset_get_system_info_via_default_shell**
    - Description: Get formatted system information in a structured format
    - Parameters: None
-   - Returns: Version, hostname, and uptime in a single line format
+   - Returns: Kernel version, hostname, and uptime in a single line format
 
-3. **unix_get_available_shell**
+2. **unix_get_available_shell**
    - Description: Get the available shells on Unix-like operating systems
    - Parameters: None
-   - Returns: List of available shells from /etc/shells
+   - Returns: Paths listed in `/etc/shells` that refer to files. These paths are
+     inspected with file metadata and are never executed.
 
 ### Performance Monitoring Tools
 
@@ -347,28 +293,27 @@ The MCP Server currently provides the following tools:
    - Parameters: None
    - Returns: Process information sorted by memory usage in descending order
 
-### Security Features
+## Execution Boundaries and Limitations
 
-All command execution tools support comprehensive security validation:
-
-- **Default Deny Policy**: All commands are denied by default unless explicitly allowed
-- **Blacklist Priority**: Blacklist rules have higher priority than whitelist rules
-- **Dual Validation Modes**: Both exact string matching and regex pattern matching for blacklist and whitelist
-- **Command Validation Logic**:
-  1. Empty commands are denied by default
-  2. If the **complete command string** exactly matches any blacklist command entry, deny immediately
-  3. If the **complete command string** matches any blacklist regex pattern, deny immediately
-  4. If command doesn't match blacklist and the **complete command string** exactly matches any whitelist command entry, allow
-  5. If command doesn't match blacklist and the **complete command string** matches any whitelist regex pattern, allow
-  6. Otherwise, deny by default
-- **Important**: Blacklist validation checks the **entire command string**, not individual arguments. For example, if `"rm"` is blacklisted, only the exact command `"rm"` is blocked, not commands like `"rm -rf /tmp/test"` (which would be evaluated separately against the whitelist)
-- **Timeout Protection**: Commands have configurable timeout limits to prevent hanging
-- **Environment Isolation**: Optional working directory and environment variable settings
-- **Logging**: All command executions and validation results are logged for audit purposes
-- **Nested Shell Protection**: Validates commands within shell invocations (e.g., `bash -c "command"`)
-
-### Tool Categories
-
-- **General Execution**: Tools 1-3 for executing arbitrary commands, Python scripts, and shell scripts
-- **System Monitoring**: Tools 1-3 for gathering basic system information
-- **Performance Analysis**: Tools 1-5 for detailed performance monitoring and process analysis
+- The six process-based diagnostics select only fixed scripts defined in the
+  server source. Each starts `/bin/bash` with `--noprofile`, `--norc`, and a
+  separate `-c` argument containing the selected script. Tool output is returned
+  as data, not evaluated as a new command.
+- The child environment is cleared with `env_clear` before launch. Only the
+  fixed `PATH=/usr/bin:/bin` and `LC_ALL=C` are set; inherited startup variables
+  such as `BASH_ENV` and exported shell functions are not copied. The working
+  directory is fixed to `/`.
+- The system-information diagnostic has a fixed 10-second wait timeout; the
+  other five process-based diagnostics have fixed 5-second wait timeouts.
+  These timeouts stop waiting for a result but do **not** terminate a still
+  running subprocess or its descendants. A slow diagnostic can continue after
+  the request reports a timeout.
+- This change does not introduce output-size limits or concurrency limits.
+  Commands may block on host resources or return substantial output. The
+  parameterless interface is not a sandbox or complete resource isolation.
+- The server still runs with its service account's operating-system privileges
+  and can return sensitive system information, including process command lines.
+  Keep production authentication enabled and grant access only to trusted
+  clients.
+- Legacy whitelist and blacklist settings have no effect. There is no
+  configuration switch to restore general shell, script, or Python execution.
