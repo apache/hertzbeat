@@ -165,15 +165,16 @@ public class RedfishCollectImplTest {
         Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2")).thenReturn(bay2U1);
         Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1")).thenReturn(bay1U2);
         Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2")).thenReturn(bay2U2);
-        MockedStatic<RedfishClient> clientMockedStatic = Mockito.mockStatic(RedfishClient.class);
-        clientMockedStatic.when(() -> RedfishClient.create(redfishProtocol)).thenReturn(redfishClient);
-        Mockito.when(redfishClient.connect()).thenReturn(redfishConnectSession);
-        redfishCollect.preCheck(metrics);
-        redfishCollect.collect(builder, metrics);
-        assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(0).getColumns(0));
-        assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(1).getColumns(0));
-        assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(2).getColumns(0));
-        assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(3).getColumns(0));
+        try (MockedStatic<RedfishClient> clientMockedStatic = Mockito.mockStatic(RedfishClient.class)) {
+            clientMockedStatic.when(() -> RedfishClient.create(redfishProtocol)).thenReturn(redfishClient);
+            Mockito.when(redfishClient.connect()).thenReturn(redfishConnectSession);
+            redfishCollect.preCheck(metrics);
+            redfishCollect.collect(builder, metrics);
+            assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(0).getColumns(0));
+            assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(1).getColumns(0));
+            assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(2).getColumns(0));
+            assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(3).getColumns(0));
+        }
     }
 
     @Test

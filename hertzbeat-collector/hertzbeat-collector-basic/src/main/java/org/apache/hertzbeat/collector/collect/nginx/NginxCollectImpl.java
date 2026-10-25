@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -165,6 +166,7 @@ public class NginxCollectImpl extends AbstractCollect {
         int timeout = Integer.parseInt(nginxProtocol.getTimeout());
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
+                    .setCookieSpec(CookieSpecs.STANDARD)
                     .setConnectTimeout(timeout)
                     .setSocketTimeout(timeout)
                     .setRedirectsEnabled(true)

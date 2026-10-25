@@ -86,6 +86,7 @@ public class FtpCollectImpl extends AbstractCollect {
     private Map<String, String> collectValue(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         boolean isActive;
         String responseTime;
+        boolean collected = false;
         try {
             long startTime = System.currentTimeMillis();
             connect(ftpClient, ftpProtocol);
@@ -94,10 +95,19 @@ public class FtpCollectImpl extends AbstractCollect {
             isActive = ftpClient.changeWorkingDirectory(ftpProtocol.getDirection());
             long endTime = System.currentTimeMillis();
             responseTime = String.valueOf(endTime - startTime);
-            ftpClient.disconnect();
+            collected = true;
         } catch (Exception e) {
             log.info("[FTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException(e.getMessage());
+        } finally {
+            try {
+                ftpClient.disconnect();
+            } catch (Exception e) {
+                if (collected) {
+                    throw new IllegalArgumentException(e.getMessage(), e);
+                }
+                log.warn("[FTPClient] error while disconnecting", e);
+            }
         }
         return new HashMap<>(8) {
             {

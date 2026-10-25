@@ -45,6 +45,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -231,6 +232,7 @@ public class HttpSdCollectImpl extends AbstractCollect {
         int timeout = CollectUtil.getTimeout(httpSdProtocol.getTimeout(), 0);
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
+                    .setCookieSpec(CookieSpecs.STANDARD)
                     .setConnectTimeout(timeout)
                     .setSocketTimeout(timeout)
                     .setRedirectsEnabled(true)

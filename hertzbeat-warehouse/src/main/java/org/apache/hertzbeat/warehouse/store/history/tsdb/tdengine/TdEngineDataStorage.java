@@ -316,8 +316,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 }
             } finally {
                 try {
-                    assert connection != null;
-                    connection.close();
+                    if (connection != null) {
+                        connection.close();
+                    }
                 } catch (Exception e) {
                     if (log.isErrorEnabled()) {
                         log.error(e.getMessage());
@@ -447,8 +448,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             }
         } finally {
             try {
-                assert connection != null;
-                connection.close();
+                if (connection != null) {
+                    connection.close();
+                }
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage());
@@ -497,8 +499,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 }
             } finally {
                 try {
-                    assert conn != null;
-                    conn.close();
+                    if (conn != null) {
+                        conn.close();
+                    }
                 } catch (Exception e) {
                     if (log.isErrorEnabled()) {
                         log.error(e.getMessage());
