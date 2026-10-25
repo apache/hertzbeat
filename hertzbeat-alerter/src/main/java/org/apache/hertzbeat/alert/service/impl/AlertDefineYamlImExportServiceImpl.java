@@ -22,11 +22,21 @@ import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.common.util.export.YamlExportUtils;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.nodes.Node;
+import org.yaml.snakeyaml.nodes.NodeId;
+import org.yaml.snakeyaml.nodes.Tag;
 
 /**
  * Configure the import and export Yaml format.
@@ -35,6 +45,9 @@ import org.yaml.snakeyaml.Yaml;
 @Slf4j
 @Service
 public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExportServiceImpl {
+
+    private static final Set<Tag> LEGACY_TAGS = Set.of(
+            new Tag(ExportAlertDefineDTO.class), new Tag(AlertDefineDTO.class));
 
     @Override
     public String type() {
@@ -48,14 +61,51 @@ public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExp
 
     @Override
     public List<ExportAlertDefineDTO> parseImport(InputStream is) {
-        Yaml yaml = new Yaml();
-        return yaml.load(is);
+        LoaderOptions options = new LoaderOptions();
+        options.setTagInspector(LEGACY_TAGS::contains);
+        Object data;
+        try {
+            data = new Yaml(new AlertDefineYamlConstructor(options)).load(is);
+        } catch (YAMLException e) {
+            throw new IllegalArgumentException("Invalid YAML alert definition configuration", e);
+        }
+        if (!(data instanceof List<?> entries) || entries.isEmpty()) {
+            throw new IllegalArgumentException("YAML alert definition configuration must be a non-empty list");
+        }
+        return entries.stream().map(entry -> {
+            if (!(entry instanceof Map<?, ?>)) {
+                throw new IllegalArgumentException("Each YAML alert definition entry must be a mapping");
+            }
+            ExportAlertDefineDTO define = JsonUtil.convertValue(entry, ExportAlertDefineDTO.class);
+            if (define == null || define.getAlertDefine() == null) {
+                throw new IllegalArgumentException("Each YAML entry must contain a valid alert definition");
+            }
+            return define;
+        }).toList();
     }
 
     @Override
     public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
 
-        YamlExportUtils.exportWriteOs(exportAlertDefineList, os);
+        // Export data mappings, without Java DTO tags, as for monitor YAML exports.
+        YamlExportUtils.exportWriteOs(exportAlertDefineList.stream()
+                .map(define -> JsonUtil.convertValue(define, Map.class)).toList(), os);
     }
 
+    private static final class AlertDefineYamlConstructor extends SafeConstructor {
+
+        private AlertDefineYamlConstructor(LoaderOptions options) {
+            super(options);
+            // Accept only legacy DTO tags, as mappings; never construct arbitrary Java objects.
+            LEGACY_TAGS.forEach(tag -> yamlConstructors.put(tag, new ConstructYamlMap() {
+                @Override
+                public Object construct(Node node) {
+                    if (node.getNodeId() != NodeId.mapping) {
+                        throw new YAMLException("Legacy alert definition DTO tags require a mapping");
+                    }
+                    return super.construct(node);
+                }
+            }));
+        }
+    }
 }
