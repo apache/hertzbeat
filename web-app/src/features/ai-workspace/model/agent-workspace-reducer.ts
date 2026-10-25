@@ -29,7 +29,6 @@ import { clearModelRetry, reduceModelRetry } from './agent-workspace-retry';
 export {
   initialAgentWorkspaceRun,
   type AgentInputRequest,
-  type AgentModelRetry,
   type AgentToolActivity,
   type AgentWorkspaceRunState
 } from './agent-workspace-run-state';
