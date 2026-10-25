@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,6 +29,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.PluginService;
+import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +59,22 @@ class PluginControllerTest {
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(pluginController).build();
+    }
+
+    @Test
+    void invalidParameterBatchUsesExistingParameterErrorResponse() throws Exception {
+        doThrow(new IllegalArgumentException("Parameters must belong to one plugin"))
+                .when(pluginService).savePluginParam(anyList());
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(pluginController)
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+
+        mvc.perform(MockMvcRequestBuilders.post("/api/plugin/params")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[{\"pluginMetadataId\":901,\"field\":\"first\",\"paramValue\":\"value\",\"type\":1},"
+                                + "{\"pluginMetadataId\":902,\"field\":\"second\",\"paramValue\":\"value\",\"type\":1}]"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.PARAM_INVALID_CODE))
+                .andExpect(jsonPath("$.msg").value("Parameters must belong to one plugin"));
     }
 
     @Test
