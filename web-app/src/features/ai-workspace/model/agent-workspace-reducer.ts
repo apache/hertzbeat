@@ -16,47 +16,23 @@
  */
 
 import type { AgentGatewayEvent } from './agent-workspace-contract';
+import type {
+  AgentApproval,
+  AgentInputRequest,
+  AgentRunMessage,
+  AgentToolActivity,
+  AgentWorkspaceRunState
+} from './agent-workspace-run-state';
+import { initialAgentWorkspaceRun } from './agent-workspace-run-state';
+import { clearModelRetry, reduceModelRetry } from './agent-workspace-retry';
 
-type AgentRunMessage = { id: string; text: string; status: 'streaming' | 'complete' };
-export type AgentToolActivity = {
-  toolCallId: string;
-  toolName: string;
-  status: string;
-  elapsedMs?: number;
-  errorMessage?: string;
-};
-type AgentApproval = { approvalId: string; toolCallId: string; toolName: string; status: string };
-export type AgentInputRequest = {
-  interactionId: string;
-  targetTool: string;
-  title: string;
-  description: string;
-  fields: Record<string, unknown>[];
-  status: string;
-};
-
-export type AgentWorkspaceRunState = {
-  runUid?: string;
-  status: 'idle' | 'running' | 'complete' | 'error';
-  messages: AgentRunMessage[];
-  tools: AgentToolActivity[];
-  approvals: AgentApproval[];
-  inputs: AgentInputRequest[];
-  errorMessage?: string;
-  observationExpired?: boolean;
-  recoveryAvailable?: boolean;
-  retryAvailable?: boolean;
-  recoveryRequired?: boolean;
-  targetFailure?: 'mismatch' | 'unavailable';
-};
-
-export const initialAgentWorkspaceRun: AgentWorkspaceRunState = {
-  status: 'idle',
-  messages: [],
-  tools: [],
-  approvals: [],
-  inputs: []
-};
+export {
+  initialAgentWorkspaceRun,
+  type AgentInputRequest,
+  type AgentModelRetry,
+  type AgentToolActivity,
+  type AgentWorkspaceRunState
+} from './agent-workspace-run-state';
 
 export type AgentWorkspaceAction = AgentGatewayEvent | { type: 'WORKSPACE_RESET' };
 
@@ -75,7 +51,7 @@ function reduceLifecycleEvent(
   switch (event.type) {
     case 'RUN_STARTED':
       return {
-        ...state,
+        ...clearModelRetry(state),
         status: 'running',
         recoveryAvailable: true,
         retryAvailable: false,
@@ -83,7 +59,7 @@ function reduceLifecycleEvent(
       };
     case 'RUN_COMPLETED':
       return {
-        ...state,
+        ...clearModelRetry(state),
         status: 'complete',
         recoveryAvailable: false,
         retryAvailable: false,
@@ -91,13 +67,15 @@ function reduceLifecycleEvent(
       };
     case 'RUN_STATUS':
       return reduceRunStatus(state, event);
+    case 'MODEL_RETRY':
+      return reduceModelRetry(state, event);
     case 'ERROR': {
       const status = stringField(event.payload, 'status').toUpperCase();
       const recoveryRequired = status === 'RECOVERY_REQUIRED';
       const targetFailure =
         status === 'TARGET_MISMATCH' ? 'mismatch' : status === 'TARGET_UNAVAILABLE' ? 'unavailable' : undefined;
       return {
-        ...state,
+        ...clearModelRetry(state),
         ...(event.runUid ? { runUid: event.runUid } : {}),
         status: 'error',
         recoveryAvailable: false,
@@ -117,7 +95,7 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
   const runUid = event.runUid ? { runUid: event.runUid } : {};
   if (status === 'CREATED' || status === 'RUNNING') {
     return {
-      ...state,
+      ...clearModelRetry(state),
       ...runUid,
       status: 'running',
       recoveryAvailable: event.payload.recoveryAvailable === true,
@@ -128,10 +106,15 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
   if (status === 'SUCCEEDED') {
     const result = stringField(event.payload, 'result');
     if (!result || event.payload.replayAvailable === false) {
-      return { ...state, ...runUid, status: 'error', errorMessage: stringField(event.payload, 'errorMessage') };
+      return {
+        ...clearModelRetry(state),
+        ...runUid,
+        status: 'error',
+        errorMessage: stringField(event.payload, 'errorMessage')
+      };
     }
     return {
-      ...state,
+      ...clearModelRetry(state),
       ...runUid,
       status: 'complete',
       recoveryAvailable: false,
@@ -143,7 +126,7 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
     };
   }
   return {
-    ...state,
+    ...clearModelRetry(state),
     ...runUid,
     status: 'error',
     recoveryAvailable: false,
@@ -160,7 +143,7 @@ function reduceMessageEvent(
   const id = event.itemId ?? event.eventId;
   switch (event.type) {
     case 'MESSAGE_STARTED':
-      return { ...state, messages: upsertMessage(state.messages, id, '') };
+      return { ...clearModelRetry(state), messages: upsertMessage(state.messages, id, '') };
     case 'MESSAGE_DELTA':
       return { ...state, messages: appendMessage(state.messages, id, stringField(event.payload, 'delta')) };
     case 'MESSAGE_COMPLETED':

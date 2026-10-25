@@ -28,6 +28,7 @@ import type {
   AgentSession,
   AgentTranscriptMessage
 } from '../model/agent-workspace-contract';
+import { agentGatewayEventTypes } from '../model/agent-workspace-contract';
 import {
   agentGatewayEventSchema,
   agentSourceTargetSchema,
@@ -243,7 +244,11 @@ function publishFrame(frame: string, onEvent: (event: AgentGatewayEvent) => void
   } catch {
     throw new AgentGatewayRequestError('contract');
   }
-  onEvent(parse(agentGatewayEventSchema, value));
+  const event = parse(agentGatewayEventSchema, value) as AgentGatewayEvent;
+  // Forward compatibility: a newer backend may emit event types this UI does not know; skip them
+  // instead of failing the whole stream. Structural violations above still surface as contract errors.
+  if (!agentGatewayEventTypes.includes(event.type)) return;
+  onEvent(event);
 }
 
 function parse<T>(schema: { parse: (value: unknown) => T }, value: unknown): T {

@@ -4422,6 +4422,9 @@
     "targetUnavailable": "HertzBeat 暫時無法核驗目前調查目標，本次調查未啟動。",
     "invalidTarget": "此調查連結包含無效或暫不支援的目標，請返回來源頁面重新發起。",
     "activeObservationPaused": "即時觀察已暫停，伺服器仍將該執行標記為進行中，系統未假定它已完成。",
+    "modelRetrying": "模型請求失敗：{{reason}}，{{delay}} 秒後自動重試（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryingNoDelay": "模型請求失敗：{{reason}}，正在自動重試（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryUnknownReason": "未知伺服器錯誤",
     "context": {
       "label": "運行上下文",
       "open": "開啟運行詳情",

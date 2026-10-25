@@ -16,11 +16,12 @@
  */
 
 import { CodeOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Tag, Typography } from 'antd';
+import { Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import { ConversationComposer, ConversationHeader } from './agent-workspace-conversation-chrome';
+import { ConversationStatusRows } from './agent-workspace-conversation-status';
 import styles from './agent-workspace-conversation.module.css';
 import { formatAgentTimestamp, formatElapsed, toolStatusColor } from './agent-workspace-format';
 
@@ -48,7 +49,6 @@ export function AgentWorkspaceConversation({
         {messages.map((message, index) => (
           <ConversationMessage key={'id' in message ? message.id : index} message={message} />
         ))}
-        {sessionLoadIncomplete ? <ConversationFailure message={t('aiWorkspace.sessionLoadIncomplete')} /> : null}
         {controller.run.tools.length ? (
           <ConversationActivity
             contextOpen={contextOpen}
@@ -58,39 +58,11 @@ export function AgentWorkspaceConversation({
             }}
           />
         ) : null}
-        {showRunFailure(controller) ? (
-          <ConversationFailure
-            message={runFailureMessage(controller, t)}
-            {...(controller.run.retryAvailable ? { retry: controller.actions.retry } : {})}
-          />
-        ) : null}
-        {showPausedObservation(controller) ? (
-          <ConversationPaused
-            recoveryAvailable={controller.run.recoveryAvailable === true}
-            recover={controller.actions.recover}
-          />
-        ) : null}
-        {controller.failure ? <ConversationFailure retry={controller.actions.recover} /> : null}
-        {controller.invalidTarget ? <ConversationFailure message={t('aiWorkspace.invalidTarget')} /> : null}
+        <ConversationStatusRows controller={controller} />
       </div>
       <ConversationComposer controller={controller} />
     </section>
   );
-}
-
-function showRunFailure(controller: AgentWorkspaceViewModel) {
-  return !controller.invalidTarget && controller.run.status === 'error' && Boolean(controller.run.errorMessage);
-}
-
-function showPausedObservation(controller: AgentWorkspaceViewModel) {
-  return !controller.invalidTarget && controller.run.status === 'running' && controller.run.observationExpired === true;
-}
-
-function runFailureMessage(controller: AgentWorkspaceViewModel, t: ReturnType<typeof useTranslation>['t']) {
-  if (controller.run.recoveryRequired) return t('aiWorkspace.recoveryRequired');
-  if (controller.run.targetFailure === 'mismatch') return t('aiWorkspace.targetMismatch');
-  if (controller.run.targetFailure === 'unavailable') return t('aiWorkspace.targetUnavailable');
-  return controller.run.errorMessage ?? '';
 }
 
 function ConversationMessage({
@@ -180,40 +152,6 @@ function EmptyConversation() {
     <div className={styles.emptyConversation}>
       <Typography.Title level={4}>{t('aiWorkspace.empty.title')}</Typography.Title>
       <Typography.Text type="secondary">{t('aiWorkspace.empty.description')}</Typography.Text>
-    </div>
-  );
-}
-
-function ConversationFailure({ message, retry }: { message?: string; retry?: () => Promise<void> }) {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.failure} role="alert">
-      <span>{message || t('aiWorkspace.failure')}</span>
-      {retry ? (
-        <Button size="small" onClick={() => void retry()}>
-          {t('common.retry')}
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-function ConversationPaused({
-  recoveryAvailable,
-  recover
-}: {
-  recoveryAvailable: boolean;
-  recover: () => Promise<void>;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.failure} role="status">
-      <span>{t('aiWorkspace.activeObservationPaused')}</span>
-      {recoveryAvailable ? (
-        <Button size="small" onClick={() => void recover()}>
-          {t('aiWorkspace.actions.recover')}
-        </Button>
-      ) : null}
     </div>
   );
 }

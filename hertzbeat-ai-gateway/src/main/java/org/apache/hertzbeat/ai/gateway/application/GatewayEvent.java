@@ -64,6 +64,7 @@ public record GatewayEvent(
         INPUT_COMPLETED,
         APPROVAL_REQUESTED,
         APPROVAL_COMPLETED,
+        MODEL_RETRY,
         RUN_STATUS,
         RUN_COMPLETED,
         ERROR
@@ -83,6 +84,7 @@ public record GatewayEvent(
             InputCompletedPayload,
             ApprovalRequestedPayload,
             ApprovalCompletedPayload,
+            ModelRetryPayload,
             RunStatusPayload,
             RunCompletedPayload,
             ErrorPayload {
@@ -152,6 +154,16 @@ public record GatewayEvent(
             String traceId,
             String interactionId,
             String status,
+            String errorMessage) implements GatewayEventPayload {
+    }
+
+    /** Model request retry progress payload. */
+    @Builder
+    public record ModelRetryPayload(
+            String traceId,
+            Integer attempt,
+            Integer maxAttempts,
+            Long delayMs,
             String errorMessage) implements GatewayEventPayload {
     }
 

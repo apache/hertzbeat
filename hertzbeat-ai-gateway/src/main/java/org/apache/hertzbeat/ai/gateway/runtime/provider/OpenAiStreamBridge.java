@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,8 +43,20 @@ final class OpenAiStreamBridge implements StreamingChatModel {
     private final OpenAiChatModel model;
 
     OpenAiStreamBridge(OpenAiChatOptions defaults) {
+        this(defaults, null);
+    }
+
+    OpenAiStreamBridge(OpenAiChatOptions defaults, Duration streamIdleTimeout) {
         model = OpenAiChatModel.builder().options(withScopeHeader(defaults, null))
-                .httpClientBuilderCustomizer(builder -> builder.interceptor(this::intercept)).build();
+                .httpClientBuilderCustomizer(builder -> {
+                    // The HTTP-client read timeout bounds the silence between two stream bytes: an idle-stream
+                    // watchdog for providers that accept the request but never deliver a first token. The SDK
+                    // default falls back to the 10-minute request timeout; unset components keep SDK defaults.
+                    if (streamIdleTimeout != null && !streamIdleTimeout.isZero() && !streamIdleTimeout.isNegative()) {
+                        builder.timeout(com.openai.core.Timeout.builder().read(streamIdleTimeout).build());
+                    }
+                    builder.interceptor(this::intercept);
+                }).build();
     }
 
     @Override

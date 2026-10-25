@@ -134,7 +134,20 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--hb-space-3);
-  padding: var(--hb-space-3);
+  max-width: 880px;
+  margin: 0 auto var(--hb-space-6);
+  padding: var(--hb-space-3) var(--hb-space-4);
   border-left: 3px solid var(--hb-status-unavailable);
   background: var(--hb-bg-raised);
+}
+
+.failure > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+
+.failure[data-tone='progress'] {
+  border-left-color: var(--ant-color-warning);
 }

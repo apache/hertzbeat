@@ -197,7 +197,7 @@ public class AgentCommandService {
                         return Flux.just(recoveryRequiredErrorEvent(
                                 command, request, conversationId, recoveryFailure.operatorMessage()));
                     }
-                    log.debug("Agent Gateway runtime failed for run {}", request.getRun().getRunUid(), exception);
+                    log.warn("Agent Gateway runtime failed for run {}", request.getRun().getRunUid(), exception);
                     failInvocationIfIncomplete(request.getRun(), completed, "Agent Gateway runtime failed.");
                     return Flux.just(errorEvent(command, request, conversationId,
                             "Agent Gateway runtime failed."));

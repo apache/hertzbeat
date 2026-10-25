@@ -75,6 +75,12 @@ public class AgentRuntimeEvent {
 
     Long elapsedMs;
 
+    Integer retryAttempt;
+
+    Integer retryMaxAttempts;
+
+    Long retryDelayMs;
+
     Instant timestamp;
 
     public static AgentRuntimeEvent runStarted(String traceId, Instant timestamp) {
@@ -97,6 +103,13 @@ public class AgentRuntimeEvent {
 
     public static AgentRuntimeEvent runRecoveryRequired(String traceId, String errorMessage, Instant timestamp) {
         return builder().type(AgentRuntimeEventType.ERROR).traceId(traceId).status(EventStatus.RECOVERY_REQUIRED)
+                .errorMessage(errorMessage).timestamp(timestamp).build();
+    }
+
+    public static AgentRuntimeEvent modelRetry(String traceId, int attempt, int maxAttempts, long delayMs,
+                                               String errorMessage, Instant timestamp) {
+        return builder().type(AgentRuntimeEventType.MODEL_RETRY).traceId(traceId)
+                .retryAttempt(attempt).retryMaxAttempts(maxAttempts).retryDelayMs(delayMs)
                 .errorMessage(errorMessage).timestamp(timestamp).build();
     }
 

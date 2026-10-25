@@ -155,6 +155,7 @@ public class AgentRuntimeLoop {
         AgentRuntimeControl control = run.control();
         int retriesUsed = 0;
         String itemId = state.beginAssistantMessageStream();
+        String lastFailureMessage = null;
         while (true) {
             control.checkpoint();
             try {
@@ -164,25 +165,46 @@ public class AgentRuntimeLoop {
                         control,
                         () -> modelClient.stream(modelRequest, control, delta -> publishModelDelta(run, delta)));
                 state.incrementModelRequestCount();
-                return response == null ? modelError(itemId) : new ModelCallResult(response, itemId);
+                return response == null ? modelError(itemId, lastFailureMessage) : new ModelCallResult(response, itemId);
             } catch (AgentRuntimeOperationTimeoutException exception) {
                 control.stop("Runtime stopped because the model request timed out.");
                 control.checkpoint();
-                return modelError(itemId);
+                return modelError(itemId, exception.getMessage());
             } catch (RuntimeException exception) {
                 if (exception instanceof AgentRuntimeStoppedException) {
                     throw exception;
                 }
+                lastFailureMessage = failureMessage(exception);
                 if (!isRetryableModelException(exception)
                         || retriesUsed >= config.getRetry().getMaxModelRetries()) {
                     state.incrementModelRequestCount();
-                    return modelError(itemId);
+                    return modelError(itemId, lastFailureMessage);
                 }
-                Duration backoff = config.getRetry().getInitialBackoff();
                 retriesUsed++;
+                Duration backoff = retryBackoff(retriesUsed);
+                publishModelRetry(run, retriesUsed, backoff, lastFailureMessage);
                 control.sleep(backoff);
             }
         }
+    }
+
+    private Duration retryBackoff(int retriesUsed) {
+        AgentRuntimeProperties.RetryProperties retry = config.getRetry();
+        double multiplier = Math.max(1.0D, retry.getBackoffMultiplier());
+        long backoffMs = (long) Math.min(
+                retry.getMaxBackoff().toMillis(),
+                (double) retry.getInitialBackoff().toMillis() * Math.pow(multiplier, retriesUsed - 1));
+        return Duration.ofMillis(Math.max(1L, backoffMs));
+    }
+
+    private void publishModelRetry(LoopRun run, int attempt, Duration backoff, String failureMessage) {
+        publish(run, AgentRuntimeEvent.modelRetry(run.context().getTraceId(), attempt,
+                config.getRetry().getMaxModelRetries(), backoff.toMillis(), failureMessage, Instant.now(clock)));
+    }
+
+    private String failureMessage(RuntimeException exception) {
+        String message = exception.getMessage();
+        return StringUtils.hasText(message) ? message : exception.getClass().getSimpleName();
     }
 
     private AgentRuntimeModelRequest compactHistory(LoopRun run, AgentRuntimeModelRequest modelRequest) {
@@ -278,9 +300,11 @@ public class AgentRuntimeLoop {
         return Math.max(fullRequestEstimate, providerBaselineEstimate);
     }
 
-    private ModelCallResult modelError(String itemId) {
-        return new ModelCallResult(AgentRuntimeModelResponse.invalidResponse(
-                "Runtime model returned no response.", null), itemId);
+    private ModelCallResult modelError(String itemId, String lastFailureMessage) {
+        // Surface the real provider failure (e.g. HTTP 429 quota errors) instead of a generic placeholder.
+        String message = StringUtils.hasText(lastFailureMessage)
+                ? lastFailureMessage : "Runtime model returned no response.";
+        return new ModelCallResult(AgentRuntimeModelResponse.invalidResponse(message, null), itemId);
     }
 
     private List<ToolExecution> recordAssistantToolTurn(LoopRun run, AgentRuntimeModelResponse modelResponse,

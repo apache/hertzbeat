@@ -943,6 +943,7 @@ class AgentRuntimeLoopTest {
     @Test
     void retryExhaustedShouldReturnModelError() {
         FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
+        List<AgentRuntimeEvent> events = new ArrayList<>();
         QueueModelClient modelClient = new QueueModelClient(List.of(
                 transientFailure("first failure"),
                 transientFailure("second failure")));
@@ -950,12 +951,62 @@ class AgentRuntimeLoopTest {
         InvocationResult result = run(modelClient, catalog, runtime(config -> {
             config.getRetry().setMaxModelRetries(1);
             config.getRetry().setInitialBackoff(Duration.ofMillis(1));
-        }));
+        }), events::add);
 
         assertRuntimeFailed(result);
-        assertEquals("Runtime model returned no response.", result.getError().getMessage());
+        assertEquals("second failure", result.getError().getMessage());
         assertEquals(2, modelClient.requests.size());
         assertEquals(0, catalog.executeCount);
+        List<AgentRuntimeEvent> retryEvents = events.stream()
+                .filter(event -> event.getType() == AgentRuntimeEventType.MODEL_RETRY)
+                .toList();
+        assertEquals(1, retryEvents.size());
+        AgentRuntimeEvent retryEvent = retryEvents.get(0);
+        assertEquals(1, retryEvent.getRetryAttempt());
+        assertEquals(1, retryEvent.getRetryMaxAttempts());
+        assertEquals("first failure", retryEvent.getErrorMessage());
+    }
+
+    @Test
+    void modelRetryShouldPublishEventsUntilSuccess() {
+        FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
+        List<AgentRuntimeEvent> events = new ArrayList<>();
+        QueueModelClient modelClient = new QueueModelClient(List.of(
+                transientFailure("provider quota exhausted"),
+                AgentRuntimeModelResponse.finalAnswer("recovered", null)));
+
+        InvocationResult result = run(modelClient, catalog, runtime(config -> {
+            config.getRetry().setMaxModelRetries(2);
+            config.getRetry().setInitialBackoff(Duration.ofMillis(1));
+        }), events::add);
+
+        assertEquals("recovered", result.getResponse());
+        assertEquals(2, modelClient.requests.size());
+        List<AgentRuntimeEvent> retryEvents = events.stream()
+                .filter(event -> event.getType() == AgentRuntimeEventType.MODEL_RETRY)
+                .toList();
+        assertEquals(1, retryEvents.size());
+        AgentRuntimeEvent retryEvent = retryEvents.get(0);
+        assertEquals(1, retryEvent.getRetryAttempt());
+        assertEquals(2, retryEvent.getRetryMaxAttempts());
+        assertEquals("provider quota exhausted", retryEvent.getErrorMessage());
+    }
+
+    @Test
+    void nonRetryableModelFailureShouldSkipRetryEvents() {
+        FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
+        List<AgentRuntimeEvent> events = new ArrayList<>();
+        QueueModelClient modelClient = new QueueModelClient(List.of(
+                new AgentRuntimeModelException("invalid request payload", false)));
+
+        InvocationResult result = run(modelClient, catalog, runtime(config -> {
+            config.getRetry().setMaxModelRetries(2);
+        }), events::add);
+
+        assertRuntimeFailed(result);
+        assertEquals("invalid request payload", result.getError().getMessage());
+        assertEquals(1, modelClient.requests.size());
+        assertEquals(0, events.stream().filter(event -> event.getType() == AgentRuntimeEventType.MODEL_RETRY).count());
     }
 
     private InvocationResult run(AgentRuntimeModelClient modelClient, FakeToolCatalogService catalog,

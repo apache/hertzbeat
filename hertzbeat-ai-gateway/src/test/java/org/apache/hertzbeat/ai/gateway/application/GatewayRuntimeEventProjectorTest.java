@@ -33,6 +33,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.InputCompletedPa
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageDeltaPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageStartedPayload;
+import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ModelRetryPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunStartedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ToolCompletedPayload;
@@ -230,6 +231,18 @@ class GatewayRuntimeEventProjectorTest {
                 .approvalStatus(approvalStatus)
                 .elapsedMs(elapsedMs)
                 .build();
+    }
+
+    @Test
+    void projectorShouldConvertModelRetry() {
+        GatewayEvent event = project(AgentRuntimeEvent.modelRetry("trace-1", 1, 2, 500L,
+                "provider quota exhausted", Instant.parse("2026-04-19T00:00:00Z")));
+        ModelRetryPayload payload = assertPayload(event, GatewayEventType.MODEL_RETRY, ModelRetryPayload.class);
+        assertEquals("trace-1", payload.traceId());
+        assertEquals(1, payload.attempt());
+        assertEquals(2, payload.maxAttempts());
+        assertEquals(500L, payload.delayMs());
+        assertEquals("provider quota exhausted", payload.errorMessage());
     }
 
     private <T> T assertPayload(GatewayEvent event, GatewayEventType type, Class<T> payloadType) {
