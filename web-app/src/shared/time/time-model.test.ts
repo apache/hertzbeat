@@ -42,6 +42,19 @@ describe('shared time ownership model', () => {
     expect(refreshGlobalTime(state, 131_000)).toMatchObject({ anchorMs: 131_000, refreshRevision: 2 });
   });
 
+  it('restarts the auto-refresh countdown when a range change resets the anchor', () => {
+    let state = updateGlobalAutoRefresh(createGlobalTimeState(100_000), 30_000, 100_000);
+    state = tickGlobalTime(state, 119_000);
+    expect(state.remainingMs).toBe(11_000);
+
+    const changed = updateGlobalRange(state, '1h', 120_000);
+    expect(changed).toMatchObject({ anchorMs: 120_000, remainingMs: 30_000 });
+    expect(tickGlobalTime(changed, 120_001).remainingMs).toBeLessThanOrEqual(changed.remainingMs ?? 0);
+
+    const paused = updateGlobalRange(updateGlobalAutoRefresh(changed, 0, 122_000), '15m', 123_000);
+    expect(paused.remainingMs).toBeNull();
+  });
+
   it('lets route-owned time inherit once, then freeze an independent committed window', () => {
     const global = globalTimeWindow(createGlobalTimeState(2_000_000));
     let route = createRouteTimeState('route_owned', global);

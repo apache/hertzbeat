@@ -60,7 +60,13 @@ export function createGlobalTimeState(nowMs: number): GlobalTimeState {
 }
 
 export function updateGlobalRange(state: GlobalTimeState, range: GlobalTimeRange, nowMs: number): GlobalTimeState {
-  return { ...state, range, rangeMs: rangeMilliseconds[range], anchorMs: nowMs };
+  return {
+    ...state,
+    range,
+    rangeMs: rangeMilliseconds[range],
+    anchorMs: nowMs,
+    remainingMs: state.autoRefreshMs > 0 ? state.autoRefreshMs : null
+  };
 }
 
 export function updateGlobalAutoRefresh(state: GlobalTimeState, autoRefreshMs: number, nowMs: number): GlobalTimeState {
