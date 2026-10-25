@@ -105,6 +105,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>README.md</include>
+                <include>UPGRADE.md</include>
             </includes>
         </fileSet>
         <fileSet>

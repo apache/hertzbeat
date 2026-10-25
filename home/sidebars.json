@@ -36,7 +36,7 @@
         {
           "type": "category",
           "label": "setting",
-          "items": ["start/account-modify", "start/custom-config"]
+          "items": ["start/account-modify", "help/admin_only_migration", "start/custom-config"]
         },
         {
           "type": "category",
@@ -122,6 +122,7 @@
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
             "help/alert_smn",
+            "help/alert_serverchan",
             "help/alert_notification_template"
           ]
         },

@@ -38,6 +38,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -276,6 +277,7 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
         int timeout = CollectUtil.getTimeout(protocol.getTimeout());
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
+                                                  .setCookieSpec(CookieSpecs.STANDARD)
                                                   .setConnectTimeout(timeout)
                                                   .setSocketTimeout(timeout)
                                                   .setConnectionRequestTimeout(timeout)
@@ -284,6 +286,7 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
             requestBuilder.setConfig(requestConfig);
         } else {
             RequestConfig requestConfig = RequestConfig.custom()
+                                                  .setCookieSpec(CookieSpecs.STANDARD)
                                                   .setRedirectsEnabled(true)
                                                   .build();
             requestBuilder.setConfig(requestConfig);

@@ -79,6 +79,26 @@ class SurenessResourceRuleTest {
     }
 
     @Test
+    void managementRulesGrantOnlyAdminInEveryShippedAndTestCopy() throws IOException {
+        assertManagementRoles(resourceRole, "packaged sureness.yml");
+        Set<Path> copies = new LinkedHashSet<>(deploymentCopies());
+        copies.add(Path.of("..", "hertzbeat-manager", "src", "test", "resources", "sureness.yml"));
+        copies.add(Path.of("..", "hertzbeat-e2e", "hertzbeat-observability-e2e", "src", "test", "resources", "sureness.yml"));
+        for (Path copy : copies) {
+            assertManagementRoles(sectionOf(copy, "resourceRole"), copy.toString());
+            assertFalse(sectionOf(copy, "excludedResource").contains("/h2-console/**===*"), copy.toString());
+        }
+    }
+
+    private static void assertManagementRoles(List<String> rules, String source) {
+        Set<String> ingestion = Set.of("/api/otlp/v1/**", "/api/logs/otlp/**", "/api/logs/ingest/**", "/api/v2/alerts");
+        for (String rule : rules) {
+            String[] segments = rule.split(SEPARATOR);
+            assertEquals(ingestion.contains(segments[0]) ? "[admin,user]" : "[admin]", segments[2], source + ": " + rule);
+        }
+    }
+
+    @Test
     void everyResourceRoleRuleIsWellFormed() {
         for (String rule : resourceRole) {
             assertEquals(RESOURCE_ROLE_SEGMENTS, rule.split(SEPARATOR, -1).length,
@@ -113,17 +133,41 @@ class SurenessResourceRuleTest {
     }
 
     @Test
-    void readingMonitorsStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", roleTree.searchPathFilterRoles("/api/monitors" + SEPARATOR + "get"));
+    void readingMonitorsRequiresAdmin() {
+        assertEquals("[admin]", roleTree.searchPathFilterRoles("/api/monitors" + SEPARATOR + "get"));
     }
 
     @Test
-    void readingAlertDefinitionsExcludesGuest() {
-        assertEquals("[admin,user]",
+    void monitorImportsAndExportsAreRestrictedToAdmin() {
+        assertMonitorTransferRoles(roleTree, "packaged sureness.yml");
+    }
+
+    @Test
+    void deploymentAndTestCopiesRestrictMonitorImportsAndExports() throws IOException {
+        Set<Path> copies = new LinkedHashSet<>(deploymentCopies());
+        copies.add(Path.of("..", "hertzbeat-manager", "src", "test", "resources", "sureness.yml"));
+        copies.add(Path.of("..", "hertzbeat-e2e", "hertzbeat-observability-e2e", "src", "test", "resources", "sureness.yml"));
+        for (Path copy : copies) {
+            TirePathTree copyTree = new TirePathTree();
+            copyTree.buildTree(new LinkedHashSet<>(sectionOf(copy, "resourceRole")));
+            assertMonitorTransferRoles(copyTree, copy.toString());
+        }
+    }
+
+    private static void assertMonitorTransferRoles(TirePathTree tree, String source) {
+        assertEquals("[admin]", tree.searchPathFilterRoles("/api/monitors/export" + SEPARATOR + "get"), source);
+        assertEquals("[admin]", tree.searchPathFilterRoles("/api/monitors/export/all" + SEPARATOR + "get"), source);
+        assertEquals("[admin]", tree.searchPathFilterRoles("/api/monitors" + SEPARATOR + "get"), source);
+        assertEquals("[admin]", tree.searchPathFilterRoles("/api/monitors/import" + SEPARATOR + "post"), source);
+    }
+
+    @Test
+    void readingAlertDefinitionsRequiresAdmin() {
+        assertEquals("[admin]",
                 roleTree.searchPathFilterRoles("/api/alert/define/1" + SEPARATOR + "get"));
-        assertEquals("[admin,user]",
+        assertEquals("[admin]",
                 roleTree.searchPathFilterRoles("/api/alert/defines" + SEPARATOR + "get"));
-        assertEquals("[admin,user]",
+        assertEquals("[admin]",
                 roleTree.searchPathFilterRoles("/api/alert/defines/export" + SEPARATOR + "get"));
     }
 
@@ -139,21 +183,10 @@ class SurenessResourceRuleTest {
                 roleTree.searchPathFilterRoles("/api/alert/defines/import" + SEPARATOR + "post"));
     }
 
-    /**
-     * Only the {@code get} verb under {@code /api/apps} used to be listed, so the monitoring
-     * template writes behind {@code AppController} reached any authenticated caller, down to
-     * a {@code guest}.
-     *
-     * <p>The write verbs are not equally dangerous, and the rules deliberately differ.
-     * {@code post} refuses to overwrite an existing template, so it only adds a type that
-     * nobody is obliged to use, which puts it on the same footing as creating a monitor.
-     * {@code put} overwrites any template including the built-in ones and then hands the new
-     * definition to {@code updateAppCollectJob}, retroactively changing what every existing
-     * monitor of that type collects for every account, so it stays admin only.
-     */
+    /** Management template authoring is admin-only, including adding a new type. */
     @Test
-    void addingMonitorTemplatesIsOpenToUsers() {
-        assertEquals("[admin,user]", roleTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "post"));
+    void addingMonitorTemplatesRequiresAdmin() {
+        assertEquals("[admin]", roleTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "post"));
     }
 
     @Test
@@ -167,8 +200,8 @@ class SurenessResourceRuleTest {
     }
 
     @Test
-    void readingMonitorTemplatesStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", roleTree.searchPathFilterRoles("/api/apps/linux/define/yml" + SEPARATOR + "get"));
+    void readingMonitorTemplatesRequiresAdmin() {
+        assertEquals("[admin]", roleTree.searchPathFilterRoles("/api/apps/linux/define/yml" + SEPARATOR + "get"));
     }
 
     /**
@@ -213,7 +246,7 @@ class SurenessResourceRuleTest {
         for (Path copy : deploymentCopies()) {
             TirePathTree copyTree = new TirePathTree();
             copyTree.buildTree(new LinkedHashSet<>(sectionOf(copy, "resourceRole")));
-            assertEquals("[admin,user]", copyTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "post"),
+            assertEquals("[admin]", copyTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "post"),
                     "adding a monitoring template is unruled or over-granted in " + copy);
             assertEquals("[admin]", copyTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "put"),
                     "overwriting a monitoring template is unruled or over-granted in " + copy);
@@ -227,10 +260,10 @@ class SurenessResourceRuleTest {
         for (Path copy : deploymentCopies()) {
             TirePathTree copyTree = new TirePathTree();
             copyTree.buildTree(new LinkedHashSet<>(sectionOf(copy, "resourceRole")));
-            assertEquals("[admin,user]",
+            assertEquals("[admin]",
                     copyTree.searchPathFilterRoles("/api/alert/define/1" + SEPARATOR + "get"),
                     "alert definitions expose query expressions to guest in " + copy);
-            assertEquals("[admin,user]",
+            assertEquals("[admin]",
                     copyTree.searchPathFilterRoles("/api/alert/defines" + SEPARATOR + "get"),
                     "alert definition lists expose query expressions to guest in " + copy);
             assertEquals("[admin]",

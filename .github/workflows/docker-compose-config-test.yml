@@ -18,14 +18,15 @@
 name: Docker Compose Config
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, '1.9.x-dev' ]
     paths:
       - '.github/workflows/docker-compose-config-test.yml'
       - 'script/ci/check-quickstart-compose.sh'
       - 'script/docker-compose/**'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, '1.9.x-dev' ]
     paths:
       - '.github/workflows/docker-compose-config-test.yml'
       - 'script/ci/check-quickstart-compose.sh'

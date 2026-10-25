@@ -18,7 +18,7 @@
 //! Configuration management for the MCP Bash Server
 //!
 //! This module handles reading and parsing configuration from TOML files,
-//! including server settings and security blacklists for command validation.
+//! including network settings and the OAuth deployment mode.
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -27,30 +27,6 @@ use std::fs;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub settings: Settings,
-    pub blacklist: Blacklist,
-    pub whitelist: Whitelist,
-}
-
-/// Security whitelist configuration for command validation
-/// Contains lists of allowed commands and operations
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Whitelist {
-    /// List of command names that are allowed to be executed
-    pub commands: Vec<String>,
-    /// List of regular expressions for commands that are allowed
-    /// These patterns are matched against the full command line
-    pub regex: Vec<String>,
-}
-
-/// Security blacklist configuration for command validation
-/// Contains lists of forbidden commands and regex patterns
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Blacklist {
-    /// List of command names that are not allowed to be executed
-    pub commands: Vec<String>,
-    /// List of regular expressions for commands that are not allowed
-    /// These patterns are matched against the full command line
-    pub regex: Vec<String>,
 }
 
 /// Server runtime settings including network configuration
@@ -64,6 +40,10 @@ pub struct Settings {
 impl Config {
     /// Read and parse configuration from a TOML file
     /// Returns parsed Config structure or error if file cannot be read/parsed
+    ///
+    /// Legacy whitelist and blacklist sections are ignored. General command,
+    /// script, and Python execution has been removed and cannot be re-enabled
+    /// through configuration.
     pub fn read_config(file: &str) -> Result<Config> {
         let toml_str = fs::read_to_string(file)?;
         let config: Config = toml::from_str(&toml_str)?;
@@ -84,14 +64,6 @@ mod tests {
 port = 4000
 host = "127.0.0.1"
 env = "development"
-
-[whitelist]
-commands = ["echo hello", "ls -la"]
-regex = ["echo.*", "ls.*"]
-
-[blacklist]
-commands = ["rm", "dd"]
-regex = [".*[|&].*", "^sudo .*"]
 "#;
 
         let mut temp_file = NamedTempFile::new().unwrap();
@@ -103,27 +75,41 @@ regex = [".*[|&].*", "^sudo .*"]
         assert_eq!(config.settings.port, 4000);
         assert_eq!(config.settings.host, "127.0.0.1");
         assert_eq!(config.settings.env, Some("development".to_string()));
+    }
 
-        assert_eq!(config.whitelist.commands.len(), 2);
-        assert!(
-            config
-                .whitelist
-                .commands
-                .contains(&"echo hello".to_string())
-        );
-        assert!(config.whitelist.commands.contains(&"ls -la".to_string()));
+    #[test]
+    fn test_legacy_command_policy_sections_are_ignored() {
+        let config_content = r#"
+[settings]
+port = 4000
+host = "127.0.0.1"
+env = "production"
 
-        assert_eq!(config.whitelist.regex.len(), 2);
-        assert!(config.whitelist.regex.contains(&"echo.*".to_string()));
-        assert!(config.whitelist.regex.contains(&"ls.*".to_string()));
+[whitelist]
+commands = ["echo hello", "ls -la"]
+regex = [".*"]
 
-        assert_eq!(config.blacklist.commands.len(), 2);
-        assert!(config.blacklist.commands.contains(&"rm".to_string()));
-        assert!(config.blacklist.commands.contains(&"dd".to_string()));
+[blacklist]
+commands = ["rm", "dd"]
+regex = [".*[|&].*", "^sudo .*"]
+"#;
 
-        assert_eq!(config.blacklist.regex.len(), 2);
-        assert!(config.blacklist.regex.contains(&".*[|&].*".to_string()));
-        assert!(config.blacklist.regex.contains(&"^sudo .*".to_string()));
+        let mut temp_file = NamedTempFile::new().unwrap();
+        write!(temp_file, "{config_content}").unwrap();
+
+        let config = Config::read_config(temp_file.path().to_str().unwrap()).unwrap();
+
+        assert_eq!(config.settings.port, 4000);
+        assert_eq!(config.settings.host, "127.0.0.1");
+        assert_eq!(config.settings.env, Some("production".to_string()));
+
+        let serialized = toml::to_string(&config).unwrap();
+        let serialized_config: toml::Value = toml::from_str(&serialized).unwrap();
+        let table = serialized_config.as_table().unwrap();
+        assert_eq!(table.len(), 1);
+        assert!(table.contains_key("settings"));
+        assert!(!table.contains_key("whitelist"));
+        assert!(!table.contains_key("blacklist"));
     }
 
     #[test]
@@ -148,31 +134,17 @@ port = 4000
     }
 
     #[test]
-    fn test_whitelist_creation() {
-        let commands = vec!["echo".to_string(), "ls".to_string()];
-        let regex = vec!["test.*".to_string()];
+    fn test_settings_env_is_optional() {
+        let config: Config = toml::from_str(
+            r#"
+[settings]
+port = 4000
+host = "127.0.0.1"
+"#,
+        )
+        .unwrap();
 
-        let whitelist = Whitelist {
-            commands: commands.clone(),
-            regex: regex.clone(),
-        };
-
-        assert_eq!(whitelist.commands, commands);
-        assert_eq!(whitelist.regex, regex);
-    }
-
-    #[test]
-    fn test_blacklist_creation() {
-        let commands = vec!["rm".to_string(), "dd".to_string()];
-        let regex = vec![".*[|&].*".to_string(), "^sudo .*".to_string()];
-
-        let blacklist = Blacklist {
-            commands: commands.clone(),
-            regex: regex.clone(),
-        };
-
-        assert_eq!(blacklist.commands, commands);
-        assert_eq!(blacklist.regex, regex);
+        assert_eq!(config.settings.env, None);
     }
 
     #[test]

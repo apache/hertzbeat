@@ -204,6 +204,12 @@
 >
   <div *nzModalContent class="-inner-content">
     <form #receiverForm="ngForm" nz-form>
+      <nz-alert
+        *ngIf="receiverNeedsFreshSecret"
+        nzType="warning"
+        [nzMessage]="'alert.notice.receiver.secret-reentry' | i18n"
+        nzShowIcon
+      ></nz-alert>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'alert.notice.receiver.people.name' | i18n }} </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
@@ -214,7 +220,8 @@
         <nz-form-label nzFor="type" nzRequired="true" nzSpan="7">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
           <nz-select
-            [(ngModel)]="receiver.type"
+            [ngModel]="receiver.type"
+            (ngModelChange)="onReceiverDestinationChange('type', $event)"
             [nzOptionOverflowSize]="10"
             id="type"
             name="type"
@@ -254,14 +261,23 @@
       <nz-form-item *ngIf="receiver.type === 2">
         <nz-form-label [nzRequired]="receiver.type === 2" [nzSpan]="7" nzFor="hookUrl">{{ 'alert.notice.type.url' | i18n }} </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
-          <input [(ngModel)]="receiver.hookUrl" [required]="receiver.type === 2" id="hookUrl" name="hookUrl" nz-input type="url" />
+          <input
+            [ngModel]="receiver.hookUrl"
+            (ngModelChange)="onReceiverDestinationChange('hookUrl', $event)"
+            [required]="receiver.type === 2"
+            id="hookUrl"
+            name="hookUrl"
+            nz-input
+            type="url"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 2">
         <nz-form-label [nzSpan]="7" nzFor="hookAuthType">{{ 'alert.notice.type.webhook-auth-type' | i18n }} </nz-form-label>
         <nz-form-control [nzSpan]="12">
           <nz-select
-            [(ngModel)]="receiver.hookAuthType"
+            [ngModel]="receiver.hookAuthType"
+            (ngModelChange)="onReceiverDestinationChange('hookAuthType', $event)"
             id="hookAuthType"
             name="hookAuthType"
             nzPlaceHolder="{{ 'alert.notice.type.webhook-auth-type.placeholder' | i18n }}"
@@ -272,17 +288,14 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="receiver.type === 2 && (receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer')">
-        <nz-form-label
-          [nzRequired]="receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer'"
-          [nzSpan]="7"
-          nzFor="hookAuthToken"
+      <nz-form-item *ngIf="receiverRequiresHookAuthToken">
+        <nz-form-label [nzRequired]="receiverRequiresHookAuthToken" [nzSpan]="7" nzFor="hookAuthToken"
           >{{ 'alert.notice.type.webhook-auth-token' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input
             [(ngModel)]="receiver.hookAuthToken"
-            [required]="receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer'"
+            [required]="receiverRequiresHookAuthToken"
             id="hookAuthToken"
             name="hookAuthToken"
             nz-input
@@ -394,13 +407,26 @@
           >{{ 'alert.notice.type.telegram-bot-user-id' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
-          <input [(ngModel)]="receiver.tgUserId" [required]="receiver.type === 7" name="tgUserId" nz-input type="text" />
+          <input
+            [ngModel]="receiver.tgUserId"
+            (ngModelChange)="onReceiverDestinationChange('tgUserId', $event)"
+            [required]="receiver.type === 7"
+            name="tgUserId"
+            nz-input
+            type="text"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 7">
         <nz-form-label [nzSpan]="7" nzFor="tgMessageThreadId">{{ 'alert.notice.type.telegram-message-thread-id' | i18n }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
-          <input [(ngModel)]="receiver.tgMessageThreadId" name="tgMessageThreadId" nz-input type="text" />
+          <input
+            [ngModel]="receiver.tgMessageThreadId"
+            (ngModelChange)="onReceiverDestinationChange('tgMessageThreadId', $event)"
+            name="tgMessageThreadId"
+            nz-input
+            type="text"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 8">
@@ -424,7 +450,14 @@
           >{{ 'alert.notice.type.discord-channel-id' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
-          <input [(ngModel)]="receiver.discordChannelId" [required]="receiver.type === 9" name="discordChannelId" nz-input type="text" />
+          <input
+            [ngModel]="receiver.discordChannelId"
+            (ngModelChange)="onReceiverDestinationChange('discordChannelId', $event)"
+            [required]="receiver.type === 9"
+            name="discordChannelId"
+            nz-input
+            type="text"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
@@ -537,7 +570,14 @@
       <nz-form-item *ngIf="receiver.type === 15">
         <nz-form-label [nzSpan]="7" nzFor="ntfyServerUrl">{{ 'alert.notice.type.ntfy-server-url' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <input [(ngModel)]="receiver.ntfyServerUrl" name="ntfyServerUrl" nz-input type="url" placeholder="https://ntfy.sh" />
+          <input
+            [ngModel]="receiver.ntfyServerUrl"
+            (ngModelChange)="onReceiverDestinationChange('ntfyServerUrl', $event)"
+            name="ntfyServerUrl"
+            nz-input
+            type="url"
+            placeholder="https://ntfy.sh"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 15">
@@ -545,13 +585,29 @@
           >{{ 'alert.notice.type.ntfy-topic' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
-          <input [(ngModel)]="receiver.ntfyTopic" [required]="receiver.type === 15" name="ntfyTopic" nz-input type="text" />
+          <input
+            [ngModel]="receiver.ntfyTopic"
+            (ngModelChange)="onReceiverDestinationChange('ntfyTopic', $event)"
+            [required]="receiver.type === 15"
+            name="ntfyTopic"
+            nz-input
+            type="text"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 15">
-        <nz-form-label [nzSpan]="7" nzFor="ntfyToken">{{ 'alert.notice.type.ntfy-token' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="ntfyToken" [nzRequired]="credentialBinding.requiresFreshSecret(receiver, 'ntfyToken')">{{
+          'alert.notice.type.ntfy-token' | i18n
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <input [(ngModel)]="receiver.ntfyToken" name="ntfyToken" nz-input type="password" placeholder="" />
+          <input
+            [required]="credentialBinding.requiresFreshSecret(receiver, 'ntfyToken')"
+            [(ngModel)]="receiver.ntfyToken"
+            name="ntfyToken"
+            nz-input
+            type="password"
+            placeholder=""
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 14">

@@ -88,8 +88,8 @@ public abstract class NettyRemotingAbstract implements RemotingService {
 
     protected void processResponseMsg(ChannelHandlerContext ctx, ClusterMsg.Message response) {
         // for sync response
-        if (this.responseTable.containsKey(response.getIdentity())) {
-            ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
+        ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
+        if (responseFuture != null) {
             responseFuture.putResponse(response);
         } else {
             // async response
@@ -145,8 +145,11 @@ public abstract class NettyRemotingAbstract implements RemotingService {
     protected void channelIdle(ChannelHandlerContext ctx, Object evt) throws Exception {
         IdleStateEvent event = (IdleStateEvent) evt;
         if (this.nettyEventListener != null && event.state() == IdleState.ALL_IDLE) {
-            ctx.channel().closeFuture();
-            this.nettyEventListener.onChannelIdle(ctx.channel());
+            try {
+                this.nettyEventListener.onChannelIdle(ctx.channel());
+            } finally {
+                ctx.channel().close();
+            }
         }
     }
 

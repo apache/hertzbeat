@@ -72,8 +72,8 @@ class SurenessUnruledEndpointTest {
     }
 
     @Test
-    void probingStorageAvailabilityStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/warehouse/storage/status", "get"));
+    void probingStorageAvailabilityRequiresAdmin() {
+        assertEquals("[admin]", rolesFor("/api/warehouse/storage/status", "get"));
     }
 
     @Test
@@ -82,8 +82,8 @@ class SurenessUnruledEndpointTest {
     }
 
     @Test
-    void readingLogsStaysOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/observability/logs", "get"));
+    void readingLogsRequiresAdmin() {
+        assertEquals("[admin]", rolesFor("/api/observability/logs", "get"));
     }
 
     /**
@@ -106,9 +106,9 @@ class SurenessUnruledEndpointTest {
 
     @Test
     void labelWritesFollowTheUsualScoping() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/label", "get"));
-        assertEquals("[admin,user]", rolesFor("/api/label", "post"));
-        assertEquals("[admin,user]", rolesFor("/api/label", "put"));
+        assertEquals("[admin]", rolesFor("/api/label", "get"));
+        assertEquals("[admin]", rolesFor("/api/label", "post"));
+        assertEquals("[admin]", rolesFor("/api/label", "put"));
         assertEquals("[admin]", rolesFor("/api/label", "delete"));
     }
 
@@ -119,12 +119,12 @@ class SurenessUnruledEndpointTest {
 
     /**
      * Favourites are stored per account and rendered on the monitor pages, so they stay
-     * reachable by every role even though they sit under the same path prefix.
+     * administrator-only along with the rest of the management plane.
      */
     @Test
-    void metricFavouritesStayOpenToEveryRole() {
-        assertEquals("[admin,user,guest]", rolesFor("/api/metrics/favorite/1", "get"));
-        assertEquals("[admin,user,guest]", rolesFor("/api/metrics/favorite/1/cpu", "post"));
-        assertEquals("[admin,user,guest]", rolesFor("/api/metrics/favorite/1/cpu", "delete"));
+    void metricFavouritesRequireAdmin() {
+        assertEquals("[admin]", rolesFor("/api/metrics/favorite/1", "get"));
+        assertEquals("[admin]", rolesFor("/api/metrics/favorite/1/cpu", "post"));
+        assertEquals("[admin]", rolesFor("/api/metrics/favorite/1/cpu", "delete"));
     }
 }

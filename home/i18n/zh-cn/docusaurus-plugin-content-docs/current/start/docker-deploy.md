@@ -35,7 +35,7 @@ sidebar_label: Docker方式安装
    - `-v $(pwd)/data:/opt/hertzbeat/data` : (可选，数据持久化) 重要，挂载数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选) 挂载日志文件到本地主机方便查看
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选) 挂载配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
-   - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选) 挂载账户配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
+   - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选) 挂载账户配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/1.9.x-dev/script/sureness.yml)
    - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选) 在你需要运行时 JDBC 扩展时挂载外部第三方 JAR 包。`mysql-jdbc` 只在你明确希望 MySQL 兼容监控继续走 JDBC 时才需要；Oracle 监控仍然需要 [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) 和 [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)。
    - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (可选) 覆盖主程序内置采集器的 MySQL 兼容监控查询链路。可选值：`auto`、`jdbc`、`r2dbc`。
    - `--name hertzbeat` : (可选) 命名容器名称为 hertzbeat
@@ -149,8 +149,8 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
    > 此文件是HertzBeat的用户配置文件，用于配置HertzBeat的用户信息，如账户密码等。
 
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat  
-   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
+   从 1.9.1 起，默认仅保留 admin/hertzbeat 账号，首次使用前请修改默认密码。旧配置中的 user、guest 也不能登录；请由管理员仅将可信账号手工迁移为 admin，重启后重新登录。参见[权限迁移指南](../help/admin_only_migration)。\
+   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，升级前必须先审查旧账号权限\
    下载 `sureness.yml` 文件到主机目录下，例如: $(pwd)/sureness.yml  
-   下载源 [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)  
+   下载源 [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/1.9.x-dev/script/sureness.yml)\
    具体修改步骤参考 [配置修改账户密码](account-modify)
