@@ -23,14 +23,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
@@ -274,7 +277,9 @@ class DbAlertStoreHandlerImplTest {
         SingleAlert existingFiringAlert = new SingleAlert();
         existingFiringAlert.setFingerprint(firingFingerprint);
         existingFiringAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(eq(WORKSPACE_ID), anyList()))
+        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(
+                eq(WORKSPACE_ID), argThat(fingerprints -> fingerprints != null
+                        && new HashSet<>(fingerprints).equals(Set.of(resolvedFingerprint, firingFingerprint)))))
                 .thenReturn(List.of(savedResolvedAlert, existingFiringAlert));
 
         when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -287,6 +292,9 @@ class DbAlertStoreHandlerImplTest {
         assertTrue(savedGroupAlert.getAlerts().stream()
                 .anyMatch(alert -> firingFingerprint.equals(alert.getFingerprint())
                         && CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())));
+        verify(singleAlertDao).findSingleAlertsByWorkspaceIdAndFingerprintIn(
+                eq(WORKSPACE_ID), argThat(fingerprints -> fingerprints != null
+                        && new HashSet<>(fingerprints).equals(Set.of(resolvedFingerprint, firingFingerprint))));
     }
 
     @Test
