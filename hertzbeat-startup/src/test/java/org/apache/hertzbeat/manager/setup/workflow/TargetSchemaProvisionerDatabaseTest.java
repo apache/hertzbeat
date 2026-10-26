@@ -24,6 +24,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.persistence.Entity;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -61,7 +62,7 @@ class TargetSchemaProvisionerDatabaseTest {
     private static final String PASSWORD = "test-only-password";
 
     @Test
-    void provisionsAndValidatesFreshMysqlSchema() throws Exception {
+    void provisionsFreshMysqlAndPreservesV200WorkflowDataDuringUpgrade() throws Exception {
         try (MySQLContainer database = new MySQLContainer("mysql:8.4")
                 .withDatabaseName(DATABASE)
                 .withUsername(USERNAME)
@@ -75,7 +76,7 @@ class TargetSchemaProvisionerDatabaseTest {
     }
 
     @Test
-    void provisionsAndValidatesFreshPostgresqlSchema() throws Exception {
+    void provisionsFreshPostgresqlAndPreservesV200WorkflowDataDuringUpgrade() throws Exception {
         try (PostgreSQLContainer database = new PostgreSQLContainer("postgres:17.6")
                 .withDatabaseName(DATABASE)
                 .withUsername(USERNAME)
@@ -199,6 +200,13 @@ class TargetSchemaProvisionerDatabaseTest {
     }
 
     private static void verify(String jdbcUrl, MetadataDatabaseKind kind, String dialect) throws Exception {
+        var oldLocation = Files.createTempDirectory("agent-v200-" + kind.value());
+        try {
+            AgentWorkflowUpgradeProof.verify(jdbcUrl, USERNAME, PASSWORD, kind.value(), oldLocation);
+        } finally {
+            Files.deleteIfExists(oldLocation.resolve("B200__current_schema.sql"));
+            Files.deleteIfExists(oldLocation);
+        }
         assertStandardFlywayCreatesFreshBaseline(jdbcUrl, kind);
         MetadataDatabaseConfiguration target =
                 new MetadataDatabaseConfiguration(kind, jdbcUrl, USERNAME, PASSWORD);
