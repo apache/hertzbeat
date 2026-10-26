@@ -87,6 +87,7 @@ public class AgentCollectorToolService {
         Long resolvedMonitorId = monitorId(monitorId);
         String resolvedCollector = collector(collector);
         Job job = oneTimeJob(resolvedMonitorId);
+        org.apache.hertzbeat.ai.gateway.tool.core.AgentCollectionCapabilityBoundary.requireNonCode(job);
         List<CollectRep.MetricsData> metricsData = resolvedCollector == null
             ? collectJobScheduling.collectSyncJobData(job)
             : collectJobScheduling.collectSyncJobData(job, resolvedCollector);
@@ -159,6 +160,7 @@ public class AgentCollectorToolService {
             throw new IllegalArgumentException("collector must identify a registered collector");
         }
         MonitorDto monitor = requiredMonitor(monitorId);
+        org.apache.hertzbeat.ai.gateway.tool.core.AgentCollectionCapabilityBoundary.requireNonCode(appService.getAppDefine(monitor.getMonitor().getApp()));
         monitorService.modifyMonitor(monitor.getMonitor(), monitor.getParams(), collector,
                 monitor.getGrafanaDashboard());
         return Map.of("operation", "assign_monitor", "monitorId", monitorId, "collector", collector);
@@ -170,6 +172,7 @@ public class AgentCollectorToolService {
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> unassignMonitor(@ToolParam(description = "Monitor id.") Long monitorId) {
         MonitorDto monitor = requiredMonitor(monitorId);
+        org.apache.hertzbeat.ai.gateway.tool.core.AgentCollectionCapabilityBoundary.requireNonCode(appService.getAppDefine(monitor.getMonitor().getApp()));
         monitorService.modifyMonitor(monitor.getMonitor(), monitor.getParams(), null,
                 monitor.getGrafanaDashboard());
         return Map.of("operation", "unassign_monitor", "monitorId", monitorId);

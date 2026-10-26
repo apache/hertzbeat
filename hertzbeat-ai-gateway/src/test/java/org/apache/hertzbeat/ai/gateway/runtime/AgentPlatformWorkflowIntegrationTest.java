@@ -66,6 +66,7 @@ import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentSessionStatus;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -118,12 +119,14 @@ class AgentPlatformWorkflowIntegrationTest {
     void twoWireEncodedReadsPersistEvidenceAndRebuildSnapshot() throws Exception {
         try (LocalModel model = new LocalModel(List.of(
                 toolTurn("model-read-1", "monitor_get", "{\"monitorId\":42}"),
-                toolTurn("model-read-2", "monitor_query", "{}"), finalTurn("Observed one monitor.")))) {
+                toolTurn("model-read-2", "monitor_query", "{}"), finalTurn("Observed one monitor."),
+                finalTurn(JsonUtil.toJson(new AgentTaskAssessment(new AgentTaskAssessment.Goal(AgentTaskAssessment.Type.OBSERVATION,
+                    AgentTaskAssessment.Operation.QUERY, "monitor", null), AgentTaskOutcome.Stage.COMPLETE, true, List.of())))))) {
             Fixture fixture = fixture();
             List<AgentRuntimeEvent> events = execute(model, fixture, false, false);
             assertEquals(AgentRuntimeEventType.RUN_COMPLETED, terminal(events).getType());
             assertEquals(2, fixture.handlerCalls().get());
-            assertEquals(3, model.requests.size());
+            assertEquals(4, model.requests.size());
             assertTrue(model.requests.get(1).contains("model-read-1"));
             assertTrue(model.requests.get(1).contains("monitor_get"));
             assertTrue(model.requests.get(1).contains("monitorId"));
@@ -178,7 +181,8 @@ class AgentPlatformWorkflowIntegrationTest {
             assertEquals(AgentRuntimeEventType.ERROR, terminal(events).getType());
             assertTrue(recorder.findRunGroundingMessages(fixture.run().getId()).stream()
                     .noneMatch(message -> message.getGroundingProof() != null));
-            assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA));
+            assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA
+                    && event.getDelta() != null && (event.getDelta().contains("Everything is healthy.") || event.getDelta().contains("Unverified private information."))));
         }
     }
 
@@ -189,8 +193,9 @@ class AgentPlatformWorkflowIntegrationTest {
             List<AgentRuntimeEvent> events = execute(model, fixture, false, false);
             assertEquals(AgentRuntimeEventType.ERROR, terminal(events).getType());
             assertEquals(0, calls.count());
-            assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA));
-            assertTrue(terminal(events).getErrorMessage().contains("successful HertzBeat data observation"));
+            assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA
+                    && event.getDelta() != null && (event.getDelta().contains("Everything is healthy.") || event.getDelta().contains("Unverified private information."))));
+            assertEquals(java.util.ResourceBundle.getBundle("agent_reply", java.util.Locale.ENGLISH).getString("unverified"), terminal(events).getErrorMessage());
         }
     }
 
@@ -203,10 +208,10 @@ class AgentPlatformWorkflowIntegrationTest {
             assertEquals(AgentRuntimeEventType.ERROR, terminal(events).getType());
             // Generic runs may ask the model to recover with another read, but cannot publish an
             // unsupported conclusion. Scoped investigations additionally enforce immediate failure.
-            assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA
-                    || event.getType() == AgentRuntimeEventType.RUN_COMPLETED));
+            assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.RUN_COMPLETED
+                    || event.getType() == AgentRuntimeEventType.ITEM_DELTA && event.getDelta() != null && event.getDelta().contains("Unsupported conclusion.")));
             assertTrue(recorder.findRunFinalAssistantMessage(fixture.run().getId())
-                    .filter(message -> message.toolCalls().isEmpty()).isEmpty());
+                    .stream().noneMatch(message -> message.text().contains("Unsupported conclusion.")));
             assertEquals(1, fixture.handlerCalls().get());
             assertFalse(new AgentGroundingEvidenceVerifier(recorder, calls).hasDurableGrounding(fixture.run(), null));
         }
@@ -289,9 +294,15 @@ class AgentPlatformWorkflowIntegrationTest {
                 .runSessionId(fixture.session().getId()).runId(fixture.run().getId()).runUid(fixture.run().getRunUid())
                 .userMessage("Read the synthetic monitor state").currentTimeIso("2026-10-16T00:00:00Z")
                 .timezone("UTC").traceId("synthetic-trace").chatHistory(List.of()).build();
+        AgentRuntimeModelClient reviewingClient = new AgentRuntimeModelClient() {
+            public boolean supportsReplyReview() { return true; }
+
+            public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
+                    java.util.function.Consumer<String> consumer) { return client.stream(request, control, consumer); }
+        };
         List<AgentRuntimeEvent> events = new ArrayList<>();
         try (AgentRuntimeControl control = AgentRuntimeControl.forContext(context, Clock.systemUTC())) {
-            new AgentRuntimeLoop(new AgentRuntimeProperties(), client::stream, fixture.bridge(), Clock.systemUTC())
+            new AgentRuntimeLoop(new AgentRuntimeProperties(), reviewingClient, fixture.bridge(), Clock.systemUTC())
                     .run(context, control, events::add, message -> {
                         if (dropProof && message.getGroundingProof() != null) {
                             return null;

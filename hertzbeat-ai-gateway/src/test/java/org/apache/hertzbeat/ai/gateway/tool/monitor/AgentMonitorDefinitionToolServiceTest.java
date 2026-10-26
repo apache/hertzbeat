@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.monitor;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,9 +37,18 @@ class AgentMonitorDefinitionToolServiceTest {
         var definitions = mock(MonitorDefinitionService.class);
         var service = new AgentMonitorDefinitionToolService(definitions);
         String revision = "a".repeat(64);
-        when(definitions.detail("custom", "en-US")).thenReturn(new MonitorDefinitionDetailResponse(
-                1, "custom", "Custom", MonitorDefinitionOrigin.CUSTOM, true, true, false,
-                "password: secret-sentinel", revision));
+        when(definitions.detail("custom", "en-US"))
+                .thenReturn(
+                        new MonitorDefinitionDetailResponse(
+                                1,
+                                "custom",
+                                "Custom",
+                                MonitorDefinitionOrigin.CUSTOM,
+                                true,
+                                true,
+                                false,
+                                "password: secret-sentinel",
+                                revision));
         assertFalse(JsonUtil.toJson(service.detail("custom", "en-US")).contains("secret-sentinel"));
         service.delete("custom", revision);
         verify(definitions).delete("custom", "\"" + revision + "\"");
@@ -49,11 +58,20 @@ class AgentMonitorDefinitionToolServiceTest {
     void catalogPagesAreBoundedAndReportPartialIncludingPastEnd() {
         var definitions = mock(MonitorDefinitionService.class);
         var service = new AgentMonitorDefinitionToolService(definitions);
-        var item = new org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCatalogItem(
-                "custom", "Custom", MonitorDefinitionOrigin.CUSTOM, true, true, false, "revision");
-        when(definitions.catalog(null)).thenReturn(
-                new org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCatalogResponse(
-                        1, java.util.Collections.nCopies(25, item)));
+        var item =
+                new org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCatalogItem(
+                        "custom",
+                        "Custom",
+                        MonitorDefinitionOrigin.CUSTOM,
+                        true,
+                        true,
+                        false,
+                        "revision");
+        when(definitions.catalog(null))
+                .thenReturn(
+                        new org.apache.hertzbeat.manager.monitor.definition
+                                .MonitorDefinitionCatalogResponse(
+                                1, java.util.Collections.nCopies(25, item)));
         var first = service.catalog(null, null, null);
         assertEquals(20, first.items().size());
         assertEquals(25, first.total());
@@ -69,5 +87,4 @@ class AgentMonitorDefinitionToolServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.catalog(null, 10001, 20));
         assertThrows(IllegalArgumentException.class, () -> service.catalog(null, 0, 101));
     }
-
 }

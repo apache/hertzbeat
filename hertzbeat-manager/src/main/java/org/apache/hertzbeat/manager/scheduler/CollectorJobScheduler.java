@@ -288,6 +288,17 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
     }
 
     @Override
+    public List<CollectRep.MetricsData> collectLocalApprovedJob(Job job) {
+        if (job.isCyclic() || job.getMetrics() == null || job.getMetrics().size() != 1
+                || org.apache.hertzbeat.common.entity.job.InlineCollectionPermit.find(job.getMetrics().getFirst()) == null
+                || !CommonConstants.MAIN_COLLECTOR_NODE.equals(collectJobService.getCollectorIdentity())
+                || consistentHash.getNode(CommonConstants.MAIN_COLLECTOR_NODE) == null) {
+            throw new IllegalStateException("Bound inline collection requires an online in-process Collector and one noncyclic metric");
+        }
+        return collectJobService.collectSyncJobData(job);
+    }
+
+    @Override
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
         // todo dispatchKey ip+port or id
         String dispatchKey = String.valueOf(job.getMonitorId());

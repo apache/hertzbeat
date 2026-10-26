@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.entity;
 
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
@@ -26,9 +24,9 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
+import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryReadModel;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityInfo;
-import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryReadModel;
 import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.apache.hertzbeat.manager.service.ObserveEntityService;
 import org.apache.hertzbeat.manager.service.entity.EntityDiscoveryReadModelService;
@@ -36,6 +34,9 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 /** Entity metadata mutations deliberately exclude credentials, graph rewrites and trusted identity fields. */
 @Service
@@ -53,22 +54,23 @@ public class AgentEntityManagementToolService {
     public record Metadata(String type, String name, String displayName, String namespace, String environment,
                            String owner, String lifecycle, String tier, String system, String description) { }
 
-    @Tool(name = "entity.editable", description = "Get the non-secret editable metadata subset of an authorized entity. Advanced configuration and graph"
-            + " bindings use the entity UI or validated definition workflow.")
-    @AgentToolPolicy(access = AgentToolAccess.STANDARD, exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Metadata editable(long entityId) {
         positive(entityId);
-        EntityDto dto = entities.getEntityDto(entityId);
-        if (dto == null || dto.getEntityInfo() == null) {
-            throw new IllegalArgumentException("Entity not found");
-        }
+        EntityDto dto = requiredReadEntity(entityId);
         EntityInfo info = dto.getEntityInfo();
         return new Metadata(info.getType(), info.getName(), info.getDisplayName(), info.getNamespace(),
                 info.getEnvironment(), info.getOwner(), info.getLifecycle(), info.getTier(), info.getSystem(), info.getDescription());
     }
 
-    @Tool(name = "entity.create", description = "Create an entity from non-secret catalog metadata; identities and bindings use the validated definition workflow.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @Tool(
+            name = "entity.create",
+            description =
+                    "Create an entity from non-secret catalog metadata; identities and bindings use"
+                        + " the validated definition workflow.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> create(Metadata metadata) {
         EntityDto dto = new EntityDto();
         dto.setEntityInfo(new EntityInfo());
@@ -78,8 +80,16 @@ public class AgentEntityManagementToolService {
         return Map.of("entityId", entities.addEntity(dto));
     }
 
-    @Tool(name = "entity.update", description = "Update supplied non-null catalog metadata fields, preserving existing identities, bindings and relations. Empty strings explicitly clear fields.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @Tool(
+            name = "entity.update",
+            description =
+                    "Update supplied non-null catalog metadata fields, preserving existing"
+                        + " identities, bindings and relations. Empty strings explicitly clear"
+                        + " fields.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> update(long entityId, Metadata metadata) {
         positive(entityId);
         EntityDto dto = entities.getEntityDto(entityId);
@@ -93,8 +103,15 @@ public class AgentEntityManagementToolService {
         return Map.of("entityId", entityId, "updated", true);
     }
 
-    @Tool(name = "entity.delete", description = "Delete an entity and its bindings and relations. Administrator authorization and dangerous-action approval are required.")
-    @AgentToolPolicy(access = AgentToolAccess.ADMIN, risk = AgentToolRisk.DANGEROUS, exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @Tool(
+            name = "entity.delete",
+            description =
+                    "Delete an entity and its bindings and relations. Administrator authorization"
+                        + " and dangerous-action approval are required.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.DANGEROUS,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> delete(long entityId) {
         positive(entityId);
         if (entities.getEntityDto(entityId) == null) {
@@ -107,8 +124,6 @@ public class AgentEntityManagementToolService {
         return Map.of("entityId", entityId, "deleted", true);
     }
 
-    @Tool(name = "entity.alerts", description = "Read paginated alerts in the authorized entity troubleshooting context.")
-    @AgentToolPolicy(access = AgentToolAccess.STANDARD, exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Page<SingleAlert> alerts(long entityId, @ToolParam(required = false) String status,
                                   @ToolParam(required = false) String severity,
                                   @ToolParam(required = false) Integer pageIndex, @ToolParam(required = false) Integer pageSize) {
@@ -116,8 +131,6 @@ public class AgentEntityManagementToolService {
         return entities.getEntityAlerts(entityId, status, severity, page(pageIndex), size(pageSize));
     }
 
-    @Tool(name = "entity.monitors", description = "Read paginated monitor summaries bound to an authorized entity; never returns monitor credentials.")
-    @AgentToolPolicy(access = AgentToolAccess.STANDARD, exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Page<MonitorInfo> monitors(long entityId, @ToolParam(required = false) Byte status,
                                      @ToolParam(required = false) String app,
                                      @ToolParam(required = false) Integer pageIndex, @ToolParam(required = false) Integer pageSize) {
@@ -125,24 +138,193 @@ public class AgentEntityManagementToolService {
         return entities.getEntityMonitors(entityId, status, app, page(pageIndex), size(pageSize));
     }
 
-    @Tool(name = "entity.discovery", description = "Read the bounded resource discovery catalog for the current workspace.")
-    @AgentToolPolicy(access = AgentToolAccess.STANDARD, exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public EntityDiscoveryReadModel discovery(@ToolParam(required = false) String search,
-                                              @ToolParam(required = false) Integer pageIndex,
-                                              @ToolParam(required = false) Integer pageSize) {
+    @Tool(
+            name = "entity.discovery",
+            description = "Read the bounded resource discovery catalog for the current workspace.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.STANDARD,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public EntityDiscoveryReadModel discovery(
+            @ToolParam(required = false) String search,
+            @ToolParam(required = false) Integer pageIndex,
+            @ToolParam(required = false) Integer pageSize) {
         if (search != null && search.trim().length() > 200) {
             throw new IllegalArgumentException("Search must not exceed 200 characters");
         }
         return discovery.getDiscovery(search == null ? null : search.trim(), page(pageIndex), size(pageSize));
     }
 
-    @Tool(name = "entity.binding_candidates", description = "Suggest authorized entity bindings for up to 50 existing monitor IDs without changing bindings.")
-    @AgentToolPolicy(access = AgentToolAccess.STANDARD, exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<Long, List<EntityMonitorBindingCandidate>> candidates(List<Long> monitorIds) {
         if (monitorIds == null || monitorIds.isEmpty() || monitorIds.size() > 50 || monitorIds.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalArgumentException("Provide 1 to 50 positive monitor IDs");
         }
         return entities.getMonitorBindingCandidates(monitorIds);
+    }
+
+    @Tool(
+            name = "entity.editable",
+            description =
+                    "Read exact accessible entity metadata, with its fixed entity id; no"
+                        + " credentials or graph state.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.STANDARD,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> editableRead(long entityId) {
+        return org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport.view(
+                Map.of("entityId", entityId, "metadata", editable(entityId)));
+    }
+
+    @Tool(
+            name = "entity.alerts",
+            description =
+                    "Read one exact accessible entity's alert page, preserving status/severity"
+                        + " scope. Counts are page results, not history totals.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.STANDARD,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> alertsRead(
+            long entityId,
+            @ToolParam(required = false, description = "firing, resolved or acknowledged; defaults firing. Query each separately for all statuses.") String status,
+            @ToolParam(required = false) String severity,
+            @ToolParam(required = false) Integer pageIndex,
+            @ToolParam(required = false) Integer pageSize) {
+        requiredReadEntity(entityId);
+        String selectedStatus = AgentEntityReadScope.alertStatus(status);
+        String selectedSeverity = AgentEntityReadScope.severity(severity);
+        var result = alerts(entityId, selectedStatus, selectedSeverity, pageIndex, pageSize);
+        if (result == null) throw new IllegalStateException("entity_alert_evidence_unavailable");
+        var output =
+                org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport.view(
+                        result);
+        output.put(
+                "scope",
+                AgentEntityReadScope.scope(
+                        "entity.alerts",
+                        AgentToolContextSupport.arguments(
+                                "entityId",
+                                entityId,
+                                "status",
+                                status,
+                                "severity",
+                                severity,
+                                "pageIndex",
+                                pageIndex,
+                                "pageSize",
+                                pageSize)));
+        return output;
+    }
+
+    @Tool(
+            name = "entity.monitors",
+            description =
+                    "Read monitor summaries for one exact accessible entity, retaining app/status"
+                        + " filtering and native pagination. No monitor credentials.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.STANDARD,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> monitorsRead(
+            long entityId,
+            @ToolParam(required = false) Byte status,
+            @ToolParam(required = false) String app,
+            @ToolParam(required = false) Integer pageIndex,
+            @ToolParam(required = false) Integer pageSize) {
+        requiredReadEntity(entityId);
+        if (status != null && (status < 0 || status > 4))
+            throw new IllegalArgumentException("Invalid monitor status");
+        String selectedApp = AgentEntityReadScope.filter(app);
+        var result = monitors(entityId, status, selectedApp, pageIndex, pageSize);
+        if (result == null) throw new IllegalStateException("entity_monitor_evidence_unavailable");
+        var output =
+                org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport.view(
+                        result);
+        output.put(
+                "scope",
+                AgentEntityReadScope.scope(
+                        "entity.monitors",
+                        AgentToolContextSupport.arguments(
+                                "entityId",
+                                entityId,
+                                "status",
+                                status,
+                                "app",
+                                app,
+                                "pageIndex",
+                                pageIndex,
+                                "pageSize",
+                                pageSize)));
+        return output;
+    }
+
+    @Tool(
+            name = "entity.binding_candidates",
+            description =
+                    "Read bounded binding suggestions for exact monitor IDs. Only matched key names"
+                        + " are exposed; suggestions do not change bindings. Missing IDs are"
+                        + " partial, not empty success.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.STANDARD,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> candidatesRead(List<Long> monitorIds) {
+        if (monitorIds == null || new java.util.HashSet<>(monitorIds).size() != monitorIds.size())
+            throw new IllegalArgumentException("Unique monitor IDs required");
+        var rows = candidates(monitorIds);
+        if (rows == null) throw new IllegalStateException("entity_binding_candidates_unavailable");
+        if (!new java.util.HashSet<>(monitorIds).containsAll(rows.keySet()))
+            throw new IllegalStateException("foreign_monitor_candidate_result");
+        var safe = new java.util.LinkedHashMap<String, Object>();
+        for (var entry : rows.entrySet()) {
+            if (entry.getValue() == null || entry.getValue().size() > 100)
+                throw new IllegalStateException("entity_binding_candidates_unavailable");
+            safe.put(
+                    entry.getKey().toString(),
+                    entry.getValue().stream()
+                            .map(
+                                    candidate -> {
+                                        if (candidate == null
+                                                || candidate.getEntityId() == null
+                                                || candidate.getEntityId() <= 0)
+                                            throw new IllegalStateException(
+                                                    "invalid_entity_candidate_result");
+                                        return AgentToolContextSupport.arguments(
+                                                "entityId",
+                                                candidate.getEntityId(),
+                                                "entityName",
+                                                candidate.getEntityName(),
+                                                "entityType",
+                                                candidate.getEntityType(),
+                                                "score",
+                                                candidate.getScore(),
+                                                "alreadyBound",
+                                                candidate.isAlreadyBound(),
+                                                "matchedKeys",
+                                                candidate.getMatchedIdentities() == null
+                                                        ? List.of()
+                                                        : candidate
+                                                                .getMatchedIdentities()
+                                                                .keySet()
+                                                                .stream()
+                                                                .sorted()
+                                                                .toList());
+                                    })
+                            .toList());
+        }
+        var result =
+                org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport.view(
+                        Map.of("monitorIds", monitorIds, "candidates", safe));
+        result.put(
+                "partial",
+                Boolean.TRUE.equals(result.get("partial")) || safe.size() != monitorIds.size());
+        return result;
+    }
+
+    private EntityDto requiredReadEntity(long id) {
+        positive(id);
+        var result = entities.getEntityDto(id);
+        if (result == null
+                || result.getEntityInfo() == null
+                || !Long.valueOf(id).equals(result.getEntityInfo().getId()))
+            throw new IllegalArgumentException("Entity not found or inaccessible");
+        return result;
     }
 
     private static void positive(long id) {

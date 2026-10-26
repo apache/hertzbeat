@@ -1,0 +1,710 @@
+{
+  "runUid": "run_697857938849024",
+  "userMessage": "\u968f\u4fbf\u627e 50 \u4e2a\u516c\u7f51\u57df\u540d\u5e2e\u6211\u521b\u5efa\u7f51\u7ad9\u76d1\u63a7",
+  "plans": [
+    {
+      "intervals": 600,
+      "planVersion": "website-candidate.v1",
+      "valid": true,
+      "requiresHumanApproval": true,
+      "timeout": 3000,
+      "inputHash": "83808dbf26316c534b39c7714b5e3952c37c05944405116b5a63ca0cd48b7734",
+      "domains": [
+        "google.com",
+        "github.com",
+        "cloudflare.com",
+        "mozilla.org",
+        "wikipedia.org",
+        "stackoverflow.com",
+        "reddit.com",
+        "linkedin.com",
+        "amazon.com",
+        "microsoft.com",
+        "apple.com",
+        "netflix.com",
+        "spotify.com",
+        "dropbox.com",
+        "slack.com",
+        "zoom.us",
+        "adobe.com",
+        "ibm.com",
+        "oracle.com",
+        "salesforce.com",
+        "shopify.com",
+        "wordpress.org",
+        "medium.com",
+        "quora.com",
+        "pinterest.com",
+        "tumblr.com",
+        "flickr.com",
+        "vimeo.com",
+        "dailymotion.com",
+        "twitch.tv",
+        "ebay.com",
+        "paypal.com",
+        "stripe.com",
+        "squareup.com",
+        "atlassian.com",
+        "jira.com",
+        "confluence.com",
+        "docker.com",
+        "kubernetes.io",
+        "nginx.com",
+        "apache.org",
+        "python.org",
+        "nodejs.org",
+        "rubyonrails.org",
+        "laravel.com",
+        "djangoproject.com",
+        "reactjs.org",
+        "vuejs.org",
+        "angular.io",
+        "typescriptlang.org"
+      ]
+    },
+    {
+      "intervals": 600,
+      "planVersion": "website-candidate.v1",
+      "valid": true,
+      "requiresHumanApproval": true,
+      "timeout": 3000,
+      "inputHash": "f28deb6663196850fcbf902786d2e1b2caf0adea66a8c6d2f4a855e6d0b77eb7",
+      "domains": [
+        "quora.com",
+        "pinterest.com",
+        "tumblr.com",
+        "flickr.com",
+        "vimeo.com",
+        "dailymotion.com",
+        "stripe.com",
+        "squareup.com",
+        "jira.com",
+        "confluence.com",
+        "nginx.com",
+        "apache.org",
+        "rubyonrails.org",
+        "laravel.com",
+        "djangoproject.com",
+        "reactjs.org",
+        "angular.io",
+        "typescriptlang.org",
+        "baidu.com",
+        "taobao.com",
+        "jd.com",
+        "sina.com.cn",
+        "sohu.com",
+        "163.com",
+        "bilibili.com",
+        "zhihu.com",
+        "csdn.net",
+        "gitee.com",
+        "aliyun.com",
+        "tencent.com",
+        "baidu.com.cn",
+        "qq.com",
+        "weibo.com",
+        "douban.com",
+        "cnblogs.com",
+        "jianshu.com",
+        "segmentfault.com",
+        "infoq.cn",
+        "oschina.net",
+        "linuxfoundation.org",
+        "gnu.org",
+        "kernel.org",
+        "debian.org",
+        "ubuntu.com",
+        "redhat.com",
+        "opensuse.org",
+        "archlinux.org",
+        "freebsd.org",
+        "openbsd.org",
+        "postgresql.org"
+      ]
+    },
+    {
+      "intervals": 600,
+      "planVersion": "website-candidate.v1",
+      "valid": true,
+      "requiresHumanApproval": true,
+      "timeout": 3000,
+      "inputHash": "4cc72a2fa761f6e39f73036f2090ede25c0b471edcfdc7f5cf5a0385dc361c7c",
+      "domains": [
+        "w3.org",
+        "ietf.org",
+        "mozilla.com",
+        "getbootstrap.com",
+        "tailwindcss.com",
+        "sass-lang.com",
+        "webpack.js.org",
+        "vitejs.dev",
+        "nextjs.org",
+        "nuxtjs.org",
+        "gatsbyjs.com",
+        "docusaurus.io",
+        "huggingface.co",
+        "kaggle.com",
+        "coursera.org",
+        "udemy.com",
+        "pluralsight.com",
+        "w3schools.com",
+        "geeksforgeeks.org",
+        "stackexchange.com",
+        "gitlab.com",
+        "bitbucket.org",
+        "sourceforge.net",
+        "jenkins.io",
+        "grafana.com",
+        "prometheus.io",
+        "elastic.co",
+        "datadoghq.com",
+        "newrelic.com",
+        "splunk.com",
+        "hashicorp.com",
+        "terraform.io",
+        "ansible.com",
+        "puppet.com",
+        "chef.io",
+        "saltproject.io",
+        "openstack.org",
+        "vmware.com",
+        "citrix.com",
+        "redhat.com.cn",
+        "suse.com",
+        "canonical.com",
+        "fedoraproject.org",
+        "centos.org",
+        "rockylinux.org",
+        "almalinux.org",
+        "debian.com",
+        "gentoo.org",
+        "slackware.com",
+        "archlinuxarm.org"
+      ]
+    }
+  ],
+  "preflights": [
+    {
+      "checkedAt": "2026-10-24T14:31:23.140834Z",
+      "planVersion": "website-preflight.v1",
+      "inputHash": "2386c89a97bf4f6df7443e4cafb05a04045543880389d6fbbbc1c089550ccd00",
+      "items": [
+        {
+          "domain": "google.com",
+          "checkedAt": "2026-10-24T14:31:23.140690Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "github.com",
+          "checkedAt": "2026-10-24T14:31:23.140711Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "cloudflare.com",
+          "checkedAt": "2026-10-24T14:31:23.140713Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "mozilla.org",
+          "checkedAt": "2026-10-24T14:31:23.140715Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "wikipedia.org",
+          "checkedAt": "2026-10-24T14:31:23.140717Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "stackoverflow.com",
+          "checkedAt": "2026-10-24T14:31:23.140719Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "reddit.com",
+          "checkedAt": "2026-10-24T14:31:23.140721Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "linkedin.com",
+          "checkedAt": "2026-10-24T14:31:23.140722Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "amazon.com",
+          "checkedAt": "2026-10-24T14:31:23.140724Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "microsoft.com",
+          "checkedAt": "2026-10-24T14:31:23.140725Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "apple.com",
+          "checkedAt": "2026-10-24T14:31:23.140727Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "netflix.com",
+          "checkedAt": "2026-10-24T14:31:23.140728Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "spotify.com",
+          "checkedAt": "2026-10-24T14:31:23.140730Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "dropbox.com",
+          "checkedAt": "2026-10-24T14:31:23.140731Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "slack.com",
+          "checkedAt": "2026-10-24T14:31:23.140741Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "zoom.us",
+          "checkedAt": "2026-10-24T14:31:23.140752Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "adobe.com",
+          "checkedAt": "2026-10-24T14:31:23.140754Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "ibm.com",
+          "checkedAt": "2026-10-24T14:31:23.140755Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "oracle.com",
+          "checkedAt": "2026-10-24T14:31:23.140757Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "salesforce.com",
+          "checkedAt": "2026-10-24T14:31:23.140758Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "shopify.com",
+          "checkedAt": "2026-10-24T14:31:23.140760Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "wordpress.org",
+          "checkedAt": "2026-10-24T14:31:23.140761Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "medium.com",
+          "checkedAt": "2026-10-24T14:31:23.140763Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "quora.com",
+          "checkedAt": "2026-10-24T14:31:23.140767Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "pinterest.com",
+          "checkedAt": "2026-10-24T14:31:23.140769Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "tumblr.com",
+          "checkedAt": "2026-10-24T14:31:23.140771Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "flickr.com",
+          "checkedAt": "2026-10-24T14:31:23.140772Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "vimeo.com",
+          "checkedAt": "2026-10-24T14:31:23.140774Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "dailymotion.com",
+          "checkedAt": "2026-10-24T14:31:23.140776Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "twitch.tv",
+          "checkedAt": "2026-10-24T14:31:23.140777Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "ebay.com",
+          "checkedAt": "2026-10-24T14:31:23.140779Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "paypal.com",
+          "checkedAt": "2026-10-24T14:31:23.140780Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "stripe.com",
+          "checkedAt": "2026-10-24T14:31:23.140782Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "squareup.com",
+          "checkedAt": "2026-10-24T14:31:23.140783Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "atlassian.com",
+          "checkedAt": "2026-10-24T14:31:23.140785Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "jira.com",
+          "checkedAt": "2026-10-24T14:31:23.140787Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "confluence.com",
+          "checkedAt": "2026-10-24T14:31:23.140788Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "docker.com",
+          "checkedAt": "2026-10-24T14:31:23.140794Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "kubernetes.io",
+          "checkedAt": "2026-10-24T14:31:23.140795Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "nginx.com",
+          "checkedAt": "2026-10-24T14:31:23.140797Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "apache.org",
+          "checkedAt": "2026-10-24T14:31:23.140798Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "python.org",
+          "checkedAt": "2026-10-24T14:31:23.140800Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "nodejs.org",
+          "checkedAt": "2026-10-24T14:31:23.140801Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "rubyonrails.org",
+          "checkedAt": "2026-10-24T14:31:23.140803Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "laravel.com",
+          "checkedAt": "2026-10-24T14:31:23.140805Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "djangoproject.com",
+          "checkedAt": "2026-10-24T14:31:23.140806Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "reactjs.org",
+          "checkedAt": "2026-10-24T14:31:23.140808Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "vuejs.org",
+          "checkedAt": "2026-10-24T14:31:23.140809Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "angular.io",
+          "checkedAt": "2026-10-24T14:31:23.140823Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "typescriptlang.org",
+          "checkedAt": "2026-10-24T14:31:23.140825Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        }
+      ],
+      "networkProbeRequiresApproval": true,
+      "networkProbePerformed": false,
+      "creationProof": false
+    },
+    {
+      "checkedAt": "2026-10-24T14:31:28.405935Z",
+      "planVersion": "website-preflight.v1",
+      "inputHash": "e96dfff1c01398658356f3f9fbe6e6617af02e3ddbe7ba38932963e26f28001c",
+      "items": [
+        {
+          "domain": "baidu.com",
+          "checkedAt": "2026-10-24T14:31:28.405857Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "taobao.com",
+          "checkedAt": "2026-10-24T14:31:28.405873Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "jd.com",
+          "checkedAt": "2026-10-24T14:31:28.405876Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "sina.com.cn",
+          "checkedAt": "2026-10-24T14:31:28.405879Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "sohu.com",
+          "checkedAt": "2026-10-24T14:31:28.405881Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "163.com",
+          "checkedAt": "2026-10-24T14:31:28.405883Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "bilibili.com",
+          "checkedAt": "2026-10-24T14:31:28.405885Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "zhihu.com",
+          "checkedAt": "2026-10-24T14:31:28.405887Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "csdn.net",
+          "checkedAt": "2026-10-24T14:31:28.405889Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "gitee.com",
+          "checkedAt": "2026-10-24T14:31:28.405891Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "aliyun.com",
+          "checkedAt": "2026-10-24T14:31:28.405893Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "tencent.com",
+          "checkedAt": "2026-10-24T14:31:28.405895Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "baidu.com.cn",
+          "checkedAt": "2026-10-24T14:31:28.405897Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "qq.com",
+          "checkedAt": "2026-10-24T14:31:28.405899Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "weibo.com",
+          "checkedAt": "2026-10-24T14:31:28.405901Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "douban.com",
+          "checkedAt": "2026-10-24T14:31:28.405903Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "cnblogs.com",
+          "checkedAt": "2026-10-24T14:31:28.405905Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "jianshu.com",
+          "checkedAt": "2026-10-24T14:31:28.405907Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "segmentfault.com",
+          "checkedAt": "2026-10-24T14:31:28.405909Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "infoq.cn",
+          "checkedAt": "2026-10-24T14:31:28.405911Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "oschina.net",
+          "checkedAt": "2026-10-24T14:31:28.405912Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "linuxfoundation.org",
+          "checkedAt": "2026-10-24T14:31:28.405914Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "gnu.org",
+          "checkedAt": "2026-10-24T14:31:28.405916Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "kernel.org",
+          "checkedAt": "2026-10-24T14:31:28.405918Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "debian.org",
+          "checkedAt": "2026-10-24T14:31:28.405920Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "ubuntu.com",
+          "checkedAt": "2026-10-24T14:31:28.405922Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "redhat.com",
+          "checkedAt": "2026-10-24T14:31:28.405924Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "opensuse.org",
+          "checkedAt": "2026-10-24T14:31:28.405925Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "archlinux.org",
+          "checkedAt": "2026-10-24T14:31:28.405927Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "freebsd.org",
+          "checkedAt": "2026-10-24T14:31:28.405929Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "openbsd.org",
+          "checkedAt": "2026-10-24T14:31:28.405931Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "postgresql.org",
+          "checkedAt": "2026-10-24T14:31:28.405933Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        }
+      ],
+      "networkProbeRequiresApproval": true,
+      "networkProbePerformed": false,
+      "creationProof": false
+    }
+  ],
+  "supersededQaSummary": {
+    "existing": 28,
+    "notChecked": 22
+  },
+  "correctFirstReceiptCounts": {
+    "EXISTING": 32,
+    "NOT_CHECKED": 18
+  },
+  "thirdActualMetadataNotPerformed": true,
+  "thirdFixtureMetadataIsSynthetic": true
+}

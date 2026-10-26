@@ -100,16 +100,24 @@ public class AgentTraceToolService {
             @ToolParam(required = false, description = "Root operation name.") String operationName,
             @ToolParam(required = false, description = "Zero-based page index.") Integer pageIndex,
             @ToolParam(required = false, description = "Page size; maximum 50.") Integer pageSize,
-            @ToolParam(required = false, description = "Hide internal spans; defaults to true.") Boolean hideInternal) {
+            @ToolParam(required = false, description = "Hide internal spans; defaults to true.") Boolean hideInternal,
+            @ToolParam(required = false, description = "NEWEST by default; DURATION_DESC ranks the slowest matching traces.")
+            TraceSort sort) {
         long[] range = range(start, end);
         int resolvedPageIndex = AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, 10_000);
         int resolvedPageSize = AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 50);
         boolean resolvedHideInternal = hideInternal == null || hideInternal;
         String workspace = workspaceId();
-        Page<TraceListItemDto> page = admitted(() -> traceQueryService.queryTraceList(workspace, entityId,
-                range[0], range[1], traceId, errorOnly, serviceName, serviceNamespace, environment,
-                null, operationName, null, null, resolvedPageIndex, resolvedPageSize, resolvedHideInternal,
-                null, null));
+        TraceSort resolvedSort = sort == null ? TraceSort.NEWEST : sort;
+        Page<TraceListItemDto> page = admitted(() -> sort == null
+                ? traceQueryService.queryTraceList(workspace, entityId,
+                        range[0], range[1], traceId, errorOnly, serviceName, serviceNamespace, environment,
+                        null, operationName, null, null, resolvedPageIndex, resolvedPageSize, resolvedHideInternal,
+                        null, null)
+                : traceQueryService.queryTraceList(workspace, entityId,
+                        range[0], range[1], traceId, errorOnly, serviceName, serviceNamespace, environment,
+                        null, operationName, null, null, resolvedPageIndex, resolvedPageSize, resolvedHideInternal,
+                        null, null, resolvedSort));
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("content", page.getContent().stream().map(this::traceRow).toList());
         result.put("pageIndex", page.getNumber());
@@ -118,7 +126,17 @@ public class AgentTraceToolService {
         result.put("totalPages", page.getTotalPages());
         result.put("start", range[0]);
         result.put("end", range[1]);
+        result.put("sort", resolvedSort.value());
+        result.put("returnedRows", page.getNumberOfElements());
+        result.put("partial", page.getNumberOfElements() < page.getTotalElements());
         return result;
+    }
+
+    public Map<String, Object> queryTraces(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                         String serviceName, String serviceNamespace, String environment,
+                                         String operationName, Integer pageIndex, Integer pageSize, Boolean hideInternal) {
+        return queryTraces(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, pageIndex, pageSize, hideInternal, null);
     }
 
     @Tool(name = "traces.get", description = "Get a bounded trace span tree using exact trace context.")

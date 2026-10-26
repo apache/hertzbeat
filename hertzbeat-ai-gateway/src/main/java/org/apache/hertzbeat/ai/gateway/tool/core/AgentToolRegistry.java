@@ -37,6 +37,11 @@ public class AgentToolRegistry {
         RegisteredTool registeredTool = Objects.requireNonNull(tool, "Registered tool is required");
         AgentToolDescriptor descriptor = registeredTool.descriptor();
         String toolName = descriptor.getName();
+        // Not part of the enabled delivery scope until native atomic source preconditions and
+        // durable create outcome/idempotency are available. ADMIN/FULL cannot re-enable them.
+        if (java.util.Set.of("entity.create", "entity.update", "entity.delete").contains(toolName)) {
+            return;
+        }
         if (handlers.containsKey(toolName)) {
             throw new IllegalStateException("Duplicate Agent tool: " + toolName);
         }

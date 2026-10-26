@@ -87,6 +87,7 @@ class AgentNoticeToolServiceTest {
     @Test
     void reportsDeletionReadbackRatherThanAssumingSuccess() {
         NoticeTemplate template = new NoticeTemplate();
+        template.setId(1L);
         when(notices.getNoticeTemplatesById(1L)).thenReturn(java.util.Optional.of(template));
         assertEquals(false, service.templateDelete(1L).get("deleted"));
         verify(notices).deleteNoticeTemplate(1L);

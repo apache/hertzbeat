@@ -18,22 +18,23 @@
 package org.apache.hertzbeat.ai.gateway.tool.alert;
 
 import jakarta.validation.Validator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
-import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
-import org.apache.hertzbeat.common.util.JsonUtil;
 
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
+import org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport;
+import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
-import org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** Validated platform management tools. */
 @Service
@@ -54,15 +55,25 @@ public class AgentAlertGroupToolService {
     @AgentToolPolicy(risk = AgentToolRisk.READ, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.STANDARD)
     public Map<String, Object> list(@ToolParam(required = false) String search,
             @ToolParam(required = false) Integer pageIndex, @ToolParam(required = false) Integer pageSize) {
-        return AgentManagementOutputSupport.view(service.getAlertGroupConverges(null, search, "gmtCreate", "desc",
-                AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE),
-                AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100)));
+        return AgentManagementOutputSupport.view(
+                service.getAlertGroupConverges(
+                        null,
+                        search,
+                        "gmtCreate",
+                        "desc",
+                        AgentToolContextSupport.bound(
+                                pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE),
+                        AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100)));
     }
 
     @Tool(name = "alert_group.get", description = "Get an exact alert grouping policy.")
     @AgentToolPolicy(risk = AgentToolRisk.READ, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.STANDARD)
     public Map<String, Object> get(Long groupId) {
-        return AgentManagementOutputSupport.view(requiredAlertGroupConverge(groupId));
+        var value = requiredAlertGroupConverge(groupId);
+        var result = AgentManagementOutputSupport.view(value);
+        if (!Boolean.TRUE.equals(result.get("partial")))
+            result.put("sourceHash", AgentAlertGroupWriteProof.sourceHash(value));
+        return result;
     }
 
     private AlertGroupConverge requiredAlertGroupConverge(Long groupId) {
@@ -70,41 +81,122 @@ public class AgentAlertGroupToolService {
             throw new IllegalArgumentException("groupId must be positive");
         }
         AlertGroupConverge value = service.getAlertGroupConverge(groupId);
-        if (value == null) {
+        if (value == null || !groupId.equals(value.getId())) {
             throw new IllegalArgumentException("Grouping policy not found");
         }
         return value;
     }
 
-    @Tool(name = "alert_group.create", description = "Create a grouping policy, changing notification grouping and timing.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.USER)
+    @Tool(
+            name = "alert_group.create",
+            description = "Create a grouping policy, changing notification grouping and timing.")
+    @AgentToolPolicy(
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.USER)
     public Map<String, Object> create(Configuration configuration) {
         AlertGroupConverge value = apply(new AlertGroupConverge(), configuration);
         validateBean(value);
         service.validate(value, false);
+        String expected = AgentAlertGroupWriteProof.contentHash(value);
         service.addAlertGroupConverge(value);
-        return AgentManagementOutputSupport.view(value);
+        return written(
+                "alert_group.create",
+                AgentToolContextSupport.arguments("configuration", configuration),
+                expected,
+                requiredAlertGroupConverge(value.getId()));
     }
 
-    @Tool(name = "alert_group.update", description = "Replace grouping configuration, including enabled state, by exact id.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.USER)
-    public Map<String, Object> update(Long groupId, Configuration configuration) {
-        AlertGroupConverge value = apply(requiredAlertGroupConverge(groupId), configuration);
+    @Tool(
+            name = "alert_group.update",
+            description = "Replace grouping configuration, including enabled state, by exact id.")
+    @AgentToolPolicy(
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.USER)
+    public Map<String, Object> update(
+            Long groupId,
+            Configuration configuration,
+            @ToolParam(
+                            description =
+                                    "Exact sourceHash from alert_group.get; snapshot condition, not"
+                                        + " atomic CAS.")
+                    String sourceHash) {
+        AlertGroupConverge value = requiredAlertGroupConverge(groupId);
+        AgentAlertGroupWriteProof.requireSource(value, sourceHash);
+        value = apply(value, configuration);
         validateBean(value);
         service.validate(value, true);
+        String expected = AgentAlertGroupWriteProof.contentHash(value);
         service.modifyAlertGroupConverge(value);
-        return AgentManagementOutputSupport.view(value);
+        return written(
+                "alert_group.update",
+                AgentToolContextSupport.arguments(
+                        "groupId",
+                        groupId,
+                        "configuration",
+                        configuration,
+                        "sourceHash",
+                        sourceHash),
+                expected,
+                requiredAlertGroupConverge(groupId));
     }
 
     @Tool(name = "alert_group.delete", description = "Permanently delete an exact grouping policy.")
-    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.ADMIN)
-    public Map<String, Object> delete(Long groupId, String reason) {
-        requiredAlertGroupConverge(groupId);
+    @AgentToolPolicy(
+            risk = AgentToolRisk.DANGEROUS,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.ADMIN)
+    public Map<String, Object> delete(
+            Long groupId,
+            String reason,
+            @ToolParam(
+                            description =
+                                    "Exact sourceHash from alert_group.get; fixed destructive"
+                                        + " target.")
+                    String sourceHash) {
+        AgentAlertGroupWriteProof.requireSource(requiredAlertGroupConverge(groupId), sourceHash);
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Deletion reason is required");
         }
         service.deleteAlertGroupConverges(Set.of(groupId));
-        return Map.of("deletedId", groupId);
+        if (service.getAlertGroupConverge(groupId) != null)
+            throw new IllegalStateException("ALERT_GROUP_DELETE_OUTCOME_UNVERIFIED_DO_NOT_RETRY");
+        return Map.of(
+                "deletedId",
+                groupId,
+                "mutationReceipt",
+                AgentAlertGroupWriteProof.receipt(
+                        "alert_group.delete",
+                        groupId,
+                        AgentToolContextSupport.arguments(
+                                "groupId", groupId, "reason", reason, "sourceHash", sourceHash),
+                        "absent",
+                        true));
+    }
+
+    /**
+     * Existing Java callers retain their signatures; model tools require explicit source snapshots.
+     */
+    public Map<String, Object> update(Long id, Configuration config) {
+        return update(
+                id, config, AgentAlertGroupWriteProof.sourceHash(requiredAlertGroupConverge(id)));
+    }
+
+    public Map<String, Object> delete(Long id, String reason) {
+        return delete(
+                id, reason, AgentAlertGroupWriteProof.sourceHash(requiredAlertGroupConverge(id)));
+    }
+
+    private Map<String, Object> written(
+            String tool, Map<String, Object> args, String expected, AlertGroupConverge observed) {
+        if (!expected.equals(AgentAlertGroupWriteProof.contentHash(observed)))
+            throw new IllegalStateException("ALERT_GROUP_WRITE_OUTCOME_UNVERIFIED_DO_NOT_RETRY");
+        Map<String, Object> row = JsonUtil.fromJson(JsonUtil.toJson(observed), Map.class);
+        row.put(
+                "mutationReceipt",
+                AgentAlertGroupWriteProof.receipt(tool, observed.getId(), args, expected, false));
+        return AgentManagementOutputSupport.view(row);
     }
 
     private AlertGroupConverge apply(AlertGroupConverge value, Configuration config) {

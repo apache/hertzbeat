@@ -71,6 +71,6 @@ public class AgentTelemetrySourceToolService {
             result.put("partial", true);
             result.put("authorizationEvidence", "Native explicit-workspace subject authorization unavailable or not matched; use the native telemetry page");
         }
-        return result;
+        return org.apache.hertzbeat.ai.gateway.tool.metrics.AgentTelemetryReadOutput.bound("telemetry.sources", result, Map.of());
     }
 }

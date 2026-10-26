@@ -40,7 +40,7 @@ public record AgentLogQuery(
         @ToolParam(required = false, description = "Product log environment control.") String environment,
         @ToolParam(required = false, description = "Product log collectorId control.") String collectorId,
         @ToolParam(required = false, description = "Product log instance control.") String instance,
-        @ToolParam(required = true, description = "Product log endpoint control.") String endpoint,
+        @ToolParam(required = false, description = "Optional product log endpoint filter.") String endpoint,
         @ToolParam(required = false, description = "Product log resourceFilter control.") String resourceFilter,
         @ToolParam(required = false, description = "Product log attributeFilter control.") String attributeFilter,
         @ToolParam(required = false, description = "Product log pageIndex control.") Integer pageIndex,
@@ -73,6 +73,17 @@ public record AgentLogQuery(
         @ToolParam(required = false, description = "Product log transactionVersion control.") Integer transactionVersion,
         @ToolParam(required = false, description = "Product log transactionLimit control.") Integer transactionLimit,
         @ToolParam(required = false, description = "Product log intervalMs control.") Long intervalMs) {
+    public AgentLogQuery {
+        if (severityCategory != null) {
+            try {
+                severityCategory = org.apache.hertzbeat.common.observability.dto.log.LogSeverityCategory
+                        .parse(severityCategory.strip().toUpperCase(java.util.Locale.ROOT)).name();
+            } catch (IllegalArgumentException invalid) {
+                throw new IllegalArgumentException("severityCategory must be TRACE, DEBUG, INFO, WARN, ERROR or FATAL");
+            }
+        }
+    }
+
     public Map<String, String> parameters() {
         validate();
         Map<String, String> result = new LinkedHashMap<>();
@@ -133,7 +144,7 @@ public record AgentLogQuery(
     }
 
     public void validate() {
-        if (start == null || end == null || start < 0 || end <= start
+        if (start == null || end == null || start < 0 || end > 253_402_300_799_999L || end <= start
                 || end - start > Duration.ofDays(7).toMillis()) {
             throw new IllegalArgumentException("Log range must be ordered and at most 7 days");
         }
@@ -145,6 +156,13 @@ public record AgentLogQuery(
         bounded(limit, 1, 100);
         bounded(transactionLimit, 1, 100);
         bounded(severityNumber, 1, 24);
+        bounded(minCount, 1, 1_000_000);
+        if (intervalMs != null && intervalMs <= 0) {
+            throw new IllegalArgumentException("intervalMs must be positive");
+        }
+        if (searchSyntax != null && !searchSyntax.isEmpty() && !"structured-v1".equals(searchSyntax)) {
+            throw new IllegalArgumentException("searchSyntax must be structured-v1 or omitted");
+        }
         text(entityType);
         text(traceId);
         text(spanId);
@@ -184,6 +202,37 @@ public record AgentLogQuery(
 
     public void validateOperation(String operation) {
         Map<String, String> supplied = parameters();
+        var unsupported = new java.util.TreeSet<>(supplied.keySet());
+        unsupported.removeAll(allowedControls(operation));
+        if (!unsupported.isEmpty()) {
+            throw new IllegalArgumentException("Unsupported log query controls for " + operation + ": "
+                    + String.join(", ", unsupported));
+        }
+        if ("analysis".equals(operation)) {
+            AgentLogAnalysisControls.validate(this);
+        }
+        if ("facetValues".equals(operation)) {
+            try {
+                org.apache.hertzbeat.common.observability.dto.log.LogFacets.Field.parse(field);
+            } catch (IllegalArgumentException invalid) {
+                throw new IllegalArgumentException("facetValues field requires a qualified id such as "
+                        + "builtin:serviceName, builtin:severityCategory, resource:<key> or attribute:<key>");
+            }
+        }
+        if ("groupByStats".equals(operation) && groupBy != null && groupBy.startsWith("builtin:")) {
+            throw new IllegalArgumentException("groupByStats uses service.name or severity, not builtin facet ids; "
+                    + "use logs.analysis field=builtin:serviceName for the qualified analysis contract");
+        }
+        if ("groupByStats".equals(operation) && orderBy != null
+                && !java.util.Set.of("count-desc", "count-asc").contains(orderBy)) {
+            throw new IllegalArgumentException("orderBy must be count-desc or count-asc");
+        }
+        if ("groupByStats".equals(operation) && (groupBy == null || groupBy.isBlank())) {
+            throw new IllegalArgumentException("groupByStats requires groupBy, for example service.name");
+        }
+    }
+
+    public static java.util.Set<String> allowedControls(String operation) {
         java.util.Set<String> allowed = new java.util.HashSet<>(java.util.Set.of(
                 "entityId", "entityType", "start", "end", "traceId", "spanId", "severityNumber", "severityText",
                 "severityCategory", "search", "serviceName", "serviceNamespace", "environment", "collectorId",
@@ -208,9 +257,7 @@ public record AgentLogQuery(
             case "live" -> allowed.add("logSort");
             default -> throw new IllegalArgumentException("Unknown log operation");
         }
-        if (!allowed.containsAll(supplied.keySet())) {
-            throw new IllegalArgumentException("A query control is unsupported for this log operation");
-        }
+        return java.util.Set.copyOf(allowed);
     }
 
     private static void bounded(Integer value, int min, int max) {

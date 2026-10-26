@@ -25,8 +25,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -34,6 +32,9 @@ import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 /** Test alert-rule lifecycle contracts. */
 class AgentAlertRuleToolServiceTest {
@@ -46,17 +47,51 @@ class AgentAlertRuleToolServiceTest {
     void setUp() {
         alertDefineService = mock(AlertDefineService.class);
         appService = mock(AppService.class);
-        service = new AgentAlertRuleToolService(alertDefineService, appService,
-                jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator());
+        var created = new java.util.concurrent.atomic.AtomicReference<AlertDefine>();
+        org.mockito.Mockito.doAnswer(
+                        invocation -> {
+                            AlertDefine row = invocation.getArgument(0);
+                            row.setId(17L);
+                            created.set(row);
+                            return null;
+                        })
+                .when(alertDefineService)
+                .addAlertDefine(org.mockito.ArgumentMatchers.any());
+        when(alertDefineService.getAlertDefine(17L)).thenAnswer(invocation -> created.get());
+
+        service =
+                new AgentAlertRuleToolService(
+                        alertDefineService,
+                        appService,
+                        jakarta.validation.Validation.buildDefaultValidatorFactory()
+                                .getValidator());
     }
 
     @Test
     void shouldCreateRuleWithCalculatorRecognizedType() {
         when(appService.getAppHierarchy("linux", "en-US"))
-                .thenReturn(List.of(new Hierarchy("metrics", "cpu", "CPU", true, null, null, null, List.of())));
+                .thenReturn(
+                        List.of(
+                                new Hierarchy(
+                                        "metrics", "cpu", "CPU", true, null, null, null,
+                                        List.of())));
 
-        Map<String, Object> result = service.createAlertRule("cpu-high", "LINUX", "cpu", "usage > 90",
-                "realtime", null, 3, 0, null, null, null, null, null, true);
+        Map<String, Object> result =
+                service.createAlertRule(
+                        "cpu-high",
+                        "LINUX",
+                        "cpu",
+                        "usage > 90",
+                        "realtime",
+                        null,
+                        3,
+                        0,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        true);
 
         verify(alertDefineService).validate(argThat(rule ->
                 CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME.equals(rule.getType())), eq(false));
@@ -98,14 +133,24 @@ class AgentAlertRuleToolServiceTest {
     void shouldUpdateExpressionTypeAndDatasource() {
         AlertDefine rule = AlertDefine.builder().id(9L).name("rule").build();
         when(alertDefineService.getAlertDefine(9L)).thenReturn(rule);
-        service.updateAlertRule(9L, Map.of("expression", "count > 20", "type", "periodic_log", "datasource", "log"));
-        verify(alertDefineService).modifyAlertDefine(argThat(updated -> "count > 20".equals(updated.getExpr())
-                && "periodic_log".equals(updated.getType()) && "log".equals(updated.getDatasource())));
+        service.updateAlertRule(
+                9L,
+                Map.of("expression", "count > 20", "type", "periodic_log", "datasource", "log"));
+        verify(alertDefineService)
+                .modifyAlertDefine(
+                        argThat(
+                                updated ->
+                                        "count > 20".equals(updated.getExpr())
+                                                && "periodic_log".equals(updated.getType())
+                                                && "log".equals(updated.getDatasource())));
     }
 
     @Test
     void shouldRejectFractionalIntegerConfiguration() {
-        when(alertDefineService.getAlertDefine(9L)).thenReturn(AlertDefine.builder().id(9L).name("rule").build());
-        assertThrows(IllegalArgumentException.class, () -> service.updateAlertRule(9L, Map.of("times", 1.5)));
+        when(alertDefineService.getAlertDefine(9L))
+                .thenReturn(AlertDefine.builder().id(9L).name("rule").build());
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.updateAlertRule(9L, Map.of("times", 1.5)));
     }
 }

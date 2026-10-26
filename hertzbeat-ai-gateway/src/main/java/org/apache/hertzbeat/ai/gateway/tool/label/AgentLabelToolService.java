@@ -17,22 +17,23 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.label;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import jakarta.validation.Validator;
-import org.apache.hertzbeat.base.service.LabelService;
-import org.apache.hertzbeat.base.dao.LabelDao;
-import org.apache.hertzbeat.common.entity.manager.Label;
 
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
+import org.apache.hertzbeat.base.dao.LabelDao;
+import org.apache.hertzbeat.base.service.LabelService;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /** Validated platform management tools. */
 @Service
@@ -48,11 +49,22 @@ public class AgentLabelToolService {
     }
 
     @Tool(name = "label.list", description = "List platform labels with bounded pagination.")
-    @AgentToolPolicy(risk = AgentToolRisk.READ, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.STANDARD)
-    public Map<String, Object> list(@ToolParam(required = false) String search, @ToolParam(required = false) Byte type,
-                            @ToolParam(required = false) Integer pageIndex, @ToolParam(required = false) Integer pageSize) {
-        return AgentManagementOutputSupport.view(service.getLabels(search, type, AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE),
-                AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100)));
+    @AgentToolPolicy(
+            risk = AgentToolRisk.READ,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.STANDARD)
+    public Map<String, Object> list(
+            @ToolParam(required = false) String search,
+            @ToolParam(required = false) Byte type,
+            @ToolParam(required = false) Integer pageIndex,
+            @ToolParam(required = false) Integer pageSize) {
+        return AgentManagementOutputSupport.view(
+                service.getLabels(
+                        search,
+                        type,
+                        AgentToolContextSupport.bound(
+                                pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE),
+                        AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100)));
     }
 
     @Tool(name = "label.get", description = "Get one label by its exact id.")
@@ -63,33 +75,70 @@ public class AgentLabelToolService {
 
     private Label requiredLabel(Long labelId) {
         requireId(labelId);
-        return labelDao.findById(labelId).orElseThrow(() -> new IllegalArgumentException("Label not found"));
+        return labelDao.findById(labelId)
+                .orElseThrow(() -> new IllegalArgumentException("Label not found"));
     }
 
     @Tool(name = "label.create", description = "Create a user label.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.USER)
-    public Map<String, Object> create(String name, @ToolParam(required = false) String value, @ToolParam(required = false) String description) {
+    @AgentToolPolicy(
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.USER)
+    public Map<String, Object> create(
+            String name,
+            @ToolParam(required = false) String value,
+            @ToolParam(required = false) String description) {
         Label label = build(null, name, value, description);
         service.addLabel(label);
-        return AgentManagementOutputSupport.view(label);
+        return receipt(
+                "label.create",
+                label,
+                AgentToolContextSupport.arguments(
+                        "name", name, "value", value, "description", description));
     }
 
-    @Tool(name = "label.update", description = "Replace the editable fields of a user label by exact id.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.USER)
-    public Map<String, Object> update(Long labelId, String name, @ToolParam(required = false) String value,
-                        @ToolParam(required = false) String description) {
+    @Tool(
+            name = "label.update",
+            description =
+                    "Update provided fields of a label by exact id; omitted value/description are"
+                        + " preserved. Use the native editor to clear them.")
+    @AgentToolPolicy(
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.USER)
+    public Map<String, Object> update(
+            Long labelId,
+            String name,
+            @ToolParam(required = false) String value,
+            @ToolParam(required = false) String description) {
         requireId(labelId);
         Label label = requiredLabel(labelId);
         Label validated = build(labelId, name, value, description);
         label.setName(validated.getName());
-        label.setTagValue(validated.getTagValue());
-        label.setDescription(validated.getDescription());
+        if (value != null) label.setTagValue(validated.getTagValue());
+        if (description != null) label.setDescription(validated.getDescription());
         service.modifyLabel(label);
-        return AgentManagementOutputSupport.view(label);
+        return receipt(
+                "label.update",
+                label,
+                AgentToolContextSupport.arguments(
+                        "labelId",
+                        labelId,
+                        "name",
+                        name,
+                        "value",
+                        value,
+                        "description",
+                        description));
     }
 
-    @Tool(name = "label.delete", description = "Delete one label and its associations. Requires explicit confirmation.")
-    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS, exposure = AgentToolExposure.MODEL_ON_DEMAND, access = AgentToolAccess.ADMIN)
+    @Tool(
+            name = "label.delete",
+            description = "Delete one label and its associations. Requires explicit confirmation.")
+    @AgentToolPolicy(
+            risk = AgentToolRisk.DANGEROUS,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND,
+            access = AgentToolAccess.ADMIN)
     public Map<String, Object> delete(Long labelId, String reason) {
         requireId(labelId);
         if (reason == null || reason.isBlank()) {
@@ -97,11 +146,60 @@ public class AgentLabelToolService {
         }
         requiredLabel(labelId);
         service.deleteLabels(new HashSet<>(Set.of(labelId)));
-        return Map.of("deletedId", labelId);
+        if (labelDao.existsById(labelId))
+            throw new IllegalStateException("LABEL_DELETE_OUTCOME_UNVERIFIED_DO_NOT_RETRY");
+        return Map.of(
+                "deletedId",
+                labelId,
+                "receiptVersion",
+                "label-mutation.v1",
+                "toolName",
+                "label.delete",
+                "labelId",
+                labelId,
+                "verified",
+                true,
+                "deleted",
+                true,
+                "inputHash",
+                org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPayloadHasher
+                        .normalizedArgumentsHash(
+                                AgentToolContextSupport.arguments(
+                                        "labelId", labelId, "reason", reason)));
+    }
+
+    private Map<String, Object> receipt(String tool, Label requested, Map<String, Object> args) {
+        Label stored = requiredLabel(requested.getId());
+        if (!java.util.Objects.equals(requested.getId(), stored.getId())
+                || !java.util.Objects.equals(requested.getName(), stored.getName())
+                || !java.util.Objects.equals(requested.getTagValue(), stored.getTagValue())
+                || !java.util.Objects.equals(requested.getDescription(), stored.getDescription())
+                || !java.util.Objects.equals(requested.getType(), stored.getType())) {
+            throw new IllegalStateException("LABEL_SAVE_OUTCOME_UNVERIFIED_DO_NOT_RETRY");
+        }
+        Map<String, Object> result =
+                new java.util.LinkedHashMap<>(AgentManagementOutputSupport.view(stored));
+        result.put("receiptVersion", "label-mutation.v1");
+        result.put("toolName", tool);
+        result.put("labelId", stored.getId());
+        result.put("verified", true);
+        result.put("deleted", false);
+        result.put(
+                "inputHash",
+                org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPayloadHasher
+                        .normalizedArgumentsHash(args));
+        return result;
     }
 
     private Label build(Long id, String name, String value, String description) {
-        Label label = Label.builder().id(id).name(name).tagValue(value).description(description).type((byte) 1).build();
+        Label label =
+                Label.builder()
+                        .id(id)
+                        .name(name)
+                        .tagValue(value)
+                        .description(description)
+                        .type((byte) 1)
+                        .build();
         if (!validator.validate(label).isEmpty() || (value != null && value.length() > 2048)) {
             throw new IllegalArgumentException("Invalid label fields");
         }
@@ -113,5 +211,4 @@ public class AgentLabelToolService {
             throw new IllegalArgumentException("labelId must be positive");
         }
     }
-
 }

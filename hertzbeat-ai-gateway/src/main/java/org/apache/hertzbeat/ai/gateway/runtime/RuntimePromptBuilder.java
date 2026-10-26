@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +48,16 @@ public class RuntimePromptBuilder {
             - Collector state and monitor state are different concepts and must not be conflated.
             - Realtime metrics are the latest collected values; historical metrics are stored time-series values.
             - Missing data, an empty result, and a numeric zero are not equivalent.
+            - Match completion to the CURRENT question. Choose monitor.query purpose COUNT, PAGE, ALL_ROWS,
+              or STATUS_COUNTS from that question, not earlier investigation turns. COUNT only needs the exact
+              matching total; a one-row sample does not make that answer partial. Stop after the necessary query.
+            - Do not retrieve full pages, logs, traces, or a time window for a simple current monitor count.
+            - For PAGE, attributes describe returned rows only. For ALL_ROWS, continue identical filters and stable
+              sorting until every page is covered. For STATUS_COUNTS, use exact matching aggregates, not sample proportions.
+            - monitor.query is a current snapshot, not a historical count; do not use it as evidence for a requested past window.
+            - Answer naturally and briefly. Execution/query metadata constrain claims; they are not an answer template.
+              Do not print a signal coverage audit, NOT_QUERIED domains, or unrelated next steps to ordinary users.
+              Missing signals affect completion only when the current request actually asks for those signals.
             - Alert rules evaluate exact metric fields and produce single alerts; group alerts aggregate related alerts.
             - Alert lifecycle states are firing and resolved.
             - Silence policies match alerts by explicit time ranges and labels.
@@ -56,7 +68,11 @@ public class RuntimePromptBuilder {
             - Start diagnosis by resolving exact monitor or alert identifiers, then inspect current state before historical evidence.
             - Every investigation must obtain a successful, semantically non-empty READ observation from HertzBeat before giving a final answer.
             - Discovery, catalog, interaction, and mutation tools do not satisfy the required READ observation.
+            - Each new run, including Retry after cancellation/failure, requires its own fresh READ observation.
+              Historical assistant/tool parts provide context only; read again even when the repeated question appears answered.
             - Never invent monitor types, metric names, field names, identifiers, units, timestamps, or current HertzBeat state.
+            - For unscoped last-15-minute requests, use the server-supplied last-15-minute bounds verbatim instead of epoch arithmetic.
+              An explicit fixed investigation window takes precedence. Never call a different duration "15 minutes".
 
             ## Tools and Approval
 
@@ -107,8 +123,12 @@ public class RuntimePromptBuilder {
             case ALERT_TRIGGER ->
                     "This run was triggered by an alert. Perform diagnosis only. Do not request CHANGE tools.";
             case USER_INPUT ->
-                    "This run was triggered by an operator. Diagnose first. Request CHANGE tools only after "
-                            + "evidence shows a repair action is required.";
+                    "This run was triggered by an operator. Respond to the current request: social conversation, "
+                            + "capability explanations, general concepts, and necessary clarifications do not require tools. "
+                            + "For actual platform-state questions, obtain fresh relevant READ evidence before stating conclusions. "
+                            + "Do not turn a general question into an investigation just because operational history exists. "
+                            + "If evidence cannot be obtained, explain that limitation without inventing state or health. "
+                            + "Request CHANGE tools only after evidence shows a repair action is required.";
             case SCHEDULE_TRIGGER ->
                     "This run was triggered by a schedule. Perform diagnosis only. Do not request CHANGE tools.";
         };
@@ -136,10 +156,24 @@ public class RuntimePromptBuilder {
     }
 
     private PromptText runtimeMetadata(AgentRuntimeContext context) {
+        var window = context.getRequestedQueryWindow();
+        var now = window == null ? OffsetDateTime.parse(context.getCurrentTimeIso()).toInstant()
+                : java.time.Instant.ofEpochMilli(window.end());
+        var recent = window == null ? now.minus(Duration.ofMinutes(15))
+                : java.time.Instant.ofEpochMilli(window.start());
         PromptText text = PromptText.create()
                 .section("Time", section -> section
                         .line("Current time", context.getCurrentTimeIso())
-                        .line("Timezone", context.getTimezone()))
+                        .line("Timezone", context.getTimezone())
+                        .line("Last 15 minutes start epoch millis", recent.toEpochMilli())
+                        .line("Last 15 minutes end epoch millis", now.toEpochMilli())
+                        .line("Last 15 minutes start UTC", recent.toString())
+                        .line("Last 15 minutes end UTC", now.toString())
+                        .line("Enforced window query mode", window == null ? null
+                                : "SERVER_RUN_WINDOW: schema-declared query bounds are supplied by the server when omitted. "
+                                  + "Reuse this binding by omitting start/end; never copy timestamps from earlier turns. "
+                                  + "Explicit bounds remain explicit and conflicting ranges are rejected. "
+                                  + "For metrics.history use monitorId and metricKey, not relative history mode."))
                 .section("Channel", section -> section
                         .line("Channel", context.getChannelId())
                         .line("Received at epoch millis", context.getReceivedAt()))
@@ -272,7 +306,11 @@ public class RuntimePromptBuilder {
             text.bullet("Available tools are provided as structured model tool definitions.")
                     .bullet("Use only the structured tool names supplied with this request. If tool.search returns hasMore=true, "
                             + "request the next page with offset increased by 10; do not assume the first page is the whole catalog.")
-                    .bullet("Use interaction.request_input for structured input and always prefer it for credentials, never ask the user to put secrets in chat.");
+                    .bullet("Use interaction.request_input only for genuinely missing values of monitor.create or monitor.update, "
+                            + "whose schemas accept inputRef. Never ask again for supplied values. For other tools use the discovered "
+                            + "schema and supplied non-secret arguments; do not invent inputRef support or request secrets in chat. "
+                            + "Input collection is not execution: after a supported form returns, call its target with the inputRef "
+                            + "in this run through normal approval, rather than giving a final answer.");
         }
         return text;
     }

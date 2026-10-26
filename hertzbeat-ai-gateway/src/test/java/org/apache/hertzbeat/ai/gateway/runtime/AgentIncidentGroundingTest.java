@@ -107,7 +107,18 @@ class AgentIncidentGroundingTest {
                 AgentRuntimeModelResponse.toolCalls("", List.of(call(42L)), null),
                 AgentRuntimeModelResponse.toolCalls("", List.of(call(43L)), null),
                 AgentRuntimeModelResponse.finalAnswer("Observed alert facts; no entity association is verified.", null)));
-        AgentRuntimeModelClient model = (request, control, consumer) -> responses.remove();
+        AgentRuntimeModelClient model = new AgentRuntimeModelClient() {
+            public boolean supportsReplyReview() { return true; }
+
+            public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
+                    java.util.function.Consumer<String> consumer) {
+                if (request.getPrompt().getInstructions().contains("ORIGINAL_TASK_COMPLETION_REVIEW"))
+                    return AgentRuntimeModelResponse.finalAnswer(JsonUtil.toJson(new AgentTaskAssessment(
+                        new AgentTaskAssessment.Goal(AgentTaskAssessment.Type.OBSERVATION, AgentTaskAssessment.Operation.QUERY, "alert", null),
+                        AgentTaskOutcome.Stage.COMPLETE, true, List.of())), null);
+                return responses.remove();
+            }
+        };
         var context = AgentRuntimeContext.builder().entryType(AgentRuntimeEntryType.ALERT_TRIGGER)
                 .approvalHandling(AgentApprovalHandling.DENY).channelId("system").receivedAt(2000L)
                 .actor(AgentActor.alertAnalysisActor()).userMessage("Investigate").workspaceId("w")

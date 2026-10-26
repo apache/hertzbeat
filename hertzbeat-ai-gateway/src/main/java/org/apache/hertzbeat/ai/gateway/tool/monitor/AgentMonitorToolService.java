@@ -17,12 +17,7 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.monitor;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import org.apache.hertzbeat.ai.gateway.contract.AgentQueryPurpose;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolArguments;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
@@ -42,6 +37,13 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Monitor namespace tools.
@@ -84,21 +86,30 @@ public class AgentMonitorToolService {
         result.put("instance", monitor.getInstance());
         result.put("status", monitorStatus(monitor.getStatus()));
         result.put("labels", monitor.getLabels() == null ? Map.of() : monitor.getLabels());
-        result.put("annotations", monitor.getAnnotations() == null ? Map.of() : monitor.getAnnotations());
+        result.put(
+                "annotations",
+                monitor.getAnnotations() == null ? Map.of() : monitor.getAnnotations());
         result.put("collector", collectorBinding(monitorId));
         result.put("credentialPresent", credentialPresent(monitorDto.getParams()));
+        result.putAll(monitorRow(monitor));
+        result.put("collectionState", monitor.getStatus() == 0 ? "paused" : "enabled");
+        result.put("parameters", safeWebsiteParameters(monitor.getApp(), monitorDto.getParams()));
+        result.put("readbackVersion", AgentMonitorMutationReceipt.READBACK_VERSION);
         return result;
     }
 
-    @Tool(name = "monitor.params",
-        description = "Get safe monitor parameter definition and value-presence summary.")
-    @AgentToolPolicy(
-        exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @Tool(
+            name = "monitor.params",
+            description = "Get safe monitor parameter definition and value-presence summary. "
+                    + "Protected defaults, option values, dependencies and placeholders are omitted; "
+                    + "use the native editor for protected configuration.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> monitorParams(
-        @ToolParam(description = "Monitor id.")
-        Long monitorId,
-        @ToolParam(required = false, description = "Application type. Omit to infer it from the monitor.")
-        String app) {
+            @ToolParam(description = "Monitor id.") Long monitorId,
+            @ToolParam(
+                            required = false,
+                            description = "Application type. Omit to infer it from the monitor.")
+                    String app) {
         Long resolvedMonitorId = monitorId;
         if (resolvedMonitorId == null) {
             throw new IllegalArgumentException("monitor.params requires monitorId");
@@ -114,10 +125,14 @@ public class AgentMonitorToolService {
         result.put("monitorId", resolvedMonitorId);
         result.put("app", resolvedApp);
         result.put("credentialPresent", credentialPresent(monitorDto.getParams()));
+        result.putAll(monitorRow(monitor));
+        result.put("collectionState", monitor.getStatus() == 0 ? "paused" : "enabled");
+        result.put("parameters", safeWebsiteParameters(monitor.getApp(), monitorDto.getParams()));
+        result.put("readbackVersion", AgentMonitorMutationReceipt.READBACK_VERSION);
         List<ParamDefineInfo> definitions = List.of();
         if (resolvedApp != null) {
             // Application catalog keys are case-insensitive; canonicalize model-provided app names for lookup.
-            definitions = appService.getAppParamDefines(resolvedApp.toLowerCase(Locale.ROOT));
+            definitions = AgentParameterMetadataProjection.safe(appService.getAppParamDefines(resolvedApp.toLowerCase(Locale.ROOT)));
         }
         result.put("paramDefinitions", definitions == null ? List.of() : definitions);
         Map<String, Boolean> valuePresence = new LinkedHashMap<>();
@@ -147,26 +162,67 @@ public class AgentMonitorToolService {
         return result;
     }
 
-    @Tool(name = "monitor.query", description = "Query monitors with filters, pagination, and optional status statistics.")
+    public Map<String, Object> queryMonitors(List<Long> ids, String app, String status, String search, String labels,
+                                             String sort, String order, Integer pageIndex, Integer pageSize, Boolean includeStats) {
+        return queryMonitors(ids, app, status, search, labels, sort, order, pageIndex, pageSize, includeStats,
+                AgentQueryPurpose.PAGE);
+    }
+
+    @Tool(
+            name = "monitor.query",
+            description =
+                    "Query current monitor snapshots. Choose purpose from the current user request:"
+                        + " COUNT needs only an exact matching total and one sample; PAGE returns"
+                        + " one requested page; ALL_ROWS requires every matching page;"
+                        + " STATUS_COUNTS returns exact status aggregates for the same filters."
+                        + " totalElements is the full matching total, not the sample count."
+                        + " Returned row attributes apply only to those rows. This tool has no"
+                        + " historical/time-range filter. Do not query other signals to answer a"
+                        + " monitor count.")
     @AgentToolPolicy
     public Map<String, Object> queryMonitors(
             @ToolParam(required = false, description = "Monitor ids.") List<Long> ids,
             @ToolParam(required = false, description = "Monitor application type.") String app,
-            @ToolParam(required = false, description = "Status: paused, up, down, or all; default all.") String status,
-            @ToolParam(required = false, description = "Monitor name or host search text.") String search,
-            @ToolParam(required = false, description = "Comma-separated key:value label filters.") String labels,
+            @ToolParam(
+                            required = false,
+                            description = "Status: paused, up, down, or all; default all.")
+                    String status,
+            @ToolParam(required = false, description = "Monitor name or host search text.")
+                    String search,
+            @ToolParam(required = false, description = "Comma-separated key:value label filters.")
+                    String labels,
             @ToolParam(required = false, description = "Sort field.") String sort,
             @ToolParam(required = false, description = "Sort order: asc or desc.") String order,
             @ToolParam(required = false, description = "Zero-based page index.") Integer pageIndex,
             @ToolParam(required = false, description = "Page size.") Integer pageSize,
-            @ToolParam(required = false, description = "Include monitor status statistics.") Boolean includeStats) {
-        int resolvedPageIndex = AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE);
-        int resolvedPageSize = AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100);
-        String resolvedSort = sort == null || sort.isBlank() ? "gmtCreate" : sort;
-        if (!MONITOR_SORT_FIELDS.contains(resolvedSort)) {
-            throw new IllegalArgumentException("sort must be id, name, app, status, gmtCreate, or gmtUpdate");
+            @ToolParam(required = false, description = "Include monitor status statistics.")
+                    Boolean includeStats,
+            @ToolParam(
+                            required = false,
+                            description =
+                                    "Result required by the current question: COUNT, PAGE,"
+                                        + " ALL_ROWS, STATUS_COUNTS, or TIME_RANGE. Default PAGE."
+                                        + " Select COUNT for how many, not ALL_ROWS.")
+                    AgentQueryPurpose purpose) {
+        AgentQueryPurpose resultPurpose = purpose == null ? AgentQueryPurpose.PAGE : purpose;
+        if (resultPurpose == AgentQueryPurpose.TIME_RANGE) {
+            return Map.of("state", "unsupported_time_range", "temporalScope", "CURRENT_SNAPSHOT",
+                    "reasonCode", "MONITOR_HISTORY_FILTER_UNSUPPORTED");
         }
-        String resolvedOrder = order == null || order.isBlank() ? "desc" : order.toLowerCase(Locale.ROOT);
+        int resolvedPageIndex = resultPurpose == AgentQueryPurpose.COUNT ? 0
+                : AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE);
+        int resolvedPageSize = resultPurpose == AgentQueryPurpose.COUNT ? 1
+                : AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100);
+        String resolvedSort = sort == null || sort.isBlank()
+                ? resultPurpose == AgentQueryPurpose.ALL_ROWS ? "id" : "gmtCreate" : sort;
+        if (!MONITOR_SORT_FIELDS.contains(resolvedSort)) {
+            throw new IllegalArgumentException(
+                    "sort must be id, name, app, status, gmtCreate, or gmtUpdate");
+        }
+        String resolvedOrder =
+                order == null || order.isBlank()
+                        ? resultPurpose == AgentQueryPurpose.ALL_ROWS ? "asc" : "desc"
+                        : order.toLowerCase(Locale.ROOT);
         if (!"asc".equals(resolvedOrder) && !"desc".equals(resolvedOrder)) {
             throw new IllegalArgumentException("order must be asc or desc");
         }
@@ -179,9 +235,55 @@ public class AgentMonitorToolService {
         result.put("pageSize", page.getSize());
         result.put("totalElements", page.getTotalElements());
         result.put("totalPages", page.getTotalPages());
-        if (Boolean.TRUE.equals(includeStats)) {
-            result.put("status", statusCounts(app, search, labels));
+        boolean aggregate = resultPurpose != AgentQueryPurpose.COUNT
+                && (Boolean.TRUE.equals(includeStats) || resultPurpose == AgentQueryPurpose.STATUS_COUNTS);
+        if (aggregate) {
+            result.put("status", statusCounts(ids, app, status, search, labels));
         }
+        Map<String, Object> filters = new LinkedHashMap<>();
+        if (ids != null && !ids.isEmpty()) {
+            filters.put("ids", List.copyOf(ids));
+        }
+        for (var filter :
+                Map.of(
+                                "app",
+                                app == null ? "" : app,
+                                "status",
+                                status == null ? "all" : status,
+                                "search",
+                                search == null ? "" : search,
+                                "labels",
+                                labels == null ? "" : labels)
+                        .entrySet()) {
+            if (!filter.getValue().isBlank()
+                    && !(filter.getKey().equals("status")
+                            && filter.getValue().equalsIgnoreCase("all"))) {
+                filters.put(filter.getKey(), filter.getValue());
+            }
+        }
+        result.put(
+                "queryMetadata",
+                Map.of(
+                        "version",
+                        "monitor-query.v1",
+                        "purpose",
+                        resultPurpose.name(),
+                        "totalScope",
+                        "MATCHING_FILTERS",
+                        "totalIsExact",
+                        true,
+                        "rowScope",
+                        "RETURNED_PAGE",
+                        "temporalScope",
+                        "CURRENT_SNAPSHOT",
+                        "authorizationScope",
+                        "CURRENT_TOOL_ACCESS",
+                        "filters",
+                        filters,
+                        "statusCountsScope",
+                        aggregate ? "MATCHING_FILTERS" : "NOT_REQUESTED",
+                        "statusCountsAtomic",
+                        false));
         return result;
     }
 
@@ -193,36 +295,58 @@ public class AgentMonitorToolService {
     /** Non-secret scheduling and collector fields for creation. */
     public record CreateOptions(String collector, Map<String, String> annotations, String scheduleType, String cronExpression) { }
 
-    @Tool(name = "monitor.create", description = "Create a HertzBeat monitor from an application type and parameters.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "monitor.create",
+            description = "Create a HertzBeat monitor from an application type and parameters.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> createMonitor(
             @ToolParam(description = "Unique monitor name.") String name,
-            @ToolParam(description = "Monitor application type, such as linux, mysql, or website.") String app,
-            @ToolParam(required = false, description = "Collection interval in seconds.") Integer intervals,
-            @ToolParam(description = "Monitor parameters keyed by parameter field.") Map<String, Object> params,
+            @ToolParam(description = "Monitor application type, such as linux, mysql, or website.")
+                    String app,
+            @ToolParam(required = false, description = "Collection interval in seconds.")
+                    Integer intervals,
+            @ToolParam(description = "Monitor parameters keyed by parameter field.")
+                    Map<String, Object> params,
             @ToolParam(required = false, description = "Monitor description.") String description,
-            @ToolParam(required = false, description = "Business labels attached to collected metrics and alerts.")
-            Map<String, String> labels,
-            @ToolParam(required = false, description = "Reference returned by interaction.request_input.") String inputRef,
-            @ToolParam(required = false, description = "Non-secret collector, annotations and interval/cron scheduling fields.") CreateOptions options) {
+            @ToolParam(
+                            required = false,
+                            description =
+                                    "Business labels attached to collected metrics and alerts.")
+                    Map<String, String> labels,
+            @ToolParam(
+                            required = false,
+                            description = "Reference returned by interaction.request_input.")
+                    String inputRef,
+            @ToolParam(
+                            required = false,
+                            description =
+                                    "Non-secret collector, annotations and interval/cron scheduling"
+                                            + " fields.")
+                    CreateOptions options) {
         if (name == null || name.isBlank() || name.length() > 100 || app == null || app.isBlank()
                 || app.length() > 100 || params == null || params.isEmpty() || params.size() > 100) {
             throw new IllegalArgumentException(
-                    "name, app, and 1 to 100 params are required; name and app must not exceed 100 characters");
+                    "name, app, and 1 to 100 params are required; name and app must not exceed 100"
+                            + " characters");
         }
         if (description != null && description.length() > 255) {
             throw new IllegalArgumentException("description must not exceed 255 characters");
         }
         // Application catalog keys are case-insensitive; canonicalize the model-provided app for lookup and storage.
         String resolvedApp = app.trim().toLowerCase(Locale.ROOT);
+        rejectExecutableParameterFields(params.keySet());
+        requireNonCodeTemplate(resolvedApp);
         List<ParamDefineInfo> definitions = appService.getAppParamDefines(resolvedApp);
         Map<String, ParamDefineInfo> definitionsByField = definitions.stream()
                 .collect(java.util.stream.Collectors.toMap(ParamDefineInfo::getField, definition -> definition));
         if (!definitionsByField.keySet().containsAll(params.keySet())) {
             Set<String> unknownFields = new LinkedHashSet<>(params.keySet());
             unknownFields.removeAll(definitionsByField.keySet());
-            throw new IllegalArgumentException("Unknown monitor parameter fields: " + unknownFields);
+            throw new IllegalArgumentException(
+                    "Unknown monitor parameter fields: " + unknownFields);
         }
         Map<String, Object> resolvedParams = new LinkedHashMap<>(params);
         for (ParamDefineInfo definition : definitions) {
@@ -240,9 +364,13 @@ public class AgentMonitorToolService {
                 .toList();
         String host = paramValue(resolvedParams.get("host"));
         String port = paramValue(resolvedParams.get("port"));
-        String instance = host == null ? "" : port == null || port.isBlank() ? host.trim() : host.trim() + ":" + port;
+        String instance =
+                host == null
+                        ? ""
+                        : port == null || port.isBlank() ? host.trim() : host.trim() + ":" + port;
         if (instance.length() > 100) {
-            throw new IllegalArgumentException("The derived monitor instance must not exceed 100 characters");
+            throw new IllegalArgumentException(
+                    "The derived monitor instance must not exceed 100 characters");
         }
         Monitor monitor = Monitor.builder()
                 .name(name.trim())
@@ -278,30 +406,85 @@ public class AgentMonitorToolService {
         Monitor validatedMonitor = monitorDto.getMonitor();
         List<Param> validatedParams = monitorDto.getParams();
         monitorService.addMonitor(validatedMonitor, validatedParams, monitorDto.getCollector(), null);
-        return Map.of("monitorId", validatedMonitor.getId(), "name", validatedMonitor.getName(),
-                "app", validatedMonitor.getApp(), "instance", validatedMonitor.getInstance(),
-                "intervals", validatedMonitor.getIntervals(), "labels", validatedMonitor.getLabels());
+        Map<String, Object> result =
+                new LinkedHashMap<>(
+                        Map.of(
+                                "monitorId",
+                                validatedMonitor.getId(),
+                                "name",
+                                validatedMonitor.getName(),
+                                "app",
+                                validatedMonitor.getApp(),
+                                "instance",
+                                validatedMonitor.getInstance(),
+                                "intervals",
+                                validatedMonitor.getIntervals(),
+                                "labels",
+                                validatedMonitor.getLabels()));
+        if ("website".equals(validatedMonitor.getApp())
+                && AgentMonitorMutationReceipt.WEBSITE_FIELDS.containsAll(params.keySet())) {
+            Map<String, Object> expected = monitorRow(validatedMonitor);
+            expected.remove("status");
+            expected.remove("monitorId");
+            expected.put(
+                    "collectionState", validatedMonitor.getStatus() == 0 ? "paused" : "enabled");
+            if (options != null && options.collector() != null) {
+                expected.put("collector", monitorDto.getCollector());
+            }
+            attachMutation(
+                    result,
+                    "monitor.create",
+                    List.of(
+                            new AgentMonitorMutationReceipt.Target(
+                                    validatedMonitor.getId(),
+                                    expected,
+                                    safeWebsiteParameters(
+                                            validatedMonitor.getApp(), validatedParams))));
+        }
+        return result;
     }
 
-    @Tool(name = "monitor.update",
-            description = "Update monitor metadata. Supported fields are name, intervals, description, labels, annotations, collector,"
-                    + " scheduleType, and cronExpression. Protocol credentials must use the native monitor form.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "monitor.update",
+            description =
+                    "Update monitor metadata. Supported fields are name, intervals, description,"
+                            + " labels, annotations, collector, scheduleType, and cronExpression."
+                            + " Protocol credentials must use the native monitor form.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> updateMonitor(
             @ToolParam(description = "Monitor id.") Long monitorId,
-            @ToolParam(description = "Fields to update. Labels replace the complete current label map.")
-            Map<String, Object> updates,
-            @ToolParam(required = false, description = "Reference returned by interaction.request_input.")
-            String inputRef) {
+            @ToolParam(
+                            description =
+                                    "Fields to update. Labels replace the complete current label"
+                                            + " map.")
+                    Map<String, Object> updates,
+            @ToolParam(
+                            required = false,
+                            description = "Reference returned by interaction.request_input.")
+                    String inputRef) {
         if (monitorId == null || updates == null || updates.isEmpty()) {
             throw new IllegalArgumentException("monitorId and updates are required");
         }
-        Set<String> supportedFields = Set.of("name", "intervals", "description", "labels", "annotations", "collector", "scheduleType", "cronExpression");
+        Set<String> supportedFields =
+                Set.of(
+                        "name",
+                        "intervals",
+                        "description",
+                        "labels",
+                        "annotations",
+                        "collector",
+                        "scheduleType",
+                        "cronExpression");
         if (!supportedFields.containsAll(updates.keySet())) {
-            throw new IllegalArgumentException("Unsupported update field; use the native monitor form for protocol parameters");
+            throw new IllegalArgumentException(
+                    "Unsupported update field; use the native monitor form for protocol"
+                            + " parameters");
         }
         MonitorDto monitorDto = monitorService.getMonitorDto(monitorId);
+        if (monitorDto != null && monitorDto.getMonitor() != null) requireNonCodeTemplate(monitorDto.getMonitor().getApp());
         if (monitorDto == null || monitorDto.getMonitor() == null) {
             throw new IllegalArgumentException("Monitor was not found: " + monitorId);
         }
@@ -331,18 +514,39 @@ public class AgentMonitorToolService {
         Monitor persisted = monitorService.getMonitor(monitorId);
         Map<String, Object> result = monitorRow(persisted == null ? monitorDto.getMonitor() : persisted);
         result.put("verified", persisted != null);
+        Map<String, Object> expected = new LinkedHashMap<>();
+        for (String field : updates.keySet()) {
+            expected.put(
+                    field,
+                    "collector".equals(field) ? monitorDto.getCollector() : result.get(field));
+        }
+        attachMutation(
+                result,
+                "monitor.update",
+                List.of(new AgentMonitorMutationReceipt.Target(monitorId, expected, Map.of())));
         return result;
     }
 
-    @Tool(name = "monitor.protocol_update", description = "Patch declared non-secret scalar protocol parameters on an existing monitor, preserving stored credentials"
-            + " server-side. Password, composite and credential-bearing parameters require the native secure editor.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public Map<String, Object> protocolUpdate(@ToolParam(description = "Existing monitor id.") Long monitorId,
-            @ToolParam(description = "Declared non-secret scalar parameter fields to patch.") Map<String, String> parameters) {
+    @Tool(
+            name = "monitor.protocol_update",
+            description =
+                    "Patch declared non-secret scalar protocol parameters on an existing monitor,"
+                            + " preserving stored credentials server-side. Password, composite and"
+                            + " credential-bearing parameters require the native secure editor.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> protocolUpdate(
+            @ToolParam(description = "Existing monitor id.") Long monitorId,
+            @ToolParam(description = "Declared non-secret scalar parameter fields to patch.")
+                    Map<String, String> parameters) {
         if (monitorId == null || monitorId <= 0 || parameters == null || parameters.isEmpty() || parameters.size() > 100) {
-            throw new IllegalArgumentException("A monitor and bounded parameter patch are required");
+            throw new IllegalArgumentException(
+                    "A monitor and bounded parameter patch are required");
         }
         MonitorDto dto = monitorService.getMonitorDto(monitorId);
+        if (dto != null && dto.getMonitor() != null) requireNonCodeTemplate(dto.getMonitor().getApp());
         if (dto == null || dto.getMonitor() == null) {
             throw new IllegalArgumentException("Monitor not found");
         }
@@ -370,17 +574,27 @@ public class AgentMonitorToolService {
                 "updatedFields", List.copyOf(parameters.keySet()));
     }
 
-    @Tool(name = "monitor.detect_draft", description = "Probe an unsaved monitor using declared non-secret scalar parameters. Performs a live collector probe without"
-            + " saving a monitor. Credential-bearing drafts require the native secure editor.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE, exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public Map<String, Object> detectDraft(@ToolParam(description = "Application identifier.") String app,
-            @ToolParam(description = "Non-secret scalar protocol parameters.") Map<String, String> parameters,
+    @Tool(
+            name = "monitor.detect_draft",
+            description =
+                    "Probe an unsaved monitor using declared non-secret scalar parameters. Performs"
+                            + " a live collector probe without saving a monitor. Credential-bearing"
+                            + " drafts require the native secure editor.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> detectDraft(
+            @ToolParam(description = "Application identifier.") String app,
+            @ToolParam(description = "Non-secret scalar protocol parameters.")
+                    Map<String, String> parameters,
             @ToolParam(required = false, description = "Collector name.") String collector) {
         if (app == null || app.isBlank() || app.length() > 100 || parameters == null
                 || parameters.isEmpty() || parameters.size() > 100) {
             throw new IllegalArgumentException("Application and bounded parameters are required");
         }
         String canonicalApp = app.trim().toLowerCase(Locale.ROOT);
+        requireNonCodeTemplate(canonicalApp);
         Map<String, ParamDefineInfo> definitions = appService.getAppParamDefines(canonicalApp).stream()
                 .collect(java.util.stream.Collectors.toMap(ParamDefineInfo::getField, value -> value));
         validateNonSecretParameters(parameters, definitions);
@@ -395,23 +609,73 @@ public class AgentMonitorToolService {
             monitorService.validate(dto, null);
             monitorService.detectMonitor(dto.getMonitor(), dto.getParams(), dto.getCollector());
         } catch (RuntimeException exception) {
-            throw new IllegalArgumentException("Monitor draft validation or availability probe failed; inspect the native editor for details");
+            throw new IllegalArgumentException(
+                    "Monitor draft validation or availability probe failed; inspect the native"
+                            + " editor for details");
         }
-        return Map.of("app", canonicalApp, "probeCompleted", true, "persisted", false);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("app", canonicalApp);
+        result.put("probeCompleted", true);
+        result.put("persisted", false);
+        result.put("probeVersion", "monitor-probe.v1");
+        result.put("parameters", safeWebsiteParameters(canonicalApp, dto.getParams()));
+        result.put("collector", dto.getCollector() == null ? "" : dto.getCollector());
+        try {
+            result.put(
+                    "inputHash",
+                    AgentToolContextSupport.invocation().getLedgerCall().getInputHash());
+        } catch (IllegalArgumentException noInvocation) {
+            result.put("inputHash", null);
+        }
+        return result;
+    }
+
+    private static void rejectExecutableParameterFields(Set<String> fields) {
+        for (String raw : fields) {
+            String field =
+                    raw == null ? "" : raw.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            if (Set.of(
+                            "script",
+                            "scriptcommand",
+                            "scriptpath",
+                            "scripttool",
+                            "command",
+                            "commands",
+                            "cmd",
+                            "sql",
+                            "sqls",
+                            "sqlquery",
+                            "python",
+                            "groovy",
+                            "javascript",
+                            "workdirectory")
+                    .contains(field)) {
+                throw new IllegalArgumentException(
+                        "Executable monitor parameters are unavailable through AI tools");
+            }
+        }
     }
 
     private void validateNonSecretParameters(Map<String, String> parameters, Map<String, ParamDefineInfo> definitions) {
+        rejectExecutableParameterFields(parameters.keySet());
         for (var entry : parameters.entrySet()) {
             ParamDefineInfo definition = definitions.get(entry.getKey());
-            String field = entry.getKey() == null ? "" : entry.getKey().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
-            if (definition == null || paramType(definition) > 1
-                    || field.matches(".*(password|passwd|secret|token|credential|authorization|privatekey|apikey|accesskey|header).*")) {
-                throw new IllegalArgumentException("This parameter requires the native secure editor");
+            String field =
+                    entry.getKey() == null
+                            ? ""
+                            : entry.getKey().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            if (definition == null
+                    || paramType(definition) > 1
+                    || field.matches(
+                            ".*(password|passwd|secret|token|credential|authorization|privatekey|apikey|accesskey|header).*")) {
+                throw new IllegalArgumentException(
+                        "This parameter requires the native secure editor");
             }
             if (entry.getValue() == null || entry.getValue().length() > 4096
                     || entry.getValue().matches("(?s).*://[^/\\s]*@.*")
                     || containsCredentialQueryParameter(entry.getValue())) {
-                throw new IllegalArgumentException("A bounded non-secret parameter value is required");
+                throw new IllegalArgumentException(
+                        "A bounded non-secret parameter value is required");
             }
         }
     }
@@ -431,9 +695,19 @@ public class AgentMonitorToolService {
             } catch (IllegalArgumentException exception) {
                 throw new IllegalArgumentException("Malformed URL query parameter name");
             }
-            if (Set.of("key", "token", "secret", "password", "passwd", "pwd", "pass", "authorization", "bearer")
-                    .contains(name)
-                    || name.matches(".*(password|secret|token|credential|authorization|privatekey|apikey|accesskey|signature)$")) {
+            if (Set.of(
+                                    "key",
+                                    "token",
+                                    "secret",
+                                    "password",
+                                    "passwd",
+                                    "pwd",
+                                    "pass",
+                                    "authorization",
+                                    "bearer")
+                            .contains(name)
+                    || name.matches(
+                            ".*(password|secret|token|credential|authorization|privatekey|apikey|accesskey|signature)$")) {
                 return true;
             }
         }
@@ -441,31 +715,47 @@ public class AgentMonitorToolService {
     }
 
     @Tool(name = "monitor.pause", description = "Pause collection for one or more monitors.")
-    @AgentToolPolicy(access = AgentToolAccess.ADMIN, risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> pauseMonitors(
-            @ToolParam(description = "Monitor ids; at most 100 per request.") List<Long> monitorIds) {
+            @ToolParam(description = "Monitor ids; at most 100 per request.")
+                    List<Long> monitorIds) {
         Set<Long> ids = monitorIds(monitorIds);
+        requireExistingMonitors(ids);
         monitorService.cancelManageMonitors(ids);
-        return operationResult("pause", ids);
+        return collectionMutation("pause", ids);
     }
 
-    @Tool(name = "monitor.resume", description = "Resume collection for one or more paused monitors.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "monitor.resume",
+            description = "Resume collection for one or more paused monitors.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> resumeMonitors(
-            @ToolParam(description = "Monitor ids; at most 100 per request.") List<Long> monitorIds) {
+            @ToolParam(description = "Monitor ids; at most 100 per request.")
+                    List<Long> monitorIds) {
         Set<Long> ids = monitorIds(monitorIds);
+        requireExistingMonitors(ids);
+        ids.forEach(id -> requireNonCodeTemplate(monitorService.getMonitor(id).getApp()));
         monitorService.enableManageMonitors(ids);
-        return operationResult("resume", ids);
+        return collectionMutation("resume", ids);
     }
 
-    @Tool(name = "monitor.delete", description = "Permanently delete one or more monitors and their scheduled jobs.")
-    @AgentToolPolicy(access = AgentToolAccess.ADMIN, risk = AgentToolRisk.DANGEROUS,
+    @Tool(
+            name = "monitor.delete",
+            description = "Permanently delete one or more monitors and their scheduled jobs.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.DANGEROUS,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> deleteMonitors(
             @ToolParam(description = "Monitor ids; at most 100 per request.") List<Long> monitorIds,
-            @ToolParam(description = "Operator-provided reason recorded with the tool invocation.") String reason) {
+            @ToolParam(description = "Operator-provided reason recorded with the tool invocation.")
+                    String reason) {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for monitor.delete");
         }
@@ -483,36 +773,52 @@ public class AgentMonitorToolService {
         return operationResult("delete", ids);
     }
 
-    @Tool(name = "monitor.types", description = "List monitor application types available for creation.")
-    @AgentToolPolicy(
-            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @Tool(
+            name = "monitor.types",
+            description = "List monitor application types available for creation.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, String> listMonitorTypes(
-            @ToolParam(required = false, description = "Language tag, such as en-US or zh-CN.") String language) {
+            @ToolParam(required = false, description = "Language tag, such as en-US or zh-CN.")
+                    String language) {
         return appService.getI18nApps(language == null || language.isBlank() ? "en-US" : language);
     }
 
-    @Tool(name = "monitor.type_params", description = "Get required parameter definitions for a monitor application type.")
-    @AgentToolPolicy(
-            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @Tool(
+            name = "monitor.type_params",
+            description = "Get required parameter definitions for a monitor application type. "
+                    + "Only fixed port/timeout/SSL defaults are returned. Other defaults, choices, "
+                    + "dependencies and placeholders are withheld; use the native editor for protected values.")
+    @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public List<ParamDefineInfo> getMonitorTypeParams(
             @ToolParam(description = "Monitor application type.") String app) {
         if (app == null || app.isBlank()) {
             throw new IllegalArgumentException("app is required");
         }
         // Application catalog keys are case-insensitive; canonicalize the model-provided app for lookup.
-        return appService.getAppParamDefines(app.trim().toLowerCase(Locale.ROOT));
+        return AgentParameterMetadataProjection.safe(appService.getAppParamDefines(app.trim().toLowerCase(Locale.ROOT)));
     }
 
-    @Tool(name = "monitor.copy", description = "Copy an existing monitor through the native copy service. Credentials remain server-side. The service does"
-            + " not return the new id; query monitors to verify the copy.")
-    @AgentToolPolicy(access = AgentToolAccess.USER, risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "monitor.copy",
+            description =
+                    "Copy an existing monitor through the native copy service. Credentials remain"
+                        + " server-side. The service does not return the new id; query monitors to"
+                        + " verify the copy.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.USER,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public Map<String, Object> copyMonitor(@ToolParam(description = "Source monitor id.") Long monitorId) {
+    public Map<String, Object> copyMonitor(
+            @ToolParam(description = "Source monitor id.") Long monitorId) {
         if (monitorId == null || monitorId <= 0) {
             throw new IllegalArgumentException("A positive monitor id is required");
         }
+        Monitor source = monitorService.getMonitor(monitorId);
+        if (source == null) throw new IllegalArgumentException("Source monitor was not found");
+        requireNonCodeTemplate(source.getApp());
         monitorService.copyMonitor(monitorId);
-        return Map.of("sourceMonitorId", monitorId, "operation", "copy", "verificationRequired", true);
+        return Map.of(
+                "sourceMonitorId", monitorId, "operation", "copy", "verificationRequired", true);
     }
 
     private String optionalText(Object value, int maximum) {
@@ -544,11 +850,13 @@ public class AgentMonitorToolService {
         };
     }
 
-    private Map<String, Long> statusCounts(String app, String search, String labels) {
+    private Map<String, Long> statusCounts(List<Long> ids, String app, String status, String search, String labels) {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put("up", count(app, search, labels, (byte) 1));
-        counts.put("down", count(app, search, labels, (byte) 2));
-        counts.put("paused", count(app, search, labels, (byte) 0));
+        Byte selected = monitorStatus(status);
+        counts.put("up", count(ids, app, search, labels, selected, (byte) 1));
+        counts.put("down", count(ids, app, search, labels, selected, (byte) 2));
+        counts.put("paused", count(ids, app, search, labels, selected, (byte) 0));
+        counts.put("unreachable", count(ids, app, search, labels, selected, (byte) 3));
         return counts;
     }
 
@@ -560,7 +868,8 @@ public class AgentMonitorToolService {
             case "paused" -> (byte) 0;
             case "up" -> (byte) 1;
             case "down" -> (byte) 2;
-            default -> throw new IllegalArgumentException("status must be paused, up, down, or all");
+            default ->
+                    throw new IllegalArgumentException("status must be paused, up, down, or all");
         };
     }
 
@@ -569,7 +878,8 @@ public class AgentMonitorToolService {
             return 600;
         }
         if (intervals < 10 || intervals > 604_800) {
-            throw new IllegalArgumentException("Monitor intervals must be from 10 to 604800 seconds");
+            throw new IllegalArgumentException(
+                    "Monitor intervals must be from 10 to 604800 seconds");
         }
         return intervals;
     }
@@ -590,13 +900,19 @@ public class AgentMonitorToolService {
             default -> "unknown";
         });
         row.put("labels", monitor.getLabels() == null ? Map.of() : monitor.getLabels());
-        row.put("annotations", monitor.getAnnotations() == null ? Map.of() : monitor.getAnnotations());
+        row.put(
+                "annotations",
+                monitor.getAnnotations() == null ? Map.of() : monitor.getAnnotations());
         row.put("description", monitor.getDescription());
         return row;
     }
 
-    private long count(String app, String search, String labels, byte status) {
-        return monitorService.getMonitors(null, app, search, status, "id", "asc", 0, 1, labels).getTotalElements();
+    private long count(List<Long> ids, String app, String search, String labels, Byte selected, byte status) {
+        return selected != null && selected != status
+                ? 0
+                : monitorService
+                        .getMonitors(ids, app, search, status, "id", "asc", 0, 1, labels)
+                        .getTotalElements();
     }
 
     private Set<Long> monitorIds(List<Long> monitorIds) {
@@ -605,6 +921,76 @@ public class AgentMonitorToolService {
             throw new IllegalArgumentException("monitorIds must contain 1 to 100 positive ids");
         }
         return new LinkedHashSet<>(monitorIds);
+    }
+
+    private Map<String, String> safeWebsiteParameters(String app, List<Param> params) {
+        if (!"website".equals(app) || params == null) {
+            return Map.of();
+        }
+        Map<String, String> safe = new LinkedHashMap<>();
+        for (Param param : params) {
+            // Never obtain the value of a secret, composite or undeclared field.
+            if (param == null
+                    || !AgentMonitorMutationReceipt.WEBSITE_FIELDS.contains(param.getField())
+                    || param.getType() > 1) {
+                continue;
+            }
+            String value = param.getParamValue();
+            if (value != null
+                    && value.length() <= 4096
+                    && !value.matches("(?s).*://[^/\\s]*@.*")
+                    && !containsCredentialQueryParameter(value)) {
+                safe.put(param.getField(), value);
+            }
+        }
+        return Map.copyOf(safe);
+    }
+
+    private void attachMutation(
+            Map<String, Object> result,
+            String tool,
+            List<AgentMonitorMutationReceipt.Target> targets) {
+        String inputHash;
+        try {
+            inputHash = AgentToolContextSupport.invocation().getLedgerCall().getInputHash();
+        } catch (IllegalArgumentException noInvocation) {
+            inputHash = null;
+        }
+        result.put(
+                "mutation",
+                new AgentMonitorMutationReceipt(
+                        AgentMonitorMutationReceipt.VERSION, tool, inputHash, targets));
+    }
+
+    /** Ordinary write tools must not start/reschedule code collectors without the bound preview flow. */
+    private void requireNonCodeTemplate(String app) {
+        org.apache.hertzbeat.ai.gateway.tool.core.AgentCollectionCapabilityBoundary.requireNonCode(appService.getAppDefine(app));
+    }
+
+    private void requireExistingMonitors(Set<Long> ids) {
+        if (ids.stream().anyMatch(id -> monitorService.getMonitor(id) == null)) {
+            throw new IllegalArgumentException(
+                    "Every requested monitor id must exist; no collection change was made");
+        }
+    }
+
+    private Map<String, Object> collectionMutation(String operation, Set<Long> ids) {
+        Map<String, Object> result = new LinkedHashMap<>(operationResult(operation, ids));
+        List<AgentMonitorMutationReceipt.Target> targets =
+                ids.stream()
+                        .map(
+                                id ->
+                                        new AgentMonitorMutationReceipt.Target(
+                                                id,
+                                                Map.of(
+                                                        "collectionState",
+                                                        "pause".equals(operation)
+                                                                ? "paused"
+                                                                : "enabled"),
+                                                Map.of()))
+                        .toList();
+        attachMutation(result, "monitor." + operation, targets);
+        return result;
     }
 
     private Map<String, Object> operationResult(String operation, Set<Long> monitorIds) {
@@ -643,21 +1029,29 @@ public class AgentMonitorToolService {
         if (updates.containsKey("name")) {
             Object name = updates.get("name");
             if (!(name instanceof String value) || value.isBlank() || value.length() > 100) {
-                throw new IllegalArgumentException("Monitor name must not be blank or exceed 100 characters");
+                throw new IllegalArgumentException(
+                        "Monitor name must not be blank or exceed 100 characters");
             }
             monitor.setName(value);
         }
         if (updates.containsKey("intervals")) {
             Object intervals = updates.get("intervals");
-            if (!(intervals instanceof Number value) || value.intValue() < 10 || value.intValue() > 604_800) {
-                throw new IllegalArgumentException("Monitor intervals must be from 10 to 604800 seconds");
+            int exact;
+            try {
+                exact =
+                        intervals instanceof Number value
+                                ? new java.math.BigDecimal(value.toString()).intValueExact()
+                                : -1;
+            } catch (ArithmeticException | NumberFormatException invalid) {
+                throw new IllegalArgumentException("Monitor interval must be an exact integer");
             }
-            monitor.setIntervals(value.intValue());
+            monitor.setIntervals(validIntervals(exact));
         }
         if (updates.containsKey("description")) {
             Object description = updates.get("description");
             if (!(description instanceof String value) || value.length() > 255) {
-                throw new IllegalArgumentException("Monitor description must be text and at most 255 characters");
+                throw new IllegalArgumentException(
+                        "Monitor description must be text and at most 255 characters");
             }
             monitor.setDescription(value);
         }
@@ -674,12 +1068,14 @@ public class AgentMonitorToolService {
         for (Map.Entry<?, ?> entry : values.entrySet()) {
             if (!(entry.getKey() instanceof String key) || key.isBlank()
                     || !(entry.getValue() instanceof String labelValue) || labelValue.isBlank()) {
-                throw new IllegalArgumentException("Monitor labels must contain non-blank string keys and values");
+                throw new IllegalArgumentException(
+                        "Monitor labels must contain non-blank string keys and values");
             }
             labels.put(key, labelValue);
         }
         if (labels.size() > 50 || JsonUtil.toJson(labels).length() > 4096) {
-            throw new IllegalArgumentException("Monitor labels must contain at most 50 entries and fit in 4096 characters");
+            throw new IllegalArgumentException(
+                    "Monitor labels must contain at most 50 entries and fit in 4096 characters");
         }
         return labels;
     }

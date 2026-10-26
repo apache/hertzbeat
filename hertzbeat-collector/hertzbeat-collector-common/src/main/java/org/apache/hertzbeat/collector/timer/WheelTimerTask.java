@@ -80,9 +80,11 @@ public class WheelTimerTask implements TimerTask {
         List<Metrics> metrics = job.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>(metrics.size());
         for (Metrics metric : metrics) {
+            var inlinePermit = org.apache.hertzbeat.common.entity.job.InlineCollectionPermit.find(metric);
             JsonElement jsonElement = GSON.toJsonTree(metric);
             CollectUtil.replaceSmilingPlaceholder(jsonElement, configmap);
             metric = GSON.fromJson(jsonElement, Metrics.class);
+            if (inlinePermit != null) org.apache.hertzbeat.common.entity.job.InlineCollectionPermit.bind(metric, inlinePermit);
             metricsTmp.add(metric);
         }
         job.setMetrics(metricsTmp);

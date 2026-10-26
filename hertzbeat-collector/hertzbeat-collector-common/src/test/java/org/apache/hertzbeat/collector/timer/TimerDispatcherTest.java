@@ -17,17 +17,18 @@
 
 package org.apache.hertzbeat.collector.timer;
 
-import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
 import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,11 +36,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test class for TimerDispatcher's getNextExecutionInterval method
@@ -338,4 +340,34 @@ public class TimerDispatcherTest {
         long actual = timerDispatcher.initialCyclicDelay(job);
         assertTrue(Math.abs(actual - expected) <= 1, "cron phase must not be jittered");
     }
+
+    @Test
+    void cancelledTemporaryJobDropsLateResponseWithoutCompletingAnotherWaiter() throws Exception {
+        Job first = Job.builder().id(1001).app("website").configmap(List.of())
+                .metrics(List.of(Metrics.builder().name("summary").interval(1L).build())).build();
+        Job second = Job.builder().id(1002).app("website").configmap(List.of())
+                .metrics(List.of(Metrics.builder().name("summary").interval(1L).build())).build();
+        var secondCompleted = new java.util.concurrent.atomic.AtomicBoolean();
+        try {
+            timerDispatcher.addJob(first, new CollectResponseEventListener() {});
+            timerDispatcher.addJob(second, new CollectResponseEventListener() {
+                @Override
+                public void response(List<CollectRep.MetricsData> response) { secondCompleted.set(true); }
+            });
+            timerDispatcher.deleteJob(first.getId(), false);
+            var late = org.mockito.Mockito.mock(CollectRep.MetricsData.class);
+            timerDispatcher.responseSyncJobData(first.getId(), List.of(late));
+            org.mockito.Mockito.verify(late).close();
+            assertFalse(secondCompleted.get());
+            timerDispatcher.responseSyncJobData(second.getId(), List.of());
+            assertTrue(secondCompleted.get());
+            assertTrue(currentTempTaskMap().isEmpty());
+            Field field = TimerDispatcher.class.getDeclaredField("eventListeners");
+            field.setAccessible(true);
+            assertTrue(((Map<?, ?>) field.get(timerDispatcher)).isEmpty());
+        } finally {
+            timerDispatcher.destroy();
+        }
+    }
+
 }

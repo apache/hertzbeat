@@ -17,6 +17,23 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import io.micrometer.observation.ObservationRegistry;
+
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalConsumption;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalStatus;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentPolicyDecision;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCompletionIndeterminateException;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionOrchestrator;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionRequest;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
+import org.springframework.util.StringUtils;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
@@ -26,124 +43,188 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalConsumption;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalStatus;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentPolicyDecision;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCompletionIndeterminateException;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionRequest;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionOrchestrator;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry;
-import org.springframework.util.StringUtils;
 
-/**
- * Controlled bridge between model tool calls and model-visible Gateway tools.
- */
+/** Controlled bridge between model tool calls and model-visible Gateway tools. */
 public class AgentToolBridge {
 
     private final AgentToolRegistry toolRegistry;
+    private final AgentControlledToolDispatcher dispatcher;
     private final Clock clock;
     private final AgentRuntimeBlockingTaskRunner taskRunner;
     private final AgentToolExecutionOrchestrator toolExecutionOrchestrator;
     private final AgentRuntimeApprovalRegistry approvalRegistry;
 
-    public AgentToolBridge(AgentToolRegistry toolRegistry,
-                           AgentToolExecutionOrchestrator toolExecutionOrchestrator,
-                           AgentRuntimeApprovalRegistry approvalRegistry) {
-        this(toolRegistry, Clock.systemUTC(),
-            new AgentRuntimeBlockingTaskRunner(), toolExecutionOrchestrator, approvalRegistry);
+    public AgentToolBridge(
+            AgentToolRegistry toolRegistry,
+            AgentToolExecutionOrchestrator toolExecutionOrchestrator,
+            AgentRuntimeApprovalRegistry approvalRegistry) {
+        this(
+                toolRegistry,
+                Clock.systemUTC(),
+                new AgentRuntimeBlockingTaskRunner(),
+                toolExecutionOrchestrator,
+                approvalRegistry);
     }
 
-    AgentToolBridge(AgentToolRegistry toolRegistry,
-                    Clock clock,
-                    AgentRuntimeBlockingTaskRunner taskRunner,
-                    AgentToolExecutionOrchestrator toolExecutionOrchestrator,
-                    AgentRuntimeApprovalRegistry approvalRegistry) {
-        // The registry owns the handler catalog; without it the bridge cannot expose model-visible tools.
+    AgentToolBridge(
+            AgentToolRegistry toolRegistry,
+            Clock clock,
+            AgentRuntimeBlockingTaskRunner taskRunner,
+            AgentToolExecutionOrchestrator toolExecutionOrchestrator,
+            AgentRuntimeApprovalRegistry approvalRegistry) {
+        this(
+                toolRegistry,
+                clock,
+                taskRunner,
+                toolExecutionOrchestrator,
+                approvalRegistry,
+                ObservationRegistry.NOOP);
+    }
+
+    public AgentToolBridge(
+            AgentToolRegistry toolRegistry,
+            AgentToolExecutionOrchestrator toolExecutionOrchestrator,
+            AgentRuntimeApprovalRegistry approvalRegistry,
+            ObservationRegistry observations) {
+        this(
+                toolRegistry,
+                Clock.systemUTC(),
+                new AgentRuntimeBlockingTaskRunner(),
+                toolExecutionOrchestrator,
+                approvalRegistry,
+                observations);
+    }
+
+    private AgentToolBridge(
+            AgentToolRegistry toolRegistry,
+            Clock clock,
+            AgentRuntimeBlockingTaskRunner taskRunner,
+            AgentToolExecutionOrchestrator toolExecutionOrchestrator,
+            AgentRuntimeApprovalRegistry approvalRegistry,
+            ObservationRegistry observations) {
+        this.dispatcher = new AgentControlledToolDispatcher(observations);
+        // The registry owns the handler catalog; without it the bridge cannot expose model-visible
+        // tools.
         this.toolRegistry = Objects.requireNonNull(toolRegistry, "toolRegistry must not be null");
-        // The bridge owns elapsed-time and timeout calculations, so a missing clock would make execution accounting invalid.
+        // The bridge owns elapsed-time and timeout calculations, so a missing clock would make
+        // execution accounting invalid.
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
-        // Blocking execution is part of timeout and cancellation enforcement; it cannot be substituted at call time.
+        // Blocking execution is part of timeout and cancellation enforcement; it cannot be
+        // substituted at call time.
         this.taskRunner = Objects.requireNonNull(taskRunner, "taskRunner must not be null");
-        // AgentRuntimeService always wires the execution orchestrator; keeping catalog execution would restore a second path.
-        this.toolExecutionOrchestrator = Objects.requireNonNull(toolExecutionOrchestrator,
-            "toolExecutionOrchestrator must not be null");
-        // Approval waits are completed from channel command handlers through this active runtime registry.
-        this.approvalRegistry = Objects.requireNonNull(approvalRegistry, "approvalRegistry must not be null");
+        // AgentRuntimeService always wires the execution orchestrator; keeping catalog execution
+        // would restore a second path.
+        this.toolExecutionOrchestrator =
+                Objects.requireNonNull(
+                        toolExecutionOrchestrator, "toolExecutionOrchestrator must not be null");
+        // Approval waits are completed from channel command handlers through this active runtime
+        // registry.
+        this.approvalRegistry =
+                Objects.requireNonNull(approvalRegistry, "approvalRegistry must not be null");
     }
 
-    public AgentToolExecutionResult execute(AgentRuntimeContext context, AgentRuntimeProperties runtimeProperties,
-                                            AgentRuntimeToolCall toolCall, AgentRuntimeControl control,
-                                            AgentToolBridge.ExecutionListener eventSink) {
-        // The runtime loop supplies the complete execution snapshot and mandatory approval event sink.
+    public AgentToolExecutionResult execute(
+            AgentRuntimeContext context,
+            AgentRuntimeProperties runtimeProperties,
+            AgentRuntimeToolCall toolCall,
+            AgentRuntimeControl control,
+            AgentToolBridge.ExecutionListener eventSink) {
+        // The runtime loop supplies the complete execution snapshot and mandatory approval event
+        // sink.
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(toolCall, "toolCall must not be null");
         Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
         Objects.requireNonNull(control, "control must not be null");
         Objects.requireNonNull(eventSink, "eventSink must not be null");
-        AgentToolExecutionResult result = executeOnce(
-                context, runtimeProperties, toolCall, control, eventSink, null, null);
+        return dispatcher.execute(
+                toolCall,
+                () -> executeGateway(context, runtimeProperties, toolCall, control, eventSink));
+    }
+
+    private AgentToolExecutionResult executeGateway(
+            AgentRuntimeContext context,
+            AgentRuntimeProperties runtimeProperties,
+            AgentRuntimeToolCall toolCall,
+            AgentRuntimeControl control,
+            AgentToolBridge.ExecutionListener eventSink) {
+        AgentToolExecutionResult result =
+                executeOnce(context, runtimeProperties, toolCall, control, eventSink, null, null);
         if (!isWaitingApproval(result)) {
             return result;
         }
-        return awaitApprovalAndResume(context, runtimeProperties, toolCall, control, eventSink, result);
+        return awaitApprovalAndResume(
+                context, runtimeProperties, toolCall, control, eventSink, result);
     }
 
-    private AgentToolExecutionResult executeOnce(AgentRuntimeContext context,
-                                                  AgentRuntimeProperties runtimeProperties,
-                                                  AgentRuntimeToolCall toolCall, AgentRuntimeControl control,
-                                                  AgentToolBridge.ExecutionListener eventSink,
-                                                  AgentToolExecutionResult approvedResult,
-                                                  AgentApprovalDecision approvalDecision) {
-        control.checkpoint();
+    private AgentToolExecutionResult executeOnce(
+            AgentRuntimeContext context,
+            AgentRuntimeProperties runtimeProperties,
+            AgentRuntimeToolCall toolCall,
+            AgentRuntimeControl control,
+            AgentToolBridge.ExecutionListener eventSink,
+            AgentToolExecutionResult approvedResult,
+            AgentApprovalDecision approvalDecision) {
+        control.beforeOperation();
         long startedAt = clock.millis();
         AgentToolDescriptor descriptor = executableDescriptor(toolCall.getToolName());
         if (descriptor == null) {
             return unavailableResult(toolCall, clock.millis() - startedAt);
         }
         try {
-            String toolCallId = approvedResult == null
-                    ? toolCall.getToolCallId()
-                    : approvedResult.getToolCallId();
-            AgentToolExecutionRequest request = AgentToolExecutionRequest.builder()
-                    .sessionUid(context.getSessionUid())
-                    .runId(context.getRunId())
-                    .runUid(context.getRunUid())
-                    .runSessionId(context.getRunSessionId())
-                    .workspaceId(context.getWorkspaceId())
-                    .actor(context.getActor())
-                    .entryType(context.getEntryType())
-                    .approvalHandling(context.getApprovalHandling())
-                    .effectiveTarget(context.getEffectiveTarget())
-                    .toolName(toolCall.getToolName())
-                    .toolCallId(toolCallId)
-                    .approvalId(approvedResult == null ? null : approvedResult.getApprovalId())
-                    .approvalStatus(approvedResult == null ? null : approvedResult.getApprovalStatus().name())
-                    .arguments(toolCall.getArguments())
-                    .eventConsumer(event -> eventSink.toolEvent(toolCall, event))
-                    .approvalConsumption(approvalConsumption(approvedResult, approvalDecision))
-                    .build();
-            AgentToolExecutionResult rawResult = taskRunner.run(
-                    "tool " + descriptor.getName(),
-                    runtimeProperties.getToolTimeout(),
-                    control,
-                    () -> toolExecutionOrchestrator.execute(request));
+            String toolCallId =
+                    approvedResult == null
+                            ? toolCall.getToolCallId()
+                            : approvedResult.getToolCallId();
+            AgentToolExecutionRequest request =
+                    AgentToolExecutionRequest.builder()
+                            .sessionUid(context.getSessionUid())
+                            .explicitConfirmationRequired(control.requiresExplicitConfirmation())
+                            .runId(context.getRunId())
+                            .runUid(context.getRunUid())
+                            .runSessionId(context.getRunSessionId())
+                            .workspaceId(context.getWorkspaceId())
+                            .actor(context.getActor())
+                            .entryType(context.getEntryType())
+                            .approvalHandling(context.getApprovalHandling())
+                            .effectiveTarget(context.getEffectiveTarget())
+                            .requestedQueryWindow(context.getRequestedQueryWindow())
+                            .toolName(toolCall.getToolName())
+                            .toolCallId(toolCallId)
+                            .approvalId(
+                                    approvedResult == null ? null : approvedResult.getApprovalId())
+                            .approvalStatus(
+                                    approvedResult == null
+                                            ? null
+                                            : approvedResult.getApprovalStatus().name())
+                            .arguments(toolCall.getArguments())
+                            .eventConsumer(event -> eventSink.toolEvent(toolCall, event))
+                            .approvalConsumption(
+                                    approvalConsumption(approvedResult, approvalDecision))
+                            .executionGuard(
+                                    () -> {
+                                        control.checkpoint();
+                                        return true;
+                                    })
+                            .build();
+            AgentToolExecutionResult rawResult =
+                    taskRunner.run(
+                            "tool " + descriptor.getName(),
+                            runtimeProperties.getToolTimeout(),
+                            control,
+                            () -> toolExecutionOrchestrator.execute(request));
             return runtimeResult(toolCall, descriptor, rawResult, clock.millis() - startedAt);
         } catch (AgentRuntimeOperationTimeoutException exception) {
-            return timeoutResult(toolCall, descriptor, exception.getTimeout(), clock.millis() - startedAt);
+            return timeoutResult(
+                    toolCall, descriptor, exception.getTimeout(), clock.millis() - startedAt);
         } catch (RuntimeException exception) {
             if (exception instanceof AgentRuntimeStoppedException
                     || exception instanceof AgentToolCompletionIndeterminateException) {
                 throw exception;
             }
             // Bridge exceptions cross into model-visible tool results and client events.
-            String errorMessage = AgentRuntimeTextSanitizer.sanitizeAndLimit(
-                    "Tool execution failed: " + exception.getMessage(), 1024);
+            String errorMessage =
+                    AgentRuntimeTextSanitizer.sanitizeAndLimit(
+                            "Tool execution failed: " + exception.getMessage(), 1024);
             return AgentToolExecutionResult.builder()
                     .toolCallId(toolCall.getToolCallId())
                     .toolName(descriptor.getName())
@@ -158,20 +239,54 @@ public class AgentToolBridge {
         }
     }
 
-    private AgentToolExecutionResult awaitApprovalAndResume(AgentRuntimeContext context,
-                                                            AgentRuntimeProperties runtimeProperties,
-                                                            AgentRuntimeToolCall toolCall,
-                                                            AgentRuntimeControl control,
-                                                            AgentToolBridge.ExecutionListener eventSink,
-                                                            AgentToolExecutionResult waitingResult) {
+    private AgentToolExecutionResult awaitApprovalAndResume(
+            AgentRuntimeContext context,
+            AgentRuntimeProperties runtimeProperties,
+            AgentRuntimeToolCall toolCall,
+            AgentRuntimeControl control,
+            AgentToolBridge.ExecutionListener eventSink,
+            AgentToolExecutionResult waitingResult) {
         String approvalId = waitingResult.getApprovalId();
         CompletableFuture<AgentApprovalDecision> approval = approvalRegistry.register(approvalId);
         try {
             eventSink.approvalRequested(toolCall, waitingResult);
-            AgentApprovalDecision decision = awaitApprovalDecision(control, approval);
+            AgentApprovalDecision decision;
+            try {
+                decision = awaitApprovalDecision(control, approval, context, waitingResult);
+            } catch (AgentRuntimeStoppedException stopped) {
+                boolean cancelledBeforeApproval = false;
+                if (stopped.isCancelled()) {
+                    try {
+                        cancelledBeforeApproval =
+                                toolExecutionOrchestrator.cancelWaitingApproval(
+                                        approvalId,
+                                        waitingResult.getToolCallId(),
+                                        context.getRunUid());
+                    } catch (RuntimeException unavailable) {
+                        org.slf4j.LoggerFactory.getLogger(AgentToolBridge.class)
+                                .warn(
+                                        "Approval cancellation record unavailable runUid={};"
+                                            + " execution status remains unverified",
+                                        context.getRunUid());
+                    }
+                }
+                if (cancelledBeforeApproval) {
+                    throw new AgentApprovalWaitCancelledException(
+                            stopped,
+                            waitingResult.toBuilder()
+                                    .status(AgentToolStatus.DENIED)
+                                    .decision(AgentPolicyDecision.DENY)
+                                    .approvalStatus(AgentApprovalStatus.REJECTED)
+                                    .output("CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED")
+                                    .errorMessage("CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED")
+                                    .build());
+                }
+                throw stopped;
+            }
             eventSink.approvalCompleted(toolCall, waitingResult, decision);
             if (decision == AgentApprovalDecision.REJECTED) {
-                AgentApprovalConsumption.Claim consumption = beginApprovalConsumption(approvalId, decision);
+                AgentApprovalConsumption.Claim consumption =
+                        beginApprovalConsumption(approvalId, decision);
                 boolean completed = false;
                 try {
                     completed = consumption.complete();
@@ -193,14 +308,20 @@ public class AgentToolBridge {
                         .build();
             }
             return executeOnce(
-                    context, runtimeProperties, toolCall, control, eventSink, waitingResult, decision);
+                    context,
+                    runtimeProperties,
+                    toolCall,
+                    control,
+                    eventSink,
+                    waitingResult,
+                    decision);
         } finally {
             approval.cancel(false);
         }
     }
 
-    private AgentApprovalConsumption approvalConsumption(AgentToolExecutionResult approvedResult,
-                                                         AgentApprovalDecision decision) {
+    private AgentApprovalConsumption approvalConsumption(
+            AgentToolExecutionResult approvedResult, AgentApprovalDecision decision) {
         if (approvedResult == null || decision == null) {
             return AgentApprovalConsumption.NONE;
         }
@@ -209,14 +330,30 @@ public class AgentToolBridge {
 
     private AgentApprovalConsumption.Claim beginApprovalConsumption(
             String approvalId, AgentApprovalDecision decision) {
-        return approvalRegistry.beginConsumption(approvalId, decision)
-                .orElseThrow(() -> new AgentRuntimeStoppedException(
-                        "Approval runtime is no longer active."));
+        return approvalRegistry
+                .beginConsumption(approvalId, decision)
+                .orElseThrow(
+                        () ->
+                                new AgentRuntimeStoppedException(
+                                        "Approval runtime is no longer active."));
     }
 
-    private AgentApprovalDecision awaitApprovalDecision(AgentRuntimeControl control,
-                                                       CompletableFuture<AgentApprovalDecision> approval) {
+    private AgentApprovalDecision awaitApprovalDecision(
+            AgentRuntimeControl control,
+            CompletableFuture<AgentApprovalDecision> approval,
+            AgentRuntimeContext context,
+            AgentToolExecutionResult waiting) {
+        java.time.LocalDateTime expires = waiting.getApprovalExpiresAt();
         while (true) {
+            if (expires != null
+                    && !expires.isAfter(
+                            java.time.LocalDateTime.now(
+                                    clock.withZone(java.time.ZoneId.systemDefault())))) {
+                toolExecutionOrchestrator.expireWaitingApproval(
+                        waiting.getApprovalId(), waiting.getToolCallId(), context.getRunUid());
+                throw new AgentRuntimeStoppedException(
+                        "Agent tool approval expired before execution.");
+            }
             try {
                 return approval.get(250, TimeUnit.MILLISECONDS);
             } catch (TimeoutException ignored) {
@@ -239,11 +376,20 @@ public class AgentToolBridge {
     }
 
     private AgentToolDescriptor executableDescriptor(String toolName) {
-        return toolRegistry.find(toolName)
-            .map(AgentToolRegistry.RegisteredTool::descriptor)
-            .filter(descriptor -> descriptor.getExposure() == AgentToolExposure.MODEL_VISIBLE
-                || descriptor.getExposure() == AgentToolExposure.MODEL_ON_DEMAND)
-            .orElse(null);
+        return toolRegistry
+                .find(toolName)
+                .map(AgentToolRegistry.RegisteredTool::descriptor)
+                .filter(
+                        descriptor ->
+                                descriptor.getExposure() == AgentToolExposure.MODEL_VISIBLE
+                                        || descriptor.getExposure()
+                                                == AgentToolExposure.MODEL_ON_DEMAND)
+                .orElse(null);
+    }
+
+    boolean supportsNativeBatch() {
+        return executableDescriptor("monitor.create_batch") != null
+                && executableDescriptor("monitor.batch_status") != null;
     }
 
     public List<AgentToolDescriptor> visibleTools() {
@@ -251,16 +397,15 @@ public class AgentToolBridge {
         if (descriptors.isEmpty()) {
             return List.of();
         }
-        return descriptors.stream()
-                .filter(this::isVisibleTool)
-                .toList();
+        return descriptors.stream().filter(this::isVisibleTool).toList();
     }
 
     public List<AgentToolDescriptor> discoverableTools(String namespace, String query) {
         return toolRegistry.discoverableDescriptors(namespace, query);
     }
 
-    public List<AgentToolDescriptor> discoverableTools(String namespace, String query, Object offset) {
+    public List<AgentToolDescriptor> discoverableTools(
+            String namespace, String query, Object offset) {
         int pageOffset = 0;
         if (offset != null) {
             try {
@@ -273,11 +418,13 @@ public class AgentToolBridge {
     }
 
     private boolean isVisibleTool(AgentToolDescriptor descriptor) {
-        // Model visibility is catalog metadata only; execution authorization remains in policy and approvals.
+        // Model visibility is catalog metadata only; execution authorization remains in policy and
+        // approvals.
         return descriptor.getExposure() == AgentToolExposure.MODEL_VISIBLE;
     }
 
-    private AgentToolExecutionResult unavailableResult(AgentRuntimeToolCall toolCall, long elapsedMs) {
+    private AgentToolExecutionResult unavailableResult(
+            AgentRuntimeToolCall toolCall, long elapsedMs) {
         String toolName = toolCall.getToolName();
         String errorMessage = "Unknown or unavailable tool: " + toolName;
         return AgentToolExecutionResult.builder()
@@ -293,10 +440,14 @@ public class AgentToolBridge {
                 .build();
     }
 
-    private AgentToolExecutionResult runtimeResult(AgentRuntimeToolCall toolCall, AgentToolDescriptor descriptor,
-                                                   AgentToolExecutionResult result, long elapsedMs) {
+    private AgentToolExecutionResult runtimeResult(
+            AgentRuntimeToolCall toolCall,
+            AgentToolDescriptor descriptor,
+            AgentToolExecutionResult result,
+            long elapsedMs) {
         if (result == null) {
-            // The orchestrator contract should not return null; degrade invalid implementations into tool failure.
+            // The orchestrator contract should not return null; degrade invalid implementations
+            // into tool failure.
             return AgentToolExecutionResult.builder()
                     .toolCallId(toolCall.getToolCallId())
                     .toolName(descriptor.getName())
@@ -311,10 +462,7 @@ public class AgentToolBridge {
         }
         AgentToolStatus status = result.getStatus();
         String output = modelOutput(status, result);
-        return result.toBuilder()
-                .output(output)
-                .elapsedMs(elapsedMs)
-                .build();
+        return result.toBuilder().output(output).elapsedMs(elapsedMs).build();
     }
 
     private String modelOutput(AgentToolStatus status, AgentToolExecutionResult result) {
@@ -326,13 +474,16 @@ public class AgentToolBridge {
                     ? result.getErrorMessage()
                     : "Tool failed without an error message.";
         }
-        // Successful handlers may intentionally return no model content; represent that as an empty tool result.
+        // Successful handlers may intentionally return no model content; represent that as an empty
+        // tool result.
         return "";
     }
 
-    private AgentToolExecutionResult timeoutResult(AgentRuntimeToolCall toolCall,
-                                                   AgentToolDescriptor descriptor,
-                                                   Duration timeout, long elapsedMs) {
+    private AgentToolExecutionResult timeoutResult(
+            AgentRuntimeToolCall toolCall,
+            AgentToolDescriptor descriptor,
+            Duration timeout,
+            long elapsedMs) {
         long timeoutMs = timeout.toMillis();
         String errorMessage = "Tool execution timed out after " + timeoutMs + "ms.";
         return AgentToolExecutionResult.builder()
@@ -353,18 +504,16 @@ public class AgentToolBridge {
                 || result.getDecision() == AgentPolicyDecision.REQUIRE_APPROVAL;
     }
 
-    /**
-     * Approval lifecycle listener owned by the tool bridge boundary.
-     */
+    /** Approval lifecycle listener owned by the tool bridge boundary. */
     public interface ExecutionListener {
 
         void approvalRequested(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result);
 
-        void approvalCompleted(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result,
-                               AgentApprovalDecision decision);
+        void approvalCompleted(
+                AgentRuntimeToolCall toolCall,
+                AgentToolExecutionResult result,
+                AgentApprovalDecision decision);
 
         void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event);
-
     }
-
 }

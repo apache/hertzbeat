@@ -97,6 +97,66 @@ class AgentToolRegistryExecutionTest {
     }
 
     @Test
+    void blankHandlerFailureKeepsBoundedCauseClassWithoutReadingCauseMessage() {
+        registry.register(handler(descriptor("metrics.empty_failure", "Bounded read", AgentToolRisk.READ), context -> {
+            throw new RuntimeException(null, new IllegalArgumentException("apiKey=must-not-be-exposed"));
+        }));
+        when(policyService.decide(any(AgentActor.class), any(AgentToolDescriptor.class)))
+                .thenReturn(policy(AgentPolicyDecision.ALLOW, AgentToolRisk.READ, "allowed"));
+        var result = orchestrator.execute(invocation("metrics.empty_failure", Map.of()));
+        assertEquals(AgentToolStatus.FAILED, result.getStatus());
+        assertNotNull(result.getErrorMessage());
+        assertTrue(result.getErrorMessage().contains("IllegalArgumentException"));
+        assertFalse(result.getErrorMessage().contains("must-not-be-exposed"));
+    }
+
+    @Test
+    void omittedTimeBoundsBindTheLockedWindowBeforeHandlerAndLedger() {
+        var seen = new AtomicReference<Map<String, Object>>();
+        String schema = "{\"type\":\"object\",\"properties\":{\"q\":{\"type\":\"object\",\"properties\":{"
+                + "\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"entityId\":{\"type\":\"integer\"}}}}}";
+        registry.register(handler(AgentToolDescriptor.builder().name("traces.query").description("Query traces")
+                .inputSchema(schema).namespace("traces").risk(AgentToolRisk.READ)
+                .exposure(AgentToolExposure.MODEL_VISIBLE).build(), context -> {
+                    seen.set(context.getRequest().getArguments());
+                    return output(AgentToolStatus.SUCCEEDED, "{\"content\":[],\"totalElements\":0}");
+                }));
+        lenient().when(policyService.decide(any(), any())).thenReturn(AgentPolicyResult.builder()
+                .decision(AgentPolicyDecision.ALLOW).risk(AgentToolRisk.READ).reason("fixture allow").build());
+        var original = Map.<String, Object>of("q", Map.of("entityId", 42));
+        var request = invocation("traces.query", original).toBuilder()
+                .requestedQueryWindow(new org.apache.hertzbeat.ai.gateway.runtime.AgentRequestedQueryWindow(
+                        1792266771302L, 1792267671302L)).build();
+        assertEquals(AgentToolStatus.SUCCEEDED, orchestrator.execute(request).getStatus());
+        var effective = (Map<?, ?>) seen.get().get("q");
+        assertEquals(1792266771302L, effective.get("start"));
+        assertEquals(1792267671302L, effective.get("end"));
+        assertEquals(Map.of("entityId", 42), original.get("q"));
+        var captured = org.mockito.ArgumentCaptor.forClass(AgentToolExecutionRequest.class);
+        verify(toolCallLedgerService).recordToolStarted(captured.capture(), any(), any());
+        assertEquals(seen.get(), captured.getValue().getArguments());
+    }
+
+    @Test
+    void requestedWindowDenialIsDurableAndPrecedesPolicyAndHandler() {
+        AtomicBoolean executed = new AtomicBoolean();
+        registry.register(handler(descriptor("traces.query", "Query traces", AgentToolRisk.READ), context -> {
+            executed.set(true);
+            return output(AgentToolStatus.SUCCEEDED, "{}");
+        }));
+        AgentToolExecutionRequest request = invocation("traces.query", Map.of("start", 0, "end", 1000000))
+                .toBuilder().requestedQueryWindow(new org.apache.hertzbeat.ai.gateway.runtime.AgentRequestedQueryWindow(
+                        100000, 1000000)).build();
+        AgentToolExecutionResult result = orchestrator.execute(request);
+        assertEquals(AgentToolStatus.DENIED, result.getStatus());
+        assertTrue(result.getErrorMessage().contains("REQUESTED_WINDOW"));
+        assertFalse(executed.get());
+        verify(toolCallLedgerService).recordToolDenied(any(), any(), any());
+        verify(policyService, never()).decide(any(), any());
+        verify(interactionInputService, never()).validateReference(any());
+    }
+
+    @Test
     void listToolsShouldExposeOnlyRegisteredOperationsCatalog() {
         Map<String, AgentToolDescriptor> descriptors = registry.descriptors().stream()
             .collect(java.util.stream.Collectors.toMap(AgentToolDescriptor::getName, descriptor -> descriptor));
@@ -293,8 +353,14 @@ class AgentToolRegistryExecutionTest {
         when(toolCallLedgerService.validateToolExecutionApproval(any(), any()))
             .thenReturn(approvalToolCall(AgentToolStatus.WAITING_APPROVAL, AgentApprovalStatus.APPROVED, null));
 
-        AgentToolExecutionResult result = orchestrator.execute(approvalResumeInvocation());
+        var events = new java.util.ArrayList<org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent>();
+        AgentToolExecutionResult result = orchestrator.execute(approvalResumeInvocation().toBuilder()
+            .eventConsumer(events::add).build());
 
+        assertEquals(1, events.size());
+        assertEquals(org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEventType.ITEM_STARTED, events.getFirst().getType());
+        assertEquals(org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.EventStatus.IN_PROGRESS, events.getFirst().getStatus());
+        assertTrue(events.getFirst().getToolArguments().isEmpty());
         assertEquals(AgentToolStatus.SUCCEEDED, result.getStatus());
         assertEquals(AgentPolicyDecision.ALLOW, result.getDecision());
         assertEquals("agp_ops_alert_silence", result.getApprovalId());

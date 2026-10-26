@@ -19,22 +19,24 @@ package org.apache.hertzbeat.ai.gateway.runtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
-import org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService;
+
 import org.apache.hertzbeat.ai.gateway.application.AgentEntityInvestigationAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
 import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /** Verifies that a durable grounding proof converges with the successful READ ledger row. */
 @Service
@@ -113,11 +115,13 @@ public class AgentGroundingEvidenceVerifier {
                                          List<TranscriptMessage> history, String workspaceId) {
         List<TranscriptMessage> bounded = history == null ? List.of() : List.copyOf(history);
         if (hasDurableGrounding(run, target) && currentAuthorityMatches(workspaceId, target)) {
-            return new VerifiedHistory(bounded, true);
+            return new VerifiedHistory(bounded, true, budgetAttempts(run), taskCheckpoint(run));
         }
-        return new VerifiedHistory(bounded.stream()
-                .map(message -> clearCurrentRunProof(run, message))
-                .toList(), false);
+        return new VerifiedHistory(
+                bounded.stream().map(message -> clearCurrentRunProof(run, message)).toList(),
+                false,
+                budgetAttempts(run),
+                taskCheckpoint(run));
     }
 
     private boolean currentAuthorityMatches(String workspaceId, AgentTargetRef target) {
@@ -189,19 +193,101 @@ public class AgentGroundingEvidenceVerifier {
         }
     }
 
+    private List<AgentRuntimeReadBudget.Attempt> budgetAttempts(AgentRun run) {
+        List<AgentToolCall> rows = toolCallDao.findByRunIdOrderByGmtCreateAsc(run.getId());
+        if (rows == null
+                || rows.stream()
+                        .anyMatch(
+                                row ->
+                                        row == null
+                                                || !Objects.equals(run.getId(), row.getRunId())
+                                                || !Objects.equals(run.getRunUid(), row.getRunUid())
+                                                || !Objects.equals(
+                                                        run.getSessionId(), row.getSessionId())
+                                                || GatewayText.isBlank(row.getToolCallId()))
+                || rows.stream().map(AgentToolCall::getToolCallId).distinct().count()
+                        != rows.size()) {
+            throw new IllegalStateException(
+                    "Current-run budget ledger is unavailable or has invalid ownership");
+        }
+        return rows.stream()
+                .map(
+                        row -> {
+                            AgentToolRisk risk =
+                                    row.getRisk() == null
+                                            ? null
+                                            : AgentToolRisk.valueOf(row.getRisk());
+                            AgentToolStatus status =
+                                    row.getStatus() == null
+                                            ? null
+                                            : AgentToolStatus.valueOf(row.getStatus());
+                            Map<String, Object> input =
+                                    risk == AgentToolRisk.READ
+                                            ? arguments(row.getInputJson())
+                                            : Map.of();
+                            if (input == null) {
+                                throw new IllegalStateException(
+                                        "Current-run read arguments cannot restore budget"
+                                                + " accounting");
+                            }
+                            return new AgentRuntimeReadBudget.Attempt(
+                                    row.getToolCallId(),
+                                    row.getToolName(),
+                                    risk,
+                                    status,
+                                    input,
+                                    risk == AgentToolRisk.READ
+                                                    || AgentMonitorMutationSemantics
+                                                            .restoresSafeResult(row.getToolName())
+                                            ? row.getResultOutput()
+                                            : null,
+                                    row.getErrorMessage(),
+                                    AgentMonitorMutationSemantics.restoresSafeResult(
+                                                    row.getToolName())
+                                            ? row.getInputHash()
+                                            : null,
+                                    row.getApprovalId());
+                        })
+                .toList();
+    }
+
+    private AgentTaskCheckpoint taskCheckpoint(AgentRun run) {
+        return transcriptRecorder
+                .findRunTaskCheckpoint(run.getId())
+                .map(TranscriptMessage::getTaskCheckpoint)
+                .filter(checkpoint -> Objects.equals(run.getRunUid(), checkpoint.runUid()))
+                .orElse(null);
+    }
+
     /** History projection plus the trusted durable-grounding decision made from proof and ledger together. */
     static final class VerifiedHistory {
 
         private final List<TranscriptMessage> messages;
         private final boolean grounded;
+        private final AgentTaskCheckpoint taskCheckpoint;
+        private final List<AgentRuntimeReadBudget.Attempt> budgetAttempts;
 
-        private VerifiedHistory(List<TranscriptMessage> messages, boolean grounded) {
+        private VerifiedHistory(
+                List<TranscriptMessage> messages,
+                boolean grounded,
+                List<AgentRuntimeReadBudget.Attempt> budgetAttempts,
+                AgentTaskCheckpoint taskCheckpoint) {
+            this.taskCheckpoint = taskCheckpoint;
             this.messages = messages == null ? List.of() : List.copyOf(messages);
             this.grounded = grounded;
+            this.budgetAttempts = List.copyOf(budgetAttempts);
         }
 
         List<TranscriptMessage> messages() {
             return messages;
+        }
+
+        List<AgentRuntimeReadBudget.Attempt> budgetAttempts() {
+            return budgetAttempts;
+        }
+
+        AgentTaskCheckpoint taskCheckpoint() {
+            return taskCheckpoint;
         }
 
         boolean grounded() {

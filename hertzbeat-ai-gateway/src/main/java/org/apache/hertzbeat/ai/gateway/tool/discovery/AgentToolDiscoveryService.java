@@ -23,6 +23,8 @@ import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry;
+import org.springframework.ai.chat.model.ToolContext;
+import org.springframework.ai.tool.toolsearch.ToolSearchTool;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.ObjectProvider;
@@ -59,8 +61,12 @@ public class AgentToolDiscoveryService {
             Integer offset) {
         boolean schemas = Boolean.TRUE.equals(includeSchema);
         AgentToolRegistry registry = registryProvider.getObject();
-        AgentToolRegistry.DiscoveryPage page = registry.discoverablePage(namespace, query, offset == null ? 0 : offset);
+        var index = new AgentCatalogToolIndex(registry, offset == null ? 0 : offset, query);
+        List<String> references = new ToolSearchTool(index, 10).toolSearchTool(query == null ? namespace : query,
+                10, namespace, new ToolContext(Map.of(ToolSearchTool.TOOL_SEARCH_TOOL_SESSION_ID_KEY, "gateway-discovery")));
+        AgentToolRegistry.DiscoveryPage page = index.page();
         List<Map<String, Object>> tools = page.tools().stream()
+            .filter(descriptor -> references.contains(descriptor.getName()))
             .map(descriptor -> toolRow(descriptor, schemas))
             .toList();
         Map<String, Object> result = new LinkedHashMap<>();

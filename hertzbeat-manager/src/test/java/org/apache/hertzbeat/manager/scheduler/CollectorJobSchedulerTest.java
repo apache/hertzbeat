@@ -82,6 +82,20 @@ public class CollectorJobSchedulerTest {
     }
 
     @Test
+    void boundExecutionRefusesSerializedOrCyclicJobsBeforeAnyCollectorCall() {
+        var m = org.apache.hertzbeat.common.entity.job.Metrics.builder().name("fixture").build();
+        var job = Job.builder().metrics(List.of(m)).build();
+        var permit = new org.apache.hertzbeat.common.entity.job.InlineCollectionPermit(List.of("bash", "-c", "printf fixture"), "/tmp",
+                org.apache.hertzbeat.common.entity.job.InlineCollectionPermit.processAccount(), System.getProperty("os.name"),
+                System.currentTimeMillis() + 10000, java.time.Clock.systemUTC(), () -> true);
+        org.apache.hertzbeat.common.entity.job.InlineCollectionPermit.bind(m, permit);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> collectorJobScheduler.collectLocalApprovedJob(job.clone()));
+        job.setCyclic(true);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> collectorJobScheduler.collectLocalApprovedJob(job));
+        org.mockito.Mockito.verifyNoInteractions(consistentHash);
+    }
+
+    @Test
     public void testCollectSyncJobData() {
         assertDoesNotThrow(() -> {
             Job job = new Job();

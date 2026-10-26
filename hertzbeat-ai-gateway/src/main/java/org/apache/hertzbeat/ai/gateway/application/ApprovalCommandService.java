@@ -58,9 +58,23 @@ public class ApprovalCommandService {
         this.consumptionTimeout = consumptionTimeout;
     }
 
+    private org.apache.hertzbeat.ai.gateway.tool.monitor.AgentInlineCollectionToolService inlineCollections;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setInlineCollections(org.apache.hertzbeat.ai.gateway.tool.monitor.AgentInlineCollectionToolService service) {
+        inlineCollections = service;
+    }
+
     public GatewaySingleResponse decide(ApprovalDecisionCommand command) {
         toolCallLedgerService.requireApprovalOwner(command.approvalId(), command.envelope(),
                 command.originEntryType());
+        var bound = toolCallLedgerService.findApproval(command.approvalId()).orElse(null);
+        if (bound != null && "monitor.collection_detect".equals(bound.getToolName())
+                && command.decision() == org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision.APPROVED) {
+            var preview = inlineCollections == null ? null : inlineCollections.approvalPreview(bound, command.envelope());
+            if (preview == null || !preview.planHash().equals(command.collectionPlanHash()))
+                throw new IllegalArgumentException("Explicit confirmation of the displayed collection plan hash is required");
+        }
         var reservation = approvalRegistry.reserve(command.approvalId());
         if (reservation.isEmpty()) {
             return response(command, null, List.of(errorEvent(command, null,

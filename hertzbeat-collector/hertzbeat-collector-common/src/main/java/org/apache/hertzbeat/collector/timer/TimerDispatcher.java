@@ -125,9 +125,9 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
                 metric.setInterval(0L);
             }
             addJob.setIntervals(new ConcurrentLinkedDeque<>(List.of(0L)));
+            eventListeners.put(addJob.getId(), eventListener);
             Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
             cancelPreviousTimeout(currentTempTaskMap.put(addJob.getId(), timeout));
-            eventListeners.put(addJob.getId(), eventListener);
         }
     }
 
@@ -160,6 +160,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
                 timeout.cancel();
             }
         } else {
+            eventListeners.remove(jobId);
             Timeout timeout = currentTempTaskMap.remove(jobId);
             if (timeout != null) {
                 timeout.cancel();
@@ -192,6 +193,9 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         CollectResponseEventListener eventListener = eventListeners.remove(jobId);
         if (eventListener != null) {
             eventListener.response(metricsDataTemps);
+        } else if (metricsDataTemps != null) {
+            // A cancelled or expired waiter cannot be revived by a late response.
+            metricsDataTemps.forEach(CollectRep.MetricsData::close);
         }
     }
 

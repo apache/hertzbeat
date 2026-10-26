@@ -53,6 +53,23 @@ import org.junit.jupiter.api.Test;
 class RuntimePromptBuilderTest {
 
     @Test
+    void providesExactServerComputedFifteenMinuteBoundsWithoutModelEpochArithmetic() {
+        var request = AgentRuntimeRequest.builder().approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
+                .envelope(emptyEnvelope()).session(session()).run(emptyRun())
+                .entryType(AgentRuntimeEntryType.USER_INPUT).userInput(userInput("recent fifteen minutes")).build();
+        var context = new AgentRuntimeContextBuilder(
+                Clock.fixed(Instant.parse("2026-10-17T15:40:02.187Z"), ZoneOffset.UTC), () -> "time-window")
+                .build(request, new AgentRuntimeProperties());
+        var prompt = new RuntimePromptBuilder().build(context, List.of(), List.of());
+        String time = runtimeContext(prompt);
+        assertTrue(time.contains("Last 15 minutes start epoch millis: 1792250702187"));
+        assertTrue(time.contains("Last 15 minutes end epoch millis: 1792251602187"));
+        assertTrue(time.contains("Last 15 minutes start UTC: 2026-10-17T15:25:02.187Z"));
+        assertTrue(time.contains("Last 15 minutes end UTC: 2026-10-17T15:40:02.187Z"));
+        assertFalse(time.contains("15:20:02.187Z"));
+    }
+
+    @Test
     void shouldExposeOnlySafeCanonicalTargetMetadata() {
         AgentTargetAuthority authority = AgentTargetAuthority.builder()
                 .bindingId(91L)
@@ -358,8 +375,7 @@ class RuntimePromptBuilderTest {
     void shouldAppendEntrySpecificPolicy() {
         Map<AgentRuntimeEntryType, String> expectedPolicies = Map.of(
                 AgentRuntimeEntryType.USER_INPUT,
-                "This run was triggered by an operator. Diagnose first. Request CHANGE tools only after evidence "
-                        + "shows a repair action is required.",
+                "This run was triggered by an operator. Respond to the current request:",
                 AgentRuntimeEntryType.ALERT_TRIGGER,
                 "This run was triggered by an alert. Perform diagnosis only. Do not request CHANGE tools.",
                 AgentRuntimeEntryType.SCHEDULE_TRIGGER,
@@ -380,7 +396,7 @@ class RuntimePromptBuilderTest {
 
             RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(), List.of());
 
-            assertTrue(prompt.getInstructions().endsWith(expectedPolicy));
+            assertTrue(prompt.getInstructions().contains(expectedPolicy));
         });
     }
 

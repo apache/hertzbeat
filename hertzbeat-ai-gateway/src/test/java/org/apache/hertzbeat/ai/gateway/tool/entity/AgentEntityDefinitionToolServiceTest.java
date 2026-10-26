@@ -25,21 +25,27 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityInfo;
 import org.apache.hertzbeat.manager.service.ObserveEntityService;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 class AgentEntityDefinitionToolServiceTest {
     private final ObserveEntityService entities = mock(ObserveEntityService.class);
-    private final AgentEntityDefinitionToolService service = new AgentEntityDefinitionToolService(entities);
+    private final AgentEntityDefinitionToolService service =
+            new AgentEntityDefinitionToolService(entities);
 
     @Test
     void rejectsUnsupportedFormatAndOversizedDefinitionsBeforeParsing() {
-        assertThrows(IllegalArgumentException.class, () -> service.preview("curl https://example.test", "curl", null));
-        assertThrows(IllegalArgumentException.class, () -> service.preview("a".repeat(131073), "yaml", null));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preview("curl https://example.test", "curl", null));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preview("a".repeat(131073), "yaml", null));
         verifyNoInteractions(entities);
     }
 
@@ -53,13 +59,21 @@ class AgentEntityDefinitionToolServiceTest {
         Map<String, Object> preview = service.preview("metadata: {name: checkout}", "yaml", null);
         verify(entities).validate(dto, false);
         assertEquals(1, preview.get("count"));
-        assertEquals(List.of(17L), service.apply("metadata: {name: checkout}", "yaml", null,
-                (String) preview.get("payloadSha256")).get("entityIds"));
+        assertEquals(
+                List.of(17L),
+                service.apply(
+                                "metadata: {name: checkout}",
+                                "yaml",
+                                null,
+                                (String) preview.get("payloadSha256"))
+                        .get("entityIds"));
     }
 
     @Test
     void refusesTamperedDefinitionBeforeServiceInvocation() {
-        assertThrows(IllegalArgumentException.class, () -> service.apply("metadata: {name: changed}", "yaml", null, "bad-hash"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.apply("metadata: {name: changed}", "yaml", null, "bad-hash"));
         verifyNoInteractions(entities);
     }
 
@@ -70,9 +84,16 @@ class AgentEntityDefinitionToolServiceTest {
         dto.getEntityInfo().setLabels(Map.of("password", "sensitive-label-value"));
         when(entities.parseEntityDefinitionBundle(any())).thenReturn(List.of(dto));
         Map<String, Object> preview = service.preview("metadata: {name: checkout}", "yaml", null);
-        assertThrows(IllegalArgumentException.class, () -> service.apply("metadata: {name: checkout}", "yaml", null,
-                (String) preview.get("payloadSha256")));
-        org.mockito.Mockito.verify(entities, org.mockito.Mockito.never()).addEntitiesByDefinitionBundle(any());
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        service.apply(
+                                "metadata: {name: checkout}",
+                                "yaml",
+                                null,
+                                (String) preview.get("payloadSha256")));
+        org.mockito.Mockito.verify(entities, org.mockito.Mockito.never())
+                .addEntitiesByDefinitionBundle(any());
     }
 
     @Test

@@ -73,6 +73,142 @@ class AgentRuntimeLoopTest {
     private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
 
     @Test
+    void explicitThreeSignalRequestCannotFinalizeAfterSkippingMetrics() {
+        var catalog = new FakeToolCatalogService(List.of(completionRead("logs.query"), completionRead("traces.query")));
+        catalog.results.add(successResult("logs.query", "{\"totalElements\":0,\"content\":[]}"));
+        catalog.results.add(successResult("traces.query", "{\"totalElements\":0,\"content\":[]}"));
+        var model = new QueueModelClient(List.of(toolResponse(
+                AgentRuntimeToolCall.builder().toolCallId("log").toolName("logs.query").build(),
+                AgentRuntimeToolCall.builder().toolCallId("trace").toolName("traces.query").build()),
+                finalResponse("All three signals covered"), finalResponse("All three signals covered")));
+        var result = run(model, catalog, runtime(config -> { }, List.of(), "cross-signal metrics logs traces investigation"));
+        assertRuntimeFailed(result);
+        assertTrue(result.getError().getMessage().contains("metrics"));
+        assertEquals(3, model.requests.size());
+        assertTrue(model.requests.getLast().getChatHistory().getLast().text().contains("metrics.otlp_inventory"));
+        assertTrue(model.requests.getLast().getChatHistory().getLast().text().contains("namespace=metrics"));
+    }
+
+    @Test
+    void explicitSignalSchemasAreOfferedWithoutExecutingDataOrExposingWrites() {
+        var names = List.of("metrics.otlp_inventory", "metrics.otlp_console", "logs.analysis", "traces.query", "logs.batch_delete");
+        var descriptors = names.stream().map(name -> AgentToolDescriptor.builder().name(name).description("Bounded signal tool")
+                .inputSchema("{}").namespace(name.substring(0, name.indexOf('.')))
+                .risk(name.equals("logs.batch_delete") ? AgentToolRisk.DANGEROUS : AgentToolRisk.READ)
+                .exposure(AgentToolExposure.MODEL_ON_DEMAND).build()).toList();
+        var catalog = new FakeToolCatalogService(descriptors);
+        var model = new QueueModelClient(List.of(finalResponse("No current evidence"), finalResponse("Still incomplete")));
+        var result = run(model, catalog, runtime(config -> { }, List.of(), "Inspect metrics, logs and traces"));
+        assertRuntimeFailed(result);
+        assertEquals(java.util.Set.of("metrics.otlp_inventory", "metrics.otlp_console", "logs.analysis", "traces.query"),
+                model.requests.getFirst().getAvailableTools().stream().map(AgentToolDescriptor::getName)
+                        .collect(java.util.stream.Collectors.toSet()));
+        assertEquals(0, catalog.executeCount);
+        var plainModel = new QueueModelClient(List.of(finalResponse("No current evidence")));
+        run(plainModel, catalog, runtime(config -> { }, List.of(), "Inspect monitors"));
+        assertTrue(plainModel.requests.getFirst().getAvailableTools().isEmpty());
+    }
+
+    @Test
+    void completeMonitorOverviewContinuesTheSameScopePageBeforeFinalizing() {
+        var catalog = new FakeToolCatalogService(List.of(completionRead("monitor.query")));
+        catalog.results.add(successResult("monitor.query", "{\"content\":[{\"monitorId\":1}],\"pageIndex\":0,\"pageSize\":1,\"totalElements\":2}"));
+        catalog.results.add(successResult("monitor.query", "{\"content\":[{\"monitorId\":2}],\"pageIndex\":1,\"pageSize\":1,\"totalElements\":2}"));
+        var model = new QueueModelClient(List.of(toolResponse(AgentRuntimeToolCall.builder().toolCallId("page0")
+                .toolName("monitor.query").arguments(Map.of("pageIndex", 0, "pageSize", 1, "sort", "id", "order", "asc")).build()),
+                finalResponse("Overview complete"), toolResponse(AgentRuntimeToolCall.builder().toolCallId("page1")
+                .toolName("monitor.query").arguments(Map.of("pageIndex", 1, "pageSize", 1, "sort", "id", "order", "asc")).build()),
+                finalResponse("Overview complete")));
+        var result = run(model, catalog, runtime(config -> { }, List.of(), "Complete monitor overview of all monitors"));
+        assertRuntimeSucceeded(result);
+        assertEquals(2, catalog.executeCount);
+        assertEquals(4, model.requests.size());
+        assertEquals("Overview complete", result.getResponse());
+        assertTrue(model.requests.get(2).isToolCallRequired());
+    }
+
+    private static AgentToolDescriptor completionRead(String name) {
+        return AgentToolDescriptor.builder().name(name).description("Bounded read").inputSchema("{}")
+                .risk(AgentToolRisk.READ).namespace("test").exposure(AgentToolExposure.MODEL_VISIBLE).build();
+    }
+
+    @Test
+    void countContractKeepsSupportedNaturalProseWithoutAnAuditTemplate() {
+        AgentToolDescriptor pageTool = AgentToolDescriptor.builder().name("monitor.query")
+                .description("Monitor page").inputSchema("{}")
+                .risk(AgentToolRisk.READ).namespace("monitor").exposure(AgentToolExposure.MODEL_VISIBLE).build();
+        FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(pageTool));
+        catalog.results.add(successResult("monitor.query",
+                "{\"content\":[{\"id\":1,\"name\":\"seed\"}],\"totalElements\":6,"
+                        + "\"queryMetadata\":{\"version\":\"monitor-query.v1\",\"purpose\":\"COUNT\","
+                        + "\"totalScope\":\"MATCHING_FILTERS\",\"totalIsExact\":true,\"filters\":{}}}"));
+        var step = new java.util.concurrent.atomic.AtomicInteger();
+        AgentRuntimeModelClient model = (request, control, delta) -> {
+            delta.accept("UNSUPPORTED_POPULATION_CLAIM");
+            if (step.getAndIncrement() == 0) {
+                return toolResponse(AgentRuntimeToolCall.builder().toolCallId("page")
+                        .toolName("monitor.query").arguments(Map.of("purpose", "COUNT", "pageSize", 1)).build());
+            }
+            delta.accept("UNSUPPORTED_POPULATION_CLAIM");
+            return finalResponse("There are 6 matching monitors in this snapshot.");
+        };
+        var fixture = runtime(config -> { }, List.of(), "How many monitors are there?");
+        List<AgentRuntimeEvent> events = new ArrayList<>();
+        List<TranscriptMessage> transcript = new ArrayList<>();
+        try (var control = AgentRuntimeControl.forContext(fixture.context(), CLOCK)) {
+            loop(model, catalog, fixture.config()).run(fixture.context(), control, events::add,
+                    message -> {
+                        transcript.add(message);
+                        return 42L;
+                    });
+        }
+        assertEquals("There are 6 matching monitors in this snapshot.", resultFromEvents(events).getResponse());
+        assertFalse(JsonUtil.toJson(events).contains("UNSUPPORTED_POPULATION_CLAIM"));
+        assertFalse(JsonUtil.toJson(transcript).contains("UNSUPPORTED_POPULATION_CLAIM"));
+        assertEquals(2, step.get());
+    }
+
+    @Test
+    void crossSignalFinalMustNotSucceedWithoutRequestedLogs() {
+        QueueModelClient model = new QueueModelClient(List.of(finalResponse("No log capability."),
+                finalResponse("No log capability.")));
+        InvocationResult result = run(model, new FakeToolCatalogService(List.of(queryTool())),
+                runtime(config -> { }, List.of(), "cross-signal logs investigation"));
+        assertRuntimeFailed(result);
+        assertEquals(2, model.requests.size());
+        assertTrue(result.getError().getMessage().contains("logs"));
+        assertTrue(model.requests.getLast().getPrompt().getInstructions().contains("LOG_COVERAGE_REQUIRED"));
+    }
+
+    @Test
+    void eachModelRequestReceivesFreshSummaryWithoutAnExtraModelCallOrTextRewrite() {
+        FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
+        QueueModelClient model = new QueueModelClient(List.of(
+                toolResponse(AgentRuntimeToolCall.builder().toolCallId("evidence-call").toolName("monitor.get")
+                        .arguments(Map.of("pageSize", 1)).build()), finalResponse("Original model statement.")));
+        var fixture = runtime(config -> { });
+        var reads = new java.util.concurrent.atomic.AtomicInteger();
+        var summary = new org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummary(
+                "PARTIAL", 1, 0, 1, 0, 1, 0,
+                List.of(new org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummary.Failure(
+                        "failed-call", "logs.query", "FAILED", "severityText rejected", "UNRESOLVED", null)), false);
+        List<AgentRuntimeEvent> events = new ArrayList<>();
+        try (var control = AgentRuntimeControl.forContext(fixture.context(), CLOCK)) {
+            new AgentRuntimeLoop(fixture.config(), AgentTaskCompletionTestClient.observation(model, "platform"),
+                    new AgentToolBridge(catalog, CLOCK, new AgentRuntimeBlockingTaskRunner(),
+                            catalog.orchestrator, new AgentRuntimeApprovalRegistry()), CLOCK, List.of(),
+                    () -> reads.getAndIncrement() == 0
+                            ? org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummary.unavailable() : summary)
+                    .run(fixture.context(), control, events::add, message -> 42L);
+        }
+        assertEquals(2, model.requests.size());
+        assertEquals(2, reads.get());
+        assertTrue(model.requests.getLast().getPrompt().getBlocks().getLast().getContent().contains("severityText rejected"));
+        assertTrue(model.requests.getFirst().getPrompt().getBlocks().getLast().getContent().contains("UNKNOWN"));
+        assertEquals("Original model statement.", resultFromEvents(events).getResponse());
+    }
+
+    @Test
     void finalAnswerShouldNotExecuteTools() {
         FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
         QueueModelClient modelClient = new QueueModelClient(List.of(finalResponse("No active problem.")));
@@ -176,14 +312,14 @@ class AgentRuntimeLoopTest {
         InvocationResult result = run(modelClient, catalog, runtime(config -> { }), events::add);
 
         assertRuntimeSucceeded(result);
-        assertEquals(List.of(1L, 2L, 3L, 4L, 5L, 6L), events.stream()
+        assertEquals(List.of(1L, 2L, 3L, 4L, 5L), events.stream()
                 .map(AgentRuntimeEvent::getEventSequence)
                 .toList());
-        assertEquals(List.of("No ", "active problem."), events.stream()
+        assertEquals(List.of("No active problem."), events.stream()
                 .filter(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA)
                 .map(AgentRuntimeEvent::getDelta)
                 .toList());
-        assertEquals(List.of(0, 1), events.stream()
+        assertEquals(List.of(0), events.stream()
                 .filter(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA)
                 .map(AgentRuntimeEvent::getDeltaIndex)
                 .toList());
@@ -227,7 +363,7 @@ class AgentRuntimeLoopTest {
     }
 
     @Test
-    void streamedToolCallShouldCompleteAssistantMessageWhenAssistantTextIsBlank() {
+    void unreviewedToolTurnDeltasStayHiddenAndFinalMessageCompletes() {
         FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
         List<AgentRuntimeEvent> events = new ArrayList<>();
         AgentRuntimeToolCall toolCall = AgentRuntimeToolCall.builder()
@@ -256,29 +392,17 @@ class AgentRuntimeLoopTest {
         InvocationResult result = run(modelClient, catalog, runtime(config -> { }), events::add);
 
         assertRuntimeSucceeded(result);
-        AgentRuntimeEvent assistantDelta = events.stream()
-                .filter(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA)
-                .filter(event -> event.getItemKind() == AgentRuntimeItemKind.ASSISTANT_MESSAGE)
-                .filter(event -> "Checking ".equals(event.getDelta()))
-                .findFirst()
-                .orElseThrow();
+        assertFalse(events.stream().anyMatch(event -> "Checking ".equals(event.getDelta())));
         AgentRuntimeEvent assistantCompleted = events.stream()
                 .filter(event -> event.getType() == AgentRuntimeEventType.ITEM_COMPLETED)
-                .filter(event -> assistantDelta.getItemId().equals(event.getItemId()))
-                .findFirst()
-                .orElseThrow();
-        assertEquals(List.of(AgentRuntimeEventType.ITEM_STARTED, AgentRuntimeEventType.ITEM_DELTA,
-                        AgentRuntimeEventType.ITEM_COMPLETED),
-                events.stream()
-                        .filter(event -> assistantCompleted.getItemId().equals(event.getItemId()))
-                        .map(AgentRuntimeEvent::getType)
-                        .toList());
+                .filter(event -> event.getItemKind() == AgentRuntimeItemKind.ASSISTANT_MESSAGE)
+                .findFirst().orElseThrow();
         AgentRuntimeEvent toolStarted = events.stream()
                 .filter(event -> event.getType() == AgentRuntimeEventType.ITEM_STARTED)
                 .filter(event -> event.getItemKind() == AgentRuntimeItemKind.TOOL_CALL)
                 .findFirst()
                 .orElseThrow();
-        assertTrue(events.indexOf(assistantCompleted) < events.indexOf(toolStarted));
+        assertTrue(events.indexOf(toolStarted) < events.indexOf(assistantCompleted));
         assertEquals("", requests.get(1).getChatHistory().get(3).text());
     }
 
@@ -310,7 +434,7 @@ class AgentRuntimeLoopTest {
         InvocationResult result = run(modelClient, catalog, approvalResumeRuntime(List.of(historyMessage)));
 
         assertRuntimeFailed(result);
-        assertEquals("Investigation requires a successful HertzBeat data observation before a final answer.",
+        assertEquals(java.util.ResourceBundle.getBundle("agent_reply", java.util.Locale.ENGLISH).getString("unverified"),
                 result.getError().getMessage());
         assertEquals(1, modelClient.requests.size());
         assertEquals(3, modelClient.requests.get(0).getChatHistory().size());
@@ -388,7 +512,8 @@ class AgentRuntimeLoopTest {
                 sequenced(5L, TranscriptMessage.userText("recent request inspect monitor 42")),
                 sequenced(6L, TranscriptMessage.assistantText("recent answer", null)));
         RuntimeFixture runtime = runtime(config -> {
-            config.getContext().setMaxTokens(1800);
+            // Reserve room for the query-purpose and execution-evidence instructions; history still exceeds this budget.
+            config.getContext().setMaxTokens(3200);
             config.getContext().getCompaction().setThresholdRatio(0.88D);
             config.getContext().getCompaction().setRetainRecentTokens(300);
             config.getContext().getCompaction().setSummaryTokenBudget(100);
@@ -485,7 +610,7 @@ class AgentRuntimeLoopTest {
         try (AgentRuntimeControl control = AgentRuntimeControl.forContext(runtime.context(), CLOCK)) {
             new AgentRuntimeLoop(
                     runtime.config(),
-                    modelClient,
+                    AgentTaskCompletionTestClient.observation(modelClient, "platform"),
                     new AgentToolBridge(catalog, CLOCK,
                             new AgentRuntimeBlockingTaskRunner(), catalog.orchestrator, approvalRegistry),
                     CLOCK)
@@ -551,7 +676,7 @@ class AgentRuntimeLoopTest {
         try (AgentRuntimeControl control = AgentRuntimeControl.forContext(runtime.context(), CLOCK)) {
             new AgentRuntimeLoop(
                     runtime.config(),
-                    modelClient,
+                    AgentTaskCompletionTestClient.observation(modelClient, "platform"),
                     new AgentToolBridge(catalog, CLOCK,
                             new AgentRuntimeBlockingTaskRunner(), catalog.orchestrator, approvalRegistry),
                     CLOCK)
@@ -559,7 +684,7 @@ class AgentRuntimeLoopTest {
         }
         InvocationResult result = resultFromEvents(events);
 
-        assertRuntimeSucceeded(result);
+        assertRuntimeFailed(result);
         assertEquals(1, catalog.executeCount);
         assertTrue(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.REQUEST_COMPLETED
                 && "agp-reject".equals(event.getApprovalId())
@@ -570,8 +695,8 @@ class AgentRuntimeLoopTest {
                 .findFirst()
                 .orElseThrow();
         assertEquals(AgentRuntimeEvent.EventStatus.DECLINED, toolCompleted.getStatus());
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
-        assertEquals("Tool execution rejected by approval decision.", toolResult.text());
+        assertEquals(1, modelClient.requests.size());
+        assertEquals("Tool execution rejected by approval decision.", toolCompleted.getErrorMessage());
     }
 
     @Test
@@ -585,12 +710,14 @@ class AgentRuntimeLoopTest {
                         .build()),
                 finalResponse("That tool is not available.")));
 
-        InvocationResult result = run(modelClient, catalog, runtime(config -> { }));
+        var events = new ArrayList<AgentRuntimeEvent>();
+        InvocationResult result = run(modelClient, catalog, runtime(config -> { }), events::add);
 
-        assertRuntimeSucceeded(result);
+        assertRuntimeFailed(result);
         assertEquals(0, catalog.executeCount);
-        TranscriptMessage toolResult = modelClient.requests.get(1).getChatHistory().get(4);
-        assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT, toolResult.getRole());
+        assertEquals(1, modelClient.requests.size());
+        var toolResult = events.stream().filter(e -> e.getType() == AgentRuntimeEventType.ITEM_COMPLETED
+                && e.getItemKind() == AgentRuntimeItemKind.TOOL_CALL).findFirst().orElseThrow();
         assertEquals("delete_everything", toolResult.getToolName());
         assertEquals("call-unknown", toolResult.getToolCallId());
     }
@@ -758,7 +885,8 @@ class AgentRuntimeLoopTest {
                         AgentRuntimeToolCall.builder().toolCallId("call-2")
                                 .toolName("monitor.get").arguments(Map.of("pageSize", 2)).build())));
 
-        InvocationResult result = run(modelClient, catalog, runtime(config -> config.setMaxToolCalls(1)), events::add);
+        // The fixture already has one durable current-run grounding call; two total permits only one fresh call.
+        InvocationResult result = run(modelClient, catalog, runtime(config -> config.setMaxToolCalls(2)), events::add);
 
         assertRuntimeFailed(result);
         assertEquals(1, catalog.executeCount);
@@ -1043,7 +1171,7 @@ class AgentRuntimeLoopTest {
                                   AgentRuntimeProperties config) {
         return new AgentRuntimeLoop(
                 config,
-                modelClient,
+                AgentTaskCompletionTestClient.observation(modelClient, "platform"),
                 new AgentToolBridge(catalog, CLOCK,
                         new AgentRuntimeBlockingTaskRunner(), catalog.orchestrator, new AgentRuntimeApprovalRegistry()),
                 CLOCK);
@@ -1055,6 +1183,11 @@ class AgentRuntimeLoopTest {
 
     private RuntimeFixture runtime(Consumer<AgentRuntimeProperties> customizer,
                                    List<TranscriptMessage> chatHistory) {
+        return runtime(customizer, chatHistory, "diagnose monitor");
+    }
+
+    private RuntimeFixture runtime(Consumer<AgentRuntimeProperties> customizer,
+                                   List<TranscriptMessage> chatHistory, String userMessage) {
         AgentRuntimeProperties config = new AgentRuntimeProperties();
         customizer.accept(config);
         List<TranscriptMessage> groundedHistory = withGroundingProof(chatHistory);
@@ -1072,7 +1205,7 @@ class AgentRuntimeLoopTest {
                 .entryType(AgentRuntimeEntryType.USER_INPUT)
                 .userInput(UserInput.builder()
                         .conversationId("conversation-loop")
-                        .message(Message.builder().text("diagnose monitor").build())
+                        .message(Message.builder().text(userMessage).build())
                         .build())
                 .chatHistory(groundedHistory)
                 .build();
@@ -1135,7 +1268,7 @@ class AgentRuntimeLoopTest {
         AgentToolCallDao toolCallDao = mock(AgentToolCallDao.class);
         when(recorder.findRunGroundingMessages(2L)).thenReturn(List.of(proofMessage));
         when(toolCallDao.findByRunIdOrderByGmtCreateAsc(2L)).thenReturn(List.of(AgentToolCall.builder()
-                .runId(2L).runUid("run-context").toolCallId("call-grounding").toolName("monitor.get")
+                .runId(2L).runUid("run-context").sessionId(1L).toolCallId("call-grounding").toolName("monitor.get")
                 .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
                 .inputJson(JsonUtil.toJson(arguments))
                 .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(arguments))

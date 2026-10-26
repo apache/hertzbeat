@@ -214,7 +214,9 @@ public class AgentLogToolService {
         return result;
     }
 
-    @Tool(name = "logs.analysis", description = "Query bounded workspace logs using the product analysis contract.")
+    @Tool(name = "logs.analysis", description = "Aggregate workspace logs over required start/end. Service and monitor filters are optional. "
+            + "For the entire matching-window count omit field, grouping and measure; matchingTotal is the full aggregate total, "
+            + "not the number of returned groups or sampled log rows. Optional field/grouping provides bounded ranked analysis.")
     @AgentToolPolicy(exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> analysis(
             @ToolParam(description = "Product log query controls; start/end required, maximum 7 days.") AgentLogQuery q) {

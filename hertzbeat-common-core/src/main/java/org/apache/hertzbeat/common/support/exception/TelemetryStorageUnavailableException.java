@@ -26,5 +26,5 @@ package org.apache.hertzbeat.common.support.exception;
  * map it to one stable unavailable response so an empty result remains distinguishable from an
  * infrastructure failure.</p>
  */
-public final class TelemetryStorageUnavailableException extends RuntimeException {
+public class TelemetryStorageUnavailableException extends RuntimeException {
 }

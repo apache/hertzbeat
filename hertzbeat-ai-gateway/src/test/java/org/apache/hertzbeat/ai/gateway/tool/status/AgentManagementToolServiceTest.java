@@ -97,6 +97,14 @@ class AgentManagementToolServiceTest {
     void groupRejectsInvalidTimingAndUsesServiceValidation() {
         AlertGroupConvergeService service = mock(AlertGroupConvergeService.class);
         AgentAlertGroupToolService tools = new AgentAlertGroupToolService(service, validator);
+        var stored = new java.util.concurrent.atomic.AtomicReference<AlertGroupConverge>();
+        org.mockito.Mockito.doAnswer(call -> {
+            AlertGroupConverge value = call.getArgument(0);
+            value.setId(7L);
+            stored.set(value);
+            return null;
+        }).when(service).addAlertGroupConverge(any());
+        when(service.getAlertGroupConverge(7L)).thenAnswer(call -> stored.get());
         assertThrows(IllegalArgumentException.class, () -> tools.create(
                 new AgentAlertGroupToolService.Configuration("policy", List.of("env"), -1L, 30L, 0L, true)));
         tools.create(new AgentAlertGroupToolService.Configuration("policy", List.of("env"), 0L, 30L, 0L, true));

@@ -17,16 +17,15 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.core;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredTool;
+import org.apache.hertzbeat.ai.gateway.tool.log.AgentLogToolInputSchema;
+import org.apache.hertzbeat.ai.gateway.tool.metrics.AgentMetricsConsoleInputSchema;
+import org.apache.hertzbeat.ai.gateway.tool.metrics.AgentMetricsHistoryInputSchema;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.method.MethodToolCallback;
-import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.support.ToolDefinitions;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -35,7 +34,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+
 import tools.jackson.core.type.TypeReference;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Agent tool registry configuration.
@@ -67,7 +72,8 @@ public class AgentToolConfiguration {
                     continue;
                 }
                 if (tool == null || policy == null) {
-                    throw new IllegalStateException("@Tool and @AgentToolPolicy must be declared together: " + method);
+                    throw new IllegalStateException(
+                            "@Tool and @AgentToolPolicy must be declared together: " + method);
                 }
                 Object bean = beanFactory.getBean(beanName);
                 Method invocableMethod = AopUtils.selectInvocableMethod(method, bean.getClass());
@@ -88,6 +94,8 @@ public class AgentToolConfiguration {
 
     private AgentToolOutput invoke(ToolCallback callback, boolean structuredOutput,
                                    AgentToolExecutionContext context) {
+        Map<String, Object> schema = JsonUtil.fromJson(callback.getToolDefinition().inputSchema(), new TypeReference<>() { });
+        rejectUnknownArguments(schema, context.getRequest().getArguments(), "");
         String toolInput = JsonUtil.toJson(context.getRequest().getArguments());
         String result = AgentToolContextSupport.withInvocation(context, () -> callback.call(toolInput));
         if (structuredOutput) {
@@ -108,19 +116,69 @@ public class AgentToolConfiguration {
                 .build();
     }
 
+    private void rejectUnknownArguments(Map<?, ?> schema, Map<?, ?> arguments, String path) {
+        if (!(schema.get("properties") instanceof Map<?, ?> properties)) {
+            return;
+        }
+        var unknown = new java.util.TreeSet<String>();
+        arguments.keySet().stream().filter(key -> !properties.containsKey(key))
+                .map(key -> path + key).forEach(unknown::add);
+        if (!unknown.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Unsupported tool argument names: " + String.join(", ", unknown));
+        }
+        arguments.forEach((key, value) -> {
+            if (properties.get(key) instanceof Map<?, ?> field) {
+                validateType(field, value, path + key);
+                if (value instanceof Map<?, ?> nested) {
+                    rejectUnknownArguments(field, nested, path + key + ".");
+                }
+            }
+        });
+    }
+
+    private void validateType(Map<?, ?> schema, Object value, String name) {
+        if (value == null || !(schema.get("type") instanceof String type)) {
+            return;
+        }
+        boolean valid = switch (type) {
+            case "integer" -> value instanceof Number number
+                    && new java.math.BigDecimal(number.toString()).stripTrailingZeros().scale() <= 0;
+            case "number" -> value instanceof Number;
+            case "boolean" -> value instanceof Boolean;
+            case "string" -> value instanceof String;
+            case "object" -> value instanceof Map;
+            case "array" -> value instanceof java.util.Collection;
+            default -> true;
+        };
+        if (!valid) {
+            throw new IllegalArgumentException(
+                    "Tool argument " + name + " must have JSON type " + type);
+        }
+    }
+
     private AgentToolDescriptor descriptor(ToolDefinition definition, AgentToolPolicy policy) {
         if (!StringUtils.hasText(definition.name())) {
             throw new IllegalArgumentException("Spring AI tool name is required");
         }
+        String inputSchema =
+                org.apache.hertzbeat.ai.gateway.tool.system.AgentInstrumentationInputSchema.enrich(
+                        definition.name(), definition.inputSchema());
         return AgentToolDescriptor.builder()
-            .name(definition.name())
-            .description(definition.description())
-            .inputSchema(definition.inputSchema())
-            .risk(policy.risk())
-            .access(policy.access())
-            .namespace(namespace(definition.name()))
-            .exposure(policy.exposure())
-            .build();
+                .name(definition.name())
+                .description(definition.description())
+                .inputSchema(
+                        "metrics.history".equals(definition.name())
+                                ? AgentMetricsHistoryInputSchema.enrich(inputSchema)
+                                : AgentMetricsConsoleInputSchema.enrich(
+                                        definition.name(),
+                                        AgentLogToolInputSchema.enrich(
+                                                definition.name(), inputSchema)))
+                .risk(policy.risk())
+                .access(policy.access())
+                .namespace(namespace(definition.name()))
+                .exposure(policy.exposure())
+                .build();
     }
 
     private String namespace(String name) {

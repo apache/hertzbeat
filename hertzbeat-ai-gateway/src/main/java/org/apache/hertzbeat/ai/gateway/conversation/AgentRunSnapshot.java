@@ -36,9 +36,17 @@ public record AgentRunSnapshot(
         LocalDateTime startedAt,
         LocalDateTime completedAt,
         AgentRetryRequest retryRequest,
-        List<AgentEvidenceReference> evidence) {
+        List<AgentEvidenceReference> evidence, AgentExecutionSummary executionSummary) {
     public AgentRunSnapshot {
         evidence = evidence == null ? List.of() : List.copyOf(evidence);
+    }
+
+    public AgentRunSnapshot(String runUid, String sessionUid, String messageId, String status,
+                            AgentTargetRef target, String result, String errorMessage, boolean replayAvailable,
+                            LocalDateTime startedAt, LocalDateTime completedAt, AgentRetryRequest retryRequest,
+                            List<AgentEvidenceReference> evidence) {
+        this(runUid, sessionUid, messageId, status, target, result, errorMessage, replayAvailable,
+                startedAt, completedAt, retryRequest, evidence, null);
     }
 
     public AgentRunSnapshot(String runUid, String sessionUid, String messageId, String status,
