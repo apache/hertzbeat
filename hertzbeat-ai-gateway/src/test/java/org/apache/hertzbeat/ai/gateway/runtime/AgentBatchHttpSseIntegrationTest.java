@@ -27,6 +27,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.subject.support.SinglePrincipalMap;
+import com.usthe.sureness.subject.support.SurenessSubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 
 import org.apache.catalina.startup.Tomcat;
@@ -316,6 +318,12 @@ class AgentBatchHttpSseIntegrationTest {
             server.stop();
             server.destroy();
         }
+        // The HTTP fixture must not poison Mockito's reusable types with a stopped
+        // servlet class loader; later identity tests run in this same JVM.
+        SubjectSum laterSubject = mock(SubjectSum.class);
+        when(laterSubject.getPrincipalMap())
+                .thenReturn(new SinglePrincipalMap(java.util.Map.of("fixture-claim", "isolated")));
+        assertEquals("isolated", laterSubject.getPrincipalMap().getPrincipal("fixture-claim"));
     }
 
     private static String readFrame(BufferedReader reader) throws Exception {
@@ -475,9 +483,11 @@ class AgentBatchHttpSseIntegrationTest {
                         @org.springframework.web.bind.annotation.PathVariable String runUid,
                         @org.springframework.web.bind.annotation.RequestBody Continuation request,
                         @org.springframework.web.bind.annotation.RequestHeader(name = "Accept-Language", required = false) String language) {
-                    SubjectSum subject = mock(SubjectSum.class);
-                    when(subject.getPrincipal()).thenReturn("admin");
-                    when(subject.getRoles()).thenReturn(List.of("admin"));
+                    // Avoid caching a Mockito type under Tomcat's disposable request class loader.
+                    SubjectSum subject = new SurenessSubjectSum.Builder()
+                            .setPrincipal("admin")
+                            .setRoles(List.of("admin"))
+                            .build();
                     // Test identity belongs to handler invocation, not a pre-body-decoding reactor thread.
                     SurenessContextHolder.bindSubject(subject);
                     AuthTokenRequestContext.bindWorkspaceId("batch-test");
