@@ -44,6 +44,9 @@ class TargetSchemaBaselineResourceTest {
     private static final Set<String> MAPPED_TABLES = Set.of(
             "hzb_account",
             "hzb_agent_run",
+            "hzb_agent_permission_state",
+            "hzb_agent_permission_audit",
+            "hzb_website_batch_item",
             "hzb_agent_schedule",
             "hzb_agent_session",
             "hzb_agent_tool_call",
@@ -127,7 +130,7 @@ class TargetSchemaBaselineResourceTest {
     @ParameterizedTest
     @ValueSource(strings = {"mysql", "postgresql"})
     void currentBaselineDeclaresEveryMappedTable(String vendor) throws IOException {
-        String resource = "db/migration/" + vendor + "/B200__current_schema.sql";
+        String resource = "db/migration/" + vendor + "/B201__current_schema.sql";
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(resource)) {
             assertThat(input).as(resource).isNotNull();
             assertThat(createdTables(new String(input.readAllBytes(), StandardCharsets.UTF_8)))
@@ -138,8 +141,8 @@ class TargetSchemaBaselineResourceTest {
         TargetSchemaBaseline baseline = TargetSchemaBaseline.load(kind);
         assertThat(baseline.expectedTables())
                 .containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
-        assertThat(TargetSchemaBaseline.VERSION).isEqualTo("200");
-        assertThat(TargetSchemaBaseline.SCRIPT).isEqualTo("B200__current_schema.sql");
+        assertThat(TargetSchemaBaseline.VERSION).isEqualTo("201");
+        assertThat(TargetSchemaBaseline.SCRIPT).isEqualTo("B201__current_schema.sql");
         assertThat(TargetSchemaBaseline.DESCRIPTION).isEqualTo("current schema");
     }
 

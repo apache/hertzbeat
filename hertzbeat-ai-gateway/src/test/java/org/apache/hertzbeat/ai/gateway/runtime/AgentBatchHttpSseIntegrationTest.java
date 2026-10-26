@@ -469,7 +469,26 @@ class AgentBatchHttpSseIntegrationTest {
                 AgentSessionDao sessions,
                 AgentBatchService batches,
                 AgentBatchCommandService commands) {
-            return new AgentBatchController(runs, sessions, batches, commands);
+            return new AgentBatchController(runs, sessions, batches, commands) {
+                @Override
+                public Flux<org.springframework.http.codec.ServerSentEvent<org.apache.hertzbeat.ai.gateway.application.GatewayEvent>> continueBatch(
+                        @org.springframework.web.bind.annotation.PathVariable String runUid,
+                        @org.springframework.web.bind.annotation.RequestBody Continuation request,
+                        @org.springframework.web.bind.annotation.RequestHeader(name = "Accept-Language", required = false) String language) {
+                    SubjectSum subject = mock(SubjectSum.class);
+                    when(subject.getPrincipal()).thenReturn("admin");
+                    when(subject.getRoles()).thenReturn(List.of("admin"));
+                    // Test identity belongs to handler invocation, not a pre-body-decoding reactor thread.
+                    SurenessContextHolder.bindSubject(subject);
+                    AuthTokenRequestContext.bindWorkspaceId("batch-test");
+                    try {
+                        return super.continueBatch(runUid, request, language);
+                    } finally {
+                        SurenessContextHolder.clear();
+                        AuthTokenRequestContext.clear();
+                    }
+                }
+            };
         }
 
         @Bean
@@ -478,26 +497,11 @@ class AgentBatchHttpSseIntegrationTest {
         }
 
         @Bean
-        WebFilter fixtureIdentity(DisconnectObservation observation) {
-            SubjectSum subject = mock(SubjectSum.class);
-            when(subject.getPrincipal()).thenReturn("admin");
-            when(subject.getRoles()).thenReturn(List.of("admin"));
-            return (exchange, chain) ->
-                    Mono.defer(
-                            () -> {
-                                SurenessContextHolder.bindSubject(subject);
-                                AuthTokenRequestContext.bindWorkspaceId("batch-test");
-                                return chain.filter(exchange)
-                                        .doFinally(
-                                                signal -> {
-                                                    SurenessContextHolder.clear();
-                                                    AuthTokenRequestContext.clear();
-                                                    if (signal
-                                                            == reactor.core.publisher.SignalType
-                                                                    .CANCEL)
-                                                        observation.cancelled.countDown();
-                                                });
-                            });
+        WebFilter disconnectObservation(DisconnectObservation observation) {
+            return (exchange, chain) -> chain.filter(exchange).doFinally(signal -> {
+                if (signal == reactor.core.publisher.SignalType.CANCEL) observation.cancelled.countDown();
+            });
         }
+
     }
 }

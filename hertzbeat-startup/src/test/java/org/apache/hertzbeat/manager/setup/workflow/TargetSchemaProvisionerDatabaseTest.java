@@ -217,7 +217,7 @@ class TargetSchemaProvisionerDatabaseTest {
                             "SELECT version, type, installed_by, success "
                                     + "FROM flyway_schema_history ORDER BY installed_rank")) {
                 assertThat(history.next()).isTrue();
-                assertThat(history.getString("version")).isEqualTo("200");
+                assertThat(history.getString("version")).isEqualTo("201");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
                 assertThat(history.getString("installed_by")).isEqualTo("hertzbeat-migration");
                 assertThat(history.getBoolean("success")).isTrue();
@@ -234,7 +234,7 @@ class TargetSchemaProvisionerDatabaseTest {
         assertThat(historyRows(jdbcUrl))
                 .extracting(HistoryRow::version)
                 .containsExactly("159", "160", "170", "172", "173", "180", "181",
-                        "200");
+                        "200", "201");
         try (Connection connection = DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD)) {
             assertLargeAgentTextRoundTrip(connection);
             MetadataSchemaSnapshot migrated = MetadataSchemaSnapshot.capture(connection);
@@ -268,9 +268,9 @@ class TargetSchemaProvisionerDatabaseTest {
                     ResultSet history = statement.executeQuery(
                             "SELECT version, type, script FROM flyway_schema_history ORDER BY installed_rank")) {
                 assertThat(history.next()).isTrue();
-                assertThat(history.getString("version")).isEqualTo("200");
+                assertThat(history.getString("version")).isEqualTo("201");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
-                assertThat(history.getString("script")).isEqualTo("B200__current_schema.sql");
+                assertThat(history.getString("script")).isEqualTo("B201__current_schema.sql");
                 assertThat(history.next()).isFalse();
             }
         }
