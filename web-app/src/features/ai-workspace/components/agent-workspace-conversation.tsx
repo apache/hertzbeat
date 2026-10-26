@@ -15,26 +15,33 @@
  * limitations under the License.
  */
 
-import { CodeOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Tag, Typography } from 'antd';
+import { AgentBatchProgress } from './agent-batch-progress';
+import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
-import { ConversationComposer, ConversationHeader } from './agent-workspace-conversation-chrome';
+import { ConversationFooter, ConversationHeader } from './agent-workspace-conversation-chrome';
 import { EarlierMessages } from './agent-workspace-earlier-messages';
 import styles from './agent-workspace-conversation.module.css';
-import { formatAgentTimestamp, formatElapsed, toolStatusColor } from './agent-workspace-format';
+import { ExecutionStatus } from './agent-workspace-execution';
+import executionStyles from './agent-workspace-execution.module.css';
+import { AgentWorkspaceMessage } from './agent-workspace-message';
+import { useConversationScroll } from './use-conversation-scroll';
+import { AgentWorkspaceWaiting } from './agent-workspace-waiting';
 
 export function AgentWorkspaceConversation({
   controller,
   contextOpen,
-  onToggleContext
+  onToggleContext,
+  onOpenHistory
 }: {
   controller: AgentWorkspaceViewModel;
   contextOpen: boolean;
   onToggleContext: () => void;
+  onOpenHistory?: (() => void) | undefined;
 }) {
   const { t } = useTranslation();
+  const { viewportRef, contentRef, onScroll, away, jumpToLatest } = useConversationScroll(controller);
   const recorded = controller.transcript.items.filter(
     item => item.role !== 'assistant' || item.text || item.errorMessage || !item.toolCalls?.length
   );
@@ -43,45 +50,93 @@ export function AgentWorkspaceConversation({
   const empty = messages.length === 0 && !controller.failure && !controller.invalidTarget && !sessionLoadIncomplete;
   return (
     <section className={styles.investigation} data-empty={empty} aria-label={t('aiWorkspace.investigation.label')}>
-      <ConversationHeader controller={controller} contextOpen={contextOpen} onToggleContext={onToggleContext} />
-      <div className={styles.transcript} aria-live="polite">
-        <EarlierMessages controller={controller} />
-        {empty ? <EmptyConversation /> : null}
-        {messages.map((message, index) => (
-          <ConversationMessage key={'id' in message ? message.id : index} message={message} />
-        ))}
-        {sessionLoadIncomplete ? <ConversationFailure message={t('aiWorkspace.sessionLoadIncomplete')} /> : null}
-        {controller.run.tools.length ? (
-          <ConversationActivity
+      <ConversationHeader
+        controller={controller}
+        contextOpen={contextOpen}
+        onToggleContext={onToggleContext}
+        onOpenHistory={onOpenHistory}
+      />
+      <div
+        className={styles.transcript}
+        aria-live="polite"
+        ref={viewportRef}
+        onScroll={onScroll}
+        tabIndex={0}
+        role="region"
+        aria-label={t('aiWorkspace.conversationHistory')}
+      >
+        <div ref={contentRef}>
+          <EarlierMessages controller={controller} />
+          {empty ? <EmptyConversation /> : null}
+          {messages.map((message, index) => (
+            <AgentWorkspaceMessage key={'id' in message ? message.id : index} message={message} />
+          ))}
+          <AgentWorkspaceWaiting controller={controller} />
+          <AgentBatchProgress batch={controller.batch} controller={controller} />
+          <ExecutionStatus
+            key={`execution:${executionIdentity(controller)}`}
+            controller={controller}
             contextOpen={contextOpen}
-            tools={controller.run.tools}
-            onOpenContext={() => {
-              if (!contextOpen) onToggleContext();
-            }}
+            onToggleContext={onToggleContext}
           />
-        ) : null}
-        {showRunFailure(controller) ? (
-          <ConversationFailure
-            message={runFailureMessage(controller, t)}
-            {...(controller.run.retryAvailable ? { retry: controller.actions.retry } : {})}
-          />
-        ) : null}
-        {showPausedObservation(controller) ? (
-          <ConversationPaused
-            recoveryAvailable={controller.run.recoveryAvailable === true}
-            recover={controller.actions.recover}
-          />
-        ) : null}
-        {controller.failure ? <ConversationFailure retry={controller.actions.recover} /> : null}
-        {controller.invalidTarget ? <ConversationFailure message={t('aiWorkspace.invalidTarget')} /> : null}
+          <ConversationNotices controller={controller} />
+        </div>
       </div>
-      <ConversationComposer controller={controller} />
+      <ConversationFooter controller={controller} away={away} jumpToLatest={jumpToLatest} />
     </section>
   );
 }
 
+function ConversationNotices({ controller }: { controller: AgentWorkspaceViewModel }) {
+  const { t } = useTranslation();
+  const sessionLoadIncomplete = controller.transcript.status === 'error';
+  return (
+    <>
+      {sessionLoadIncomplete ? <ConversationFailure message={t('aiWorkspace.sessionLoadIncomplete')} /> : null}
+      {showRunFailure(controller) ? (
+        <ConversationFailure
+          key={`failure:${executionIdentity(controller)}`}
+          message={runFailureMessage(controller, t)}
+          technical={runFailureTechnical(controller)}
+          {...(controller.run.retryAvailable && !controller.batch?.progress ? { retry: controller.actions.retry } : {})}
+        />
+      ) : null}
+      {showPausedObservation(controller) ? (
+        <ConversationPaused
+          recoveryAvailable={controller.run.recoveryAvailable === true}
+          recover={controller.actions.recover}
+        />
+      ) : null}
+      {controller.failure && ['idle', 'running'].includes(controller.run.status) ? (
+        <ConversationTransportFailure controller={controller} />
+      ) : null}
+      {controller.invalidTarget ? <ConversationFailure message={t('aiWorkspace.invalidTarget')} /> : null}
+    </>
+  );
+}
+
+function executionIdentity(controller: AgentWorkspaceViewModel) {
+  return controller.run.runUid ?? controller.selectedSessionUid ?? 'new';
+}
+
+function runFailureTechnical(controller: AgentWorkspaceViewModel) {
+  return controller.run.recoveryRequired || controller.run.targetFailure ? undefined : controller.run.errorMessage;
+}
+
 function showRunFailure(controller: AgentWorkspaceViewModel) {
-  return !controller.invalidTarget && controller.run.status === 'error' && Boolean(controller.run.errorMessage);
+  if (controller.batch?.progress) return false;
+  const summary = controller.run.executionSummary;
+  const coveredBySummary =
+    summary?.status === 'PARTIAL' &&
+    Boolean(summary.stopReason) &&
+    !controller.run.recoveryRequired &&
+    !controller.run.targetFailure;
+  return (
+    !controller.invalidTarget &&
+    !coveredBySummary &&
+    controller.run.status === 'error' &&
+    Boolean(controller.run.errorMessage)
+  );
 }
 
 function showPausedObservation(controller: AgentWorkspaceViewModel) {
@@ -92,88 +147,7 @@ function runFailureMessage(controller: AgentWorkspaceViewModel, t: ReturnType<ty
   if (controller.run.recoveryRequired) return t('aiWorkspace.recoveryRequired');
   if (controller.run.targetFailure === 'mismatch') return t('aiWorkspace.targetMismatch');
   if (controller.run.targetFailure === 'unavailable') return t('aiWorkspace.targetUnavailable');
-  return controller.run.errorMessage ?? '';
-}
-
-function ConversationMessage({
-  message
-}: {
-  message: {
-    id: string | number;
-    text: string;
-    role?: string;
-    toolName?: string;
-    errorMessage?: string;
-    createdAt?: string | null;
-  };
-}) {
-  const { t } = useTranslation();
-  const role = message.role ?? 'assistant';
-  const user = role === 'user';
-  const toolResult = role === 'toolResult';
-  return (
-    <article className={styles.message} data-role={role}>
-      <div className={styles.messageMeta}>
-        {!user && !toolResult ? (
-          <img aria-hidden="true" className={styles.assistantMark} src="/assets/logo.svg" alt="" />
-        ) : null}
-        {toolResult ? (
-          <code className={styles.messageRole}>{message.toolName}</code>
-        ) : (
-          <Typography.Text className={styles.messageRole ?? ''} type="secondary">
-            {user ? t('aiWorkspace.roles.you') : t('aiWorkspace.roles.assistant')}
-          </Typography.Text>
-        )}
-        {message.createdAt ? (
-          <Typography.Text className={styles.messageTime ?? ''} type="secondary">
-            <time dateTime={message.createdAt}>{formatAgentTimestamp(message.createdAt)}</time>
-          </Typography.Text>
-        ) : null}
-      </div>
-      <div className={styles.messageText}>{message.text}</div>
-      {message.errorMessage ? (
-        <Typography.Text className={styles.messageError ?? ''} type="danger">
-          {message.errorMessage}
-        </Typography.Text>
-      ) : null}
-    </article>
-  );
-}
-
-function ConversationActivity({
-  contextOpen,
-  onOpenContext,
-  tools
-}: {
-  contextOpen: boolean;
-  onOpenContext: () => void;
-  tools: AgentWorkspaceViewModel['run']['tools'];
-}) {
-  const { t } = useTranslation();
-  return (
-    <section className={styles.inlineActivity} aria-label={t('aiWorkspace.context.activity')}>
-      {tools.map(tool => (
-        <button
-          aria-expanded={contextOpen}
-          aria-label={tool.toolName}
-          className={styles.inlineTool}
-          key={tool.toolCallId}
-          type="button"
-          onClick={onOpenContext}
-        >
-          <CodeOutlined />
-          <span className={styles.inlineToolName}>{tool.toolName}</span>
-          {tool.elapsedMs === undefined ? null : (
-            <Typography.Text type="secondary">{formatElapsed(tool.elapsedMs)}</Typography.Text>
-          )}
-          <Tag bordered={false} color={toolStatusColor(tool.status)}>
-            {tool.status === 'UNKNOWN' ? t('aiWorkspace.context.statusUnknown') : tool.status}
-          </Tag>
-          <RightOutlined className={styles.inlineToolChevron} />
-        </button>
-      ))}
-    </section>
-  );
+  return t('aiWorkspace.executionSummary.runFailed');
 }
 
 function EmptyConversation() {
@@ -186,11 +160,50 @@ function EmptyConversation() {
   );
 }
 
-function ConversationFailure({ message, retry }: { message?: string; retry?: () => Promise<void> }) {
+function ConversationTransportFailure({ controller }: { controller: AgentWorkspaceViewModel }) {
+  const { t } = useTranslation();
+  const failure = controller.transportFailure;
+  const retry = async () => {
+    if (controller.batch?.progress) {
+      if (controller.selectedSessionUid) await controller.actions.selectSession(controller.selectedSessionUid);
+      return;
+    }
+    await controller.actions.recover();
+  };
+  return (
+    <ConversationFailure
+      retry={retry}
+      {...(failure
+        ? {
+            message: t(`aiWorkspace.transportFailure.${failure.code}`, { status: failure.httpStatus }),
+            technical: t('aiWorkspace.transportFailure.requestId', { id: failure.requestId })
+          }
+        : {})}
+    />
+  );
+}
+
+function ConversationFailure({
+  message,
+  technical,
+  retry
+}: {
+  message?: string;
+  technical?: string | undefined;
+  retry?: () => Promise<void>;
+}) {
   const { t } = useTranslation();
   return (
     <div className={styles.failure} role="alert">
-      <span>{message || t('aiWorkspace.failure')}</span>
+      <div>
+        <span>{message || t('aiWorkspace.failure')}</span>
+        {technical ? (
+          <details className={executionStyles.executionDetails}>
+            <summary className={executionStyles.executionSummary}>{t('aiWorkspace.executionSummary.details')}</summary>
+            <p className={executionStyles.executionFacts}>{technical}</p>
+          </details>
+        ) : null}
+      </div>
       {retry ? (
         <Button size="small" onClick={() => void retry()}>
           {t('common.retry')}

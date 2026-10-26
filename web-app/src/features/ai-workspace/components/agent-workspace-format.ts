@@ -32,7 +32,7 @@ export function formatAgentTimestamp(value: string) {
 
 export function toolStatusColor(status: string) {
   const normalized = status.toUpperCase();
-  if (normalized === 'UNKNOWN') return 'default';
+  if (normalized === 'UNKNOWN' || normalized === 'CANCELLED') return 'default';
   if (normalized === 'SUCCEEDED' || normalized === 'COMPLETED') return 'success';
   if (normalized === 'FAILED' || normalized === 'DENIED') return 'error';
   if (normalized.includes('WAITING')) return 'warning';
@@ -47,6 +47,7 @@ export function sessionStatusLabel(status: string, t: TFunction) {
   const normalized = status.toUpperCase();
   if (normalized === 'ACTIVE' || normalized === 'RUNNING') return t('aiWorkspace.sessions.status.active');
   if (normalized === 'COMPLETED' || normalized === 'SUCCEEDED') return t('aiWorkspace.sessions.status.completed');
+  if (normalized === 'PARTIAL') return t('aiWorkspace.sessions.status.partial');
   if (normalized === 'FAILED') return t('aiWorkspace.sessions.status.failed');
   if (normalized === 'CANCELLED') return t('aiWorkspace.sessions.status.cancelled');
   if (normalized === 'RECOVERY_REQUIRED') return t('aiWorkspace.sessions.status.recoveryRequired');
@@ -71,4 +72,10 @@ export function formatAgentScopeWindow(start: number, end: number, timeZone = 'U
   } catch {
     return '—';
   }
+}
+
+export function toolStatusLabel(status: string, t: TFunction) {
+  if (status === 'UNKNOWN') return t('aiWorkspace.context.statusUnknown');
+  if (status === 'CANCELLED') return t('aiWorkspace.context.cancelledBeforeExecution');
+  return status;
 }

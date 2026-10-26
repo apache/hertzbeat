@@ -19,6 +19,9 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import type { AgentChatRequest, AgentSourceTarget } from '../model/agent-workspace-contract';
 import { withTranscriptTools, type AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
+import { useAgentSessionDeletion } from './use-agent-session-deletion';
+import { useAgentPermissionMode } from './use-agent-permission-mode';
+import { useAgentBatch } from './use-agent-batch';
 import { useAgentWorkspaceActions } from './use-agent-workspace-actions';
 import { useAgentWorkspaceHistory } from './use-agent-workspace-history';
 import { useAgentWorkspaceRuntime, type AgentWorkspaceRefs } from './use-agent-workspace-runtime';
@@ -38,11 +41,17 @@ export function useAgentWorkspaceController({
   const history = useAgentWorkspaceHistory(refs.isMounted);
   const runtime = useAgentWorkspaceRuntime(history, refs, language);
   const actions = useAgentWorkspaceActions(history, runtime, refs, target, invalidTarget);
+  const batch = useAgentBatch(runtime.run.runUid, runtime.executeBatch);
+  const permission = useAgentPermissionMode(history.selectedSessionUid);
+  const deletion = useAgentSessionDeletion(history, refs, actions.newInvestigation);
   useWorkspaceLifecycle(history.refreshSessions, history.cancelSessionLoad, refs);
   useSourceTargetLifecycle(contextKey ?? (target ? JSON.stringify(target) : 'none'), actions.newInvestigation);
   const displayedTarget = runtime.target ?? (runtime.run.status === 'idle' ? target : undefined);
   return {
+    batch,
+    permission,
     sessions: history.sessions,
+    sessionDeletion: deletion.state,
     ...(history.selectedSessionUid ? { selectedSessionUid: history.selectedSessionUid } : {}),
     transcript: history.transcript,
     draftMessages: history.draftMessages,
@@ -51,14 +60,25 @@ export function useAgentWorkspaceController({
     invalidTarget,
     composer: runtime.composer,
     streaming: runtime.streaming,
-    stopping: runtime.stopping,
+    stopping: runtime.stopping || batch.stopping,
     ...(runtime.failure ? { failure: runtime.failure } : {}),
-    actions: { ...actions, loadOlder: history.loadOlder }
+    transportFailure: runtime.transportFailure,
+    actions: {
+      ...actions,
+      stop: batch.progress ? batch.stop : actions.stop,
+      loadOlder: history.loadOlder,
+      requestDeleteSession: deletion.requestDeleteSession,
+      requestClearSessions: deletion.requestClearSessions,
+      cancelSessionDeletion: deletion.cancelSessionDeletion,
+      confirmSessionDeletion: deletion.confirmSessionDeletion
+    }
   };
 }
 
 function useSourceTargetLifecycle(key: string, reset: () => void) {
-  const current = useRef<{ initialized: boolean; key?: string }>({ initialized: false });
+  const current = useRef<{ initialized: boolean; key?: string }>({
+    initialized: false
+  });
   useEffect(() => {
     if (!current.current.initialized) {
       current.current = { initialized: true, key };

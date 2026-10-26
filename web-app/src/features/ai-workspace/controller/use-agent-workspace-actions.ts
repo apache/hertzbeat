@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
+import { agentMessageTooLarge } from '../model/agent-input-limits';
 
 import type { AgentRetryRequest, AgentSourceTarget } from '../model/agent-workspace-contract';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
@@ -58,6 +59,7 @@ export function useAgentWorkspaceActions(
       stop: runtime.stop,
       retry: runtime.retry,
       recover: runtime.recover,
+      reviseApproval: runtime.reviseApproval,
       decideApproval: runtime.decideApproval,
       submitInteraction: runtime.submitInteraction
     }),
@@ -100,7 +102,8 @@ function useSelectSession(history: AgentWorkspaceHistory, runtime: Runtime, refs
       runtime.dispatch({
         type: 'RUN_EVIDENCE_LOADED',
         runUid: loaded.snapshot.runUid,
-        evidence: loaded.snapshot.evidence
+        evidence: loaded.snapshot.evidence,
+        executionSummary: loaded.snapshot.executionSummary
       });
     },
     [history, refs, runtime]
@@ -127,7 +130,7 @@ function useSendInvestigation(
 ) {
   return useCallback(async () => {
     const message = runtime.composer.trim();
-    if (!message || runtime.streaming || invalidTarget) return;
+    if (!message || agentMessageTooLarge(message) || runtime.streaming || invalidTarget) return;
     const conversationId = refs.getConversation() ?? crypto.randomUUID();
     refs.setConversation(conversationId);
     const request = {

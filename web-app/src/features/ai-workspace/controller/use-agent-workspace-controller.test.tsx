@@ -15,11 +15,25 @@
  * limitations under the License.
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook as renderRawHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { PropsWithChildren } from 'react';
 import type { AgentGatewayEvent } from '../model/agent-workspace-contract';
 import { useAgentWorkspaceController } from './use-agent-workspace-controller';
+
+const renderHook: typeof renderRawHook = (callback, options) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderRawHook(callback, { ...options, wrapper: Wrapper });
+};
+vi.mock('../api/agent-batch-api', () => ({
+  getAgentBatch: vi.fn().mockResolvedValue(null),
+  streamAgentBatch: vi.fn()
+}));
 
 const api = vi.hoisted(() => ({
   decideAgentApproval: vi.fn(),
@@ -47,6 +61,36 @@ describe('useAgentWorkspaceController', () => {
     api.listAgentTranscript.mockResolvedValue([]);
     api.getLatestAgentRun.mockResolvedValue(null);
   });
+
+  it.each(['unmount', 'selectSession', 'newInvestigation'] as const)(
+    'aborts the owned stream on %s without sending a replacement request',
+    async action => {
+      let signal: AbortSignal | undefined;
+      api.streamAgentChat.mockImplementation((_request, _publish, options: { signal: AbortSignal }) => {
+        signal = options.signal;
+        return new Promise<void>((_resolve, reject) => {
+          signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+        });
+      });
+      const view = renderHook(() => useAgentWorkspaceController());
+      await waitFor(() => expect(view.result.current.sessions.status).toBe('ready'));
+      act(() => view.result.current.actions.setComposer('Inspect the selected resource'));
+      let execution!: Promise<void>;
+      act(() => {
+        execution = view.result.current.actions.send();
+      });
+      await waitFor(() => expect(signal).toBeDefined());
+      await act(async () => {
+        if (action === 'unmount') view.unmount();
+        else if (action === 'selectSession') await view.result.current.actions.selectSession('other-session');
+        else view.result.current.actions.newInvestigation();
+        await execution;
+      });
+      expect(signal!.aborted).toBe(true);
+      expect(api.streamAgentChat).toHaveBeenCalledOnce();
+      if (action !== 'unmount') expect(view.result.current.failure).toBeUndefined();
+    }
+  );
 
   it('streams one target-bound investigation and converges to its authoritative transcript', async () => {
     api.streamAgentChat.mockImplementation((_request, publish: (event: AgentGatewayEvent) => void) => {

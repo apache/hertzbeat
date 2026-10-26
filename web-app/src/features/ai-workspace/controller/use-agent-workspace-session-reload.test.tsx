@@ -15,10 +15,24 @@
  * limitations under the License.
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook as renderRawHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { PropsWithChildren } from 'react';
 import { useAgentWorkspaceController } from './use-agent-workspace-controller';
+
+const renderHook: typeof renderRawHook = (callback, options) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderRawHook(callback, { ...options, wrapper: Wrapper });
+};
+vi.mock('../api/agent-batch-api', () => ({
+  getAgentBatch: vi.fn().mockResolvedValue(null),
+  streamAgentBatch: vi.fn()
+}));
 
 const api = vi.hoisted(() => ({
   decideAgentApproval: vi.fn(),

@@ -15,42 +15,43 @@
  * limitations under the License.
  */
 
-import { PlusOutlined, ScheduleOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  ScheduleOutlined,
+  SearchOutlined,
+  SettingOutlined
+} from '@ant-design/icons';
 import { Button, Input, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
-import { sessionStatusLabel } from './agent-workspace-format';
+import { AgentWorkspaceSessionList } from './agent-workspace-session-list';
+import { AgentWorkspaceSessionDeleteDialog } from './agent-workspace-session-delete-dialog';
 import styles from './agent-workspace-session-pane.module.css';
 
 export function AgentWorkspaceSessionPane({
   controller,
   isAdmin,
   onOpenProviders,
-  onOpenSchedules
+  onOpenSchedules,
+  mobileOpen = false,
+  onClose
 }: {
   controller: AgentWorkspaceViewModel;
   isAdmin: boolean;
   onOpenProviders: () => void;
   onOpenSchedules: () => void;
+  mobileOpen?: boolean;
+  onClose?: () => void;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   return (
-    <nav className={styles.sessions} aria-label={t('aiWorkspace.sessions.label')}>
-      <div className={styles.paneHeader}>
-        <Typography.Text strong>{t('aiWorkspace.sessions.title')}</Typography.Text>
-        <Button
-          aria-label={t('aiWorkspace.sessions.new')}
-          icon={<PlusOutlined />}
-          size="small"
-          type="text"
-          onClick={controller.actions.newInvestigation}
-        >
-          {t('aiWorkspace.sessions.new')}
-        </Button>
-      </div>
+    <nav className={styles.sessions} data-mobile-open={mobileOpen} aria-label={t('aiWorkspace.sessions.label')}>
+      <SessionPaneHeader controller={controller} onClose={onClose} />
       <div className={styles.sessionSearch}>
         <Input
           allowClear
@@ -63,45 +64,27 @@ export function AgentWorkspaceSessionPane({
           onChange={event => setQuery(event.target.value)}
         />
       </div>
-      <SessionList controller={controller} query={query} />
+      <AgentWorkspaceSessionList controller={controller} query={query} />
+      <div className={styles.historyActions}>
+        <Button
+          type="text"
+          icon={<DeleteOutlined />}
+          loading={controller.sessionDeletion?.phase === 'loading'}
+          disabled={
+            !controller.sessions.items.length ||
+            controller.sessions.status !== 'ready' ||
+            controller.sessionDeletion?.phase === 'deleting' ||
+            !controller.actions.requestClearSessions
+          }
+          aria-label={t('aiWorkspace.sessions.clearAll')}
+          onClick={() => void controller.actions.requestClearSessions?.()}
+        >
+          {t('aiWorkspace.sessions.clearAll')}
+        </Button>
+      </div>
+      <AgentWorkspaceSessionDeleteDialog controller={controller} />
       {isAdmin ? <AdminActions onOpenProviders={onOpenProviders} onOpenSchedules={onOpenSchedules} /> : null}
     </nav>
-  );
-}
-
-function SessionList({ controller, query }: { controller: AgentWorkspaceViewModel; query: string }) {
-  const { i18n, t } = useTranslation();
-  const normalizedQuery = query.trim().toLocaleLowerCase(i18n.language);
-  const visibleSessions = useMemo(
-    () =>
-      normalizedQuery
-        ? controller.sessions.items.filter(session =>
-            `${session.title ?? ''} ${session.status}`.toLocaleLowerCase(i18n.language).includes(normalizedQuery)
-          )
-        : controller.sessions.items,
-    [controller.sessions.items, i18n.language, normalizedQuery]
-  );
-  return (
-    <div className={styles.sessionList}>
-      <SessionState controller={controller} hasQuery={Boolean(normalizedQuery)} visibleCount={visibleSessions.length} />
-      {visibleSessions.map(session => (
-        <button
-          className={styles.sessionButton}
-          data-selected={session.sessionUid === controller.selectedSessionUid}
-          key={session.sessionUid}
-          type="button"
-          onClick={() => void controller.actions.selectSession(session.sessionUid)}
-        >
-          <span className={styles.sessionTitle}>{session.title || t('aiWorkspace.sessions.untitled')}</span>
-          <span className={styles.sessionMeta}>
-            <small>{sessionStatusLabel(session.status, t)}</small>
-            {session.gmtUpdate ? (
-              <time dateTime={session.gmtUpdate}>{formatSessionTime(session.gmtUpdate, i18n.language)}</time>
-            ) : null}
-          </span>
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -135,41 +118,35 @@ function AdminActions({
   );
 }
 
-function SessionState({
+function SessionPaneHeader({
   controller,
-  hasQuery,
-  visibleCount
+  onClose
 }: {
   controller: AgentWorkspaceViewModel;
-  hasQuery: boolean;
-  visibleCount: number;
+  onClose?: (() => void) | undefined;
 }) {
   const { t } = useTranslation();
-  if (controller.sessions.status === 'loading') {
-    return <Typography.Text type="secondary">{t('aiWorkspace.sessions.loading')}</Typography.Text>;
-  }
-  if (controller.sessions.status === 'error') {
-    return <Typography.Text type="danger">{t('aiWorkspace.sessions.unavailable')}</Typography.Text>;
-  }
-  if (controller.sessions.items.length === 0) {
-    return <Typography.Text type="secondary">{t('aiWorkspace.sessions.empty')}</Typography.Text>;
-  }
-  if (hasQuery && visibleCount === 0) {
-    return <Typography.Text type="secondary">{t('aiWorkspace.sessions.noMatches')}</Typography.Text>;
-  }
-  return null;
-}
-
-function formatSessionTime(value: string, locale: string) {
-  const timestamp = new Date(value);
-  if (Number.isNaN(timestamp.getTime())) return value;
-  const now = new Date();
-  const sameDay =
-    timestamp.getFullYear() === now.getFullYear() &&
-    timestamp.getMonth() === now.getMonth() &&
-    timestamp.getDate() === now.getDate();
-  return new Intl.DateTimeFormat(
-    locale,
-    sameDay ? { hour: '2-digit', minute: '2-digit' } : { month: 'short', day: '2-digit' }
-  ).format(timestamp);
+  return (
+    <div className={styles.paneHeader}>
+      <Button
+        className={styles.mobileClose ?? ''}
+        icon={<CloseOutlined />}
+        type="text"
+        size="small"
+        aria-label={t('aiWorkspace.sessions.close')}
+        onClick={() => onClose?.()}
+      />
+      <Typography.Text strong>{t('aiWorkspace.sessions.title')}</Typography.Text>
+      <Button
+        aria-label={t('aiWorkspace.sessions.new')}
+        icon={<PlusOutlined />}
+        size="small"
+        type="text"
+        disabled={controller.sessionDeletion?.phase === 'deleting'}
+        onClick={controller.actions.newInvestigation}
+      >
+        {t('aiWorkspace.sessions.new')}
+      </Button>
+    </div>
+  );
 }

@@ -17,6 +17,7 @@
 
 import { apiMessageGet } from '@/core/http/api-message';
 
+import type { AgentMessagePart } from '../model/agent-message-parts';
 import { AGENT_TRANSCRIPT_PAGE_SIZE, type AgentTranscriptPage } from '../model/agent-transcript-pagination';
 import { agentTranscriptEntrySchema, springPageSchema, transcriptPayloadSchema } from './agent-gateway-schema';
 
@@ -31,7 +32,10 @@ export async function listAgentTranscriptPage(
   // The gateway orders entries ascending. Jump to the last page without reading the entire session.
   const page =
     pageIndex === undefined && first.totalPages > 1 ? await fetchPage(sessionUid, first.totalPages - 1, signal) : first;
-  return { pageIndex: page.number, items: page.content.map(mapEntry) };
+  return {
+    pageIndex: page.number,
+    items: page.content.filter(entry => entry.messageRole !== 'taskCheckpoint').map(mapEntry)
+  };
 }
 
 async function fetchPage(sessionUid: string, pageIndex: number, signal?: AbortSignal) {
@@ -63,15 +67,29 @@ function mapEntry(entry: ReturnType<typeof agentTranscriptEntrySchema.parse>) {
   return {
     id: entry.id,
     sequence: entry.sessionSequence,
+    ...(message.recordedRunUid ? { recordedRunUid: message.recordedRunUid } : {}),
     role: message.role,
     text: message.content
       .filter(block => block.type === 'text' && block.text)
       .map(block => block.text)
       .join('\n'),
     ...(toolCalls.length ? { toolCalls } : {}),
+    ...(message.content.length > 1 ? { parts: publicParts(message.content, entry.id) } : {}),
     ...(message.toolCallId ? { toolCallId: message.toolCallId } : {}),
     ...(message.toolName ? { toolName: message.toolName } : {}),
     ...(message.errorMessage ? { errorMessage: message.errorMessage } : {}),
+    ...(message.toolStatus ? { toolStatus: message.toolStatus } : {}),
+    ...(message.toolElapsedMs != null ? { toolElapsedMs: message.toolElapsedMs } : {}),
     createdAt: entry.gmtCreate
   };
+}
+
+function publicParts(content: ReturnType<typeof transcriptPayloadSchema.parse>['content'], entryId: number) {
+  return content.flatMap<AgentMessagePart>((block, index) => {
+    if (block.type === 'text' && block.text) return [{ type: 'text', text: block.text }];
+    if (block.type === 'toolCall' && block.name) {
+      return [{ type: 'toolCall', name: block.name, id: block.id || `transcript:${entryId}:call:${index}` }];
+    }
+    return [];
+  });
 }

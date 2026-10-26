@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
+import { readAgentStreamChunk } from './agent-stream-deadline';
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
-import { apiStreamFetch } from '@/core/http/http-client';
+import { apiStreamFetch, type StreamHeaderPhase } from '@/core/http/http-client';
+import type { AgentTransportFailure } from '../model/agent-transport-diagnostic';
 
 import type {
   AgentChatRequest,
@@ -29,6 +31,7 @@ import type {
 } from '../model/agent-workspace-contract';
 import {
   agentGatewayEventSchema,
+  agentPendingApprovalViewSchema,
   agentSourceTargetSchema,
   agentProviderConfigurationViewSchema,
   agentProviderOptionSchema,
@@ -57,7 +60,8 @@ const paths = {
 class AgentGatewayRequestError extends Error {
   constructor(
     readonly kind: 'unavailable' | 'http' | 'contract',
-    readonly status?: number
+    readonly status?: number,
+    readonly transportFailure?: AgentTransportFailure
   ) {
     super('Agent Gateway request failed');
     this.name = 'AgentGatewayRequestError';
@@ -71,34 +75,132 @@ export async function listAgentSessions(signal?: AbortSignal): Promise<AgentSess
 
 export { listAgentTranscriptPage } from './agent-transcript-api';
 
+export function agentGatewayFailureDetails(error: unknown): AgentTransportFailure | undefined {
+  return error instanceof AgentGatewayRequestError ? error.transportFailure : undefined;
+}
+
+type StreamOptions = { signal?: AbortSignal; language?: string };
+
 export async function streamAgentChat(
   request: AgentChatRequest,
   onEvent: (event: AgentGatewayEvent) => void,
-  options: { signal?: AbortSignal; language?: string } = {}
+  options: StreamOptions = {}
 ) {
-  const preferredLanguage = request.preferredLanguage;
-  const wireRequest = wireChatRequest(request);
-  const headers = new Headers({ Accept: 'text/event-stream', 'Content-Type': 'application/json' });
-  const requestLanguage = preferredLanguage ?? options.language;
-  if (requestLanguage) headers.set('Accept-Language', requestLanguage);
+  const trace = createStreamTrace();
+  const response = await openAgentStream(request, options, trace);
+  await readTracedStream(response, onEvent, trace, options.signal);
+}
+
+function createStreamTrace() {
+  const requestId = crypto.randomUUID();
+  const began = Date.now();
+  let phase: StreamHeaderPhase = 'queued';
+  const event = (stage: string, status?: number) => {
+    const detail = {
+      requestId,
+      stage,
+      elapsedMs: Math.max(0, Date.now() - began),
+      ...(status ? { httpStatus: status } : {})
+    };
+    try {
+      console.info('HB_AGENT_TRANSPORT', JSON.stringify(detail));
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('hertzbeat:agent-transport', { detail }));
+    } catch {
+      /* Diagnostics cannot affect transport. */
+    }
+  };
+  return {
+    requestId,
+    event,
+    phase: () => phase,
+    observe: (next: StreamHeaderPhase) => {
+      phase = next;
+      event(next);
+    },
+    failure: (code: AgentTransportFailure['code'], status?: number): AgentTransportFailure => {
+      event(code, status);
+      return { requestId, code, ...(status ? { httpStatus: status } : {}) };
+    }
+  };
+}
+type StreamTrace = ReturnType<typeof createStreamTrace>;
+
+function headerFailureCode(error: unknown, phase: StreamHeaderPhase): AgentTransportFailure['code'] {
+  const name = error && typeof error === 'object' && 'name' in error ? error.name : undefined;
+  if (name === 'TimeoutError') return phase === 'queued' ? 'QUEUE_TIMEOUT' : 'HEADER_TIMEOUT';
+  return phase === 'queued' ? 'REQUEST_PREPARATION_FAILED' : 'TRANSPORT_FAILURE';
+}
+
+async function openAgentStream(request: AgentChatRequest, options: StreamOptions, trace: StreamTrace) {
+  const headers = new Headers({
+    Accept: 'text/event-stream',
+    'Content-Type': 'application/json',
+    'X-HertzBeat-Agent-Request-Id': trace.requestId
+  });
+  const language = request.preferredLanguage ?? options.language;
+  if (language) headers.set('Accept-Language', language);
   let response: Response;
   try {
-    response = await apiStreamFetch(paths.stream, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(wireRequest),
-      cache: 'no-store',
-      ...(options.signal ? { signal: options.signal } : {})
-    });
+    response = await apiStreamFetch(
+      paths.stream,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(wireChatRequest(request)),
+        cache: 'no-store',
+        ...(options.signal ? { signal: options.signal } : {})
+      },
+      trace.observe
+    );
   } catch (error) {
-    if (isAbort(error)) throw error;
-    throw new AgentGatewayRequestError('unavailable');
+    if (isAbort(error)) {
+      trace.event('caller_cancelled');
+      throw error;
+    }
+    throw new AgentGatewayRequestError(
+      'unavailable',
+      undefined,
+      trace.failure(headerFailureCode(error, trace.phase()))
+    );
   }
-  if (!response.ok) throw new AgentGatewayRequestError('http', response.status);
-  if (!response.headers.get('Content-Type')?.toLowerCase().startsWith('text/event-stream') || !response.body) {
-    throw new AgentGatewayRequestError('contract', response.status);
+  if (!response.ok)
+    throw new AgentGatewayRequestError('http', response.status, trace.failure('HTTP_REJECTED', response.status));
+  if (!response.headers.get('Content-Type')?.toLowerCase().startsWith('text/event-stream') || !response.body)
+    throw new AgentGatewayRequestError('contract', response.status, trace.failure('STREAM_CONTRACT', response.status));
+  return response;
+}
+
+async function readTracedStream(
+  response: Response,
+  onEvent: (event: AgentGatewayEvent) => void,
+  trace: StreamTrace,
+  signal?: AbortSignal
+) {
+  let first = true;
+  try {
+    await readEventStream(
+      response.body!,
+      event => {
+        if (first) {
+          first = false;
+          trace.event('first_event');
+        }
+        onEvent(event);
+      },
+      signal
+    );
+    trace.event('stream_closed');
+  } catch (error) {
+    if (isAbort(error)) {
+      trace.event('caller_cancelled');
+      throw error;
+    }
+    throw new AgentGatewayRequestError(
+      'contract',
+      response.status,
+      trace.failure('STREAM_READ_FAILED', response.status)
+    );
   }
-  await readEventStream(response.body, onEvent);
 }
 
 function wireChatRequest(request: AgentChatRequest) {
@@ -117,22 +219,63 @@ function sourceTarget(target: NonNullable<AgentChatRequest['target']>) {
 }
 
 export async function getAgentRun(runUid: string, signal?: AbortSignal): Promise<AgentRunSnapshot> {
-  return parse(agentRunSnapshotSchema, await apiMessageGet(paths.run(runUid), signal ? { signal } : {}));
+  return recoverApprovals(
+    parse(agentRunSnapshotSchema, await apiMessageGet(paths.run(runUid), signal ? { signal } : {})),
+    signal
+  );
 }
 
 export async function getLatestAgentRun(sessionUid: string, signal?: AbortSignal): Promise<AgentRunSnapshot | null> {
-  return parse(
+  const snapshot = parse(
     agentRunSnapshotSchema.nullable(),
     await apiMessageGet(paths.latestRun(sessionUid), signal ? { signal } : {})
   );
+  return snapshot ? recoverApprovals(snapshot, signal) : null;
+}
+
+async function recoverApprovals(snapshot: AgentRunSnapshot, signal?: AbortSignal): Promise<AgentRunSnapshot> {
+  try {
+    const view = parse(
+      agentPendingApprovalViewSchema,
+      await apiMessageGet(`${paths.run(snapshot.runUid)}/pending-approvals`, signal ? { signal } : {})
+    );
+    if (view.runUid !== snapshot.runUid || view.sessionUid !== snapshot.sessionUid)
+      throw new AgentGatewayRequestError('contract');
+    return {
+      ...snapshot,
+      recoveredApprovals: view.approvals,
+      approvalRecoveryUnavailable: view.truncated
+    };
+  } catch (error) {
+    if (isAbort(error)) throw error;
+    return { ...snapshot, approvalRecoveryUnavailable: true };
+  }
 }
 
 export function stopAgentRun(runUid: string) {
   return apiMessagePost(paths.stop(runUid), {});
 }
 
-export function decideAgentApproval(approvalId: string, decision: 'approve' | 'reject') {
-  return apiMessagePost(paths.approval(approvalId, decision), {});
+export async function decideAgentApproval(
+  approvalId: string,
+  decision: 'approve' | 'reject',
+  collectionPlanHash?: string
+) {
+  const response: unknown = await apiMessagePost(
+    paths.approval(approvalId, decision),
+    collectionPlanHash ? { collectionPlanHash } : {}
+  );
+  if (
+    response === null ||
+    typeof response !== 'object' ||
+    !('body' in response) ||
+    response.body === null ||
+    typeof response.body !== 'object' ||
+    !('status' in response.body) ||
+    response.body.status !== 'completed'
+  )
+    throw new Error('Approval response was not accepted');
+  return response;
 }
 
 export function submitAgentInteraction(interactionId: string, values: Record<string, unknown>) {
@@ -170,17 +313,30 @@ export async function activateDefaultAgentProvider(): Promise<AgentProviderConfi
   return parse(agentProviderConfigurationViewSchema, await apiMessageDelete(paths.activeDefault));
 }
 
-async function readEventStream(stream: ReadableStream<Uint8Array>, onEvent: (event: AgentGatewayEvent) => void) {
+export async function readEventStream(
+  stream: ReadableStream<Uint8Array>,
+  onEvent: (event: AgentGatewayEvent) => void,
+  signal: AbortSignal = new AbortController().signal
+) {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
+  const cancel = () => {
+    void reader.cancel().catch(() => undefined);
+  };
   let buffer = '';
   try {
+    signal.throwIfAborted();
+    signal.addEventListener('abort', cancel, { once: true });
     for (;;) {
-      const { done, value } = await reader.read();
+      const { done, value } = await readAgentStreamChunk(reader);
+      signal.throwIfAborted();
       buffer += decoder.decode(value, { stream: !done });
       const frames = buffer.split(/\r?\n\r?\n/);
       buffer = frames.pop() ?? '';
-      frames.forEach(frame => publishFrame(frame, onEvent));
+      for (const frame of frames) {
+        signal.throwIfAborted();
+        if (publishFrame(frame, onEvent)) return;
+      }
       if (done) break;
     }
     if (buffer.trim()) publishFrame(buffer, onEvent);
@@ -189,24 +345,28 @@ async function readEventStream(stream: ReadableStream<Uint8Array>, onEvent: (eve
     if (error instanceof AgentGatewayRequestError) throw error;
     throw new AgentGatewayRequestError('contract');
   } finally {
+    signal.removeEventListener('abort', cancel);
+    cancel();
     reader.releaseLock();
   }
 }
 
-function publishFrame(frame: string, onEvent: (event: AgentGatewayEvent) => void) {
+function publishFrame(frame: string, onEvent: (event: AgentGatewayEvent) => void): boolean {
   const data = frame
     .split(/\r?\n/)
     .filter(line => line.startsWith('data:'))
     .map(line => line.slice(5).replace(/^ /, ''))
     .join('\n');
-  if (!data) return;
+  if (!data) return false;
   let value: unknown;
   try {
     value = JSON.parse(data);
   } catch {
     throw new AgentGatewayRequestError('contract');
   }
-  onEvent(parse(agentGatewayEventSchema, value));
+  const event = parse(agentGatewayEventSchema, value);
+  onEvent(event);
+  return event.type === 'RUN_COMPLETED';
 }
 
 function parse<T>(schema: { parse: (value: unknown) => T }, value: unknown): T {

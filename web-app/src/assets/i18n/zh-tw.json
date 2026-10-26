@@ -4373,26 +4373,43 @@
     "title": "AI 工作台",
     "description": "根據 HertzBeat 即時資料排查問題，並在執行前審核每一項操作。",
     "sessions": {
-      "label": "調查記錄",
-      "title": "調查記錄",
+      "label": "任務記錄",
+      "title": "任務記錄",
       "new": "新增",
-      "loading": "正在載入調查記錄…",
-      "unavailable": "調查記錄暫不可用。",
-      "empty": "尚無調查記錄。",
-      "untitled": "未命名調查",
-      "search": "搜尋調查記錄",
-      "noMatches": "沒有符合的調查記錄。",
+      "loading": "正在載入任務記錄…",
+      "unavailable": "任務記錄暫不可用。",
+      "empty": "尚無任務記錄。",
+      "untitled": "未命名任務",
+      "search": "搜尋任務記錄",
+      "noMatches": "沒有符合的任務記錄。",
       "status": {
         "active": "進行中",
         "completed": "已完成",
         "failed": "失敗",
         "cancelled": "已取消",
         "recoveryRequired": "需要核對",
-        "noRun": "暫無執行"
+        "noRun": "暫無執行",
+        "partial": "部分完成",
+        "unfinished": "未完成 · 查看詳情"
+      },
+      "delete": "刪除對話",
+      "menu": "對話操作：{{title}}",
+      "close": "關閉歷史記錄",
+      "clearAll": "清空全部對話",
+      "deleteTitle": "刪除對話？",
+      "deleteConfirm": "刪除（{{count}}）",
+      "deleteDescription": "將永久刪除目前帳號的 {{count}} 個對話及其訊息、執行與工具記錄。此操作無法還原。",
+      "activeCannotDelete": "請先停止正在執行的對話，再執行刪除。目前未刪除任何對話。",
+      "deleteUnavailable": "無法取得待刪除清單或完成刪除，請檢查連線後重試。",
+      "groups": {
+        "today": "今天",
+        "yesterday": "昨天",
+        "week": "最近 7 天",
+        "older": "更早"
       }
     },
     "investigation": {
-      "label": "問題調查"
+      "label": "任務"
     },
     "roles": {
       "you": "你",
@@ -4403,8 +4420,8 @@
       "description": "可以詢問監控、實體、告警、指標、日誌、鏈路或拓撲範圍內的問題。"
     },
     "composer": {
-      "label": "調查問題",
-      "placeholder": "讓 HertzBeat 協助排查一個運行問題…"
+      "label": "任務指令",
+      "placeholder": "輸入問題…"
     },
     "actions": {
       "send": "傳送",
@@ -4415,13 +4432,13 @@
       "reject": "拒絕",
       "submit": "提交"
     },
-    "failure": "調查連線暫不可用。系統不會假定任何操作已經完成。",
+    "failure": "任務連線暫不可用。系統不會假定任何操作已經完成。",
     "loadOlder": "載入更早的訊息",
-    "sessionLoadIncomplete": "部分已儲存的調查資訊未能載入，請重新整理或重新選擇該調查。",
+    "sessionLoadIncomplete": "部分已儲存的任務資訊未能載入，請重新整理或重新選擇該任務。",
     "recoveryRequired": "工具可能已經執行，但 HertzBeat 未能儲存結果。繼續前請先核對目標狀態。",
-    "targetMismatch": "目前調查目標已失效，請返回來源頁面重新發起調查。",
-    "targetUnavailable": "HertzBeat 暫時無法核驗目前調查目標，本次調查未啟動。",
-    "invalidTarget": "此調查連結包含無效或暫不支援的目標，請返回來源頁面重新發起。",
+    "targetMismatch": "目前任務目標已失效，請返回來源頁面重新發起任務。",
+    "targetUnavailable": "HertzBeat 暫時無法核驗目前任務目標，本次任務未啟動。",
+    "invalidTarget": "此任務連結包含無效或暫不支援的目標，請返回來源頁面重新發起。",
     "activeObservationPaused": "即時觀察已暫停，伺服器仍將該執行標記為進行中，系統未假定它已完成。",
     "context": {
       "label": "運行上下文",
@@ -4444,14 +4461,98 @@
       "inputs": "需要補充的資訊",
       "noInputs": "無需補充資訊",
       "statusUnknown": "未記錄執行狀態",
+      "cancelledBeforeExecution": "已取消，未執行",
       "viewSource": "查看來源",
       "pageScope": "第 {{page}} 頁 · 每頁 {{size}} 筆",
       "internalHidden": "已排除內部遙測",
-      "noiseHidden": "已排除雜訊"
+      "noiseHidden": "已排除雜訊",
+      "rawOutput": "原始結果"
     },
     "approval": {
       "adminRequired": "需要管理員審批",
-      "decisionUnavailable": "目前帳戶無法確認此操作"
+      "decisionUnavailable": "目前帳戶無法確認此操作",
+      "recoveryUnavailable": "暫時無法恢復審批詳情，請重新讀取此任務，不要重複發送。",
+      "expired": "審批已過期，未授權執行操作。",
+      "runtimeUnavailable": "原審批執行已不可用。",
+      "summary": {
+        "title": "審批詳情",
+        "unavailable": "暫時沒有可讀摘要。決定前請核對原始請求及原生頁面。",
+        "operationCount": "{{operation}} · {{count}} 個目標",
+        "unknownTarget": "目標資訊不可用",
+        "intervals": "週期：{{value}} 秒",
+        "timeout": "逾時：{{value}} 毫秒",
+        "pathFingerprint": "路徑指紋",
+        "keyFingerprint": "冪等鍵指紋",
+        "inputHash": "綁定輸入 SHA-256",
+        "masked": "敏感值及自由文字不展示；路徑與冪等鍵以指紋表示。",
+        "incomplete": "此摘要尚未涵蓋所有請求欄位。批准前請在原生頁面核對尚未支援的欄位。",
+        "operation": {
+          "CREATE": "新增",
+          "UPDATE": "修改",
+          "DELETE": "刪除",
+          "PAUSE": "暫停",
+          "RESUME": "恢復",
+          "REVIEW": "核對"
+        },
+        "field": {
+          "INTERVALS": "請求週期（秒）",
+          "TIMEOUT": "請求逾時（毫秒）",
+          "RETRY_PREFLIGHT": "重試已知預檢失敗項"
+        }
+      },
+      "collection": {
+        "title": "確認最終採集命令",
+        "risk": "僅在主 Collector 本機以其執行帳號採集一次。命令可讀取、修改該帳號有權存取的檔案並存取網路。請逐行審核，勿嵌入憑據；完全模式不能略過審批。暫不支援遠端 Collector、檔案腳本或週期執行。",
+        "target": "目標 / Collector",
+        "account": "執行帳號 / 作業系統",
+        "directory": "工作目錄",
+        "revision": "範本與參數版本",
+        "hash": "不可變計畫雜湊",
+        "expires": "到期時間",
+        "confirm": "我已核對完整命令、目標、帳號與可能產生的影響。"
+      },
+      "personal": {
+        "title": "個人工作區變更",
+        "scope": "修改目前使用者的監控工作區設定",
+        "monitor": "監控",
+        "metric": "指標組",
+        "action": "操作",
+        "favorite": "加入收藏",
+        "unfavorite": "取消收藏",
+        "application": "監控類型",
+        "revision": "預期目前版本",
+        "save": "儲存佈局",
+        "reset": "重設已儲存佈局",
+        "document": "完整版本化佈局請求"
+      },
+      "inhibition": {
+        "title": "告警抑制策略",
+        "impact": "符合條件的目標告警可能停止通知；刪除策略可能恢復通知。",
+        "versionLimit": "來源雜湊綁定已核對快照，原生介面不提供原子版本 CAS。",
+        "target": "策略 ID",
+        "newTarget": "新增策略（ID 由伺服器產生）",
+        "snapshot": "已核對的來源雜湊",
+        "configuration": "完整原生設定",
+        "deleting": "永久刪除這一條明確的策略。"
+      },
+      "revision": {
+        "creating": "將新增一條策略。",
+        "beforeUnavailable": "無法核驗原值，不推測修改前狀態。",
+        "noChanges": "與已核驗快照相比，沒有可編輯欄位變化。",
+        "changes": "已儲存並核驗的原值 → 提議新值（非即時讀取）",
+        "field": "欄位",
+        "before": "原值",
+        "after": "新值",
+        "removed": "刪除",
+        "action": "取消本輪並修改",
+        "title": "修改前先取消本輪執行",
+        "confirm": "取消本輪並準備草稿",
+        "scope": "將停止本輪全部執行，包括 {{count}} 個待審批提案；不會批准任何操作。",
+        "effects": "已完成的變更不會回復。結果未知時，先核實再提出新變更。",
+        "instructions": "說明完整的修訂後請求",
+        "manualSend": "伺服器確認取消後，修訂意見會放回輸入框。請核對後自行傳送，新提案需要重新審批。",
+        "failed": "無法核驗取消狀態，未傳送修訂請求。請重新整理執行並檢查狀態。"
+      }
     },
     "providers": {
       "action": "模型提供方",
@@ -4473,20 +4574,182 @@
       "model": "模型",
       "apiKey": "API 金鑰",
       "apiKeyHint": "留空可保留現有金鑰。",
-      "save": "儲存提供方"
+      "save": "儲存提供方",
+      "protocol": "API 協定",
+      "protocolHint": "僅在此端點支援時選擇 Responses。切換協定後請建立新任務。",
+      "chatCompletions": "Chat Completions",
+      "responses": "Responses",
+      "testConnection": "測試連線",
+      "cancelTest": "取消測試",
+      "testRunning": "正在測試連線…",
+      "testHint": "使用未儲存的表單傳送一筆簡短的合成文字請求，不包含業務資料或工具。不會儲存或啟用設定。測試成功不代表串流或工具呼叫已通過驗證；僅在供應商來源相同時重用已儲存金鑰。",
+      "testMetadata": "協定：{{protocol}} · 模型：{{model}} · {{elapsed}} 毫秒 · HTTP {{status}}",
+      "testResult": {
+        "OK": "連線成功，文字生成已有回應。",
+        "CONFIGURATION": "請檢查供應商、模型、協定與完整基本網址（http:// 或 https://）。",
+        "CREDENTIAL_REQUIRED": "目的地已變更，請輸入此目的地的金鑰後再測試。",
+        "AUTHENTICATION": "驗證失敗，請檢查 API 金鑰與存取權限。",
+        "ADDRESS_PATH": "端點路徑失敗或發生重新導向，請檢查基本網址與協定路徑。",
+        "MODEL": "模型不存在，或此金鑰無法存取。",
+        "PROTOCOL": "端點不接受或未回傳所選協定，未嘗試備援協定。",
+        "TIMEOUT": "連線測試逾時。",
+        "CANCELLED": "已取消連線測試。",
+        "BUSY": "已有連線測試正在執行，請稍後再試。",
+        "RATE_LIMIT": "已達供應商速率限制。",
+        "UPSTREAM": "供應商服務失敗，請稍後再試。",
+        "TLS": "TLS 驗證失敗，請檢查端點憑證。",
+        "NETWORK": "無法進行連線測試，請檢查網路與登入狀態。"
+      }
     },
     "evidence": {
       "title": "證據",
       "collecting": "等待已驗證證據…",
-      "unrecorded": "此調查未記錄證據引用",
+      "unrecorded": "此任務未記錄證據引用",
       "empty": "未記錄已驗證的觀測結果，不代表系統健康。",
       "partial": "部分證據",
       "complete": "未報告截斷",
       "coverageUnknown": "未報告覆蓋範圍",
       "observations": "{{count}} 筆觀測",
       "incidentScope": "僅告警事實 · 策略 {{id}}",
-      "investigationScope": "有界跨訊號調查",
+      "investigationScope": "有界跨訊號任務",
       "investigationLimit": "選擇不超過 24 小時的時間範圍"
+    },
+    "toolFailureWarning": "本次任務有 {{count}} 次工具呼叫失敗或被拒絕；這些錯誤不能當作空結果或健康結論。",
+    "executionSummary": {
+      "UNKNOWN": "執行狀態未知：無法讀取完整工具紀錄",
+      "IN_PROGRESS": "執行仍在進行",
+      "NO_RECORDS": "未找到工具執行紀錄",
+      "PARTIAL": "PARTIAL · 執行或查詢覆蓋不完整：請查看失敗、預算與範圍限制",
+      "RECOVERED": "歷史失敗已由相同請求的後續成功呼叫恢復",
+      "NO_FAILED_ATTEMPTS": "工具紀錄中沒有失敗呼叫",
+      "counts": "共 {{total}} 次；成功 {{succeeded}}，歷史失敗 {{failed}}，已恢復 {{recovered}}，未恢復/未驗證 {{unresolved}}，未完成 {{unfinished}}。",
+      "coverage": "以上由伺服器工具紀錄產生。僅成功且範圍已驗證的查詢可支持結論；執行成功或空結果不代表系統健康或完整覆蓋。",
+      "UNRESOLVED": "尚未恢復",
+      "SAME_REQUEST_SUCCEEDED": "相同請求後續成功（保留歷史失敗）",
+      "CHANGED_REQUEST_SUCCEEDED_SCOPE_UNVERIFIED": "修改參數後成功，原失敗範圍仍未驗證",
+      "truncated": "僅顯示前 20 筆失敗，總數包含全部紀錄。",
+      "queryCoverage": "查詢範圍與回傳限制（伺服器紀錄）",
+      "stopReason": "停止原因",
+      "countUnknown": "未知",
+      "absoluteWindowUnknown": "工具未提供絕對時間邊界；請參照所列範圍",
+      "rangeCounts": "回傳 {{returned}} / 總量 {{total}} {{unit}}；起始偏移 {{offset}}",
+      "coverageTruncated": "僅顯示前40筆範圍紀錄，不能據此聲稱完整覆蓋。",
+      "rows": "行",
+      "points": "點",
+      "groups": "組",
+      "coverageStates": {
+        "EMPTY_RESULT": "成功空結果，僅限該查詢條件",
+        "PARTIAL_PAGE": "僅部分結果，不代表完整覆蓋",
+        "BOUNDED_RESULTS": "有界結果，未提供總量",
+        "OBSERVED_ROWS": "已回傳查詢資料",
+        "UNKNOWN": "覆蓋情況未知，不代表零或正常"
+      },
+      "details": "查看詳情",
+      "toolFailed": "工具呼叫失敗 · 查看詳情",
+      "runFailed": "任務未完成，回答可能不完整",
+      "compact": {
+        "UNKNOWN": "執行狀態暫不可用",
+        "IN_PROGRESS": "任務進行中",
+        "NO_RECORDS": "暫無工具執行記錄",
+        "PARTIAL": "部分完成，部分查詢結果尚未驗證",
+        "RECOVERED": "先前失敗已恢復",
+        "NO_FAILED_ATTEMPTS": "執行記錄"
+      }
+    },
+    "batch": {
+      "title": "批次處理進度",
+      "counts": "已驗證 {{verified}} / {{total}} 項 · 剩餘 {{pending}} 項 · 待核對 {{reviewRequired}} 項",
+      "segment": "第 {{segment}} 段 · 工具调用 {{calls}} / {{budget}} 次",
+      "target": "冻结目标",
+      "interval": "间隔（秒）",
+      "status": "状态",
+      "receipt": "资源 / 证据",
+      "continue": "繼續剩餘任務",
+      "reconcile": "唯讀核對結果",
+      "reconnect": "重新連線目前區段",
+      "frozen": "目标和参数已冻结。每段沿用原运行预算，只有明确点击才会继续；已完成或结果未知的写入不会重复执行。",
+      "cancelled": "已取消。此執行已結束，保留歷史紀錄，不會繼續或自動重試。",
+      "unknown": "部分结果需要人工核对。找到同名资源不能证明由本次任务创建；只读核对不会重新写入。",
+      "unavailable": "暂时无法读取进度。请刷新后再继续，不要重新发送原始创建指令。",
+      "stopping": "正在等待当前执行器停止，停止完成后才能继续下一段。",
+      "stage": {
+        "RUNNING": "当前段正在执行",
+        "WAITING_APPROVAL": "等待审批",
+        "COMPLETE": "全部冻结目标均已验证",
+        "REVIEW_REQUIRED": "已暂停：结果需要核对",
+        "PAUSED": "当前段已暂停，剩余任务需明确点击继续"
+      },
+      "receiptKind": {
+        "NATIVE_RECEIPT": "原生操作回执",
+        "STATE_READBACK": "状态读回验证",
+        "MATCH_ONLY": "仅匹配候选，待人工核对",
+        "NONE": "无回执"
+      },
+      "item": {
+        "PENDING": "待执行",
+        "READY": "已校验",
+        "RECEIPT": "已保存，正在读回",
+        "VERIFIED": "已验证",
+        "WAITING_APPROVAL": "等待审批",
+        "FAILED": "失败，待核对",
+        "UNCERTAIN": "结果未知",
+        "REJECTED": "审批已拒绝",
+        "VALIDATION_FAILED": "校验失败",
+        "MATCHED_REVIEW": "匹配候选，待核对",
+        "UNRESOLVED_REVIEW": "尚未核实，待核对",
+        "RUNNING": "执行中",
+        "VALIDATING": "驗證中",
+        "EXECUTING": "執行中",
+        "CHECKING": "讀回狀態中"
+      },
+      "monitor": "監控 {{id}}",
+      "parameters": "凍結參數",
+      "retryPreflight": "重試失敗的預檢項",
+      "preflightStopped": "本段已結束，部分目標預檢失敗；已驗證資源不會重新建立。",
+      "ended": "本段已結束，目前沒有可執行的續段操作。"
+    },
+    "permission": {
+      "label": "審批模式",
+      "manual": "逐次批准",
+      "full": "完全模式（15 分鐘）",
+      "loading": "正在核驗審批模式",
+      "unavailable": "模式狀態不可用",
+      "selectSession": "請先開始或選擇一個任務。",
+      "scope": "僅適用於你在目前對話中的操作，有效期 15 分鐘。你可以隨時恢復逐次批准。",
+      "boundaries": "角色權限、任務範圍、預算和強制審批仍然有效。危險操作和其他必須確認的操作仍需單獨批准。",
+      "riskTitle": "確認完全模式的授權範圍",
+      "risk": "啟用後，符合條件的應用變更可無需逐項確認直接執行。請先閱讀授權範圍和風險。",
+      "acknowledge": "我已了解風險，允許目前對話中符合條件的應用變更。",
+      "wait": "請繼續閱讀風險，{{seconds}} 秒後可主動確認。",
+      "ready": "閱讀等待時間已結束，請主動確認後啟用。",
+      "enable": "同意並啟用完全模式",
+      "expired": "本次確認已過期，請關閉後重新開啟。",
+      "error": "無法核驗回應，請重新整理目前模式後再繼續。"
+    },
+    "waiting": {
+      "thinking": "思考中…",
+      "findingTools": "尋找可用工具…",
+      "queryingLogs": "查詢日誌…",
+      "executingTool": "執行工具…",
+      "responding": "撰寫回覆…"
+    },
+    "conversationHistory": "對話訊息",
+    "latestMessages": "回到最新訊息",
+    "message": {
+      "copy": "複製訊息",
+      "copied": "已複製",
+      "copyFailed": "複製失敗，請選取文字後手動複製。",
+      "copyAfterGeneration": "回覆完成後可複製"
+    },
+    "transportFailure": {
+      "QUEUE_TIMEOUT": "請求尚未送出：等待瀏覽器工作階段回應順序逾時。",
+      "HEADER_TIMEOUT": "請求已交給瀏覽器，但未收到伺服器回應標頭。請先核驗伺服器任務，勿盲目重送。",
+      "REQUEST_PREPARATION_FAILED": "請求準備失敗，尚未送出。",
+      "HTTP_REJECTED": "伺服器拒絕請求（HTTP {{status}}），尚未確認任務受理。",
+      "TRANSPORT_FAILURE": "瀏覽器傳輸失敗，尚未確認伺服器是否受理。",
+      "STREAM_CONTRACT": "回應無法核驗為任務串流，請先核驗伺服器狀態。",
+      "STREAM_READ_FAILED": "任務串流讀取中斷，請先核驗伺服器任務再重試。",
+      "requestId": "請求識別碼：{{id}}"
     }
   },
   "alertInvestigation": {
@@ -4571,15 +4834,15 @@
     }
   },
   "aiSchedules": {
-    "title": "定時調查",
-    "description": "依排程執行固定調查，並透過已設定的通知接收者傳送結果。",
-    "workspaceAction": "定時調查",
-    "create": "新增定時調查",
+    "title": "定時任務",
+    "description": "依排程執行固定任務，並透過已設定的通知接收者傳送結果。",
+    "workspaceAction": "定時任務",
+    "create": "新增定時任務",
     "never": "未排程",
     "receiverCount": "{{count}} 位接收者",
     "columns": {
       "schedule": "任務",
-      "instruction": "調查指令",
+      "instruction": "任務指令",
       "delivery": "通知",
       "nextRun": "下次執行",
       "enabled": "啟用",
@@ -4590,20 +4853,20 @@
       "transcript": "執行記錄",
       "edit": "編輯",
       "delete": "刪除",
-      "deleteConfirm": "刪除這個定時調查嗎？"
+      "deleteConfirm": "刪除這個定時任務嗎？"
     },
     "states": {
-      "loading": "正在載入定時調查…",
-      "empty": "尚無定時調查。",
-      "emptyDescription": "建立後可依排程重複執行相同調查，並通知指定接收者。",
-      "unavailable": "定時調查暫時無法使用。",
+      "loading": "正在載入定時任務…",
+      "empty": "尚無定時任務。",
+      "emptyDescription": "建立後可依排程重複執行相同任務，並通知指定接收者。",
+      "unavailable": "定時任務暫時無法使用。",
       "mutationFailed": "無法確認本次變更，請重新整理後再試。"
     },
     "editor": {
-      "createTitle": "新增定時調查",
-      "editTitle": "編輯定時調查",
+      "createTitle": "新增定時任務",
+      "editTitle": "編輯定時任務",
       "name": "名稱",
-      "instruction": "調查指令",
+      "instruction": "任務指令",
       "cron": "執行排程",
       "cronHint": "使用六段 Spring cron，秒必須為 0",
       "receivers": "通知接收者",
@@ -4611,12 +4874,12 @@
       "templateHint": "自訂範本要求所有接收者類型一致",
       "defaultTemplate": "使用各接收者類型的預設範本",
       "enabled": "儲存後啟用",
-      "save": "儲存定時調查"
+      "save": "儲存定時任務"
     },
     "transcript": {
       "title": "執行記錄 · {{name}}",
       "loading": "正在載入執行記錄…",
-      "empty": "這個定時調查尚無執行記錄。",
+      "empty": "這個定時任務尚無執行記錄。",
       "unavailable": "執行記錄暫時無法使用。",
       "loadEarlier": "載入更早記錄",
       "noText": "沒有文字內容"
@@ -4935,5 +5198,6 @@
   "dashboard.v3.traceSamplesFailed": "異常樣本載入失敗",
   "dashboard.v3.traceSamplesUnsupported": "目前後端不支援異常樣本查詢",
   "dashboard.v3.traceSamplesMissing": "目前視窗未取得異常樣本",
-  "dashboard.v3.errorSpans": "錯誤 Span {{count}}"
+  "dashboard.v3.errorSpans": "錯誤 Span {{count}}",
+  "aiWorkspace.composer.tooLarge": "訊息超過上限（32,768 字元或 48 KiB）。草稿已保留，請縮短後再傳送。"
 }
