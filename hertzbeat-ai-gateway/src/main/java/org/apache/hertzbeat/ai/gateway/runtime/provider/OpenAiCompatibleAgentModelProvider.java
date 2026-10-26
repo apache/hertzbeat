@@ -37,6 +37,18 @@ import org.springframework.util.StringUtils;
 @ConditionalOnClass(OpenAiChatModel.class)
 public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
 
+    private final io.micrometer.observation.ObservationRegistry observationRegistry;
+
+    public OpenAiCompatibleAgentModelProvider() {
+        this.observationRegistry = io.micrometer.observation.ObservationRegistry.NOOP;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public OpenAiCompatibleAgentModelProvider(
+            org.springframework.beans.factory.ObjectProvider<io.micrometer.observation.ObservationRegistry> registry) {
+        this.observationRegistry = registry.getIfAvailable(() -> io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
     public static final String TYPE = "openai-compatible";
 
     private static final String DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
@@ -76,18 +88,41 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
     @Override
     public HertzBeatModel createModel(ModelProviderConfig config) {
         completeAndValidate(config);
+        if (AgentModelProtocol.parse(config.getProtocol()) == AgentModelProtocol.RESPONSES) {
+            var defaults = org.springframework.ai.openai.responses.OpenAiResponsesChatOptions.builder()
+                    .baseUrl(config.getBaseUrl()).apiKey(config.getApiKey()).model(config.getModel()).build();
+            return new HertzBeatModel(new OpenAiResponsesStreamBridge(defaults, observationRegistry),
+                    (request, callbacks) -> requestOptions(config, request, callbacks), AgentModelBinding.of(config));
+        }
         OpenAiChatOptions defaultOptions = OpenAiChatOptions.builder()
                 .baseUrl(config.getBaseUrl())
                 .apiKey(config.getApiKey())
                 .model(config.getModel())
                 .build();
-        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions);
+        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions, observationRegistry);
         return new HertzBeatModel(chatModel,
-                (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks));
+                (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks), AgentModelBinding.of(config));
     }
 
     ChatOptions requestOptions(ModelProviderConfig config, AgentRuntimeModelRequest request,
                                List<ToolCallback> toolCallbacks) {
+        if (AgentModelProtocol.parse(config.getProtocol()) == AgentModelProtocol.RESPONSES) {
+            var builder = org.springframework.ai.openai.responses.OpenAiResponsesChatOptions.builder()
+                    .model(config.getModel());
+            if (request.getTemperature() != null) {
+                builder.temperature(request.getTemperature());
+            }
+            if (request.getMaxCompletionTokens() != null) {
+                builder.maxOutputTokens(request.getMaxCompletionTokens());
+            }
+            if (!toolCallbacks.isEmpty()) {
+                builder.toolCallbacks(toolCallbacks);
+                if (request.isToolCallRequired()) {
+                    builder.toolChoice("required");
+                }
+            }
+            return builder.build();
+        }
         OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder()
                 .model(config.getModel());
         if (request.getTemperature() != null) {
@@ -98,11 +133,15 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
         }
         if (!toolCallbacks.isEmpty()) {
             builder.toolCallbacks(toolCallbacks);
+            if (request.isToolCallRequired()) {
+                builder.toolChoice("required");
+            }
         }
         return builder.build();
     }
 
     private void completeAndValidate(ModelProviderConfig config) {
+        AgentModelProtocol.parse(config.getProtocol());
         if (!StringUtils.hasText(config.getApiKey())) {
             throw new IllegalArgumentException("OpenAI-compatible provider API key must not be blank");
         }

@@ -67,6 +67,120 @@ class GreptimeMetricInventoryRepositoryTest {
     }
 
     @Test
+    void absentOptionalNamespaceNeverBroadensScopeAndCachesConfirmedSchema() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.contains("information_schema.columns")) {
+                return inventoryColumns(false);
+            }
+            if (sql.contains("p.service_namespace")) {
+                throw missingColumn("service_namespace");
+            }
+            assertTrue(sql.contains("1 = 0"));
+            assertTrue(sql.contains("p.hertzbeat_workspace_id = 'team-a'"));
+            assertTrue(sql.contains("p.service_name = 'checkout'"));
+            assertTrue(sql.contains("p.greptime_timestamp < to_timestamp_millis(2001)"));
+            return List.of();
+        });
+        for (int i = 0; i < 2; i++) {
+            var result = repository.findMetricNames(query("checkout", "commerce", "prod", null, null, null, 20));
+            assertEquals(SUCCESS, result.status());
+            assertTrue(result.names().isEmpty());
+        }
+        var sql = ArgumentCaptor.forClass(String.class);
+        verify(executor, org.mockito.Mockito.times(4)).executeStrict(sql.capture());
+        assertEquals(1L, sql.getAllValues().stream().filter(value -> value.contains("information_schema.columns")).count());
+    }
+
+    @Test
+    void cachedSchemaRetainsExistingNamespaceAndAllowsRequestsWithoutTheMissingDimension() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.contains("information_schema.columns")) {
+                return inventoryColumns(true);
+            }
+            if (sql.contains("p.hertzbeat_collector_id")) {
+                throw missingColumn("hertzbeat_collector_id");
+            }
+            assertTrue(sql.contains("p.service_namespace = 'commerce'"));
+            return sql.contains("1 = 0") ? List.of() : List.of(Map.of("table_name", "duration_bucket"));
+        });
+        assertTrue(repository.findMetricNames(query("checkout", "commerce", "prod", "collector-a", null, null, 20))
+                .names().isEmpty());
+        var visible = repository.findMetricNames(query("checkout", "commerce", "prod", null, null, null, 20));
+        assertEquals(SUCCESS, visible.status());
+        assertEquals(List.of("duration_bucket"), visible.names());
+    }
+
+    @Test
+    void schemaReadFailureAndInvalidRequiredSchemaCannotBecomeEmptySuccess() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.contains("information_schema.columns")) {
+                throw new IllegalStateException("metadata unavailable");
+            }
+            throw missingColumn("service_namespace");
+        });
+        assertEquals(FAILURE, repository.findMetricNames(query("checkout", "commerce", null, null, null, null, 20)).status());
+        org.mockito.Mockito.doAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.contains("information_schema.columns")) {
+                return List.of(Map.of("column_name", "service_name"));
+            }
+            throw missingColumn("service_namespace");
+        }).when(executor).executeStrict(anyString());
+        var incompatible = repository.findMetricNames(query("checkout", "commerce", null, null, null, null, 20));
+        assertEquals(FAILURE, incompatible.status());
+        assertEquals("metric_inventory_schema_incompatible", incompatible.errorMessage());
+    }
+
+    @Test
+    void optionalSchemaCapabilitiesAreIsolatedByTrustedTelemetryRoute() throws Exception {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            boolean self = org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.isSelf();
+            if (sql.contains("information_schema.columns")) {
+                return inventoryColumns(self);
+            }
+            if (sql.contains(self ? "p.hertzbeat_collector_id" : "p.service_namespace")) {
+                throw missingColumn(self ? "hertzbeat_collector_id" : "service_namespace");
+            }
+            return sql.contains("1 = 0") ? List.of() : List.of(Map.of("table_name", "duration_bucket"));
+        });
+        assertTrue(repository.findMetricNames(query("checkout", "commerce", "prod", null, null, null, 20)).names().isEmpty());
+        var route = new org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.Route(
+                org.apache.hertzbeat.common.observability.gateway.TelemetrySource.SELF, "self_metrics", "team-a");
+        var visible = org.apache.hertzbeat.common.observability.gateway.TelemetrySourceContext.call(route, () -> {
+            repository.findMetricNames(query("checkout", "commerce", "prod", "collector-a", null, null, 20));
+            return repository.findMetricNames(query("checkout", "commerce", "prod", null, null, null, 20));
+        });
+        assertEquals(List.of("duration_bucket"), visible.names());
+    }
+
+    private List<Map<String, Object>> inventoryColumns(boolean namespace) {
+        var columns = new ArrayList<Map<String, Object>>();
+        for (String column : List.of("hertzbeat_workspace_id", "greptime_timestamp", "__table_id",
+                "service_name", "deployment_environment_name", "service_instance_id")) {
+            columns.add(Map.of("column_name", column));
+        }
+        if (namespace) {
+            columns.add(Map.of("column_name", "service_namespace"));
+        }
+        return columns;
+    }
+
+    private RuntimeException missingColumn(String column) {
+        String body = "{\"code\":3000,\"error\":\"Failed to plan SQL: No field named p." + column + ".\"}";
+        return new RuntimeException("storage wrapper", HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", HttpHeaders.EMPTY,
+                body.getBytes(java.nio.charset.StandardCharsets.UTF_8), java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    @Test
     void keepsNamesUsableWhenNativeMetadataIsUnavailable() {
         when(executorProvider.getIfAvailable()).thenReturn(executor);
         when(executor.executeStrict(anyString())).thenThrow(new IllegalStateException("unsupported metadata"));

@@ -4370,29 +4370,61 @@
     }
   },
   "aiWorkspace": {
+    "waiting": {
+      "thinking": "正在思考…",
+      "findingTools": "正在寻找可用工具…",
+      "queryingLogs": "正在查询日志…",
+      "executingTool": "正在执行工具…",
+      "responding": "正在生成回复…"
+    },
+    "conversationHistory": "对话消息",
+    "latestMessages": "返回最新消息",
+    "message": {
+      "copy": "复制消息",
+      "copied": "已复制",
+      "copyFailed": "复制失败，请选中文字手动复制。",
+      "copyAfterGeneration": "回复完成后可复制"
+    },
     "title": "AI 工作台",
     "description": "基于 HertzBeat 实时数据排查问题，并在执行前审核每一项操作。",
     "sessions": {
-      "label": "调查记录",
-      "title": "调查记录",
+      "label": "任务记录",
+      "title": "任务记录",
       "new": "新建",
-      "loading": "正在加载调查记录…",
-      "unavailable": "调查记录暂不可用。",
-      "empty": "还没有调查记录。",
-      "untitled": "未命名调查",
-      "search": "搜索调查记录",
-      "noMatches": "没有匹配的调查记录。",
+      "loading": "正在加载任务记录…",
+      "unavailable": "任务记录暂不可用。",
+      "empty": "还没有任务记录。",
+      "untitled": "未命名任务",
+      "search": "搜索任务记录",
+      "noMatches": "没有匹配的任务记录。",
       "status": {
         "active": "进行中",
         "completed": "已完成",
         "failed": "失败",
         "cancelled": "已取消",
         "recoveryRequired": "需要核对",
-        "noRun": "暂无运行"
+        "noRun": "暂无运行",
+        "partial": "部分完成",
+        "unfinished": "未完成 · 查看详情"
+      },
+      "delete": "删除对话",
+      "menu": "对话操作：{{title}}",
+      "close": "关闭历史记录",
+      "clearAll": "清空全部对话",
+      "deleteTitle": "删除对话？",
+      "deleteConfirm": "删除（{{count}}）",
+      "deleteDescription": "将永久删除当前账号的 {{count}} 个对话及其消息、运行与工具记录。此操作无法恢复。",
+      "activeCannotDelete": "请先停止正在运行的对话，再执行删除。目前未删除任何对话。",
+      "deleteUnavailable": "无法获取待删除清单或完成删除，请检查连接后重试。",
+      "groups": {
+        "today": "今天",
+        "yesterday": "昨天",
+        "week": "最近 7 天",
+        "older": "更早"
       }
     },
     "investigation": {
-      "label": "问题调查"
+      "label": "任务"
     },
     "roles": {
       "you": "你",
@@ -4403,8 +4435,8 @@
       "description": "可以询问监控、实体、告警、指标、日志、链路或拓扑范围内的问题。"
     },
     "composer": {
-      "label": "调查问题",
-      "placeholder": "让 HertzBeat 帮你排查一个运行问题…"
+      "label": "任务指令",
+      "placeholder": "输入问题…"
     },
     "actions": {
       "send": "发送",
@@ -4415,12 +4447,13 @@
       "reject": "拒绝",
       "submit": "提交"
     },
-    "failure": "调查连接暂不可用。系统不会假定任何操作已经完成。",
-    "sessionLoadIncomplete": "部分已保存的调查信息未能加载，请刷新或重新选择该调查。",
+    "failure": "任务连接暂不可用。系统不会假定任何操作已经完成。",
+    "loadOlder": "加载更早的消息",
+    "sessionLoadIncomplete": "部分已保存的任务信息未能加载，请刷新或重新选择该任务。",
     "recoveryRequired": "工具可能已经执行，但 HertzBeat 未能保存结果。继续前请先核对目标状态。",
-    "targetMismatch": "当前调查目标已失效，请返回来源页面重新发起调查。",
-    "targetUnavailable": "HertzBeat 暂时无法核验当前调查目标，本次调查未启动。",
-    "invalidTarget": "此调查链接包含无效或暂不支持的目标，请返回来源页面重新发起。",
+    "targetMismatch": "当前任务目标已失效，请返回来源页面重新发起任务。",
+    "targetUnavailable": "HertzBeat 暂时无法核验当前任务目标，本次任务未启动。",
+    "invalidTarget": "此任务链接包含无效或暂不支持的目标，请返回来源页面重新发起。",
     "activeObservationPaused": "实时观察已暂停，服务器仍将该运行标记为进行中，系统未假定它已经完成。",
     "context": {
       "label": "运行上下文",
@@ -4442,10 +4475,99 @@
       "noApprovals": "没有待审批操作",
       "inputs": "需要补充的信息",
       "noInputs": "无需补充信息",
-      "statusUnknown": "未记录执行状态"
+      "statusUnknown": "未记录执行状态",
+      "cancelledBeforeExecution": "已取消，未执行",
+      "viewSource": "查看来源",
+      "pageScope": "第 {{page}} 页 · 每页 {{size}} 条",
+      "internalHidden": "已排除内部遥测",
+      "noiseHidden": "已排除噪声",
+      "rawOutput": "原始结果"
     },
     "approval": {
-      "adminRequired": "需要管理员审批"
+      "adminRequired": "需要管理员审批",
+      "decisionUnavailable": "当前账户无法确认此操作",
+      "recoveryUnavailable": "暂时无法恢复审批详情，请重新读取此任务，不要重复发送。",
+      "expired": "审批已过期，未授权执行操作。",
+      "runtimeUnavailable": "原审批运行已不可用。",
+      "summary": {
+        "title": "审批详情",
+        "unavailable": "暂时没有可读摘要。决定前请核对原始请求及原生页面。",
+        "operationCount": "{{operation}} · {{count}} 个目标",
+        "unknownTarget": "目标信息不可用",
+        "intervals": "周期：{{value}} 秒",
+        "timeout": "超时：{{value}} 毫秒",
+        "pathFingerprint": "路径指纹",
+        "keyFingerprint": "幂等键指纹",
+        "inputHash": "绑定输入 SHA-256",
+        "masked": "敏感值和自由文本不展示；路径与幂等键以指纹表示。",
+        "incomplete": "此摘要尚未覆盖所有请求字段。批准前请在原生页面核对未支持的字段。",
+        "operation": {
+          "CREATE": "新建",
+          "UPDATE": "修改",
+          "DELETE": "删除",
+          "PAUSE": "暂停",
+          "RESUME": "恢复",
+          "REVIEW": "核对"
+        },
+        "field": {
+          "INTERVALS": "请求周期（秒）",
+          "TIMEOUT": "请求超时（毫秒）",
+          "RETRY_PREFLIGHT": "重试已知预检失败项"
+        }
+      },
+      "collection": {
+        "title": "确认最终采集命令",
+        "risk": "仅在主 Collector 本机以其运行账号采集一次。命令可读取、修改该账号有权访问的文件并访问网络。请逐行审核，勿嵌入凭据；完全模式不能跳过审批。暂不支持远程 Collector、文件脚本或周期执行。",
+        "target": "目标 / Collector",
+        "account": "执行账号 / 操作系统",
+        "directory": "工作目录",
+        "revision": "模板与参数版本",
+        "hash": "不可变计划哈希",
+        "expires": "过期时间",
+        "confirm": "我已核对完整命令、目标、账号与可能产生的影响。"
+      },
+      "personal": {
+        "title": "个人工作区变更",
+        "scope": "修改当前用户的监控工作区设置",
+        "monitor": "监控",
+        "metric": "指标组",
+        "action": "操作",
+        "favorite": "加入收藏",
+        "unfavorite": "取消收藏",
+        "application": "监控类型",
+        "revision": "预期当前版本",
+        "save": "保存布局",
+        "reset": "重置已保存布局",
+        "document": "完整版本化布局请求"
+      },
+      "inhibition": {
+        "title": "告警抑制策略",
+        "impact": "匹配的目标告警可能停止通知；删除策略可能恢复通知。",
+        "versionLimit": "源哈希绑定已核对快照，原生接口不提供原子版本 CAS。",
+        "target": "策略 ID",
+        "newTarget": "新建策略（ID 由服务端生成）",
+        "snapshot": "已核对的源哈希",
+        "configuration": "完整原生配置",
+        "deleting": "永久删除这一条明确的策略。"
+      },
+      "revision": {
+        "creating": "将新建一条策略。",
+        "beforeUnavailable": "无法核验原值，不推测修改前状态。",
+        "noChanges": "与已核验快照相比，没有可编辑字段变化。",
+        "changes": "已保存并核验的原值 → 提议新值（非实时读取）",
+        "field": "字段",
+        "before": "原值",
+        "after": "新值",
+        "removed": "删除",
+        "action": "取消本轮并修改",
+        "title": "修改前先取消本轮运行",
+        "confirm": "取消本轮并准备草稿",
+        "scope": "将停止本轮全部运行，包括 {{count}} 个待审批提案；不会批准任何操作。",
+        "effects": "已完成的变更不会回滚。结果未知时，先核实再提出新变更。",
+        "instructions": "说明完整的修订后请求",
+        "manualSend": "服务端确认取消后，修订意见会放回输入框。请核对后自行发送，新提案需要重新审批。",
+        "failed": "无法核验取消状态，未发送修订请求。请刷新运行并检查状态。"
+      }
     },
     "providers": {
       "action": "模型提供方",
@@ -4467,7 +4589,167 @@
       "model": "模型",
       "apiKey": "API 密钥",
       "apiKeyHint": "留空可保留现有密钥。",
-      "save": "保存提供方"
+      "save": "保存提供方",
+      "protocol": "API 协议",
+      "protocolHint": "仅在此端点支持时选择 Responses。切换协议后请新建任务。",
+      "testConnection": "测试连接",
+      "cancelTest": "取消测试",
+      "testRunning": "正在测试连接…",
+      "testHint": "使用未保存的表单发送一次简短的合成文本请求，不含业务数据或工具，不保存或启用配置。成功仅表示文本生成可响应，未验证流式输出或工具调用。已保存密钥仅在同一服务地址下复用。",
+      "testMetadata": "协议：{{protocol}} · 模型：{{model}} · {{elapsed}} 毫秒 · HTTP {{status}}",
+      "testResult": {
+        "OK": "连接成功，文本生成已响应。",
+        "CONFIGURATION": "请检查提供方、模型、协议，以及完整基础 URL（http:// 或 https://）。",
+        "CREDENTIAL_REQUIRED": "服务地址已改变，请输入用于新地址的密钥后测试。",
+        "AUTHENTICATION": "认证失败，请检查 API 密钥和访问权限。",
+        "ADDRESS_PATH": "接口路径错误或发生重定向，请检查基础地址和协议路径。",
+        "MODEL": "模型不存在或当前密钥无权使用。",
+        "PROTOCOL": "接口未接受或返回所选协议，未尝试自动切换。",
+        "TIMEOUT": "连接测试超时。",
+        "CANCELLED": "连接测试已取消。",
+        "BUSY": "已有连接测试正在运行，请稍后重试。",
+        "RATE_LIMIT": "提供方触发限流。",
+        "UPSTREAM": "提供方服务异常，请稍后重试。",
+        "TLS": "TLS 验证失败，请检查服务端证书。",
+        "NETWORK": "连接测试不可用，请检查网络和登录状态。"
+      },
+      "chatCompletions": "Chat Completions",
+      "responses": "Responses"
+    },
+    "evidence": {
+      "title": "证据",
+      "collecting": "等待已验证证据…",
+      "unrecorded": "此任务未记录证据引用",
+      "empty": "未记录已验证的观测结果，不代表系统健康。",
+      "partial": "部分证据",
+      "complete": "未报告截断",
+      "coverageUnknown": "未报告覆盖范围",
+      "observations": "{{count}} 条观测",
+      "incidentScope": "仅告警事实 · 策略 {{id}}",
+      "investigationScope": "有界跨信号任务",
+      "investigationLimit": "选择不超过 24 小时的时间范围"
+    },
+    "toolFailureWarning": "本次任务有 {{count}} 次工具调用失败或被拒绝；这些错误不能当作空结果或健康结论。",
+    "executionSummary": {
+      "UNKNOWN": "执行状态未知：无法读取完整工具记录",
+      "IN_PROGRESS": "执行仍在进行",
+      "NO_RECORDS": "未找到工具执行记录",
+      "PARTIAL": "PARTIAL · 执行或查询覆盖不完整：请查看失败、预算与范围限制",
+      "RECOVERED": "历史失败已由相同请求的后续成功调用恢复",
+      "NO_FAILED_ATTEMPTS": "工具记录中没有失败调用",
+      "counts": "共 {{total}} 次；成功 {{succeeded}}，历史失败 {{failed}}，已恢复 {{recovered}}，未恢复/未验证 {{unresolved}}，未完成 {{unfinished}}。",
+      "coverage": "以上由服务端工具记录生成。仅成功且已验证范围的查询可支持结论；执行成功或空结果不代表系统健康或全量覆盖。",
+      "UNRESOLVED": "尚未恢复",
+      "SAME_REQUEST_SUCCEEDED": "相同请求后续成功（保留历史失败）",
+      "CHANGED_REQUEST_SUCCEEDED_SCOPE_UNVERIFIED": "修改参数后成功，原失败范围仍未验证",
+      "truncated": "仅展示前 20 条失败，总数包含全部记录。",
+      "queryCoverage": "查询范围与返回限制（服务端记录）",
+      "stopReason": "停止原因",
+      "countUnknown": "未知",
+      "absoluteWindowUnknown": "工具未提供绝对时间边界；请参照所列查询范围",
+      "rangeCounts": "返回 {{returned}} / 总量 {{total}} {{unit}}；起始偏移 {{offset}}",
+      "coverageTruncated": "只展示前40条查询范围记录；其余范围未展示，不能据此声称全量覆盖。",
+      "rows": "行",
+      "points": "点",
+      "groups": "组",
+      "coverageStates": {
+        "EMPTY_RESULT": "成功空结果，仅限该查询条件",
+        "PARTIAL_PAGE": "仅部分结果，不能代表全量",
+        "BOUNDED_RESULTS": "有界结果，总量未提供",
+        "OBSERVED_ROWS": "已返回的查询数据",
+        "UNKNOWN": "覆盖情况未知，不能推断为零或健康"
+      },
+      "details": "查看详情",
+      "toolFailed": "工具调用失败 · 查看详情",
+      "runFailed": "任务未完成，回答可能不完整",
+      "compact": {
+        "UNKNOWN": "执行状态暂不可用",
+        "IN_PROGRESS": "任务进行中",
+        "NO_RECORDS": "暂无工具执行记录",
+        "PARTIAL": "部分完成，部分查询结果尚未验证",
+        "RECOVERED": "先前失败已恢复",
+        "NO_FAILED_ATTEMPTS": "执行记录"
+      }
+    },
+    "batch": {
+      "title": "批处理进度",
+      "counts": "已验证 {{verified}} / {{total}} 项 · 剩余 {{pending}} 项 · 待核对 {{reviewRequired}} 项",
+      "segment": "第 {{segment}} 段 · 工具调用 {{calls}} / {{budget}} 次",
+      "target": "冻结目标",
+      "interval": "间隔（秒）",
+      "status": "状态",
+      "receipt": "资源 / 证据",
+      "continue": "继续剩余任务",
+      "reconcile": "只读核对结果",
+      "reconnect": "重连当前段",
+      "frozen": "目标和参数已冻结。每段沿用原运行预算，只有明确点击才会继续；已完成或结果未知的写入不会重复执行。",
+      "cancelled": "已取消。该运行已结束，历史记录保留，不会继续或自动重试。",
+      "unknown": "部分结果需要人工核对。找到同名资源不能证明由本次任务创建；只读核对不会重新写入。",
+      "unavailable": "暂时无法读取进度。请刷新后再继续，不要重新发送原始创建指令。",
+      "stopping": "正在等待当前执行器停止，停止完成后才能继续下一段。",
+      "stage": {
+        "RUNNING": "当前段正在执行",
+        "WAITING_APPROVAL": "等待审批",
+        "COMPLETE": "全部冻结目标均已验证",
+        "REVIEW_REQUIRED": "已暂停：结果需要核对",
+        "PAUSED": "当前段已暂停，剩余任务需明确点击继续"
+      },
+      "receiptKind": {
+        "NATIVE_RECEIPT": "原生操作回执",
+        "STATE_READBACK": "状态读回验证",
+        "MATCH_ONLY": "仅匹配候选，待人工核对",
+        "NONE": "无回执"
+      },
+      "item": {
+        "PENDING": "待执行",
+        "READY": "已校验",
+        "RECEIPT": "已保存，正在读回",
+        "VERIFIED": "已验证",
+        "WAITING_APPROVAL": "等待审批",
+        "FAILED": "失败，待核对",
+        "UNCERTAIN": "结果未知",
+        "REJECTED": "审批已拒绝",
+        "VALIDATION_FAILED": "校验失败",
+        "MATCHED_REVIEW": "匹配候选，待核对",
+        "UNRESOLVED_REVIEW": "尚未核实，待核对",
+        "RUNNING": "执行中",
+        "VALIDATING": "校验中",
+        "EXECUTING": "执行中",
+        "CHECKING": "状态读回中"
+      },
+      "monitor": "监控 {{id}}",
+      "parameters": "冻结参数",
+      "retryPreflight": "重试失败的预检项",
+      "preflightStopped": "本段已结束，部分目标预检失败；已验证资源不会重新创建。",
+      "ended": "本段已结束，当前没有可执行的续段操作。"
+    },
+    "permission": {
+      "label": "审批模式",
+      "manual": "逐次批准",
+      "full": "完全模式（15 分钟）",
+      "loading": "正在核验审批模式",
+      "unavailable": "模式状态不可用",
+      "selectSession": "请先开始或选择一个任务。",
+      "scope": "仅适用于你在当前会话中的操作，有效期 15 分钟。你可以随时恢复逐次批准。",
+      "boundaries": "角色权限、任务范围、预算和强制审批仍然有效。危险操作和其他必须确认的操作仍需单独批准。",
+      "riskTitle": "确认完全模式的授权范围",
+      "risk": "启用后，符合条件的应用变更可无需逐项确认直接执行。请先阅读授权范围和风险。",
+      "acknowledge": "我已了解风险，允许当前会话中符合条件的应用变更。",
+      "wait": "请继续阅读风险，{{seconds}} 秒后可主动确认。",
+      "ready": "阅读等待时间已结束，请主动确认后启用。",
+      "enable": "同意并启用完全模式",
+      "expired": "本次确认已过期，请关闭后重新打开。",
+      "error": "无法核验响应，请刷新当前模式后再继续。"
+    },
+    "transportFailure": {
+      "QUEUE_TIMEOUT": "请求尚未发出：等待浏览器会话响应顺序超时。",
+      "HEADER_TIMEOUT": "请求已交给浏览器，但未收到服务器响应头。请先核验服务器任务，勿盲目重发。",
+      "REQUEST_PREPARATION_FAILED": "请求准备失败，尚未发出。",
+      "HTTP_REJECTED": "服务器拒绝请求（HTTP {{status}}），尚未确认任务受理。",
+      "TRANSPORT_FAILURE": "浏览器传输失败，尚未确认服务器是否受理。",
+      "STREAM_CONTRACT": "响应无法核验为任务流，请先核验服务器状态。",
+      "STREAM_READ_FAILED": "任务流读取中断，请先核验服务器任务再重试。",
+      "requestId": "请求标识：{{id}}"
     }
   },
   "alertInvestigation": {
@@ -4552,15 +4834,15 @@
     }
   },
   "aiSchedules": {
-    "title": "定时调查",
-    "description": "按计划执行固定调查，并通过已配置的通知接收人发送结果。",
-    "workspaceAction": "定时调查",
-    "create": "新建定时调查",
+    "title": "定时任务",
+    "description": "按计划执行固定任务，并通过已配置的通知接收人发送结果。",
+    "workspaceAction": "定时任务",
+    "create": "新建定时任务",
     "never": "未安排",
     "receiverCount": "{{count}} 个接收人",
     "columns": {
       "schedule": "任务",
-      "instruction": "调查指令",
+      "instruction": "任务指令",
       "delivery": "通知",
       "nextRun": "下次执行",
       "enabled": "启用",
@@ -4571,20 +4853,20 @@
       "transcript": "执行记录",
       "edit": "编辑",
       "delete": "删除",
-      "deleteConfirm": "删除这个定时调查吗？"
+      "deleteConfirm": "删除这个定时任务吗？"
     },
     "states": {
-      "loading": "正在加载定时调查…",
-      "empty": "还没有定时调查。",
-      "emptyDescription": "创建后可按计划重复执行同一调查，并通知指定接收人。",
-      "unavailable": "定时调查暂不可用。",
+      "loading": "正在加载定时任务…",
+      "empty": "还没有定时任务。",
+      "emptyDescription": "创建后可按计划重复执行同一任务，并通知指定接收人。",
+      "unavailable": "定时任务暂不可用。",
       "mutationFailed": "无法确认本次变更，请刷新后重试。"
     },
     "editor": {
-      "createTitle": "新建定时调查",
-      "editTitle": "编辑定时调查",
+      "createTitle": "新建定时任务",
+      "editTitle": "编辑定时任务",
       "name": "名称",
-      "instruction": "调查指令",
+      "instruction": "任务指令",
       "cron": "执行计划",
       "cronHint": "使用六段 Spring cron，秒必须为 0",
       "receivers": "通知接收人",
@@ -4592,12 +4874,12 @@
       "templateHint": "自定义模板要求所有接收人类型一致",
       "defaultTemplate": "使用各接收人类型的默认模板",
       "enabled": "保存后启用",
-      "save": "保存定时调查"
+      "save": "保存定时任务"
     },
     "transcript": {
       "title": "执行记录 · {{name}}",
       "loading": "正在加载执行记录…",
-      "empty": "这个定时调查还没有执行记录。",
+      "empty": "这个定时任务还没有执行记录。",
       "unavailable": "执行记录暂不可用。",
       "loadEarlier": "加载更早记录",
       "noText": "没有文本内容"
@@ -4916,5 +5198,6 @@
   "dashboard.v3.traceSamplesFailed": "异常样本加载失败",
   "dashboard.v3.traceSamplesUnsupported": "当前后端不支持异常样本查询",
   "dashboard.v3.traceSamplesMissing": "当前窗口未取得异常样本",
-  "dashboard.v3.errorSpans": "错误 Span {{count}}"
+  "dashboard.v3.errorSpans": "错误 Span {{count}}",
+  "aiWorkspace.composer.tooLarge": "消息超过上限（32,768 字符或 48 KiB）。草稿已保留，请缩短后再发送。"
 }
