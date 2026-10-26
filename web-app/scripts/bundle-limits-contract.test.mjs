@@ -18,6 +18,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 import { loadConfigFromFile } from 'vite';
 
@@ -95,4 +96,20 @@ test('manual vendor splitting preserves dependency execution order', async () =>
   const loadedConfig = await loadConfigFromFile({ command: 'build', mode: 'production' }, configFile);
 
   assert.equal(loadedConfig?.config.build?.rolldownOptions?.output?.strictExecutionOrder, true);
+});
+
+test('locale output preserves complete catalogs without retaining named namespaces', async () => {
+  const configFile = fileURLToPath(new URL('../vite.config.ts', import.meta.url));
+  const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, configFile);
+  const plugins = loaded.config.plugins.flat(Infinity);
+  const plugin = plugins.find(value => value?.name === 'locale-default-export');
+  assert.ok(plugin);
+  for (const locale of ['en-us', 'zh-cn', 'zh-tw', 'ja-jp', 'pt-br']) {
+    const id = fileURLToPath(new URL(`../src/assets/i18n/${locale}.json`, import.meta.url));
+    const result = plugin.transform('', id);
+    const emitted = JSON.parse(result.code.slice('export default '.length, -1));
+    assert.deepEqual(emitted, JSON.parse(readFileSync(id, 'utf8')));
+    assert.equal(plugin.transform('', `${id}?raw`), undefined);
+  }
+  assert.equal(plugin.transform('', fileURLToPath(new URL('../package.json', import.meta.url))), undefined);
 });

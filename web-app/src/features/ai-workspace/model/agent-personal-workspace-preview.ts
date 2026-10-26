@@ -15,119 +15,96 @@
  * limitations under the License.
  */
 
-export type PersonalLayoutRequest = {
-  expectedRevision: string;
-  schemaVersion: 1;
-  mode: 'auto' | 'custom';
-  columns: 12;
-  items: { group: string; x: number; y: number; w: number; h: number; collapsed: boolean; order: number }[];
-  historyDock: { collapsed: boolean; height: number };
-};
-export type AgentPersonalWorkspacePreview = {
-  kind: 'FAVORITE' | 'LAYOUT';
-  monitorId: string | null;
-  application: string | null;
-  metricsName: string | null;
-  favorite: boolean | null;
-  expectedRevision: string | null;
-  request: PersonalLayoutRequest | null;
-};
+import { z } from 'zod';
 
-function record(v: unknown): v is Record<string, unknown> {
-  return v !== null && typeof v === 'object' && !Array.isArray(v);
-}
-function keys(v: Record<string, unknown>, list: string[]) {
-  return Object.keys(v).length === list.length && Object.keys(v).every(k => list.includes(k));
-}
-function integer(v: unknown, min: number, max: number): v is number {
-  return typeof v === 'number' && Number.isSafeInteger(v) && v >= min && v <= max;
-}
-function revision(v: unknown) {
-  return (
-    typeof v === 'string' &&
-    (v === 'missing' || /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(v))
-  );
-}
-function dock(v: unknown) {
-  return record(v) && keys(v, ['collapsed', 'height']) && typeof v.collapsed === 'boolean' && integer(v.height, 8, 20);
-}
-function itemIdentity(v: Record<string, unknown>) {
-  return (
-    keys(v, ['group', 'x', 'y', 'w', 'h', 'collapsed', 'order']) &&
-    typeof v.group === 'string' &&
-    /^[A-Za-z0-9_.:-]{1,128}$/.test(v.group) &&
-    typeof v.collapsed === 'boolean' &&
-    integer(v.order, 0, 127)
-  );
-}
-function itemGeometry(v: Record<string, unknown>) {
-  return (
-    integer(v.x, 0, 12) &&
-    integer(v.y, 0, 999) &&
-    integer(v.w, 4, 12) &&
-    [4, 6, 8, 12].includes(v.w) &&
-    v.x + v.w <= 12 &&
-    integer(v.h, v.collapsed ? 4 : 8, 24)
-  );
-}
-function item(v: unknown): v is PersonalLayoutRequest['items'][number] {
-  return record(v) && itemIdentity(v) && itemGeometry(v);
-}
-function overlap(a: PersonalLayoutRequest['items'][number], b: PersonalLayoutRequest['items'][number]) {
+const revisionSchema = z.union([
+  z.literal('missing'),
+  z.string().regex(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/)
+]);
+const layoutItemSchema = z
+  .strictObject({
+    group: z.string().regex(/^[A-Za-z0-9_.:-]{1,128}$/),
+    x: z.number().int().min(0).max(12),
+    y: z.number().int().min(0).max(999),
+    w: z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(12)]),
+    h: z.number().int().min(4).max(24),
+    collapsed: z.boolean(),
+    order: z.number().int().min(0).max(127)
+  })
+  .refine(value => value.x + value.w <= 12 && value.h >= (value.collapsed ? 4 : 8));
+type LayoutItem = z.infer<typeof layoutItemSchema>;
+function overlap(a: LayoutItem, b: LayoutItem) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
-function items(v: unknown) {
-  if (!Array.isArray(v) || v.length > 128 || !v.every(item)) return false;
-  if (new Set(v.map(x => x.group)).size !== v.length || new Set(v.map(x => x.order)).size !== v.length) return false;
-  for (let i = 0; i < v.length; i++)
-    for (let j = i + 1; j < v.length; j++) {
-      if (overlap(v[i]!, v[j]!)) return false;
-    }
-  return true;
-}
-export function isPersonalLayoutRequest(v: unknown): v is PersonalLayoutRequest {
+const layoutItemsSchema = z
+  .array(layoutItemSchema)
+  .max(128)
+  .refine(items => {
+    if (
+      new Set(items.map(item => item.group)).size !== items.length ||
+      new Set(items.map(item => item.order)).size !== items.length
+    )
+      return false;
+    return items.every((item, index) => items.slice(index + 1).every(other => !overlap(item, other)));
+  });
+export const personalLayoutRequestSchema = z.strictObject({
+  expectedRevision: revisionSchema,
+  schemaVersion: z.literal(1),
+  mode: z.enum(['auto', 'custom']),
+  columns: z.literal(12),
+  items: layoutItemsSchema,
+  historyDock: z.strictObject({ collapsed: z.boolean(), height: z.number().int().min(8).max(20) })
+});
+export type PersonalLayoutRequest = z.infer<typeof personalLayoutRequestSchema>;
+const personalWorkspaceBaseSchema = z.strictObject({
+  kind: z.enum(['FAVORITE', 'LAYOUT']),
+  monitorId: z
+    .string()
+    .regex(/^[1-9][0-9]{0,18}$/)
+    .nullable(),
+  application: z
+    .string()
+    .regex(/^[a-z0-9_.:-]{1,128}$/)
+    .nullable(),
+  metricsName: z
+    .string()
+    .regex(/^[A-Za-z0-9_.:-]{1,100}$/)
+    .nullable(),
+  favorite: z.boolean().nullable(),
+  expectedRevision: revisionSchema.nullable(),
+  request: personalLayoutRequestSchema.nullable()
+});
+type PersonalPreview = z.infer<typeof personalWorkspaceBaseSchema>;
+function validFavorite(value: PersonalPreview) {
   return (
-    record(v) &&
-    keys(v, ['expectedRevision', 'schemaVersion', 'mode', 'columns', 'items', 'historyDock']) &&
-    revision(v.expectedRevision) &&
-    v.schemaVersion === 1 &&
-    v.columns === 12 &&
-    ['auto', 'custom'].includes(String(v.mode)) &&
-    dock(v.historyDock) &&
-    items(v.items)
+    value.monitorId !== null &&
+    value.metricsName !== null &&
+    value.favorite !== null &&
+    value.application === null &&
+    value.expectedRevision === null &&
+    value.request === null
   );
 }
-function favorite(v: Record<string, unknown>) {
-  return (
-    typeof v.monitorId === 'string' &&
-    /^[1-9][0-9]{0,18}$/.test(v.monitorId) &&
-    typeof v.metricsName === 'string' &&
-    /^[A-Za-z0-9_.:-]{1,100}$/.test(v.metricsName) &&
-    typeof v.favorite === 'boolean' &&
-    v.application === null &&
-    v.expectedRevision === null &&
-    v.request === null
-  );
-}
-function layout(v: Record<string, unknown>) {
+function validLayout(value: PersonalPreview) {
   if (
-    v.monitorId !== null ||
-    v.metricsName !== null ||
-    v.favorite !== null ||
-    typeof v.application !== 'string' ||
-    !/^[a-z0-9_.:-]{1,128}$/.test(v.application) ||
-    !revision(v.expectedRevision)
+    value.monitorId !== null ||
+    value.metricsName !== null ||
+    value.favorite !== null ||
+    value.application === null ||
+    value.expectedRevision === null
   )
     return false;
-  if (v.request === null) return v.expectedRevision !== 'missing';
-  return isPersonalLayoutRequest(v.request) && v.request.expectedRevision === v.expectedRevision;
+  return value.request === null
+    ? value.expectedRevision !== 'missing'
+    : value.request.expectedRevision === value.expectedRevision;
 }
-export function isAgentPersonalWorkspacePreview(v: unknown): v is AgentPersonalWorkspacePreview {
-  if (
-    !record(v) ||
-    !keys(v, ['kind', 'monitorId', 'application', 'metricsName', 'favorite', 'expectedRevision', 'request'])
-  )
-    return false;
-  if (v.kind === 'FAVORITE') return favorite(v);
-  return v.kind === 'LAYOUT' && layout(v);
+export const agentPersonalWorkspacePreviewSchema = personalWorkspaceBaseSchema.refine(value =>
+  value.kind === 'FAVORITE' ? validFavorite(value) : validLayout(value)
+);
+export type AgentPersonalWorkspacePreview = z.infer<typeof agentPersonalWorkspacePreviewSchema>;
+export function isPersonalLayoutRequest(value: unknown): value is PersonalLayoutRequest {
+  return personalLayoutRequestSchema.safeParse(value).success;
+}
+export function isAgentPersonalWorkspacePreview(value: unknown): value is AgentPersonalWorkspacePreview {
+  return agentPersonalWorkspacePreviewSchema.safeParse(value).success;
 }

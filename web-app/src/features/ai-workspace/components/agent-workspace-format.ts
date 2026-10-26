@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import type { TFunction } from 'i18next';
 
 export function formatAgentTimestamp(value: string) {
@@ -78,4 +79,8 @@ export function toolStatusLabel(status: string, t: TFunction) {
   if (status === 'UNKNOWN') return t('aiWorkspace.context.statusUnknown');
   if (status === 'CANCELLED') return t('aiWorkspace.context.cancelledBeforeExecution');
   return status;
+}
+
+export function executionIdentity(controller: AgentWorkspaceViewModel) {
+  return controller.run.runUid ?? controller.selectedSessionUid ?? 'new';
 }

@@ -16,22 +16,21 @@
  */
 
 import { CloseOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Input, Modal, Tag, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { Button, Tag, Typography } from 'antd';
+import { ApprovalActions } from './agent-workspace-approval-actions';
+import { InputRequest } from './agent-workspace-input-request';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { agentRequestIsPending } from '../model/agent-runtime-status';
-import type { AgentInputRequest, AgentToolActivity } from '../model/agent-workspace-reducer';
+import type { AgentToolActivity } from '../model/agent-workspace-reducer';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
-import { AgentCollectionPreviewView } from './agent-collection-preview-view';
-import type { AgentCollectionPreview } from '../model/agent-collection-preview';
 import { AgentApprovalSummaryView } from './agent-approval-summary-view';
 import { AgentWorkspaceEvidence } from './agent-workspace-evidence';
 import { agentTargetSourcePath } from '../model/agent-source-path';
 import { agentWorkspaceTargetFacts } from './agent-workspace-target-facts';
 import styles from './agent-workspace-context-pane.module.css';
 
-import { AgentReviseProposal } from './agent-revise-proposal';
 import { toolStatusLabel } from './agent-workspace-format';
 export function AgentWorkspaceContextPane({
   controller,
@@ -151,88 +150,6 @@ function ContextApprovals({ controller }: { controller: AgentWorkspaceViewModel 
   );
 }
 
-function ApprovalActions({
-  controller,
-  approvalId,
-  canDecide,
-  collection,
-  requiresCollection
-}: {
-  controller: AgentWorkspaceViewModel;
-  approvalId: string;
-  canDecide: boolean;
-  collection?: AgentCollectionPreview | undefined;
-  requiresCollection?: boolean;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const decide = async () => {
-    if (submitting || controller.stopping) return;
-    setSubmitting(true);
-    setOpen(false);
-    try {
-      if (collection) await controller.actions.decideApproval(approvalId, 'approve', collection.planHash);
-      else await controller.actions.decideApproval(approvalId, 'approve');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-  if (!canDecide || (requiresCollection && !collection))
-    return <Muted value={t('aiWorkspace.approval.decisionUnavailable')} />;
-  return (
-    <div className={styles.approvalActions}>
-      {collection ? (
-        <Modal
-          open={open}
-          title={t('aiWorkspace.approval.collection.title')}
-          okText={t('aiWorkspace.actions.approve')}
-          onCancel={() => setOpen(false)}
-          onOk={() => void decide()}
-          okButtonProps={{ disabled: !confirmed || submitting || controller.stopping }}
-          destroyOnHidden
-        >
-          <AgentCollectionPreviewView preview={collection} />
-          <Checkbox checked={confirmed} onChange={event => setConfirmed(event.target.checked)}>
-            {t('aiWorkspace.approval.collection.confirm')}
-          </Checkbox>
-        </Modal>
-      ) : null}
-      <Button
-        size="small"
-        type="primary"
-        loading={submitting}
-        disabled={submitting || controller.stopping}
-        onClick={() => {
-          if (collection) {
-            setConfirmed(false);
-            setOpen(true);
-          } else void decide();
-        }}
-      >
-        {t('aiWorkspace.actions.approve')}
-      </Button>
-      <Button
-        size="small"
-        danger
-        disabled={submitting || controller.stopping}
-        onClick={() => void controller.actions.decideApproval(approvalId, 'reject')}
-      >
-        {t('aiWorkspace.actions.reject')}
-      </Button>
-      {controller.actions.reviseApproval ? (
-        <AgentReviseProposal
-          approvalId={approvalId}
-          disabled={submitting || controller.stopping}
-          pendingCount={controller.run.approvals.filter(isPending).length}
-          revise={controller.actions.reviseApproval}
-        />
-      ) : null}
-    </div>
-  );
-}
-
 function ContextInputs({ controller }: { controller: AgentWorkspaceViewModel }) {
   const { t } = useTranslation();
   const pending = controller.run.inputs.filter(isPending);
@@ -246,53 +163,6 @@ function ContextInputs({ controller }: { controller: AgentWorkspaceViewModel }) 
         <Muted value={t('aiWorkspace.context.noInputs')} />
       )}
     </ContextSection>
-  );
-}
-
-function InputRequest({
-  request,
-  submit
-}: {
-  request: AgentInputRequest;
-  submit: AgentWorkspaceViewModel['actions']['submitInteraction'];
-}) {
-  const { t } = useTranslation();
-  const [values, setValues] = useState<Record<string, string>>({});
-  return (
-    <div className={styles.inputRequest}>
-      <Typography.Text strong>{request.title}</Typography.Text>
-      {request.description ? <Typography.Text type="secondary">{request.description}</Typography.Text> : null}
-      {request.fields.map(field => (
-        <InputField field={field} key={String(field.field)} values={values} setValues={setValues} />
-      ))}
-      <Button size="small" type="primary" onClick={() => void submit(request.interactionId, values)}>
-        {t('aiWorkspace.actions.submit')}
-      </Button>
-    </div>
-  );
-}
-
-function InputField({
-  field,
-  values,
-  setValues
-}: {
-  field: Record<string, unknown>;
-  values: Record<string, string>;
-  setValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-}) {
-  const name = typeof field.field === 'string' ? field.field : '';
-  if (!name) return null;
-  return (
-    <label className={styles.inputField}>
-      <span>{typeof field.label === 'string' ? field.label : name}</span>
-      <Input
-        type={field.type === 'password' ? 'password' : 'text'}
-        value={values[name] ?? ''}
-        placeholder={typeof field.placeholder === 'string' ? field.placeholder : undefined}
-        onChange={event => setValues(current => ({ ...current, [name]: event.target.value }))}
-      />
-    </label>
   );
 }
 

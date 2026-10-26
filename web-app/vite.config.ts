@@ -18,7 +18,7 @@
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 import { createRequire } from 'node:module';
-import { realpathSync } from 'node:fs';
+import { realpathSync, readFileSync } from 'node:fs';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import bundleLimits from './scripts/bundle-limits.json' with { type: 'json' };
@@ -37,7 +37,20 @@ const backendProxy = {
 };
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      // Catalog loaders consume only default exports. Keep dependency package.json
+      // named exports intact while avoiding retained locale namespace bindings.
+      name: 'locale-default-export',
+      enforce: 'post',
+      transform(_code, id) {
+        const catalogs = fileURLToPath(new URL('./src/assets/i18n/', import.meta.url));
+        if (!id.startsWith(catalogs) || !id.endsWith('.json')) return;
+        return { code: `export default ${JSON.stringify(JSON.parse(readFileSync(id, 'utf8')))};`, map: null };
+      }
+    }
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

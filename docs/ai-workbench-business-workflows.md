@@ -14,6 +14,15 @@ rechecks current permissions, consumes approval once, calls the native service
 and independently reads back the result. Changing a target or parameter requires
 a new proposal. Cancellation and expiry do not authorize a late execution.
 
+The approval route permits authenticated `admin,user` roles so a user can reach
+an approval decision endpoint for their own permitted CHANGE. This route policy
+originates in the initial platform-coverage commit; it does not grant operation
+permission by itself. The ledger rechecks the original owner/workspace, current
+account roles and resource access; DANGEROUS and ADMIN resources remain
+administrator-only. Foreign-owner, role-downgrade and missing-verifier cases fail
+closed. The source configuration copies stay aligned; no deployed security
+configuration is changed during validation.
+
 Read-only operations still require their native resource permissions. The
 session-scoped full-access mode can waive ordinary change confirmations only
 within the existing actor's permissions; enabling it requires the server's
@@ -57,8 +66,13 @@ file-oriented operations need further work. Credential entry stays in the native
 workflow; no generic authenticated proxy is supplied as a fallback.
 
 The Agent tools `entity.create`, `entity.update` and `entity.delete` are excluded
-at registration. Their experimental metadata-write implementation is not part
-of this PR's enabled behavior. Native Entity UI/API remains unchanged; other
+at registration. The original annotated Java methods remain compiled, but cannot
+be discovered or resolved through the registry, including an execution request
+carrying a prior approval ID. The newer unfinished metadata-write experiment is
+removed; neither version is enabled Agent behavior. Four dedicated exclusion
+tests cover registration/discovery, preserved reads, direct execution and the
+approval-resume execution boundary. The latter is not a cross-process database
+recovery simulation. Native Entity UI/API remains unchanged; other
 Entity operations are not thereby declared read-only or independently audited.
 Native atomic version preconditions and durable create recovery are prerequisites
 for reconsidering these tools.
@@ -79,7 +93,14 @@ databases or their deployment-specific concurrency behavior.
 Before opening an existing H2 database with the new driver, stop its owner and
 take a consistent, restorable backup. Validate a separate copy first. Retain the
 old driver with the old backup; do not downgrade an upgraded live file in place.
-No runtime database migration or service restart is performed by this PR.
+Fresh installations use the B201 baseline. Existing V200 schemas receive the
+additive V201 migration for permission state/audit, batch receipts and batch-run
+parent/segment constraints. Permission tables start empty: upgrading grants no
+session additional authority. Historical migrations remain unchanged. H2 fresh
+installation and V200 upgrade are exercised locally; MySQL/PostgreSQL scripts
+and their integration tests still require their respective database CI jobs.
+The running development service and its database were not modified while
+preparing these source changes.
 
 ## Validation boundaries
 

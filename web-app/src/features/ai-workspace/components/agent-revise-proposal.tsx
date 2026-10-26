@@ -18,38 +18,16 @@
 import { Button, Input, Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-export function AgentReviseProposal({
-  approvalId,
-  disabled,
-  pendingCount,
-  revise
-}: {
+type RevisionProps = {
   approvalId: string;
   disabled: boolean;
   pendingCount: number;
   revise: (id: string, text: string) => Promise<boolean>;
-}) {
+};
+export function AgentReviseProposal(props: RevisionProps) {
+  const { disabled, pendingCount } = props;
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const submit = async () => {
-    if (busy || !text.trim() || disabled) return;
-    setBusy(true);
-    setFailed(false);
-    try {
-      const ok = await revise(approvalId, text);
-      if (ok) {
-        setOpen(false);
-        setText('');
-      } else setFailed(true);
-    } catch {
-      setFailed(true);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { open, text, busy, failed, setOpen, setText, setFailed, submit } = useRevisionDialog(props);
   return (
     <>
       <Button
@@ -89,4 +67,28 @@ export function AgentReviseProposal({
       </Modal>
     </>
   );
+}
+
+function useRevisionDialog({ approvalId, disabled, revise }: RevisionProps) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const submit = async () => {
+    if (busy || !text.trim() || disabled) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      const ok = await revise(approvalId, text);
+      if (ok) {
+        setOpen(false);
+        setText('');
+      } else setFailed(true);
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { open, text, busy, failed, setOpen, setText, setFailed, submit };
 }

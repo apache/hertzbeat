@@ -68,7 +68,7 @@ test('AI history fixture opens its latest page and loads earlier messages withou
     await route.fulfill({ json: { code: 0, data } });
   });
   await page.goto('/ai');
-  await page.getByRole('button', { name: /Long history fixture/ }).click();
+  await page.getByRole('button', { name: 'Long history fixture', exact: true }).click();
   await expect(page.getByText('Fixture message 401', { exact: true })).toBeVisible();
   await expect(page.getByText('Fixture message 1', { exact: true })).toHaveCount(0);
   expect(requests).toEqual([0, 2]);
@@ -78,7 +78,7 @@ test('AI history fixture opens its latest page and loads earlier messages withou
   await page.getByRole('button', { name: 'Load earlier messages', exact: true }).click();
   await expect(page.getByText('Fixture message 1', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Load earlier messages', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Investigation' }).locator('article')).toHaveCount(401);
+  await expect(page.getByRole('region', { name: 'Task', exact: true }).locator('article')).toHaveCount(401);
   expect(requests).toEqual([0, 2, 1, 0]);
   expect(failures).toEqual([]);
 });
@@ -169,10 +169,10 @@ test('AI evidence fixture shows bounded context and honest partial coverage with
   await page.goto(`/ai?source=entityInvestigation&entityId=42&start=${start}&end=${end}&timezone=UTC`);
   const context = page.getByRole('complementary', { name: 'Run context' });
   await expect(context).toBeVisible();
-  await expect(context).toContainText('Bounded cross-signal investigation');
+  await expect(context).toContainText('Bounded cross-signal task');
   await expect(context).toContainText('UTC');
   await page.screenshot({ path: '.tmp/ai-entity-scope-fixture.png', fullPage: true });
-  await page.getByRole('button', { name: /Controlled UI fixture/ }).click();
+  await page.getByRole('button', { name: 'Controlled UI fixture · not a model response', exact: true }).click();
   await page.getByRole('button', { name: 'Open run details', exact: true }).click();
   await expect(context).toContainText('Partial evidence');
   await expect(context).toContainText('Coverage not reported');

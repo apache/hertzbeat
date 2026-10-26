@@ -15,77 +15,31 @@
  * limitations under the License.
  */
 
-export type AgentCollectionPreview = {
-  version: 'inline-collection.v1';
-  planId: string;
-  monitorId: number;
-  sourceRevision: string;
-  planHash: string;
-  collector: 'main-default-collector';
-  operatingSystem: string;
-  account: string;
-  directory: string;
-  argv: [string, string, string];
-  oneShot: true;
-  expiresAt: number;
-};
-function text(value: unknown, max: number): value is string {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= max &&
-    Array.from(value).every(char => char.charCodeAt(0) >= 32 || [10, 13, 9].includes(char.charCodeAt(0)))
-  );
-}
-function record(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+import { z } from 'zod';
+
+const printable = (max: number) =>
+  z
+    .string()
+    .min(1)
+    .max(max)
+    .refine(value =>
+      Array.from(value).every(char => char.charCodeAt(0) >= 32 || [10, 13, 9].includes(char.charCodeAt(0)))
+    );
+export const agentCollectionPreviewSchema = z.strictObject({
+  version: z.literal('inline-collection.v1'),
+  planId: z.string().regex(/^[a-f0-9-]{36}$/),
+  monitorId: z.number().int().positive(),
+  sourceRevision: z.string().regex(/^[a-f0-9]{64}$/),
+  planHash: z.string().regex(/^[a-f0-9]{64}$/),
+  collector: z.literal('main-default-collector'),
+  operatingSystem: printable(100),
+  account: printable(100),
+  directory: printable(4096).refine(value => value.startsWith('/')),
+  argv: z.tuple([z.literal('bash'), z.literal('-c'), printable(16384)]),
+  oneShot: z.literal(true),
+  expiresAt: z.number().int().positive()
+});
+export type AgentCollectionPreview = z.infer<typeof agentCollectionPreviewSchema>;
 export function isAgentCollectionPreview(value: unknown): value is AgentCollectionPreview {
-  if (!record(value)) return false;
-  const keys = [
-    'version',
-    'planId',
-    'monitorId',
-    'sourceRevision',
-    'planHash',
-    'collector',
-    'operatingSystem',
-    'account',
-    'directory',
-    'argv',
-    'oneShot',
-    'expiresAt'
-  ];
-  if (Object.keys(value).length !== keys.length || !Object.keys(value).every(k => keys.includes(k))) return false;
-  return validIdentity(value) && validExecution(value);
-}
-function validIdentity(v: Record<string, unknown>) {
-  return (
-    v.version === 'inline-collection.v1' &&
-    text(v.planId, 36) &&
-    /^[a-f0-9-]{36}$/.test(v.planId) &&
-    Number.isSafeInteger(v.monitorId) &&
-    Number(v.monitorId) > 0 &&
-    text(v.sourceRevision, 64) &&
-    /^[a-f0-9]{64}$/.test(v.sourceRevision) &&
-    text(v.planHash, 64) &&
-    /^[a-f0-9]{64}$/.test(v.planHash) &&
-    v.oneShot === true &&
-    Number.isSafeInteger(v.expiresAt) &&
-    Number(v.expiresAt) > 0
-  );
-}
-function validExecution(v: Record<string, unknown>) {
-  return (
-    v.collector === 'main-default-collector' &&
-    text(v.operatingSystem, 100) &&
-    text(v.account, 100) &&
-    text(v.directory, 4096) &&
-    v.directory.startsWith('/') &&
-    Array.isArray(v.argv) &&
-    v.argv.length === 3 &&
-    v.argv[0] === 'bash' &&
-    v.argv[1] === '-c' &&
-    text(v.argv[2], 16384)
-  );
+  return agentCollectionPreviewSchema.safeParse(value).success;
 }

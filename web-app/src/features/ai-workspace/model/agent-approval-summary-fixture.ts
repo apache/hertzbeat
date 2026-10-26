@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-export const approvalSummaryFixture = () => ({
+import type { AgentApprovalSummary } from './agent-approval-summary';
+
+export const approvalSummaryFixture = (): AgentApprovalSummary => ({
   version: 'approval-summary.v1' as const,
   operation: 'CREATE' as const,
   targetCount: 2,

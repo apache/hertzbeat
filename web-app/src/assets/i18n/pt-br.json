@@ -4389,7 +4389,8 @@
         "cancelled": "Cancelada",
         "recoveryRequired": "Verificação necessária",
         "noRun": "Sem execuções",
-        "partial": "Parcialmente concluído"
+        "partial": "Parcialmente concluído",
+        "unfinished": "Não concluído · ver detalhes"
       },
       "delete": "Excluir conversa",
       "menu": "Ações da conversa: {{title}}",
@@ -4469,7 +4470,89 @@
     },
     "approval": {
       "adminRequired": "Aprovação do administrador necessária",
-      "decisionUnavailable": "Esta conta não pode aprovar esta ação"
+      "decisionUnavailable": "Esta conta não pode aprovar esta ação",
+      "recoveryUnavailable": "Não foi possível restaurar a aprovação. Releia a tarefa; não a reenvie.",
+      "expired": "A aprovação expirou. Nenhuma operação foi autorizada.",
+      "runtimeUnavailable": "O processo original de aprovação não está mais disponível.",
+      "summary": {
+        "title": "Detalhes da aprovação",
+        "unavailable": "Resumo indisponível. Confira a solicitação original e a página nativa antes de decidir.",
+        "operationCount": "{{operation}} · {{count}} destinos",
+        "unknownTarget": "Destino indisponível",
+        "intervals": "Intervalo: {{value}} segundos",
+        "timeout": "Tempo limite: {{value}} ms",
+        "pathFingerprint": "Impressão digital do caminho",
+        "keyFingerprint": "Impressão digital da chave de idempotência",
+        "inputHash": "SHA-256 da entrada vinculada",
+        "masked": "Valores sensíveis e texto livre são omitidos; caminhos e chaves são exibidos por impressões digitais.",
+        "incomplete": "O resumo não cobre todos os campos. Verifique os campos não suportados na página nativa antes de aprovar.",
+        "operation": {
+          "CREATE": "Criar",
+          "UPDATE": "Atualizar",
+          "DELETE": "Excluir",
+          "PAUSE": "Pausar",
+          "RESUME": "Retomar",
+          "REVIEW": "Revisar"
+        },
+        "field": {
+          "INTERVALS": "Intervalo solicitado (segundos)",
+          "TIMEOUT": "Tempo limite solicitado (ms)",
+          "RETRY_PREFLIGHT": "Repetir falhas conhecidas de pré-validação"
+        }
+      },
+      "collection": {
+        "title": "Confirmar o comando exato de coleta",
+        "risk": "Uma coleta será executada no Collector principal com a conta do sistema operacional. O comando pode ler ou alterar arquivos e acessar a rede com suas permissões. Revise cada linha e não inclua credenciais. FULL não dispensa aprovação. Collectors remotos, arquivos e execução periódica não são suportados.",
+        "target": "Destino / Collector",
+        "account": "Conta de execução / sistema operacional",
+        "directory": "Diretório de trabalho",
+        "revision": "Revisão do modelo e dos parâmetros",
+        "hash": "Hash do plano imutável",
+        "expires": "Expira em",
+        "confirm": "Revisei o comando completo, o destino, a conta e os possíveis efeitos."
+      },
+      "personal": {
+        "title": "Alteração no espaço pessoal",
+        "scope": "Altera o espaço de monitoramento do usuário atual",
+        "monitor": "Monitor",
+        "metric": "Grupo de métricas",
+        "action": "Ação",
+        "favorite": "Adicionar favorito",
+        "unfavorite": "Remover favorito",
+        "application": "Aplicação",
+        "revision": "Revisão atual esperada",
+        "save": "Salvar layout",
+        "reset": "Redefinir layout salvo",
+        "document": "Solicitação completa do layout versionado"
+      },
+      "inhibition": {
+        "title": "Política de inibição de alertas",
+        "impact": "Alertas de destino correspondentes podem deixar de notificar. A exclusão pode retomar as notificações.",
+        "versionLimit": "O hash vincula o estado verificado; a API nativa não oferece CAS atômico de versão.",
+        "target": "ID da política",
+        "newTarget": "Nova política (ID atribuído pelo servidor)",
+        "snapshot": "Hash de origem verificado",
+        "configuration": "Configuração nativa completa",
+        "deleting": "Exclui permanentemente esta política exata."
+      },
+      "revision": {
+        "creating": "Cria uma nova política.",
+        "beforeUnavailable": "Valores anteriores verificados indisponíveis; nenhum estado anterior é inferido.",
+        "noChanges": "Nenhum campo editável muda no estado verificado.",
+        "changes": "Valores anteriores salvos e verificados → valores propostos (sem leitura atual)",
+        "field": "Campo",
+        "before": "Antes",
+        "after": "Depois",
+        "removed": "Removido",
+        "action": "Cancelar execução e revisar",
+        "title": "Cancelar esta execução antes de revisar",
+        "confirm": "Cancelar execução e preparar rascunho",
+        "scope": "Interrompe toda a execução atual, incluindo {{count}} propostas pendentes. Não aprova operações.",
+        "effects": "Alterações concluídas não são revertidas. Confira resultados incertos antes de solicitar outra alteração.",
+        "instructions": "Descreva a solicitação revisada completa",
+        "manualSend": "Após o servidor confirmar o cancelamento, o texto vai para o editor. Revise e envie manualmente; a nova proposta exige aprovação própria.",
+        "failed": "Não foi possível confirmar o cancelamento. Nenhuma revisão foi enviada. Atualize e confira o estado da execução."
+      }
     },
     "providers": {
       "action": "Provedores de modelo",
@@ -4620,7 +4703,10 @@
       },
       "monitor": "Monitor {{id}}",
       "parameters": "Parâmetros fixados",
-      "retryPreflight": "Repetir pré-verificações com falha"
+      "retryPreflight": "Repetir pré-verificações com falha",
+      "cancelled": "Cancelada. A execução terminou. O histórico é mantido; não haverá continuação nem repetição automática.",
+      "preflightStopped": "O segmento terminou com falhas de pré-validação. Recursos verificados não serão recriados.",
+      "ended": "Este segmento terminou. Não há ação de continuação disponível."
     },
     "permission": {
       "label": "Modo de aprovação",
