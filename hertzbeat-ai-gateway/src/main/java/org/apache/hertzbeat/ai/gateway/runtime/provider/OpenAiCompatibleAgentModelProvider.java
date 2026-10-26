@@ -42,10 +42,26 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
 
     public static final String TYPE = "openai-compatible";
 
+    private final io.micrometer.observation.ObservationRegistry observationRegistry;
     private final AgentRuntimeProperties runtimeProperties;
 
-    public OpenAiCompatibleAgentModelProvider(AgentRuntimeProperties runtimeProperties) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public OpenAiCompatibleAgentModelProvider(
+            AgentRuntimeProperties runtimeProperties,
+            org.springframework.beans.factory.ObjectProvider<io.micrometer.observation.ObservationRegistry> registry) {
+        this(runtimeProperties, registry.getIfAvailable(() -> io.micrometer.observation.ObservationRegistry.NOOP));
+    }
+
+    public OpenAiCompatibleAgentModelProvider(
+            AgentRuntimeProperties runtimeProperties,
+            io.micrometer.observation.ObservationRegistry registry) {
         this.runtimeProperties = Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
+        this.observationRegistry = Objects.requireNonNullElse(
+                registry, io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
+    public OpenAiCompatibleAgentModelProvider(AgentRuntimeProperties runtimeProperties) {
+        this(runtimeProperties, io.micrometer.observation.ObservationRegistry.NOOP);
     }
 
     private Duration streamIdleTimeout() {
@@ -89,6 +105,12 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
     @Override
     public HertzBeatModel createModel(ModelProviderConfig config) {
         completeAndValidate(config);
+        if (AgentModelProtocol.parse(config.getProtocol()) == AgentModelProtocol.RESPONSES) {
+            var defaults = org.springframework.ai.openai.responses.OpenAiResponsesChatOptions.builder()
+                    .baseUrl(config.getBaseUrl()).apiKey(config.getApiKey()).model(config.getModel()).build();
+            return new HertzBeatModel(new OpenAiResponsesStreamBridge(defaults, observationRegistry),
+                    (request, callbacks) -> requestOptions(config, request, callbacks), AgentModelBinding.of(config));
+        }
         OpenAiChatOptions defaultOptions = OpenAiChatOptions.builder()
                 .baseUrl(config.getBaseUrl())
                 .apiKey(config.getApiKey())
@@ -97,13 +119,30 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
                 // user-visible MODEL_RETRY progress are owned by AgentRuntimeLoop instead.
                 .maxRetries(0)
                 .build();
-        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions, streamIdleTimeout());
+        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions, streamIdleTimeout(), observationRegistry);
         return new HertzBeatModel(chatModel,
-                (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks));
+                (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks), AgentModelBinding.of(config));
     }
 
     ChatOptions requestOptions(ModelProviderConfig config, AgentRuntimeModelRequest request,
                                List<ToolCallback> toolCallbacks) {
+        if (AgentModelProtocol.parse(config.getProtocol()) == AgentModelProtocol.RESPONSES) {
+            var builder = org.springframework.ai.openai.responses.OpenAiResponsesChatOptions.builder()
+                    .model(config.getModel());
+            if (request.getTemperature() != null) {
+                builder.temperature(request.getTemperature());
+            }
+            if (request.getMaxCompletionTokens() != null) {
+                builder.maxOutputTokens(request.getMaxCompletionTokens());
+            }
+            if (!toolCallbacks.isEmpty()) {
+                builder.toolCallbacks(toolCallbacks);
+                if (request.isToolCallRequired()) {
+                    builder.toolChoice("required");
+                }
+            }
+            return builder.build();
+        }
         OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder()
                 .model(config.getModel())
                 // Per-request options must not resurrect the SDK default retry policy (3 hidden attempts).
@@ -116,11 +155,15 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
         }
         if (!toolCallbacks.isEmpty()) {
             builder.toolCallbacks(toolCallbacks);
+            if (request.isToolCallRequired()) {
+                builder.toolChoice("required");
+            }
         }
         return builder.build();
     }
 
     private void completeAndValidate(ModelProviderConfig config) {
+        AgentModelProtocol.parse(config.getProtocol());
         if (!StringUtils.hasText(config.getApiKey())) {
             throw new IllegalArgumentException("OpenAI-compatible provider API key must not be blank");
         }

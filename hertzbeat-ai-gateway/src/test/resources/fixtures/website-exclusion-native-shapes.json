@@ -1,0 +1,23 @@
+{
+  "source": "consistent-cold-backup-native-JPA-readonly-not-live-session",
+  "nativeWebsiteRows": 216,
+  "nativeHostProjectionRows": 216,
+  "legacyUrlHostCount": 1,
+  "legacyShapes": [
+    {
+      "userinfoPresent": false,
+      "monitorId": 695721249090816,
+      "shape": "http-uri",
+      "scheme": "https",
+      "length": 23
+    }
+  ],
+  "complete": false,
+  "reason": "WEBSITE_EXCLUSIONS_INVALID",
+  "domainCount": null,
+  "networkRequests": 0,
+  "writes": 0,
+  "sampleHost": "https://www.example.org/",
+  "sampleHostIsSynthetic": true,
+  "scope": "Actual read-only source row shape, not raw URL/secret export"
+}

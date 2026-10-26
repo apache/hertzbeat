@@ -18,88 +18,119 @@
 package org.apache.hertzbeat.ai.gateway.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+
+import java.time.Duration;
 
 /**
  * Test case for {@link AgentRuntimeProperties}.
  */
 class AgentRuntimePropertiesTest {
 
-    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-        .withUserConfiguration(BindingConfig.class);
+    private final ApplicationContextRunner contextRunner =
+            new ApplicationContextRunner().withUserConfiguration(BindingConfig.class);
 
     @Test
     void defaultRuntimeShouldUseBoundedLimits() {
-        contextRunner.run(context -> {
-            AgentRuntimeProperties properties = context.getBean(AgentRuntimeProperties.class);
+        contextRunner.run(
+                context -> {
+                    AgentRuntimeProperties properties =
+                            context.getBean(AgentRuntimeProperties.class);
 
-            assertEquals(0.2D, properties.getTemperature());
-            assertEquals(4096, properties.getMaxCompletionTokens());
-            assertEquals(2048, properties.getMaxSteps());
-            assertEquals(1024, properties.getMaxToolCalls());
-            assertEquals(Duration.ofSeconds(360), properties.getModelRequestTimeout());
-            assertEquals(Duration.ofSeconds(120), properties.getModelStreamIdleTimeout());
-            assertEquals(Duration.ofSeconds(180), properties.getToolTimeout());
-            assertEquals(32000, properties.getContext().getMaxTokens());
-            assertEquals(0.9D, properties.getContext().getCompaction().getThresholdRatio());
-            assertEquals(12000, properties.getContext().getCompaction().getRetainRecentTokens());
-            assertEquals(4000, properties.getContext().getCompaction().getSummaryTokenBudget());
-            assertEquals(28800, properties.getContext().compactionThresholdTokens());
-            assertEquals(5, properties.getRetry().getMaxModelRetries());
-            assertEquals(Duration.ofSeconds(2), properties.getRetry().getInitialBackoff());
-            assertEquals(2.0D, properties.getRetry().getBackoffMultiplier());
-            assertEquals(Duration.ofSeconds(16), properties.getRetry().getMaxBackoff());
-            assertEquals(1024, properties.getStream().getMaxBufferedEvents());
-        });
+                    assertEquals(0.2D, properties.getTemperature());
+                    assertNull(properties.getMaxCompletionTokens());
+                    assertNull(properties.getReviewMaxCompletionTokens());
+                    assertEquals(64, properties.getMaxSteps());
+                    assertEquals(64, properties.getMaxToolCalls());
+                    assertEquals(3, properties.getMaxEquivalentReadCalls());
+                    assertEquals(6, properties.getMaxNoProgressReadCalls());
+                    assertEquals(Duration.ofSeconds(360), properties.getModelRequestTimeout());
+                    assertEquals(Duration.ofSeconds(120), properties.getModelStreamIdleTimeout());
+                    assertEquals(Duration.ofSeconds(180), properties.getToolTimeout());
+                    assertEquals(32000, properties.getContext().getMaxTokens());
+                    assertEquals(0.9D, properties.getContext().getCompaction().getThresholdRatio());
+                    assertEquals(
+                            12000, properties.getContext().getCompaction().getRetainRecentTokens());
+                    assertEquals(
+                            4000, properties.getContext().getCompaction().getSummaryTokenBudget());
+                    assertEquals(28800, properties.getContext().compactionThresholdTokens());
+                    assertEquals(5, properties.getRetry().getMaxModelRetries());
+                    assertEquals(Duration.ofSeconds(2), properties.getRetry().getInitialBackoff());
+                    assertEquals(2.0D, properties.getRetry().getBackoffMultiplier());
+                    assertEquals(Duration.ofSeconds(16), properties.getRetry().getMaxBackoff());
+                    assertEquals(1024, properties.getStream().getMaxBufferedEvents());
+                });
     }
 
     @Test
     void runtimePropertiesShouldBind() {
-        contextRunner.withPropertyValues(
-            "hertzbeat.agent.runtime.temperature=0.4",
-            "hertzbeat.agent.runtime.max-completion-tokens=2048",
-            "hertzbeat.agent.runtime.max-steps=5",
-            "hertzbeat.agent.runtime.max-tool-calls=3",
-            "hertzbeat.agent.runtime.model-request-timeout=30s",
-            "hertzbeat.agent.runtime.tool-timeout=250ms",
-            "hertzbeat.agent.runtime.context.max-tokens=24000",
-            "hertzbeat.agent.runtime.context.compaction.threshold-ratio=0.75",
-            "hertzbeat.agent.runtime.context.compaction.retain-recent-tokens=9000",
-            "hertzbeat.agent.runtime.context.compaction.summary-token-budget=2048",
-            "hertzbeat.agent.runtime.retry.max-model-retries=1",
-            "hertzbeat.agent.runtime.retry.initial-backoff=125ms",
-            "hertzbeat.agent.runtime.stream.max-buffered-events=8")
-            .run(context -> {
-                AgentRuntimeProperties properties = context.getBean(AgentRuntimeProperties.class);
+        contextRunner
+                .withPropertyValues(
+                        "hertzbeat.agent.runtime.temperature=0.4",
+                        "hertzbeat.agent.runtime.max-completion-tokens=2048",
+                        "hertzbeat.agent.runtime.review-max-completion-tokens=1024",
+                        "hertzbeat.agent.runtime.max-steps=5",
+                        "hertzbeat.agent.runtime.max-tool-calls=3",
+                        "hertzbeat.agent.runtime.model-request-timeout=30s",
+                        "hertzbeat.agent.runtime.tool-timeout=250ms",
+                        "hertzbeat.agent.runtime.context.max-tokens=24000",
+                        "hertzbeat.agent.runtime.context.compaction.threshold-ratio=0.75",
+                        "hertzbeat.agent.runtime.context.compaction.retain-recent-tokens=9000",
+                        "hertzbeat.agent.runtime.context.compaction.summary-token-budget=2048",
+                        "hertzbeat.agent.runtime.retry.max-model-retries=1",
+                        "hertzbeat.agent.runtime.retry.initial-backoff=125ms",
+                        "hertzbeat.agent.runtime.stream.max-buffered-events=8")
+                .run(
+                        context -> {
+                            AgentRuntimeProperties properties =
+                                    context.getBean(AgentRuntimeProperties.class);
 
-                assertEquals(0.4D, properties.getTemperature());
-                assertEquals(2048, properties.getMaxCompletionTokens());
-                assertEquals(5, properties.getMaxSteps());
-                assertEquals(3, properties.getMaxToolCalls());
-                assertEquals(Duration.ofSeconds(30), properties.getModelRequestTimeout());
-                assertEquals(Duration.ofMillis(250), properties.getToolTimeout());
-                assertEquals(24000, properties.getContext().getMaxTokens());
-                assertEquals(0.75D, properties.getContext().getCompaction().getThresholdRatio());
-                assertEquals(9000, properties.getContext().getCompaction().getRetainRecentTokens());
-                assertEquals(2048, properties.getContext().getCompaction().getSummaryTokenBudget());
-                assertEquals(18000, properties.getContext().compactionThresholdTokens());
-                assertEquals(1, properties.getRetry().getMaxModelRetries());
-                assertEquals(Duration.ofMillis(125), properties.getRetry().getInitialBackoff());
-                assertEquals(8, properties.getStream().getMaxBufferedEvents());
-            });
+                            assertEquals(0.4D, properties.getTemperature());
+                            assertEquals(2048, properties.getMaxCompletionTokens());
+                            assertEquals(1024, properties.getReviewMaxCompletionTokens());
+                            assertEquals(5, properties.getMaxSteps());
+                            assertEquals(3, properties.getMaxToolCalls());
+                            assertEquals(
+                                    Duration.ofSeconds(30), properties.getModelRequestTimeout());
+                            assertEquals(Duration.ofMillis(250), properties.getToolTimeout());
+                            assertEquals(24000, properties.getContext().getMaxTokens());
+                            assertEquals(
+                                    0.75D,
+                                    properties.getContext().getCompaction().getThresholdRatio());
+                            assertEquals(
+                                    9000,
+                                    properties
+                                            .getContext()
+                                            .getCompaction()
+                                            .getRetainRecentTokens());
+                            assertEquals(
+                                    2048,
+                                    properties
+                                            .getContext()
+                                            .getCompaction()
+                                            .getSummaryTokenBudget());
+                            assertEquals(
+                                    18000, properties.getContext().compactionThresholdTokens());
+                            assertEquals(1, properties.getRetry().getMaxModelRetries());
+                            assertEquals(
+                                    Duration.ofMillis(125),
+                                    properties.getRetry().getInitialBackoff());
+                            assertEquals(8, properties.getStream().getMaxBufferedEvents());
+                        });
     }
 
     @Test
     void invalidCompactionPolicyShouldFailFast() {
         AgentRuntimeProperties properties = new AgentRuntimeProperties();
 
-        assertThrows(IllegalArgumentException.class,
-            () -> properties.getContext().getCompaction().setThresholdRatio(1D));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> properties.getContext().getCompaction().setThresholdRatio(1D));
 
         properties.getContext().setMaxTokens(100);
         properties.getContext().getCompaction().setRetainRecentTokens(60);
@@ -108,6 +139,5 @@ class AgentRuntimePropertiesTest {
     }
 
     @EnableConfigurationProperties(AgentRuntimeProperties.class)
-    static class BindingConfig {
-    }
+    static class BindingConfig {}
 }

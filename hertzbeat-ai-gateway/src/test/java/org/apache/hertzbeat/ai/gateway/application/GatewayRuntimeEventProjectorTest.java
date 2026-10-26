@@ -108,7 +108,7 @@ class GatewayRuntimeEventProjectorTest {
     void projectorShouldConvertApprovalRequestCompletionAndRunCompleted() {
         AgentToolExecutionResult pending = toolResult("agc-1", "node.restart", "approval-1",
                 AgentToolStatus.WAITING_APPROVAL, AgentPolicyDecision.REQUIRE_APPROVAL,
-                AgentApprovalStatus.PENDING, 0L);
+                AgentApprovalStatus.PENDING, 0L).toBuilder().canDecide(true).build();
         AgentToolExecutionResult approved = toolResult("agc-1", "node.restart", "approval-1",
                 AgentToolStatus.SUCCEEDED, AgentPolicyDecision.REQUIRE_APPROVAL,
                 AgentApprovalStatus.APPROVED, 0L);
@@ -122,6 +122,7 @@ class GatewayRuntimeEventProjectorTest {
         ApprovalRequestedPayload approvalPayload = assertPayload(approval, GatewayEventType.APPROVAL_REQUESTED,
                 ApprovalRequestedPayload.class);
         assertEquals("waiting_approval", approvalPayload.status());
+        assertEquals(true, approvalPayload.canDecide());
         ApprovalCompletedPayload approvalCompletedPayload = assertPayload(approvalCompleted,
                 GatewayEventType.APPROVAL_COMPLETED, ApprovalCompletedPayload.class);
         assertEquals("approved", approvalCompletedPayload.status());

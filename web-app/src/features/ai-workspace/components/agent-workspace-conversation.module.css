@@ -30,6 +30,8 @@
 }
 .transcript {
   overflow: auto;
+  overflow-anchor: none;
+  min-width: 0;
   padding: clamp(28px, 4vw, 48px) clamp(16px, 5%, 64px);
 }
 .emptyConversation {
@@ -46,6 +48,7 @@
 .message {
   display: grid;
   gap: var(--hb-space-2);
+  min-width: 0;
   max-width: 880px;
   margin: 0 auto var(--hb-space-6);
 }
@@ -94,8 +97,7 @@
   display: grid;
   max-width: 880px;
   margin: calc(-1 * var(--hb-space-2)) auto var(--hb-space-6);
-  border: 1px solid var(--ai-divider);
-  border-radius: 10px;
+  border-top: 1px solid var(--ai-divider);
   overflow: hidden;
 }
 .inlineTool {
@@ -129,25 +131,80 @@
   color: var(--hb-text-secondary);
   font-size: 11px;
 }
-.failure {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--hb-space-3);
-  max-width: 880px;
-  margin: 0 auto var(--hb-space-6);
-  padding: var(--hb-space-3) var(--hb-space-4);
-  border-left: 3px solid var(--hb-status-unavailable);
-  background: var(--hb-bg-raised);
-}
 
-.failure > span {
-  flex: 1;
+.toolSummary {
+  padding: var(--hb-space-1) 0;
+  color: var(--hb-text-secondary);
+  cursor: pointer;
+}
+.toolSummary:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 3px;
+}
+.toolSummaryContent {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
+  max-width: calc(100% - 24px);
+  font-size: 12px;
+}
+.toolOutput {
+  max-height: 320px;
+  margin: var(--hb-space-3) 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.assistantText {
   min-width: 0;
   overflow-wrap: anywhere;
   line-height: 1.65;
 }
+.assistantText :global(p),
+.assistantText :global(ul),
+.assistantText :global(ol) {
+  margin: 0 0 var(--hb-space-3);
+}
+.assistantText :global(table) {
+  display: block;
+  max-width: 100%;
+  margin-bottom: var(--hb-space-4);
+  overflow: auto;
+  border-collapse: collapse;
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-chrome);
+}
+.assistantText :global(th),
+.assistantText :global(td) {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border: 1px solid var(--hb-border-subtle);
+  min-width: 96px;
+  text-align: left;
+}
+.assistantText :global(pre) {
+  max-width: 100%;
+  padding: var(--hb-space-3);
+  overflow: auto;
+  background: var(--hb-bg-raised);
+}
+.assistantText :global(img) {
+  max-width: 100%;
+}
 
-.failure[data-tone='progress'] {
-  border-left-color: var(--ant-color-warning);
+.assistantText :global(th) {
+  background: var(--hb-bg-hover);
+  font-weight: 600;
+}
+.assistantText :global(tbody tr:nth-child(even)) {
+  background: var(--hb-bg-canvas);
+}
+.conversationFooter {
+  display: grid;
+  min-width: 0;
+}
+.latest {
+  justify-self: center;
+  margin: 0 0 var(--hb-space-2);
 }

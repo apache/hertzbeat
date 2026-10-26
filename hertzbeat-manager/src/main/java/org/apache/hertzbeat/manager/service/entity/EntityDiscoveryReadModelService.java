@@ -58,7 +58,7 @@ public class EntityDiscoveryReadModelService {
             Page<Monitor> page = monitorService.getMonitors(
                     null, null, search, null, "id", "desc", pageIndex, pageSize, null);
             if (page == null) {
-                return empty(pageIndex, pageSize);
+                throw new CommonException(UNAVAILABLE);
             }
             List<Monitor> monitors = page.getContent().stream().filter(Objects::nonNull).toList();
             List<Long> monitorIds = monitors.stream()
@@ -70,8 +70,10 @@ public class EntityDiscoveryReadModelService {
                     monitorIds.isEmpty()
                             ? Collections.emptyMap()
                             : observeEntityService.getMonitorBindingCandidates(monitorIds);
-            Map<Long, List<EntityMonitorBindingCandidate>> safeCandidates =
-                    candidates == null ? Collections.emptyMap() : candidates;
+            if (candidates == null) {
+                throw new CommonException(UNAVAILABLE);
+            }
+            Map<Long, List<EntityMonitorBindingCandidate>> safeCandidates = candidates;
             List<EntityDiscoveryReadModel.DiscoveryRow> content = monitors.stream()
                     .map(monitor -> row(monitor, safeCandidates.get(monitor.getId())))
                     .toList();
@@ -85,10 +87,6 @@ public class EntityDiscoveryReadModelService {
         } catch (RuntimeException ignored) {
             throw new CommonException(UNAVAILABLE);
         }
-    }
-
-    private static EntityDiscoveryReadModel empty(int pageIndex, int pageSize) {
-        return new EntityDiscoveryReadModel(SCHEMA_VERSION, pageIndex, pageSize, 0, 0, List.of());
     }
 
     private static EntityDiscoveryReadModel.DiscoveryRow row(

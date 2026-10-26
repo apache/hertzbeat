@@ -43,11 +43,19 @@ final class OpenAiStreamBridge implements StreamingChatModel {
     private final OpenAiChatModel model;
 
     OpenAiStreamBridge(OpenAiChatOptions defaults) {
-        this(defaults, null);
+        this(defaults, null, io.micrometer.observation.ObservationRegistry.NOOP);
     }
 
     OpenAiStreamBridge(OpenAiChatOptions defaults, Duration streamIdleTimeout) {
+        this(defaults, streamIdleTimeout, io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
+    OpenAiStreamBridge(
+            OpenAiChatOptions defaults,
+            Duration streamIdleTimeout,
+            io.micrometer.observation.ObservationRegistry registry) {
         model = OpenAiChatModel.builder().options(withScopeHeader(defaults, null))
+                .observationRegistry(registry)
                 .httpClientBuilderCustomizer(builder -> {
                     // The HTTP-client read timeout bounds the silence between two stream bytes: an idle-stream
                     // watchdog for providers that accept the request but never deliver a first token. The SDK

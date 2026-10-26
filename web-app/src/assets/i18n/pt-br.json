@@ -4373,26 +4373,43 @@
     "title": "Espaço de trabalho de IA",
     "description": "Investigue dados ativos do HertzBeat e revise cada ação proposta antes da execução.",
     "sessions": {
-      "label": "Investigações",
-      "title": "Investigações",
+      "label": "Tarefas",
+      "title": "Tarefas",
       "new": "Nova",
-      "loading": "Carregando investigações…",
-      "unavailable": "As investigações estão indisponíveis.",
-      "empty": "Ainda não há investigações.",
-      "untitled": "Investigação sem título",
-      "search": "Buscar investigações",
-      "noMatches": "Nenhuma investigação encontrada.",
+      "loading": "Carregando tarefas…",
+      "unavailable": "As tarefas estão indisponíveis.",
+      "empty": "Ainda não há tarefas.",
+      "untitled": "Tarefa sem título",
+      "search": "Buscar tarefas",
+      "noMatches": "Nenhuma tarefa encontrada.",
       "status": {
         "active": "Em andamento",
         "completed": "Concluída",
         "failed": "Falhou",
         "cancelled": "Cancelada",
         "recoveryRequired": "Verificação necessária",
-        "noRun": "Sem execuções"
+        "noRun": "Sem execuções",
+        "partial": "Parcialmente concluído",
+        "unfinished": "Não concluído · ver detalhes"
+      },
+      "delete": "Excluir conversa",
+      "menu": "Ações da conversa: {{title}}",
+      "close": "Fechar histórico",
+      "clearAll": "Limpar todas as conversas",
+      "deleteTitle": "Excluir conversas?",
+      "deleteConfirm": "Excluir ({{count}})",
+      "deleteDescription": "Excluir permanentemente {{count}} conversas e suas mensagens, execuções e registros de ferramentas da sua conta. Esta ação não pode ser desfeita.",
+      "activeCannotDelete": "Pare as conversas em execução antes de excluir. Nenhuma conversa foi excluída.",
+      "deleteUnavailable": "Não foi possível preparar ou concluir a exclusão. Verifique a conexão e tente novamente.",
+      "groups": {
+        "today": "Hoje",
+        "yesterday": "Ontem",
+        "week": "Últimos 7 dias",
+        "older": "Anteriores"
       }
     },
     "investigation": {
-      "label": "Investigação"
+      "label": "Tarefa"
     },
     "roles": {
       "you": "Você",
@@ -4403,8 +4420,8 @@
       "description": "Pergunte sobre um monitor, entidade, alerta, métrica, log, trace ou escopo de topologia."
     },
     "composer": {
-      "label": "Prompt da investigação",
-      "placeholder": "Peça ao HertzBeat para investigar um problema operacional…"
+      "label": "Prompt da tarefa",
+      "placeholder": "Pergunte…"
     },
     "actions": {
       "send": "Enviar",
@@ -4415,12 +4432,13 @@
       "reject": "Rejeitar",
       "submit": "Enviar"
     },
-    "failure": "O fluxo da investigação está indisponível. Nenhuma ação será considerada concluída.",
-    "sessionLoadIncomplete": "Não foi possível carregar alguns detalhes salvos da investigação. Atualize ou selecione a investigação novamente.",
+    "failure": "O fluxo da tarefa está indisponível. Nenhuma ação será considerada concluída.",
+    "loadOlder": "Carregar mensagens anteriores",
+    "sessionLoadIncomplete": "Não foi possível carregar alguns detalhes salvos da tarefa. Atualize ou selecione a tarefa novamente.",
     "recoveryRequired": "A ferramenta pode ter sido executada, mas o HertzBeat não conseguiu salvar o resultado. Verifique o destino antes de continuar.",
-    "targetMismatch": "Este alvo de investigação não é mais válido. Volte à origem e inicie uma nova investigação.",
-    "targetUnavailable": "O HertzBeat não consegue verificar este alvo de investigação agora. Nenhuma investigação foi iniciada.",
-    "invalidTarget": "Este link de investigação contém um alvo inválido ou ainda não suportado. Volte à página de origem e tente novamente.",
+    "targetMismatch": "Este alvo de tarefa não é mais válido. Volte à origem e inicie uma nova tarefa.",
+    "targetUnavailable": "O HertzBeat não consegue verificar este alvo de tarefa agora. Nenhuma tarefa foi iniciada.",
+    "invalidTarget": "Este link de tarefa contém um alvo inválido ou ainda não suportado. Volte à página de origem e tente novamente.",
     "activeObservationPaused": "A observação em tempo real foi pausada. A execução persistente continua em andamento; nenhuma conclusão foi presumida.",
     "modelRetrying": "Falha na requisição do modelo: {{reason}}. Nova tentativa em {{delay}}s ({{attempt}}/{{maxAttempts}})…",
     "modelRetryingNoDelay": "Falha na requisição do modelo: {{reason}}. Tentando novamente ({{attempt}}/{{maxAttempts}})…",
@@ -4445,10 +4463,99 @@
       "noApprovals": "Nenhuma aprovação pendente",
       "inputs": "Entrada solicitada",
       "noInputs": "Nenhuma entrada solicitada",
-      "statusUnknown": "Estado não registrado"
+      "statusUnknown": "Estado não registrado",
+      "cancelledBeforeExecution": "Cancelado antes da execução",
+      "viewSource": "Ver origem",
+      "pageScope": "Página {{page}} · {{size}} registros por página",
+      "internalHidden": "Telemetria interna excluída",
+      "noiseHidden": "Ruído excluído",
+      "rawOutput": "Resultado original"
     },
     "approval": {
-      "adminRequired": "Aprovação do administrador necessária"
+      "adminRequired": "Aprovação do administrador necessária",
+      "decisionUnavailable": "Esta conta não pode aprovar esta ação",
+      "recoveryUnavailable": "Não foi possível restaurar a aprovação. Releia a tarefa; não a reenvie.",
+      "expired": "A aprovação expirou. Nenhuma operação foi autorizada.",
+      "runtimeUnavailable": "O processo original de aprovação não está mais disponível.",
+      "summary": {
+        "title": "Detalhes da aprovação",
+        "unavailable": "Resumo indisponível. Confira a solicitação original e a página nativa antes de decidir.",
+        "operationCount": "{{operation}} · {{count}} destinos",
+        "unknownTarget": "Destino indisponível",
+        "intervals": "Intervalo: {{value}} segundos",
+        "timeout": "Tempo limite: {{value}} ms",
+        "pathFingerprint": "Impressão digital do caminho",
+        "keyFingerprint": "Impressão digital da chave de idempotência",
+        "inputHash": "SHA-256 da entrada vinculada",
+        "masked": "Valores sensíveis e texto livre são omitidos; caminhos e chaves são exibidos por impressões digitais.",
+        "incomplete": "O resumo não cobre todos os campos. Verifique os campos não suportados na página nativa antes de aprovar.",
+        "operation": {
+          "CREATE": "Criar",
+          "UPDATE": "Atualizar",
+          "DELETE": "Excluir",
+          "PAUSE": "Pausar",
+          "RESUME": "Retomar",
+          "REVIEW": "Revisar"
+        },
+        "field": {
+          "INTERVALS": "Intervalo solicitado (segundos)",
+          "TIMEOUT": "Tempo limite solicitado (ms)",
+          "RETRY_PREFLIGHT": "Repetir falhas conhecidas de pré-validação"
+        }
+      },
+      "collection": {
+        "title": "Confirmar o comando exato de coleta",
+        "risk": "Uma coleta será executada no Collector principal com a conta do sistema operacional. O comando pode ler ou alterar arquivos e acessar a rede com suas permissões. Revise cada linha e não inclua credenciais. FULL não dispensa aprovação. Collectors remotos, arquivos e execução periódica não são suportados.",
+        "target": "Destino / Collector",
+        "account": "Conta de execução / sistema operacional",
+        "directory": "Diretório de trabalho",
+        "revision": "Revisão do modelo e dos parâmetros",
+        "hash": "Hash do plano imutável",
+        "expires": "Expira em",
+        "confirm": "Revisei o comando completo, o destino, a conta e os possíveis efeitos."
+      },
+      "personal": {
+        "title": "Alteração no espaço pessoal",
+        "scope": "Altera o espaço de monitoramento do usuário atual",
+        "monitor": "Monitor",
+        "metric": "Grupo de métricas",
+        "action": "Ação",
+        "favorite": "Adicionar favorito",
+        "unfavorite": "Remover favorito",
+        "application": "Aplicação",
+        "revision": "Revisão atual esperada",
+        "save": "Salvar layout",
+        "reset": "Redefinir layout salvo",
+        "document": "Solicitação completa do layout versionado"
+      },
+      "inhibition": {
+        "title": "Política de inibição de alertas",
+        "impact": "Alertas de destino correspondentes podem deixar de notificar. A exclusão pode retomar as notificações.",
+        "versionLimit": "O hash vincula o estado verificado; a API nativa não oferece CAS atômico de versão.",
+        "target": "ID da política",
+        "newTarget": "Nova política (ID atribuído pelo servidor)",
+        "snapshot": "Hash de origem verificado",
+        "configuration": "Configuração nativa completa",
+        "deleting": "Exclui permanentemente esta política exata."
+      },
+      "revision": {
+        "creating": "Cria uma nova política.",
+        "beforeUnavailable": "Valores anteriores verificados indisponíveis; nenhum estado anterior é inferido.",
+        "noChanges": "Nenhum campo editável muda no estado verificado.",
+        "changes": "Valores anteriores salvos e verificados → valores propostos (sem leitura atual)",
+        "field": "Campo",
+        "before": "Antes",
+        "after": "Depois",
+        "removed": "Removido",
+        "action": "Cancelar execução e revisar",
+        "title": "Cancelar esta execução antes de revisar",
+        "confirm": "Cancelar execução e preparar rascunho",
+        "scope": "Interrompe toda a execução atual, incluindo {{count}} propostas pendentes. Não aprova operações.",
+        "effects": "Alterações concluídas não são revertidas. Confira resultados incertos antes de solicitar outra alteração.",
+        "instructions": "Descreva a solicitação revisada completa",
+        "manualSend": "Após o servidor confirmar o cancelamento, o texto vai para o editor. Revise e envie manualmente; a nova proposta exige aprovação própria.",
+        "failed": "Não foi possível confirmar o cancelamento. Nenhuma revisão foi enviada. Atualize e confira o estado da execução."
+      }
     },
     "providers": {
       "action": "Provedores de modelo",
@@ -4470,7 +4577,182 @@
       "model": "Modelo",
       "apiKey": "Chave da API",
       "apiKeyHint": "Deixe em branco para manter a chave existente.",
-      "save": "Salvar provedor"
+      "save": "Salvar provedor",
+      "protocol": "Protocolo da API",
+      "protocolHint": "Selecione Responses somente se este endpoint for compatível. Inicie uma nova tarefa após alterar o protocolo.",
+      "chatCompletions": "Chat Completions",
+      "responses": "Responses",
+      "testConnection": "Testar conexão",
+      "cancelTest": "Cancelar teste",
+      "testRunning": "Testando conexão…",
+      "testHint": "Envia uma solicitação curta de texto sintético usando este formulário não salvo. Não inclui dados de negócio nem ferramentas e não salva ou ativa a configuração. O sucesso não verifica streaming nem chamadas de ferramentas. Chaves salvas só são reutilizadas para a mesma origem do provedor.",
+      "testMetadata": "Protocolo: {{protocol}} · Modelo: {{model}} · {{elapsed}} ms · HTTP {{status}}",
+      "testResult": {
+        "OK": "Conexão bem-sucedida. A geração de texto respondeu.",
+        "CONFIGURATION": "Verifique o provedor, modelo, protocolo e URL base completa (http:// ou https://).",
+        "CREDENTIAL_REQUIRED": "O destino mudou. Informe uma chave para esse destino antes de testar.",
+        "AUTHENTICATION": "Falha na autenticação. Verifique a chave de API e as permissões de acesso.",
+        "ADDRESS_PATH": "O caminho do endpoint falhou ou foi redirecionado. Verifique a URL base e o caminho do protocolo.",
+        "MODEL": "O modelo é desconhecido ou indisponível para esta chave.",
+        "PROTOCOL": "O endpoint não aceitou ou não retornou o protocolo selecionado. Nenhuma alternativa foi tentada.",
+        "TIMEOUT": "O teste de conexão expirou.",
+        "CANCELLED": "Teste de conexão cancelado.",
+        "BUSY": "Já existe um teste em andamento. Tente novamente em instantes.",
+        "RATE_LIMIT": "Limite de requisições do provedor atingido.",
+        "UPSTREAM": "Falha no serviço do provedor. Tente novamente mais tarde.",
+        "TLS": "Falha na verificação TLS. Verifique o certificado do endpoint.",
+        "NETWORK": "Teste de conexão indisponível. Verifique a rede e a sessão autenticada."
+      }
+    },
+    "evidence": {
+      "title": "Evidências",
+      "collecting": "Aguardando evidências verificadas…",
+      "unrecorded": "Não foram registradas referências de evidências para esta tarefa",
+      "empty": "Nenhuma observação verificada foi registrada. Isso não significa que o sistema esteja saudável.",
+      "partial": "Evidência parcial",
+      "complete": "Nenhum truncamento informado",
+      "coverageUnknown": "Cobertura não informada",
+      "observations": "{{count}} observações",
+      "incidentScope": "Somente fatos dos alertas · Política {{id}}",
+      "investigationScope": "Tarefa delimitada entre sinais",
+      "investigationLimit": "Selecione um intervalo de até 24 horas"
+    },
+    "toolFailureWarning": "Chamadas de ferramenta com falha ou negadas: {{count}}. Esses erros não comprovam um resultado vazio ou saudável.",
+    "executionSummary": {
+      "UNKNOWN": "Estado desconhecido: registros completos indisponíveis",
+      "IN_PROGRESS": "Execução em andamento",
+      "NO_RECORDS": "Nenhum registro de execução de ferramenta",
+      "PARTIAL": "PARTIAL · Execução ou cobertura incompleta: veja falhas, limites e escopo",
+      "RECOVERED": "Falhas históricas recuperadas por solicitações idênticas bem-sucedidas",
+      "NO_FAILED_ATTEMPTS": "Nenhuma tentativa com falha nos registros",
+      "counts": "{{total}} tentativas; {{succeeded}} sucessos, {{failed}} falhas históricas, {{recovered}} recuperadas, {{unresolved}} pendentes/não verificadas, {{unfinished}} inacabadas.",
+      "coverage": "Gerado dos registros do servidor. As conclusões se aplicam apenas às consultas bem-sucedidas com escopo verificado. Sucesso ou resultados vazios não comprovam saúde nem cobertura completa.",
+      "UNRESOLVED": "Pendente",
+      "SAME_REQUEST_SUCCEEDED": "Solicitação idêntica teve sucesso depois; falha histórica mantida",
+      "CHANGED_REQUEST_SUCCEEDED_SCOPE_UNVERIFIED": "Solicitação alterada teve sucesso; escopo original não verificado",
+      "truncated": "Exibindo as primeiras 20 falhas; totais incluem todos os registros.",
+      "queryCoverage": "Escopo e limites retornados (registros do servidor)",
+      "stopReason": "Motivo da parada",
+      "countUnknown": "desconhecido",
+      "absoluteWindowUnknown": "A ferramenta não forneceu limites de tempo absolutos; consulte o escopo listado",
+      "rangeCounts": "Retornados {{returned}} / total {{total}} {{unit}}; deslocamento {{offset}}",
+      "coverageTruncated": "Somente os primeiros40 escopos são exibidos; isso não comprova cobertura completa.",
+      "rows": "linhas",
+      "points": "pontos",
+      "groups": "grupos",
+      "coverageStates": {
+        "EMPTY_RESULT": "Resultado vazio bem-sucedido apenas para estas condições",
+        "PARTIAL_PAGE": "Resultados parciais; não representam o total",
+        "BOUNDED_RESULTS": "Resultados limitados; total não fornecido",
+        "OBSERVED_ROWS": "Dados de consulta retornados",
+        "UNKNOWN": "Cobertura desconhecida; não inferir zero nem saúde"
+      },
+      "details": "Ver detalhes",
+      "toolFailed": "Falha na ferramenta — ver detalhes",
+      "runFailed": "Tarefa falhou; a resposta pode estar incompleta",
+      "compact": {
+        "UNKNOWN": "Estado de execução indisponível",
+        "IN_PROGRESS": "Tarefa em andamento",
+        "NO_RECORDS": "Sem registros de execução",
+        "PARTIAL": "Resultado parcial — algumas consultas não foram verificadas",
+        "RECOVERED": "Falhas anteriores recuperadas",
+        "NO_FAILED_ATTEMPTS": "Registros de execução"
+      }
+    },
+    "batch": {
+      "title": "Progresso do lote",
+      "counts": "{{verified}} / {{total}} verificados · {{pending}} restantes · {{reviewRequired}} para revisão",
+      "segment": "Segment {{segment}} · {{calls}} / {{budget}} tool calls",
+      "target": "Frozen target",
+      "interval": "Interval (s)",
+      "status": "Status",
+      "receipt": "Resource / evidence",
+      "continue": "Continuar itens restantes",
+      "reconcile": "Conferir sem gravar",
+      "reconnect": "Reconectar ao segmento atual",
+      "frozen": "Targets and parameters are frozen. Each segment uses the original run budget and requires an explicit action. Completed or uncertain writes are never repeated.",
+      "unknown": "Some results require review. A matching resource does not prove that this task created it. Reconciliation never repeats a write.",
+      "unavailable": "Progress is unavailable. Refresh before continuing; do not resubmit the original request.",
+      "stopping": "Waiting for the current executor to stop before another segment can begin.",
+      "stage": {
+        "RUNNING": "Current segment is running",
+        "WAITING_APPROVAL": "Waiting for approval",
+        "COMPLETE": "All frozen items verified",
+        "REVIEW_REQUIRED": "Paused: results need review",
+        "PAUSED": "Segment paused; remaining items need explicit continuation"
+      },
+      "receiptKind": {
+        "NATIVE_RECEIPT": "Native receipt",
+        "STATE_READBACK": "State readback",
+        "MATCH_ONLY": "Candidate only; review required",
+        "NONE": "No receipt"
+      },
+      "item": {
+        "PENDING": "Pending",
+        "READY": "Validated",
+        "RECEIPT": "Saved; checking state",
+        "VERIFIED": "Verified",
+        "WAITING_APPROVAL": "Waiting for approval",
+        "FAILED": "Failed; review required",
+        "UNCERTAIN": "Unknown outcome",
+        "REJECTED": "Approval rejected",
+        "VALIDATION_FAILED": "Validation failed",
+        "MATCHED_REVIEW": "Matching candidate; review required",
+        "UNRESOLVED_REVIEW": "Unresolved; review required",
+        "RUNNING": "Running",
+        "VALIDATING": "Validando",
+        "EXECUTING": "Executando",
+        "CHECKING": "Conferindo estado"
+      },
+      "monitor": "Monitor {{id}}",
+      "parameters": "Parâmetros fixados",
+      "retryPreflight": "Repetir pré-verificações com falha",
+      "cancelled": "Cancelada. A execução terminou. O histórico é mantido; não haverá continuação nem repetição automática.",
+      "preflightStopped": "O segmento terminou com falhas de pré-validação. Recursos verificados não serão recriados.",
+      "ended": "Este segmento terminou. Não há ação de continuação disponível."
+    },
+    "permission": {
+      "label": "Modo de aprovação",
+      "manual": "Aprovar cada alteração",
+      "full": "Modo completo (15 minutos)",
+      "loading": "Verificando modo de aprovação",
+      "unavailable": "Modo indisponível",
+      "selectSession": "Inicie ou selecione uma tarefa primeiro.",
+      "scope": "Aplica-se apenas a você nesta conversa por 15 minutos. Você pode restaurar a aprovação individual a qualquer momento.",
+      "boundaries": "Permissões, escopo da tarefa, orçamento e aprovações obrigatórias continuam válidos. Operações perigosas e outras protegidas ainda exigem aprovação separada.",
+      "riskTitle": "Revisar acesso do modo completo",
+      "risk": "Quando ativo, alterações elegíveis podem ser executadas sem confirmação individual. Revise o escopo e os riscos antes de ativar.",
+      "acknowledge": "Entendo os riscos e permito alterações elegíveis nesta conversa.",
+      "wait": "Leia os riscos por mais {{seconds}} segundos antes de confirmar.",
+      "ready": "O período de revisão terminou. Confirme explicitamente para ativar.",
+      "enable": "Ativar modo completo",
+      "expired": "Esta confirmação expirou. Feche e abra novamente.",
+      "error": "Não foi possível verificar a resposta. Atualize o modo atual antes de continuar."
+    },
+    "waiting": {
+      "thinking": "Pensando…",
+      "findingTools": "Buscando ferramentas disponíveis…",
+      "queryingLogs": "Consultando logs…",
+      "executingTool": "Executando ferramenta…",
+      "responding": "Escrevendo resposta…"
+    },
+    "conversationHistory": "Mensagens da conversa",
+    "latestMessages": "Voltar às mais recentes",
+    "message": {
+      "copy": "Copiar mensagem",
+      "copied": "Copiado",
+      "copyFailed": "Falha ao copiar. Selecione o texto e copie manualmente.",
+      "copyAfterGeneration": "Copie após a conclusão da resposta"
+    },
+    "transportFailure": {
+      "QUEUE_TIMEOUT": "A solicitação não foi enviada: a espera pela sessão do navegador expirou.",
+      "HEADER_TIMEOUT": "O envio foi solicitado ao navegador, mas os cabeçalhos não chegaram. Verifique a tarefa no servidor antes de reenviar.",
+      "REQUEST_PREPARATION_FAILED": "A preparação falhou e a solicitação não foi enviada.",
+      "HTTP_REJECTED": "O servidor rejeitou a solicitação (HTTP {{status}}). A aceitação da tarefa não foi confirmada.",
+      "TRANSPORT_FAILURE": "O transporte do navegador falhou; a aceitação no servidor não foi confirmada.",
+      "STREAM_CONTRACT": "A resposta não pôde ser validada como fluxo de tarefa. Verifique o estado do servidor.",
+      "STREAM_READ_FAILED": "O fluxo da tarefa foi interrompido. Verifique a tarefa no servidor antes de tentar novamente.",
+      "requestId": "ID da solicitação: {{id}}"
     }
   },
   "alertInvestigation": {
@@ -4555,15 +4837,15 @@
     }
   },
   "aiSchedules": {
-    "title": "Investigações agendadas",
-    "description": "Execute uma investigação fixa por agenda e envie o resultado aos destinatários configurados.",
-    "workspaceAction": "Investigações agendadas",
+    "title": "Tarefas agendadas",
+    "description": "Execute uma tarefa fixa por agenda e envie o resultado aos destinatários configurados.",
+    "workspaceAction": "Tarefas agendadas",
     "create": "Criar agendamento",
     "never": "Não agendado",
     "receiverCount": "{{count}} destinatários",
     "columns": {
       "schedule": "Agendamento",
-      "instruction": "Instrução da investigação",
+      "instruction": "Instrução da tarefa",
       "delivery": "Entrega",
       "nextRun": "Próxima execução",
       "enabled": "Ativo",
@@ -4577,17 +4859,17 @@
       "deleteConfirm": "Excluir este agendamento?"
     },
     "states": {
-      "loading": "Carregando investigações agendadas…",
-      "empty": "Ainda não há investigações agendadas.",
-      "emptyDescription": "Crie um agendamento para repetir a investigação e notificar os mesmos destinatários.",
-      "unavailable": "As investigações agendadas estão indisponíveis.",
+      "loading": "Carregando tarefas agendadas…",
+      "empty": "Ainda não há tarefas agendadas.",
+      "emptyDescription": "Crie um agendamento para repetir a tarefa e notificar os mesmos destinatários.",
+      "unavailable": "As tarefas agendadas estão indisponíveis.",
       "mutationFailed": "Não foi possível confirmar a alteração. Atualize antes de tentar novamente."
     },
     "editor": {
-      "createTitle": "Criar investigação agendada",
-      "editTitle": "Editar investigação agendada",
+      "createTitle": "Criar tarefa agendada",
+      "editTitle": "Editar tarefa agendada",
       "name": "Nome",
-      "instruction": "Instrução da investigação",
+      "instruction": "Instrução da tarefa",
       "cron": "Expressão de agendamento",
       "cronHint": "Cron Spring de seis campos; os segundos devem ser 0",
       "receivers": "Destinatários da notificação",
@@ -4919,5 +5201,6 @@
   "dashboard.v3.traceSamplesFailed": "Falha ao carregar rastros anômalos",
   "dashboard.v3.traceSamplesUnsupported": "Este backend não suporta consultas de rastros anômalos",
   "dashboard.v3.traceSamplesMissing": "Nenhuma amostra anômala foi obtida nesta janela",
-  "dashboard.v3.errorSpans": "Spans com erro {{count}}"
+  "dashboard.v3.errorSpans": "Spans com erro {{count}}",
+  "aiWorkspace.composer.tooLarge": "A mensagem excede o limite (32.768 caracteres ou 48 KiB). O rascunho foi mantido; reduza-o antes de enviar."
 }

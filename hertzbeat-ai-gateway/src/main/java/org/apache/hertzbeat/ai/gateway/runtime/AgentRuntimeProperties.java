@@ -17,16 +17,16 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
-import java.time.Duration;
-import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/**
- * Agent runtime execution configuration baseline.
- */
+import java.time.Duration;
+import java.util.Objects;
+
+/** Agent runtime execution configuration baseline. */
 @Getter
 @Setter
 @ToString
@@ -37,11 +37,20 @@ public class AgentRuntimeProperties {
 
     private double temperature = 0.2D;
 
-    private int maxCompletionTokens = 4096;
+    // Null omits the output-token parameter and uses the configured provider's default.
+    private Integer maxCompletionTokens;
 
-    private int maxSteps = 2048;
+    private Integer reviewMaxCompletionTokens;
 
-    private int maxToolCalls = 1024;
+    private int maxSteps = 64;
+
+    private int maxToolCalls = 64;
+
+    private int maxConsecutiveReadFailures = 3;
+
+    private int maxEquivalentReadCalls = 3;
+
+    private int maxNoProgressReadCalls = 6;
 
     private Duration modelRequestTimeout = Duration.ofSeconds(360);
 
@@ -69,12 +78,33 @@ public class AgentRuntimeProperties {
         this.temperature = temperature;
     }
 
-    public void setMaxCompletionTokens(int maxCompletionTokens) {
-        this.maxCompletionTokens = requirePositive("maxCompletionTokens", maxCompletionTokens);
+    public void setMaxCompletionTokens(Integer maxCompletionTokens) {
+        this.maxCompletionTokens =
+                maxCompletionTokens == null
+                        ? null
+                        : requirePositive("maxCompletionTokens", maxCompletionTokens);
+    }
+
+    public void setReviewMaxCompletionTokens(Integer value) {
+        this.reviewMaxCompletionTokens =
+                value == null ? null : requirePositive("reviewMaxCompletionTokens", value);
     }
 
     public void setMaxSteps(int maxSteps) {
         this.maxSteps = requirePositive("maxSteps", maxSteps);
+    }
+
+    public void setMaxConsecutiveReadFailures(int maxConsecutiveReadFailures) {
+        this.maxConsecutiveReadFailures =
+                requirePositive("maxConsecutiveReadFailures", maxConsecutiveReadFailures);
+    }
+
+    public void setMaxEquivalentReadCalls(int value) {
+        this.maxEquivalentReadCalls = requirePositive("maxEquivalentReadCalls", value);
+    }
+
+    public void setMaxNoProgressReadCalls(int value) {
+        this.maxNoProgressReadCalls = requirePositive("maxNoProgressReadCalls", value);
     }
 
     public void setMaxToolCalls(int maxToolCalls) {
@@ -98,12 +128,14 @@ public class AgentRuntimeProperties {
     }
 
     public void setContext(ContextProperties context) {
-        // The runtime loop needs a complete context policy before calculating every model input window.
+        // The runtime loop needs a complete context policy before calculating every model input
+        // window.
         this.context = Objects.requireNonNull(context, "context must not be null");
     }
 
     public void setRetry(RetryProperties retry) {
-        // The runtime loop dereferences retry policy on every model failure; binding must preserve that invariant.
+        // The runtime loop dereferences retry policy on every model failure; binding must preserve
+        // that invariant.
         this.retry = Objects.requireNonNull(retry, "retry must not be null");
     }
 
@@ -116,17 +148,13 @@ public class AgentRuntimeProperties {
         context.compactionThresholdTokens();
     }
 
-    /**
-     * Runtime model context window and compaction settings.
-     */
+    /** Runtime model context window and compaction settings. */
     @Getter
     @Setter
     @ToString
     public static class ContextProperties {
 
-        /**
-         * Maximum token budget used to plan the model context window.
-         */
+        /** Maximum token budget used to plan the model context window. */
         private long maxTokens = 32000;
 
         private CompactionProperties compaction = new CompactionProperties();
@@ -137,22 +165,23 @@ public class AgentRuntimeProperties {
 
         public void setCompaction(CompactionProperties compaction) {
             // Every context decision requires a complete compaction policy.
-            this.compaction = Objects.requireNonNull(compaction, "context.compaction must not be null");
+            this.compaction =
+                    Objects.requireNonNull(compaction, "context.compaction must not be null");
         }
 
         long compactionThresholdTokens() {
             long thresholdTokens = (long) Math.floor(maxTokens * compaction.getThresholdRatio());
-            if (compaction.getRetainRecentTokens() + compaction.getSummaryTokenBudget() >= thresholdTokens) {
+            if (compaction.getRetainRecentTokens() + compaction.getSummaryTokenBudget()
+                    >= thresholdTokens) {
                 throw new IllegalArgumentException(
-                    "context compaction retain and summary budgets must be below the compaction threshold");
+                        "context compaction retain and summary budgets must be below the compaction"
+                            + " threshold");
             }
             return thresholdTokens;
         }
     }
 
-    /**
-     * Runtime history compaction policy.
-     */
+    /** Runtime history compaction policy. */
     @Getter
     @Setter
     @ToString
@@ -166,25 +195,24 @@ public class AgentRuntimeProperties {
 
         public void setThresholdRatio(double thresholdRatio) {
             if (thresholdRatio <= 0 || thresholdRatio >= 1) {
-                throw new IllegalArgumentException("context.compaction.thresholdRatio must be between 0 and 1");
+                throw new IllegalArgumentException(
+                        "context.compaction.thresholdRatio must be between 0 and 1");
             }
             this.thresholdRatio = thresholdRatio;
         }
 
         public void setRetainRecentTokens(long retainRecentTokens) {
-            this.retainRecentTokens = requirePositive(
-                "context.compaction.retainRecentTokens", retainRecentTokens);
+            this.retainRecentTokens =
+                    requirePositive("context.compaction.retainRecentTokens", retainRecentTokens);
         }
 
         public void setSummaryTokenBudget(int summaryTokenBudget) {
-            this.summaryTokenBudget = requirePositive(
-                "context.compaction.summaryTokenBudget", summaryTokenBudget);
+            this.summaryTokenBudget =
+                    requirePositive("context.compaction.summaryTokenBudget", summaryTokenBudget);
         }
     }
 
-    /**
-     * Runtime retry settings for transient model errors.
-     */
+    /** Runtime retry settings for transient model errors. */
     @Getter
     @Setter
     @ToString
@@ -220,9 +248,7 @@ public class AgentRuntimeProperties {
         }
     }
 
-    /**
-     * Runtime streaming backpressure controls for slow clients.
-     */
+    /** Runtime streaming backpressure controls for slow clients. */
     @Getter
     @Setter
     @ToString

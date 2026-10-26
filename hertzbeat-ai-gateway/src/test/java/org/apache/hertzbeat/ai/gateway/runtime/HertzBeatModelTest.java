@@ -55,6 +55,50 @@ import reactor.core.publisher.Flux;
 class HertzBeatModelTest {
 
     @Test
+    void boundProviderMustRejectMissingOrDuplicateToolIdsBeforeGatewayExecution() {
+        for (var calls : List.of(List.of(new AssistantMessage.ToolCall("", "function", "read", "{}")),
+                List.of(new AssistantMessage.ToolCall("same", "function", "read", "{}"),
+                        new AssistantMessage.ToolCall("same", "function", "read", "{}")))) {
+            var chat = new CapturingChatModel(response(AssistantMessage.builder().toolCalls(calls).build(),
+                    ChatResponseMetadata.builder().build()));
+            var client = new HertzBeatModel(chat,
+                    (req, callbacks) -> org.springframework.ai.chat.prompt.ChatOptions.builder().build(), "binding-fixture");
+            assertThrows(AgentRuntimeModelException.class, () -> stream(client, request()));
+        }
+    }
+
+    @Test
+    void orderedStreamPartsMustSurvivePrivateHistoryReplayWithOriginalToolNames() {
+        var wireCall = new AssistantMessage.ToolCall("wire-1", "function", "fixture_read", "{}");
+        var parts = List.<org.springframework.ai.chat.messages.part.MessagePart>of(
+                org.springframework.ai.chat.messages.part.TextPart.of("before"),
+                org.springframework.ai.chat.messages.part.ToolCallPart.of(wireCall),
+                org.springframework.ai.chat.messages.part.TextPart.of("after"));
+        var indexed = java.util.stream.IntStream.range(0, parts.size())
+                .mapToObj(index -> org.springframework.ai.chat.messages.part.StreamingParts.complete(parts.get(index), index)).toList();
+        var assistant = AssistantMessage.builder().parts(indexed).build();
+        var chat = new CapturingChatModel(response(assistant, ChatResponseMetadata.builder().build()));
+        var client = new HertzBeatModel(chat, (req, callbacks) -> org.springframework.ai.chat.prompt.ChatOptions.builder().build(),
+                "binding-fixture");
+        var result = stream(client, request());
+        assertEquals(parts, result.getModelParts().parts());
+        org.apache.hertzbeat.common.util.AesUtil.setDefaultSecretKey("parts-fixture-01");
+        var saved = TranscriptMessage.assistantToolCalls("beforeafter",
+                List.of(TranscriptContent.toolCall("wire-1", "fixture.read", Map.of())), null);
+        saved.setModelPartsCiphertext(AgentModelPartsCodec.seal(result.getModelParts()));
+        saved.setPruned(true);
+        var tool = TranscriptMessage.toolResult("wire-1", "fixture.read", "ok", null);
+        var replay = AgentRuntimeModelRequest.builder().prompt(request().getPrompt()).chatHistory(List.of(saved, tool)).build();
+        stream(client, replay);
+        var historyAssistant = chat.prompt.getInstructions().stream().filter(AssistantMessage.class::isInstance)
+                .map(AssistantMessage.class::cast).findFirst().orElseThrow();
+        var historyTool = chat.prompt.getInstructions().stream().filter(ToolResponseMessage.class::isInstance)
+                .map(ToolResponseMessage.class::cast).findFirst().orElseThrow();
+        assertEquals(parts, historyAssistant.getParts());
+        assertEquals("fixture_read", historyTool.getResponses().getFirst().name());
+    }
+
+    @Test
     void finalAnswerShouldMapAssistantTextAndUsage() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Healthy."),
                 ChatResponseMetadata.builder()

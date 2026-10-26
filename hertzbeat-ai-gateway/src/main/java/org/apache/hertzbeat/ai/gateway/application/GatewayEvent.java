@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.ai.gateway.application;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.hertzbeat.ai.gateway.runtime.TranscriptContent;
 import java.util.Map;
 import java.util.Objects;
 import lombok.Builder;
@@ -110,7 +112,12 @@ public record GatewayEvent(
 
     /** Assistant message completion payload. */
     @Builder
-    public record MessageCompletedPayload(String traceId) implements GatewayEventPayload {
+    public record MessageCompletedPayload(String traceId,
+                                          @JsonInclude(JsonInclude.Include.NON_NULL) List<TranscriptContent> parts)
+            implements GatewayEventPayload {
+        public MessageCompletedPayload(String traceId) {
+            this(traceId, null);
+        }
     }
 
     /** Tool execution start payload. */
@@ -174,7 +181,9 @@ public record GatewayEvent(
             String toolName,
             String approvalId,
             String toolCallId,
-            String status) implements GatewayEventPayload {
+            String status,
+            Boolean canDecide,
+            org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary summary) implements GatewayEventPayload {
     }
 
     /** Approval completion payload. */

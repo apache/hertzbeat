@@ -65,6 +65,7 @@ public class HertzBeatModel {
     };
 
     private final StreamingChatModel chatModel;
+    private String providerBinding;
     private final ObjectMapper objectMapper;
     private final AgentModelRequestOptionsFactory requestOptionsFactory;
 
@@ -88,21 +89,34 @@ public class HertzBeatModel {
         this.requestOptionsFactory = requestOptionsFactory;
     }
 
+    public HertzBeatModel(StreamingChatModel chatModel, AgentModelRequestOptionsFactory requestOptionsFactory,
+                          String providerBinding) {
+        this(chatModel, requestOptionsFactory);
+        this.providerBinding = providerBinding;
+    }
+
     public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
                                             Consumer<String> textDeltaConsumer) {
         control.checkpoint();
+        AgentModelCallTiming timing = new AgentModelCallTiming(control.getRunUid(), request);
         ToolNameCodec toolNameCodec = ToolNameCodec.of(request.getAvailableTools());
         Prompt prompt = toPrompt(request, toolNameCodec);
         Thread currentThread = Thread.currentThread();
         AutoCloseable abortRegistration = control.onAbort(currentThread::interrupt);
-        ChatResponseAccumulator accumulator = new ChatResponseAccumulator(textDeltaConsumer, toolNameCodec);
+        ChatResponseAccumulator accumulator = new ChatResponseAccumulator(delta -> {
+            timing.text(delta);
+            textDeltaConsumer.accept(delta);
+        }, toolNameCodec);
+        boolean streamCompleted = false;
         try {
-            chatModel.stream(prompt)
+            new org.springframework.ai.chat.model.MessageAggregator().aggregate(chatModel.stream(prompt), accumulator::complete)
                     .doOnNext(response -> {
                         control.checkpoint();
+                        timing.chunk();
                         accumulator.accept(response);
                     })
                     .blockLast();
+            streamCompleted = true;
         } catch (AgentRuntimeModelException exception) {
             throw exception;
         } catch (RuntimeException exception) {
@@ -115,6 +129,7 @@ public class HertzBeatModel {
             throw AgentRuntimeModelException.retryable(
                     "Model provider request failed: " + providerMessage, exception);
         } finally {
+            timing.finish(accumulator.metadata, accumulator.finishReason, streamCompleted, control.isStopRequested());
             try {
                 abortRegistration.close();
             } catch (Exception ignored) {
@@ -122,7 +137,9 @@ public class HertzBeatModel {
             }
         }
         control.checkpoint();
-        return accumulator.toRuntimeResponse();
+        AgentRuntimeModelResponse response = accumulator.toRuntimeResponse();
+        AgentRuntimeSafeTrace.model(control.getRunUid(), request, response, accumulator.finishReason);
+        return response;
     }
 
     private static String userFacingFailureMessage(RuntimeException exception) {
@@ -187,8 +204,16 @@ public class HertzBeatModel {
         if (chatHistory.isEmpty()) {
             return;
         }
+        Map<String, String> pairedNames = new java.util.HashMap<>();
         for (TranscriptMessage historyMessage : chatHistory) {
             Message message = toSpringHistoryMessage(historyMessage, toolNameCodec);
+            if (message instanceof AssistantMessage assistant) {
+                assistant.getToolCalls().forEach(call -> pairedNames.put(call.id(), call.name()));
+            } else if (message instanceof ToolResponseMessage tool) {
+                message = ToolResponseMessage.builder().metadata(tool.getMetadata()).responses(tool.getResponses().stream()
+                        .map(result -> new ToolResponseMessage.ToolResponse(result.id(),
+                                pairedNames.getOrDefault(result.id(), result.name()), result.responseData())).toList()).build();
+            }
             if (message != null) {
                 messages.add(message);
             }
@@ -197,6 +222,11 @@ public class HertzBeatModel {
 
     private Message toSpringHistoryMessage(TranscriptMessage historyMessage, ToolNameCodec toolNameCodec) {
         TranscriptMessage.TranscriptRole role = historyMessage.getRole();
+        if (role == TranscriptMessage.TranscriptRole.ASSISTANT
+                && StringUtils.hasText(historyMessage.getModelPartsCiphertext())) {
+            AgentModelParts saved = AgentModelPartsCodec.open(historyMessage.getModelPartsCiphertext(), providerBinding);
+            return AssistantMessage.builder().parts(saved.parts()).properties(historyMetadata(historyMessage)).build();
+        }
         if (role == TranscriptMessage.TranscriptRole.USER) {
             return UserMessage.builder()
                     .text(historyMessage.text())
@@ -355,7 +385,12 @@ public class HertzBeatModel {
             return List.of();
         }
         List<AgentRuntimeToolCall> result = new ArrayList<>(toolCalls.size());
+        java.util.Set<String> ids = new java.util.HashSet<>();
         for (AssistantMessage.ToolCall toolCall : toolCalls) {
+            if ((providerBinding != null && !StringUtils.hasText(toolCall.id()))
+                    || (StringUtils.hasText(toolCall.id()) && !ids.add(toolCall.id()))) {
+                throw AgentRuntimeModelException.nonRetryable("Provider tool call IDs must be present and unique", null);
+            }
             Map<String, Object> arguments = parseArguments(toolCall);
             String toolCallId = toolCall.id();
             // Some OpenAI-compatible providers omit tool call IDs; synthesize one so tool responses can reference it.
@@ -432,6 +467,8 @@ public class HertzBeatModel {
         private final StringBuilder text = new StringBuilder();
         private List<AgentRuntimeToolCall> toolCalls = List.of();
         private ChatResponseMetadata metadata;
+        private AssistantMessage aggregated;
+        private String finishReason;
 
         private ChatResponseAccumulator(Consumer<String> textDeltaConsumer, ToolNameCodec toolNameCodec) {
             this.textDeltaConsumer = textDeltaConsumer;
@@ -445,15 +482,15 @@ public class HertzBeatModel {
                 metadata = responseMetadata;
             }
             Generation generation = response.getResult();
+            if (generation != null && generation.getMetadata() != null
+                    && StringUtils.hasText(generation.getMetadata().getFinishReason())) {
+                finishReason = generation.getMetadata().getFinishReason();
+            }
             // Streaming chunks can carry only metadata; wait until an assistant output chunk arrives.
             if (generation == null || generation.getOutput() == null) {
                 return;
             }
             AssistantMessage output = generation.getOutput();
-            List<AgentRuntimeToolCall> responseToolCalls = toRuntimeToolCalls(output.getToolCalls(), toolNameCodec);
-            if (!responseToolCalls.isEmpty()) {
-                toolCalls = responseToolCalls;
-            }
             String delta = output.getText();
             if (StringUtils.hasLength(delta)) {
                 text.append(delta);
@@ -461,11 +498,29 @@ public class HertzBeatModel {
             }
         }
 
+        private void complete(ChatResponse response) {
+            if (response.getResult() != null && response.getResult().getOutput() != null) {
+                if (response.getResult().getMetadata() != null
+                        && StringUtils.hasText(response.getResult().getMetadata().getFinishReason())) {
+                    finishReason = response.getResult().getMetadata().getFinishReason();
+                }
+                aggregated = response.getResult().getOutput();
+                toolCalls = java.util.Set.of("length", "max_tokens").contains(AgentRuntimeSafeTrace.finishReason(finishReason))
+                        ? List.of() : toRuntimeToolCalls(aggregated.getToolCalls(), toolNameCodec);
+                metadata = response.getMetadata();
+            }
+        }
+
         private AgentRuntimeModelResponse toRuntimeResponse() {
+            if (java.util.Set.of("length", "max_tokens").contains(AgentRuntimeSafeTrace.finishReason(finishReason)))
+                return AgentRuntimeModelResponse.invalidResponse("MODEL_OUTPUT_LIMIT_REACHED: incomplete output cannot authorize tools or completion", toRuntimeUsage(metadata));
             if (text.isEmpty() && toolCalls.isEmpty()) {
                 throw new AgentRuntimeModelException("Model provider returned an empty response.", true);
             }
-            return HertzBeatModel.this.toRuntimeResponse(text.toString(), toolCalls, metadata);
+            String finalText = aggregated == null ? text.toString() : aggregated.getText();
+            AgentRuntimeModelResponse result = HertzBeatModel.this.toRuntimeResponse(finalText, toolCalls, metadata);
+            return providerBinding == null || aggregated == null ? result
+                    : result.withModelParts(new AgentModelParts(providerBinding, aggregated.getParts()));
         }
     }
 

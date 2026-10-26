@@ -91,7 +91,7 @@ public class GatewayRuntimeEventProjector {
                             .traceId(event.getTraceId())
                             .toolName(event.getToolName())
                             .toolCallId(event.getToolCallId())
-                            .arguments(event.getToolArguments())
+                            .arguments(displayArguments(event.getToolArguments()))
                             .status(event.getStatus() == null ? EventStatus.IN_PROGRESS.externalName()
                                     : event.getStatus().externalName())
                             .build());
@@ -140,6 +140,7 @@ public class GatewayRuntimeEventProjector {
             return gatewayEvent(event, GatewayEventType.MESSAGE_COMPLETED, conversationId, sessionUid, runUid,
                     MessageCompletedPayload.builder()
                             .traceId(event.getTraceId())
+                            .parts(event.getMessageParts())
                             .build());
         }
         return unsupported(event, conversationId, sessionUid, runUid,
@@ -168,6 +169,10 @@ public class GatewayRuntimeEventProjector {
         }
         return gatewayEvent(event, GatewayEventType.APPROVAL_REQUESTED, conversationId, sessionUid, runUid,
                 ApprovalRequestedPayload.builder()
+                        .summary(event.getRequestPayload() != null && event.getRequestPayload().get("summary")
+                                instanceof org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary summary ? summary : null)
+                        .canDecide(event.getRequestPayload() != null
+                                && Boolean.TRUE.equals(event.getRequestPayload().get("canDecide")))
                         .traceId(event.getTraceId())
                         .toolName(event.getToolName())
                         .approvalId(event.getApprovalId())
@@ -288,6 +293,20 @@ public class GatewayRuntimeEventProjector {
                 .filter(Map.class::isInstance)
                 .map(item -> Map.copyOf((Map<String, Object>) item))
                 .toList();
+    }
+
+    /** SSE shows bounded numeric routing facts only; arbitrary parameter aliases may hold secrets. */
+    private static java.util.Map<String, Object> displayArguments(java.util.Map<String, Object> arguments) {
+        if (arguments == null) return java.util.Map.of();
+        java.util.Map<String, Object> safe = new java.util.LinkedHashMap<>();
+        for (String key : java.util.List.of("monitorId", "entityId", "id", "limit", "pageIndex", "pageSize")) {
+            Object value = arguments.get(key);
+            if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+                long numeric = ((Number) value).longValue();
+                if (numeric >= 0) safe.put(key, value);
+            }
+        }
+        return java.util.Map.copyOf(safe);
     }
 
 }

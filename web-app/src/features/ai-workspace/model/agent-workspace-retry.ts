@@ -16,9 +16,9 @@
  */
 
 import type { AgentGatewayEvent } from './agent-workspace-contract';
-import type { AgentWorkspaceRunState } from './agent-workspace-run-state';
+import type { AgentWorkspaceRunState } from './agent-run-state';
 
-export type { AgentModelRetry } from './agent-workspace-run-state';
+export type { AgentModelRetry } from './agent-run-state';
 
 /** Records live model retry progress announced by a MODEL_RETRY gateway event. */
 export function reduceModelRetry(state: AgentWorkspaceRunState, event: AgentGatewayEvent): AgentWorkspaceRunState {

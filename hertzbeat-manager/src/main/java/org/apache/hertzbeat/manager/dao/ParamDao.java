@@ -27,6 +27,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface ParamDao extends JpaRepository<Param, Long> {
 
+    /** Find only candidate hosts already monitored as websites, without exposing other parameters. */
+    @org.springframework.data.jpa.repository.Query("select distinct lower(p.paramValue) from Param p where p.field = 'host' "
+            + "and lower(p.paramValue) in :hosts and p.monitorId in (select m.id from Monitor m where m.app = 'website')")
+    List<String> findExistingWebsiteHosts(@org.springframework.data.repository.query.Param("hosts") java.util.Collection<String> hosts);
+
+    /** Host-only projection constrained to the monitor IDs returned by the native read service. */
+    @org.springframework.data.jpa.repository.Query("select p.monitorId, p.paramValue from Param p where p.field = 'host' "
+            + "and p.monitorId in :ids and p.monitorId in (select m.id from Monitor m where m.app = 'website')")
+    List<Object[]> findWebsiteHostProjection(@org.springframework.data.repository.query.Param("ids") java.util.Collection<Long> ids);
+
     /**
      * Query the list of parameters associated with the monitoring ID'
      * @param monitorId Monitor ID
