@@ -215,7 +215,7 @@ export type AgentSession = {
   gmtUpdate: string | null;
 };
 
-export type AgentRecoveredApproval = {
+type AgentRecoveredApproval = {
   summary?: AgentApprovalSummary | null | undefined;
   approvalId: string;
   toolCallId: string;

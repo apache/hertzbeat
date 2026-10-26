@@ -21,7 +21,7 @@ import type { AgentPermissionChallenge, AgentPermissionSnapshot } from '../model
 
 const epoch = z.number().int().nonnegative().safe();
 const scope = z.literal('CURRENT_USER_SESSION_NORMAL_APPLICATION_WRITES');
-export const agentPermissionPaths = {
+const agentPermissionPaths = {
   status: (sessionUid: string) => `/api/agent/sessions/${encodeURIComponent(sessionUid)}/permission-mode`,
   challenge: (sessionUid: string) => `${agentPermissionPaths.status(sessionUid)}/challenge`,
   confirm: (sessionUid: string) => `${agentPermissionPaths.status(sessionUid)}/confirm`,

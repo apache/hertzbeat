@@ -31,7 +31,7 @@ const labelSetSchema = z.record(trimmed(64), trimmed(256)).refine(value => {
     entries.reduce((size, [key, item]) => size + key.length + item.length, 0) <= 1800
   );
 });
-export const inhibitionConfigurationSchema = z.strictObject({
+const inhibitionConfigurationSchema = z.strictObject({
   name: trimmed(100),
   sourceLabels: labelSetSchema,
   targetLabels: labelSetSchema,

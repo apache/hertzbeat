@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-export const AGENT_MESSAGE_MAX_CHARS = 32768;
-export const AGENT_MESSAGE_MAX_BYTES = 49152;
+const AGENT_MESSAGE_MAX_CHARS = 32768;
+const AGENT_MESSAGE_MAX_BYTES = 49152;
 
 /** Mirrors the server admission budget; never truncate a frozen manifest. */
 export function agentMessageTooLarge(message: string) {

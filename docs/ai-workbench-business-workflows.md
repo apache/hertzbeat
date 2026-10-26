@@ -123,3 +123,22 @@ previous OTLP read-only final-completion scenario needs targeted revalidation.
 Provider retry countdown, provider-error presentation and configurable
 timeout/backoff improvements are being reviewed independently in PR #4496;
 they are not imported or duplicated here.
+
+## Reproducible production UI proof
+
+Run `pnpm build && pnpm budget && pnpm test:browser:ai` in `web-app` after
+installing the pinned dependencies and Playwright Chromium. The AI-only config
+uses strict loopback port 4289, synthetic HTTP responses and a fresh browser
+profile. It covers 401-message pagination, bounded/partial evidence, bootstrap
+and foreground session recovery, rejected refresh, Web Lock admission timeout
+and retry, and the five production locale catalogs. It does not call a provider,
+use existing browser tabs, or create monitors. The broader `playwright.config.ts` references
+`scripts/browser/live-log-sse-fixture.mjs`, which is absent in this source
+snapshot. Broader browser smoke is not claimed; the AI-specific command above
+is independently reproducible.
+
+Locale compilation shares repeated source-owned keys/text across catalogs;
+it does not remove translations, change their nested values, or move payloads
+outside JavaScript budget accounting. The dictionary is immutable and stable
+for the lifetime of a build/watch plugin instance. Development HMR retains
+Vite's regular JSON path.

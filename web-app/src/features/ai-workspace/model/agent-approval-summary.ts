@@ -90,7 +90,7 @@ function validInhibitionExtension(value: Summary) {
     isAgentInhibitionPreview(value.inhibition, value.operation)
   );
 }
-export const agentApprovalSummarySchema = approvalSummaryBaseSchema.refine(
+const agentApprovalSummarySchema = approvalSummaryBaseSchema.refine(
   value => validPersonalExtension(value) && validInhibitionExtension(value)
 );
 export type AgentApprovalSummary = z.infer<typeof agentApprovalSummarySchema>;

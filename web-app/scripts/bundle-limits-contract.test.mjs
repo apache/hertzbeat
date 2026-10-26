@@ -104,12 +104,18 @@ test('locale output preserves complete catalogs without retaining named namespac
   const plugins = loaded.config.plugins.flat(Infinity);
   const plugin = plugins.find(value => value?.name === 'locale-default-export');
   assert.ok(plugin);
-  for (const locale of ['en-us', 'zh-cn', 'zh-tw', 'ja-jp', 'pt-br']) {
-    const id = fileURLToPath(new URL(`../src/assets/i18n/${locale}.json`, import.meta.url));
-    const result = plugin.transform('', id);
-    const emitted = JSON.parse(result.code.slice('export default '.length, -1));
-    assert.deepEqual(emitted, JSON.parse(readFileSync(id, 'utf8')));
-    assert.equal(plugin.transform('', `${id}?raw`), undefined);
+  const sharedId = plugin.resolveId('virtual:hertzbeat-locale-values');
+  const sharedCode = plugin.load(sharedId);
+  const sharedUrl = `data:text/javascript;base64,${Buffer.from(sharedCode).toString('base64')}`;
+  for (const family of ['', 'shell/', 'explore/']) {
+    for (const locale of ['en-us', 'zh-cn', 'zh-tw', 'ja-jp', 'pt-br']) {
+      const id = fileURLToPath(new URL(`../src/assets/i18n/${family}${locale}.json`, import.meta.url));
+      const result = plugin.transform('', id);
+      const code = result.code.replace(JSON.stringify('virtual:hertzbeat-locale-values'), JSON.stringify(sharedUrl));
+      const emitted = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+      assert.deepEqual(emitted.default, JSON.parse(readFileSync(id, 'utf8')));
+      assert.equal(plugin.transform('', `${id}?raw`), undefined);
+    }
   }
   assert.equal(plugin.transform('', fileURLToPath(new URL('../package.json', import.meta.url))), undefined);
 });

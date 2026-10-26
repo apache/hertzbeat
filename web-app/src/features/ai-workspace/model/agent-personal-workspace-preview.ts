@@ -47,7 +47,7 @@ const layoutItemsSchema = z
       return false;
     return items.every((item, index) => items.slice(index + 1).every(other => !overlap(item, other)));
   });
-export const personalLayoutRequestSchema = z.strictObject({
+const personalLayoutRequestSchema = z.strictObject({
   expectedRevision: revisionSchema,
   schemaVersion: z.literal(1),
   mode: z.enum(['auto', 'custom']),
