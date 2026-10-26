@@ -40,6 +40,7 @@ import org.apache.hertzbeat.ai.gateway.runtime.provider.ProviderProbeDestination
 import org.apache.hertzbeat.ai.gateway.runtime.provider.ProviderProbeTransport;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -51,13 +52,21 @@ public class ProviderConnectionTestService implements AutoCloseable {
     private final ProviderProbeDestinationPolicy destinations;
     private final ProviderProbeTransport transport;
     private final ExecutorService workers = Executors.newVirtualThreadPerTaskExecutor();
-    private final Semaphore permits = new Semaphore(4);
+    private final Semaphore permits;
     private final ConcurrentHashMap<String, TestTask> active = new ConcurrentHashMap<>();
     private final Cache<String, Boolean> cancelled = Caffeine.newBuilder().maximumSize(256)
             .expireAfterWrite(Duration.ofMinutes(1)).build();
 
+    @Autowired
     public ProviderConnectionTestService(ModelProviderConfigurationService configurations, AgentModelProviderRegistry providers,
                                          ProviderProbeDestinationPolicy destinations, ProviderProbeTransport transport) {
+        this(configurations, providers, destinations, transport, new Semaphore(4));
+    }
+
+    /** Test seam for observing admission release without changing the public four-probe limit. */
+    ProviderConnectionTestService(ModelProviderConfigurationService configurations, AgentModelProviderRegistry providers,
+                                  ProviderProbeDestinationPolicy destinations, ProviderProbeTransport transport, Semaphore permits) {
+        this.permits = Objects.requireNonNull(permits, "permits");
         this.configurations = configurations;
         this.providers = providers;
         this.destinations = destinations;
@@ -110,6 +119,8 @@ public class ProviderConnectionTestService implements AutoCloseable {
 
     private void execute(String owner, TestTask task, ModelProviderConfig input) {
         ModelProviderConfig config = null;
+        Category category = null;
+        Integer httpStatus = null;
         try {
             if (cancelled.getIfPresent(owner + ":" + task.id) != null) task.stop(Category.CANCELLED);
             if (task.completion.isDone()) return;
@@ -122,19 +133,23 @@ public class ProviderConnectionTestService implements AutoCloseable {
                 task.call.set(call);
                 if (task.completion.isDone()) call.cancel();
             });
-            task.completion.complete(task.result(outcome.category(), outcome.httpStatus()));
+            category = outcome.category();
+            httpStatus = outcome.httpStatus();
         } catch (ProviderProbeDestinationPolicy.DestinationDenied denied) {
-            task.completion.complete(task.result(Category.CONFIGURATION, null));
+            category = Category.CONFIGURATION;
         } catch (CredentialRequired missing) {
-            task.completion.complete(task.result(Category.CREDENTIAL_REQUIRED, null));
+            category = Category.CREDENTIAL_REQUIRED;
         } catch (IllegalArgumentException invalid) {
-            task.completion.complete(task.result(Category.CONFIGURATION, null));
+            category = Category.CONFIGURATION;
         } catch (Exception failure) {
-            task.completion.complete(task.result(Category.NETWORK, null));
+            category = Category.NETWORK;
         } finally {
             if (config != null) config.setApiKey(null);
             active.remove(owner, task);
             permits.release();
+            // A normal result is observable only after its admission resources are free.
+            // stop() still returns promptly but never releases an in-flight worker's slot.
+            if (category != null) task.completion.complete(task.result(category, httpStatus));
         }
     }
 

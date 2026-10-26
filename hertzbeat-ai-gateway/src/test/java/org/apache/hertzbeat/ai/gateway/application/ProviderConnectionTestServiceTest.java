@@ -23,6 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 import org.apache.hertzbeat.ai.gateway.application.ProviderConnectionTest.Category;
 import org.apache.hertzbeat.ai.gateway.application.ProviderConnectionTest.Request;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderOption;
@@ -38,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -120,6 +123,41 @@ class ProviderConnectionTestServiceTest {
     }
 
     @Test
+    void completedProbeReleasesAdmissionBeforeReturning() throws Exception {
+        var cleanupEntered = new CountDownLatch(1);
+        var releaseCleanup = new CountDownLatch(1);
+        var permits = new Semaphore(1) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void release() {
+                cleanupEntered.countDown();
+                try {
+                    assertTrue(releaseCleanup.await(3, TimeUnit.SECONDS));
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(interrupted);
+                } finally {
+                    super.release();
+                }
+            }
+        };
+        service.close();
+        service = new ProviderConnectionTestService(configurations, providers, destinations, transport, permits);
+        var first = CompletableFuture.supplyAsync(() -> service.test("admin", request(form())));
+        try {
+            assertTrue(cleanupEntered.await(3, TimeUnit.SECONDS));
+            assertThrows(TimeoutException.class, () -> first.get(100, TimeUnit.MILLISECONDS));
+            releaseCleanup.countDown();
+            assertEquals(Category.OK, first.get(3, TimeUnit.SECONDS).category());
+            assertEquals(Category.OK, service.test("admin", request(form())).category());
+            assertEquals(1, permits.availablePermits());
+        } finally {
+            releaseCleanup.countDown();
+        }
+    }
+
+    @Test
     void cancellationTombstonePreventsOutboundAndCannotCancelAnotherOwner() throws Exception {
         var request = request(form());
         service.cancel("admin-a", request.requestId());
@@ -153,6 +191,47 @@ class ProviderConnectionTestServiceTest {
         service.cancel("admin", request.requestId());
         assertEquals(Category.CANCELLED, running.get(3, TimeUnit.SECONDS).category());
         verify(call).cancel();
+    }
+
+    @Test
+    void cancellationKeepsOwnerAndGlobalAdmissionUntilUncooperativeTransportSettles() throws Exception {
+        assertStoppedProbeKeepsAdmission(Category.CANCELLED);
+    }
+
+    @Test
+    void timeoutKeepsOwnerAndGlobalAdmissionUntilUncooperativeTransportSettles() throws Exception {
+        assertStoppedProbeKeepsAdmission(Category.TIMEOUT);
+    }
+
+    private void assertStoppedProbeKeepsAdmission(Category expected) throws Exception {
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var call = mock(okhttp3.Call.class);
+        var permits = new Semaphore(1);
+        service.close();
+        service = new ProviderConnectionTestService(configurations, providers, destinations, transport, permits);
+        when(transport.execute(any(), anyString(), anyString(), any(), any())).thenAnswer(invocation -> {
+            java.util.function.Consumer<okhttp3.Call> register = invocation.getArgument(4);
+            register.accept(call);
+            entered.countDown();
+            assertTrue(release.await(20, TimeUnit.SECONDS));
+            return new ProviderProbeTransport.Outcome(Category.NETWORK, null);
+        });
+        var request = request(form());
+        var running = CompletableFuture.supplyAsync(() -> service.test("admin", request));
+        try {
+            assertTrue(entered.await(3, TimeUnit.SECONDS));
+            if (expected == Category.CANCELLED) service.cancel("admin", request.requestId());
+            assertEquals(expected, running.get(15, TimeUnit.SECONDS).category());
+            assertEquals(0, permits.availablePermits());
+            assertEquals(Category.BUSY, service.test("admin", request(form())).category());
+            assertEquals(Category.BUSY, service.test("other", request(form())).category());
+            verify(call).cancel();
+            verify(transport).execute(any(), anyString(), anyString(), any(), any());
+            verifyNoInteractions(configurations);
+        } finally {
+            release.countDown();
+        }
     }
 
     @Test
