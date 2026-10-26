@@ -98,7 +98,8 @@ public class StatusPageServiceImpl implements StatusPageService {
         if (component.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
             component.setState(component.getConfigState());
         }
-        statusPageComponentDao.save(component);
+        StatusPageComponent saved = statusPageComponentDao.save(component);
+        statusPageComponent.setId(saved.getId());
     }
 
     @Override
@@ -333,7 +334,10 @@ public class StatusPageServiceImpl implements StatusPageService {
         if (incident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
             incident.setEndTime(System.currentTimeMillis());
         }
-        statusPageIncidentDao.save(incident);
+        StatusPageIncident saved = statusPageIncidentDao.save(incident);
+        statusPageIncident.setId(saved.getId());
+        statusPageIncident.setStartTime(saved.getStartTime());
+        statusPageIncident.setEndTime(saved.getEndTime());
     }
 
     @Override

@@ -17,11 +17,12 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * In-memory registry for active runtime controls.
@@ -37,9 +38,14 @@ public class AgentRuntimeControlRegistry {
         String runUid = control.getRunUid();
         AgentRuntimeControl existing = controls.putIfAbsent(runUid, control);
         if (existing != null) {
-            throw new IllegalStateException("Agent runtime control is already registered for this run");
+            throw new IllegalStateException(
+                    "Agent runtime control is already registered for this run");
         }
         return () -> controls.remove(runUid, control);
+    }
+
+    public boolean isActive(String runUid) {
+        return controls.containsKey(runUid);
     }
 
     public boolean cancel(String runUid, String reason) {

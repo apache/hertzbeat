@@ -24,4 +24,8 @@ public class MonitorDatabaseException extends RuntimeException {
     public MonitorDatabaseException(String message) {
         super(message);
     }
+
+    public MonitorDatabaseException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

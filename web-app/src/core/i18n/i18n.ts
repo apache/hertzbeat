@@ -49,6 +49,12 @@ const exploreLocaleLoaders: Record<SupportedLocale, () => Promise<Record<string,
 };
 
 export const i18n = i18next.createInstance();
+type LocaleMessages = Record<string, unknown>;
+const loadedCatalogs = new Map<
+  SupportedLocale,
+  { root: LocaleMessages; shell: LocaleMessages; explore: LocaleMessages }
+>();
+const hotRootCatalogs = new Map<SupportedLocale, LocaleMessages>();
 let latestLocaleLoad = 0;
 let localePublication = Promise.resolve();
 
@@ -60,34 +66,74 @@ export async function loadLocale(locale: SupportedLocale, options: { signal?: Ab
       shellLocaleLoaders[locale](),
       exploreLocaleLoaders[locale]()
     ]);
-    i18n.addResourceBundle(
-      locale,
-      'translation',
-      {
-        ...messages,
-        ...shellMessages,
-        exploreSource: {
-          ...messageGroup(messages.exploreSource),
-          ...messageGroup(exploreMessages.exploreSource)
-        },
-        exploreTrace: {
-          ...messageGroup(messages.exploreTrace),
-          ...messageGroup(exploreMessages.exploreTrace)
-        },
-        exploreInvestigation: {
-          ...messageGroup(messages.exploreInvestigation),
-          ...messageGroup(exploreMessages.exploreInvestigation)
-        },
-        explore: {
-          ...messageGroup(messages.explore),
-          ...messageGroup(exploreMessages.explore)
-        }
-      },
-      true,
-      true
-    );
+    const root = hotRootCatalogs.get(locale) ?? messages;
+    loadedCatalogs.set(locale, { root, shell: shellMessages, explore: exploreMessages });
+    publishLocaleMessages(locale, root, shellMessages, exploreMessages);
   }
   return publishLatestLocale(locale, owner, options.signal);
+}
+
+function publishLocaleMessages(
+  locale: SupportedLocale,
+  messages: LocaleMessages,
+  shellMessages: LocaleMessages,
+  exploreMessages: LocaleMessages
+) {
+  i18n.removeResourceBundle(locale, 'translation');
+  i18n.addResourceBundle(
+    locale,
+    'translation',
+    {
+      ...messages,
+      ...shellMessages,
+      exploreSource: {
+        ...messageGroup(messages.exploreSource),
+        ...messageGroup(exploreMessages.exploreSource)
+      },
+      exploreTrace: {
+        ...messageGroup(messages.exploreTrace),
+        ...messageGroup(exploreMessages.exploreTrace)
+      },
+      exploreInvestigation: {
+        ...messageGroup(messages.exploreInvestigation),
+        ...messageGroup(exploreMessages.exploreInvestigation)
+      },
+      explore: {
+        ...messageGroup(messages.explore),
+        ...messageGroup(exploreMessages.explore)
+      }
+    },
+    true,
+    true
+  );
+}
+
+/** Replace a Vite-updated root catalog without resetting user state or changing the selected locale. */
+export function replaceLocaleRootMessages(locale: SupportedLocale, messages: LocaleMessages) {
+  hotRootCatalogs.set(locale, messages);
+  const current = loadedCatalogs.get(locale);
+  if (!current) return;
+  loadedCatalogs.set(locale, { ...current, root: messages });
+  publishLocaleMessages(locale, messages, current.shell, current.explore);
+  if (i18n.resolvedLanguage === locale) i18n.emit('languageChanged', i18n.language);
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept(
+    [
+      '@/assets/i18n/en-us.json',
+      '@/assets/i18n/zh-cn.json',
+      '@/assets/i18n/zh-tw.json',
+      '@/assets/i18n/ja-jp.json',
+      '@/assets/i18n/pt-br.json'
+    ],
+    modules => {
+      const locales: SupportedLocale[] = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'pt-BR'];
+      modules.forEach((module, index) => {
+        if (module) replaceLocaleRootMessages(locales[index]!, module.default as LocaleMessages);
+      });
+    }
+  );
 }
 
 function publishLatestLocale(locale: SupportedLocale, owner: number, signal?: AbortSignal) {

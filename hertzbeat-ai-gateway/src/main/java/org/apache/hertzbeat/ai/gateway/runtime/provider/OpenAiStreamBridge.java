@@ -42,7 +42,12 @@ final class OpenAiStreamBridge implements StreamingChatModel {
     private final OpenAiChatModel model;
 
     OpenAiStreamBridge(OpenAiChatOptions defaults) {
+        this(defaults, io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
+    OpenAiStreamBridge(OpenAiChatOptions defaults, io.micrometer.observation.ObservationRegistry registry) {
         model = OpenAiChatModel.builder().options(withScopeHeader(defaults, null))
+                .observationRegistry(registry)
                 .httpClientBuilderCustomizer(builder -> builder.interceptor(this::intercept)).build();
     }
 

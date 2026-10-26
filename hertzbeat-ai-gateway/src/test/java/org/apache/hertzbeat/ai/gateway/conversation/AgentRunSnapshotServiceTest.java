@@ -46,6 +46,22 @@ class AgentRunSnapshotServiceTest {
     private AgentGroundingEvidenceVerifier groundingVerifier;
 
     @Test
+    void serverExecutionFactsDoNotRewriteAssistantResult() {
+        AgentRun run = succeededLegacyRun();
+        when(groundingVerifier.hasDurableGrounding(run, null)).thenReturn(true);
+        when(transcriptRecorder.findRunFinalAssistantMessage(2L)).thenReturn(Optional.of(
+                TranscriptMessage.assistantText("All calls succeeded; no errors.", null)));
+        AgentExecutionSummaryService facts = org.mockito.Mockito.mock(AgentExecutionSummaryService.class);
+        var partial = new AgentExecutionSummary("PARTIAL", 2, 1, 1, 0, 1, 0, java.util.List.of(), false);
+        when(facts.summarize(run)).thenReturn(partial);
+        var snapshot = new AgentRunSnapshotService(transcriptRecorder, groundingVerifier, facts).snapshot(session(), run);
+        assertEquals("All calls succeeded; no errors.", snapshot.result());
+        assertEquals("PARTIAL", snapshot.executionSummary().status());
+        assertEquals(1, snapshot.executionSummary().failedAttempts());
+        assertEquals("SUCCEEDED", run.getStatus());
+    }
+
+    @Test
     void legacyToolCallPreambleShouldNotBeReplayedAsTheFinalAnswer() {
         AgentRun run = succeededLegacyRun();
 
@@ -92,6 +108,18 @@ class AgentRunSnapshotServiceTest {
         assertEquals("Verify the target before continuing.", snapshot.errorMessage());
         assertTrue(snapshot.replayAvailable());
         assertNull(snapshot.retryRequest());
+    }
+
+    @Test
+    void verifiedEmptyReadRemainsVisibleAsZeroObservations() {
+        AgentRun run = succeededLegacyRun();
+        var proof = org.apache.hertzbeat.ai.gateway.runtime.AgentGroundingProof.builder()
+                .runUid("run-1").toolCallId("call-1").toolName("traces.query")
+                .observationKind("trace-records").observationCount(0).build();
+        when(groundingVerifier.verifiedProofs(run, null)).thenReturn(java.util.List.of(proof));
+        AgentRunSnapshot snapshot = service().snapshot(session(), run);
+        assertEquals(1, snapshot.evidence().size());
+        assertEquals(0, snapshot.evidence().getFirst().observationCount());
     }
 
     private AgentRunSnapshotService service() {

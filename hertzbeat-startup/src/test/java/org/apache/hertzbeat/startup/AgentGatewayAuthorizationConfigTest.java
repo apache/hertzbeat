@@ -57,7 +57,7 @@ class AgentGatewayAuthorizationConfigTest {
             "  - /api/agent/sessions/**===get===[admin,user]",
             "  - /api/agent/webui/**===post===[admin,user]",
             "  - /api/agent/runs/**===post===[admin,user]",
-            "  - /api/agent/approvals/**===post===[admin]",
+            "  - /api/agent/approvals/**===post===[admin,user]",
             "  - /api/agent/interactions/**===post===[admin,user]");
 
     @Test

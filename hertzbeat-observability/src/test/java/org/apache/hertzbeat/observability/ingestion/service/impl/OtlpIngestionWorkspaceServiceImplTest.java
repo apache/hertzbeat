@@ -2322,6 +2322,19 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void inventorySchemaIncompatibilityIsAnExplicitUnavailableSubtypeWithoutPayloadLeak() {
+        when(metricInventoryRepository.findMetricNames(
+                org.mockito.ArgumentMatchers.any(MetricInventoryRepository.Query.class)))
+                .thenReturn(MetricInventoryRepository.Result.schemaIncompatible());
+        var error = assertThrows(org.apache.hertzbeat.common.support.exception.TelemetryStorageSchemaIncompatibleException.class,
+                () -> otlpIngestionWorkspaceService.getMetricsInventory(
+                        "team-a", null, null, 100L, 200L, null, null, null, null, null, null, null, null));
+        assertTrue(error instanceof org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException);
+        assertTrue(error.getMessage().contains("schema incompatible"));
+        assertTrue(error.getMessage().contains("workspace isolation"));
+    }
+
+    @Test
     void inventoryRejectsInvalidExplicitWindowSearchAndLimitBeforeStorage() {
         for (String limit : List.of("0", "201", "-1", "", "1.5", "not-a-number")) {
             assertThrows(IllegalArgumentException.class, () -> otlpIngestionWorkspaceService.getMetricsInventory(
