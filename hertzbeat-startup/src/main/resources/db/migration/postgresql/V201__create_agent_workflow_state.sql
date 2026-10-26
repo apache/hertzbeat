@@ -68,3 +68,6 @@ ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_topic VA
 ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_channel VARCHAR(64);
 ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_token VARCHAR(300);
 ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_topic_code VARCHAR(300);
+
+-- Match the non-shrinking V190 expression type for older V200 baselines as well.
+ALTER TABLE IF EXISTS hzb_alert_define ALTER COLUMN expr TYPE TEXT;

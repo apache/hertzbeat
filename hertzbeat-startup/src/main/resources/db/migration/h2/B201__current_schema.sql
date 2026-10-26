@@ -14,7 +14,7 @@
 -- limitations under the License.
 
 -- Current V201 baseline; shared MySQL compatibility-mode schema.
--- Shared MySQL baseline SHA-256: 4d940828fba77104389aefe0765f7d19bd0112ea7a655380b8abc064e08b03a9
+-- Shared MySQL baseline SHA-256: 5881f81d8cfaa6fbee02a253d05afad944caddad95924ef3bc4ddfcacf0d7a7a
 
 RUNSCRIPT FROM 'classpath:db/migration/mysql/B201__current_schema.sql';
 

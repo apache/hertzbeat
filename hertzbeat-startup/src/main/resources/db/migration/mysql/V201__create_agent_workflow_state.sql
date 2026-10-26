@@ -112,3 +112,19 @@ SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
+
+-- Align native Boolean storage with the current MySQL Hibernate mapping.
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_entity_identity' AND column_name='primary_identity' AND data_type<>'bit')=1, 'ALTER TABLE hzb_entity_identity MODIFY COLUMN primary_identity BIT(1) NOT NULL DEFAULT 0 COMMENT ''Whether primary identity''', 'SELECT 1');
+PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
+EXECUTE hzb_ai_statement;
+DEALLOCATE PREPARE hzb_ai_statement;
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_sop_schedule' AND column_name='enabled' AND data_type<>'bit')=1, 'ALTER TABLE hzb_sop_schedule MODIFY COLUMN enabled BIT(1) DEFAULT 1 COMMENT ''Whether the schedule is enabled''', 'SELECT 1');
+PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
+EXECUTE hzb_ai_statement;
+DEALLOCATE PREPARE hzb_ai_statement;
+
+-- Repair V200 baseline snapshots that omitted V190's expression widening without reducing existing limits.
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_alert_define' AND column_name='expr' AND data_type<>'longtext')=1, 'ALTER TABLE hzb_alert_define MODIFY COLUMN expr LONGTEXT', 'SELECT 1');
+PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
+EXECUTE hzb_ai_statement;
+DEALLOCATE PREPARE hzb_ai_statement;
