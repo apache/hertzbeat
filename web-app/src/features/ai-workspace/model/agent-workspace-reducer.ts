@@ -171,13 +171,18 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
       ...state,
       ...runUid,
       status: 'running',
-        cancelled: false,
+      cancelled: false,
       recoveryAvailable: event.payload.recoveryAvailable === true,
       retryAvailable: false,
       ...(event.payload.observationExpired === true ? { observationExpired: true } : {})
     };
   }
-  state = { ...state, cancelled: status === 'CANCELLED', approvals: [], ...(status === 'CANCELLED' ? { tools: stopUnresolvedTools(state.tools) } : {}) };
+  state = {
+    ...state,
+    cancelled: status === 'CANCELLED',
+    approvals: [],
+    ...(status === 'CANCELLED' ? { tools: stopUnresolvedTools(state.tools) } : {})
+  };
   if (status === 'SUCCEEDED') {
     const result = stringField(event.payload, 'result');
     if (!result || event.payload.replayAvailable === false) {
@@ -187,7 +192,7 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
       ...state,
       ...runUid,
       status: 'complete',
-        cancelled: false,
+      cancelled: false,
       recoveryAvailable: false,
       retryAvailable: false,
       messages: terminalMessages(state.messages, event.payload.resultAlreadyVisible === true, result, event.eventId)

@@ -51,18 +51,21 @@ describe('conversation composer', () => {
     expect(controller.actions.send).not.toHaveBeenCalled();
   });
 
-  it.each(['x'.repeat(32769), '\u6d4b'.repeat(16385)])('retains oversized drafts and blocks both submission paths', message => {
-    const controller = fixture();
-    controller.composer = message;
-    show(controller);
-    expect(screen.getByRole('textbox')).toHaveValue(message);
-    expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('aiWorkspace.composer.tooLarge'));
-    expect(screen.getByRole('button', { name: i18n.t('aiWorkspace.actions.send') })).toBeDisabled();
-    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter', code: 'Enter' });
-    expect(controller.actions.send).not.toHaveBeenCalled();
-    expect(controller.actions.setComposer).not.toHaveBeenCalled();
-  });
+  it.each(['x'.repeat(32769), '\u6d4b'.repeat(16385)])(
+    'retains oversized drafts and blocks both submission paths',
+    message => {
+      const controller = fixture();
+      controller.composer = message;
+      show(controller);
+      expect(screen.getByRole('textbox')).toHaveValue(message);
+      expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('aiWorkspace.composer.tooLarge'));
+      expect(screen.getByRole('button', { name: i18n.t('aiWorkspace.actions.send') })).toBeDisabled();
+      fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter', code: 'Enter' });
+      expect(controller.actions.send).not.toHaveBeenCalled();
+      expect(controller.actions.setComposer).not.toHaveBeenCalled();
+    }
+  );
 
   it('accepts a complete manifest-sized message without trimming its fields', () => {
     const controller = fixture();

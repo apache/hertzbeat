@@ -129,7 +129,11 @@ export function ConversationComposer({ controller }: { controller: AgentWorkspac
         onChange={event => controller.actions.setComposer(event.target.value)}
         onKeyDown={event => submitOnEnter(event, composing.current, canSend, controller.actions.send)}
       />
-      {tooLarge ? <Typography.Text id="agent-message-size-error" role="alert" type="danger">{t('aiWorkspace.composer.tooLarge')}</Typography.Text> : null}
+      {tooLarge ? (
+        <Typography.Text id="agent-message-size-error" role="alert" type="danger">
+          {t('aiWorkspace.composer.tooLarge')}
+        </Typography.Text>
+      ) : null}
       <Button
         aria-label={t('aiWorkspace.actions.send')}
         title={t('aiWorkspace.actions.send')}

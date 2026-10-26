@@ -94,13 +94,23 @@ function ToolResultMessage({ message }: { message: ConversationMessage }) {
           <span className={styles.toolSummaryContent}>
             <code className={styles.messageRole}>{message.toolName}</code>
             <span>
-              {t(cancelled ? 'aiWorkspace.context.cancelledBeforeExecution' : message.errorMessage ? 'aiWorkspace.executionSummary.toolFailed' : 'aiWorkspace.context.rawOutput')}
+              {t(
+                cancelled
+                  ? 'aiWorkspace.context.cancelledBeforeExecution'
+                  : message.errorMessage
+                    ? 'aiWorkspace.executionSummary.toolFailed'
+                    : 'aiWorkspace.context.rawOutput'
+              )}
             </span>
             <MessageTimestamp value={message.createdAt} />
           </span>
         </summary>
         <pre className={styles.toolOutput}>{message.text}</pre>
-        {cancelled ? <Typography.Text type="secondary">{message.errorMessage}</Typography.Text> : <MessageError message={message.errorMessage} />}
+        {cancelled ? (
+          <Typography.Text type="secondary">{message.errorMessage}</Typography.Text>
+        ) : (
+          <MessageError message={message.errorMessage} />
+        )}
       </details>
     </article>
   );

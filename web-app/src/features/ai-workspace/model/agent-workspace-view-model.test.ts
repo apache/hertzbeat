@@ -165,21 +165,42 @@ describe('Durable cancellation evidence', () => {
   );
 });
 
-
 describe('Cancellation summary proof scope', () => {
   const proof = 'CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED';
   function run() {
     return {
-      ...initialAgentWorkspaceRun, runUid: 'current', cancelled: true,
+      ...initialAgentWorkspaceRun,
+      runUid: 'current',
+      cancelled: true,
       tools: [
         { recordedRunUid: 'current', toolCallId: 'read', toolName: 'alert_inhibit.get', status: 'SUCCEEDED' },
-        { recordedRunUid: 'current', toolCallId: 'cancel', toolName: 'alert_inhibit.update', status: 'CANCELLED', errorMessage: proof }
+        {
+          recordedRunUid: 'current',
+          toolCallId: 'cancel',
+          toolName: 'alert_inhibit.update',
+          status: 'CANCELLED',
+          errorMessage: proof
+        }
       ],
       executionSummary: {
-        status: 'PARTIAL' as const, totalAttempts: 2, succeededAttempts: 1, failedAttempts: 1,
-        recoveredAttempts: 0, unresolvedAttempts: 1, unfinishedAttempts: 0, truncated: false,
-        failures: [{ toolCallId: 'cancel', toolName: 'alert_inhibit.update', status: 'DENIED' as const,
-          errorMessage: proof, recovery: 'UNRESOLVED' as const, laterSuccessToolCallId: null }]
+        status: 'PARTIAL' as const,
+        totalAttempts: 2,
+        succeededAttempts: 1,
+        failedAttempts: 1,
+        recoveredAttempts: 0,
+        unresolvedAttempts: 1,
+        unfinishedAttempts: 0,
+        truncated: false,
+        failures: [
+          {
+            toolCallId: 'cancel',
+            toolName: 'alert_inhibit.update',
+            status: 'DENIED' as const,
+            errorMessage: proof,
+            recovery: 'UNRESOLVED' as const,
+            laterSuccessToolCallId: null
+          }
+        ]
       }
     };
   }
@@ -187,15 +208,25 @@ describe('Cancellation summary proof scope', () => {
     const state = run();
     expect(isCancelledBeforeApprovalOnly(state)).toBe(true);
     expect(state.executionSummary.status).toBe('PARTIAL');
-    state.tools.push({ recordedRunUid: 'previous', toolCallId: 'older', toolName: 'monitor.create', status: 'SUCCEEDED' });
+    state.tools.push({
+      recordedRunUid: 'previous',
+      toolCallId: 'older',
+      toolName: 'monitor.create',
+      status: 'SUCCEEDED'
+    });
     expect(isCancelledBeforeApprovalOnly(state)).toBe(true);
   });
-  it.each(['monitor.create', 'alert_inhibit.update', 'unfamiliar.tool'])('does not erase a successful %s operation', name => {
-    const state = run(); state.tools[0]!.toolName = name;
-    expect(isCancelledBeforeApprovalOnly(state)).toBe(false);
-  });
+  it.each(['monitor.create', 'alert_inhibit.update', 'unfamiliar.tool'])(
+    'does not erase a successful %s operation',
+    name => {
+      const state = run();
+      state.tools[0]!.toolName = name;
+      expect(isCancelledBeforeApprovalOnly(state)).toBe(false);
+    }
+  );
   it.each(['FAILED', 'UNKNOWN', 'RUNNING', 'DENIED'])('preserves %s and ordinary rejection', status => {
-    const state = run(); state.tools[1]!.status = status;
+    const state = run();
+    state.tools[1]!.status = status;
     expect(isCancelledBeforeApprovalOnly(state)).toBe(false);
   });
   it('rejects legacy, cross-run, incomplete, non-cancelled and truncated proof', () => {

@@ -20,12 +20,24 @@ import { useTranslation } from 'react-i18next';
 import type { AgentExecutionSummary as ExecutionSummary, AgentQueryCoverage } from '../model/agent-workspace-contract';
 import styles from './agent-workspace-execution.module.css';
 
-export function AgentExecutionSummary({ summary, cancelledBeforeApproval = false }: { summary: ExecutionSummary; cancelledBeforeApproval?: boolean }) {
+export function AgentExecutionSummary({
+  summary,
+  cancelledBeforeApproval = false
+}: {
+  summary: ExecutionSummary;
+  cancelledBeforeApproval?: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <details className={styles.executionDetails} data-status={cancelledBeforeApproval ? 'CANCELLED' : summary.status}>
       <summary className={styles.executionSummary}>
-        <span>{t(cancelledBeforeApproval ? 'aiWorkspace.context.cancelledBeforeExecution' : `aiWorkspace.executionSummary.compact.${summary.status}`)}</span>
+        <span>
+          {t(
+            cancelledBeforeApproval
+              ? 'aiWorkspace.context.cancelledBeforeExecution'
+              : `aiWorkspace.executionSummary.compact.${summary.status}`
+          )}
+        </span>
         <span className={styles.detailsHint}>{t('aiWorkspace.executionSummary.details')}</span>
       </summary>
       {cancelledBeforeApproval ? (
@@ -33,7 +45,9 @@ export function AgentExecutionSummary({ summary, cancelledBeforeApproval = false
           <p>{t('aiWorkspace.context.cancelledBeforeExecution')}</p>
           <QueryCoverage summary={summary} />
         </div>
-      ) : <ExecutionFacts summary={summary} />}
+      ) : (
+        <ExecutionFacts summary={summary} />
+      )}
     </details>
   );
 }

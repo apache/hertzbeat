@@ -77,7 +77,11 @@ describe('batch progress presentation', () => {
       screen.queryByText('This segment is paused; explicitly continue the remaining items')
     ).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Continue remaining items' })).not.toBeInTheDocument();
-    expect(screen.queryByText("Targets and parameters are frozen. Each segment uses the original run budget and requires an explicit action. Completed or uncertain writes are never repeated.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Targets and parameters are frozen. Each segment uses the original run budget and requires an explicit action. Completed or uncertain writes are never repeated.'
+      )
+    ).not.toBeInTheDocument();
   });
   it('distinguishes a terminal segment without an authorized next action', () => {
     const progress = batchFixture();
@@ -121,7 +125,9 @@ describe('batch progress presentation', () => {
       progress.stage = verified === 50 ? 'COMPLETE' : 'RUNNING';
       progress.nextAction = 'NONE';
       progress.items = Array.from({ length: 50 }, (_, index) => ({
-        ...progress.items[0]!, id: `fixture-${index}`, name: `fixture-${index}`,
+        ...progress.items[0]!,
+        id: `fixture-${index}`,
+        name: `fixture-${index}`,
         status: index < verified ? 'VERIFIED' : 'PENDING',
         monitorId: index < verified ? `${index + 1}` : null,
         receiptKind: index < verified ? 'NATIVE_RECEIPT' : 'NONE'
