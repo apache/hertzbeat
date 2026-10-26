@@ -57,3 +57,26 @@ ALTER TABLE hzb_agent_run ADD COLUMN IF NOT EXISTS batch_read_only BOOLEAN;
 CREATE INDEX IF NOT EXISTS idx_agent_run_batch_root ON hzb_agent_run(batch_root_run_uid);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_run_batch_parent ON hzb_agent_run(batch_parent_run_uid);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_run_batch_segment ON hzb_agent_run(batch_root_run_uid, batch_segment);
+
+-- Legacy AI conversation credentials remain encrypted; existing rows stay unchanged.
+ALTER TABLE hzb_ai_conversation ADD COLUMN IF NOT EXISTS security_data VARCHAR(255);
+
+-- MySQL LONGTEXT/TEXT aliases are VARCHAR in H2; preserve the mapped LOB types.
+ALTER TABLE hzb_ai_message ALTER COLUMN content CLOB;
+ALTER TABLE hzb_define ALTER COLUMN content CLOB;
+ALTER TABLE hzb_notice_template ALTER COLUMN content CLOB;
+ALTER TABLE hzb_collector ALTER COLUMN runtime_config CLOB;
+ALTER TABLE hzb_collector ALTER COLUMN instrumentation_intake CLOB;
+ALTER TABLE hzb_monitor_metric_layout ALTER COLUMN layout_document CLOB;
+ALTER TABLE hzb_signal_dashboard_panel_draft ALTER COLUMN query_snapshot CLOB;
+ALTER TABLE hzb_signal_dashboard_panel_draft ALTER COLUMN payload CLOB;
+ALTER TABLE hzb_entity_identity ALTER COLUMN primary_identity BOOLEAN;
+
+-- Preserve newly mapped optional notification fields without changing existing receiver data.
+ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_server_url VARCHAR(300);
+ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_token VARCHAR(300);
+ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_topic VARCHAR(300);
+ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_channel VARCHAR(64);
+ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_token VARCHAR(300);
+ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_topic_code VARCHAR(300);
+ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled BOOLEAN;

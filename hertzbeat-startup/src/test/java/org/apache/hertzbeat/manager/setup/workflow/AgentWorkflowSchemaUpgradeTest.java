@@ -34,6 +34,20 @@ class AgentWorkflowSchemaUpgradeTest {
     }
 
     @Test
+    void upgradePreservesPreviouslyAutoUpdatedConversationSecurityData() throws Exception {
+        String url = "jdbc:h2:mem:agent-existing-" + UUID.randomUUID() + ";MODE=MYSQL;DB_CLOSE_DELAY=-1";
+        AgentWorkflowUpgradeProof.verify(url, "sa", "", "h2", oldMigrationDirectory, true);
+    }
+
+    @Test
+    void freshH2BaselineValidatesEveryCurrentEntity() throws Exception {
+        String url = "jdbc:h2:mem:agent-fresh-" + UUID.randomUUID() + ";MODE=MYSQL;DB_CLOSE_DELAY=-1";
+        org.flywaydb.core.Flyway.configure().dataSource(url, "sa", "")
+                .locations("classpath:db/migration/h2").load().migrate();
+        AgentWorkflowUpgradeProof.verifyMappings(url, "sa", "", "org.hibernate.dialect.H2Dialect");
+    }
+
+    @Test
     void everySupportedVendorHasAdditiveWorkflowMigrationAndCurrentBaseline() throws Exception {
         for (String vendor : new String[]{"h2", "mysql", "postgresql"}) {
             try (var resource = getClass().getResourceAsStream("/db/migration/" + vendor + "/V201__create_agent_workflow_state.sql")) {
@@ -41,7 +55,9 @@ class AgentWorkflowSchemaUpgradeTest {
                 String sql = new String(resource.readAllBytes(), StandardCharsets.UTF_8).toLowerCase();
                 assertThat(sql).doesNotContain("drop table", "delete from", "update hzb_agent_permission_state");
                 assertThat(sql).contains("hzb_agent_permission_state", "hzb_agent_permission_audit", "hzb_website_batch_item",
-                        "batch_root_run_uid", "batch_parent_run_uid", "uk_agent_run_batch_parent", "uk_agent_run_batch_segment");
+                        "batch_root_run_uid", "batch_parent_run_uid", "uk_agent_run_batch_parent", "uk_agent_run_batch_segment",
+                        "security_data", "ntfy_server_url", "ntfy_token", "ntfy_topic",
+                        "wpush_channel", "wpush_token", "wpush_topic_code");
             }
             assertThat(getClass().getResource("/db/migration/" + vendor + "/B201__current_schema.sql")).isNotNull();
         }

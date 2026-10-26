@@ -15,7 +15,7 @@
 
 --
 -- Current V201 schema baseline for provisioning an empty PostgreSQL target.
--- Historical databases apply the same-version V200 migration instead.
+-- Existing V200 databases apply the additive V201 migration instead.
 
     create table hzb_ai_conversation (
         gmt_create timestamp(6),
@@ -24,6 +24,7 @@
         creator varchar(255),
         modifier varchar(255),
         title varchar(255),
+        security_data varchar(255),
         primary key (id)
     );
 
@@ -320,6 +321,12 @@
         tg_message_thread_id varchar(255),
         tg_user_id varchar(255),
         user_id varchar(255),
+        ntfy_server_url varchar(300),
+        ntfy_token varchar(300),
+        ntfy_topic varchar(300),
+        wpush_channel varchar(64),
+        wpush_token varchar(300),
+        wpush_topic_code varchar(300),
         primary key (id)
     );
 

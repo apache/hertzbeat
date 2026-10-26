@@ -133,8 +133,14 @@ class TargetSchemaBaselineResourceTest {
         String resource = "db/migration/" + vendor + "/B201__current_schema.sql";
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(resource)) {
             assertThat(input).as(resource).isNotNull();
-            assertThat(createdTables(new String(input.readAllBytes(), StandardCharsets.UTF_8)))
-                    .containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(createdTables(sql)).containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
+            String conversation = sql.substring(sql.indexOf("create table hzb_ai_conversation ("));
+            assertThat(conversation.substring(0, conversation.indexOf(';'))).contains("security_data varchar(255)");
+            String receiver = sql.substring(sql.indexOf("create table hzb_notice_receiver ("));
+            assertThat(receiver.substring(0, receiver.indexOf(';'))).contains("ntfy_server_url varchar(300)",
+                    "ntfy_token varchar(300)", "ntfy_topic varchar(300)", "wpush_channel varchar(64)",
+                    "wpush_token varchar(300)", "wpush_topic_code varchar(300)");
         }
         MetadataDatabaseKind kind = vendor.equals("mysql")
                 ? MetadataDatabaseKind.MYSQL : MetadataDatabaseKind.POSTGRESQL;

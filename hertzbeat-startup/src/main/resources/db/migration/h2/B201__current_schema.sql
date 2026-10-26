@@ -14,6 +14,18 @@
 -- limitations under the License.
 
 -- Current V201 baseline; shared MySQL compatibility-mode schema.
--- Shared MySQL baseline SHA-256: 2b928b0c402238bd7b3a4d3c149325132463e0592eb855bf215249ddf9a44a18
+-- Shared MySQL baseline SHA-256: 4d940828fba77104389aefe0765f7d19bd0112ea7a655380b8abc064e08b03a9
 
 RUNSCRIPT FROM 'classpath:db/migration/mysql/B201__current_schema.sql';
+
+-- MySQL LONGTEXT/TEXT aliases are VARCHAR in H2; preserve the mapped LOB types.
+ALTER TABLE hzb_ai_message ALTER COLUMN content CLOB;
+ALTER TABLE hzb_define ALTER COLUMN content CLOB;
+ALTER TABLE hzb_notice_template ALTER COLUMN content CLOB;
+ALTER TABLE hzb_collector ALTER COLUMN runtime_config CLOB;
+ALTER TABLE hzb_collector ALTER COLUMN instrumentation_intake CLOB;
+ALTER TABLE hzb_monitor_metric_layout ALTER COLUMN layout_document CLOB;
+ALTER TABLE hzb_signal_dashboard_panel_draft ALTER COLUMN query_snapshot CLOB;
+ALTER TABLE hzb_signal_dashboard_panel_draft ALTER COLUMN payload CLOB;
+ALTER TABLE hzb_entity_identity ALTER COLUMN primary_identity BOOLEAN;
+ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled BOOLEAN;
