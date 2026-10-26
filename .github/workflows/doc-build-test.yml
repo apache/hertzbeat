@@ -46,7 +46,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.13'
 
       - name: Check Markdown
         # Preserve the pinned CLI version, repository config and lint scope.
