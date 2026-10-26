@@ -52,7 +52,7 @@ spring:
 
 collector:
   info:
-    version: ${COLLECTOR_VERSION:1.9.0}
+    version: ${COLLECTOR_VERSION:1.9.1}
     ip: ${COLLECTOR_IP:}
   dispatch:
     entrance:
