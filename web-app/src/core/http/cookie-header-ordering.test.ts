@@ -95,7 +95,11 @@ describe('cookie response header ordering', () => {
       vi.fn<typeof fetch>(input => {
         const path = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         paths.push(path);
-        return Promise.resolve(new Response(null, { status: path === '/read' && reads++ === 0 ? 401 : 200 }));
+        return Promise.resolve(
+          new Response(null, {
+            status: path === '/read' && reads++ === 0 ? 401 : 200
+          })
+        );
       })
     );
     unregister = registerBrowserSessionRefreshCoordinator(async () => {
@@ -171,6 +175,50 @@ describe('cookie response header ordering', () => {
     await queued;
     headers.resolve(ok());
     await writer;
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+  it('does not submit a queued stream after its30second admission deadline', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('navigator', {});
+    const writerHeaders = deferred<Response>();
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockReturnValueOnce(writerHeaders.promise));
+    const writer = apiFetch('/api/ui/session', { method: 'POST' }).catch(reason => reason as unknown);
+    await flush();
+    const phases: string[] = [];
+    const queued = apiStreamFetch('/stream', {}, phase => phases.push(phase)).catch(reason => reason as Error);
+    await flush();
+    await vi.advanceTimersByTimeAsync(30_001);
+    await expect(queued).resolves.toMatchObject({ name: 'TimeoutError' });
+    expect(phases).toEqual(['queued']);
+    writerHeaders.resolve(ok());
+    await writer;
+    await flush();
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it('aborts active header transport at30seconds and exposes its stage without replay', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('navigator', {});
+    let signal: AbortSignal | null | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(
+        (_input, init) =>
+          new Promise((_resolve, reject) => {
+            signal = init?.signal;
+            signal?.addEventListener('abort', () => reject(new Error('Transport aborted')), {
+              once: true
+            });
+          })
+      )
+    );
+    const phases: string[] = [];
+    const stream = apiStreamFetch('/stream', {}, phase => phases.push(phase)).catch(reason => reason as Error);
+    await flush();
+    await vi.advanceTimersByTimeAsync(30_001);
+    await expect(stream).resolves.toMatchObject({ name: 'TimeoutError' });
+    expect(signal?.aborted).toBe(true);
+    expect(phases).toEqual(['queued', 'fetch_started']);
     expect(fetch).toHaveBeenCalledOnce();
   });
 });

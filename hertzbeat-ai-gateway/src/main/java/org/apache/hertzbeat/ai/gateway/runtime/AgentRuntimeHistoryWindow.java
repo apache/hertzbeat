@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.util.StringUtils;
@@ -307,6 +308,7 @@ public final class AgentRuntimeHistoryWindow {
             }
         }
         TranscriptMessage repairedAssistant = assistant.toBuilder()
+            .modelPartsCiphertext(Objects.equals(content, assistant.getContent()) ? assistant.getModelPartsCiphertext() : null)
             .content(content)
             .build();
         return new ToolPairRepair(repairedAssistant, matchedResults);

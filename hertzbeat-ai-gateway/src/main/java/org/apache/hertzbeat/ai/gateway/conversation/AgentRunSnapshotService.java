@@ -17,21 +17,22 @@
 
 package org.apache.hertzbeat.ai.gateway.conversation;
 
-import java.util.Objects;
-import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.application.AgentRunRequestFingerprint;
 import org.apache.hertzbeat.ai.gateway.application.AgentTargetCanonicalizationService;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
-import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentGroundingEvidenceVerifier;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Builds the durable result/error projection used by replay and run queries.
@@ -43,11 +44,20 @@ public class AgentRunSnapshotService {
 
     private final AgentTranscriptRecorder transcriptRecorder;
     private final AgentGroundingEvidenceVerifier groundingVerifier;
+    private final AgentExecutionSummaryService executionSummaries;
 
     public AgentRunSnapshotService(AgentTranscriptRecorder transcriptRecorder,
                                    AgentGroundingEvidenceVerifier groundingVerifier) {
+        this(transcriptRecorder, groundingVerifier, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AgentRunSnapshotService(AgentTranscriptRecorder transcriptRecorder,
+                                  AgentGroundingEvidenceVerifier groundingVerifier,
+                                  AgentExecutionSummaryService executionSummaries) {
         this.transcriptRecorder = transcriptRecorder;
         this.groundingVerifier = groundingVerifier;
+        this.executionSummaries = executionSummaries;
     }
 
     public AgentRunSnapshot snapshot(AgentSession session, AgentRun run) {
@@ -70,14 +80,24 @@ public class AgentRunSnapshotService {
                 replayAvailable,
                 run.getStartedAt(),
                 run.getCompletedAt(),
-                retryRequest(session, run, status));
+                retryRequest(session, run, status),
+                groundingVerifier.verifiedProofs(run, AgentRunService.targetFromRun(run)).stream()
+                        .map(AgentEvidenceReference::from).toList(),
+                executionSummaries == null ? AgentExecutionSummary.unavailable() : executionSummaries.summarize(run));
     }
 
     private AgentRetryRequest retryRequest(AgentSession session, AgentRun run, AgentRunStatus status) {
-        if (status == AgentRunStatus.SUCCEEDED || status == AgentRunStatus.RECOVERY_REQUIRED
+        if (transcriptRecorder
+                        .findRunTaskCheckpoint(run.getId())
+                        .map(TranscriptMessage::getTaskCheckpoint)
+                        .map(checkpoint -> checkpoint.monitorBatch() != null)
+                        .orElse(false)
+                || status == AgentRunStatus.SUCCEEDED
+                || status == AgentRunStatus.RECOVERY_REQUIRED
                 || !Objects.equals(session.getId(), run.getSessionId())
                 || !Objects.equals(ChannelId.WEB_UI.id(), session.getChannel())
-                || !Objects.equals(AgentRuntimeEntryType.USER_INPUT.name(), session.getOriginEntryType())
+                || !Objects.equals(
+                        AgentRuntimeEntryType.USER_INPUT.name(), session.getOriginEntryType())
                 || !Objects.equals(AgentRuntimeEntryType.USER_INPUT.name(), run.getEntryType())) {
             return null;
         }

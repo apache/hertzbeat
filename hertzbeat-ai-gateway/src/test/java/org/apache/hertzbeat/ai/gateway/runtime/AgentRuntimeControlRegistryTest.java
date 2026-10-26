@@ -17,13 +17,14 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Clock;
 import org.junit.jupiter.api.Test;
+
+import java.time.Clock;
 
 /**
  * Same-run runtime control admission tests.
@@ -31,10 +32,27 @@ import org.junit.jupiter.api.Test;
 class AgentRuntimeControlRegistryTest {
 
     @Test
+    void operationGuardChecksBothBeforeAndAfterCancellation() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        try (var control = new AgentRuntimeControl("trace-guard", "run-guard", Clock.systemUTC())) {
+            control.operationGuard(
+                    () -> {
+                        calls.incrementAndGet();
+                        control.cancel("cancelled before operation");
+                    });
+            assertThrows(AgentRuntimeStoppedException.class, control::beforeOperation);
+            assertEquals(1, calls.get());
+            assertThrows(AgentRuntimeStoppedException.class, control::beforeOperation);
+            assertEquals(1, calls.get());
+        }
+    }
+
+    @Test
     void firstStopSignalKeepsItsReasonAndCancellationKind() throws Exception {
         for (boolean userCancellationFirst : new boolean[] {true, false}) {
             AgentRuntimeControlRegistry registry = new AgentRuntimeControlRegistry();
-            try (AgentRuntimeControl control = new AgentRuntimeControl("trace-1", "run-1", Clock.systemUTC());
+            try (AgentRuntimeControl control =
+                            new AgentRuntimeControl("trace-1", "run-1", Clock.systemUTC());
                     AutoCloseable ignored = registry.register(control)) {
                 if (userCancellationFirst) {
                     registry.cancel("run-1", "user requested stop");
@@ -46,7 +64,9 @@ class AgentRuntimeControlRegistryTest {
                 AgentRuntimeStoppedException stopped = assertThrows(
                         AgentRuntimeStoppedException.class, control::checkpoint);
                 assertEquals(userCancellationFirst, stopped.isCancelled());
-                assertEquals(userCancellationFirst ? "user requested stop" : "model timeout", stopped.getMessage());
+                assertEquals(
+                        userCancellationFirst ? "user requested stop" : "model timeout",
+                        stopped.getMessage());
             }
         }
     }
@@ -55,7 +75,8 @@ class AgentRuntimeControlRegistryTest {
     void duplicateRegistrationShouldNotReplaceTheFirstControl() throws Exception {
         AgentRuntimeControlRegistry registry = new AgentRuntimeControlRegistry();
         AgentRuntimeControl first = new AgentRuntimeControl("trace-1", "run-1", Clock.systemUTC());
-        AgentRuntimeControl duplicate = new AgentRuntimeControl("trace-2", "run-1", Clock.systemUTC());
+        AgentRuntimeControl duplicate =
+                new AgentRuntimeControl("trace-2", "run-1", Clock.systemUTC());
 
         try (AutoCloseable ignored = registry.register(first)) {
             assertThrows(IllegalStateException.class, () -> registry.register(duplicate));

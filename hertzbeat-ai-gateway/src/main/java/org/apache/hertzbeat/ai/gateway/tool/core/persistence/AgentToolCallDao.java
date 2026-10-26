@@ -18,8 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.tool.core.persistence;
 
 import jakarta.persistence.LockModeType;
-import java.util.List;
-import java.util.Optional;
+
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -27,25 +26,33 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-/**
- * Repository for Agent Gateway tool calls.
- */
+import java.util.List;
+import java.util.Optional;
+
+/** Repository for Agent Gateway tool calls. */
 @Repository
 public interface AgentToolCallDao extends JpaRepository<AgentToolCall, Long> {
 
-    /**
-     * Find tool calls for a run ordered by creation time.
-     */
-    List<AgentToolCall> findByRunIdOrderByGmtCreateAsc(Long runId);
+    /** Bounded read-only approval projection for an already owner-checked run. */
+    List<AgentToolCall> findByRunIdAndApprovalIdIsNotNullOrderByIdAsc(
+            Long runId, org.springframework.data.domain.Pageable pageable);
 
     /**
-     * Find tool calls for a session ordered by creation time.
+     * Bounded earlier durable tool receipts, used only to display a hash-bound proposal baseline.
      */
+    List<AgentToolCall> findByRunIdAndIdLessThanOrderByIdDesc(
+            Long runId, Long id, org.springframework.data.domain.Pageable pageable);
+
+    /** Find tool calls for a run ordered by creation time. */
+    @Query(
+            "select call from AgentToolCall call where call.runId = :runId order by call.gmtCreate"
+                    + " asc, call.id asc")
+    List<AgentToolCall> findByRunIdOrderByGmtCreateAsc(@Param("runId") Long runId);
+
+    /** Find tool calls for a session ordered by creation time. */
     List<AgentToolCall> findBySessionIdOrderByGmtCreateAsc(Long sessionId);
 
-    /**
-     * Find an approval-backed tool call by public approval ID.
-     */
+    /** Find an approval-backed tool call by public approval ID. */
     Optional<AgentToolCall> findByApprovalId(String approvalId);
 
     /** Serialize runtime resume against approval compensation for the same ledger row. */
@@ -55,7 +62,8 @@ public interface AgentToolCallDao extends JpaRepository<AgentToolCall, Long> {
 
     /** Serialize one approval decision lifecycle only after its session owner scope matches. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             select toolCall from AgentToolCall toolCall, AgentSession session
             where toolCall.sessionId = session.id
               and toolCall.approvalId = :approvalId
@@ -73,7 +81,8 @@ public interface AgentToolCallDao extends JpaRepository<AgentToolCall, Long> {
             @Param("actorId") String actorId,
             @Param("originEntryType") String originEntryType);
 
-    @Query("""
+    @Query(
+            """
             select count(toolCall) > 0 from AgentToolCall toolCall, AgentSession session
             where toolCall.sessionId = session.id
               and toolCall.approvalId = :approvalId
@@ -90,5 +99,4 @@ public interface AgentToolCallDao extends JpaRepository<AgentToolCall, Long> {
             @Param("actorType") String actorType,
             @Param("actorId") String actorId,
             @Param("originEntryType") String originEntryType);
-
 }

@@ -20,14 +20,18 @@ package org.apache.hertzbeat.ai.gateway.runtime;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provider-neutral transcript message used for replay and persistence.
@@ -40,7 +44,9 @@ import lombok.Setter;
 public class TranscriptMessage {
 
     public static final String COMPACTION_SUMMARY_PREFIX =
-        "The conversation history before this point was compacted into the following summary:\n\n<summary>\n";
+            "The conversation history before this point was compacted into the following"
+                    + " summary:\n\n"
+                    + "<summary>\n";
     public static final String COMPACTION_SUMMARY_SUFFIX = "\n</summary>";
 
     private TranscriptRole role;
@@ -52,6 +58,25 @@ public class TranscriptMessage {
     private String toolCallId;
 
     private String toolName;
+
+    /** Server-authored display association only; never a grounding or execution permission. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String recordedRunUid;
+
+    /** Recorded execution metadata; absent on legacy messages, never inferred from output text. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private AgentToolStatus toolStatus;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long toolElapsedMs;
+
+    /** Original-task result; absent in legacy transcripts and never reconstructed from assistant prose. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private AgentTaskOutcome taskOutcome;
+
+    /** Server-authored goal checkpoint, not inferred from model prose or legacy history. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private AgentTaskCheckpoint taskCheckpoint;
 
     /** Model-visible error */
     private String errorMessage;
@@ -83,6 +108,9 @@ public class TranscriptMessage {
      * Provider usage for the complete primary model response that produced this assistant message.
      */
     private AgentRuntimeModelResponse.Usage usage;
+
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private String modelPartsCiphertext;
 
     private boolean pruned;
 
@@ -233,7 +261,8 @@ public class TranscriptMessage {
         USER("user"),
         ASSISTANT("assistant"),
         TOOL_RESULT("toolResult"),
-        COMPACTION_SUMMARY("compactionSummary");
+        COMPACTION_SUMMARY("compactionSummary"),
+        TASK_CHECKPOINT("taskCheckpoint");
 
         private final String wireValue;
 

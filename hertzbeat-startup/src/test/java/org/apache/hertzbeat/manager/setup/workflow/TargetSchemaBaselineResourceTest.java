@@ -44,6 +44,9 @@ class TargetSchemaBaselineResourceTest {
     private static final Set<String> MAPPED_TABLES = Set.of(
             "hzb_account",
             "hzb_agent_run",
+            "hzb_agent_permission_state",
+            "hzb_agent_permission_audit",
+            "hzb_website_batch_item",
             "hzb_agent_schedule",
             "hzb_agent_session",
             "hzb_agent_tool_call",
@@ -127,19 +130,25 @@ class TargetSchemaBaselineResourceTest {
     @ParameterizedTest
     @ValueSource(strings = {"mysql", "postgresql"})
     void currentBaselineDeclaresEveryMappedTable(String vendor) throws IOException {
-        String resource = "db/migration/" + vendor + "/B200__current_schema.sql";
+        String resource = "db/migration/" + vendor + "/B201__current_schema.sql";
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(resource)) {
             assertThat(input).as(resource).isNotNull();
-            assertThat(createdTables(new String(input.readAllBytes(), StandardCharsets.UTF_8)))
-                    .containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(createdTables(sql)).containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
+            String conversation = sql.substring(sql.indexOf("create table hzb_ai_conversation ("));
+            assertThat(conversation.substring(0, conversation.indexOf(';'))).contains("security_data varchar(255)");
+            String receiver = sql.substring(sql.indexOf("create table hzb_notice_receiver ("));
+            assertThat(receiver.substring(0, receiver.indexOf(';'))).contains("ntfy_server_url varchar(300)",
+                    "ntfy_token varchar(300)", "ntfy_topic varchar(300)", "wpush_channel varchar(64)",
+                    "wpush_token varchar(300)", "wpush_topic_code varchar(300)");
         }
         MetadataDatabaseKind kind = vendor.equals("mysql")
                 ? MetadataDatabaseKind.MYSQL : MetadataDatabaseKind.POSTGRESQL;
         TargetSchemaBaseline baseline = TargetSchemaBaseline.load(kind);
         assertThat(baseline.expectedTables())
                 .containsExactlyInAnyOrderElementsOf(MAPPED_TABLES);
-        assertThat(TargetSchemaBaseline.VERSION).isEqualTo("200");
-        assertThat(TargetSchemaBaseline.SCRIPT).isEqualTo("B200__current_schema.sql");
+        assertThat(TargetSchemaBaseline.VERSION).isEqualTo("201");
+        assertThat(TargetSchemaBaseline.SCRIPT).isEqualTo("B201__current_schema.sql");
         assertThat(TargetSchemaBaseline.DESCRIPTION).isEqualTo("current schema");
     }
 

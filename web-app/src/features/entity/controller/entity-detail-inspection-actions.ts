@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { buildAgentWorkspacePath, entityInvestigationTarget } from '@/features/ai-workspace';
+
 import {
   buildEntityExplorePath,
   buildEntityTopologyPath,
@@ -30,6 +32,11 @@ export function buildEntityInspectionActions(
   navigate: (path: string) => void
 ) {
   return {
+    investigate: () => {
+      if (evidence.kind !== 'ready' || signals?.kind !== 'ready') return;
+      const target = entityInvestigationTarget(evidence.detail.entity.id, signals.plan.anchor.window);
+      if (target) navigate(buildAgentWorkspacePath(target));
+    },
     explore: (signal: EntityExploreSignal) => {
       if (signals?.kind === 'ready' && signals.capabilities[signal] === 'available') {
         navigate(buildEntitySignalHandoffPath(signals.plan, signal));

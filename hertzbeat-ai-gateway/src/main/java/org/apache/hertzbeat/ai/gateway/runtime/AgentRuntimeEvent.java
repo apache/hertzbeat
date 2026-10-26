@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.gateway.runtime;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NonNull;
@@ -73,6 +74,8 @@ public class AgentRuntimeEvent {
 
     String result;
 
+    List<TranscriptContent> messageParts;
+
     Long elapsedMs;
 
     Instant timestamp;
@@ -117,8 +120,13 @@ public class AgentRuntimeEvent {
     }
 
     public static AgentRuntimeEvent assistantMessageCompleted(String itemId, String traceId, Instant timestamp) {
+        return assistantMessageCompleted(itemId, traceId, timestamp, null);
+    }
+
+    public static AgentRuntimeEvent assistantMessageCompleted(String itemId, String traceId, Instant timestamp,
+                                                               List<TranscriptContent> parts) {
         return builder().type(AgentRuntimeEventType.ITEM_COMPLETED).itemKind(AgentRuntimeItemKind.ASSISTANT_MESSAGE)
-                .itemId(itemId).traceId(traceId).timestamp(timestamp).build();
+                .itemId(itemId).traceId(traceId).timestamp(timestamp).messageParts(parts).build();
     }
 
     public static AgentRuntimeEvent toolStarted(String itemId, String traceId, AgentRuntimeToolCall toolCall,
@@ -142,7 +150,16 @@ public class AgentRuntimeEvent {
         return builder().type(AgentRuntimeEventType.REQUESTED_ACTION).itemKind(AgentRuntimeItemKind.TOOL_CALL)
                 .itemId(itemId).traceId(traceId).requestId(result.getApprovalId()).requestKind(RequestKind.APPROVAL)
                 .status(EventStatus.WAITING_APPROVAL).toolName(result.getToolName())
-                .toolCallId(result.getToolCallId()).approvalId(result.getApprovalId()).timestamp(timestamp).build();
+                .toolCallId(result.getToolCallId()).approvalId(result.getApprovalId())
+                .requestPayload(approvalPayload(result))
+                .timestamp(timestamp).build();
+    }
+
+    private static Map<String, Object> approvalPayload(AgentToolExecutionResult result) {
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("canDecide", Boolean.TRUE.equals(result.getCanDecide()));
+        if (result.getApprovalSummary() != null) payload.put("summary", result.getApprovalSummary());
+        return java.util.Collections.unmodifiableMap(payload);
     }
 
     public static AgentRuntimeEvent approvalCompleted(String itemId, String traceId,
