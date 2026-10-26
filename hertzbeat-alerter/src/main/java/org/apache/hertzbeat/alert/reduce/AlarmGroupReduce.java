@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -258,6 +259,7 @@ public class AlarmGroupReduce implements DisposableBean {
             newCache.setGroupDefineName(defineName);
             newCache.setCreateTime(System.currentTimeMillis());
             newCache.setAlertFingerprints(new ConcurrentHashMap<>(8));
+            newCache.setResolvedFingerprints(ConcurrentHashMap.newKeySet());
             return newCache;
         });
         String fingerprint = alert.getFingerprint();
@@ -266,6 +268,18 @@ public class AlarmGroupReduce implements DisposableBean {
         if (existingAlert != null) {
             alert.setStartAt(existingAlert.getStartAt());
         }
+        // Sources like Prometheus keep reposting a resolved alert until they forget it. Once a
+        // resolution was emitted the member is evicted from alertFingerprints, so a repost would
+        // look new and trigger another recovery notification for the same alert instance.
+        if (CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())
+                && !cache.getResolvedFingerprints().add(fingerprint)) {
+            return;
+        }
+        if (CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) {
+            // A firing repost starts a new incident lifecycle for this fingerprint.
+            cache.getResolvedFingerprints().remove(fingerprint);
+        }
+
         // Add or update the alert. The cache retains every currently-active alert of the
         // group, so the group status is always computed over the full member set rather
         // than only the alerts received within the current send window.
@@ -322,8 +336,15 @@ public class AlarmGroupReduce implements DisposableBean {
         // members are retained until they recover, keeping the group firing while any member
         // is still active instead of flushing the whole cache after every send.
         if (hasResolvedAlert) {
-            cache.getAlertFingerprints().values().removeIf(
-                    alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
+            cache.getAlertFingerprints().entrySet().removeIf(entry -> {
+                boolean resolved = CommonConstants.ALERT_STATUS_RESOLVED.equals(entry.getValue().getStatus());
+                if (resolved) {
+                    // Record the fingerprint so a reposted resolved alert is deduplicated
+                    // instead of triggering another recovery notification.
+                    cache.getResolvedFingerprints().add(entry.getKey());
+                }
+                return resolved;
+            });
         }
     }
     
@@ -411,6 +432,7 @@ public class AlarmGroupReduce implements DisposableBean {
         private String groupKey;
         private Map<String, String> groupLabels;
         private Map<String, SingleAlert> alertFingerprints = new ConcurrentHashMap<>(8);
+        private Set<String> resolvedFingerprints = ConcurrentHashMap.newKeySet();
         private long createTime;
         private long lastSendTime;
         private long lastRepeatTime;
