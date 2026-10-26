@@ -241,7 +241,7 @@ class TargetSchemaProvisionerDatabaseTest {
         HistoricalMetadataSchema.rebuild(jdbcUrl, USERNAME, PASSWORD, kind.value());
         assertThat(historyRows(jdbcUrl))
                 .extracting(HistoryRow::version)
-                .containsExactly("159", "160", "170", "172", "173", "180", "181",
+                .containsExactly("159", "160", "170", "172", "173", "180", "190",
                         "200", "201");
         try (Connection connection = DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD)) {
             assertLargeAgentTextRoundTrip(connection);
