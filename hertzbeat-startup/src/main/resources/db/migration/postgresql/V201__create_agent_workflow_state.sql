@@ -59,12 +59,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_run_batch_parent ON hzb_agent_run(bat
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_run_batch_segment ON hzb_agent_run(batch_root_run_uid, batch_segment);
 
 -- Legacy AI conversation credentials remain encrypted; existing rows stay unchanged.
-ALTER TABLE hzb_ai_conversation ADD COLUMN IF NOT EXISTS security_data VARCHAR(255);
+ALTER TABLE IF EXISTS hzb_ai_conversation ADD COLUMN IF NOT EXISTS security_data VARCHAR(255);
 
 -- Preserve newly mapped optional notification fields without changing existing receiver data.
-ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_server_url VARCHAR(300);
-ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_token VARCHAR(300);
-ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_topic VARCHAR(300);
-ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_channel VARCHAR(64);
-ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_token VARCHAR(300);
-ALTER TABLE hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_topic_code VARCHAR(300);
+ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_server_url VARCHAR(300);
+ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_token VARCHAR(300);
+ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS ntfy_topic VARCHAR(300);
+ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_channel VARCHAR(64);
+ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_token VARCHAR(300);
+ALTER TABLE IF EXISTS hzb_notice_receiver ADD COLUMN IF NOT EXISTS wpush_topic_code VARCHAR(300);

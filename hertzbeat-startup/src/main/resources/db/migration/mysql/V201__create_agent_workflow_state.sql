@@ -82,33 +82,33 @@ EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
 
 -- Legacy AI conversation credentials remain encrypted; existing rows stay unchanged.
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_ai_conversation' AND column_name='security_data')=0, 'ALTER TABLE hzb_ai_conversation ADD COLUMN security_data VARCHAR(255)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_ai_conversation')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_ai_conversation' AND column_name='security_data')=0, 'ALTER TABLE hzb_ai_conversation ADD COLUMN security_data VARCHAR(255)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
 
 -- Preserve newly mapped optional notification fields without changing existing receiver data.
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='ntfy_server_url')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN ntfy_server_url VARCHAR(300)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='ntfy_server_url')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN ntfy_server_url VARCHAR(300)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='ntfy_token')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN ntfy_token VARCHAR(300)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='ntfy_token')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN ntfy_token VARCHAR(300)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='ntfy_topic')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN ntfy_topic VARCHAR(300)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='ntfy_topic')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN ntfy_topic VARCHAR(300)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='wpush_channel')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN wpush_channel VARCHAR(64)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='wpush_channel')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN wpush_channel VARCHAR(64)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='wpush_token')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN wpush_token VARCHAR(300)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='wpush_token')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN wpush_token VARCHAR(300)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
-SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='wpush_topic_code')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN wpush_topic_code VARCHAR(300)', 'SELECT 1');
+SET @hzb_ai_ddl = IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver')=1 AND (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='hzb_notice_receiver' AND column_name='wpush_topic_code')=0, 'ALTER TABLE hzb_notice_receiver ADD COLUMN wpush_topic_code VARCHAR(300)', 'SELECT 1');
 PREPARE hzb_ai_statement FROM @hzb_ai_ddl;
 EXECUTE hzb_ai_statement;
 DEALLOCATE PREPARE hzb_ai_statement;
