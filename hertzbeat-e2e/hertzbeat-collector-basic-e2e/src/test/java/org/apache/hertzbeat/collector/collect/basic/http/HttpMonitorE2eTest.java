@@ -29,8 +29,10 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -53,16 +55,16 @@ import java.util.Map;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
 
-    private static final int MOCK_SERVER_PORT = 52376;
     private static final String LOCALHOST = "127.0.0.1";
     private static final String RELATIVE_PATH = "/";
     private static final List<String> ALLOW_EMPTY_WHITE_LIST = List.of("header");
-    private static HttpServer mockServer;
+    private HttpServer mockServer;
 
-    @AfterAll
-    public static void tearDown() {
+    @AfterEach
+    public void tearDown() {
         if (mockServer != null) {
             mockServer.stop(0);
+            mockServer = null;
         }
     }
 
@@ -74,11 +76,10 @@ public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
         collect = new HttpCollectImpl();
 
         // Setup mock server and endpoints
-        mockServer = HttpServer.create(new InetSocketAddress(MOCK_SERVER_PORT), 0);
+        mockServer = HttpServer.create(new InetSocketAddress(LOCALHOST, 0), 0);
         mockServer.setExecutor(null);
-        mockServer.start();
-
         mockServer.createContext(RELATIVE_PATH, exchange -> sendJsonResponse(exchange, ""));
+        mockServer.start();
 
     }
 
@@ -91,7 +92,7 @@ public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
         }
     }
 
-    @Test
+    @RepeatedTest(3)
     public void testHttpMonitor() {
         Job dockerJob = appService.getAppDefine("api");
         List<Map<String, Configmap>> configmapFromPreCollectData = new LinkedList<>();
@@ -107,6 +108,21 @@ public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
         }
     }
 
+    @Test
+    public void testConcurrentFixturesUseIndependentPorts() throws Exception {
+        HttpMonitorE2eTest other = new HttpMonitorE2eTest();
+        try {
+            other.setUp();
+            Assertions.assertNotEquals(mockServer.getAddress().getPort(), other.mockServer.getAddress().getPort());
+            Assertions.assertNotSame(mockServer, other.mockServer);
+            other.testHttpMonitor();
+            other.tearDown();
+            testHttpMonitor();
+        } finally {
+            other.tearDown();
+        }
+    }
+
     @Override
     protected Protocol buildProtocol(Metrics metricsDef) {
         // Setup HTTP protocol
@@ -114,7 +130,7 @@ public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
         protocol.setHost(LOCALHOST);
         protocol.setUrl(RELATIVE_PATH);
         protocol.setMethod("GET");
-        protocol.setPort(String.valueOf(MOCK_SERVER_PORT));
+        protocol.setPort(String.valueOf(mockServer.getAddress().getPort()));
         protocol.setParseType(metricsDef.getHttp().getParseType());
         protocol.setParseScript(metricsDef.getHttp().getParseScript());
         return protocol;
